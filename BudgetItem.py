@@ -13,3 +13,14 @@ class BudgetItem:
         self.cadence = cadence
         self.amount = amount
         self.memo = memo
+
+    def __str__(self):
+        return_string = ""
+
+        return_string += str(self.start_date) +" | "+str(self.priority) + " | " + str(self.cadence).ljust(10) + " | "
+        return_string += str(self.amount).ljust(10) + " | " + str(self.memo)
+
+        return return_string
+
+    def __repr__(self):
+        pass
