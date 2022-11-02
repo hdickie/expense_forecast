@@ -2,6 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
 import datetime
+import re
 
 def generate_date_sequence(start_date_YYYYMMDD,num_days,cadence):
 
@@ -31,7 +32,7 @@ class ExpenseForecast:
 
         pass
 
-    def satisfice(self, budget_schedule_df, account_set_df):
+    def satisfice(self, budget_schedule_df, account_set_df, memo_rules_df):
 
         priority_1_budget_schedule_df = budget_schedule_df.loc[budget_schedule_df.Priority == 1, :]
 
@@ -121,9 +122,40 @@ class ExpenseForecast:
                 new_row_df.iloc[0, index_of_relevant_column_balance] = new_balance
 
             #todo execute non-neogtiable transactions
-            for budget_item in relevant_budget_items_df:
-                #todo account selection HAS to depend on priority.
-                pass
+            for index, budget_item in relevant_budget_items_df.iterrows():
+                #if memo matches any regex in memo_rules_df
+                    #relevant_memo_rule = memo_rules_df[memo_rules_df.transaction_priority == 1 and memo_rules_df]
+
+                #use first regex match
+                found_matching_regex = False
+                for index2, row2 in memo_rules_df[memo_rules_df.transaction_priority == 1].iterrows():
+                    m = re.search(row2.memo_regex,budget_item.Memo)
+
+                    if m is not None:
+                        #do stuff
+
+                        if row2.account_from is not None:
+                            index_of_account_from_column = list(new_row_df.columns).index(row2.account_from)
+
+                        if row2.account_to is not None:
+                            index_of_account_to_column = list(new_row_df.columns).index(row2.account_to)
+
+                        if row2.account_from is None: #e.g. income
+                            new_row_df.iloc[0,index_of_account_to_column] += budget_item.Amount
+
+                        if row2.account_to is None: #e.g. spend
+                            new_row_df.iloc[0,index_of_account_from_column] += budget_item.Amount
+
+                        if row2.account_from is not None and row2.account_to is not None:  # e.g. xfer bw accts
+                            new_row_df.iloc[0, index_of_account_to_column] += budget_item.Amount
+                            new_row_df.iloc[0, index_of_account_from_column] -= budget_item.Amount
+
+                        found_matching_regex = True
+                        break
+
+                if not found_matching_regex:
+                    print('We received a budget item that we do not have a case to handle. this is a show stopping error.')
+                    print('Exiting.')
 
             previous_date = d
             forecast_df = pd.concat([forecast_df,new_row_df])
