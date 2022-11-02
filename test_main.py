@@ -25,7 +25,7 @@ if __name__ == '__main__':
                            balance=1001,
                            min_balance=0,
                            max_balance=float('inf'),
-                           apr=26.74,
+                           apr=0.2674,
                            interest_cadence='Monthly',
                            interest_type='Compound',
                            billing_start_date='2000-01-07',
@@ -78,7 +78,8 @@ if __name__ == '__main__':
 
     y = x.satisfice(budget_schedule_df, account_set_df)
 
-
+    print("-------------------------------")
+    print(y[0].to_string())
     print("-------------------------------")
     print(y[1].to_string())
     print("-------------------------------")

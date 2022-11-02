@@ -1,5 +1,27 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.pyplot import figure
+import datetime
+
+def generate_date_sequence(start_date_YYYYMMDD,num_days,cadence):
+
+    start_date = datetime.datetime.strptime(start_date_YYYYMMDD,'%Y%m%d')
+    end_date = start_date + datetime.timedelta(days=num_days)
+
+    if cadence.lower() == "daily":
+        return_series = pd.date_range(start_date,end_date,freq='D')
+    elif cadence.lower() == "weekly":
+        return_series = pd.date_range(start_date,end_date,freq='W')
+    elif cadence.lower() == "biweekly":
+        return_series = pd.date_range(start_date,end_date,freq='2W')
+    elif cadence.lower() == "monthly":
+        return_series = pd.date_range(start_date,end_date,freq='M')
+    elif cadence.lower() == "quarterly":
+        return_series = pd.date_range(start_date,end_date,freq='Q')
+    elif cadence.lower() == "yearly":
+        return_series = pd.date_range(start_date,end_date,freq='Y')
+
+    return return_series
 
 class ExpenseForecast:
 
@@ -71,14 +93,27 @@ class ExpenseForecast:
 
                 #todo if not an interest accrual day, continue
 
+                days_since_billing_start_date = (d - row['Billing_Start_Dt']).days
+
+
                 relevant_apr = row['APR']
                 relevant_balance = new_row_df.iloc[0,index_of_relevant_column_balance]
                 if row['Interest_Cadence'].lower() == 'daily':
                     new_balance = relevant_balance + ( relevant_balance * relevant_apr ) / 365.25
                 elif row['Interest_Cadence'].lower() == 'monthly':
-                    new_balance = relevant_balance + ( relevant_balance * relevant_apr) / 30
+
+                    interest_accrual_days = generate_date_sequence(row['Billing_Start_Dt'].strftime('%Y%m%d'), days_since_billing_start_date + 10, 'monthly')
+                    if d in interest_accrual_days:
+                        new_balance = relevant_balance + ( relevant_balance * relevant_apr) / 30
+                    else:
+                        new_balance = relevant_balance
                 elif row['Interest_Cadence'].lower() == 'yearly':
-                    new_balance = relevant_balance + ( relevant_balance * relevant_apr)
+                    interest_accrual_days = generate_date_sequence(row['Billing_Start_Dt'].strftime('%Y%m%d'),
+                                                                   days_since_billing_start_date + 10, 'yearly')
+                    if d in interest_accrual_days:
+                        new_balance = relevant_balance + (relevant_balance * relevant_apr)
+                    else:
+                        new_balance = relevant_balance
                 else:
                     print('Undefined case in satisfice()')
 
@@ -117,12 +152,26 @@ class ExpenseForecast:
 
 
     def computeForecast(self,forecast_df):
+        figure(figsize=(8, 6), dpi=80)
+        for i in range(1,forecast_df.shape[1]-1):
+            plt.plot(forecast_df['Date'], forecast_df.iloc[:,i],label=forecast_df.columns[i])
 
-        plt.plot(forecast_df['Checking'])
+        ax = plt.subplot(111)
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0 + box.height * 0.1,
+                         box.width, box.height * 0.9])
 
+        # Put a legend below current axis
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05),
+                  fancybox=True, shadow=True, ncol=2)
+
+        #TODO a large number of accounts will require some adjustment here so that the legend is entirely visible
+
+        min_date = min(forecast_df.Date).strftime('%Y-%m-%d')
+        max_date = max(forecast_df.Date).strftime('%Y-%m-%d')
+        plt.title('Forecast: '+str(min_date)+' -> '+str(max_date))
         plt.savefig('C:/Users/HumeD/Documents/outplot.png')
 
-        pass
 
     def plotOutput(self,output_path):
         raise NotImplementedError
