@@ -68,4 +68,6 @@ class AccountSet:
                                             })
 
             all_accounts_df = pd.concat([all_accounts_df, new_account_row_df], axis=0)
+            all_accounts_df.reset_index(drop=True,inplace=True)
+
         return all_accounts_df

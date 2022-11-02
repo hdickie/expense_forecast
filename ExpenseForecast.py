@@ -1,4 +1,5 @@
 import pandas as pd
+import matplotlib.pyplot as plt
 
 class ExpenseForecast:
 
@@ -9,8 +10,6 @@ class ExpenseForecast:
         pass
 
     def satisfice(self, budget_schedule_df, account_set_df):
-
-        account_set_df = account_set_df.rename(columns={"Name":0})
 
         priority_1_budget_schedule_df = budget_schedule_df.loc[budget_schedule_df.Priority == 1, :]
 
@@ -63,14 +62,35 @@ class ExpenseForecast:
             relevant_budget_items_df = priority_1_budget_schedule_df.loc[ d == priority_1_budget_schedule_df.Date, : ]
             relevant_budget_items_df.sort_values(inplace=True, axis=0, by="Amount",ascending=False)
 
+            # todo interest accruals. shouldnt happen every day as it does ats it is currently implemented
+            for index, row in account_set_df.iterrows():
+                index_of_relevant_column_balance = list(new_row_df.columns).index(row.Name)
+
+                if row['APR'] == 0:
+                    continue
+
+                #todo if not an interest accrual day, continue
+
+                relevant_apr = row['APR']
+                relevant_balance = new_row_df.iloc[0,index_of_relevant_column_balance]
+                if row['Interest_Cadence'].lower() == 'daily':
+                    new_balance = relevant_balance + ( relevant_balance * relevant_apr ) / 365.25
+                elif row['Interest_Cadence'].lower() == 'monthly':
+                    new_balance = relevant_balance + ( relevant_balance * relevant_apr) / 30
+                elif row['Interest_Cadence'].lower() == 'yearly':
+                    new_balance = relevant_balance + ( relevant_balance * relevant_apr)
+                else:
+                    print('Undefined case in satisfice()')
+
+                #print(str(d)+' Updating balance '+str(row.Name)+' '+str(relevant_balance)+' -> '+str(new_balance))
+                new_row_df.iloc[0, index_of_relevant_column_balance] = new_balance
+
+            #todo execute non-neogtiable transactions
             for budget_item in relevant_budget_items_df:
-
-                #todo interest accruals
-
-
-
+                #todo account selection HAS to depend on priority.
                 pass
 
+            previous_date = d
             forecast_df = pd.concat([forecast_df,new_row_df])
 
 
@@ -92,12 +112,16 @@ class ExpenseForecast:
         updated_budget_schedule_df.sort_values(inplace=True, axis=0, by="Date")
         updated_budget_schedule_df.reset_index(inplace=True, drop=True)
 
-        return [budget_schedule_df,account_set_df,forecast_df]
+        return [updated_budget_schedule_df,account_set_df,forecast_df]
 
 
 
-    def computeForecast(self,start_date,num_days):
-        raise NotImplementedError
+    def computeForecast(self,forecast_df):
+
+        plt.plot(forecast_df['Checking'])
+
+        plt.savefig('C:/Users/HumeD/Documents/outplot.png')
+
         pass
 
     def plotOutput(self,output_path):

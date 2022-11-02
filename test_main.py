@@ -79,7 +79,10 @@ if __name__ == '__main__':
     y = x.satisfice(budget_schedule_df, account_set_df)
 
 
-    #print("-------------------------------")
-    #print(y[2].to_string())
-    #print("-------------------------------")
+    print("-------------------------------")
+    print(y[1].to_string())
+    print("-------------------------------")
     y[2].to_csv('C:/Users/HumeD/Documents/out.csv',index=False)
+
+    forecast_df = y[2]
+    x.computeForecast(forecast_df)
