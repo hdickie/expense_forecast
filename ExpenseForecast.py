@@ -152,9 +152,13 @@ class ExpenseForecast:
 
 
     def computeForecast(self,forecast_df):
+        pass
+
+
+    def plotOutput(self,forecast_df,output_path):
         figure(figsize=(8, 6), dpi=80)
-        for i in range(1,forecast_df.shape[1]-1):
-            plt.plot(forecast_df['Date'], forecast_df.iloc[:,i],label=forecast_df.columns[i])
+        for i in range(1, forecast_df.shape[1] - 1):
+            plt.plot(forecast_df['Date'], forecast_df.iloc[:, i], label=forecast_df.columns[i])
 
         ax = plt.subplot(111)
         box = ax.get_position()
@@ -165,14 +169,9 @@ class ExpenseForecast:
         ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05),
                   fancybox=True, shadow=True, ncol=2)
 
-        #TODO a large number of accounts will require some adjustment here so that the legend is entirely visible
+        # TODO a large number of accounts will require some adjustment here so that the legend is entirely visible
 
         min_date = min(forecast_df.Date).strftime('%Y-%m-%d')
         max_date = max(forecast_df.Date).strftime('%Y-%m-%d')
-        plt.title('Forecast: '+str(min_date)+' -> '+str(max_date))
-        plt.savefig('C:/Users/HumeD/Documents/outplot.png')
-
-
-    def plotOutput(self,output_path):
-        raise NotImplementedError
-        pass
+        plt.title('Forecast: ' + str(min_date) + ' -> ' + str(max_date))
+        plt.savefig(output_path)

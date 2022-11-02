@@ -86,4 +86,4 @@ if __name__ == '__main__':
     y[2].to_csv('C:/Users/HumeD/Documents/out.csv',index=False)
 
     forecast_df = y[2]
-    x.computeForecast(forecast_df)
+    x.plotOutput(forecast_df,'C:/Users/HumeD/Documents/outplot.png')
