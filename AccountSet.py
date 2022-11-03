@@ -9,6 +9,17 @@ class AccountSet:
             print(account)
             self.accounts.append(account)
 
+    def __str__(self):
+        return_string = ""
+
+        for account in self.accounts:
+            return_string += str(account) + "\n"
+
+        return return_string
+
+    def __repr__(self):
+        return str(self)
+
     def addAccount(self,
                  name = '',
                  balance = -1,

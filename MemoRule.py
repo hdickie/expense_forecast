@@ -9,3 +9,12 @@ class MemoRule:
         self.account_to = account_to
         self.transaction_priority = transaction_priority
 
+    def __str__(self):
+        return_string = str(self.memo_regex).ljust(10) + " | " + str(self.account_from).ljust(10) + " | "
+        return_string += str(self.account_to) + " | " + str(self.transaction_priority)
+
+        return return_string
+
+    def __repr__(self):
+        return str(self)
+

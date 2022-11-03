@@ -1,5 +1,5 @@
 import unittest
-import MemoRule
+import MemoRuleSet
 
 class TestMemoRuleSetMethods(unittest.TestCase):
 
@@ -10,6 +10,4 @@ class TestMemoRuleSetMethods(unittest.TestCase):
 
         # bc duck-typing, we dont check data types, but just make sure that the fields are usable the way we want
 
-
         pass
-
