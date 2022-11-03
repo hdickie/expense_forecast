@@ -1,15 +1,19 @@
 import unittest
-import BudgetItem, BudgetSet
+import BudgetItem
 
-class TestBudgetItemSetMethods(unittest.TestCase):
+class TestBudgetItemMethods(unittest.TestCase):
 
     def test_BudgetItemSet_Constructor(self):
 
         #TODO change this to use isinstance
-        self.assertEqual('<class \'BudgetSet.BudgetSet\'>',str( type( BudgetSet.BudgetSet() ) ) )
+        test_budget_set = BudgetItem.BudgetItem(memo='test')
+        self.assertEqual('<class \'BudgetItem.BudgetItem\'>',str( type( test_budget_set ) ) )
 
         # bc duck-typing, we dont check data types, but just make sure that the fields are usable the way we want
 
+    def test_str(self):
+        self.assertIsNotNone(str(BudgetItem.BudgetItem()))
 
-        pass
+    def test_repr(self):
+        self.assertIsNotNone(repr(BudgetItem.BudgetItem()))
 

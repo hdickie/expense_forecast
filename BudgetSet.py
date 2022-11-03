@@ -1,25 +1,5 @@
 import BudgetItem, pandas as pd, datetime
-
-def generate_date_sequence(start_date_YYYYMMDD,num_days,cadence):
-
-    start_date = datetime.datetime.strptime(start_date_YYYYMMDD,'%Y%m%d')
-    end_date = start_date + datetime.timedelta(days=num_days)
-
-    if cadence.lower() == "daily":
-        return_series = pd.date_range(start_date,end_date,freq='D')
-    elif cadence.lower() == "weekly":
-        return_series = pd.date_range(start_date,end_date,freq='W')
-    elif cadence.lower() == "biweekly":
-        return_series = pd.date_range(start_date,end_date,freq='2W')
-    elif cadence.lower() == "monthly":
-        return_series = pd.date_range(start_date,end_date,freq='M')
-    elif cadence.lower() == "quarterly":
-        return_series = pd.date_range(start_date,end_date,freq='Q')
-    elif cadence.lower() == "yearly":
-        return_series = pd.date_range(start_date,end_date,freq='Y')
-
-    return return_series
-
+from hd_util import *
 
 class BudgetSet:
 
@@ -29,9 +9,10 @@ class BudgetSet:
             print(budget_item)
 
     def __str__(self):
-
-        return_string = str(self.start_date) + " | " + str(self.priority) + " | " + str(self.cadence).ljust(10) + " | "
-        return_string += str(self.amount).ljust(10) + " | " + str(self.memo)
+        return_string = ""
+        for budget_item in self.budget_items:
+            return_string = str(budget_item.start_date) + " | " + str(budget_item.priority) + " | " + str(budget_item.cadence).ljust(10) + " | "
+            return_string += str(budget_item.amount).ljust(10) + " | " + str(budget_item.memo)
 
         return return_string
 
@@ -52,6 +33,24 @@ class BudgetSet:
                  memo)
 
         self.budget_items.append(budget_item)
+
+    def getBudgetItems(self):
+        all_budget_items_df = pd.DataFrame({'start_date': [], 'priority': [], 'cadence': [], 'amount': [],
+                                        'memo': []
+                                        })
+
+        for budget_item in self.budget_items:
+            new_budget_item_row_df = pd.DataFrame({'start_date': [budget_item.start_date],
+                                               'priority': [budget_item.priority],
+                                               'cadence': [budget_item.cadence],
+                                               'amount': [budget_item.amount],
+                                               'memo': [budget_item.memo]
+                                               })
+
+            all_budget_items_df = pd.concat([all_budget_items_df, new_budget_item_row_df], axis=0)
+            all_budget_items_df.reset_index(drop=True, inplace=True)
+
+        return all_budget_items_df
 
     def getBudgetSchedule(self,start_date_YYYYMMDD,num_days):
 

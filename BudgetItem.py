@@ -23,4 +23,4 @@ class BudgetItem:
         return return_string
 
     def __repr__(self):
-        pass
+        return str(self)

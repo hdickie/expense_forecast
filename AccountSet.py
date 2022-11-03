@@ -6,7 +6,6 @@ class AccountSet:
     def __init__(self,accounts__list=[]):
         self.accounts = []
         for account in accounts__list:
-            print(account)
             self.accounts.append(account)
 
     def __str__(self):

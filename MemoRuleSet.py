@@ -19,7 +19,7 @@ class MemoRuleSet:
     def __repr__(self):
         return str(self)
 
-    def addMemoRule(self,memo_regex,account_from,account_to,transaction_priority):
+    def addMemoRule(self,memo_regex='',account_from='',account_to='',transaction_priority=''):
         memo_rule = MemoRule.MemoRule(memo_regex,account_from,account_to,transaction_priority)
         self.memo_rules.append(memo_rule)
 
