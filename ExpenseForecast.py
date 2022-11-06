@@ -89,7 +89,7 @@ class ExpenseForecast:
 
                     interest_accrual_days = generate_date_sequence(row['Billing_Start_Dt'].strftime('%Y%m%d'), days_since_billing_start_date + 10, 'monthly')
                     if d in interest_accrual_days:
-                        print('doing a monthly interest accrual calculation '+str(d)+' '+str(row))
+                        #print('doing a monthly interest accrual calculation '+str(d)+' '+str(row))
                         new_balance = relevant_balance + ( relevant_balance * relevant_apr) / 12
                     else:
                         new_balance = relevant_balance

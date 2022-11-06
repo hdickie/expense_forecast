@@ -7,8 +7,23 @@ pd.options.mode.chained_assignment = None #apparently this warning can throw fal
 class TestExpenseForecastMethods(unittest.TestCase):
 
     def check_account_boundaries(self,accounts_df,forecast_df):
+        for col_name in forecast_df.columns.tolist():
 
-        pass
+            acct_boundary__min = accounts_df[accounts_df.Name == col_name,'Min_Balance']
+            acct_boundary__max = accounts_df[accounts_df.Name == col_name, 'Max_Balance']
+
+            min_in_forecast_for_acct = min(forecast_df[col_name])
+            max_in_forecast_for_acct = max(forecast_df[col_name])
+
+            try:
+                assert min_in_forecast_for_acct >= acct_boundary__min
+                assert max_in_forecast_for_acct <= acct_boundary__max
+            except:
+                print('Account Boundary Violation for '+str(col_name)+' in ExpenseForecast.check_account_boundaries()')
+                raise e
+
+
+
 
     def test_ExpenseForecast_Constructor(self):
 

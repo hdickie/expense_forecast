@@ -132,7 +132,7 @@ if __name__ == '__main__':
     memo_rule_set = MemoRuleSet.MemoRuleSet()
     memo_rule_set.addMemoRule(
         memo_regex="Food",
-        account_from="Credit Card: Credit Current Statement Balance",
+        account_from="Credit Card: Current Statement Balance",
         account_to=None,
         transaction_priority=1
     )
