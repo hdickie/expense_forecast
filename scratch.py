@@ -29,7 +29,7 @@ if __name__ == '__main__':
                            balance=1001,
                            min_balance=0,
                            max_balance=float('inf'),
-                           apr=0.2674,
+                           apr=0.02674,
                            interest_cadence='Monthly',
                            interest_type='Compound',
                            billing_start_date='2000-01-07',
@@ -50,16 +50,64 @@ if __name__ == '__main__':
                            accrued_interest=-1)
 
     account_set.addAccount(name='Loan A',
-                           balance=1003,
+                           balance=3359.17,
                            min_balance=0,
                            max_balance=float('inf'),
-                           apr=0.06,
+                           apr=0.0466,
                            interest_cadence='daily',
                            interest_type='Simple',
-                           billing_start_date='2000-01-07',
+                           billing_start_date='2023-01-03',
                            account_type='loan',
-                           principal_balance=-1,
-                           accrued_interest=-1)
+                           principal_balance=3359.17,
+                           accrued_interest=0)
+
+    account_set.addAccount(name='Loan B',
+                           balance=4746.18,
+                           min_balance=0,
+                           max_balance=float('inf'),
+                           apr=0.0429,
+                           interest_cadence='daily',
+                           interest_type='Simple',
+                           billing_start_date='2023-01-03',
+                           account_type='loan',
+                           principal_balance=4746.18,
+                           accrued_interest=0)
+
+    account_set.addAccount(name='Loan C',
+                           balance=1919.55,
+                           min_balance=0,
+                           max_balance=float('inf'),
+                           apr=0.0429,
+                           interest_cadence='daily',
+                           interest_type='Simple',
+                           billing_start_date='2023-01-03',
+                           account_type='loan',
+                           principal_balance=1919.55,
+                           accrued_interest=0)
+
+    account_set.addAccount(name='Loan D',
+                           balance=4726.68,
+                           min_balance=0,
+                           max_balance=float('inf'),
+                           apr=0.0376,
+                           interest_cadence='daily',
+                           interest_type='Simple',
+                           billing_start_date='2023-01-03',
+                           account_type='loan',
+                           principal_balance=4726.68,
+                           accrued_interest=0)
+
+    account_set.addAccount(name='Loan E',
+                           balance=1823.31,
+                           min_balance=0,
+                           max_balance=float('inf'),
+                           apr=0.0376,
+                           interest_cadence='daily',
+                           interest_type='Simple',
+                           billing_start_date='2023-01-03',
+                           account_type='loan',
+                           principal_balance=1823.31,
+                           accrued_interest=0)
 
     account_set_df = account_set.getAccounts()
 

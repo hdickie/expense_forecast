@@ -3,32 +3,15 @@ import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
 import datetime
 import re
-
-def generate_date_sequence(start_date_YYYYMMDD,num_days,cadence):
-
-    start_date = datetime.datetime.strptime(start_date_YYYYMMDD,'%Y%m%d')
-    end_date = start_date + datetime.timedelta(days=num_days)
-
-    if cadence.lower() == "daily":
-        return_series = pd.date_range(start_date,end_date,freq='D')
-    elif cadence.lower() == "weekly":
-        return_series = pd.date_range(start_date,end_date,freq='W')
-    elif cadence.lower() == "biweekly":
-        return_series = pd.date_range(start_date,end_date,freq='2W')
-    elif cadence.lower() == "monthly":
-        return_series = pd.date_range(start_date,end_date,freq='M')
-    elif cadence.lower() == "quarterly":
-        return_series = pd.date_range(start_date,end_date,freq='Q')
-    elif cadence.lower() == "yearly":
-        return_series = pd.date_range(start_date,end_date,freq='Y')
-
-    return return_series
+from hd_util import *
 
 class ExpenseForecast:
 
     def __init__(self):
 
         #TODO assert consistency between accountset and budgetset
+
+        #todo assert that satisfice memo rules have been defined
 
         pass
 
@@ -81,6 +64,7 @@ class ExpenseForecast:
                 continue #we consider the starting balances finalized
             new_row_df = forecast_df[forecast_df.Date == previous_date].copy()
             new_row_df.Date = d
+            new_row_df.Memo = ''
 
             relevant_budget_items_df = priority_1_budget_schedule_df.loc[ d == priority_1_budget_schedule_df.Date, : ]
             relevant_budget_items_df.sort_values(inplace=True, axis=0, by="Amount",ascending=False)
@@ -105,7 +89,8 @@ class ExpenseForecast:
 
                     interest_accrual_days = generate_date_sequence(row['Billing_Start_Dt'].strftime('%Y%m%d'), days_since_billing_start_date + 10, 'monthly')
                     if d in interest_accrual_days:
-                        new_balance = relevant_balance + ( relevant_balance * relevant_apr) / 30
+                        print('doing a monthly interest accrual calculation '+str(d)+' '+str(row))
+                        new_balance = relevant_balance + ( relevant_balance * relevant_apr) / 12
                     else:
                         new_balance = relevant_balance
                 elif row['Interest_Cadence'].lower() == 'yearly':
@@ -140,11 +125,11 @@ class ExpenseForecast:
                         if row2.account_to is not None:
                             index_of_account_to_column = list(new_row_df.columns).index(row2.account_to)
 
-                        if row2.account_from is None: #e.g. income
-                            new_row_df.iloc[0,index_of_account_to_column] += budget_item.Amount
+                        if row2.account_from is not None: #e.g. income
+                            new_row_df.iloc[0, index_of_account_from_column] += budget_item.Amount
 
-                        if row2.account_to is None: #e.g. spend
-                            new_row_df.iloc[0,index_of_account_from_column] += budget_item.Amount
+                        if row2.account_to is not None: #e.g. spend
+                            new_row_df.iloc[0, index_of_account_to_column] += budget_item.Amount
 
                         if row2.account_from is not None and row2.account_to is not None:  # e.g. xfer bw accts
                             new_row_df.iloc[0, index_of_account_to_column] += budget_item.Amount
@@ -156,6 +141,19 @@ class ExpenseForecast:
                 if not found_matching_regex:
                     print('We received a budget item that we do not have a case to handle. this is a show stopping error.')
                     print('Exiting.')
+                else: #update memo
+                    if new_row_df.loc[0,'Memo'] != '':
+                        new_row_df.loc[0,'Memo'] = new_row_df.loc[0,'Memo'] + '; '
+
+                    new_memo_text = ""
+                    if row2.account_from is not None:
+                        new_memo_text = new_memo_text + str(row2.account_from) + ' ' + str(-1*abs(budget_item.Amount)) + ' '
+
+                    if row2.account_to is not None:
+                        new_memo_text = new_memo_text + str(row2.account_to) + ' ' + str(budget_item.Amount) + ' '
+
+                    new_row_df.loc[0, 'Memo'] = new_row_df.loc[0,'Memo'] + new_memo_text
+
 
             previous_date = d
             forecast_df = pd.concat([forecast_df,new_row_df])
@@ -183,12 +181,12 @@ class ExpenseForecast:
 
 
 
-    def computeForecast(self,forecast_df):
-        pass
+    def computeForecast(self,budget_schedule_df, account_set_df, memo_rules_df):
+        return self.satisfice(budget_schedule_df, account_set_df, memo_rules_df)
 
 
     def plotOutput(self,forecast_df,output_path):
-        figure(figsize=(8, 6), dpi=80)
+        figure(figsize=(14, 6), dpi=80)
         for i in range(1, forecast_df.shape[1] - 1):
             plt.plot(forecast_df['Date'], forecast_df.iloc[:, i], label=forecast_df.columns[i])
 
@@ -199,7 +197,7 @@ class ExpenseForecast:
 
         # Put a legend below current axis
         ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05),
-                  fancybox=True, shadow=True, ncol=2)
+                  fancybox=True, shadow=True, ncol=4)
 
         # TODO a large number of accounts will require some adjustment here so that the legend is entirely visible
 

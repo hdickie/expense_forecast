@@ -6,6 +6,7 @@ class Account:
     def __init__(self,
                  name = '',
                  balance = -1,
+                 previous_statement_balance = -1,
                  min_balance = -1,
                  max_balance = -1,
                  apr = 0,
@@ -14,11 +15,13 @@ class Account:
                  billing_start_date = '2000-01-01',
                  account_type = 'checking',
                  principal_balance = -1,
-                 accrued_interest = -1
+                 accrued_interest = -1,
+                 minimum_payment = 0
                  ):
 
         self.name = str(name)
         self.balance = balance
+        self.previous_statement_balance = previous_statement_balance
         self.min_balance = min_balance
         self.max_balance = max_balance
         self.apr = apr
@@ -28,6 +31,7 @@ class Account:
         self.account_type = account_type
         self.principal_balance = principal_balance
         self.accrued_interest = accrued_interest
+        self.minimum_payment = minimum_payment
 
         if self.billing_start_date != 'None':
             self.billing_start_date = datetime.datetime.strptime(billing_start_date,'%Y-%m-%d')
@@ -44,6 +48,8 @@ class Account:
         if interest_type.lower() not in ['none','simple','compound']:
             raise ValueError
 
+        #todo assert principal + interest = balance
+
     def __repr__(self):
         return_string = ""
         return_string += "Name: "+str(self.name)+"\n"
@@ -57,6 +63,7 @@ class Account:
         return_string += "Account Type: "+str(self.account_type)+"\n"
         return_string += "Principal Balance: "+str(self.principal_balance)+"\n"
         return_string += "Accrued Interest: "+str(self.accrued_interest)+"\n"
+        return_string += "Minimum Payment: " + str(self.minimum_payment) + "\n"
         return return_string
 
     def __str__(self):
@@ -73,6 +80,7 @@ class Account:
         return_string += "Account Type: " + str(self.account_type) + "\n"
         return_string += "Principal Balance: " + str(self.principal_balance) + "\n"
         return_string += "Accrued Interest: " + str(self.accrued_interest) + "\n"
+        return_string += "Minimum Payment: " + str(self.minimum_payment) + "\n"
         return return_string
 
 

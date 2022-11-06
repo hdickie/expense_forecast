@@ -23,7 +23,7 @@ class BudgetSet:
                  start_date = '',
                  priority = '',
                  cadence='',
-                 amount='',
+                 amount=0,
                  memo=''):
 
         budget_item = BudgetItem.BudgetItem(start_date,

@@ -5,13 +5,13 @@ class BudgetItem:
                  start_date = '',
                  priority = '',
                  cadence='',
-                 amount='',
+                 amount=0,
                  memo=''):
 
         self.start_date = start_date
         self.priority = priority
         self.cadence = cadence
-        self.amount = amount
+        self.amount = float(amount)
         self.memo = memo
 
     def __str__(self):
