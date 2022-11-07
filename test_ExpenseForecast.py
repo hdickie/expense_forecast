@@ -6,21 +6,30 @@ pd.options.mode.chained_assignment = None #apparently this warning can throw fal
 
 class TestExpenseForecastMethods(unittest.TestCase):
 
-    def check_account_boundaries(self,accounts_df,forecast_df):
-        for col_name in forecast_df.columns.tolist():
+    def account_boundaries_are_violated(self,accounts_df,forecast_df):
 
-            acct_boundary__min = accounts_df[accounts_df.Name == col_name,'Min_Balance']
-            acct_boundary__max = accounts_df[accounts_df.Name == col_name, 'Max_Balance']
+        for col_name in forecast_df.columns.tolist():
+            if col_name == 'Date' or col_name == 'Memo':
+                continue
+
+            acct_boundary__min = accounts_df.loc[accounts_df.Name == col_name,'Min_Balance']
+            acct_boundary__max = accounts_df.loc[accounts_df.Name == col_name, 'Max_Balance']
 
             min_in_forecast_for_acct = min(forecast_df[col_name])
             max_in_forecast_for_acct = max(forecast_df[col_name])
 
             try:
-                assert min_in_forecast_for_acct >= acct_boundary__min
-                assert max_in_forecast_for_acct <= acct_boundary__max
-            except:
-                print('Account Boundary Violation for '+str(col_name)+' in ExpenseForecast.check_account_boundaries()')
-                raise e
+                # print('min_in_forecast_for_acct:'+str(min_in_forecast_for_acct))
+                # print('max_in_forecast_for_acct:' + str(max_in_forecast_for_acct))
+                # print('acct_boundary__min:' + str(acct_boundary__min))
+                # print('acct_boundary__max:' + str(acct_boundary__max))
+
+                assert float(min_in_forecast_for_acct) >= float(acct_boundary__min)
+                assert float(max_in_forecast_for_acct) <= float(acct_boundary__max)
+            except Exception as e:
+                print('Account Boundary Violation for '+str(col_name)+' in ExpenseForecast.account_boundaries_are_violated()')
+                return True
+        return False
 
 
 
@@ -34,7 +43,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
         initial_values_dict = {}
         initial_values_dict['Checking'] = 1000
         initial_values_dict['Credit Card Current Statement Balance'] = 2000
-        initial_values_dict['Credit Card Previous Statement Balance'] = 2000
+        initial_values_dict['Credit Card Previous Statement Balance'] = 3000
         initial_values_dict['Loan A Principal Balance'] = 3359.17
         initial_values_dict['Loan A Interest'] = 0
         initial_values_dict['Credit Card APR'] = 0.2674
@@ -52,7 +61,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
         account_set.addAccount(name='Credit Card',  balance=initial_values_dict['Credit Card Current Statement Balance'],
                                previous_statement_balance=initial_values_dict['Credit Card Previous Statement Balance'], min_balance=0,
                                max_balance=20000,   apr=initial_values_dict['Credit Card APR'],    interest_cadence='Monthly',  interest_type='Compound',
-                               billing_start_date='2000-01-07', account_type='credit',  principal_balance=-1,   accrued_interest=-1,minimum_payment=40)
+                               billing_start_date='2021-01-07', account_type='credit',  principal_balance=-1,   accrued_interest=-1,minimum_payment=40)
 
 
         account_set.addAccount(name='Loan A',   balance=initial_values_dict['Loan A Principal Balance']+initial_values_dict['Loan A Interest'],
@@ -70,7 +79,14 @@ class TestExpenseForecastMethods(unittest.TestCase):
         budget_schedule_df = budget_set.getBudgetSchedule(start_date_YYYYMMDD=start_date_YYYYMMDD,num_days=3)
         account_set_df = account_set.getAccounts()
         memo_rules_df = memo_rule_set.getMemoRules()
+
+        #print('account_set_df:')
+        #print(account_set_df.to_string())
+
         forecast_df = expense_forecast_obj.computeForecast(budget_schedule_df, account_set_df, memo_rules_df)[2]
+
+        #print('forecast_df:')
+        #print(forecast_df.to_string())
 
         # Date  Checking    Credit Card: Credit Card Current Statement Balance  Credit Card: Credit Card Previous Statement Balance
         #   Loan A: Loan Principal Balance      Loan A: Loan Interest       Memo
@@ -112,8 +128,8 @@ class TestExpenseForecastMethods(unittest.TestCase):
         expected_result_set_df.iloc[3, new_empty_row_df.columns.tolist().index('Credit Card: Current Statement Balance')] = 0
 
         expected_result_set_df.iloc[1, new_empty_row_df.columns.tolist().index('Credit Card: Previous Statement Balance')] = initial_values_dict['Credit Card Previous Statement Balance']
-        expected_result_set_df.iloc[2, new_empty_row_df.columns.tolist().index('Credit Card: Previous Statement Balance')] = initial_values_dict['Credit Card Previous Statement Balance'] + initial_values_dict['Credit Card Previous Statement Balance'] + initial_values_dict['Credit Card Previous Statement Balance']*initial_values_dict['Credit Card APR']/12
-        expected_result_set_df.iloc[3, new_empty_row_df.columns.tolist().index('Credit Card: Previous Statement Balance')] = initial_values_dict['Credit Card Previous Statement Balance'] + initial_values_dict['Credit Card Previous Statement Balance'] + initial_values_dict['Credit Card Previous Statement Balance']*initial_values_dict['Credit Card APR']/12
+        expected_result_set_df.iloc[2, new_empty_row_df.columns.tolist().index('Credit Card: Previous Statement Balance')] = initial_values_dict['Credit Card Previous Statement Balance'] + initial_values_dict['Credit Card Current Statement Balance'] + initial_values_dict['Credit Card Previous Statement Balance']*initial_values_dict['Credit Card APR']/12
+        expected_result_set_df.iloc[3, new_empty_row_df.columns.tolist().index('Credit Card: Previous Statement Balance')] = initial_values_dict['Credit Card Previous Statement Balance'] + initial_values_dict['Credit Card Current Statement Balance'] + initial_values_dict['Credit Card Previous Statement Balance']*initial_values_dict['Credit Card APR']/12
 
         #Loan should accrue interest daily based on the principal balance
         expected_result_set_df.iloc[1, new_empty_row_df.columns.tolist().index('Loan A: Principal Balance')] = initial_values_dict['Loan A Principal Balance']
@@ -139,7 +155,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
         ##check that amount is correct
 
         try:
-            self.check_account_boundaries(account_set_df,forecast_df)
+            self.account_boundaries_are_violated(account_set_df,forecast_df)
             self.assertTrue(forecast_df.iloc[:,0:expected_result_set_df.shape[1]-1].equals(expected_result_set_df.iloc[:,0:expected_result_set_df.shape[1]-1]))
         except Exception as e:
             print('FAILURE IN test_interest_accrual()')
@@ -159,7 +175,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
         # 1. make cc min payment only. bal is less than $40
         # 2. make cc min payment only. bal is more than $40 and less than $2k
         # 3. make cc min payment only. bal is more than $2k. min payment is 2%
-        # 4. make cc min payment. combined current and prev statement balance less than $40, both non 0%
+        # 4. make cc min payment. combined current and prev statement balance less than $40, both non 0
 
         # scenarios: previous statement balance and payment in excess of minimum
 
@@ -211,16 +227,20 @@ class TestExpenseForecastMethods(unittest.TestCase):
         expected_result_set_1_df.iloc[0, new_empty_row_df.columns.tolist().index('Credit Card: Current Statement Balance')] = initial_values_dict_1['Credit Card Current Statement Balance']
         expected_result_set_1_df.iloc[0, new_empty_row_df.columns.tolist().index('Credit Card: Previous Statement Balance')] = initial_values_dict_1['Credit Card Previous Statement Balance']
 
-        expected_result_set_1_df.iloc[1, new_empty_row_df.columns.tolist().index('Checking')] = initial_values_dict_1[
-            'Checking']
-        expected_result_set_1_df.iloc[
-            1, new_empty_row_df.columns.tolist().index('Credit Card: Current Statement Balance')] = \
+        expected_result_set_1_df.iloc[1, new_empty_row_df.columns.tolist().index('Checking')] = initial_values_dict_1['Checking']
+        expected_result_set_1_df.iloc[1, new_empty_row_df.columns.tolist().index('Credit Card: Current Statement Balance')] = \
         initial_values_dict_1['Credit Card Current Statement Balance']
-        expected_result_set_1_df.iloc[
-            1, new_empty_row_df.columns.tolist().index('Credit Card: Previous Statement Balance')] = \
+        expected_result_set_1_df.iloc[1, new_empty_row_df.columns.tolist().index('Credit Card: Previous Statement Balance')] = \
         initial_values_dict_1['Credit Card Previous Statement Balance']
 
-        #todo further days
+        expected_result_set_1_df.iloc[2, new_empty_row_df.columns.tolist().index('Checking')] = initial_values_dict_1['Checking'] - initial_values_dict_1['Credit Card Previous Statement Balance']
+        expected_result_set_1_df.iloc[2, new_empty_row_df.columns.tolist().index('Credit Card: Current Statement Balance')] = 0
+        expected_result_set_1_df.iloc[2, new_empty_row_df.columns.tolist().index('Credit Card: Previous Statement Balance')] = 0
+
+        expected_result_set_1_df.iloc[3, new_empty_row_df.columns.tolist().index('Checking')] = initial_values_dict_1['Checking'] - initial_values_dict_1['Credit Card Previous Statement Balance']
+        expected_result_set_1_df.iloc[3, new_empty_row_df.columns.tolist().index('Credit Card: Current Statement Balance')] = 0
+        expected_result_set_1_df.iloc[3, new_empty_row_df.columns.tolist().index('Credit Card: Previous Statement Balance')] = 0
+
 
 
         account_set_1 = AccountSet.AccountSet()
@@ -267,14 +287,19 @@ class TestExpenseForecastMethods(unittest.TestCase):
             0, new_empty_row_df.columns.tolist().index('Credit Card: Previous Statement Balance')] = \
             initial_values_dict_2['Credit Card Previous Statement Balance']
 
-        expected_result_set_2_df.iloc[1, new_empty_row_df.columns.tolist().index('Checking')] = initial_values_dict_2[
-            'Checking']
-        expected_result_set_2_df.iloc[
-            1, new_empty_row_df.columns.tolist().index('Credit Card: Current Statement Balance')] = \
+        expected_result_set_2_df.iloc[1, new_empty_row_df.columns.tolist().index('Checking')] = initial_values_dict_2['Checking']
+        expected_result_set_2_df.iloc[1, new_empty_row_df.columns.tolist().index('Credit Card: Current Statement Balance')] = \
             initial_values_dict_2['Credit Card Current Statement Balance']
-        expected_result_set_2_df.iloc[
-            1, new_empty_row_df.columns.tolist().index('Credit Card: Previous Statement Balance')] = \
+        expected_result_set_2_df.iloc[1, new_empty_row_df.columns.tolist().index('Credit Card: Previous Statement Balance')] = \
             initial_values_dict_2['Credit Card Previous Statement Balance']
+
+        expected_result_set_2_df.iloc[2, new_empty_row_df.columns.tolist().index('Checking')] = initial_values_dict_2['Checking'] - 40
+        expected_result_set_2_df.iloc[2, new_empty_row_df.columns.tolist().index('Credit Card: Current Statement Balance')] = 0
+        expected_result_set_2_df.iloc[2, new_empty_row_df.columns.tolist().index('Credit Card: Previous Statement Balance')] = (initial_values_dict_2['Credit Card Previous Statement Balance'] - 40) + (initial_values_dict_2['Credit Card Previous Statement Balance'] - 40)*initial_values_dict_2['Credit Card APR']/12
+
+        expected_result_set_2_df.iloc[3, new_empty_row_df.columns.tolist().index('Checking')] = initial_values_dict_2['Checking'] - 40
+        expected_result_set_2_df.iloc[3, new_empty_row_df.columns.tolist().index('Credit Card: Current Statement Balance')] = 0
+        expected_result_set_2_df.iloc[3, new_empty_row_df.columns.tolist().index('Credit Card: Previous Statement Balance')] = (initial_values_dict_2['Credit Card Previous Statement Balance'] - 40) + (initial_values_dict_2['Credit Card Previous Statement Balance'] - 40)*initial_values_dict_2['Credit Card APR']/12
         # todo further days
 
 
@@ -326,13 +351,10 @@ class TestExpenseForecastMethods(unittest.TestCase):
             0, new_empty_row_df.columns.tolist().index('Credit Card: Previous Statement Balance')] = \
             initial_values_dict_3['Credit Card Previous Statement Balance']
 
-        expected_result_set_3_df.iloc[1, new_empty_row_df.columns.tolist().index('Checking')] = initial_values_dict_3[
-            'Checking']
-        expected_result_set_3_df.iloc[
-            1, new_empty_row_df.columns.tolist().index('Credit Card: Current Statement Balance')] = \
+        expected_result_set_3_df.iloc[1, new_empty_row_df.columns.tolist().index('Checking')] = initial_values_dict_3['Checking']
+        expected_result_set_3_df.iloc[1, new_empty_row_df.columns.tolist().index('Credit Card: Current Statement Balance')] = \
             initial_values_dict_3['Credit Card Current Statement Balance']
-        expected_result_set_3_df.iloc[
-            1, new_empty_row_df.columns.tolist().index('Credit Card: Previous Statement Balance')] = \
+        expected_result_set_3_df.iloc[1, new_empty_row_df.columns.tolist().index('Credit Card: Previous Statement Balance')] = \
             initial_values_dict_3['Credit Card Previous Statement Balance']
         # todo further days
 
@@ -615,99 +637,86 @@ class TestExpenseForecastMethods(unittest.TestCase):
 
             error_ind = False
 
-            error_ind = error_ind and self.check_account_boundaries(account_set_1,forecast_1_df)
-            error_ind = error_ind and forecast_1_df.iloc[:,0:forecast_1_df.shape[1]-1].equals(expected_result_set_1_df.iloc[:,0:expected_result_set_1_df.shape[1]-1])
+            if self.account_boundaries_are_violated(account_set_1.getAccounts(),forecast_1_df) \
+                or not forecast_1_df.iloc[:,0:forecast_1_df.shape[1]-1].equals(expected_result_set_1_df.iloc[:,0:expected_result_set_1_df.shape[1]-1]):
+                print('FAILURE IN test_credit_card_payments()')
+                print('Expected 1 '.ljust(50, '#'))
+                print(expected_result_set_1_df.iloc[:, 0:expected_result_set_1_df.shape[1] - 1].to_string())
+                print(''.ljust(50, '#'))
+                print('Forecasted 1 '.ljust(50, '#'))
+                print(forecast_1_df.iloc[:, 0:forecast_1_df.shape[1] - 1].to_string())
+                print('#'.ljust(50, '#'))
+                error_ind = True
 
-            error_ind = error_ind and self.check_account_boundaries(account_set_2, forecast_2_df)
-            error_ind = error_ind and forecast_2_df.iloc[:, 0:forecast_2_df.shape[1] - 1].equals(
-                expected_result_set_2_df.iloc[:, 0:expected_result_set_2_df.shape[1] - 1])
+            if self.account_boundaries_are_violated(account_set_2.getAccounts(), forecast_2_df) \
+                    or not forecast_2_df.iloc[:, 0:forecast_2_df.shape[1] - 1].equals(expected_result_set_2_df.iloc[:, 0:expected_result_set_2_df.shape[1] - 1]):
+                print('Expected 2 '.ljust(50, '#'))
+                print(expected_result_set_2_df.iloc[:, 0:expected_result_set_2_df.shape[1] - 1].to_string())
+                print(''.ljust(50, '#'))
+                print('Forecasted 2 '.ljust(50, '#'))
+                print(forecast_2_df.iloc[:, 0:forecast_2_df.shape[1] - 1].to_string())
+                print('#'.ljust(50, '#'))
+                error_ind = True
 
-            error_ind = error_ind and self.check_account_boundaries(account_set_3, forecast_3_df)
-            error_ind = error_ind and forecast_3_df.iloc[:, 0:forecast_3_df.shape[1] - 1].equals(
-                expected_result_set_3_df.iloc[:, 0:expected_result_set_3_df.shape[1] - 1])
+            if self.account_boundaries_are_violated(account_set_3.getAccounts(), forecast_3_df) \
+                    or not forecast_3_df.iloc[:, 0:forecast_3_df.shape[1] - 1].equals(
+                expected_result_set_3_df.iloc[:, 0:expected_result_set_3_df.shape[1] - 1]):
+                print('Expected 3 '.ljust(50, '#'))
+                print(expected_result_set_3_df.iloc[:, 0:expected_result_set_3_df.shape[1] - 1].to_string())
+                print(''.ljust(50, '#'))
+                print('Forecasted 3 '.ljust(50, '#'))
+                print(forecast_3_df.iloc[:, 0:forecast_3_df.shape[1] - 1].to_string())
+                print('#'.ljust(50, '#'))
+                error_ind = True
 
-            error_ind = error_ind and self.check_account_boundaries(account_set_4, forecast_4_df)
-            error_ind = error_ind and forecast_4_df.iloc[:, 0:forecast_5_df.shape[1] - 1].equals(
-                expected_result_set_4_df.iloc[:, 0:expected_result_set_4_df.shape[1] - 1])
+            if self.account_boundaries_are_violated(account_set_4.getAccounts(), forecast_4_df) \
+                    or not forecast_4_df.iloc[:, 0:forecast_4_df.shape[1] - 1].equals(
+                expected_result_set_4_df.iloc[:, 0:expected_result_set_4_df.shape[1] - 1]):
+                print('Expected 4 '.ljust(50, '#'))
+                print(expected_result_set_4_df.iloc[:, 0:expected_result_set_4_df.shape[1] - 1].to_string())
+                print(''.ljust(50, '#'))
+                print('Forecasted 4 '.ljust(50, '#'))
+                print(forecast_4_df.iloc[:, 0:forecast_4_df.shape[1] - 1].to_string())
+                print('#'.ljust(50, '#'))
+                error_ind = True
 
-            error_ind = error_ind and self.check_account_boundaries(account_set_5, forecast_5_df)
-            error_ind = error_ind and forecast_5_df.iloc[:, 0:forecast_5_df.shape[1] - 1].equals(
-                expected_result_set_5_df.iloc[:, 0:expected_result_set_5_df.shape[1] - 1])
+            if self.account_boundaries_are_violated(account_set_5.getAccounts(), forecast_5_df) \
+                    or not forecast_5_df.iloc[:, 0:forecast_5_df.shape[1] - 1].equals(
+                expected_result_set_5_df.iloc[:, 0:expected_result_set_5_df.shape[1] - 1]):
+                print('Expected 5 '.ljust(50, '#'))
+                print(expected_result_set_5_df.iloc[:, 0:expected_result_set_5_df.shape[1] - 1].to_string())
+                print(''.ljust(50, '#'))
+                print('Forecasted 5 '.ljust(50, '#'))
+                print(forecast_5_df.iloc[:, 0:forecast_5_df.shape[1] - 1].to_string())
+                print('#'.ljust(50, '#'))
+                error_ind = True
 
-            error_ind = error_ind and self.check_account_boundaries(account_set_6, forecast_6_df)
-            error_ind = error_ind and forecast_6_df.iloc[:, 0:forecast_6_df.shape[1] - 1].equals(
-                expected_result_set_6_df.iloc[:, 0:expected_result_set_6_df.shape[1] - 1])
+            if self.account_boundaries_are_violated(account_set_6.getAccounts(), forecast_6_df) \
+                    or not forecast_6_df.iloc[:, 0:forecast_6_df.shape[1] - 1].equals(
+                expected_result_set_6_df.iloc[:, 0:expected_result_set_6_df.shape[1] - 1]):
+                print('Expected 6 '.ljust(50, '#'))
+                print(expected_result_set_6_df.iloc[:, 0:expected_result_set_6_df.shape[1] - 1].to_string())
+                print(''.ljust(50, '#'))
+                print('Forecasted 6 '.ljust(50, '#'))
+                print(forecast_6_df.iloc[:, 0:forecast_6_df.shape[1] - 1].to_string())
+                print('#'.ljust(50, '#'))
+                error_ind = True
 
-            error_ind = error_ind and self.check_account_boundaries(account_set_7, forecast_7_df)
-            error_ind = error_ind and forecast_7_df.iloc[:, 0:forecast_7_df.shape[1] - 1].equals(
-                expected_result_set_7_df.iloc[:, 0:expected_result_set_7_df.shape[1] - 1])
+            if self.account_boundaries_are_violated(account_set_7.getAccounts(), forecast_7_df) \
+                    or not forecast_7_df.iloc[:, 0:forecast_7_df.shape[1] - 1].equals(
+                expected_result_set_7_df.iloc[:, 0:expected_result_set_7_df.shape[1] - 1]):
+                print('Expected 7 '.ljust(50, '#'))
+                print(expected_result_set_7_df.iloc[:, 0:expected_result_set_7_df.shape[1] - 1].to_string())
+                print(''.ljust(50, '#'))
+                print('Forecasted 7 '.ljust(50, '#'))
+                print(forecast_7_df.iloc[:, 0:forecast_7_df.shape[1] - 1].to_string())
+                print('#'.ljust(50, '#'))
+                error_ind = True
 
             if error_ind:
                 raise ValueError
 
         except Exception as e:
-            print('FAILURE IN test_credit_card_payments()')
-            print('Expected 1 '.ljust(50,'#'))
-            print(expected_result_set_1_df.iloc[:,0:expected_result_set_1_df.shape[1]-1].to_string())
-            print(''.ljust(50,'#'))
-            print('Forecasted 1 '.ljust(50,'#'))
-            print(forecast_1_df.iloc[:,0:forecast_1_df.shape[1]-1].to_string())
-            print('#'.ljust(50,'#'))
-
-            print('')
-
-            print('Expected 2 '.ljust(50, '#'))
-            print(expected_result_set_2_df.iloc[:, 0:expected_result_set_2_df.shape[1] - 1].to_string())
-            print(''.ljust(50, '#'))
-            print('Forecasted 2 '.ljust(50, '#'))
-            print(forecast_2_df.iloc[:, 0:forecast_2_df.shape[1] - 1].to_string())
-            print('#'.ljust(50, '#'))
-
-            print('')
-
-            print('Expected 3 '.ljust(50, '#'))
-            print(expected_result_set_3_df.iloc[:, 0:expected_result_set_3_df.shape[1] - 1].to_string())
-            print(''.ljust(50, '#'))
-            print('Forecasted 3 '.ljust(50, '#'))
-            print(forecast_3_df.iloc[:, 0:forecast_3_df.shape[1] - 1].to_string())
-            print('#'.ljust(50, '#'))
-
-            print('')
-
-            print('Expected 4 '.ljust(50, '#'))
-            print(expected_result_set_4_df.iloc[:, 0:expected_result_set_4_df.shape[1] - 1].to_string())
-            print(''.ljust(50, '#'))
-            print('Forecasted 4 '.ljust(50, '#'))
-            print(forecast_4_df.iloc[:, 0:forecast_4_df.shape[1] - 1].to_string())
-            print('#'.ljust(50, '#'))
-
-            print('')
-
-            print('Expected 5 '.ljust(50, '#'))
-            print(expected_result_set_5_df.iloc[:, 0:expected_result_set_5_df.shape[1] - 1].to_string())
-            print(''.ljust(50, '#'))
-            print('Forecasted 5 '.ljust(50, '#'))
-            print(forecast_5_df.iloc[:, 0:forecast_5_df.shape[1] - 1].to_string())
-            print('#'.ljust(50, '#'))
-
-            print('')
-
-            print('Expected 6 '.ljust(50, '#'))
-            print(expected_result_set_6_df.iloc[:, 0:expected_result_set_6_df.shape[1] - 1].to_string())
-            print(''.ljust(50, '#'))
-            print('Forecasted 6 '.ljust(50, '#'))
-            print(forecast_6_df.iloc[:, 0:forecast_6_df.shape[1] - 1].to_string())
-            print('#'.ljust(50, '#'))
-
-            print('')
-
-            print('Expected 7 '.ljust(50, '#'))
-            print(expected_result_set_7_df.iloc[:, 0:expected_result_set_7_df.shape[1] - 1].to_string())
-            print(''.ljust(50, '#'))
-            print('Forecasted 7 '.ljust(50, '#'))
-            print(forecast_7_df.iloc[:, 0:forecast_7_df.shape[1] - 1].to_string())
-            print('#'.ljust(50, '#'))
-
             raise e
 
     def template_test_method(self):
@@ -790,7 +799,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
         ###
 
         try:
-            self.check_account_boundaries(account_set_df, forecast_df)
+            self.account_boundaries_are_violated(account_set_df, forecast_df)
             # self.assertTrue(forecast_df.iloc[:,0:expected_result_set_df.shape[1]-1].equals(expected_result_set_df.iloc[:,0:expected_result_set_df.shape[1]-1]))
         except Exception as e:
             print('FAILURE IN test_credit_card_payments()')
@@ -817,5 +826,5 @@ class TestExpenseForecastMethods(unittest.TestCase):
         # account_set_df = account_set.getAccounts()
         # memo_rules_df = memo_rule_set.getMemoRules()
         # forecast_df = expense_forecast_obj.computeForecast(budget_schedule_df, account_set_df, memo_rules_df)
-        # self.check_account_boundaries(account_set_df,forecast_df)
+        # self.account_boundaries_are_violated(account_set_df,forecast_df)
         pass

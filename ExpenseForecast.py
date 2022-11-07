@@ -16,7 +16,6 @@ class ExpenseForecast:
         pass
 
     def satisfice(self, budget_schedule_df, account_set_df, memo_rules_df):
-
         priority_1_budget_schedule_df = budget_schedule_df.loc[budget_schedule_df.Priority == 1, :]
 
         min_sched_date = min(budget_schedule_df.Date)
@@ -52,12 +51,29 @@ class ExpenseForecast:
         forecast_df = forecast_df[1:]
         forecast_df.reset_index(drop=True,inplace=True)
 
+
+        #print('initial forecast values pre assignment:')
+        #print(forecast_df.to_string())
+
         #set initial values
         for i in range(0,account_set_df.shape[0]):
-            row = account_set_df.iloc[i,:]
-            forecast_df.iloc[0, 1 + i] = row.Balance
+            row = account_set_df.iloc[i, :]
+            #print('row:'+str(row))
+            #print('Setting '+forecast_df.columns.tolist()[i+1]+' = '+str(row.Balance))
+
+            if row.Account_Type.lower() == 'interest':
+                forecast_df.iloc[0, 1 + i] = row.Accrued_Interest #the +1 is on the index here bc we are iterating over account_df not forecast_df
+            else:
+                forecast_df.iloc[0, 1 + i] = row.Balance
+
+        #print('initial forecast values post assignment:')
+        #print(forecast_df.to_string())
+
+        #todo, we make minimum payments on loans and credit cards before interest for this day is calculated
+        #in order for this to work, it is easiest if additional payments are made before the due date
 
 
+        index_of_checking_column = forecast_df.columns.tolist().index('Checking')
         for d in all_days:
             if d == forecast_df.iloc[0,0]:
                 previous_date = d
@@ -69,44 +85,103 @@ class ExpenseForecast:
             relevant_budget_items_df = priority_1_budget_schedule_df.loc[ d == priority_1_budget_schedule_df.Date, : ]
             relevant_budget_items_df.sort_values(inplace=True, axis=0, by="Amount",ascending=False)
 
-            # todo interest accruals. shouldnt happen every day as it does ats it is currently implemented
+            #here, interest is calculated and current statement balances are moved to previous
             for index, row in account_set_df.iterrows():
-                index_of_relevant_column_balance = list(new_row_df.columns).index(row.Name)
-
                 if row['APR'] == 0:
                     continue
 
-                #todo if not an interest accrual day, continue
+                if row['Account_Type'].lower() not in ['previous statement balance','interest']:
+                    continue
 
                 days_since_billing_start_date = (d - row['Billing_Start_Dt']).days
 
-
-                relevant_apr = row['APR']
-                relevant_balance = new_row_df.iloc[0,index_of_relevant_column_balance]
                 if row['Interest_Cadence'].lower() == 'daily':
-                    new_balance = relevant_balance + ( relevant_balance * relevant_apr ) / 365.25
+                    pass #we want to continue processing
                 elif row['Interest_Cadence'].lower() == 'monthly':
-
-                    interest_accrual_days = generate_date_sequence(row['Billing_Start_Dt'].strftime('%Y%m%d'), days_since_billing_start_date + 10, 'monthly')
-                    if d in interest_accrual_days:
-                        #print('doing a monthly interest accrual calculation '+str(d)+' '+str(row))
-                        new_balance = relevant_balance + ( relevant_balance * relevant_apr) / 12
-                    else:
-                        new_balance = relevant_balance
+                    interest_accrual_days = generate_date_sequence(row['Billing_Start_Dt'].strftime('%Y%m%d'),
+                                                                   days_since_billing_start_date + 10, 'monthly')
+                    #print('checking if this is a day for monthly interest accrual')
+                    #print('? is '+str(d)+' in '+str(interest_accrual_days))
+                    if d not in interest_accrual_days:
+                        continue
                 elif row['Interest_Cadence'].lower() == 'yearly':
                     interest_accrual_days = generate_date_sequence(row['Billing_Start_Dt'].strftime('%Y%m%d'),
                                                                    days_since_billing_start_date + 10, 'yearly')
-                    if d in interest_accrual_days:
-                        new_balance = relevant_balance + (relevant_balance * relevant_apr)
-                    else:
-                        new_balance = relevant_balance
+                    if d not in interest_accrual_days:
+                        continue
                 else:
                     print('Undefined case in satisfice()')
 
-                #print(str(d)+' Updating balance '+str(row.Name)+' '+str(relevant_balance)+' -> '+str(new_balance))
-                new_row_df.iloc[0, index_of_relevant_column_balance] = new_balance
+                #at this point, we know we are about to calculate interest. how we do that depends on cadence and account type
 
-            #todo execute non-neogtiable transactions
+                relevant_apr = row['APR']
+                #print('row:'+str(row))
+                if row['Account_Type'].lower() == 'previous statement balance' and row['Interest_Cadence'].lower() == 'monthly':
+
+                    # total_debt = forecast_df.iloc[0, i] + forecast_df.iloc[0, i + 1] #i is current, i + 1 is previous
+                    available_funds = new_row_df.iloc[0, index_of_checking_column]
+                    # current_statement_balance = forecast_df.iloc[0, i]
+                    previous_statement_balance = new_row_df.iloc[0, index + 1] #plus 1 bc index is an iterative cursor for accounts_df not forecast_df
+
+                    # scenarios
+                    # 1. make cc min payment only. bal is less than $40
+                    # 2. make cc min payment only. bal is more than $40 and less than $2k
+                    # 3. make cc min payment only. bal is more than $2k. min payment is 2%
+                    # 4. make cc min payment. combined current and prev statement balance less than $40, both non 0%
+
+                    # scenarios: previous statement balance and payment in excess of minimum
+
+                    # 5. make cc payment in excess of minimum. current statement more than $40, pay less than total balance.
+                    # 6. make cc payment in excess of minimum. current statement more than $40, pay less than total balance, when balance is greater than checking
+                    # 7. make cc payment in excess of minimum. current statement more than $2k, pay more than total balance.
+
+                    if available_funds > previous_statement_balance and previous_statement_balance <= 40:
+                        new_row_df.iloc[0, index_of_checking_column] -= previous_statement_balance
+                        new_row_df.iloc[0, i + 1] = 0  # pay previous statement balance
+                        # todo update memo
+                    elif available_funds > previous_statement_balance and 40 < previous_statement_balance and previous_statement_balance <= 2000:
+                        new_row_df.iloc[0, index_of_checking_column] -= 40
+                        new_row_df.iloc[0, i + 1] -= 40  # pay previous statement balance
+                        # todo update memo
+                    elif available_funds > previous_statement_balance and 2000 <= previous_statement_balance:
+                        min_payment_amt = previous_statement_balance * 0.02
+                        new_row_df.iloc[0, index_of_checking_column] -= min_payment_amt
+                        new_row_df.iloc[0, i + 1] -= min_payment_amt  # pay previous statement balance
+                        # todo update memo
+
+                    #interest accrual and balance transfer
+                    index_of_previous_statement_balance = new_row_df.columns.tolist().index(row.Name)
+                    previous_statement_balance = new_row_df.iloc[0, index_of_previous_statement_balance]
+
+                    index_of_current_statement_balance = index_of_previous_statement_balance - 1
+                    current_statement_balance = new_row_df.iloc[0, index_of_current_statement_balance]
+
+                    #move current statement balance to previous and add interest
+                    new_row_df.iloc[0,index_of_previous_statement_balance] = current_statement_balance + previous_statement_balance + previous_statement_balance*relevant_apr/12
+                    new_row_df.iloc[0, index_of_current_statement_balance] = 0
+
+                elif row['Account_Type'].lower() == 'interest' and row['Interest_Cadence'].lower() == 'daily':
+                    index_of_accrued_interest = new_row_df.columns.tolist().index(row.Name)
+                    index_of_principal_balance = index_of_accrued_interest - 1
+
+                    new_row_df.iloc[0, index_of_accrued_interest] += new_row_df.iloc[0, index_of_principal_balance]*relevant_apr/365.25
+
+                elif row['Account_Type'].lower() == 'interest' and row['Interest_Cadence'].lower() == 'monthly':
+                    index_of_accrued_interest = new_row_df.columns.tolist().index(row.Name)
+                    index_of_principal_balance = index_of_accrued_interest - 1
+
+                    new_row_df.iloc[0, index_of_accrued_interest] += new_row_df.iloc[
+                                                                         0, index_of_principal_balance] * relevant_apr / 12
+                elif row['Account_Type'].lower() == 'interest' and row['Interest_Cadence'].lower() == 'yearly':
+                    index_of_accrued_interest = new_row_df.columns.tolist().index(row.Name)
+                    index_of_principal_balance = index_of_accrued_interest - 1
+
+                    new_row_df.iloc[0, index_of_accrued_interest] += new_row_df.iloc[
+                                                                         0, index_of_principal_balance] * relevant_apr
+                else:
+                    print('Undefined case in satisfice()')
+
+            #other priority 1 transactions
             for index, budget_item in relevant_budget_items_df.iterrows():
                 #if memo matches any regex in memo_rules_df
                     #relevant_memo_rule = memo_rules_df[memo_rules_df.transaction_priority == 1 and memo_rules_df]

@@ -15,7 +15,11 @@ def generate_date_sequence(start_date_YYYYMMDD,num_days,cadence):
     elif cadence.lower() == "biweekly":
         return_series = pd.date_range(start_date,end_date,freq='2W')
     elif cadence.lower() == "monthly":
-        return_series = pd.date_range(start_date,end_date,freq='M')
+
+        day_delta = int(start_date.strftime('%d'))-1
+        first_of_each_relevant_month = pd.date_range(start_date,end_date,freq='MS')
+
+        return_series = first_of_each_relevant_month + datetime.timedelta(days=day_delta)
     elif cadence.lower() == "quarterly":
         return_series = pd.date_range(start_date,end_date,freq='Q')
     elif cadence.lower() == "yearly":

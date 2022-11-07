@@ -43,7 +43,7 @@ class AccountSet:
             self.accounts.append(account)
 
             account = Account.Account(name+': Interest', balance, previous_statement_balance, min_balance, max_balance, apr, interest_cadence, interest_type,
-                                      billing_start_date, 'Principal Balance', None, accrued_interest,minimum_payment)
+                                      billing_start_date, 'Interest', None, accrued_interest,minimum_payment)
             self.accounts.append(account)
 
         elif account_type.lower() == 'credit':

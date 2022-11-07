@@ -1,6 +1,11 @@
 import Account, BudgetItem, BudgetSet, ExpenseForecast, AccountSet, datetime, pandas as pd, MemoRule, MemoRuleSet
 pd.options.mode.chained_assignment = None #apparently this warning can throw false positives???
 
+import sys, os
+from termcolor import colored, cprint
+
+os.system('color')
+
 if __name__ == '__main__':
 
     #Define starting parameters
@@ -59,7 +64,8 @@ if __name__ == '__main__':
                            billing_start_date='2023-01-03',
                            account_type='loan',
                            principal_balance=3359.17,
-                           accrued_interest=0)
+                           accrued_interest=0,
+                           minimum_payment=67.28)
 
     account_set.addAccount(name='Loan B',
                            balance=4746.18,
@@ -71,7 +77,8 @@ if __name__ == '__main__':
                            billing_start_date='2023-01-03',
                            account_type='loan',
                            principal_balance=4746.18,
-                           accrued_interest=0)
+                           accrued_interest=0,
+                           minimum_payment=56.57)
 
     account_set.addAccount(name='Loan C',
                            balance=1919.55,
@@ -83,7 +90,8 @@ if __name__ == '__main__':
                            billing_start_date='2023-01-03',
                            account_type='loan',
                            principal_balance=1919.55,
-                           accrued_interest=0)
+                           accrued_interest=0,
+                           minimum_payment=56.57)
 
     account_set.addAccount(name='Loan D',
                            balance=4726.68,
@@ -95,7 +103,8 @@ if __name__ == '__main__':
                            billing_start_date='2023-01-03',
                            account_type='loan',
                            principal_balance=4726.68,
-                           accrued_interest=0)
+                           accrued_interest=0,
+                           minimum_payment=55.17)
 
     account_set.addAccount(name='Loan E',
                            balance=1823.31,
@@ -107,7 +116,8 @@ if __name__ == '__main__':
                            billing_start_date='2023-01-03',
                            account_type='loan',
                            principal_balance=1823.31,
-                           accrued_interest=0)
+                           accrued_interest=0,
+                           minimum_payment=21.29)
 
     account_set_df = account_set.getAccounts()
 
@@ -157,6 +167,13 @@ if __name__ == '__main__':
     print("-------------------------------")
     print(y[1].to_string())
     print("-------------------------------")
+
+
+    text = colored('Hello, World!', 'red', attrs=['reverse', 'blink'])
+    print(text)
+    cprint('Hello, World!', 'green', 'on_red')
+
+
     y[2].to_csv('C:/Users/HumeD/Documents/out.csv',index=False)
 
     forecast_df = y[2]
