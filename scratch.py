@@ -34,7 +34,7 @@ if __name__ == '__main__':
                            balance=1001,
                            min_balance=0,
                            max_balance=float('inf'),
-                           apr=0.02674,
+                           apr=0.2674,
                            interest_cadence='Monthly',
                            interest_type='Compound',
                            billing_start_date='2000-01-07',
@@ -50,7 +50,7 @@ if __name__ == '__main__':
                            interest_cadence='Monthly',
                            interest_type='Compound',
                            billing_start_date='2000-01-07',
-                           account_type='credit',
+                           account_type='savings',
                            principal_balance=-1,
                            accrued_interest=-1)
 
@@ -169,12 +169,9 @@ if __name__ == '__main__':
     print("-------------------------------")
 
 
-    text = colored('Hello, World!', 'red', attrs=['reverse', 'blink'])
-    print(text)
-    cprint('Hello, World!', 'green', 'on_red')
-
-
     y[2].to_csv('C:/Users/HumeD/Documents/out.csv',index=False)
 
     forecast_df = y[2]
-    x.plotOutput(forecast_df,'C:/Users/HumeD/Documents/outplot.png')
+    x.plotOverall(forecast_df,'C:/Users/HumeD/Documents/overall.png')
+
+    x.plotAccountTypeTotals(forecast_df,'C:/Users/HumeD/Documents/account_type_totals.png')

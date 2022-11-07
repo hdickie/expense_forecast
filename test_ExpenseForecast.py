@@ -166,22 +166,33 @@ class TestExpenseForecastMethods(unittest.TestCase):
             print(forecast_df.iloc[:,0:expected_result_set_df.shape[1]-1].to_string())
             print('#'.ljust(50,'#'))
             raise e
-            
+
+    # note: payments in excess of minimum are priority 2
+    #
+    # scenarios: min payments only. we do not consider the case of insufficient funds because this is priority 1
+    # 1. make cc min payment only. prev statement bal is less than $40
+    # 2. make cc min payment only. prev statement bal is more than $40 and less than $2k
+    # 3. make cc min payment only. prev bal is more than $2k. min payment is 2%
+    #
+    # scenarios: hard-coded payment in excess of minimum
+    # 5. prev less than 40, total debt more than 40, pay less than total balance.
+    # 6. prev less than 40, total debt more than 40, pay more than total balance.
+    # 7. prev less than 40, total debt more than 40, pay less than total balance when insufficient funds
+    # 8. prev less than 40, total debt more than 40, pay more than total balance when insufficient funds
+    # 9. prev more than 40 and less than 2k. pay less than total balance
+    # 10. prev more than 40 and less than 2k. pay more than total balance
+    # 11. prev more than 40 and less than 2k. pay less than total balance when insufficient funds
+    # 12. prev more than 40 and less than 2k. pay more than total balance when insufficient funds
+    # 13. prev more than 2k. pay less than total balance
+    # 14. prev more than 2k. pay more than total balance
+    # 15. prev more than 2k. pay less than total balance when insufficient funds
+    # 16. prev more than 2k. pay more than total balance when insufficient funds
+    #
+    # scenarios: amount = "*"
+    # 17. prv less than 40, current is non 0
+    # 18. prv bw 40 and 2k, current is non 0
+    # 19. prv more than 2k, current is non 0
     def test_credit_card_payments(self):
-
-        # note: payments in excess of minimum are priority 2
-
-        # scenarios
-        # 1. make cc min payment only. bal is less than $40
-        # 2. make cc min payment only. bal is more than $40 and less than $2k
-        # 3. make cc min payment only. bal is more than $2k. min payment is 2%
-        # 4. make cc min payment. combined current and prev statement balance less than $40, both non 0
-
-        # scenarios: previous statement balance and payment in excess of minimum
-
-        # 5. make cc payment in excess of minimum. current statement more than $40, pay less than total balance.
-        # 6. make cc payment in excess of minimum. current statement more than $40, pay less than total balance, when balance is greater than checking
-        # 7. make cc payment in excess of minimum. current statement more than $2k, pay more than total balance.
 
         new_empty_row_df = pd.DataFrame(
             {'Date': [None], 'Checking': [None], 'Credit Card: Current Statement Balance': [None],
@@ -300,7 +311,6 @@ class TestExpenseForecastMethods(unittest.TestCase):
         expected_result_set_2_df.iloc[3, new_empty_row_df.columns.tolist().index('Checking')] = initial_values_dict_2['Checking'] - 40
         expected_result_set_2_df.iloc[3, new_empty_row_df.columns.tolist().index('Credit Card: Current Statement Balance')] = 0
         expected_result_set_2_df.iloc[3, new_empty_row_df.columns.tolist().index('Credit Card: Previous Statement Balance')] = (initial_values_dict_2['Credit Card Previous Statement Balance'] - 40) + (initial_values_dict_2['Credit Card Previous Statement Balance'] - 40)*initial_values_dict_2['Credit Card APR']/12
-        # todo further days
 
 
         account_set_2 = AccountSet.AccountSet()
@@ -356,7 +366,36 @@ class TestExpenseForecastMethods(unittest.TestCase):
             initial_values_dict_3['Credit Card Current Statement Balance']
         expected_result_set_3_df.iloc[1, new_empty_row_df.columns.tolist().index('Credit Card: Previous Statement Balance')] = \
             initial_values_dict_3['Credit Card Previous Statement Balance']
-        # todo further days
+
+        expected_result_set_3_df.iloc[2, new_empty_row_df.columns.tolist().index('Checking')] = \
+            initial_values_dict_3['Checking'] - initial_values_dict_3[
+                'Credit Card Previous Statement Balance']*0.02
+        expected_result_set_3_df.iloc[
+            2, new_empty_row_df.columns.tolist().index('Credit Card: Current Statement Balance')] = 0
+        expected_result_set_3_df.iloc[
+            2, new_empty_row_df.columns.tolist().index('Credit Card: Previous Statement Balance')] = \
+            (initial_values_dict_3['Credit Card Previous Statement Balance'] -
+             initial_values_dict_3[
+                 'Credit Card Previous Statement Balance'] * 0.02) \
+            + (initial_values_dict_3['Credit Card Previous Statement Balance'] -
+               initial_values_dict_3[
+                   'Credit Card Previous Statement Balance'] * 0.02) * \
+            initial_values_dict_3['Credit Card APR'] / 12
+
+        expected_result_set_3_df.iloc[3, new_empty_row_df.columns.tolist().index('Checking')] = initial_values_dict_3['Checking'] - initial_values_dict_3[
+                'Credit Card Previous Statement Balance']*0.02
+        expected_result_set_3_df.iloc[
+            3, new_empty_row_df.columns.tolist().index('Credit Card: Current Statement Balance')] = 0
+
+        expected_result_set_3_df.iloc[
+            3, new_empty_row_df.columns.tolist().index('Credit Card: Previous Statement Balance')] = \
+            (initial_values_dict_3['Credit Card Previous Statement Balance'] -
+             initial_values_dict_3[
+                 'Credit Card Previous Statement Balance'] * 0.02) \
+            + (initial_values_dict_3['Credit Card Previous Statement Balance'] -
+               initial_values_dict_3[
+                   'Credit Card Previous Statement Balance'] * 0.02) * \
+            initial_values_dict_3['Credit Card APR'] / 12
 
         account_set_3 = AccountSet.AccountSet()
         budget_set_3 = BudgetSet.BudgetSet()
@@ -388,62 +427,74 @@ class TestExpenseForecastMethods(unittest.TestCase):
         forecast_3_df = expense_forecast_obj.computeForecast(budget_schedule_3_df, account_set_3_df, memo_rules_3_df)[2]
 
         # scenario 4
-        initial_values_dict_4 = {}
-        initial_values_dict_4['Checking'] = 1000
-        initial_values_dict_4['Credit Card Current Statement Balance'] = 10
-        initial_values_dict_4['Credit Card Previous Statement Balance'] = 10
-        initial_values_dict_4['Credit Card APR'] = 0.2674
-
-        # Date  Checking    Credit Card: Credit Card Current Statement Balance  Credit Card: Credit Card Previous Statement Balance  Memo
-        expected_result_set_4_df = empty_result_set_df.copy()
-        expected_result_set_4_df.iloc[0, new_empty_row_df.columns.tolist().index('Checking')] = initial_values_dict_4[
-            'Checking']
-        expected_result_set_4_df.iloc[
-            0, new_empty_row_df.columns.tolist().index('Credit Card: Current Statement Balance')] = \
-            initial_values_dict_4[
-                'Credit Card Current Statement Balance']
-        expected_result_set_4_df.iloc[
-            0, new_empty_row_df.columns.tolist().index('Credit Card: Previous Statement Balance')] = \
-            initial_values_dict_4['Credit Card Previous Statement Balance']
-
-        expected_result_set_4_df.iloc[1, new_empty_row_df.columns.tolist().index('Checking')] = initial_values_dict_4[
-            'Checking']
-        expected_result_set_4_df.iloc[
-            1, new_empty_row_df.columns.tolist().index('Credit Card: Current Statement Balance')] = \
-            initial_values_dict_4['Credit Card Current Statement Balance']
-        expected_result_set_4_df.iloc[
-            1, new_empty_row_df.columns.tolist().index('Credit Card: Previous Statement Balance')] = \
-            initial_values_dict_4['Credit Card Previous Statement Balance']
-        # todo further days
-
-        account_set_4 = AccountSet.AccountSet()
-        budget_set_4 = BudgetSet.BudgetSet()
-        memo_rule_set_4 = MemoRuleSet.MemoRuleSet()
-
-        account_set_4.addAccount(name='Checking', balance=initial_values_dict_4['Checking'], min_balance=0,
-                                 max_balance=float('inf'),
-                                 apr=0, interest_cadence='None', interest_type='None', billing_start_date='None',
-                                 account_type='checking', principal_balance=None, accrued_interest=None)
-
-        account_set_4.addAccount(name='Credit Card',
-                                 balance=initial_values_dict_4['Credit Card Current Statement Balance'],
-                                 previous_statement_balance=initial_values_dict_4[
-                                     'Credit Card Previous Statement Balance'],
-                                 min_balance=0,
-                                 max_balance=20000, apr=initial_values_dict_4['Credit Card APR'],
-                                 interest_cadence='Monthly', interest_type='Compound',
-                                 billing_start_date='2000-01-07', account_type='credit', principal_balance=-1,
-                                 accrued_interest=-1, minimum_payment=40)
-
-        budget_set_4.addBudgetItem(start_date='2023-01-01', priority=1, cadence='daily', amount='0',
-                                   memo='dummy for test')
-        memo_rule_set_4.addMemoRule(memo_regex='dummy for test', account_from='Checking', account_to=None,
-                                    transaction_priority=1)
-
-        budget_schedule_4_df = budget_set_4.getBudgetSchedule(start_date_YYYYMMDD=start_date_YYYYMMDD, num_days=3)
-        account_set_4_df = account_set_4.getAccounts()
-        memo_rules_4_df = memo_rule_set_4.getMemoRules()
-        forecast_4_df = expense_forecast_obj.computeForecast(budget_schedule_4_df, account_set_4_df, memo_rules_4_df)[2]
+        # initial_values_dict_4 = {}
+        # initial_values_dict_4['Checking'] = 1000
+        # initial_values_dict_4['Credit Card Current Statement Balance'] = 10
+        # initial_values_dict_4['Credit Card Previous Statement Balance'] = 10
+        # initial_values_dict_4['Credit Card APR'] = 0.2674
+        #
+        # # Date  Checking    Credit Card: Credit Card Current Statement Balance  Credit Card: Credit Card Previous Statement Balance  Memo
+        # expected_result_set_4_df = empty_result_set_df.copy()
+        # expected_result_set_4_df.iloc[0, new_empty_row_df.columns.tolist().index('Checking')] = initial_values_dict_4[
+        #     'Checking']
+        # expected_result_set_4_df.iloc[
+        #     0, new_empty_row_df.columns.tolist().index('Credit Card: Current Statement Balance')] = \
+        #     initial_values_dict_4[
+        #         'Credit Card Current Statement Balance']
+        # expected_result_set_4_df.iloc[
+        #     0, new_empty_row_df.columns.tolist().index('Credit Card: Previous Statement Balance')] = \
+        #     initial_values_dict_4['Credit Card Previous Statement Balance']
+        #
+        # expected_result_set_4_df.iloc[1, new_empty_row_df.columns.tolist().index('Checking')] = initial_values_dict_4[
+        #     'Checking']
+        # expected_result_set_4_df.iloc[
+        #     1, new_empty_row_df.columns.tolist().index('Credit Card: Current Statement Balance')] = \
+        #     initial_values_dict_4['Credit Card Current Statement Balance']
+        # expected_result_set_4_df.iloc[
+        #     1, new_empty_row_df.columns.tolist().index('Credit Card: Previous Statement Balance')] = \
+        #     initial_values_dict_4['Credit Card Previous Statement Balance']
+        #
+        # expected_result_set_4_df.iloc[2, new_empty_row_df.columns.tolist().index('Checking')] = initial_values_dict_4[
+        #     'Checking'] - initial_values_dict_4['Credit Card Previous Statement Balance']
+        # expected_result_set_4_df.iloc[3, new_empty_row_df.columns.tolist().index('Checking')] = initial_values_dict_4[
+        #     'Checking'] - initial_values_dict_4['Credit Card Previous Statement Balance']
+        #
+        # expected_result_set_4_df.iloc[2, new_empty_row_df.columns.tolist().index('Credit Card: Current Statement Balance')] = 0
+        # expected_result_set_4_df.iloc[3, new_empty_row_df.columns.tolist().index('Credit Card: Current Statement Balance')] = 0
+        #
+        # expected_result_set_4_df.iloc[
+        #     2, new_empty_row_df.columns.tolist().index('Credit Card: Previous Statement Balance')] = initial_values_dict_4['Credit Card Current Statement Balance']
+        # expected_result_set_4_df.iloc[
+        #     3, new_empty_row_df.columns.tolist().index('Credit Card: Previous Statement Balance')] = initial_values_dict_4['Credit Card Current Statement Balance']
+        #
+        # account_set_4 = AccountSet.AccountSet()
+        # budget_set_4 = BudgetSet.BudgetSet()
+        # memo_rule_set_4 = MemoRuleSet.MemoRuleSet()
+        #
+        # account_set_4.addAccount(name='Checking', balance=initial_values_dict_4['Checking'], min_balance=0,
+        #                          max_balance=float('inf'),
+        #                          apr=0, interest_cadence='None', interest_type='None', billing_start_date='None',
+        #                          account_type='checking', principal_balance=None, accrued_interest=None)
+        #
+        # account_set_4.addAccount(name='Credit Card',
+        #                          balance=initial_values_dict_4['Credit Card Current Statement Balance'],
+        #                          previous_statement_balance=initial_values_dict_4[
+        #                              'Credit Card Previous Statement Balance'],
+        #                          min_balance=0,
+        #                          max_balance=20000, apr=initial_values_dict_4['Credit Card APR'],
+        #                          interest_cadence='Monthly', interest_type='Compound',
+        #                          billing_start_date='2000-01-07', account_type='credit', principal_balance=-1,
+        #                          accrued_interest=-1, minimum_payment=40)
+        #
+        # budget_set_4.addBudgetItem(start_date='2023-01-01', priority=1, cadence='daily', amount='0',
+        #                            memo='dummy for test')
+        # memo_rule_set_4.addMemoRule(memo_regex='dummy for test', account_from='Checking', account_to=None,
+        #                             transaction_priority=1)
+        #
+        # budget_schedule_4_df = budget_set_4.getBudgetSchedule(start_date_YYYYMMDD=start_date_YYYYMMDD, num_days=3)
+        # account_set_4_df = account_set_4.getAccounts()
+        # memo_rules_4_df = memo_rule_set_4.getMemoRules()
+        # forecast_4_df = expense_forecast_obj.computeForecast(budget_schedule_4_df, account_set_4_df, memo_rules_4_df)[2]
 
         # scenario 5
         initial_values_dict_5 = {}
@@ -669,16 +720,16 @@ class TestExpenseForecastMethods(unittest.TestCase):
                 print('#'.ljust(50, '#'))
                 error_ind = True
 
-            if self.account_boundaries_are_violated(account_set_4.getAccounts(), forecast_4_df) \
-                    or not forecast_4_df.iloc[:, 0:forecast_4_df.shape[1] - 1].equals(
-                expected_result_set_4_df.iloc[:, 0:expected_result_set_4_df.shape[1] - 1]):
-                print('Expected 4 '.ljust(50, '#'))
-                print(expected_result_set_4_df.iloc[:, 0:expected_result_set_4_df.shape[1] - 1].to_string())
-                print(''.ljust(50, '#'))
-                print('Forecasted 4 '.ljust(50, '#'))
-                print(forecast_4_df.iloc[:, 0:forecast_4_df.shape[1] - 1].to_string())
-                print('#'.ljust(50, '#'))
-                error_ind = True
+            # if self.account_boundaries_are_violated(account_set_4.getAccounts(), forecast_4_df) \
+            #         or not forecast_4_df.iloc[:, 0:forecast_4_df.shape[1] - 1].equals(
+            #     expected_result_set_4_df.iloc[:, 0:expected_result_set_4_df.shape[1] - 1]):
+            #     print('Expected 4 '.ljust(50, '#'))
+            #     print(expected_result_set_4_df.iloc[:, 0:expected_result_set_4_df.shape[1] - 1].to_string())
+            #     print(''.ljust(50, '#'))
+            #     print('Forecasted 4 '.ljust(50, '#'))
+            #     print(forecast_4_df.iloc[:, 0:forecast_4_df.shape[1] - 1].to_string())
+            #     print('#'.ljust(50, '#'))
+            #     error_ind = True
 
             if self.account_boundaries_are_violated(account_set_5.getAccounts(), forecast_5_df) \
                     or not forecast_5_df.iloc[:, 0:forecast_5_df.shape[1] - 1].equals(
@@ -811,7 +862,36 @@ class TestExpenseForecastMethods(unittest.TestCase):
             print('#'.ljust(50, '#'))
             raise e
 
+    # scenarios: min payments only
+    # 1. minimum payments only
+    #
+    # scenarios: hard coded payments in excess of minimum
+    # 2. extra payment: 1 loan, less than total balance
+    # 3. extra payment: 1 loan, more than total balance
+    # 4. extra payment: 1 loan, less than total balance when insufficient funds
+    # 5. extra payment: 1 loan, more than total balance when insufficient funds
+
+    # 6. extra payment: 2 loans, same interest rate diff balances, less than total balance
+    # 7. extra payment: 2 loans, same interest rate diff balances, more than total balance
+    # 8. extra payment: 2 loans, same interest rate diff balances, less than total balance when insufficient funds
+    # 9. extra payment: 2 loans, same interest rate diff balances, more than total balance when insufficient funds
+
+    # 10. extra payment: 2 loans, diff interest rate diff balances, less than total balance
+    # 11. extra payment: 2 loans, diff interest rate diff balances, more than total balance
+    # 12. extra payment: 2 loans, diff interest rate diff balances, less than total balance when insufficient funds
+    # 13. extra payment: 2 loans, diff interest rate diff balances, more than total balance when insufficient funds
+
+    # 14. extra payment: 5 loans, diff interest rate diff balances, less than total balance
+    # 15. extra payment: 5 loans, diff interest rate diff balances, more than total balance
+    # 16. extra payment: 5 loans, diff interest rate diff balances, less than total balance when insufficient funds
+    # 17. extra payment: 5 loans, diff interest rate diff balances, more than total balance when insufficient funds
+    #
+    # scenarios: amount = "*"
+    # 18. extra payment: 5 loans, diff interest rate diff balances,
     def test_loan_payments(self):
+
+
+
         # expense_forecast_obj = ExpenseForecast.ExpenseForecast()
         # account_set = AccountSet.AccountSet()
         # budget_set = BudgetSet.BudgetSet()

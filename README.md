@@ -19,10 +19,7 @@ The way I am currently using it:
 
 
 Plots I want:
-TODO
-
-
-
-Notes
-add previous statement balance as a parameter to the addAccount function
+1. Overall
+2. Net worth
+3. Marginal Interest
 

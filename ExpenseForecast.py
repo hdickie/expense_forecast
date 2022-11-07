@@ -1,4 +1,4 @@
-import pandas as pd
+import pandas as pd, numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
 import datetime
@@ -246,7 +246,7 @@ class ExpenseForecast:
         updated_account_set_df = account_set_df
         updated_forecast_df = forecast_df
 
-
+        #this needs to be able to accept "*", meaning "free balance"
 
 
         updated_budget_schedule_df.sort_values(inplace=True, axis=0, by="Date")
@@ -260,7 +260,7 @@ class ExpenseForecast:
         return self.satisfice(budget_schedule_df, account_set_df, memo_rules_df)
 
 
-    def plotOutput(self,forecast_df,output_path):
+    def plotOverall(self,forecast_df,output_path):
         figure(figsize=(14, 6), dpi=80)
         for i in range(1, forecast_df.shape[1] - 1):
             plt.plot(forecast_df['Date'], forecast_df.iloc[:, i], label=forecast_df.columns[i])
@@ -280,3 +280,52 @@ class ExpenseForecast:
         max_date = max(forecast_df.Date).strftime('%Y-%m-%d')
         plt.title('Forecast: ' + str(min_date) + ' -> ' + str(max_date))
         plt.savefig(output_path)
+
+    def plotAccountTypeTotals(self,forecast_df,output_path):
+        #aggregate by account type: Principal Balance + interest, checking, previous + current statement balance, savings
+        checking_df = pd.DataFrame(forecast_df.Checking.copy())
+        savings_df = pd.DataFrame(forecast_df.Savings.copy())
+        date_df = pd.DataFrame(forecast_df.Date.copy())
+
+        zero_df = pd.DataFrame(np.zeros((checking_df.shape[0], 1)))
+        cc_df = pd.DataFrame(zero_df.copy())
+        loan_df = pd.DataFrame(zero_df.copy())
+
+        cc_colnames = [s for s in forecast_df.columns.tolist() if 'Statement Balance' in s]
+        loan_colnames = [s for s in forecast_df.columns.tolist() if 'Interest' in s] + [s for s in forecast_df.columns.tolist() if 'Principal Balance' in s]
+
+        cc_df = pd.DataFrame(forecast_df.loc[:,cc_colnames].sum(axis=1))
+
+        loan_df = pd.DataFrame(forecast_df.loc[:,loan_colnames].sum(axis=1))
+
+        date_df.reset_index(drop=True,inplace=True)
+        checking_df.reset_index(drop=True,inplace=True)
+        savings_df.reset_index(drop=True,inplace=True)
+        cc_df.reset_index(drop=True,inplace=True)
+        loan_df.reset_index(drop=True,inplace=True)
+
+        loan_df = loan_df.rename(columns={0:"Loan"})
+        cc_df = cc_df.rename(columns={0: "Credit"})
+
+        agg_df = pd.concat([date_df,checking_df,savings_df,cc_df,loan_df],axis=1)
+
+        figure(figsize=(14, 6), dpi=80)
+        for i in range(1, agg_df.shape[1]):
+            plt.plot(agg_df['Date'], agg_df.iloc[:, i], label=agg_df.columns[i])
+
+        ax = plt.subplot(111)
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0 + box.height * 0.1,
+                         box.width, box.height * 0.9])
+
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05),
+                  fancybox=True, shadow=True, ncol=4)
+
+        min_date = min(forecast_df.Date).strftime('%Y-%m-%d')
+        max_date = max(forecast_df.Date).strftime('%Y-%m-%d')
+
+        plt.title('Account Type Totals: ' + str(min_date) + ' -> ' + str(max_date))
+        plt.savefig(output_path)
+
+    def plotMarginalInterest(self,accounts_df,forecast_df,output_path):
+        pass
