@@ -160,16 +160,16 @@ if __name__ == '__main__':
 
 
     #QC output
-    print("-------------------------------")
-    print(budget_schedule_df.to_string())
-    print("-------------------------------")
-    print(memo_rules_df.to_string())
-    print("-------------------------------")
-    print(y[1].to_string())
-    print("-------------------------------")
+    # print("-------------------------------")
+    # print(budget_schedule_df.to_string())
+    # print("-------------------------------")
+    # print(memo_rules_df.to_string())
+    # print("-------------------------------")
+    # print(y[1].to_string())
+    # print("-------------------------------")
 
 
-    y[2].to_csv('C:/Users/HumeD/Documents/out.csv',index=False)
+    y[2].to_csv('C:/Users/HumeD/Documents/out.csv',index=False,sep="|")
 
     forecast_df = y[2]
     x.plotOverall(forecast_df,'C:/Users/HumeD/Documents/overall.png')

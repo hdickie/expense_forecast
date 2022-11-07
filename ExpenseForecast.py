@@ -23,6 +23,46 @@ class ExpenseForecast:
 
         pass
 
+    def account_boundaries_are_violated(self,accounts_df,forecast_df):
+
+        for col_name in forecast_df.columns.tolist():
+            if col_name == 'Date' or col_name == 'Memo':
+                continue
+
+            current_column = forecast_df[col_name]
+
+            acct_boundary__min = float(accounts_df.loc[accounts_df.Name == col_name,'Min_Balance'])
+            acct_boundary__max = float(accounts_df.loc[accounts_df.Name == col_name, 'Max_Balance'])
+
+            min_in_forecast_for_acct = min(current_column)
+            max_in_forecast_for_acct = max(current_column)
+
+            try:
+                print(current_column)
+                print('min_in_forecast_for_acct:'+str(min_in_forecast_for_acct))
+                print('max_in_forecast_for_acct:' + str(max_in_forecast_for_acct))
+                print('acct_boundary__min:' + str(acct_boundary__min))
+                print('acct_boundary__max:' + str(acct_boundary__max))
+                print('')
+                print('')
+
+                assert float(min_in_forecast_for_acct) >= float(acct_boundary__min)
+                assert float(max_in_forecast_for_acct) <= float(acct_boundary__max)
+
+            except Exception as e:
+
+                offending_rows__min = forecast_df[current_column < acct_boundary__min]
+                offending_rows__max = forecast_df[current_column > acct_boundary__max]
+
+                print(e)
+                print('Account Boundary Violation for '+str(col_name)+' in ExpenseForecast.account_boundaries_are_violated()')
+                print('Offending Rows: Minimum')
+                print(offending_rows__min.to_string())
+                print('Offending Rows: Maximum')
+                print(offending_rows__max.to_string())
+                return True
+        return False
+
     def satisfice(self, budget_schedule_df, account_set_df, memo_rules_df):
         """
         Computes output time-series that represents only non-negotiable spend.
@@ -90,6 +130,7 @@ class ExpenseForecast:
 
 
         index_of_checking_column = forecast_df.columns.tolist().index('Checking')
+        index_of_memo_column = forecast_df.columns.tolist().index('Memo')
         for d in all_days:
             if d == forecast_df.iloc[0,0]:
                 previous_date = d
@@ -150,20 +191,26 @@ class ExpenseForecast:
                     # 5. make cc payment in excess of minimum. current statement more than $40, pay less than total balance.
                     # 6. make cc payment in excess of minimum. current statement more than $40, pay less than total balance, when balance is greater than checking
                     # 7. make cc payment in excess of minimum. current statement more than $2k, pay more than total balance.
+                    if new_row_df.iloc[0, index_of_memo_column] != "":
+                        new_row_df.iloc[0, index_of_memo_column] += ' ; '
 
+                    new_row_df.iloc[0, index_of_memo_column] += ' Min cc pmt , '
                     if available_funds > previous_statement_balance and previous_statement_balance <= 40:
                         new_row_df.iloc[0, index_of_checking_column] -= previous_statement_balance
                         new_row_df.iloc[0, i + 1] = 0  # pay previous statement balance
-                        # todo update memo
+                        new_row_df.iloc[0, index_of_memo_column] += ' Checking - '+str(previous_statement_balance)+' , '
+                        new_row_df.iloc[0, index_of_memo_column] += ' Credit - ' + str(previous_statement_balance) + ' , '
                     elif available_funds > previous_statement_balance and 40 < previous_statement_balance and previous_statement_balance <= 2000:
                         new_row_df.iloc[0, index_of_checking_column] -= 40
                         new_row_df.iloc[0, i + 1] -= 40  # pay previous statement balance
-                        # todo update memo
+                        new_row_df.iloc[0, index_of_memo_column] += ' Checking - ' + str(40) + ' , '
+                        new_row_df.iloc[0, index_of_memo_column] += ' Credit - ' + str(40) + ' , '
                     elif available_funds > previous_statement_balance and 2000 <= previous_statement_balance:
                         min_payment_amt = previous_statement_balance * 0.02
                         new_row_df.iloc[0, index_of_checking_column] -= min_payment_amt
-                        new_row_df.iloc[0, i + 1] -= min_payment_amt  # pay previous statement balance
-                        # todo update memo
+                        new_row_df.iloc[0, i + 1] -= min_payment_amt
+                        new_row_df.iloc[0, index_of_memo_column] += ' Checking - ' + str(min_payment_amt) + ' , '
+                        new_row_df.iloc[0, index_of_memo_column] += ' Credit - ' + str(min_payment_amt) + ' , '
 
                     #interest accrual and balance transfer
                     index_of_previous_statement_balance = new_row_df.columns.tolist().index(row.Name)
@@ -173,8 +220,11 @@ class ExpenseForecast:
                     current_statement_balance = new_row_df.iloc[0, index_of_current_statement_balance]
 
                     #move current statement balance to previous and add interest
-                    new_row_df.iloc[0,index_of_previous_statement_balance] = current_statement_balance + previous_statement_balance + previous_statement_balance*relevant_apr/12
+                    new_interest_accrued = previous_statement_balance*relevant_apr/12
+                    new_row_df.iloc[0,index_of_previous_statement_balance] = current_statement_balance + previous_statement_balance + new_interest_accrued
                     new_row_df.iloc[0, index_of_current_statement_balance] = 0
+
+                    new_row_df.iloc[0, index_of_memo_column] += ' cc interest accrued ' + str(new_interest_accrued)
 
                 elif row['Account_Type'].lower() == 'interest' and row['Interest_Cadence'].lower() == 'daily':
                     index_of_accrued_interest = new_row_df.columns.tolist().index(row.Name)
@@ -216,10 +266,10 @@ class ExpenseForecast:
                         if row2.account_to is not None:
                             index_of_account_to_column = list(new_row_df.columns).index(row2.account_to)
 
-                        if row2.account_from is not None: #e.g. income
+                        if row2.account_from is not None and row2.account_to is None: #e.g. income
                             new_row_df.iloc[0, index_of_account_from_column] += budget_item.Amount
 
-                        if row2.account_to is not None: #e.g. spend
+                        if row2.account_to is not None and row2.account_from is None: #e.g. spend
                             new_row_df.iloc[0, index_of_account_to_column] += budget_item.Amount
 
                         if row2.account_from is not None and row2.account_to is not None:  # e.g. xfer bw accts
@@ -236,7 +286,7 @@ class ExpenseForecast:
                     if new_row_df.loc[0,'Memo'] != '':
                         new_row_df.loc[0,'Memo'] = new_row_df.loc[0,'Memo'] + '; '
 
-                    new_memo_text = ""
+                    new_memo_text = budget_item.Memo + ' , '
                     if row2.account_from is not None:
                         new_memo_text = new_memo_text + str(row2.account_from) + ' ' + str(-1*abs(budget_item.Amount)) + ' '
 
@@ -245,9 +295,13 @@ class ExpenseForecast:
 
                     new_row_df.loc[0, 'Memo'] = new_row_df.loc[0,'Memo'] + new_memo_text
 
-
             previous_date = d
-            forecast_df = pd.concat([forecast_df,new_row_df])
+            if self.account_boundaries_are_violated(account_set_df,new_row_df):
+                break
+            else:
+                forecast_df = pd.concat([forecast_df, new_row_df])
+
+
 
 
         updated_budget_schedule_df = budget_schedule_df.loc[budget_schedule_df.Priority != 1,:]
