@@ -25,7 +25,7 @@ class BudgetSet:
                  cadence='',
                  amount=0,
                  memo=''):
-
+        """ Add a BudgetItem to list BudgetItem.budget_items. """
         budget_item = BudgetItem.BudgetItem(start_date,
                  priority,
                  cadence,

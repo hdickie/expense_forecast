@@ -1,3 +1,11 @@
+"""
+
+Your module's verbose yet thorough docstring.
+
+"""
+
+
+
 import pandas as pd, numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
@@ -16,6 +24,14 @@ class ExpenseForecast:
         pass
 
     def satisfice(self, budget_schedule_df, account_set_df, memo_rules_df):
+        """
+        Computes output time-series that represents only non-negotiable spend.
+
+        :param budget_schedule_df:
+        :param account_set_df:
+        :param memo_rules_df:
+        :return:
+        """
         priority_1_budget_schedule_df = budget_schedule_df.loc[budget_schedule_df.Priority == 1, :]
 
         min_sched_date = min(budget_schedule_df.Date)
@@ -242,7 +258,16 @@ class ExpenseForecast:
         return [updated_budget_schedule_df, account_set_df, forecast_df]
 
     def optimize_next_choice(self,updated_budget_schedule_df,account_set_df,forecast_df):
+        """
+        optimize_next_choice() one line description.
 
+        Multiple line description.
+
+        :param updated_budget_schedule_df:
+        :param account_set_df:
+        :param forecast_df:
+        :return:
+        """
         updated_account_set_df = account_set_df
         updated_forecast_df = forecast_df
 
@@ -257,10 +282,31 @@ class ExpenseForecast:
 
 
     def computeForecast(self,budget_schedule_df, account_set_df, memo_rules_df):
+        """
+        One-description.
+
+        Multiple line dsecription.
+
+
+        :param budget_schedule_df:
+        :param account_set_df:
+        :param memo_rules_df:
+        :return:
+        """
         return self.satisfice(budget_schedule_df, account_set_df, memo_rules_df)
 
 
     def plotOverall(self,forecast_df,output_path):
+        """
+        Writes to file a plot of all accounts.
+
+        Multiple line description.
+
+
+        :param forecast_df:
+        :param output_path:
+        :return:
+        """
         figure(figsize=(14, 6), dpi=80)
         for i in range(1, forecast_df.shape[1] - 1):
             plt.plot(forecast_df['Date'], forecast_df.iloc[:, i], label=forecast_df.columns[i])
@@ -282,6 +328,14 @@ class ExpenseForecast:
         plt.savefig(output_path)
 
     def plotAccountTypeTotals(self,forecast_df,output_path):
+        """
+        Writes to file a plot by account type.
+
+
+        :param forecast_df:
+        :param output_path:
+        :return:
+        """
         #aggregate by account type: Principal Balance + interest, checking, previous + current statement balance, savings
         checking_df = pd.DataFrame(forecast_df.Checking.copy())
         savings_df = pd.DataFrame(forecast_df.Savings.copy())
@@ -328,4 +382,16 @@ class ExpenseForecast:
         plt.savefig(output_path)
 
     def plotMarginalInterest(self,accounts_df,forecast_df,output_path):
+        """
+        Writes a plot of spend on interest from all sources.
+
+        Multiple line description.
+
+
+        :param accounts_df:
+        :param forecast_df:
+        :param output_path:
+        :return:
+        """
+        #todo this will have to get the cc interest from the memo line
         pass

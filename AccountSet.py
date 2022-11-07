@@ -34,7 +34,7 @@ class AccountSet:
                    accrued_interest = -1,
                    minimum_payment = 0
                  ):
-
+        """ Add an Account to list AccountSet.accounts. """
 
         #TODO this should be based on interest type or interest AND account type
         if account_type.lower() == 'loan':

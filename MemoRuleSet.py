@@ -20,6 +20,7 @@ class MemoRuleSet:
         return str(self)
 
     def addMemoRule(self,memo_regex='',account_from='',account_to='',transaction_priority=''):
+        """ Add a MemoRule to list MemoRuleSet.memo_rules. """
         memo_rule = MemoRule.MemoRule(memo_regex,account_from,account_to,transaction_priority)
         self.memo_rules.append(memo_rule)
 
