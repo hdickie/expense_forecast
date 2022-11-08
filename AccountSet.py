@@ -256,9 +256,9 @@ class AccountSet:
 
         return JSON_string
 
-    def fromJSON(self,JSON_string):
-        #todo implement AccountSet.fromJSON()
-        pass
+    # def fromJSON(self,JSON_string):
+    #     #todo implement AccountSet.fromJSON()
+    #     pass
 
 if __name__ == "__main__":
     import doctest

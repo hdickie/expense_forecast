@@ -54,9 +54,9 @@ class MemoRuleSet:
 
         return JSON_string
 
-    def fromJSON(self,JSON_string):
-        #todo implement MemoRuleSet.fromJSON()
-        pass
+    # def fromJSON(self,JSON_string):
+    #     #todo implement MemoRuleSet.fromJSON()
+    #     pass
 
 if __name__ == "__main__":
     import doctest

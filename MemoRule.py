@@ -51,24 +51,28 @@ class MemoRule:
         exception_value_error_ind = False
         exception_value_error_message_string = ""
 
+        #todo ValueError if from = to? and also if both are empty string
 
-        try:
-           self.memo_regex = str(self.memo_regex)
-        except:
-           exception_type_error_message_string += 'failed cast MemoRule.memo_regex to str\n'
-           exception_type_error_ind = True
+        self.memo_regex = str(self.memo_regex)
+        # try:
+        #    self.memo_regex = str(self.memo_regex)
+        # except:
+        #    exception_type_error_message_string += 'failed cast MemoRule.memo_regex to str\n'
+        #    exception_type_error_ind = True
 
-        try:
-           self.account_from = str(self.account_from)
-        except:
-           exception_type_error_message_string += 'failed cast MemoRule.account_from to str\n'
-           exception_type_error_ind = True
+        self.account_from = str(self.account_from)
+        # try:
+        #    self.account_from = str(self.account_from)
+        # except:
+        #    exception_type_error_message_string += 'failed cast MemoRule.account_from to str\n'
+        #    exception_type_error_ind = True
 
-        try:
-           self.account_to = str(self.account_to)
-        except:
-           exception_type_error_message_string += 'failed cast MemoRule.account_to to str\n'
-           exception_type_error_ind = True
+        self.account_to = str(self.account_to)
+        # try:
+        #    self.account_to = str(self.account_to)
+        # except:
+        #    exception_type_error_message_string += 'failed cast MemoRule.account_to to str\n'
+        #    exception_type_error_ind = True
 
         try:
            self.transaction_priority = int(self.transaction_priority)
@@ -130,9 +134,9 @@ class MemoRule:
         JSON_string += "}"
         return JSON_string
 
-    def fromJSON(self,JSON_string):
-        #todo implement MemoRule.fromJSON()
-        pass
+    # def fromJSON(self,JSON_string):
+    #     #todo implement MemoRule.fromJSON()
+    #     pass
 
 if __name__ == "__main__":
     import doctest

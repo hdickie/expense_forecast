@@ -7,7 +7,12 @@ class TestMemoRuleMethods(unittest.TestCase):
 
         self.assertEqual('<class \'MemoRule.MemoRule\'>',str( type( MemoRule.MemoRule(memo_regex='.*',account_from='',account_to='',transaction_priority=1) ) ) )
 
-        # bc duck-typing, we dont check data types, but just make sure that the fields are usable the way we want
+        #provoking exceptions for test coverage
+        with self.assertRaises(ValueError):
+            MemoRule.MemoRule(memo_regex=None,account_from=None,account_to=None,transaction_priority=None)
+
+        with self.assertRaises(TypeError):
+            MemoRule.MemoRule(memo_regex="*",account_from='',account_to='',transaction_priority=1)
 
 
     def test_str(self):
@@ -15,3 +20,11 @@ class TestMemoRuleMethods(unittest.TestCase):
 
     def test_repr(self):
         self.assertIsNotNone(repr(MemoRule.MemoRule(memo_regex='.*',account_from='',account_to='',transaction_priority=1)))
+
+    def test_toJSON(self):
+
+        test_memo_rule = MemoRule.MemoRule(memo_regex='.*',account_from='',account_to='',transaction_priority=1)
+        test_memo_rule_JSON = test_memo_rule.toJSON()
+        test_expectation = """{\n"Memo_Regex":".*",\n"Account_From":"",\n"Account_To":"",\n"Transaction_Priority":"1"\n}"""
+
+        assert test_memo_rule_JSON == test_expectation

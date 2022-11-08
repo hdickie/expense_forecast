@@ -97,11 +97,12 @@ class BudgetItem:
            exception_value_error_message_string += 'BudgetItem.priority must be greater than or equal to 1\n'
            exception_value_error_ind = True
 
-        try:
-           self.cadence = str(self.cadence)
-        except:
-           exception_type_error_message_string += 'failed cast BudgetItem.cadence to str\n'
-           exception_type_error_ind = True
+        self.cadence = str(self.cadence)
+        # try:
+        #    self.cadence = str(self.cadence)
+        # except:
+        #    exception_type_error_message_string += 'failed cast BudgetItem.cadence to str\n'
+        #    exception_type_error_ind = True
 
         try:
            assert self.cadence.lower() in ['once','daily','weekly','biweekly','monthly','quarterly','yearly']
@@ -111,7 +112,7 @@ class BudgetItem:
            exception_value_error_ind = True
 
         try:
-           self.amount = str(self.amount)
+           self.amount = float(self.amount)
         except:
            exception_type_error_message_string += 'failed cast BudgetItem.amount to float\n'
            exception_type_error_ind = True
@@ -122,11 +123,12 @@ class BudgetItem:
            exception_type_error_message_string += 'failed cast BudgetItem.deferrable to bool\n'
            exception_type_error_ind = True
 
-        try:
-           self.memo = str(self.memo)
-        except:
-           exception_type_error_message_string += 'failed cast BudgetItem.memo to str\n'
-           exception_type_error_ind = True
+        self.memo = str(self.memo)
+        # try:
+        #    self.memo = str(self.memo)
+        # except:
+        #    exception_type_error_message_string += 'failed cast BudgetItem.memo to str\n'
+        #    exception_type_error_ind = True
 
 
         if print_debug_messages:
@@ -172,9 +174,9 @@ class BudgetItem:
         JSON_string += "}"
         return JSON_string
 
-    def fromJSON(self,JSON_string):
-        #todo implement BudgetItem.fromJSON()
-        pass
+    # def fromJSON(self,JSON_string):
+    #     #todo implement BudgetItem.fromJSON()
+    #     pass
 
 if __name__ == "__main__":
     import doctest

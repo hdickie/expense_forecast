@@ -98,9 +98,9 @@ class BudgetSet:
         JSON_string += '\n'
         return JSON_string
 
-    def fromJSON(self,JSON_string):
-        #todo implement BudgetSet.fromJSON()
-        pass
+    # def fromJSON(self,JSON_string):
+    #     #todo implement BudgetSet.fromJSON()
+    #     pass
 
 if __name__ == "__main__":
     import doctest

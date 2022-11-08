@@ -242,12 +242,12 @@ class Account:
             exception_value_error_message_string += 'Account.account_type was not one of: checking, prev stmt bal, cur stmt bal, interest, savings, principal balance\n'
             exception_value_error_ind = True
 
-
-        try:
-            self.name = str(name)
-        except:
-            exception_type_error_message_string += 'failed cast Account.name to str\n'
-            exception_type_error_ind = True
+        self.name = str(name)
+        # try:
+        #     self.name = str(name)
+        # except:
+        #     exception_type_error_message_string += 'failed cast Account.name to str\n'
+        #     exception_type_error_ind = True
 
         try:
             self.balance = float(balance)
@@ -309,23 +309,26 @@ class Account:
                 exception_value_error_message_string += "For types other than credit, loan, or savings, Account.apr should be None.\n"
                 exception_value_error_ind = True
 
+        self.interest_cadence = interest_cadence
         if account_type.lower() in ['credit', 'loan', 'savings']:
-            try:
-                self.interest_cadence = str(interest_cadence) #None, Daily, Monthly
-            except:
-                exception_type_error_message_string += 'failed cast Account.interest_cadence to str\n'
-                exception_type_error_ind = True
+            self.interest_cadence = str(interest_cadence)
+            # try:
+            #     self.interest_cadence = str(interest_cadence)
+            # except:
+            #     exception_type_error_message_string += 'failed cast Account.interest_cadence to str\n'
+            #     exception_type_error_ind = True
         else:
             if interest_cadence is not None:
                 exception_value_error_message_string += "For types other than credit, loan, or savings, Account.interest_cadence should be None.\n"
                 exception_value_error_ind = True
 
         if account_type.lower() in ['credit', 'loan', 'savings']:
-            try:
-                self.interest_type = str(interest_type) #None, Simple, Compound
-            except:
-                exception_type_error_message_string += 'failed cast Account.interest_type to str\n'
-                exception_type_error_ind = True
+            self.interest_type = str(interest_type)
+            # try:
+            #     self.interest_type = str(interest_type) #None, Simple, Compound
+            # except:
+            #     exception_type_error_message_string += 'failed cast Account.interest_type to str\n'
+            #     exception_type_error_ind = True
         else:
             if interest_type is not None:
                 exception_value_error_message_string += "For types other than credit, loan, or savings, Account.interest_type should be None.\n"
@@ -438,9 +441,9 @@ class Account:
         JSON_string += "}"
         return JSON_string
 
-    def fromJSON(self,JSON_string):
-        #todo implement Account.fromJSON()
-        pass
+    # def fromJSON(self,JSON_string):
+    #     #todo implement Account.fromJSON()
+    #     pass
 
 
 if __name__ == "__main__":
