@@ -5,7 +5,6 @@ class TestAccountSetMethods(unittest.TestCase):
 
     def test_AccountSet_Constructor(self):
 
-        #TODO change this to use isinstance
         test_account_set = AccountSet.AccountSet()
         self.assertEqual('<class \'AccountSet.AccountSet\'>',str( type( test_account_set ) ) )
 

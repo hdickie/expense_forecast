@@ -187,6 +187,11 @@ class Account:
         ...
         ValueError
 
+        #todo credit tests
+
+        #todo loan tests
+
+        #todo savings tests
 
 
         :param str name: A name for the account. Used to label output columns.
@@ -407,6 +412,9 @@ class Account:
         return single_account_df.to_string()
 
     def toJSON(self):
+        """
+        Get a JSON string representation of the Account object.
+        """
         JSON_string = "{\n"
         JSON_string += "\"Name\":"+"\""+str(self.name)+"\",\n"
         JSON_string += "\"Balance\":" + "\"" + str(self.balance) + "\",\n"
@@ -422,6 +430,10 @@ class Account:
         JSON_string += "\"Minimum_Payment\":" + "\"" + str(self.minimum_payment) + "\"\n"
         JSON_string += "}"
         return JSON_string
+
+    def fromJSON(self,JSON_string):
+        #todo implement Account.fromJSON()
+        pass
 
 
 if __name__ == "__main__":

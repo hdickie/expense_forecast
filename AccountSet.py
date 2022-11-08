@@ -1,6 +1,10 @@
+"""
+Single-line AccountSet description
+
+Multiple-line AccountSet description
+
+"""
 import Account, pandas as pd
-
-
 class AccountSet:
 
     def __init__(self,accounts__list=[]):
@@ -55,6 +59,9 @@ class AccountSet:
             self.accounts.append(account)
 
     def getAccounts(self):
+        """
+        Get a DataFrame representing the AccountSet object.
+        """
         all_accounts_df = pd.DataFrame({'Name':[],'Balance':[],'Previous_Statement_Balance':[],'Min_Balance':[],'Max_Balance':[],
                                         'APR': [], 'Interest_Cadence': [], 'Interest_Type': [], 'Billing_Start_Dt': [],
                                         'Account_Type': [], 'Principal_Balance': [], 'Accrued_Interest': [], 'Minimum_Payment': []
@@ -80,3 +87,27 @@ class AccountSet:
             all_accounts_df.reset_index(drop=True,inplace=True)
 
         return all_accounts_df
+
+    def toJSON(self):
+        """
+        Get a JSON string representation of the AccountSet object.
+        """
+
+        JSON_string="{\n"
+        for i in range(0,len(self.accounts)):
+            account = self.accounts[i]
+            JSON_string+=account.toJSON()
+            if i != len(self.accounts):
+                JSON_string+=","
+            JSON_string+='\n'
+        JSON_string+='\n'
+
+        return JSON_string
+
+    def fromJSON(self,JSON_string):
+        #todo implement AccountSet.fromJSON()
+        pass
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()

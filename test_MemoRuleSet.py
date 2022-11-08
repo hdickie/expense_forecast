@@ -5,7 +5,6 @@ class TestMemoRuleSetMethods(unittest.TestCase):
 
     def test_MemoRuleSet_Constructor(self):
 
-        #TODO change this to use isinstance
         test_memo_rule_set = MemoRuleSet.MemoRuleSet()
         self.assertEqual('<class \'MemoRuleSet.MemoRuleSet\'>',str( type( test_memo_rule_set ) ) )
 

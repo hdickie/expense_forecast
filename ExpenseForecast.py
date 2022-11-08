@@ -1,6 +1,7 @@
 """
+Your module's verbose yet thorough docstring. Single line
 
-Your module's verbose yet thorough docstring.
+Multiple line description
 
 """
 
@@ -573,3 +574,9 @@ class ExpenseForecast:
         """
         #todo this will have to get the cc interest from the memo line
         pass
+
+
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()

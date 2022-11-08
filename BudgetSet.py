@@ -70,3 +70,25 @@ class BudgetSet:
         current_budget_schedule.sort_values(inplace=True,axis=0,by="Date")
         current_budget_schedule.reset_index(inplace=True,drop=True)
         return current_budget_schedule
+
+    def toJSON(self):
+        """
+        Get a string representing the BudgetSet object.
+        """
+        JSON_string = "{\n"
+        for i in range(0, len(self.budget_items)):
+            budget_item = self.budget_items[i]
+            JSON_string += budget_item.toJSON()
+            if i != len(self.budget_items):
+                JSON_string += ","
+            JSON_string += '\n'
+        JSON_string += '\n'
+        return JSON_string
+
+    def fromJSON(self,JSON_string):
+        #todo implement BudgetSet.fromJSON()
+        pass
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()

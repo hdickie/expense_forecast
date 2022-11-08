@@ -21,6 +21,9 @@ class MemoRuleSet:
         self.memo_rules.append(memo_rule)
 
     def getMemoRules(self):
+        """
+        Get a DataFrame representing the MemoRuleSet object.
+        """
         all_memo_rules_df = pd.DataFrame({'memo_regex': [], 'account_from': [], 'account_to': [],
                                              'transaction_priority': []})
 
@@ -35,3 +38,26 @@ class MemoRuleSet:
             all_memo_rules_df.reset_index(drop=True, inplace=True)
 
         return all_memo_rules_df
+
+    def toJSON(self):
+        """
+        Get a string representing the MemoRuleSet object.
+        """
+        JSON_string = "{\n"
+        for i in range(0, len(self.memo_rules)):
+            memo_rule = self.memo_rules[i]
+            JSON_string += memo_rule.toJSON()
+            if i != len(self.memo_rules):
+                JSON_string += ","
+            JSON_string += '\n'
+        JSON_string += '\n'
+
+        return JSON_string
+
+    def fromJSON(self,JSON_string):
+        #todo implement MemoRuleSet.fromJSON()
+        pass
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()

@@ -5,7 +5,6 @@ class TestBudgetSetMethods(unittest.TestCase):
 
     def test_BudgetSet_Constructor(self):
 
-        #TODO change this to use isinstance
         test_budget_set = BudgetSet.BudgetSet()
         self.assertEqual('<class \'BudgetSet.BudgetSet\'>',str( type( test_budget_set ) ) )
 
