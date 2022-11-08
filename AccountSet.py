@@ -9,29 +9,24 @@ class AccountSet:
             self.accounts.append(account)
 
     def __str__(self):
-        return_string = ""
-
-        for account in self.accounts:
-            return_string += str(account) + "\n"
-
-        return return_string
+        return self.getAccounts().to_string()
 
     def __repr__(self):
         return str(self)
 
     def addAccount(self,
                  name = '',
-                 balance = -1,
-                 previous_statement_balance = -1,
-                 min_balance = -1,
-                 max_balance = -1,
+                 balance = 0,
+                 previous_statement_balance = 0,
+                 min_balance = 0,
+                 max_balance = float('Inf'),
                  apr = 0,
                  interest_cadence = 'None',
                  interest_type = 'None',
                  billing_start_date = '2000-01-01',
                  account_type = 'checking',
-                   principal_balance = -1,
-                   accrued_interest = -1,
+                   principal_balance = 0,
+                   accrued_interest = 0,
                    minimum_payment = 0
                  ):
         """ Add an Account to list AccountSet.accounts. """

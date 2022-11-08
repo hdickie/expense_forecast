@@ -9,12 +9,7 @@ class BudgetSet:
             print(budget_item)
 
     def __str__(self):
-        return_string = ""
-        for budget_item in self.budget_items:
-            return_string = str(budget_item.start_date) + " | " + str(budget_item.priority) + " | " + str(budget_item.cadence).ljust(10) + " | "
-            return_string += str(budget_item.amount).ljust(10) + " | " + str(budget_item.memo)
-
-        return return_string
+        return self.getBudgetItems().to_string()
 
     def __repr__(self):
         return str(self)

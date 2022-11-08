@@ -1,4 +1,4 @@
-
+import pandas as pd
 class BudgetItem:
 
     def __init__(self,
@@ -15,12 +15,15 @@ class BudgetItem:
         self.memo = memo
 
     def __str__(self):
-        return_string = ""
+        single_budget_item_df = pd.DataFrame({
+            'start_date': [self.start_date],
+            'priority': [self.priority],
+            'cadence': [self.cadence],
+            'amount': [self.amount],
+            'memo': [self.memo]
+        })
 
-        return_string += str(self.start_date) +" | "+str(self.priority) + " | " + str(self.cadence).ljust(10) + " | "
-        return_string += str(self.amount).ljust(10) + " | " + str(self.memo)
-
-        return return_string
+        return single_budget_item_df.to_string()
 
     def __repr__(self):
         return str(self)

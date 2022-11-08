@@ -15,11 +15,23 @@ from hd_util import *
 
 class ExpenseForecast:
 
-    def __init__(self):
+    def __init__(self,account_set,budget_set,memo_rule_set):
+
+        #todo internal consistency
+        # 1. starting balances must obey account boundaries actually this should be handled in Account constructor
+
+        # 1. if interest cadence is not none, then interest type and billing_start_dt must have valid values
 
         #TODO assert consistency between accountset and budgetset
 
         #todo assert that satisfice memo rules have been defined
+        #for each account with an interest cadence
+
+        #account_set,budget_set,memo_rule_set
+
+        print(account_set)
+        print(budget_set)
+        print(memo_rule_set)
 
         pass
 
@@ -38,13 +50,13 @@ class ExpenseForecast:
             max_in_forecast_for_acct = max(current_column)
 
             try:
-                print(current_column)
-                print('min_in_forecast_for_acct:'+str(min_in_forecast_for_acct))
-                print('max_in_forecast_for_acct:' + str(max_in_forecast_for_acct))
-                print('acct_boundary__min:' + str(acct_boundary__min))
-                print('acct_boundary__max:' + str(acct_boundary__max))
-                print('')
-                print('')
+                # print(current_column)
+                # print('min_in_forecast_for_acct:'+str(min_in_forecast_for_acct))
+                # print('max_in_forecast_for_acct:' + str(max_in_forecast_for_acct))
+                # print('acct_boundary__min:' + str(acct_boundary__min))
+                # print('acct_boundary__max:' + str(acct_boundary__max))
+                # print('')
+                # print('')
 
                 assert float(min_in_forecast_for_acct) >= float(acct_boundary__min)
                 assert float(max_in_forecast_for_acct) <= float(acct_boundary__max)
@@ -54,12 +66,12 @@ class ExpenseForecast:
                 offending_rows__min = forecast_df[current_column < acct_boundary__min]
                 offending_rows__max = forecast_df[current_column > acct_boundary__max]
 
-                print(e)
-                print('Account Boundary Violation for '+str(col_name)+' in ExpenseForecast.account_boundaries_are_violated()')
-                print('Offending Rows: Minimum')
-                print(offending_rows__min.to_string())
-                print('Offending Rows: Maximum')
-                print(offending_rows__max.to_string())
+                # print(e)
+                # print('Account Boundary Violation for '+str(col_name)+' in ExpenseForecast.account_boundaries_are_violated()')
+                # print('Offending Rows: Minimum')
+                # print(offending_rows__min.to_string())
+                # print('Offending Rows: Maximum')
+                # print(offending_rows__max.to_string())
                 return True
         return False
 
@@ -128,6 +140,8 @@ class ExpenseForecast:
         #todo, we make minimum payments on loans and credit cards before interest for this day is calculated
         #in order for this to work, it is easiest if additional payments are made before the due date
 
+        #todo, the account used to make minimum payments should be set accotrding to memo rules, not hard coded as checking
+        #accounts that receive interest accruals should be selected by interest type, not by account type
 
         index_of_checking_column = forecast_df.columns.tolist().index('Checking')
         index_of_memo_column = forecast_df.columns.tolist().index('Memo')
@@ -347,7 +361,117 @@ class ExpenseForecast:
         :param memo_rules_df:
         :return:
         """
-        return self.satisfice(budget_schedule_df, account_set_df, memo_rules_df)
+
+        satisficed_forecast__list = self.satisfice(budget_schedule_df, account_set_df, memo_rules_df)
+        updated_budget_schedule_df = satisficed_forecast__list[0]
+        account_set_df = satisficed_forecast__list[1]
+        forecast_df = satisficed_forecast__list[2]
+
+        print('ENTER computeForecast()')
+        unique_priority_indices = updated_budget_schedule_df.Priority.unique()
+        for priority_index in unique_priority_indices:
+
+            for budget_item_index, budget_item_row in updated_budget_schedule_df.iterrows():
+                print(budget_item_row)
+
+                found_matching_regex = False
+                transaction_was_executed = False
+                relevant_memo_rules_rows_df = memo_rules_df[memo_rules_df.transaction_priority == priority_index]
+                print(relevant_memo_rules_rows_df)
+                for memo_rules_index, memo_rules_row in relevant_memo_rules_rows_df.iterrows():
+
+                    memo_regex_match = re.search(memo_rules_row.memo_regex, budget_item_row.Memo)
+
+                    if memo_regex_match is not None:
+                        # do stuff
+
+                        row_w_date_of_proposed_transaction = forecast_df[forecast_df.Date == budget_item_row.Date]
+                        print(row_w_date_of_proposed_transaction)
+
+                        if memo_rules_row.account_from is not None:
+                            index_of_account_from_column = list(row_w_date_of_proposed_transaction.columns).index(memo_rules_row.account_from)
+
+                        if memo_rules_row.account_to is not None:
+                            index_of_account_to_column = list(row_w_date_of_proposed_transaction.columns).index(memo_rules_row.account_to)
+
+
+                        #todo, here, the decision has to be made whether or not to execute the transaction
+                        if memo_rules_row.account_from is not None and memo_rules_row.account_to is None:  # e.g. income
+                            row_w_date_of_proposed_transaction.iloc[0, index_of_account_from_column] += budget_item_row.Amount
+                            transaction_was_executed = True
+                        elif memo_rules_row.account_to is not None and memo_rules_row.account_from is None:  # e.g. spend
+                            row_w_date_of_proposed_transaction.iloc[0, index_of_account_to_column] += budget_item_row.Amount
+                            transaction_was_executed = True
+                        elif memo_rules_row.account_from is not None and memo_rules_row.account_to is not None:  # e.g. xfer bw accts
+                            row_w_date_of_proposed_transaction.iloc[0, index_of_account_to_column] += budget_item_row.Amount
+                            row_w_date_of_proposed_transaction.iloc[0, index_of_account_from_column] -= budget_item_row.Amount
+                            transaction_was_executed = True
+                        else:
+                            transaction_was_executed = False #this is redundant, but included so code is readable
+
+                        found_matching_regex = True
+                        break
+
+                    if not found_matching_regex:
+                        print(
+                            'We received a budget item that we do not have a case to handle. this is a show stopping error.')
+                        print('Exiting.')
+                    else:  # update memo
+                        if row_w_date_of_proposed_transaction.loc[0, 'Memo'] != '':
+                            row_w_date_of_proposed_transaction.loc[0, 'Memo'] = row_w_date_of_proposed_transaction.loc[0, 'Memo'] + '; '
+
+                        new_memo_text = budget_item_row.Memo + ' , '
+                        if memo_rules_row.account_from is not None:
+                            new_memo_text = new_memo_text + str(memo_rules_row.account_from) + ' ' + str(
+                                -1 * abs(budget_item_row.Amount)) + ' '
+
+                        if memo_rules_row.account_to is not None:
+                            new_memo_text = new_memo_text + str(memo_rules_row.account_to) + ' ' + str(budget_item_row.Amount) + ' '
+
+                        row_w_date_of_proposed_transaction.loc[0, 'Memo'] = row_w_date_of_proposed_transaction.loc[0, 'Memo'] + new_memo_text
+
+                if transaction_was_executed:
+                    #todo resatisficing must occur
+                    #the row in question has been changed. we keep the row w the transaction and all previous rows.
+                    #we submit all later rows for re-satsificing
+                    #Note that satisfice returns the first row the same as it was submitted, so we keep only
+                    #those rows w less than date, and for the date = same as transaction and alter, we submit to satisfice
+
+                    date_of_transaction_df = row_w_date_of_proposed_transaction.iloc[0,0]
+                    rows_to_keep_df = forecast_df[forecast_df.Date < date_of_transaction_df.Date]
+
+                    #satisfice iterates over budget schedule items to determine the date, so we filter the budget schedule items
+                    only_future_budget_schedule_df = budget_schedule_df[budget_schedule_df.Date > date_of_transaction_df.Date]
+
+                    #account initial balances must match the first row of the forecast that we submit
+
+                    print(account_set_df)
+                    print(row_w_date_of_proposed_transaction)
+
+                    #memo rules are the same
+
+                    resatisficed_rows_df = self.satisfice(only_future_budget_schedule_df, account_set_df, memo_rules_df)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        return forecast_df
+        #return self.satisfice(budget_schedule_df, account_set_df, memo_rules_df)
 
 
     def plotOverall(self,forecast_df,output_path):

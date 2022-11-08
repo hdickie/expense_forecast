@@ -1,15 +1,12 @@
-import Account, BudgetItem, BudgetSet, ExpenseForecast, AccountSet, datetime, pandas as pd, MemoRule, MemoRuleSet
+import BudgetSet, ExpenseForecast, AccountSet, datetime, pandas as pd, MemoRuleSet
 pd.options.mode.chained_assignment = None #apparently this warning can throw false positives???
-
-import sys, os
-from termcolor import colored, cprint
-
-os.system('color')
 
 if __name__ == '__main__':
 
     #Define starting parameters
+    num_days = 365
     start_date_YYYYMMDD = datetime.datetime.now().strftime('%Y%m%d')
+    end_date_YYYYMMDD = (datetime.datetime.now() + datetime.timedelta(days=num_days)).strftime('%Y%m%d')
 
     starting_balances = {}
     starting_balances['Checking'] = 0
@@ -135,6 +132,18 @@ if __name__ == '__main__':
                                                    amount=1200,
                                                    memo='Income')
 
+    # budget_set.addBudgetItem(start_date='2000-01-06',
+    #                          priority=2,
+    #                          cadence='monthly',
+    #                          amount="*",
+    #                          memo='Additional Credit Card Payment') #todo this is what we want to make work
+
+    budget_set.addBudgetItem(start_date='2023-01-06',
+                             priority=2,
+                             cadence='monthly',
+                             amount=1000,
+                             memo='Additional Credit Card Payment') #this is what we want to make work
+
 
     budget_schedule_df = budget_set.getBudgetSchedule(start_date_YYYYMMDD,365)
 
@@ -152,11 +161,17 @@ if __name__ == '__main__':
         account_to="Checking",
         transaction_priority=1
     )
+    memo_rule_set.addMemoRule(
+        memo_regex="Additional Credit Card Payment",
+        account_from="Checking",
+        account_to="Credit",
+        transaction_priority=2
+    )
     memo_rules_df = memo_rule_set.getMemoRules()
 
     #Begin simulation
-    x = ExpenseForecast.ExpenseForecast()
-    y = x.satisfice(budget_schedule_df, account_set_df,memo_rules_df)
+    x = ExpenseForecast.ExpenseForecast(account_set,budget_set,memo_rule_set)
+    forecast_df = x.computeForecast(start_date_YYYYMMDD,end_date_YYYYMMDD)
 
 
     #QC output
@@ -169,9 +184,9 @@ if __name__ == '__main__':
     # print("-------------------------------")
 
 
-    y[2].to_csv('C:/Users/HumeD/Documents/out.csv',index=False,sep="|")
+    forecast_df.to_csv('C:/Users/HumeD/Documents/out.csv',index=False,sep="|")
 
-    forecast_df = y[2]
+
     x.plotOverall(forecast_df,'C:/Users/HumeD/Documents/overall.png')
 
     x.plotAccountTypeTotals(forecast_df,'C:/Users/HumeD/Documents/account_type_totals.png')

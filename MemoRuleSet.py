@@ -9,18 +9,14 @@ class MemoRuleSet:
             self.memo_rules.append(memo_rule)
 
     def __str__(self):
-        return_string = ""
-
-        for memo_rule in self.memo_rules:
-            return_string += str(memo_rule) + "\n"
-
-        return return_string
+        return self.getMemoRules().to_string()
 
     def __repr__(self):
         return str(self)
 
     def addMemoRule(self,memo_regex='',account_from='',account_to='',transaction_priority=''):
         """ Add a MemoRule to list MemoRuleSet.memo_rules. """
+        #todo validation
         memo_rule = MemoRule.MemoRule(memo_regex,account_from,account_to,transaction_priority)
         self.memo_rules.append(memo_rule)
 
