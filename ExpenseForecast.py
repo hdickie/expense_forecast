@@ -19,7 +19,6 @@ class ExpenseForecast:
     def __init__(self,account_set,budget_set,memo_rule_set):
 
         #todo internal consistency
-        # 1. starting balances must obey account boundaries actually this should be handled in Account constructor
 
         # 1. if interest cadence is not none, then interest type and billing_start_dt must have valid values
 

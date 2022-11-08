@@ -22,8 +22,10 @@ def generate_date_sequence(start_date_YYYYMMDD,num_days,cadence):
 
         return_series = first_of_each_relevant_month + datetime.timedelta(days=day_delta)
     elif cadence.lower() == "quarterly":
+        #todo check if this needs an adjustment like the monthly case did
         return_series = pd.date_range(start_date,end_date,freq='Q')
     elif cadence.lower() == "yearly":
+        # todo check if this needs an adjustment like the monthly case did
         return_series = pd.date_range(start_date,end_date,freq='Y')
 
     return return_series

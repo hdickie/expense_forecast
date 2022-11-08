@@ -47,7 +47,7 @@ class MemoRuleSet:
         for i in range(0, len(self.memo_rules)):
             memo_rule = self.memo_rules[i]
             JSON_string += memo_rule.toJSON()
-            if i != len(self.memo_rules):
+            if i+1 != len(self.memo_rules):
                 JSON_string += ","
             JSON_string += '\n'
         JSON_string += '\n'

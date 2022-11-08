@@ -48,7 +48,13 @@ class BudgetSet:
         return all_budget_items_df
 
     def getBudgetSchedule(self,start_date_YYYYMMDD,num_days):
+        """
+        Generate a dataframe of proposed transactions
 
+        :param start_date_YYYYMMDD:
+        :param num_days:
+        :return:
+        """
         current_budget_schedule = pd.DataFrame({'Date':[],'Priority':[],'Amount':[],'Memo':[]})
 
         for budget_item in self.budget_items:
@@ -79,7 +85,7 @@ class BudgetSet:
         for i in range(0, len(self.budget_items)):
             budget_item = self.budget_items[i]
             JSON_string += budget_item.toJSON()
-            if i != len(self.budget_items):
+            if i+1 != len(self.budget_items):
                 JSON_string += ","
             JSON_string += '\n'
         JSON_string += '\n'
