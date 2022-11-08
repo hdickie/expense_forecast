@@ -14,21 +14,6 @@ class BudgetSet:
     def __repr__(self):
         return str(self)
 
-    def addBudgetItem(self,
-                 start_date = '',
-                 priority = '',
-                 cadence='',
-                 amount=0,
-                 memo=''):
-        """ Add a BudgetItem to list BudgetItem.budget_items. """
-        budget_item = BudgetItem.BudgetItem(start_date,
-                 priority,
-                 cadence,
-                 amount,
-                 memo)
-
-        self.budget_items.append(budget_item)
-
     def getBudgetItems(self):
         all_budget_items_df = pd.DataFrame({'start_date': [], 'priority': [], 'cadence': [], 'amount': [],
                                         'memo': []
@@ -46,6 +31,7 @@ class BudgetSet:
             all_budget_items_df.reset_index(drop=True, inplace=True)
 
         return all_budget_items_df
+
 
     def getBudgetSchedule(self,start_date_YYYYMMDD,num_days):
         """
@@ -76,6 +62,27 @@ class BudgetSet:
         current_budget_schedule.sort_values(inplace=True,axis=0,by="Date")
         current_budget_schedule.reset_index(inplace=True,drop=True)
         return current_budget_schedule
+
+    def addBudgetItem(self,
+                 start_date_YYYYMMDD,
+                 priority,
+                 cadence,
+                 amount,
+                 deferrable,
+                 memo,
+                 print_debug_messages = True,
+                 throw_exceptions = True):
+        """ Add a BudgetItem to list BudgetItem.budget_items. """
+        budget_item = BudgetItem.BudgetItem(start_date_YYYYMMDD,
+                 priority,
+                 cadence,
+                 amount,
+                 deferrable,
+                 memo,print_debug_messages,throw_exceptions)
+
+        #todo error when duplicate budget item. (user should make memo different its not that hard.)
+        #that is, if amount and date are the same, different memos are required. its fine otherwise
+        self.budget_items.append(budget_item)
 
     def toJSON(self):
         """

@@ -104,9 +104,10 @@ class BudgetItem:
            exception_type_error_ind = True
 
         try:
-           assert self.cadence.lower() in ['once','weekly','biweekly','monthly','quarterly','yearly']
+           assert self.cadence.lower() in ['once','daily','weekly','biweekly','monthly','quarterly','yearly']
         except:
-           exception_value_error_message_string += 'BudgetItem.cadence is not one of: once, weekly, biweekly, monthly, quarterly, yearly\n'
+           exception_value_error_message_string += 'BudgetItem.cadence is not one of: once, daily, weekly, biweekly, monthly, quarterly, yearly\n'
+           exception_value_error_message_string += 'Value was:'+str(self.cadence)+'\n'
            exception_value_error_ind = True
 
         try:

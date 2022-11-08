@@ -74,13 +74,14 @@ class MemoRule:
            self.transaction_priority = int(self.transaction_priority)
         except:
            exception_type_error_message_string += 'failed cast MemoRule.transaction_priority to int\n'
+           exception_type_error_message_string += "Value was:" + str(self.transaction_priority) + '\n'
            exception_type_error_ind = True
 
         try:
             re.search(self.memo_regex,'')
         except:
             exception_value_error_message_string += "An exception was thrown when MemoRule.memo_regex was interpreted as a regex.\n"
-            exception_value_error_message_string += '\n'
+            exception_value_error_message_string += "Value was:"+str(self.memo_regex)+'\n'
             exception_value_error_ind = True
 
         try:
