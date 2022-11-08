@@ -8,20 +8,19 @@ class TestMemoRuleMethods(unittest.TestCase):
         self.assertEqual('<class \'MemoRule.MemoRule\'>',str( type( MemoRule.MemoRule(memo_regex='.*',account_from='',account_to='',transaction_priority=1) ) ) )
 
         #provoking exceptions for test coverage
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             MemoRule.MemoRule(memo_regex=None,account_from=None,account_to=None,transaction_priority=None)
 
-        with self.assertRaises(TypeError):
+        with self.assertRaises(ValueError):
             MemoRule.MemoRule(memo_regex="*",account_from='',account_to='',transaction_priority=1)
 
-
-    def test_str(self):
+    def test_MemoRule_str(self):
         self.assertIsNotNone(str(MemoRule.MemoRule(memo_regex='.*',account_from='',account_to='',transaction_priority=1)))
 
-    def test_repr(self):
+    def test_MemoRule_repr(self):
         self.assertIsNotNone(repr(MemoRule.MemoRule(memo_regex='.*',account_from='',account_to='',transaction_priority=1)))
 
-    def test_toJSON(self):
+    def test_MemoRule_toJSON(self):
 
         test_memo_rule = MemoRule.MemoRule(memo_regex='.*',account_from='',account_to='',transaction_priority=1)
         test_memo_rule_JSON = test_memo_rule.toJSON()

@@ -36,6 +36,7 @@ class TestBudgetSetMethods(unittest.TestCase):
         test_budget_set.addBudgetItem(start_date_YYYYMMDD='20220101',priority=1,cadence='daily',amount=0,deferrable=False,memo='test'
                                       #,throw_exceptions=False
                                       )
+        test_budget_set.addBudgetItem(start_date_YYYYMMDD='20220101', priority=1, cadence='once', amount=0,deferrable=False, memo='test 0')
         test_budget_set.addBudgetItem(start_date_YYYYMMDD='20220101', priority=1, cadence='weekly',amount=0,deferrable=False, memo='test 1')
         test_budget_set.addBudgetItem(start_date_YYYYMMDD='20220101', priority=1, cadence='biweekly',amount=0,deferrable=False, memo='test 2')
         test_budget_set.addBudgetItem(start_date_YYYYMMDD='20220101', priority=1, cadence='monthly',amount=0,deferrable=False, memo='test 3')
