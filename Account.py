@@ -238,8 +238,17 @@ class Account:
         exception_value_error_ind = False
         exception_value_error_message_string = ""
 
-        if account_type.lower() not in ['checking','prev stmt bal','cur stmt bal','savings','principal balance','interest']:
-            exception_value_error_message_string += 'Account.account_type was not one of: checking, prev stmt bal, cur stmt bal, interest, savings, principal balance\n'
+        if account_type.lower() in ['credit','loan']:
+            exception_value_error_message_string += 'WARNING: Account.account_type was one of: credit, loan\n'
+            exception_value_error_message_string += 'Note that these values are accepted by AccountSet.addAccount()\n'
+            exception_value_error_message_string += 'but not by the class Account directly \n'
+            exception_value_error_message_string += 'Value was:' + str(account_type.lower()) + "\n"
+            exception_value_error_ind = True
+            raise ValueError #honestly no need to continue if we hit this
+
+        if account_type.lower() not in ['checking','prv stmt bal','curr stmt bal','savings','principal balance','interest']:
+            exception_value_error_message_string += 'Account.account_type was not one of: checking, prv stmt bal, curr stmt bal, interest, savings, principal balance\n'
+            exception_value_error_message_string += 'Value was:'+str(account_type.lower())+"\n"
             exception_value_error_ind = True
 
         self.name = str(name)
@@ -255,16 +264,17 @@ class Account:
             exception_type_error_message_string += 'failed cast Account.balance to float\n'
             exception_type_error_ind = True
 
-        if account_type.lower() in ['credit']:
-            try:
-                self.previous_statement_balance = float(previous_statement_balance)
-            except:
-                exception_type_error_message_string += 'failed cast Account.previous_statement_balance to float\n'
-                exception_type_error_ind = True
-        else:
-            if previous_statement_balance is not None:
-                exception_value_error_message_string += "For types other than credit, Account.previous_statement_balance should be None.\n"
-                exception_value_error_ind = True
+        # if account_type.lower() in ['credit']:
+        #     try:
+        #         self.previous_statement_balance = float(previous_statement_balance)
+        #     except:
+        #         exception_type_error_message_string += 'failed cast Account.previous_statement_balance to float\n'
+        #         exception_type_error_ind = True
+        # else:
+        #     if previous_statement_balance is not None:
+        #         exception_value_error_message_string += "For types other than credit, Account.previous_statement_balance should be None.\n"
+        #         exception_value_error_message_string += 'Value was:' + str(previous_statement_balance)+"\n"
+        #         exception_value_error_ind = True
 
 
         try:
@@ -298,7 +308,7 @@ class Account:
             exception_value_error_message_string += 'Account.max_balance was less than Account.min_balance\n'
             exception_value_error_ind = True
 
-        if account_type.lower() in ['credit','loan','savings']:
+        if account_type.lower() in ['prv stmt bal','principal balance','savings']:
             try:
                 self.apr = float(apr)
             except:
@@ -306,11 +316,12 @@ class Account:
                 exception_type_error_ind = True
         else:
             if apr is not None:
-                exception_value_error_message_string += "For types other than credit, loan, or savings, Account.apr should be None.\n"
+                exception_value_error_message_string += "For types other than prv stmt bal, principal balance, or savings, Account.apr should be None.\n"
+                exception_value_error_message_string += 'Value was:' + str(apr)+"\n"
                 exception_value_error_ind = True
 
         self.interest_cadence = interest_cadence
-        if account_type.lower() in ['credit', 'loan', 'savings']:
+        if account_type.lower() in ['prv stmt bal','principal balance','savings']:
             self.interest_cadence = str(interest_cadence)
             # try:
             #     self.interest_cadence = str(interest_cadence)
@@ -319,10 +330,11 @@ class Account:
             #     exception_type_error_ind = True
         else:
             if interest_cadence is not None:
-                exception_value_error_message_string += "For types other than credit, loan, or savings, Account.interest_cadence should be None.\n"
+                exception_value_error_message_string += "For types other than prv stmt bal,principal balance,savings, Account.interest_cadence should be None.\n"
+                exception_value_error_message_string += 'Value was:' + str(interest_cadence)+"\n"
                 exception_value_error_ind = True
 
-        if account_type.lower() in ['credit', 'loan', 'savings']:
+        if account_type.lower() in ['prv stmt bal','principal balance','savings']:
             self.interest_type = str(interest_type)
             # try:
             #     self.interest_type = str(interest_type) #None, Simple, Compound
@@ -331,10 +343,11 @@ class Account:
             #     exception_type_error_ind = True
         else:
             if interest_type is not None:
-                exception_value_error_message_string += "For types other than credit, loan, or savings, Account.interest_type should be None.\n"
+                exception_value_error_message_string += "For types other than prv stmt bal,principal balance,savings, Account.interest_type should be None.\n"
+                exception_value_error_message_string += 'Value was:' + str(interest_type)+"\n"
                 exception_value_error_ind = True
 
-        if account_type.lower() in ['credit', 'loan', 'savings']:
+        if account_type.lower() in ['prv stmt bal','principal balance','savings']:
             try:
                 self.billing_start_date = datetime.datetime.strptime(billing_start_date_YYYYMMDD,'%Y%m%d')
             except:
@@ -342,7 +355,8 @@ class Account:
                 exception_type_error_ind = True
         else:
             if billing_start_date_YYYYMMDD is not None:
-                exception_value_error_message_string += "For types other than credit, loan, or savings, Account.billing_start_date should be None.\n"
+                exception_value_error_message_string += "For types other than prv stmt bal,principal balance,savings, Account.billing_start_date should be None.\n"
+                exception_value_error_message_string += 'Value was:' + str(billing_start_date_YYYYMMDD)+"\n"
                 exception_value_error_ind = True
 
         if account_type.lower() in ['loan']:
@@ -354,9 +368,10 @@ class Account:
         else:
             if principal_balance is not None:
                 exception_value_error_message_string += "For types other than loan, Account.principal_balance should be None.\n"
+                exception_value_error_message_string += 'Value was:' + str(principal_balance)+"\n"
                 exception_value_error_ind = True
 
-        if account_type.lower() in ['loan']:
+        if account_type.lower() in ['principal balance']:
             try:
                 self.accrued_interest = float(accrued_interest)
             except:
@@ -364,10 +379,11 @@ class Account:
                 exception_type_error_ind = True
         else:
             if accrued_interest is not None:
-                exception_value_error_message_string += "For types other than loan, Account.accrued_interest should be None.\n"
+                exception_value_error_message_string += "For types other than principal balance, Account.accrued_interest should be None.\n"
+                exception_value_error_message_string += 'Value was:' + str(accrued_interest)+"\n"
                 exception_value_error_ind = True
 
-        if account_type.lower() in ['credit','loan']:
+        if account_type.lower() in ['prv stmt bal','principal balance']:
             try:
                 self.minimum_payment = float(minimum_payment)
             except:
@@ -375,10 +391,11 @@ class Account:
                 exception_type_error_ind = True
         else:
             if minimum_payment is not None:
-                exception_value_error_message_string += "For types other than credit or loan, Account.minimum_payment should be None.\n"
+                exception_value_error_message_string += "For types other than prv stmt bal or principal balance, Account.minimum_payment should be None.\n"
+                exception_value_error_message_string += 'Value was:' + str(minimum_payment)+"\n"
                 exception_value_error_ind = True
 
-        if account_type.lower() in ['loan']:
+        if account_type.lower() in ['principal balance']:
             if principal_balance + accrued_interest != balance:
                 exception_value_error_message_string += "Account.Principal_balance + Account.accrued_interest != Account.balance.\n"
                 exception_value_error_ind = True
@@ -409,14 +426,15 @@ class Account:
             'Balance': [self.balance],
             'Min Balance': [self.min_balance],
             'Max Balance': [self.max_balance],
+            'Account Type': [self.account_type],
+            'Billing Start Date': [self.billing_start_date],
+            'Interest Type': [self.interest_type],
             'APR': [self.apr],
             'Interest Cadence': [self.interest_cadence],
-            'Interest Type': [self.interest_type],
-            'Billing Start Date': [self.billing_start_date],
-            'Account Type': [self.account_type],
+            'Minimum Payment': [self.minimum_payment],
+            'Previpus Statement Balance': [self.previous_statement_balance],
             'Principal Balance': [self.principal_balance],
-            'Accrued Interest': [self.accrued_interest],
-            'Minimum Payment': [self.minimum_payment]
+            'Accrued Interest': [self.accrued_interest]
         })
 
         return single_account_df.to_string()
@@ -430,14 +448,15 @@ class Account:
         JSON_string += "\"Balance\":" + "\"" + str(self.balance) + "\",\n"
         JSON_string += "\"Min_Balance\":" + "\"" + str(self.min_balance) + "\",\n"
         JSON_string += "\"Max_Balance\":" + "\"" + str(self.max_balance) + "\",\n"
+        JSON_string += "\"Account_Type\":" + "\"" + str(self.account_type) + "\",\n"
+        JSON_string += "\"Billing_Start_Date\":" + "\"" + str(self.billing_start_date) + "\",\n"
+        JSON_string += "\"Interest_Type\":" + "\"" + str(self.interest_type) + "\",\n"
         JSON_string += "\"APR\":" + "\"" + str(self.apr) + "\",\n"
         JSON_string += "\"Interest_Cadence\":" + "\"" + str(self.interest_cadence) + "\",\n"
-        JSON_string += "\"Interest_Type\":" + "\"" + str(self.interest_type) + "\",\n"
-        JSON_string += "\"Billing_Start_Date\":" + "\"" + str(self.billing_start_date) + "\",\n"
-        JSON_string += "\"Account_Type\":" + "\"" + str(self.account_type) + "\",\n"
+        JSON_string += "\"Minimum_Payment\":" + "\"" + str(self.minimum_payment) + "\"\n"
+        JSON_string += "\"Previous_Statement_Balance\":" + "\"" + str(self.previous_statement_balance) + "\"\n"
         JSON_string += "\"Principal_Balance\":" + "\"" + str(self.principal_balance) + "\",\n"
         JSON_string += "\"Accrued_Interest\":" + "\"" + str(self.accrued_interest) + "\",\n"
-        JSON_string += "\"Minimum_Payment\":" + "\"" + str(self.minimum_payment) + "\"\n"
         JSON_string += "}"
         return JSON_string
 
@@ -446,6 +465,6 @@ class Account:
     #     pass
 
 
-#this is written this way so that test coverage can reach 100%
+#written in one line so that test coverage can reach 100%
 if __name__ == "__main__": import doctest ; doctest.testmod()
 

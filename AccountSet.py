@@ -74,6 +74,10 @@ class AccountSet:
         ... throw_exceptions = False
         ... )]).toJSON())
 
+        #todo example of adding a loan account. (copy this into the unittest)
+
+        #todo example of adding a credit account. (copy this into the unittest)
+
         """
 
         # IMPORTANT NOTE: the previous statement balance and interest accounts should be the index after
@@ -86,16 +90,18 @@ class AccountSet:
                 balance=account.previous_statement_balance,
                 min_balance=account.min_balance,
                 max_balance=account.max_balance,
-                account_type="Prev Stmt Bal",
+                account_type="Prv Stmt Bal",
                 billing_start_date_YYYYMMDD = account.billing_start_date,
                 interest_type = account.interest_type,
                 apr = account.apr,
                 interest_cadence = account.interest_cadence,
                 minimum_payment = account.minimum_payment,
+                previous_statement_balance = None,
+                principal_balance = None,
                 throw_exceptions=False)
 
                 account.name += ": Cur Stmt Bal"
-                account.account_type = "Cur Stmt Bal"
+                account.account_type = "Curr Stmt Bal"
                 account.interest_type = None
                 account.apr = None
                 account.interest_cadence = None
@@ -105,8 +111,7 @@ class AccountSet:
                 self.accounts.append(account)
                 self.accounts.append(prev_stmt_bal_acct)
             elif account.account_type == "loan":
-                # todo create interest account
-                # todo also set appropriate values to None
+
                 loan_interest_acct = Account.Account(name = str(account.name)+': Interest',  # no default because it is a required field
                 balance = float(account.accrued_interest),
                 min_balance = 0,
@@ -117,7 +122,7 @@ class AccountSet:
                 apr = None,
                 interest_cadence = None,
                 minimum_payment = None,
-                previous_statement_balance = None,
+                previous_statement_balance = None, #todo there is something wrong here
                 principal_balance = None,
                 accrued_interest = None,
                 throw_exceptions=False
@@ -155,32 +160,97 @@ class AccountSet:
                  print_debug_messages = True,
                  throw_exceptions = True
                  ):
-
-        """ Add an Account to list AccountSet.accounts. For credit and loan type accounts, previous statement balance and interest accounts are created.
-
+        """
+        Add an Account to list AccountSet.accounts. For credit and loan type accounts, previous statement balance and interest accounts are created.
         """
 
         #TODO this should be based on interest type or interest AND account type
         if account_type.lower() == 'loan':
-            account = Account.Account(name+': Principal Balance', balance, previous_statement_balance, min_balance, max_balance, apr, interest_cadence, interest_type,
-                                      billing_start_date_YYYYMMDD, 'Principal Balance', principal_balance, None,minimum_payment,print_debug_messages,throw_exceptions)
+            account = Account.Account(name = name+': Principal Balance',
+                                      balance = principal_balance,
+                                      min_balance = min_balance,
+                                      max_balance = max_balance,
+                                      account_type = 'Principal Balance',
+                                      billing_start_date_YYYYMMDD = billing_start_date_YYYYMMDD,
+                                      interest_type = interest_type,
+                                      apr = apr,
+                                      interest_cadence = interest_cadence,
+                                      minimum_payment = minimum_payment,
+                                      previous_statement_balance = None,
+                                      principal_balance = None,
+                                      accrued_interest = None,
+                                      print_debug_messages = print_debug_messages,
+                                      throw_exceptions = throw_exceptions)
             self.accounts.append(account)
 
-            account = Account.Account(name+': Interest', balance, previous_statement_balance, min_balance, max_balance, apr, interest_cadence, interest_type,
-                                      billing_start_date_YYYYMMDD, 'Interest', None, accrued_interest,minimum_payment,print_debug_messages,throw_exceptions)
+
+            account = Account.Account(name = name+': Interest',
+                                      balance=accrued_interest,
+                                      min_balance=min_balance,
+                                      max_balance=max_balance,
+                                      account_type='Interest',
+                                      billing_start_date_YYYYMMDD=None,
+                                      interest_type=None,
+                                      apr=None,
+                                      interest_cadence=None,
+                                      minimum_payment=None,
+                                      previous_statement_balance=None,
+                                      principal_balance=None,
+                                      accrued_interest=None,
+                                      print_debug_messages=print_debug_messages,
+                                      throw_exceptions=throw_exceptions)
             self.accounts.append(account)
 
         elif account_type.lower() == 'credit':
-            account = Account.Account(name+': Current Statement Balance', balance, 0, min_balance, max_balance, apr, interest_cadence, interest_type,
-                                      billing_start_date_YYYYMMDD, 'Current Statement Balance', principal_balance, None,minimum_payment,print_debug_messages,throw_exceptions)
+            account = Account.Account(name = name+': Curr Stmt Bal',
+                                      balance = balance,
+                                      min_balance = min_balance,
+                                      max_balance = max_balance,
+                                      account_type = 'Curr Stmt Bal',
+                                      billing_start_date_YYYYMMDD = None,
+                                      interest_type = None,
+                                      apr = None,
+                                      interest_cadence = None,
+                                      minimum_payment = None,
+                                      previous_statement_balance = None,
+                                      principal_balance = None,
+                                      accrued_interest = None,
+                                      print_debug_messages = print_debug_messages,
+                                      throw_exceptions = throw_exceptions)
             self.accounts.append(account)
 
-            account = Account.Account(name+': Previous Statement Balance', previous_statement_balance, 0, min_balance, max_balance, apr, interest_cadence, interest_type,
-                                      billing_start_date_YYYYMMDD, 'Previous Statement Balance', principal_balance, None,minimum_payment,print_debug_messages,throw_exceptions)
+            account = Account.Account(name = name+': Prv Stmt Bal',
+                                      balance = previous_statement_balance,
+                                      min_balance = min_balance,
+                                      max_balance = max_balance,
+                                      account_type = 'Prv Stmt Bal',
+                                      billing_start_date_YYYYMMDD = billing_start_date_YYYYMMDD,
+                                      interest_type = interest_type,
+                                      apr = apr,
+                                      interest_cadence = interest_cadence,
+                                      minimum_payment = minimum_payment,
+                                      previous_statement_balance = None,
+                                      principal_balance = None,
+                                      accrued_interest = None,
+                                      print_debug_messages = print_debug_messages,
+                                      throw_exceptions = throw_exceptions)
             self.accounts.append(account)
         else:
-            account = Account.Account(name, balance, previous_statement_balance, min_balance, max_balance, apr, interest_cadence, interest_type,
-                                      billing_start_date_YYYYMMDD, account_type, principal_balance, accrued_interest,minimum_payment,print_debug_messages,throw_exceptions)
+            account = Account.Account(name = name,
+                                      balance = balance,
+                                      min_balance = min_balance,
+                                      max_balance = max_balance,
+                                      account_type = account_type,
+                                      billing_start_date_YYYYMMDD = billing_start_date_YYYYMMDD,
+                                      interest_type = interest_type,
+                                      apr = apr,
+                                      interest_cadence = interest_cadence,
+                                      minimum_payment = minimum_payment,
+                                      previous_statement_balance = previous_statement_balance,
+                                      principal_balance = principal_balance,
+                                      accrued_interest = accrued_interest,
+                                      print_debug_messages = print_debug_messages,
+                                      throw_exceptions = throw_exceptions)
             self.accounts.append(account)
 
     def getAccounts(self):
@@ -212,25 +282,35 @@ class AccountSet:
         }
         <BLANKLINE>
         """
-        all_accounts_df = pd.DataFrame({'Name':[],'Balance':[],'Previous_Statement_Balance':[],'Min_Balance':[],'Max_Balance':[],
-                                        'APR': [], 'Interest_Cadence': [], 'Interest_Type': [], 'Billing_Start_Dt': [],
-                                        'Account_Type': [], 'Principal_Balance': [], 'Accrued_Interest': [], 'Minimum_Payment': []
+        all_accounts_df = pd.DataFrame({'Name':[],
+                                        'Balance':[],
+                                        'Min_Balance':[],
+                                        'Max_Balance':[],
+                                        'Account_Type': [],
+                                        'Billing_Start_Dt': [],
+                                        'Interest_Type': [],
+                                        'APR': [],
+                                        'Interest_Cadence': [],
+                                        'Minimum_Payment': [],
+                                        'Previous_Statement_Balance': [],
+                                        'Principal_Balance': [],
+                                        'Accrued_Interest': []
                                         })
 
         for account in self.accounts:
             new_account_row_df = pd.DataFrame({'Name': [account.name],
                                                'Balance': [account.balance],
-                                               'Previous_Statement_Balance': [account.previous_statement_balance],
                                                'Min_Balance': [account.min_balance],
                                                'Max_Balance': [account.max_balance],
+                                               'Account_Type': [account.account_type],
+                                               'Billing_Start_Dt': [account.billing_start_date],
+                                               'Interest_Type': [account.interest_type],
                                                'APR': [account.apr],
                                                'Interest_Cadence': [account.interest_cadence],
-                                               'Interest_Type': [account.interest_type],
-                                               'Billing_Start_Dt': [account.billing_start_date],
-                                               'Account_Type': [account.account_type],
+                                               'Minimum_Payment': [account.minimum_payment],
+                                               'Previous_Statement_Balance': [account.previous_statement_balance],
                                                'Principal_Balance': [account.principal_balance],
-                                               'Accrued_Interest': [account.accrued_interest],
-                                               'Minimum_Payment': [account.minimum_payment]
+                                               'Accrued_Interest': [account.accrued_interest]
                                             })
 
             all_accounts_df = pd.concat([all_accounts_df, new_account_row_df], axis=0)
@@ -260,5 +340,5 @@ class AccountSet:
     #     #todo implement AccountSet.fromJSON()
     #     pass
 
-#this is written this way so that test coverage can reach 100%
+#written in one line so that test coverage can reach 100%
 if __name__ == "__main__": import doctest ; doctest.testmod()

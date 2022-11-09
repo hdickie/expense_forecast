@@ -178,5 +178,5 @@ class BudgetItem:
     #     #todo implement BudgetItem.fromJSON()
     #     pass
 
-#this is written this way so that test coverage can reach 100%
+#written in one line so that test coverage can reach 100%
 if __name__ == "__main__": import doctest ; doctest.testmod()

@@ -17,7 +17,7 @@ class TestAccountMethods(unittest.TestCase):
         #Account.Account(name='Test Account')
 
         # check that the right exceptions are raised
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             Account.Account(name='test account',
                             balance='X',
                             min_balance=0,
