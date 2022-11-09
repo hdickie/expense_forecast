@@ -85,57 +85,18 @@ class AccountSet:
 
         self.accounts = []
         for account in accounts__list:
-            if account.account_type == "credit":
-                prev_stmt_bal_acct = Account.Account(name=account.name+": Prev Stmt Bal",
-                balance=account.previous_statement_balance,
-                min_balance=account.min_balance,
-                max_balance=account.max_balance,
-                account_type="Prv Stmt Bal",
-                billing_start_date_YYYYMMDD = account.billing_start_date,
-                interest_type = account.interest_type,
-                apr = account.apr,
-                interest_cadence = account.interest_cadence,
-                minimum_payment = account.minimum_payment,
-                previous_statement_balance = None,
-                principal_balance = None,
-                throw_exceptions=False)
+            self.accounts.append(account)
 
-                account.name += ": Cur Stmt Bal"
-                account.account_type = "Curr Stmt Bal"
-                account.interest_type = None
-                account.apr = None
-                account.interest_cadence = None
-                account.previous_statement_balance = None
-                account.minimum_payment = None
+            #if credit or loan accounts are being added via this method, they should already be consistent.
+            #FOR THAT REASON, adding accounts this way is not recommended.
+            #therefore, once all accounts have been added to self.accounts, we check for consistency
 
-                self.accounts.append(account)
-                self.accounts.append(prev_stmt_bal_acct)
-            elif account.account_type == "loan":
 
-                loan_interest_acct = Account.Account(name = str(account.name)+': Interest',  # no default because it is a required field
-                balance = float(account.accrued_interest),
-                min_balance = 0,
-                max_balance = float('Inf'),
-                account_type = 'interest',
-                billing_start_date_YYYYMMDD = None,
-                interest_type = None,
-                apr = None,
-                interest_cadence = None,
-                minimum_payment = None,
-                previous_statement_balance = None, #todo there is something wrong here
-                principal_balance = None,
-                accrued_interest = None,
-                throw_exceptions=False
-                )
+        #todo: for each account with compound interest, there is a curr and prev bal acct
+        #todo: for each account with simple interest, there is a principal balance and interest account
 
-                account.name += ': Principal Balance'
-                account.account_type = 'Principal Balance'
-                account.accrued_interest = None
 
-                self.accounts.append(account)
-                self.accounts.append(loan_interest_acct)
-            else:
-                self.accounts.append(account)
+
 
     def __str__(self):
         return self.getAccounts().to_string()
