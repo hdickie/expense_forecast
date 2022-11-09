@@ -250,6 +250,7 @@ class Account:
             exception_value_error_message_string += 'Account.account_type was not one of: checking, prv stmt bal, curr stmt bal, interest, savings, principal balance\n'
             exception_value_error_message_string += 'Value was:'+str(account_type.lower())+"\n"
             exception_value_error_ind = True
+            raise ValueError
 
         self.name = str(name)
         # try:
@@ -359,29 +360,30 @@ class Account:
                 exception_value_error_message_string += 'Value was:' + str(billing_start_date_YYYYMMDD)+"\n"
                 exception_value_error_ind = True
 
-        if account_type.lower() in ['loan']:
-            try:
-                self.principal_balance = float(principal_balance)
-            except:
-                exception_type_error_message_string += 'failed cast Account.principal_balance to float\n'
-                exception_type_error_ind = True
-        else:
-            if principal_balance is not None:
-                exception_value_error_message_string += "For types other than loan, Account.principal_balance should be None.\n"
-                exception_value_error_message_string += 'Value was:' + str(principal_balance)+"\n"
-                exception_value_error_ind = True
+        # if account_type.lower() in ['loan']:
+        #     try:
+        #         self.principal_balance = float(principal_balance)
+        #     except:
+        #         exception_type_error_message_string += 'failed cast Account.principal_balance to float\n'
+        #         exception_type_error_ind = True
+        # else:
+        #     if principal_balance is not None:
+        #         exception_value_error_message_string += "For types other than loan, Account.principal_balance should be None.\n"
+        #         exception_value_error_message_string += 'Value was:' + str(principal_balance)+"\n"
+        #         exception_value_error_ind = True
 
-        if account_type.lower() in ['principal balance']:
-            try:
-                self.accrued_interest = float(accrued_interest)
-            except:
-                exception_type_error_message_string += 'failed cast Account.accrued_interest to float\n'
-                exception_type_error_ind = True
-        else:
-            if accrued_interest is not None:
-                exception_value_error_message_string += "For types other than principal balance, Account.accrued_interest should be None.\n"
-                exception_value_error_message_string += 'Value was:' + str(accrued_interest)+"\n"
-                exception_value_error_ind = True
+        # if account_type.lower() in ['principal balance']:
+        #     try:
+        #         self.accrued_interest = float(accrued_interest)
+        #     except:
+        #         exception_type_error_message_string += 'failed cast Account.accrued_interest to float\n'
+        #         exception_value_error_message_string += 'Value was:' + str(accrued_interest) + "\n"
+        #         exception_type_error_ind = True
+        # else:
+        #     if accrued_interest is not None:
+        #         exception_value_error_message_string += "For types other than principal balance, Account.accrued_interest should be None.\n"
+        #         exception_value_error_message_string += 'Value was:' + str(accrued_interest)+"\n"
+        #         exception_value_error_ind = True
 
         if account_type.lower() in ['prv stmt bal','principal balance']:
             try:
@@ -395,17 +397,16 @@ class Account:
                 exception_value_error_message_string += 'Value was:' + str(minimum_payment)+"\n"
                 exception_value_error_ind = True
 
-        if account_type.lower() in ['principal balance']:
-            if principal_balance + accrued_interest != balance:
-                exception_value_error_message_string += "Account.Principal_balance + Account.accrued_interest != Account.balance.\n"
-                exception_value_error_ind = True
+        #Once procesing has reached this point, interest and principal have been separated into different accounts
+        # if account_type.lower() in ['principal balance']:
+        #     if principal_balance + accrued_interest != balance:
+        #         exception_value_error_message_string += "Account.Principal_balance + Account.accrued_interest != Account.balance.\n"
+        #         exception_value_error_ind = True
 
         if print_debug_messages:
-            if exception_type_error_ind:
-                print(exception_type_error_message_string)
+            if exception_type_error_ind: print(exception_type_error_message_string)
 
-            if exception_value_error_ind:
-                print(exception_value_error_message_string)
+            if exception_value_error_ind: print(exception_value_error_message_string)
 
         if throw_exceptions:
             if exception_type_error_ind:

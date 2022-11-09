@@ -25,7 +25,113 @@ class TestAccountMethods(unittest.TestCase):
                             account_type='checking',print_debug_messages=False)
 
 
-        # TODO implement more error checking here
+        with self.assertRaises(ValueError):
+            Account.Account(name='test account',
+                            balance=0,
+                            min_balance=0,
+                            max_balance=0,
+                            account_type='shmecking', print_debug_messages=False)
+
+        with self.assertRaises(ValueError):
+            Account.Account(name='test account',
+                            balance=0,
+                            min_balance=0,
+                            max_balance=0,
+                            account_type='loan', print_debug_messages=False)
+
+        with self.assertRaises(TypeError):
+            Account.Account(name='test account',
+                            balance=0,
+                            min_balance='not a float',
+                            max_balance=0,
+                            account_type='checking', print_debug_messages=False)
+
+        with self.assertRaises(TypeError):
+            Account.Account(name='test account',
+                            balance=0,
+                            min_balance=0,
+                            max_balance='not a float',
+                            account_type='checking', print_debug_messages=False)
+
+        with self.assertRaises(ValueError):
+            Account.Account(name='test account',
+                            balance=0,
+                            min_balance=1,
+                            max_balance=-1,
+                            account_type='checking', print_debug_messages=False)
+
+        with self.assertRaises(ValueError):
+            Account.Account(name='test account',
+                            balance=0,
+                            min_balance=0,
+                            max_balance=0,
+                            account_type='checking',
+                            apr=0.05,
+                            print_debug_messages=False)
+
+        with self.assertRaises(ValueError):
+            Account.Account(name='test account',
+                            balance=0,
+                            min_balance=0,
+                            max_balance=0,
+                            account_type='checking',
+                            billing_start_date_YYYYMMDD='20000101',
+                            print_debug_messages=False)
+
+        with self.assertRaises(ValueError):
+            Account.Account(name='test account',
+                            balance=0,
+                            min_balance=0,
+                            max_balance=0,
+                            account_type='checking',
+                            interest_type='non null value',
+                            print_debug_messages=False)
+
+        with self.assertRaises(ValueError):
+            Account.Account(name='test account',
+                            balance=0,
+                            min_balance=0,
+                            max_balance=0,
+                            account_type='checking',
+                            interest_cadence='non null value',
+                            print_debug_messages=False)
+
+        with self.assertRaises(TypeError):
+            Account.Account(name='test account',
+                            balance=0,
+                            min_balance=0,
+                            max_balance=0,
+                            account_type='savings',
+                            billing_start_date_YYYYMMDD='not a date string',
+                            print_debug_messages=False)
+
+        with self.assertRaises(ValueError):
+            Account.Account(name='test account',
+                            balance=0,
+                            min_balance=0,
+                            max_balance=0,
+                            account_type='curr stmt bal',
+                            minimum_payment=5,
+                            print_debug_messages=False)
+
+        with self.assertRaises(TypeError):
+            Account.Account(name='test account',
+                            balance=0,
+                            min_balance=0,
+                            max_balance=0,
+                            account_type='prv stmt bal',
+                            minimum_payment='not a float',
+                            print_debug_messages=False)
+
+        with self.assertRaises(TypeError):
+            Account.Account(name='test account',
+                            balance=0,
+                            min_balance=0,
+                            max_balance=0,
+                            account_type='savings',
+                            minimum_payment='not a date string',
+                            print_debug_messages=False)
+
 
     def test_str(self):
         self.assertIsNotNone(str(Account.Account(name='test account',
@@ -41,4 +147,13 @@ class TestAccountMethods(unittest.TestCase):
                             max_balance=0,
                             account_type='checking')))
 
+    def test_toJSON(self):
+        test_account = Account.Account(name='test account',
+                            balance=0,
+                            min_balance=0,
+                            max_balance=0,
+                            account_type='checking')
+        test_account_JSON = test_account.toJSON()
+        test_expectation = """{\n"Name":"test account",\n"Balance":"0.0",\n"Min_Balance":"0.0",\n"Max_Balance":"0.0",\n"Account_Type":"checking",\n"Billing_Start_Date":"None",\n"Interest_Type":"None",\n"APR":"None",\n"Interest_Cadence":"None",\n"Minimum_Payment":"None"\n"Previous_Statement_Balance":"None"\n"Principal_Balance":"None",\n"Accrued_Interest":"None",\n}"""
+        assert test_account_JSON == test_expectation
 

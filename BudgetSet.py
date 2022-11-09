@@ -6,7 +6,7 @@ class BudgetSet:
     def __init__(self,budget_items__list=[]):
         self.budget_items = []
         for budget_item in budget_items__list:
-            print(budget_item)
+            self.budget_items.append(budget_item)
 
     def __str__(self):
         return self.getBudgetItems().to_string()
@@ -95,7 +95,7 @@ class BudgetSet:
             if i+1 != len(self.budget_items):
                 JSON_string += ","
             JSON_string += '\n'
-        JSON_string += '\n'
+        JSON_string += '}'
         return JSON_string
 
     # def fromJSON(self,JSON_string):

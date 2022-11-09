@@ -166,6 +166,12 @@ class AccountSet:
 
         #TODO this should be based on interest type or interest AND account type
         if account_type.lower() == 'loan':
+
+
+            if principal_balance + accrued_interest != balance:
+                print("Account.Principal_balance + Account.accrued_interest != Account.balance.\n")
+                raise ValueError
+
             account = Account.Account(name = name+': Principal Balance',
                                       balance = principal_balance,
                                       min_balance = min_balance,
@@ -332,7 +338,7 @@ class AccountSet:
             if i+1 != len(self.accounts):
                 JSON_string+=","
             JSON_string+='\n'
-        JSON_string+='}\n'
+        JSON_string+='}'
 
         return JSON_string
 

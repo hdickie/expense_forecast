@@ -59,3 +59,14 @@ class TestBudgetSetMethods(unittest.TestCase):
 
     def test_repr(self):
         self.assertIsNotNone(repr(BudgetSet.BudgetSet()))
+
+    def test_toJSON(self):
+        test_budget_set = BudgetSet.BudgetSet(
+            [BudgetItem.BudgetItem(start_date_YYYYMMDD='20000101', priority=1, cadence='once',
+                                      amount=10, deferrable=False, memo='test 1'),
+             BudgetItem.BudgetItem(start_date_YYYYMMDD='20000101', priority=1, cadence='once',
+                                      amount=10, deferrable=False, memo='test 2')
+             ])
+        test_budget_set_JSON = test_budget_set.toJSON()
+        test_expectation = """{\n{\n"Start_Date":"2000-01-01 00:00:00",\n"Priority":"1",\n"Cadence":"once",\n"Amount":"10.0",\n"Deferrable":"False",\n"Memo":"test 1"\n},\n{\n"Start_Date":"2000-01-01 00:00:00",\n"Priority":"1",\n"Cadence":"once",\n"Amount":"10.0",\n"Deferrable":"False",\n"Memo":"test 2"\n}\n}"""
+        assert test_budget_set_JSON == test_expectation

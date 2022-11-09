@@ -117,11 +117,12 @@ class BudgetItem:
            exception_type_error_message_string += 'failed cast BudgetItem.amount to float\n'
            exception_type_error_ind = True
 
-        try:
-           self.deferrable = bool(self.deferrable)
-        except:
-           exception_type_error_message_string += 'failed cast BudgetItem.deferrable to bool\n'
-           exception_type_error_ind = True
+        #almost everything can cast to bool which im not sure how I feel about
+        # try:
+        #    self.deferrable = bool(self.deferrable)
+        # except:
+        #    exception_type_error_message_string += 'failed cast BudgetItem.deferrable to bool\n'
+        #    exception_type_error_ind = True
 
         self.memo = str(self.memo)
         # try:
@@ -130,13 +131,10 @@ class BudgetItem:
         #    exception_type_error_message_string += 'failed cast BudgetItem.memo to str\n'
         #    exception_type_error_ind = True
 
-
         if print_debug_messages:
-            if exception_type_error_ind:
-                print(exception_type_error_message_string)
+            if exception_type_error_ind: print(exception_type_error_message_string)
 
-            if exception_value_error_ind:
-                print(exception_value_error_message_string)
+            if exception_value_error_ind: print(exception_value_error_message_string)
 
         if throw_exceptions:
             if exception_type_error_ind:

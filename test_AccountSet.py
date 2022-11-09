@@ -38,8 +38,7 @@ class TestAccountSetMethods(unittest.TestCase):
                                     minimum_payment=0,
                                     previous_statement_balance=0,
                                     principal_balance=None,
-                                    accrued_interest=None,
-                                    throw_exceptions=False
+                                    accrued_interest=None
                                     )
         self.assertEqual('<class \'AccountSet.AccountSet\'>', str(type(test_account_set)))
 
@@ -48,7 +47,7 @@ class TestAccountSetMethods(unittest.TestCase):
                                     balance=1000,
                                     min_balance=0,
                                     max_balance=10000,
-                                    account_type='credit',
+                                    account_type='loan',
                                     billing_start_date_YYYYMMDD='20220101',
                                     interest_type = 'simple',
                                     apr=0.03,

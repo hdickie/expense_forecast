@@ -82,7 +82,7 @@ class MemoRule:
            exception_type_error_ind = True
 
         try:
-            re.search(self.memo_regex,'')
+            x = re.search(self.memo_regex,'')
         except:
             exception_value_error_message_string += "An exception was thrown when MemoRule.memo_regex was interpreted as a regex.\n"
             exception_value_error_message_string += "Value was:"+str(self.memo_regex)+'\n'
@@ -92,14 +92,13 @@ class MemoRule:
             assert self.transaction_priority >= 1
         except:
             exception_value_error_message_string += "MemoRule.transaction_priority must be greater than or equal to 1.\n"
+            exception_value_error_message_string += "Value was:" + str(self.transaction_priority) + '\n'
             exception_value_error_ind = True
 
         if print_debug_messages:
-            if exception_type_error_ind:
-                print(exception_type_error_message_string)
+            if exception_type_error_ind: print(exception_type_error_message_string)
 
-            if exception_value_error_ind:
-                print(exception_value_error_message_string)
+            if exception_value_error_ind:print(exception_value_error_message_string)
 
         if throw_exceptions:
             if exception_type_error_ind:

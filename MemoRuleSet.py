@@ -5,7 +5,6 @@ class MemoRuleSet:
     def __init__(self,memo_rules__list=[]):
         self.memo_rules = []
         for memo_rule in memo_rules__list:
-            print(memo_rule)
             self.memo_rules.append(memo_rule)
 
     def __str__(self):
@@ -50,7 +49,7 @@ class MemoRuleSet:
             if i+1 != len(self.memo_rules):
                 JSON_string += ","
             JSON_string += '\n'
-        JSON_string += '\n'
+        JSON_string += '}'
 
         return JSON_string
 
