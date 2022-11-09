@@ -6,19 +6,86 @@ class TestAccountSetMethods(unittest.TestCase):
     def test_AccountSet_Constructor(self):
 
         # check constructor with list of accounts
-        test_acct = Account.Account(name="test checking",
+        checking_acct = Account.Account(name="test checking",
         balance = 0,
         min_balance = 0,
         max_balance = 0,
         account_type = 'checking')
-        self.assertEqual('<class \'AccountSet.AccountSet\'>', str(type(AccountSet.AccountSet([test_acct]))))
+        self.assertEqual('<class \'AccountSet.AccountSet\'>', str(type(AccountSet.AccountSet([checking_acct]))))
+
+        prv_bal_acct = Account.Account(name='Credit: Prv Stmt Bal',
+        balance = 0,
+        min_balance = 0,
+        max_balance = 0,
+        account_type = 'Prv Stmt Bal',
+        billing_start_date_YYYYMMDD = '20000101',
+        interest_type = 'compound',
+        apr = 0.05,
+        interest_cadence = 'monthly',
+        previous_statement_balance = None,
+        minimum_payment = 40,
+        principal_balance = None,
+        accrued_interest = None)
+
+        cur_bal_acct = Account.Account(name='Credit: Curr Stmt Bal',
+                                       balance=0,
+                                       min_balance=0,
+                                       max_balance=0,
+                                       account_type='Curr Stmt Bal',
+                                       billing_start_date_YYYYMMDD=None,
+                                       interest_type=None,
+                                       apr=None,
+                                       interest_cadence=None,
+                                       previous_statement_balance=None,
+                                       minimum_payment=None,
+                                       principal_balance=None,
+                                       accrued_interest=None)
+
+        principal_balance_acct = Account.Account(name='Loan: Principal Balance',
+                                       balance=0,
+                                       min_balance=0,
+                                       max_balance=0,
+                                       account_type='Principal Balance',
+                                       billing_start_date_YYYYMMDD='20000101',
+                                       interest_type='simple',
+                                       apr=0.05,
+                                       interest_cadence='daily',
+                                       previous_statement_balance=None,
+                                       minimum_payment=40,
+                                       principal_balance=None,
+                                       accrued_interest=None)
+
+        interest_acct = Account.Account(name='Loan: Interest',
+                                       balance=0,
+                                       min_balance=0,
+                                       max_balance=0,
+                                       account_type='Interest',
+                                       billing_start_date_YYYYMMDD=None,
+                                       interest_type=None,
+                                       apr=None,
+                                       interest_cadence=None,
+                                       previous_statement_balance=None,
+                                       minimum_payment=None,
+                                       principal_balance=None,
+                                       accrued_interest=None)
 
 
-        #todo throw exception when there is an interest acconut with no corresponding principal balance
-        #todo throw exception when there is a principal balance account with no corresponding interest account
+        #these hould not throw exceptions
+        valid_accountset_loan = AccountSet.AccountSet([checking_acct,principal_balance_acct,interest_acct])
+        valid_accountset_cc = AccountSet.AccountSet([checking_acct, prv_bal_acct, cur_bal_acct])
 
-        #todo throw an exception when there is a cur stmt bal acct with no prv stmt bal acct
-        #todo throw an exception when there is a prv stmt bal acct with no cur stmt bal acct
+        with self.assertRaises(ValueError):
+            AccountSet.AccountSet([checking_acct,interest_acct])
+
+        with self.assertRaises(ValueError):
+            AccountSet.AccountSet([checking_acct,principal_balance_acct])
+
+        with self.assertRaises(ValueError):
+            AccountSet.AccountSet([checking_acct,cur_bal_acct])
+
+        with self.assertRaises(ValueError):
+            AccountSet.AccountSet([checking_acct,prv_bal_acct])
+
 
     def test_addAccount(self):
 

@@ -122,7 +122,12 @@ class Account:
         "Minimum_Payment":"None"
         }
 
-        >>> print(Account(name='balance boundary violation',balance = -1, min_balance=0, max_balance=0,account_type="checking",throw_exceptions=False).toJSON())
+        >>> print(Account(name='balance boundary violation',
+        ... balance = -1,
+        ... min_balance=0,
+        ... max_balance=0,
+        ... account_type="checking",
+        ... throw_exceptions=False).toJSON())
         Account.balance was less than minimum balance
         <BLANKLINE>
         {
@@ -141,12 +146,22 @@ class Account:
         }
 
 
-        >>> print(Account(name='balance boundary violation',balance = -1, min_balance=0, max_balance=0,account_type="checking",print_debug_messages=False).toJSON())
+        >>> print(Account(name='balance boundary violation',
+        ... balance = -1,
+        ... min_balance=0,
+        ... max_balance=0,
+        ... account_type="checking",
+        ... print_debug_messages=False).toJSON())
         Traceback (most recent call last):
         ...
         ValueError
 
-        >>> print(Account(name='account type error',balance=0,min_balance=0,max_balance=0,account_type='shmecking',throw_exceptions=False).toJSON())
+        >>> print(Account(name='account type error',
+        ... balance=0,
+        ... min_balance=0,
+        ... max_balance=0,
+        ... account_type='shmecking',
+        ... throw_exceptions=False).toJSON())
         Account.account_type was not one of: checking, prev stmt bal, cur stmt bal, interest, savings, principal balance
         <BLANKLINE>
         {
@@ -164,12 +179,21 @@ class Account:
         "Minimum_Payment":"None"
         }
 
-        >>> print(Account(name='account type error',balance=0,min_balance=0,max_balance=0,account_type='shmecking',print_debug_messages=False).toJSON())
+        >>> print(Account(name='account type error',
+        ... balance=0,
+        ... min_balance=0,
+        ... max_balance=0,
+        ... account_type='shmecking',
+        ... print_debug_messages=False).toJSON())
         Traceback (most recent call last):
         ...
         ValueError
 
-        >>> print(Account(name='checking w non-None params that should be None',balance = 0, min_balance = 0, max_balance = 0,account_type='checking',
+        >>> print(Account(name='checking w non-None params that should be None',
+        ... balance = 0,
+        ... min_balance = 0,
+        ... max_balance = 0,
+        ... account_type='checking',
         ... billing_start_date_YYYYMMDD = '20000101',
         ... interest_type = 'simple',
         ... apr = 0,
@@ -202,7 +226,11 @@ class Account:
         "Minimum_Payment":"0"
         }
 
-        >>> print(Account(name='checking w non-None params that should be None',balance = 0, min_balance = 0, max_balance = 0,account_type='checking',
+        >>> print(Account(name='checking w non-None params that should be None',
+        ... balance = 0,
+        ... min_balance = 0,
+        ... max_balance = 0,
+        ... account_type='checking',
         ... billing_start_date_YYYYMMDD = '20000101',
         ... interest_type = 'simple',
         ... apr = 0,
@@ -215,7 +243,6 @@ class Account:
         ...
         ValueError
 
-        #todo refactor credit and loan cases into prev stmt bal, cur stmt bal and principal balance and interest
 
         """
         self.name = name

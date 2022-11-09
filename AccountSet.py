@@ -91,10 +91,55 @@ class AccountSet:
             #FOR THAT REASON, adding accounts this way is not recommended.
             #therefore, once all accounts have been added to self.accounts, we check for consistency
 
+        if len(self.accounts) > 0:
+            accounts_df = self.getAccounts()
+            #index_of_name_column = accounts_df.columns.tolist().index('Name')
+            loan_check_name__series = accounts_df.loc[accounts_df.Account_Type.isin(['Principal Balance','Interest']), 'Name']
+            cc_check__name__series = accounts_df.loc[accounts_df.Account_Type.isin(['Prv Stmt Bal','Curr Stmt Bal']), 'Name']
 
-        #todo: for each account with compound interest, there is a curr and prev bal acct
-        #todo: for each account with simple interest, there is a principal balance and interest account
+            print('loan_check_name__series:'+str(loan_check_name__series))
+            print('cc_check__name__series:'+str(cc_check__name__series))
 
+            loan_pb_acct__list = list()
+            loan_interest_acct__list = list()
+            for acct in loan_check_name__series:
+                acct_name = acct.split(':')[0]
+                acct_type = acct.split(':')[1].lower().strip()
+
+                if acct_type == 'principal balance':
+                    loan_pb_acct__list.append(acct_name)
+                elif acct_type == 'interest':
+                    loan_interest_acct__list.append(acct_name)
+                # else:
+                #     print('this should be impossible')
+                #     print('value was:' + str(acct_type))
+                #     raise ValueError
+
+            cc_prv_acct__list = list()
+            cc_curr_acct__list = list()
+            for acct in cc_check__name__series:
+                acct_name = acct.split(':')[0]
+                acct_type = acct.split(':')[1].lower().strip()
+
+                if acct_type == 'prv stmt bal':
+                    cc_prv_acct__list.append(acct_name)
+                elif acct_type == 'curr stmt bal':
+                    cc_curr_acct__list.append(acct_name)
+                # else:
+                #     print('this should be impossible')
+                #     print('value was:'+str(acct_type))
+                #     raise ValueError
+
+            print('loan_pb_acct__list:'+str(loan_pb_acct__list))
+            print('loan_interest_acct__list:'+str(loan_interest_acct__list))
+            print('cc_prv_acct__list:'+str(cc_prv_acct__list))
+            print('cc_curr_acct__list:'+str(cc_curr_acct__list))
+            print('')
+
+            if loan_pb_acct__list != loan_interest_acct__list:
+                raise ValueError
+            if cc_prv_acct__list != cc_curr_acct__list:
+                raise ValueError
 
 
 
