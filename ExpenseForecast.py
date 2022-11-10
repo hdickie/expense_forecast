@@ -9,6 +9,21 @@ from hd_util import *
 class ExpenseForecast:
 
     def __init__(self,account_set,budget_set,memo_rule_set):
+        """
+        ExpenseForecast one-line description
+
+        # todo ExpenseForecast doctests
+        | Test Cases
+        | Expected Successes
+        | S1: ... #todo refactor ExpenseForecast.ExpenseForecast() doctest S1 to use _S1 label
+        |
+        | Expected Fails
+        | F1 ... #todo refactor ExpenseForecast.ExpenseForecast() doctest F1 to use _F1 label
+
+        :param account_set:
+        :param budget_set:
+        :param memo_rule_set:
+        """
 
         accounts_df = account_set.getAccounts()
         budget_df = budget_set.getBudgetItems()
@@ -87,7 +102,21 @@ class ExpenseForecast:
         self.forecast_df = self.computeForecast(account_set, budget_set, memo_rule_set)
 
     def account_boundaries_are_violated(self,accounts_df,forecast_df):
+        """
+        account_boundaries_are_violated single-line description
 
+        #todo ExpenseForecast.account_boundaries_are_violated() doctests
+        | Test Cases
+        | Expected Successes
+        | S1: ... #todo refactor ExpenseForecast.account_boundaries_are_violated() doctest S1 to use _S1 label
+        |
+        | Expected Fails
+        | F1 ... #todo refactor ExpenseForecast.account_boundaries_are_violated() doctest F1 to use _F1 label
+
+        :param accounts_df:
+        :param forecast_df:
+        :return:
+        """
         for col_name in forecast_df.columns.tolist():
             if col_name == 'Date' or col_name == 'Memo':
                 continue
@@ -129,6 +158,13 @@ class ExpenseForecast:
     def satisfice(self, budget_set, account_set, memo_rule_set):
         """
         Computes output time-series that represents only non-negotiable spend.
+
+        | Test Cases
+        | Expected Successes
+        | S1: ... #todo refactor ExpenseForecast.satisfice() doctest S1 to use _S1 label
+        |
+        | Expected Fails
+        | F1 ... #todo refactor ExpenseForecast.satisfice() doctest F1 to use _F1 label
 
         :param budget_schedule_df:
         :param account_set_df:
@@ -385,6 +421,13 @@ class ExpenseForecast:
 
         Multiple line description.
 
+        | Test Cases
+        | Expected Successes
+        | S1: ... #todo refactor ExpenseForecast.optimize_next_choice() doctest S1 to use _S1 label
+        |
+        | Expected Fails
+        | F1 ... #todo refactor ExpenseForecast.optimize_next_choice() doctest F1 to use _F1 label
+
         :param updated_budget_schedule_df:
         :param account_set_df:
         :param forecast_df:
@@ -409,6 +452,12 @@ class ExpenseForecast:
 
         Multiple line dsecription.
 
+        | Test Cases
+        | Expected Successes
+        | S1: ... #todo refactor ExpenseForecast.computeForecast() doctest S1 to use _S1 label
+        |
+        | Expected Fails
+        | F1 ... #todo refactor ExpenseForecast.computeForecast() doctest F1 to use _F1 label
 
         :param budget_schedule_df:
         :param account_set_df:
@@ -563,6 +612,12 @@ class ExpenseForecast:
         """
         Writes to file a plot by account type.
 
+        | Test Cases
+        | Expected Successes
+        | S1: ... #todo refactor ExpenseForecast.plotAccountTypeTotals() doctest S1 to use _S1 label
+        |
+        | Expected Fails
+        | F1 ... #todo refactor ExpenseForecast.plotAccountTypeTotals() doctest F1 to use _F1 label
 
         :param forecast_df:
         :param output_path:
@@ -619,6 +674,13 @@ class ExpenseForecast:
 
         Multiple line description.
 
+        | Test Cases
+        | Expected Successes
+        | S1: ... #todo refactor ExpenseForecast.plotMarginalInterest() doctest S1 to use _S1 label
+        |
+        | Expected Fails
+        | F1 ... #todo refactor ExpenseForecast.plotMarginalInterest() doctest F1 to use _F1 label
+
 
         :param accounts_df:
         :param forecast_df:
@@ -626,6 +688,16 @@ class ExpenseForecast:
         :return:
         """
         #todo plotMarginalInterest():: this will have to get the cc interest from the memo line
+        raise NotImplementedError
+
+    def toJSON(self):
+        """
+        Returns a JSON string representing the ExpenseForecast object.
+
+        #todo ExpenseForecast.toJSON() say what the columns are
+
+        :return:
+        """
         raise NotImplementedError
 
 

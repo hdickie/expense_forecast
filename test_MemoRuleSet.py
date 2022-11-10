@@ -39,6 +39,10 @@ class TestMemoRuleSetMethods(unittest.TestCase):
         test_df = test_memorule_set.getMemoRules()
         self.assertIsNotNone(test_df)
 
+    def test_addMemoRule(self):
+
+        raise NotImplementedError
+
     def test_toJSON(self):
         test_memo_rule_set = MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*', account_from='noodle', account_to='',
                                            transaction_priority=1),

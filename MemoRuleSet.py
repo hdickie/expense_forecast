@@ -5,9 +5,17 @@ class MemoRuleSet:
 
     def __init__(self,memo_rules__list=[]):
         """
-        Create a MemoRuleSet from a <list> of <MemoRule> objects.
+        Create a <MemoRuleSet> from a <list> of <MemoRule> objects.
 
-        #todo MemoRuleSet.MemoRuleSet() doctests
+        | Test Cases
+        | Expected Successes
+        | S1 Provide valid parameters.
+        |
+        | Expected Fails
+        | F1 input a list with objects that are not BudgetItem type. Do this without explicitly checking type. #todo refactor MemoRuleSet.MemoRuleSet() doctest F1 to use _F1 label
+        | F2 provide a list of MemoRules with a memo and priority that matches a MemoRule already in self.memo_riles (same from and to) #todo refactor MemoRuleSet.MemoRuleSet() doctest F2 to use _F2 label
+        | F3 provide a list of MemoRules with a memo and priority that matches a MemoRule already in self.memo_rules (different from and to) #todo refactor MemoRuleSet.MemoRuleSet() doctest F3 to use _F3 label
+
 
         :param memo_rules__list:
         """
@@ -21,20 +29,38 @@ class MemoRuleSet:
     def __repr__(self):
         return str(self)
 
-    def addMemoRule(self,memo_regex='',account_from='',account_to='',transaction_priority=''):
-        """ Add a MemoRule to list MemoRuleSet.memo_rules. """
-        #todo validation
+    def addMemoRule(self,memo_regex,account_from,account_to,transaction_priority):
+        """ Add a <MemoRule> to <list> MemoRuleSet.memo_rules.
+
+        | Test Cases
+        | Expected Successes
+        | S1 Provide valid parameters.
+        |
+        | Expected Fails
+        | F1 Provide incorrect types for each parameter  #todo refactor MemoRuleSet.addMemoRule() doctest F1 to use _F1 label
+        | F2 add a BudgetItem with a memo and priority that matches a BudgetItem already in self.budgetItems (same from and to) #todo refactor MemoRuleSet.addMemoRule() doctest F2 to use _F2 label
+        | F3 add a BudgetItem with a memo and priority that matches a BudgetItem already in self.budgetItems (different from and to) #todo refactor MemoRuleSet.addMemoRule() doctest F3 to use _F3 label
+
+        """
+
+        error_ind = False
+        error_message_txt = ""
+
+        current_memo_rules_df = self.getMemoRules()
+
+        current_memo_rules_df.Memo_Regex.isin([memo_regex])
+        print(current_memo_rules_df)
+        #if a memo rule is added with the same regex and priority, but different from or to, then throw an error
+
 
         #if a memo rule is added that already exists, just ignore it.
-        #we could drop duplicates later but it is cheaper to check if it contains an element once
-        #than to compare all elements to each other
 
-        memo_rule = MemoRule.MemoRule(memo_regex,account_from,account_to,transaction_priority)
+        memo_rule = MemoRule.MemoRule(memo_regex, account_from, account_to, transaction_priority)
         self.memo_rules.append(memo_rule)
 
     def getMemoRules(self):
         """
-        Get a DataFrame representing the MemoRuleSet object.
+        Get a <DataFrame> representing the <MemoRuleSet> object.
         """
         all_memo_rules_df = pd.DataFrame({'Memo_Regex': [], 'Account_From': [], 'Account_To': [],
                                              'Transaction_Priority': []})
@@ -53,7 +79,9 @@ class MemoRuleSet:
 
     def toJSON(self):
         """
-        Get a string representing the MemoRuleSet object.
+        Get a JSON <string> representing the <MemoRuleSet> object.
+
+        #todo MemoRuleSet.toJSON() say what the columns are
         """
         JSON_string = "{\n"
         for i in range(0, len(self.memo_rules)):

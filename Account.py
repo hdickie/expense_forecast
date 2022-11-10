@@ -30,7 +30,31 @@ class Account:
         Those accounts are created when a credit or loan account are added to an AccountSet with the addAccount method or
         in the AccountSet constructor.
 
-        Just don't use Account() to directly create accounts. Create an AccountSet and add them wiht addAccount.
+        Just don't use Account() to directly create accounts. Create an AccountSet and add them with addAccount.
+
+        | Test Cases
+        | Expected Successes
+        | S1 Checking #todo refactor Account.Account() doctest S1 to use _S1 label
+        | S2 Savings #todo refactor Account.Account() doctest S2 to use _S2 label
+        | S3 Credit #todo refactor Account.Account() doctest S3 to use _S3 label
+        | S4 Loan #todo refactor Account.Account() doctest S4 to use _S4 label
+        |
+        | Expected Fails
+        | Parameters that are provided are incorrect
+        | F1 Checking - Exclude necessary parameters and include irrelevant parameters #todo refactor Account.Account() doctest F1 to use _F1 label
+        | F2 Savings - Exclude necessary parameters and include irrelevant parameters #todo refactor Account.Account() doctest F2 to use _F2 label
+        | F3 Credit - Exclude necessary parameters and include irrelevant parameters #todo refactor Account.Account() doctest F3 to use _F3 label
+        | F4 Loan - Exclude necessary parameters and include irrelevant parameters #todo refactor Account.Account() doctest F4 to use _F4 label
+        |
+        | Incorrect Types provided for necessary parameters
+        | F5 Credit - Provide incorrect types for all necessary parameters #todo refactor Account.Account() doctest F5 to use _F5 label
+        | F6 Loan - Provide incorrect types for all necessary parameters #todo refactor Account.Account() doctest F6 to use _F6 label
+        |
+        | Inconsistent values provided for related parameters
+        | F7 Checking - Balance is less than Minimum Balance #todo refactor Account.Account() doctest F7 to use _F8 label
+        | F8 Checking - Balance is greater than Maximum Balance #todo refactor Account.Account() doctest F8 to use _F9 label
+        | F9 Checking - Min Balance is greater than Max Balance #todo refactor Account.Account() doctest F9 to use _F10 label
+        |
 
         :param str name: A name for the account. Used to label output columns.
         :param float balance: A dollar value for the balance of the account.
@@ -452,6 +476,9 @@ class Account:
     def toJSON(self):
         """
         Get a JSON string representation of the Account object.
+
+        #todo Account.toJSON() say what the columns are
+
         """
         JSON_string = "{\n"
         JSON_string += "\"Name\":"+"\""+str(self.name)+"\",\n"

@@ -7,14 +7,29 @@ class MemoRule:
                  print_debug_messages=True,
                  throw_exceptions=True):
         """
-        Creates a MemoRule object. Input validation is performed.
+        Creates a <MemoRule> object. Input validation is performed.
+
+        | Test Cases
+        | Expected Successes
+        | S1 Valid values for all parameters #todo refactor MemoRule.MemoRule() doctest S1 to use _S1 label
+        |
+        | Expected Fails
+        | Parameters that are provided are incorrect
+        | F1 provide no parameters #todo refactor MemoRule.MemoRule() doctest F1 to use _F1 label
+        |
+        | Incorrect Types provided for necessary parameters
+        | F2 Provide incorrect types for all necessary parameters #todo refactor MemoRule.MemoRule() doctest F2 to use _F2 label
+        |
+        | Illegal values provided
+        | F3 memo_regex explodes when interpreted as regex #todo refactor Account.Account() doctest F3 to use _F3 label
+        | F4 transaction priority is less than 1 #todo refactor Account.Account() doctest F4 to use _F4 label
+        | F5 transaction priority is not an integer #todo refactor Account.Account() doctest F5 to use _F5 label
 
         :param memo_regex: A regex to determine if this memo rule should be used for a budget item.
         :param account_from: Name of the account which funds will be drawn from
         :param account_to: Name of the account which funds will be depoisted
         :param transaction_priority: This priority index must match the priority of the transaction
 
-        #todo write MemoRule.MemoRule doctests
         >>> MemoRule()
         Traceback (most recent call last):
         ...
@@ -124,7 +139,9 @@ class MemoRule:
 
     def toJSON(self):
         """
-        Get a string representing the MemoRule object.
+        Get a JSON <string> representing the <MemoRule> object.
+
+        #todo MemoRuleSet.toJSON() say what the columns are
         """
         JSON_string = "{\n"
         JSON_string += "\"Memo_Regex\":" + "\"" + str(self.memo_regex) + "\",\n"

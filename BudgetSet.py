@@ -5,8 +5,16 @@ class BudgetSet:
 
     def __init__(self,budget_items__list=[]):
         """
+        Add a budget_item to self.budget_items. Input validation is performed.
 
-        #todo write BudgetSet.BudgetSet() doctests
+        | Test Cases
+        | Expected Successes
+        | S1: input an empty list #todo refactor BudgetSet.BudgetSet() doctest S1 to use _S1 label
+        | S1: input a list of BudgetItem objects #todo refactor BudgetSet.BudgetSet() doctest S2 to use _S2 label
+        |
+        | Expected Fails
+        | F1 input a list with objects that are not BudgetItem type. Do this without explicitly checking type. #todo refactor BudgetSet.BudgetSet() doctest F1 to use _F1 label
+        | F2 input a list with a BudgetItem with a memo that matches a BudgetItem already in self.budget_items
 
         :param budget_items__list:
         """
@@ -23,8 +31,6 @@ class BudgetSet:
     def getBudgetItems(self):
         """
         Returns a DataFrame of BudgetItems.
-
-        #todo write doctests for BudgetSet.getBudgetItems()
 
         :return: DataFrame
         """
@@ -87,7 +93,17 @@ class BudgetSet:
                  memo,
                  print_debug_messages = True,
                  throw_exceptions = True):
-        """ Add a BudgetItem to list BudgetItem.budget_items. """
+        """ Add a BudgetItem to list BudgetItem.budget_items.
+
+        | Test Cases
+        | Expected Successes
+        | S1: provide valid parameters #todo refactor BudgetSet.addBudgetItem() doctest S1 to use _S1 label
+        |
+        | Expected Fails
+        | F1 Provide incorrect types for all parameters #todo refactor BudgetSet.BudgetSet() doctest F1 to use _F1 label
+        | F2 add a BudgetItem where there are 2 BudgetItems with the same memo
+
+        """
         budget_item = BudgetItem.BudgetItem(start_date_YYYYMMDD,
                  priority,
                  cadence,
@@ -101,7 +117,9 @@ class BudgetSet:
 
     def toJSON(self):
         """
-        Get a JSON string representing the BudgetSet object.
+        Get a JSON <string> representing the <BudgetSet> object.
+
+        #todo BudgetSet.toJSON() say what the columns are
         """
         JSON_string = "{\n"
         for i in range(0, len(self.budget_items)):

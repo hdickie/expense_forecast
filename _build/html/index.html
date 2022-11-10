@@ -57,7 +57,32 @@ cast to float. Legal combinations of parameters are described below.</p>
 <p>Note that this method is can’t create previous statement balance or interest accounts and it is not intended to.
 Those accounts are created when a credit or loan account are added to an AccountSet with the addAccount method or
 in the AccountSet constructor.</p>
-<p>Just don’t use Account() to directly create accounts. Create an AccountSet and add them wiht addAccount.</p>
+<p>Just don’t use Account() to directly create accounts. Create an AccountSet and add them with addAccount.</p>
+<div class="line-block">
+<div class="line">Test Cases</div>
+<div class="line">Expected Successes</div>
+<div class="line">S1 Checking #todo refactor Account.Account() doctest S1 to use _S1 label</div>
+<div class="line">S2 Savings #todo refactor Account.Account() doctest S2 to use _S2 label</div>
+<div class="line">S3 Credit #todo refactor Account.Account() doctest S3 to use _S3 label</div>
+<div class="line">S4 Loan #todo refactor Account.Account() doctest S4 to use _S4 label</div>
+<div class="line"><br /></div>
+<div class="line">Expected Fails</div>
+<div class="line">Parameters that are provided are incorrect</div>
+<div class="line">F1 Checking - Exclude necessary parameters and include irrelevant parameters #todo refactor Account.Account() doctest F1 to use _F1 label</div>
+<div class="line">F2 Savings - Exclude necessary parameters and include irrelevant parameters #todo refactor Account.Account() doctest F2 to use _F2 label</div>
+<div class="line">F3 Credit - Exclude necessary parameters and include irrelevant parameters #todo refactor Account.Account() doctest F3 to use _F3 label</div>
+<div class="line">F4 Loan - Exclude necessary parameters and include irrelevant parameters #todo refactor Account.Account() doctest F4 to use _F4 label</div>
+<div class="line"><br /></div>
+<div class="line">Incorrect Types provided for necessary parameters</div>
+<div class="line">F5 Credit - Provide incorrect types for all necessary parameters #todo refactor Account.Account() doctest F5 to use _F5 label</div>
+<div class="line">F6 Loan - Provide incorrect types for all necessary parameters #todo refactor Account.Account() doctest F6 to use _F6 label</div>
+<div class="line"><br /></div>
+<div class="line">Inconsistent values provided for related parameters</div>
+<div class="line">F7 Checking - Balance is less than Minimum Balance #todo refactor Account.Account() doctest F7 to use _F8 label</div>
+<div class="line">F8 Checking - Balance is greater than Maximum Balance #todo refactor Account.Account() doctest F8 to use _F9 label</div>
+<div class="line">F9 Checking - Min Balance is greater than Max Balance #todo refactor Account.Account() doctest F9 to use _F10 label</div>
+<div class="line"><br /></div>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -276,6 +301,19 @@ in the AccountSet constructor.</p>
 <dt class="sig sig-object py" id="AccountSet.AccountSet">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">AccountSet.</span></span><span class="sig-name descname"><span class="pre">AccountSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">accounts__list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#AccountSet.AccountSet" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates an AccountSet object. Previous Statement Balance and Loan Interest accounts are created automatically.</p>
+<div class="line-block">
+<div class="line">Test Cases</div>
+<div class="line">Expected Successes</div>
+<div class="line">S1 [Checking, Credit Prv Stmt Bal, Credit Cur Stmt Bal, Savings Prv Stmt Bal, Savings Cur Stmt Bal, Loan Principal Balance, Loan Interest] #todo refactor Account.Account() doctest S1 to use _S1 label</div>
+<div class="line">S2 Input no parameters</div>
+<div class="line"><br /></div>
+<div class="line">Expected Fails</div>
+<div class="line">F1 Savings - Prev Stmt Bal + Cur Stmt Bal violates account boundary,</div>
+<div class="line-block">
+<div class="line">Loan - Principal Balance + Interest != Balance #todo refactor AccountSet.AccountSet() doctest F1 to use _F1 label</div>
+</div>
+<div class="line">F2 Input a list that has an object that is not of AccountSet type. Do this without explicitly looking for the class name. #todo refactor AccountSet.AccountSet() doctest F2 to use _F2 label</div>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>accounts__list</strong> – </p>
@@ -345,12 +383,26 @@ in the AccountSet constructor.</p>
 <span class="gp">... </span><span class="p">)])</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
 </pre></div>
 </div>
-<p>#todo example of adding a loan account. (copy this into the unittest)</p>
-<p>#todo example of adding a credit account. (copy this into the unittest)</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="AccountSet.AccountSet.addAccount">
 <span class="sig-name descname"><span class="pre">addAccount</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">billing_start_date_YYYYMMDD</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interest_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interest_cadence</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimum_payment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">previous_statement_balance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">principal_balance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accrued_interest</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_debug_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">throw_exceptions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#AccountSet.AccountSet.addAccount" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add an Account to list AccountSet.accounts. For credit and loan type accounts, previous statement balance and interest accounts are created.</p>
+<div class="line-block">
+<div class="line">Test Cases</div>
+<div class="line">Expected Successes</div>
+<div class="line">S1: add Checking #todo refactor AccountSet.addAccount() doctest S1 to use _S1 label</div>
+<div class="line">S2: add Savings #todo refactor AccountSet.addAccount() doctest S2 to use _S2 label</div>
+<div class="line">S3: add Credit #todo refactor AccountSet.addAccount() doctest S3 to use _S3 label</div>
+<div class="line">S4: add Loan #todo refactor AccountSet.addAccount() doctest S4 to use _S4 label</div>
+<div class="line"><br /></div>
+<div class="line">Expected Fails</div>
+<div class="line">F1 add a second checking account  #todo refactor AccountSet.addAccount() doctest F1 to use _F1 label</div>
+<div class="line">F2 add an account with the same name as an existing account #todo refactor AccountSet.addAccount() doctest F2 to use _F2 label</div>
+<div class="line">F3: Savings - Prev Stmt Bal + Cur Stmt Bal violates account boundary #todo refactor AccountSet.addAccount() doctest F3 to use _F3 label</div>
+<div class="line">F4: Loan - Principal Balance + Interest != Balance #todo refactor AccountSet.addAccount() doctest F4 to use _F4 label</div>
+<div class="line"><br /></div>
+<div class="line"><br /></div>
+</div>
 </dd></dl>
 
 <dl class="py method">
@@ -397,6 +449,22 @@ in the AccountSet constructor.</p>
 <dd><p>Creates a BudgetItem object. Input validation is performed.</p>
 <p>The BudgetItem constructor does not check types, but numerical parameters will raise a ValueError if they cannot be
 cast to float.</p>
+<div class="line-block">
+<div class="line">Test Cases</div>
+<div class="line">Expected Successes</div>
+<div class="line">S1 Valid values for all parameters #todo refactor BudgetItem.BudgetItem() doctest S1 to use _S1 label</div>
+<div class="line"><br /></div>
+<div class="line">Expected Fails</div>
+<div class="line">Parameters that are provided are incorrect</div>
+<div class="line">F1 provide no parameters #todo refactor BudgetItem.BudgetItem() doctest F1 to use _F1 label</div>
+<div class="line"><br /></div>
+<div class="line">Incorrect Types provided for necessary parameters</div>
+<div class="line">F2 Provide incorrect types for all necessary parameters #todo refactor BudgetItem.BudgetItem() doctest F2 to use _F2 label</div>
+<div class="line"><br /></div>
+<div class="line">Illegal values provided</div>
+<div class="line">F3 Priority less than 1 and cadence is some random string #todo refactor Account.Account() doctest F3 to use _F3 label</div>
+<div class="line"><br /></div>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -415,9 +483,9 @@ break if non-negotiable budget items cause account boundaries to be violated. Hi
 hard-coded meaning, but here is how I plan to use them at this time:</p>
 <ol class="arabic simple">
 <li><p>Non-negotiable. (Income, Rent, Minimum cc payments, Minimum loan payments, cost of living line-items)</p></li>
-<li><p>Additional payments on credit card debt</p></li>
 <li><p>Non-deferrable budget items that I am willing to pay interest on</p></li>
 <li><p>Deferrable budget items that I am willing to pay interest on</p></li>
+<li><p>Additional payments on credit card debt</p></li>
 <li><p>Non-deferrable budget items that I am not willing to pay interest on</p></li>
 <li><p>Deferrable budget items that I am not willing to pay interest on</p></li>
 <li><p>additional loan payments</p></li>
@@ -427,12 +495,8 @@ hard-coded meaning, but here is how I plan to use them at this time:</p>
 <p>Comment on Amount:
 This implementation will subtract abs(Amount) from Account_From, and add abs(amount) to Account_To. Therefore,
 negative values for Amount are reflected in the memo values but don’t change the directional change of account balances.</p>
-<p>#todo doctests
-&gt;&gt;&gt; BudgetItem()
-Traceback (most recent call last):
-…
-TypeError: BudgetItem.__init__() missing 6 required positional arguments: ‘start_date_YYYYMMDD’, ‘priority’, ‘cadence’, ‘amount’, ‘deferrable’, and ‘memo’</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">BudgetItem</span><span class="p">(</span><span class="n">start_date_YYYYMMDD</span><span class="o">=</span><span class="s1">&#39;20000101&#39;</span><span class="p">,</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1"># Test S1</span>
+<span class="gp">... </span><span class="n">BudgetItem</span><span class="p">(</span><span class="n">start_date_YYYYMMDD</span><span class="o">=</span><span class="s1">&#39;20000101&#39;</span><span class="p">,</span>
 <span class="gp">... </span><span class="n">priority</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
 <span class="gp">... </span><span class="n">cadence</span><span class="o">=</span><span class="s1">&#39;once&#39;</span><span class="p">,</span>
 <span class="gp">... </span><span class="n">amount</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
@@ -448,6 +512,12 @@ TypeError: BudgetItem.__init__() missing 6 required positional arguments: ‘sta
 <span class="go">}</span>
 </pre></div>
 </div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">BudgetItem</span><span class="p">()</span> <span class="c1"># Test F1</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">TypeError</span>: <span class="n">BudgetItem.__init__() missing 6 required positional arguments: &#39;start_date_YYYYMMDD&#39;, &#39;priority&#39;, &#39;cadence&#39;, &#39;amount&#39;, &#39;deferrable&#39;, and &#39;memo&#39;</span>
+</pre></div>
+</div>
 <dl class="py method">
 <dt class="sig sig-object py" id="BudgetItem.BudgetItem.toJSON">
 <span class="sig-name descname"><span class="pre">toJSON</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#BudgetItem.BudgetItem.toJSON" title="Permalink to this definition">¶</a></dt>
@@ -459,7 +529,13 @@ TypeError: BudgetItem.__init__() missing 6 required positional arguments: ‘sta
 <span class="target" id="module-BudgetSet"></span><dl class="py class">
 <dt class="sig sig-object py" id="BudgetSet.BudgetSet">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">BudgetSet.</span></span><span class="sig-name descname"><span class="pre">BudgetSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">budget_items__list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#BudgetSet.BudgetSet" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="py method">
+<dd><p>#todo write BudgetSet.BudgetSet() doctests</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>budget_items__list</strong> – </p>
+</dd>
+</dl>
+<dl class="py method">
 <dt class="sig sig-object py" id="BudgetSet.BudgetSet.addBudgetItem">
 <span class="sig-name descname"><span class="pre">addBudgetItem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_date_YYYYMMDD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">priority</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cadence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amount</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deferrable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_debug_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">throw_exceptions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#BudgetSet.BudgetSet.addBudgetItem" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a BudgetItem to list BudgetItem.budget_items.</p>
@@ -468,12 +544,20 @@ TypeError: BudgetItem.__init__() missing 6 required positional arguments: ‘sta
 <dl class="py method">
 <dt class="sig sig-object py" id="BudgetSet.BudgetSet.getBudgetItems">
 <span class="sig-name descname"><span class="pre">getBudgetItems</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#BudgetSet.BudgetSet.getBudgetItems" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Returns a DataFrame of BudgetItems.</p>
+<p>#todo write doctests for BudgetSet.getBudgetItems()</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="BudgetSet.BudgetSet.getBudgetSchedule">
 <span class="sig-name descname"><span class="pre">getBudgetSchedule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_date_YYYYMMDD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_days</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#BudgetSet.BudgetSet.getBudgetSchedule" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a dataframe of proposed transactions</p>
+<p>#todo write doctests for BudgetSet.getBudgetSchedule()</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -490,7 +574,7 @@ TypeError: BudgetItem.__init__() missing 6 required positional arguments: ‘sta
 <dl class="py method">
 <dt class="sig sig-object py" id="BudgetSet.BudgetSet.toJSON">
 <span class="sig-name descname"><span class="pre">toJSON</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#BudgetSet.BudgetSet.toJSON" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get a string representing the BudgetSet object.</p>
+<dd><p>Get a JSON string representing the BudgetSet object.</p>
 </dd></dl>
 
 </dd></dl>
@@ -505,7 +589,7 @@ TypeError: BudgetItem.__init__() missing 6 required positional arguments: ‘sta
 
 <dl class="py method">
 <dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.computeForecast">
-<span class="sig-name descname"><span class="pre">computeForecast</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">budget_schedule_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_set_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memo_rules_df</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.computeForecast" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">computeForecast</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">budget_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memo_rule_set</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.computeForecast" title="Permalink to this definition">¶</a></dt>
 <dd><p>One-description.</p>
 <p>Multiple line dsecription.</p>
 <dl class="field-list simple">
@@ -597,7 +681,7 @@ TypeError: BudgetItem.__init__() missing 6 required positional arguments: ‘sta
 
 <dl class="py method">
 <dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.satisfice">
-<span class="sig-name descname"><span class="pre">satisfice</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">budget_schedule_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_set_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memo_rules_df</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.satisfice" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">satisfice</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">budget_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memo_rule_set</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.satisfice" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes output time-series that represents only non-negotiable spend.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -629,7 +713,7 @@ TypeError: BudgetItem.__init__() missing 6 required positional arguments: ‘sta
 </ul>
 </dd>
 </dl>
-<p>#todo doctests
+<p>#todo write MemoRule.MemoRule doctests
 &gt;&gt;&gt; MemoRule()
 Traceback (most recent call last):
 …
@@ -666,9 +750,16 @@ TypeError: MemoRule.__init__() missing 4 required positional arguments: ‘memo_
 <span class="target" id="module-MemoRuleSet"></span><dl class="py class">
 <dt class="sig sig-object py" id="MemoRuleSet.MemoRuleSet">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">MemoRuleSet.</span></span><span class="sig-name descname"><span class="pre">MemoRuleSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">memo_rules__list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#MemoRuleSet.MemoRuleSet" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="py method">
+<dd><p>Create a MemoRuleSet from a &lt;list&gt; of &lt;MemoRule&gt; objects.</p>
+<p>#todo MemoRuleSet.MemoRuleSet() doctests</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>memo_rules__list</strong> – </p>
+</dd>
+</dl>
+<dl class="py method">
 <dt class="sig sig-object py" id="MemoRuleSet.MemoRuleSet.addMemoRule">
-<span class="sig-name descname"><span class="pre">addMemoRule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">memo_regex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_from</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_to</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transaction_priority</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#MemoRuleSet.MemoRuleSet.addMemoRule" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">addMemoRule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">memo_regex</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_from</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_to</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transaction_priority</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#MemoRuleSet.MemoRuleSet.addMemoRule" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a MemoRule to list MemoRuleSet.memo_rules.</p>
 </dd></dl>
 

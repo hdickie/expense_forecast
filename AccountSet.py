@@ -5,6 +5,17 @@ class AccountSet:
         """
         Creates an AccountSet object. Previous Statement Balance and Loan Interest accounts are created automatically.
 
+        | Test Cases
+        | Expected Successes
+        | S1 [Checking, Credit Prv Stmt Bal, Credit Cur Stmt Bal, Savings Prv Stmt Bal, Savings Cur Stmt Bal, Loan Principal Balance, Loan Interest] #todo refactor Account.Account() doctest S1 to use _S1 label
+        | S2 Input no parameters
+        |
+        | Expected Fails
+        | F1 Savings - Prev Stmt Bal + Cur Stmt Bal violates account boundary,
+        |       Loan - Principal Balance + Interest != Balance #todo refactor AccountSet.AccountSet() doctest F1 to use _F1 label
+        | F2 Input a list that has an object that is not of AccountSet type. Do this without explicitly looking for the class name. #todo refactor AccountSet.AccountSet() doctest F2 to use _F2 label
+
+
         :param accounts__list:
 
         >>> AccountSet()
@@ -67,10 +78,6 @@ class AccountSet:
         ... print_debug_messages = True,
         ... throw_exceptions = False
         ... )]).toJSON())
-
-        #todo example of adding a loan account. (copy this into the unittest)
-
-        #todo example of adding a credit account. (copy this into the unittest)
 
         """
 
@@ -162,6 +169,21 @@ class AccountSet:
                  ):
         """
         Add an Account to list AccountSet.accounts. For credit and loan type accounts, previous statement balance and interest accounts are created.
+
+        | Test Cases
+        | Expected Successes
+        | S1: add Checking #todo refactor AccountSet.addAccount() doctest S1 to use _S1 label
+        | S2: add Savings #todo refactor AccountSet.addAccount() doctest S2 to use _S2 label
+        | S3: add Credit #todo refactor AccountSet.addAccount() doctest S3 to use _S3 label
+        | S4: add Loan #todo refactor AccountSet.addAccount() doctest S4 to use _S4 label
+        |
+        | Expected Fails
+        | F1 add a second checking account  #todo refactor AccountSet.addAccount() doctest F1 to use _F1 label
+        | F2 add an account with the same name as an existing account #todo refactor AccountSet.addAccount() doctest F2 to use _F2 label
+        | F3: Savings - Prev Stmt Bal + Cur Stmt Bal violates account boundary #todo refactor AccountSet.addAccount() doctest F3 to use _F3 label
+        | F4: Loan - Principal Balance + Interest != Balance #todo refactor AccountSet.addAccount() doctest F4 to use _F4 label
+        |
+        |
         """
 
         #TODO this should be based on interest type or interest AND account type
@@ -341,6 +363,8 @@ class AccountSet:
     def toJSON(self):
         """
         Get a JSON string representation of the AccountSet object.
+
+        #todo AccountSet.toJSON() say what the columns are
         """
 
         JSON_string="{\n"

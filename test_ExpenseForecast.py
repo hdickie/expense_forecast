@@ -911,3 +911,6 @@ class TestExpenseForecastMethods(unittest.TestCase):
 
     def test_satisfice(self):
         raise NotImplementedError
+
+    def test_toJSON(self):
+        raise NotImplementedError

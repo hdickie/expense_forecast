@@ -16,6 +16,21 @@ class BudgetItem:
         The BudgetItem constructor does not check types, but numerical parameters will raise a ValueError if they cannot be
         cast to float.
 
+        | Test Cases
+        | Expected Successes
+        | S1 Valid values for all parameters #todo refactor BudgetItem.BudgetItem() doctest S1 to use _S1 label
+        |
+        | Expected Fails
+        | Parameters that are provided are incorrect
+        | F1 provide no parameters #todo refactor BudgetItem.BudgetItem() doctest F1 to use _F1 label
+        |
+        | Incorrect Types provided for necessary parameters
+        | F2 Provide incorrect types for all necessary parameters #todo refactor BudgetItem.BudgetItem() doctest F2 to use _F2 label
+        |
+        | Illegal values provided
+        | F3 Priority less than 1 and cadence is some random string #todo refactor Account.Account() doctest F3 to use _F3 label
+        |
+
         :param str start_date_YYYYMMDD: A string that indicates the start date with format %Y%m%d.
         :param int priority: An integer >= 1 that indicates priority. See below for priority level meanings.
         :param str cadence: One of: 'once', 'daily', 'weekly', 'biweekly', 'monthly', 'quarterly', 'yearly'
@@ -29,9 +44,9 @@ class BudgetItem:
         hard-coded meaning, but here is how I plan to use them at this time:
 
         1. Non-negotiable. (Income, Rent, Minimum cc payments, Minimum loan payments, cost of living line-items)
-        2. Additional payments on credit card debt
-        3. Non-deferrable budget items that I am willing to pay interest on
-        4. Deferrable budget items that I am willing to pay interest on
+        2. Non-deferrable budget items that I am willing to pay interest on
+        3. Deferrable budget items that I am willing to pay interest on
+        4. Additional payments on credit card debt
         5. Non-deferrable budget items that I am not willing to pay interest on
         6. Deferrable budget items that I am not willing to pay interest on
         7. additional loan payments
@@ -42,13 +57,8 @@ class BudgetItem:
         This implementation will subtract abs(Amount) from Account_From, and add abs(amount) to Account_To. Therefore,
         negative values for Amount are reflected in the memo values but don't change the directional change of account balances.
 
-        #todo doctests
-        >>> BudgetItem()
-        Traceback (most recent call last):
-        ...
-        TypeError: BudgetItem.__init__() missing 6 required positional arguments: 'start_date_YYYYMMDD', 'priority', 'cadence', 'amount', 'deferrable', and 'memo'
-
-        >>> print(BudgetItem(start_date_YYYYMMDD='20000101',
+        >>> print( # Test S1
+        ... BudgetItem(start_date_YYYYMMDD='20000101',
         ... priority=1,
         ... cadence='once',
         ... amount=10,
@@ -62,6 +72,12 @@ class BudgetItem:
         "Deferrable":"False",
         "Memo":"test"
         }
+
+        >>> BudgetItem() # Test F1
+        Traceback (most recent call last):
+        ...
+        TypeError: BudgetItem.__init__() missing 6 required positional arguments: 'start_date_YYYYMMDD', 'priority', 'cadence', 'amount', 'deferrable', and 'memo'
+
 
         """
 
@@ -161,6 +177,8 @@ class BudgetItem:
     def toJSON(self):
         """
         Get a string representing the BudgetItem object.
+
+        #todo Budgetitem.toJSON() say what the columns are
         """
         JSON_string = "{\n"
         JSON_string += "\"Start_Date\":" + "\"" + str(self.start_date) + "\",\n"
