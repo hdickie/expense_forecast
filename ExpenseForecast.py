@@ -18,22 +18,20 @@ class ExpenseForecast:
 
     def __init__(self,account_set,budget_set,memo_rule_set):
 
-        #todo internal consistency
+        distinct_memo_priority_combinations = None
+        distinct_account_names = None
+        
 
-        # 1. if interest cadence is not none, then interest type and billing_start_dt must have valid values
-
-        #TODO assert consistency between accountset and budgetset
-
-        #todo assert that satisfice memo rules have been defined
-        #for each account with an interest cadence
+        #todo for each distinct account name in all memo rules to and from fields, there is a matching account
+        #todo for each budget item memo x priority combo, there is at least 1 memo_regex x priority that matches
+        #todo assert that satisfice memo rules have been defined for each account with an interest cadence
 
         #account_set,budget_set,memo_rule_set
 
-        print(account_set)
-        print(budget_set)
-        print(memo_rule_set)
+        self.account_set = account_set
+        self.budget_set = budget_set
+        self.memo_rule_set = memo_rule_set
 
-        pass
 
     def account_boundaries_are_violated(self,accounts_df,forecast_df):
 
@@ -572,7 +570,7 @@ class ExpenseForecast:
         :return:
         """
         #todo this will have to get the cc interest from the memo line
-        pass
+        raise NotImplementedError
 
 
 

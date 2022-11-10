@@ -770,97 +770,97 @@ class TestExpenseForecastMethods(unittest.TestCase):
         except Exception as e:
             raise e
 
-    def template_test_method(self):
-
-        initial_values_dict = {}
-        initial_values_dict['Checking'] = 1000
-        initial_values_dict['Credit Card Current Statement Balance'] = 2000
-        initial_values_dict['Credit Card Previous Statement Balance'] = 2000
-        initial_values_dict['Loan A Principal Balance'] = 3359.17
-        initial_values_dict['Loan A Interest'] = 0
-        initial_values_dict['Credit Card APR'] = 0.2674
-        initial_values_dict['Loan APR'] = 0.0466
-
-        expense_forecast_obj = ExpenseForecast.ExpenseForecast()
-        account_set = AccountSet.AccountSet()
-        budget_set = BudgetSet.BudgetSet()
-        memo_rule_set = MemoRuleSet.MemoRuleSet()
-
-        # account_set.addAccount(name='Loan A',
-        #                        balance=initial_values_dict['Loan A Principal Balance'] + initial_values_dict[
-        #                            'Loan A Interest'],
-        #                        min_balance=0, max_balance=float('inf'),
-        #                        apr=initial_values_dict['Loan APR'], interest_cadence='daily', interest_type='Simple',
-        #                        billing_start_date='2023-01-03',
-        #                        account_type='loan', principal_balance=initial_values_dict['Loan A Principal Balance'],
-        #                        accrued_interest=initial_values_dict['Loan A Interest'])
-        #
-        # budget_set.addBudgetItem(start_date='2023-01-01', priority=1, cadence='daily', amount='0',
-        #                          memo='dummy for test')
-        # memo_rule_set.addMemoRule(memo_regex='dummy for test', account_from='Checking', account_to=None,
-        #                           transaction_priority=1)
-
-        start_date_YYYYMMDD = '20230105'
-        start_date = datetime.datetime.strptime(start_date_YYYYMMDD, '%Y%m%d')
-
-        budget_schedule_df = budget_set.getBudgetSchedule(start_date_YYYYMMDD=start_date_YYYYMMDD, num_days=3)
-        account_set_df = account_set.getAccounts()
-        memo_rules_df = memo_rule_set.getMemoRules()
-        forecast_df = expense_forecast_obj.computeForecast(budget_schedule_df, account_set_df, memo_rules_df)
-
-        # Date  Checking    Credit Card: Credit Card Current Statement Balance  Credit Card: Credit Card Previous Statement Balance
-        #   Loan A: Loan Principal Balance      Loan A: Loan Interest       Memo
-
-        new_empty_row_df = pd.DataFrame(
-            {'Date': [None], 'Checking': [None], 'Credit Card: Current Statement Balance': [None],
-             'Credit Card: Previous Statement Balance': [None], 'Loan A: Principal Balance': [None],
-             'Loan A: Interest': [None], 'Memo': [None]
-             })
-
-        expected_result_set_df = pd.concat([new_empty_row_df.copy(),
-                                            new_empty_row_df.copy(),
-                                            new_empty_row_df.copy(),
-                                            new_empty_row_df.copy()])
-
-        expected_result_set_df.iloc[0, 0] = start_date
-        expected_result_set_df.iloc[0, new_empty_row_df.columns.tolist().index('Checking')] = initial_values_dict[
-            'Checking']
-        expected_result_set_df.iloc[
-            0, new_empty_row_df.columns.tolist().index('Credit Card: Current Statement Balance')] = initial_values_dict[
-            'Credit Card Current Statement Balance']
-        expected_result_set_df.iloc[
-            0, new_empty_row_df.columns.tolist().index('Credit Card: Previous Statement Balance')] = \
-            initial_values_dict['Credit Card Previous Statement Balance']
-        expected_result_set_df.iloc[0, new_empty_row_df.columns.tolist().index('Loan A: Principal Balance')] = \
-            initial_values_dict['Loan A Principal Balance']
-        expected_result_set_df.iloc[0, new_empty_row_df.columns.tolist().index('Loan A: Interest')] = \
-            initial_values_dict['Loan A Interest']
-
-        expected_result_set_df.iloc[1, 0] = start_date + datetime.timedelta(days=1)
-        expected_result_set_df.iloc[2, 0] = start_date + datetime.timedelta(days=2)
-        expected_result_set_df.iloc[3, 0] = start_date + datetime.timedelta(days=3)
-
-        # set expected rows
-        # expected_result_set_df.iloc[2, new_empty_row_df.columns.tolist().index('Credit Card: Current Statement Balance')] = 0
-
-        # check that minimum payment is always the max(statement_balance,40,1% of statement balance)
-        # Define test input
-        ###
-
-        ###
-
-        try:
-            self.account_boundaries_are_violated(account_set_df, forecast_df)
-            # self.assertTrue(forecast_df.iloc[:,0:expected_result_set_df.shape[1]-1].equals(expected_result_set_df.iloc[:,0:expected_result_set_df.shape[1]-1]))
-        except Exception as e:
-            print('FAILURE IN test_credit_card_payments()')
-            print('Expected '.ljust(50, '#'))
-            # print(expected_result_set_df.iloc[:,0:expected_result_set_df.shape[1]-1].to_string())
-            print(''.ljust(50, '#'))
-            print(' Forecasted'.ljust(50, '#'))
-            # print(forecast_df.iloc[:,0:expected_result_set_df.shape[1]-1].to_string())
-            print('#'.ljust(50, '#'))
-            raise e
+    # def template_test_method(self):
+    #
+    #     initial_values_dict = {}
+    #     initial_values_dict['Checking'] = 1000
+    #     initial_values_dict['Credit Card Current Statement Balance'] = 2000
+    #     initial_values_dict['Credit Card Previous Statement Balance'] = 2000
+    #     initial_values_dict['Loan A Principal Balance'] = 3359.17
+    #     initial_values_dict['Loan A Interest'] = 0
+    #     initial_values_dict['Credit Card APR'] = 0.2674
+    #     initial_values_dict['Loan APR'] = 0.0466
+    #
+    #     expense_forecast_obj = ExpenseForecast.ExpenseForecast()
+    #     account_set = AccountSet.AccountSet()
+    #     budget_set = BudgetSet.BudgetSet()
+    #     memo_rule_set = MemoRuleSet.MemoRuleSet()
+    #
+    #     # account_set.addAccount(name='Loan A',
+    #     #                        balance=initial_values_dict['Loan A Principal Balance'] + initial_values_dict[
+    #     #                            'Loan A Interest'],
+    #     #                        min_balance=0, max_balance=float('inf'),
+    #     #                        apr=initial_values_dict['Loan APR'], interest_cadence='daily', interest_type='Simple',
+    #     #                        billing_start_date='2023-01-03',
+    #     #                        account_type='loan', principal_balance=initial_values_dict['Loan A Principal Balance'],
+    #     #                        accrued_interest=initial_values_dict['Loan A Interest'])
+    #     #
+    #     # budget_set.addBudgetItem(start_date='2023-01-01', priority=1, cadence='daily', amount='0',
+    #     #                          memo='dummy for test')
+    #     # memo_rule_set.addMemoRule(memo_regex='dummy for test', account_from='Checking', account_to=None,
+    #     #                           transaction_priority=1)
+    #
+    #     start_date_YYYYMMDD = '20230105'
+    #     start_date = datetime.datetime.strptime(start_date_YYYYMMDD, '%Y%m%d')
+    #
+    #     budget_schedule_df = budget_set.getBudgetSchedule(start_date_YYYYMMDD=start_date_YYYYMMDD, num_days=3)
+    #     account_set_df = account_set.getAccounts()
+    #     memo_rules_df = memo_rule_set.getMemoRules()
+    #     forecast_df = expense_forecast_obj.computeForecast(budget_schedule_df, account_set_df, memo_rules_df)
+    #
+    #     # Date  Checking    Credit Card: Credit Card Current Statement Balance  Credit Card: Credit Card Previous Statement Balance
+    #     #   Loan A: Loan Principal Balance      Loan A: Loan Interest       Memo
+    #
+    #     new_empty_row_df = pd.DataFrame(
+    #         {'Date': [None], 'Checking': [None], 'Credit Card: Current Statement Balance': [None],
+    #          'Credit Card: Previous Statement Balance': [None], 'Loan A: Principal Balance': [None],
+    #          'Loan A: Interest': [None], 'Memo': [None]
+    #          })
+    #
+    #     expected_result_set_df = pd.concat([new_empty_row_df.copy(),
+    #                                         new_empty_row_df.copy(),
+    #                                         new_empty_row_df.copy(),
+    #                                         new_empty_row_df.copy()])
+    #
+    #     expected_result_set_df.iloc[0, 0] = start_date
+    #     expected_result_set_df.iloc[0, new_empty_row_df.columns.tolist().index('Checking')] = initial_values_dict[
+    #         'Checking']
+    #     expected_result_set_df.iloc[
+    #         0, new_empty_row_df.columns.tolist().index('Credit Card: Current Statement Balance')] = initial_values_dict[
+    #         'Credit Card Current Statement Balance']
+    #     expected_result_set_df.iloc[
+    #         0, new_empty_row_df.columns.tolist().index('Credit Card: Previous Statement Balance')] = \
+    #         initial_values_dict['Credit Card Previous Statement Balance']
+    #     expected_result_set_df.iloc[0, new_empty_row_df.columns.tolist().index('Loan A: Principal Balance')] = \
+    #         initial_values_dict['Loan A Principal Balance']
+    #     expected_result_set_df.iloc[0, new_empty_row_df.columns.tolist().index('Loan A: Interest')] = \
+    #         initial_values_dict['Loan A Interest']
+    #
+    #     expected_result_set_df.iloc[1, 0] = start_date + datetime.timedelta(days=1)
+    #     expected_result_set_df.iloc[2, 0] = start_date + datetime.timedelta(days=2)
+    #     expected_result_set_df.iloc[3, 0] = start_date + datetime.timedelta(days=3)
+    #
+    #     # set expected rows
+    #     # expected_result_set_df.iloc[2, new_empty_row_df.columns.tolist().index('Credit Card: Current Statement Balance')] = 0
+    #
+    #     # check that minimum payment is always the max(statement_balance,40,1% of statement balance)
+    #     # Define test input
+    #     ###
+    #
+    #     ###
+    #
+    #     try:
+    #         self.account_boundaries_are_violated(account_set_df, forecast_df)
+    #         # self.assertTrue(forecast_df.iloc[:,0:expected_result_set_df.shape[1]-1].equals(expected_result_set_df.iloc[:,0:expected_result_set_df.shape[1]-1]))
+    #     except Exception as e:
+    #         print('FAILURE IN test_credit_card_payments()')
+    #         print('Expected '.ljust(50, '#'))
+    #         # print(expected_result_set_df.iloc[:,0:expected_result_set_df.shape[1]-1].to_string())
+    #         print(''.ljust(50, '#'))
+    #         print(' Forecasted'.ljust(50, '#'))
+    #         # print(forecast_df.iloc[:,0:expected_result_set_df.shape[1]-1].to_string())
+    #         print('#'.ljust(50, '#'))
+    #         raise e
 
     # scenarios: min payments only
     # 1. minimum payments only
@@ -907,4 +907,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
         # memo_rules_df = memo_rule_set.getMemoRules()
         # forecast_df = expense_forecast_obj.computeForecast(budget_schedule_df, account_set_df, memo_rules_df)
         # self.account_boundaries_are_violated(account_set_df,forecast_df)
-        pass
+        raise NotImplementedError
+
+    def test_satisfice(self):
+        raise NotImplementedError
