@@ -13,9 +13,9 @@ Windows:
 <install_command>
 ```
 
-## Using expense_forecast
+## Documentation
 
-TODO demonstrative examples. Exhaustive examples go in tutorial document.
+<a href=""/>Documentation></a> #TODO write script to copy Sphinx auto-generated docs into folders that don't start with an underscore.
 
 ## Contributing to expense_forecast
 
