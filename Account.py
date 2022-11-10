@@ -1,9 +1,4 @@
-"""
-Single-line description for Account.py
 
-Multiple line description
-
-"""
 import datetime, pandas as pd
 
 class Account:
@@ -52,54 +47,37 @@ class Account:
         :param float accrued_interest: Accrued Interest. Only meaningful for accounts w simple interest.
         :param bool print_debug_messages: if true, prints debug messages
         :param bool throw_exceptions: if true, throws any exceptions that were raised
-        :return Account object
-        :rtype Account
+
         :raises ValueError: if the combination of input paramters is not valid.
-        :raises TypeError: if numerical values can't be cast to float. If billing_start_date is not string format %Y%m%d.
+        :raises  TypeError: if numerical values can't be cast to float. If billing_start_date is not string format %Y%m%d.
 
-         Legal combinations of parameters for each account type are:
+        :return: Account object
 
-        account_type = "checking"
-        billing_start_date_YYYYMMDD = None
-        interest_type = None
-        apr = None
-        interest_cadence = None
-        previous_statement_balance = None
-        minimum_payment = None
-        principal_balance = None
-        accrued_interest = None
+        :rtype: Account
 
-        account_type = "savings"
-        billing_start_date_YYYYMMDD = date of str matching format %Y%m%d
-        interest_type = "compound"
-        apr = float (not None)
-        interest_cadence = "daily", "monthly", or "yearly"
-        previous_statement_balance = None
-        minimum_payment = None
-        principal_balance = None
-        accrued_interest = None
 
-        #
-        # account_type = "credit"
-        # billing_start_date_YYYYMMDD = date of str matching format %Y%m%d
-        # interest_type = "compound"
-        # apr = float (not None)
-        # interest_cadence = "daily", "monthly", or "yearly"
-        # previous_statement_balance = float (not None). Must obey account min and max.
-        # minimum_payment = Non-negative float (not None).
-        # principal_balance = None
-        # accrued_interest = None
-        #
-        # account_type = "loan"
-        # billing_start_date_YYYYMMDD = date of str matching format %Y%m%d
-        # interest_type = "simple"
-        # apr = float (not None)
-        # interest_cadence = "daily", "monthly", or "yearly"
-        # previous_statement_balance = None
-        # minimum_payment = Non-negative float (not None).
-        # principal_balance = Non-negative float (not None). Principal_Balance + Accrued_Interets must = Balance.
-        # accrued_interest = Non-negative float (not None). Principal_Balance + Accrued_Interets must = Balance.
-
+        | Legal combinations of parameters for each account type are:
+        |
+        | account_type = "checking"
+        | billing_start_date_YYYYMMDD = None
+        | interest_type = None
+        | apr = None
+        | interest_cadence = None
+        | previous_statement_balance = None
+        | minimum_payment = None
+        | principal_balance = None
+        | accrued_interest = None
+        |
+        | account_type = "savings"
+        | billing_start_date_YYYYMMDD = date of str matching format %Y%m%d
+        | interest_type = "compound"
+        | apr = float (not None)
+        | interest_cadence = "daily", "monthly", or "yearly"
+        | previous_statement_balance = None
+        | minimum_payment = None
+        | principal_balance = None
+        | accrued_interest = None
+        |
 
         >>> Account()
         Traceback (most recent call last):

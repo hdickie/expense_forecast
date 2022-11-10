@@ -1,9 +1,3 @@
-"""
-Single-line AccountSet description
-
-Multiple-line AccountSet description
-
-"""
 import Account, pandas as pd
 class AccountSet:
 

@@ -1,11 +1,3 @@
-"""
-Your module's verbose yet thorough docstring. Single line
-
-Multiple line description
-
-"""
-
-
 
 import pandas as pd, numpy as np
 import matplotlib.pyplot as plt
@@ -20,7 +12,7 @@ class ExpenseForecast:
 
         distinct_memo_priority_combinations = None
         distinct_account_names = None
-        
+
 
         #todo for each distinct account name in all memo rules to and from fields, there is a matching account
         #todo for each budget item memo x priority combo, there is at least 1 memo_regex x priority that matches
