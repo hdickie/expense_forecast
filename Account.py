@@ -243,6 +243,8 @@ class Account:
         exception_value_error_ind = False
         exception_value_error_message_string = ""
 
+        #todo savings accounts also need a current and previous statement balance account
+
         if account_type.lower() in ['credit','loan']:
             exception_value_error_message_string += 'WARNING: Account.account_type was one of: credit, loan\n'
             exception_value_error_message_string += 'Note that these values are accepted by AccountSet.addAccount()\n'
@@ -293,6 +295,7 @@ class Account:
             assert self.min_balance <= self.balance
         except:
             exception_value_error_message_string += 'Account.balance was less than minimum balance\n'
+            exception_value_error_message_string += str(self.min_balance) + ' <= ' + str(self.balance) + ' was not true\n'
             exception_value_error_ind = True
 
         try:
@@ -358,6 +361,7 @@ class Account:
                 self.billing_start_date = datetime.datetime.strptime(billing_start_date_YYYYMMDD,'%Y%m%d')
             except:
                 exception_type_error_message_string += 'failed cast Account.billing_start_date_YYYYMMDD to datetime\n'
+                exception_value_error_message_string += 'Value was:' + str(interest_type) + "\n"
                 exception_type_error_ind = True
         else:
             if billing_start_date_YYYYMMDD is not None:
@@ -467,7 +471,6 @@ class Account:
         return JSON_string
 
     # def fromJSON(self,JSON_string):
-    #     #todo implement Account.fromJSON()
     #     pass
 
 

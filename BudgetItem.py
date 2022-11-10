@@ -145,12 +145,12 @@ class BudgetItem:
 
     def __str__(self):
         single_budget_item_df = pd.DataFrame({
-            'start_date': [self.start_date],
-            'priority': [self.priority],
-            'cadence': [self.cadence],
-            'amount': [self.amount],
-            'deferrable': [self.deferrable],
-            'memo': [self.memo]
+            'Start_date': [self.start_date],
+            'Priority': [self.priority],
+            'Cadence': [self.cadence],
+            'Amount': [self.amount],
+            'Deferrable': [self.deferrable],
+            'Memo': [self.memo]
         })
 
         return single_budget_item_df.to_string()
@@ -173,7 +173,6 @@ class BudgetItem:
         return JSON_string
 
     # def fromJSON(self,JSON_string):
-    #     #todo implement BudgetItem.fromJSON()
     #     pass
 
 #written in one line so that test coverage can reach 100%

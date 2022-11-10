@@ -2,7 +2,10 @@ import datetime
 import pandas as pd
 
 def generate_date_sequence(start_date_YYYYMMDD,num_days,cadence):
-    """ A wrapper for pd.date_range intended to make code easier to read. """
+    """ A wrapper for pd.date_range intended to make code easier to read.
+
+    #todo write hd_util.generate_date_sequence() doctests
+    """
 
     start_date = datetime.datetime.strptime(start_date_YYYYMMDD,'%Y%m%d')
     end_date = start_date + datetime.timedelta(days=num_days)

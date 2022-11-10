@@ -14,7 +14,7 @@ class MemoRule:
         :param account_to: Name of the account which funds will be depoisted
         :param transaction_priority: This priority index must match the priority of the transaction
 
-        #todo doctests
+        #todo write MemoRule.MemoRule doctests
         >>> MemoRule()
         Traceback (most recent call last):
         ...
@@ -52,7 +52,7 @@ class MemoRule:
         exception_value_error_ind = False
         exception_value_error_message_string = ""
 
-        #todo ValueError if from = to? and also if both are empty string
+        #todo MemoRule.MemoRule():: ValueError if from = to? and also if both are empty string
 
         self.memo_regex = str(self.memo_regex)
         # try:
@@ -135,7 +135,6 @@ class MemoRule:
         return JSON_string
 
     # def fromJSON(self,JSON_string):
-    #     #todo implement MemoRule.fromJSON()
     #     pass
 
 #written in one line so that test coverage can reach 100%

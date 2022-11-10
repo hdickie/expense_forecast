@@ -10,20 +10,81 @@ class ExpenseForecast:
 
     def __init__(self,account_set,budget_set,memo_rule_set):
 
-        distinct_memo_priority_combinations = None
-        distinct_account_names = None
+        accounts_df = account_set.getAccounts()
+        budget_df = budget_set.getBudgetItems()
+        memo_df = memo_rule_set.getMemoRules()
+
+        # for each distinct account name in all memo rules to and from fields, there is a matching account
+        # that is, for each memo rule that mentions an account, the mentioned account should exist
+        # not that it is NOT a requirement that the converse is true
+        # that is, there can be an account that has no corresponding memo rules
+
+        # should be no duplicates and credit and loan acct splitting is already handled
+
+        distinct_base_account_names__from_acct = pd.DataFrame(pd.DataFrame(accounts_df[['Name']]).apply(lambda x: x[0].split(':')[0],axis=1).drop_duplicates()).rename(columns={0:'Name'})
+        account_names__from_memo = pd.concat([pd.DataFrame(memo_df[['Account_From']]).rename(columns={'Account_From':'Name'}),
+                                              pd.DataFrame(memo_df[['Account_To']]).rename(columns={'Account_To':'Name'}) ])
+
+        distinct_account_names__from_memo = pd.DataFrame(account_names__from_memo.loc[account_names__from_memo.Name != 'None', 'Name'].drop_duplicates().reset_index(drop=True))
+
+        try:
+            assert set(distinct_account_names__from_memo.Name).intersection(set(distinct_base_account_names__from_acct.Name)) == set(distinct_account_names__from_memo.Name)
+        except:
+            print('An account name was mentioned in a memo rule that did not exist in the account set')
+            print('all accounts mentioned in memo rules:')
+            print(distinct_account_names__from_memo)
+            print('all defined accounts:')
+            print(distinct_base_account_names__from_acct)
+            error_ind = True
+
+        #for each budget item memo x priority combo, there is at least 1 memo_regex x priority that matches
+        distinct_memo_priority_combinations__from_budget = budget_df[['Priority', 'Memo']].drop_duplicates()
+        distinct_memo_priority_combinations__from_memo = memo_df[['Transaction_Priority', 'Memo_Regex']] #should be no duplicates
+
+        any_matches_found_at_all = False
+        error_text=""
+        for budget_index, budget_row in distinct_memo_priority_combinations__from_budget.iterrows():
+            match_found = False
+            for memo_index, memo_row in distinct_memo_priority_combinations__from_memo.iterrows():
+                if budget_row.Priority == memo_row.Transaction_Priority:
+                    m = re.search(memo_row.Memo_Regex, budget_row.Memo)
+                    if m is not None:
+                        match_found = True
+                        continue
+
+            if match_found == False:
+                error_text += "No regex match found for memo:\'"+str(budget_row.Memo)+"\'\n"
+
+        if error_text != "":
+            print(error_text)
+            error_ind = True
+
+        smpl_sel_vec = accounts_df.Interest_Type.apply(lambda x: x.lower() if x is not None else None) == 'simple'
+        cmpnd_sel_vec = accounts_df.Interest_Type.apply(lambda x: x.lower() if x is not None else None) == 'compound'
 
 
-        #todo for each distinct account name in all memo rules to and from fields, there is a matching account
-        #todo for each budget item memo x priority combo, there is at least 1 memo_regex x priority that matches
-        #todo assert that satisfice memo rules have been defined for each account with an interest cadence
+        # for each account with interest_type == 'Simple', there should be principal balance and an interest acct
+        distinct_simple_interest_bearing_accounts = pd.DataFrame(accounts_df.loc[smpl_sel_vec,'Name'])
+        #print(distinct_simple_interest_bearing_accounts.to_string())
+        #todo implement test: for each account with interest_type == 'Simple', there should be principal balance and an interest acct
 
-        #account_set,budget_set,memo_rule_set
+        #for each account with interest_type == 'Compound', there should be prev bal and curr bal accts
+        distinct_compound_interest_bearing_accounts = pd.DataFrame(accounts_df.loc[cmpnd_sel_vec,'Name'])
+        #print(distinct_compound_interest_bearing_accounts.to_string())
+        #todo implement test: for each account with interest_type == 'Compound', there should be prev bal and curr bal accts
 
-        self.account_set = account_set
-        self.budget_set = budget_set
-        self.memo_rule_set = memo_rule_set
+        error_text_string = ""
+        error_ind = False
 
+        if error_ind:
+            print(error_text_string)
+            raise ValueError
+
+        self.initial_account_set = account_set
+        self.initial_budget_set = budget_set
+        self.initial_memo_rule_set = memo_rule_set
+
+        self.forecast_df = self.computeForecast(account_set, budget_set, memo_rule_set)
 
     def account_boundaries_are_violated(self,accounts_df,forecast_df):
 
@@ -65,7 +126,7 @@ class ExpenseForecast:
                 return True
         return False
 
-    def satisfice(self, budget_schedule_df, account_set_df, memo_rules_df):
+    def satisfice(self, budget_set, account_set, memo_rule_set):
         """
         Computes output time-series that represents only non-negotiable spend.
 
@@ -74,6 +135,9 @@ class ExpenseForecast:
         :param memo_rules_df:
         :return:
         """
+
+        #todo refactor ExpenseForecast.satisfice() to use budget_set, account_set, memo_rule_set
+
         priority_1_budget_schedule_df = budget_schedule_df.loc[budget_schedule_df.Priority == 1, :]
 
         min_sched_date = min(budget_schedule_df.Date)
@@ -127,10 +191,10 @@ class ExpenseForecast:
         #print('initial forecast values post assignment:')
         #print(forecast_df.to_string())
 
-        #todo, we make minimum payments on loans and credit cards before interest for this day is calculated
+        #todo satisfice():: we make minimum payments on loans and credit cards before interest for this day is calculated
         #in order for this to work, it is easiest if additional payments are made before the due date
 
-        #todo, the account used to make minimum payments should be set accotrding to memo rules, not hard coded as checking
+        #todo satisfice():: the account used to make minimum payments should be set accotrding to memo rules, not hard coded as checking
         #accounts that receive interest accruals should be selected by interest type, not by account type
 
         index_of_checking_column = forecast_df.columns.tolist().index('Checking')
@@ -339,7 +403,7 @@ class ExpenseForecast:
 
 
 
-    def computeForecast(self,budget_schedule_df, account_set_df, memo_rules_df):
+    def computeForecast(self,budget_set, account_set, memo_rule_set):
         """
         One-description.
 
@@ -352,7 +416,7 @@ class ExpenseForecast:
         :return:
         """
 
-        satisficed_forecast__list = self.satisfice(budget_schedule_df, account_set_df, memo_rules_df)
+        satisficed_forecast__list = self.satisfice(budget_set, account_set, memo_rule_set)
         updated_budget_schedule_df = satisficed_forecast__list[0]
         account_set_df = satisficed_forecast__list[1]
         forecast_df = satisficed_forecast__list[2]
@@ -385,7 +449,7 @@ class ExpenseForecast:
                             index_of_account_to_column = list(row_w_date_of_proposed_transaction.columns).index(memo_rules_row.account_to)
 
 
-                        #todo, here, the decision has to be made whether or not to execute the transaction
+                        #todo computeForecast():: the decision has to be made whether or not to execute the transaction
                         if memo_rules_row.account_from is not None and memo_rules_row.account_to is None:  # e.g. income
                             row_w_date_of_proposed_transaction.iloc[0, index_of_account_from_column] += budget_item_row.Amount
                             transaction_was_executed = True
@@ -421,7 +485,7 @@ class ExpenseForecast:
                         row_w_date_of_proposed_transaction.loc[0, 'Memo'] = row_w_date_of_proposed_transaction.loc[0, 'Memo'] + new_memo_text
 
                 if transaction_was_executed:
-                    #todo resatisficing must occur
+                    #todo computeForecast(): resatisficing must occur
                     #the row in question has been changed. we keep the row w the transaction and all previous rows.
                     #we submit all later rows for re-satsificing
                     #Note that satisfice returns the first row the same as it was submitted, so we keep only
@@ -488,7 +552,7 @@ class ExpenseForecast:
         ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05),
                   fancybox=True, shadow=True, ncol=4)
 
-        # TODO a large number of accounts will require some adjustment here so that the legend is entirely visible
+        # TODO plotOverall():: a large number of accounts will require some adjustment here so that the legend is entirely visible
 
         min_date = min(forecast_df.Date).strftime('%Y-%m-%d')
         max_date = max(forecast_df.Date).strftime('%Y-%m-%d')
@@ -561,7 +625,7 @@ class ExpenseForecast:
         :param output_path:
         :return:
         """
-        #todo this will have to get the cc interest from the memo line
+        #todo plotMarginalInterest():: this will have to get the cc interest from the memo line
         raise NotImplementedError
 
 

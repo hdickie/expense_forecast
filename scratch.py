@@ -19,25 +19,27 @@ if __name__ == '__main__':
                            balance=1000,
                            min_balance=0,
                            max_balance=float('inf'),
-                           apr=0,
-                           interest_cadence='None',
-                           interest_type='None',
-                           billing_start_date='None',
+                           apr=None,
+                           interest_cadence=None,
+                           interest_type=None,
+                           billing_start_date_YYYYMMDD=None,
                            account_type='checking',
                            principal_balance=None,
                            accrued_interest=None)
 
-    account_set.addAccount(name='Credit Card',
+    account_set.addAccount(name='Credit',
                            balance=1001,
                            min_balance=0,
                            max_balance=float('inf'),
                            apr=0.2674,
                            interest_cadence='Monthly',
                            interest_type='Compound',
-                           billing_start_date='2000-01-07',
+                           billing_start_date_YYYYMMDD='20000107',
                            account_type='credit',
-                           principal_balance=-1,
-                           accrued_interest=-1)
+                           previous_statement_balance=0,
+                           principal_balance=None,
+                           accrued_interest=None,
+                           minimum_payment=40)
 
     account_set.addAccount(name='Savings',
                            balance=1002,
@@ -46,7 +48,7 @@ if __name__ == '__main__':
                            apr=0.01,
                            interest_cadence='Monthly',
                            interest_type='Compound',
-                           billing_start_date='2000-01-07',
+                           billing_start_date_YYYYMMDD='20000107',
                            account_type='savings',
                            principal_balance=-1,
                            accrued_interest=-1)
@@ -58,7 +60,7 @@ if __name__ == '__main__':
                            apr=0.0466,
                            interest_cadence='daily',
                            interest_type='Simple',
-                           billing_start_date='2023-01-03',
+                           billing_start_date_YYYYMMDD='20230103',
                            account_type='loan',
                            principal_balance=3359.17,
                            accrued_interest=0,
@@ -71,7 +73,7 @@ if __name__ == '__main__':
                            apr=0.0429,
                            interest_cadence='daily',
                            interest_type='Simple',
-                           billing_start_date='2023-01-03',
+                           billing_start_date_YYYYMMDD='20230103',
                            account_type='loan',
                            principal_balance=4746.18,
                            accrued_interest=0,
@@ -84,7 +86,7 @@ if __name__ == '__main__':
                            apr=0.0429,
                            interest_cadence='daily',
                            interest_type='Simple',
-                           billing_start_date='2023-01-03',
+                           billing_start_date_YYYYMMDD='20230103',
                            account_type='loan',
                            principal_balance=1919.55,
                            accrued_interest=0,
@@ -97,7 +99,7 @@ if __name__ == '__main__':
                            apr=0.0376,
                            interest_cadence='daily',
                            interest_type='Simple',
-                           billing_start_date='2023-01-03',
+                           billing_start_date_YYYYMMDD='20230103',
                            account_type='loan',
                            principal_balance=4726.68,
                            accrued_interest=0,
@@ -110,7 +112,7 @@ if __name__ == '__main__':
                            apr=0.0376,
                            interest_cadence='daily',
                            interest_type='Simple',
-                           billing_start_date='2023-01-03',
+                           billing_start_date_YYYYMMDD='20230103',
                            account_type='loan',
                            principal_balance=1823.31,
                            accrued_interest=0,
@@ -120,17 +122,19 @@ if __name__ == '__main__':
 
     #Define Budget Items
     budget_set = BudgetSet.BudgetSet()
-    budget_set.addBudgetItem(start_date = '2000-01-01',
+    budget_set.addBudgetItem(start_date_YYYYMMDD = '20000101',
                  priority = 1,
                  cadence='daily',
                  amount=-30,
-                 memo='Food')
+                 memo='Food',
+                             deferrable=False)
 
-    budget_set.addBudgetItem(start_date='2000-01-01',
+    budget_set.addBudgetItem(start_date_YYYYMMDD='20000101',
                                                    priority=1,
                                                    cadence='weekly',
                                                    amount=1200,
-                                                   memo='Income')
+                                                   memo='Income',
+                             deferrable=False)
 
     # budget_set.addBudgetItem(start_date='2000-01-06',
     #                          priority=2,
@@ -138,11 +142,11 @@ if __name__ == '__main__':
     #                          amount="*",
     #                          memo='Additional Credit Card Payment') #todo this is what we want to make work
 
-    budget_set.addBudgetItem(start_date='2023-01-06',
+    budget_set.addBudgetItem(start_date_YYYYMMDD='20230106',
                              priority=2,
                              cadence='monthly',
                              amount=1000,
-                             memo='Additional Credit Card Payment') #this is what we want to make work
+                             memo='Additional Credit Card Payment',deferrable=False)
 
 
     budget_schedule_df = budget_set.getBudgetSchedule(start_date_YYYYMMDD,365)
@@ -151,7 +155,7 @@ if __name__ == '__main__':
     memo_rule_set = MemoRuleSet.MemoRuleSet()
     memo_rule_set.addMemoRule(
         memo_regex="Food",
-        account_from="Credit Card: Current Statement Balance",
+        account_from="Credit",
         account_to=None,
         transaction_priority=1
     )
@@ -171,7 +175,6 @@ if __name__ == '__main__':
 
     #Begin simulation
     x = ExpenseForecast.ExpenseForecast(account_set,budget_set,memo_rule_set)
-    forecast_df = x.computeForecast(start_date_YYYYMMDD,end_date_YYYYMMDD)
 
 
     #QC output
@@ -184,9 +187,9 @@ if __name__ == '__main__':
     # print("-------------------------------")
 
 
-    forecast_df.to_csv('C:/Users/HumeD/Documents/out.csv',index=False,sep="|")
+    #forecast_df.to_csv('C:/Users/HumeD/Documents/out.csv',index=False,sep="|")
 
 
-    x.plotOverall(forecast_df,'C:/Users/HumeD/Documents/overall.png')
+    #x.plotOverall(forecast_df,'C:/Users/HumeD/Documents/overall.png')
 
-    x.plotAccountTypeTotals(forecast_df,'C:/Users/HumeD/Documents/account_type_totals.png')
+    #x.plotAccountTypeTotals(forecast_df,'C:/Users/HumeD/Documents/account_type_totals.png')

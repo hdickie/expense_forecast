@@ -167,6 +167,13 @@ class AccountSet:
         #TODO this should be based on interest type or interest AND account type
         if account_type.lower() == 'loan':
 
+            if principal_balance is None:
+                print('Prinicipal_Balance cannot be None for account_type = loan')
+                raise ValueError
+
+            if accrued_interest is None:
+                print('Accrued_Interest cannot be None for account_type = loan')
+                raise ValueError
 
             if principal_balance + accrued_interest != balance:
                 print("Account.Principal_balance + Account.accrued_interest != Account.balance.\n")
@@ -208,6 +215,11 @@ class AccountSet:
             self.accounts.append(account)
 
         elif account_type.lower() == 'credit':
+
+            if previous_statement_balance is None:
+                print('Previous_Statement_Balance cannot be None for account_type = loan')
+                raise ValueError
+
             account = Account.Account(name = name+': Curr Stmt Bal',
                                       balance = balance,
                                       min_balance = min_balance,
@@ -343,7 +355,6 @@ class AccountSet:
         return JSON_string
 
     # def fromJSON(self,JSON_string):
-    #     #todo implement AccountSet.fromJSON()
     #     pass
 
 #written in one line so that test coverage can reach 100%

@@ -4,6 +4,12 @@ from hd_util import *
 class BudgetSet:
 
     def __init__(self,budget_items__list=[]):
+        """
+
+        #todo write BudgetSet.BudgetSet() doctests
+
+        :param budget_items__list:
+        """
         self.budget_items = []
         for budget_item in budget_items__list:
             self.budget_items.append(budget_item)
@@ -15,16 +21,23 @@ class BudgetSet:
         return str(self)
 
     def getBudgetItems(self):
-        all_budget_items_df = pd.DataFrame({'start_date': [], 'priority': [], 'cadence': [], 'amount': [],
-                                        'memo': []
+        """
+        Returns a DataFrame of BudgetItems.
+
+        #todo write doctests for BudgetSet.getBudgetItems()
+
+        :return: DataFrame
+        """
+        all_budget_items_df = pd.DataFrame({'Start_date': [], 'Priority': [], 'Cadence': [], 'Amount': [],
+                                        'Memo': []
                                         })
 
         for budget_item in self.budget_items:
-            new_budget_item_row_df = pd.DataFrame({'start_date': [budget_item.start_date],
-                                               'priority': [budget_item.priority],
-                                               'cadence': [budget_item.cadence],
-                                               'amount': [budget_item.amount],
-                                               'memo': [budget_item.memo]
+            new_budget_item_row_df = pd.DataFrame({'Start_date': [budget_item.start_date],
+                                               'Priority': [budget_item.priority],
+                                               'Cadence': [budget_item.cadence],
+                                               'Amount': [budget_item.amount],
+                                               'Memo': [budget_item.memo]
                                                })
 
             all_budget_items_df = pd.concat([all_budget_items_df, new_budget_item_row_df], axis=0)
@@ -36,6 +49,8 @@ class BudgetSet:
     def getBudgetSchedule(self,start_date_YYYYMMDD,num_days):
         """
         Generate a dataframe of proposed transactions
+
+        #todo write doctests for BudgetSet.getBudgetSchedule()
 
         :param start_date_YYYYMMDD:
         :param num_days:
@@ -86,7 +101,7 @@ class BudgetSet:
 
     def toJSON(self):
         """
-        Get a string representing the BudgetSet object.
+        Get a JSON string representing the BudgetSet object.
         """
         JSON_string = "{\n"
         for i in range(0, len(self.budget_items)):
@@ -99,7 +114,6 @@ class BudgetSet:
         return JSON_string
 
     # def fromJSON(self,JSON_string):
-    #     #todo implement BudgetSet.fromJSON()
     #     pass
 
 #written in one line so that test coverage can reach 100%
