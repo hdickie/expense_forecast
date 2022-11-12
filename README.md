@@ -1,6 +1,8 @@
 # Expense_Forecast
 
-The expense_forecast module is a tool that allows anyone with at least a beginner understanding of python to compute future trends of their spend. This tool can compute not only one future scenario, but different decision rules can implemented to allow comparison of the consequences of different sets of decision rules. Furthermore, once these forecasts have been created, the impact of marginal changes can bne evaluated, yielding answers to questions such as "if I spend $1000 today, how much longer will it take to pay off all my loans?".
+The expense_forecast module is a tool that allows anyone with a beginner understanding of python to compute future trends of their spend. Different sets of decision rules can implemented to compute long-term trends and compare the impact on milestone dates. This module allows the user to "map dollars to days", yielding answers to questions such as: "if I spend $1000 today, how much longer will it take to pay off all my loans?".
+
+
   
 This object-oriented approach may seem like overkill, but I have tried and failed several times to do this using only DataFrames.
   

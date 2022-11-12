@@ -50,7 +50,7 @@
 </div>
 <span class="target" id="module-Account"></span><dl class="py class">
 <dt class="sig sig-object py" id="Account.Account">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Account.</span></span><span class="sig-name descname"><span class="pre">Account</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">billing_start_date_YYYYMMDD</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interest_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interest_cadence</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimum_payment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_debug_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">throw_exceptions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Account.Account" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Account.</span></span><span class="sig-name descname"><span class="pre">Account</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">billing_start_date_YYYYMMDD</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interest_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interest_cadence</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimum_payment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_debug_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raise_exceptions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Account.Account" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates an Account object. Input validation is performed. Intended for use by internal methods.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -66,7 +66,7 @@
 <li><p><strong>interest_cadence</strong> (<em>str</em>) – One of: ‘daily’, ‘monthly’, ‘yearly’. Not case sensitive.</p></li>
 <li><p><strong>minimum_payment</strong> (<em>float</em>) – Minimum payment. Only meaningful for loans and credit cards.</p></li>
 <li><p><strong>print_debug_messages</strong> (<em>bool</em>) – if true, prints debug messages</p></li>
-<li><p><strong>throw_exceptions</strong> (<em>bool</em>) – if true, throws any exceptions that were raised</p></li>
+<li><p><strong>raise_exceptions</strong> (<em>bool</em>) – if true, throws any exceptions that were raised</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
@@ -150,7 +150,7 @@
 </pre></div>
 </div>
 <div class="line-block">
-<div class="line">The throw_exceptions parameter can be set to False to allow some debugging text to come through.</div>
+<div class="line">The raise_exceptions parameter can be set to False to allow some debugging text to come through.</div>
 </div>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#F1: Checking: Debug Messages Test</span>
 <span class="gp">... </span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;F1 Checking: Debug Messages Test&#39;</span><span class="p">,</span>
@@ -162,7 +162,7 @@
 <span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="s1">&#39;simple&#39;</span><span class="p">,</span>
 <span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="s1">&#39;20000101&#39;</span><span class="p">,</span>
 <span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s1">&#39;checking&#39;</span><span class="p">,</span>
-<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">throw_exceptions</span><span class="o">=</span><span class="kc">False</span> <span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">raise_exceptions</span><span class="o">=</span><span class="kc">False</span> <span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
 <span class="go">ValueErrors:</span>
 <span class="go">For types other than prev stmt bal, principal balance, or savings, Account.apr should be None.</span>
 <span class="go">Value was:0.05</span>
@@ -203,7 +203,7 @@
 
 <span class="target" id="module-AccountSet"></span><dl class="py class">
 <dt class="sig sig-object py" id="AccountSet.AccountSet">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">AccountSet.</span></span><span class="sig-name descname"><span class="pre">AccountSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">accounts__list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_debug_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">throw_exceptions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#AccountSet.AccountSet" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">AccountSet.</span></span><span class="sig-name descname"><span class="pre">AccountSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">accounts__list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_debug_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raise_exceptions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#AccountSet.AccountSet" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates an AccountSet object. Possible Account Types are: Checking, Credit, Loan, Savings. Consistency is checked.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -219,62 +219,49 @@
 <dd class="field-odd"><p><a class="reference internal" href="#AccountSet.AccountSet" title="AccountSet.AccountSet">AccountSet</a></p>
 </dd>
 </dl>
-<p>Reasons for ValueError exception:
-Combined balance between prev and curr violate account boundaries.
-Accounts that are related (as implied by name) have different parameters.
-A principal balance account was input without an interest account, vice versa, and etc.</p>
-<p>Creating an AccountSet without passing parameters is a valid thing to do.
-&gt;&gt;&gt; AccountSet()
-Empty DataFrame
-Columns: [Name, Balance, Min_Balance, Max_Balance, Account_Type, Billing_Start_Dt, Interest_Type, APR, Interest_Cadence, Minimum_Payment]
-Index: []</p>
-<p>IF you want to pass a list of Accounts explicitly you can do that as well.
-&gt;&gt;&gt; print(AccountSet([Account.Account(name=”test checking”,
-… balance=0,
-… min_balance=0,
-… max_balance=0,
-… account_type=’checking’
-… )]).toJSON())
-{
-{
-“Name”:”test checking”,
-“Balance”:”0.0”,
-“Min_Balance”:”0.0”,
-“Max_Balance”:”0.0”,
-“Account_Type”:”checking”,
-“Billing_Start_Date”:”None”,
-“Interest_Type”:”None”,
-“APR”:”None”,
-“Interest_Cadence”:”None”,
-“Minimum_Payment”:”None”
-}
-}</p>
-<p>Combined balance account boundary violation
-&gt;&gt;&gt; print(AccountSet([Account.Account(name=”Credit: Curr Stmt Bal”,
-… balance=75,
-… min_balance=0,
-… max_balance=100,
-… apr=None,
-… interest_cadence=None,
-… interest_type=None,
-… billing_start_date_YYYYMMDD=None,
-… account_type=’Curr Stmt Bal’,
-… minimum_payment=None
-… ),
-… Account.Account(name=”Credit: Prev Stmt Bal”,
-… balance=75,
-… min_balance=0,
-… max_balance=0,
-… apr=0.05,
-… interest_cadence=”Monthly”,
-… interest_type=”Compound”,
-… billing_start_date_YYYYMMDD=”20000101”,
-… account_type=’Prev Stmt Bal’,
-… minimum_payment=40
-… )]).toJSON())</p>
+<div class="line-block">
+<div class="line">Reasons for ValueError exception:</div>
+<div class="line">Combined balance between prev and curr violate account boundaries.</div>
+<div class="line">Accounts that are related (as implied by name) have different parameters.</div>
+<div class="line">A principal balance account was input without an interest account, vice versa, and etc.</div>
+</div>
+<div class="line-block">
+<div class="line">Creating an AccountSet without passing parameters is a valid thing to do.</div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">AccountSet</span><span class="p">()</span>
+<span class="go">Empty DataFrame</span>
+<span class="go">Columns: [Name, Balance, Min_Balance, Max_Balance, Account_Type, Billing_Start_Dt, Interest_Type, APR, Interest_Cadence, Minimum_Payment]</span>
+<span class="go">Index: []</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line">If you want to pass a list of Accounts explicitly you can do that as well.</div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">AccountSet</span><span class="p">([</span><span class="n">Account</span><span class="o">.</span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;test checking&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s1">&#39;checking&#39;</span>
+<span class="gp">... </span><span class="p">)])</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="go">{</span>
+<span class="go">{</span>
+<span class="go">&quot;Name&quot;:&quot;test checking&quot;,</span>
+<span class="go">&quot;Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Min_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Max_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Account_Type&quot;:&quot;checking&quot;,</span>
+<span class="go">&quot;Billing_Start_Date&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Type&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;APR&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Cadence&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Minimum_Payment&quot;:&quot;None&quot;</span>
+<span class="go">}</span>
+<span class="go">}</span>
+</pre></div>
+</div>
 <dl class="py method">
 <dt class="sig sig-object py" id="AccountSet.AccountSet.addAccount">
-<span class="sig-name descname"><span class="pre">addAccount</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">billing_start_date_YYYYMMDD</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interest_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interest_cadence</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimum_payment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">previous_statement_balance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">principal_balance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accrued_interest</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_debug_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">throw_exceptions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#AccountSet.AccountSet.addAccount" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">addAccount</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">billing_start_date_YYYYMMDD</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interest_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interest_cadence</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimum_payment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">previous_statement_balance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">principal_balance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accrued_interest</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_debug_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raise_exceptions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#AccountSet.AccountSet.addAccount" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add an Account to list AccountSet.accounts. For credit and loan type accounts, previous statement balance and interest accounts are created.</p>
 <div class="line-block">
 <div class="line">Test Cases</div>
@@ -310,13 +297,11 @@ Index: []</p>
 <span class="go">&quot;Balance&quot;:&quot;0.0&quot;,</span>
 <span class="go">&quot;Min_Balance&quot;:&quot;0.0&quot;,</span>
 <span class="go">&quot;Max_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Account_Type&quot;:&quot;checking&quot;,</span>
+<span class="go">&quot;Billing_Start_Date&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Type&quot;:&quot;None&quot;,</span>
 <span class="go">&quot;APR&quot;:&quot;None&quot;,</span>
 <span class="go">&quot;Interest_Cadence&quot;:&quot;None&quot;,</span>
-<span class="go">&quot;Interest_Type&quot;:&quot;None&quot;,</span>
-<span class="go">&quot;Billing_Start_Date&quot;:&quot;None&quot;,</span>
-<span class="go">&quot;Account_Type&quot;:&quot;checking&quot;,</span>
-<span class="go">&quot;Principal_Balance&quot;:&quot;None&quot;,</span>
-<span class="go">&quot;Accrued_Interest&quot;:&quot;None&quot;,</span>
 <span class="go">&quot;Minimum_Payment&quot;:&quot;None&quot;</span>
 <span class="go">}</span>
 <span class="go">}</span>
@@ -334,7 +319,7 @@ Index: []</p>
 
 <span class="target" id="module-BudgetItem"></span><dl class="py class">
 <dt class="sig sig-object py" id="BudgetItem.BudgetItem">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">BudgetItem.</span></span><span class="sig-name descname"><span class="pre">BudgetItem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_date_YYYYMMDD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">priority</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cadence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amount</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deferrable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_debug_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">throw_exceptions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#BudgetItem.BudgetItem" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">BudgetItem.</span></span><span class="sig-name descname"><span class="pre">BudgetItem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_date_YYYYMMDD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">priority</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cadence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amount</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deferrable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_debug_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raise_exceptions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#BudgetItem.BudgetItem" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a BudgetItem object. Input validation is performed.</p>
 <p>The BudgetItem constructor does not check types, but numerical parameters will raise a ValueError if they cannot be
 cast to float.</p>
@@ -436,7 +421,7 @@ negative values for Amount are reflected in the memo values but don’t change t
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="BudgetSet.BudgetSet.addBudgetItem">
-<span class="sig-name descname"><span class="pre">addBudgetItem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_date_YYYYMMDD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">priority</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cadence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amount</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deferrable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_debug_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">throw_exceptions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#BudgetSet.BudgetSet.addBudgetItem" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">addBudgetItem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_date_YYYYMMDD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">priority</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cadence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amount</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deferrable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_debug_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raise_exceptions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#BudgetSet.BudgetSet.addBudgetItem" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a BudgetItem to list BudgetItem.budget_items.</p>
 <div class="line-block">
 <div class="line">Test Cases</div>
@@ -711,7 +696,7 @@ negative values for Amount are reflected in the memo values but don’t change t
 
 <span class="target" id="module-MemoRule"></span><dl class="py class">
 <dt class="sig sig-object py" id="MemoRule.MemoRule">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">MemoRule.</span></span><span class="sig-name descname"><span class="pre">MemoRule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">memo_regex</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_from</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_to</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transaction_priority</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_debug_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">throw_exceptions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#MemoRule.MemoRule" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">MemoRule.</span></span><span class="sig-name descname"><span class="pre">MemoRule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">memo_regex</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_from</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_to</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transaction_priority</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_debug_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raise_exceptions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#MemoRule.MemoRule" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a &lt;MemoRule&gt; object. Input validation is performed.</p>
 <div class="line-block">
 <div class="line">Test Cases</div>
@@ -746,7 +731,7 @@ negative values for Amount are reflected in the memo values but don’t change t
 <span class="gr">TypeError</span>: <span class="n">MemoRule.__init__() missing 4 required positional arguments: &#39;memo_regex&#39;, &#39;account_from&#39;, &#39;account_to&#39;, and &#39;transaction_priority&#39;</span>
 </pre></div>
 </div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">MemoRule</span><span class="p">(</span><span class="n">memo_regex</span><span class="o">=</span><span class="s1">&#39;(&#39;</span><span class="p">,</span><span class="n">account_from</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span><span class="n">account_to</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span><span class="n">transaction_priority</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">throw_exceptions</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">MemoRule</span><span class="p">(</span><span class="n">memo_regex</span><span class="o">=</span><span class="s1">&#39;(&#39;</span><span class="p">,</span><span class="n">account_from</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span><span class="n">account_to</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span><span class="n">transaction_priority</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">raise_exceptions</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
 <span class="go">An exception was thrown when MemoRule.memo_regex was interpreted as a regex.</span>
 
 

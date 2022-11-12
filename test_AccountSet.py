@@ -1,7 +1,13 @@
 import unittest
-import Account, AccountSet
+import Account, doctest, doctest_AccountSet, AccountSet
 
 class TestAccountSetMethods(unittest.TestCase):
+
+    def test_AccountSet_doctests(self):
+        #doctest.testmod(doctest_AccountSet,name="doctest_AccountSet")
+        #doctest.DocTestSuite(module='doctest_AccountSet')
+        doctest.testfile('doctest_AccountSet.py')
+        #doctest.run_docstring_examples('doctest_AccountSet.py',globs={})
 
     def test_AccountSet_Constructor(self):
 
@@ -227,81 +233,81 @@ class TestAccountSetMethods(unittest.TestCase):
         test_account_set_JSON = test_account_set.toJSON()
 
         test_expectation = """{
-{
-"Name":"test checking",
-"Balance":"0.0",
-"Min_Balance":"0.0",
-"Max_Balance":"0.0",
-"Account_Type":"checking",
-"Billing_Start_Date":"None",
-"Interest_Type":"None",
-"APR":"None",
-"Interest_Cadence":"None",
-"Minimum_Payment":"None"
-"Previous_Statement_Balance":"None"
-"Principal_Balance":"None",
-"Accrued_Interest":"None",
-},
-{
-"Name":"test credit: Curr Stmt Bal",
-"Balance":"0.0",
-"Min_Balance":"0.0",
-"Max_Balance":"0.0",
-"Account_Type":"Curr Stmt Bal",
-"Billing_Start_Date":"None",
-"Interest_Type":"None",
-"APR":"None",
-"Interest_Cadence":"None",
-"Minimum_Payment":"None"
-"Previous_Statement_Balance":"None"
-"Principal_Balance":"None",
-"Accrued_Interest":"None",
-},
-{
-"Name":"test credit: Prv Stmt Bal",
-"Balance":"0.0",
-"Min_Balance":"0.0",
-"Max_Balance":"0.0",
-"Account_Type":"Prv Stmt Bal",
-"Billing_Start_Date":"2022-01-01 00:00:00",
-"Interest_Type":"compound",
-"APR":"0.05",
-"Interest_Cadence":"monthly",
-"Minimum_Payment":"0.0"
-"Previous_Statement_Balance":"None"
-"Principal_Balance":"None",
-"Accrued_Interest":"None",
-},
-{
-"Name":"test loan: Principal Balance",
-"Balance":"900.0",
-"Min_Balance":"0.0",
-"Max_Balance":"10000.0",
-"Account_Type":"Principal Balance",
-"Billing_Start_Date":"2022-01-01 00:00:00",
-"Interest_Type":"simple",
-"APR":"0.03",
-"Interest_Cadence":"daily",
-"Minimum_Payment":"1.0"
-"Previous_Statement_Balance":"None"
-"Principal_Balance":"None",
-"Accrued_Interest":"None",
-},
-{
-"Name":"test loan: Interest",
-"Balance":"100.0",
-"Min_Balance":"0.0",
-"Max_Balance":"10000.0",
-"Account_Type":"Interest",
-"Billing_Start_Date":"None",
-"Interest_Type":"None",
-"APR":"None",
-"Interest_Cadence":"None",
-"Minimum_Payment":"None"
-"Previous_Statement_Balance":"None"
-"Principal_Balance":"None",
-"Accrued_Interest":"None",
-}
-}"""
+        {
+        "Name":"test checking",
+        "Balance":"0.0",
+        "Min_Balance":"0.0",
+        "Max_Balance":"0.0",
+        "Account_Type":"checking",
+        "Billing_Start_Date":"None",
+        "Interest_Type":"None",
+        "APR":"None",
+        "Interest_Cadence":"None",
+        "Minimum_Payment":"None"
+        "Previous_Statement_Balance":"None"
+        "Principal_Balance":"None",
+        "Accrued_Interest":"None",
+        },
+        {
+        "Name":"test credit: Curr Stmt Bal",
+        "Balance":"0.0",
+        "Min_Balance":"0.0",
+        "Max_Balance":"0.0",
+        "Account_Type":"Curr Stmt Bal",
+        "Billing_Start_Date":"None",
+        "Interest_Type":"None",
+        "APR":"None",
+        "Interest_Cadence":"None",
+        "Minimum_Payment":"None"
+        "Previous_Statement_Balance":"None"
+        "Principal_Balance":"None",
+        "Accrued_Interest":"None",
+        },
+        {
+        "Name":"test credit: Prv Stmt Bal",
+        "Balance":"0.0",
+        "Min_Balance":"0.0",
+        "Max_Balance":"0.0",
+        "Account_Type":"Prv Stmt Bal",
+        "Billing_Start_Date":"2022-01-01 00:00:00",
+        "Interest_Type":"compound",
+        "APR":"0.05",
+        "Interest_Cadence":"monthly",
+        "Minimum_Payment":"0.0"
+        "Previous_Statement_Balance":"None"
+        "Principal_Balance":"None",
+        "Accrued_Interest":"None",
+        },
+        {
+        "Name":"test loan: Principal Balance",
+        "Balance":"900.0",
+        "Min_Balance":"0.0",
+        "Max_Balance":"10000.0",
+        "Account_Type":"Principal Balance",
+        "Billing_Start_Date":"2022-01-01 00:00:00",
+        "Interest_Type":"simple",
+        "APR":"0.03",
+        "Interest_Cadence":"daily",
+        "Minimum_Payment":"1.0"
+        "Previous_Statement_Balance":"None"
+        "Principal_Balance":"None",
+        "Accrued_Interest":"None",
+        },
+        {
+        "Name":"test loan: Interest",
+        "Balance":"100.0",
+        "Min_Balance":"0.0",
+        "Max_Balance":"10000.0",
+        "Account_Type":"Interest",
+        "Billing_Start_Date":"None",
+        "Interest_Type":"None",
+        "APR":"None",
+        "Interest_Cadence":"None",
+        "Minimum_Payment":"None"
+        "Previous_Statement_Balance":"None"
+        "Principal_Balance":"None",
+        "Accrued_Interest":"None",
+        }
+        }"""
 
         assert test_account_set_JSON == test_expectation

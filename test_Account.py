@@ -3,6 +3,9 @@ import Account
 
 class TestAccountMethods(unittest.TestCase):
 
+    def test_Account_doctests(self):
+        raise NotImplementedError
+
     def test_Account_Constructor(self):
         self.assertEqual('<class \'Account.Account\'>',str( type(
             Account.Account(name='test account',
