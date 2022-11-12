@@ -92,7 +92,7 @@ class BudgetSet:
                  deferrable,
                  memo,
                  print_debug_messages = True,
-                 throw_exceptions = True):
+                 raise_exceptions = True):
         """ Add a BudgetItem to list BudgetItem.budget_items.
 
         | Test Cases
@@ -109,7 +109,7 @@ class BudgetSet:
                  cadence,
                  amount,
                  deferrable,
-                 memo,print_debug_messages,throw_exceptions)
+                 memo,print_debug_messages,raise_exceptions)
 
         #todo error when duplicate budget item. (user should make memo different its not that hard.)
         #that is, if amount and date are the same, different memos are required. its fine otherwise

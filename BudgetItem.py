@@ -9,7 +9,7 @@ class BudgetItem:
                  deferrable,
                  memo,
                  print_debug_messages=True,
-                 throw_exceptions=True):
+                 raise_exceptions=True):
         """
         Creates a BudgetItem object. Input validation is performed.
 
@@ -152,7 +152,7 @@ class BudgetItem:
 
             if exception_value_error_ind: print(exception_value_error_message_string)
 
-        if throw_exceptions:
+        if raise_exceptions:
             if exception_type_error_ind:
                 raise TypeError
 

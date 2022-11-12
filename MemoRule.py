@@ -5,7 +5,7 @@ class MemoRule:
 
     def __init__(self,memo_regex,account_from,account_to,transaction_priority,
                  print_debug_messages=True,
-                 throw_exceptions=True):
+                 raise_exceptions=True):
         """
         Creates a <MemoRule> object. Input validation is performed.
 
@@ -35,7 +35,7 @@ class MemoRule:
         ...
         TypeError: MemoRule.__init__() missing 4 required positional arguments: 'memo_regex', 'account_from', 'account_to', and 'transaction_priority'
 
-        >>> print(MemoRule(memo_regex='(',account_from='',account_to='',transaction_priority=1,throw_exceptions=False).toJSON())
+        >>> print(MemoRule(memo_regex='(',account_from='',account_to='',transaction_priority=1,raise_exceptions=False).toJSON())
         An exception was thrown when MemoRule.memo_regex was interpreted as a regex.
         <BLANKLINE>
         <BLANKLINE>
@@ -116,7 +116,7 @@ class MemoRule:
 
             if exception_value_error_ind:print(exception_value_error_message_string)
 
-        if throw_exceptions:
+        if raise_exceptions:
             if exception_type_error_ind:
                 raise TypeError
 

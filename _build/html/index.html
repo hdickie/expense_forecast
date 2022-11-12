@@ -51,10 +51,7 @@
 <span class="target" id="module-Account"></span><dl class="py class">
 <dt class="sig sig-object py" id="Account.Account">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Account.</span></span><span class="sig-name descname"><span class="pre">Account</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">billing_start_date_YYYYMMDD</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interest_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interest_cadence</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimum_payment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_debug_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">throw_exceptions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Account.Account" title="Permalink to this definition">¶</a></dt>
-<dd><div class="line-block">
-<div class="line"><br /></div>
-<div class="line">Creates an Account. Input validation is performed. Intended for use by internal methods.</div>
-</div>
+<dd><p>Creates an Account object. Input validation is performed. Intended for use by internal methods.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -89,8 +86,13 @@
 <div class="line-block">
 <div class="line">There are 5 required parameters in the method signature.</div>
 <div class="line">These are all parameters needed for Checking, Curr Stmt Bal and Interest account types.</div>
-<div class="line">Prev Stmt Bal and Principal Balance account types also require all of the other parameters.</div>
+<div class="line">Prev Stmt Bal and Principal Balance account types also require all the other parameters.</div>
 <div class="line">The Account constructor does not check types, but numerical parameters will raise a ValueError if they cannot be cast to float.</div>
+</div>
+<div class="line-block">
+<div class="line">Account relationships are inferred based on name by splitting on ‘:’</div>
+<div class="line">e.g. an account called “credit” becomes “credit : curr stmt bal” and “credit : prev stmt bal”. (whitespace is arbitrary)</div>
+<div class="line">Keep this in mind if you are initializing Accounts directly.</div>
 </div>
 <div class="line-block">
 <div class="line">The logic of the way Accounts work is essentially this:</div>
@@ -201,90 +203,75 @@
 
 <span class="target" id="module-AccountSet"></span><dl class="py class">
 <dt class="sig sig-object py" id="AccountSet.AccountSet">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">AccountSet.</span></span><span class="sig-name descname"><span class="pre">AccountSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">accounts__list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#AccountSet.AccountSet" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates an AccountSet object. Previous Statement Balance and Loan Interest accounts are created automatically.</p>
-<div class="line-block">
-<div class="line">Test Cases</div>
-<div class="line">Expected Successes</div>
-<div class="line">S1 [Checking, Credit Prv Stmt Bal, Credit Cur Stmt Bal, Savings Prv Stmt Bal, Savings Cur Stmt Bal, Loan Principal Balance, Loan Interest] #todo refactor Account.Account() doctest S1 to use _S1 label</div>
-<div class="line">S2 Input no parameters</div>
-<div class="line"><br /></div>
-<div class="line">Expected Fails</div>
-<div class="line">F1 Savings - Prev Stmt Bal + Cur Stmt Bal violates account boundary,</div>
-<div class="line-block">
-<div class="line">Loan - Principal Balance + Interest != Balance #todo refactor AccountSet.AccountSet() doctest F1 to use _F1 label</div>
-</div>
-<div class="line">F2 Input a list that has an object that is not of AccountSet type. Do this without explicitly looking for the class name. #todo refactor AccountSet.AccountSet() doctest F2 to use _F2 label</div>
-</div>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">AccountSet.</span></span><span class="sig-name descname"><span class="pre">AccountSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">accounts__list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_debug_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">throw_exceptions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#AccountSet.AccountSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates an AccountSet object. Possible Account Types are: Checking, Credit, Loan, Savings. Consistency is checked.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>accounts__list</strong> – </p>
+<dd class="field-odd"><p><strong>accounts__list</strong> (<em>list</em>) – A list of Account objects. Empty list by default. Consistency is checked.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – if the combination of input parameters is not valid.</p></li>
+<li><p><strong>Other exception types</strong> – if members of input list do not have the methods and attributes of an Account object.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#AccountSet.AccountSet" title="AccountSet.AccountSet">AccountSet</a></p>
 </dd>
 </dl>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">AccountSet</span><span class="p">()</span>
-<span class="go">Empty DataFrame</span>
-<span class="go">Columns: [Name, Balance, Previous_Statement_Balance, Min_Balance, Max_Balance, APR, Interest_Cadence, Interest_Type, Billing_Start_Dt, Account_Type, Principal_Balance, Accrued_Interest, Minimum_Payment]</span>
-<span class="go">Index: []</span>
-</pre></div>
-</div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">AccountSet</span><span class="p">([</span><span class="n">Account</span><span class="o">.</span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;test checking&quot;</span><span class="p">,</span>
-<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s1">&#39;checking&#39;</span>
-<span class="gp">... </span><span class="p">)])</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
-<span class="go">{</span>
-<span class="go">{</span>
-<span class="go">&quot;Name&quot;:&quot;test checking&quot;,</span>
-<span class="go">&quot;Balance&quot;:&quot;0.0&quot;,</span>
-<span class="go">&quot;Min_Balance&quot;:&quot;0.0&quot;,</span>
-<span class="go">&quot;Max_Balance&quot;:&quot;0.0&quot;,</span>
-<span class="go">&quot;APR&quot;:&quot;None&quot;,</span>
-<span class="go">&quot;Interest_Cadence&quot;:&quot;None&quot;,</span>
-<span class="go">&quot;Interest_Type&quot;:&quot;None&quot;,</span>
-<span class="go">&quot;Billing_Start_Date&quot;:&quot;None&quot;,</span>
-<span class="go">&quot;Account_Type&quot;:&quot;checking&quot;,</span>
-<span class="go">&quot;Principal_Balance&quot;:&quot;None&quot;,</span>
-<span class="go">&quot;Accrued_Interest&quot;:&quot;None&quot;,</span>
-<span class="go">&quot;Minimum_Payment&quot;:&quot;None&quot;</span>
-<span class="go">}</span>
-<span class="go">}</span>
-</pre></div>
-</div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">AccountSet</span><span class="p">([</span><span class="n">Account</span><span class="o">.</span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;test loan&quot;</span><span class="p">,</span>
-<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
-<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="s1">&#39;Inf&#39;</span><span class="p">),</span>
-<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s1">&#39;loan&#39;</span><span class="p">,</span>
-<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="s1">&#39;20220103&#39;</span><span class="p">,</span>
-<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="s1">&#39;Simple&#39;</span><span class="p">,</span>
-<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="mf">0.0376</span><span class="p">,</span>
-<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="s1">&#39;daily&#39;</span><span class="p">,</span>
-<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="mf">55.17</span><span class="p">,</span>
-<span class="gp">... </span><span class="n">previous_statement_balance</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-<span class="gp">... </span><span class="n">principal_balance</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span>
-<span class="gp">... </span><span class="n">accrued_interest</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
-<span class="gp">... </span><span class="n">print_debug_messages</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<span class="gp">... </span><span class="n">throw_exceptions</span><span class="o">=</span><span class="kc">False</span>
-<span class="gp">... </span><span class="p">)])</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
-</pre></div>
-</div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">AccountSet</span><span class="p">([</span><span class="n">Account</span><span class="o">.</span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;test credit&quot;</span><span class="p">,</span>
-<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
-<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">20000</span><span class="p">,</span>
-<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s1">&#39;credit&#39;</span><span class="p">,</span>
-<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="s1">&#39;20220103&#39;</span><span class="p">,</span>
-<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="s1">&#39;Compound&#39;</span><span class="p">,</span>
-<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="mf">0.2674</span><span class="p">,</span>
-<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="s1">&#39;monthly&#39;</span><span class="p">,</span>
-<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span>
-<span class="gp">... </span><span class="n">previous_statement_balance</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span>
-<span class="gp">... </span><span class="n">print_debug_messages</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<span class="gp">... </span><span class="n">throw_exceptions</span><span class="o">=</span><span class="kc">False</span>
-<span class="gp">... </span><span class="p">)])</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
-</pre></div>
-</div>
+<p>Reasons for ValueError exception:
+Combined balance between prev and curr violate account boundaries.
+Accounts that are related (as implied by name) have different parameters.
+A principal balance account was input without an interest account, vice versa, and etc.</p>
+<p>Creating an AccountSet without passing parameters is a valid thing to do.
+&gt;&gt;&gt; AccountSet()
+Empty DataFrame
+Columns: [Name, Balance, Min_Balance, Max_Balance, Account_Type, Billing_Start_Dt, Interest_Type, APR, Interest_Cadence, Minimum_Payment]
+Index: []</p>
+<p>IF you want to pass a list of Accounts explicitly you can do that as well.
+&gt;&gt;&gt; print(AccountSet([Account.Account(name=”test checking”,
+… balance=0,
+… min_balance=0,
+… max_balance=0,
+… account_type=’checking’
+… )]).toJSON())
+{
+{
+“Name”:”test checking”,
+“Balance”:”0.0”,
+“Min_Balance”:”0.0”,
+“Max_Balance”:”0.0”,
+“Account_Type”:”checking”,
+“Billing_Start_Date”:”None”,
+“Interest_Type”:”None”,
+“APR”:”None”,
+“Interest_Cadence”:”None”,
+“Minimum_Payment”:”None”
+}
+}</p>
+<p>Combined balance account boundary violation
+&gt;&gt;&gt; print(AccountSet([Account.Account(name=”Credit: Curr Stmt Bal”,
+… balance=75,
+… min_balance=0,
+… max_balance=100,
+… apr=None,
+… interest_cadence=None,
+… interest_type=None,
+… billing_start_date_YYYYMMDD=None,
+… account_type=’Curr Stmt Bal’,
+… minimum_payment=None
+… ),
+… Account.Account(name=”Credit: Prev Stmt Bal”,
+… balance=75,
+… min_balance=0,
+… max_balance=0,
+… apr=0.05,
+… interest_cadence=”Monthly”,
+… interest_type=”Compound”,
+… billing_start_date_YYYYMMDD=”20000101”,
+… account_type=’Prev Stmt Bal’,
+… minimum_payment=40
+… )]).toJSON())</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="AccountSet.AccountSet.addAccount">
 <span class="sig-name descname"><span class="pre">addAccount</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">billing_start_date_YYYYMMDD</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interest_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interest_cadence</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimum_payment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">previous_statement_balance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">principal_balance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accrued_interest</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_debug_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">throw_exceptions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#AccountSet.AccountSet.addAccount" title="Permalink to this definition">¶</a></dt>

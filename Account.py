@@ -15,11 +15,10 @@ class Account:
                  interest_cadence=None,
                  minimum_payment=None,
                  print_debug_messages=True, #this is here because doctest can test expected output OR exceptions, but not both
-                 throw_exceptions=True
+                 raise_exceptions=True
                  ):
         """
-        |
-        | Creates an Account. Input validation is performed. Intended for use by internal methods.
+        Creates an Account object. Input validation is performed. Intended for use by internal methods.
 
         :param str name: A name for the account. Used to label output columns.
         :param float balance: A dollar value for the balance of the account.
@@ -32,7 +31,7 @@ class Account:
         :param str interest_cadence: One of: 'daily', 'monthly', 'yearly'. Not case sensitive.
         :param float minimum_payment: Minimum payment. Only meaningful for loans and credit cards.
         :param bool print_debug_messages: if true, prints debug messages
-        :param bool throw_exceptions: if true, throws any exceptions that were raised
+        :param bool raise_exceptions: if true, throws any exceptions that were raised
         :raises ValueError: if the combination of input parameters is not valid.
         :raises  TypeError: if numerical values can't be cast to float. If billing_start_date is not string format %Y%m%d.
         :rtype: Account
@@ -42,8 +41,12 @@ class Account:
 
         | There are 5 required parameters in the method signature.
         | These are all parameters needed for Checking, Curr Stmt Bal and Interest account types.
-        | Prev Stmt Bal and Principal Balance account types also require all of the other parameters.
+        | Prev Stmt Bal and Principal Balance account types also require all the other parameters.
         | The Account constructor does not check types, but numerical parameters will raise a ValueError if they cannot be cast to float.
+
+        | Account relationships are inferred based on name by splitting on ':'
+        | e.g. an account called "credit" becomes "credit : curr stmt bal" and "credit : prev stmt bal". (whitespace is arbitrary)
+        | Keep this in mind if you are initializing Accounts directly.
 
         | The logic of the way Accounts work is essentially this:
         | All accounts have either no interest, simple interest, or compound interest.
@@ -94,7 +97,7 @@ class Account:
         ...
         ValueError
 
-        | The throw_exceptions parameter can be set to False to allow some debugging text to come through.
+        | The raise_exceptions parameter can be set to False to allow some debugging text to come through.
 
         >>> print( #F1: Checking: Debug Messages Test
         ... Account(name='F1 Checking: Debug Messages Test',
@@ -106,7 +109,7 @@ class Account:
         ... interest_type='simple',
         ... billing_start_date_YYYYMMDD='20000101',
         ... account_type='checking',
-        ... minimum_payment=40, throw_exceptions=False ).toJSON())
+        ... minimum_payment=40, raise_exceptions=False ).toJSON())
         ValueErrors:
         For types other than prev stmt bal, principal balance, or savings, Account.apr should be None.
         Value was:0.05
@@ -311,7 +314,7 @@ class Account:
 
             if exception_value_error_ind: print("ValueErrors:\n"+exception_value_error_message_string)
 
-        if throw_exceptions:
+        if raise_exceptions:
             if exception_type_error_ind:
                 raise TypeError
 
