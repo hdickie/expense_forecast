@@ -97,11 +97,35 @@ class BudgetSet:
 
         | Test Cases
         | Expected Successes
-        | S1: provide valid parameters #todo refactor BudgetSet.addBudgetItem() doctest S1 to use _S1 label
+        | S1: Provide no parameters
+        | S2: provide valid parameters #todo refactor BudgetSet.addBudgetItem() doctest S2 to use _S2 label
         |
         | Expected Fails
         | F1 Provide incorrect types for all parameters #todo refactor BudgetSet.BudgetSet() doctest F1 to use _F1 label
         | F2 add a BudgetItem where there are 2 BudgetItems with the same memo
+
+        >>> print(BudgetSet().toJSON())
+        Empty DataFrame
+        Columns: [Start_date, Priority, Cadence, Amount, Memo]
+        Index: []
+        
+        >>> print(BudgetSet([ BudgetItem.BudgetItem(start_date_YYYYMMDD='20000101',
+        ... priority=1,
+        ... cadence='once',
+        ... amount=0,
+        ... deferrable=False,
+        ... memo='Income')
+        ... ]).toJSON())
+        {
+        {
+        "Start_Date":"2000-01-01 00:00:00",
+        "Priority":"1",
+        "Cadence":"once",
+        "Amount":"0.0",
+        "Deferrable":"False",
+        "Memo":"Income"
+        }
+        }
 
         """
         budget_item = BudgetItem.BudgetItem(start_date_YYYYMMDD,
