@@ -119,7 +119,6 @@ class BudgetSet:
         """
         Get a JSON <string> representing the <BudgetSet> object.
 
-        #todo BudgetSet.toJSON() say what the columns are
         """
         JSON_string = "{\n"
         for i in range(0, len(self.budget_items)):

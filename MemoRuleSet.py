@@ -79,9 +79,7 @@ class MemoRuleSet:
 
     def toJSON(self):
         """
-        Get a JSON <string> representing the <MemoRuleSet> object.
-
-        #todo MemoRuleSet.toJSON() say what the columns are
+        Get a JSON <string> representing the <MemoRuleSet> object.\
         """
         JSON_string = "{\n"
         for i in range(0, len(self.memo_rules)):

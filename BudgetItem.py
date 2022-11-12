@@ -29,7 +29,7 @@ class BudgetItem:
         |
         | Illegal values provided
         | F3 Priority less than 1 and cadence is some random string #todo refactor Account.Account() doctest F3 to use _F3 label
-        |
+        | F4 All income should be priority 1. Therefore, income with a different priority should raise an exception #todo refactor Account.Account() doctest F4 to use _F4 label
 
         :param str start_date_YYYYMMDD: A string that indicates the start date with format %Y%m%d.
         :param int priority: An integer >= 1 that indicates priority. See below for priority level meanings.
@@ -176,9 +176,8 @@ class BudgetItem:
 
     def toJSON(self):
         """
-        Get a string representing the BudgetItem object.
+        Get a <string> representing the <BudgetItem> object.
 
-        #todo Budgetitem.toJSON() say what the columns are
         """
         JSON_string = "{\n"
         JSON_string += "\"Start_Date\":" + "\"" + str(self.start_date) + "\",\n"

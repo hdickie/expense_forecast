@@ -8,7 +8,7 @@ from hd_util import *
 
 class ExpenseForecast:
 
-    def __init__(self,account_set,budget_set,memo_rule_set):
+    def __init__(self,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD):
         """
         ExpenseForecast one-line description
 
@@ -24,6 +24,10 @@ class ExpenseForecast:
         :param budget_set:
         :param memo_rule_set:
         """
+
+        #todo datetime validation in ExpenseForecast.ExpenseForecast()
+        self.start_date = datetime.datetime.strptime(start_date_YYYYMMDD,'%Y%m%d')
+        self.end_date = datetime.datetime.strptime(end_date_YYYYMMDD,'%Y%m%d')
 
         accounts_df = account_set.getAccounts()
         budget_df = budget_set.getBudgetItems()
@@ -155,16 +159,83 @@ class ExpenseForecast:
                 return True
         return False
 
-    def satisfice(self, budget_set, account_set, memo_rule_set):
+    def getInitialForecastRow(self):
+
+        min_sched_date = self.start_date
+        account_set_df = self.initial_account_set.getAccounts()
+
+        date_only_df = pd.DataFrame(['Date', min_sched_date]).T
+
+        accounts_only_df = pd.DataFrame(account_set_df.iloc[:, 0:1]).T
+        accounts_only_df.reset_index(inplace=True, drop=True)
+        accounts_only_df.columns = accounts_only_df.iloc[0]
+
+        starting_zero_balances_df = pd.DataFrame([0] * account_set_df.shape[0]).T
+        starting_zero_balances_df.reset_index(inplace=True, drop=True)
+        starting_zero_balances_df.columns = accounts_only_df.iloc[0]
+
+        accounts_only_df = pd.concat([accounts_only_df, starting_zero_balances_df]).T
+        accounts_only_df.reset_index(drop=True, inplace=True)
+        accounts_only_df.columns = [0, 1]
+
+        memo_only_df = pd.DataFrame(['Memo', '']).T
+
+        initial_forecast_row_df = pd.concat([
+            date_only_df,
+            accounts_only_df,
+            memo_only_df
+        ])
+
+        initial_forecast_row_df = initial_forecast_row_df.T
+        initial_forecast_row_df.columns = initial_forecast_row_df.iloc[0, :]
+        initial_forecast_row_df = initial_forecast_row_df[1:]
+        initial_forecast_row_df.reset_index(drop=True, inplace=True)
+
+        # print('initial forecast values pre assignment:')
+        # print(forecast_df.to_string())
+
+        # set initial values
+        for i in range(0, account_set_df.shape[0]):
+            row = account_set_df.iloc[i, :]
+            # print('row:'+str(row))
+            # print('Setting '+forecast_df.columns.tolist()[i+1]+' = '+str(row.Balance))
+
+            initial_forecast_row_df.iloc[0, 1 + i] = row.Balance
+
+        return initial_forecast_row_df
+
+    def executeTransactionsForDay(self,budget_schedule_df,memo_rule_set,current_forecast_row_df):
+
+        #all transactions should be executed. This method does no error checking because that should happen upstream.
+        #We could include account_df info here, but I don't think it is necessary
+
+        #making minimum payments should be determined by memo rules instead of hard-coded as checking
+
+        #returns a single forecast row with updated memo
+        raise NotImplementedError
+
+    def calculateInterestAccrualsForDay(self,account_df,current_forecast_row_df):
+
+        # accounts that receive interest accruals should be selected by interest type, not by account type
+        # Note that account balances are passed to this method, but they are irrelevant.
+        # We refer to current_forecast_row_df for balances, and to account_df for interest accrual details
+
+        #Note also that this method will transfer balances from current statement to previous statement for savings
+        # and credit accounts
+
+        # returns a single forecast row with updated memo
+        raise NotImplementedError
+
+    def computeForecast(self, budget_set, account_set, memo_rule_set):
         """
         Computes output time-series that represents only non-negotiable spend.
 
         | Test Cases
         | Expected Successes
-        | S1: ... #todo refactor ExpenseForecast.satisfice() doctest S1 to use _S1 label
+        | S1: ... #todo refactor ExpenseForecast.computeForecast() doctest S1 to use _S1 label
         |
         | Expected Fails
-        | F1 ... #todo refactor ExpenseForecast.satisfice() doctest F1 to use _F1 label
+        | F1 ... #todo refactor ExpenseForecast.computeForecast() doctest F1 to use _F1 label
 
         :param budget_schedule_df:
         :param account_set_df:
@@ -172,261 +243,223 @@ class ExpenseForecast:
         :return:
         """
 
-        #todo refactor ExpenseForecast.satisfice() to use budget_set, account_set, memo_rule_set
+        #this method will execute all budgetitems given to it. If account boudnaries are violated, it is because
+        #the input provided was not properly vetted
 
-        priority_1_budget_schedule_df = budget_schedule_df.loc[budget_schedule_df.Priority == 1, :]
+        all_days = pd.date_range(self.start_date,self.end_date)
+        memo_df = self.initial_memo_rule_set.getMemoRules() #this never changes
+        initial_forecast_row_df = self.getInitialForecastRow()
+        account_set_df = self.initial_account_set.getAccounts()
 
-        min_sched_date = min(budget_schedule_df.Date)
-        max_sched_date = max(budget_schedule_df.Date)
-
-        all_days = pd.date_range(min_sched_date, max_sched_date)
-
-        date_only_df = pd.DataFrame(['Date',min_sched_date]).T
-
-        accounts_only_df = pd.DataFrame( account_set_df.iloc[:,0:1] ).T
-        accounts_only_df.reset_index(inplace=True,drop=True)
-        accounts_only_df.columns = accounts_only_df.iloc[0]
-
-
-        starting_zero_balances_df = pd.DataFrame([0]*account_set_df.shape[0]).T
-        starting_zero_balances_df.reset_index(inplace=True,drop=True)
-        starting_zero_balances_df.columns = accounts_only_df.iloc[0]
-
-        accounts_only_df = pd.concat([accounts_only_df,starting_zero_balances_df]).T
-        accounts_only_df.reset_index(drop=True,inplace=True)
-        accounts_only_df.columns = [0,1]
-
-        memo_only_df = pd.DataFrame(['Memo','']).T
-
-        forecast_df = pd.concat([
-            date_only_df,
-            accounts_only_df,
-            memo_only_df
-            ])
-
-        forecast_df = forecast_df.T
-        forecast_df.columns = forecast_df.iloc[0,:]
-        forecast_df = forecast_df[1:]
-        forecast_df.reset_index(drop=True,inplace=True)
-
-
-        #print('initial forecast values pre assignment:')
-        #print(forecast_df.to_string())
-
-        #set initial values
-        for i in range(0,account_set_df.shape[0]):
-            row = account_set_df.iloc[i, :]
-            #print('row:'+str(row))
-            #print('Setting '+forecast_df.columns.tolist()[i+1]+' = '+str(row.Balance))
-
-            if row.Account_Type.lower() == 'interest':
-                forecast_df.iloc[0, 1 + i] = row.Accrued_Interest #the +1 is on the index here bc we are iterating over account_df not forecast_df
-            else:
-                forecast_df.iloc[0, 1 + i] = row.Balance
-
-        #print('initial forecast values post assignment:')
-        #print(forecast_df.to_string())
-
-        #todo satisfice():: we make minimum payments on loans and credit cards before interest for this day is calculated
-        #in order for this to work, it is easiest if additional payments are made before the due date
-
-        #todo satisfice():: the account used to make minimum payments should be set accotrding to memo rules, not hard coded as checking
-        #accounts that receive interest accruals should be selected by interest type, not by account type
-
-        index_of_checking_column = forecast_df.columns.tolist().index('Checking')
-        index_of_memo_column = forecast_df.columns.tolist().index('Memo')
         for d in all_days:
-            if d == forecast_df.iloc[0,0]:
-                previous_date = d
-                continue #we consider the starting balances finalized
-            new_row_df = forecast_df[forecast_df.Date == previous_date].copy()
-            new_row_df.Date = d
-            new_row_df.Memo = ''
+          if d == self.start_date:
+              forecast_df = initial_forecast_row_df
+              continue #because we consider the input values for the first day to be final
 
-            relevant_budget_items_df = priority_1_budget_schedule_df.loc[ d == priority_1_budget_schedule_df.Date, : ]
-            relevant_budget_items_df.sort_values(inplace=True, axis=0, by="Amount",ascending=False)
+          this_days_budget_schedule_df = None
 
-            #here, interest is calculated and current statement balances are moved to previous
-            for index, row in account_set_df.iterrows():
-                if row['APR'] == 0:
-                    continue
+          new_forecast_row_df = self.executeTransactionsForDay(this_days_budget_schedule_df, memo_df,previous_row_df) #returns only a forecast row w updated memo
+          new_forecast_row_df = self.calculateInterestAccrualsForDay( account_set_df,new_forecast_row_df ) #returns only a forecast row w updated memo
 
-                if row['Account_Type'].lower() not in ['previous statement balance','interest']:
-                    continue
-
-                days_since_billing_start_date = (d - row['Billing_Start_Dt']).days
-
-                if row['Interest_Cadence'].lower() == 'daily':
-                    pass #we want to continue processing
-                elif row['Interest_Cadence'].lower() == 'monthly':
-                    interest_accrual_days = generate_date_sequence(row['Billing_Start_Dt'].strftime('%Y%m%d'),
-                                                                   days_since_billing_start_date + 10, 'monthly')
-                    #print('checking if this is a day for monthly interest accrual')
-                    #print('? is '+str(d)+' in '+str(interest_accrual_days))
-                    if d not in interest_accrual_days:
-                        continue
-                elif row['Interest_Cadence'].lower() == 'yearly':
-                    interest_accrual_days = generate_date_sequence(row['Billing_Start_Dt'].strftime('%Y%m%d'),
-                                                                   days_since_billing_start_date + 10, 'yearly')
-                    if d not in interest_accrual_days:
-                        continue
-                else:
-                    print('Undefined case in satisfice()')
-
-                #at this point, we know we are about to calculate interest. how we do that depends on cadence and account type
-
-                relevant_apr = row['APR']
-                #print('row:'+str(row))
-                if row['Account_Type'].lower() == 'previous statement balance' and row['Interest_Cadence'].lower() == 'monthly':
-
-                    # total_debt = forecast_df.iloc[0, i] + forecast_df.iloc[0, i + 1] #i is current, i + 1 is previous
-                    available_funds = new_row_df.iloc[0, index_of_checking_column]
-                    # current_statement_balance = forecast_df.iloc[0, i]
-                    previous_statement_balance = new_row_df.iloc[0, index + 1] #plus 1 bc index is an iterative cursor for accounts_df not forecast_df
-
-                    # scenarios
-                    # 1. make cc min payment only. bal is less than $40
-                    # 2. make cc min payment only. bal is more than $40 and less than $2k
-                    # 3. make cc min payment only. bal is more than $2k. min payment is 2%
-                    # 4. make cc min payment. combined current and prev statement balance less than $40, both non 0%
-
-                    # scenarios: previous statement balance and payment in excess of minimum
-
-                    # 5. make cc payment in excess of minimum. current statement more than $40, pay less than total balance.
-                    # 6. make cc payment in excess of minimum. current statement more than $40, pay less than total balance, when balance is greater than checking
-                    # 7. make cc payment in excess of minimum. current statement more than $2k, pay more than total balance.
-                    if new_row_df.iloc[0, index_of_memo_column] != "":
-                        new_row_df.iloc[0, index_of_memo_column] += ' ; '
-
-                    new_row_df.iloc[0, index_of_memo_column] += ' Min cc pmt , '
-                    if available_funds > previous_statement_balance and previous_statement_balance <= 40:
-                        new_row_df.iloc[0, index_of_checking_column] -= previous_statement_balance
-                        new_row_df.iloc[0, i + 1] = 0  # pay previous statement balance
-                        new_row_df.iloc[0, index_of_memo_column] += ' Checking - '+str(previous_statement_balance)+' , '
-                        new_row_df.iloc[0, index_of_memo_column] += ' Credit - ' + str(previous_statement_balance) + ' , '
-                    elif available_funds > previous_statement_balance and 40 < previous_statement_balance and previous_statement_balance <= 2000:
-                        new_row_df.iloc[0, index_of_checking_column] -= 40
-                        new_row_df.iloc[0, i + 1] -= 40  # pay previous statement balance
-                        new_row_df.iloc[0, index_of_memo_column] += ' Checking - ' + str(40) + ' , '
-                        new_row_df.iloc[0, index_of_memo_column] += ' Credit - ' + str(40) + ' , '
-                    elif available_funds > previous_statement_balance and 2000 <= previous_statement_balance:
-                        min_payment_amt = previous_statement_balance * 0.02
-                        new_row_df.iloc[0, index_of_checking_column] -= min_payment_amt
-                        new_row_df.iloc[0, i + 1] -= min_payment_amt
-                        new_row_df.iloc[0, index_of_memo_column] += ' Checking - ' + str(min_payment_amt) + ' , '
-                        new_row_df.iloc[0, index_of_memo_column] += ' Credit - ' + str(min_payment_amt) + ' , '
-
-                    #interest accrual and balance transfer
-                    index_of_previous_statement_balance = new_row_df.columns.tolist().index(row.Name)
-                    previous_statement_balance = new_row_df.iloc[0, index_of_previous_statement_balance]
-
-                    index_of_current_statement_balance = index_of_previous_statement_balance - 1
-                    current_statement_balance = new_row_df.iloc[0, index_of_current_statement_balance]
-
-                    #move current statement balance to previous and add interest
-                    new_interest_accrued = previous_statement_balance*relevant_apr/12
-                    new_row_df.iloc[0,index_of_previous_statement_balance] = current_statement_balance + previous_statement_balance + new_interest_accrued
-                    new_row_df.iloc[0, index_of_current_statement_balance] = 0
-
-                    new_row_df.iloc[0, index_of_memo_column] += ' cc interest accrued ' + str(new_interest_accrued)
-
-                elif row['Account_Type'].lower() == 'interest' and row['Interest_Cadence'].lower() == 'daily':
-                    index_of_accrued_interest = new_row_df.columns.tolist().index(row.Name)
-                    index_of_principal_balance = index_of_accrued_interest - 1
-
-                    new_row_df.iloc[0, index_of_accrued_interest] += new_row_df.iloc[0, index_of_principal_balance]*relevant_apr/365.25
-
-                elif row['Account_Type'].lower() == 'interest' and row['Interest_Cadence'].lower() == 'monthly':
-                    index_of_accrued_interest = new_row_df.columns.tolist().index(row.Name)
-                    index_of_principal_balance = index_of_accrued_interest - 1
-
-                    new_row_df.iloc[0, index_of_accrued_interest] += new_row_df.iloc[
-                                                                         0, index_of_principal_balance] * relevant_apr / 12
-                elif row['Account_Type'].lower() == 'interest' and row['Interest_Cadence'].lower() == 'yearly':
-                    index_of_accrued_interest = new_row_df.columns.tolist().index(row.Name)
-                    index_of_principal_balance = index_of_accrued_interest - 1
-
-                    new_row_df.iloc[0, index_of_accrued_interest] += new_row_df.iloc[
-                                                                         0, index_of_principal_balance] * relevant_apr
-                else:
-                    print('Undefined case in satisfice()')
-
-            #other priority 1 transactions
-            for index, budget_item in relevant_budget_items_df.iterrows():
-                #if memo matches any regex in memo_rules_df
-                    #relevant_memo_rule = memo_rules_df[memo_rules_df.transaction_priority == 1 and memo_rules_df]
-
-                #use first regex match
-                found_matching_regex = False
-                for index2, row2 in memo_rules_df[memo_rules_df.transaction_priority == 1].iterrows():
-                    m = re.search(row2.memo_regex,budget_item.Memo)
-
-                    if m is not None:
-                        #do stuff
-
-                        if row2.account_from is not None:
-                            index_of_account_from_column = list(new_row_df.columns).index(row2.account_from)
-
-                        if row2.account_to is not None:
-                            index_of_account_to_column = list(new_row_df.columns).index(row2.account_to)
-
-                        if row2.account_from is not None and row2.account_to is None: #e.g. income
-                            new_row_df.iloc[0, index_of_account_from_column] += budget_item.Amount
-
-                        if row2.account_to is not None and row2.account_from is None: #e.g. spend
-                            new_row_df.iloc[0, index_of_account_to_column] += budget_item.Amount
-
-                        if row2.account_from is not None and row2.account_to is not None:  # e.g. xfer bw accts
-                            new_row_df.iloc[0, index_of_account_to_column] += budget_item.Amount
-                            new_row_df.iloc[0, index_of_account_from_column] -= budget_item.Amount
-
-                        found_matching_regex = True
-                        break
-
-                if not found_matching_regex:
-                    print('We received a budget item that we do not have a case to handle. this is a show stopping error.')
-                    print('Exiting.')
-                else: #update memo
-                    if new_row_df.loc[0,'Memo'] != '':
-                        new_row_df.loc[0,'Memo'] = new_row_df.loc[0,'Memo'] + '; '
-
-                    new_memo_text = budget_item.Memo + ' , '
-                    if row2.account_from is not None:
-                        new_memo_text = new_memo_text + str(row2.account_from) + ' ' + str(-1*abs(budget_item.Amount)) + ' '
-
-                    if row2.account_to is not None:
-                        new_memo_text = new_memo_text + str(row2.account_to) + ' ' + str(budget_item.Amount) + ' '
-
-                    new_row_df.loc[0, 'Memo'] = new_row_df.loc[0,'Memo'] + new_memo_text
-
-            previous_date = d
-            if self.account_boundaries_are_violated(account_set_df,new_row_df):
-                break
-            else:
-                forecast_df = pd.concat([forecast_df, new_row_df])
+          forecast_df = pd.concat([forecast_df,new_forecast_row_df])
+          previous_row_df = new_forecast_row_df
 
 
 
+        # index_of_checking_column = forecast_df.columns.tolist().index('Checking')
+        # index_of_memo_column = forecast_df.columns.tolist().index('Memo')
+        # for d in all_days:
+        #     if d == forecast_df.iloc[0,0]:
+        #         previous_date = d
+        #         continue #we consider the starting balances finalized
+        #     new_row_df = forecast_df[forecast_df.Date == previous_date].copy()
+        #     new_row_df.Date = d
+        #     new_row_df.Memo = ''
+        #
+        #     relevant_budget_items_df = priority_1_budget_schedule_df.loc[ d == priority_1_budget_schedule_df.Date, : ]
+        #     relevant_budget_items_df.sort_values(inplace=True, axis=0, by="Amount",ascending=False)
+        #
+        #     #here, interest is calculated and current statement balances are moved to previous
+        #     for index, row in account_set_df.iterrows():
+        #         if row['APR'] == 0:
+        #             continue
+        #
+        #         if row['Account_Type'].lower() not in ['previous statement balance','interest']:
+        #             continue
+        #
+        #         days_since_billing_start_date = (d - row['Billing_Start_Dt']).days
+        #
+        #         if row['Interest_Cadence'].lower() == 'daily':
+        #             pass #we want to continue processing
+        #         elif row['Interest_Cadence'].lower() == 'monthly':
+        #             interest_accrual_days = generate_date_sequence(row['Billing_Start_Dt'].strftime('%Y%m%d'),
+        #                                                            days_since_billing_start_date + 10, 'monthly')
+        #             #print('checking if this is a day for monthly interest accrual')
+        #             #print('? is '+str(d)+' in '+str(interest_accrual_days))
+        #             if d not in interest_accrual_days:
+        #                 continue
+        #         elif row['Interest_Cadence'].lower() == 'yearly':
+        #             interest_accrual_days = generate_date_sequence(row['Billing_Start_Dt'].strftime('%Y%m%d'),
+        #                                                            days_since_billing_start_date + 10, 'yearly')
+        #             if d not in interest_accrual_days:
+        #                 continue
+        #         else:
+        #             print('Undefined case in computeForecast()')
+        #
+        #         #at this point, we know we are about to calculate interest. how we do that depends on cadence and account type
+        #
+        #         relevant_apr = row['APR']
+        #         #print('row:'+str(row))
+        #         if row['Account_Type'].lower() == 'previous statement balance' and row['Interest_Cadence'].lower() == 'monthly':
+        #
+        #             # total_debt = forecast_df.iloc[0, i] + forecast_df.iloc[0, i + 1] #i is current, i + 1 is previous
+        #             available_funds = new_row_df.iloc[0, index_of_checking_column]
+        #             # current_statement_balance = forecast_df.iloc[0, i]
+        #             previous_statement_balance = new_row_df.iloc[0, index + 1] #plus 1 bc index is an iterative cursor for accounts_df not forecast_df
+        #
+        #             # scenarios
+        #             # 1. make cc min payment only. bal is less than $40
+        #             # 2. make cc min payment only. bal is more than $40 and less than $2k
+        #             # 3. make cc min payment only. bal is more than $2k. min payment is 2%
+        #             # 4. make cc min payment. combined current and prev statement balance less than $40, both non 0%
+        #
+        #             # scenarios: previous statement balance and payment in excess of minimum
+        #
+        #             # 5. make cc payment in excess of minimum. current statement more than $40, pay less than total balance.
+        #             # 6. make cc payment in excess of minimum. current statement more than $40, pay less than total balance, when balance is greater than checking
+        #             # 7. make cc payment in excess of minimum. current statement more than $2k, pay more than total balance.
+        #             if new_row_df.iloc[0, index_of_memo_column] != "":
+        #                 new_row_df.iloc[0, index_of_memo_column] += ' ; '
+        #
+        #             new_row_df.iloc[0, index_of_memo_column] += ' Min cc pmt , '
+        #             if available_funds > previous_statement_balance and previous_statement_balance <= 40:
+        #                 new_row_df.iloc[0, index_of_checking_column] -= previous_statement_balance
+        #                 new_row_df.iloc[0, i + 1] = 0  # pay previous statement balance
+        #                 new_row_df.iloc[0, index_of_memo_column] += ' Checking - '+str(previous_statement_balance)+' , '
+        #                 new_row_df.iloc[0, index_of_memo_column] += ' Credit - ' + str(previous_statement_balance) + ' , '
+        #             elif available_funds > previous_statement_balance and 40 < previous_statement_balance and previous_statement_balance <= 2000:
+        #                 new_row_df.iloc[0, index_of_checking_column] -= 40
+        #                 new_row_df.iloc[0, i + 1] -= 40  # pay previous statement balance
+        #                 new_row_df.iloc[0, index_of_memo_column] += ' Checking - ' + str(40) + ' , '
+        #                 new_row_df.iloc[0, index_of_memo_column] += ' Credit - ' + str(40) + ' , '
+        #             elif available_funds > previous_statement_balance and 2000 <= previous_statement_balance:
+        #                 min_payment_amt = previous_statement_balance * 0.02
+        #                 new_row_df.iloc[0, index_of_checking_column] -= min_payment_amt
+        #                 new_row_df.iloc[0, i + 1] -= min_payment_amt
+        #                 new_row_df.iloc[0, index_of_memo_column] += ' Checking - ' + str(min_payment_amt) + ' , '
+        #                 new_row_df.iloc[0, index_of_memo_column] += ' Credit - ' + str(min_payment_amt) + ' , '
+        #
+        #             #interest accrual and balance transfer
+        #             index_of_previous_statement_balance = new_row_df.columns.tolist().index(row.Name)
+        #             previous_statement_balance = new_row_df.iloc[0, index_of_previous_statement_balance]
+        #
+        #             index_of_current_statement_balance = index_of_previous_statement_balance - 1
+        #             current_statement_balance = new_row_df.iloc[0, index_of_current_statement_balance]
+        #
+        #             #move current statement balance to previous and add interest
+        #             new_interest_accrued = previous_statement_balance*relevant_apr/12
+        #             new_row_df.iloc[0,index_of_previous_statement_balance] = current_statement_balance + previous_statement_balance + new_interest_accrued
+        #             new_row_df.iloc[0, index_of_current_statement_balance] = 0
+        #
+        #             new_row_df.iloc[0, index_of_memo_column] += ' cc interest accrued ' + str(new_interest_accrued)
+        #
+        #         elif row['Account_Type'].lower() == 'interest' and row['Interest_Cadence'].lower() == 'daily':
+        #             index_of_accrued_interest = new_row_df.columns.tolist().index(row.Name)
+        #             index_of_principal_balance = index_of_accrued_interest - 1
+        #
+        #             new_row_df.iloc[0, index_of_accrued_interest] += new_row_df.iloc[0, index_of_principal_balance]*relevant_apr/365.25
+        #
+        #         elif row['Account_Type'].lower() == 'interest' and row['Interest_Cadence'].lower() == 'monthly':
+        #             index_of_accrued_interest = new_row_df.columns.tolist().index(row.Name)
+        #             index_of_principal_balance = index_of_accrued_interest - 1
+        #
+        #             new_row_df.iloc[0, index_of_accrued_interest] += new_row_df.iloc[
+        #                                                                  0, index_of_principal_balance] * relevant_apr / 12
+        #         elif row['Account_Type'].lower() == 'interest' and row['Interest_Cadence'].lower() == 'yearly':
+        #             index_of_accrued_interest = new_row_df.columns.tolist().index(row.Name)
+        #             index_of_principal_balance = index_of_accrued_interest - 1
+        #
+        #             new_row_df.iloc[0, index_of_accrued_interest] += new_row_df.iloc[
+        #                                                                  0, index_of_principal_balance] * relevant_apr
+        #         else:
+        #             print('Undefined case in computeForecast()')
+        #
+        #     #other priority 1 transactions
+        #     for index, budget_item in relevant_budget_items_df.iterrows():
+        #         #if memo matches any regex in memo_rules_df
+        #             #relevant_memo_rule = memo_rules_df[memo_rules_df.transaction_priority == 1 and memo_rules_df]
+        #
+        #         #use first regex match
+        #         found_matching_regex = False
+        #         for index2, row2 in memo_rules_df[memo_rules_df.transaction_priority == 1].iterrows():
+        #             m = re.search(row2.memo_regex,budget_item.Memo)
+        #
+        #             if m is not None:
+        #                 #do stuff
+        #
+        #                 if row2.account_from is not None:
+        #                     index_of_account_from_column = list(new_row_df.columns).index(row2.account_from)
+        #
+        #                 if row2.account_to is not None:
+        #                     index_of_account_to_column = list(new_row_df.columns).index(row2.account_to)
+        #
+        #                 if row2.account_from is not None and row2.account_to is None: #e.g. income
+        #                     new_row_df.iloc[0, index_of_account_from_column] += budget_item.Amount
+        #
+        #                 if row2.account_to is not None and row2.account_from is None: #e.g. spend
+        #                     new_row_df.iloc[0, index_of_account_to_column] += budget_item.Amount
+        #
+        #                 if row2.account_from is not None and row2.account_to is not None:  # e.g. xfer bw accts
+        #                     new_row_df.iloc[0, index_of_account_to_column] += budget_item.Amount
+        #                     new_row_df.iloc[0, index_of_account_from_column] -= budget_item.Amount
+        #
+        #                 found_matching_regex = True
+        #                 break
+        #
+        #         if not found_matching_regex:
+        #             print('We received a budget item that we do not have a case to handle. this is a show stopping error.')
+        #             print('Exiting.')
+        #         else: #update memo
+        #             if new_row_df.loc[0,'Memo'] != '':
+        #                 new_row_df.loc[0,'Memo'] = new_row_df.loc[0,'Memo'] + '; '
+        #
+        #             new_memo_text = budget_item.Memo + ' , '
+        #             if row2.account_from is not None:
+        #                 new_memo_text = new_memo_text + str(row2.account_from) + ' ' + str(-1*abs(budget_item.Amount)) + ' '
+        #
+        #             if row2.account_to is not None:
+        #                 new_memo_text = new_memo_text + str(row2.account_to) + ' ' + str(budget_item.Amount) + ' '
+        #
+        #             new_row_df.loc[0, 'Memo'] = new_row_df.loc[0,'Memo'] + new_memo_text
+        #
+        #     previous_date = d
+        #     if self.account_boundaries_are_violated(account_set_df,new_row_df):
+        #         break
+        #     else:
+        #         forecast_df = pd.concat([forecast_df, new_row_df])
 
-        updated_budget_schedule_df = budget_schedule_df.loc[budget_schedule_df.Priority != 1,:]
-        updated_budget_schedule_df.sort_values(inplace=True, axis=0, by="Date")
-        updated_budget_schedule_df.reset_index(inplace=True, drop=True)
+
+
+        # Fully don't need these lines but not deleting them yet just for completeness of the commented out section
+        # updated_budget_schedule_df = budget_schedule_df.loc[budget_schedule_df.Priority != 1,:]
+        # updated_budget_schedule_df.sort_values(inplace=True, axis=0, by="Date")
+        # updated_budget_schedule_df.reset_index(inplace=True, drop=True)
 
         #account_set_df is returned unchanged. we depend on optimize logic to not violate boundaries by checking the forecast
-        return [updated_budget_schedule_df, account_set_df, forecast_df]
+        return [deferred_past_end_date_budget_items_df, forecast_df]
 
-    def optimize_next_choice(self,updated_budget_schedule_df,account_set_df,forecast_df):
+    def decide__defer_or_execute_or_skip(self,updated_budget_schedule_df,account_set_df,forecast_df):
         """
-        optimize_next_choice() one line description.
+        Returns an empty row (execute or skip), or an updated <DataFrame> of BudgetItems.
 
-        Multiple line description.
+        This method accepts a single BudgetItem, along with the AccountSet and Forecast.
 
         | Test Cases
         | Expected Successes
-        | S1: ... #todo refactor ExpenseForecast.optimize_next_choice() doctest S1 to use _S1 label
+        | S1: ... #todo refactor ExpenseForecast.decide__defer_or_execute_or_skip() doctest S1 to use _S1 label
         |
         | Expected Fails
-        | F1 ... #todo refactor ExpenseForecast.optimize_next_choice() doctest F1 to use _F1 label
+        | F1 ... #todo refactor ExpenseForecast.decide__defer_or_execute_or_skip() doctest F1 to use _F1 label
 
         :param updated_budget_schedule_df:
         :param account_set_df:
@@ -446,7 +479,7 @@ class ExpenseForecast:
 
 
 
-    def computeForecast(self,budget_set, account_set, memo_rule_set):
+    def computeOptimalForecast(self,budget_set, account_set, memo_rule_set):
         """
         One-description.
 
@@ -454,10 +487,10 @@ class ExpenseForecast:
 
         | Test Cases
         | Expected Successes
-        | S1: ... #todo refactor ExpenseForecast.computeForecast() doctest S1 to use _S1 label
+        | S1: ... #todo refactor ExpenseForecast.computeOptimalForecast() doctest S1 to use _S1 label
         |
         | Expected Fails
-        | F1 ... #todo refactor ExpenseForecast.computeForecast() doctest F1 to use _F1 label
+        | F1 ... #todo refactor ExpenseForecast.computeOptimalForecast() doctest F1 to use _F1 label
 
         :param budget_schedule_df:
         :param account_set_df:
@@ -465,12 +498,12 @@ class ExpenseForecast:
         :return:
         """
 
-        satisficed_forecast__list = self.satisfice(budget_set, account_set, memo_rule_set)
-        updated_budget_schedule_df = satisficed_forecast__list[0]
-        account_set_df = satisficed_forecast__list[1]
-        forecast_df = satisficed_forecast__list[2]
+        computeForecastd_forecast__list = self.computeForecast(budget_set, account_set, memo_rule_set)
+        updated_budget_schedule_df = computeForecastd_forecast__list[0]
+        account_set_df = computeForecastd_forecast__list[1]
+        forecast_df = computeForecastd_forecast__list[2]
 
-        print('ENTER computeForecast()')
+        print('ENTER computeOptimalForecast()')
         unique_priority_indices = updated_budget_schedule_df.Priority.unique()
         for priority_index in unique_priority_indices:
 
@@ -498,7 +531,7 @@ class ExpenseForecast:
                             index_of_account_to_column = list(row_w_date_of_proposed_transaction.columns).index(memo_rules_row.account_to)
 
 
-                        #todo computeForecast():: the decision has to be made whether or not to execute the transaction
+                        #todo computeOptimalForecast():: the decision has to be made whether or not to execute the transaction
                         if memo_rules_row.account_from is not None and memo_rules_row.account_to is None:  # e.g. income
                             row_w_date_of_proposed_transaction.iloc[0, index_of_account_from_column] += budget_item_row.Amount
                             transaction_was_executed = True
@@ -534,16 +567,16 @@ class ExpenseForecast:
                         row_w_date_of_proposed_transaction.loc[0, 'Memo'] = row_w_date_of_proposed_transaction.loc[0, 'Memo'] + new_memo_text
 
                 if transaction_was_executed:
-                    #todo computeForecast(): resatisficing must occur
+                    #todo computeOptimalForecast(): resatisficing must occur
                     #the row in question has been changed. we keep the row w the transaction and all previous rows.
                     #we submit all later rows for re-satsificing
-                    #Note that satisfice returns the first row the same as it was submitted, so we keep only
-                    #those rows w less than date, and for the date = same as transaction and alter, we submit to satisfice
+                    #Note that computeForecast returns the first row the same as it was submitted, so we keep only
+                    #those rows w less than date, and for the date = same as transaction and alter, we submit to computeForecast
 
                     date_of_transaction_df = row_w_date_of_proposed_transaction.iloc[0,0]
                     rows_to_keep_df = forecast_df[forecast_df.Date < date_of_transaction_df.Date]
 
-                    #satisfice iterates over budget schedule items to determine the date, so we filter the budget schedule items
+                    #computeForecast iterates over budget schedule items to determine the date, so we filter the budget schedule items
                     only_future_budget_schedule_df = budget_schedule_df[budget_schedule_df.Date > date_of_transaction_df.Date]
 
                     #account initial balances must match the first row of the forecast that we submit
@@ -553,7 +586,7 @@ class ExpenseForecast:
 
                     #memo rules are the same
 
-                    resatisficed_rows_df = self.satisfice(only_future_budget_schedule_df, account_set_df, memo_rules_df)
+                    recomputeForecastd_rows_df = self.computeForecast(only_future_budget_schedule_df, account_set_df, memo_rules_df)
 
 
 
@@ -574,7 +607,7 @@ class ExpenseForecast:
 
 
         return forecast_df
-        #return self.satisfice(budget_schedule_df, account_set_df, memo_rules_df)
+        #return self.computeForecast(budget_schedule_df, account_set_df, memo_rules_df)
 
 
     def plotOverall(self,forecast_df,output_path):

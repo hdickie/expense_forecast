@@ -37,7 +37,7 @@ html_theme = "classic"
 html_theme_path = ["."]
 
 html_theme_options = {
-    'sidebarwidth': 400,
-}
+    'sidebarwidth': 400
+} #When I put this in classic.css, classic.css gets overwritten every time I use "make html"
 
 autoclass_content = 'both'

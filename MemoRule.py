@@ -140,8 +140,6 @@ class MemoRule:
     def toJSON(self):
         """
         Get a JSON <string> representing the <MemoRule> object.
-
-        #todo MemoRuleSet.toJSON() say what the columns are
         """
         JSON_string = "{\n"
         JSON_string += "\"Memo_Regex\":" + "\"" + str(self.memo_regex) + "\",\n"
