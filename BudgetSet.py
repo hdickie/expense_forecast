@@ -108,7 +108,7 @@ class BudgetSet:
         Empty DataFrame
         Columns: [Start_date, Priority, Cadence, Amount, Memo]
         Index: []
-        
+
         >>> print(BudgetSet([ BudgetItem.BudgetItem(start_date_YYYYMMDD='20000101',
         ... priority=1,
         ... cadence='once',

@@ -1,10 +1,11 @@
 import unittest
 import Account
+import doctest
 
 class TestAccountMethods(unittest.TestCase):
 
     def test_Account_doctests(self):
-        raise NotImplementedError
+        doctest.testmod(Account)
 
     def test_Account_Constructor(self):
         self.assertEqual('<class \'Account.Account\'>',str( type(
@@ -122,9 +123,9 @@ class TestAccountMethods(unittest.TestCase):
                             balance=0,
                             min_balance=0,
                             max_balance=0,
-                            account_type='prv stmt bal',
+                            account_type='prev stmt bal',
                             minimum_payment='not a float',
-                            print_debug_messages=False)
+                            raise_exceptionse=False) #just for debugging this test
 
         with self.assertRaises(TypeError):
             Account.Account(name='test account',
@@ -132,7 +133,7 @@ class TestAccountMethods(unittest.TestCase):
                             min_balance=0,
                             max_balance=0,
                             account_type='savings',
-                            minimum_payment='not a date string',
+                            billing_start_date_YYYYMMDD='not a date string',
                             print_debug_messages=False)
 
 
@@ -157,6 +158,6 @@ class TestAccountMethods(unittest.TestCase):
                             max_balance=0,
                             account_type='checking')
         test_account_JSON = test_account.toJSON()
-        test_expectation = """{\n"Name":"test account",\n"Balance":"0.0",\n"Min_Balance":"0.0",\n"Max_Balance":"0.0",\n"Account_Type":"checking",\n"Billing_Start_Date":"None",\n"Interest_Type":"None",\n"APR":"None",\n"Interest_Cadence":"None",\n"Minimum_Payment":"None"\n"Previous_Statement_Balance":"None"\n"Principal_Balance":"None",\n"Accrued_Interest":"None",\n}"""
+        test_expectation = """{\n"Name":"test account",\n"Balance":"0.0",\n"Min_Balance":"0.0",\n"Max_Balance":"0.0",\n"Account_Type":"checking",\n"Billing_Start_Date":"None",\n"Interest_Type":"None",\n"APR":"None",\n"Interest_Cadence":"None",\n"Minimum_Payment":"None"\n}"""
         assert test_account_JSON == test_expectation
 
