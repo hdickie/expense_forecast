@@ -43,18 +43,17 @@ class MemoRuleSet:
 
         """
 
-        error_ind = False
-        error_message_txt = ""
-
         current_memo_rules_df = self.getMemoRules()
+        memo_rules_of_same_priority_df = current_memo_rules_df.loc[current_memo_rules_df.Transaction_Priority == transaction_priority,:]
 
-        current_memo_rules_df.Memo_Regex.isin([memo_regex])
-        print(current_memo_rules_df)
-        #if a memo rule is added with the same regex and priority, but different from or to, then throw an error
+        for index, row in memo_rules_of_same_priority_df.iterrows():
+            if row.Memo_Regex == memo_regex:
+                if row.Account_From == account_from and row.Account_To == account_to:
+                    raise ValueError #An attempt was made to add a memo rule to a memo rule set that already existed.
+                else:
+                    raise ValueError #A MemoRule with the same memo_regex and priority as an existing rule, but with different from or to was added. This creates an ambiguous situation and we cannot continue.
 
-
-        #if a memo rule is added that already exists, just ignore it.
-
+        #Lower-level validation will occur in the MemoRule constructor
         memo_rule = MemoRule.MemoRule(memo_regex, account_from, account_to, transaction_priority)
         self.memo_rules.append(memo_rule)
 

@@ -40,8 +40,15 @@ class TestMemoRuleSetMethods(unittest.TestCase):
         self.assertIsNotNone(test_df)
 
     def test_addMemoRule(self):
+        with self.assertRaises(ValueError): #duplicate memo rule
+            memo_rule_set = MemoRuleSet.MemoRuleSet()
+            memo_rule_set.addMemoRule(memo_regex=".*", account_from='', account_to='', transaction_priority=1)
+            memo_rule_set.addMemoRule(memo_regex=".*", account_from='', account_to='', transaction_priority=1)
 
-        raise NotImplementedError
+        with self.assertRaises(ValueError):  # ambiguous combination of memo rules
+            memo_rule_set = MemoRuleSet.MemoRuleSet()
+            memo_rule_set.addMemoRule(memo_regex=".*", account_from='a', account_to='b', transaction_priority=1)
+            memo_rule_set.addMemoRule(memo_regex=".*", account_from='a', account_to='c', transaction_priority=1)
 
     def test_toJSON(self):
         test_memo_rule_set = MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*', account_from='noodle', account_to='',

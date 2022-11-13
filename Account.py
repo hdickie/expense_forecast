@@ -888,6 +888,21 @@ class Account:
         "Minimum_Payment":"None"
         }
 
+        >>> print( #F16 Principal Balance No ':' in account name
+        ... Account(name='F16 Principal Balance No semicolon in account name',
+        ... balance=0,
+        ... min_balance=0,
+        ... max_balance=0,
+        ... account_type="Principal Balance",
+        ... apr=None,
+        ... interest_cadence=None,
+        ... interest_type=None,
+        ... billing_start_date_YYYYMMDD=None,
+        ... minimum_payment=None,
+        ... print_debug_messages=False).toJSON())
+        Traceback (most recent call last):
+        ...
+        ValueError
 
         #######################################333
 

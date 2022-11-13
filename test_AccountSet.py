@@ -144,6 +144,54 @@ class TestAccountSetMethods(unittest.TestCase):
                                     )
         self.assertEqual('<class \'AccountSet.AccountSet\'>', str(type(test_account_set)))
 
+        with self.assertRaises(ValueError):
+            test_account_set.addAccount(name="test loan",
+                                        balance=1000,
+                                        min_balance=0,
+                                        max_balance=10000,
+                                        account_type='loan',
+                                        billing_start_date_YYYYMMDD='20220101',
+                                        interest_type='simple',
+                                        apr=0.03,
+                                        interest_cadence='daily',
+                                        minimum_payment=1,
+                                        previous_statement_balance=None,
+                                        principal_balance=None,
+                                        accrued_interest=100
+                                        )
+
+        with self.assertRaises(ValueError):
+            test_account_set.addAccount(name="test loan",
+                                        balance=1000,
+                                        min_balance=0,
+                                        max_balance=10000,
+                                        account_type='loan',
+                                        billing_start_date_YYYYMMDD='20220101',
+                                        interest_type='simple',
+                                        apr=0.03,
+                                        interest_cadence='daily',
+                                        minimum_payment=1,
+                                        previous_statement_balance=None,
+                                        principal_balance=900,
+                                        accrued_interest=None
+                                        )
+
+        with self.assertRaises(ValueError):
+            test_account_set.addAccount(name="test credit",
+                                        balance=0,
+                                        min_balance=0,
+                                        max_balance=0,
+                                        account_type='credit',
+                                        billing_start_date_YYYYMMDD='20220101',
+                                        interest_type='compound',
+                                        apr=0.05,
+                                        interest_cadence='monthly',
+                                        minimum_payment=0,
+                                        previous_statement_balance=None,
+                                        principal_balance=None,
+                                        accrued_interest=None
+                                        )
+
 
 
 

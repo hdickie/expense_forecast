@@ -189,6 +189,794 @@
 <span class="go">}</span>
 </pre></div>
 </div>
+<p>############# Move to another file when I can get it to cound for test coverage ###############</p>
+<p>Creates an Account. Input validation is performed.</p>
+<p>See Account.py for more details
+This file is exhaustive test cases.</p>
+<p>Test Cases
+Expected Successes
+[x] S1 Checking
+[x] S2 Prev Stmt Bal
+[x] S3 Curr Stmt Bal
+[x] S4 Principal Balance
+[x] S5 Interest</p>
+<p>Expected Fails
+Parameters that are provided are incorrect
+[x] F0 Provide no parameters
+[x] F1 Checking - include irrelevant parameters
+[x] F2 Prev Stmt Bal - exclude relevant non-default-required parameters and include irrelevant parameters
+[x] F3 Curr Stmt Bal - exclude relevant non-default-required parameters and include irrelevant parameters
+[x] F4 Principal Balance - exclude relevant non-default-required parameters and include irrelevant parameters
+[x] F5 Interest - exclude relevant non-default-required parameters and include irrelevant parameters</p>
+<p>Incorrect Types provided for necessary parameters
+[x] F6 Prev Stmt Bal - Provide incorrect types for all necessary parameters
+[x] F7 Principal Balance - Provide incorrect types for all necessary parameters</p>
+<p>Inconsistent values provided for related parameters
+[x] F8 Checking - Balance is less than Minimum Balance
+[x] F9 Checking - Balance is greater than Maximum Balance
+[x] F10 Checking - Min Balance is greater than Max Balance</p>
+<p>Illegal Values
+[x] F11 - Provide illegal values for account type, interest type and cadence</p>
+<p>More I thought of:
+[ ] F13 Account_type is explicitly passed as None
+[ ] F14 if Account_type is credit or loan
+[ ] F15 If Account_type is empty string</p>
+<p>#todo im not sure if what raises a TypeError vs. a ValueError is consistent
+#todo blank lines between error messages and JSON may be inconsistent</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Account</span><span class="p">()</span> <span class="c1"># Test F0</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">TypeError</span>: <span class="n">Account.__init__() missing 5 required positional arguments: &#39;name&#39;, &#39;balance&#39;, &#39;min_balance&#39;, &#39;max_balance&#39;, and &#39;account_type&#39;</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#S1 Checking</span>
+<span class="gp">... </span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;S1 Checking&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s1">&#39;checking&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="go">{</span>
+<span class="go">&quot;Name&quot;:&quot;S1 Checking&quot;,</span>
+<span class="go">&quot;Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Min_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Max_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Account_Type&quot;:&quot;checking&quot;,</span>
+<span class="go">&quot;Billing_Start_Date&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Type&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;APR&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Cadence&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Minimum_Payment&quot;:&quot;None&quot;</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#S2 Prev Stmt Bal</span>
+<span class="gp">... </span><span class="n">Account</span><span class="p">(</span>
+<span class="gp">... </span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Credit: S2 Prev Stmt Bal&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="s1">&#39;monthly&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="s1">&#39;compound&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="s1">&#39;20000101&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s1">&#39;Prev Stmt Bal&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">raise_exceptions</span><span class="o">=</span><span class="kc">False</span> <span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="go">{</span>
+<span class="go">&quot;Name&quot;:&quot;Credit: S2 Prev Stmt Bal&quot;,</span>
+<span class="go">&quot;Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Min_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Max_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Account_Type&quot;:&quot;Prev Stmt Bal&quot;,</span>
+<span class="go">&quot;Billing_Start_Date&quot;:&quot;2000-01-01 00:00:00&quot;,</span>
+<span class="go">&quot;Interest_Type&quot;:&quot;compound&quot;,</span>
+<span class="go">&quot;APR&quot;:&quot;0.05&quot;,</span>
+<span class="go">&quot;Interest_Cadence&quot;:&quot;monthly&quot;,</span>
+<span class="go">&quot;Minimum_Payment&quot;:&quot;40.0&quot;</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#S3 Curr Stmt Bal</span>
+<span class="gp">... </span><span class="n">Account</span><span class="p">(</span>
+<span class="gp">... </span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;S3 Curr Stmt Bal&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s1">&#39;Curr Stmt Bal&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="kc">None</span> <span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="go">{</span>
+<span class="go">&quot;Name&quot;:&quot;S3 Curr Stmt Bal&quot;,</span>
+<span class="go">&quot;Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Min_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Max_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Account_Type&quot;:&quot;Curr Stmt Bal&quot;,</span>
+<span class="go">&quot;Billing_Start_Date&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Type&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;APR&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Cadence&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Minimum_Payment&quot;:&quot;None&quot;</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#S4 Principal Balance</span>
+<span class="gp">... </span><span class="n">Account</span><span class="p">(</span>
+<span class="gp">... </span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Loan: S4 Principal Balance&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="s1">&#39;daily&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="s1">&#39;simple&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="s1">&#39;20000101&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s1">&#39;Principal Balance&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="mf">223.15</span> <span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="go">{</span>
+<span class="go">&quot;Name&quot;:&quot;Loan: S4 Principal Balance&quot;,</span>
+<span class="go">&quot;Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Min_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Max_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Account_Type&quot;:&quot;Principal Balance&quot;,</span>
+<span class="go">&quot;Billing_Start_Date&quot;:&quot;2000-01-01 00:00:00&quot;,</span>
+<span class="go">&quot;Interest_Type&quot;:&quot;simple&quot;,</span>
+<span class="go">&quot;APR&quot;:&quot;0.05&quot;,</span>
+<span class="go">&quot;Interest_Cadence&quot;:&quot;daily&quot;,</span>
+<span class="go">&quot;Minimum_Payment&quot;:&quot;223.15&quot;</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#S5 Interest</span>
+<span class="gp">... </span><span class="n">Account</span><span class="p">(</span>
+<span class="gp">... </span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;S5 Interest&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s1">&#39;Interest&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="kc">None</span> <span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="go">{</span>
+<span class="go">&quot;Name&quot;:&quot;S5 Interest&quot;,</span>
+<span class="go">&quot;Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Min_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Max_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Account_Type&quot;:&quot;Interest&quot;,</span>
+<span class="go">&quot;Billing_Start_Date&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Type&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;APR&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Cadence&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Minimum_Payment&quot;:&quot;None&quot;</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#F1: Checking: Exception Test</span>
+<span class="gp">... </span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;F1 Checking: Exception Test&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="s1">&#39;daily&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="s1">&#39;simple&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="s1">&#39;20000101&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s1">&#39;checking&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="mi">40</span> <span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#F1: Checking: Debug Messages Test</span>
+<span class="gp">... </span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;F1 Checking: Debug Messages Test&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="s1">&#39;daily&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="s1">&#39;simple&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="s1">&#39;20000101&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s1">&#39;checking&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">raise_exceptions</span><span class="o">=</span><span class="kc">False</span> <span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="go">ValueErrors:</span>
+<span class="go">For types other than prev stmt bal, principal balance, or savings, Account.apr should be None.</span>
+<span class="go">Value was:0.05</span>
+<span class="go">For account_type other than prev stmt bal, principal balance, or savings, Account.interest_cadence should be None.</span>
+<span class="go">Value was:daily</span>
+<span class="go">For types other than prev stmt bal, principal balance, or savings, Account.interest_type should be None.</span>
+<span class="go">Value was:simple</span>
+<span class="go">For types other than prev stmt bal, principal balance, or savings, Account.billing_start_date should be None.</span>
+<span class="go">Value was:20000101</span>
+<span class="go">For types other than prev stmt bal or principal balance, Account.minimum_payment should be None.</span>
+<span class="go">Value was:40</span>
+
+<span class="go">{</span>
+<span class="go">&quot;Name&quot;:&quot;F1 Checking: Debug Messages Test&quot;,</span>
+<span class="go">&quot;Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Min_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Max_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Account_Type&quot;:&quot;checking&quot;,</span>
+<span class="go">&quot;Billing_Start_Date&quot;:&quot;20000101&quot;,</span>
+<span class="go">&quot;Interest_Type&quot;:&quot;simple&quot;,</span>
+<span class="go">&quot;APR&quot;:&quot;0.05&quot;,</span>
+<span class="go">&quot;Interest_Cadence&quot;:&quot;daily&quot;,</span>
+<span class="go">&quot;Minimum_Payment&quot;:&quot;40&quot;</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#F2: Prev Stmt Bal: Exception Test</span>
+<span class="gp">... </span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Credit: F2 Prev Stmt Bal: Exception Test&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s1">&#39;Prev Stmt Bal&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="kc">None</span> <span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">TypeError</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#F2 Prev Stmt Bal: Debug Messages Test</span>
+<span class="gp">... </span><span class="n">Account</span><span class="p">(</span>
+<span class="gp">... </span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Credit: F2 Prev Stmt Bal: Debug Messages Test&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s1">&#39;Prev Stmt Bal&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">raise_exceptions</span><span class="o">=</span><span class="kc">False</span> <span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="go">TypeErrors:</span>
+<span class="go">failed cast Account.apr to float</span>
+<span class="go">Value was:None</span>
+<span class="go">failed cast Account.billing_start_date_YYYYMMDD to datetime</span>
+<span class="go">Value was:None</span>
+<span class="go">failed cast Account.minimum_payment to float</span>
+<span class="go">Value was:None</span>
+
+<span class="go">ValueErrors:</span>
+<span class="go">For account_type = prev stmt bal, principal balance, or savings, Account.interest_cadence should be one of: daily, monthly, quarterly, or yearly.</span>
+<span class="go">Value was:None</span>
+<span class="go">{</span>
+<span class="go">&quot;Name&quot;:&quot;Credit: F2 Prev Stmt Bal: Debug Messages Test&quot;,</span>
+<span class="go">&quot;Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Min_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Max_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Account_Type&quot;:&quot;Prev Stmt Bal&quot;,</span>
+<span class="go">&quot;Billing_Start_Date&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Type&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;APR&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Cadence&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Minimum_Payment&quot;:&quot;None&quot;</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#F3 Curr Stmt Bal: Exception Test</span>
+<span class="gp">... </span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Credit: F3 Curr Stmt Bal: Exception Test&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s2">&quot;Curr Stmt Bal&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="s1">&#39;monthly&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="s1">&#39;simple&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="s1">&#39;20000101&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">print_debug_messages</span><span class="o">=</span><span class="kc">False</span> <span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#Test F3 Curr Stmt Bal: Debug Messages Test</span>
+<span class="gp">... </span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Credit: F3 Curr Stmt Bal: Debug Messages Test&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s2">&quot;Curr Stmt Bal&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="s1">&#39;monthly&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="s1">&#39;simple&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="s1">&#39;20000101&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span><span class="n">raise_exceptions</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="go">ValueErrors:</span>
+<span class="go">For types other than prev stmt bal, principal balance, or savings, Account.apr should be None.</span>
+<span class="go">Value was:0.05</span>
+<span class="go">For account_type other than prev stmt bal, principal balance, or savings, Account.interest_cadence should be None.</span>
+<span class="go">Value was:monthly</span>
+<span class="go">For types other than prev stmt bal, principal balance, or savings, Account.interest_type should be None.</span>
+<span class="go">Value was:simple</span>
+<span class="go">For types other than prev stmt bal, principal balance, or savings, Account.billing_start_date should be None.</span>
+<span class="go">Value was:20000101</span>
+<span class="go">For types other than prev stmt bal or principal balance, Account.minimum_payment should be None.</span>
+<span class="go">Value was:40</span>
+
+<span class="go">{</span>
+<span class="go">&quot;Name&quot;:&quot;Credit: F3 Curr Stmt Bal: Debug Messages Test&quot;,</span>
+<span class="go">&quot;Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Min_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Max_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Account_Type&quot;:&quot;Curr Stmt Bal&quot;,</span>
+<span class="go">&quot;Billing_Start_Date&quot;:&quot;20000101&quot;,</span>
+<span class="go">&quot;Interest_Type&quot;:&quot;simple&quot;,</span>
+<span class="go">&quot;APR&quot;:&quot;0.05&quot;,</span>
+<span class="go">&quot;Interest_Cadence&quot;:&quot;monthly&quot;,</span>
+<span class="go">&quot;Minimum_Payment&quot;:&quot;40&quot;</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#F4 Principal Balance: Exception Test</span>
+<span class="gp">... </span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Loan: F4 Principal Balance: Exception Test&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s2">&quot;Principal Balance&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">print_debug_messages</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">TypeError</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#F4 Principal Balance: Debug Messages Test</span>
+<span class="gp">... </span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Loan: F4 Principal Balance: Debug Messages Test&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s2">&quot;Principal Balance&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">raise_exceptions</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="go">TypeErrors:</span>
+<span class="go">failed cast Account.apr to float</span>
+<span class="go">Value was:None</span>
+<span class="go">failed cast Account.billing_start_date_YYYYMMDD to datetime</span>
+<span class="go">Value was:None</span>
+<span class="go">failed cast Account.minimum_payment to float</span>
+<span class="go">Value was:None</span>
+
+<span class="go">ValueErrors:</span>
+<span class="go">For account_type = prev stmt bal, principal balance, or savings, Account.interest_cadence should be one of: daily, monthly, quarterly, or yearly.</span>
+<span class="go">Value was:None</span>
+<span class="go">{</span>
+<span class="go">&quot;Name&quot;:&quot;Loan: F4 Principal Balance: Debug Messages Test&quot;,</span>
+<span class="go">&quot;Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Min_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Max_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Account_Type&quot;:&quot;Principal Balance&quot;,</span>
+<span class="go">&quot;Billing_Start_Date&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Type&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;APR&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Cadence&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Minimum_Payment&quot;:&quot;None&quot;</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#F5 Interest - exclude relevant non-default-required parameters and include irrelevant parameters: Exception Test&#39;,</span>
+<span class="gp">... </span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Loan: F5 Interest - exclude relevant non-default-required parameters and include irrelevant parameters: Exception Test&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s2">&quot;Interest&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="s2">&quot;daily&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="s2">&quot;simple&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="s2">&quot;20000101&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="mi">40</span> <span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#F5 Interest - exclude relevant non-default-required parameters and include irrelevant parameters: Debug Messages Test</span>
+<span class="gp">... </span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Loan: F5 Interest - exclude relevant non-default-required parameters and include irrelevant parameters: Debug Messages Test&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s2">&quot;Interest&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="s2">&quot;daily&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="s2">&quot;simple&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="s2">&quot;20000101&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span><span class="n">raise_exceptions</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="go">ValueErrors:</span>
+<span class="go">For types other than prev stmt bal, principal balance, or savings, Account.apr should be None.</span>
+<span class="go">Value was:0.05</span>
+<span class="go">For account_type other than prev stmt bal, principal balance, or savings, Account.interest_cadence should be None.</span>
+<span class="go">Value was:daily</span>
+<span class="go">For types other than prev stmt bal, principal balance, or savings, Account.interest_type should be None.</span>
+<span class="go">Value was:simple</span>
+<span class="go">For types other than prev stmt bal, principal balance, or savings, Account.billing_start_date should be None.</span>
+<span class="go">Value was:20000101</span>
+<span class="go">For types other than prev stmt bal or principal balance, Account.minimum_payment should be None.</span>
+<span class="go">Value was:40</span>
+
+<span class="go">{</span>
+<span class="go">&quot;Name&quot;:&quot;Loan: F5 Interest - exclude relevant non-default-required parameters and include irrelevant parameters: Debug Messages Test&quot;,</span>
+<span class="go">&quot;Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Min_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Max_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Account_Type&quot;:&quot;Interest&quot;,</span>
+<span class="go">&quot;Billing_Start_Date&quot;:&quot;20000101&quot;,</span>
+<span class="go">&quot;Interest_Type&quot;:&quot;simple&quot;,</span>
+<span class="go">&quot;APR&quot;:&quot;0.05&quot;,</span>
+<span class="go">&quot;Interest_Cadence&quot;:&quot;daily&quot;,</span>
+<span class="go">&quot;Minimum_Payment&quot;:&quot;40&quot;</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#F6 Credit - Provide incorrect types for all necessary parameters</span>
+<span class="gp">... </span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Credit: F6 Credit - Provide incorrect types for all necessary parameters: Exception Test&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s2">&quot;Prev Stmt Bal&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">print_debug_messages</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">TypeError</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#F6 Credit - Provide incorrect types for all necessary parameters: Debug Messages Test</span>
+<span class="gp">... </span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Credit: F6 Credit - Provide incorrect types for all necessary parameters: Debug Messages Test&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s2">&quot;Prev Stmt Bal&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">raise_exceptions</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="go">TypeErrors:</span>
+<span class="go">failed cast Account.apr to float</span>
+<span class="go">Value was:None</span>
+<span class="go">failed cast Account.billing_start_date_YYYYMMDD to datetime</span>
+<span class="go">Value was:None</span>
+<span class="go">failed cast Account.minimum_payment to float</span>
+<span class="go">Value was:None</span>
+
+<span class="go">ValueErrors:</span>
+<span class="go">For account_type = prev stmt bal, principal balance, or savings, Account.interest_cadence should be one of: daily, monthly, quarterly, or yearly.</span>
+<span class="go">Value was:None</span>
+<span class="go">{</span>
+<span class="go">&quot;Name&quot;:&quot;Credit: F6 Credit - Provide incorrect types for all necessary parameters: Debug Messages Test&quot;,</span>
+<span class="go">&quot;Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Min_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Max_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Account_Type&quot;:&quot;Prev Stmt Bal&quot;,</span>
+<span class="go">&quot;Billing_Start_Date&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Type&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;APR&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Cadence&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Minimum_Payment&quot;:&quot;None&quot;</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#F7 Loan - Provide incorrect types for all necessary parameters: Debug Messages Test</span>
+<span class="gp">... </span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Loan: F7 Principal Balance - Provide incorrect types for all necessary parameters: Debug Messages Test&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s2">&quot;Principal Balance&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">raise_exceptions</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="go">TypeErrors:</span>
+<span class="go">failed cast Account.apr to float</span>
+<span class="go">Value was:None</span>
+<span class="go">failed cast Account.billing_start_date_YYYYMMDD to datetime</span>
+<span class="go">Value was:None</span>
+<span class="go">failed cast Account.minimum_payment to float</span>
+<span class="go">Value was:None</span>
+
+<span class="go">ValueErrors:</span>
+<span class="go">For account_type = prev stmt bal, principal balance, or savings, Account.interest_cadence should be one of: daily, monthly, quarterly, or yearly.</span>
+<span class="go">Value was:None</span>
+<span class="go">{</span>
+<span class="go">&quot;Name&quot;:&quot;Loan: F7 Principal Balance - Provide incorrect types for all necessary parameters: Debug Messages Test&quot;,</span>
+<span class="go">&quot;Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Min_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Max_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Account_Type&quot;:&quot;Principal Balance&quot;,</span>
+<span class="go">&quot;Billing_Start_Date&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Type&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;APR&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Cadence&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Minimum_Payment&quot;:&quot;None&quot;</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#F7 Principal Balance - Provide incorrect types for all necessary parameters: Exception Test</span>
+<span class="gp">... </span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;F7 Principal Balance - Provide incorrect types for all necessary parameters: Exception Test&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s2">&quot;Principal Balance&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">print_debug_messages</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">TypeError</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#F8 Checking - Balance is less than Minimum Balance: Exception Test</span>
+<span class="gp">... </span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;F8 Checking - Balance is less than Minimum Balance&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=-</span><span class="mi">10</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s2">&quot;checking&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="kc">None</span> <span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#F8 Checking - Balance is less than Minimum Balance: Debug Messages Test</span>
+<span class="gp">... </span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;F8 Checking - Balance is less than Minimum Balance&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=-</span><span class="mi">10</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s2">&quot;checking&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">raise_exceptions</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="go">ValueErrors:</span>
+<span class="go">Account.balance was less than minimum balance</span>
+<span class="go">0.0 &lt;= -10.0 was not true</span>
+
+<span class="go">{</span>
+<span class="go">&quot;Name&quot;:&quot;F8 Checking - Balance is less than Minimum Balance&quot;,</span>
+<span class="go">&quot;Balance&quot;:&quot;-10.0&quot;,</span>
+<span class="go">&quot;Min_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Max_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Account_Type&quot;:&quot;checking&quot;,</span>
+<span class="go">&quot;Billing_Start_Date&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Type&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;APR&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Cadence&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Minimum_Payment&quot;:&quot;None&quot;</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#F9 Checking - Balance is greater than Maximum Balance: Exception Test</span>
+<span class="gp">... </span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;F9 Checking - Balance is greater than Maximum Balance&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s2">&quot;checking&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="kc">None</span> <span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#F9 Checking - Balance is greater than Maximum Balance : Debug Messages Test</span>
+<span class="gp">... </span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;F9 Checking - Balance is greater than Maximum Balance&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s2">&quot;checking&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">raise_exceptions</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="go">ValueErrors:</span>
+<span class="go">Account.balance was greater than Account.max_balance</span>
+<span class="go">0.0 &gt;= 10.0 was not true</span>
+
+<span class="go">{</span>
+<span class="go">&quot;Name&quot;:&quot;F9 Checking - Balance is greater than Maximum Balance&quot;,</span>
+<span class="go">&quot;Balance&quot;:&quot;10.0&quot;,</span>
+<span class="go">&quot;Min_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Max_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Account_Type&quot;:&quot;checking&quot;,</span>
+<span class="go">&quot;Billing_Start_Date&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Type&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;APR&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Cadence&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Minimum_Payment&quot;:&quot;None&quot;</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#F10 Checking - Min Balance is greater than Max Balance: Exception Test</span>
+<span class="gp">... </span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;F10 Checking - Min Balance is greater than Max Balance&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s2">&quot;checking&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="kc">None</span> <span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#F10 Checking - Min Balance is greater than Max Balance: Debug Messages Test</span>
+<span class="gp">... </span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;F10 Checking - Min Balance is greater than Max Balance&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s2">&quot;checking&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">raise_exceptions</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="go">ValueErrors:</span>
+<span class="go">Account.balance was less than minimum balance</span>
+<span class="go">10.0 &lt;= 5.0 was not true</span>
+<span class="go">Account.balance was greater than Account.max_balance</span>
+<span class="go">0.0 &gt;= 5.0 was not true</span>
+<span class="go">Account.max_balance was less than Account.min_balance</span>
+
+<span class="go">{</span>
+<span class="go">&quot;Name&quot;:&quot;F10 Checking - Min Balance is greater than Max Balance&quot;,</span>
+<span class="go">&quot;Balance&quot;:&quot;5.0&quot;,</span>
+<span class="go">&quot;Min_Balance&quot;:&quot;10.0&quot;,</span>
+<span class="go">&quot;Max_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Account_Type&quot;:&quot;checking&quot;,</span>
+<span class="go">&quot;Billing_Start_Date&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Type&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;APR&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Cadence&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Minimum_Payment&quot;:&quot;None&quot;</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#F11 - Provide illegal values for account type: Exception Test</span>
+<span class="gp">... </span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;F11 - Provide illegal values for account type, interest type and cadence&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s1">&#39;shmecking&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="s2">&quot;shmeekly&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="s2">&quot;shmimple&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#F11 - Provide illegal values for account type: Debug Messages Test</span>
+<span class="gp">... </span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;F11 - Provide illegal values for account type, interest type and cadence&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s1">&#39;shmecking&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="s2">&quot;shmeekly&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="s2">&quot;shmimple&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">raise_exceptions</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="go">ValueErrors:</span>
+<span class="go">Account.account_type was not one of: checking, prev stmt bal, curr stmt bal, interest, savings, principal balance</span>
+<span class="go">Value was:shmecking</span>
+<span class="go">For account_type other than prev stmt bal, principal balance, or savings, Account.interest_cadence should be None.</span>
+<span class="go">Value was:shmeekly</span>
+<span class="go">For types other than prev stmt bal, principal balance, or savings, Account.interest_type should be None.</span>
+<span class="go">Value was:shmimple</span>
+
+<span class="go">{</span>
+<span class="go">&quot;Name&quot;:&quot;F11 - Provide illegal values for account type, interest type and cadence&quot;,</span>
+<span class="go">&quot;Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Min_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Max_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Account_Type&quot;:&quot;shmecking&quot;,</span>
+<span class="go">&quot;Billing_Start_Date&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Type&quot;:&quot;shmimple&quot;,</span>
+<span class="go">&quot;APR&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Cadence&quot;:&quot;shmeekly&quot;,</span>
+<span class="go">&quot;Minimum_Payment&quot;:&quot;None&quot;</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#F13 account_type is explicitly None</span>
+<span class="gp">... </span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;F13 account_type is explicitly None&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">raise_exceptions</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="go">ValueErrors:</span>
+<span class="go">Account.account_type was not one of: checking, prev stmt bal, curr stmt bal, interest, savings, principal balance</span>
+<span class="go">Value was:none</span>
+
+<span class="go">{</span>
+<span class="go">&quot;Name&quot;:&quot;F13 account_type is explicitly None&quot;,</span>
+<span class="go">&quot;Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Min_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Max_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Account_Type&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Billing_Start_Date&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Type&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;APR&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Cadence&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Minimum_Payment&quot;:&quot;None&quot;</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#F15 account_type is empty string</span>
+<span class="gp">... </span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;F15 account_type is empty string&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span><span class="n">raise_exceptions</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="go">ValueErrors:</span>
+<span class="go">Account.account_type was not one of: checking, prev stmt bal, curr stmt bal, interest, savings, principal balance</span>
+<span class="go">Value was:</span>
+
+<span class="go">{</span>
+<span class="go">&quot;Name&quot;:&quot;F15 account_type is empty string&quot;,</span>
+<span class="go">&quot;Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Min_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Max_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Account_Type&quot;:&quot;&quot;,</span>
+<span class="go">&quot;Billing_Start_Date&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Type&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;APR&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Cadence&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Minimum_Payment&quot;:&quot;None&quot;</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#F16 Principal Balance No &#39;:&#39; in account name</span>
+<span class="gp">... </span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;F16 Principal Balance No semicolon in account name&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s2">&quot;Principal Balance&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">print_debug_messages</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>
+</pre></div>
+</div>
+<p>#######################################333</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="Account.Account.toJSON">
 <span class="sig-name descname"><span class="pre">toJSON</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Account.Account.toJSON" title="Permalink to this definition">¶</a></dt>
@@ -259,6 +1047,364 @@
 <span class="go">}</span>
 </pre></div>
 </div>
+<p>######### Move these to another file when I can get it to count for test coverage ###########</p>
+<div class="line-block">
+<div class="line">Test Cases</div>
+<div class="line">Expected Successes</div>
+<div class="line"><br /></div>
+<div class="line"><br /></div>
+<div class="line">Expected Fails</div>
+<div class="line">[x] F1: Pass a list containing a non-Account object</div>
+<div class="line">[ ] F2: Missing related accounts</div>
+<div class="line">[ ] F3: Inconsistent account parameters: Min_Balance and Max_Balance</div>
+<div class="line">[ ] F4: Combined balance max account boundary violation</div>
+<div class="line">[ ] F5: Combined balance min account boundary violation</div>
+</div>
+<p>Pass a list with an object that is not an Account object.
+This error never prints the error text even if you pass raise_exceptions = True
+The line that the exception is rasied from is close to the validation code that explains this so I am
+calling this good enough.
+&gt;&gt;&gt; print(AccountSet([0]).toJSON()) #F1: Pass a list containing a non-Account object
+Traceback (most recent call last):
+…
+ValueError</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">AccountSet</span><span class="p">([</span> <span class="c1">#F2: Missing related accounts: credit</span>
+<span class="gp">... </span><span class="n">Account</span><span class="o">.</span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Credit: Prev Stmt Bal&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">75</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">101</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="s2">&quot;Monthly&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="s2">&quot;Compound&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="s2">&quot;20000101&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s1">&#39;Prev Stmt Bal&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="mi">40</span>
+<span class="gp">... </span><span class="p">)],</span><span class="n">raise_exceptions</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">AccountSet</span><span class="p">([</span> <span class="c1">#F2: Missing related accounts: loan</span>
+<span class="gp">... </span><span class="n">Account</span><span class="o">.</span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Loan: Interest&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">75</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s1">&#39;Interest&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="kc">None</span>
+<span class="gp">... </span><span class="p">)],</span><span class="n">raise_exceptions</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">AccountSet</span><span class="p">([</span> <span class="c1">#F3: Inconsistent account parameters: Min_Balance and Max_Balance</span>
+<span class="gp">... </span><span class="n">Account</span><span class="o">.</span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Credit: Curr Stmt Bal&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">75</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s1">&#39;Curr Stmt Bal&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="kc">None</span>
+<span class="gp">... </span><span class="p">),</span>
+<span class="gp">... </span><span class="n">Account</span><span class="o">.</span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Credit: Prev Stmt Bal&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">75</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">101</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="s2">&quot;Monthly&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="s2">&quot;Compound&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="s2">&quot;20000101&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s1">&#39;Prev Stmt Bal&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="mi">40</span>
+<span class="gp">... </span><span class="p">),</span><span class="n">Account</span><span class="o">.</span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Loan: Interest&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">75</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s1">&#39;Interest&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="kc">None</span>
+<span class="gp">... </span><span class="p">),</span>
+<span class="gp">... </span><span class="n">Account</span><span class="o">.</span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Loan: Principal Balance&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">75</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">101</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="s2">&quot;Monthly&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="s2">&quot;Compound&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="s2">&quot;20000101&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s1">&#39;Principal Balance&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="mi">40</span>
+<span class="gp">... </span><span class="p">)],</span><span class="n">raise_exceptions</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="go">ValueErrors:</span>
+<span class="go">Min_Balance did not match between Curr Stmt Bal and Prev Stmt Bal for account Credit</span>
+<span class="go">Max_Balance did not match between Curr Stmt Bal and Prev Stmt Bal for account Credit</span>
+<span class="go">Min_Balance did not match between Principal Balance and Interest for account Loan</span>
+<span class="go">Max_Balance did not match between Principal Balance and Interest for account Loan</span>
+
+<span class="go">{</span>
+<span class="go">{</span>
+<span class="go">&quot;Name&quot;:&quot;Credit: Curr Stmt Bal&quot;,</span>
+<span class="go">&quot;Balance&quot;:&quot;75.0&quot;,</span>
+<span class="go">&quot;Min_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Max_Balance&quot;:&quot;100.0&quot;,</span>
+<span class="go">&quot;Account_Type&quot;:&quot;Curr Stmt Bal&quot;,</span>
+<span class="go">&quot;Billing_Start_Date&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Type&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;APR&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Cadence&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Minimum_Payment&quot;:&quot;None&quot;</span>
+<span class="go">},</span>
+<span class="go">{</span>
+<span class="go">&quot;Name&quot;:&quot;Credit: Prev Stmt Bal&quot;,</span>
+<span class="go">&quot;Balance&quot;:&quot;75.0&quot;,</span>
+<span class="go">&quot;Min_Balance&quot;:&quot;1.0&quot;,</span>
+<span class="go">&quot;Max_Balance&quot;:&quot;101.0&quot;,</span>
+<span class="go">&quot;Account_Type&quot;:&quot;Prev Stmt Bal&quot;,</span>
+<span class="go">&quot;Billing_Start_Date&quot;:&quot;2000-01-01 00:00:00&quot;,</span>
+<span class="go">&quot;Interest_Type&quot;:&quot;Compound&quot;,</span>
+<span class="go">&quot;APR&quot;:&quot;0.05&quot;,</span>
+<span class="go">&quot;Interest_Cadence&quot;:&quot;Monthly&quot;,</span>
+<span class="go">&quot;Minimum_Payment&quot;:&quot;40.0&quot;</span>
+<span class="go">},</span>
+<span class="go">{</span>
+<span class="go">&quot;Name&quot;:&quot;Loan: Interest&quot;,</span>
+<span class="go">&quot;Balance&quot;:&quot;75.0&quot;,</span>
+<span class="go">&quot;Min_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Max_Balance&quot;:&quot;100.0&quot;,</span>
+<span class="go">&quot;Account_Type&quot;:&quot;Interest&quot;,</span>
+<span class="go">&quot;Billing_Start_Date&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Type&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;APR&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Cadence&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Minimum_Payment&quot;:&quot;None&quot;</span>
+<span class="go">},</span>
+<span class="go">{</span>
+<span class="go">&quot;Name&quot;:&quot;Loan: Principal Balance&quot;,</span>
+<span class="go">&quot;Balance&quot;:&quot;75.0&quot;,</span>
+<span class="go">&quot;Min_Balance&quot;:&quot;1.0&quot;,</span>
+<span class="go">&quot;Max_Balance&quot;:&quot;101.0&quot;,</span>
+<span class="go">&quot;Account_Type&quot;:&quot;Principal Balance&quot;,</span>
+<span class="go">&quot;Billing_Start_Date&quot;:&quot;2000-01-01 00:00:00&quot;,</span>
+<span class="go">&quot;Interest_Type&quot;:&quot;Compound&quot;,</span>
+<span class="go">&quot;APR&quot;:&quot;0.05&quot;,</span>
+<span class="go">&quot;Interest_Cadence&quot;:&quot;Monthly&quot;,</span>
+<span class="go">&quot;Minimum_Payment&quot;:&quot;40.0&quot;</span>
+<span class="go">}</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">AccountSet</span><span class="p">(</span> <span class="c1">#F4: Combined balance max account boundary violation</span>
+<span class="gp">... </span><span class="p">[</span><span class="n">Account</span><span class="o">.</span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Credit: Curr Stmt Bal&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">75</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s1">&#39;Curr Stmt Bal&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="kc">None</span>
+<span class="gp">... </span><span class="p">),</span>
+<span class="gp">... </span><span class="n">Account</span><span class="o">.</span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Credit: Prev Stmt Bal&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">75</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="s2">&quot;Monthly&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="s2">&quot;Compound&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="s2">&quot;20000101&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s1">&#39;Prev Stmt Bal&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="mi">40</span>
+<span class="gp">... </span><span class="p">),</span><span class="n">Account</span><span class="o">.</span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Loan: Interest&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">75</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s1">&#39;Interest&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="kc">None</span>
+<span class="gp">... </span><span class="p">),</span>
+<span class="gp">... </span><span class="n">Account</span><span class="o">.</span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Loan: Principal Balance&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=</span><span class="mi">75</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="s2">&quot;Monthly&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="s2">&quot;Compound&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="s2">&quot;20000101&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s1">&#39;Principal Balance&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="mi">40</span>
+<span class="gp">... </span><span class="p">)],</span><span class="n">raise_exceptions</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="go">ValueErrors:</span>
+<span class="go">Combined Prev and Curr Stmt bal was greater than max_balance for account Credit</span>
+<span class="go">Combined Principal Balance and Interest bal was greater than max_balance for account Loan</span>
+
+<span class="go">{</span>
+<span class="go">{</span>
+<span class="go">&quot;Name&quot;:&quot;Credit: Curr Stmt Bal&quot;,</span>
+<span class="go">&quot;Balance&quot;:&quot;75.0&quot;,</span>
+<span class="go">&quot;Min_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Max_Balance&quot;:&quot;100.0&quot;,</span>
+<span class="go">&quot;Account_Type&quot;:&quot;Curr Stmt Bal&quot;,</span>
+<span class="go">&quot;Billing_Start_Date&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Type&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;APR&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Cadence&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Minimum_Payment&quot;:&quot;None&quot;</span>
+<span class="go">},</span>
+<span class="go">{</span>
+<span class="go">&quot;Name&quot;:&quot;Credit: Prev Stmt Bal&quot;,</span>
+<span class="go">&quot;Balance&quot;:&quot;75.0&quot;,</span>
+<span class="go">&quot;Min_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Max_Balance&quot;:&quot;100.0&quot;,</span>
+<span class="go">&quot;Account_Type&quot;:&quot;Prev Stmt Bal&quot;,</span>
+<span class="go">&quot;Billing_Start_Date&quot;:&quot;2000-01-01 00:00:00&quot;,</span>
+<span class="go">&quot;Interest_Type&quot;:&quot;Compound&quot;,</span>
+<span class="go">&quot;APR&quot;:&quot;0.05&quot;,</span>
+<span class="go">&quot;Interest_Cadence&quot;:&quot;Monthly&quot;,</span>
+<span class="go">&quot;Minimum_Payment&quot;:&quot;40.0&quot;</span>
+<span class="go">},</span>
+<span class="go">{</span>
+<span class="go">&quot;Name&quot;:&quot;Loan: Interest&quot;,</span>
+<span class="go">&quot;Balance&quot;:&quot;75.0&quot;,</span>
+<span class="go">&quot;Min_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Max_Balance&quot;:&quot;100.0&quot;,</span>
+<span class="go">&quot;Account_Type&quot;:&quot;Interest&quot;,</span>
+<span class="go">&quot;Billing_Start_Date&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Type&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;APR&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Cadence&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Minimum_Payment&quot;:&quot;None&quot;</span>
+<span class="go">},</span>
+<span class="go">{</span>
+<span class="go">&quot;Name&quot;:&quot;Loan: Principal Balance&quot;,</span>
+<span class="go">&quot;Balance&quot;:&quot;75.0&quot;,</span>
+<span class="go">&quot;Min_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Max_Balance&quot;:&quot;100.0&quot;,</span>
+<span class="go">&quot;Account_Type&quot;:&quot;Principal Balance&quot;,</span>
+<span class="go">&quot;Billing_Start_Date&quot;:&quot;2000-01-01 00:00:00&quot;,</span>
+<span class="go">&quot;Interest_Type&quot;:&quot;Compound&quot;,</span>
+<span class="go">&quot;APR&quot;:&quot;0.05&quot;,</span>
+<span class="go">&quot;Interest_Cadence&quot;:&quot;Monthly&quot;,</span>
+<span class="go">&quot;Minimum_Payment&quot;:&quot;40.0&quot;</span>
+<span class="go">}</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">AccountSet</span><span class="p">(</span> <span class="c1">#F5: Combined balance min account boundary violation</span>
+<span class="gp">... </span><span class="p">[</span><span class="n">Account</span><span class="o">.</span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Credit: Curr Stmt Bal&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=-</span><span class="mi">10</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=-</span><span class="mi">15</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s1">&#39;Curr Stmt Bal&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="kc">None</span>
+<span class="gp">... </span><span class="p">),</span>
+<span class="gp">... </span><span class="n">Account</span><span class="o">.</span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Credit: Prev Stmt Bal&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=-</span><span class="mi">10</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=-</span><span class="mi">15</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="s2">&quot;Monthly&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="s2">&quot;Compound&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="s2">&quot;20000101&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s1">&#39;Prev Stmt Bal&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="mi">40</span>
+<span class="gp">... </span><span class="p">),</span><span class="n">Account</span><span class="o">.</span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Loan: Interest&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=-</span><span class="mi">10</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=-</span><span class="mi">15</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s1">&#39;Interest&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="kc">None</span>
+<span class="gp">... </span><span class="p">),</span>
+<span class="gp">... </span><span class="n">Account</span><span class="o">.</span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Loan: Principal Balance&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">balance</span><span class="o">=-</span><span class="mi">10</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">min_balance</span><span class="o">=-</span><span class="mi">15</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">max_balance</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">apr</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_cadence</span><span class="o">=</span><span class="s2">&quot;Monthly&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">interest_type</span><span class="o">=</span><span class="s2">&quot;Compound&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">billing_start_date_YYYYMMDD</span><span class="o">=</span><span class="s2">&quot;20000101&quot;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">account_type</span><span class="o">=</span><span class="s1">&#39;Principal Balance&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">minimum_payment</span><span class="o">=</span><span class="mi">40</span>
+<span class="gp">... </span><span class="p">)],</span><span class="n">raise_exceptions</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="go">ValueErrors:</span>
+<span class="go">Combined Prev and Curr Stmt bal was less than min_balance for account Credit</span>
+<span class="go">Combined Principal Balance and Interest bal was less than min_balance for account Loan</span>
+
+<span class="go">{</span>
+<span class="go">{</span>
+<span class="go">&quot;Name&quot;:&quot;Credit: Curr Stmt Bal&quot;,</span>
+<span class="go">&quot;Balance&quot;:&quot;-10.0&quot;,</span>
+<span class="go">&quot;Min_Balance&quot;:&quot;-15.0&quot;,</span>
+<span class="go">&quot;Max_Balance&quot;:&quot;100.0&quot;,</span>
+<span class="go">&quot;Account_Type&quot;:&quot;Curr Stmt Bal&quot;,</span>
+<span class="go">&quot;Billing_Start_Date&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Type&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;APR&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Cadence&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Minimum_Payment&quot;:&quot;None&quot;</span>
+<span class="go">},</span>
+<span class="go">{</span>
+<span class="go">&quot;Name&quot;:&quot;Credit: Prev Stmt Bal&quot;,</span>
+<span class="go">&quot;Balance&quot;:&quot;-10.0&quot;,</span>
+<span class="go">&quot;Min_Balance&quot;:&quot;-15.0&quot;,</span>
+<span class="go">&quot;Max_Balance&quot;:&quot;100.0&quot;,</span>
+<span class="go">&quot;Account_Type&quot;:&quot;Prev Stmt Bal&quot;,</span>
+<span class="go">&quot;Billing_Start_Date&quot;:&quot;2000-01-01 00:00:00&quot;,</span>
+<span class="go">&quot;Interest_Type&quot;:&quot;Compound&quot;,</span>
+<span class="go">&quot;APR&quot;:&quot;0.05&quot;,</span>
+<span class="go">&quot;Interest_Cadence&quot;:&quot;Monthly&quot;,</span>
+<span class="go">&quot;Minimum_Payment&quot;:&quot;40.0&quot;</span>
+<span class="go">},</span>
+<span class="go">{</span>
+<span class="go">&quot;Name&quot;:&quot;Loan: Interest&quot;,</span>
+<span class="go">&quot;Balance&quot;:&quot;-10.0&quot;,</span>
+<span class="go">&quot;Min_Balance&quot;:&quot;-15.0&quot;,</span>
+<span class="go">&quot;Max_Balance&quot;:&quot;100.0&quot;,</span>
+<span class="go">&quot;Account_Type&quot;:&quot;Interest&quot;,</span>
+<span class="go">&quot;Billing_Start_Date&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Type&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;APR&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Cadence&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Minimum_Payment&quot;:&quot;None&quot;</span>
+<span class="go">},</span>
+<span class="go">{</span>
+<span class="go">&quot;Name&quot;:&quot;Loan: Principal Balance&quot;,</span>
+<span class="go">&quot;Balance&quot;:&quot;-10.0&quot;,</span>
+<span class="go">&quot;Min_Balance&quot;:&quot;-15.0&quot;,</span>
+<span class="go">&quot;Max_Balance&quot;:&quot;100.0&quot;,</span>
+<span class="go">&quot;Account_Type&quot;:&quot;Principal Balance&quot;,</span>
+<span class="go">&quot;Billing_Start_Date&quot;:&quot;2000-01-01 00:00:00&quot;,</span>
+<span class="go">&quot;Interest_Type&quot;:&quot;Compound&quot;,</span>
+<span class="go">&quot;APR&quot;:&quot;0.05&quot;,</span>
+<span class="go">&quot;Interest_Cadence&quot;:&quot;Monthly&quot;,</span>
+<span class="go">&quot;Minimum_Payment&quot;:&quot;40.0&quot;</span>
+<span class="go">}</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<hr class="docutils" />
 <dl class="py method">
 <dt class="sig sig-object py" id="AccountSet.AccountSet.addAccount">
 <span class="sig-name descname"><span class="pre">addAccount</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">billing_start_date_YYYYMMDD</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interest_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interest_cadence</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimum_payment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">previous_statement_balance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">principal_balance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accrued_interest</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_debug_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raise_exceptions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#AccountSet.AccountSet.addAccount" title="Permalink to this definition">¶</a></dt>
@@ -272,8 +1418,8 @@
 <div class="line">S4: add Loan #todo refactor AccountSet.addAccount() doctest S4 to use _S4 label</div>
 <div class="line"><br /></div>
 <div class="line">Expected Fails</div>
-<div class="line">F1 add a second checking account  #todo refactor AccountSet.addAccount() doctest F1 to use _F1 label</div>
-<div class="line">F2 add an account with the same name as an existing account #todo refactor AccountSet.addAccount() doctest F2 to use _F2 label</div>
+<div class="line">F1: add a second checking account  #todo refactor AccountSet.addAccount() doctest F1 to use _F1 label</div>
+<div class="line">F2: add an account with the same name as an existing account #todo refactor AccountSet.addAccount() doctest F2 to use _F2 label</div>
 <div class="line">F3: Savings - Prev Stmt Bal + Cur Stmt Bal violates account boundary #todo refactor AccountSet.addAccount() doctest F3 to use _F3 label</div>
 <div class="line">F4: Loan - Principal Balance + Interest != Balance #todo refactor AccountSet.addAccount() doctest F4 to use _F4 label</div>
 <div class="line"><br /></div>
@@ -326,18 +1472,18 @@ cast to float.</p>
 <div class="line-block">
 <div class="line">Test Cases</div>
 <div class="line">Expected Successes</div>
-<div class="line">S1 Valid values for all parameters #todo refactor BudgetItem.BudgetItem() doctest S1 to use _S1 label</div>
+<div class="line">[x] S1 Valid values for all parameters</div>
 <div class="line"><br /></div>
 <div class="line">Expected Fails</div>
 <div class="line">Parameters that are provided are incorrect</div>
-<div class="line">F1 provide no parameters #todo refactor BudgetItem.BudgetItem() doctest F1 to use _F1 label</div>
+<div class="line">[x] F1 provide no parameters</div>
 <div class="line"><br /></div>
 <div class="line">Incorrect Types provided for necessary parameters</div>
-<div class="line">F2 Provide incorrect types for all necessary parameters #todo refactor BudgetItem.BudgetItem() doctest F2 to use _F2 label</div>
+<div class="line">[x] F2 Provide incorrect types for all necessary parameters</div>
 <div class="line"><br /></div>
 <div class="line">Illegal values provided</div>
-<div class="line">F3 Priority less than 1 and cadence is some random string #todo refactor Account.Account() doctest F3 to use _F3 label</div>
-<div class="line">F4 All income should be priority 1. Therefore, income with a different priority should raise an exception #todo refactor Account.Account() doctest F4 to use _F4 label</div>
+<div class="line">[x] F3 Priority less than 1 and cadence is some random string</div>
+<div class="line">[ ] F4 All income should be priority 1. Therefore, income with a different priority should raise an exception</div>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -380,7 +1526,7 @@ negative values for Amount are reflected in the memo values but don’t change t
 <span class="go">&quot;Start_Date&quot;:&quot;2000-01-01 00:00:00&quot;,</span>
 <span class="go">&quot;Priority&quot;:&quot;1&quot;,</span>
 <span class="go">&quot;Cadence&quot;:&quot;once&quot;,</span>
-<span class="go">&quot;Amount&quot;:&quot;10&quot;,</span>
+<span class="go">&quot;Amount&quot;:&quot;10.0&quot;,</span>
 <span class="go">&quot;Deferrable&quot;:&quot;False&quot;,</span>
 <span class="go">&quot;Memo&quot;:&quot;test&quot;</span>
 <span class="go">}</span>
@@ -390,6 +1536,120 @@ negative values for Amount are reflected in the memo values but don’t change t
 <span class="gt">Traceback (most recent call last):</span>
 <span class="c">...</span>
 <span class="gr">TypeError</span>: <span class="n">BudgetItem.__init__() missing 6 required positional arguments: &#39;start_date_YYYYMMDD&#39;, &#39;priority&#39;, &#39;cadence&#39;, &#39;amount&#39;, &#39;deferrable&#39;, and &#39;memo&#39;</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1"># Test F2: Exception Test</span>
+<span class="gp">... </span><span class="n">BudgetItem</span><span class="p">(</span><span class="n">start_date_YYYYMMDD</span><span class="o">=</span><span class="s1">&#39;abc&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">priority</span><span class="o">=</span><span class="s1">&#39;X&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">cadence</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">amount</span><span class="o">=</span><span class="s1">&#39;Z&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">deferrable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">memo</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">TypeError</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1"># Test F2: Debug Messages</span>
+<span class="gp">... </span><span class="n">BudgetItem</span><span class="p">(</span><span class="n">start_date_YYYYMMDD</span><span class="o">=</span><span class="s1">&#39;abc&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">priority</span><span class="o">=</span><span class="s1">&#39;X&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">cadence</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">amount</span><span class="o">=</span><span class="s1">&#39;Z&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">deferrable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">memo</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">raise_exceptions</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="go">failed cast BudgetItem.start_date to datetime</span>
+<span class="go">failed cast BudgetItem.priority to int</span>
+<span class="go">failed cast BudgetItem.amount to float</span>
+
+<span class="go">BudgetItem.priority must be greater than or equal to 1</span>
+<span class="go">BudgetItem.cadence is not one of: once, daily, weekly, biweekly, monthly, quarterly, yearly</span>
+<span class="go">Value was:0</span>
+
+<span class="go">{</span>
+<span class="go">&quot;Start_Date&quot;:&quot;abc&quot;,</span>
+<span class="go">&quot;Priority&quot;:&quot;X&quot;,</span>
+<span class="go">&quot;Cadence&quot;:&quot;0&quot;,</span>
+<span class="go">&quot;Amount&quot;:&quot;Z&quot;,</span>
+<span class="go">&quot;Deferrable&quot;:&quot;False&quot;,</span>
+<span class="go">&quot;Memo&quot;:&quot;1&quot;</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#F3 Priority less than 1 and cadence is some random string: Exception Test</span>
+<span class="gp">... </span><span class="n">BudgetItem</span><span class="p">(</span><span class="n">start_date_YYYYMMDD</span><span class="o">=</span><span class="s1">&#39;abc&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">priority</span><span class="o">=</span><span class="s1">&#39;X&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">cadence</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">amount</span><span class="o">=</span><span class="s1">&#39;Z&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">deferrable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">memo</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">TypeError</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#F3 Priority less than 1 and cadence is some random string: Debug Messages Test</span>
+<span class="gp">... </span><span class="n">BudgetItem</span><span class="p">(</span><span class="n">start_date_YYYYMMDD</span><span class="o">=</span><span class="s1">&#39;20000101&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">priority</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">cadence</span><span class="o">=</span><span class="s1">&#39;abc&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">amount</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">deferrable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">memo</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span><span class="n">raise_exceptions</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="go">BudgetItem.priority must be greater than or equal to 1</span>
+<span class="go">BudgetItem.cadence is not one of: once, daily, weekly, biweekly, monthly, quarterly, yearly</span>
+<span class="go">Value was:abc</span>
+
+<span class="go">{</span>
+<span class="go">&quot;Start_Date&quot;:&quot;2000-01-01 00:00:00&quot;,</span>
+<span class="go">&quot;Priority&quot;:&quot;0&quot;,</span>
+<span class="go">&quot;Cadence&quot;:&quot;abc&quot;,</span>
+<span class="go">&quot;Amount&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Deferrable&quot;:&quot;False&quot;,</span>
+<span class="go">&quot;Memo&quot;:&quot;&quot;</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#F3 Priority less than 1 and cadence is some random string: Exception Test</span>
+<span class="gp">... </span><span class="n">BudgetItem</span><span class="p">(</span><span class="n">start_date_YYYYMMDD</span><span class="o">=</span><span class="s1">&#39;20000101&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">priority</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">cadence</span><span class="o">=</span><span class="s1">&#39;abc&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">amount</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">deferrable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">memo</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#F4 Income priority != 1: Debug Messages Test</span>
+<span class="gp">... </span><span class="n">BudgetItem</span><span class="p">(</span><span class="n">start_date_YYYYMMDD</span><span class="o">=</span><span class="s1">&#39;20000101&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">priority</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">cadence</span><span class="o">=</span><span class="s1">&#39;once&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">amount</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">deferrable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">memo</span><span class="o">=</span><span class="s1">&#39;Income&#39;</span><span class="p">,</span><span class="n">raise_exceptions</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="go">BudgetItem.priority must be greater than or equal to 1</span>
+<span class="go">If Memo = Income, then priority must = 1</span>
+<span class="go">Value was:0</span>
+<span class="go">{</span>
+<span class="go">&quot;Start_Date&quot;:&quot;2000-01-01 00:00:00&quot;,</span>
+<span class="go">&quot;Priority&quot;:&quot;0&quot;,</span>
+<span class="go">&quot;Cadence&quot;:&quot;once&quot;,</span>
+<span class="go">&quot;Amount&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Deferrable&quot;:&quot;False&quot;,</span>
+<span class="go">&quot;Memo&quot;:&quot;Income&quot;</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span> <span class="c1">#F4 Income priority != 1: Exception Test</span>
+<span class="gp">... </span><span class="n">BudgetItem</span><span class="p">(</span><span class="n">start_date_YYYYMMDD</span><span class="o">=</span><span class="s1">&#39;20000101&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">priority</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">cadence</span><span class="o">=</span><span class="s1">&#39;once&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">amount</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">deferrable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">memo</span><span class="o">=</span><span class="s1">&#39;Income&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>
 </pre></div>
 </div>
 <dl class="py method">
@@ -426,11 +1686,37 @@ negative values for Amount are reflected in the memo values but don’t change t
 <div class="line-block">
 <div class="line">Test Cases</div>
 <div class="line">Expected Successes</div>
-<div class="line">S1: provide valid parameters #todo refactor BudgetSet.addBudgetItem() doctest S1 to use _S1 label</div>
+<div class="line">S1: Provide no parameters</div>
+<div class="line">S2: provide valid parameters #todo refactor BudgetSet.addBudgetItem() doctest S2 to use _S2 label</div>
 <div class="line"><br /></div>
 <div class="line">Expected Fails</div>
 <div class="line">F1 Provide incorrect types for all parameters #todo refactor BudgetSet.BudgetSet() doctest F1 to use _F1 label</div>
 <div class="line">F2 add a BudgetItem where there are 2 BudgetItems with the same memo</div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">BudgetSet</span><span class="p">()</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="go">Empty DataFrame</span>
+<span class="go">Columns: [Start_date, Priority, Cadence, Amount, Memo]</span>
+<span class="go">Index: []</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">BudgetSet</span><span class="p">([</span> <span class="n">BudgetItem</span><span class="o">.</span><span class="n">BudgetItem</span><span class="p">(</span><span class="n">start_date_YYYYMMDD</span><span class="o">=</span><span class="s1">&#39;20000101&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">priority</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">cadence</span><span class="o">=</span><span class="s1">&#39;once&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">amount</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">deferrable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="gp">... </span><span class="n">memo</span><span class="o">=</span><span class="s1">&#39;Income&#39;</span><span class="p">)</span>
+<span class="gp">... </span><span class="p">])</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="go">{</span>
+<span class="go">{</span>
+<span class="go">&quot;Start_Date&quot;:&quot;2000-01-01 00:00:00&quot;,</span>
+<span class="go">&quot;Priority&quot;:&quot;1&quot;,</span>
+<span class="go">&quot;Cadence&quot;:&quot;once&quot;,</span>
+<span class="go">&quot;Amount&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Deferrable&quot;:&quot;False&quot;,</span>
+<span class="go">&quot;Memo&quot;:&quot;Income&quot;</span>
+<span class="go">}</span>
+<span class="go">}</span>
+</pre></div>
 </div>
 </dd></dl>
 

@@ -708,11 +708,11 @@ class AccountSet:
                                       raise_exceptions=raise_exceptions)
             self.accounts.append(account)
 
-            account = Account.Account(name=name + ': Prv Stmt Bal',
+            account = Account.Account(name=name + ': Prev Stmt Bal',
                                       balance=previous_statement_balance,
                                       min_balance=min_balance,
                                       max_balance=max_balance,
-                                      account_type='Prv Stmt Bal',
+                                      account_type='Prev Stmt Bal',
                                       billing_start_date_YYYYMMDD=billing_start_date_YYYYMMDD,
                                       interest_type=interest_type,
                                       apr=apr,

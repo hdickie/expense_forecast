@@ -39,6 +39,13 @@ class TestBudgetItemMethods(unittest.TestCase):
             BudgetItem.BudgetItem(start_date_YYYYMMDD='20000101', priority=1, cadence='shmonce',
                                   amount=10, deferrable=False, memo='test',print_debug_messages=False)
 
+        with self.assertRaises(ValueError):
+            BudgetItem.BudgetItem(start_date_YYYYMMDD='20000101', priority=2, cadence='once',
+                                  amount=10, deferrable=False, memo='Income', print_debug_messages=False)
+
+    def test_addBudgetItem(self):
+        raise NotImplementedError
+
     def test_str(self):
         self.assertIsNotNone(str(BudgetItem.BudgetItem(
             start_date_YYYYMMDD='20000101',
