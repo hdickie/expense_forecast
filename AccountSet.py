@@ -647,6 +647,12 @@ class AccountSet:
         | F4: Loan - Principal Balance + Interest != Balance #todo refactor AccountSet.addAccount() doctest F4 to use _F4 label
         |
         |
+
+        #todo implement test: for each account with interest_type == 'Simple', there should be principal balance and an interest acct
+        # this check has been implemented by account_type, but not by interest_type
+        # for each account with interest_type == 'Compound', there should be prev bal and curr bal accts
+        # i am 100% not mad about redundancy here
+
         """
 
         # TODO this should be based on interest type or interest AND account type

@@ -8,7 +8,14 @@ from hd_util import *
 
 class ExpenseForecast:
 
-    def __init__(self,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD):
+    def __init__(self,
+                 account_set,
+                 budget_set,
+                 memo_rule_set,
+                 start_date_YYYYMMDD,
+                 end_date_YYYYMMDD,
+                 print_debug_messages=True,
+                 raise_exceptions=True):
         """
         ExpenseForecast one-line description
 
@@ -25,13 +32,28 @@ class ExpenseForecast:
         :param memo_rule_set:
         """
 
-        #todo datetime validation in ExpenseForecast.ExpenseForecast()
-        self.start_date = datetime.datetime.strptime(start_date_YYYYMMDD,'%Y%m%d')
-        self.end_date = datetime.datetime.strptime(end_date_YYYYMMDD,'%Y%m%d')
+        try:
+            self.start_date = datetime.datetime.strptime(start_date_YYYYMMDD,'%Y%m%d')
+        except:
+            raise ValueError #Failed to cast start_date_YYYYMMDD to datetime with format %Y%m%d
+
+        try:
+            self.end_date = datetime.datetime.strptime(end_date_YYYYMMDD,'%Y%m%d')
+        except:
+            raise ValueError #Failed to cast end_date_YYYYMMDD to datetime with format %Y%m%d
+
+        if self.start_date >= self.end_date:
+            raise ValueError #start_date must be before end_date
 
         accounts_df = account_set.getAccounts()
+        if accounts_df.shape[0] == 0:
+            raise ValueError #There needs to be at least 1 account for ExpenseForecast to do anything.
+
         budget_df = budget_set.getBudgetItems()
         memo_df = memo_rule_set.getMemoRules()
+
+        error_text = ""
+        error_ind = False
 
         # for each distinct account name in all memo rules to and from fields, there is a matching account
         # that is, for each memo rule that mentions an account, the mentioned account should exist
@@ -49,11 +71,11 @@ class ExpenseForecast:
         try:
             assert set(distinct_account_names__from_memo.Name).intersection(set(distinct_base_account_names__from_acct.Name)) == set(distinct_account_names__from_memo.Name)
         except:
-            print('An account name was mentioned in a memo rule that did not exist in the account set')
-            print('all accounts mentioned in memo rules:')
-            print(distinct_account_names__from_memo)
-            print('all defined accounts:')
-            print(distinct_base_account_names__from_acct)
+            error_text += 'An account name was mentioned in a memo rule that did not exist in the account set'
+            error_text += 'all accounts mentioned in memo rules:'
+            error_text += distinct_account_names__from_memo
+            error_text += 'all defined accounts:'
+            error_text += distinct_base_account_names__from_acct
             error_ind = True
 
         #for each budget item memo x priority combo, there is at least 1 memo_regex x priority that matches
@@ -61,7 +83,6 @@ class ExpenseForecast:
         distinct_memo_priority_combinations__from_memo = memo_df[['Transaction_Priority', 'Memo_Regex']] #should be no duplicates
 
         any_matches_found_at_all = False
-        error_text=""
         for budget_index, budget_row in distinct_memo_priority_combinations__from_budget.iterrows():
             match_found = False
             for memo_index, memo_row in distinct_memo_priority_combinations__from_memo.iterrows():
@@ -69,35 +90,24 @@ class ExpenseForecast:
                     m = re.search(memo_row.Memo_Regex, budget_row.Memo)
                     if m is not None:
                         match_found = True
+                        any_matches_found_at_all = True
                         continue
 
             if match_found == False:
                 error_text += "No regex match found for memo:\'"+str(budget_row.Memo)+"\'\n"
 
-        if error_text != "":
-            print(error_text)
+        if any_matches_found_at_all == False:
             error_ind = True
 
         smpl_sel_vec = accounts_df.Interest_Type.apply(lambda x: x.lower() if x is not None else None) == 'simple'
         cmpnd_sel_vec = accounts_df.Interest_Type.apply(lambda x: x.lower() if x is not None else None) == 'compound'
 
+        if print_debug_messages:
+            if error_ind: print(error_text)
 
-        # for each account with interest_type == 'Simple', there should be principal balance and an interest acct
-        distinct_simple_interest_bearing_accounts = pd.DataFrame(accounts_df.loc[smpl_sel_vec,'Name'])
-        #print(distinct_simple_interest_bearing_accounts.to_string())
-        #todo implement test: for each account with interest_type == 'Simple', there should be principal balance and an interest acct
-
-        #for each account with interest_type == 'Compound', there should be prev bal and curr bal accts
-        distinct_compound_interest_bearing_accounts = pd.DataFrame(accounts_df.loc[cmpnd_sel_vec,'Name'])
-        #print(distinct_compound_interest_bearing_accounts.to_string())
-        #todo implement test: for each account with interest_type == 'Compound', there should be prev bal and curr bal accts
-
-        error_text_string = ""
-        error_ind = False
-
-        if error_ind:
-            print(error_text_string)
-            raise ValueError
+        if raise_exceptions:
+            if error_ind:
+                raise ValueError
 
         self.initial_account_set = account_set
         self.initial_budget_set = budget_set
