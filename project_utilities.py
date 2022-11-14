@@ -114,8 +114,6 @@ def generate_HTML_debug_report(test_result__string,plot_paths__dict={}):
     <html>
     <head>
     <title>expense_forecast debug summary</title>
-    <meta name="description" content="Our first page">
-    <meta name="keywords" content="html tutorial template">
     
     <link rel="stylesheet" type="text/css" href="build/html/static/classic.css" />
     </head>
@@ -157,9 +155,8 @@ def generate_HTML_expense_forecast_report():
         <!doctype html>
         <html>
         <head>
-        <title>expense_forecast debug summary</title>
-        <meta name="description" content="Our first page">
-        <meta name="keywords" content="html tutorial template">
+        <title>Expense Forecast</title>
+        <link rel="stylesheet" type="text/css" href="build/html/static/classic.css" />
         </head>
         <body>
         <img src="%s">
