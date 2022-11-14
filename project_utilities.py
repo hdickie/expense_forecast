@@ -129,6 +129,8 @@ def generate_HTML_debug_report(test_result__string,plot_paths__dict={}):
     Plot 4: %s <br> <img src="%s"> <br> <br>
     Plot 5: %s <br> <img src="%s"> <br> <br>
     
+    %s
+    
     <br>
     </body>
     </html>
