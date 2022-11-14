@@ -182,10 +182,13 @@ def copy_sphinx_docs_to_path_without_underscore():
            if '.\.' in root:
                continue
 
-           print(os.path.join(root, name))
-
-           #this records absolute paths to refactor
+           #print('Path:'+str(os.path.join(root, name)))
+           # this records paths to refactor that start with "./", which is used for file operations
            paths_to_replace[os.path.join(root, name)] = os.path.join(root, name).replace('_','')
+
+           #this records paths to refactor without the "./", which is used in html js and css elements
+           paths_to_replace[os.path.join(root, name).replace('./', '')] = os.path.join(root, name).replace('_', '').replace('./', '')
+           print('Path:' + str(os.path.join(root, name)).replace('_', '').replace('./', ''))
 
    for root, dirs, files in os.walk("./_build/html/_static/", topdown=False):
        for name in files:
@@ -193,12 +196,15 @@ def copy_sphinx_docs_to_path_without_underscore():
            if '.\.' in root:
                continue
 
-           print(os.path.join(root, name))
-
-           # this records absolute paths to refactor
+           #print('Path:' + str(os.path.join(root, name)))
+           # this records paths to refactor that start with "./"
            paths_to_replace[os.path.join(root, name)] = os.path.join(root, name).replace('_', '')
+           print(str(os.path.join(root, name)) + ' -> ' + str(os.path.join(root, name)).replace('_', ''))
 
-
+           #this records paths to refactor without the "./", which is used in html js and css elements
+           #Since those elements refer to other files relative to ./build/html/, we delete the aforementioned path prefix
+           paths_to_replace[os.path.join(root, name).replace('./', '').replace('_build/html/', '')] = os.path.join(root, name).replace('_', '').replace('build/html/', '').replace('./', '')
+           print( str(os.path.join(root, name).replace('./', '').replace('_build/html/', '')) + ' -> ' + str(os.path.join(root, name)).replace('_', '').replace('build/html/', '').replace('./', ''))
 
            #shutil.copyfile(os.path.join(root, name),os.path.join(root, name).replace('_',''))
 
