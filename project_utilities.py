@@ -288,7 +288,7 @@ if __name__ == "__main__":
     #trello_api_test()
     #database_connection_test()
 
-    # test_result__string = run_tests()
+    test_result__string = run_tests()
     # plot_paths__dict = plot_all()
-    # generate_HTML_debug_report(test_result__string)
+    generate_HTML_debug_report(test_result__string)
     # generate_HTML_expense_forecast_report()
