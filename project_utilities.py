@@ -1,4 +1,4 @@
-import datetime, pandas as pd, subprocess, os, pyodbc, re, prefect
+import datetime, pandas as pd, subprocess, os, pyodbc, re, prefect, requests as req
 
 
 def generate_date_sequence(start_date_YYYYMMDD,num_days,cadence):
@@ -116,6 +116,8 @@ def generate_HTML_debug_report(test_result__string,plot_paths__dict={}):
     <title>expense_forecast debug summary</title>
     <meta name="description" content="Our first page">
     <meta name="keywords" content="html tutorial template">
+    
+    <link rel="stylesheet" type="text/css" href="build/html/static/classic.css" />
     </head>
     <body>
     
@@ -241,7 +243,7 @@ def copy_sphinx_docs_to_path_without_underscore():
    for root, dirs, files in os.walk("./_build/html/_static/", topdown=True):
        for name in files:
 
-           # only refactor certain file types\
+           # only refactor certain file types
            if ('.txt' in name or '.css' in name or '.html' in name or '.js' in name) and 'venv' not in root:
                pass
            else:
@@ -262,18 +264,29 @@ def copy_sphinx_docs_to_path_without_underscore():
                f.writelines(file_lines)
 
 
+def trello_api_test():
+    api_personal_key="34ac57600bcd22547628e5099c6bde15"
+    api_token = "31af6b3f449284940b226e34a8754301eecc0bcf64ef87d13e672c63c542493c"
+    r = req.get("https://api.trello.com/1/members/me/boards?key=%s&token=%s" % (api_personal_key, api_token))
+    print(r.text)
 
+def database_connection_test():
+    cnxn_str = ("Driver={SQL Server Native Client 11.0};"
+            "Server=localhost\SQLEXPRESS;"
+            "Database=master;"
+            "Trusted_Connection=yes;")
+    cnxn = pyodbc.connect(cnxn_str)
+    cursor = cnxn.cursor()
+    cursor.execute("create table test_table AS (select * from sys.tables );")
+    data = pd.read_sql("select * from sys.tables", cnxn)
+    print(data)
 
 if __name__ == "__main__":
-    copy_sphinx_docs_to_path_without_underscore()
-    # cnxn_str = ("Driver={SQL Server Native Client 11.0};"
-    #         "Server=localhost\SQLEXPRESS;"
-    #         "Database=master;"
-    #         "Trusted_Connection=yes;")
-    # cnxn = pyodbc.connect(cnxn_str)
-    # cursor = cnxn.cursor()
-    # data = pd.read_sql("select * from sys.tables", cnxn)
-    # print(data)
+    pass
+    # copy_sphinx_docs_to_path_without_underscore()
+
+    #trello_api_test()
+    #database_connection_test()
 
     # test_result__string = run_tests()
     # plot_paths__dict = plot_all()
