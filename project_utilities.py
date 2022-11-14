@@ -1,4 +1,4 @@
-import datetime, pandas as pd, subprocess, os, pyodbc, re, shutil
+import datetime, pandas as pd, subprocess, os, pyodbc, re, prefect
 
 
 def generate_date_sequence(start_date_YYYYMMDD,num_days,cadence):
@@ -184,7 +184,22 @@ def copy_sphinx_docs_to_path_without_underscore():
 
            print(os.path.join(root, name))
 
+           #this records absolute paths to refactor
            paths_to_replace[os.path.join(root, name)] = os.path.join(root, name).replace('_','')
+
+   for root, dirs, files in os.walk("./_build/html/_static/", topdown=False):
+       for name in files:
+           # skip hidden folders
+           if '.\.' in root:
+               continue
+
+           print(os.path.join(root, name))
+
+           # this records absolute paths to refactor
+           paths_to_replace[os.path.join(root, name)] = os.path.join(root, name).replace('_', '')
+
+
+
            #shutil.copyfile(os.path.join(root, name),os.path.join(root, name).replace('_',''))
 
    # now that the files are at the new location, refactor with the new paths
@@ -193,12 +208,15 @@ def copy_sphinx_docs_to_path_without_underscore():
        for name in files:
 
            #only refactor certain file types
-           if '.txt' in name or '.css' in name or '.html' in name or '.js' in name:
+           if ('.txt' in name or '.css' in name or '.html' in name or '.js' in name) and 'venv' not in root:
                pass
            else:
                continue
 
+
+
            #print(name)
+           #print('Reading: ' + str(os.path.join(root, name)))
            with open(os.path.join(root, name),'r', encoding="utf8") as f:
                file_lines = f.readlines()
 
@@ -206,8 +224,31 @@ def copy_sphinx_docs_to_path_without_underscore():
            for path_tuple in paths_to_replace.items():
                file_lines = [file_line.replace(path_tuple[1],path_tuple[0]) for file_line in file_lines]
 
+           #print('Writing: ' + str(os.path.join(root, name).replace('_', '')))
            with open(os.path.join(root, name).replace('_',''), 'w', encoding="utf8") as f:
-               print('Writing: '+str(os.path.join(root, name).replace('_','')))
+
+               f.writelines(file_lines)
+
+   for root, dirs, files in os.walk("./_build/html/_static/", topdown=True):
+       for name in files:
+
+           # only refactor certain file types\
+           if ('.txt' in name or '.css' in name or '.html' in name or '.js' in name) and 'venv' not in root:
+               pass
+           else:
+               continue
+
+           # print(name)
+           #print('Reading: ' + str(os.path.join(root, name)))
+           with open(os.path.join(root, name), 'r', encoding="utf8") as f:
+               file_lines = f.readlines()
+
+           # print(file_lines)
+           for path_tuple in paths_to_replace.items():
+               file_lines = [file_line.replace(path_tuple[1], path_tuple[0]) for file_line in file_lines]
+
+           #print('Writing: ' + str(os.path.join(root, name).replace('_', '')))
+           with open(os.path.join(root, name).replace('_', ''), 'w', encoding="utf8") as f:
                f.writelines(file_lines)
 
 
