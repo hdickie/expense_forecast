@@ -187,8 +187,8 @@ def copy_sphinx_docs_to_path_without_underscore():
            paths_to_replace[os.path.join(root, name)] = os.path.join(root, name).replace('_','')
 
            #this records paths to refactor without the "./", which is used in html js and css elements
-           paths_to_replace[os.path.join(root, name).replace('./', '')] = os.path.join(root, name).replace('_', '').replace('./', '')
-           print('Path:' + str(os.path.join(root, name)).replace('_', '').replace('./', ''))
+           paths_to_replace[os.path.join(root, name).replace('./', '').replace('_build/html/', '')] = os.path.join(root, name).replace('_', '').replace('./', '')
+           # print('Path:' + str(os.path.join(root, name)).replace('_', '').replace('./', ''))
 
    for root, dirs, files in os.walk("./_build/html/_static/", topdown=False):
        for name in files:
@@ -199,12 +199,12 @@ def copy_sphinx_docs_to_path_without_underscore():
            #print('Path:' + str(os.path.join(root, name)))
            # this records paths to refactor that start with "./"
            paths_to_replace[os.path.join(root, name)] = os.path.join(root, name).replace('_', '')
-           print(str(os.path.join(root, name)) + ' -> ' + str(os.path.join(root, name)).replace('_', ''))
+           # print(str(os.path.join(root, name)) + ' -> ' + str(os.path.join(root, name)).replace('_', ''))
 
            #this records paths to refactor without the "./", which is used in html js and css elements
            #Since those elements refer to other files relative to ./build/html/, we delete the aforementioned path prefix
            paths_to_replace[os.path.join(root, name).replace('./', '').replace('_build/html/', '')] = os.path.join(root, name).replace('_', '').replace('build/html/', '').replace('./', '')
-           print( str(os.path.join(root, name).replace('./', '').replace('_build/html/', '')) + ' -> ' + str(os.path.join(root, name)).replace('_', '').replace('build/html/', '').replace('./', ''))
+           # print( str(os.path.join(root, name).replace('./', '').replace('_build/html/', '')) + ' -> ' + str(os.path.join(root, name)).replace('_', '').replace('build/html/', '').replace('./', ''))
 
            #shutil.copyfile(os.path.join(root, name),os.path.join(root, name).replace('_',''))
 
@@ -219,8 +219,6 @@ def copy_sphinx_docs_to_path_without_underscore():
            else:
                continue
 
-
-
            #print(name)
            #print('Reading: ' + str(os.path.join(root, name)))
            with open(os.path.join(root, name),'r', encoding="utf8") as f:
@@ -228,7 +226,12 @@ def copy_sphinx_docs_to_path_without_underscore():
 
            #print(file_lines)
            for path_tuple in paths_to_replace.items():
-               file_lines = [file_line.replace(path_tuple[1],path_tuple[0]) for file_line in file_lines]
+               # for file_line in file_lines:
+               #     if name == 'index.html':
+               #         if str(path_tuple[1]) in file_line:
+               #             print(str(path_tuple[0]) + ' -> ' + str(path_tuple[1]))
+               #     file_line.replace(path_tuple[0],path_tuple[1])
+               file_lines = [file_line.replace(path_tuple[0],path_tuple[1]) for file_line in file_lines]
 
            #print('Writing: ' + str(os.path.join(root, name).replace('_', '')))
            with open(os.path.join(root, name).replace('_',''), 'w', encoding="utf8") as f:
@@ -250,6 +253,7 @@ def copy_sphinx_docs_to_path_without_underscore():
                file_lines = f.readlines()
 
            # print(file_lines)
+           # print(name)
            for path_tuple in paths_to_replace.items():
                file_lines = [file_line.replace(path_tuple[1], path_tuple[0]) for file_line in file_lines]
 
