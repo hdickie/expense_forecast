@@ -1,5 +1,6 @@
 import datetime, pandas as pd, subprocess, os, pyodbc, re, prefect, requests as req
-
+import mysql
+import mysql.connector
 
 def generate_date_sequence(start_date_YYYYMMDD,num_days,cadence):
     """ A wrapper for pd.date_range intended to make code easier to read.
@@ -38,7 +39,12 @@ def run_tests(test_suite_name=''):
     #using the verbose version would give more detailed output, but i would rather spend time on other stuff
     #results = subprocess.run(['python','-m','unittest','discover','-v'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     start_ts = datetime.datetime.now()
-    results = subprocess.run(['python', '-m', 'unittest', 'discover'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+    if test_suite_name != '':
+        results = subprocess.run(['python', '-m', 'unittest', 'discover'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    else:
+        results = subprocess.run(['python', '-m', 'unittest', 'discover',test_suite_name], stdout=subprocess.PIPE,
+                                 stderr=subprocess.STDOUT)
     end_ts = datetime.datetime.now()
 
     time_elapsed = end_ts - start_ts
@@ -83,11 +89,11 @@ def run_tests(test_suite_name=''):
         return_string += error_line+"\n"
     return_string += ''.ljust(15, '#')+"\n"
 
+
     #for line in test_result_lines:
     #    print(line)
 
     return return_string
-
 
 def plot_all():
     plot_name_to_path__dict = {}
@@ -269,7 +275,7 @@ def trello_api_test():
     r = req.get("https://api.trello.com/1/members/me/boards?key=%s&token=%s" % (api_personal_key, api_token))
     print(r.text)
 
-def database_connection_test():
+def mssql_database_connection_test():
     cnxn_str = ("Driver={SQL Server Native Client 11.0};"
             "Server=localhost\SQLEXPRESS;"
             "Database=master;"
@@ -280,14 +286,74 @@ def database_connection_test():
     data = pd.read_sql("select * from sys.tables", cnxn)
     print(data)
 
+def remote_mysql_database_connection_test():
+    # cnxn_str = ("Driver={SQL Server Native Client 11.0};",
+    #             "Server=cpanel-box5161.bluehost.com:3306;",
+    #             user="admin",
+    #             password="triplethickroofofnaturalcedarshingles",
+    #             "Database=humedick_sandbox;"
+    #             "Trusted_Connection=yes;")
+    # cnxn = pyodbc.connect(cnxn_str)
+    # cursor = cnxn.cursor()
+    # cursor.execute("create table test_table AS (select * from sys.tables );")
+    # data = pd.read_sql("select * from sys.tables", cnxn)
+    # print(data)
+
+    mydb = mysql.connector.connect(
+        host="cpanel-box5161.bluehost.com",
+        user="admin",
+        password="triplethickroofofnaturalcedarshingles"
+    )
+
+    mycursor = mydb.cursor()
+
+    mycursor.execute("select * from sandbox.accounts")
+    for x in mycursor:
+        print(x)
+
+    #not working, but i think i can work around this
+
+def plot_expected_vs_actual_for_each_account(expected_df,actual_df,label='',output_folder=','):
+
+    #no formal input validation just this check
+    assert expected_df.shape[1] == actual_df.shape[1] #if error, then diff number of columns
+
+    raise NotImplementedError
+
+import paramiko
+def ssh_test():
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy()) #this is not secure and should be changed
+
+    # k = paramiko.RSAKey.from_private_key_file(keyfilename)
+    # # OR k = paramiko.DSSKey.from_private_key_file(keyfilename)
+    #
+    # ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    # ssh.connect(hostname=host, username=user, pkey=k)
+
+
+
+    ssh.connect("humedickie.com", username="humedick", password="Eatsh1tandD1E!")
+    pass
+
+def send_text_to_my_phone(msg):
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect("humedickie.com", username="humedick", password="Eatsh1tandD1E!")
+    ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command("echo \""+msg+"\" > msg.txt")
+    ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command("mail 5303836572@mypixmessages.com < msg.txt")
+
+    # it works!
+
 if __name__ == "__main__":
     pass
+    #remote_mysql_database_connection_test()
     # copy_sphinx_docs_to_path_without_underscore()
 
     #trello_api_test()
     #database_connection_test()
 
-    test_result__string = run_tests()
+    #test_result__string = run_tests()
     # plot_paths__dict = plot_all()
-    generate_HTML_debug_report(test_result__string)
+    #generate_HTML_debug_report(test_result__string)
     # generate_HTML_expense_forecast_report()

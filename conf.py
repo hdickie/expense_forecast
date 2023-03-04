@@ -6,7 +6,7 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = '| '
+project = 'expense_forecast'
 copyright = '2022, Hume Dickie'
 author = 'Hume Dickie'
 release = '0.0.0'

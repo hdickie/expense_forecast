@@ -1,5 +1,36 @@
 import BudgetItem, pandas as pd, datetime
-from project_utilities import *
+
+def generate_date_sequence(start_date_YYYYMMDD,num_days,cadence):
+    """ A wrapper for pd.date_range intended to make code easier to read.
+
+    #todo write project_utilities.generate_date_sequence() doctests
+    """
+
+    start_date = datetime.datetime.strptime(start_date_YYYYMMDD,'%Y%m%d')
+    end_date = start_date + datetime.timedelta(days=num_days)
+
+    if cadence.lower() == "once":
+        return pd.Series(start_date)
+    elif cadence.lower() == "daily":
+        return_series = pd.date_range(start_date,end_date,freq='D')
+    elif cadence.lower() == "weekly":
+        return_series = pd.date_range(start_date,end_date,freq='W')
+    elif cadence.lower() == "biweekly":
+        return_series = pd.date_range(start_date,end_date,freq='2W')
+    elif cadence.lower() == "monthly":
+
+        day_delta = int(start_date.strftime('%d'))-1
+        first_of_each_relevant_month = pd.date_range(start_date,end_date,freq='MS')
+
+        return_series = first_of_each_relevant_month + datetime.timedelta(days=day_delta)
+    elif cadence.lower() == "quarterly":
+        #todo check if this needs an adjustment like the monthly case did
+        return_series = pd.date_range(start_date,end_date,freq='Q')
+    elif cadence.lower() == "yearly":
+        # todo check if this needs an adjustment like the monthly case did
+        return_series = pd.date_range(start_date,end_date,freq='Y')
+
+    return return_series
 
 class BudgetSet:
 
@@ -34,12 +65,13 @@ class BudgetSet:
 
         :return: DataFrame
         """
-        all_budget_items_df = pd.DataFrame({'Start_date': [], 'Priority': [], 'Cadence': [], 'Amount': [],
+        all_budget_items_df = pd.DataFrame({'Start_Date': [], 'End_Date': [], 'Priority': [], 'Cadence': [], 'Amount': [],
                                         'Memo': []
                                         })
 
         for budget_item in self.budget_items:
-            new_budget_item_row_df = pd.DataFrame({'Start_date': [budget_item.start_date],
+            new_budget_item_row_df = pd.DataFrame({'Start_Date': [budget_item.start_date],
+                                                   'End_Date': [budget_item.end_date],
                                                'Priority': [budget_item.priority],
                                                'Cadence': [budget_item.cadence],
                                                'Amount': [budget_item.amount],
@@ -52,7 +84,7 @@ class BudgetSet:
         return all_budget_items_df
 
 
-    def getBudgetSchedule(self,start_date_YYYYMMDD,num_days):
+    def getBudgetSchedule(self,start_date_YYYYMMDD,end_date_YYYYMMDD):
         """
         Generate a dataframe of proposed transactions
 
@@ -63,9 +95,10 @@ class BudgetSet:
         :return:
         """
         current_budget_schedule = pd.DataFrame({'Date':[],'Priority':[],'Amount':[],'Memo':[]})
-
+        end_date = datetime.datetime.strptime(str(end_date_YYYYMMDD),'%Y%m%d')
         for budget_item in self.budget_items:
-            relevant_date_sequence = generate_date_sequence(start_date_YYYYMMDD,num_days,budget_item.cadence)
+            relative_num_days = (end_date - budget_item.start_date).days
+            relevant_date_sequence = generate_date_sequence(budget_item.start_date.strftime('%Y%m%d'),relative_num_days,budget_item.cadence)
 
             relevant_date_sequence_df = pd.DataFrame(relevant_date_sequence)
             relevant_date_sequence_df = relevant_date_sequence_df.rename(columns={0:"Date"})
@@ -86,6 +119,7 @@ class BudgetSet:
 
     def addBudgetItem(self,
                  start_date_YYYYMMDD,
+                 end_date_YYYYMMDD,
                  priority,
                  cadence,
                  amount,
@@ -104,31 +138,9 @@ class BudgetSet:
         | F1 Provide incorrect types for all parameters #todo refactor BudgetSet.BudgetSet() doctest F1 to use _F1 label
         | F2 add a BudgetItem where there are 2 BudgetItems with the same memo
 
-        >>> print(BudgetSet().toJSON())
-        Empty DataFrame
-        Columns: [Start_date, Priority, Cadence, Amount, Memo]
-        Index: []
-
-        >>> print(BudgetSet([ BudgetItem.BudgetItem(start_date_YYYYMMDD='20000101',
-        ... priority=1,
-        ... cadence='once',
-        ... amount=0,
-        ... deferrable=False,
-        ... memo='Income')
-        ... ]).toJSON())
-        {
-        {
-        "Start_Date":"2000-01-01 00:00:00",
-        "Priority":"1",
-        "Cadence":"once",
-        "Amount":"0.0",
-        "Deferrable":"False",
-        "Memo":"Income"
-        }
-        }
-
         """
         budget_item = BudgetItem.BudgetItem(start_date_YYYYMMDD,
+                                            end_date_YYYYMMDD,
                  priority,
                  cadence,
                  amount,

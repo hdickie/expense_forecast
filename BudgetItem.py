@@ -3,6 +3,7 @@ class BudgetItem:
 
     def __init__(self,
                  start_date_YYYYMMDD,
+                 end_date_YYYYMMDD,
                  priority,
                  cadence,
                  amount,
@@ -32,6 +33,7 @@ class BudgetItem:
         | [ ] F4 All income should be priority 1. Therefore, income with a different priority should raise an exception
 
         :param str start_date_YYYYMMDD: A string that indicates the start date with format %Y%m%d.
+        :param str start_date_YYYYMMDD: A string that indicates the end date with format %Y%m%d.
         :param int priority: An integer >= 1 that indicates priority. See below for priority level meanings.
         :param str cadence: One of: 'once', 'daily', 'weekly', 'biweekly', 'monthly', 'quarterly', 'yearly'
         :param float amount: A dollar value for the amount of the transaction. See below for how to handle negative values.
@@ -57,138 +59,10 @@ class BudgetItem:
         This implementation will subtract abs(Amount) from Account_From, and add abs(amount) to Account_To. Therefore,
         negative values for Amount are reflected in the memo values but don't change the directional change of account balances.
 
-        >>> print( # Test S1
-        ... BudgetItem(start_date_YYYYMMDD='20000101',
-        ... priority=1,
-        ... cadence='once',
-        ... amount=10,
-        ... deferrable=False,
-        ... memo='test').toJSON())
-        {
-        "Start_Date":"2000-01-01 00:00:00",
-        "Priority":"1",
-        "Cadence":"once",
-        "Amount":"10.0",
-        "Deferrable":"False",
-        "Memo":"test"
-        }
-
-        >>> BudgetItem() # Test F1
-        Traceback (most recent call last):
-        ...
-        TypeError: BudgetItem.__init__() missing 6 required positional arguments: 'start_date_YYYYMMDD', 'priority', 'cadence', 'amount', 'deferrable', and 'memo'
-
-        >>> print( # Test F2: Exception Test
-        ... BudgetItem(start_date_YYYYMMDD='abc',
-        ... priority='X',
-        ... cadence=0,
-        ... amount='Z',
-        ... deferrable=False,
-        ... memo=1).toJSON())
-        Traceback (most recent call last):
-        ...
-        TypeError
-
-        >>> print( # Test F2: Debug Messages
-        ... BudgetItem(start_date_YYYYMMDD='abc',
-        ... priority='X',
-        ... cadence=0,
-        ... amount='Z',
-        ... deferrable=False,
-        ... memo=1,raise_exceptions=False).toJSON())
-        failed cast BudgetItem.start_date to datetime
-        failed cast BudgetItem.priority to int
-        failed cast BudgetItem.amount to float
-        <BLANKLINE>
-        BudgetItem.priority must be greater than or equal to 1
-        BudgetItem.cadence is not one of: once, daily, weekly, biweekly, monthly, quarterly, yearly
-        Value was:0
-        <BLANKLINE>
-        {
-        "Start_Date":"abc",
-        "Priority":"X",
-        "Cadence":"0",
-        "Amount":"Z",
-        "Deferrable":"False",
-        "Memo":"1"
-        }
-
-
-        >>> print( #F3 Priority less than 1 and cadence is some random string: Exception Test
-        ... BudgetItem(start_date_YYYYMMDD='abc',
-        ... priority='X',
-        ... cadence=0,
-        ... amount='Z',
-        ... deferrable=False,
-        ... memo=1).toJSON())
-        Traceback (most recent call last):
-        ...
-        TypeError
-
-        >>> print( #F3 Priority less than 1 and cadence is some random string: Debug Messages Test
-        ... BudgetItem(start_date_YYYYMMDD='20000101',
-        ... priority=0,
-        ... cadence='abc',
-        ... amount=0,
-        ... deferrable=False,
-        ... memo='',raise_exceptions=False).toJSON())
-        BudgetItem.priority must be greater than or equal to 1
-        BudgetItem.cadence is not one of: once, daily, weekly, biweekly, monthly, quarterly, yearly
-        Value was:abc
-        <BLANKLINE>
-        {
-        "Start_Date":"2000-01-01 00:00:00",
-        "Priority":"0",
-        "Cadence":"abc",
-        "Amount":"0.0",
-        "Deferrable":"False",
-        "Memo":""
-        }
-
-        >>> print( #F3 Priority less than 1 and cadence is some random string: Exception Test
-        ... BudgetItem(start_date_YYYYMMDD='20000101',
-        ... priority=0,
-        ... cadence='abc',
-        ... amount=0,
-        ... deferrable=False,
-        ... memo='').toJSON())
-        Traceback (most recent call last):
-        ...
-        ValueError
-
-
-        >>> print( #F4 Income priority != 1: Debug Messages Test
-        ... BudgetItem(start_date_YYYYMMDD='20000101',
-        ... priority=0,
-        ... cadence='once',
-        ... amount=0,
-        ... deferrable=False,
-        ... memo='Income',raise_exceptions=False).toJSON())
-        BudgetItem.priority must be greater than or equal to 1
-        If Memo = Income, then priority must = 1
-        Value was:0
-        {
-        "Start_Date":"2000-01-01 00:00:00",
-        "Priority":"0",
-        "Cadence":"once",
-        "Amount":"0.0",
-        "Deferrable":"False",
-        "Memo":"Income"
-        }
-
-        >>> print( #F4 Income priority != 1: Exception Test
-        ... BudgetItem(start_date_YYYYMMDD='20000101',
-        ... priority=0,
-        ... cadence='once',
-        ... amount=0,
-        ... deferrable=False,
-        ... memo='Income').toJSON())
-        Traceback (most recent call last):
-        ...
-        ValueError
         """
 
         self.start_date = start_date_YYYYMMDD
+        self.end_date = end_date_YYYYMMDD
         self.priority = priority
         self.cadence = cadence
         self.amount = amount
@@ -203,9 +77,19 @@ class BudgetItem:
 
 
         try:
-            self.start_date = datetime.datetime.strptime(start_date_YYYYMMDD,'%Y%m%d')
+            self.start_date = datetime.datetime.strptime(str(start_date_YYYYMMDD).replace('-',''),'%Y%m%d')
+            #todo accept YYYY-MM-DD and YYYYMMDD
         except:
             exception_type_error_message_string += 'failed cast BudgetItem.start_date to datetime\n'
+            exception_type_error_message_string += 'value was:'+str(start_date_YYYYMMDD)+'\n'
+            exception_type_error_ind = True
+
+        try:
+            self.end_date = datetime.datetime.strptime(str(end_date_YYYYMMDD).replace('-',''),'%Y%m%d')
+            #todo accept YYYY-MM-DD and YYYYMMDD
+        except:
+            exception_type_error_message_string += 'failed cast BudgetItem.end_date to datetime\n'
+            exception_type_error_message_string += 'value was:'+str(end_date_YYYYMMDD)+'\n'
             exception_type_error_ind = True
 
         try:
@@ -221,11 +105,6 @@ class BudgetItem:
            exception_value_error_ind = True
 
         self.cadence = str(self.cadence)
-        # try:
-        #    self.cadence = str(self.cadence)
-        # except:
-        #    exception_type_error_message_string += 'failed cast BudgetItem.cadence to str\n'
-        #    exception_type_error_ind = True
 
         try:
            assert self.cadence.lower() in ['once','daily','weekly','biweekly','monthly','quarterly','yearly']
@@ -238,6 +117,7 @@ class BudgetItem:
            self.amount = float(self.amount)
         except:
            exception_type_error_message_string += 'failed cast BudgetItem.amount to float\n'
+           exception_type_error_message_string += 'value was:'+str(self.amount)+'\n'
            exception_type_error_ind = True
 
         #almost everything can cast to bool which im not sure how I feel about
@@ -273,7 +153,8 @@ class BudgetItem:
 
     def __str__(self):
         single_budget_item_df = pd.DataFrame({
-            'Start_date': [self.start_date],
+            'Start_Date': [self.start_date],
+            'Etart_Date': [self.end_date],
             'Priority': [self.priority],
             'Cadence': [self.cadence],
             'Amount': [self.amount],
@@ -293,6 +174,7 @@ class BudgetItem:
         """
         JSON_string = "{\n"
         JSON_string += "\"Start_Date\":" + "\"" + str(self.start_date) + "\",\n"
+        JSON_string += "\"End_Date\":" + "\"" + str(self.end_date) + "\",\n"
         JSON_string += "\"Priority\":" + "\"" + str(self.priority) + "\",\n"
         JSON_string += "\"Cadence\":" + "\"" + str(self.cadence) + "\",\n"
         JSON_string += "\"Amount\":" + "\"" + str(self.amount) + "\",\n"

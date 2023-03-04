@@ -1,0 +1,12 @@
+0,2000-01-01,2000-01-02,2000-01-03
+Checking,100.0,100.0,100.0
+Checking (Expected),100,70,0
+Checking Diff,0.0,-30.0,-100.0
+Credit: Curr Stmt Bal,30.0,30.0,30.0
+Credit: Curr Stmt Bal (Expected),0,0,0
+Credit: Curr Stmt Bal Diff,-30.0,-30.0,-30.0
+Credit: Prev Stmt Bal,0.0,0.0,0.0
+Credit: Prev Stmt Bal (Expected),30,0,0
+Credit: Prev Stmt Bal Diff,30.0,0.0,0.0
+Date,2000-01-01,2000-01-02,2000-01-03
+Memo,,dummy for test ; ,dummy for test ; 

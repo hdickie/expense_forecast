@@ -1,8 +1,10 @@
 import Account, pandas as pd
-
+import logging
 
 class AccountSet:
 
+    #TODO passing this without arguments caused accounts__list to get values from some older scope. Therefore, AccountSet() doesn't work as expected.
+    # (I expected the default parameter defined below to be used!)
     def __init__(self, accounts__list=[], print_debug_messages=True, raise_exceptions=True):
         """
         Creates an AccountSet object. Possible Account Types are: Checking, Credit, Loan, Savings. Consistency is checked.
@@ -48,366 +50,8 @@ class AccountSet:
         }
 
 
-        ######### Move these to another file when I can get it to count for test coverage ###########
-
-        | Test Cases
-        | Expected Successes
-        |
-        |
-        | Expected Fails
-        | [x] F1: Pass a list containing a non-Account object
-        | [ ] F2: Missing related accounts
-        | [ ] F3: Inconsistent account parameters: Min_Balance and Max_Balance
-        | [ ] F4: Combined balance max account boundary violation
-        | [ ] F5: Combined balance min account boundary violation
-
-        Pass a list with an object that is not an Account object.
-        This error never prints the error text even if you pass raise_exceptions = True
-        The line that the exception is rasied from is close to the validation code that explains this so I am
-        calling this good enough.
-        >>> print(AccountSet([0]).toJSON()) #F1: Pass a list containing a non-Account object
-        Traceback (most recent call last):
-        ...
-        ValueError
-
-
-        >>> print(AccountSet([ #F2: Missing related accounts: credit
-        ... Account.Account(name="Credit: Prev Stmt Bal",
-        ... balance=75,
-        ... min_balance=1,
-        ... max_balance=101,
-        ... apr=0.05,
-        ... interest_cadence="Monthly",
-        ... interest_type="Compound",
-        ... billing_start_date_YYYYMMDD="20000101",
-        ... account_type='Prev Stmt Bal',
-        ... minimum_payment=40
-        ... )],raise_exceptions=False).toJSON())
-        Traceback (most recent call last):
-        ...
-        ValueError
-
-        >>> print(AccountSet([ #F2: Missing related accounts: loan
-        ... Account.Account(name="Loan: Interest",
-        ... balance=75,
-        ... min_balance=0,
-        ... max_balance=100,
-        ... apr=None,
-        ... interest_cadence=None,
-        ... interest_type=None,
-        ... billing_start_date_YYYYMMDD=None,
-        ... account_type='Interest',
-        ... minimum_payment=None
-        ... )],raise_exceptions=False).toJSON())
-        Traceback (most recent call last):
-        ...
-        ValueError
-
-
-
-        >>> print(AccountSet([ #F3: Inconsistent account parameters: Min_Balance and Max_Balance
-        ... Account.Account(name="Credit: Curr Stmt Bal",
-        ... balance=75,
-        ... min_balance=0,
-        ... max_balance=100,
-        ... apr=None,
-        ... interest_cadence=None,
-        ... interest_type=None,
-        ... billing_start_date_YYYYMMDD=None,
-        ... account_type='Curr Stmt Bal',
-        ... minimum_payment=None
-        ... ),
-        ... Account.Account(name="Credit: Prev Stmt Bal",
-        ... balance=75,
-        ... min_balance=1,
-        ... max_balance=101,
-        ... apr=0.05,
-        ... interest_cadence="Monthly",
-        ... interest_type="Compound",
-        ... billing_start_date_YYYYMMDD="20000101",
-        ... account_type='Prev Stmt Bal',
-        ... minimum_payment=40
-        ... ),Account.Account(name="Loan: Interest",
-        ... balance=75,
-        ... min_balance=0,
-        ... max_balance=100,
-        ... apr=None,
-        ... interest_cadence=None,
-        ... interest_type=None,
-        ... billing_start_date_YYYYMMDD=None,
-        ... account_type='Interest',
-        ... minimum_payment=None
-        ... ),
-        ... Account.Account(name="Loan: Principal Balance",
-        ... balance=75,
-        ... min_balance=1,
-        ... max_balance=101,
-        ... apr=0.05,
-        ... interest_cadence="Monthly",
-        ... interest_type="Compound",
-        ... billing_start_date_YYYYMMDD="20000101",
-        ... account_type='Principal Balance',
-        ... minimum_payment=40
-        ... )],raise_exceptions=False).toJSON())
-        ValueErrors:
-        Min_Balance did not match between Curr Stmt Bal and Prev Stmt Bal for account Credit
-        Max_Balance did not match between Curr Stmt Bal and Prev Stmt Bal for account Credit
-        Min_Balance did not match between Principal Balance and Interest for account Loan
-        Max_Balance did not match between Principal Balance and Interest for account Loan
-        <BLANKLINE>
-        {
-        {
-        "Name":"Credit: Curr Stmt Bal",
-        "Balance":"75.0",
-        "Min_Balance":"0.0",
-        "Max_Balance":"100.0",
-        "Account_Type":"Curr Stmt Bal",
-        "Billing_Start_Date":"None",
-        "Interest_Type":"None",
-        "APR":"None",
-        "Interest_Cadence":"None",
-        "Minimum_Payment":"None"
-        },
-        {
-        "Name":"Credit: Prev Stmt Bal",
-        "Balance":"75.0",
-        "Min_Balance":"1.0",
-        "Max_Balance":"101.0",
-        "Account_Type":"Prev Stmt Bal",
-        "Billing_Start_Date":"2000-01-01 00:00:00",
-        "Interest_Type":"Compound",
-        "APR":"0.05",
-        "Interest_Cadence":"Monthly",
-        "Minimum_Payment":"40.0"
-        },
-        {
-        "Name":"Loan: Interest",
-        "Balance":"75.0",
-        "Min_Balance":"0.0",
-        "Max_Balance":"100.0",
-        "Account_Type":"Interest",
-        "Billing_Start_Date":"None",
-        "Interest_Type":"None",
-        "APR":"None",
-        "Interest_Cadence":"None",
-        "Minimum_Payment":"None"
-        },
-        {
-        "Name":"Loan: Principal Balance",
-        "Balance":"75.0",
-        "Min_Balance":"1.0",
-        "Max_Balance":"101.0",
-        "Account_Type":"Principal Balance",
-        "Billing_Start_Date":"2000-01-01 00:00:00",
-        "Interest_Type":"Compound",
-        "APR":"0.05",
-        "Interest_Cadence":"Monthly",
-        "Minimum_Payment":"40.0"
-        }
-        }
-
-
-        >>> print(AccountSet( #F4: Combined balance max account boundary violation
-        ... [Account.Account(name="Credit: Curr Stmt Bal",
-        ... balance=75,
-        ... min_balance=0,
-        ... max_balance=100,
-        ... apr=None,
-        ... interest_cadence=None,
-        ... interest_type=None,
-        ... billing_start_date_YYYYMMDD=None,
-        ... account_type='Curr Stmt Bal',
-        ... minimum_payment=None
-        ... ),
-        ... Account.Account(name="Credit: Prev Stmt Bal",
-        ... balance=75,
-        ... min_balance=0,
-        ... max_balance=100,
-        ... apr=0.05,
-        ... interest_cadence="Monthly",
-        ... interest_type="Compound",
-        ... billing_start_date_YYYYMMDD="20000101",
-        ... account_type='Prev Stmt Bal',
-        ... minimum_payment=40
-        ... ),Account.Account(name="Loan: Interest",
-        ... balance=75,
-        ... min_balance=0,
-        ... max_balance=100,
-        ... apr=None,
-        ... interest_cadence=None,
-        ... interest_type=None,
-        ... billing_start_date_YYYYMMDD=None,
-        ... account_type='Interest',
-        ... minimum_payment=None
-        ... ),
-        ... Account.Account(name="Loan: Principal Balance",
-        ... balance=75,
-        ... min_balance=0,
-        ... max_balance=100,
-        ... apr=0.05,
-        ... interest_cadence="Monthly",
-        ... interest_type="Compound",
-        ... billing_start_date_YYYYMMDD="20000101",
-        ... account_type='Principal Balance',
-        ... minimum_payment=40
-        ... )],raise_exceptions=False).toJSON())
-        ValueErrors:
-        Combined Prev and Curr Stmt bal was greater than max_balance for account Credit
-        Combined Principal Balance and Interest bal was greater than max_balance for account Loan
-        <BLANKLINE>
-        {
-        {
-        "Name":"Credit: Curr Stmt Bal",
-        "Balance":"75.0",
-        "Min_Balance":"0.0",
-        "Max_Balance":"100.0",
-        "Account_Type":"Curr Stmt Bal",
-        "Billing_Start_Date":"None",
-        "Interest_Type":"None",
-        "APR":"None",
-        "Interest_Cadence":"None",
-        "Minimum_Payment":"None"
-        },
-        {
-        "Name":"Credit: Prev Stmt Bal",
-        "Balance":"75.0",
-        "Min_Balance":"0.0",
-        "Max_Balance":"100.0",
-        "Account_Type":"Prev Stmt Bal",
-        "Billing_Start_Date":"2000-01-01 00:00:00",
-        "Interest_Type":"Compound",
-        "APR":"0.05",
-        "Interest_Cadence":"Monthly",
-        "Minimum_Payment":"40.0"
-        },
-        {
-        "Name":"Loan: Interest",
-        "Balance":"75.0",
-        "Min_Balance":"0.0",
-        "Max_Balance":"100.0",
-        "Account_Type":"Interest",
-        "Billing_Start_Date":"None",
-        "Interest_Type":"None",
-        "APR":"None",
-        "Interest_Cadence":"None",
-        "Minimum_Payment":"None"
-        },
-        {
-        "Name":"Loan: Principal Balance",
-        "Balance":"75.0",
-        "Min_Balance":"0.0",
-        "Max_Balance":"100.0",
-        "Account_Type":"Principal Balance",
-        "Billing_Start_Date":"2000-01-01 00:00:00",
-        "Interest_Type":"Compound",
-        "APR":"0.05",
-        "Interest_Cadence":"Monthly",
-        "Minimum_Payment":"40.0"
-        }
-        }
-
-
-        >>> print(AccountSet( #F5: Combined balance min account boundary violation
-        ... [Account.Account(name="Credit: Curr Stmt Bal",
-        ... balance=-10,
-        ... min_balance=-15,
-        ... max_balance=100,
-        ... apr=None,
-        ... interest_cadence=None,
-        ... interest_type=None,
-        ... billing_start_date_YYYYMMDD=None,
-        ... account_type='Curr Stmt Bal',
-        ... minimum_payment=None
-        ... ),
-        ... Account.Account(name="Credit: Prev Stmt Bal",
-        ... balance=-10,
-        ... min_balance=-15,
-        ... max_balance=100,
-        ... apr=0.05,
-        ... interest_cadence="Monthly",
-        ... interest_type="Compound",
-        ... billing_start_date_YYYYMMDD="20000101",
-        ... account_type='Prev Stmt Bal',
-        ... minimum_payment=40
-        ... ),Account.Account(name="Loan: Interest",
-        ... balance=-10,
-        ... min_balance=-15,
-        ... max_balance=100,
-        ... apr=None,
-        ... interest_cadence=None,
-        ... interest_type=None,
-        ... billing_start_date_YYYYMMDD=None,
-        ... account_type='Interest',
-        ... minimum_payment=None
-        ... ),
-        ... Account.Account(name="Loan: Principal Balance",
-        ... balance=-10,
-        ... min_balance=-15,
-        ... max_balance=100,
-        ... apr=0.05,
-        ... interest_cadence="Monthly",
-        ... interest_type="Compound",
-        ... billing_start_date_YYYYMMDD="20000101",
-        ... account_type='Principal Balance',
-        ... minimum_payment=40
-        ... )],raise_exceptions=False).toJSON())
-        ValueErrors:
-        Combined Prev and Curr Stmt bal was less than min_balance for account Credit
-        Combined Principal Balance and Interest bal was less than min_balance for account Loan
-        <BLANKLINE>
-        {
-        {
-        "Name":"Credit: Curr Stmt Bal",
-        "Balance":"-10.0",
-        "Min_Balance":"-15.0",
-        "Max_Balance":"100.0",
-        "Account_Type":"Curr Stmt Bal",
-        "Billing_Start_Date":"None",
-        "Interest_Type":"None",
-        "APR":"None",
-        "Interest_Cadence":"None",
-        "Minimum_Payment":"None"
-        },
-        {
-        "Name":"Credit: Prev Stmt Bal",
-        "Balance":"-10.0",
-        "Min_Balance":"-15.0",
-        "Max_Balance":"100.0",
-        "Account_Type":"Prev Stmt Bal",
-        "Billing_Start_Date":"2000-01-01 00:00:00",
-        "Interest_Type":"Compound",
-        "APR":"0.05",
-        "Interest_Cadence":"Monthly",
-        "Minimum_Payment":"40.0"
-        },
-        {
-        "Name":"Loan: Interest",
-        "Balance":"-10.0",
-        "Min_Balance":"-15.0",
-        "Max_Balance":"100.0",
-        "Account_Type":"Interest",
-        "Billing_Start_Date":"None",
-        "Interest_Type":"None",
-        "APR":"None",
-        "Interest_Cadence":"None",
-        "Minimum_Payment":"None"
-        },
-        {
-        "Name":"Loan: Principal Balance",
-        "Balance":"-10.0",
-        "Min_Balance":"-15.0",
-        "Max_Balance":"100.0",
-        "Account_Type":"Principal Balance",
-        "Billing_Start_Date":"2000-01-01 00:00:00",
-        "Interest_Type":"Compound",
-        "APR":"0.05",
-        "Interest_Cadence":"Monthly",
-        "Minimum_Payment":"40.0"
-        }
-        }
-
-        ######################################
         """
+        #print('enter AccountSet()')
 
         value_error_text = ""
         value_error_ind = False
@@ -418,16 +62,16 @@ class AccountSet:
         # IMPORTANT NOTE: the previous statement balance and interest accounts should be the index after
         # im sure there is a fancier/smarter design but the logic I have implemented in ExpenseForecast assumes this
 
-        self.accounts = []
-        for account in accounts__list:
-            self.accounts.append(account)
+        #print('BEFORE accounts__list:' + str(accounts__list))
+        self.accounts = accounts__list
+        #print('AFTER  accounts__list:'+str(accounts__list))
 
             # if credit or loan accounts are being added via this method, they should already be consistent.
             # FOR THAT REASON, adding accounts this way is not recommended.
             # therefore, once all accounts have been added to self.accounts, we check for consistency
 
         if len(self.accounts) > 0:
-
+            logging.info(self.accounts)
             required_attributes = ['name', 'balance', 'min_balance', 'max_balance', 'account_type',
                                    'billing_start_date',
                                    'interest_type', 'apr', 'interest_cadence', 'minimum_payment']
@@ -457,9 +101,9 @@ class AccountSet:
 
             # index_of_name_column=accounts_df.columns.tolist().index('Name')
             loan_check_name__series = accounts_df.loc[
-                accounts_df.Account_Type.isin(['Principal Balance', 'Interest']), 'Name']
+                accounts_df.Account_Type.isin(['principal balance', 'interest']), 'Name']
             cc_check__name__series = accounts_df.loc[
-                accounts_df.Account_Type.isin(['Prev Stmt Bal', 'Curr Stmt Bal']), 'Name']
+                accounts_df.Account_Type.isin(['prev stmt bal', 'curr stmt bal']), 'Name']
 
             # print('loan_check_name__series:')
             # print(loan_check_name__series)
@@ -589,14 +233,6 @@ class AccountSet:
                         acct_name) + "\n"
                     value_error_ind = True
 
-
-
-
-                # print('cc_prv_acct_row:')
-                # print(cc_prv_acct_row)
-
-
-
             if print_debug_messages:
                 if type_error_ind: print("TypeErrors:\n" + type_error_text)
 
@@ -606,6 +242,7 @@ class AccountSet:
                 if type_error_ind: raise TypeError
 
                 if value_error_ind: raise ValueError
+        #print('exit AccountSet()')
 
     def __str__(self):
         return self.getAccounts().to_string()
@@ -671,7 +308,7 @@ class AccountSet:
                                       balance=principal_balance,
                                       min_balance=min_balance,
                                       max_balance=max_balance,
-                                      account_type='Principal Balance',
+                                      account_type='principal balance',
                                       billing_start_date_YYYYMMDD=billing_start_date_YYYYMMDD,
                                       interest_type=interest_type,
                                       apr=apr,
@@ -685,7 +322,7 @@ class AccountSet:
                                       balance=accrued_interest,
                                       min_balance=min_balance,
                                       max_balance=max_balance,
-                                      account_type='Interest',
+                                      account_type='interest',
                                       billing_start_date_YYYYMMDD=None,
                                       interest_type=None,
                                       apr=None,
@@ -698,13 +335,13 @@ class AccountSet:
         elif account_type.lower() == 'credit':
 
             if previous_statement_balance is None:
-                raise ValueError #Previous_Statement_Balance cannot be None for account_type=loan
+                raise ValueError #Previous_Statement_Balance cannot be None for account_type=credit
 
             account = Account.Account(name=name + ': Curr Stmt Bal',
                                       balance=balance,
                                       min_balance=min_balance,
                                       max_balance=max_balance,
-                                      account_type='Curr Stmt Bal',
+                                      account_type='curr stmt bal',
                                       billing_start_date_YYYYMMDD=None,
                                       interest_type=None,
                                       apr=None,
@@ -718,7 +355,7 @@ class AccountSet:
                                       balance=previous_statement_balance,
                                       min_balance=min_balance,
                                       max_balance=max_balance,
-                                      account_type='Prev Stmt Bal',
+                                      account_type='prev stmt bal',
                                       billing_start_date_YYYYMMDD=billing_start_date_YYYYMMDD,
                                       interest_type=interest_type,
                                       apr=apr,
@@ -741,6 +378,77 @@ class AccountSet:
                                       print_debug_messages=print_debug_messages,
                                       raise_exceptions=raise_exceptions)
             self.accounts.append(account)
+
+    def executeTransaction(self, Account_From, Account_To, Amount):
+        pass
+        AF = ''
+        AT = ''
+
+        #determine account type. there will be 1 or 2 matches depending on account type. 1 => no interest , 2 => interest
+        account_base_names = [ x.split(':')[0] for x in self.getAccounts().Name ]
+        #print('self.getAccounts().Name:'+str(self.getAccounts().Name))
+        #print('account_base_names:'+str(account_base_names))
+        if Account_From is not None:
+            if Account_From != '' and Account_From != 'None':
+                AF_base_name_match_count = account_base_names.count(Account_From)
+                account_from_index = account_base_names.index(Account_From)  # first match found. for credit, first will be current stmt bal, second will be prev
+                if AF_base_name_match_count == 2:
+                    if self.accounts[account_from_index].account_type == 'curr stmt bal':
+                        AF_Account_Type = 'credit'
+                    elif self.accounts[account_from_index].account_type == 'principal balance':
+                        AF_Account_Type = 'loan'
+                    elif self.accounts[account_from_index].account_type == 'checking':
+                        AF_Account_Type = 'checking'
+                elif AF_base_name_match_count == 1:
+                    AF_Account_Type = self.accounts[account_from_index].account_type
+                else:
+                    raise ValueError #if this happens, then validation in ExpenseForecast constructor failed to catch something
+                #AT_base_name_match_count = account_base_names.count(Account_To)
+
+        if Account_To is not None:
+            if Account_To != '' and Account_To != 'None':
+                AT_base_name_match_count = account_base_names.count(Account_To)
+                account_to_index = account_base_names.index(Account_To)  # first match found. for credit, first will be current stmt bal, second will be prev
+                if AT_base_name_match_count == 2:
+                    if self.accounts[account_to_index].account_type == 'curr stmt bal':
+                        AT_Account_Type = 'credit'
+                    elif self.accounts[account_to_index].account_type == 'principal balance':
+                        AT_Account_Type = 'loan'
+                    elif self.accounts[account_to_index].account_type == 'checking':
+                        AT_Account_Type = 'checking'
+                elif AT_base_name_match_count == 1:
+                    AT_Account_Type = self.accounts[account_to_index].account_type
+                else:
+                    raise ValueError #if this happens, then validation in ExpenseForecast constructor failed to catch something
+
+        if Account_From is not None:
+            if Account_From != '' and Account_From != 'None':
+                if AF_Account_Type == 'checking':
+                    self.accounts[account_from_index].balance -= abs(Amount)
+                elif AF_Account_Type == 'credit' or AF_Account_Type == 'loan':
+                    self.accounts[account_from_index].balance += abs(Amount)
+                else:
+                    raise NotImplementedError #from types other than checking or credit not yet implemented
+
+
+        if Account_To is not None:
+            if Account_To != '' and Account_To != 'None':
+                if AT_Account_Type == 'checking':
+                    self.accounts[account_to_index].balance += abs(Amount)
+                elif AT_Account_Type == 'credit' or AT_Account_Type == 'loan':
+                    #if the amount we are playing on credit card is more than the previous statement balance
+                    if abs(Amount) >= self.accounts[account_to_index+1].balance:
+                        remaining_to_pay = abs(Amount) - self.accounts[account_to_index + 1].balance
+                        self.accounts[account_to_index + 1].balance = 0
+
+
+                        #this has the potential to overpay, but we consider that upstreams problem
+                        self.accounts[account_to_index].balance -= remaining_to_pay
+                    else: #pay down the previous statement balance
+                        self.accounts[account_to_index + 1].balance -= Amount
+                else:
+                    raise NotImplementedError #from types other than checking or credit not yet implemented
+
 
     def getAccounts(self):
         """

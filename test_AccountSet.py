@@ -1,5 +1,6 @@
+import math
 import unittest
-import Account, AccountSet, doctest
+import Account, AccountSet, doctest, copy
 
 class TestAccountSetMethods(unittest.TestCase):
 
@@ -17,72 +18,189 @@ class TestAccountSetMethods(unittest.TestCase):
         balance = 0,
         min_balance = 0,
         max_balance = 0,
-        account_type = 'checking')
+        account_type = 'checking',print_debug_messages=False)
         self.assertEqual('<class \'AccountSet.AccountSet\'>', str(type(AccountSet.AccountSet([checking_acct]))))
 
         prv_bal_acct = Account.Account(name='Credit: Prev Stmt Bal',
         balance = 0,
         min_balance = 0,
         max_balance = 0,
-        account_type = 'Prev Stmt Bal',
+        account_type = 'prev stmt bal',
         billing_start_date_YYYYMMDD = '20000101',
         interest_type = 'compound',
         apr = 0.05,
         interest_cadence = 'monthly',
-        minimum_payment = 40)
+        minimum_payment = 40,print_debug_messages=False)
 
         cur_bal_acct = Account.Account(name='Credit: Curr Stmt Bal',
                                        balance=0,
                                        min_balance=0,
                                        max_balance=0,
-                                       account_type='Curr Stmt Bal',
+                                       account_type='curr stmt bal',
                                        billing_start_date_YYYYMMDD=None,
                                        interest_type=None,
                                        apr=None,
                                        interest_cadence=None,
-                                       minimum_payment=None)
+                                       minimum_payment=None,print_debug_messages=False)
 
         principal_balance_acct = Account.Account(name='Loan: Principal Balance',
                                        balance=0,
                                        min_balance=0,
                                        max_balance=0,
-                                       account_type='Principal Balance',
+                                       account_type='principal balance',
                                        billing_start_date_YYYYMMDD='20000101',
                                        interest_type='simple',
                                        apr=0.05,
                                        interest_cadence='daily',
-                                       minimum_payment=40)
+                                       minimum_payment=40,print_debug_messages=False)
 
         interest_acct = Account.Account(name='Loan: Interest',
                                        balance=0,
                                        min_balance=0,
                                        max_balance=0,
-                                       account_type='Interest',
+                                       account_type='interest',
                                        billing_start_date_YYYYMMDD=None,
                                        interest_type=None,
                                        apr=None,
                                        interest_cadence=None,
-                                       minimum_payment=None)
+                                       minimum_payment=None,print_debug_messages=False)
 
 
-        #these hould not throw exceptions
-        valid_accountset_loan = AccountSet.AccountSet([checking_acct,principal_balance_acct,interest_acct])
-        valid_accountset_cc = AccountSet.AccountSet([checking_acct, prv_bal_acct, cur_bal_acct])
-
-        with self.assertRaises(ValueError):
-            AccountSet.AccountSet([checking_acct,interest_acct])
+        #these should not throw exceptions
+        valid_accountset_loan = AccountSet.AccountSet([checking_acct,principal_balance_acct,interest_acct],print_debug_messages=False)
+        valid_accountset_cc = AccountSet.AccountSet([checking_acct, prv_bal_acct, cur_bal_acct],print_debug_messages=False)
 
         with self.assertRaises(ValueError):
-            AccountSet.AccountSet([checking_acct,principal_balance_acct])
+            AccountSet.AccountSet([checking_acct,interest_acct],print_debug_messages=False)
 
         with self.assertRaises(ValueError):
-            AccountSet.AccountSet([checking_acct,cur_bal_acct])
+            AccountSet.AccountSet(['',None],print_debug_messages=False)
 
         with self.assertRaises(ValueError):
-            AccountSet.AccountSet([checking_acct,prv_bal_acct])
+            AccountSet.AccountSet([checking_acct,principal_balance_acct],print_debug_messages=False)
 
+        with self.assertRaises(ValueError):
+            AccountSet.AccountSet([checking_acct,cur_bal_acct],print_debug_messages=False)
+
+        with self.assertRaises(ValueError):
+            AccountSet.AccountSet([checking_acct,prv_bal_acct],print_debug_messages=False)
+
+        cur_bal_75_acct = Account.Account(name='Credit: Curr Stmt Bal',
+                                       balance=75,
+                                       min_balance=0,
+                                       max_balance=100,
+                                       account_type='curr stmt bal',
+                                       billing_start_date_YYYYMMDD=None,
+                                       interest_type=None,
+                                       apr=None,
+                                       interest_cadence=None,
+                                       minimum_payment=None, print_debug_messages=False)
+
+        prv_bal_75_acct = Account.Account(name='Credit: Prev Stmt Bal',
+                                       balance=75,
+                                       min_balance=0,
+                                       max_balance=100,
+                                       account_type='prev stmt bal',
+                                       billing_start_date_YYYYMMDD='20000101',
+                                       interest_type='compound',
+                                       apr=0.05,
+                                       interest_cadence='monthly',
+                                       minimum_payment=40, print_debug_messages=False)
+
+        with self.assertRaises(ValueError): #combinaed balance violates max
+            AccountSet.AccountSet([cur_bal_75_acct, prv_bal_75_acct], print_debug_messages=False)
+
+        with self.assertRaises(ValueError):  # mismatching max
+            AccountSet.AccountSet([cur_bal_acct, prv_bal_75_acct], print_debug_messages=False)
+
+        cur_bal_minus_75_acct = Account.Account(name='Credit: Curr Stmt Bal',
+                                          balance=-75,
+                                          min_balance=-100,
+                                          max_balance=100,
+                                          account_type='curr stmt bal',
+                                          billing_start_date_YYYYMMDD=None,
+                                          interest_type=None,
+                                          apr=None,
+                                          interest_cadence=None,
+                                          minimum_payment=None, print_debug_messages=False)
+
+        prv_bal_minus_75_acct = Account.Account(name='Credit: Prev Stmt Bal',
+                                          balance=-75,
+                                          min_balance=-100,
+                                          max_balance=100,
+                                          account_type='prev stmt bal',
+                                          billing_start_date_YYYYMMDD='20000101',
+                                          interest_type='compound',
+                                          apr=0.05,
+                                          interest_cadence='monthly',
+                                          minimum_payment=40, print_debug_messages=False)
+
+        with self.assertRaises(ValueError):  # combinaed balance violates max
+            AccountSet.AccountSet([cur_bal_minus_75_acct, prv_bal_minus_75_acct], print_debug_messages=False)
+
+        with self.assertRaises(ValueError):  # mismatching max
+            AccountSet.AccountSet([cur_bal_acct, prv_bal_minus_75_acct], print_debug_messages=False)
+
+        principal_balance_75_acct = Account.Account(name='Loan: Principal Balance',
+                                                 balance=75,
+                                                 min_balance=0,
+                                                 max_balance=100,
+                                                 account_type='principal balance',
+                                                 billing_start_date_YYYYMMDD='20000101',
+                                                 interest_type='simple',
+                                                 apr=0.05,
+                                                 interest_cadence='daily',
+                                                 minimum_payment=40, print_debug_messages=False)
+
+        interest_75_acct = Account.Account(name='Loan: Interest',
+                                        balance=75,
+                                        min_balance=0,
+                                        max_balance=100,
+                                        account_type='interest',
+                                        billing_start_date_YYYYMMDD=None,
+                                        interest_type=None,
+                                        apr=None,
+                                        interest_cadence=None,
+                                        minimum_payment=None, print_debug_messages=False)
+
+        with self.assertRaises(ValueError):  # combinaed balance violates max
+            AccountSet.AccountSet([principal_balance_75_acct, interest_75_acct], print_debug_messages=False)
+
+        with self.assertRaises(ValueError):  # mismatching max
+            AccountSet.AccountSet([principal_balance_acct, interest_75_acct], print_debug_messages=False)
+
+        principal_balance_minus_75_acct = Account.Account(name='Loan: Principal Balance',
+                                                    balance=-75,
+                                                    min_balance=-100,
+                                                    max_balance=0,
+                                                    account_type='principal balance',
+                                                    billing_start_date_YYYYMMDD='20000101',
+                                                    interest_type='simple',
+                                                    apr=0.05,
+                                                    interest_cadence='daily',
+                                                    minimum_payment=40, print_debug_messages=False)
+
+        interest_minus_75_acct = Account.Account(name='Loan: Interest',
+                                           balance=-75,
+                                           min_balance=-100,
+                                           max_balance=0,
+                                           account_type='interest',
+                                           billing_start_date_YYYYMMDD=None,
+                                           interest_type=None,
+                                           apr=None,
+                                           interest_cadence=None,
+                                           minimum_payment=None, print_debug_messages=False)
+
+        with self.assertRaises(ValueError):  # combinaed balance violates max
+            AccountSet.AccountSet([principal_balance_minus_75_acct, interest_minus_75_acct], print_debug_messages=False)
+
+        with self.assertRaises(ValueError):  # mismatching max
+            AccountSet.AccountSet([principal_balance_acct, interest_minus_75_acct], print_debug_messages=False)
 
     def test_addAccount(self):
+
+        #TODO have i checked that principal balance and interest add up?
+        #i notice that the principal balance field could be eliminated
 
         test_account_set = AccountSet.AccountSet([])
 
@@ -123,7 +241,7 @@ class TestAccountSetMethods(unittest.TestCase):
                                     minimum_payment=0,
                                     previous_statement_balance=0,
                                     principal_balance=None,
-                                    accrued_interest=None
+                                    accrued_interest=None,print_debug_messages=True
                                     )
         self.assertEqual('<class \'AccountSet.AccountSet\'>', str(type(test_account_set)))
 
@@ -191,6 +309,91 @@ class TestAccountSetMethods(unittest.TestCase):
                                         principal_balance=None,
                                         accrued_interest=None
                                         )
+
+    def test_execute_transaction(self):
+        test_account_set = AccountSet.AccountSet([])
+
+        test_account_set.addAccount(name="test checking",
+                                    balance=1000.0,
+                                    min_balance=0.0,
+                                    max_balance=float('inf'),
+                                    account_type='checking',
+                                    billing_start_date_YYYYMMDD=None,
+                                    interest_type=None,
+                                    apr=None,
+                                    interest_cadence=None,
+                                    minimum_payment=None,
+                                    previous_statement_balance=None,
+                                    principal_balance=None,
+                                    accrued_interest=None,
+                                    print_debug_messages=False)
+
+        test_account_set.addAccount(name="test credit",
+                                    balance=1000.0,
+                                    min_balance=0.0,
+                                    max_balance=20000.0,
+                                    account_type='credit',
+                                    billing_start_date_YYYYMMDD='20000107',
+                                    interest_type='compound',
+                                    apr=0.2479,
+                                    interest_cadence='monthly',
+                                    minimum_payment=20.0,
+                                    previous_statement_balance=500.0,
+                                    principal_balance=None,
+                                    accrued_interest=None,
+                                    print_debug_messages=False)
+
+        test_account_set.addAccount(name="test loan",
+                                    balance=1000.0,
+                                    min_balance=0,
+                                    max_balance=26000.0,
+                                    account_type='loan',
+                                    billing_start_date_YYYYMMDD='20230303',
+                                    interest_type='simple',
+                                    apr=0.067,
+                                    interest_cadence='daily',
+                                    minimum_payment='223.19',
+                                    previous_statement_balance=None,
+                                    principal_balance=900.0,
+                                    accrued_interest=100.0,
+                                    print_debug_messages=False)
+
+        test_account_set__bkp = copy.deepcopy(test_account_set)
+
+        initial_state_vector = list(test_account_set.getAccounts().iloc[:,1]) # [1000, 1000, 500, 900, 100]
+
+        test_account_set.executeTransaction(Account_From='test checking',Account_To=None,Amount=100.0)
+        result_vector = list(test_account_set.getAccounts().iloc[:,1])
+        self.assertListEqual(result_vector,[900.0, 1000.0, 500.0, 900.0, 100.0])
+        test_account_set.executeTransaction(Account_From=None, Account_To='test checking', Amount=100.0) # the reverse operation as well
+        result_vector = list(test_account_set.getAccounts().iloc[:, 1])
+        self.assertListEqual(result_vector,initial_state_vector)
+
+        #credit payment, less than prev stmt bal and curr stmt bal > 0
+        test_account_set.executeTransaction(Account_From='test credit', Account_To=None, Amount=50.0)
+        result_vector = list(test_account_set.getAccounts().iloc[:, 1])
+        self.assertListEqual(result_vector, [1000.0, 1050.0, 500.0, 900.0, 100.0])
+        test_account_set.executeTransaction(Account_From=None, Account_To='test credit',
+                                            Amount=50)   # the reverse operation as well
+        result_vector = list(test_account_set.getAccounts().iloc[:, 1])
+        self.assertListEqual(result_vector, [1000.0, 1050.0, 450.0, 900.0, 100.0])
+        test_account_set = copy.deepcopy( test_account_set__bkp )
+
+        # credit payment, less than total balance, more than prev stmt balance, curr stmt bal != 0
+        test_account_set.executeTransaction(Account_From=None, Account_To='test credit',Amount=501.0)
+        result_vector = list(test_account_set.getAccounts().iloc[:, 1])
+        self.assertListEqual(result_vector, [1000.0, 999.0, 0.0, 900.0, 100.0])
+        test_account_set.executeTransaction(Account_From='test credit', Account_To=None, Amount=501.0)
+        result_vector = list(test_account_set.getAccounts().iloc[:, 1])  # the reverse operation
+        self.assertListEqual(result_vector, [1000.0, 1500.0, 0.0, 900.0, 100.0])
+        test_account_set = copy.deepcopy(test_account_set__bkp)
+
+        test_account_set.executeTransaction(Account_From=None, Account_To='test loan', Amount=100)
+        result_vector = list(test_account_set.getAccounts().iloc[:, 1])
+        self.assertListEqual(result_vector, [1000, 1000, 500, 900, 0])
+        test_account_set.executeTransaction(Account_From='test loan', Account_To=None, Amount=100)
+        result_vector = list(test_account_set.getAccounts().iloc[:, 1]) #the reverse
+        self.assertListEqual(result_vector, [1000, 1000, 500, 1000, 0])
 
 
 

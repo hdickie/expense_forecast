@@ -21,12 +21,14 @@ Developed on a windows device so probably only works on window. I haven't checke
 
 ## Plans
 Releases
-v1.0 - MVP
-v1.1 - plus Google Analytics
-v2.0 - plus databases for history
-v3.0 - plus BlueHost backend for daily updates
-v4.0 - plus Trello for app interface
-v5.0 - plus d3 for animated plots
+<ul>
+<li>v1.0 - MVP</li>
+<li>v1.1 - plus Google Analytics</li>
+<li>v2.0 - plus databases for history</li>
+<li>v3.0 - plus BlueHost backend for daily updates</li>
+<li>v4.0 - plus Trello for app interface</li>
+<li>v5.0 - plus d3 for animated plots</li>
+</ul>
 
 ## How to Use
 1. Download the .zip from github
@@ -34,13 +36,27 @@ v5.0 - plus d3 for animated plots
 3. Run the module. report.html will be created in the same directory as the module (unless you provided a different value)
 
 ## In-Depth Tutorial
-An example of this script and the output it creates are here: <a href="tutorial.html">Tutorial</a>
+An example of this script and the output it creates are here: <a href="https://hdickie.github.io/expense_forecast/tutorial.html">Tutorial</a>
 
 ## Documentation
-<a href="https://hdickie.github.io/expense_forecast/build/html/"/>Documentation></a>
+<a href="https://hdickie.github.io/expense_forecast/build/html/"/>Documentation</a>
 
 ## Contact
-The best way to contact me is via LinkedIn: https://www.linkedin.com/in/humedickie/. You can also reach me at hume.dickie@live.com.
+The best way to contact me is via LinkedIn: https://www.linkedin.com/in/humedickie/.  
+You can also reach me at hume.dickie@live.com.  
+
+## Notes to Self: Todo
+Documentation
+ - Move exhaustive doctests to other files
+	- get doctests in other files to count for code coverage 
+ - Expense_Forecast doctests
+ 
+Testing
+ - Expense_Forecast unittests
+	
+HTML
+ - finalize CSS
+	- organize it
 
 ## Notes to Self
 1. Microsoft SQL Server Management Studio & Azure Data Studio to run sql server and client
@@ -53,12 +69,7 @@ Website + Documentation
 	- Portfolio
 	- Internet-facing GUI for expense_forecast
 
+As I debug the ExpenseForecast class, I want to look at plots for my debugging.
 
-## Notes to Self: Todo
-Documentation
- - Move exhaustive doctests to other files
-	- get doctests in other files to count for code coverage 
-	
-HTML
- - finalize CSS
-	- organize it
+debugging plot: plot of actual vs. expected balance for each account. Report only shows it if there is a difference.
+

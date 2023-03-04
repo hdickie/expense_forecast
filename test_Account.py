@@ -1,6 +1,8 @@
 import unittest
 import Account
 import doctest
+from nose2.tools import params
+import pandas as pd
 
 class TestAccountMethods(unittest.TestCase):
 
@@ -28,6 +30,29 @@ class TestAccountMethods(unittest.TestCase):
                             max_balance=0,
                             account_type='checking',print_debug_messages=False)
 
+        with self.assertRaises(ValueError):
+            Account.Account(name='credit prev stmt bal: test account min payment value error',
+                            balance=0,
+                            min_balance=0,
+                            max_balance=0,
+                            apr=0,
+                            billing_start_date_YYYYMMDD='20000101',
+                            account_type='prev stmt bal',
+                            interest_cadence='monthly',
+                            minimum_payment='X',
+                            print_debug_messages=False)
+
+        with self.assertRaises(ValueError):
+            Account.Account(name='account name missing colon character',
+                            balance=0,
+                            min_balance=0,
+                            max_balance=0,
+                            apr=0,
+                            billing_start_date_YYYYMMDD='20000101',
+                            account_type='prev stmt bal',
+                            interest_cadence='monthly',
+                            minimum_payment=0,
+                            print_debug_messages=False)
 
         with self.assertRaises(ValueError):
             Account.Account(name='test account',
@@ -37,11 +62,18 @@ class TestAccountMethods(unittest.TestCase):
                             account_type='shmecking', print_debug_messages=False)
 
         with self.assertRaises(ValueError):
-            Account.Account(name='test account',
+            Account.Account(name='test account type None',
                             balance=0,
                             min_balance=0,
                             max_balance=0,
-                            account_type='loan', print_debug_messages=False)
+                            account_type=None, print_debug_messages=False)
+
+        with self.assertRaises(ValueError):
+            Account.Account(name='test account type credit',
+                            balance=0,
+                            min_balance=0,
+                            max_balance=0,
+                            account_type='credit', print_debug_messages=False)
 
         with self.assertRaises(TypeError):
             Account.Account(name='test account',
