@@ -15,7 +15,7 @@ def generate_date_sequence(start_date_YYYYMMDD,num_days,cadence):
         return_series = pd.date_range(start_date,end_date,freq='D')
     elif cadence.lower() == "weekly":
         return_series = pd.date_range(start_date,end_date,freq='W')
-    elif cadence.lower() == "biweekly":
+    elif cadence.lower() == "semiweekly":
         return_series = pd.date_range(start_date,end_date,freq='2W')
     elif cadence.lower() == "monthly":
 

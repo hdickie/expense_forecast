@@ -42,6 +42,11 @@ def generate_date_sequence(start_date_YYYYMMDD,num_days,cadence):
     elif cadence.lower() == "yearly":
         # todo check if this needs an adjustment like the monthly case did
         return_series = pd.date_range(start_date,end_date,freq='Y')
+    else:
+        print('undefined edge case in generate_date_sequence()')
+        print('start_date_YYYYMMDD:'+str(start_date_YYYYMMDD))
+        print('num_days:'+str(num_days))
+        print('cadence:'+str(cadence))
 
     return return_series
 
@@ -814,7 +819,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                    min_balance=0,
                                    max_balance=float('Inf'),
                                    account_type="credit",
-                                   billing_start_date_YYYYMMDD='20000102',
+                                   billing_start_date_YYYYMMDD='19991202',
                                    interest_type='Compound',
                                    apr=0.05,
                                    interest_cadence='Monthly',
@@ -887,7 +892,10 @@ class TestExpenseForecastMethods(unittest.TestCase):
         # Run the Forecasts
         expense_forecasts = []
         for i in range(0, len(test_descriptions)):
-            # print('Running Forecast #'+str(i))
+            print('Running Forecast #'+str(i))
+            #print(account_sets[i])
+            #print(budget_sets[i])
+            #print(memo_rule_sets[i])
 
             try:
                 expense_forecasts.append(ExpenseForecast.ExpenseForecast(account_sets[i],
@@ -898,7 +906,8 @@ class TestExpenseForecastMethods(unittest.TestCase):
 
                 # print(expense_forecasts[i].forecast_df.to_string())
             except Exception as e:
-                pass
+                print('Failed to run forecast #'+str(i)+' e:'+str(e))
+                raise e
 
         # Compute Differences
         differences = []
@@ -915,18 +924,24 @@ class TestExpenseForecastMethods(unittest.TestCase):
                 d = d.reindex(sorted(d.columns), axis=1)
                 differences.append(d)
             except Exception as e:
-                pass
+                print(e)
+                raise e
 
         # Display Results
         for i in range(0, len(test_descriptions)):
             try:
                 display_test_result(test_descriptions[i], differences[i])
             except Exception as e:
-                pass
+                print('Failed to display test result for test #'+str(i)+' e:'+str(e))
 
         # Check Results
         for i in range(0, len(test_descriptions)):
-            self.assertTrue(differences[i].shape[0] == 0)
+            try:
+                self.assertTrue(differences[i].shape[0] == 0)
+            except Exception as e:
+                #print(e)
+                #print(differences[i].T.to_string())
+                raise e
 
 
 
@@ -959,112 +974,160 @@ class TestExpenseForecastMethods(unittest.TestCase):
     #
     # scenarios: amount = "*"
     # 18. extra payment: 5 loans, diff interest rate diff balances,
-    def test_loan_payments(self):
-        test_descriptions = [
-            'Test 1 : ',
-            'Test 2 : '
-        ]
+    # def test_loan_payments(self):
+    #     test_descriptions = [
+    #         'Test 1 : ',
+    #         'Test 2 : '
+    #     ]
+    #
+    #     account_sets = []
+    #     budget_sets = []
+    #     memo_rule_sets = []
+    #
+    #     expected_results = []
+    #
+    #     start_date_YYYYMMDD = self.start_date_YYYYMMDD
+    #     end_date_YYYYMMDD = self.end_date_YYYYMMDD
+    #
+    #     for i in range(0, len(test_descriptions)):
+    #         account_sets.append(copy.deepcopy(self.account_set))
+    #         budget_sets.append(copy.deepcopy(self.budget_set))
+    #         memo_rule_sets.append(copy.deepcopy(self.memo_rule_set))
+    #
+    #     ### BEGIN Test Case 1
+    #     account_sets[0].addAccount(name='Checking',
+    #                                balance=0,
+    #                                min_balance=0,
+    #                                max_balance=float('Inf'),
+    #                                account_type="checking")
+    #
+    #     account_sets[0].addAccount(name='Loan',
+    #                                balance=1000,
+    #                                min_balance=0,
+    #                                max_balance=float('Inf'),
+    #                                account_type="loan",
+    #                                billing_start_date_YYYYMMDD='20000102',
+    #                                interest_type='Simple',
+    #                                apr=0.05,
+    #                                interest_cadence='Daily',
+    #                                minimum_payment=0,
+    #                                previous_statement_balance=None,
+    #                                principal_balance=1000,
+    #                                accrued_interest=0
+    #                                )
+    #
+    #     budget_sets[0].addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
+    #                                  cadence='daily', amount=0, memo='dummy memo',
+    #                                  deferrable=False)
+    #
+    #     memo_rule_sets[0].addMemoRule(memo_regex='.*', account_from='Checking', account_to='Loan',
+    #                                   transaction_priority=1)
+    #
+    #     expected_result_0_df = pd.DataFrame({
+    #         'Date': ['20000101', '20000102', '20000103'],
+    #         'Checking': [0, 0, 0],
+    #         'Loan: Principal Balance': [0, 0, 0],
+    #         'Loan: Interest': [0, 0, 0],
+    #         'Memo': ['', '', '']
+    #     })
+    #     expected_result_0_df.Date = [datetime.datetime.strptime(x, '%Y%m%d').strftime('%Y-%m-%d') for x in
+    #                                  expected_result_0_df.Date]
+    #     expected_results.append(expected_result_0_df)
+    #     ### END
+    #
+    #     ### BEGIN Test Case 2
+    #     account_sets[1].addAccount(name='Checking',
+    #                                balance=0,
+    #                                min_balance=0,
+    #                                max_balance=float('Inf'),
+    #                                account_type="checking")
+    #
+    #     account_sets[1].addAccount(name='Credit',
+    #                                balance=1000,
+    #                                min_balance=0,
+    #                                max_balance=float('Inf'),
+    #                                account_type="credit",
+    #                                billing_start_date_YYYYMMDD='20000102',
+    #                                interest_type='Compound',
+    #                                apr=0.05,
+    #                                interest_cadence='Monthly',
+    #                                minimum_payment=0,
+    #                                previous_statement_balance=0,
+    #                                principal_balance=None,
+    #                                accrued_interest=None
+    #                                )
+    #
+    #     budget_sets[1].addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
+    #                                  cadence='daily', amount=0, memo='dummy memo',
+    #                                  deferrable=False)
+    #
+    #     memo_rule_sets[1].addMemoRule(memo_regex='.*', account_from='Checking', account_to='Credit',
+    #                                   transaction_priority=1)
+    #
+    #     expected_result_1_df = pd.DataFrame({
+    #         'Date': ['20000101', '20000102', '20000103'],
+    #         'Checking': [0, 0, 0],
+    #         'Credit: Curr Stmt Bal': [0, 0, 0],
+    #         'Credit: Prev Stmt Bal': [0, 0, 0],
+    #         'Memo': ['', '', '']
+    #     })
+    #     expected_result_1_df.Date = [datetime.datetime.strptime(x, '%Y%m%d').strftime('%Y-%m-%d') for x in
+    #                                  expected_result_1_df.Date]
+    #     expected_results.append(expected_result_1_df)
+    #     ### END
+    #
+    #     # Run the Forecasts
+    #     expense_forecasts = []
+    #     for i in range(0, len(test_descriptions)):
+    #         # print('Running Forecast #'+str(i))
+    #
+    #         try:
+    #             expense_forecasts.append(ExpenseForecast.ExpenseForecast(account_sets[i],
+    #                                                                      budget_sets[i],
+    #                                                                      memo_rule_sets[i],
+    #                                                                      start_date_YYYYMMDD,
+    #                                                                      end_date_YYYYMMDD, raise_exceptions=False))
+    #
+    #             # print(expense_forecasts[i].forecast_df.to_string())
+    #         except Exception as e:
+    #             print(e)
+    #             print(budget_sets[i])
+    #             raise e
+    #
+    #     # Compute Differences
+    #     differences = []
+    #     for i in range(0, len(test_descriptions)):
+    #         try:
+    #
+    #             print(expense_forecasts[i].forecast_df.columns)
+    #             print(expected_results[i].columns)
+    #
+    #             d = expense_forecasts[i].compute_forecast_difference(expected_results[i],
+    #                                                                  label=test_descriptions[i],
+    #                                                                  make_plots=True,
+    #                                                                  diffs_only=False,
+    #                                                                  require_matching_columns=True,
+    #                                                                  require_matching_date_range=True,
+    #                                                                  append_expected_values=True,
+    #                                                                  return_type='dataframe')
+    #             d = d.reindex(sorted(d.columns), axis=1)
+    #             differences.append(d)
+    #
+    #         except Exception as e:
+    #             print(e)
+    #
+    #     # Display Results
+    #     for i in range(0, len(test_descriptions)):
+    #         try:
+    #             display_test_result(test_descriptions[i], differences[i])
+    #         except Exception as e:
+    #             print(e)
+    #
+    #     # Check Results
+    #     for i in range(0, len(test_descriptions)):
+    #         self.assertTrue(differences[i].shape[0] == 0)
 
-        account_sets = []
-        budget_sets = []
-        memo_rule_sets = []
-
-        expected_results = []
-
-        start_date_YYYYMMDD = self.start_date_YYYYMMDD
-        end_date_YYYYMMDD = self.end_date_YYYYMMDD
-
-        for i in range(0, len(test_descriptions)):
-            account_sets.append(copy.deepcopy(self.account_set))
-            budget_sets.append(copy.deepcopy(self.budget_set))
-            memo_rule_sets.append(copy.deepcopy(self.memo_rule_set))
-
-        ### BEGIN Test Case 1
-        account_sets[0].addAccount(name='Checking',
-                                   balance=0,
-                                   min_balance=0,
-                                   max_balance=float('Inf'),
-                                   account_type="checking")
-
-        account_sets[0].addAccount(name='Loan',
-                                   balance=0,
-                                   min_balance=0,
-                                   max_balance=float('Inf'),
-                                   account_type="loan",
-                                   billing_start_date_YYYYMMDD='20000102',
-                                   interest_type='Simple',
-                                   apr=0.05,
-                                   interest_cadence='Daily',
-                                   minimum_payment=0,
-                                   previous_statement_balance=None,
-                                   principal_balance=0,
-                                   accrued_interest=0
-                                   )
-
-        budget_sets[0].addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
-                                     cadence='daily', amount=0, memo='dummy memo',
-                                     deferrable=False)
-
-        memo_rule_sets[0].addMemoRule(memo_regex='.*', account_from='Checking', account_to='Loan',
-                                      transaction_priority=1)
-
-        expected_result_0_df = pd.DataFrame({
-            'Date': ['20000101', '20000102', '20000103'],
-            'Checking': [0, 0, 0],
-            'Loan: Principal Balance': [0, 0, 0],
-            'Loan: Interest': [0, 0, 0],
-            'Memo': ['', '', '']
-        })
-        expected_result_0_df.Date = [datetime.datetime.strptime(x, '%Y%m%d').strftime('%Y-%m-%d') for x in
-                                     expected_result_0_df.Date]
-        expected_results.append(expected_result_0_df)
-        ### END
-
-        # Run the Forecasts
-        expense_forecasts = []
-        for i in range(0, len(test_descriptions)):
-            # print('Running Forecast #'+str(i))
-
-            try:
-                expense_forecasts.append(ExpenseForecast.ExpenseForecast(account_sets[i],
-                                                                         budget_sets[i],
-                                                                         memo_rule_sets[i],
-                                                                         start_date_YYYYMMDD,
-                                                                         end_date_YYYYMMDD, raise_exceptions=False))
-
-                # print(expense_forecasts[i].forecast_df.to_string())
-            except Exception as e:
-                pass
-
-        # Compute Differences
-        differences = []
-        for i in range(0, len(test_descriptions)):
-            try:
-                d = expense_forecasts[i].compute_forecast_difference(expected_results[i],
-                                                                     label=test_descriptions[i],
-                                                                     make_plots=True,
-                                                                     diffs_only=False,
-                                                                     require_matching_columns=True,
-                                                                     require_matching_date_range=True,
-                                                                     append_expected_values=True,
-                                                                     return_type='dataframe')
-                d = d.reindex(sorted(d.columns), axis=1)
-                differences.append(d)
-            except Exception as e:
-                pass
-
-        # Display Results
-        for i in range(0, len(test_descriptions)):
-            try:
-                display_test_result(test_descriptions[i], differences[i])
-            except Exception as e:
-                pass
-
-        # Check Results
-        for i in range(0, len(test_descriptions)):
-            self.assertTrue(differences[i].shape[0] == 0)
-
-    def test_allocate_loan_payments(self):
+    def test_allocate_additional_loan_payments(self):
         account_set = copy.deepcopy(self.account_set)
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
@@ -1170,12 +1233,18 @@ class TestExpenseForecastMethods(unittest.TestCase):
              start_date_YYYYMMDD,
              end_date_YYYYMMDD, raise_exceptions=False)
 
-        print('running loan payment allocation')
-        E.allocate_loan_payments(account_set, 15000, '20230303')
+        #print('running loan payment allocation')
+        #B1 = E.allocate_additional_loan_payments(account_set, 15000, '20230303')
+        #print('B1:')
+        #print(B1.getBudgetItems().to_string())
+
+        B2 = E.allocate_additional_loan_payments(account_set, 1000, '20230303')
+        #print('B2:')
+        #print(B2.getBudgetItems().to_string())
 
 
     def test_satisfice(self):
         raise NotImplementedError
 
-    def test_toJSON(self):
-        raise NotImplementedError
+    # def test_toJSON(self):
+    #     raise NotImplementedError

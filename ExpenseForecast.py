@@ -4,8 +4,9 @@ import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
 import datetime
 import re
+import copy
 
-import BudgetSet
+import BudgetSet, BudgetItem
 
 
 def generate_date_sequence(start_date_YYYYMMDD,num_days,cadence):
@@ -13,6 +14,10 @@ def generate_date_sequence(start_date_YYYYMMDD,num_days,cadence):
 
     #todo write project_utilities.generate_date_sequence() doctests
     """
+    #print('generate_date_sequence():')
+    #print('start_date_YYYYMMDD:'+str(start_date_YYYYMMDD))
+    #print('num_days...........:'+str(num_days))
+    #print('cadence............:'+str(cadence))
 
     start_date = datetime.datetime.strptime(start_date_YYYYMMDD,'%Y%m%d')
     end_date = start_date + datetime.timedelta(days=num_days)
@@ -168,6 +173,12 @@ class ExpenseForecast:
 
         #this method already has access to these: account_set, budget_set, memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD
         deffered_and_forecast__list = self.computeForecast()
+
+        assert(min(self.forecast_df.Date) == start_date_YYYYMMDD) #specified first day of forecast did not match
+        #print('max(self.forecast_df.Date)'+str(max(self.forecast_df.Date)))
+        #print('end_date_YYYYMMDD:'+str(end_date_YYYYMMDD))
+        assert (max(self.forecast_df.Date) == end_date_YYYYMMDD) #specified last day of forecast did not match
+
         self.deferred_df = deffered_and_forecast__list[0]
         self.forecast_df = deffered_and_forecast__list[1]
 
@@ -339,51 +350,119 @@ class ExpenseForecast:
         #generate a date sequence at the specified cadence between billing_start_date and the current date
         #if the current date is in that sequence, then do accrual
 
-        account_index = 0
-        for index, row in account_set.getAccounts().iterrows():
+        for account_index, row in account_set.getAccounts().iterrows():
             #print(row)
             if row.Interest_Cadence == 'None' or row.Interest_Cadence is None or row.Interest_Cadence == '': #ithink this may be refactored. i think this will explode if interest_cadence is None
-                account_index += 1
                 continue
-
-            if row.Account_Type == 'savings':
-                account_index += 1
-                continue #todo
 
             num_days = (datetime.datetime.strptime(current_date,'%Y-%m-%d') - row.Billing_Start_Dt).days
             dseq = generate_date_sequence(start_date_YYYYMMDD=row.Billing_Start_Dt.strftime('%Y%m%d'),
                                           num_days=num_days,
                                           cadence=row.Interest_Cadence)
 
+            #print('current_date:'+str(current_date))
+            #print('dseq:'+str(dseq))
+
             if current_date in dseq:
-                #do accruals
-                if row.Account_Type == 'prev stmt bal' and row.Interest_Cadence == 'monthly':
-                    #print('DOING INTEREST ACCRUAL')
-                    #print('row:\n'+str(row.to_string()))
+
+                #print('interest accrual initial conditions:')
+                #print(current_forecast_row_df.to_string())
+
+                if row.Interest_Type.lower() == 'compound' and row.Interest_Cadence.lower() == 'yearly':
+                    print('CASE 1 : Compound, Monthly')
+
+                    raise NotImplementedError
+
+                elif row.Interest_Type.lower() == 'compound' and row.Interest_Cadence.lower() == 'quarterly':
+                    print('CASE 2 : Compound, Quarterly')
+
+                    raise NotImplementedError
+
+                elif row.Interest_Type.lower() == 'compound' and row.Interest_Cadence.lower() == 'monthly':
+                    print('CASE 3 : Compound, Monthly')
+
                     accrued_interest = row.APR * row.Balance / 12
                     account_set.accounts[account_index].balance += accrued_interest
 
-                    #move curr stmt bal to previous
+                    # move curr stmt bal to previous
                     prev_stmt_balance = account_set.accounts[account_index - 1].balance
 
                     prev_acct_name = account_set.accounts[account_index - 1].name
                     curr_acct_name = account_set.accounts[account_index].name
-                    #print('current account name:' + str(curr_acct_name))
-                    #print('prev_acct_name:'+str(prev_acct_name))
-                    #print('prev_stmt_balance:'+str(prev_stmt_balance))
+                    # print('current account name:' + str(curr_acct_name))
+                    # print('prev_acct_name:'+str(prev_acct_name))
+                    # print('prev_stmt_balance:'+str(prev_stmt_balance))
                     account_set.accounts[account_index].balance += prev_stmt_balance
                     account_set.accounts[account_index - 1].balance = 0
 
-                #todo loan interest case
+                    updated_balances = account_set.getAccounts().Balance
+                    for i in range(0, updated_balances.shape[0]):
+                        current_forecast_row_df.iloc[0, i + 1] = updated_balances[i]
+                    # returns a single forecast row (memo is updated externally)
+                    return current_forecast_row_df
 
-            account_index += 1
+                elif row.Interest_Type.lower() == 'compound' and row.Interest_Cadence.lower() == 'semiweekly':
+                    print('CASE 4 : Compound, Semiweekly')
 
-        updated_balances = account_set.getAccounts().Balance
-        for i in range(0, updated_balances.shape[0]):
-            pass
-            current_forecast_row_df.iloc[0, i + 1] = updated_balances[i]
-        # returns a single forecast row (memo is updated externally)
-        return current_forecast_row_df
+                    raise NotImplementedError # Compound, Semiweekly
+
+                elif row.Interest_Type.lower() == 'compound' and row.Interest_Cadence.lower() == 'weekly':
+                    print('CASE 5 : Compound, Weekly')
+
+                    raise NotImplementedError # Compound, Weekly
+
+                elif row.Interest_Type.lower() == 'compound' and row.Interest_Cadence.lower() == 'daily':
+                    print('CASE 6 : Compound, Daily')
+
+                    raise NotImplementedError # Compound, Daily
+
+                elif row.Interest_Type.lower() == 'simple' and row.Interest_Cadence.lower() == 'yearly':
+                    print('CASE 7 : Simple, Monthly')
+
+                    raise NotImplementedError # Simple, Monthly
+
+                elif row.Interest_Type.lower() == 'simple' and row.Interest_Cadence.lower() == 'quarterly':
+                    print('CASE 8 : Simple, Quarterly')
+
+                    raise NotImplementedError # Simple, Quarterly
+
+                elif row.Interest_Type.lower() == 'simple' and row.Interest_Cadence.lower() == 'monthly':
+                    print('CASE 9 : Simple, Monthly')
+
+                    raise NotImplementedError # Simple, Monthly
+
+                elif row.Interest_Type.lower() == 'simple' and row.Interest_Cadence.lower() == 'semiweekly':
+                    print('CASE 10 : Simple, Semiweekly')
+
+                    raise NotImplementedError # Simple, Semiweekly
+
+                elif row.Interest_Type.lower() == 'simple' and row.Interest_Cadence.lower() == 'weekly':
+                    print('CASE 11 : Simple, Weekly')
+
+                    raise NotImplementedError # Simple, Weekly
+
+                elif row.Interest_Type.lower() == 'simple' and row.Interest_Cadence.lower() == 'daily':
+                    print('CASE 12 : Simple, Daily')
+
+                    accrued_interest = row.APR * row.Balance / 365.25
+                    account_set.accounts[account_index].balance += accrued_interest
+
+
+
+                    account_index += 1
+
+                    updated_balances = account_set.getAccounts().Balance
+                    for i in range(0, updated_balances.shape[0]):
+                        pass
+                        current_forecast_row_df.iloc[0, i + 1] = updated_balances[i]
+                    # returns a single forecast row (memo is updated externally)
+                    return current_forecast_row_df
+
+            else:
+                #print('There were no interest bearing items for this day')
+                #print('returning this row:')
+                #print(current_forecast_row_df.to_string())
+                return current_forecast_row_df
 
     def computeForecast(self):
         """
@@ -395,7 +474,6 @@ class ExpenseForecast:
         |
         | Expected Fails
         | F1 ... #todo refactor ExpenseForecast.computeForecast() doctest F1 to use _F1 label
-
         :param budget_schedule_df:
         :param account_set_df:
         :param memo_rules_df:
@@ -410,18 +488,27 @@ class ExpenseForecast:
         numdays = (self.end_date - self.start_date).days  # TODO assert upstream that end date is after start date, or include numdays as a obj var
         budget_schedule_df = self.initial_budget_set.getBudgetSchedule(self.start_date.strftime('%Y%m%d'), self.end_date.strftime('%Y%m%d'))
 
-
         memo_set = self.initial_memo_rule_set # this never changes
         account_set = self.initial_account_set
+
+        forecast_df = initial_forecast_row_df
+        previous_row_df = initial_forecast_row_df
 
         #print('numdays:'+str(numdays))
         #print('initial_budget_set:'+str(self.initial_budget_set))
         #print('budget_schedule_df:'+budget_schedule_df.to_string()+'\n')
+        #print('initial_forecast_row_df:')
+        #print(initial_forecast_row_df.to_string())
+
         for d in all_days:
+          #print('d:'+str(d))
+          #print('start_date:'+str(self.start_date))
+          #print('initial_forecast_row_df:')
+          #print(initial_forecast_row_df)
+
           if d == self.start_date:
-              forecast_df = initial_forecast_row_df
-              previous_row_df = initial_forecast_row_df
-              continue #because we consider the input values for the first day to be final
+              continue #because we consider the first day to be final
+
           current_row_df = previous_row_df.copy()
           current_row_df.Date = d.strftime('%Y-%m-%d')
           current_row_df.Memo = ''
@@ -430,12 +517,34 @@ class ExpenseForecast:
 
           #print('this_days_budget_schedule_df:'+str(this_days_budget_schedule_df))
           new_forecast_row_df = self.executeTransactionsForDay( this_days_budget_schedule_df, account_set, memo_set,current_row_df) #returns only a forecast row w updated memo
+          print('Running calculateInterestAccrualsForDay() for '+str(d))
           new_forecast_row_df = self.calculateInterestAccrualsForDay( account_set,new_forecast_row_df ) #returns only a forecast row w updated memo
+          print(new_forecast_row_df.to_string())
 
           forecast_df = pd.concat([forecast_df,new_forecast_row_df])
           previous_row_df = new_forecast_row_df
 
-        deferred_past_end_date_budget_items_df = None
+        forecast_df.reset_index(drop=True,inplace=True)
+        print('forecast_df:')
+        print(forecast_df.to_string())
+
+        try:
+            assert min(forecast_df.Date) == self.start_date.strftime('%Y-%m-%d') #computeForecast() did not include the first day as specified
+        except Exception as e:
+            print(e)
+            print('self.start_date:'+str(self.start_date.strftime('%Y-%m-%d')))
+            print('min(forecast_df.Date):'+str(min(forecast_df.Date)))
+            raise e
+
+        try:
+            assert max(forecast_df.Date) == self.end_date.strftime('%Y-%m-%d') #computeForecast() did not include the last day as specified
+        except Exception as e:
+            print(e)
+            print('self.end_date:'+str(self.end_date.strftime('%Y%m%d')))
+            print('max(forecast_df.Date):'+str(max(forecast_df.Date)))
+            raise e
+
+        deferred_past_end_date_budget_items_df = Nonewo
 
         # index_of_checking_column = forecast_df.columns.tolist().index('Checking')
         # index_of_memo_column = forecast_df.columns.tolist().index('Memo')
@@ -642,145 +751,338 @@ class ExpenseForecast:
 
         pass
 
-    def allocate_loan_payments(self, account_set, amount, date_string_YYYYMMDD, recursion_depth=0, partial_payment_budget_set=None):
-        """
-        First pass at this does not account for minimum payment amounts
+    def allocate_additional_loan_payments(self,account_set,amount,date_string_YYYYMMDD):
 
-        returns a budget item for each account implementing the payment
-        """
-
-        left_prefix = ' '.rjust(recursion_depth, '#')
-
-        # The Algorithm:
-        # if payment amount is larger than grand total, then pay and move on
-        # Calculate the marginal interest amounts. Order them greatest to least.
-        # All those accounts with rank 1 will for sure be part of this payment. there may be more but we start there.
-        # If there is a next account, record that amount of marginal interest.
-        # Compute what the balances for the currently considered loans must be in order to imply the corresponding amount of marginal interest.
-        # If the total amount needed is greater than the amount, then allocate the current payment between the considered loans in proprotion to their current balances.
-        # otherwise, implement a payment of the needed amounts, and recurse with new initial conditions
-
+        account_set = copy.deepcopy(account_set)
         A = account_set.getAccounts()
         principal_accts_df = A[A.Account_Type == 'principal balance']
-        interest_accts_df = A[A.Account_Type == 'interest']
+
+        principal_accts_df['Marginal Interest Amount'] = principal_accts_df.Balance * principal_accts_df.APR
+        principal_accts_df['Marginal Interest Rank'] = principal_accts_df['Marginal Interest Amount'].rank(method='dense', ascending=False)
+
+        number_of_phase_space_regions = max(principal_accts_df['Marginal Interest Rank'])
+        #print('number_of_phase_space_regions:'+str(number_of_phase_space_regions))
+
 
         all_account_names__1 = [ x.split(':') for x in principal_accts_df.Name ]
         all_account_names__2 = [name for sublist in all_account_names__1 for name in sublist]
         all_account_names = set(all_account_names__2) - set([' Principal Balance'])
 
-        final_payment_amounts__BudgetSet = BudgetSet.BudgetSet([])
+        payment_amounts__BudgetSet = BudgetSet.BudgetSet([])
 
-        grand_total_owed = sum(principal_accts_df.Balance) + sum(interest_accts_df.Balance)
+        for i in range(0,int(number_of_phase_space_regions)):
 
-        if amount > grand_total_owed:
-            amount = grand_total_owed
+            if amount == 0:
+                break
 
-        if partial_payment_budget_set is not None:
-            #print('partial_payment_budget_set.getBudgetItems():')
-            #print(partial_payment_budget_set.getBudgetItems().to_string())
+            #print('i:'+str(i))
+            A = account_set.getAccounts()
+            #print('A:\n')
+            #print(A.to_string())
 
-            grand_total_allocated = sum(partial_payment_budget_set.getBudgetItems().Amount)
+            principal_accts_df = A[A.Account_Type == 'principal balance']
+            interest_accts_df = A[A.Account_Type == 'interest']
 
-            if sum(partial_payment_budget_set.getBudgetItems().Amount) == amount:
-                #algorithm complete!
-                return partial_payment_budget_set
-            elif sum(partial_payment_budget_set.getBudgetItems().Amount) > amount:
-                print(left_prefix+'The allocate_loan_payments algorithm has somehow allocated more than the amount being paid')
-                return None
-            else:
-                print(left_prefix+'Allocated amounts are less than total amount to pay')
-                pass
-                #continue the recursize algorithm
-        else:
-            grand_total_allocated = 0
-
-        total_amount_per_loan = {}
-        for acct_name in all_account_names:
-
-            principal_amt = principal_accts_df.iloc[ [acct_name in pa_element for pa_element in principal_accts_df.Name] , : ].Balance.iloc[0]
-            interest_amt = interest_accts_df.iloc[ [acct_name in pa_element for pa_element in principal_accts_df.Name], :].Balance.iloc[0]
-
-            total_amount_per_loan[acct_name] = principal_amt + interest_amt
-
-        if amount == grand_total_owed:
-            print(left_prefix+'Case 1: The amount to pay is equal to the grand total owed')
+            total_amount_per_loan = {}
             for acct_name in all_account_names:
-                final_payment_amounts__BudgetSet.addBudgetItem(start_date_YYYYMMDD=date_string_YYYYMMDD,
-                                                               end_date_YYYYMMDD=date_string_YYYYMMDD,
-                                                               priority=7,
-                                                                cadence='once',
-                                                               amount=total_amount_per_loan[acct_name],
-                                                               memo=acct_name+' additional payments',
-                                                                deferrable=False)
 
-            return final_payment_amounts__BudgetSet
-        else:
-            #the amount of the payment is less than the grand total
-            principal_accts_df['Marginal Interest'] = [ round(x,2) for x in (principal_accts_df.Balance * principal_accts_df.APR) ]
+                principal_amt = principal_accts_df.iloc[ [acct_name in pa_element for pa_element in principal_accts_df.Name] , : ].Balance.iloc[0]
+                interest_amt = interest_accts_df.iloc[ [acct_name in pa_element for pa_element in principal_accts_df.Name], :].Balance.iloc[0]
 
-            principal_accts_df.sort_values(by='Marginal Interest', inplace=True, ascending=False)
-            principal_accts_df['Marginal Interest Rank'] = principal_accts_df['Marginal Interest'].rank(method='dense',ascending=False)
-            #print(principal_accts_df.to_string())
+                total_amount_per_loan[acct_name] = principal_amt + interest_amt
 
-            highest_marginal_interest_df = principal_accts_df[principal_accts_df['Marginal Interest Rank'] == 1]
-            second_highest_marginal_interest_df = principal_accts_df[principal_accts_df['Marginal Interest Rank'] == 2]
+            P = np.matrix(principal_accts_df.Balance)
+            r = np.matrix(principal_accts_df.APR)
+            P_dot_r = P.T.dot(r)
 
-            highest_marginal_interest_acct_name = highest_marginal_interest_df.Name.iloc[0].split(':')[0]
-            second_highest_marginal_interest_acct_name = second_highest_marginal_interest_df.Name.iloc[0].split(':')[0]
+            reciprocal_rates = []
+            for i in range(0, P.shape[1]):
+                reciprocal_rates.append(1/r[0,i])
+            reciprocal_rates = np.matrix(reciprocal_rates)
+            #print('reciprocal_rates:')
+            #print(reciprocal_rates.shape)
+            #print(reciprocal_rates)
 
-            #print(highest_marginal_interest_df)
-            #print(highest_marginal_interest_acct_name)
+            #print('P_dot_r:')
+            #print(P_dot_r.shape)
+            #print(np.matrix(P_dot_r))
 
-            #print(second_highest_marginal_interest_df)
-            #print(second_highest_marginal_interest_acct_name)
+            marginal_interest_amounts__list = []
+            for i in range(0,P.shape[1]):
+                marginal_interest_amounts__list.append(round(P_dot_r[i,i],2))
+            #print(marginal_interest_amounts__list)
+            marginal_interest_amounts__matrix = np.matrix(marginal_interest_amounts__list)
+            #print('marginal_interest_amounts__matrix:')
+            #print(marginal_interest_amounts__matrix)
+            marginal_interest_amounts_df = pd.DataFrame(marginal_interest_amounts__list)
+            marginal_interest_amounts_df.columns = ['Marginal Interest Amount']
+            marginal_interest_amounts_df['Marginal Interest Rank'] = marginal_interest_amounts_df['Marginal Interest Amount'].rank(method='dense', ascending=False)
+            #print('marginal_interest_amounts_df:')
+            #print(marginal_interest_amounts_df)
 
-            # if there is only 1 acct to pay first, and 0 accts in second place
-            if highest_marginal_interest_df.shape[0] == 1 and second_highest_marginal_interest_df.shape[0] == 1:
-                print(left_prefix+'Case 2: there is only 1 acct to pay first, and 0 accts in second place')
-                amount_to_pay = min(total_amount_per_loan[highest_marginal_interest_acct_name],amount)
+            try:
+                next_lowest_marginal_interest_amount = marginal_interest_amounts_df[marginal_interest_amounts_df['Marginal Interest Rank'] == 2].iloc[0,0]
+            except Exception as e:
+                next_lowest_marginal_interest_amount = 0
+            #print('next_lowest_marginal_interest_amount:')
+            #print(next_lowest_marginal_interest_amount)
+            marginal_interest_amounts_df__c = copy.deepcopy(marginal_interest_amounts_df)
 
-                final_payment_amounts__BudgetSet.addBudgetItem(start_date_YYYYMMDD=date_string_YYYYMMDD,
-                                                               end_date_YYYYMMDD=date_string_YYYYMMDD,
-                                                               priority=7,
-                                                               cadence='once',
-                                                               amount=amount_to_pay,
-                                                               memo=acct_name + ' additional payments',
-                                                               deferrable=False)
+            #print('marginal_interest_amounts_df__c[marginal_interest_amounts_df__c[Marginal Interest Rank] == 1]')
+            #print(marginal_interest_amounts_df__c['Marginal Interest Rank'] == 1)
+            #print(marginal_interest_amounts_df__c[marginal_interest_amounts_df__c['Marginal Interest Rank'] == 1])
+            #print(marginal_interest_amounts_df__c[marginal_interest_amounts_df__c['Marginal Interest Rank'] == 1]['Marginal Interest Amount'])
 
-                account_set.executeTransaction(Account_From=None,Account_To=acct_name,Amount=amount_to_pay)
-                amount = amount - amount_to_pay
+            marginal_interest_amounts_df__c.loc[marginal_interest_amounts_df__c['Marginal Interest Rank'] == 1,marginal_interest_amounts_df__c.columns == 'Marginal Interest Amount'] = next_lowest_marginal_interest_amount
+            next_step_marginal_interest_vector = np.matrix(marginal_interest_amounts_df__c['Marginal Interest Amount'])
+            #print('next_step_marginal_interest_vector:\n')
+            #print(next_step_marginal_interest_vector)
 
-                # LEFT OFF HERE
 
-                recursion_depth = recursion_depth + 1
-                final_payment_amounts__BudgetSet = self.allocate_loan_payments(account_set, amount, date_string_YYYYMMDD, recursion_depth, partial_payment_budget_set=final_payment_amounts__BudgetSet)
-                return final_payment_amounts__BudgetSet
+            current_state = marginal_interest_amounts__matrix.T.dot(reciprocal_rates)
+            #print('current_state:\n'+str(current_state))
 
-            # if there is only 1 acct to pay first, and at least 1 acct in second place
-            elif highest_marginal_interest_df.shape[0] == 1 and second_highest_marginal_interest_df.shape[0] > 1:
-                print(left_prefix + 'Case 3: there is only 1 acct to pay first, and at least 1 acct in second place')
+            #print('next_step_marginal_interest_vector:')
+            #print(next_step_marginal_interest_vector)
 
-                #the min in denominator is just to get a scalar from a vector. all vals are the same
-                highest_loan_bifurcation_balance = highest_marginal_interest_df['Marginal Interest'].iloc[0] / min([ x for x in second_highest_marginal_interest_df.APR ])
-                print(left_prefix+'highest_loan_bifurcation_balance:'+str(highest_loan_bifurcation_balance))
+            next_state = next_step_marginal_interest_vector.T.dot(reciprocal_rates)
+            #print('next_state:\n' + str(next_state))
 
-                return None
+            delta = current_state - next_state
+            #print('delta:')
+            #print(delta)
 
-            # multiple accts to pay first, and no other accts to pay
-            elif highest_marginal_interest_df.shape[0] == 1 and second_highest_marginal_interest_df.shape[0] == 0:
-                print(left_prefix + 'Case 4: multiple accts to pay first, and no other accts to pay')
+            payment_amounts = []
+            for i in range(0,delta.shape[0]):
+                loop__amount = delta[i,i]
+                payment_amounts.append(loop__amount)
 
-                return None
+            if amount <= sum(payment_amounts):
+                payment_amounts = [ a * (amount)/sum(payment_amounts) for a in payment_amounts]
+            #print('amount -> remaining_amount:')
+            #print(str(amount) + ' -> ' + str(amount - sum(payment_amounts)))
+            amount = amount - sum(payment_amounts)
 
-            # multiple accts to pay first, and at least 1 other acct to pay
-            elif highest_marginal_interest_df.shape[0] == 1 and second_highest_marginal_interest_df.shape[0] == 0:
-                print(left_prefix + 'Case 5: multiple accts to pay first, and at least 1 other acct to pay')
+            for i in range(0, delta.shape[0]):
+                loop__to_name = principal_accts_df.Name.iloc[i].split(':')[0]
+                loop__amount = round(payment_amounts[i],2)
 
-                return None
+                #print( str( loop__amount ) + ' ' + loop__to_name )
 
+                if loop__amount == 0:
+                    continue
+
+                account_set.executeTransaction(Account_From=None,Account_To=loop__to_name,Amount=loop__amount)
+                payment_amounts__BudgetSet.addBudgetItem(date_string_YYYYMMDD,date_string_YYYYMMDD,7,'once',loop__amount,False,loop__to_name+' additional payment')
+
+        #consolidate payments
+        B = payment_amounts__BudgetSet.getBudgetItems()
+        #print('B:')
+        #print(B.to_string())
+        payment_dict = {}
+        for index, row in B.iterrows():
+            #print('row:')
+            #print(row)
+
+            if row.Memo in payment_dict.keys():
+                payment_dict[row.Memo] = payment_dict[row.Memo] + row.Amount
             else:
-                print('UNDEFINED EDGE CASE IN ExpenseForecast::allocate_loan_payments()')
-                return None
+                payment_dict[row.Memo] = row.Amount
+
+        final_budget_items = []
+        for key in payment_dict.keys():
+            final_budget_items.append(BudgetItem.BudgetItem(date_string_YYYYMMDD,
+                 date_string_YYYYMMDD,
+                 7,
+                 'once',
+                 payment_dict[key],
+                 False,
+                 key,))
+        #print('final_budget_items:')
+        #print(final_budget_items)
+
+        return BudgetSet.BudgetSet(final_budget_items)
+
+
+
+
+
+
+
+
+    # def allocate_loan_payments(self, account_set, amount, date_string_YYYYMMDD, recursion_depth=0, partial_payment_budget_set=None):
+    #     """
+    #     First pass at this does not account for minimum payment amounts
+    #
+    #     returns a budget item for each account implementing the payment
+    #     """
+    #
+    #     left_prefix = '# ' + str(recursion_depth) + ' ' + ('#' * recursion_depth) + ' '
+    #
+    #     debug_header_width = 30
+    #
+    #     print(left_prefix+'Amount'.ljust(debug_header_width,'.')+':'+str(amount))
+    #     if account_set is not None:
+    #         print(left_prefix+'account_set:\n' + account_set.getAccounts().loc[:,['Name','Balance']].to_string())
+    #
+    #     if partial_payment_budget_set is not None:
+    #         print(left_prefix+'partial_payment_budget_set:\n' + partial_payment_budget_set.getBudgetItems().loc[:,['Amount','Memo']].to_string())
+    #
+    #
+    #
+    #     # The Algorithm:
+    #     # if payment amount is larger than grand total, then pay and move on
+    #     # Calculate the marginal interest amounts. Order them greatest to least.
+    #     # All those accounts with rank 1 will for sure be part of this payment. there may be more but we start there.
+    #     # If there is a next account, record that amount of marginal interest.
+    #     # Compute what the balances for the currently considered loans must be in order to imply the corresponding amount of marginal interest.
+    #     # If the total amount needed is greater than the amount, then allocate the current payment between the considered loans in proprotion to their current balances.
+    #     # otherwise, implement a payment of the needed amounts, and recurse with new initial conditions
+    #
+    #     A = account_set.getAccounts()
+    #     principal_accts_df = A[A.Account_Type == 'principal balance']
+    #     interest_accts_df = A[A.Account_Type == 'interest']
+    #
+    #     all_account_names__1 = [ x.split(':') for x in principal_accts_df.Name ]
+    #     all_account_names__2 = [name for sublist in all_account_names__1 for name in sublist]
+    #     all_account_names = set(all_account_names__2) - set([' Principal Balance'])
+    #
+    #     final_payment_amounts__BudgetSet = BudgetSet.BudgetSet([])
+    #
+    #     grand_total_owed = sum(principal_accts_df.Balance) + sum(interest_accts_df.Balance)
+    #     print(left_prefix+'grand_total_owed:'+str(grand_total_owed))
+    #
+    #     if amount > grand_total_owed:
+    #         print(left_prefix + 'Amount is greater than grand total owed. Setting amount equal to grand total')
+    #         amount = grand_total_owed
+    #
+    #     if partial_payment_budget_set is not None:
+    #         #print('partial_payment_budget_set.getBudgetItems():')
+    #         #print(partial_payment_budget_set.getBudgetItems().to_string())
+    #
+    #         grand_total_allocated = sum(partial_payment_budget_set.getBudgetItems().Amount)
+    #
+    #         if sum(partial_payment_budget_set.getBudgetItems().Amount) == amount:
+    #             #algorithm complete!
+    #             return partial_payment_budget_set
+    #         elif sum(partial_payment_budget_set.getBudgetItems().Amount) > amount:
+    #             print(left_prefix+'The allocate_loan_payments algorithm has somehow allocated more than the amount being paid')
+    #             return None
+    #         else:
+    #             print(left_prefix+'Allocated amounts are less than total amount to pay')
+    #             pass
+    #             #continue the recursize algorithm
+    #     else:
+    #         grand_total_allocated = 0
+    #
+    #     total_amount_per_loan = {}
+    #     for acct_name in all_account_names:
+    #
+    #         principal_amt = principal_accts_df.iloc[ [acct_name in pa_element for pa_element in principal_accts_df.Name] , : ].Balance.iloc[0]
+    #         interest_amt = interest_accts_df.iloc[ [acct_name in pa_element for pa_element in principal_accts_df.Name], :].Balance.iloc[0]
+    #
+    #         total_amount_per_loan[acct_name] = principal_amt + interest_amt
+    #
+    #     if amount == grand_total_owed:
+    #         print(left_prefix+'Case 1: The amount to pay is equal to the grand total owed')
+    #         for acct_name in all_account_names:
+    #             print(left_prefix+' adding BudgetItem: '+acct_name+' additional payments '+str(total_amount_per_loan[acct_name]))
+    #             final_payment_amounts__BudgetSet.addBudgetItem(start_date_YYYYMMDD=date_string_YYYYMMDD,
+    #                                                            end_date_YYYYMMDD=date_string_YYYYMMDD,
+    #                                                            priority=7,
+    #                                                             cadence='once',
+    #                                                            amount=total_amount_per_loan[acct_name],
+    #                                                            memo=acct_name+' additional payments',
+    #                                                             deferrable=False)
+    #
+    #             account_set.executeTransaction(Account_From=None, Account_To=acct_name, Amount=total_amount_per_loan[acct_name])
+    #             amount = 0
+    #         return final_payment_amounts__BudgetSet
+    #     else:
+    #         #the amount of the payment is less than the grand total
+    #         principal_accts_df['Marginal Interest'] = [ round(x,2) for x in (principal_accts_df.Balance * principal_accts_df.APR) ]
+    #
+    #         principal_accts_df.sort_values(by='Marginal Interest', inplace=True, ascending=False)
+    #         principal_accts_df['Marginal Interest Rank'] = principal_accts_df['Marginal Interest'].rank(method='dense',ascending=False)
+    #         print(left_prefix+principal_accts_df.loc[:,['Name','APR','Balance','Marginal Interest']].to_string())
+    #
+    #         highest_marginal_interest_df = principal_accts_df[principal_accts_df['Marginal Interest Rank'] == 1]
+    #         second_highest_marginal_interest_df = principal_accts_df[principal_accts_df['Marginal Interest Rank'] == 2]
+    #
+    #         highest_marginal_interest_acct_name = highest_marginal_interest_df.Name.iloc[0].split(':')[0]
+    #         second_highest_marginal_interest_acct_name = second_highest_marginal_interest_df.Name.iloc[0].split(':')[0]
+    #
+    #         #print(highest_marginal_interest_df)
+    #         print(left_prefix+'highest_marginal_interest_acct_name:'+highest_marginal_interest_acct_name)
+    #
+    #         #print(second_highest_marginal_interest_df)
+    #         print(left_prefix+'second_highest_marginal_interest_acct_name:'+second_highest_marginal_interest_acct_name)
+    #
+    #         # if there is only 1 acct to pay first, and 0 accts in second place
+    #         print(left_prefix+'highest_marginal_interest_df.shape[0]:'+str(highest_marginal_interest_df.shape[0]))
+    #         print(left_prefix+'second_highest_marginal_interest_df.shape[0]:'+str(second_highest_marginal_interest_df.shape[0]))
+    #         if highest_marginal_interest_df.shape[0] == 1 and second_highest_marginal_interest_df.shape[0] == 1:
+    #             print(left_prefix+'Case 2: there is only 1 acct to pay first, and 0 accts in second place')
+    #
+    #             P_a = highest_marginal_interest_df.Balance.iloc[0]
+    #             R_a = highest_marginal_interest_df.APR.iloc[0]
+    #
+    #             P_b = second_highest_marginal_interest_df.Balance.iloc[0]
+    #             R_b = second_highest_marginal_interest_df.APR.iloc[0]
+    #
+    #             amount_to_pay = P_a - ( P_b * R_b ) / R_a
+    #
+    #             acct_name = highest_marginal_interest_acct_name
+    #
+    #             #amount_to_pay = min(total_amount_per_loan[highest_marginal_interest_acct_name],amount)
+    #
+    #             final_payment_amounts__BudgetSet.addBudgetItem(start_date_YYYYMMDD=date_string_YYYYMMDD,
+    #                                                            end_date_YYYYMMDD=date_string_YYYYMMDD,
+    #                                                            priority=7,
+    #                                                            cadence='once',
+    #                                                            amount=amount_to_pay,
+    #                                                            memo=acct_name + ' additional payments',
+    #                                                            deferrable=False)
+    #
+    #             print(left_prefix + ' adding BudgetItem: ' + acct_name + ' additional payments ' + str(amount_to_pay))
+    #
+    #             account_set.executeTransaction(Account_From=None,Account_To=acct_name,Amount=amount_to_pay)
+    #             amount = amount - amount_to_pay
+    #
+    #             #the marginal interest amounts should now match
+    #             A = account_set.getAccounts()
+    #             principal_accts_df = A[A.Account_Type == 'principal balance']
+    #
+    #
+    #             recursion_depth = recursion_depth + 1
+    #             final_payment_amounts__BudgetSet = self.allocate_loan_payments(account_set, amount, date_string_YYYYMMDD, recursion_depth, partial_payment_budget_set=final_payment_amounts__BudgetSet)
+    #             return final_payment_amounts__BudgetSet
+    #
+    #         # if there is only 1 acct to pay first, and more than 1 acct in second place
+    #         elif highest_marginal_interest_df.shape[0] == 1 and second_highest_marginal_interest_df.shape[0] > 1:
+    #             print(left_prefix + 'Case 3: there is only 1 acct to pay first, and more than 1 acct in second place')
+    #
+    #             #the min in denominator is just to get a scalar from a vector. all vals are the same
+    #             highest_loan_bifurcation_balance = highest_marginal_interest_df['Marginal Interest'].iloc[0] / min([ x for x in second_highest_marginal_interest_df.APR ])
+    #             print(left_prefix+'highest_loan_bifurcation_balance:'+str(highest_loan_bifurcation_balance))
+    #
+    #             return None
+    #
+    #         # multiple accts to pay first, and no other accts to pay
+    #         elif highest_marginal_interest_df.shape[0] > 1 and second_highest_marginal_interest_df.shape[0] == 0:
+    #             print(left_prefix + 'Case 4: multiple accts to pay first, and no other accts to pay')
+    #
+    #             return None
+    #
+    #         # multiple accts to pay first, and at least 1 other acct to pay
+    #         elif highest_marginal_interest_df.shape[0] > 1 and second_highest_marginal_interest_df.shape[0] > 0:
+    #             print(left_prefix + 'Case 5: multiple accts to pay first, and at least 1 other acct to pay')
+    #
+    #             return None
+    #
+    #         else:
+    #             print('UNDEFINED EDGE CASE IN ExpenseForecast::allocate_loan_payments()')
+    #             return None
 
 
 
@@ -1114,6 +1416,49 @@ class ExpenseForecast:
                 #print('max(forecast_df2[\'Date\']):'+str())
                 #print('')
                 raise e
+        else:
+            overlapping_date_range = set(self.forecast_df['Date']) & set(forecast2_df['Date'])
+            LHS_only_dates = set(self.forecast_df['Date']) - set(forecast2_df['Date'])
+            RHS_only_dates = set(forecast2_df['Date']) - set(self.forecast_df['Date'])
+            if len(overlapping_date_range) == 0:
+                raise ValueError #the date ranges for the forecasts being compared are disjoint
+
+            LHS_columns = self.forecast_df.columns
+            LHS_example_row = pd.DataFrame(self.forecast_df.iloc[0,:]).copy().T
+            LHS_example_row.columns = LHS_columns
+            #print('LHS_example_row:')
+            #print(LHS_example_row.to_string())
+            #print('LHS_example_row.columns:')
+            #print(LHS_example_row.columns)
+            for cname in LHS_example_row.columns:
+                if cname == 'Date':
+                    continue
+                elif cname == 'Memo':
+                    LHS_example_row[cname] = ''
+                else:
+                    LHS_example_row[cname] = float("nan")
+
+            for dt in RHS_only_dates:
+                LHS_zero_row_to_add = LHS_example_row.copy()
+                LHS_zero_row_to_add['Date'] = dt
+                self.forecast_df = pd.concat([LHS_zero_row_to_add, self.forecast_df])
+            self.forecast_df.sort_values(by='Date',inplace=True,ascending=True)
+
+            RHS_example_row = pd.DataFrame(forecast2_df.iloc[0,:]).copy()
+            for cname in RHS_example_row.columns:
+                if cname == 'Date':
+                    continue
+                elif cname == 'Memo':
+                    RHS_example_row[cname] = ''
+                else:
+                    RHS_example_row[cname] = float("nan")
+
+            for dt in LHS_only_dates:
+                RHS_zero_row_to_add = RHS_example_row.copy()
+                RHS_zero_row_to_add['Date'] = dt
+                forecast2_df = pd.concat([RHS_zero_row_to_add, self.forecast_df])
+            forecast2_df.sort_values(by='Date', inplace=True, ascending=True)
+
 
         if diffs_only == True:
             return_df = self.forecast_df[['Date','Memo']].copy()
@@ -1124,11 +1469,11 @@ class ExpenseForecast:
         #print(return_df.columns)
         #print('BEFORE return_df:\n' + return_df.to_string())
 
-        # TODO align date range
         relevant_column_names__set = set(self.forecast_df.columns) - set(['Date','Memo'])
         #print('relevant_column_names__set:'+str(relevant_column_names__set))
+        assert set(self.forecast_df.columns) == set(forecast2_df)
         for c in relevant_column_names__set:
-            new_column_name = c+' (Diff) '
+            new_column_name = str(c)+' (Diff) '
             #print('new_column_name:'+str(new_column_name))
             res = pd.DataFrame( forecast2_df[c] - self.forecast_df[c] )
             #res = forecast2_df[c].sub(self.forecast_df[c])
