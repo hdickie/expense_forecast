@@ -65,7 +65,7 @@ class BudgetSet:
 
         :return: DataFrame
         """
-        all_budget_items_df = pd.DataFrame({'Start_Date': [], 'End_Date': [], 'Priority': [], 'Cadence': [], 'Amount': [],
+        all_budget_items_df = pd.DataFrame({'Start_Date': [], 'End_Date': [], 'Priority': [], 'Cadence': [], 'Amount': [], 'Deferrable': [],
                                         'Memo': []
                                         })
 
@@ -75,10 +75,21 @@ class BudgetSet:
                                                'Priority': [budget_item.priority],
                                                'Cadence': [budget_item.cadence],
                                                'Amount': [budget_item.amount],
+                                                'Deferrable': [budget_item.deferrable],
                                                'Memo': [budget_item.memo]
                                                })
 
-            all_budget_items_df = pd.concat([all_budget_items_df, new_budget_item_row_df], axis=0)
+
+            #print('all_budget_items_df:')
+            #print(all_budget_items_df.to_string())
+            #print('new_budget_item_row_df:')
+            #print(new_budget_item_row_df.to_string())
+
+            if (all_budget_items_df.empty) & (not new_budget_item_row_df.empty):
+                all_budget_items_df = new_budget_item_row_df
+
+            if (not all_budget_items_df.empty) & (not new_budget_item_row_df.empty):
+                all_budget_items_df = pd.concat([all_budget_items_df, new_budget_item_row_df], axis=0)
             all_budget_items_df.reset_index(drop=True, inplace=True)
 
         return all_budget_items_df
@@ -95,11 +106,11 @@ class BudgetSet:
         :return:
         """
 
-        print('getBudgetSchedule():')
-        print('self.budget_items:')
-        print(self.budget_items)
+        #print('getBudgetSchedule():')
+        #print('self.budget_items:')
+        #print(self.budget_items)
 
-        current_budget_schedule = pd.DataFrame({'Date':[],'Priority':[],'Amount':[],'Memo':[]})
+        current_budget_schedule = pd.DataFrame({'Date':[],'Priority':[],'Amount':[],'Deferrable':[],'Memo':[]})
         end_date = datetime.datetime.strptime(str(end_date_YYYYMMDD),'%Y%m%d')
         for budget_item in self.budget_items:
             relative_num_days = (end_date - budget_item.start_date).days
@@ -107,10 +118,10 @@ class BudgetSet:
 
             relevant_date_sequence_df = pd.DataFrame(relevant_date_sequence)
             relevant_date_sequence_df = relevant_date_sequence_df.rename(columns={0:"Date"})
-            current_item_cols_df = pd.DataFrame((budget_item.priority, budget_item.amount, budget_item.memo)).T
+            current_item_cols_df = pd.DataFrame((budget_item.priority, budget_item.amount, budget_item.deferrable, budget_item.memo)).T
 
             current_item_cols_df = current_item_cols_df.rename(columns=
-                {0: "Priority", 1: "Amount", 2: "Memo"})
+                {0: "Priority", 1: "Amount", 2: "Deferrable", 3: "Memo"})
 
             new_budget_schedule_rows_df = relevant_date_sequence_df.merge(current_item_cols_df, how="cross")
 

@@ -18,9 +18,64 @@ BEGIN_GREEN = f"{Fore.GREEN}"
 BEGIN_YELLOW = f"{Fore.YELLOW}"
 BEGIN_BLUE = f"{Fore.BLUE}"
 BEGIN_MAGENTA = f"{Fore.MAGENTA}"
-BEGON_WHITE = f"{Fore.WHITE}"
+BEGIN_WHITE = f"{Fore.WHITE}"
 BEGIN_CYAN = f"{Fore.CYAN}"
 RESET_COLOR = f"{Style.RESET_ALL}"
+
+import logging
+logger = logging.getLogger('Expense_Forecast')
+logger.setLevel(logging.DEBUG)
+
+# create console handler and set level to debug
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+
+# create formatter
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+# add formatter to ch
+ch.setFormatter(formatter)
+
+# add ch to logger
+logger = logging.getLogger()
+
+def log_in_color(color,level,msg,stack_depth=0):
+
+    if stack_depth == 0:
+        left_prefix = ''
+    else:
+        left_prefix = ' '
+    left_prefix = left_prefix.ljust(stack_depth*4,'#') + ' '
+
+
+    if color.lower() == 'red':
+        msg = BEGIN_RED + left_prefix + msg + RESET_COLOR
+    elif color.lower() == 'green':
+        msg = BEGIN_GREEN + left_prefix + msg + RESET_COLOR
+    elif color.lower() == 'yellow':
+        msg = BEGIN_YELLOW + left_prefix + msg + RESET_COLOR
+    elif color.lower() == 'blue':
+        msg = BEGIN_BLUE + left_prefix + msg + RESET_COLOR
+    elif color.lower() == 'magenta':
+        msg = BEGIN_MAGENTA + left_prefix + msg + RESET_COLOR
+    elif color.lower() == 'white':
+        msg = BEGIN_WHITE + left_prefix + msg + RESET_COLOR
+    elif color.lower() == 'cyan':
+        msg = BEGIN_CYAN + left_prefix + msg + RESET_COLOR
+
+    if level == 'debug':
+        logger.debug(msg)
+    elif level == 'warning':
+        logger.warning(msg)
+    elif level == 'error':
+        logger.error(msg)
+    elif level == 'info':
+        logger.info(msg)
+    elif level == 'critical':
+        logger.critical(msg)
+    else:
+        print(msg)
+
 
 
 def generate_date_sequence(start_date_YYYYMMDD,num_days,cadence):
@@ -178,6 +233,7 @@ class ExpenseForecast:
         self.initial_memo_rule_set = memo_rule_set
 
         self.forecast_df = self.getInitialForecastRow()
+        self.deferred_df = None
 
         #this method already has access to these: account_set, budget_set, memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD
         self.computeForecast()
@@ -310,8 +366,9 @@ class ExpenseForecast:
         return initial_forecast_row_df
 
     def executeTransactionsForDay(self,budget_schedule_df,account_set,memo_set,current_forecast_row_df):
-        print(BEGIN_GREEN + 'executeTransactionsForDay(date='+str(current_forecast_row_df.Date.iloc[0])+')' + RESET_COLOR)
-        print(BEGIN_GREEN + budget_schedule_df.to_string() + RESET_COLOR)
+        #print(BEGIN_GREEN + 'executeTransactionsForDay(date='+str(current_forecast_row_df.Date.iloc[0])+')' + RESET_COLOR)
+        #print(BEGIN_GREEN + budget_schedule_df.to_string() + RESET_COLOR)
+        log_in_color('green','debug','executeTransactionsForDay(date='+str(current_forecast_row_df.Date.iloc[0])+')',0)
         #making minimum payments should be determined by memo rules instead of hard-coded as checking
         # try:
         #     print('budget_schedule_df:\n'+budget_schedule_df.to_string())
@@ -327,67 +384,12 @@ class ExpenseForecast:
         # except Exception as e:
         #     pass
 
-        #todo infer non-negotiable credit and loan payments from the account set
-
-        #the branch logic here assumes the sort order of accounts in account list
         A = account_set.getAccounts()
-
-        for index, row in A.iterrows():
-            if pd.isnull(row.Billing_Start_Dt):
-                continue
-            #print(BEGIN_GREEN + row.to_string() + RESET_COLOR)
-            # print('current_forecast_row_df.Date - row.Billing_Start_Dt:')
-            # print('current_forecast_row_df.Date:')
-            # print(current_forecast_row_df.Date)
-            # print('row.Billing_Start_Dt:')
-            # print(row.Billing_Start_Dt)
-
-            num_days = (datetime.datetime.strptime(current_forecast_row_df.Date.iloc[0],'%Y-%m-%d') - row.Billing_Start_Dt).days
-            billing_days = set(generate_date_sequence(row.Billing_Start_Dt.strftime('%Y%m%d'), num_days, row.Interest_Cadence))
-            # print('current_forecast_row_df.Date.iloc[0]:')
-            # print(current_forecast_row_df.Date.iloc[0])
-            # print('row.Billing_Start_Dt.strftime(%Y-%m-%d):')
-            # print(row.Billing_Start_Dt.strftime('%Y-%m-%d'))
-            if current_forecast_row_df.Date.iloc[0] == row.Billing_Start_Dt.strftime('%Y-%m-%d'):
-                billing_days = set(current_forecast_row_df.Date).union(billing_days)
-            if current_forecast_row_df.Date.iloc[0] in billing_days:
-                #print(row)
-                if row.Account_Type == 'prev stmt bal': #cc min payment
-
-                    minimum_payment_amount = max(40,row.Balance*0.02)
-                    current_forecast_row_df.Memo += row.Name.split(':')[0] + ' cc min payment ; '
-
-                elif row.Account_Type == 'interest': #loan min payment
-
-                    minimum_payment_amount = A.loc[index - 1,:].Balance
-                    current_forecast_row_df.Memo += row.Name.split(':')[0] + ' loan min payment ; '
-
-                if row.Account_Type == 'prev stmt bal' or row.Account_Type == 'interest':
-
-                    payment_toward_prev = min(minimum_payment_amount, row.Balance)
-                    payment_toward_curr = min(A.loc[index - 1, :].Balance, minimum_payment_amount - payment_toward_prev)
-                    surplus_payment = minimum_payment_amount - (payment_toward_prev + payment_toward_curr)
-
-                    if payment_toward_prev > 0:
-                        account_set.executeTransaction(Account_From='Checking', Account_To=row.Name.split(':')[0], Amount=payment_toward_prev)
-                        print(BEGIN_MAGENTA + ' Min Payment: Paid ' + str(payment_toward_prev) + ' on ' + str(A.loc[index - 1, :].Name.split(':')[0]) + ' Curr Stmt Bal' + RESET_COLOR)
-                    else:
-                        print(BEGIN_MAGENTA + ' Min Payment: Paid 0 on ' +str(row.Name.split(':')[0]+ ' Prev Stmt Bal') + RESET_COLOR)
-                        pass
-
-                    if payment_toward_curr > 0:
-                        account_set.executeTransaction(Account_From='Checking', Account_To=A.loc[index - 1,:].Name.split(':')[0], Amount=payment_toward_curr)
-                        print(BEGIN_MAGENTA + ' Min Payment: Paid '+str(payment_toward_curr)+' on ' + str(A.loc[index - 1, :].Name.split(':')[0]) + ' Curr Stmt Bal' + RESET_COLOR)
-                    else:
-                        print(BEGIN_MAGENTA + ' Min Payment: Paid 0 on ' + str(A.loc[index - 1,:].Name.split(':')[0]) + ' Curr Stmt Bal' + RESET_COLOR)
-                        pass
-
 
         # This makes sure that Income is considered first
         budget_schedule_df.sort_values(by='Amount',inplace=True,ascending=False)
 
         deferred_transactions = []
-
         for index, row in budget_schedule_df.iterrows():
             found_matching_memo_rule = False
             for index2, row2 in memo_set.getMemoRules().iterrows():
@@ -399,11 +401,37 @@ class ExpenseForecast:
                     pass # no match
 
                 if found_matching_memo_rule:
+                    m_cc = re.search('additional cc payment',row2.Memo_Regex)
+                    try:
+                        m_cc.group(0)
+                        additional_cc_payment = True
+                    except:
+                        pass  # no match
+
+                    m_loan = re.search('additional loan payment', row2.Memo_Regex)
+                    try:
+                        m_loan.group(0)
+                        additional_loan_payment = True
+                    except:
+                        pass  # no match
+
 
                     #todo make sure not violating account boundaries
                     #account_boundaries_are_violated(accounts_df,forecast_df)
 
-                    if row.Amount > 0:
+                    available_balances = account_set.getAvailableBalances()
+                    assert row2.Account_From in available_balances.keys()
+
+                    if row.Amount > available_balances[row2.Account_From]:
+                        if row.Deferrable is False:
+                            pass #amount was too much and not deferrable, so we just ignore it #todo log this
+                        else:
+                            row.Date = row.Date + 1
+                            if self.deferred_df is None:
+                                self.deferred_df = row
+                            else:
+                                self.deferred_df = pd.concat([self.deferred_df,row])
+                    elif row.Amount > 0:
                         account_set.executeTransaction(row2.Account_From,row2.Account_To,row.Amount)
 
                     current_forecast_row_df.Memo += row.Memo + ' ; '
@@ -540,6 +568,80 @@ class ExpenseForecast:
                 #print(current_forecast_row_df.to_string())
                 return current_forecast_row_df
 
+    def executeMinimumPayments(self,account_set,current_forecast_row_df):
+
+        log_in_color('green', 'debug',
+                     'BEGIN executeMinimumPayments()',
+                     1)
+
+        # the branch logic here assumes the sort order of accounts in account list
+        A = account_set.getAccounts()
+
+        for index, row in A.iterrows():
+            if pd.isnull(row.Billing_Start_Dt):
+                continue
+            # print(BEGIN_GREEN + row.to_string() + RESET_COLOR)
+            # print('current_forecast_row_df.Date - row.Billing_Start_Dt:')
+            # print('current_forecast_row_df.Date:')
+            # print(current_forecast_row_df.Date)
+            # print('row.Billing_Start_Dt:')
+            # print(row.Billing_Start_Dt)
+
+            num_days = (datetime.datetime.strptime(current_forecast_row_df.Date.iloc[0],
+                                                   '%Y-%m-%d') - row.Billing_Start_Dt).days
+            billing_days = set(
+                generate_date_sequence(row.Billing_Start_Dt.strftime('%Y%m%d'), num_days, row.Interest_Cadence))
+            # print('current_forecast_row_df.Date.iloc[0]:')
+            # print(current_forecast_row_df.Date.iloc[0])
+            # print('row.Billing_Start_Dt.strftime(%Y-%m-%d):')
+            # print(row.Billing_Start_Dt.strftime('%Y-%m-%d'))
+            if current_forecast_row_df.Date.iloc[0] == row.Billing_Start_Dt.strftime('%Y-%m-%d'):
+                billing_days = set(current_forecast_row_df.Date).union(billing_days)
+            if current_forecast_row_df.Date.iloc[0] in billing_days:
+                # print(row)
+                if row.Account_Type == 'prev stmt bal':  # cc min payment
+
+                    minimum_payment_amount = max(40, row.Balance * 0.02)
+                    current_forecast_row_df.Memo += row.Name.split(':')[0] + ' cc min payment ; '
+
+                elif row.Account_Type == 'interest':  # loan min payment
+
+                    minimum_payment_amount = A.loc[index - 1, :].Balance
+                    current_forecast_row_df.Memo += row.Name.split(':')[0] + ' loan min payment ; '
+
+                if row.Account_Type == 'prev stmt bal' or row.Account_Type == 'interest':
+
+                    payment_toward_prev = min(minimum_payment_amount, row.Balance)
+                    payment_toward_curr = min(A.loc[index - 1, :].Balance, minimum_payment_amount - payment_toward_prev)
+                    surplus_payment = minimum_payment_amount - (payment_toward_prev + payment_toward_curr)
+
+                    if payment_toward_prev > 0:
+                        account_set.executeTransaction(Account_From='Checking', Account_To=row.Name.split(':')[0],
+                                                       Amount=payment_toward_prev)
+                        log_in_color('magenta', 'debug',
+                                     'Min Payment: Paid ' + str(payment_toward_prev) + ' on ' + str(A.loc[index - 1, :].Name.split(':')[0]) + ' Curr Stmt Bal',
+                                     3)
+                    else:
+                        log_in_color('magenta', 'debug',
+                                     'Min Payment: Paid 0 on ' + str(row.Name.split(':')[0]) + ' Prev Stmt Bal',
+                                     3)
+                        pass
+
+                    if payment_toward_curr > 0:
+                        account_set.executeTransaction(Account_From='Checking',
+                                                       Account_To=A.loc[index - 1, :].Name.split(':')[0],
+                                                       Amount=payment_toward_curr)
+                        #print(BEGIN_MAGENTA + ' Min Payment: Paid ' + str(payment_toward_curr) + ' on ' + str(A.loc[index - 1, :].Name.split(':')[0]) + ' Curr Stmt Bal' + RESET_COLOR)
+                    else:
+                        #print(BEGIN_MAGENTA + ' Min Payment: Paid 0 on ' + str(A.loc[index - 1, :].Name.split(':')[0]) + ' Curr Stmt Bal' + RESET_COLOR)
+                        pass
+        log_in_color('green', 'debug',
+                     'END  executeMinimumPayments()',
+                     1)
+
+        return current_forecast_row_df
+
+
     def computeForecast(self):
         """
         Computes output time-series that represents only non-negotiable spend.
@@ -549,7 +651,7 @@ class ExpenseForecast:
         :param memo_rules_df:
         :return:
         """
-
+        log_in_color('green', 'debug', 'BEGIN computeForecast()', 0)
         #this method will execute all budgetitems given to it. If account boudnaries are violated, it is because
         #the input provided was not properly vetted
 
@@ -557,8 +659,8 @@ class ExpenseForecast:
         initial_forecast_row_df = self.getInitialForecastRow()
         numdays = (self.end_date - self.start_date).days  # TODO assert upstream that end date is after start date, or include numdays as a obj var
         budget_schedule_df = self.initial_budget_set.getBudgetSchedule(self.start_date.strftime('%Y%m%d'), self.end_date.strftime('%Y%m%d'))
-        print('budget_schedule_df:')
-        print(budget_schedule_df.to_string())
+        #print('budget_schedule_df:')
+        #print(budget_schedule_df.to_string())
 
         memo_set = self.initial_memo_rule_set # this never changes
         account_set = self.initial_account_set
@@ -586,13 +688,19 @@ class ExpenseForecast:
           current_row_df.Memo = ''
 
           this_days_budget_schedule_df = budget_schedule_df.loc[budget_schedule_df.Date == d,:]
-          print('this_days_budget_schedule_df:')
-          print(this_days_budget_schedule_df.to_string())
+
+          for line in this_days_budget_schedule_df.to_string().split('\n'):
+            log_in_color('cyan', 'debug',line,1)
+
+          new_forecast_row_df = self.executeMinimumPayments(account_set,current_row_df)
 
           #print('this_days_budget_schedule_df:'+str(this_days_budget_schedule_df))
           #print('Running executeTransactionsForDay() for '+str(d))
           #print(current_row_df.to_string())
-          new_forecast_row_df = self.executeTransactionsForDay( this_days_budget_schedule_df, account_set, memo_set,current_row_df) #returns only a forecast row w updated memo
+
+          # returns only a forecast row w updated memo, but does update self.deferred_items
+          new_forecast_row_df = self.executeTransactionsForDay( this_days_budget_schedule_df, account_set, memo_set,current_row_df)
+
           #print('Running calculateInterestAccrualsForDay() for '+str(d))
           #print(new_forecast_row_df.to_string())
           new_forecast_row_df = self.calculateInterestAccrualsForDay( account_set,new_forecast_row_df ) #returns only a forecast row w updated memo
@@ -600,28 +708,31 @@ class ExpenseForecast:
           forecast_df = pd.concat([forecast_df,new_forecast_row_df])
           previous_row_df = new_forecast_row_df
 
+          #add deferred items to budget schedule, set deferred items to None
+          budget_schedule_df = pd.concat([budget_schedule_df,self.deferred_df])
+          self.deferred_df = None
+
         forecast_df.reset_index(drop=True,inplace=True)
         #print('forecast_df:')
         #print(forecast_df.to_string())
-
+        log_in_color('green', 'debug', 'END   computeForecast()', 0)
         try:
             assert min(forecast_df.Date) == self.start_date.strftime('%Y-%m-%d') #computeForecast() did not include the first day as specified
         except Exception as e:
             print(e)
-            print('self.start_date:'+str(self.start_date.strftime('%Y-%m-%d')))
-            print('min(forecast_df.Date):'+str(min(forecast_df.Date)))
+            #print('self.start_date:'+str(self.start_date.strftime('%Y-%m-%d')))
+            #print('min(forecast_df.Date):'+str(min(forecast_df.Date)))
             raise e
 
         try:
             assert max(forecast_df.Date) == self.end_date.strftime('%Y-%m-%d') #computeForecast() did not include the last day as specified
         except Exception as e:
             print(e)
-            print('self.end_date:'+str(self.end_date.strftime('%Y%m%d')))
-            print('max(forecast_df.Date):'+str(max(forecast_df.Date)))
+            #print('self.end_date:'+str(self.end_date.strftime('%Y%m%d')))
+            #print('max(forecast_df.Date):'+str(max(forecast_df.Date)))
             raise e
 
         self.forecast_df = forecast_df
-        self.deferred_df = None
 
         # index_of_checking_column = forecast_df.columns.tolist().index('Checking')
         # index_of_memo_column = forecast_df.columns.tolist().index('Memo')
@@ -1189,17 +1300,17 @@ class ExpenseForecast:
 
         memo_rules_df = self.initial_memo_rule_set.getMemoRules()
 
-        print('ENTER computeOptimalForecast()')
+        #print('ENTER computeOptimalForecast()')
         unique_priority_indices = updated_budget_schedule_df.Priority.unique()
         for priority_index in unique_priority_indices:
 
             for budget_item_index, budget_item_row in updated_budget_schedule_df.iterrows():
-                print(budget_item_row)
+                #print(budget_item_row)
 
                 found_matching_regex = False
                 transaction_was_executed = False
                 relevant_memo_rules_rows_df = memo_rules_df[memo_rules_df.transaction_priority == priority_index]
-                print(relevant_memo_rules_rows_df)
+                #print(relevant_memo_rules_rows_df)
                 for memo_rules_index, memo_rules_row in relevant_memo_rules_rows_df.iterrows():
 
                     memo_regex_match = re.search(memo_rules_row.memo_regex, budget_item_row.Memo)
@@ -1208,7 +1319,7 @@ class ExpenseForecast:
                         # do stuff
 
                         row_w_date_of_proposed_transaction = forecast_df[forecast_df.Date == budget_item_row.Date]
-                        print(row_w_date_of_proposed_transaction)
+                        #print(row_w_date_of_proposed_transaction)
 
                         # todo computeOptimalForecast():: the decision has to be made whether or not to execute the transaction
 
@@ -1277,29 +1388,12 @@ class ExpenseForecast:
 
                     #account initial balances must match the first row of the forecast that we submit
 
-                    print(account_set_df)
-                    print(row_w_date_of_proposed_transaction)
+                    #print(account_set_df)
+                    #print(row_w_date_of_proposed_transaction)
 
                     #memo rules are the same
 
                     recomputed_forecast_rows_df = self.computeForecast(only_future_budget_schedule_df, account_set_df, memo_rules_df)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
         return forecast_df

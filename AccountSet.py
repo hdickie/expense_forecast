@@ -10,6 +10,8 @@ BEGIN_RED = f"{Fore.RED}"
 BEGIN_CYAN = f"{Fore.CYAN}"
 RESET_COLOR = f"{Style.RESET_ALL}"
 
+from ExpenseForecast import log_in_color
+
 class AccountSet:
 
     #TODO passing this without arguments caused accounts__list to get values from some older scope. Therefore, AccountSet() doesn't work as expected.
@@ -388,8 +390,25 @@ class AccountSet:
                                       raise_exceptions=raise_exceptions)
             self.accounts.append(account)
 
-    def executeTransaction(self, Account_From, Account_To, Amount):
+    def getAvailableBalances(self):
 
+        balances_dict = {}
+        for i in range(0,len(self.accounts)):
+            a = self.accounts[i]
+            if a.account_type == 'checking':
+                balances_dict[a.name] = a.balance
+            elif a.account_type == 'prev stmt bal':
+                prev_balance = a.balance
+                curr_balance = self.accounts[i-1].balance
+
+                remaining_prev_balance = a.max_balance - ( prev_balance + curr_balance )
+                balances_dict[a.name.split(':')[0]] = remaining_prev_balance
+            else:
+                pass
+                #raise NotImplementedError
+        return balances_dict
+
+    def executeTransaction(self, Account_From, Account_To, Amount):
         debug_print__AF=Account_From
         debug_print__AT=Account_To
         debug_print_Amount=str(Amount)
@@ -398,7 +417,7 @@ class AccountSet:
 
         if Account_To is None:
             debug_print__AT = 'None'
-        print(BEGIN_CYAN+'executeTransaction(Account_From='+debug_print__AF+', Account_To='+debug_print__AT+', Amount='+debug_print_Amount+')'+RESET_COLOR)
+        log_in_color('green', 'debug','BEGIN executeTransaction(Account_From='+debug_print__AF+', Account_To='+debug_print__AT+', Amount='+debug_print_Amount+')', 2)
 
         #determine account type. there will be 1 or 2 matches depending on account type. 1 => no interest , 2 => interest
         account_base_names = [ x.split(':')[0] for x in self.getAccounts().Name ]
@@ -464,6 +483,10 @@ class AccountSet:
                         self.accounts[account_to_index + 1].balance -= Amount
                 else:
                     raise NotImplementedError #from types other than checking or credit not yet implemented
+
+        log_in_color('green', 'debug',
+                     'END   executeTransaction(Account_From=' + debug_print__AF + ', Account_To=' + debug_print__AT + ', Amount=' + debug_print_Amount + ')',
+                     2)
 
 
     def getAccounts(self):

@@ -767,7 +767,8 @@ class TestExpenseForecastMethods(unittest.TestCase):
             #print('Running Forecast #'+str(i))
 
             if i == 8:
-                print(BEGIN_YELLOW + '#############################################' + RESET_COLOR)
+                #print(BEGIN_YELLOW + '#############################################' + RESET_COLOR)
+                pass
 
             try:
                 expense_forecasts.append(ExpenseForecast.ExpenseForecast(account_sets[i],
