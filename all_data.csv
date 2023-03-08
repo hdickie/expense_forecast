@@ -1,4 +1,4 @@
-Date,Checking,Loan: Principal Balance,Loan: Interest
-2000-01-01,0.0,1000.0,0.0
-2000-01-02,0.0,1000.1368925393566,0.0
-2000-01-03,0.0,1000.2738038182805,0.0
+Date,Checking,Credit: Curr Stmt Bal,Credit: Prev Stmt Bal
+2000-01-01,2000.0,0.0,0.0
+2000-01-02,2000.0,0.0,0.0
+2000-01-03,2000.0,0.0,0.0

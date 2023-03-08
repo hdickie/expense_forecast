@@ -154,7 +154,7 @@ class BudgetItem:
     def __str__(self):
         single_budget_item_df = pd.DataFrame({
             'Start_Date': [self.start_date],
-            'Etart_Date': [self.end_date],
+            'End_Date': [self.end_date],
             'Priority': [self.priority],
             'Cadence': [self.cadence],
             'Amount': [self.amount],

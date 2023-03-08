@@ -94,6 +94,11 @@ class BudgetSet:
         :param num_days:
         :return:
         """
+
+        print('getBudgetSchedule():')
+        print('self.budget_items:')
+        print(self.budget_items)
+
         current_budget_schedule = pd.DataFrame({'Date':[],'Priority':[],'Amount':[],'Memo':[]})
         end_date = datetime.datetime.strptime(str(end_date_YYYYMMDD),'%Y%m%d')
         for budget_item in self.budget_items:

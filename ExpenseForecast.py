@@ -8,6 +8,20 @@ import copy
 
 import BudgetSet, BudgetItem
 
+from colorama import init as colorama_init
+from colorama import Fore
+from colorama import Style
+colorama_init()
+
+BEGIN_RED = f"{Fore.RED}"
+BEGIN_GREEN = f"{Fore.GREEN}"
+BEGIN_YELLOW = f"{Fore.YELLOW}"
+BEGIN_BLUE = f"{Fore.BLUE}"
+BEGIN_MAGENTA = f"{Fore.MAGENTA}"
+BEGON_WHITE = f"{Fore.WHITE}"
+BEGIN_CYAN = f"{Fore.CYAN}"
+RESET_COLOR = f"{Style.RESET_ALL}"
+
 
 def generate_date_sequence(start_date_YYYYMMDD,num_days,cadence):
     """ A wrapper for pd.date_range intended to make code easier to read.
@@ -163,31 +177,38 @@ class ExpenseForecast:
         self.initial_budget_set = budget_set
         self.initial_memo_rule_set = memo_rule_set
 
-        self.forecast_df = pd.DataFrame({
-            'Date':['20000101','20000102','20000103','20000104'],
-            'Checking': [0,0,0,0],
-            'Credit: Curr Stmt Bal': [0,0,0,0],
-            'Credit: Prev Stmt Bal': [0,0,0,0],
-            'Memo':['','','','']
-        })
+        self.forecast_df = self.getInitialForecastRow()
 
         #this method already has access to these: account_set, budget_set, memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD
-        deffered_and_forecast__list = self.computeForecast()
+        self.computeForecast()
 
-        assert(min(self.forecast_df.Date) == start_date_YYYYMMDD) #specified first day of forecast did not match
-        #print('max(self.forecast_df.Date)'+str(max(self.forecast_df.Date)))
-        #print('end_date_YYYYMMDD:'+str(end_date_YYYYMMDD))
-        assert (max(self.forecast_df.Date) == end_date_YYYYMMDD) #specified last day of forecast did not match
+        #print('self.forecast_df:')
+        #print(self.forecast_df.to_string())
 
-        self.deferred_df = deffered_and_forecast__list[0]
-        self.forecast_df = deffered_and_forecast__list[1]
+        try:
+            assert(min(self.forecast_df.Date) == self.start_date.strftime('%Y-%m-%d')) #specified first day of forecast did not match
+        except AssertionError as e:
+            print('min(self.forecast_df.Date):' + str(min(self.forecast_df.Date)))
+            print('self.start_date.strftime(%Y-%m-%d):' + self.start_date.strftime('%Y-%m-%d'))
+            raise e
+
+        try:
+            assert (max(self.forecast_df.Date) == self.end_date.strftime('%Y-%m-%d')) #specified last day of forecast did not match
+        except AssertionError as e:
+            if max(self.forecast_df.Date) > self.end_date.strftime('%Y-%m-%d'):
+                print('max forecast date is past the specified end date')
+            else:
+                print('max forecast date is before the specified end date')
+            print('max(self.forecast_df.Date):' + str(max(self.forecast_df.Date)))
+            print('self.end_date.strftime(%Y-%m-%d):' + self.end_date.strftime('%Y-%m-%d'))
+            raise e
 
         self.forecast_df.index = self.forecast_df['Date']
 
         #write all_data.csv
-        self.forecast_df.iloc[:,0:(self.forecast_df.shape[1]-1)].to_csv('all_data.csv',index=False)
+        #self.forecast_df.iloc[:,0:(self.forecast_df.shape[1]-1)].to_csv('all_data.csv',index=False)
 
-        self.forecast_df.to_csv('out.csv', index=False)
+        #self.forecast_df.to_csv('out.csv', index=False)
 
     def account_boundaries_are_violated(self,accounts_df,forecast_df):
         """
@@ -289,7 +310,8 @@ class ExpenseForecast:
         return initial_forecast_row_df
 
     def executeTransactionsForDay(self,budget_schedule_df,account_set,memo_set,current_forecast_row_df):
-
+        print(BEGIN_GREEN + 'executeTransactionsForDay(date='+str(current_forecast_row_df.Date.iloc[0])+')' + RESET_COLOR)
+        print(BEGIN_GREEN + budget_schedule_df.to_string() + RESET_COLOR)
         #making minimum payments should be determined by memo rules instead of hard-coded as checking
         # try:
         #     print('budget_schedule_df:\n'+budget_schedule_df.to_string())
@@ -305,13 +327,68 @@ class ExpenseForecast:
         # except Exception as e:
         #     pass
 
+        #todo infer non-negotiable credit and loan payments from the account set
+
+        #the branch logic here assumes the sort order of accounts in account list
+        A = account_set.getAccounts()
+
+        for index, row in A.iterrows():
+            if pd.isnull(row.Billing_Start_Dt):
+                continue
+            #print(BEGIN_GREEN + row.to_string() + RESET_COLOR)
+            # print('current_forecast_row_df.Date - row.Billing_Start_Dt:')
+            # print('current_forecast_row_df.Date:')
+            # print(current_forecast_row_df.Date)
+            # print('row.Billing_Start_Dt:')
+            # print(row.Billing_Start_Dt)
+
+            num_days = (datetime.datetime.strptime(current_forecast_row_df.Date.iloc[0],'%Y-%m-%d') - row.Billing_Start_Dt).days
+            billing_days = set(generate_date_sequence(row.Billing_Start_Dt.strftime('%Y%m%d'), num_days, row.Interest_Cadence))
+            # print('current_forecast_row_df.Date.iloc[0]:')
+            # print(current_forecast_row_df.Date.iloc[0])
+            # print('row.Billing_Start_Dt.strftime(%Y-%m-%d):')
+            # print(row.Billing_Start_Dt.strftime('%Y-%m-%d'))
+            if current_forecast_row_df.Date.iloc[0] == row.Billing_Start_Dt.strftime('%Y-%m-%d'):
+                billing_days = set(current_forecast_row_df.Date).union(billing_days)
+            if current_forecast_row_df.Date.iloc[0] in billing_days:
+                #print(row)
+                if row.Account_Type == 'prev stmt bal': #cc min payment
+
+                    minimum_payment_amount = max(40,row.Balance*0.02)
+                    current_forecast_row_df.Memo += row.Name.split(':')[0] + ' cc min payment ; '
+
+                elif row.Account_Type == 'interest': #loan min payment
+
+                    minimum_payment_amount = A.loc[index - 1,:].Balance
+                    current_forecast_row_df.Memo += row.Name.split(':')[0] + ' loan min payment ; '
+
+                if row.Account_Type == 'prev stmt bal' or row.Account_Type == 'interest':
+
+                    payment_toward_prev = min(minimum_payment_amount, row.Balance)
+                    payment_toward_curr = min(A.loc[index - 1, :].Balance, minimum_payment_amount - payment_toward_prev)
+                    surplus_payment = minimum_payment_amount - (payment_toward_prev + payment_toward_curr)
+
+                    if payment_toward_prev > 0:
+                        account_set.executeTransaction(Account_From='Checking', Account_To=row.Name.split(':')[0], Amount=payment_toward_prev)
+                        print(BEGIN_MAGENTA + ' Min Payment: Paid ' + str(payment_toward_prev) + ' on ' + str(A.loc[index - 1, :].Name.split(':')[0]) + ' Curr Stmt Bal' + RESET_COLOR)
+                    else:
+                        print(BEGIN_MAGENTA + ' Min Payment: Paid 0 on ' +str(row.Name.split(':')[0]+ ' Prev Stmt Bal') + RESET_COLOR)
+                        pass
+
+                    if payment_toward_curr > 0:
+                        account_set.executeTransaction(Account_From='Checking', Account_To=A.loc[index - 1,:].Name.split(':')[0], Amount=payment_toward_curr)
+                        print(BEGIN_MAGENTA + ' Min Payment: Paid '+str(payment_toward_curr)+' on ' + str(A.loc[index - 1, :].Name.split(':')[0]) + ' Curr Stmt Bal' + RESET_COLOR)
+                    else:
+                        print(BEGIN_MAGENTA + ' Min Payment: Paid 0 on ' + str(A.loc[index - 1,:].Name.split(':')[0]) + ' Curr Stmt Bal' + RESET_COLOR)
+                        pass
+
+
         # This makes sure that Income is considered first
         budget_schedule_df.sort_values(by='Amount',inplace=True,ascending=False)
 
         deferred_transactions = []
 
         for index, row in budget_schedule_df.iterrows():
-
             found_matching_memo_rule = False
             for index2, row2 in memo_set.getMemoRules().iterrows():
                 m = re.search(row2.Memo_Regex,row.Memo)
@@ -323,7 +400,11 @@ class ExpenseForecast:
 
                 if found_matching_memo_rule:
 
-                    account_set.executeTransaction(row2.Account_From,row2.Account_To,row.Amount)
+                    #todo make sure not violating account boundaries
+                    #account_boundaries_are_violated(accounts_df,forecast_df)
+
+                    if row.Amount > 0:
+                        account_set.executeTransaction(row2.Account_From,row2.Account_To,row.Amount)
 
                     current_forecast_row_df.Memo += row.Memo + ' ; '
                     break #stop looking for matching memo rules
@@ -335,7 +416,6 @@ class ExpenseForecast:
         #at this point, memo has been updated, but balances are stale
         updated_balances = account_set.getAccounts().Balance
         for i in range(0,updated_balances.shape[0]):
-            pass
             current_forecast_row_df.iloc[0,i+1] = updated_balances[i]
 
         #returns a single forecast row with updated memo
@@ -369,17 +449,17 @@ class ExpenseForecast:
                 #print(current_forecast_row_df.to_string())
 
                 if row.Interest_Type.lower() == 'compound' and row.Interest_Cadence.lower() == 'yearly':
-                    print('CASE 1 : Compound, Monthly')
+                    #print('CASE 1 : Compound, Monthly')
 
                     raise NotImplementedError
 
                 elif row.Interest_Type.lower() == 'compound' and row.Interest_Cadence.lower() == 'quarterly':
-                    print('CASE 2 : Compound, Quarterly')
+                    #print('CASE 2 : Compound, Quarterly')
 
                     raise NotImplementedError
 
                 elif row.Interest_Type.lower() == 'compound' and row.Interest_Cadence.lower() == 'monthly':
-                    print('CASE 3 : Compound, Monthly')
+                    #print('CASE 3 : Compound, Monthly')
 
                     accrued_interest = row.APR * row.Balance / 12
                     account_set.accounts[account_index].balance += accrued_interest
@@ -387,69 +467,66 @@ class ExpenseForecast:
                     # move curr stmt bal to previous
                     prev_stmt_balance = account_set.accounts[account_index - 1].balance
 
-                    prev_acct_name = account_set.accounts[account_index - 1].name
-                    curr_acct_name = account_set.accounts[account_index].name
+                    # prev_acct_name = account_set.accounts[account_index - 1].name
+                    # curr_acct_name = account_set.accounts[account_index].name
                     # print('current account name:' + str(curr_acct_name))
                     # print('prev_acct_name:'+str(prev_acct_name))
                     # print('prev_stmt_balance:'+str(prev_stmt_balance))
                     account_set.accounts[account_index].balance += prev_stmt_balance
+                    account_set.accounts[account_index].balance = round(account_set.accounts[account_index].balance,2)
                     account_set.accounts[account_index - 1].balance = 0
 
                     updated_balances = account_set.getAccounts().Balance
                     for i in range(0, updated_balances.shape[0]):
-                        current_forecast_row_df.iloc[0, i + 1] = updated_balances[i]
+                        current_forecast_row_df.iloc[0, i + 1] = round(updated_balances[i],2)
                     # returns a single forecast row (memo is updated externally)
                     return current_forecast_row_df
 
                 elif row.Interest_Type.lower() == 'compound' and row.Interest_Cadence.lower() == 'semiweekly':
-                    print('CASE 4 : Compound, Semiweekly')
+                    #print('CASE 4 : Compound, Semiweekly')
 
                     raise NotImplementedError # Compound, Semiweekly
 
                 elif row.Interest_Type.lower() == 'compound' and row.Interest_Cadence.lower() == 'weekly':
-                    print('CASE 5 : Compound, Weekly')
+                    #print('CASE 5 : Compound, Weekly')
 
                     raise NotImplementedError # Compound, Weekly
 
                 elif row.Interest_Type.lower() == 'compound' and row.Interest_Cadence.lower() == 'daily':
-                    print('CASE 6 : Compound, Daily')
+                    #print('CASE 6 : Compound, Daily')
 
                     raise NotImplementedError # Compound, Daily
 
                 elif row.Interest_Type.lower() == 'simple' and row.Interest_Cadence.lower() == 'yearly':
-                    print('CASE 7 : Simple, Monthly')
+                    #print('CASE 7 : Simple, Monthly')
 
                     raise NotImplementedError # Simple, Monthly
 
                 elif row.Interest_Type.lower() == 'simple' and row.Interest_Cadence.lower() == 'quarterly':
-                    print('CASE 8 : Simple, Quarterly')
+                    #print('CASE 8 : Simple, Quarterly')
 
                     raise NotImplementedError # Simple, Quarterly
 
                 elif row.Interest_Type.lower() == 'simple' and row.Interest_Cadence.lower() == 'monthly':
-                    print('CASE 9 : Simple, Monthly')
+                    #print('CASE 9 : Simple, Monthly')
 
                     raise NotImplementedError # Simple, Monthly
 
                 elif row.Interest_Type.lower() == 'simple' and row.Interest_Cadence.lower() == 'semiweekly':
-                    print('CASE 10 : Simple, Semiweekly')
+                    #print('CASE 10 : Simple, Semiweekly')
 
                     raise NotImplementedError # Simple, Semiweekly
 
                 elif row.Interest_Type.lower() == 'simple' and row.Interest_Cadence.lower() == 'weekly':
-                    print('CASE 11 : Simple, Weekly')
+                    #print('CASE 11 : Simple, Weekly')
 
                     raise NotImplementedError # Simple, Weekly
 
                 elif row.Interest_Type.lower() == 'simple' and row.Interest_Cadence.lower() == 'daily':
-                    print('CASE 12 : Simple, Daily')
+                    #print('CASE 12 : Simple, Daily')
 
                     accrued_interest = row.APR * row.Balance / 365.25
-                    account_set.accounts[account_index].balance += accrued_interest
-
-
-
-                    account_index += 1
+                    account_set.accounts[account_index + 1].balance += round(accrued_interest,2) #this is the interest account
 
                     updated_balances = account_set.getAccounts().Balance
                     for i in range(0, updated_balances.shape[0]):
@@ -459,8 +536,7 @@ class ExpenseForecast:
                     return current_forecast_row_df
 
             else:
-                #print('There were no interest bearing items for this day')
-                #print('returning this row:')
+                #('There were no interest bearing items for this day')
                 #print(current_forecast_row_df.to_string())
                 return current_forecast_row_df
 
@@ -468,12 +544,6 @@ class ExpenseForecast:
         """
         Computes output time-series that represents only non-negotiable spend.
 
-        | Test Cases
-        | Expected Successes
-        | S1: ... #todo refactor ExpenseForecast.computeForecast() doctest S1 to use _S1 label
-        |
-        | Expected Fails
-        | F1 ... #todo refactor ExpenseForecast.computeForecast() doctest F1 to use _F1 label
         :param budget_schedule_df:
         :param account_set_df:
         :param memo_rules_df:
@@ -487,6 +557,8 @@ class ExpenseForecast:
         initial_forecast_row_df = self.getInitialForecastRow()
         numdays = (self.end_date - self.start_date).days  # TODO assert upstream that end date is after start date, or include numdays as a obj var
         budget_schedule_df = self.initial_budget_set.getBudgetSchedule(self.start_date.strftime('%Y%m%d'), self.end_date.strftime('%Y%m%d'))
+        print('budget_schedule_df:')
+        print(budget_schedule_df.to_string())
 
         memo_set = self.initial_memo_rule_set # this never changes
         account_set = self.initial_account_set
@@ -514,19 +586,23 @@ class ExpenseForecast:
           current_row_df.Memo = ''
 
           this_days_budget_schedule_df = budget_schedule_df.loc[budget_schedule_df.Date == d,:]
+          print('this_days_budget_schedule_df:')
+          print(this_days_budget_schedule_df.to_string())
 
           #print('this_days_budget_schedule_df:'+str(this_days_budget_schedule_df))
+          #print('Running executeTransactionsForDay() for '+str(d))
+          #print(current_row_df.to_string())
           new_forecast_row_df = self.executeTransactionsForDay( this_days_budget_schedule_df, account_set, memo_set,current_row_df) #returns only a forecast row w updated memo
-          print('Running calculateInterestAccrualsForDay() for '+str(d))
+          #print('Running calculateInterestAccrualsForDay() for '+str(d))
+          #print(new_forecast_row_df.to_string())
           new_forecast_row_df = self.calculateInterestAccrualsForDay( account_set,new_forecast_row_df ) #returns only a forecast row w updated memo
-          print(new_forecast_row_df.to_string())
-
+          #print(new_forecast_row_df.to_string())
           forecast_df = pd.concat([forecast_df,new_forecast_row_df])
           previous_row_df = new_forecast_row_df
 
         forecast_df.reset_index(drop=True,inplace=True)
-        print('forecast_df:')
-        print(forecast_df.to_string())
+        #print('forecast_df:')
+        #print(forecast_df.to_string())
 
         try:
             assert min(forecast_df.Date) == self.start_date.strftime('%Y-%m-%d') #computeForecast() did not include the first day as specified
@@ -544,7 +620,8 @@ class ExpenseForecast:
             print('max(forecast_df.Date):'+str(max(forecast_df.Date)))
             raise e
 
-        deferred_past_end_date_budget_items_df = Nonewo
+        self.forecast_df = forecast_df
+        self.deferred_df = None
 
         # index_of_checking_column = forecast_df.columns.tolist().index('Checking')
         # index_of_memo_column = forecast_df.columns.tolist().index('Memo')
@@ -726,7 +803,6 @@ class ExpenseForecast:
         # updated_budget_schedule_df.reset_index(inplace=True, drop=True)
 
         #account_set_df is returned unchanged. we depend on optimize logic to not violate boundaries by checking the forecast
-        return [deferred_past_end_date_budget_items_df, forecast_df]
 
     def decide__defer_or_execute_or_skip(self,budget_schedule_item_df,account_set_df,forecast_df):
         """
@@ -1372,11 +1448,11 @@ class ExpenseForecast:
         self.forecast_df.reset_index(inplace=True,drop=True)
         forecast2_df.reset_index(inplace=True,drop=True)
 
+        # print('compute_forecast_difference()')
         # print('self.forecast_df:')
-        # print(self.forecast_df)
-        # print('')
+        # print(self.forecast_df.to_string())
         # print('forecast2_df:')
-        # print(forecast2_df)
+        # print(forecast2_df.to_string())
 
         #return_type in ['dataframe','html','both']
         #make

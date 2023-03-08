@@ -1,6 +1,15 @@
 import Account, pandas as pd
 import logging
 
+from colorama import init as colorama_init
+from colorama import Fore
+from colorama import Style
+colorama_init()
+
+BEGIN_RED = f"{Fore.RED}"
+BEGIN_CYAN = f"{Fore.CYAN}"
+RESET_COLOR = f"{Style.RESET_ALL}"
+
 class AccountSet:
 
     #TODO passing this without arguments caused accounts__list to get values from some older scope. Therefore, AccountSet() doesn't work as expected.
@@ -380,9 +389,16 @@ class AccountSet:
             self.accounts.append(account)
 
     def executeTransaction(self, Account_From, Account_To, Amount):
-        pass
-        AF = ''
-        AT = ''
+
+        debug_print__AF=Account_From
+        debug_print__AT=Account_To
+        debug_print_Amount=str(Amount)
+        if Account_From is None:
+            debug_print__AF = 'None'
+
+        if Account_To is None:
+            debug_print__AT = 'None'
+        print(BEGIN_CYAN+'executeTransaction(Account_From='+debug_print__AF+', Account_To='+debug_print__AT+', Amount='+debug_print_Amount+')'+RESET_COLOR)
 
         #determine account type. there will be 1 or 2 matches depending on account type. 1 => no interest , 2 => interest
         account_base_names = [ x.split(':')[0] for x in self.getAccounts().Name ]

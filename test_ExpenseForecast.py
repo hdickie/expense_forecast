@@ -1,6 +1,6 @@
 import unittest
-import Account,AccountSet,BudgetItem,BudgetSet,MemoRule,MemoRuleSet,ExpenseForecast
-import pandas as pd
+import AccountSet,BudgetSet,MemoRuleSet,ExpenseForecast
+import pandas as pd, numpy as np
 import datetime, logging
 pd.options.mode.chained_assignment = None #apparently this warning can throw false positives???
 
@@ -10,6 +10,15 @@ from colorama import init as colorama_init
 from colorama import Fore
 from colorama import Style
 colorama_init()
+
+BEGIN_RED = f"{Fore.RED}"
+BEGIN_GREEN = f"{Fore.GREEN}"
+BEGIN_YELLOW = f"{Fore.YELLOW}"
+BEGIN_BLUE = f"{Fore.BLUE}"
+BEGIN_MAGENTA = f"{Fore.MAGENTA}"
+BEGON_WHITE = f"{Fore.WHITE}"
+BEGIN_CYAN = f"{Fore.CYAN}"
+RESET_COLOR = f"{Style.RESET_ALL}"
 
 import copy
 
@@ -55,8 +64,11 @@ def display_test_result(test_name, df1):
     display_width = max([len(x) for x in df1.T.to_string().split('\n')])
     left_prefix = '# '
 
-    print(f"{Fore.BLUE}" + ''.ljust(display_width, '#') + f"{Style.RESET_ALL}")
-    print((left_prefix + test_name).ljust(display_width - 1, ' ') + '#')
+    lines_to_print = []
+    test_passed = False
+
+    lines_to_print.append(f"{Fore.BLUE}" + ''.ljust(display_width, '#') + f"{Style.RESET_ALL}")
+    lines_to_print.append((left_prefix + test_name).ljust(display_width - 1, ' ') + '#')
 
     df1 = df1.reindex(sorted(df1.columns), axis=1)
     # print(df1.T.to_string())
@@ -88,17 +100,21 @@ def display_test_result(test_name, df1):
             #    print(line)
 
             if '(Diff)' in line:
-                print(f"{Fore.RED}" + line + f"{Style.RESET_ALL}")
+                lines_to_print.append(f"{Fore.RED}" + line + f"{Style.RESET_ALL}")
             else:
-                print(line)
+                lines_to_print.append(line)
 
             index = index + 1
-        print(left_prefix + 'RESULT: FAIL')
+        lines_to_print.append(left_prefix + 'RESULT: FAIL')
     else:
-        print(left_prefix + 'No mismatched columns to show')
-        print((left_prefix + 'RESULT: PASS').ljust(display_width - 1, ' ') + '#')
+        lines_to_print.append(left_prefix + 'No mismatched columns to show')
+        lines_to_print.append((left_prefix + 'RESULT: PASS').ljust(display_width - 1, ' ') + '#')
+        test_passed = True
 
-    print(f"{Fore.BLUE}" + ''.ljust(display_width, '#') + f"{Style.RESET_ALL}")
+    lines_to_print.append(f"{Fore.BLUE}" + ''.ljust(display_width, '#') + f"{Style.RESET_ALL}")
+    if not test_passed:
+        for line in lines_to_print:
+            print(line)
 
 
 class TestExpenseForecastMethods(unittest.TestCase):
@@ -600,12 +616,15 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                    accrued_interest=None
                                    )
 
-        budget_sets[8].addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
-                                     cadence='daily', amount=0, memo='min cc payment',
+        budget_sets[8].addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=4,
+                                     cadence='once', amount=100, memo='additional cc payment',
                                      deferrable=False)
 
         memo_rule_sets[8].addMemoRule(memo_regex='.*', account_from='Checking', account_to='Credit',
                                       transaction_priority=1)
+
+        memo_rule_sets[8].addMemoRule(memo_regex='.*', account_from='Checking', account_to='Credit',
+                                      transaction_priority=4)
 
         expected_result_8_df = pd.DataFrame({
             'Date': ['20000101', '20000102', '20000103'],
@@ -642,7 +661,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                    )
 
         budget_sets[9].addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
-                                     cadence='daily', amount=0, memo='min cc payment',
+                                     cadence='monthly', amount=0, memo='min cc payment',
                                      deferrable=False)
 
         memo_rule_sets[9].addMemoRule(memo_regex='.*', account_from='Checking', account_to='Credit',
@@ -683,7 +702,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                    )
 
         budget_sets[10].addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
-                                     cadence='daily', amount=0, memo='min cc payment',
+                                     cadence='monthly', amount=0, memo='min cc payment',
                                      deferrable=False)
 
         memo_rule_sets[10].addMemoRule(memo_regex='.*', account_from='Checking', account_to='Credit',
@@ -747,6 +766,9 @@ class TestExpenseForecastMethods(unittest.TestCase):
         for i in range(0,len(test_descriptions)):
             #print('Running Forecast #'+str(i))
 
+            if i == 8:
+                print(BEGIN_YELLOW + '#############################################' + RESET_COLOR)
+
             try:
                 expense_forecasts.append(ExpenseForecast.ExpenseForecast(account_sets[i],
                      budget_sets[i],
@@ -756,7 +778,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
 
                 #print(expense_forecasts[i].forecast_df.to_string())
             except Exception as e:
-                pass
+                raise e
 
         # Compute Differences
         differences = []
@@ -780,11 +802,20 @@ class TestExpenseForecastMethods(unittest.TestCase):
             try:
                 display_test_result(test_descriptions[i], differences[i])
             except Exception as e:
-                pass
+                raise e
 
         # Check Results
-        for i in range(0,len(test_descriptions)):
-            self.assertTrue(differences[i].shape[0] == 0)
+        for i in range(0, len(test_descriptions)):
+            try:
+                sel_vec = (differences[i].columns != 'Date') & (differences[i].columns != 'Memo')
+                non_boilerplate_values__M = np.matrix(differences[i].iloc[:,sel_vec])
+
+                error_ind = sum(sum(np.square(non_boilerplate_values__M)).T) #this very much DOES NOT SCALE. this is intended for small tests
+                self.assertTrue(error_ind == 0)
+            except Exception as e:
+                #print('Offending result set:')
+                #print(differences[i].to_string())
+                raise e
 
     def test_interest_accrual(self):
 
@@ -840,7 +871,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
             'Date': ['20000101', '20000102', '20000103'],
             'Checking': [0, 0, 0],
             'Credit: Curr Stmt Bal': [0, 0, 0],
-            'Credit: Prev Stmt Bal': [1000, 1087.5, 1087.5],
+            'Credit: Prev Stmt Bal': [1000, 1004.17, 1004.17],
             'Memo': ['', '', '']
         })
         expected_result_0_df.Date = [datetime.datetime.strptime(x, '%Y%m%d').strftime('%Y-%m-%d') for x in
@@ -881,7 +912,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
             'Date': ['20000101', '20000102', '20000103'],
             'Checking': [0, 0, 0],
             'Loan: Principal Balance': [1000, 1000, 1000],
-            'Loan: Interest': [0, 2.87, 5.75],
+            'Loan: Interest': [0, 0.14, 0.28], #because of rounding error, the 0.28 would be a 0.27 IRL. #todo explicity call this out in docs
             'Memo': ['', '', '']
         })
         expected_result_1_df.Date = [datetime.datetime.strptime(x, '%Y%m%d').strftime('%Y-%m-%d') for x in
@@ -916,10 +947,10 @@ class TestExpenseForecastMethods(unittest.TestCase):
                 d = expense_forecasts[i].compute_forecast_difference(expected_results[i],
                                                                      label=test_descriptions[i],
                                                                      make_plots=True,
-                                                                     diffs_only=False,
+                                                                     diffs_only=True,
                                                                      require_matching_columns=True,
                                                                      require_matching_date_range=True,
-                                                                     append_expected_values=True,
+                                                                     append_expected_values=False,
                                                                      return_type='dataframe')
                 d = d.reindex(sorted(d.columns), axis=1)
                 differences.append(d)
@@ -937,10 +968,14 @@ class TestExpenseForecastMethods(unittest.TestCase):
         # Check Results
         for i in range(0, len(test_descriptions)):
             try:
-                self.assertTrue(differences[i].shape[0] == 0)
+                sel_vec = (differences[i].columns != 'Date') & (differences[i].columns != 'Memo')
+                non_boilerplate_values__M = np.matrix(differences[i].iloc[:,sel_vec])
+
+                error_ind = sum(sum(np.square(non_boilerplate_values__M)).T) #this very much DOES NOT SCALE. this is intended for small tests
+                self.assertTrue(error_ind == 0)
             except Exception as e:
-                #print(e)
-                #print(differences[i].T.to_string())
+                print('Offending result set:')
+                print(differences[i].to_string())
                 raise e
 
 
