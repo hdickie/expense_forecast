@@ -23,21 +23,19 @@ BEGIN_CYAN = f"{Fore.CYAN}"
 RESET_COLOR = f"{Style.RESET_ALL}"
 
 import logging
-logger = logging.getLogger('Expense_Forecast')
+
+format = '%(asctime)s - %(name)s - %(levelname)-8s - %(message)s'
+formatter = logging.Formatter(format)
+ch = logging.StreamHandler()
+ch.setFormatter(formatter)
+ch.setLevel(logging.DEBUG)
+logger = logging.getLogger(__name__)
+logger.propagate = False
+logger.handlers.clear()
+logger.addHandler(ch)
+
 logger.setLevel(logging.DEBUG)
 
-# create console handler and set level to debug
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-
-# create formatter
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-# add formatter to ch
-ch.setFormatter(formatter)
-
-# add ch to logger
-logger = logging.getLogger()
 
 def log_in_color(color,level,msg,stack_depth=0):
 
@@ -45,7 +43,7 @@ def log_in_color(color,level,msg,stack_depth=0):
         left_prefix = ''
     else:
         left_prefix = ' '
-    left_prefix = left_prefix.ljust(stack_depth*4,'#') + ' '
+    left_prefix = left_prefix.ljust(stack_depth*4,' ') + ' '
 
 
     if color.lower() == 'red':
@@ -76,7 +74,9 @@ def log_in_color(color,level,msg,stack_depth=0):
     else:
         print(msg)
 
-
+print('Pre log test')
+logger.debug('log test')
+log_in_color('green','debug','color Log Test',0)
 
 def generate_date_sequence(start_date_YYYYMMDD,num_days,cadence):
     """ A wrapper for pd.date_range intended to make code easier to read.
@@ -368,7 +368,10 @@ class ExpenseForecast:
     def executeTransactionsForDay(self,budget_schedule_df,account_set,memo_set,current_forecast_row_df):
         #print(BEGIN_GREEN + 'executeTransactionsForDay(date='+str(current_forecast_row_df.Date.iloc[0])+')' + RESET_COLOR)
         #print(BEGIN_GREEN + budget_schedule_df.to_string() + RESET_COLOR)
-        log_in_color('green','debug','executeTransactionsForDay(date='+str(current_forecast_row_df.Date.iloc[0])+')',0)
+        log_in_color('green','debug','BEGIN executeTransactionsForDay(date='+str(current_forecast_row_df.Date.iloc[0])+')',1)
+
+        for line in budget_schedule_df.to_string().split('\n'):
+            log_in_color('cyan','debug',line,2)
         #making minimum payments should be determined by memo rules instead of hard-coded as checking
         # try:
         #     print('budget_schedule_df:\n'+budget_schedule_df.to_string())
@@ -446,6 +449,8 @@ class ExpenseForecast:
         for i in range(0,updated_balances.shape[0]):
             current_forecast_row_df.iloc[0,i+1] = updated_balances[i]
 
+        log_in_color('green', 'debug',
+                     'END   executeTransactionsForDay(date=' + str(current_forecast_row_df.Date.iloc[0]) + ')', 1)
         #returns a single forecast row with updated memo
         return current_forecast_row_df
 
@@ -570,9 +575,7 @@ class ExpenseForecast:
 
     def executeMinimumPayments(self,account_set,current_forecast_row_df):
 
-        log_in_color('green', 'debug',
-                     'BEGIN executeMinimumPayments()',
-                     1)
+
 
         # the branch logic here assumes the sort order of accounts in account list
         A = account_set.getAccounts()
@@ -580,6 +583,7 @@ class ExpenseForecast:
         for index, row in A.iterrows():
             if pd.isnull(row.Billing_Start_Dt):
                 continue
+
             # print(BEGIN_GREEN + row.to_string() + RESET_COLOR)
             # print('current_forecast_row_df.Date - row.Billing_Start_Dt:')
             # print('current_forecast_row_df.Date:')
@@ -598,6 +602,9 @@ class ExpenseForecast:
             if current_forecast_row_df.Date.iloc[0] == row.Billing_Start_Dt.strftime('%Y-%m-%d'):
                 billing_days = set(current_forecast_row_df.Date).union(billing_days)
             if current_forecast_row_df.Date.iloc[0] in billing_days:
+                log_in_color('green', 'debug',
+                             'BEGIN executeMinimumPayments()',
+                             1)
                 # print(row)
                 if row.Account_Type == 'prev stmt bal':  # cc min payment
 
@@ -615,29 +622,13 @@ class ExpenseForecast:
                     payment_toward_curr = min(A.loc[index - 1, :].Balance, minimum_payment_amount - payment_toward_prev)
                     surplus_payment = minimum_payment_amount - (payment_toward_prev + payment_toward_curr)
 
-                    if payment_toward_prev > 0:
-                        account_set.executeTransaction(Account_From='Checking', Account_To=row.Name.split(':')[0],
-                                                       Amount=payment_toward_prev)
-                        log_in_color('magenta', 'debug',
-                                     'Min Payment: Paid ' + str(payment_toward_prev) + ' on ' + str(A.loc[index - 1, :].Name.split(':')[0]) + ' Curr Stmt Bal',
-                                     3)
-                    else:
-                        log_in_color('magenta', 'debug',
-                                     'Min Payment: Paid 0 on ' + str(row.Name.split(':')[0]) + ' Prev Stmt Bal',
-                                     3)
-                        pass
+                    if (payment_toward_prev + payment_toward_curr) > 0:
+                        account_set.executeTransaction(Account_From='Checking', Account_To=row.Name.split(':')[0], #Note that the execute transaction method will split the amount paid between the 2 accounts
+                                                       Amount=(payment_toward_prev+payment_toward_curr))
+                log_in_color('green', 'debug',
+                             'END  executeMinimumPayments()',
+                             1)
 
-                    if payment_toward_curr > 0:
-                        account_set.executeTransaction(Account_From='Checking',
-                                                       Account_To=A.loc[index - 1, :].Name.split(':')[0],
-                                                       Amount=payment_toward_curr)
-                        #print(BEGIN_MAGENTA + ' Min Payment: Paid ' + str(payment_toward_curr) + ' on ' + str(A.loc[index - 1, :].Name.split(':')[0]) + ' Curr Stmt Bal' + RESET_COLOR)
-                    else:
-                        #print(BEGIN_MAGENTA + ' Min Payment: Paid 0 on ' + str(A.loc[index - 1, :].Name.split(':')[0]) + ' Curr Stmt Bal' + RESET_COLOR)
-                        pass
-        log_in_color('green', 'debug',
-                     'END  executeMinimumPayments()',
-                     1)
 
         return current_forecast_row_df
 
@@ -689,8 +680,11 @@ class ExpenseForecast:
 
           this_days_budget_schedule_df = budget_schedule_df.loc[budget_schedule_df.Date == d,:]
 
-          for line in this_days_budget_schedule_df.to_string().split('\n'):
-            log_in_color('cyan', 'debug',line,1)
+          # for line in this_days_budget_schedule_df.to_string().split('\n'):
+          #   log_in_color('cyan', 'debug',line,0)
+          # log_in_color('cyan', 'debug', '###########################################################################################################################', 0)
+          # for line in account_set.getAccounts().to_string().split('\n'):
+          #   log_in_color('cyan', 'debug',line,0)
 
           new_forecast_row_df = self.executeMinimumPayments(account_set,current_row_df)
 
@@ -699,7 +693,11 @@ class ExpenseForecast:
           #print(current_row_df.to_string())
 
           # returns only a forecast row w updated memo, but does update self.deferred_items
-          new_forecast_row_df = self.executeTransactionsForDay( this_days_budget_schedule_df, account_set, memo_set,current_row_df)
+          # print('this_days_budget_schedule_df:')
+          # print(this_days_budget_schedule_df.to_string())
+          # print('this_days_budget_schedule_df.empty:'+str(this_days_budget_schedule_df.empty))
+          if not this_days_budget_schedule_df.empty:
+            new_forecast_row_df = self.executeTransactionsForDay( this_days_budget_schedule_df, account_set, memo_set,current_row_df)
 
           #print('Running calculateInterestAccrualsForDay() for '+str(d))
           #print(new_forecast_row_df.to_string())

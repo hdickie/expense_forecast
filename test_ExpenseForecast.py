@@ -4,21 +4,12 @@ import pandas as pd, numpy as np
 import datetime, logging
 pd.options.mode.chained_assignment = None #apparently this warning can throw false positives???
 
-logging.getLogger(__name__).disabled = True
-
 from colorama import init as colorama_init
 from colorama import Fore
 from colorama import Style
 colorama_init()
 
-BEGIN_RED = f"{Fore.RED}"
-BEGIN_GREEN = f"{Fore.GREEN}"
-BEGIN_YELLOW = f"{Fore.YELLOW}"
-BEGIN_BLUE = f"{Fore.BLUE}"
-BEGIN_MAGENTA = f"{Fore.MAGENTA}"
-BEGON_WHITE = f"{Fore.WHITE}"
-BEGIN_CYAN = f"{Fore.CYAN}"
-RESET_COLOR = f"{Style.RESET_ALL}"
+from ExpenseForecast import log_in_color
 
 import copy
 
@@ -767,8 +758,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
             #print('Running Forecast #'+str(i))
 
             if i == 8:
-                #print(BEGIN_YELLOW + '#############################################' + RESET_COLOR)
-                pass
+                log_in_color('yellow','debug','###########################################################################################################')
 
             try:
                 expense_forecasts.append(ExpenseForecast.ExpenseForecast(account_sets[i],
