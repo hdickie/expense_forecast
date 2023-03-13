@@ -13,12 +13,78 @@ logging.getLogger().addHandler(ch)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 logger.info("HI")
-print('A')
+
+
+from colorama import init as colorama_init
+from colorama import Fore
+from colorama import Style
+colorama_init()
+
 
 if __name__ == '__main__':
     logger.info('This is a debug message')
 
-    print('C')
+    account_set = AccountSet.AccountSet([])
+    budget_set = BudgetSet.BudgetSet([])
+    memo_rule_set = MemoRuleSet.MemoRuleSet([])
+    start_date_YYYYMMDD = '20000101'
+    end_date_YYYYMMDD = '20000103'
+
+    account_set.addAccount(name='Checking',
+                               balance=200,
+                               min_balance=0,
+                               max_balance=float('Inf'),
+                               account_type="checking")
+
+    account_set.addAccount(name='Credit',
+                               balance=500,
+                               min_balance=0,
+                               max_balance=20000,
+                               account_type="credit",
+                               billing_start_date_YYYYMMDD='20000102',
+                               interest_type='Compound',
+                               apr=0.05,
+                               interest_cadence='Monthly',
+                               minimum_payment=40,
+                               previous_statement_balance=500,
+                               principal_balance=None,
+                               accrued_interest=None
+                               )
+
+    budget_set.addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
+                                 cadence='monthly', amount=0, memo='additional cc payment test 9',
+                                 deferrable=False)
+
+    memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1)
+
+    expected_result_df = pd.DataFrame({
+        'Date': ['20000101', '20000102', '20000103'],
+        'Checking': [200, 0, 0],
+        'Credit: Curr Stmt Bal': [500, 500, 500],
+        'Credit: Prev Stmt Bal': [500, 300, 300],
+        'Memo': ['', '', '']
+    })
+    expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d').strftime('%Y-%m-%d') for x in
+                                 expected_result_df.Date]
+
+    E = ExpenseForecast.ExpenseForecast(account_set,
+                     budget_set,
+                     memo_rule_set,
+                     start_date_YYYYMMDD,
+                     end_date_YYYYMMDD)
+
+    R = E.compute_forecast_difference(expected_result_df,
+                                                              label='scratch test',
+                                                              make_plots=False,
+                                                              diffs_only=True,
+                                                                    require_matching_columns=True,
+                                                                    require_matching_date_range=True,
+                                                                    append_expected_values=False,
+                                                              return_type='dataframe')
+
+    print('R:')
+    print(R.to_string())
+    display_test_result('scratch test display_test_result()',R)
 
     # test_descriptions = []
     # test_descriptions.append('scratch test 1')

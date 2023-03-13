@@ -45,38 +45,35 @@ def log_in_color(color,level,msg,stack_depth=0):
         left_prefix = ' '
     left_prefix = left_prefix.ljust(stack_depth*4,' ') + ' '
 
+    for line in msg.split('\n'):
 
-    if color.lower() == 'red':
-        msg = BEGIN_RED + left_prefix + msg + RESET_COLOR
-    elif color.lower() == 'green':
-        msg = BEGIN_GREEN + left_prefix + msg + RESET_COLOR
-    elif color.lower() == 'yellow':
-        msg = BEGIN_YELLOW + left_prefix + msg + RESET_COLOR
-    elif color.lower() == 'blue':
-        msg = BEGIN_BLUE + left_prefix + msg + RESET_COLOR
-    elif color.lower() == 'magenta':
-        msg = BEGIN_MAGENTA + left_prefix + msg + RESET_COLOR
-    elif color.lower() == 'white':
-        msg = BEGIN_WHITE + left_prefix + msg + RESET_COLOR
-    elif color.lower() == 'cyan':
-        msg = BEGIN_CYAN + left_prefix + msg + RESET_COLOR
+        if color.lower() == 'red':
+            line = BEGIN_RED + left_prefix + line + RESET_COLOR
+        elif color.lower() == 'green':
+            line = BEGIN_GREEN + left_prefix + line + RESET_COLOR
+        elif color.lower() == 'yellow':
+            line = BEGIN_YELLOW + left_prefix + line + RESET_COLOR
+        elif color.lower() == 'blue':
+            line = BEGIN_BLUE + left_prefix + line + RESET_COLOR
+        elif color.lower() == 'magenta':
+            line = BEGIN_MAGENTA + left_prefix + line + RESET_COLOR
+        elif color.lower() == 'white':
+            line = BEGIN_WHITE + left_prefix + line + RESET_COLOR
+        elif color.lower() == 'cyan':
+            line = BEGIN_CYAN + left_prefix + line + RESET_COLOR
 
-    if level == 'debug':
-        logger.debug(msg)
-    elif level == 'warning':
-        logger.warning(msg)
-    elif level == 'error':
-        logger.error(msg)
-    elif level == 'info':
-        logger.info(msg)
-    elif level == 'critical':
-        logger.critical(msg)
-    else:
-        print(msg)
-
-print('Pre log test')
-logger.debug('log test')
-log_in_color('green','debug','color Log Test',0)
+        if level == 'debug':
+            logger.debug(line)
+        elif level == 'warning':
+            logger.warning(line)
+        elif level == 'error':
+            logger.error(line)
+        elif level == 'info':
+            logger.info(line)
+        elif level == 'critical':
+            logger.critical(line)
+        else:
+            print(line)
 
 def generate_date_sequence(start_date_YYYYMMDD,num_days,cadence):
     """ A wrapper for pd.date_range intended to make code easier to read.
@@ -266,59 +263,64 @@ class ExpenseForecast:
 
         #self.forecast_df.to_csv('out.csv', index=False)
 
-    def account_boundaries_are_violated(self,accounts_df,forecast_df):
-        """
-        account_boundaries_are_violated single-line description
 
-        #todo ExpenseForecast.account_boundaries_are_violated() doctests
-        | Test Cases
-        | Expected Successes
-        | S1: ... #todo refactor ExpenseForecast.account_boundaries_are_violated() doctest S1 to use _S1 label
-        |
-        | Expected Fails
-        | F1 ... #todo refactor ExpenseForecast.account_boundaries_are_violated() doctest F1 to use _F1 label
+    #
+    # def account_boundaries_are_violated(self,accounts_df,forecast_df):
+    #     """
+    #     account_boundaries_are_violated single-line description
+    #
+    #     #todo ExpenseForecast.account_boundaries_are_violated() doctests
+    #     | Test Cases
+    #     | Expected Successes
+    #     | S1: ... #todo refactor ExpenseForecast.account_boundaries_are_violated() doctest S1 to use _S1 label
+    #     |
+    #     | Expected Fails
+    #     | F1 ... #todo refactor ExpenseForecast.account_boundaries_are_violated() doctest F1 to use _F1 label
+    #
+    #     :param accounts_df:
+    #     :param forecast_df:
+    #     :return:
+    #     """
+    #     for col_name in forecast_df.columns.tolist():
+    #         if col_name == 'Date' or col_name == 'Memo':
+    #             continue
+    #
+    #         current_column = forecast_df[col_name]
+    #
+    #         acct_boundary__min = float(accounts_df.loc[accounts_df.Name == col_name,'Min_Balance'])
+    #         acct_boundary__max = float(accounts_df.loc[accounts_df.Name == col_name, 'Max_Balance'])
+    #
+    #         min_in_forecast_for_acct = min(current_column)
+    #         max_in_forecast_for_acct = max(current_column)
+    #
+    #         try:
+    #             # print(current_column)
+    #             # print('min_in_forecast_for_acct:'+str(min_in_forecast_for_acct))
+    #             # print('max_in_forecast_for_acct:' + str(max_in_forecast_for_acct))
+    #             # print('acct_boundary__min:' + str(acct_boundary__min))
+    #             # print('acct_boundary__max:' + str(acct_boundary__max))
+    #             # print('')
+    #             # print('')
+    #
+    #             assert float(min_in_forecast_for_acct) >= float(acct_boundary__min)
+    #             assert float(max_in_forecast_for_acct) <= float(acct_boundary__max)
+    #
+    #         except Exception as e:
+    #
+    #             offending_rows__min = forecast_df[current_column < acct_boundary__min]
+    #             offending_rows__max = forecast_df[current_column > acct_boundary__max]
+    #
+    #             # print(e)
+    #             # print('Account Boundary Violation for '+str(col_name)+' in ExpenseForecast.account_boundaries_are_violated()')
+    #             # print('Offending Rows: Minimum')
+    #             # print(offending_rows__min.to_string())
+    #             # print('Offending Rows: Maximum')
+    #             # print(offending_rows__max.to_string())
+    #             return True
+    #     return False
+    #
+    #
 
-        :param accounts_df:
-        :param forecast_df:
-        :return:
-        """
-        for col_name in forecast_df.columns.tolist():
-            if col_name == 'Date' or col_name == 'Memo':
-                continue
-
-            current_column = forecast_df[col_name]
-
-            acct_boundary__min = float(accounts_df.loc[accounts_df.Name == col_name,'Min_Balance'])
-            acct_boundary__max = float(accounts_df.loc[accounts_df.Name == col_name, 'Max_Balance'])
-
-            min_in_forecast_for_acct = min(current_column)
-            max_in_forecast_for_acct = max(current_column)
-
-            try:
-                # print(current_column)
-                # print('min_in_forecast_for_acct:'+str(min_in_forecast_for_acct))
-                # print('max_in_forecast_for_acct:' + str(max_in_forecast_for_acct))
-                # print('acct_boundary__min:' + str(acct_boundary__min))
-                # print('acct_boundary__max:' + str(acct_boundary__max))
-                # print('')
-                # print('')
-
-                assert float(min_in_forecast_for_acct) >= float(acct_boundary__min)
-                assert float(max_in_forecast_for_acct) <= float(acct_boundary__max)
-
-            except Exception as e:
-
-                offending_rows__min = forecast_df[current_column < acct_boundary__min]
-                offending_rows__max = forecast_df[current_column > acct_boundary__max]
-
-                # print(e)
-                # print('Account Boundary Violation for '+str(col_name)+' in ExpenseForecast.account_boundaries_are_violated()')
-                # print('Offending Rows: Minimum')
-                # print(offending_rows__min.to_string())
-                # print('Offending Rows: Maximum')
-                # print(offending_rows__max.to_string())
-                return True
-        return False
 
     def getInitialForecastRow(self):
 
@@ -369,7 +371,9 @@ class ExpenseForecast:
         #print(BEGIN_GREEN + 'executeTransactionsForDay(date='+str(current_forecast_row_df.Date.iloc[0])+')' + RESET_COLOR)
         #print(BEGIN_GREEN + budget_schedule_df.to_string() + RESET_COLOR)
         log_in_color('green','debug','BEGIN executeTransactionsForDay(date='+str(current_forecast_row_df.Date.iloc[0])+')',1)
-
+        available_balances = account_set.getAvailableBalances()
+        log_in_color('white', 'debug', '(start of day) available_balances: ' + str(available_balances), 2)
+        log_in_color('cyan', 'debug', 'All proposed transactions for day:', 2)
         for line in budget_schedule_df.to_string().split('\n'):
             log_in_color('cyan','debug',line,2)
         #making minimum payments should be determined by memo rules instead of hard-coded as checking
@@ -395,26 +399,44 @@ class ExpenseForecast:
         deferred_transactions = []
         for index, row in budget_schedule_df.iterrows():
             found_matching_memo_rule = False
+
+            if row.Amount == 0:
+                continue
+
+            log_in_color('yellow', 'debug', 'All matching memo rules:' , 3)
+            for line in memo_set.getMemoRules().to_string().split('\n'):
+                log_in_color('yellow', 'debug',line, 3)
+
             for index2, row2 in memo_set.getMemoRules().iterrows():
+
+                if row2.Transaction_Priority != row.Priority:
+                    continue
+
                 m = re.search(row2.Memo_Regex,row.Memo)
                 try:
                     m.group(0)
                     found_matching_memo_rule = True
-                except:
+                    log_in_color('yellow', 'debug','Found matching memo rule: '+str(row2.Account_From)+' -> '+str(row2.Account_To), 3)
+                except Exception as e:
                     pass # no match
+                    log_in_color('yellow', 'debug', 'found_matching_memo_rule = False', 3)
 
                 if found_matching_memo_rule:
                     m_cc = re.search('additional cc payment',row2.Memo_Regex)
                     try:
                         m_cc.group(0)
                         additional_cc_payment = True
+                        #log_in_color('yellow', 'debug','Found matching memo rule: '+str(row2.Account_From) + ' -> ' + str(row2.Account_To), 3)
                     except:
                         pass  # no match
+
 
                     m_loan = re.search('additional loan payment', row2.Memo_Regex)
                     try:
                         m_loan.group(0)
                         additional_loan_payment = True
+                        #log_in_color('yellow', 'debug', 'Found matching memo rule: '+str(row2.Account_From) + ' -> ' + str(row2.Account_To), 3)
+
                     except:
                         pass  # no match
 
@@ -425,16 +447,25 @@ class ExpenseForecast:
                     available_balances = account_set.getAvailableBalances()
                     assert row2.Account_From in available_balances.keys()
 
+                    log_in_color('white', 'debug', '(pre transaction) available_balances: '+str(available_balances), 3)
+
                     if row.Amount > available_balances[row2.Account_From]:
-                        if row.Deferrable is False:
-                            pass #amount was too much and not deferrable, so we just ignore it #todo log this
-                        else:
+                        if row.Deferrable:
+                            log_in_color('white', 'debug', 'Insufficient funds on a deferrable transaction', 4)
                             row.Date = row.Date + 1
                             if self.deferred_df is None:
                                 self.deferred_df = row
                             else:
-                                self.deferred_df = pd.concat([self.deferred_df,row])
-                    elif row.Amount > 0:
+                                self.deferred_df = pd.concat([self.deferred_df, row])
+                        else:
+                            log_in_color('white', 'debug', 'Insufficient funds on a non-deferrable transaction', 4)
+                            # we just ignore it
+
+                        if row.Deferrable is False:
+                            pass #amount was too much and not deferrable, so we just ignore it #todo log this
+
+                    else:
+                        log_in_color('white', 'debug', 'Proceeding with transaction', 3)
                         account_set.executeTransaction(row2.Account_From,row2.Account_To,row.Amount)
 
                     current_forecast_row_df.Memo += row.Memo + ' ; '
@@ -442,6 +473,7 @@ class ExpenseForecast:
                 else:
                     pass
                     #we checked for this case in the ExpenseForecast constructor so lets not do it here
+                    log_in_color('yellow', 'error', 'No matching memo rules foudn for transaction', 3)
 
 
         #at this point, memo has been updated, but balances are stale
@@ -449,6 +481,8 @@ class ExpenseForecast:
         for i in range(0,updated_balances.shape[0]):
             current_forecast_row_df.iloc[0,i+1] = updated_balances[i]
 
+
+        log_in_color('white', 'debug', '(end of day) available_balances: ' + str(account_set.getAvailableBalances()), 2)
         log_in_color('green', 'debug',
                      'END   executeTransactionsForDay(date=' + str(current_forecast_row_df.Date.iloc[0]) + ')', 1)
         #returns a single forecast row with updated memo
@@ -650,8 +684,8 @@ class ExpenseForecast:
         initial_forecast_row_df = self.getInitialForecastRow()
         numdays = (self.end_date - self.start_date).days  # TODO assert upstream that end date is after start date, or include numdays as a obj var
         budget_schedule_df = self.initial_budget_set.getBudgetSchedule(self.start_date.strftime('%Y%m%d'), self.end_date.strftime('%Y%m%d'))
-        #print('budget_schedule_df:')
-        #print(budget_schedule_df.to_string())
+        # print('budget_schedule_df:')
+        # print(budget_schedule_df.to_string())
 
         memo_set = self.initial_memo_rule_set # this never changes
         account_set = self.initial_account_set
@@ -660,8 +694,8 @@ class ExpenseForecast:
         previous_row_df = initial_forecast_row_df
 
         #print('numdays:'+str(numdays))
-        #print('initial_budget_set:'+str(self.initial_budget_set))
-        #print('budget_schedule_df:'+budget_schedule_df.to_string()+'\n')
+        log_in_color('green', 'debug', 'initial_budget_set:\n'+str(self.initial_budget_set), 0)
+        log_in_color('green', 'debug', 'budget_schedule_df:\n'+budget_schedule_df.to_string(), 0)
         #print('initial_forecast_row_df:')
         #print(initial_forecast_row_df.to_string())
 
@@ -693,8 +727,9 @@ class ExpenseForecast:
           #print(current_row_df.to_string())
 
           # returns only a forecast row w updated memo, but does update self.deferred_items
-          # print('this_days_budget_schedule_df:')
-          # print(this_days_budget_schedule_df.to_string())
+          log_in_color('green', 'debug', 'this_days_budget_schedule_df:', 3)
+          log_in_color('green', 'debug', this_days_budget_schedule_df.to_string(), 3)
+          
           # print('this_days_budget_schedule_df.empty:'+str(this_days_budget_schedule_df.empty))
           if not this_days_budget_schedule_df.empty:
             new_forecast_row_df = self.executeTransactionsForDay( this_days_budget_schedule_df, account_set, memo_set,current_row_df)
@@ -1677,6 +1712,8 @@ class ExpenseForecast:
         if make_plots:
             pass
             #todo draw plots
+
+        return_df = return_df.reindex(sorted(return_df.columns), axis=1)
 
         return return_df
 

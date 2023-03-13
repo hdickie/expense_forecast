@@ -1,5 +1,73 @@
 import BudgetItem, pandas as pd, datetime
 
+
+from colorama import init as colorama_init
+from colorama import Fore
+from colorama import Style
+colorama_init()
+
+BEGIN_RED = f"{Fore.RED}"
+BEGIN_GREEN = f"{Fore.GREEN}"
+BEGIN_YELLOW = f"{Fore.YELLOW}"
+BEGIN_BLUE = f"{Fore.BLUE}"
+BEGIN_MAGENTA = f"{Fore.MAGENTA}"
+BEGIN_WHITE = f"{Fore.WHITE}"
+BEGIN_CYAN = f"{Fore.CYAN}"
+RESET_COLOR = f"{Style.RESET_ALL}"
+
+
+def log_in_color(color,level,msg,stack_depth=0):
+
+    if stack_depth == 0:
+        left_prefix = ''
+    else:
+        left_prefix = ' '
+    left_prefix = left_prefix.ljust(stack_depth*4,' ') + ' '
+
+
+    if color.lower() == 'red':
+        msg = BEGIN_RED + left_prefix + msg + RESET_COLOR
+    elif color.lower() == 'green':
+        msg = BEGIN_GREEN + left_prefix + msg + RESET_COLOR
+    elif color.lower() == 'yellow':
+        msg = BEGIN_YELLOW + left_prefix + msg + RESET_COLOR
+    elif color.lower() == 'blue':
+        msg = BEGIN_BLUE + left_prefix + msg + RESET_COLOR
+    elif color.lower() == 'magenta':
+        msg = BEGIN_MAGENTA + left_prefix + msg + RESET_COLOR
+    elif color.lower() == 'white':
+        msg = BEGIN_WHITE + left_prefix + msg + RESET_COLOR
+    elif color.lower() == 'cyan':
+        msg = BEGIN_CYAN + left_prefix + msg + RESET_COLOR
+
+    if level == 'debug':
+        logger.debug(msg)
+    elif level == 'warning':
+        logger.warning(msg)
+    elif level == 'error':
+        logger.error(msg)
+    elif level == 'info':
+        logger.info(msg)
+    elif level == 'critical':
+        logger.critical(msg)
+    else:
+        print(msg)
+
+import logging
+
+format = '%(asctime)s - %(name)-15s - %(levelname)-8s - %(message)s'
+formatter = logging.Formatter(format)
+ch = logging.StreamHandler()
+ch.setFormatter(formatter)
+ch.setLevel(logging.DEBUG)
+logger = logging.getLogger(__name__)
+logger.propagate = False
+logger.handlers.clear()
+logger.addHandler(ch)
+
+logger.setLevel(logging.DEBUG)
+
+
 def generate_date_sequence(start_date_YYYYMMDD,num_days,cadence):
     """ A wrapper for pd.date_range intended to make code easier to read.
 
@@ -85,11 +153,12 @@ class BudgetSet:
             #print('new_budget_item_row_df:')
             #print(new_budget_item_row_df.to_string())
 
+            if (not all_budget_items_df.empty) & (not new_budget_item_row_df.empty):
+                all_budget_items_df = pd.concat([all_budget_items_df, new_budget_item_row_df], axis=0)
+
             if (all_budget_items_df.empty) & (not new_budget_item_row_df.empty):
                 all_budget_items_df = new_budget_item_row_df
 
-            if (not all_budget_items_df.empty) & (not new_budget_item_row_df.empty):
-                all_budget_items_df = pd.concat([all_budget_items_df, new_budget_item_row_df], axis=0)
             all_budget_items_df.reset_index(drop=True, inplace=True)
 
         return all_budget_items_df
@@ -105,6 +174,10 @@ class BudgetSet:
         :param num_days:
         :return:
         """
+        # log_in_color('green', 'debug','getBudgetSchedule(start_date_YYYYMMDD='+str(start_date_YYYYMMDD)+',end_date_YYYYMMDD='+str(end_date_YYYYMMDD)+')', 0)
+        # log_in_color('green', 'debug','self.budget_items:', 0)
+        # for b in self.budget_items:
+        #     log_in_color('green', 'debug', '\n'+str(b), 0)
 
         #print('getBudgetSchedule():')
         #print('self.budget_items:')
@@ -128,6 +201,7 @@ class BudgetSet:
             current_budget_schedule = pd.concat([current_budget_schedule,new_budget_schedule_rows_df],axis=0)
 
             #print(current_budget_schedule.head(1))
+
 
         current_budget_schedule.sort_values(inplace=True,axis=0,by="Date")
         current_budget_schedule.reset_index(inplace=True,drop=True)
@@ -162,6 +236,23 @@ class BudgetSet:
                  amount,
                  deferrable,
                  memo,print_debug_messages,raise_exceptions)
+
+        all_current_budget_items = self.getBudgetItems()
+        memos_w_matching_priority = all_current_budget_items.loc[all_current_budget_items.Priority == priority,'Memo']
+
+        log_in_color('green', 'debug', 'addBudgetItem(priority='+str(priority)+',cadence='+str(cadence)+',memo='+str(memo)+',start_date_YYYYMMDD='+str(start_date_YYYYMMDD)+',end_date_YYYYMMDD='+str(end_date_YYYYMMDD)+')', 0)
+
+        # print('BUDGET SET TEST 1')
+        # print(memo)
+        # print(str(priority))
+        #
+        # print('all_current_budget_items:')
+        # print(all_current_budget_items)
+        # print('memos_w_matching_priority:')
+        # print(memos_w_matching_priority)
+
+        if memo in memos_w_matching_priority:
+            raise ValueError #A budget item with this priority and memo already exists
 
         #todo error when duplicate budget item. (user should make memo different its not that hard.)
         #that is, if amount and date are the same, different memos are required. its fine otherwise

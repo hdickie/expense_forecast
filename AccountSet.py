@@ -409,15 +409,31 @@ class AccountSet:
         return balances_dict
 
     def executeTransaction(self, Account_From, Account_To, Amount):
+
+        if Amount == 0:
+            return None
+
+        boundary_error_ind = False
+        equivalent_exchange_error_ind = False
+
         debug_print__AF=Account_From
         debug_print__AT=Account_To
         debug_print_Amount=str(Amount)
+
         if Account_From is None:
             debug_print__AF = 'None'
 
         if Account_To is None:
             debug_print__AT = 'None'
         log_in_color('green', 'debug','executeTransaction(Account_From='+debug_print__AF+', Account_To='+debug_print__AT+', Amount='+debug_print_Amount+')', 2)
+
+        before_txn_total_available_funds = 0
+        available_funds = self.getAvailableBalances()
+
+        log_in_color('magenta', 'error', 'available_funds:'+str(available_funds),3)
+
+        for a in available_funds.keys():
+            before_txn_total_available_funds += available_funds[a]
 
         #determine account type. there will be 1 or 2 matches depending on account type. 1 => no interest , 2 => interest
         account_base_names = [ x.split(':')[0] for x in self.getAccounts().Name ]
@@ -459,8 +475,31 @@ class AccountSet:
         if Account_From is not None:
             if Account_From != '' and Account_From != 'None':
                 if AF_Account_Type == 'checking':
+
+                    balance_after_proposed_transaction = self.accounts[account_from_index].balance - abs(Amount)
+                    try:
+                        assert self.accounts[account_from_index].min_balance <= balance_after_proposed_transaction and self.accounts[account_from_index].max_balance
+                    except Exception as e:
+                        log_in_color('red','error','transaction violated Account_From boundaries:')
+                        log_in_color('red', 'error', str(e))
+                        log_in_color('red', 'error', 'Account_From:\n'+str(self.accounts[account_from_index]))
+                        log_in_color('red', 'error', 'Amount:'+str(Amount))
+                        boundary_error_ind = True
+
                     self.accounts[account_from_index].balance -= abs(Amount)
                 elif AF_Account_Type == 'credit' or AF_Account_Type == 'loan':
+
+                    balance_after_proposed_transaction = self.accounts[account_from_index].balance + abs(Amount)
+                    try:
+                        assert self.accounts[account_from_index].min_balance <= balance_after_proposed_transaction and \
+                               self.accounts[account_from_index].max_balance
+                    except Exception as e:
+                        log_in_color('red', 'error', 'transaction violated Account_From boundaries:')
+                        log_in_color('red', 'error', str(e))
+                        log_in_color('red', 'error', 'Account_From:\n' + str(self.accounts[account_from_index]))
+                        log_in_color('red', 'error', 'Amount:' + str(Amount))
+                        boundary_error_ind = True
+
                     self.accounts[account_from_index].balance += abs(Amount)
                 else:
                     raise NotImplementedError #from types other than checking or credit not yet implemented
@@ -470,6 +509,7 @@ class AccountSet:
         if Account_To is not None:
             if Account_To != '' and Account_To != 'None':
                 if AT_Account_Type == 'checking':
+
                     self.accounts[account_to_index].balance += abs(Amount)
                     log_in_color('magenta', 'debug', 'Paid ' + str(Amount) + ' to ' + Account_To, 3)
                 elif AT_Account_Type == 'credit' or AT_Account_Type == 'loan':
@@ -488,6 +528,28 @@ class AccountSet:
                         self.accounts[account_to_index + 1].balance -= Amount
                 else:
                     raise NotImplementedError #from types other than checking or credit not yet implemented
+
+        after_txn_total_available_funds = 0
+        available_funds = self.getAvailableBalances()
+        for a in available_funds.keys():
+            after_txn_total_available_funds += available_funds[a]
+
+        empirical_delta = before_txn_total_available_funds - after_txn_total_available_funds
+        if empirical_delta != 0 and Account_From is not None and Account_To is not None:
+            equivalent_exchange_error_ind = True
+
+        if boundary_error_ind:
+            raise ValueError #Account boundaries were violated
+
+        if equivalent_exchange_error_ind:
+            log_in_color('red', 'error', 'ACCOUNT BOUNDARIES WERE VIOLATED',3)
+            available_funds = self.getAvailableBalances()
+            log_in_color('red', 'error', 'available_funds:' + str(available_funds), 3)
+            log_in_color('red', 'error', '( SUM(before txn balances) - SUM(after txn balances) ) != 0'
+                                         '',3)
+            log_in_color('red', 'error', str(before_txn_total_available_funds) + ' - ' + str(after_txn_total_available_funds) + ' = ' + str(empirical_delta) + ' !== ' + str(Amount) ,3)
+
+            raise ValueError # ( SUM(before txn balances) - SUM(after txn balances) ) != Amount
 
 
 
