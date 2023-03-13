@@ -1,25 +1,7 @@
 import BudgetSet, ExpenseForecast, AccountSet, datetime, pandas as pd, MemoRuleSet, copy
 pd.options.mode.chained_assignment = None #apparently this warning can throw false positives???
 
-import logging
-logger = logging.getLogger()
-
-format = '%(asctime)s - %(name)-30s - %(levelname)-8s - %(message)s'
-formatter = logging.Formatter(format)
-ch = logging.StreamHandler()
-ch.setFormatter(formatter)
-ch.setLevel(logging.DEBUG)
-logging.getLogger().addHandler(ch)
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logger.info("HI")
-
-
-from colorama import init as colorama_init
-from colorama import Fore
-from colorama import Style
-colorama_init()
-
+from log_methods import log_in_color
 
 if __name__ == '__main__':
     logger.info('This is a debug message')

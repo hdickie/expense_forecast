@@ -8,72 +8,7 @@ import copy
 
 import BudgetSet, BudgetItem
 
-from colorama import init as colorama_init
-from colorama import Fore
-from colorama import Style
-colorama_init()
-
-BEGIN_RED = f"{Fore.RED}"
-BEGIN_GREEN = f"{Fore.GREEN}"
-BEGIN_YELLOW = f"{Fore.YELLOW}"
-BEGIN_BLUE = f"{Fore.BLUE}"
-BEGIN_MAGENTA = f"{Fore.MAGENTA}"
-BEGIN_WHITE = f"{Fore.WHITE}"
-BEGIN_CYAN = f"{Fore.CYAN}"
-RESET_COLOR = f"{Style.RESET_ALL}"
-
-import logging
-
-format = '%(asctime)s - %(name)s - %(levelname)-8s - %(message)s'
-formatter = logging.Formatter(format)
-ch = logging.StreamHandler()
-ch.setFormatter(formatter)
-ch.setLevel(logging.DEBUG)
-logger = logging.getLogger(__name__)
-logger.propagate = False
-logger.handlers.clear()
-logger.addHandler(ch)
-
-logger.setLevel(logging.DEBUG)
-
-
-def log_in_color(color,level,msg,stack_depth=0):
-
-    if stack_depth == 0:
-        left_prefix = ''
-    else:
-        left_prefix = ' '
-    left_prefix = left_prefix.ljust(stack_depth*4,' ') + ' '
-
-    for line in msg.split('\n'):
-
-        if color.lower() == 'red':
-            line = BEGIN_RED + left_prefix + line + RESET_COLOR
-        elif color.lower() == 'green':
-            line = BEGIN_GREEN + left_prefix + line + RESET_COLOR
-        elif color.lower() == 'yellow':
-            line = BEGIN_YELLOW + left_prefix + line + RESET_COLOR
-        elif color.lower() == 'blue':
-            line = BEGIN_BLUE + left_prefix + line + RESET_COLOR
-        elif color.lower() == 'magenta':
-            line = BEGIN_MAGENTA + left_prefix + line + RESET_COLOR
-        elif color.lower() == 'white':
-            line = BEGIN_WHITE + left_prefix + line + RESET_COLOR
-        elif color.lower() == 'cyan':
-            line = BEGIN_CYAN + left_prefix + line + RESET_COLOR
-
-        if level == 'debug':
-            logger.debug(line)
-        elif level == 'warning':
-            logger.warning(line)
-        elif level == 'error':
-            logger.error(line)
-        elif level == 'info':
-            logger.info(line)
-        elif level == 'critical':
-            logger.critical(line)
-        else:
-            print(line)
+from log_methods import log_in_color
 
 def generate_date_sequence(start_date_YYYYMMDD,num_days,cadence):
     """ A wrapper for pd.date_range intended to make code easier to read.

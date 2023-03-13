@@ -1,16 +1,6 @@
 import Account, pandas as pd
-import logging
 
-from colorama import init as colorama_init
-from colorama import Fore
-from colorama import Style
-colorama_init()
-
-BEGIN_RED = f"{Fore.RED}"
-BEGIN_CYAN = f"{Fore.CYAN}"
-RESET_COLOR = f"{Style.RESET_ALL}"
-
-from ExpenseForecast import log_in_color
+from log_methods import log_in_color
 
 class AccountSet:
 

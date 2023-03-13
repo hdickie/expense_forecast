@@ -4,12 +4,7 @@ import pandas as pd, numpy as np
 import datetime, logging
 pd.options.mode.chained_assignment = None #apparently this warning can throw false positives???
 
-from colorama import init as colorama_init
-from colorama import Fore
-from colorama import Style
-colorama_init()
-
-from ExpenseForecast import log_in_color
+from log_methods import log_in_color
 
 import copy
 
@@ -50,72 +45,7 @@ def generate_date_sequence(start_date_YYYYMMDD,num_days,cadence):
 
     return return_series
 
-
-def display_test_result(test_name, df1):
-    display_width = max([len(x) for x in df1.T.to_string().split('\n')])
-    left_prefix = '# '
-
-    lines_to_print = []
-    test_passed = False
-
-    lines_to_print.append(f"{Fore.BLUE}" + ''.ljust(display_width, '#') + f"{Style.RESET_ALL}")
-    lines_to_print.append((left_prefix + test_name).ljust(display_width - 1, ' ') + '#')
-
-    df1 = df1.reindex(sorted(df1.columns), axis=1)
-    # print('DF PRE-ANALYSIS')
-    # print(df1.T.to_string())
-    index = 0
-    columns_to_include = []
-    #lines_to_highlight_red = []
-    mismatch_column_count = 0
-    for cname in df1.columns:
-        if cname in ['Memo', 'Date']:
-            columns_to_include.append(index)
-        elif 'Diff' in cname:
-            if sum(df1[cname]) != 0:
-                #if we got diffs only, then only append the line itself
-                columns_to_include.append(index)
-
-                # we check to confirm that the lines before and after are the expected and actual
-                if df1.columns[index - 1] == cname.split('(')[0] and cname.split('(')[0] == df1.columns[index + 1].split('(')[0]: #if the account name had parenthesis in it then this wil get fucked up
-                    columns_to_include.append(index - 1)
-                    columns_to_include.append(index + 1)
-
-                mismatch_column_count = mismatch_column_count + 1
-
-                #lines_to_highlight_red.append(index + 2)
-
-        index = index + 1
-
-    # print('COLUMNS TO INCLUDE')
-    # print(str(columns_to_include))
-
-    output_lines = df1.iloc[:, columns_to_include].T.to_string().split('\n')
-    index = 0
-    if mismatch_column_count > 0:
-        for line in output_lines:
-            #if index in lines_to_highlight_red:
-            #    print(f"{Fore.RED}" + line + f"{Style.RESET_ALL}")
-            #else:
-            #    print(line)
-
-            if '(Diff)' in line:
-                lines_to_print.append(f"{Fore.RED}" + line + f"{Style.RESET_ALL}")
-            else:
-                lines_to_print.append(line)
-
-            index = index + 1
-        lines_to_print.append(left_prefix + 'RESULT: FAIL')
-    else:
-        lines_to_print.append(left_prefix + 'No mismatched columns to show')
-        lines_to_print.append((left_prefix + 'RESULT: PASS').ljust(display_width - 1, ' ') + '#')
-        test_passed = True
-
-    lines_to_print.append(f"{Fore.BLUE}" + ''.ljust(display_width, '#') + f"{Style.RESET_ALL}")
-    if not test_passed:
-        for line in lines_to_print:
-            print(line)
-
+from log_methods import display_test_result
 
 class TestExpenseForecastMethods(unittest.TestCase):
 
