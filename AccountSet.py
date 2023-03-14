@@ -1,5 +1,5 @@
 import Account, pandas as pd
-
+import copy
 from log_methods import log_in_color
 
 class AccountSet:
@@ -72,7 +72,6 @@ class AccountSet:
             # therefore, once all accounts have been added to self.accounts, we check for consistency
 
         if len(self.accounts) > 0:
-            logging.info(self.accounts)
             required_attributes = ['name', 'balance', 'min_balance', 'max_balance', 'account_type',
                                    'billing_start_date',
                                    'interest_type', 'apr', 'interest_cadence', 'minimum_payment']
@@ -290,8 +289,19 @@ class AccountSet:
         # this check has been implemented by account_type, but not by interest_type
         # for each account with interest_type == 'Compound', there should be prev bal and curr bal accts
         # i am 100% not mad about redundancy here
-
         """
+
+        log_string='addAccount(name='+str(name)+',balance='+str(balance)+',account_type='+str(account_type)
+        if account_type == 'checking':
+            pass
+        elif account_type == 'credit':
+            log_string+=',billing_start_date_YYYYMMDD='+str(billing_start_date_YYYYMMDD)+',apr='+str(apr)+',previous_statement_balance='+str(previous_statement_balance)
+        elif account_type == 'loan':
+            log_string+=',billing_start_date_YYYYMMDD='+str(billing_start_date_YYYYMMDD)+',apr='+str(apr)+',principal_balance='+str(principal_balance)+',accrued_interest='+str(accrued_interest)
+        else:
+            pass
+        log_string+=')'
+        log_in_color('green', 'debug',log_string, 0)
 
         # TODO this should be based on interest type or interest AND account type
         if account_type.lower() == 'loan':
@@ -525,23 +535,36 @@ class AccountSet:
             after_txn_total_available_funds += available_funds[a]
 
         empirical_delta = before_txn_total_available_funds - after_txn_total_available_funds
-        if empirical_delta != 0 and Account_From is not None and Account_To is not None:
+        if empirical_delta != Amount and Account_From is not None and Account_To is not None:
             equivalent_exchange_error_ind = True
 
         if boundary_error_ind:
             raise ValueError #Account boundaries were violated
 
         if equivalent_exchange_error_ind:
-            log_in_color('red', 'error', 'ACCOUNT BOUNDARIES WERE VIOLATED',3)
+            log_in_color('red', 'error', 'FUNDS NOT ACCOUNTED FOR POST-TRANSACTION',3)
             available_funds = self.getAvailableBalances()
             log_in_color('red', 'error', 'available_funds:' + str(available_funds), 3)
-            log_in_color('red', 'error', '( SUM(before txn balances) - SUM(after txn balances) ) != 0'
-                                         '',3)
+            log_in_color('red', 'error', '( SUM(before txn balances) - SUM(after txn balances) ) != 0',3)
             log_in_color('red', 'error', str(before_txn_total_available_funds) + ' - ' + str(after_txn_total_available_funds) + ' = ' + str(empirical_delta) + ' !== ' + str(Amount) ,3)
+            # log_in_color('red', 'error', 'before_txn_total_available_funds:'+str(before_txn_total_available_funds), 3)
+            # log_in_color('red', 'error', 'after_txn_total_available_funds:'+str(after_txn_total_available_funds), 3)
+            # log_in_color('red', 'error', 'empirical_delta:'+str(empirical_delta), 3)
+            # log_in_color('red', 'error', 'Amount:'+str(Amount), 3)
+
 
             raise ValueError # ( SUM(before txn balances) - SUM(after txn balances) ) != Amount
 
+    def transaction_would_violate_account_boundaries(self,account_from_name,account_to_name,amount):
 
+        if amount == 0:
+            return False
+
+        copy_of_this_account_set = AccountSet(self.accounts)
+        copy_of_this_account_set.executeTransaction(account_from_name,account_to_name,amount)
+        account_info = copy_of_this_account_set.getAccounts()
+        illegal_state_rows = account_info[(account_info.Balance < account_info.Min_Balance) | (account_info.Balance > account_info.Max_Balance)]
+        return illegal_state_rows.shape[0] > 0
 
 
     def getAccounts(self):

@@ -354,7 +354,7 @@ class ExpenseForecast:
                     log_in_color('yellow', 'debug','Found matching memo rule: '+str(row2.Account_From)+' -> '+str(row2.Account_To), 3)
                 except Exception as e:
                     pass # no match
-                    log_in_color('yellow', 'debug', 'found_matching_memo_rule = False', 3)
+                    #log_in_color('yellow', 'debug', 'found_matching_memo_rule = False', 3)
 
                 if found_matching_memo_rule:
                     m_cc = re.search('additional cc payment',row2.Memo_Regex)
@@ -380,11 +380,30 @@ class ExpenseForecast:
                     #account_boundaries_are_violated(accounts_df,forecast_df)
 
                     available_balances = account_set.getAvailableBalances()
-                    assert row2.Account_From in available_balances.keys()
+                    if row2.Account_From is not None:
+                        if row2.Account_From != 'None':
+                            try:
+                                assert row2.Account_From in available_balances.keys()
+                            except AssertionError as e:
+                                log_in_color('red', 'debug',row2.Account_From + ' not found in account set', 3)
+                                log_in_color('red', 'debug', 'available_balances.keys():'+str(available_balances.keys()), 3)
+                                raise e
+
+                    if row2.Account_To is not None:
+                        if row2.Account_To != 'None':
+                            try:
+                                assert row2.Account_To in available_balances.keys()
+                            except AssertionError as e:
+                                log_in_color('red', 'debug',row2.Account_To + ' not found in account set', 3)
+                                log_in_color('red', 'debug', 'available_balances.keys():'+str(available_balances.keys()), 3)
+                                raise e
 
                     log_in_color('white', 'debug', '(pre transaction) available_balances: '+str(available_balances), 3)
 
-                    if row.Amount > available_balances[row2.Account_From]:
+                    #this check needs to more generally check for account boundary violations and doesnt explode w None values
+                    #if row.Amount > available_balances[row2.Account_From]:
+
+                    if account_set.transaction_would_violate_account_boundaries(row2.Account_From,row2.Account_To,row.Amount):
                         if row.Deferrable:
                             log_in_color('white', 'debug', 'Insufficient funds on a deferrable transaction', 4)
                             row.Date = row.Date + 1
@@ -405,10 +424,10 @@ class ExpenseForecast:
 
                     current_forecast_row_df.Memo += row.Memo + ' ; '
                     break #stop looking for matching memo rules
-                else:
-                    pass
-                    #we checked for this case in the ExpenseForecast constructor so lets not do it here
-                    log_in_color('yellow', 'error', 'No matching memo rules foudn for transaction', 3)
+
+            if not found_matching_memo_rule:
+                #we checked for this case in the ExpenseForecast constructor so lets not do it here
+                log_in_color('yellow', 'error', 'No matching memo rules found for transaction: '+str(row.Memo), 3)
 
 
         #at this point, memo has been updated, but balances are stale
@@ -883,28 +902,29 @@ class ExpenseForecast:
 
         #account_set_df is returned unchanged. we depend on optimize logic to not violate boundaries by checking the forecast
 
-    def decide__defer_or_execute_or_skip(self,budget_schedule_item_df,account_set_df,forecast_df):
-        """
-        Returns an empty row (execute or skip), or an updated <DataFrame> of BudgetItems.
-
-        This method accepts a single BudgetItem, along with the AccountSet and Forecast.
-
-        This should print the reason for the decision to logs.
-
-        :param budget_schedule_item_df:
-        :param account_set_df:
-        :param forecast_df:
-        :return boolean:
-        """
-
-        #this needs to be able to accept "*", meaning "free balance"
-
-        return True
-
-    def evaluate_free_balance(self,account_set_df,forecast_df):
-        #return values for each account
-
-        pass
+    #
+    # def decide__defer_or_execute_or_skip(self,budget_schedule_item_df,account_set_df,forecast_df):
+    #     """
+    #     Returns an empty row (execute or skip), or an updated <DataFrame> of BudgetItems.
+    #
+    #     This method accepts a single BudgetItem, along with the AccountSet and Forecast.
+    #
+    #     This should print the reason for the decision to logs.
+    #
+    #     :param budget_schedule_item_df:
+    #     :param account_set_df:
+    #     :param forecast_df:
+    #     :return boolean:
+    #     """
+    #
+    #     #this needs to be able to accept "*", meaning "free balance"
+    #
+    #     return True
+    #
+    # def evaluate_free_balance(self,account_set_df,forecast_df):
+    #     #return values for each account
+    #
+    #     pass
 
     def allocate_additional_loan_payments(self,account_set,amount,date_string_YYYYMMDD):
 
@@ -1057,12 +1077,6 @@ class ExpenseForecast:
         #print(final_budget_items)
 
         return BudgetSet.BudgetSet(final_budget_items)
-
-
-
-
-
-
 
 
     # def allocate_loan_payments(self, account_set, amount, date_string_YYYYMMDD, recursion_depth=0, partial_payment_budget_set=None):
