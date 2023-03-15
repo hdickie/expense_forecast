@@ -430,7 +430,7 @@ class AccountSet:
         before_txn_total_available_funds = 0
         available_funds = self.getAvailableBalances()
 
-        log_in_color('magenta', 'error', 'available_funds:'+str(available_funds),3)
+        log_in_color('magenta', 'debug', 'available_funds:'+str(available_funds),3)
 
         for a in available_funds.keys():
             before_txn_total_available_funds += available_funds[a]

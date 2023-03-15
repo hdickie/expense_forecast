@@ -679,7 +679,7 @@ class ExpenseForecast:
               current_row_df.Date = d.strftime('%Y-%m-%d')
               current_row_df.Memo = ''
 
-              this_days_budget_schedule_df = budget_schedule_df.loc[budget_schedule_df.Date == d,:]
+              this_days_budget_schedule_df = budget_schedule_df.loc[(budget_schedule_df.Date == d) & ( budget_schedule_df.Priority == 1 ),:]
 
               # for line in this_days_budget_schedule_df.to_string().split('\n'):
               #   log_in_color('cyan', 'debug',line,0)
@@ -716,10 +716,33 @@ class ExpenseForecast:
             log_in_color('white', 'debug', 'FINAL STATE BEFORE CRASH', 0)
             self.forecast_df.reset_index(drop=True, inplace=True)
             log_in_color('white', 'debug', self.forecast_df.to_string(), 0)
-            raise e
 
+            #raise e #instead of raising this exception again, we just fill the rest of the forecast with nulls and return it
         self.forecast_df.reset_index(drop=True,inplace=True)
 
+        if max(self.forecast_df.Date) != self.end_date.strftime('%Y-%m-%d'):
+            s_date = (datetime.datetime.strptime(max(self.forecast_df.Date),'%Y-%m-%d') + datetime.timedelta(days=1)).strftime('%Y%m%d')
+            n_days = (self.end_date - datetime.datetime.strptime(max(self.forecast_df.Date),'%Y-%m-%d')).days - 1
+            remaining_days = generate_date_sequence(s_date, n_days, 'daily')
+            remaining_days = [ x.strftime('%Y-%m-%d') for x in remaining_days ]
+            remaining_days_df = pd.DataFrame(remaining_days)
+            remaining_days_df.rename(columns={0:'Date'})
+
+            empty_row = copy.deepcopy(self.forecast_df.head(1))
+            for cname in empty_row.columns:
+                if cname == 'Date':
+                    continue
+                elif cname == 'Memo':
+                    empty_row[cname] = ''
+                else:
+                    empty_row[cname] = None
+
+            empty_row = empty_row.rename(columns={"Date": "Old_Date__Delete_This"})
+            remaining_rows_df = remaining_days_df.merge(empty_row, how="cross")
+            remaining_rows_df = remaining_rows_df.drop(['Old_Date__Delete_This'],axis=1)
+            remaining_rows_df = remaining_rows_df.rename(columns={0:"Date"})
+            self.forecast_df = pd.concat([self.forecast_df,remaining_rows_df])
+        self.forecast_df.reset_index(drop=True, inplace=True)
         log_in_color('white', 'info', 'FINAL STATE', 0)
         log_in_color('white', 'info', self.forecast_df.to_string(), 0)
 
