@@ -328,8 +328,8 @@ class ExpenseForecast:
 
         A = account_set.getAccounts()
 
-        # This makes sure that Income is considered first
-        budget_schedule_df.sort_values(by='Amount',inplace=True,ascending=False)
+        #todo rearrange rows to put income rows first
+        #budget_schedule_df.sort_values(by='Amount',inplace=True,ascending=False)
 
         deferred_transactions = []
         for index, row in budget_schedule_df.iterrows():
@@ -765,7 +765,7 @@ class ExpenseForecast:
             print('max(self.forecast_df.Date):'+str(max(self.forecast_df.Date)))
             raise e
 
-        #self.forecast_df = forecast_df
+        self.satisficed_forecast_df = self.forecast_df
 
 
     def allocate_additional_loan_payments(self,account_set,amount,date_string_YYYYMMDD):
@@ -925,7 +925,7 @@ class ExpenseForecast:
         """
         One-description.
 
-        Multiple line dsecription.
+        Multiple line description.
 
         | Test Cases
         | Expected Successes
