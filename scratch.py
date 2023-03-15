@@ -15,7 +15,7 @@ if __name__ == '__main__':
     budget_set = BudgetSet.BudgetSet([])
     memo_rule_set = MemoRuleSet.MemoRuleSet([])
     start_date_YYYYMMDD = '20230313'
-    end_date_YYYYMMDD = '20231001'
+    end_date_YYYYMMDD = '20231231'
 
     current_checking_balance = 2434.18
     current_credit_previous_statement_balance = 7351.23
@@ -118,7 +118,7 @@ if __name__ == '__main__':
     memo_rule_set.addMemoRule(memo_regex='rent', account_from='Checking', account_to=None,transaction_priority=1)
     memo_rule_set.addMemoRule(memo_regex='utilities', account_from='Checking', account_to=None, transaction_priority=1)
 
-    memo_rule_set.addMemoRule(memo_regex='cyclical billing total', account_from='Checking', account_to='Credit', transaction_priority=4)
+    #memo_rule_set.addMemoRule(memo_regex='cyclical billing total', account_from='Checking', account_to='Credit', transaction_priority=4)
 
 
 

@@ -361,7 +361,7 @@ class ExpenseForecast:
                     try:
                         m_cc.group(0)
                         additional_cc_payment = True
-                        #log_in_color('yellow', 'debug','Found matching memo rule: '+str(row2.Account_From) + ' -> ' + str(row2.Account_To), 3)
+                        #log_in_color('yellow', 'debug', 'transaction flagged as additional cc payment', 3)
                     except:
                         pass  # no match
 
@@ -370,10 +370,17 @@ class ExpenseForecast:
                     try:
                         m_loan.group(0)
                         additional_loan_payment = True
-                        #log_in_color('yellow', 'debug', 'Found matching memo rule: '+str(row2.Account_From) + ' -> ' + str(row2.Account_To), 3)
-
+                        #log_in_color('yellow', 'debug', 'transaction flagged as additional loan payment', 3)
                     except:
                         pass  # no match
+
+                    m_income = re.search('income', row2.Memo_Regex)
+                    try:
+                        m_income.group(0)
+                        income_flag = True
+                        #log_in_color('yellow', 'debug', 'transaction flagged as income', 3)
+                    except Exception as e:
+                        income_flag = False
 
 
                     #todo make sure not violating account boundaries
@@ -403,7 +410,9 @@ class ExpenseForecast:
                     #this check needs to more generally check for account boundary violations and doesnt explode w None values
                     #if row.Amount > available_balances[row2.Account_From]:
 
-                    if account_set.transaction_would_violate_account_boundaries(row2.Account_From,row2.Account_To,row.Amount):
+                    not_OK_to_proceed = account_set.transaction_would_violate_account_boundaries(row2.Account_From,row2.Account_To,row.Amount,income_flag)
+                    log_in_color('white', 'debug', 'not_OK_to_proceed:' + str(not_OK_to_proceed),3)
+                    if not_OK_to_proceed:
                         if row.Deferrable:
                             log_in_color('white', 'debug', 'Insufficient funds on a deferrable transaction', 4)
                             row.Date = row.Date + 1
@@ -420,7 +429,10 @@ class ExpenseForecast:
 
                     else:
                         log_in_color('white', 'debug', 'Proceeding with transaction', 3)
-                        account_set.executeTransaction(row2.Account_From,row2.Account_To,row.Amount)
+                        if income_flag:
+                            log_in_color('white', 'debug', 'transaction flagged as income', 3)
+
+                        account_set.executeTransaction(row2.Account_From,row2.Account_To,row.Amount,income_flag)
 
                     current_forecast_row_df.Memo += row.Memo + ' ; '
                     break #stop looking for matching memo rules
@@ -653,58 +665,69 @@ class ExpenseForecast:
         #print('initial_forecast_row_df:')
         #print(initial_forecast_row_df.to_string())
 
-        for d in all_days:
-          #print('d:'+str(d))
-          #print('start_date:'+str(self.start_date))
-          #print('initial_forecast_row_df:')
-          #print(initial_forecast_row_df)
+        try:
+            for d in all_days:
+              #print('d:'+str(d))
+              #print('start_date:'+str(self.start_date))
+              #print('initial_forecast_row_df:')
+              #print(initial_forecast_row_df)
 
-          if d == self.start_date:
-              continue #because we consider the first day to be final
+              if d == self.start_date:
+                  continue #because we consider the first day to be final
 
-          current_row_df = previous_row_df.copy()
-          current_row_df.Date = d.strftime('%Y-%m-%d')
-          current_row_df.Memo = ''
+              current_row_df = previous_row_df.copy()
+              current_row_df.Date = d.strftime('%Y-%m-%d')
+              current_row_df.Memo = ''
 
-          this_days_budget_schedule_df = budget_schedule_df.loc[budget_schedule_df.Date == d,:]
+              this_days_budget_schedule_df = budget_schedule_df.loc[budget_schedule_df.Date == d,:]
 
-          # for line in this_days_budget_schedule_df.to_string().split('\n'):
-          #   log_in_color('cyan', 'debug',line,0)
-          # log_in_color('cyan', 'debug', '###########################################################################################################################', 0)
-          # for line in account_set.getAccounts().to_string().split('\n'):
-          #   log_in_color('cyan', 'debug',line,0)
+              # for line in this_days_budget_schedule_df.to_string().split('\n'):
+              #   log_in_color('cyan', 'debug',line,0)
+              # log_in_color('cyan', 'debug', '###########################################################################################################################', 0)
+              # for line in account_set.getAccounts().to_string().split('\n'):
+              #   log_in_color('cyan', 'debug',line,0)
 
-          new_forecast_row_df = self.executeMinimumPayments(account_set,current_row_df)
+              new_forecast_row_df = self.executeMinimumPayments(account_set,current_row_df)
 
-          #print('this_days_budget_schedule_df:'+str(this_days_budget_schedule_df))
-          #print('Running executeTransactionsForDay() for '+str(d))
-          #print(current_row_df.to_string())
+              #print('this_days_budget_schedule_df:'+str(this_days_budget_schedule_df))
+              #print('Running executeTransactionsForDay() for '+str(d))
+              #print(current_row_df.to_string())
 
-          # returns only a forecast row w updated memo, but does update self.deferred_items
-          log_in_color('green', 'debug', 'this_days_budget_schedule_df:', 3)
-          log_in_color('green', 'debug', this_days_budget_schedule_df.to_string(), 3)
-          
-          # print('this_days_budget_schedule_df.empty:'+str(this_days_budget_schedule_df.empty))
-          if not this_days_budget_schedule_df.empty:
-            new_forecast_row_df = self.executeTransactionsForDay( this_days_budget_schedule_df, account_set, memo_set,current_row_df)
+              # returns only a forecast row w updated memo, but does update self.deferred_items
+              log_in_color('green', 'debug', 'this_days_budget_schedule_df:', 3)
+              log_in_color('green', 'debug', this_days_budget_schedule_df.to_string(), 3)
 
-          #print('Running calculateInterestAccrualsForDay() for '+str(d))
-          #print(new_forecast_row_df.to_string())
-          new_forecast_row_df = self.calculateInterestAccrualsForDay( account_set,new_forecast_row_df ) #returns only a forecast row w updated memo
-          #print(new_forecast_row_df.to_string())
-          forecast_df = pd.concat([forecast_df,new_forecast_row_df])
-          previous_row_df = new_forecast_row_df
+              # print('this_days_budget_schedule_df.empty:'+str(this_days_budget_schedule_df.empty))
+              if not this_days_budget_schedule_df.empty:
+                new_forecast_row_df = self.executeTransactionsForDay( this_days_budget_schedule_df, account_set, memo_set,current_row_df)
 
-          #add deferred items to budget schedule, set deferred items to None
-          budget_schedule_df = pd.concat([budget_schedule_df,self.deferred_df])
-          self.deferred_df = None
+              #print('Running calculateInterestAccrualsForDay() for '+str(d))
+              #print(new_forecast_row_df.to_string())
+              new_forecast_row_df = self.calculateInterestAccrualsForDay( account_set,new_forecast_row_df ) #returns only a forecast row w updated memo
+              #print(new_forecast_row_df.to_string())
+              self.forecast_df = pd.concat([self.forecast_df,new_forecast_row_df])
+              previous_row_df = new_forecast_row_df
 
-        forecast_df.reset_index(drop=True,inplace=True)
+              #add deferred items to budget schedule, set deferred items to None
+              budget_schedule_df = pd.concat([budget_schedule_df,self.deferred_df])
+              self.deferred_df = None
+
+        except Exception as e:
+            log_in_color('white', 'debug', 'FINAL STATE BEFORE CRASH', 0)
+            self.forecast_df.reset_index(drop=True, inplace=True)
+            log_in_color('white', 'debug', self.forecast_df.to_string(), 0)
+            raise e
+
+        self.forecast_df.reset_index(drop=True,inplace=True)
+
+        log_in_color('white', 'info', 'FINAL STATE', 0)
+        log_in_color('white', 'info', self.forecast_df.to_string(), 0)
+
         #print('forecast_df:')
         #print(forecast_df.to_string())
         log_in_color('green', 'debug', 'END   computeForecast()', 0)
         try:
-            assert min(forecast_df.Date) == self.start_date.strftime('%Y-%m-%d') #computeForecast() did not include the first day as specified
+            assert min(self.forecast_df.Date) == self.start_date.strftime('%Y-%m-%d') #computeForecast() did not include the first day as specified
         except Exception as e:
             print(e)
             #print('self.start_date:'+str(self.start_date.strftime('%Y-%m-%d')))
@@ -712,14 +735,14 @@ class ExpenseForecast:
             raise e
 
         try:
-            assert max(forecast_df.Date) == self.end_date.strftime('%Y-%m-%d') #computeForecast() did not include the last day as specified
+            assert max(self.forecast_df.Date) == self.end_date.strftime('%Y-%m-%d') #computeForecast() did not include the last day as specified
         except Exception as e:
             print(e)
-            #print('self.end_date:'+str(self.end_date.strftime('%Y%m%d')))
-            #print('max(forecast_df.Date):'+str(max(forecast_df.Date)))
+            print('self.end_date:'+str(self.end_date.strftime('%Y%m%d')))
+            print('max(self.forecast_df.Date):'+str(max(self.forecast_df.Date)))
             raise e
 
-        self.forecast_df = forecast_df
+        #self.forecast_df = forecast_df
 
         # index_of_checking_column = forecast_df.columns.tolist().index('Checking')
         # index_of_memo_column = forecast_df.columns.tolist().index('Memo')

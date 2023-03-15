@@ -408,7 +408,7 @@ class AccountSet:
                 #raise NotImplementedError
         return balances_dict
 
-    def executeTransaction(self, Account_From, Account_To, Amount):
+    def executeTransaction(self, Account_From, Account_To, Amount,income_flag=False):
 
         if Amount == 0:
             return None
@@ -503,7 +503,8 @@ class AccountSet:
                     self.accounts[account_from_index].balance += abs(Amount)
                 else:
                     raise NotImplementedError #from types other than checking or credit not yet implemented
-            log_in_color('magenta', 'debug','Paid '+str(Amount)+' from '+Account_From,3)
+                log_in_color('magenta', 'debug', 'Paid ' + str(Amount) + ' from ' + Account_From, 3)
+
 
 
         if Account_To is not None:
@@ -535,7 +536,11 @@ class AccountSet:
             after_txn_total_available_funds += available_funds[a]
 
         empirical_delta = before_txn_total_available_funds - after_txn_total_available_funds
-        if empirical_delta != Amount and Account_From is not None and Account_To is not None:
+
+        if income_flag:
+            empirical_delta = empirical_delta * -1
+
+        if round(empirical_delta,2) != round(Amount,2) and Account_From is not None and Account_To is not None:
             equivalent_exchange_error_ind = True
 
         if boundary_error_ind:
@@ -543,6 +548,7 @@ class AccountSet:
 
         if equivalent_exchange_error_ind:
             log_in_color('red', 'error', 'FUNDS NOT ACCOUNTED FOR POST-TRANSACTION',3)
+            log_in_color('red', 'error', 'income_flag:'+str(income_flag), 3)
             available_funds = self.getAvailableBalances()
             log_in_color('red', 'error', 'available_funds:' + str(available_funds), 3)
             log_in_color('red', 'error', '( SUM(before txn balances) - SUM(after txn balances) ) != 0',3)
@@ -555,15 +561,20 @@ class AccountSet:
 
             raise ValueError # ( SUM(before txn balances) - SUM(after txn balances) ) != Amount
 
-    def transaction_would_violate_account_boundaries(self,account_from_name,account_to_name,amount):
+    def transaction_would_violate_account_boundaries(self,account_from_name,account_to_name,amount,income_flag=False):
 
         if amount == 0:
             return False
 
-        copy_of_this_account_set = AccountSet(self.accounts)
-        copy_of_this_account_set.executeTransaction(account_from_name,account_to_name,amount)
+        copy_of_this_account_set = copy.deepcopy(self)
+        copy_of_this_account_set.executeTransaction(account_from_name,account_to_name,amount,income_flag)
         account_info = copy_of_this_account_set.getAccounts()
         illegal_state_rows = account_info[(account_info.Balance < account_info.Min_Balance) | (account_info.Balance > account_info.Max_Balance)]
+
+        if illegal_state_rows.shape[0] > 0:
+            print('illegal_state_rows:')
+            print(illegal_state_rows.to_string())
+
         return illegal_state_rows.shape[0] > 0
 
 
