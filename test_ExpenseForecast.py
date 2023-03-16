@@ -128,6 +128,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                      amount=10,
                                      deferrable=False,
                                      memo='test',
+                                 partial_payment_allowed=False,
                                      print_debug_messages=False)
 
             #Since there are no memo rules, this will cause the intended error
@@ -233,7 +234,8 @@ class TestExpenseForecastMethods(unittest.TestCase):
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
                                      cadence='daily', amount=0, memo='dummy memo',
-                                     deferrable=False)
+                                     deferrable=False,
+                                 partial_payment_allowed=False)
 
         memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1)
 
@@ -288,7 +290,8 @@ class TestExpenseForecastMethods(unittest.TestCase):
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
                                  cadence='daily', amount=0, memo='dummy memo',
-                                 deferrable=False)
+                                 deferrable=False,
+                                 partial_payment_allowed=False)
 
         memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1)
 
@@ -343,9 +346,11 @@ class TestExpenseForecastMethods(unittest.TestCase):
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
                                  cadence='daily', amount=0, memo='dummy memo',
-                                 deferrable=False)
+                                 deferrable=False,
+                                 partial_payment_allowed=False)
 
-        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1)
+        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1,
+                                 partial_payment_allowed=False)
 
         expected_result_df = pd.DataFrame({
             'Date': ['20000101', '20000102', '20000103'],
@@ -398,11 +403,13 @@ class TestExpenseForecastMethods(unittest.TestCase):
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
                                  cadence='daily', amount=0, memo='dummy memo',
-                                 deferrable=False)
+                                 deferrable=False,
+                                 partial_payment_allowed=False)
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=4,
                                  cadence='once', amount=100, memo='dummy memo',
-                                 deferrable=False)
+                                 deferrable=False,
+                                 partial_payment_allowed=False)
 
         memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1)
         memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=4)
@@ -459,11 +466,13 @@ class TestExpenseForecastMethods(unittest.TestCase):
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
                                  cadence='daily', amount=0, memo='dummy memo',
-                                 deferrable=False)
+                                 deferrable=False,
+                                 partial_payment_allowed=False)
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=4,
                                  cadence='once', amount=100, memo='dummy memo',
-                                 deferrable=False)
+                                 deferrable=False,
+                                 partial_payment_allowed=False)
 
         memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1)
         memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=4)
@@ -519,11 +528,13 @@ class TestExpenseForecastMethods(unittest.TestCase):
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
                                  cadence='daily', amount=0, memo='dummy memo',
-                                 deferrable=False)
+                                 deferrable=False,
+                                 partial_payment_allowed=False)
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=4,
                                  cadence='once', amount=720, memo='test pay all prev part of curr',
-                                 deferrable=False)
+                                 deferrable=False,
+                                 partial_payment_allowed=False)
 
         memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1)
         memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=4)
@@ -580,7 +591,8 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                )
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=4,
-                                 cadence='once', amount=160, memo='additional cc payment test 9',deferrable=False)
+                                 cadence='once', amount=160, memo='additional cc payment test 9',deferrable=False,
+                                 partial_payment_allowed=True)
 
 
         memo_rule_set.addMemoRule(memo_regex='.*',account_from='Credit',account_to=None,transaction_priority=1)
@@ -637,7 +649,8 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                )
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=4,
-                                 cadence='once', amount=100, memo='additional cc payment test 9',deferrable=False)
+                                 cadence='once', amount=100, memo='additional cc payment test 9',deferrable=False,
+                                 partial_payment_allowed=False)
 
 
         memo_rule_set.addMemoRule(memo_regex='.*',account_from='Credit',account_to=None,transaction_priority=1)

@@ -67,8 +67,9 @@ class BudgetSet:
 
         :return: DataFrame
         """
-        all_budget_items_df = pd.DataFrame({'Start_Date': [], 'End_Date': [], 'Priority': [], 'Cadence': [], 'Amount': [], 'Deferrable': [],
-                                        'Memo': []
+        all_budget_items_df = pd.DataFrame({'Start_Date': [], 'End_Date': [], 'Priority': [], 'Cadence': [], 'Amount': [], 'Memo': [],
+                                            'Deferrable': [],
+                                            'Partial_Payment_Allowed': []
                                         })
 
         for budget_item in self.budget_items:
@@ -77,8 +78,9 @@ class BudgetSet:
                                                'Priority': [budget_item.priority],
                                                'Cadence': [budget_item.cadence],
                                                'Amount': [budget_item.amount],
-                                                'Deferrable': [budget_item.deferrable],
-                                               'Memo': [budget_item.memo]
+                                               'Memo': [budget_item.memo],
+                                               'Deferrable': [budget_item.deferrable],
+                                               'Partial_Payment_Allowed': [budget_item.partial_payment_allowed]
                                                })
 
 
@@ -117,7 +119,7 @@ class BudgetSet:
         #print('self.budget_items:')
         #print(self.budget_items)
 
-        current_budget_schedule = pd.DataFrame({'Date':[],'Priority':[],'Amount':[],'Deferrable':[],'Memo':[]})
+        current_budget_schedule = pd.DataFrame({'Date':[],'Priority':[],'Amount':[],'Memo':[],'Deferrable':[],'Partial_Payment_Allowed':[]})
         end_date = datetime.datetime.strptime(str(end_date_YYYYMMDD),'%Y%m%d')
         for budget_item in self.budget_items:
             relative_num_days = (end_date - budget_item.start_date).days
@@ -128,7 +130,7 @@ class BudgetSet:
             current_item_cols_df = pd.DataFrame((budget_item.priority, budget_item.amount, budget_item.deferrable, budget_item.memo)).T
 
             current_item_cols_df = current_item_cols_df.rename(columns=
-                {0: "Priority", 1: "Amount", 2: "Deferrable", 3: "Memo"})
+                {0: "Priority", 1: "Amount", 2: "Memo", 3: "Deferrable", 4: "Partial_Payment_Allowed"})
 
             new_budget_schedule_rows_df = relevant_date_sequence_df.merge(current_item_cols_df, how="cross")
 
@@ -147,8 +149,9 @@ class BudgetSet:
                  priority,
                  cadence,
                  amount,
+                      memo,
                  deferrable,
-                 memo,
+                 partial_payment_allowed,
                  print_debug_messages = True,
                  raise_exceptions = True):
         """ Add a BudgetItem to list BudgetItem.budget_items.
@@ -168,8 +171,10 @@ class BudgetSet:
                  priority,
                  cadence,
                  amount,
+                 memo,
                  deferrable,
-                 memo,print_debug_messages,raise_exceptions)
+                 partial_payment_allowed,
+                 print_debug_messages,raise_exceptions)
 
         all_current_budget_items = self.getBudgetItems()
         memos_w_matching_priority = all_current_budget_items.loc[all_current_budget_items.Priority == priority,'Memo']

@@ -7,8 +7,9 @@ class BudgetItem:
                  priority,
                  cadence,
                  amount,
-                 deferrable,
                  memo,
+                 deferrable=False,
+                 partial_payment_allowed=False,
                  print_debug_messages=True,
                  raise_exceptions=True):
         """
@@ -66,8 +67,9 @@ class BudgetItem:
         self.priority = priority
         self.cadence = cadence
         self.amount = amount
-        self.deferrable = deferrable
         self.memo = memo
+        self.deferrable = deferrable
+        self.partial_payment_allowed = partial_payment_allowed
 
         exception_type_error_ind = False
         exception_type_error_message_string = ""
@@ -158,8 +160,10 @@ class BudgetItem:
             'Priority': [self.priority],
             'Cadence': [self.cadence],
             'Amount': [self.amount],
+            'Memo': [self.memo],
             'Deferrable': [self.deferrable],
-            'Memo': [self.memo]
+            'Partial_Payment_Allowed': [self.partial_payment_allowed]
+
         })
 
         return single_budget_item_df.to_string()
@@ -178,8 +182,9 @@ class BudgetItem:
         JSON_string += "\"Priority\":" + "\"" + str(self.priority) + "\",\n"
         JSON_string += "\"Cadence\":" + "\"" + str(self.cadence) + "\",\n"
         JSON_string += "\"Amount\":" + "\"" + str(self.amount) + "\",\n"
+        JSON_string += "\"Memo\":" + "\"" + str(self.memo) + "\",\n"
         JSON_string += "\"Deferrable\":" + "\"" + str(self.deferrable) + "\",\n"
-        JSON_string += "\"Memo\":" + "\"" + str(self.memo) + "\"\n"
+        JSON_string += "\"Partial_Payment_Allowed\":" + "\"" + str(self.partial_payment_allowed) + "\"\n"
         JSON_string += "}"
         return JSON_string
 
