@@ -150,9 +150,405 @@ class TestExpenseForecastMethods(unittest.TestCase):
 
         ### Debug Message Tests
 
+
+    def compute_forecast_and_actual_vs_expected(self,
+                                                account_set,
+                                                budget_set,
+                                                memo_rule_set,
+                                                start_date_YYYYMMDD,
+                                                end_date_YYYYMMDD,
+                                                expected_result_df,
+                                                test_description):
+
+        E = ExpenseForecast.ExpenseForecast(account_set, budget_set,
+                                            memo_rule_set,
+                                            start_date_YYYYMMDD,
+                                            end_date_YYYYMMDD, raise_exceptions=False)
+
+        d = E.compute_forecast_difference(expected_result_df,
+                                          label=test_description,
+                                          make_plots=False,
+                                          diffs_only=True,
+                                          require_matching_columns=True,
+                                          require_matching_date_range=True,
+                                          append_expected_values=False,
+                                          return_type='dataframe')
+
+        f = E.compute_forecast_difference(expected_result_df,
+                                          label=test_description,
+                                          make_plots=False,
+                                          diffs_only=False,
+                                          require_matching_columns=True,
+                                          require_matching_date_range=True,
+                                          append_expected_values=True,
+                                          return_type='dataframe')
+
+        try:
+            display_test_result(test_description, d)
+        except Exception as e:
+            raise e
+
+        try:
+            sel_vec = (d.columns != 'Date') & (d.columns != 'Memo')
+            non_boilerplate_values__M = np.matrix(d.iloc[:, sel_vec])
+
+            error_ind = sum(sum(np.square(
+                non_boilerplate_values__M)).T)  # this very much DOES NOT SCALE. this is intended for small tests
+            self.assertTrue(error_ind == 0)
+        except Exception as e:
+            print(test_description)
+            print(f.T.to_string())
+            raise e
+
+    def test_cc_payment__satisfice__prev_bal_25__expect_25(self):
+        test_description = 'test_cc_payment__satisfice__prev_bal_25__expect_25'
+
+        start_date_YYYYMMDD = self.start_date_YYYYMMDD
+        end_date_YYYYMMDD = self.end_date_YYYYMMDD
+
+        account_set = copy.deepcopy(self.account_set)
+        budget_set = copy.deepcopy(self.budget_set)
+        memo_rule_set = copy.deepcopy(self.memo_rule_set)
+
+        account_set.addAccount(name='Checking',
+                                   balance=2000,
+                                   min_balance=0,
+                                   max_balance=float('Inf'),
+                                   account_type="checking")
+
+        account_set.addAccount(name='Credit',
+                                   balance=0,
+                                   min_balance=0,
+                                   max_balance=20000,
+                                   account_type="credit",
+                                   billing_start_date_YYYYMMDD='20000102',
+                                   interest_type='Compound',
+                                   apr=0.05,
+                                   interest_cadence='Monthly',
+                                   minimum_payment=40,
+                                   previous_statement_balance=25,
+                                   principal_balance=None,
+                                   accrued_interest=None
+                                   )
+
+        budget_set.addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
+                                     cadence='daily', amount=0, memo='dummy memo',
+                                     deferrable=False)
+
+        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1)
+
+        expected_result_df = pd.DataFrame({
+            'Date': ['20000101', '20000102', '20000103'],
+            'Checking': [2000, 1975, 1975],
+            'Credit: Curr Stmt Bal': [0, 0, 0],
+            'Credit: Prev Stmt Bal': [25, 0, 0],
+            'Memo': ['', '', '']
+        })
+        expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d').strftime('%Y-%m-%d') for x in
+                                     expected_result_df.Date]
+
+        self.compute_forecast_and_actual_vs_expected(account_set,
+                                                budget_set,
+                                                memo_rule_set,
+                                                start_date_YYYYMMDD,
+                                                end_date_YYYYMMDD,
+                                                expected_result_df,
+                                                test_description)
+
+    def test_cc_payment__satisfice__prev_bal_1000__expect_40(self):
+        test_description = 'test_cc_payment__satisfice__prev_bal_1000__expect_40'
+
+        start_date_YYYYMMDD = self.start_date_YYYYMMDD
+        end_date_YYYYMMDD = self.end_date_YYYYMMDD
+
+        account_set = copy.deepcopy(self.account_set)
+        budget_set = copy.deepcopy(self.budget_set)
+        memo_rule_set = copy.deepcopy(self.memo_rule_set)
+
+        account_set.addAccount(name='Checking',
+                               balance=2000,
+                               min_balance=0,
+                               max_balance=float('Inf'),
+                               account_type="checking")
+
+        account_set.addAccount(name='Credit',
+                               balance=0,
+                               min_balance=0,
+                               max_balance=20000,
+                               account_type="credit",
+                               billing_start_date_YYYYMMDD='20000102',
+                               interest_type='Compound',
+                               apr=0.05,
+                               interest_cadence='Monthly',
+                               minimum_payment=40,
+                               previous_statement_balance=1000,
+                               principal_balance=None,
+                               accrued_interest=None
+                               )
+
+        budget_set.addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
+                                 cadence='daily', amount=0, memo='dummy memo',
+                                 deferrable=False)
+
+        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1)
+
+        expected_result_df = pd.DataFrame({
+            'Date': ['20000101', '20000102', '20000103'],
+            'Checking': [2000, 1960, 1960],
+            'Credit: Curr Stmt Bal': [0, 0, 0],
+            'Credit: Prev Stmt Bal': [1000, 960, 960],
+            'Memo': ['', '', '']
+        })
+        expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d').strftime('%Y-%m-%d') for x in
+                                   expected_result_df.Date]
+
+        self.compute_forecast_and_actual_vs_expected(account_set,
+                                                     budget_set,
+                                                     memo_rule_set,
+                                                     start_date_YYYYMMDD,
+                                                     end_date_YYYYMMDD,
+                                                     expected_result_df,
+                                                     test_description)
+
+    def test_cc_payment__satisfice__prev_bal_3000__expect_60(self):
+        test_description = 'test_cc_payment__satisfice__prev_bal_3000__expect_60'
+
+        start_date_YYYYMMDD = self.start_date_YYYYMMDD
+        end_date_YYYYMMDD = self.end_date_YYYYMMDD
+
+        account_set = copy.deepcopy(self.account_set)
+        budget_set = copy.deepcopy(self.budget_set)
+        memo_rule_set = copy.deepcopy(self.memo_rule_set)
+
+        account_set.addAccount(name='Checking',
+                               balance=2000,
+                               min_balance=0,
+                               max_balance=float('Inf'),
+                               account_type="checking")
+
+        account_set.addAccount(name='Credit',
+                               balance=0,
+                               min_balance=0,
+                               max_balance=20000,
+                               account_type="credit",
+                               billing_start_date_YYYYMMDD='20000102',
+                               interest_type='Compound',
+                               apr=0.05,
+                               interest_cadence='Monthly',
+                               minimum_payment=40,
+                               previous_statement_balance=3000,
+                               principal_balance=None,
+                               accrued_interest=None
+                               )
+
+        budget_set.addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
+                                 cadence='daily', amount=0, memo='dummy memo',
+                                 deferrable=False)
+
+        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1)
+
+        expected_result_df = pd.DataFrame({
+            'Date': ['20000101', '20000102', '20000103'],
+            'Checking': [2000, 1940, 1940],
+            'Credit: Curr Stmt Bal': [0, 0, 0],
+            'Credit: Prev Stmt Bal': [3000, 2940, 2940],
+            'Memo': ['', '', '']
+        })
+        expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d').strftime('%Y-%m-%d') for x in
+                                   expected_result_df.Date]
+
+        self.compute_forecast_and_actual_vs_expected(account_set,
+                                                     budget_set,
+                                                     memo_rule_set,
+                                                     start_date_YYYYMMDD,
+                                                     end_date_YYYYMMDD,
+                                                     expected_result_df,
+                                                     test_description)
+
+    def test_cc_payment__optimize__no_prev_balance__pay_100__no_funds__expect_skip(self):
+        test_description = 'test_cc_payment__optimize__no_prev_balance__pay_100__no_funds__expect_skip'
+
+        start_date_YYYYMMDD = self.start_date_YYYYMMDD
+        end_date_YYYYMMDD = self.end_date_YYYYMMDD
+
+        account_set = copy.deepcopy(self.account_set)
+        budget_set = copy.deepcopy(self.budget_set)
+        memo_rule_set = copy.deepcopy(self.memo_rule_set)
+
+        account_set.addAccount(name='Checking',
+                               balance=2000,
+                               min_balance=0,
+                               max_balance=float('Inf'),
+                               account_type="checking")
+
+        account_set.addAccount(name='Credit',
+                               balance=0,
+                               min_balance=0,
+                               max_balance=20000,
+                               account_type="credit",
+                               billing_start_date_YYYYMMDD='20000102',
+                               interest_type='Compound',
+                               apr=0.05,
+                               interest_cadence='Monthly',
+                               minimum_payment=40,
+                               previous_statement_balance=0,
+                               principal_balance=None,
+                               accrued_interest=None
+                               )
+
+        budget_set.addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
+                                 cadence='daily', amount=0, memo='dummy memo',
+                                 deferrable=False)
+
+        budget_set.addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=4,
+                                 cadence='once', amount=100, memo='dummy memo',
+                                 deferrable=False)
+
+        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1)
+        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=4)
+
+        expected_result_df = pd.DataFrame({
+            'Date': ['20000101', '20000102', '20000103'],
+            'Checking': [2000, 2000, 2000],
+            'Credit: Curr Stmt Bal': [0, 0, 0],
+            'Credit: Prev Stmt Bal': [0, 0, 0],
+            'Memo': ['', '', '']
+        })
+        expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d').strftime('%Y-%m-%d') for x in
+                                   expected_result_df.Date]
+
+        self.compute_forecast_and_actual_vs_expected(account_set,
+                                                     budget_set,
+                                                     memo_rule_set,
+                                                     start_date_YYYYMMDD,
+                                                     end_date_YYYYMMDD,
+                                                     expected_result_df,
+                                                     test_description)
+    def test_cc_payment__optimize__no_prev_balance__pay_100__expect_skip(self):
+        test_description = 'test_cc_payment__optimize__no_prev_balance__pay_100__expect_skip'
+
+
+        start_date_YYYYMMDD = self.start_date_YYYYMMDD
+        end_date_YYYYMMDD = self.end_date_YYYYMMDD
+
+        account_set = copy.deepcopy(self.account_set)
+        budget_set = copy.deepcopy(self.budget_set)
+        memo_rule_set = copy.deepcopy(self.memo_rule_set)
+
+
+        account_set.addAccount(name='Checking',
+                               balance=2000,
+                               min_balance=0,
+                               max_balance=float('Inf'),
+                               account_type="checking")
+
+        account_set.addAccount(name='Credit',
+                               balance=0,
+                               min_balance=0,
+                               max_balance=20000,
+                               account_type="credit",
+                               billing_start_date_YYYYMMDD='20000102',
+                               interest_type='Compound',
+                               apr=0.05,
+                               interest_cadence='Monthly',
+                               minimum_payment=40,
+                               previous_statement_balance=0,
+                               principal_balance=None,
+                               accrued_interest=None
+                               )
+
+        budget_set.addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
+                                 cadence='daily', amount=0, memo='dummy memo',
+                                 deferrable=False)
+
+        budget_set.addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=4,
+                                 cadence='once', amount=100, memo='dummy memo',
+                                 deferrable=False)
+
+        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1)
+        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=4)
+
+        expected_result_df = pd.DataFrame({
+            'Date': ['20000101', '20000102', '20000103'],
+            'Checking': [2000, 2000, 2000],
+            'Credit: Curr Stmt Bal': [0, 0, 0],
+            'Credit: Prev Stmt Bal': [0, 0, 0],
+            'Memo': ['', '', '']
+        })
+        expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d').strftime('%Y-%m-%d') for x in
+                                   expected_result_df.Date]
+
+        self.compute_forecast_and_actual_vs_expected(account_set,
+                                                     budget_set,
+                                                     memo_rule_set,
+                                                     start_date_YYYYMMDD,
+                                                     end_date_YYYYMMDD,
+                                                     expected_result_df,
+                                                     test_description)
+
+    def test_cc_payment__optimize__pay_all_of_prev_part_of_curr__expect_800(self):
+        test_description = 'test_cc_payment__optimize__pay_all_of_prev_part_of_curr__expect_800'
+
+        start_date_YYYYMMDD = self.start_date_YYYYMMDD
+        end_date_YYYYMMDD = self.end_date_YYYYMMDD
+
+        account_set = copy.deepcopy(self.account_set)
+        budget_set = copy.deepcopy(self.budget_set)
+        memo_rule_set = copy.deepcopy(self.memo_rule_set)
+
+        account_set.addAccount(name='Checking',
+                               balance=2000,
+                               min_balance=0,
+                               max_balance=float('Inf'),
+                               account_type="checking")
+
+        account_set.addAccount(name='Credit',
+                               balance=500,
+                               min_balance=0,
+                               max_balance=20000,
+                               account_type="credit",
+                               billing_start_date_YYYYMMDD='20000102',
+                               interest_type='Compound',
+                               apr=0.05,
+                               interest_cadence='Monthly',
+                               minimum_payment=40,
+                               previous_statement_balance=500,
+                               principal_balance=None,
+                               accrued_interest=None
+                               )
+
+        budget_set.addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
+                                 cadence='daily', amount=0, memo='dummy memo',
+                                 deferrable=False)
+
+        budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=4,
+                                 cadence='once', amount=720, memo='test pay all prev part of curr',
+                                 deferrable=False)
+
+        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1)
+        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=4)
+
+        expected_result_df = pd.DataFrame({
+            'Date': ['20000101', '20000102', '20000103'],
+            'Checking': [2000, 1200, 1200],
+            'Credit: Curr Stmt Bal': [500, 200, 200],
+            'Credit: Prev Stmt Bal': [500, 0, 0],
+            'Memo': ['', '', '']
+        })
+        expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d').strftime('%Y-%m-%d') for x in
+                                   expected_result_df.Date]
+
+        self.compute_forecast_and_actual_vs_expected(account_set,
+                                                     budget_set,
+                                                     memo_rule_set,
+                                                     start_date_YYYYMMDD,
+                                                     end_date_YYYYMMDD,
+                                                     expected_result_df,
+                                                     test_description)
+
+
     def test_cc_payment__optimize__pay_part_of_prev_balance__expect_200(self):
-        log_in_color('green', 'debug', '\n', 0)
-        test_description = 'optimize, pay part of prev balance, expect 200'
+        test_description = 'test_cc_payment__optimize__pay_part_of_prev_balance__expect_200'
 
         start_date_YYYYMMDD = self.start_date_YYYYMMDD
         end_date_YYYYMMDD = self.end_date_YYYYMMDD
@@ -201,45 +597,71 @@ class TestExpenseForecastMethods(unittest.TestCase):
         expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d').strftime('%Y-%m-%d') for x in expected_result_df.Date]
         ### END
 
-        E = ExpenseForecast.ExpenseForecast(account_set,budget_set,
-                                            memo_rule_set,
-                                            start_date_YYYYMMDD,
-                                            end_date_YYYYMMDD, raise_exceptions=False)
+        self.compute_forecast_and_actual_vs_expected(account_set,
+                                                     budget_set,
+                                                     memo_rule_set,
+                                                     start_date_YYYYMMDD,
+                                                     end_date_YYYYMMDD,
+                                                     expected_result_df,
+                                                     test_description)
 
-        d = E.compute_forecast_difference(expected_result_df,
-                                                         label=test_description,
-                                                         make_plots=False,
-                                                         diffs_only=True,
-                                                         require_matching_columns=True,
-                                                         require_matching_date_range=True,
-                                                         append_expected_values=False,
-                                                         return_type='dataframe')
+    def test_cc_payment__optimize__non_0_prev_balance_but_no_funds__expect_0(self):
+        test_description = 'test_cc_payment__optimize__non_0_prev_balance_but_no_funds__expect_0'
 
-        f = E.compute_forecast_difference(expected_result_df,
-                                                             label=test_description,
-                                                             make_plots=False,
-                                                             diffs_only=False,
-                                                             require_matching_columns=True,
-                                                             require_matching_date_range=True,
-                                                             append_expected_values=True,
-                                                             return_type='dataframe')
+        start_date_YYYYMMDD = self.start_date_YYYYMMDD
+        end_date_YYYYMMDD = self.end_date_YYYYMMDD
 
-        try:
-            display_test_result(test_description, d)
-        except Exception as e:
-            raise e
+        account_set = copy.deepcopy(self.account_set)
+        budget_set = copy.deepcopy(self.budget_set)
+        memo_rule_set = copy.deepcopy(self.memo_rule_set)
 
-        try:
-            sel_vec = (d.columns != 'Date') & (d.columns != 'Memo')
-            non_boilerplate_values__M = np.matrix(d.iloc[:, sel_vec])
+        account_set.addAccount(name='Checking',
+                               balance=0,
+                               min_balance=0,
+                               max_balance=float('Inf'),
+                               account_type="checking")
 
-            error_ind = sum(sum(np.square(
-                non_boilerplate_values__M)).T)  # this very much DOES NOT SCALE. this is intended for small tests
-            self.assertTrue(error_ind == 0)
-        except Exception as e:
-            print(test_description)
-            print(f.T.to_string())
-            raise e
+        account_set.addAccount(name='Credit',
+                               balance=500,
+                               min_balance=0,
+                               max_balance=20000,
+                               account_type="credit",
+                               billing_start_date_YYYYMMDD='20000102',
+                               interest_type='Compound',
+                               apr=0.05,
+                               interest_cadence='Monthly',
+                               minimum_payment=40,
+                               previous_statement_balance=500,
+                               principal_balance=None,
+                               accrued_interest=None
+                               )
+
+        budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=4,
+                                 cadence='once', amount=100, memo='additional cc payment test 9',deferrable=False)
+
+
+        memo_rule_set.addMemoRule(memo_regex='.*',account_from='Credit',account_to=None,transaction_priority=1)
+
+        memo_rule_set.addMemoRule(memo_regex='.*additional cc payment.*', account_from='Checking', account_to='Credit', transaction_priority=4)
+
+        expected_result_df = pd.DataFrame({
+            'Date': ['20000101', '20000102', '20000103'],
+            'Checking': [0, 0, 0],
+            'Credit: Curr Stmt Bal': [500, 500, 500],
+            'Credit: Prev Stmt Bal': [500, 300, 300],
+            'Memo': ['', '', '']
+        })
+        expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d').strftime('%Y-%m-%d') for x in expected_result_df.Date]
+
+        self.compute_forecast_and_actual_vs_expected(account_set,
+                                                     budget_set,
+                                                     memo_rule_set,
+                                                     start_date_YYYYMMDD,
+                                                     end_date_YYYYMMDD,
+                                                     expected_result_df,
+                                                     test_description)
+
+
 
 
     # Interest accruals are calculated before any payments for that day
@@ -254,786 +676,8 @@ class TestExpenseForecastMethods(unittest.TestCase):
     # 7. monthly accrual compound (make a payment)
     #
     # each test case can have success defined by a 3 x n matrix
-    def test_credit_card_payments  (self):
-        #print('running test_interest_accrual()')
 
-        test_descriptions = [
-            'Test 0 : satisfice, no prev balance to pay, expect skip',
-            'Test 1 : satisfice, prev balance is less than minimum payment, expect 25 ',
-            'Test 2 : satisfice, prev balance is between $40 and $2k, expect 40',
-            'Test 3 : satisfice, prev balance is $3k, expect 60',
-
-            'Test 4 : optimize, no prev balance, explicitly pay 0, expect skip',
-            'Test 5 : optimize, no prev balance, explicitly pay 100, expect skip',
-            'Test 6 : optimize, no prev balance, explicitly pay 100, checking is 0, expect skip',
-            'Test 7 : optimize, no prev balance, explicitly pay 100, checking is 100, expect skip',
-
-            #'Test 9 : optimize, pay less than explicitly indicated, expect 50', ##we actually don't want this
-
-            'Test 8 : optimize, pay part of prev balance, expect 200',
-            'Test 9 : optimize, pay all of prev and part of curr, expect 800',
-            'Test 10 : optimize, non-0 prev balance but no funds, expect 0',
-        ]
-
-
-        account_sets = []
-        budget_sets = []
-        memo_rule_sets = []
-
-        expected_results = []
-
-        start_date_YYYYMMDD = self.start_date_YYYYMMDD
-        end_date_YYYYMMDD = self.end_date_YYYYMMDD
-
-        for i in range(0,len(test_descriptions)):
-            account_sets.append(copy.deepcopy(self.account_set))
-            budget_sets.append(copy.deepcopy(self.budget_set))
-            memo_rule_sets.append(copy.deepcopy(self.memo_rule_set))
-
-        ### BEGIN Test Case 1
-        account_sets[0].addAccount(name='Checking',
-                                   balance=2000,
-                                   min_balance=0,
-                                   max_balance=float('Inf'),
-                                   account_type="checking")
-
-        account_sets[0].addAccount(name='Credit',
-                                   balance=0,
-                                   min_balance=0,
-                                   max_balance=20000,
-                                   account_type="credit",
-                                   billing_start_date_YYYYMMDD='20000102',
-                                   interest_type='Compound',
-                                   apr=0.05,
-                                   interest_cadence='Monthly',
-                                   minimum_payment=40,
-                                   previous_statement_balance=0,
-                                   principal_balance=None,
-                                   accrued_interest=None
-                                   )
-
-        budget_sets[0].addBudgetItem(start_date_YYYYMMDD='20000101',end_date_YYYYMMDD='20000103',priority=1,cadence='daily',amount=0,memo='dummy memo',
-                                     deferrable=False)
-
-        memo_rule_sets[0].addMemoRule(memo_regex='.*',account_from='Credit',account_to=None,transaction_priority=1)
-
-        expected_result_0_df = pd.DataFrame({
-            'Date': ['20000101', '20000102', '20000103'],
-            'Checking': [2000, 2000, 2000],
-            'Credit: Curr Stmt Bal': [0, 0, 0],
-            'Credit: Prev Stmt Bal': [0, 0, 0],
-            'Memo': ['', '', '']
-        })
-        expected_result_0_df.Date = [datetime.datetime.strptime(x, '%Y%m%d').strftime('%Y-%m-%d') for x in
-                                     expected_result_0_df.Date]
-        expected_results.append(expected_result_0_df)
-        ### END
-
-        ### BEGIN Test Case 2
-        account_sets[1].addAccount(name='Checking',
-                                   balance=2000,
-                                   min_balance=0,
-                                   max_balance=float('Inf'),
-                                   account_type="checking")
-
-        account_sets[1].addAccount(name='Credit',
-                                   balance=0,
-                                   min_balance=0,
-                                   max_balance=20000,
-                                   account_type="credit",
-                                   billing_start_date_YYYYMMDD='20000102',
-                                   interest_type='Compound',
-                                   apr=0.05,
-                                   interest_cadence='Monthly',
-                                   minimum_payment=40,
-                                   previous_statement_balance=25,
-                                   principal_balance=None,
-                                   accrued_interest=None
-                                   )
-
-        budget_sets[1].addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
-                                     cadence='daily', amount=0, memo='dummy memo',
-                                     deferrable=False)
-
-        memo_rule_sets[1].addMemoRule(memo_regex='.*',account_from='Credit',account_to=None,transaction_priority=1)
-
-        expected_result_1_df = pd.DataFrame({
-            'Date': ['20000101', '20000102', '20000103'],
-            'Checking': [2000, 1975, 1975],
-            'Credit: Curr Stmt Bal': [0, 0, 0],
-            'Credit: Prev Stmt Bal': [25, 0, 0],
-            'Memo': ['', '', '']
-        })
-        expected_result_1_df.Date = [datetime.datetime.strptime(x, '%Y%m%d').strftime('%Y-%m-%d') for x in
-                                     expected_result_1_df.Date]
-        expected_results.append(expected_result_1_df)
-        ### END
-
-        ### BEGIN Test Case 3
-        account_sets[2].addAccount(name='Checking',
-                                   balance=2000,
-                                   min_balance=0,
-                                   max_balance=float('Inf'),
-                                   account_type="checking")
-
-        account_sets[2].addAccount(name='Credit',
-                                   balance=0,
-                                   min_balance=0,
-                                   max_balance=20000,
-                                   account_type="credit",
-                                   billing_start_date_YYYYMMDD='20000102',
-                                   interest_type='Compound',
-                                   apr=0.05,
-                                   interest_cadence='Monthly',
-                                   minimum_payment=40,
-                                   previous_statement_balance=1000,
-                                   principal_balance=None,
-                                   accrued_interest=None
-                                   )
-
-        budget_sets[2].addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
-                                     cadence='daily', amount=0, memo='dummy memo',
-                                     deferrable=False)
-
-        memo_rule_sets[2].addMemoRule(memo_regex='.*',account_from='Credit',account_to=None,transaction_priority=1)
-
-        expected_result_2_df = pd.DataFrame({
-            'Date': ['20000101', '20000102', '20000103'],
-            'Checking': [2000, 1960, 1960],
-            'Credit: Curr Stmt Bal': [0, 0, 0],
-            'Credit: Prev Stmt Bal': [1000, 960, 960],
-            'Memo': ['', '', '']
-        })
-        expected_result_2_df.Date = [datetime.datetime.strptime(x, '%Y%m%d').strftime('%Y-%m-%d') for x in
-                                     expected_result_2_df.Date]
-        expected_results.append(expected_result_2_df)
-        ### END
-
-        ### BEGIN Test Case 4
-        account_sets[3].addAccount(name='Checking',
-                                   balance=2000,
-                                   min_balance=0,
-                                   max_balance=float('Inf'),
-                                   account_type="checking")
-
-        account_sets[3].addAccount(name='Credit',
-                                   balance=0,
-                                   min_balance=0,
-                                   max_balance=20000,
-                                   account_type="credit",
-                                   billing_start_date_YYYYMMDD='20000102',
-                                   interest_type='Compound',
-                                   apr=0.05,
-                                   interest_cadence='Monthly',
-                                   minimum_payment=40,
-                                   previous_statement_balance=3000,
-                                   principal_balance=None,
-                                   accrued_interest=None
-                                   )
-
-        budget_sets[3].addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
-                                     cadence='daily', amount=0, memo='dummy memo',
-                                     deferrable=False)
-
-        memo_rule_sets[3].addMemoRule(memo_regex='.*',account_from='Credit',account_to=None,transaction_priority=1)
-
-        expected_result_3_df = pd.DataFrame({
-            'Date': ['20000101', '20000102', '20000103'],
-            'Checking': [2000, 1940, 1940],
-            'Credit: Curr Stmt Bal': [0, 0, 0],
-            'Credit: Prev Stmt Bal': [3000, 2940, 2940],
-            'Memo': ['', '', '']
-        })
-        expected_result_3_df.Date = [datetime.datetime.strptime(x, '%Y%m%d').strftime('%Y-%m-%d') for x in
-                                     expected_result_3_df.Date]
-        expected_results.append(expected_result_3_df)
-        ### END
-
-        ### BEGIN Test Case 5
-        account_sets[4].addAccount(name='Checking',
-                                   balance=0,
-                                   min_balance=0,
-                                   max_balance=float('Inf'),
-                                   account_type="checking")
-
-        account_sets[4].addAccount(name='Credit',
-                                   balance=0,
-                                   min_balance=0,
-                                   max_balance=20000,
-                                   account_type="credit",
-                                   billing_start_date_YYYYMMDD='20000102',
-                                   interest_type='Compound',
-                                   apr=0.05,
-                                   interest_cadence='Monthly',
-                                   minimum_payment=40,
-                                   previous_statement_balance=0,
-                                   principal_balance=None,
-                                   accrued_interest=None
-                                   )
-
-        budget_sets[4].addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
-                                     cadence='daily', amount=0, memo='dummy memo',
-                                     deferrable=False)
-
-        memo_rule_sets[4].addMemoRule(memo_regex='.*',account_from='Credit',account_to=None,transaction_priority=1)
-
-        expected_result_4_df = pd.DataFrame({
-            'Date': ['20000101', '20000102', '20000103'],
-            'Checking': [0, 0, 0],
-            'Credit: Curr Stmt Bal': [0, 0, 0],
-            'Credit: Prev Stmt Bal': [0, 0, 0],
-            'Memo': ['', '', '']
-        })
-        expected_result_4_df.Date = [datetime.datetime.strptime(x, '%Y%m%d').strftime('%Y-%m-%d') for x in
-                                     expected_result_4_df.Date]
-        expected_results.append(expected_result_4_df)
-        ### END
-
-        ### BEGIN Test Case 6
-        account_sets[5].addAccount(name='Checking',
-                                   balance=0,
-                                   min_balance=0,
-                                   max_balance=float('Inf'),
-                                   account_type="checking")
-
-        account_sets[5].addAccount(name='Credit',
-                                   balance=0,
-                                   min_balance=0,
-                                   max_balance=20000,
-                                   account_type="credit",
-                                   billing_start_date_YYYYMMDD='20000102',
-                                   interest_type='Compound',
-                                   apr=0.05,
-                                   interest_cadence='Monthly',
-                                   minimum_payment=40,
-                                   previous_statement_balance=0,
-                                   principal_balance=None,
-                                   accrued_interest=None
-                                   )
-
-        budget_sets[5].addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
-                                     cadence='daily', amount=0, memo='dummy memo',
-                                     deferrable=False)
-
-        memo_rule_sets[5].addMemoRule(memo_regex='.*',account_from='Credit',account_to=None,transaction_priority=1)
-
-        expected_result_5_df = pd.DataFrame({
-            'Date': ['20000101', '20000102', '20000103'],
-            'Checking': [0, 0, 0],
-            'Credit: Curr Stmt Bal': [0, 0, 0],
-            'Credit: Prev Stmt Bal': [0, 0, 0],
-            'Memo': ['', '', '']
-        })
-        expected_result_5_df.Date = [datetime.datetime.strptime(x, '%Y%m%d').strftime('%Y-%m-%d') for x in
-                                     expected_result_5_df.Date]
-        expected_results.append(expected_result_5_df)
-        ### END
-
-        ### BEGIN Test Case 7
-        account_sets[6].addAccount(name='Checking',
-                                   balance=0,
-                                   min_balance=0,
-                                   max_balance=float('Inf'),
-                                   account_type="checking")
-
-        account_sets[6].addAccount(name='Credit',
-                                   balance=0,
-                                   min_balance=0,
-                                   max_balance=20000,
-                                   account_type="credit",
-                                   billing_start_date_YYYYMMDD='20000102',
-                                   interest_type='Compound',
-                                   apr=0.05,
-                                   interest_cadence='Monthly',
-                                   minimum_payment=40,
-                                   previous_statement_balance=0,
-                                   principal_balance=None,
-                                   accrued_interest=None
-                                   )
-
-        budget_sets[6].addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
-                                     cadence='daily', amount=0, memo='dummy memo',
-                                     deferrable=False)
-
-        memo_rule_sets[6].addMemoRule(memo_regex='.*',account_from='Credit',account_to=None,transaction_priority=1)
-
-        expected_result_6_df = pd.DataFrame({
-            'Date': ['20000101', '20000102', '20000103'],
-            'Checking': [0, 0, 0],
-            'Credit: Curr Stmt Bal': [0, 0, 0],
-            'Credit: Prev Stmt Bal': [0, 0, 0],
-            'Memo': ['', '', '']
-        })
-        expected_result_6_df.Date = [datetime.datetime.strptime(x, '%Y%m%d').strftime('%Y-%m-%d') for x in
-                                     expected_result_6_df.Date]
-        expected_results.append(expected_result_6_df)
-        ### END
-
-        ### BEGIN Test Case 8
-        account_sets[7].addAccount(name='Checking',
-                                   balance=100,
-                                   min_balance=0,
-                                   max_balance=float('Inf'),
-                                   account_type="checking")
-
-        account_sets[7].addAccount(name='Credit',
-                                   balance=0,
-                                   min_balance=0,
-                                   max_balance=20000,
-                                   account_type="credit",
-                                   billing_start_date_YYYYMMDD='20000102',
-                                   interest_type='Compound',
-                                   apr=0.05,
-                                   interest_cadence='Monthly',
-                                   minimum_payment=40,
-                                   previous_statement_balance=0,
-                                   principal_balance=None,
-                                   accrued_interest=None
-                                   )
-
-        budget_sets[7].addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
-                                     cadence='daily', amount=0, memo='dummy memo',
-                                     deferrable=False)
-
-        memo_rule_sets[7].addMemoRule(memo_regex='.*',account_from='Credit',account_to=None,transaction_priority=1)
-
-        expected_result_7_df = pd.DataFrame({
-            'Date': ['20000101', '20000102', '20000103'],
-            'Checking': [100, 100, 100],
-            'Credit: Curr Stmt Bal': [0, 0, 0],
-            'Credit: Prev Stmt Bal': [0, 0, 0],
-            'Memo': ['', '', '']
-        })
-        expected_result_7_df.Date = [datetime.datetime.strptime(x, '%Y%m%d').strftime('%Y-%m-%d') for x in
-                                     expected_result_7_df.Date]
-        expected_results.append(expected_result_7_df)
-        ### END
-
-        ### BEGIN Test Case 9
-        # account_sets[8].addAccount(name='Checking',
-        #                            balance=100,
-        #                            min_balance=0,
-        #                            max_balance=float('Inf'),
-        #                            account_type="checking")
-        #
-        # account_sets[8].addAccount(name='Credit',
-        #                            balance=0,
-        #                            min_balance=0,
-        #                            max_balance=20000,
-        #                            account_type="credit",
-        #                            billing_start_date_YYYYMMDD='20000102',
-        #                            interest_type='Compound',
-        #                            apr=0.05,
-        #                            interest_cadence='Monthly',
-        #                            minimum_payment=40,
-        #                            previous_statement_balance=50,
-        #                            principal_balance=None,
-        #                            accrued_interest=None
-        #                            )
-        #
-        # budget_sets[8].addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=4,
-        #                              cadence='once', amount=10
-        #                              , memo='additional cc payment test 8',
-        #                              deferrable=False)
-        #
-        # memo_rule_sets[8].addMemoRule(memo_regex='.*',account_from='Credit',account_to=None,transaction_priority=1)
-        #
-        # memo_rule_sets[8].addMemoRule(memo_regex='.*', account_from='Checking', account_to='Credit',transaction_priority=4)
-        #
-        # expected_result_8_df = pd.DataFrame({
-        #     'Date': ['20000101', '20000102', '20000103'],
-        #     'Checking': [100, 50, 50],
-        #     'Credit: Curr Stmt Bal': [0, 0, 0],
-        #     'Credit: Prev Stmt Bal': [50, 0, 0],
-        #     'Memo': ['', '', '']
-        # })
-        # expected_result_8_df.Date = [datetime.datetime.strptime(x, '%Y%m%d').strftime('%Y-%m-%d') for x in
-        #                              expected_result_8_df.Date]
-        # expected_results.append(expected_result_8_df)
-        ### END
-
-        ### BEGIN Test Case 10
-        account_sets[8].addAccount(name='Checking',
-                                   balance=200,
-                                   min_balance=0,
-                                   max_balance=float('Inf'),
-                                   account_type="checking")
-
-        account_sets[8].addAccount(name='Credit',
-                                   balance=500,
-                                   min_balance=0,
-                                   max_balance=20000,
-                                   account_type="credit",
-                                   billing_start_date_YYYYMMDD='20000102',
-                                   interest_type='Compound',
-                                   apr=0.05,
-                                   interest_cadence='Monthly',
-                                   minimum_payment=40,
-                                   previous_statement_balance=500,
-                                   principal_balance=None,
-                                   accrued_interest=None
-                                   )
-
-        print('IF THERE IS DUPLICATION HERE, THEN I FOUND THE PROBLEM ')
-        print('BEFORE')
-        print(budget_sets[8])
-        budget_sets[8].addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=4,
-                                     cadence='once', amount=160, memo='additional cc payment test 9',
-                                     deferrable=False)
-        print('AFTER')
-        print(budget_sets[8])
-
-        memo_rule_sets[8].addMemoRule(memo_regex='.*',account_from='Credit',account_to=None,transaction_priority=1)
-
-        memo_rule_sets[8].addMemoRule(memo_regex='.*additional cc payment.*', account_from='Checking', account_to='Credit', transaction_priority=4)
-
-        expected_result_8_df = pd.DataFrame({
-            'Date': ['20000101', '20000102', '20000103'],
-            'Checking': [200, 0, 0],
-            'Credit: Curr Stmt Bal': [500, 500, 500],
-            'Credit: Prev Stmt Bal': [500, 300, 300],
-            'Memo': ['', '', '']
-        })
-        expected_result_8_df.Date = [datetime.datetime.strptime(x, '%Y%m%d').strftime('%Y-%m-%d') for x in
-                                     expected_result_8_df.Date]
-        expected_results.append(expected_result_8_df)
-        ### END
-
-        ### BEGIN Test Case 11
-        account_sets[9].addAccount(name='Checking',
-                                   balance=800,
-                                   min_balance=0,
-                                   max_balance=float('Inf'),
-                                   account_type="checking")
-
-        account_sets[9].addAccount(name='Credit',
-                                   balance=500,
-                                   min_balance=0,
-                                   max_balance=20000,
-                                   account_type="credit",
-                                   billing_start_date_YYYYMMDD='20000102',
-                                   interest_type='Compound',
-                                   apr=0.05,
-                                   interest_cadence='Monthly',
-                                   minimum_payment=40,
-                                   previous_statement_balance=500,
-                                   principal_balance=None,
-                                   accrued_interest=None
-                                   )
-
-        budget_sets[9].addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
-                                     cadence='monthly', amount=0, memo='additional cc payment test 10',
-                                     deferrable=False)
-
-        memo_rule_sets[9].addMemoRule(memo_regex='.*',account_from='Credit',account_to=None,transaction_priority=1)
-
-        expected_result_9_df = pd.DataFrame({
-            'Date': ['20000101', '20000102', '20000103'],
-            'Checking': [800, 0, 0],
-            'Credit: Curr Stmt Bal': [500, 200, 200],
-            'Credit: Prev Stmt Bal': [500, 0, 0],
-            'Memo': ['', '', '']
-        })
-        expected_result_9_df.Date = [datetime.datetime.strptime(x, '%Y%m%d').strftime('%Y-%m-%d') for x in
-                                     expected_result_9_df.Date]
-        expected_results.append(expected_result_9_df)
-        ### END
-
-        ### BEGIN Test Case 12
-        account_sets[10].addAccount(name='Checking',
-                                    balance=0,
-                                    min_balance=0,
-                                    max_balance=float('Inf'),
-                                    account_type="checking")
-
-        account_sets[10].addAccount(name='Credit',
-                                    balance=500,
-                                    min_balance=0,
-                                    max_balance=20000,
-                                    account_type="credit",
-                                    billing_start_date_YYYYMMDD='20000102',
-                                    interest_type='Compound',
-                                    apr=0.05,
-                                    interest_cadence='Monthly',
-                                    minimum_payment=40,
-                                    previous_statement_balance=500,
-                                    principal_balance=None,
-                                    accrued_interest=None
-                                    )
-
-        budget_sets[10].addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
-                                      cadence='daily', amount=0, memo='additional cc payment test 11',
-                                      deferrable=False)
-
-        memo_rule_sets[10].addMemoRule(memo_regex='.*',account_from='Credit',account_to=None,transaction_priority=1)
-
-        expected_result_10_df = pd.DataFrame({
-            'Date': ['20000101', '20000102', '20000103'],
-            'Checking': [0, 0, 0],
-            'Credit: Curr Stmt Bal': [500, 500, 500],
-            'Credit: Prev Stmt Bal': [500, 500, 500],
-            'Memo': ['', '', '']
-        })
-        expected_result_10_df.Date = [datetime.datetime.strptime(x, '%Y%m%d').strftime('%Y-%m-%d') for x in
-                                      expected_result_10_df.Date]
-        expected_results.append(expected_result_10_df)
-        ### END
-
-        # Run the Forecasts
-        expense_forecasts = []
-        for i in range(0,len(test_descriptions)):
-            #print('Running Forecast #'+str(i))
-            #
-            if i == 8:
-                log_in_color('white','debug','###########################################################################################################')
-
-            with self.subTest(i=i):
-                try:
-                    expense_forecasts.append(ExpenseForecast.ExpenseForecast(account_sets[i],
-                                                                             budget_sets[i],
-                                                                             memo_rule_sets[i],
-                                                                             start_date_YYYYMMDD,
-                                                                             end_date_YYYYMMDD,raise_exceptions=False))
-
-                    #print(expense_forecasts[i].forecast_df.to_string())
-                except Exception as e:
-                    if i == 10:
-                        self.assertRaises(ValueError)
-                    else:
-                        raise e
-
-        # Compute Differences
-        differences = []
-        full_output = []
-        for i in range(0,len(test_descriptions)):
-
-            if i == 10:
-                continue
-
-            try:
-
-                if i == 8:
-                    print(expected_results[i].to_string())
-
-                d = expense_forecasts[i].compute_forecast_difference(expected_results[i],
-                                                                     label=test_descriptions[i],
-                                                                     make_plots=False,
-                                                                     diffs_only=True,
-                                                                     require_matching_columns=True,
-                                                                     require_matching_date_range=True,
-                                                                     append_expected_values=False,
-                                                                     return_type='dataframe')
-
-                f = expense_forecasts[i].compute_forecast_difference(expected_results[i],
-                                                                     label=test_descriptions[i],
-                                                                     make_plots=False,
-                                                                     diffs_only=False,
-                                                                     require_matching_columns=True,
-                                                                     require_matching_date_range=True,
-                                                                     append_expected_values=True,
-                                                                     return_type='dataframe')
-
-                differences.append(d)
-                full_output.append(f)
-            except Exception as e:
-                pass
-
-        # Display Results
-        for i in range(0,len(test_descriptions)):
-
-            if i == 10:
-                continue
-
-            try:
-                display_test_result(test_descriptions[i], differences[i])
-            except Exception as e:
-                raise e
-
-        # Check Results
-        for i in range(0, len(test_descriptions)):
-
-            if i == 10:
-                continue
-
-            with self.subTest(i=i):
-                try:
-                    sel_vec = (differences[i].columns != 'Date') & (differences[i].columns != 'Memo')
-                    non_boilerplate_values__M = np.matrix(differences[i].iloc[:,sel_vec])
-
-                    error_ind = sum(sum(np.square(non_boilerplate_values__M)).T) #this very much DOES NOT SCALE. this is intended for small tests
-                    self.assertTrue(error_ind == 0)
-                except Exception as e:
-                    print('Test #:' + str(i))
-                    print(test_descriptions[i])
-                    print(full_output[i].T.to_string())
-                    raise e
-
-
-    def test_interest_accrual(self):
-
-        test_descriptions = [
-            'Test 1 : Compound Monthly',
-            'Test 2 : Simple Daily'
-        ]
-
-        account_sets = []
-        budget_sets = []
-        memo_rule_sets = []
-
-        expected_results = []
-
-        start_date_YYYYMMDD = self.start_date_YYYYMMDD
-        end_date_YYYYMMDD = self.end_date_YYYYMMDD
-
-        for i in range(0, len(test_descriptions)):
-            account_sets.append(copy.deepcopy(self.account_set))
-            budget_sets.append(copy.deepcopy(self.budget_set))
-            memo_rule_sets.append(copy.deepcopy(self.memo_rule_set))
-
-        ### BEGIN Test Case 1
-        account_sets[0].addAccount(name='Checking',
-                                   balance=0,
-                                   min_balance=0,
-                                   max_balance=float('Inf'),
-                                   account_type="checking")
-
-        account_sets[0].addAccount(name='Credit',
-                                   balance=0,
-                                   min_balance=0,
-                                   max_balance=float('Inf'),
-                                   account_type="credit",
-                                   billing_start_date_YYYYMMDD='19991202',
-                                   interest_type='Compound',
-                                   apr=0.05,
-                                   interest_cadence='Monthly',
-                                   minimum_payment=40,
-                                   previous_statement_balance=1000,
-                                   principal_balance=None,
-                                   accrued_interest=None
-                                   )
-
-        budget_sets[0].addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
-                                     cadence='daily', amount=0, memo='dummy memo',
-                                     deferrable=False)
-
-        memo_rule_sets[0].addMemoRule(memo_regex='.*', account_from='Checking', account_to='Credit',
-                                      transaction_priority=1)
-
-        expected_result_0_df = pd.DataFrame({
-            'Date': ['20000101', '20000102', '20000103'],
-            'Checking': [0, 0, 0],
-            'Credit: Curr Stmt Bal': [0, 0, 0],
-            'Credit: Prev Stmt Bal': [1000, 1004.17, 1004.17],
-            'Memo': ['', '', '']
-        })
-        expected_result_0_df.Date = [datetime.datetime.strptime(x, '%Y%m%d').strftime('%Y-%m-%d') for x in
-                                     expected_result_0_df.Date]
-        expected_results.append(expected_result_0_df)
-        ### END
-
-        ### BEGIN Test Case 2
-        account_sets[1].addAccount(name='Checking',
-                                   balance=0,
-                                   min_balance=0,
-                                   max_balance=float('Inf'),
-                                   account_type="checking")
-
-        account_sets[1].addAccount(name='Loan',
-                                   balance=1000,
-                                   min_balance=0,
-                                   max_balance=float('Inf'),
-                                   account_type="loan",
-                                   billing_start_date_YYYYMMDD='20000102',
-                                   interest_type='Simple',
-                                   apr=0.05,
-                                   interest_cadence='Daily',
-                                   minimum_payment=40,
-                                   previous_statement_balance=None,
-                                   principal_balance=1000,
-                                   accrued_interest=0
-                                   )
-
-        budget_sets[1].addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
-                                     cadence='daily', amount=0, memo='dummy memo',
-                                     deferrable=False)
-
-        memo_rule_sets[1].addMemoRule(memo_regex='.*', account_from='Checking', account_to='Loan',
-                                      transaction_priority=1)
-
-        expected_result_1_df = pd.DataFrame({
-            'Date': ['20000101', '20000102', '20000103'],
-            'Checking': [0, 0, 0],
-            'Loan: Principal Balance': [1000, 1000, 1000],
-            'Loan: Interest': [0, 0.14, 0.28], #because of rounding error, the 0.28 would be a 0.27 IRL. #todo explicity call this out in docs
-            'Memo': ['', '', '']
-        })
-        expected_result_1_df.Date = [datetime.datetime.strptime(x, '%Y%m%d').strftime('%Y-%m-%d') for x in
-                                     expected_result_1_df.Date]
-        expected_results.append(expected_result_1_df)
-        ### END
-
-        # Run the Forecasts
-        expense_forecasts = []
-        for i in range(0, len(test_descriptions)):
-            print('Running Forecast #'+str(i))
-            #print(account_sets[i])
-            #print(budget_sets[i])
-            #print(memo_rule_sets[i])
-
-            try:
-                expense_forecasts.append(ExpenseForecast.ExpenseForecast(account_sets[i],
-                                                                         budget_sets[i],
-                                                                         memo_rule_sets[i],
-                                                                         start_date_YYYYMMDD,
-                                                                         end_date_YYYYMMDD, raise_exceptions=False))
-
-                # print(expense_forecasts[i].forecast_df.to_string())
-            except Exception as e:
-                print('Failed to run forecast #'+str(i)+' e:'+str(e))
-                raise e
-
-        # Compute Differences
-        differences = []
-        for i in range(0, len(test_descriptions)):
-            try:
-                d = expense_forecasts[i].compute_forecast_difference(expected_results[i],
-                                                                     label=test_descriptions[i],
-                                                                     make_plots=True,
-                                                                     diffs_only=True,
-                                                                     require_matching_columns=True,
-                                                                     require_matching_date_range=True,
-                                                                     append_expected_values=False,
-                                                                     return_type='dataframe')
-                d = d.reindex(sorted(d.columns), axis=1)
-                differences.append(d)
-            except Exception as e:
-                print(e)
-                raise e
-
-        # Display Results
-        for i in range(0, len(test_descriptions)):
-            try:
-                display_test_result(test_descriptions[i], differences[i])
-            except Exception as e:
-                print('Failed to display test result for test #'+str(i)+' e:'+str(e))
-
-        # Check Results
-        for i in range(0, len(test_descriptions)):
-            try:
-                sel_vec = (differences[i].columns != 'Date') & (differences[i].columns != 'Memo')
-                non_boilerplate_values__M = np.matrix(differences[i].iloc[:,sel_vec])
-
-                error_ind = sum(sum(np.square(non_boilerplate_values__M)).T) #this very much DOES NOT SCALE. this is intended for small tests
-                self.assertTrue(error_ind == 0)
-            except Exception as e:
-                print('Offending result set:')
-                print(differences[i].to_string())
-                raise e
-
-
-
-
-
+    #
 
     # scenarios: min payments only
     # 1. minimum payments only
@@ -1214,124 +858,124 @@ class TestExpenseForecastMethods(unittest.TestCase):
     #     for i in range(0, len(test_descriptions)):
     #         self.assertTrue(differences[i].shape[0] == 0)
 
-    def test_allocate_additional_loan_payments(self):
-        account_set = copy.deepcopy(self.account_set)
-        budget_set = copy.deepcopy(self.budget_set)
-        memo_rule_set = copy.deepcopy(self.memo_rule_set)
+    #
+    # def test_allocate_additional_loan_payments(self):
+    #     account_set = copy.deepcopy(self.account_set)
+    #     budget_set = copy.deepcopy(self.budget_set)
+    #     memo_rule_set = copy.deepcopy(self.memo_rule_set)
+    #
+    #     start_date_YYYYMMDD = self.start_date_YYYYMMDD
+    #     end_date_YYYYMMDD = self.end_date_YYYYMMDD
+    #
+    #     account_set.addAccount(name='Checking',
+    #                            balance=0,
+    #                            min_balance=0,
+    #                            max_balance=float('Inf'),
+    #                            account_type="checking",
+    #                            billing_start_date_YYYYMMDD=None,
+    #                            interest_type=None,
+    #                            apr=None,
+    #                            interest_cadence=None,
+    #                            minimum_payment=None,
+    #                            previous_statement_balance=None,
+    #                            principal_balance=None,
+    #                            accrued_interest=None
+    #                            )
+    #
+    #     account_set.addAccount(name='Loan A',
+    #                            balance=3359.17,
+    #                            min_balance=0,
+    #                            max_balance=float('Inf'),
+    #                            account_type="loan",
+    #                            billing_start_date_YYYYMMDD='20230903',
+    #                            interest_type='Simple',
+    #                            apr=0.0466,
+    #                            interest_cadence='Daily',
+    #                            minimum_payment=67.28,
+    #                            previous_statement_balance=None,
+    #                            principal_balance=3359.17,
+    #                            accrued_interest=0
+    #                            )
+    #
+    #     account_set.addAccount(name='Loan B',
+    #                            balance=4746.18,
+    #                            min_balance=0,
+    #                            max_balance=float('Inf'),
+    #                            account_type="loan",
+    #                            billing_start_date_YYYYMMDD='20230903',
+    #                            interest_type='Simple',
+    #                            apr=0.0429,
+    #                            interest_cadence='Daily',
+    #                            minimum_payment=56.57,
+    #                            previous_statement_balance=None,
+    #                            principal_balance=4746.18,
+    #                            accrued_interest=0
+    #                            )
+    #
+    #     account_set.addAccount(name='Loan C',
+    #                            balance=1919.55,
+    #                            min_balance=0,
+    #                            max_balance=float('Inf'),
+    #                            account_type="loan",
+    #                            billing_start_date_YYYYMMDD='20230903',
+    #                            interest_type='Simple',
+    #                            apr=0.0429,
+    #                            interest_cadence='Daily',
+    #                            minimum_payment=22.88,
+    #                            previous_statement_balance=None,
+    #                            principal_balance=1919.55,
+    #                            accrued_interest=0
+    #                            )
+    #
+    #     account_set.addAccount(name='Loan D',
+    #                            balance=4766.68,
+    #                            min_balance=0,
+    #                            max_balance=float('Inf'),
+    #                            account_type="loan",
+    #                            billing_start_date_YYYYMMDD='20230903',
+    #                            interest_type='Simple',
+    #                            apr=0.0376,
+    #                            interest_cadence='Daily',
+    #                            minimum_payment=55.17,
+    #                            previous_statement_balance=None,
+    #                            principal_balance=4766.68,
+    #                            accrued_interest=0
+    #                            )
+    #
+    #     account_set.addAccount(name='Loan E',
+    #                            balance=1823.31,
+    #                            min_balance=0,
+    #                            max_balance=float('Inf'),
+    #                            account_type="loan",
+    #                            billing_start_date_YYYYMMDD='20230903',
+    #                            interest_type='Simple',
+    #                            apr=0.0376,
+    #                            interest_cadence='Daily',
+    #                            minimum_payment=21.29,
+    #                            previous_statement_balance=None,
+    #                            principal_balance=1823.31,
+    #                            accrued_interest=0
+    #                            )
+    #
+    #
+    #
+    #     E = ExpenseForecast.ExpenseForecast(account_set,
+    #                                         budget_set,
+    #                                         memo_rule_set,
+    #                                         start_date_YYYYMMDD,
+    #                                         end_date_YYYYMMDD, raise_exceptions=False)
+    #
+    #     #print('running loan payment allocation')
+    #     #B1 = E.allocate_additional_loan_payments(account_set, 15000, '20230303')
+    #     #print('B1:')
+    #     #print(B1.getBudgetItems().to_string())
+    #
+    #     B2 = E.allocate_additional_loan_payments(account_set, 1000, '20230303')
+    #     #print('B2:')
+    #     #print(B2.getBudgetItems().to_string())
+    #
 
-        start_date_YYYYMMDD = self.start_date_YYYYMMDD
-        end_date_YYYYMMDD = self.end_date_YYYYMMDD
 
-        account_set.addAccount(name='Checking',
-                               balance=0,
-                               min_balance=0,
-                               max_balance=float('Inf'),
-                               account_type="checking",
-                               billing_start_date_YYYYMMDD=None,
-                               interest_type=None,
-                               apr=None,
-                               interest_cadence=None,
-                               minimum_payment=None,
-                               previous_statement_balance=None,
-                               principal_balance=None,
-                               accrued_interest=None
-                               )
-
-        account_set.addAccount(name='Loan A',
-                               balance=3359.17,
-                               min_balance=0,
-                               max_balance=float('Inf'),
-                               account_type="loan",
-                               billing_start_date_YYYYMMDD='20230903',
-                               interest_type='Simple',
-                               apr=0.0466,
-                               interest_cadence='Daily',
-                               minimum_payment=67.28,
-                               previous_statement_balance=None,
-                               principal_balance=3359.17,
-                               accrued_interest=0
-                               )
-
-        account_set.addAccount(name='Loan B',
-                               balance=4746.18,
-                               min_balance=0,
-                               max_balance=float('Inf'),
-                               account_type="loan",
-                               billing_start_date_YYYYMMDD='20230903',
-                               interest_type='Simple',
-                               apr=0.0429,
-                               interest_cadence='Daily',
-                               minimum_payment=56.57,
-                               previous_statement_balance=None,
-                               principal_balance=4746.18,
-                               accrued_interest=0
-                               )
-
-        account_set.addAccount(name='Loan C',
-                               balance=1919.55,
-                               min_balance=0,
-                               max_balance=float('Inf'),
-                               account_type="loan",
-                               billing_start_date_YYYYMMDD='20230903',
-                               interest_type='Simple',
-                               apr=0.0429,
-                               interest_cadence='Daily',
-                               minimum_payment=22.88,
-                               previous_statement_balance=None,
-                               principal_balance=1919.55,
-                               accrued_interest=0
-                               )
-
-        account_set.addAccount(name='Loan D',
-                               balance=4766.68,
-                               min_balance=0,
-                               max_balance=float('Inf'),
-                               account_type="loan",
-                               billing_start_date_YYYYMMDD='20230903',
-                               interest_type='Simple',
-                               apr=0.0376,
-                               interest_cadence='Daily',
-                               minimum_payment=55.17,
-                               previous_statement_balance=None,
-                               principal_balance=4766.68,
-                               accrued_interest=0
-                               )
-
-        account_set.addAccount(name='Loan E',
-                               balance=1823.31,
-                               min_balance=0,
-                               max_balance=float('Inf'),
-                               account_type="loan",
-                               billing_start_date_YYYYMMDD='20230903',
-                               interest_type='Simple',
-                               apr=0.0376,
-                               interest_cadence='Daily',
-                               minimum_payment=21.29,
-                               previous_statement_balance=None,
-                               principal_balance=1823.31,
-                               accrued_interest=0
-                               )
-
-
-
-        E = ExpenseForecast.ExpenseForecast(account_set,
-                                            budget_set,
-                                            memo_rule_set,
-                                            start_date_YYYYMMDD,
-                                            end_date_YYYYMMDD, raise_exceptions=False)
-
-        #print('running loan payment allocation')
-        #B1 = E.allocate_additional_loan_payments(account_set, 15000, '20230303')
-        #print('B1:')
-        #print(B1.getBudgetItems().to_string())
-
-        B2 = E.allocate_additional_loan_payments(account_set, 1000, '20230303')
-        #print('B2:')
-        #print(B2.getBudgetItems().to_string())
-
-
-    def test_satisfice(self):
-        raise NotImplementedError
 
     # def test_toJSON(self):
     #     raise NotImplementedError

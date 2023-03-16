@@ -411,7 +411,7 @@ class AccountSet:
     def executeTransaction(self, Account_From, Account_To, Amount,income_flag=False):
 
         if Amount == 0:
-            return None
+            return True
 
         boundary_error_ind = False
         equivalent_exchange_error_ind = False
@@ -429,6 +429,7 @@ class AccountSet:
 
         before_txn_total_available_funds = 0
         available_funds = self.getAvailableBalances()
+        starting_available_funds = copy.deepcopy(available_funds)
 
         log_in_color('magenta', 'debug', 'available_funds:'+str(available_funds),3)
 
@@ -480,6 +481,7 @@ class AccountSet:
                     try:
                         assert self.accounts[account_from_index].min_balance <= balance_after_proposed_transaction and self.accounts[account_from_index].max_balance
                     except Exception as e:
+                        log_in_color('red', 'error', '')
                         log_in_color('red','error','transaction violated Account_From boundaries:')
                         log_in_color('red', 'error', str(e))
                         log_in_color('red', 'error', 'Account_From:\n'+str(self.accounts[account_from_index]))
@@ -540,17 +542,21 @@ class AccountSet:
         if income_flag:
             empirical_delta = empirical_delta * -1
 
-        if round(empirical_delta,2) != round(Amount,2) and Account_From is not None and Account_To is not None:
+        if round(empirical_delta,2) != 0 and Account_From is not None and Account_To is not None:
+            equivalent_exchange_error_ind = True
+
+        if round(empirical_delta,2) != 0 and ( Account_From is None or Account_To is None ):
             equivalent_exchange_error_ind = True
 
         if boundary_error_ind:
             raise ValueError #Account boundaries were violated
 
         if equivalent_exchange_error_ind:
+            log_in_color('red', 'error', '', 3)
             log_in_color('red', 'error', 'FUNDS NOT ACCOUNTED FOR POST-TRANSACTION',3)
             log_in_color('red', 'error', 'income_flag:'+str(income_flag), 3)
-            available_funds = self.getAvailableBalances()
-            log_in_color('red', 'error', 'available_funds:' + str(available_funds), 3)
+            log_in_color('red', 'error', 'starting_available_funds:' + str(starting_available_funds), 3)
+            log_in_color('red', 'error', 'available_funds:' + str(self.getAvailableBalances()), 3)
             log_in_color('red', 'error', '( SUM(before txn balances) - SUM(after txn balances) ) != 0',3)
             log_in_color('red', 'error', str(before_txn_total_available_funds) + ' - ' + str(after_txn_total_available_funds) + ' = ' + str(empirical_delta) + ' !== ' + str(Amount) ,3)
             # log_in_color('red', 'error', 'before_txn_total_available_funds:'+str(before_txn_total_available_funds), 3)

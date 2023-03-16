@@ -713,7 +713,7 @@ class ExpenseForecast:
               self.deferred_df = None
 
         except Exception as e:
-            log_in_color('white', 'debug', 'FINAL STATE BEFORE CRASH', 0)
+            log_in_color('white', 'debug', '\nFINAL STATE BEFORE CRASH', 0)
             self.forecast_df.reset_index(drop=True, inplace=True)
             log_in_color('white', 'debug', self.forecast_df.to_string(), 0)
 
@@ -743,8 +743,9 @@ class ExpenseForecast:
             remaining_rows_df = remaining_rows_df.rename(columns={0:"Date"})
             self.forecast_df = pd.concat([self.forecast_df,remaining_rows_df])
         self.forecast_df.reset_index(drop=True, inplace=True)
-        log_in_color('white', 'info', 'FINAL STATE', 0)
-        log_in_color('white', 'info', self.forecast_df.to_string(), 0)
+        log_in_color('white', 'debug', '', 0)
+        log_in_color('white', 'debug', 'FINAL STATE', 0)
+        log_in_color('white', 'debug', self.forecast_df.to_string(), 0)
 
         #print('forecast_df:')
         #print(forecast_df.to_string())
