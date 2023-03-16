@@ -20,7 +20,7 @@ format = '%(asctime)s - %(name)s - %(levelname)-8s - %(message)s'
 formatter = logging.Formatter(format)
 ch = logging.StreamHandler()
 ch.setFormatter(formatter)
-ch.setLevel(logging.INFO)
+ch.setLevel(logging.DEBUG)
 logger = logging.getLogger(__name__)
 logger.propagate = False
 logger.handlers.clear()

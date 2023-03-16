@@ -168,7 +168,7 @@ class ExpenseForecast:
         self.deferred_df = None
 
         #this method already has access to these: account_set, budget_set, memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD
-        self.computeForecast()
+        self.computeSatisficeForecast()
 
         #print('self.forecast_df:')
         #print(self.forecast_df.to_string())
@@ -302,10 +302,10 @@ class ExpenseForecast:
 
         return initial_forecast_row_df
 
-    def executeTransactionsForDay(self,budget_schedule_df,account_set,memo_set,current_forecast_row_df):
+    def executeTransactionsForDay(self,budget_schedule_df,account_set,memo_set,current_forecast_row_df,allow_skip_and_defer):
         #print(BEGIN_GREEN + 'executeTransactionsForDay(date='+str(current_forecast_row_df.Date.iloc[0])+')' + RESET_COLOR)
         #print(BEGIN_GREEN + budget_schedule_df.to_string() + RESET_COLOR)
-        log_in_color('green','debug','BEGIN executeTransactionsForDay(date='+str(current_forecast_row_df.Date.iloc[0])+')',1)
+        log_in_color('green','debug','BEGIN executeTransactionsForDay(date='+str(current_forecast_row_df.Date.iloc[0])+',allow_skip_and_defer='+str(allow_skip_and_defer)+')',1)
         available_balances = account_set.getAvailableBalances()
         log_in_color('white', 'debug', '(start of day) available_balances: ' + str(available_balances), 2)
         log_in_color('cyan', 'debug', 'All proposed transactions for day:', 2)
@@ -412,20 +412,31 @@ class ExpenseForecast:
 
                     not_OK_to_proceed = account_set.transaction_would_violate_account_boundaries(row2.Account_From,row2.Account_To,row.Amount,income_flag)
                     log_in_color('white', 'debug', 'not_OK_to_proceed:' + str(not_OK_to_proceed),3)
-                    if not_OK_to_proceed:
+
+                    if not_OK_to_proceed and row.Partial_Payment_Allowed:
+                        previous_amount = row.Amount
+                        row.Amount = available_balances[row2.Account_From]
+                        log_in_color('white', 'debug', 'Partial Payment is allowed, so we reduce the amount of the payment', 3)
+                        log_in_color('white', 'debug',str(previous_amount)+' -> '+str(row.Amount), 3)
+
+                    if not_OK_to_proceed and not allow_skip_and_defer:
+                        raise ValueError #a proposed transaction would have violated account boundaries when skip and defer were not allowed
+
+                    if not_OK_to_proceed and allow_skip_and_defer:
                         if row.Deferrable:
                             log_in_color('white', 'debug', 'Insufficient funds on a deferrable transaction', 4)
                             row.Date = row.Date + 1
-                            if self.deferred_df is None:
+                            if self.deferred_df is None: #todo this should happen in the ExpenseForecast constructor
                                 self.deferred_df = row
                             else:
                                 self.deferred_df = pd.concat([self.deferred_df, row])
                         else:
                             log_in_color('white', 'debug', 'Insufficient funds on a non-deferrable transaction', 4)
+                            if self.skipped_df is None: #todo this should happen in the ExpenseForecast constructor
+                                self.skipped_df = row
+                            else:
+                                self.skipped_df = pd.concat([self.skipped_df, row])
                             # we just ignore it
-
-                        if row.Deferrable is False:
-                            pass #amount was too much and not deferrable, so we just ignore it #todo log this
 
                     else:
                         log_in_color('white', 'debug', 'Proceeding with transaction', 3)
@@ -633,7 +644,7 @@ class ExpenseForecast:
         return current_forecast_row_df
 
 
-    def computeForecast(self):
+    def computeSatisficeForecast(self):
         """
         Computes output time-series that represents only non-negotiable spend.
 
@@ -642,7 +653,7 @@ class ExpenseForecast:
         :param memo_rules_df:
         :return:
         """
-        log_in_color('green', 'debug', 'BEGIN computeForecast()', 0)
+        log_in_color('green', 'debug', 'BEGIN computeSatisficeForecast()', 0)
         #this method will execute all budgetitems given to it. If account boudnaries are violated, it is because
         #the input provided was not properly vetted
 
@@ -699,7 +710,7 @@ class ExpenseForecast:
 
               # print('this_days_budget_schedule_df.empty:'+str(this_days_budget_schedule_df.empty))
               if not this_days_budget_schedule_df.empty:
-                new_forecast_row_df = self.executeTransactionsForDay( this_days_budget_schedule_df, account_set, memo_set,current_row_df)
+                new_forecast_row_df = self.executeTransactionsForDay( this_days_budget_schedule_df, account_set, memo_set,current_row_df,False)
 
               #print('Running calculateInterestAccrualsForDay() for '+str(d))
               #print(new_forecast_row_df.to_string())
@@ -749,9 +760,9 @@ class ExpenseForecast:
 
         #print('forecast_df:')
         #print(forecast_df.to_string())
-        log_in_color('green', 'debug', 'END   computeForecast()', 0)
+        log_in_color('green', 'debug', 'END   computeSatisficeForecast()', 0)
         try:
-            assert min(self.forecast_df.Date) == self.start_date.strftime('%Y-%m-%d') #computeForecast() did not include the first day as specified
+            assert min(self.forecast_df.Date) == self.start_date.strftime('%Y-%m-%d') #computeSatisficeForecast() did not include the first day as specified
         except Exception as e:
             print(e)
             #print('self.start_date:'+str(self.start_date.strftime('%Y-%m-%d')))
@@ -759,7 +770,7 @@ class ExpenseForecast:
             raise e
 
         try:
-            assert max(self.forecast_df.Date) == self.end_date.strftime('%Y-%m-%d') #computeForecast() did not include the last day as specified
+            assert max(self.forecast_df.Date) == self.end_date.strftime('%Y-%m-%d') #computeSatisficeForecast() did not include the last day as specified
         except Exception as e:
             print(e)
             print('self.end_date:'+str(self.end_date.strftime('%Y%m%d')))
@@ -941,7 +952,7 @@ class ExpenseForecast:
         :return:
         """
 
-        compute_forecast__list = self.computeForecast(budget_set, account_set, memo_rule_set)
+        compute_forecast__list = self.computeSatisficeForecast(budget_set, account_set, memo_rule_set)
         updated_budget_schedule_df = compute_forecast__list[0] #todo make sure this is sorted by amount descending
         account_set_df = compute_forecast__list[1]
         forecast_df = compute_forecast__list[2]
@@ -1025,13 +1036,13 @@ class ExpenseForecast:
                     #todo computeOptimalForecast(): resatisficing must occur
                     #the row in question has been changed. we keep the row w the transaction and all previous rows.
                     #we submit all later rows for re-satsificing
-                    #Note that computeForecast returns the first row the same as it was submitted, so we keep only
-                    #those rows w less than date, and for the date = same as transaction and alter, we submit to computeForecast
+                    #Note that computeSatisficeForecast returns the first row the same as it was submitted, so we keep only
+                    #those rows w less than date, and for the date = same as transaction and alter, we submit to computeSatisficeForecast
 
                     date_of_transaction_df = row_w_date_of_proposed_transaction.iloc[0,0]
                     rows_to_keep_df = forecast_df[forecast_df.Date < date_of_transaction_df.Date]
 
-                    #computeForecast iterates over budget schedule items to determine the date, so we filter the budget schedule items
+                    #computeSatisficeForecast iterates over budget schedule items to determine the date, so we filter the budget schedule items
                     only_future_budget_schedule_df = budget_schedule_df[budget_schedule_df.Date > date_of_transaction_df.Date]
 
                     #account initial balances must match the first row of the forecast that we submit
@@ -1041,11 +1052,11 @@ class ExpenseForecast:
 
                     #memo rules are the same
 
-                    recomputed_forecast_rows_df = self.computeForecast(only_future_budget_schedule_df, account_set_df, memo_rules_df)
+                    recomputed_forecast_rows_df = self.computeSatisficeForecast(only_future_budget_schedule_df, account_set_df, memo_rules_df)
 
 
         return forecast_df
-        #return self.computeForecast(budget_schedule_df, account_set_df, memo_rules_df)
+        #return self.computeSatisficeForecast(budget_schedule_df, account_set_df, memo_rules_df)
 
 
     def plotOverall(self,forecast_df,output_path):

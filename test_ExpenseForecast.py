@@ -201,7 +201,17 @@ class TestExpenseForecastMethods(unittest.TestCase):
             print(f.T.to_string())
             raise e
 
-    def test_cc_payment__satisfice__prev_bal_25__expect_25(self):
+    def test_p1_only_no_memos(self):
+
+        raise NotImplementedError
+
+    def test_p1_only__income_and_payment_on_same_day(self):
+
+        raise NotImplementedError
+
+
+
+    def test_p1_only__cc_payment__prev_bal_25__expect_25(self):
         test_description = 'test_cc_payment__satisfice__prev_bal_25__expect_25'
 
         start_date_YYYYMMDD = self.start_date_YYYYMMDD
@@ -257,7 +267,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                                 expected_result_df,
                                                 test_description)
 
-    def test_cc_payment__satisfice__prev_bal_1000__expect_40(self):
+    def test_p1_only__cc_payment__prev_bal_1000__expect_40(self):
         test_description = 'test_cc_payment__satisfice__prev_bal_1000__expect_40'
 
         start_date_YYYYMMDD = self.start_date_YYYYMMDD
@@ -313,7 +323,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                                      expected_result_df,
                                                      test_description)
 
-    def test_cc_payment__satisfice__prev_bal_3000__expect_60(self):
+    def test_p1_only__cc_payment_prev_bal_3000__expect_60(self):
         test_description = 'test_cc_payment__satisfice__prev_bal_3000__expect_60'
 
         start_date_YYYYMMDD = self.start_date_YYYYMMDD
@@ -349,8 +359,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                  deferrable=False,
                                  partial_payment_allowed=False)
 
-        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1,
-                                 partial_payment_allowed=False)
+        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1)
 
         expected_result_df = pd.DataFrame({
             'Date': ['20000101', '20000102', '20000103'],
@@ -370,7 +379,16 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                                      expected_result_df,
                                                      test_description)
 
-    def test_cc_payment__optimize__no_prev_balance__pay_100__no_funds__expect_skip(self):
+    def test_p2_and_3__expect_skip(self):
+        raise NotImplementedError
+
+    def test_p2_and_3__expect_defer(self):
+        raise NotImplementedError
+
+    def test_p2_and_3__p3_item_skipped_bc_p2(self):
+        raise NotImplementedError
+
+    def test_p4__cc_payment__no_prev_balance__pay_100__no_funds__expect_skip(self):
         test_description = 'test_cc_payment__optimize__no_prev_balance__pay_100__no_funds__expect_skip'
 
         start_date_YYYYMMDD = self.start_date_YYYYMMDD
@@ -431,7 +449,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                                      end_date_YYYYMMDD,
                                                      expected_result_df,
                                                      test_description)
-    def test_cc_payment__optimize__no_prev_balance__pay_100__expect_skip(self):
+    def test_p4__cc_payment__no_prev_balance__pay_100__expect_skip(self):
         test_description = 'test_cc_payment__optimize__no_prev_balance__pay_100__expect_skip'
 
 
@@ -495,7 +513,10 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                                      expected_result_df,
                                                      test_description)
 
-    def test_cc_payment__optimize__pay_all_of_prev_part_of_curr__expect_800(self):
+        #todo check that transaction was added to
+        raise NotImplementedError
+
+    def test_p4__cc_payment__pay_all_of_prev_part_of_curr__expect_800(self):
         test_description = 'test_cc_payment__optimize__pay_all_of_prev_part_of_curr__expect_800'
 
         start_date_YYYYMMDD = self.start_date_YYYYMMDD
@@ -558,7 +579,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                                      test_description)
 
 
-    def test_cc_payment__optimize__pay_part_of_prev_balance__expect_200(self):
+    def test_p4__cc_payment__pay_part_of_prev_balance__expect_200(self):
         test_description = 'test_cc_payment__optimize__pay_part_of_prev_balance__expect_200'
 
         start_date_YYYYMMDD = self.start_date_YYYYMMDD
@@ -617,7 +638,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                                      expected_result_df,
                                                      test_description)
 
-    def test_cc_payment__optimize__non_0_prev_balance_but_no_funds__expect_0(self):
+    def test_p4__cc_payment__non_0_prev_balance_but_no_funds__expect_0(self):
         test_description = 'test_cc_payment__optimize__non_0_prev_balance_but_no_funds__expect_0'
 
         start_date_YYYYMMDD = self.start_date_YYYYMMDD
@@ -650,7 +671,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=4,
                                  cadence='once', amount=100, memo='additional cc payment test 9',deferrable=False,
-                                 partial_payment_allowed=False)
+                                 partial_payment_allowed=True)
 
 
         memo_rule_set.addMemoRule(memo_regex='.*',account_from='Credit',account_to=None,transaction_priority=1)
@@ -666,15 +687,38 @@ class TestExpenseForecastMethods(unittest.TestCase):
         })
         expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d').strftime('%Y-%m-%d') for x in expected_result_df.Date]
 
-        self.compute_forecast_and_actual_vs_expected(account_set,
-                                                     budget_set,
-                                                     memo_rule_set,
-                                                     start_date_YYYYMMDD,
-                                                     end_date_YYYYMMDD,
-                                                     expected_result_df,
-                                                     test_description)
+        with self.assertRaises(AssertionError):
+            self.compute_forecast_and_actual_vs_expected(account_set,
+                                                         budget_set,
+                                                         memo_rule_set,
+                                                         start_date_YYYYMMDD,
+                                                         end_date_YYYYMMDD,
+                                                         expected_result_df,
+                                                         test_description)
+
+    def test_p4__cc_payment__partial_of_indicated_amount(self):
+
+        raise NotImplementedError
+
+    def test_p5_and_6__expect_skip(self):
+
+        raise NotImplementedError
+
+    def test_p5_and_6__expect_defer(self):
+
+        raise NotImplementedError
 
 
+    #note that additional loan payment is not a memo line, but allocate_additional_loan_payments is a helper method that can be used to create budget items
+    #honestly should probably be refactored to be a method of account_set
+    def test_p7__additional_loan_payments(self):
+        raise NotImplementedError
+
+    def test_p8__savings(self):
+        raise NotImplementedError
+
+    def test_p9__investments(self):
+        raise NotImplementedError
 
 
     # Interest accruals are calculated before any payments for that day
