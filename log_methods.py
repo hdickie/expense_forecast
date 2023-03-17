@@ -37,7 +37,7 @@ def log_in_color(color,level,msg,stack_depth=0):
         left_prefix = ' '
     left_prefix = left_prefix.ljust(stack_depth*4,' ') + ' '
 
-    for line in msg.split('\n'):
+    for line in str(msg).split('\n'):
 
         if color.lower() == 'red':
             line = BEGIN_RED + left_prefix + line + RESET_COLOR

@@ -168,7 +168,7 @@ class ExpenseForecast:
         self.deferred_df = None
 
         #this method already has access to these: account_set, budget_set, memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD
-        self.computeSatisficeForecast()
+        self.computeOptimalForecast()
 
         #print('self.forecast_df:')
         #print(self.forecast_df.to_string())
@@ -192,6 +192,9 @@ class ExpenseForecast:
             raise e
 
         self.forecast_df.index = self.forecast_df['Date']
+
+        self.deferred_df = pd.DataFrame({'Date':[],'Priority':[],'Amount':[],'Memo':[],'Deferrable':[],'Partial_Payment_Allowed':[]})
+        self.skipped_df = pd.DataFrame({'Date':[],'Priority':[],'Amount':[],'Memo':[],'Deferrable':[],'Partial_Payment_Allowed':[]})
 
         #write all_data.csv
         #self.forecast_df.iloc[:,0:(self.forecast_df.shape[1]-1)].to_csv('all_data.csv',index=False)
@@ -302,15 +305,13 @@ class ExpenseForecast:
 
         return initial_forecast_row_df
 
-    def executeTransactionsForDay(self,budget_schedule_df,account_set,memo_set,current_forecast_row_df,allow_skip_and_defer):
+    #allow_skip_and_defer does nothing here. take it out
+    def executeEssentialTransactionsForDay(self, budget_schedule_df, account_set, memo_set, current_forecast_row_df, allow_skip_and_defer):
         #print(BEGIN_GREEN + 'executeTransactionsForDay(date='+str(current_forecast_row_df.Date.iloc[0])+')' + RESET_COLOR)
         #print(BEGIN_GREEN + budget_schedule_df.to_string() + RESET_COLOR)
-        log_in_color('green','debug','BEGIN executeTransactionsForDay(date='+str(current_forecast_row_df.Date.iloc[0])+',allow_skip_and_defer='+str(allow_skip_and_defer)+')',1)
+        log_in_color('green','debug','BEGIN executeEssentialTransactionsForDay(date='+str(current_forecast_row_df.Date.iloc[0])+',allow_skip_and_defer='+str(allow_skip_and_defer)+')',1)
         available_balances = account_set.getAvailableBalances()
         log_in_color('white', 'debug', '(start of day) available_balances: ' + str(available_balances), 2)
-        log_in_color('cyan', 'debug', 'All proposed transactions for day:', 2)
-        for line in budget_schedule_df.to_string().split('\n'):
-            log_in_color('cyan','debug',line,2)
         #making minimum payments should be determined by memo rules instead of hard-coded as checking
         # try:
         #     print('budget_schedule_df:\n'+budget_schedule_df.to_string())
@@ -326,12 +327,16 @@ class ExpenseForecast:
         # except Exception as e:
         #     pass
 
-        A = account_set.getAccounts()
+        income_rows_sel_vec = [ re.search('.*income.*',str(memo)) is not None for memo in budget_schedule_df.Memo]
+        income_rows_df = budget_schedule_df[income_rows_sel_vec]
+        non_income_rows_df = budget_schedule_df[[not x for x in income_rows_sel_vec]]
+        non_income_rows_df.sort_values(by='Amount',inplace=True,ascending=False)
+        budget_schedule_df = pd.concat([income_rows_df,non_income_rows_df])
 
-        #todo rearrange rows to put income rows first
-        #budget_schedule_df.sort_values(by='Amount',inplace=True,ascending=False)
+        log_in_color('cyan', 'debug', 'All proposed transactions for day:', 2)
+        for line in budget_schedule_df.to_string().split('\n'):
+            log_in_color('cyan','debug',line,2)
 
-        deferred_transactions = []
         for index, row in budget_schedule_df.iterrows():
             found_matching_memo_rule = False
 
@@ -382,10 +387,6 @@ class ExpenseForecast:
                     except Exception as e:
                         income_flag = False
 
-
-                    #todo make sure not violating account boundaries
-                    #account_boundaries_are_violated(accounts_df,forecast_df)
-
                     available_balances = account_set.getAvailableBalances()
                     if row2.Account_From is not None:
                         if row2.Account_From != 'None':
@@ -410,7 +411,7 @@ class ExpenseForecast:
                     #this check needs to more generally check for account boundary violations and doesnt explode w None values
                     #if row.Amount > available_balances[row2.Account_From]:
 
-                    not_OK_to_proceed = account_set.transaction_would_violate_account_boundaries(row2.Account_From,row2.Account_To,row.Amount,income_flag)
+                    not_OK_to_proceed = account_set.transaction_would_violate_current_state_account_boundaries(row2.Account_From, row2.Account_To, row.Amount, income_flag)
                     log_in_color('white', 'debug', 'not_OK_to_proceed:' + str(not_OK_to_proceed),3)
 
                     if not_OK_to_proceed and row.Partial_Payment_Allowed:
@@ -423,20 +424,18 @@ class ExpenseForecast:
                         raise ValueError #a proposed transaction would have violated account boundaries when skip and defer were not allowed
 
                     if not_OK_to_proceed and allow_skip_and_defer:
+                        log_in_color('white', 'debug', 'Insufficient funds on a deferrable transaction', 4)
+                        log_in_color('white', 'debug', 'row:\n' + str(row), 4)
                         if row.Deferrable:
-                            log_in_color('white', 'debug', 'Insufficient funds on a deferrable transaction', 4)
-                            row.Date = row.Date + 1
-                            if self.deferred_df is None: #todo this should happen in the ExpenseForecast constructor
-                                self.deferred_df = row
-                            else:
-                                self.deferred_df = pd.concat([self.deferred_df, row])
+                            row.Date = row.Date + datetime.timedelta(days=1)
+                            self.deferred_df = pd.concat([self.deferred_df, row])
+                            log_in_color('white', 'debug', '\nself.deferred_df:', 4)
+                            log_in_color('white', 'debug', self.deferred_df, 4)
                         else:
-                            log_in_color('white', 'debug', 'Insufficient funds on a non-deferrable transaction', 4)
-                            if self.skipped_df is None: #todo this should happen in the ExpenseForecast constructor
-                                self.skipped_df = row
-                            else:
-                                self.skipped_df = pd.concat([self.skipped_df, row])
-                            # we just ignore it
+                            log_in_color('white', 'debug', 'Insufficient funds on a non-deferrable transaction\n', 4)
+                            self.skipped_df = pd.concat([self.skipped_df, row])
+                            log_in_color('white', 'debug', '\nself.skipped_df:', 4)
+                            log_in_color('white', 'debug', self.skipped_df, 4)
 
                     else:
                         log_in_color('white', 'debug', 'Proceeding with transaction', 3)
@@ -461,7 +460,7 @@ class ExpenseForecast:
 
         log_in_color('white', 'debug', '(end of day) available_balances: ' + str(account_set.getAvailableBalances()), 2)
         log_in_color('green', 'debug',
-                     'END   executeTransactionsForDay(date=' + str(current_forecast_row_df.Date.iloc[0]) + ')', 1)
+                     'END   executeEssentialTransactionsForDay(date=' + str(current_forecast_row_df.Date.iloc[0]) + ')', 1)
         #returns a single forecast row with updated memo
         return current_forecast_row_df
 
@@ -671,19 +670,19 @@ class ExpenseForecast:
         previous_row_df = initial_forecast_row_df
 
         #print('numdays:'+str(numdays))
-        log_in_color('green', 'debug', 'initial_budget_set:\n'+str(self.initial_budget_set), 0)
-        log_in_color('green', 'debug', 'budget_schedule_df:\n'+budget_schedule_df.to_string(), 0)
+        # log_in_color('green', 'debug', 'initial_budget_set:\n'+str(self.initial_budget_set), 0)
+        # log_in_color('green', 'debug', 'budget_schedule_df:\n'+budget_schedule_df.to_string(), 0)
         #print('initial_forecast_row_df:')
         #print(initial_forecast_row_df.to_string())
 
         try:
             for d in all_days:
-              #print('d:'+str(d))
-              #print('start_date:'+str(self.start_date))
-              #print('initial_forecast_row_df:')
-              #print(initial_forecast_row_df)
+              #log_in_color('green', 'debug', 'd:'+str(d),1)
+
 
               if d == self.start_date:
+                  # print('initial_forecast_row_df:')
+                  # print(initial_forecast_row_df)
                   continue #because we consider the first day to be final
 
               current_row_df = previous_row_df.copy()
@@ -710,7 +709,7 @@ class ExpenseForecast:
 
               # print('this_days_budget_schedule_df.empty:'+str(this_days_budget_schedule_df.empty))
               if not this_days_budget_schedule_df.empty:
-                new_forecast_row_df = self.executeTransactionsForDay( this_days_budget_schedule_df, account_set, memo_set,current_row_df,False)
+                new_forecast_row_df = self.executeEssentialTransactionsForDay(this_days_budget_schedule_df, account_set, memo_set, current_row_df, False)
 
               #print('Running calculateInterestAccrualsForDay() for '+str(d))
               #print(new_forecast_row_df.to_string())
@@ -724,6 +723,7 @@ class ExpenseForecast:
               self.deferred_df = None
 
         except Exception as e:
+            log_in_color('white', 'debug',repr(e), 0)
             log_in_color('white', 'debug', '\nFINAL STATE BEFORE CRASH', 0)
             self.forecast_df.reset_index(drop=True, inplace=True)
             log_in_color('white', 'debug', self.forecast_df.to_string(), 0)
@@ -778,6 +778,46 @@ class ExpenseForecast:
             raise e
 
         self.satisficed_forecast_df = self.forecast_df
+        self.account_set = account_set
+
+
+    def getMinimumFutureAvailableBalances(self,date_YYYYMMDD):
+        log_in_color('green','debug','ENTER getMinimumFutureAvailableBalances(date='+str(date_YYYYMMDD)+')')
+        current_and_future_forecast_df = self.forecast_df[self.forecast_df.Date >= date_YYYYMMDD]
+
+        #account set doesnt need to be in sync because we just using it for accoutn names
+        A = self.account_set.getAccounts()
+        future_available_balances = {}
+        for account_index, account_row in A.iterrows():
+            full_aname = account_row.Name
+            aname = full_aname.split(':')[0]
+
+            if account_row.Account_Type.lower() == 'checking':
+                future_available_balances[aname] = min(current_and_future_forecast_df[aname])
+            elif account_row.Account_Type.lower() == 'prev stmt bal':
+
+                prev_name = full_aname
+                curr_name = A.iloc[account_index-1].Name
+
+                available_credit = current_and_future_forecast_df[prev_name] + current_and_future_forecast_df[curr_name]
+                future_available_balances[aname] = A[A.Name == prev_name].Max_Balance.iloc[0] - min(available_credit)
+
+        log_in_color('green', 'debug', 'future_available_balances:' + str(future_available_balances))
+        log_in_color('green', 'debug', 'EXIT getMinimumFutureAvailableBalances(date=' + str(date_YYYYMMDD) + ')')
+        return future_available_balances
+
+
+    def executeNonEssentialTransactionsForDay(self,current_budget_schedule_items_df,priority_level,date_YYYYMMDD):
+        log_in_color('green', 'debug', 'ENTER executeNonEssentialTransactionsForDay(date=' + str(date_YYYYMMDD) + ')')
+        assert min(current_budget_schedule_items_df.Priority) == max(current_budget_schedule_items_df.Priority)
+        assert min(current_budget_schedule_items_df.Priority) == priority_level
+
+        #account_set needs to be set to the minimum balances for dates GREATER THAN OR EQUAL TO the day in question
+        #however, this gets weird for credit, so lets make a method for it
+
+        minimum_future_available_balances = self.getMinimumFutureAvailableBalances(date_YYYYMMDD)
+
+        log_in_color('green', 'debug', 'EXIT executeNonEssentialTransactionsForDay(date=' + str(date_YYYYMMDD) + ')')
 
 
     def allocate_additional_loan_payments(self,account_set,amount,date_string_YYYYMMDD):
@@ -933,7 +973,7 @@ class ExpenseForecast:
         return BudgetSet.BudgetSet(final_budget_items)
 
 
-    def computeOptimalForecast(self,budget_set, account_set, memo_rule_set):
+    def computeOptimalForecast(self):
         """
         One-description.
 
@@ -952,111 +992,39 @@ class ExpenseForecast:
         :return:
         """
 
-        compute_forecast__list = self.computeSatisficeForecast(budget_set, account_set, memo_rule_set)
-        updated_budget_schedule_df = compute_forecast__list[0] #todo make sure this is sorted by amount descending
-        account_set_df = compute_forecast__list[1]
-        forecast_df = compute_forecast__list[2]
+        self.computeSatisficeForecast()
+        log_in_color('green', 'debug', 'ENTER computeOptimalForecast()')
 
-        memo_rules_df = self.initial_memo_rule_set.getMemoRules()
+        budget_schedule_df = self.initial_budget_set.getBudgetSchedule(self.start_date.strftime('%Y%m%d'),self.end_date.strftime('%Y%m%d'))
 
-        #print('ENTER computeOptimalForecast()')
-        unique_priority_indices = updated_budget_schedule_df.Priority.unique()
+        unique_priority_indices = self.initial_budget_set.getBudgetItems().Priority.unique()
+
+        all_days = self.forecast_df.Date
         for priority_index in unique_priority_indices:
+            if priority_index == 1:
+                continue  # this is handled by computeSatisficedForecast
 
-            for budget_item_index, budget_item_row in updated_budget_schedule_df.iterrows():
-                #print(budget_item_row)
+            for d in all_days:
+                log_in_color('green', 'debug', 'd:' + str(d), 1)
+                current_row_df = self.forecast_df[self.forecast_df.Date == d]
 
-                found_matching_regex = False
-                transaction_was_executed = False
-                relevant_memo_rules_rows_df = memo_rules_df[memo_rules_df.transaction_priority == priority_index]
-                #print(relevant_memo_rules_rows_df)
-                for memo_rules_index, memo_rules_row in relevant_memo_rules_rows_df.iterrows():
+                # print('d:'+str(d))
+                # print('self.start_date:'+str(self.start_date.strftime('%Y-%m-%d')))
+                if d == self.start_date.strftime('%Y-%m-%d'):
+                    previous_row_df = current_row_df
+                    continue  # because we consider the first day to be final
 
-                    memo_regex_match = re.search(memo_rules_row.memo_regex, budget_item_row.Memo)
+                current_row_df = previous_row_df.copy()
 
-                    if memo_regex_match is not None:
-                        # do stuff
 
-                        row_w_date_of_proposed_transaction = forecast_df[forecast_df.Date == budget_item_row.Date]
-                        #print(row_w_date_of_proposed_transaction)
-
-                        # todo computeOptimalForecast():: the decision has to be made whether or not to execute the transaction
-
-                        #` evaluate_free_balance
-
-                        account_set.executeTransaction(memo_rules_row.Account_From, memo_rules_row.Account_To, budget_item_row.Amount)
-                        transaction_was_executed = True
-
-                        # if memo_rules_row.account_from is not None:
-                        #     index_of_account_from_column = list(row_w_date_of_proposed_transaction.columns).index(memo_rules_row.account_from)
-                        #
-                        # if memo_rules_row.account_to is not None:
-                        #     index_of_account_to_column = list(row_w_date_of_proposed_transaction.columns).index(memo_rules_row.account_to)
+                current_priority_budget_schedule_df = budget_schedule_df[(budget_schedule_df.Priority == priority_index) & (budget_schedule_df.Date == d)]
+                if not current_priority_budget_schedule_df.empty:
+                    log_in_color('green', 'debug', 'current_priority_budget_schedule_df:')
+                    log_in_color('green', 'debug', current_priority_budget_schedule_df)
+                    new_forecast_row_df = self.executeNonEssentialTransactionsForDay(current_priority_budget_schedule_df, priority_index, d)
 
 
 
-
-
-
-                        # if memo_rules_row.account_from is not None and memo_rules_row.account_to is None:  # e.g. income
-                        #     row_w_date_of_proposed_transaction.iloc[0, index_of_account_from_column] += budget_item_row.Amount #execute transaction
-                        #     transaction_was_executed = True
-                        # elif memo_rules_row.account_to is not None and memo_rules_row.account_from is None:  # e.g. spend
-                        #     row_w_date_of_proposed_transaction.iloc[0, index_of_account_to_column] += budget_item_row.Amount
-                        #     transaction_was_executed = True
-                        # elif memo_rules_row.account_from is not None and memo_rules_row.account_to is not None:  # e.g. xfer bw accts
-                        #     row_w_date_of_proposed_transaction.iloc[0, index_of_account_to_column] += budget_item_row.Amount
-                        #     row_w_date_of_proposed_transaction.iloc[0, index_of_account_from_column] -= budget_item_row.Amount
-                        #     transaction_was_executed = True
-                        # else:
-                        #     transaction_was_executed = False #this is redundant, but included so code is readable
-
-                        found_matching_regex = True
-                        break
-
-                    if not found_matching_regex:
-                        print(
-                            'We received a budget item that we do not have a case to handle. this is a show stopping error.')
-                        print('Exiting.')
-                    else:  # update memo
-                        if row_w_date_of_proposed_transaction.loc[0, 'Memo'] != '':
-                            row_w_date_of_proposed_transaction.loc[0, 'Memo'] = row_w_date_of_proposed_transaction.loc[0, 'Memo'] + '; '
-
-                        new_memo_text = budget_item_row.Memo + ' , '
-                        if memo_rules_row.account_from is not None:
-                            new_memo_text = new_memo_text + str(memo_rules_row.account_from) + ' ' + str(
-                                -1 * abs(budget_item_row.Amount)) + ' '
-
-                        if memo_rules_row.account_to is not None:
-                            new_memo_text = new_memo_text + str(memo_rules_row.account_to) + ' ' + str(budget_item_row.Amount) + ' '
-
-                        row_w_date_of_proposed_transaction.loc[0, 'Memo'] = row_w_date_of_proposed_transaction.loc[0, 'Memo'] + new_memo_text
-
-                if transaction_was_executed:
-                    #todo computeOptimalForecast(): resatisficing must occur
-                    #the row in question has been changed. we keep the row w the transaction and all previous rows.
-                    #we submit all later rows for re-satsificing
-                    #Note that computeSatisficeForecast returns the first row the same as it was submitted, so we keep only
-                    #those rows w less than date, and for the date = same as transaction and alter, we submit to computeSatisficeForecast
-
-                    date_of_transaction_df = row_w_date_of_proposed_transaction.iloc[0,0]
-                    rows_to_keep_df = forecast_df[forecast_df.Date < date_of_transaction_df.Date]
-
-                    #computeSatisficeForecast iterates over budget schedule items to determine the date, so we filter the budget schedule items
-                    only_future_budget_schedule_df = budget_schedule_df[budget_schedule_df.Date > date_of_transaction_df.Date]
-
-                    #account initial balances must match the first row of the forecast that we submit
-
-                    #print(account_set_df)
-                    #print(row_w_date_of_proposed_transaction)
-
-                    #memo rules are the same
-
-                    recomputed_forecast_rows_df = self.computeSatisficeForecast(only_future_budget_schedule_df, account_set_df, memo_rules_df)
-
-
-        return forecast_df
-        #return self.computeSatisficeForecast(budget_schedule_df, account_set_df, memo_rules_df)
 
 
     def plotOverall(self,forecast_df,output_path):

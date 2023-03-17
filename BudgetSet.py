@@ -127,7 +127,7 @@ class BudgetSet:
 
             relevant_date_sequence_df = pd.DataFrame(relevant_date_sequence)
             relevant_date_sequence_df = relevant_date_sequence_df.rename(columns={0:"Date"})
-            current_item_cols_df = pd.DataFrame((budget_item.priority, budget_item.amount, budget_item.deferrable, budget_item.memo)).T
+            current_item_cols_df = pd.DataFrame((budget_item.priority, budget_item.amount, budget_item.memo, budget_item.deferrable, budget_item.partial_payment_allowed)).T
 
             current_item_cols_df = current_item_cols_df.rename(columns=
                 {0: "Priority", 1: "Amount", 2: "Memo", 3: "Deferrable", 4: "Partial_Payment_Allowed"})
