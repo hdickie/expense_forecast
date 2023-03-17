@@ -301,7 +301,7 @@ class AccountSet:
         else:
             pass
         log_string+=')'
-        log_in_color('green', 'debug',log_string, 0)
+        log_in_color('green', 'debug',log_string)
 
         # TODO this should be based on interest type or interest AND account type
         if account_type.lower() == 'loan':
