@@ -160,12 +160,18 @@ class ExpenseForecast:
             if error_ind:
                 raise ValueError
 
-        self.initial_account_set = account_set
-        self.initial_budget_set = budget_set
-        self.initial_memo_rule_set = memo_rule_set
+        self.initial_account_set = copy.deepcopy(account_set)
+        self.initial_budget_set = copy.deepcopy(budget_set)
+        self.initial_memo_rule_set = copy.deepcopy(memo_rule_set)
 
         self.forecast_df = self.getInitialForecastRow()
-        self.deferred_df = None
+
+        self.deferred_df = pd.DataFrame(
+            {'Date': [], 'Priority': [], 'Amount': [], 'Memo': [], 'Deferrable': [], 'Partial_Payment_Allowed': []})
+        self.skipped_df = pd.DataFrame(
+            {'Date': [], 'Priority': [], 'Amount': [], 'Memo': [], 'Deferrable': [], 'Partial_Payment_Allowed': []})
+        self.confirmed_df = pd.DataFrame(
+            {'Date': [], 'Priority': [], 'Amount': [], 'Memo': [], 'Deferrable': [], 'Partial_Payment_Allowed': []})
 
         #this method already has access to these: account_set, budget_set, memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD
         self.computeOptimalForecast()
@@ -192,9 +198,6 @@ class ExpenseForecast:
             raise e
 
         self.forecast_df.index = self.forecast_df['Date']
-
-        self.deferred_df = pd.DataFrame({'Date':[],'Priority':[],'Amount':[],'Memo':[],'Deferrable':[],'Partial_Payment_Allowed':[]})
-        self.skipped_df = pd.DataFrame({'Date':[],'Priority':[],'Amount':[],'Memo':[],'Deferrable':[],'Partial_Payment_Allowed':[]})
 
         #write all_data.csv
         #self.forecast_df.iloc[:,0:(self.forecast_df.shape[1]-1)].to_csv('all_data.csv',index=False)
@@ -343,7 +346,7 @@ class ExpenseForecast:
             if row.Amount == 0:
                 continue
 
-            log_in_color('yellow', 'debug', 'All matching memo rules:' , 3)
+            log_in_color('yellow', 'debug', 'All memo rules:' , 3)
             for line in memo_set.getMemoRules().to_string().split('\n'):
                 log_in_color('yellow', 'debug',line, 3)
 
@@ -704,8 +707,6 @@ class ExpenseForecast:
               #print(current_row_df.to_string())
 
               # returns only a forecast row w updated memo, but does update self.deferred_items
-              log_in_color('green', 'debug', 'this_days_budget_schedule_df:', 3)
-              log_in_color('green', 'debug', this_days_budget_schedule_df.to_string(), 3)
 
               # print('this_days_budget_schedule_df.empty:'+str(this_days_budget_schedule_df.empty))
               if not this_days_budget_schedule_df.empty:
@@ -782,7 +783,7 @@ class ExpenseForecast:
 
 
     def getMinimumFutureAvailableBalances(self,date_YYYYMMDD):
-        log_in_color('green','debug','ENTER getMinimumFutureAvailableBalances(date='+str(date_YYYYMMDD)+')')
+        log_in_color('green','debug','ENTER getMinimumFutureAvailableBalances(date='+str(date_YYYYMMDD)+')',2)
         current_and_future_forecast_df = self.forecast_df[self.forecast_df.Date >= date_YYYYMMDD]
 
         #account set doesnt need to be in sync because we just using it for accoutn names
@@ -802,22 +803,160 @@ class ExpenseForecast:
                 available_credit = current_and_future_forecast_df[prev_name] + current_and_future_forecast_df[curr_name]
                 future_available_balances[aname] = A[A.Name == prev_name].Max_Balance.iloc[0] - min(available_credit)
 
-        log_in_color('green', 'debug', 'future_available_balances:' + str(future_available_balances))
-        log_in_color('green', 'debug', 'EXIT getMinimumFutureAvailableBalances(date=' + str(date_YYYYMMDD) + ')')
+        log_in_color('magenta', 'debug', 'future_available_balances:' + str(future_available_balances),3)
+        log_in_color('green', 'debug', 'EXIT getMinimumFutureAvailableBalances(date=' + str(date_YYYYMMDD) + ')',2)
         return future_available_balances
+
+    def updateForecastByPropogatingPostTransactionBalances(self,date_YYYYMMDD):
+        #when this method called, there will be a mismatch between the balances in self.account_set, and the balances indicated on the forecast
+        #there should be at most 2 differences, and if there are two, the changes would be between a prev and curr credit account, or a principal balance and interest account
+
+        #for each account, check if the forecast agrees with the account set
+        #assert that changes are always a reduction in net worth. (all income was priority 1, and this method is not called in priority 1)
+        #set account_set balances equal to what is indicated by the forecast
+        #re-satisfice using the balances and date from the previous step as initial conditions
+        #assert that range of account balances do not violate account boundaries
+
+        current_and_future_forecast_rows_df = self.forecast_df[self.forecast_df.Date >= date_YYYYMMDD]
+
+        A = self.account_set.getAccounts()
+
+        mismatched_balance_count = 0 #if this goes above 2 then there is an error
+        for aname in self.account_set.getAccounts().Name:
+            single_account_forecast_df = current_and_future_forecast_rows_df.iloc[:,current_and_future_forecast_rows_df.columns == aname]
+
+            if single_account_forecast_df.iloc[0,0] != A[A.Name == aname].Balance:
+
+            print('single_account_forecast_df:')
+            print(single_account_forecast_df)
+
 
 
     def executeNonEssentialTransactionsForDay(self,current_budget_schedule_items_df,priority_level,date_YYYYMMDD):
-        log_in_color('green', 'debug', 'ENTER executeNonEssentialTransactionsForDay(date=' + str(date_YYYYMMDD) + ')')
+        log_in_color('green', 'debug', 'ENTER executeNonEssentialTransactionsForDay(date=' + str(date_YYYYMMDD) + ')',1)
         assert min(current_budget_schedule_items_df.Priority) == max(current_budget_schedule_items_df.Priority)
         assert min(current_budget_schedule_items_df.Priority) == priority_level
+
+        log_in_color('cyan','debug','current_budget_schedule_items_df:',2)
+        log_in_color('cyan', 'debug', current_budget_schedule_items_df,2)
 
         #account_set needs to be set to the minimum balances for dates GREATER THAN OR EQUAL TO the day in question
         #however, this gets weird for credit, so lets make a method for it
 
         minimum_future_available_balances = self.getMinimumFutureAvailableBalances(date_YYYYMMDD)
 
-        log_in_color('green', 'debug', 'EXIT executeNonEssentialTransactionsForDay(date=' + str(date_YYYYMMDD) + ')')
+        #todo set account_set balances equal to the values that the forecast has for this day
+
+        for index, row in current_budget_schedule_items_df.iterrows():
+            found_matching_memo_rule = False
+
+            if row.Amount == 0:
+                log_in_color('green', 'debug', 'Skipping transaction because the amount was 0', 3)
+                continue
+
+            log_in_color('yellow', 'debug', 'All memo rules:' , 3)
+            for line in self.initial_memo_rule_set.getMemoRules().to_string().split('\n'):
+                log_in_color('yellow', 'debug',line, 3)
+
+            for index2, row2 in self.initial_memo_rule_set.getMemoRules().iterrows():
+
+                if row2.Transaction_Priority != row.Priority:
+                    continue
+
+                m = re.search(row2.Memo_Regex,row.Memo)
+                try:
+                    m.group(0)
+                    found_matching_memo_rule = True
+                    log_in_color('yellow', 'debug','Found matching memo rule: '+str(row2.Account_From)+' -> '+str(row2.Account_To), 3)
+                except Exception as e:
+                    pass # no match
+                    #log_in_color('yellow', 'debug', 'found_matching_memo_rule = False', 3)
+
+                if found_matching_memo_rule:
+                    if row2.Account_From is not None:
+                        if row2.Account_From != 'None':
+                            try:
+                                assert row2.Account_From in minimum_future_available_balances.keys()
+                            except AssertionError as e:
+                                log_in_color('red', 'debug', row2.Account_From + ' not found in account set', 3)
+                                log_in_color('red', 'debug',
+                                             'available_balances.keys():' + str(minimum_future_available_balances.keys()), 3)
+                                raise e
+
+                    if row2.Account_To is not None:
+                        if row2.Account_To != 'None':
+                            try:
+                                assert row2.Account_To in minimum_future_available_balances.keys()
+                            except AssertionError as e:
+                                log_in_color('red', 'debug', row2.Account_To + ' not found in account set', 3)
+                                log_in_color('red', 'debug',
+                                             'available_balances.keys():' + str(minimum_future_available_balances.keys()), 3)
+                                raise e
+
+                    log_in_color('white', 'debug', '(pre transaction) available_balances: ' + str(minimum_future_available_balances),3)
+
+                    # this check needs to more generally check for account boundary violations and doesnt explode w None values
+
+                    not_OK_to_proceed = ( minimum_future_available_balances[row2.Account_From] < row.Amount )
+                    log_in_color('white', 'debug', 'not_OK_to_proceed:' + str(not_OK_to_proceed), 3)
+
+                    if not_OK_to_proceed:
+                        if row.Partial_Payment_Allowed:
+                            previous_amount = row.Amount
+                            row.Amount = minimum_future_available_balances[row2.Account_From]
+                            log_in_color('white', 'debug','Partial Payment is allowed, so we reduce the amount of the payment', 3)
+                            log_in_color('white', 'debug', str(previous_amount) + ' -> ' + str(row.Amount), 3)
+
+                        elif row.Deferrable:
+                            log_in_color('white', 'debug', 'Insufficient funds on a deferrable transaction', 4)
+                            log_in_color('white', 'debug', 'row:\n' + str(row), 4)
+
+                            row.Date = row.Date + datetime.timedelta(days=1)
+                            self.deferred_df = pd.concat([self.deferred_df, row])
+                            log_in_color('white', 'debug', '\nself.deferred_df:', 4)
+                            log_in_color('white', 'debug', self.deferred_df, 4)
+                        else:
+                            log_in_color('white', 'debug', 'Insufficient funds on a non-deferrable transaction\n',
+                                         4)
+                            self.skipped_df = pd.concat([self.skipped_df, row])
+                            log_in_color('white', 'debug', '\nself.skipped_df:', 4)
+                            log_in_color('white', 'debug', self.skipped_df, 4)
+
+                    else:
+                        log_in_color('white', 'debug', 'Proceeding with transaction', 3)
+                        self.account_set.executeTransaction(row2.Account_From, row2.Account_To, row.Amount, income_flag=False)
+                        self.forecast_df[self.forecast_df.Date == date_YYYYMMDD].Memo += row.Memo + ' ; '
+                        self.updateForecastByPropogatingPostTransactionBalances(date_YYYYMMDD)
+
+
+                        break  # stop looking for matching memo rules
+
+                    if not found_matching_memo_rule:
+                        # we checked for this case in the ExpenseForecast constructor so lets not do it here
+                        log_in_color('yellow', 'error',
+                                     'No matching memo rules found for transaction: ' + str(row.Memo), 3)
+
+                # at this point, memo has been updated, but balances are stale
+                updated_balances = account_set.getAccounts().Balance
+                for i in range(0, updated_balances.shape[0]):
+                    current_forecast_row_df.iloc[0, i + 1] = updated_balances[i]
+
+                log_in_color('white', 'debug',
+                             '(end of day) available_balances: ' + str(account_set.getAvailableBalances()), 2)
+                log_in_color('green', 'debug',
+                             'END   executeEssentialTransactionsForDay(date=' + str(
+                                 current_forecast_row_df.Date.iloc[0]) + ')', 1)
+                # returns a single forecast row with updated memo
+                return current_forecast_row_df
+
+
+
+
+
+
+
+
+        log_in_color('green', 'debug', 'EXIT executeNonEssentialTransactionsForDay(date=' + str(date_YYYYMMDD) + ')',1)
 
 
     def allocate_additional_loan_payments(self,account_set,amount,date_string_YYYYMMDD):
@@ -1019,9 +1158,9 @@ class ExpenseForecast:
 
                 current_priority_budget_schedule_df = budget_schedule_df[(budget_schedule_df.Priority == priority_index) & (budget_schedule_df.Date == d)]
                 if not current_priority_budget_schedule_df.empty:
-                    log_in_color('green', 'debug', 'current_priority_budget_schedule_df:')
-                    log_in_color('green', 'debug', current_priority_budget_schedule_df)
                     new_forecast_row_df = self.executeNonEssentialTransactionsForDay(current_priority_budget_schedule_df, priority_index, d)
+
+        log_in_color('green', 'debug', 'EXIT computeOptimalForecast()')
 
 
 

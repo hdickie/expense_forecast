@@ -599,6 +599,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
         print(E.deferred_df)
         assert E.deferred_df.shape[0] == 1
         assert E.deferred_df['Memo'].iloc[0] == 'this should be deferred'
+
     def test_p2_and_3__p3_item_skipped_bc_p2(self):
         test_description = 'test_p2_and_3__p3_item_skipped_bc_p2'
 
@@ -631,12 +632,12 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                )
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=2,
-                                 cadence='once', amount=0, memo='this should be executed',
+                                 cadence='once', amount=100, memo='this should be executed',
                                  deferrable=False,
                                  partial_payment_allowed=False)
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=3,
-                                 cadence='once', amount=0, memo='this should be skipped',
+                                 cadence='once', amount=100, memo='this should be skipped',
                                  deferrable=False,
                                  partial_payment_allowed=False)
 
