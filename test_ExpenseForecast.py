@@ -166,7 +166,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                             start_date_YYYYMMDD,
                                             end_date_YYYYMMDD, raise_exceptions=False)
 
-        d = E.compute_forecast_difference(expected_result_df,
+        d = E.compute_forecast_difference(E.forecast_df,expected_result_df,
                                           label=test_description,
                                           make_plots=False,
                                           diffs_only=True,
@@ -175,7 +175,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                           append_expected_values=False,
                                           return_type='dataframe')
 
-        f = E.compute_forecast_difference(expected_result_df,
+        f = E.compute_forecast_difference(E.forecast_df,expected_result_df,
                                           label=test_description,
                                           make_plots=False,
                                           diffs_only=False,
