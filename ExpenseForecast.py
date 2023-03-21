@@ -188,7 +188,8 @@ class ExpenseForecast:
         forecast_df, skipped_df, confirmed_df, deferred_df = self.computeOptimalForecast(start_date_YYYYMMDD,
                                                                                          end_date_YYYYMMDD,
                                                                                          budget_schedule_df,
-                                                                                         account_set, memo_rule_set)
+                                                                                         account_set,
+                                                                                         memo_rule_set)
         self.forecast_df = forecast_df
         self.skipped_df = skipped_df
         self.confirmed_df = confirmed_df
@@ -497,14 +498,12 @@ class ExpenseForecast:
                                                 pd.concat(
                                                     [copy.deepcopy(confirmed_df), single_proposed_transaction_df]),
                                                 copy.deepcopy(account_set), copy.deepcopy(memo_set))
-                    log_in_color('magenta', 'debug', 'END error-check computeOptimalForecast (SUCCESS)',
-                                 self.log_stack_depth)
+                    log_in_color('magenta', 'debug', 'END error-check computeOptimalForecast (SUCCESS)',self.log_stack_depth)
                     self.log_stack_depth -= 1
                     transaction_is_permitted = True
                 except Exception as e:
                     print(e)
-                    log_in_color('magenta', 'debug', 'END error-check computeOptimalForecast (FAIL)',
-                                 self.log_stack_depth)
+                    log_in_color('magenta', 'debug', 'END error-check computeOptimalForecast (FAIL)',self.log_stack_depth)
                     self.log_stack_depth -= 1
                     transaction_is_permitted = False
 
@@ -523,14 +522,9 @@ class ExpenseForecast:
                         single_proposed_transaction_df = pd.DataFrame(copy.deepcopy(budget_item_row)).T
                         single_proposed_transaction_df.Priority = 1
                         self.log_stack_depth += 1
-                        log_in_color('magenta', 'debug', 'BEGIN error-check computeOptimalForecast',
-                                     self.log_stack_depth)
-                        self.computeOptimalForecast(self.start_date.strftime('%Y%m%d'),
-                                                    self.end_date.strftime('%Y%m%d'), pd.concat(
-                                [copy.deepcopy(confirmed_df), single_proposed_transaction_df]),
-                                                    copy.deepcopy(account_set), copy.deepcopy(memo_set))
-                        log_in_color('magenta', 'debug', 'END error-check computeOptimalForecast (SUCCESS)',
-                                     self.log_stack_depth)
+                        log_in_color('magenta', 'debug', 'BEGIN error-check computeOptimalForecast',self.log_stack_depth)
+                        self.computeOptimalForecast(self.start_date.strftime('%Y%m%d'),self.end_date.strftime('%Y%m%d'), pd.concat([copy.deepcopy(confirmed_df), single_proposed_transaction_df]), copy.deepcopy(account_set), copy.deepcopy(memo_set))
+                        log_in_color('magenta', 'debug', 'END error-check computeOptimalForecast (SUCCESS)',self.log_stack_depth)
                         self.log_stack_depth -= 1
                         transaction_is_permitted = True
                     except Exception as e:
@@ -605,8 +599,11 @@ class ExpenseForecast:
                     # print( datetime.datetime.strptime(date_YYYYMMDD,'%Y%m%d'))
                     row_sel_vec = (forecast_df.Date == datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d'))
                     for account_index, account_row in account_set.getAccounts().iterrows():
+                        if ( account_index + 1) == account_set.getAccount().shape[1]:
+                            break
                         print('UPDATING ' + str(account_row.Name) + '. SET TO ' + str(updated_balances[account_index]))
-                        forecast_df.iloc[row_sel_vec, account_index + 1] = updated_balances[account_index]
+                        relevant_balance = account_set.getAccounts().iloc[account_index,1]
+                        forecast_df[forecast_df.Date == d].iloc[0, account_index + 1] = relevant_balance
 
                 else:
                     raise ValueError("""This is an edge case that should not be possible
@@ -889,7 +886,10 @@ class ExpenseForecast:
 
             updated_balances = account_set.getAccounts().Balance
             for account_index, account_row in account_set.getAccounts().iterrows():
-                current_forecast_row_df.iloc[0, account_index + 1] = updated_balances[account_index]
+                if ( account_index + 1) == account_set.getAccount().shape[1]:
+                    break
+                relevant_balance = account_set.getAccounts().iloc[account_index,1]
+                forecast_df[forecast_df.Date == d].iloc[0, account_index + 1] = relevant_balance
 
             # returns a single forecast row
             log_in_color('green', 'debug', 'EXIT calculateInterestAccrualsForDay', self.log_stack_depth)
@@ -954,7 +954,10 @@ class ExpenseForecast:
 
                 updated_balances = account_set.getAccounts().Balance
                 for account_index, account_row in account_set.getAccounts().iterrows():
-                    current_forecast_row_df.iloc[0, account_index + 1] = updated_balances[account_index]
+                    if ( account_index + 1) == account_set.getAccount().shape[1]:
+                        break
+                    relevant_balance = account_set.getAccounts().iloc[account_index,1]
+                    forecast_df[forecast_df.Date == d].iloc[0, account_index + 1] = relevant_balance
 
                 log_in_color('green', 'debug',
                              'END  executeMinimumPayments()',
@@ -1472,6 +1475,12 @@ class ExpenseForecast:
         """
         self.log_stack_depth += 1
         log_in_color('green', 'debug', 'ENTER computeOptimalForecast()', self.log_stack_depth)
+        log_in_color('cyan', 'debug', 'Full budget schedule:', self.log_stack_depth)
+        log_in_color('cyan', 'debug', budget_schedule_df.to_string(), self.log_stack_depth)
+
+
+        if self.log_stack_depth > 10:
+            raise ValueError("stack depth greater than 10. smells like infinite recursion to me. take a look buddy")
 
         all_days = pd.date_range(datetime.datetime.strptime(start_date_YYYYMMDD, '%Y%m%d'),
                                  datetime.datetime.strptime(end_date_YYYYMMDD, '%Y%m%d'))
@@ -1524,8 +1533,13 @@ class ExpenseForecast:
             # print('AFTER INTEREST ACCRUAL')
             # print(current_row_df.to_string())
 
+            #print('About to update account balances')
             for account_index, account_row in account_set.getAccounts().iterrows():
-                forecast_df[forecast_df.Date == d].iloc[0, account_index + 1] = account_set.getAccounts()[account_index]
+                if ( account_index + 1) == account_set.getAccounts().shape[1]:
+                    break
+                #print('UPDATING '+str(account_row.Name)+'. SET TO '+str(account_set.getAccounts()[account_index]))
+                relevant_balance = account_set.getAccounts().iloc[account_index,1]
+                forecast_df[forecast_df.Date == d].iloc[0, account_index + 1] = relevant_balance
 
         # forecast_df, skipped_df, confirmed_df, deferred_df = self.computeSatisficeForecast(start_date_YYYYMMDD,end_date_YYYYMMDD,budget_set,account_set,memo_rule_set)
 
@@ -1565,8 +1579,11 @@ class ExpenseForecast:
 
                 # print('About to update account balances')
                 for account_index, account_row in account_set.getAccounts().iterrows():
+                    if ( account_index + 1) == account_set.getAccounts().shape[1]:
+                        break
                     # print('UPDATING '+str(account_row.Name)+'. SET TO '+str(updated_balances[account_index]))
-                    forecast_df[forecast_df.Date == d].iloc[0, account_index + 1] = account_set.getAccounts()[account_index]
+                    relevant_balance = account_set.getAccounts().iloc[account_index,1]
+                    forecast_df[forecast_df.Date == d].iloc[0, account_index + 1] = relevant_balance
 
         log_in_color('green', 'debug', 'EXIT computeOptimalForecast()', self.log_stack_depth)
         self.log_stack_depth -= 1
