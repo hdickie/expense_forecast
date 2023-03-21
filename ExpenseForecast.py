@@ -182,14 +182,20 @@ class ExpenseForecast:
 
         self.log_stack_depth = 0
 
-        budget_schedule_df = budget_set.getBudgetSchedule(start_date_YYYYMMDD, end_date_YYYYMMDD)
+        proposed_df = budget_set.getBudgetSchedule(start_date_YYYYMMDD, end_date_YYYYMMDD)
+        confirmed_df = copy.deepcopy(proposed_df.head(0))
+        deferred_df = copy.deepcopy(proposed_df.head(0))
+        skipped_df = copy.deepcopy(proposed_df.head(0))
 
-        # this method already has access to these: account_set, budget_set, memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD
-        forecast_df, skipped_df, confirmed_df, deferred_df = self.computeOptimalForecast(start_date_YYYYMMDD,
-                                                                                         end_date_YYYYMMDD,
-                                                                                         budget_schedule_df,
-                                                                                         account_set,
-                                                                                         memo_rule_set)
+
+        forecast_df, skipped_df, confirmed_df, deferred_df = self.computeOptimalForecast(start_date_YYYYMMDD=start_date_YYYYMMDD,
+                                                                                         end_date_YYYYMMDD=end_date_YYYYMMDD,
+                                                                                         confirmed_df=confirmed_df,
+                                                                                         proposed_df=proposed_df,
+                                                                                         deferred_df=deferred_df,
+                                                                                         skipped_df=skipped_df,
+                                                                                         account_set=account_set,
+                                                                                         memo_rule_set=memo_rule_set)
         self.forecast_df = forecast_df
         self.skipped_df = skipped_df
         self.confirmed_df = confirmed_df
@@ -490,14 +496,24 @@ class ExpenseForecast:
                     # if the transaction violates account boundaries, then that will be detected by AccountSet
                     # the key difference between this simulation-within-a-simulation and the main simulation is that the proposed transaction is treated as having priority 1
                     # if this works I am actually so extremely happy with the elegance
+                    # also remove the original row tho
                     single_proposed_transaction_df = pd.DataFrame(copy.deepcopy(budget_item_row)).T
                     single_proposed_transaction_df.Priority = 1
                     self.log_stack_depth += 1
                     log_in_color('magenta', 'debug', 'BEGIN error-check computeOptimalForecast', self.log_stack_depth)
-                    self.computeOptimalForecast(self.start_date.strftime('%Y%m%d'), self.end_date.strftime('%Y%m%d'),
-                                                pd.concat(
-                                                    [copy.deepcopy(confirmed_df), single_proposed_transaction_df]),
-                                                copy.deepcopy(account_set), copy.deepcopy(memo_set))
+                    # start_date_YYYYMMDD, end_date_YYYYMMDD, confirmed_df, proposed_df, deferred_df, skipped_df, account_set, memo_rule_set
+
+                    hypothetical_confirmed_df = pd.concat([copy.deepcopy(confirmed_df), single_proposed_transaction_df])
+
+
+                    self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date.strftime('%Y%m%d'),
+                                                end_date_YYYYMMDD=self.end_date.strftime('%Y%m%d'),
+                                                confirmed_df=hypothetical_confirmed_df,
+                                                proposed_df=proposed_df,
+                                                deferred_df=deferred_df,
+                                                skipped_df=skipped_df,
+                                                account_set=copy.deepcopy(account_set),
+                                                memo_rule_set=copy.deepcopy(memo_set))
                     log_in_color('magenta', 'debug', 'END error-check computeOptimalForecast (SUCCESS)',self.log_stack_depth)
                     self.log_stack_depth -= 1
                     transaction_is_permitted = True
@@ -523,7 +539,14 @@ class ExpenseForecast:
                         single_proposed_transaction_df.Priority = 1
                         self.log_stack_depth += 1
                         log_in_color('magenta', 'debug', 'BEGIN error-check computeOptimalForecast',self.log_stack_depth)
-                        self.computeOptimalForecast(self.start_date.strftime('%Y%m%d'),self.end_date.strftime('%Y%m%d'), pd.concat([copy.deepcopy(confirmed_df), single_proposed_transaction_df]), copy.deepcopy(account_set), copy.deepcopy(memo_set))
+                        self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date.strftime('%Y%m%d'),
+                                                    end_date_YYYYMMDD=self.end_date.strftime('%Y%m%d'),
+                                                    confirmed_df=pd.concat([copy.deepcopy(confirmed_df), single_proposed_transaction_df]),
+                                                    proposed_df=proposed_df,
+                                                    deferred_df=deferred_df,
+                                                    skipped_df=skipped_df,
+                                                    account_set=copy.deepcopy(account_set),
+                                                    memo_rule_set=copy.deepcopy(memo_set))
                         log_in_color('magenta', 'debug', 'END error-check computeOptimalForecast (SUCCESS)',self.log_stack_depth)
                         self.log_stack_depth -= 1
                         transaction_is_permitted = True
@@ -1454,8 +1477,7 @@ class ExpenseForecast:
 
         return BudgetSet.BudgetSet(final_budget_items)
 
-    def computeOptimalForecast(self, start_date_YYYYMMDD, end_date_YYYYMMDD, budget_schedule_df, account_set,
-                               memo_rule_set):
+    def computeOptimalForecast(self, start_date_YYYYMMDD, end_date_YYYYMMDD, confirmed_df, proposed_df, deferred_df, skipped_df, account_set, memo_rule_set):
         """
         One-description.
 
@@ -1475,8 +1497,17 @@ class ExpenseForecast:
         """
         self.log_stack_depth += 1
         log_in_color('green', 'debug', 'ENTER computeOptimalForecast()', self.log_stack_depth)
+
+        full_budget_schedule_df = pd.concat([confirmed_df, proposed_df, deferred_df, skipped_df])
+        full_budget_schedule_df.reset_index(drop=True,inplace=True)
+        try:
+            assert full_budget_schedule_df.shape[0] == full_budget_schedule_df.drop_duplicates().shape[0]
+        except Exception as e:
+            log_in_color('red','debug','a duplicate memo was detected. This is filtered for in ExpenseForecast(), so we know that this was caused by internal logic.')
+            raise e
+
         log_in_color('cyan', 'debug', 'Full budget schedule:', self.log_stack_depth)
-        log_in_color('cyan', 'debug', budget_schedule_df.to_string(), self.log_stack_depth)
+        log_in_color('cyan', 'debug', full_budget_schedule_df.to_string(), self.log_stack_depth)
 
 
         if self.log_stack_depth > 10:
@@ -1488,10 +1519,6 @@ class ExpenseForecast:
         # print('initial_forecast_row:'+str(forecast_df))
         # budget_schedule_df = budget_set.getBudgetSchedule(start_date_YYYYMMDD, end_date_YYYYMMDD)
 
-        skipped_df = copy.deepcopy(budget_schedule_df.head(0))
-        confirmed_df = copy.deepcopy(budget_schedule_df.head(0))
-        deferred_df = copy.deepcopy(budget_schedule_df.head(0))
-
         for d in all_days:
             log_in_color('green', 'debug', 'SATISFICE d:' + str(d), self.log_stack_depth)
 
@@ -1502,7 +1529,7 @@ class ExpenseForecast:
                                                                                                                 '%Y%m%d'),
                                                                                                             memo_set=memo_rule_set,
                                                                                                             confirmed_df=confirmed_df,
-                                                                                                            proposed_df=budget_schedule_df,
+                                                                                                            proposed_df=proposed_df,
                                                                                                             deferred_df=deferred_df,
                                                                                                             skipped_df=skipped_df,
                                                                                                             priority_level=1,
@@ -1541,9 +1568,7 @@ class ExpenseForecast:
                 relevant_balance = account_set.getAccounts().iloc[account_index,1]
                 forecast_df[forecast_df.Date == d].iloc[0, account_index + 1] = relevant_balance
 
-        # forecast_df, skipped_df, confirmed_df, deferred_df = self.computeSatisficeForecast(start_date_YYYYMMDD,end_date_YYYYMMDD,budget_set,account_set,memo_rule_set)
-
-        unique_priority_indices = budget_schedule_df.Priority.unique()
+        unique_priority_indices = full_budget_schedule_df.Priority.unique()
         for priority_index in unique_priority_indices:
             if priority_index == 1:
                 continue
@@ -1559,7 +1584,7 @@ class ExpenseForecast:
                     date_YYYYMMDD=d.strftime('%Y%m%d'),
                     memo_set=memo_rule_set,
                     confirmed_df=confirmed_df,
-                    proposed_df=budget_schedule_df,
+                    proposed_df=proposed_df,
                     deferred_df=deferred_df,
                     skipped_df=skipped_df,
                     priority_level=priority_index,
