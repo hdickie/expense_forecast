@@ -16,17 +16,17 @@ RESET_COLOR = f"{Style.RESET_ALL}"
 
 import logging
 
-format = '%(asctime)s - %(name)s - %(levelname)-8s - %(message)s'
-formatter = logging.Formatter(format)
-ch = logging.StreamHandler()
-ch.setFormatter(formatter)
-ch.setLevel(logging.DEBUG)
-logger = logging.getLogger(__name__)
-logger.propagate = False
-logger.handlers.clear()
-logger.addHandler(ch)
+color_log_format = '%(asctime)s - %(levelname)-8s - %(message)s'
+color_formatter = logging.Formatter(color_log_format)
+col_ch = logging.StreamHandler()
+col_ch.setFormatter(color_formatter)
+col_ch.setLevel(logging.DEBUG)
 
-logger.setLevel(logging.DEBUG)
+col_logger = logging.getLogger(__name__)
+col_logger.propagate = False
+col_logger.handlers.clear()
+col_logger.addHandler(col_ch)
+
 
 
 def log_in_color(color,level,msg,stack_depth=0):
@@ -55,15 +55,15 @@ def log_in_color(color,level,msg,stack_depth=0):
             line = BEGIN_CYAN + left_prefix + line + RESET_COLOR
 
         if level == 'debug':
-            logger.debug(line)
+            col_logger.debug(line)
         elif level == 'warning':
-            logger.warning(line)
+            col_logger.warning(line)
         elif level == 'error':
-            logger.error(line)
+            col_logger.error(line)
         elif level == 'info':
-            logger.info(line)
+            col_logger.info(line)
         elif level == 'critical':
-            logger.critical(line)
+            col_logger.critical(line)
         else:
             print(line)
 

@@ -9,6 +9,18 @@ import BudgetSet, BudgetItem
 
 from log_methods import log_in_color
 
+import logging
+
+f_l_format = '%(funcName)s():%(lineno)i: - %(message)s'
+f_l_formatter = logging.Formatter(f_l_format)
+f_l_ch = logging.StreamHandler()
+f_l_ch.setFormatter(f_l_formatter)
+f_l_ch.setLevel(logging.DEBUG)
+
+logger = logging.getLogger(__name__)
+logger.propagate = False
+logger.handlers.clear()
+logger.addHandler(f_l_ch)
 
 def generate_date_sequence(start_date_YYYYMMDD, num_days, cadence):
     """ A wrapper for pd.date_range intended to make code easier to read.
@@ -501,7 +513,7 @@ class ExpenseForecast:
                     single_proposed_transaction_df.Priority = 1
                     self.log_stack_depth += 1
                     log_in_color('magenta', 'debug', 'BEGIN error-check computeOptimalForecast', self.log_stack_depth)
-                    # start_date_YYYYMMDD, end_date_YYYYMMDD, confirmed_df, proposed_df, deferred_df, skipped_df, account_set, memo_rule_set
+                    logger.debug(' '.ljust(self.log_stack_depth*4,' ') + ' BEGIN error-check computeOptimalForecast')
 
                     hypothetical_confirmed_df = pd.concat([copy.deepcopy(confirmed_df), single_proposed_transaction_df])
 
