@@ -107,6 +107,8 @@ def display_test_result(test_name, df1):
     # print('COLUMNS TO INCLUDE')
     # print(str(columns_to_include))
 
+    df1.Date = [ x.strftime('%Y-%m-%d') for x in df1.Date ]
+
     output_lines = df1.iloc[:, columns_to_include].T.to_string().split('\n')
     index = 0
     if mismatch_column_count > 0:
