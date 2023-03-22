@@ -329,9 +329,35 @@ class ExpenseForecast:
 
 
         """
-        relevant_proposed_df = copy.deepcopy(proposed_df[(proposed_df.Priority <= priority_level) & (proposed_df.Date == datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d'))])
-        relevant_confirmed_df = copy.deepcopy(confirmed_df[(confirmed_df.Priority <= priority_level) & (confirmed_df.Date == datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d'))])
-        relevant_deferred_df = copy.deepcopy(deferred_df[(deferred_df.Priority <= priority_level) & (deferred_df.Date == datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d'))])
+        relevant_proposed_df = copy.deepcopy(proposed_df[(proposed_df.Priority <= priority_level) & (proposed_df.Date == date_YYYYMMDD )])
+        relevant_confirmed_df = copy.deepcopy(confirmed_df[(confirmed_df.Priority <= priority_level) & (confirmed_df.Date == date_YYYYMMDD )])
+        relevant_deferred_df = copy.deepcopy(deferred_df[(deferred_df.Priority <= priority_level) & (deferred_df.Date == date_YYYYMMDD )])
+
+        log_in_color('cyan', 'debug', 'executeTransactionsForDay()', self.log_stack_depth)
+
+        # print('(proposed_df.Priority <= priority_level):')
+        # print((proposed_df.Priority <= priority_level))
+        # print('proposed_df.Priority:')
+        # print(proposed_df.Priority)
+        # print('priority_level:')
+        # print(priority_level)
+        # print('proposed_df.Date == date_YYYYMMDD')
+        # print((proposed_df.Date == date_YYYYMMDD))
+
+        log_in_color('cyan', 'debug', 'ALL Confirmed: ', self.log_stack_depth)
+        log_in_color('cyan', 'debug', confirmed_df.to_string(), self.log_stack_depth + 1)
+        log_in_color('cyan', 'debug', 'ALL Proposed: ', self.log_stack_depth)
+        log_in_color('cyan', 'debug', proposed_df.to_string(), self.log_stack_depth + 1)
+        log_in_color('cyan', 'debug', 'ALL Deferred: ', self.log_stack_depth)
+        log_in_color('cyan', 'debug', deferred_df.to_string(), self.log_stack_depth + 1)
+
+
+        log_in_color('cyan', 'debug', 'Relevant Confirmed: ', self.log_stack_depth)
+        log_in_color('cyan', 'debug', relevant_confirmed_df.to_string(), self.log_stack_depth + 1)
+        log_in_color('cyan', 'debug', 'Relevant Proposed: ', self.log_stack_depth)
+        log_in_color('cyan', 'debug', relevant_proposed_df.to_string(), self.log_stack_depth + 1)
+        log_in_color('cyan', 'debug', 'Relevant Deferred: ', self.log_stack_depth)
+        log_in_color('cyan', 'debug', relevant_deferred_df.to_string(), self.log_stack_depth + 1)
 
         self.log_stack_depth += 1
         log_in_color('green', 'debug', 'BEGIN executeTransactionsForDay(priority_level=' + str(priority_level) + ',date=' + str(date_YYYYMMDD) + ')', self.log_stack_depth)
@@ -344,7 +370,7 @@ class ExpenseForecast:
             forecast_df = pd.concat([forecast_df, previous_row_df])
             forecast_df.reset_index(drop=True, inplace=True)
 
-        if (priority_level != 1 and relevant_proposed_df.empty and relevant_confirmed_df.empty and relevant_deferred_df.empty) | (priority_level == 1 and relevant_proposed_df.empty):
+        if (priority_level != 1 and relevant_proposed_df.empty and relevant_confirmed_df.empty and relevant_deferred_df.empty) | (priority_level == 1 and relevant_confirmed_df.empty):
             log_in_color('white', 'debug', '(end of day) available_balances: ' + str(account_set.getAvailableBalances()), self.log_stack_depth)
             log_in_color('green', 'debug', 'END executeTransactionsForDay(priority_level=' + str(priority_level) + ',date=' + str(date_YYYYMMDD) + ')', self.log_stack_depth)
             self.log_stack_depth -= 1
@@ -353,12 +379,20 @@ class ExpenseForecast:
         memo_set_df = memo_set.getMemoRules()
         relevant_memo_set_df = memo_set_df[memo_set_df.Transaction_Priority == priority_level]
 
-        if priority_level == 1:
+        if (priority_level == 1) and not proposed_df.empty:
+            #not sure if this sort needs to happen for both but it doesnt hurt anything
             income_rows_sel_vec = [re.search('.*income.*', str(memo)) is not None for memo in proposed_df.Memo]
             income_rows_df = proposed_df[income_rows_sel_vec]
             non_income_rows_df = proposed_df[[not x for x in income_rows_sel_vec]]
-            non_income_rows_df.sort_values(by='Amount', inplace=True, ascending=False)
-            budget_schedule_df = pd.concat([income_rows_df, non_income_rows_df])
+            non_income_rows_df.sort_values(by=['Amount'], inplace=True, ascending=False)
+            proposed_df = pd.concat([income_rows_df, non_income_rows_df])
+
+        if (priority_level == 1) and not confirmed_df.empty:
+            income_rows_sel_vec = [re.search('.*income.*', str(memo)) is not None for memo in confirmed_df.Memo]
+            income_rows_df = confirmed_df[income_rows_sel_vec]
+            non_income_rows_df = confirmed_df[[not x for x in income_rows_sel_vec]]
+            non_income_rows_df.sort_values(by=['Amount'], inplace=True, ascending=False)
+            confirmed_df = pd.concat([income_rows_df, non_income_rows_df])
 
         if priority_level == 1 and confirmed_df.shape[0] > 0 and deferred_df.shape[0] > 0:
             raise ValueError("Design assumption violated.")
@@ -383,6 +417,7 @@ class ExpenseForecast:
         log_in_color('yellow', 'debug', relevant_memo_set_df.to_string(), self.log_stack_depth)
 
         for confirmed_index, confirmed_row in relevant_confirmed_df.iterrows():
+            log_in_color('green','debug','processing confirmed transaction:'+str(confirmed_row.Memo),self.log_stack_depth)
             for memo_rule_index, memo_rule_row in relevant_memo_set_df.iterrows():
                 m = re.search(memo_rule_row.Memo_Regex, confirmed_row.Memo)
                 try:
@@ -452,10 +487,18 @@ class ExpenseForecast:
                     log_in_color('magenta', 'debug', 'BEGIN error-check computeOptimalForecast', self.log_stack_depth)
                     logger.debug(' '.ljust(self.log_stack_depth * 4, ' ') + ' BEGIN error-check computeOptimalForecast')
 
-                    hypothetical_confirmed_df = pd.concat([copy.deepcopy(confirmed_df), single_proposed_transaction_df])
+                    #furthermore, since we are not processing any more proposed transactions in this one-adjustment simulation, there is no need to pass any proposed transactions to this method call
+                    empty_df = copy.deepcopy(proposed_df).head(0)
 
-                    self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date.strftime('%Y%m%d'), end_date_YYYYMMDD=self.end_date.strftime('%Y%m%d'), confirmed_df=hypothetical_confirmed_df,
-                                                proposed_df=proposed_df, deferred_df=deferred_df, skipped_df=skipped_df, account_set=copy.deepcopy(account_set), memo_rule_set=copy.deepcopy(memo_set))
+                    updated_confirmed_df = pd.concat([copy.deepcopy(confirmed_df), single_proposed_transaction_df])
+
+                    self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date.strftime('%Y%m%d'),
+                                                end_date_YYYYMMDD=self.end_date.strftime('%Y%m%d'),
+                                                confirmed_df=updated_confirmed_df,
+                                                proposed_df=empty_df,
+                                                deferred_df=deferred_df,
+                                                skipped_df=skipped_df,
+                                                account_set=copy.deepcopy(account_set), memo_rule_set=copy.deepcopy(memo_set))
                     log_in_color('magenta', 'debug', 'END error-check computeOptimalForecast (SUCCESS)', self.log_stack_depth)
                     self.log_stack_depth -= 1
                     transaction_is_permitted = True
@@ -468,7 +511,8 @@ class ExpenseForecast:
                 log_in_color('green', 'debug',
                              'not transaction_is_permitted=' + str(not transaction_is_permitted) + ',budget_item_row.Partial_Payment_Allowed=' + str(budget_item_row.Partial_Payment_Allowed),
                              self.log_stack_depth)
-                if not transaction_is_permitted and allow_partial_payments and budget_item_row.Partial_Payment_Allowed:
+                if not transaction_is_permitted and allow_partial_payments and budget_item_row\
+                        .Partial_Payment_Allowed:
                     budget_item_row.Amount = available_balances[memo_rule_row.Account_From]
 
                     try:
@@ -480,10 +524,19 @@ class ExpenseForecast:
                         single_proposed_transaction_df = pd.DataFrame(copy.deepcopy(budget_item_row)).T
                         single_proposed_transaction_df.Priority = 1
                         self.log_stack_depth += 1
+
+                        updated_confirmed_df = pd.concat([copy.deepcopy(confirmed_df), single_proposed_transaction_df])
+                        empty_df = copy.deepcopy(proposed_df).head(0)
+
                         log_in_color('magenta', 'debug', 'BEGIN error-check computeOptimalForecast', self.log_stack_depth)
-                        self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date.strftime('%Y%m%d'), end_date_YYYYMMDD=self.end_date.strftime('%Y%m%d'),
-                                                    confirmed_df=pd.concat([copy.deepcopy(confirmed_df), single_proposed_transaction_df]), proposed_df=proposed_df, deferred_df=deferred_df,
-                                                    skipped_df=skipped_df, account_set=copy.deepcopy(account_set), memo_rule_set=copy.deepcopy(memo_set))
+                        self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date.strftime('%Y%m%d'),
+                                                    end_date_YYYYMMDD=self.end_date.strftime('%Y%m%d'),
+                                                    confirmed_df=updated_confirmed_df,
+                                                    proposed_df=empty_df, #no need to pass these because this method call would never make it to the point where it used them
+                                                    deferred_df=empty_df,
+                                                    skipped_df=empty_df,
+                                                    account_set=copy.deepcopy(account_set),
+                                                    memo_rule_set=copy.deepcopy(memo_set))
                         log_in_color('magenta', 'debug', 'END error-check computeOptimalForecast (SUCCESS)', self.log_stack_depth)
                         self.log_stack_depth -= 1
                         transaction_is_permitted = True
@@ -520,9 +573,18 @@ class ExpenseForecast:
                     single_proposed_transaction_df.Priority = 1
                     self.log_stack_depth += 1
                     log_in_color('magenta', 'debug', 'BEGIN recalculating computeOptimalForecast', self.log_stack_depth)
-                    forecast_with_accurately_updated_future_rows = self.computeOptimalForecast(self, self.start_date.strftime('%Y%m%d'), self.end_date_YYYYMMDD.strftime('%Y%m%d'),
-                                                                                               pd.concat([copy.deepcopy(confirmed_df), single_proposed_transaction_df]), copy.deepcopy(account_set),
-                                                                                               copy.deepcopy(memo_set))
+
+                    updated_confirmed_df = pd.concat([copy.deepcopy(confirmed_df), single_proposed_transaction_df])
+                    remaining_unproposed_transactions_df = proposed_df[~proposed_df.index.isin(single_proposed_transaction_df.index)]
+
+                    forecast_with_accurately_updated_future_rows = self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date.strftime('%Y%m%d'),
+                                                                                               end_date_YYYYMMDD=self.end_date.strftime('%Y%m%d'),
+                                                                                               confirmed_df=updated_confirmed_df,
+                                                                                               proposed_df=remaining_unproposed_transactions_df,
+                                                                                               deferred_df=deferred_df,
+                                                                                               skipped_df=skipped_df,
+                                                                                               account_set=copy.deepcopy(account_set),
+                                                                                               memo_rule_set=copy.deepcopy(memo_set))
                     log_in_color('magenta', 'debug', 'END recalculating computeOptimalForecast', self.log_stack_depth)
                     self.log_stack_depth -= 1
 
@@ -1374,8 +1436,15 @@ class ExpenseForecast:
             log_in_color('red', 'debug', 'a duplicate memo was detected. This is filtered for in ExpenseForecast(), so we know that this was caused by internal logic.')
             raise e
 
-        log_in_color('cyan', 'debug', 'Full budget schedule:', self.log_stack_depth)
-        log_in_color('cyan', 'debug', full_budget_schedule_df.to_string(), self.log_stack_depth)
+        #log_in_color('cyan', 'debug', 'Full budget schedule:', self.log_stack_depth)
+        #log_in_color('cyan', 'debug', full_budget_schedule_df.to_string(), self.log_stack_depth)
+        log_in_color('cyan', 'debug', 'computeOptimalForecast()', self.log_stack_depth)
+        log_in_color('cyan', 'debug', 'Confirmed: ', self.log_stack_depth)
+        log_in_color('cyan', 'debug', confirmed_df.to_string(), self.log_stack_depth + 1)
+        log_in_color('cyan', 'debug', 'Proposed: ', self.log_stack_depth)
+        log_in_color('cyan', 'debug', proposed_df.to_string(), self.log_stack_depth + 1)
+        log_in_color('cyan', 'debug', 'Deferred: ', self.log_stack_depth)
+        log_in_color('cyan', 'debug', deferred_df.to_string(), self.log_stack_depth + 1)
 
         if self.log_stack_depth > 10:
             raise ValueError("stack depth greater than 10. smells like infinite recursion to me. take a look buddy")
@@ -1396,14 +1465,14 @@ class ExpenseForecast:
                                                                                                             allow_partial_payments=False)  # this is the implementation of satisfice
             # print('SATISFICE AFTER TXN:'+str(forecast_df))
 
-            if new_skipped_df.shape[0] > 0:
-                skipped_df = pd.concat([skipped_df, new_skipped_df])
-
-            if new_confirmed_df.shape[0] > 0:
-                confirmed_df = pd.concat([confirmed_df, new_confirmed_df])
-
-            if new_deferred_df.shape[0] > 0:
-                deferred_df = pd.concat([deferred_df, new_deferred_df])
+            # if new_skipped_df.shape[0] > 0:
+            #     skipped_df = pd.concat([skipped_df, new_skipped_df])
+            #
+            # if new_confirmed_df.shape[0] > 0:
+            #     confirmed_df = pd.concat([confirmed_df, new_confirmed_df])
+            #
+            # if new_deferred_df.shape[0] > 0:
+            #     deferred_df = pd.concat([deferred_df, new_deferred_df])
 
             # these should probably come before executeTransactionsForDay, but I'm actually not sure so I'm OK leaving these here for now
             # print('BEFORE MIN PAYMENTS')
@@ -1435,9 +1504,17 @@ class ExpenseForecast:
 
                 # print('OPTIMIZE BEFORE TXN forecast_df')
                 # print(forecast_df[forecast_df.Date == d].to_string())
-                forecast_df, new_skipped_df, new_confirmed_df, new_deferred_df = self.executeTransactionsForDay(account_set, forecast_df=forecast_df, date_YYYYMMDD=d.strftime('%Y%m%d'),
-                    memo_set=memo_rule_set, confirmed_df=confirmed_df, proposed_df=proposed_df, deferred_df=deferred_df, skipped_df=skipped_df, priority_level=priority_index,
-                    allow_skip_and_defer=True, allow_partial_payments=True)
+                forecast_df, new_skipped_df, new_confirmed_df, new_deferred_df = self.executeTransactionsForDay(account_set,
+                                                                                                                forecast_df=forecast_df,
+                                                                                                                date_YYYYMMDD=d.strftime('%Y%m%d'),
+                                                                                                                memo_set=memo_rule_set,
+                                                                                                                confirmed_df=confirmed_df,
+                                                                                                                proposed_df=proposed_df,
+                                                                                                                deferred_df=deferred_df,
+                                                                                                                skipped_df=skipped_df,
+                                                                                                                priority_level=priority_index,
+                                                                                                                allow_skip_and_defer=True,
+                                                                                                                allow_partial_payments=True)
                 # print('OPTIMIZE AFTER TXN forecast_df')
                 # print(forecast_df[forecast_df.Date == d].to_string())
 
