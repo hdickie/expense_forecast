@@ -711,7 +711,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
 
         account_set.addAccount(name='Checking',
-                               balance=2000,
+                               balance=0,
                                min_balance=0,
                                max_balance=float('Inf'),
                                account_type="checking")
@@ -731,13 +731,8 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                accrued_interest=None
                                )
 
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
-                                 cadence='daily', amount=0, memo='dummy memo',
-                                 deferrable=False,
-                                 partial_payment_allowed=False)
-
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=4,
-                                 cadence='once', amount=100, memo='dummy memo',
+        budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=4,
+                                 cadence='once', amount=100, memo='additional credit card payment',
                                  deferrable=False,
                                  partial_payment_allowed=False)
 
@@ -746,7 +741,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
 
         expected_result_df = pd.DataFrame({
             'Date': ['20000101', '20000102', '20000103'],
-            'Checking': [2000, 2000, 2000],
+            'Checking': [0, 0, 0],
             'Credit: Curr Stmt Bal': [0, 0, 0],
             'Credit: Prev Stmt Bal': [0, 0, 0],
             'Memo': ['', '', '']
