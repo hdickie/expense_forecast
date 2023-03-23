@@ -896,7 +896,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                min_balance=0,
                                max_balance=20000,
                                account_type="credit",
-                               billing_start_date_YYYYMMDD='20000102',
+                               billing_start_date_YYYYMMDD='20000112',
                                interest_type='Compound',
                                apr=0.05,
                                interest_cadence='Monthly',
@@ -907,7 +907,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                )
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=4,
-                                 cadence='once', amount=160, memo='additional cc payment test 9',deferrable=False,
+                                 cadence='once', amount=200, memo='additional cc payment test',deferrable=False,
                                  partial_payment_allowed=True)
 
 
