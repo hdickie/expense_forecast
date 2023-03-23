@@ -839,7 +839,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                min_balance=0,
                                max_balance=20000,
                                account_type="credit",
-                               billing_start_date_YYYYMMDD='20000102',
+                               billing_start_date_YYYYMMDD='20000112',
                                interest_type='Compound',
                                apr=0.05,
                                interest_cadence='Monthly',
@@ -849,18 +849,13 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                accrued_interest=None
                                )
 
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
-                                 cadence='daily', amount=0, memo='dummy memo',
-                                 deferrable=False,
-                                 partial_payment_allowed=False)
-
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=4,
-                                 cadence='once', amount=720, memo='test pay all prev part of curr',
+                                 cadence='once', amount=800, memo='test pay all prev part of curr',
                                  deferrable=False,
                                  partial_payment_allowed=False)
 
         memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1)
-        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=4)
+        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to='Credit', transaction_priority=4)
 
         expected_result_df = pd.DataFrame({
             'Date': ['20000101', '20000102', '20000103'],
