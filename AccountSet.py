@@ -531,9 +531,9 @@ class AccountSet:
                     log_in_color('red', 'error', 'Amount:'+str(Amount))
                     boundary_error_ind = True
 
-                log_in_color('magenta', 'debug', 'account min:' + str(self.accounts[account_to_index].min_balance), 3)
-                log_in_color('magenta', 'debug', 'account max:' + str(self.accounts[account_to_index].max_balance), 3)
-                log_in_color('magenta', 'debug', 'balance_after_proposed_transaction:' + str(balance_after_proposed_transaction), 3)
+                # log_in_color('magenta', 'debug', 'account min:' + str(self.accounts[account_to_index].min_balance), 3)
+                # log_in_color('magenta', 'debug', 'account max:' + str(self.accounts[account_to_index].max_balance), 3)
+                # log_in_color('magenta', 'debug', 'balance_after_proposed_transaction:' + str(balance_after_proposed_transaction), 3)
 
                 #if the amount we are playing on credit card is more than the previous statement balance
                 if abs(Amount) >= self.accounts[account_to_index+1].balance:

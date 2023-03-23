@@ -408,7 +408,7 @@ class ExpenseForecast:
             log_in_color('green', 'debug', 'END executeTransactionsForDay(priority_level=' + str(priority_level) + ',date=' + str(date_YYYYMMDD) + ') '+str(row_count_string)+str(bal_string), self.log_stack_depth)
 
             if datetime.datetime.strptime(date_YYYYMMDD,'%Y%m%d') != self.start_date:
-                log_in_color('green','debug','no items for '+str(date_YYYYMMDD)+'. Setting this days balances equal to the previous.')
+                log_in_color('green','debug','no items for '+str(date_YYYYMMDD)+'. Setting this days balances equal to the previous.',self.log_stack_depth)
                 for i in range(1,len(forecast_df.columns)):
                     prev_row_sel_vec = (forecast_df.Date == ( datetime.datetime.strptime(date_YYYYMMDD,'%Y%m%d') - datetime.timedelta(days=1) ))
                     curr_row_sel_vec = (forecast_df.Date == datetime.datetime.strptime(date_YYYYMMDD,'%Y%m%d') )

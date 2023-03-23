@@ -1037,9 +1037,9 @@ class TestExpenseForecastMethods(unittest.TestCase):
 
         expected_result_df = pd.DataFrame({
             'Date': ['20000101', '20000102', '20000103'],
-            'Checking': [0, 0, 0],
-            'Credit: Curr Stmt Bal': [0, 0, 0],
-            'Credit: Prev Stmt Bal': [0, 0, 0],
+            'Checking': [2000, 1960, 1960],
+            'Credit: Curr Stmt Bal': [500, 0, 0],
+            'Credit: Prev Stmt Bal': [500, 961.92, 961.92],
             'Memo': ['', '', '']
         })
         expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d') for x in
@@ -1052,7 +1052,6 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                                      end_date_YYYYMMDD,
                                                      expected_result_df,
                                                      test_description)
-        raise NotImplementedError
 
     def test_p5_and_6__expect_skip(self):
         test_description = 'test_p5_and_6__expect_skip'
