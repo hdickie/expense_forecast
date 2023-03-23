@@ -675,7 +675,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=3,
                                  cadence='once', amount=100, memo='this should be deferred',
-                                 deferrable=False,
+                                 deferrable=True,
                                  partial_payment_allowed=False)
 
         memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=1)

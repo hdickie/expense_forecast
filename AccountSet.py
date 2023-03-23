@@ -301,7 +301,7 @@ class AccountSet:
         else:
             pass
         log_string+=')'
-        log_in_color('green', 'debug',log_string)
+        log_in_color('green', 'debug',log_string, 0)
 
         # TODO this should be based on interest type or interest AND account type
         if account_type.lower() == 'loan':
@@ -536,7 +536,7 @@ class AccountSet:
         empirical_delta = after_txn_total_available_funds - before_txn_total_available_funds
 
         if boundary_error_ind:
-            raise ValueError("Account boundaries were violated") #
+            raise ValueError("Account boundaries were violated")
 
         single_account_transaction_ind = ( Account_From == 'None' or Account_To == 'None' )
 
