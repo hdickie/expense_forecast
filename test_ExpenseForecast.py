@@ -698,8 +698,8 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                                      expected_result_df,
                                                      test_description)
 
-        assert E.skipped_df.shape[0] == 1
-        assert E.skipped_df['Memo'].iloc[0] == 'this should be skipped'
+        assert E.deferred_df.shape[0] == 1
+        assert E.deferred_df['Memo'].iloc[0] == 'this should be deferred'
     def test_p4__cc_payment__no_prev_balance__pay_100__no_funds__expect_skip(self):
         test_description = 'test_cc_payment__optimize__no_prev_balance__pay_100__no_funds__expect_skip'
 
