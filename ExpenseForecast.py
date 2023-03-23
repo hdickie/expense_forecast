@@ -5,7 +5,7 @@ import datetime
 import re
 import copy
 
-import BudgetSet, BudgetItem
+import BudgetSet, BudgetItem, MemoRuleSet
 
 from log_methods import log_in_color
 
@@ -569,6 +569,8 @@ class ExpenseForecast:
                         raise e
 
                     account_set_before_error_check = copy.deepcopy(account_set)
+                    only_relevant_memo_rule_with_priority_1 = MemoRuleSet.MemoRuleSet([memo_set.memo_rules[ memo_rule_index ]])
+                    only_relevant_memo_rule_with_priority_1.memo_rules[0].transaction_priority = 1
 
                     self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date.strftime('%Y%m%d'),
                                                 end_date_YYYYMMDD=self.end_date.strftime('%Y%m%d'),
@@ -576,7 +578,8 @@ class ExpenseForecast:
                                                 proposed_df=empty_df,
                                                 deferred_df=deferred_df,
                                                 skipped_df=skipped_df,
-                                                account_set=copy.deepcopy(account_set), memo_rule_set=copy.deepcopy(memo_set))
+                                                account_set=copy.deepcopy(account_set),
+                                                memo_rule_set=only_relevant_memo_rule_with_priority_1)
 
                     account_set = account_set_before_error_check #i think this is redundant
 
@@ -611,6 +614,8 @@ class ExpenseForecast:
                         empty_df = copy.deepcopy(proposed_df).head(0)
 
                         account_set_before_error_check = copy.deepcopy(account_set)
+                        only_relevant_memo_rule_with_priority_1 = MemoRuleSet.MemoRuleSet([memo_set.memo_rules[memo_rule_index]])
+                        only_relevant_memo_rule_with_priority_1.memo_rules[0].transaction_priority = 1
 
                         log_in_color('magenta', 'debug', 'BEGIN error-check computeOptimalForecast', self.log_stack_depth)
                         self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date.strftime('%Y%m%d'),
@@ -620,7 +625,7 @@ class ExpenseForecast:
                                                     deferred_df=empty_df,
                                                     skipped_df=empty_df,
                                                     account_set=copy.deepcopy(account_set),
-                                                    memo_rule_set=copy.deepcopy(memo_set))
+                                                    memo_rule_set=only_relevant_memo_rule_with_priority_1)
                         log_in_color('magenta', 'debug', 'END error-check computeOptimalForecast (SUCCESS)', self.log_stack_depth)
 
                         account_set = account_set_before_error_check #i think this is redundant
@@ -681,9 +686,10 @@ class ExpenseForecast:
 
                         relevant_balance = forecast_df.iloc[0,account_index + 1]
                         account_set.accounts[account_index].balance = relevant_balance
-                        print('CASE 1 SET ' + str(account_row.Name) + ' to $' + str(relevant_balance))
+                        #print('CASE 1 SET ' + str(account_row.Name) + ' to $' + str(relevant_balance))
 
-
+                    only_relevant_memo_rule_with_priority_1 = MemoRuleSet.MemoRuleSet([memo_set.memo_rules[memo_rule_index]])
+                    only_relevant_memo_rule_with_priority_1.memo_rules[0].transaction_priority = 1
 
                     #forecast_df, skipped_df, confirmed_df, deferred_df
                     forecast_with_accurately_updated_future_rows = self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date.strftime('%Y%m%d'),
@@ -693,7 +699,8 @@ class ExpenseForecast:
                                                                                                deferred_df=empty_df,
                                                                                                skipped_df=empty_df,
                                                                                                account_set=copy.deepcopy(account_set),
-                                                                                               memo_rule_set=copy.deepcopy(memo_set))[0]
+                                                                                               memo_rule_set=only_relevant_memo_rule_with_priority_1
+                                                                                               )[0]
                     log_in_color('magenta', 'debug', 'END recalculating computeOptimalForecast for updated future rows', self.log_stack_depth)
 
                     account_set = account_set_before_propogate #i think this is redundant
@@ -736,8 +743,8 @@ class ExpenseForecast:
                     budget_item_row.Partial_Payment_Allowed:""" + str(budget_item_row.Partial_Payment_Allowed) + """
                     """)
 
-        print('returning this forecast row:')
-        print(forecast_df[forecast_df.Date == datetime.datetime.strptime(date_YYYYMMDD,'%Y%m%d')])
+        #print('returning this forecast row:')
+        #print(forecast_df[forecast_df.Date == datetime.datetime.strptime(date_YYYYMMDD,'%Y%m%d')])
         log_in_color('white', 'debug', '(end of day ' + str(date_YYYYMMDD) + ') available_balances: ' + str(account_set.getAvailableBalances()), self.log_stack_depth)
 
         bal_string='  '
@@ -1399,8 +1406,8 @@ class ExpenseForecast:
                                                                                                                 priority_level=priority_index,
                                                                                                                 allow_skip_and_defer=True,
                                                                                                                 allow_partial_payments=True)
-                print('Row returned by executeTransactionsForDay:')
-                print(forecast_df[forecast_df.Date == d])
+                #print('Row returned by executeTransactionsForDay:')
+                #print(forecast_df[forecast_df.Date == d])
 
                 ### this actually might need to go the other way
                 # for account_index, account_row in account_set.getAccounts().iterrows():

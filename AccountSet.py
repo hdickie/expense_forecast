@@ -476,7 +476,7 @@ class AccountSet:
 
                 balance_after_proposed_transaction = self.accounts[account_from_index].balance - abs(Amount)
                 try:
-                    assert self.accounts[account_from_index].min_balance <= balance_after_proposed_transaction and self.accounts[account_from_index].max_balance
+                    assert self.accounts[account_from_index].min_balance <= balance_after_proposed_transaction <= self.accounts[account_from_index].max_balance
                 except Exception as e:
                     log_in_color('red', 'error', '')
                     log_in_color('red','error','transaction violated Account_From boundaries:')
@@ -488,10 +488,15 @@ class AccountSet:
                 self.accounts[account_from_index].balance -= abs(Amount)
             elif AF_Account_Type == 'credit' or AF_Account_Type == 'loan':
 
-                balance_after_proposed_transaction = self.accounts[account_from_index].balance + abs(Amount)
+                balance_after_proposed_transaction = self.getAvailableBalances()[self.accounts[account_from_index].name.split(':')[0]] - abs(Amount)
+                #this check assumes that both prev and curr accounts for credit have the same bounds
+
+                # log_in_color('magenta', 'debug', 'account min:' + str(self.accounts[account_from_index].min_balance), 3)
+                # log_in_color('magenta', 'debug', 'account max:' + str(self.accounts[account_from_index].max_balance), 3)
+                # log_in_color('magenta', 'debug', 'balance_after_proposed_transaction:' + str(balance_after_proposed_transaction), 3)
+
                 try:
-                    assert self.accounts[account_from_index].min_balance <= balance_after_proposed_transaction and \
-                           self.accounts[account_from_index].max_balance
+                    assert self.accounts[account_from_index].min_balance <= balance_after_proposed_transaction <= self.accounts[account_from_index].max_balance
                 except Exception as e:
                     log_in_color('red', 'error', 'transaction violated Account_From boundaries:')
                     log_in_color('red', 'error', str(e))
@@ -512,6 +517,24 @@ class AccountSet:
                 self.accounts[account_to_index].balance += abs(Amount)
                 log_in_color('magenta', 'debug', 'Paid ' + str(Amount) + ' to ' + Account_To, 3)
             elif AT_Account_Type == 'credit' or AT_Account_Type == 'loan':
+
+                AT_ANAME = self.accounts[account_to_index].name.split(':')[0]
+                balance_after_proposed_transaction = self.getAvailableBalances()[AT_ANAME] + abs(Amount)
+
+                try:
+                    assert self.accounts[account_to_index].min_balance <= balance_after_proposed_transaction <= self.accounts[account_to_index].max_balance
+                except Exception as e:
+                    log_in_color('red', 'error', '')
+                    log_in_color('red','error','transaction violated Account_From boundaries:')
+                    log_in_color('red', 'error', str(e))
+                    log_in_color('red', 'error', 'Account_From:\n'+str(self.accounts[account_from_index]))
+                    log_in_color('red', 'error', 'Amount:'+str(Amount))
+                    boundary_error_ind = True
+
+                log_in_color('magenta', 'debug', 'account min:' + str(self.accounts[account_to_index].min_balance), 3)
+                log_in_color('magenta', 'debug', 'account max:' + str(self.accounts[account_to_index].max_balance), 3)
+                log_in_color('magenta', 'debug', 'balance_after_proposed_transaction:' + str(balance_after_proposed_transaction), 3)
+
                 #if the amount we are playing on credit card is more than the previous statement balance
                 if abs(Amount) >= self.accounts[account_to_index+1].balance:
                     remaining_to_pay = abs(Amount) - self.accounts[account_to_index + 1].balance

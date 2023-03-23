@@ -794,13 +794,13 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                accrued_interest=None
                                )
 
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=4,
-                                 cadence='once', amount=100, memo='this should be skippe',
+        budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=4,
+                                 cadence='once', amount=100, memo='this should be skipped',
                                  deferrable=False,
                                  partial_payment_allowed=False)
 
         memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1)
-        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=4)
+        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to='Credit', transaction_priority=4)
 
         expected_result_df = pd.DataFrame({
             'Date': ['20000101', '20000102', '20000103'],
