@@ -763,34 +763,34 @@ class ExpenseForecast:
         current_date = current_forecast_row_df.Date.iloc[0]
         # generate a date sequence at the specified cadence between billing_start_date and the current date
         # if the current date is in that sequence, then do accrual
-        for account_index, row in account_set.getAccounts().iterrows():
-            if row.Interest_Cadence == 'None' or row.Interest_Cadence is None or row.Interest_Cadence == '':  # ithink this may be refactored. i think this will explode if interest_cadence is None
+        for account_index, account_row in account_set.getAccounts().iterrows():
+            if account_row.Interest_Cadence == 'None' or account_row.Interest_Cadence is None or account_row.Interest_Cadence == '':  # ithink this may be refactored. i think this will explode if interest_cadence is None
                 continue
-            num_days = (current_date - row.Billing_Start_Dt).days
-            dseq = generate_date_sequence(start_date_YYYYMMDD=row.Billing_Start_Dt.strftime('%Y%m%d'), num_days=num_days, cadence=row.Interest_Cadence)
+            num_days = (current_date - account_row.Billing_Start_Dt).days
+            dseq = generate_date_sequence(start_date_YYYYMMDD=account_row.Billing_Start_Dt.strftime('%Y%m%d'), num_days=num_days, cadence=account_row.Interest_Cadence)
 
-            if current_forecast_row_df.Date.iloc[0] == row.Billing_Start_Dt:
+            if current_forecast_row_df.Date.iloc[0] == account_row.Billing_Start_Dt:
                 dseq = set(current_forecast_row_df.Date).union(dseq)
 
             if current_date in dseq:
-                log_in_color('green', 'debug', 'computing interest accruals for:' + str(row.Name), self.log_stack_depth)
+                log_in_color('green', 'debug', 'computing interest accruals for:' + str(account_row.Name), self.log_stack_depth)
                 # print('interest accrual initial conditions:')
                 # print(current_forecast_row_df.to_string())
 
-                if row.Interest_Type.lower() == 'compound' and row.Interest_Cadence.lower() == 'yearly':
+                if account_row.Interest_Type.lower() == 'compound' and account_row.Interest_Cadence.lower() == 'yearly':
                     # print('CASE 1 : Compound, Monthly')
 
                     raise NotImplementedError
 
-                elif row.Interest_Type.lower() == 'compound' and row.Interest_Cadence.lower() == 'quarterly':
+                elif account_row.Interest_Type.lower() == 'compound' and account_row.Interest_Cadence.lower() == 'quarterly':
                     # print('CASE 2 : Compound, Quarterly')
 
                     raise NotImplementedError
 
-                elif row.Interest_Type.lower() == 'compound' and row.Interest_Cadence.lower() == 'monthly':
+                elif account_row.Interest_Type.lower() == 'compound' and account_row.Interest_Cadence.lower() == 'monthly':
                     # print('CASE 3 : Compound, Monthly')
 
-                    accrued_interest = row.APR * row.Balance / 12
+                    accrued_interest = account_row.APR * account_row.Balance / 12
                     account_set.accounts[account_index].balance += accrued_interest
 
                     # move curr stmt bal to previous
@@ -805,50 +805,50 @@ class ExpenseForecast:
                     account_set.accounts[account_index].balance = round(account_set.accounts[account_index].balance, 2)
                     account_set.accounts[account_index - 1].balance = 0
 
-                elif row.Interest_Type.lower() == 'compound' and row.Interest_Cadence.lower() == 'semiweekly':
+                elif account_row.Interest_Type.lower() == 'compound' and account_row.Interest_Cadence.lower() == 'semiweekly':
                     # print('CASE 4 : Compound, Semiweekly')
 
                     raise NotImplementedError  # Compound, Semiweekly
 
-                elif row.Interest_Type.lower() == 'compound' and row.Interest_Cadence.lower() == 'weekly':
+                elif account_row.Interest_Type.lower() == 'compound' and account_row.Interest_Cadence.lower() == 'weekly':
                     # print('CASE 5 : Compound, Weekly')
 
                     raise NotImplementedError  # Compound, Weekly
 
-                elif row.Interest_Type.lower() == 'compound' and row.Interest_Cadence.lower() == 'daily':
+                elif account_row.Interest_Type.lower() == 'compound' and account_row.Interest_Cadence.lower() == 'daily':
                     # print('CASE 6 : Compound, Daily')
 
                     raise NotImplementedError  # Compound, Daily
 
-                elif row.Interest_Type.lower() == 'simple' and row.Interest_Cadence.lower() == 'yearly':
+                elif account_row.Interest_Type.lower() == 'simple' and account_row.Interest_Cadence.lower() == 'yearly':
                     # print('CASE 7 : Simple, Monthly')
 
                     raise NotImplementedError  # Simple, Monthly
 
-                elif row.Interest_Type.lower() == 'simple' and row.Interest_Cadence.lower() == 'quarterly':
+                elif account_row.Interest_Type.lower() == 'simple' and account_row.Interest_Cadence.lower() == 'quarterly':
                     # print('CASE 8 : Simple, Quarterly')
 
                     raise NotImplementedError  # Simple, Quarterly
 
-                elif row.Interest_Type.lower() == 'simple' and row.Interest_Cadence.lower() == 'monthly':
+                elif account_row.Interest_Type.lower() == 'simple' and account_row.Interest_Cadence.lower() == 'monthly':
                     # print('CASE 9 : Simple, Monthly')
 
                     raise NotImplementedError  # Simple, Monthly
 
-                elif row.Interest_Type.lower() == 'simple' and row.Interest_Cadence.lower() == 'semiweekly':
+                elif account_row.Interest_Type.lower() == 'simple' and account_row.Interest_Cadence.lower() == 'semiweekly':
                     # print('CASE 10 : Simple, Semiweekly')
 
                     raise NotImplementedError  # Simple, Semiweekly
 
-                elif row.Interest_Type.lower() == 'simple' and row.Interest_Cadence.lower() == 'weekly':
+                elif account_row.Interest_Type.lower() == 'simple' and account_row.Interest_Cadence.lower() == 'weekly':
                     # print('CASE 11 : Simple, Weekly')
 
                     raise NotImplementedError  # Simple, Weekly
 
-                elif row.Interest_Type.lower() == 'simple' and row.Interest_Cadence.lower() == 'daily':
+                elif account_row.Interest_Type.lower() == 'simple' and account_row.Interest_Cadence.lower() == 'daily':
                     # print('CASE 12 : Simple, Daily')
 
-                    accrued_interest = row.APR * row.Balance / 365.25
+                    accrued_interest = account_row.APR * account_row.Balance / 365.25
                     account_set.accounts[account_index + 1].balance += round(accrued_interest, 2)  # this is the interest account
 
             else:
@@ -858,13 +858,12 @@ class ExpenseForecast:
 
             updated_balances = account_set.getAccounts().Balance
             for account_index, account_row in account_set.getAccounts().iterrows():
-                if (account_index + 1) == account_set.getAccount().shape[1]:
+                if (account_index + 1) == account_set.getAccounts().shape[1]:
                     break
 
                 relevant_balance = account_set.getAccounts().iloc[account_index, 1]
-                row_sel_vec = (forecast_df.Date == datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d'))
-                col_sel_vec = (forecast_df.columns == account_row.Name)
-                forecast_df.iloc[row_sel_vec, col_sel_vec] = relevant_balance
+                col_sel_vec = (current_forecast_row_df.columns == account_row.Name)
+                current_forecast_row_df.iloc[0, col_sel_vec] = relevant_balance
 
             # returns a single forecast row
             log_in_color('green', 'debug', 'EXIT calculateInterestAccrualsForDay', self.log_stack_depth)
@@ -880,8 +879,8 @@ class ExpenseForecast:
         # the branch logic here assumes the sort order of accounts in account list
         A = account_set.getAccounts()
 
-        for index, row in A.iterrows():
-            if pd.isnull(row.Billing_Start_Dt):
+        for account_index, account_row in A.iterrows():
+            if pd.isnull(account_row.Billing_Start_Dt):
                 continue
 
             # print(BEGIN_GREEN + row.to_string() + RESET_COLOR)
@@ -891,45 +890,44 @@ class ExpenseForecast:
             # print('row.Billing_Start_Dt:')
             # print(row.Billing_Start_Dt)
 
-            num_days = (current_forecast_row_df.Date.iloc[0] - row.Billing_Start_Dt).days
-            billing_days = set(generate_date_sequence(row.Billing_Start_Dt.strftime('%Y%m%d'), num_days, row.Interest_Cadence))
+            num_days = (current_forecast_row_df.Date.iloc[0] - account_row.Billing_Start_Dt).days
+            billing_days = set(generate_date_sequence(account_row.Billing_Start_Dt.strftime('%Y%m%d'), num_days, account_row.Interest_Cadence))
 
-            if current_forecast_row_df.Date.iloc[0] == row.Billing_Start_Dt:
+            if current_forecast_row_df.Date.iloc[0] == account_row.Billing_Start_Dt:
                 billing_days = set(current_forecast_row_df.Date).union(billing_days)
 
             if current_forecast_row_df.Date.iloc[0] in billing_days:
                 self.log_stack_depth += 1
                 log_in_color('green', 'debug', 'BEGIN executeMinimumPayments()', self.log_stack_depth)
                 # print(row)
-                if row.Account_Type == 'prev stmt bal':  # cc min payment
+                if account_row.Account_Type == 'prev stmt bal':  # cc min payment
 
-                    minimum_payment_amount = max(40, row.Balance * 0.02)
-                    current_forecast_row_df.Memo += row.Name.split(':')[0] + ' cc min payment ($' + str(minimum_payment_amount) + ') ; '
+                    minimum_payment_amount = max(40, account_row.Balance * 0.02)
+                    current_forecast_row_df.Memo += account_row.Name.split(':')[0] + ' cc min payment ($' + str(minimum_payment_amount) + ') ; '
 
-                elif row.Account_Type == 'interest':  # loan min payment
+                elif account_row.Account_Type == 'interest':  # loan min payment
 
-                    minimum_payment_amount = A.loc[index - 1, :].Balance
-                    current_forecast_row_df.Memo += row.Name.split(':')[0] + ' loan min payment ($' + str(minimum_payment_amount) + '); '
+                    minimum_payment_amount = A.loc[account_index - 1, :].Balance
+                    current_forecast_row_df.Memo += account_row.Name.split(':')[0] + ' loan min payment ($' + str(minimum_payment_amount) + '); '
 
-                if row.Account_Type == 'prev stmt bal' or row.Account_Type == 'interest':
+                if account_row.Account_Type == 'prev stmt bal' or account_row.Account_Type == 'interest':
 
-                    payment_toward_prev = min(minimum_payment_amount, row.Balance)
-                    payment_toward_curr = min(A.loc[index - 1, :].Balance, minimum_payment_amount - payment_toward_prev)
+                    payment_toward_prev = min(minimum_payment_amount, account_row.Balance)
+                    payment_toward_curr = min(A.loc[account_index - 1, :].Balance, minimum_payment_amount - payment_toward_prev)
                     surplus_payment = minimum_payment_amount - (payment_toward_prev + payment_toward_curr)
 
                     if (payment_toward_prev + payment_toward_curr) > 0:
-                        account_set.executeTransaction(Account_From='Checking', Account_To=row.Name.split(':')[0],
+                        account_set.executeTransaction(Account_From='Checking', Account_To=account_row.Name.split(':')[0],
                                                        # Note that the execute transaction method will split the amount paid between the 2 accounts
                                                        Amount=(payment_toward_prev + payment_toward_curr))
 
                 updated_balances = account_set.getAccounts().Balance
-                for account_index, account_row in account_set.getAccounts().iterrows():
-                    if (account_index + 1) == account_set.getAccount().shape[1]:
+                for account_index2, account_row2 in account_set.getAccounts().iterrows():
+                    if (account_index + 1) == account_set.getAccounts().shape[1]:
                         break
-                    relevant_balance = account_set.getAccounts().iloc[account_index, 1]
-                    row_sel_vec = (forecast_df.Date == datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d'))
-                    col_sel_vec = (forecast_df.columns == account_row.Name)
-                    forecast_df.iloc[row_sel_vec, col_sel_vec] = relevant_balance
+                    relevant_balance = account_set.getAccounts().iloc[account_index2, 1]
+                    col_sel_vec = (current_forecast_row_df.columns == account_row.Name)
+                    current_forecast_row_df.iloc[0, col_sel_vec] = relevant_balance
 
                 log_in_color('green', 'debug', 'END  executeMinimumPayments()', self.log_stack_depth)
                 self.log_stack_depth -= 1
@@ -1285,10 +1283,11 @@ class ExpenseForecast:
         T = C + P + D + S
         row_count_string = ' C:' + str(C) + '  P:' + str(P) + '  D:' + str(D) + '  S:' + str(S) + '  T:' + str(T)
 
-        try:
-            assert T > 0
-        except AssertionError:
-            raise ValueError('ComputeOptimalForecast was called with empty inputs')
+        ### This is not a valid error check because minimum payments are not budget items and can result in interesting and meaningful output all on thier own.
+        # try:
+        #     assert T > 0
+        # except AssertionError:
+        #     raise ValueError('ComputeOptimalForecast was called with empty inputs')
 
         bal_string = '  '
         for account_index, account_row in account_set.getAccounts().iterrows():
