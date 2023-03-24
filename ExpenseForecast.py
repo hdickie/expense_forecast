@@ -540,7 +540,7 @@ class ExpenseForecast:
                         # log_in_color('cyan', 'debug', forecast_df[row_sel_vec].to_string(), self.log_stack_depth)
 
                         forecast_df.loc[row_sel_vec, col_sel_vec] = relevant_balance
-                        #print('Appending memo: '+str(confirmed_row.Memo))
+                        print('Appending memo: '+str(confirmed_row.Memo))
                         forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'] += confirmed_row.Memo + ' ; '
         self.log_stack_depth -= 1
                         # log_in_color('cyan', 'debug', 'AFTER', self.log_stack_depth)
@@ -1268,6 +1268,9 @@ class ExpenseForecast:
         # budget_schedule_df = budget_set.getBudgetSchedule(start_date_YYYYMMDD, end_date_YYYYMMDD)
 
         for d in all_days:
+            if d == self.start_date:
+                continue #first day is considered final
+
             bal_string = ''
             for account_index, account_row in account_set.getAccounts().iterrows():
                 bal_string += '$' + str(account_row.Balance) + ' '
@@ -1335,6 +1338,8 @@ class ExpenseForecast:
                     continue
 
                 for d in all_days:
+                    if d == self.start_date:
+                        continue  # first day is considered final
 
                     C = confirmed_df.shape[0]
                     P = proposed_df.shape[0]
