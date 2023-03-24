@@ -216,7 +216,7 @@ class ExpenseForecast:
                         """)
 
         try:
-            assert (max(forecast_df.Date) == datetime.datetime.strptime(end_date_YYYYMMDD, '%Y%m%d'))
+            assert (max(forecast_df.Date) == self.end_date) #it is important that we use self.end_date here for the case when satisfice fails to not raise and exception
         except AssertionError as e:
             raise ValueError("""
                         ExpenseForecast() did not include the last day as specified.
@@ -1383,8 +1383,17 @@ class ExpenseForecast:
                     print('#######################################################################################################################################')
 
         if failed_to_satisfice_flag:
-            #todo sort items into confirmed and deferred respectively
-            pass
+
+            not_confirmed_df = confirmed_df.loc[confirmed_df.Date >= self.end_date]
+            new_deferred_df = proposed_df.loc[[not x for x in proposed_df.Deferrable]]
+            skipped_df = pd.concat([skipped_df,not_confirmed_df,new_deferred_df])
+            confirmed_df = confirmed_df.loc[confirmed_df.Date < self.end_date]
+            deferred_df = proposed_df.loc[proposed_df.Deferrable]
+
+            skipped_df.reset_index(inplace=True,drop=True)
+            confirmed_df.reset_index(inplace=True, drop=True)
+            deferred_df.reset_index(inplace=True, drop=True)
+
 
         C = confirmed_df.shape[0]
         P = proposed_df.shape[0]

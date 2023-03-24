@@ -1430,7 +1430,14 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                             start_date_YYYYMMDD,
                                             end_date_YYYYMMDD)
 
+        print('Forecast:')
         print(E.forecast_df.to_string())
+        print('Confirmed:')
+        print(E.confirmed_df.to_string())
+        print('Deferred:')
+        print(E.deferred_df.to_string())
+        print('Skipped:')
+        print(E.skipped_df.to_string())
 
     def test_p5_and_6__expect_defer(self):
         test_description = 'test_p5_and_6__expect_defer'
