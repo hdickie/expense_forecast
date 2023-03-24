@@ -391,7 +391,7 @@ class AccountSet:
             self.accounts.append(account)
 
     def getAvailableBalances(self):
-
+        #log_in_color('magenta','debug','ENTER getAvailableBalances()')
         balances_dict = {}
         for i in range(0,len(self.accounts)):
             a = self.accounts[i]
@@ -406,6 +406,8 @@ class AccountSet:
             else:
                 pass
                 #raise NotImplementedError
+        # log_in_color('magenta', 'debug', balances_dict)
+        # log_in_color('magenta', 'debug', 'EXIT getAvailableBalances()')
         return balances_dict
 
     def executeTransaction(self, Account_From, Account_To, Amount,income_flag=False):
@@ -507,11 +509,13 @@ class AccountSet:
                 self.accounts[account_from_index].balance += abs(Amount)
             else:
                 raise NotImplementedError #from types other than checking or credit not yet implemented
-            log_in_color('magenta', 'debug', 'Paid ' + str(Amount) + ' from ' + Account_From, 0)
+
+            if not boundary_error_ind:
+                log_in_color('magenta', 'debug', 'Paid ' + str(Amount) + ' from ' + Account_From, 0)
 
 
 
-        if Account_To != '' and Account_To != 'None':
+        if Account_To != '' and Account_To != 'None' and (not boundary_error_ind):
             if AT_Account_Type == 'checking':
 
                 self.accounts[account_to_index].balance += abs(Amount)
@@ -585,30 +589,6 @@ class AccountSet:
             log_in_color('red', 'error', 'available_funds:' + str(self.getAvailableBalances()), 0)
             raise ValueError("Funds not accounted for in AccountSet::executeTransaction()") # Funds not accounted for
 
-    def transaction_would_violate_current_state_account_boundaries(self, account_from_name, account_to_name, amount, income_flag=False):
-        log_in_color('green','debug','ENTER transaction_would_violate_account_boundaries(Account_From='+str(account_from_name)+',account_to_name='+str(account_to_name)+',Amount='+str(amount)+',income_flag='+str(income_flag)+')')
-        if amount == 0:
-            return False
-
-        error_ind = False
-
-        copy_of_this_account_set = copy.deepcopy(self)
-        try:
-            copy_of_this_account_set.executeTransaction(account_from_name,account_to_name,amount,income_flag)
-        except:
-            log_in_color('green', 'debug', 'EXIT transaction_would_violate_account_boundaries()')
-            error_ind = True
-
-        account_info = copy_of_this_account_set.getAccounts()
-        illegal_state_rows = account_info[(account_info.Balance < account_info.Min_Balance) | (account_info.Balance > account_info.Max_Balance)]
-
-        if illegal_state_rows.shape[0] > 0: #i think that an error would halt execution before the code ever got here
-            log_in_color('green', 'debug', 'illegal_state_rows:')
-            log_in_color('green', 'debug', illegal_state_rows.to_string())
-
-        return_value = illegal_state_rows.shape[0] > 0
-        log_in_color('green', 'debug', 'EXIT transaction_would_violate_account_boundaries()')
-        return (return_value or error_ind)
 
 
     def getAccounts(self):
