@@ -16,7 +16,8 @@ RESET_COLOR = f"{Style.RESET_ALL}"
 
 import logging
 
-color_log_format = '%(asctime)s - %(levelname)-8s - %(message)s'
+#color_log_format = '%(asctime)s - %(levelname)-8s - %(message)s'
+color_log_format = '%(levelname)-8s - %(message)s'
 color_formatter = logging.Formatter(color_log_format)
 col_ch = logging.StreamHandler()
 col_ch.setFormatter(color_formatter)

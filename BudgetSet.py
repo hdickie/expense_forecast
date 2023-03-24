@@ -179,7 +179,7 @@ class BudgetSet:
         all_current_budget_items = self.getBudgetItems()
         memos_w_matching_priority = all_current_budget_items.loc[all_current_budget_items.Priority == priority,'Memo']
 
-        log_in_color('green', 'debug', 'addBudgetItem(priority='+str(priority)+',cadence='+str(cadence)+',memo='+str(memo)+',start_date_YYYYMMDD='+str(start_date_YYYYMMDD)+',end_date_YYYYMMDD='+str(end_date_YYYYMMDD)+')')
+        log_in_color('green', 'info', 'addBudgetItem(priority='+str(priority)+',cadence='+str(cadence)+',memo='+str(memo)+',start_date_YYYYMMDD='+str(start_date_YYYYMMDD)+',end_date_YYYYMMDD='+str(end_date_YYYYMMDD)+')')
 
         # print('BUDGET SET TEST 1')
         # print(memo)

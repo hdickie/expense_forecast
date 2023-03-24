@@ -3,13 +3,10 @@ import logging
 import BudgetSet, ExpenseForecast, AccountSet, datetime, pandas as pd, MemoRuleSet, copy
 pd.options.mode.chained_assignment = None #apparently this warning can throw false positives???
 
-from log_methods import log_in_color
-from log_methods import display_test_result
-
-logger = logging.getLogger()
+#from log_methods import log_in_color
 
 if __name__ == '__main__':
-    log_in_color('green', 'debug', 'START SCRATCH', 0)
+    #log_in_color('green', 'debug', 'START SCRATCH', 0)
 
     #case_string = 'test'
     case_string = 'reallife'
@@ -50,9 +47,6 @@ if __name__ == '__main__':
                                    accrued_interest=None
                                    )
 
-        print('account_set:')
-        print(account_set.getAccounts())
-        print(account_set.getAccounts()[0])
 
         budget_set.addBudgetItem(start_date_YYYYMMDD=start_date_YYYYMMDD, end_date_YYYYMMDD=end_date_YYYYMMDD, priority=1,
                                      cadence='daily', amount=30, memo='food',
@@ -148,12 +142,12 @@ if __name__ == '__main__':
         memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=6)
         memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=7)
 
-        # E = ExpenseForecast.ExpenseForecast(account_set,
-        #                                     budget_set,
-        #                                     memo_rule_set,
-        #                                     start_date_YYYYMMDD,
-        #                                     end_date_YYYYMMDD)
+        E = ExpenseForecast.ExpenseForecast(account_set,
+                                            budget_set,
+                                            memo_rule_set,
+                                            start_date_YYYYMMDD,
+                                            end_date_YYYYMMDD)
 
-        #print(E.forecast_df.to_string())
+        print(E.forecast_df.to_string())
 
 

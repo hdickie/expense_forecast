@@ -1,6 +1,8 @@
 
 import MemoRule, pandas as pd
 
+from log_methods import log_in_color
+
 class MemoRuleSet:
 
     def __init__(self,memo_rules__list=[]):
@@ -42,6 +44,7 @@ class MemoRuleSet:
         | F3 add a BudgetItem with a memo and priority that matches a BudgetItem already in self.budgetItems (different from and to) #todo refactor MemoRuleSet.addMemoRule() doctest F3 to use _F3 label
 
         """
+        log_in_color('green','info','addMemoRule(memo_regex='+str(memo_regex)+',account_from='+str(account_from)+',account_to='+str(account_to)+',transaction_priority='+str(transaction_priority)+')')
 
         current_memo_rules_df = self.getMemoRules()
         memo_rules_of_same_priority_df = current_memo_rules_df.loc[current_memo_rules_df.Transaction_Priority == transaction_priority,:]

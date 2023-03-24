@@ -301,7 +301,7 @@ class AccountSet:
         else:
             pass
         log_string+=')'
-        log_in_color('green', 'debug',log_string, 0)
+        log_in_color('green', 'info',log_string, 0)
 
         # TODO this should be based on interest type or interest AND account type
         if account_type.lower() == 'loan':
@@ -422,13 +422,13 @@ class AccountSet:
 
         if Account_To is None:
             Account_To = 'None'
-        log_in_color('green', 'debug','executeTransaction(Account_From='+Account_From+', Account_To='+Account_To+', Amount='+debug_print_Amount+')', 2)
+        log_in_color('green', 'debug','executeTransaction(Account_From='+Account_From+', Account_To='+Account_To+', Amount='+debug_print_Amount+')')
 
         before_txn_total_available_funds = 0
         available_funds = self.getAvailableBalances()
         starting_available_funds = copy.deepcopy(available_funds)
 
-        log_in_color('magenta', 'debug', 'available_funds:'+str(available_funds),3)
+        log_in_color('magenta', 'debug', 'available_funds:'+str(available_funds))
 
         for a in available_funds.keys():
             before_txn_total_available_funds += available_funds[a]
@@ -507,7 +507,7 @@ class AccountSet:
                 self.accounts[account_from_index].balance += abs(Amount)
             else:
                 raise NotImplementedError #from types other than checking or credit not yet implemented
-            log_in_color('magenta', 'debug', 'Paid ' + str(Amount) + ' from ' + Account_From, 3)
+            log_in_color('magenta', 'debug', 'Paid ' + str(Amount) + ' from ' + Account_From, 0)
 
 
 
@@ -515,7 +515,7 @@ class AccountSet:
             if AT_Account_Type == 'checking':
 
                 self.accounts[account_to_index].balance += abs(Amount)
-                log_in_color('magenta', 'debug', 'Paid ' + str(Amount) + ' to ' + Account_To, 3)
+                log_in_color('magenta', 'debug', 'Paid ' + str(Amount) + ' to ' + Account_To, 0)
             elif AT_Account_Type == 'credit' or AT_Account_Type == 'loan':
 
                 AT_ANAME = self.accounts[account_to_index].name.split(':')[0]
@@ -539,14 +539,14 @@ class AccountSet:
                 if abs(Amount) >= self.accounts[account_to_index+1].balance:
                     remaining_to_pay = abs(Amount) - self.accounts[account_to_index + 1].balance
                     self.accounts[account_to_index + 1].balance = 0
-                    log_in_color('magenta', 'debug','Paid ' + str(self.accounts[account_to_index + 1].balance) + ' to ' + str(self.accounts[account_to_index + 1].name), 3)
+                    log_in_color('magenta', 'debug','Paid ' + str(self.accounts[account_to_index + 1].balance) + ' to ' + str(self.accounts[account_to_index + 1].name), 0)
 
 
                     #this has the potential to overpay, but we consider that upstreams problem
                     self.accounts[account_to_index].balance -= remaining_to_pay
-                    log_in_color('magenta', 'debug', 'Paid ' + str(remaining_to_pay) + ' to ' + self.accounts[account_to_index].name, 3)
+                    log_in_color('magenta', 'debug', 'Paid ' + str(remaining_to_pay) + ' to ' + self.accounts[account_to_index].name, 0)
                 else: #pay down the previous statement balance
-                    log_in_color('magenta', 'debug', 'Paid ' + str(Amount) + ' to ' + str(self.accounts[account_to_index + 1].name), 3)
+                    log_in_color('magenta', 'debug', 'Paid ' + str(Amount) + ' to ' + str(self.accounts[account_to_index + 1].name), 0)
                     self.accounts[account_to_index + 1].balance -= Amount
             else:
                 raise NotImplementedError #from types other than checking or credit not yet implemented
@@ -577,12 +577,12 @@ class AccountSet:
             #raise ValueError("impossible error in  AccountSet::executeTransaction(). if 2 accounts were indicated, then the pre-post delta must be 0.") #this should not be possible.
 
         if equivalent_exchange_error_ind:
-            log_in_color('red', 'error', '', 3)
-            log_in_color('red', 'error', 'FUNDS NOT ACCOUNTED FOR POST-TRANSACTION', 3)
-            log_in_color('red', 'error', 'single_account_transaction_ind:'+str(single_account_transaction_ind),3)
-            log_in_color('red', 'error', 'income_flag:' + str(income_flag), 3)
-            log_in_color('red', 'error', 'starting_available_funds:' + str(starting_available_funds), 3)
-            log_in_color('red', 'error', 'available_funds:' + str(self.getAvailableBalances()), 3)
+            log_in_color('red', 'error', '', 0)
+            log_in_color('red', 'error', 'FUNDS NOT ACCOUNTED FOR POST-TRANSACTION', 0)
+            log_in_color('red', 'error', 'single_account_transaction_ind:'+str(single_account_transaction_ind),0)
+            log_in_color('red', 'error', 'income_flag:' + str(income_flag), 0)
+            log_in_color('red', 'error', 'starting_available_funds:' + str(starting_available_funds), 0)
+            log_in_color('red', 'error', 'available_funds:' + str(self.getAvailableBalances()), 0)
             raise ValueError("Funds not accounted for in AccountSet::executeTransaction()") # Funds not accounted for
 
     def transaction_would_violate_current_state_account_boundaries(self, account_from_name, account_to_name, amount, income_flag=False):
