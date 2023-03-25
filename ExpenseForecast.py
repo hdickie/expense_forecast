@@ -675,26 +675,26 @@ class ExpenseForecast:
 
                 proposed_row_df.Date = proposed_row_df.Date + datetime.timedelta(days = 1)
 
-                print('new_deferred_df before append (case 1)')
-                print(new_deferred_df.to_string())
+                # print('new_deferred_df before append (case 1)')
+                # print(new_deferred_df.to_string())
 
                 new_deferred_df = pd.concat([new_deferred_df, pd.DataFrame(proposed_row_df).T])
 
-                print('new_deferred_df after append')
-                print(new_deferred_df.to_string())
+                # print('new_deferred_df after append')
+                # print(new_deferred_df.to_string())
 
 
                 # assert deferred_df['Memo'].shape[0] == deferred_df['Memo'].drop_duplicates().shape[0]
-
-                print('proposed before moved to deferred:')
-                print(proposed_df.to_string())
+                #
+                # print('proposed before moved to deferred:')
+                # print(proposed_df.to_string())
 
                 #this is done only for QC, since we don't return proposed_df
                 remaining_unproposed_transactions_df = proposed_df[~proposed_df.index.isin(single_proposed_transaction_df.index)]
                 proposed_df = remaining_unproposed_transactions_df
-
-                print('proposed after moved to deferred:')
-                print(proposed_df.to_string())
+                #
+                # print('proposed after moved to deferred:')
+                # print(proposed_df.to_string())
 
             elif not transaction_is_permitted and allow_skip_and_defer and not proposed_row_df.Deferrable:
                 log_in_color('green', 'debug', 'Appending transaction to skipped_df', self.log_stack_depth)
@@ -888,11 +888,11 @@ class ExpenseForecast:
                 single_proposed_transaction_df.Date = single_proposed_transaction_df.Date + datetime.timedelta(days=1)
                 remaining_deferred_df = deferred_df[~deferred_df.index.isin(single_proposed_transaction_df.index)]
 
-                print('deferred_df before append (case 3)')
-                print(deferred_df.to_string())
+                # print('deferred_df before append (case 3)')
+                # print(deferred_df.to_string())
                 deferred_df = pd.concat([remaining_deferred_df,single_proposed_transaction_df])
-                print('deferred_df after append')
-                print(deferred_df.to_string())
+                # print('deferred_df after append')
+                # print(deferred_df.to_string())
 
                 # print('Deferred_df after increment:')
                 # print(deferred_df.to_string())
@@ -973,13 +973,13 @@ class ExpenseForecast:
                 """)
         self.log_stack_depth -= 1
 
-        print('deferred_df before append (case 2)')
-        print(deferred_df.to_string())
+        # print('deferred_df before append (case 2)')
+        # print(deferred_df.to_string())
         deferred_df = pd.concat([deferred_df, new_deferred_df])
         deferred_df.reset_index(drop=True, inplace=True)
         new_deferred_df = new_deferred_df.head(0)
-        print('deferred_df after append')
-        print(deferred_df.to_string())
+        # print('deferred_df after append')
+        # print(deferred_df.to_string())
 
 
         # print('returning this forecast row:')
