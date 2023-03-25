@@ -698,8 +698,21 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                                      expected_result_df,
                                                      test_description)
 
+        print('Forecast:')
+        print(E.forecast_df.to_string())
+
+        print('Confirmed:')
+        print(E.confirmed_df.to_string())
+
+        print('Deferred:')
+        print(E.deferred_df.to_string())
+
+        print('Skipped:')
+        print(E.skipped_df.to_string())
+
         assert E.deferred_df.shape[0] == 1
         assert E.deferred_df['Memo'].iloc[0] == 'this should be deferred'
+
     def test_p4__cc_payment__no_prev_balance__pay_100__no_funds__expect_skip(self):
         test_description = 'test_cc_payment__optimize__no_prev_balance__pay_100__no_funds__expect_skip'
 
