@@ -185,9 +185,9 @@ class ExpenseForecast:
         proposed_df = proposed_df[(self.start_date <= proposed_df.Date) & (proposed_df.Date <= self.end_date)]
         proposed_df.reset_index(drop=True, inplace=True)
 
-        #take priority 1 items and put them in confirmed
+        # take priority 1 items and put them in confirmed
         confirmed_df = proposed_df[proposed_df.Priority == 1]
-        confirmed_df.reset_index(drop=True,inplace=True)
+        confirmed_df.reset_index(drop=True, inplace=True)
 
         proposed_df = proposed_df[proposed_df.Priority != 1]
         proposed_df.reset_index(drop=True, inplace=True)
@@ -217,7 +217,7 @@ class ExpenseForecast:
                         """)
 
         try:
-            assert (max(forecast_df.Date) == self.end_date) #it is important that we use self.end_date here for the case when satisfice fails to not raise and exception
+            assert (max(forecast_df.Date) == self.end_date)  # it is important that we use self.end_date here for the case when satisfice fails to not raise and exception
         except AssertionError as e:
             raise ValueError("""
                         ExpenseForecast() did not include the last day as specified.
@@ -329,7 +329,10 @@ class ExpenseForecast:
 
         return initial_forecast_row_df
 
-    #we should be able to take skipped out of here
+
+
+
+    # we should be able to take skipped out of here
     def executeTransactionsForDay(self, account_set, forecast_df, date_YYYYMMDD, memo_set, confirmed_df, proposed_df, deferred_df, skipped_df, priority_level, allow_partial_payments,
                                   allow_skip_and_defer):
         """
@@ -341,11 +344,11 @@ class ExpenseForecast:
 
         """
 
-        #note that for confirmed and deferred we take priority less than or equal to, but for proposed, we only take equal to
-        relevant_proposed_df = copy.deepcopy(proposed_df[(proposed_df.Priority == priority_level) & (proposed_df.Date == date_YYYYMMDD )])
+        # note that for confirmed and deferred we take priority less than or equal to, but for proposed, we only take equal to
+        relevant_proposed_df = copy.deepcopy(proposed_df[(proposed_df.Priority == priority_level) & (proposed_df.Date == date_YYYYMMDD)])
 
-        relevant_confirmed_df = copy.deepcopy(confirmed_df[(confirmed_df.Priority <= priority_level) & (confirmed_df.Date == date_YYYYMMDD )])
-        relevant_deferred_df = copy.deepcopy(deferred_df[(deferred_df.Priority <= priority_level) & (deferred_df.Date == date_YYYYMMDD )])
+        relevant_confirmed_df = copy.deepcopy(confirmed_df[(confirmed_df.Priority <= priority_level) & (confirmed_df.Date == date_YYYYMMDD)])
+        relevant_deferred_df = copy.deepcopy(deferred_df[(deferred_df.Priority <= priority_level) & (deferred_df.Date == date_YYYYMMDD)])
 
         C0 = relevant_confirmed_df.shape[0]
         P0 = relevant_proposed_df.shape[0]
@@ -360,7 +363,8 @@ class ExpenseForecast:
         row_count_string = ' C0:' + str(C0) + '  P0:' + str(P0) + '  D0:' + str(D0) + '  S0:' + str(S0) + '  T0:' + str(T0)
 
         self.log_stack_depth += 1
-        log_in_color('green', 'debug', 'BEGIN executeTransactionsForDay(priority_level=' + str(priority_level) + ',date=' + str(date_YYYYMMDD) + ') '+str(row_count_string)+str(bal_string), self.log_stack_depth)
+        log_in_color('green', 'debug', 'BEGIN executeTransactionsForDay(priority_level=' + str(priority_level) + ',date=' + str(date_YYYYMMDD) + ') ' + str(row_count_string) + str(bal_string),
+                     self.log_stack_depth)
         self.log_stack_depth += 1
         log_in_color('white', 'debug', '(start of day) available_balances: ' + str(account_set.getAvailableBalances()), self.log_stack_depth)
 
@@ -373,9 +377,9 @@ class ExpenseForecast:
         # print('proposed_df.Date == date_YYYYMMDD')
         # print((proposed_df.Date == date_YYYYMMDD))
 
-        if not confirmed_df.empty:
-            log_in_color('cyan', 'debug', 'ALL Confirmed: ', self.log_stack_depth)
-            log_in_color('cyan', 'debug', confirmed_df.to_string(), self.log_stack_depth + 1)
+        # if not confirmed_df.empty:
+        #     log_in_color('cyan', 'debug', 'ALL Confirmed: ', self.log_stack_depth)
+        #     log_in_color('cyan', 'debug', confirmed_df.to_string(), self.log_stack_depth + 1)
 
         # if not proposed_df.empty:
         #     log_in_color('cyan', 'debug', 'ALL Proposed: ', self.log_stack_depth)
@@ -385,9 +389,9 @@ class ExpenseForecast:
         #     log_in_color('cyan', 'debug', 'ALL Deferred: ', self.log_stack_depth)
         #     log_in_color('cyan', 'debug', deferred_df.to_string(), self.log_stack_depth + 1)
         #
-        if not relevant_confirmed_df.empty:
-            log_in_color('cyan', 'debug', 'Relevant Confirmed: ', self.log_stack_depth)
-            log_in_color('cyan', 'debug', relevant_confirmed_df.to_string(), self.log_stack_depth + 1)
+        # if not relevant_confirmed_df.empty:
+        #     log_in_color('cyan', 'debug', 'Relevant Confirmed: ', self.log_stack_depth)
+        #     log_in_color('cyan', 'debug', relevant_confirmed_df.to_string(), self.log_stack_depth + 1)
         # if not relevant_proposed_df.empty:
         #     log_in_color('cyan', 'debug', 'Relevant Proposed: ', self.log_stack_depth)
         #     log_in_color('cyan', 'debug', relevant_proposed_df.to_string(), self.log_stack_depth + 1)
@@ -397,17 +401,17 @@ class ExpenseForecast:
 
         if priority_level == 1 and forecast_df.loc[forecast_df.Date == date_YYYYMMDD].empty and self.end_date >= datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d'):
             # this is the only place where new days get added to a forecast
-            previous_row_df = copy.deepcopy(forecast_df.loc[forecast_df.Date == (datetime.datetime.strptime(date_YYYYMMDD,'%Y%m%d') - datetime.timedelta(days = 1) ) ])
-            previous_row_df.Date = datetime.datetime.strptime(date_YYYYMMDD,'%Y%m%d')
+            previous_row_df = copy.deepcopy(forecast_df.loc[forecast_df.Date == (datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d') - datetime.timedelta(days=1))])
+            previous_row_df.Date = datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d')
             previous_row_df.Memo = ''
-            print('APPENDING NEW DAY: ' + date_YYYYMMDD)
-            print(previous_row_df.to_string())
+            #print('APPENDING NEW DAY: ' + date_YYYYMMDD)
+            #print(previous_row_df.to_string())
             forecast_df = pd.concat([forecast_df, previous_row_df])
             forecast_df.reset_index(drop=True, inplace=True)
 
         if (priority_level != 1 and relevant_proposed_df.empty and relevant_confirmed_df.empty and relevant_deferred_df.empty) | (priority_level == 1 and relevant_confirmed_df.empty):
             log_in_color('white', 'debug', '(end of day ' + str(date_YYYYMMDD) + ') available_balances: ' + str(account_set.getAvailableBalances()), self.log_stack_depth)
-            log_in_color('white', 'debug', 'final row state: ' + str(forecast_df[forecast_df.Date == datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d')]), self.log_stack_depth)
+            #log_in_color('white', 'debug', 'final row state: ' + str(forecast_df[forecast_df.Date == datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d')]), self.log_stack_depth)
 
             C1 = confirmed_df.shape[0]
             P1 = proposed_df.shape[0]
@@ -421,13 +425,14 @@ class ExpenseForecast:
                 bal_string += '$' + str(account_row.Balance) + ' '
 
             self.log_stack_depth -= 1
-            log_in_color('green', 'debug', 'END executeTransactionsForDay(priority_level=' + str(priority_level) + ',date=' + str(date_YYYYMMDD) + ') '+str(row_count_string)+str(bal_string), self.log_stack_depth)
+            log_in_color('green', 'debug', 'END executeTransactionsForDay(priority_level=' + str(priority_level) + ',date=' + str(date_YYYYMMDD) + ') ' + str(row_count_string) + str(bal_string),
+                         self.log_stack_depth)
 
-            if datetime.datetime.strptime(date_YYYYMMDD,'%Y%m%d') != self.start_date:
-                log_in_color('green','debug','no items for '+str(date_YYYYMMDD)+'. Setting this days balances equal to the previous.',self.log_stack_depth)
-                for i in range(1,len(forecast_df.columns)):
-                    prev_row_sel_vec = (forecast_df.Date == ( datetime.datetime.strptime(date_YYYYMMDD,'%Y%m%d') - datetime.timedelta(days=1) ))
-                    curr_row_sel_vec = (forecast_df.Date == datetime.datetime.strptime(date_YYYYMMDD,'%Y%m%d') )
+            if datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d') != self.start_date:
+                log_in_color('green', 'debug', 'no items for ' + str(date_YYYYMMDD) + '. Setting this days balances equal to the previous.', self.log_stack_depth)
+                for i in range(1, len(forecast_df.columns)):
+                    prev_row_sel_vec = (forecast_df.Date == (datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d') - datetime.timedelta(days=1)))
+                    curr_row_sel_vec = (forecast_df.Date == datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d'))
                     col_sel_vec = (forecast_df.columns == forecast_df.columns[i])
 
                     if forecast_df.columns[i] == 'Memo':
@@ -440,12 +445,12 @@ class ExpenseForecast:
                     # print('col_sel_vec:')
                     # print(col_sel_vec)
 
-                    value_to_carry = forecast_df.loc[list(prev_row_sel_vec),col_sel_vec].iloc[0].iloc[0]
+                    value_to_carry = forecast_df.loc[list(prev_row_sel_vec), col_sel_vec].iloc[0].iloc[0]
 
                     # print('value_to_carry:')
                     # print(value_to_carry)
 
-                    forecast_df.loc[list(curr_row_sel_vec),col_sel_vec] = value_to_carry
+                    forecast_df.loc[list(curr_row_sel_vec), col_sel_vec] = value_to_carry
 
             # log_in_color('green','debug','new row:',self.log_stack_depth)
             # log_in_color('green', 'debug', forecast_df.loc[list(curr_row_sel_vec)].to_string(),self.log_stack_depth)
@@ -457,7 +462,7 @@ class ExpenseForecast:
         relevant_memo_set_df = memo_set_df[memo_set_df.Transaction_Priority == priority_level]
 
         if (priority_level == 1) and not proposed_df.empty:
-            #not sure if this sort needs to happen for both but it doesnt hurt anything
+            # not sure if this sort needs to happen for both but it doesnt hurt anything
             income_rows_sel_vec = [re.search('.*income.*', str(memo)) is not None for memo in proposed_df.Memo]
             income_rows_df = proposed_df[income_rows_sel_vec]
             non_income_rows_df = proposed_df[[not x for x in income_rows_sel_vec]]
@@ -481,347 +486,566 @@ class ExpenseForecast:
 
         if priority_level > 1:
             # the account_set needs to be updated to reflect what the balances were for this day
-            row_sel_vec = (forecast_df.Date == datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d'))
-            for account_index, account_row in account_set.getAccounts().iterrows():
-                account_set.accounts[account_index].Balance = forecast_df.loc[row_sel_vec, account_row.Name]
+            account_set = self.sync_account_set_w_forecast_day(account_set,forecast_df,date_YYYYMMDD)
 
         # this may not be necessary, but it is at least clear that this method only operates on the local scope
         account_set = copy.deepcopy(account_set)
         forecast_df = copy.deepcopy(forecast_df)
         memo_set_df = copy.deepcopy(memo_set_df)
 
-        log_in_color('yellow', 'debug', 'Relevant memo rules (priority ' + str(priority_level) + '):', self.log_stack_depth)
-        log_in_color('yellow', 'debug', relevant_memo_set_df.to_string(), self.log_stack_depth)
+        # log_in_color('yellow', 'debug', 'Relevant memo rules (priority ' + str(priority_level) + '):', self.log_stack_depth)
+        # log_in_color('yellow', 'debug', relevant_memo_set_df.to_string(), self.log_stack_depth)
 
         self.log_stack_depth += 1
         for confirmed_index, confirmed_row in relevant_confirmed_df.iterrows():
-            log_in_color('green','debug','processing confirmed transaction: '+str(confirmed_row.Memo),self.log_stack_depth)
-            for memo_rule_index, memo_rule_row in relevant_memo_set_df.iterrows():
-                m = re.search(memo_rule_row.Memo_Regex, confirmed_row.Memo)
-                try:
-                    m.group(0)
-                    log_in_color('yellow', 'debug', 'Found matching memo rule for confirmed txn: ' + str(memo_rule_row.Account_From) + ' -> ' + str(memo_rule_row.Account_To), self.log_stack_depth)
-                except Exception as e:
-                    log_in_color('yellow', 'debug', 'memo rule did not match', self.log_stack_depth)
-                    continue
+            log_in_color('green', 'debug', 'processing confirmed transaction: ' + str(confirmed_row.Memo), self.log_stack_depth)
 
-                m_income = re.search('income', confirmed_row.Memo)
-                try:
-                    m_income.group(0)
-                    income_flag = True
-                    log_in_color('yellow', 'debug', 'transaction flagged as income: '+str(m_income.group(0)), 3)
-                except Exception as e:
-                    income_flag = False
+            relevant_memo_rule_set = memo_set.findMatchingMemoRule(confirmed_row)
+            memo_rule_row = relevant_memo_rule_set.getMemoRules().loc[0,:]
 
-                account_set.executeTransaction(Account_From=memo_rule_row.Account_From, Account_To=memo_rule_row.Account_To, Amount=confirmed_row.Amount, income_flag=income_flag)
-                for account_index, account_row in account_set.getAccounts().iterrows():
-                    #print('account_row:')
-                    #print(account_row.to_string())
-                    if (account_index + 1) == account_set.getAccounts().shape[1]:
-                        break
+            m_income = re.search('income', confirmed_row.Memo)
+            try:
+                m_income.group(0)
+                income_flag = True
+                log_in_color('yellow', 'debug', 'transaction flagged as income: ' + str(m_income.group(0)), 3)
+            except Exception as e:
+                income_flag = False
 
-                    row_sel_vec = (forecast_df.Date == datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d'))
-                    col_sel_vec = (forecast_df.columns == account_row.Name)
+            account_set.executeTransaction(Account_From=memo_rule_row.Account_From, Account_To=memo_rule_row.Account_To, Amount=confirmed_row.Amount, income_flag=income_flag)
 
-                    # print('d: '+date_YYYYMMDD)
-                    # print('row_sel_vec:'+str(row_sel_vec))
-                    # print('forecast_df.loc[row_sel_vec, col_sel_vec]:')
-                    # print(forecast_df.loc[row_sel_vec, col_sel_vec].to_string())
-                    # print('forecast_df.loc[row_sel_vec, col_sel_vec].iloc[0]:')
-                    # print(forecast_df.loc[row_sel_vec, col_sel_vec].iloc[0])
-                    # print('forecast_df.loc[row_sel_vec, col_sel_vec].iloc[0].iloc[0]:')
-                    # print(forecast_df.loc[row_sel_vec, col_sel_vec].iloc[0].iloc[0])
+            #update forecast to reflect new balances
+            for account_index, account_row in account_set.getAccounts().iterrows():
+                # print('account_row:')
+                # print(account_row.to_string())
+                if (account_index + 1) == account_set.getAccounts().shape[1]:
+                    break
 
-                    current_balance = forecast_df.loc[row_sel_vec, col_sel_vec].iloc[0].iloc[0]
-                    relevant_balance = account_set.getAccounts().iloc[account_index, 1]
+                row_sel_vec = (forecast_df.Date == datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d'))
+                col_sel_vec = (forecast_df.columns == account_row.Name)
 
+                # print('d: '+date_YYYYMMDD)
+                # print('row_sel_vec:'+str(row_sel_vec))
+                # print('forecast_df.loc[row_sel_vec, col_sel_vec]:')
+                # print(forecast_df.loc[row_sel_vec, col_sel_vec].to_string())
+                # print('forecast_df.loc[row_sel_vec, col_sel_vec].iloc[0]:')
+                # print(forecast_df.loc[row_sel_vec, col_sel_vec].iloc[0])
+                # print('forecast_df.loc[row_sel_vec, col_sel_vec].iloc[0].iloc[0]:')
+                # print(forecast_df.loc[row_sel_vec, col_sel_vec].iloc[0].iloc[0])
 
+                current_balance = forecast_df.loc[row_sel_vec, col_sel_vec].iloc[0].iloc[0]
+                relevant_balance = account_set.getAccounts().iloc[account_index, 1]
 
-                    # print('current_balance:'+str(current_balance))
-                    # print('relevant_balance:' + str(relevant_balance))
+                # print('current_balance:'+str(current_balance))
+                # print('relevant_balance:' + str(relevant_balance))
 
-                    #print(str(current_balance)+' ?= '+str(relevant_balance))
-                    if current_balance != relevant_balance:  # if statement just here to reduce useless logs
-                        # log_in_color('cyan', 'debug', 'updating forecast_row ', self.log_stack_depth)
-                        # log_in_color('cyan', 'debug', 'CASE 4 Setting ' + account_row.Name + ' to ' + str(relevant_balance), self.log_stack_depth)
-                        # log_in_color('cyan', 'debug', 'BEFORE', self.log_stack_depth)
-                        # log_in_color('cyan', 'debug', forecast_df[row_sel_vec].to_string(), self.log_stack_depth)
+                # print(str(current_balance)+' ?= '+str(relevant_balance))
+                if current_balance != relevant_balance:  # if statement just here to reduce useless logs
+                    # log_in_color('cyan', 'debug', 'updating forecast_row ', self.log_stack_depth)
+                    # log_in_color('cyan', 'debug', 'CASE 4 Setting ' + account_row.Name + ' to ' + str(relevant_balance), self.log_stack_depth)
+                    # log_in_color('cyan', 'debug', 'BEFORE', self.log_stack_depth)
+                    # log_in_color('cyan', 'debug', forecast_df[row_sel_vec].to_string(), self.log_stack_depth)
 
-                        forecast_df.loc[row_sel_vec, col_sel_vec] = relevant_balance
-                        print('Appending memo: '+str(confirmed_row.Memo))
-                        forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'] += confirmed_row.Memo + ' ; '
+                    forecast_df.loc[row_sel_vec, col_sel_vec] = relevant_balance
+                    #print('Appending memo: ' + str(confirmed_row.Memo))
+                    forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'] += confirmed_row.Memo + ' ; '
         self.log_stack_depth -= 1
-                        # log_in_color('cyan', 'debug', 'AFTER', self.log_stack_depth)
-                        # log_in_color('cyan', 'debug', forecast_df[row_sel_vec].to_string(), self.log_stack_depth)
-
-
-
-
+        # log_in_color('cyan', 'debug', 'AFTER', self.log_stack_depth)
+        # log_in_color('cyan', 'debug', forecast_df[row_sel_vec].to_string(), self.log_stack_depth)
 
         # log_in_color('cyan', 'debug', 'Relevant proposed transactions for day (priority ' + str(priority_level) + '):', self.log_stack_depth)
         # log_in_color('cyan', 'debug', relevant_proposed_df.to_string(), self.log_stack_depth)
 
-        proposed_and_deferred_df = pd.concat([relevant_proposed_df, relevant_deferred_df])
-        #assert proposed_and_deferred_df['Memo'].shape[0] == proposed_and_deferred_df['Memo'].drop_duplicates().shape[0]
+        # assert proposed_and_deferred_df['Memo'].shape[0] == proposed_and_deferred_df['Memo'].drop_duplicates().shape[0]
+
+        new_deferred_df = copy.deepcopy(deferred_df.head(0))
+
         self.log_stack_depth += 1
-        for budget_item_index, budget_item_row in proposed_and_deferred_df.iterrows():
+        for proposed_item_index, proposed_row_df in proposed_df.iterrows():
             amount_ammended = False
             # log_in_color('cyan','debug','Processing proposed or deferred txn:',self.log_stack_depth)
             # log_in_color('cyan','debug',pd.DataFrame(budget_item_row).T.to_string(),self.log_stack_depth)
 
-            for memo_rule_index, memo_rule_row in relevant_memo_set_df.iterrows():
-                m = re.search(memo_rule_row.Memo_Regex, budget_item_row.Memo)
+            relevant_memo_rule_set = memo_set.findMatchingMemoRule(proposed_row_df)
+            memo_rule_row = relevant_memo_rule_set.getMemoRules().loc[0,:]
+
+            # no need for error checking between memo rules and budget items because that happened upstream in the ExpenseForecast constructor
+
+            available_balances = account_set.getAvailableBalances()
+            log_in_color('white', 'debug', '(pre transaction) available_balances: ' + str(available_balances), self.log_stack_depth)
+            log_in_color('green', 'debug', 'Checking transaction to see if it violates account boundaries', self.log_stack_depth)
+            try:
+
+                # this line of code works for the satisfice case because there are no future conditions that could be violated.
+                # #copy.deepcopy(account_set).executeTransaction(Account_From=memo_rule_row.Account_From,
+                #                                               Account_To=memo_rule_row.Account_To,
+                #                                               Amount=budget_item_row.Amount,
+                #                                               income_flag=income_flag)
+
+                # todo roll_forward needs to be implemented. The problem is that interest accruals and minimum payments need to happen again also....
+                # ! a recursive trick could work here..... maybe.....................
+                # add the transaction to to confirmed_df and run it and then check for errors..........................
+
+                # this line works for the optimize case precisely because the executeTransactionsForDay method (this method) does no error checking
+                # if the transaction violates account boundaries, then that will be detected by AccountSet
+                # the key difference between this simulation-within-a-simulation and the main simulation is that the proposed transaction is treated as having priority 1
+                # if this works I am actually so extremely happy with the elegance
+                # also remove the original row tho
+                single_proposed_transaction_df = pd.DataFrame(copy.deepcopy(proposed_row_df)).T
+                single_proposed_transaction_df.Priority = 1
+                self.log_stack_depth += 1
+                log_in_color('magenta', 'debug', 'BEGIN error-check computeOptimalForecast', self.log_stack_depth)
+                logger.debug(' '.ljust(self.log_stack_depth * 4, ' ') + ' BEGIN error-check computeOptimalForecast')
+
+                not_yet_validated_confirmed_df = copy.deepcopy(pd.concat([confirmed_df, single_proposed_transaction_df]))
+                not_yet_validated_confirmed_df.Priority = 1  # priority needs to be 1 for confirmed items as well for the error-check
+
+                # furthermore, since we are not processing any more proposed transactions in this one-adjustment simulation, there is no need to pass any proposed transactions to this method call
+                empty_df = copy.deepcopy(proposed_df).head(0)
+
+                # print('confirmed_df:')
+                # print(confirmed_df)
+                # print('single_proposed_transaction_df:')
+                # print(single_proposed_transaction_df)
+
+                # try:
+                #     assert confirmed_df['Memo'].shape[0] == confirmed_df['Memo'].drop_duplicates().shape[0]
+                # except Exception as e:
+                #     print('duplicated memo in updated_confirmed in the proposed or deferred part of the logic')
+                #     raise e
+
+                account_set_before_error_check = copy.deepcopy(account_set)
+                only_relevant_memo_rule_with_priority_1 = MemoRuleSet.MemoRuleSet(relevant_memo_rule_set.memo_rules)
+                only_relevant_memo_rule_with_priority_1.memo_rules[0].transaction_priority = 1
+
+                self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date.strftime('%Y%m%d'),
+                                            end_date_YYYYMMDD=self.end_date.strftime('%Y%m%d'),
+                                            confirmed_df=not_yet_validated_confirmed_df,
+                                            proposed_df=empty_df,
+                                            deferred_df=deferred_df,
+                                            skipped_df=skipped_df,
+                                            account_set=copy.deepcopy(account_set),
+                                            memo_rule_set=only_relevant_memo_rule_with_priority_1)
+
+                account_set = account_set_before_error_check  # i think this is redundant
+
+                log_in_color('magenta', 'debug', 'END error-check computeOptimalForecast (SUCCESS)', self.log_stack_depth)
+                self.log_stack_depth -= 1
+                transaction_is_permitted = True
+            except ValueError as e:
+                if re.search('.*Account boundaries were violated.*', str(e.args)) is None:  # this is the only exception where we don't want to stop immediately
+                    raise e
+
+                log_in_color('magenta', 'debug', 'END error-check computeOptimalForecast (FAIL)', self.log_stack_depth)
+                self.log_stack_depth -= 1
+                transaction_is_permitted = False
+
+            # log_in_color('green', 'debug','not transaction_is_permitted=' + str(not transaction_is_permitted) + ',budget_item_row.Partial_Payment_Allowed=' + str(budget_item_row.Partial_Payment_Allowed),self.log_stack_depth)
+            if not transaction_is_permitted and allow_partial_payments and proposed_row_df.Partial_Payment_Allowed:
+                log_in_color('green', 'debug', 'Transaction not permitted. Attempting to calculate partial payment.')
+                proposed_row_df.Amount = available_balances[memo_rule_row.Account_From]
+
                 try:
-                    m.group(0)
-                    log_in_color('yellow', 'debug', 'Found matching memo rule for proposed or deferred txn: ' + str(memo_rule_row.Account_From) + ' -> ' + str(memo_rule_row.Account_To), self.log_stack_depth)
-                except Exception as e:
-                    continue
-
-                m_income = re.search('income', memo_rule_row.Memo_Regex)
-                try:
-                    m_income.group(0)
-                    income_flag = True
-                    log_in_color('yellow', 'debug', 'transaction flagged as income', 3)
-                except Exception as e:
-                    income_flag = False
-
-
-
-                # no need for error checking between memo rules and budget items because that happened upstream in the ExpenseForecast constructor
-
-                available_balances = account_set.getAvailableBalances()
-                log_in_color('white', 'debug', '(pre transaction) available_balances: ' + str(available_balances), self.log_stack_depth)
-                log_in_color('green', 'debug', 'Checking transaction to see if it violates account boundaries', self.log_stack_depth)
-                try:
-
-                    # this line of code works for the satisfice case because there are no future conditions that could be violated.
-                    # #copy.deepcopy(account_set).executeTransaction(Account_From=memo_rule_row.Account_From,
+                    # copy.deepcopy(account_set).executeTransaction(Account_From=memo_rule_row.Account_From,
                     #                                               Account_To=memo_rule_row.Account_To,
                     #                                               Amount=budget_item_row.Amount,
                     #                                               income_flag=income_flag)
 
-                    # todo roll_forward needs to be implemented. The problem is that interest accruals and minimum payments need to happen again also....
-                    # ! a recursive trick could work here..... maybe.....................
-                    # add the transaction to to confirmed_df and run it and then check for errors..........................
-
-                    # this line works for the optimize case precisely because the executeTransactionsForDay method (this method) does no error checking
-                    # if the transaction violates account boundaries, then that will be detected by AccountSet
-                    # the key difference between this simulation-within-a-simulation and the main simulation is that the proposed transaction is treated as having priority 1
-                    # if this works I am actually so extremely happy with the elegance
-                    # also remove the original row tho
-                    single_proposed_transaction_df = pd.DataFrame(copy.deepcopy(budget_item_row)).T
+                    single_proposed_transaction_df = pd.DataFrame(copy.deepcopy(proposed_row_df)).T
                     single_proposed_transaction_df.Priority = 1
                     self.log_stack_depth += 1
-                    log_in_color('magenta', 'debug', 'BEGIN error-check computeOptimalForecast', self.log_stack_depth)
-                    logger.debug(' '.ljust(self.log_stack_depth * 4, ' ') + ' BEGIN error-check computeOptimalForecast')
 
-                    not_yet_validated_confirmed_df = copy.deepcopy(pd.concat([confirmed_df,single_proposed_transaction_df]))
-                    not_yet_validated_confirmed_df.Priority = 1 #priority needs to be 1 for confirmed items as well for the error-check
-
-                    #furthermore, since we are not processing any more proposed transactions in this one-adjustment simulation, there is no need to pass any proposed transactions to this method call
+                    confirmed_df = pd.concat([copy.deepcopy(confirmed_df), single_proposed_transaction_df])
+                    # assert confirmed_df['Memo'].shape[0] == confirmed_df['Memo'].drop_duplicates().shape[0]
                     empty_df = copy.deepcopy(proposed_df).head(0)
 
-                    # print('confirmed_df:')
-                    # print(confirmed_df)
-                    # print('single_proposed_transaction_df:')
-                    # print(single_proposed_transaction_df)
-
-                    # try:
-                    #     assert confirmed_df['Memo'].shape[0] == confirmed_df['Memo'].drop_duplicates().shape[0]
-                    # except Exception as e:
-                    #     print('duplicated memo in updated_confirmed in the proposed or deferred part of the logic')
-                    #     raise e
-
                     account_set_before_error_check = copy.deepcopy(account_set)
-                    only_relevant_memo_rule_with_priority_1 = MemoRuleSet.MemoRuleSet([memo_set.memo_rules[ memo_rule_index ]])
+                    only_relevant_memo_rule_with_priority_1 = MemoRuleSet.MemoRuleSet(relevant_memo_rule_set.memo_rules)
                     only_relevant_memo_rule_with_priority_1.memo_rules[0].transaction_priority = 1
 
+                    log_in_color('magenta', 'debug', 'BEGIN error-check computeOptimalForecast', self.log_stack_depth)
                     self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date.strftime('%Y%m%d'),
                                                 end_date_YYYYMMDD=self.end_date.strftime('%Y%m%d'),
-                                                confirmed_df=not_yet_validated_confirmed_df,
-                                                proposed_df=empty_df,
-                                                deferred_df=deferred_df,
-                                                skipped_df=skipped_df,
+                                                confirmed_df=confirmed_df,
+                                                proposed_df=empty_df,  # no need to pass these because this method call would never make it to the point where it used them
+                                                deferred_df=empty_df,
+                                                skipped_df=empty_df,
                                                 account_set=copy.deepcopy(account_set),
                                                 memo_rule_set=only_relevant_memo_rule_with_priority_1)
-
-                    account_set = account_set_before_error_check #i think this is redundant
-
                     log_in_color('magenta', 'debug', 'END error-check computeOptimalForecast (SUCCESS)', self.log_stack_depth)
+
+                    account_set = account_set_before_error_check  # i think this is redundant
+
                     self.log_stack_depth -= 1
                     transaction_is_permitted = True
                 except ValueError as e:
-                    if re.search('.*Account boundaries were violated.*',str(e.args)).group(0) is None:  # this is the only exception where we don't want to stop immediately
+                    if re.search('.*Account boundaries were violated.*', str(e.args)) is None:  # this is the only exception where we don't want to stop immediately
                         raise e
 
                     log_in_color('magenta', 'debug', 'END error-check computeOptimalForecast (FAIL)', self.log_stack_depth)
                     self.log_stack_depth -= 1
-                    transaction_is_permitted = False
+                    transaction_is_permitted = False  # I think this will never happen, because the "worst case" would be a 0, which is acceptable
 
-                #log_in_color('green', 'debug','not transaction_is_permitted=' + str(not transaction_is_permitted) + ',budget_item_row.Partial_Payment_Allowed=' + str(budget_item_row.Partial_Payment_Allowed),self.log_stack_depth)
-                if not transaction_is_permitted and allow_partial_payments and budget_item_row.Partial_Payment_Allowed:
-                    log_in_color('green','debug','Transaction not permitted. Attempting to calculate partial payment.')
-                    budget_item_row.Amount = available_balances[memo_rule_row.Account_From]
+                if transaction_is_permitted:
+                    log_in_color('green', 'debug', 'Transaction was not permitted at indicated amount. The amount was approved at this amount: ' + str(proposed_row_df.Amount),
+                                 self.log_stack_depth)
+                    amount_ammended = True
 
-                    try:
-                        # copy.deepcopy(account_set).executeTransaction(Account_From=memo_rule_row.Account_From,
-                        #                                               Account_To=memo_rule_row.Account_To,
-                        #                                               Amount=budget_item_row.Amount,
-                        #                                               income_flag=income_flag)
+            # print('budget_item_row:'+str(budget_item_row))
+            # log_in_color('green', 'debug', 'not transaction_is_permitted=' + str(not transaction_is_permitted) + ',budget_item_row.Deferrable=' + str(budget_item_row.Deferrable),self.log_stack_depth)
+            if not transaction_is_permitted and allow_skip_and_defer and proposed_row_df.Deferrable:
+                log_in_color('green', 'debug', 'Appending transaction to deferred_df', self.log_stack_depth)
+                new_deferred_df = pd.concat([deferred_df, pd.DataFrame(proposed_row_df).T])
+                # assert deferred_df['Memo'].shape[0] == deferred_df['Memo'].drop_duplicates().shape[0]
 
-                        single_proposed_transaction_df = pd.DataFrame(copy.deepcopy(budget_item_row)).T
-                        single_proposed_transaction_df.Priority = 1
-                        self.log_stack_depth += 1
+                remaining_unproposed_transactions_df = proposed_df[~proposed_df.index.isin(single_proposed_transaction_df.index)]
+                proposed_df = remaining_unproposed_transactions_df
 
-                        confirmed_df = pd.concat([copy.deepcopy(confirmed_df), single_proposed_transaction_df])
-                        #assert confirmed_df['Memo'].shape[0] == confirmed_df['Memo'].drop_duplicates().shape[0]
-                        empty_df = copy.deepcopy(proposed_df).head(0)
+            elif not transaction_is_permitted and allow_skip_and_defer and not proposed_row_df.Deferrable:
+                log_in_color('green', 'debug', 'Appending transaction to skipped_df', self.log_stack_depth)
+                skipped_df = pd.concat([skipped_df, pd.DataFrame(proposed_row_df).T])
+                # assert skipped_df['Memo'].shape[0] == skipped_df['Memo'].drop_duplicates().shape[0]
 
-                        account_set_before_error_check = copy.deepcopy(account_set)
-                        only_relevant_memo_rule_with_priority_1 = MemoRuleSet.MemoRuleSet([memo_set.memo_rules[memo_rule_index]])
-                        only_relevant_memo_rule_with_priority_1.memo_rules[0].transaction_priority = 1
+                remaining_unproposed_transactions_df = proposed_df[~proposed_df.index.isin(single_proposed_transaction_df.index)]
+                proposed_df = remaining_unproposed_transactions_df
 
-                        log_in_color('magenta', 'debug', 'BEGIN error-check computeOptimalForecast', self.log_stack_depth)
-                        self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date.strftime('%Y%m%d'),
-                                                    end_date_YYYYMMDD=self.end_date.strftime('%Y%m%d'),
-                                                    confirmed_df=confirmed_df,
-                                                    proposed_df=empty_df, #no need to pass these because this method call would never make it to the point where it used them
-                                                    deferred_df=empty_df,
-                                                    skipped_df=empty_df,
-                                                    account_set=copy.deepcopy(account_set),
-                                                    memo_rule_set=only_relevant_memo_rule_with_priority_1)
-                        log_in_color('magenta', 'debug', 'END error-check computeOptimalForecast (SUCCESS)', self.log_stack_depth)
+            elif not transaction_is_permitted and not allow_skip_and_defer:
+                raise ValueError('Partial payment, skip and defer were not allowed (either by txn parameter or method call), and transaction failed to obtain approval.')
 
-                        account_set = account_set_before_error_check #i think this is redundant
+            elif transaction_is_permitted:
+                log_in_color('green', 'debug', 'Transaction is permitted. Proceeding.', self.log_stack_depth)
+                account_set.executeTransaction(Account_From=memo_rule_row.Account_From, Account_To=memo_rule_row.Account_To, Amount=proposed_row_df.Amount, income_flag=False)
+                log_in_color('white', 'debug', 'available_balances immediately after txn: ' + str(account_set.getAvailableBalances()), self.log_stack_depth)
 
-                        self.log_stack_depth -= 1
-                        transaction_is_permitted = True
-                    except ValueError as e:
-                        if re.search('.*Account boundaries were violated.*', str(e.args)).group(0) is None:  # this is the only exception where we don't want to stop immediately
-                            raise e
+                # print('confirmed_df BEFORE append to official')
+                # print(confirmed_df.to_string())
+                confirmed_df = pd.concat([confirmed_df, pd.DataFrame(proposed_row_df).T])
+                # assert confirmed_df['Memo'].shape[0] == confirmed_df['Memo'].drop_duplicates().shape[0]
+                # print('confirmed_df AFTER append to official')
+                # print(confirmed_df.to_string())
 
-                        log_in_color('magenta', 'debug', 'END error-check computeOptimalForecast (FAIL)', self.log_stack_depth)
-                        self.log_stack_depth -= 1
-                        transaction_is_permitted = False  # I think this will never happen, because the "worst case" would be a 0, which is acceptable
+                log_in_color('magenta', 'debug', 'BEGIN recalculating computeOptimalForecast for updated future rows', self.log_stack_depth)
 
-                    if transaction_is_permitted:
-                        log_in_color('green', 'debug', 'Transaction was not permitted at indicated amount. The amount was approved at this amount: ' + str(budget_item_row.Amount),
-                                     self.log_stack_depth)
-                        amount_ammended = True
+                remaining_unproposed_transactions_df = proposed_df[~proposed_df.index.isin(single_proposed_transaction_df.index)]
+                proposed_df = remaining_unproposed_transactions_df
 
-                # print('budget_item_row:'+str(budget_item_row))
-                #log_in_color('green', 'debug', 'not transaction_is_permitted=' + str(not transaction_is_permitted) + ',budget_item_row.Deferrable=' + str(budget_item_row.Deferrable),self.log_stack_depth)
-                if not transaction_is_permitted and allow_skip_and_defer and budget_item_row.Deferrable:
-                    log_in_color('green', 'debug', 'Appending transaction to deferred_df', self.log_stack_depth)
-                    deferred_df = pd.concat([deferred_df, pd.DataFrame(budget_item_row).T])
-                    #assert deferred_df['Memo'].shape[0] == deferred_df['Memo'].drop_duplicates().shape[0]
+                account_set_before_propogate = copy.deepcopy(account_set)
 
-                elif not transaction_is_permitted and allow_skip_and_defer and not budget_item_row.Deferrable:
-                    log_in_color('green', 'debug', 'Appending transaction to skipped_df', self.log_stack_depth)
-                    skipped_df = pd.concat([skipped_df, pd.DataFrame(budget_item_row).T])
-                    #assert skipped_df['Memo'].shape[0] == skipped_df['Memo'].drop_duplicates().shape[0]
+                # update account_set to match balaances in initial forecast row
+                for account_index, account_row in account_set.getAccounts().iterrows():
+                    if (account_index + 1) == account_set.getAccounts().shape[1]:
+                        break
 
-                elif not transaction_is_permitted and not allow_skip_and_defer:
-                    raise ValueError('Partial payment, skip and defer were not allowed (either by txn parameter or method call), and transaction failed to obtain approval.')
+                    relevant_balance = forecast_df.iloc[0, account_index + 1]
+                    account_set.accounts[account_index].balance = relevant_balance
+                    # print('CASE 1 SET ' + str(account_row.Name) + ' to $' + str(relevant_balance))
 
-                elif transaction_is_permitted:
-                    log_in_color('green', 'debug', 'Transaction is permitted. Proceeding.', self.log_stack_depth)
-                    account_set.executeTransaction(Account_From=memo_rule_row.Account_From, Account_To=memo_rule_row.Account_To, Amount=budget_item_row.Amount, income_flag=income_flag)
-                    log_in_color('white', 'debug', 'available_balances immediately after txn: ' + str(account_set.getAvailableBalances()), self.log_stack_depth)
+                only_relevant_memo_rule_with_priority_1 = MemoRuleSet.MemoRuleSet(relevant_memo_rule_set.memo_rules)
+                only_relevant_memo_rule_with_priority_1.memo_rules[0].transaction_priority = 1
 
-                    # print('confirmed_df BEFORE append to official')
-                    # print(confirmed_df.to_string())
-                    confirmed_df = pd.concat([confirmed_df, pd.DataFrame(budget_item_row).T])
-                    #assert confirmed_df['Memo'].shape[0] == confirmed_df['Memo'].drop_duplicates().shape[0]
-                    # print('confirmed_df AFTER append to official')
-                    # print(confirmed_df.to_string())
+                # forecast_df, skipped_df, confirmed_df, deferred_df
+                forecast_with_accurately_updated_future_rows = self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date.strftime('%Y%m%d'),
+                                                                                           end_date_YYYYMMDD=self.end_date.strftime('%Y%m%d'),
+                                                                                           confirmed_df=copy.deepcopy(confirmed_df),
+                                                                                           proposed_df=empty_df,
+                                                                                           deferred_df=empty_df,
+                                                                                           skipped_df=empty_df,
+                                                                                           account_set=copy.deepcopy(account_set),
+                                                                                           memo_rule_set=only_relevant_memo_rule_with_priority_1
+                                                                                           )[0]
+                log_in_color('magenta', 'debug', 'END recalculating computeOptimalForecast for updated future rows', self.log_stack_depth)
 
-                    log_in_color('magenta', 'debug', 'BEGIN recalculating computeOptimalForecast for updated future rows', self.log_stack_depth)
+                account_set = account_set_before_propogate  # i think this is redundant
+                #log_in_color('white', 'debug', 'available_balances after recalculate future: ' + str(account_set.getAvailableBalances()), self.log_stack_depth)
 
-                    remaining_unproposed_transactions_df = proposed_df[~proposed_df.index.isin(single_proposed_transaction_df.index)]
-                    proposed_df = remaining_unproposed_transactions_df
+                forecast_rows_to_keep_df = forecast_df[forecast_df.Date < datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d')]
+                # print('forecast_with_accurately_updated_future_rows:')
+                # print(forecast_with_accurately_updated_future_rows)
+                new_forecast_rows_df = forecast_with_accurately_updated_future_rows[forecast_with_accurately_updated_future_rows.Date >= datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d')]
 
-                    account_set_before_propogate = copy.deepcopy(account_set)
+                forecast_df = pd.concat([forecast_rows_to_keep_df, new_forecast_rows_df])
+                assert forecast_df.shape[0] == forecast_df.drop_duplicates().shape[0]
+                forecast_df.reset_index(drop=True, inplace=True)
 
-                    #update account_set to match balaances in initial forecast row
-                    for account_index, account_row in account_set.getAccounts().iterrows():
-                        if (account_index + 1) == account_set.getAccounts().shape[1]:
-                            break
+                row_sel_vec = [x for x in (forecast_df.Date == datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d'))]
+                col_sel_vec = (forecast_df.columns == "Memo")
 
-                        relevant_balance = forecast_df.iloc[0,account_index + 1]
-                        account_set.accounts[account_index].balance = relevant_balance
-                        #print('CASE 1 SET ' + str(account_row.Name) + ' to $' + str(relevant_balance))
+                if amount_ammended:
+                    forecast_df.iloc[row_sel_vec, col_sel_vec] += proposed_row_df.Memo + ' ($' + str(proposed_row_df.Amount) + ') ; '
+                else:
+                    forecast_df.iloc[row_sel_vec, col_sel_vec] += proposed_row_df.Memo + ' ; '
 
-                    only_relevant_memo_rule_with_priority_1 = MemoRuleSet.MemoRuleSet([memo_set.memo_rules[memo_rule_index]])
+                # print('forecast_df:')
+                # print(forecast_df.to_string())
+                # print( datetime.datetime.strptime(date_YYYYMMDD,'%Y%m%d'))
+                for account_index, account_row in account_set.getAccounts().iterrows():
+                    if (account_index + 1) == account_set.getAccounts().shape[1]:
+                        break
+                    relevant_balance = account_set.getAccounts().iloc[account_index, 1]
+
+                    row_sel_vec = (forecast_df.Date == datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d'))
+                    col_sel_vec = (forecast_df.columns == account_row.Name)
+                    # log_in_color('cyan', 'debug', 'updating forecast_row ')
+                    # log_in_color('cyan', 'debug', 'BEFORE')
+                    # log_in_color('cyan', 'debug', forecast_df[row_sel_vec].to_string())
+                    forecast_df.iloc[row_sel_vec, col_sel_vec] = relevant_balance
+                    # log_in_color('cyan', 'debug', 'AFTER')
+                    # log_in_color('cyan', 'debug', forecast_df[row_sel_vec].to_string())
+
+            else:
+                raise ValueError("""This is an edge case that should not be possible
+                transaction_is_permitted...............:""" + str(transaction_is_permitted) + """
+                allow_skip_and_defer...................:""" + str(allow_skip_and_defer) + """
+                budget_item_row.Deferrable.............:""" + str(proposed_row_df.Deferrable) + """
+                budget_item_row.Partial_Payment_Allowed:""" + str(proposed_row_df.Partial_Payment_Allowed) + """
+                """)
+        self.log_stack_depth -= 1
+
+        self.log_stack_depth += 1
+        for budget_item_index, budget_item_row in deferred_df.iterrows():
+            amount_ammended = False
+            # log_in_color('cyan','debug','Processing proposed or deferred txn:',self.log_stack_depth)
+            # log_in_color('cyan','debug',pd.DataFrame(budget_item_row).T.to_string(),self.log_stack_depth)
+
+            relevant_memo_rule_set = memo_set.findMatchingMemoRule(confirmed_row)
+            memo_rule_row = relevant_memo_rule_set.getMemoRules().loc[0,:]
+
+
+            # no need for error checking between memo rules and budget items because that happened upstream in the ExpenseForecast constructor
+
+            available_balances = account_set.getAvailableBalances()
+            log_in_color('white', 'debug', '(pre transaction) available_balances: ' + str(available_balances), self.log_stack_depth)
+            log_in_color('green', 'debug', 'Checking transaction to see if it violates account boundaries', self.log_stack_depth)
+            try:
+
+                # this line of code works for the satisfice case because there are no future conditions that could be violated.
+                # #copy.deepcopy(account_set).executeTransaction(Account_From=memo_rule_row.Account_From,
+                #                                               Account_To=memo_rule_row.Account_To,
+                #                                               Amount=budget_item_row.Amount,
+                #                                               income_flag=income_flag)
+
+                # todo roll_forward needs to be implemented. The problem is that interest accruals and minimum payments need to happen again also....
+                # ! a recursive trick could work here..... maybe.....................
+                # add the transaction to to confirmed_df and run it and then check for errors..........................
+
+                # this line works for the optimize case precisely because the executeTransactionsForDay method (this method) does no error checking
+                # if the transaction violates account boundaries, then that will be detected by AccountSet
+                # the key difference between this simulation-within-a-simulation and the main simulation is that the proposed transaction is treated as having priority 1
+                # if this works I am actually so extremely happy with the elegance
+                # also remove the original row tho
+                single_proposed_transaction_df = pd.DataFrame(copy.deepcopy(budget_item_row)).T
+                single_proposed_transaction_df.Priority = 1
+                self.log_stack_depth += 1
+                log_in_color('magenta', 'debug', 'BEGIN error-check computeOptimalForecast', self.log_stack_depth)
+                logger.debug(' '.ljust(self.log_stack_depth * 4, ' ') + ' BEGIN error-check computeOptimalForecast')
+
+                not_yet_validated_confirmed_df = copy.deepcopy(pd.concat([confirmed_df, single_proposed_transaction_df]))
+                not_yet_validated_confirmed_df.Priority = 1  # priority needs to be 1 for confirmed items as well for the error-check
+
+                # furthermore, since we are not processing any more proposed transactions in this one-adjustment simulation, there is no need to pass any proposed transactions to this method call
+                empty_df = copy.deepcopy(proposed_df).head(0)
+
+                # print('confirmed_df:')
+                # print(confirmed_df)
+                # print('single_proposed_transaction_df:')
+                # print(single_proposed_transaction_df)
+
+                # try:
+                #     assert confirmed_df['Memo'].shape[0] == confirmed_df['Memo'].drop_duplicates().shape[0]
+                # except Exception as e:
+                #     print('duplicated memo in updated_confirmed in the proposed or deferred part of the logic')
+                #     raise e
+
+                account_set_before_error_check = copy.deepcopy(account_set)
+                only_relevant_memo_rule_with_priority_1 = MemoRuleSet.MemoRuleSet(relevant_memo_rule_set.memo_rules)
+                only_relevant_memo_rule_with_priority_1.memo_rules[0].transaction_priority = 1
+
+                self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date.strftime('%Y%m%d'),
+                                            end_date_YYYYMMDD=self.end_date.strftime('%Y%m%d'),
+                                            confirmed_df=not_yet_validated_confirmed_df,
+                                            proposed_df=empty_df,
+                                            deferred_df=deferred_df,
+                                            skipped_df=skipped_df,
+                                            account_set=copy.deepcopy(account_set),
+                                            memo_rule_set=only_relevant_memo_rule_with_priority_1)
+
+                account_set = account_set_before_error_check  # i think this is redundant
+
+                log_in_color('magenta', 'debug', 'END error-check computeOptimalForecast (SUCCESS)', self.log_stack_depth)
+                self.log_stack_depth -= 1
+                transaction_is_permitted = True
+            except ValueError as e:
+                if re.search('.*Account boundaries were violated.*', str(e.args)) is None:  # this is the only exception where we don't want to stop immediately
+                    raise e
+
+                log_in_color('magenta', 'debug', 'END error-check computeOptimalForecast (FAIL)', self.log_stack_depth)
+                self.log_stack_depth -= 1
+                transaction_is_permitted = False
+
+            # log_in_color('green', 'debug','not transaction_is_permitted=' + str(not transaction_is_permitted) + ',budget_item_row.Partial_Payment_Allowed=' + str(budget_item_row.Partial_Payment_Allowed),self.log_stack_depth)
+            if not transaction_is_permitted and allow_partial_payments and budget_item_row.Partial_Payment_Allowed:
+                log_in_color('green', 'debug', 'Transaction not permitted. Attempting to calculate partial payment.')
+                budget_item_row.Amount = available_balances[memo_rule_row.Account_From]
+
+                try:
+                    # copy.deepcopy(account_set).executeTransaction(Account_From=memo_rule_row.Account_From,
+                    #                                               Account_To=memo_rule_row.Account_To,
+                    #                                               Amount=budget_item_row.Amount,
+                    #                                               income_flag=income_flag)
+
+                    single_proposed_transaction_df = pd.DataFrame(copy.deepcopy(budget_item_row)).T
+                    single_proposed_transaction_df.Priority = 1
+                    self.log_stack_depth += 1
+
+                    confirmed_df = pd.concat([copy.deepcopy(confirmed_df), single_proposed_transaction_df])
+                    # assert confirmed_df['Memo'].shape[0] == confirmed_df['Memo'].drop_duplicates().shape[0]
+                    empty_df = copy.deepcopy(proposed_df).head(0)
+
+                    account_set_before_error_check = copy.deepcopy(account_set)
+                    only_relevant_memo_rule_with_priority_1 = MemoRuleSet.MemoRuleSet(relevant_memo_rule_set.memo_rules)
                     only_relevant_memo_rule_with_priority_1.memo_rules[0].transaction_priority = 1
 
-                    #forecast_df, skipped_df, confirmed_df, deferred_df
-                    forecast_with_accurately_updated_future_rows = self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date.strftime('%Y%m%d'),
-                                                                                               end_date_YYYYMMDD=self.end_date.strftime('%Y%m%d'),
-                                                                                               confirmed_df=copy.deepcopy(confirmed_df),
-                                                                                               proposed_df=empty_df,
-                                                                                               deferred_df=empty_df,
-                                                                                               skipped_df=empty_df,
-                                                                                               account_set=copy.deepcopy(account_set),
-                                                                                               memo_rule_set=only_relevant_memo_rule_with_priority_1
-                                                                                               )[0]
-                    log_in_color('magenta', 'debug', 'END recalculating computeOptimalForecast for updated future rows', self.log_stack_depth)
+                    log_in_color('magenta', 'debug', 'BEGIN error-check computeOptimalForecast', self.log_stack_depth)
+                    self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date.strftime('%Y%m%d'),
+                                                end_date_YYYYMMDD=self.end_date.strftime('%Y%m%d'),
+                                                confirmed_df=confirmed_df,
+                                                proposed_df=empty_df,  # no need to pass these because this method call would never make it to the point where it used them
+                                                deferred_df=empty_df,
+                                                skipped_df=empty_df,
+                                                account_set=copy.deepcopy(account_set),
+                                                memo_rule_set=only_relevant_memo_rule_with_priority_1)
+                    log_in_color('magenta', 'debug', 'END error-check computeOptimalForecast (SUCCESS)', self.log_stack_depth)
 
-                    account_set = account_set_before_propogate #i think this is redundant
-                    log_in_color('white', 'debug', 'available_balances after recalculate future: ' + str(account_set.getAvailableBalances()), self.log_stack_depth)
+                    account_set = account_set_before_error_check  # i think this is redundant
 
-                    forecast_rows_to_keep_df = forecast_df[forecast_df.Date < datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d')]
-                    # print('forecast_with_accurately_updated_future_rows:')
-                    # print(forecast_with_accurately_updated_future_rows)
-                    new_forecast_rows_df = forecast_with_accurately_updated_future_rows[forecast_with_accurately_updated_future_rows.Date >= datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d')]
+                    self.log_stack_depth -= 1
+                    transaction_is_permitted = True
+                except ValueError as e:
+                    if re.search('.*Account boundaries were violated.*', str(e.args)) is None:  # this is the only exception where we don't want to stop immediately
+                        raise e
 
-                    forecast_df = pd.concat([forecast_rows_to_keep_df, new_forecast_rows_df])
-                    assert forecast_df.shape[0] == forecast_df.drop_duplicates().shape[0]
-                    forecast_df.reset_index(drop=True, inplace=True)
+                    log_in_color('magenta', 'debug', 'END error-check computeOptimalForecast (FAIL)', self.log_stack_depth)
+                    self.log_stack_depth -= 1
+                    transaction_is_permitted = False  # I think this will never happen, because the "worst case" would be a 0, which is acceptable
 
-                    row_sel_vec = [x for x in (forecast_df.Date == datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d'))]
-                    col_sel_vec = (forecast_df.columns == "Memo")
+                if transaction_is_permitted:
+                    log_in_color('green', 'debug', 'Transaction was not permitted at indicated amount. The amount was approved at this amount: ' + str(budget_item_row.Amount),
+                                 self.log_stack_depth)
+                    amount_ammended = True
 
-                    if amount_ammended:
-                        forecast_df.iloc[row_sel_vec, col_sel_vec] += budget_item_row.Memo + ' ($' + str(budget_item_row.Amount) + ') ; '
-                    else:
-                        forecast_df.iloc[row_sel_vec, col_sel_vec] += budget_item_row.Memo + ' ; '
+            # print('budget_item_row:'+str(budget_item_row))
+            # log_in_color('green', 'debug', 'not transaction_is_permitted=' + str(not transaction_is_permitted) + ',budget_item_row.Deferrable=' + str(budget_item_row.Deferrable),self.log_stack_depth)
+            if not transaction_is_permitted and allow_skip_and_defer and budget_item_row.Deferrable:
+                log_in_color('green', 'debug', 'Appending transaction to deferred_df', self.log_stack_depth)
+                deferred_df = pd.concat([deferred_df, pd.DataFrame(budget_item_row).T])
+                # assert deferred_df['Memo'].shape[0] == deferred_df['Memo'].drop_duplicates().shape[0]
 
-                    # print('forecast_df:')
-                    # print(forecast_df.to_string())
-                    # print( datetime.datetime.strptime(date_YYYYMMDD,'%Y%m%d'))
-                    for account_index, account_row in account_set.getAccounts().iterrows():
-                        if (account_index + 1) == account_set.getAccounts().shape[1]:
-                            break
-                        relevant_balance = account_set.getAccounts().iloc[account_index, 1]
+            elif not transaction_is_permitted and allow_skip_and_defer and not budget_item_row.Deferrable:
+                log_in_color('green', 'debug', 'Appending transaction to skipped_df', self.log_stack_depth)
+                skipped_df = pd.concat([skipped_df, pd.DataFrame(budget_item_row).T])
+                # assert skipped_df['Memo'].shape[0] == skipped_df['Memo'].drop_duplicates().shape[0]
 
-                        row_sel_vec = ( forecast_df.Date == datetime.datetime.strptime(date_YYYYMMDD,'%Y%m%d') )
-                        col_sel_vec = ( forecast_df.columns == account_row.Name )
-                        log_in_color('cyan','debug','updating forecast_row ')
-                        log_in_color('cyan', 'debug', 'BEFORE')
-                        log_in_color('cyan', 'debug', forecast_df[ row_sel_vec ].to_string())
-                        forecast_df.iloc[ row_sel_vec, col_sel_vec ] = relevant_balance
-                        log_in_color('cyan', 'debug', 'AFTER')
-                        log_in_color('cyan', 'debug', forecast_df[ row_sel_vec ].to_string())
+            elif not transaction_is_permitted and not allow_skip_and_defer:
+                raise ValueError('Partial payment, skip and defer were not allowed (either by txn parameter or method call), and transaction failed to obtain approval.')
 
+            elif transaction_is_permitted:
+                log_in_color('green', 'debug', 'Transaction is permitted. Proceeding.', self.log_stack_depth)
+                account_set.executeTransaction(Account_From=memo_rule_row.Account_From, Account_To=memo_rule_row.Account_To, Amount=budget_item_row.Amount, income_flag=False)
+                log_in_color('white', 'debug', 'available_balances immediately after txn: ' + str(account_set.getAvailableBalances()), self.log_stack_depth)
+
+                # print('confirmed_df BEFORE append to official')
+                # print(confirmed_df.to_string())
+                confirmed_df = pd.concat([confirmed_df, pd.DataFrame(budget_item_row).T])
+                # assert confirmed_df['Memo'].shape[0] == confirmed_df['Memo'].drop_duplicates().shape[0]
+                # print('confirmed_df AFTER append to official')
+                # print(confirmed_df.to_string())
+
+                log_in_color('magenta', 'debug', 'BEGIN recalculating computeOptimalForecast for updated future rows', self.log_stack_depth)
+
+                remaining_unproposed_transactions_df = proposed_df[~proposed_df.index.isin(single_proposed_transaction_df.index)]
+                proposed_df = remaining_unproposed_transactions_df
+
+                account_set_before_propogate = copy.deepcopy(account_set)
+
+                # update account_set to match balaances in initial forecast row
+                for account_index, account_row in account_set.getAccounts().iterrows():
+                    if (account_index + 1) == account_set.getAccounts().shape[1]:
+                        break
+
+                    relevant_balance = forecast_df.iloc[0, account_index + 1]
+                    account_set.accounts[account_index].balance = relevant_balance
+                    # print('CASE 1 SET ' + str(account_row.Name) + ' to $' + str(relevant_balance))
+
+                only_relevant_memo_rule_with_priority_1 = MemoRuleSet.MemoRuleSet(relevant_memo_rule_set.memo_rules)
+                only_relevant_memo_rule_with_priority_1.memo_rules[0].transaction_priority = 1
+
+                # forecast_df, skipped_df, confirmed_df, deferred_df
+                forecast_with_accurately_updated_future_rows = self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date.strftime('%Y%m%d'),
+                                                                                           end_date_YYYYMMDD=self.end_date.strftime('%Y%m%d'),
+                                                                                           confirmed_df=copy.deepcopy(confirmed_df),
+                                                                                           proposed_df=empty_df,
+                                                                                           deferred_df=empty_df,
+                                                                                           skipped_df=empty_df,
+                                                                                           account_set=copy.deepcopy(account_set),
+                                                                                           memo_rule_set=only_relevant_memo_rule_with_priority_1
+                                                                                           )[0]
+                log_in_color('magenta', 'debug', 'END recalculating computeOptimalForecast for updated future rows', self.log_stack_depth)
+
+                account_set = account_set_before_propogate  # i think this is redundant
+                log_in_color('white', 'debug', 'available_balances after recalculate future: ' + str(account_set.getAvailableBalances()), self.log_stack_depth)
+
+                forecast_rows_to_keep_df = forecast_df[forecast_df.Date < datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d')]
+                # print('forecast_with_accurately_updated_future_rows:')
+                # print(forecast_with_accurately_updated_future_rows)
+                new_forecast_rows_df = forecast_with_accurately_updated_future_rows[forecast_with_accurately_updated_future_rows.Date >= datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d')]
+
+                forecast_df = pd.concat([forecast_rows_to_keep_df, new_forecast_rows_df])
+                assert forecast_df.shape[0] == forecast_df.drop_duplicates().shape[0]
+                forecast_df.reset_index(drop=True, inplace=True)
+
+                row_sel_vec = [x for x in (forecast_df.Date == datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d'))]
+                col_sel_vec = (forecast_df.columns == "Memo")
+
+                if amount_ammended:
+                    forecast_df.iloc[row_sel_vec, col_sel_vec] += budget_item_row.Memo + ' ($' + str(budget_item_row.Amount) + ') ; '
                 else:
-                    raise ValueError("""This is an edge case that should not be possible
-                    transaction_is_permitted...............:""" + str(transaction_is_permitted) + """
-                    allow_skip_and_defer...................:""" + str(allow_skip_and_defer) + """
-                    budget_item_row.Deferrable.............:""" + str(budget_item_row.Deferrable) + """
-                    budget_item_row.Partial_Payment_Allowed:""" + str(budget_item_row.Partial_Payment_Allowed) + """
-                    """)
+                    forecast_df.iloc[row_sel_vec, col_sel_vec] += budget_item_row.Memo + ' ; '
+
+                # print('forecast_df:')
+                # print(forecast_df.to_string())
+                # print( datetime.datetime.strptime(date_YYYYMMDD,'%Y%m%d'))
+                for account_index, account_row in account_set.getAccounts().iterrows():
+                    if (account_index + 1) == account_set.getAccounts().shape[1]:
+                        break
+                    relevant_balance = account_set.getAccounts().iloc[account_index, 1]
+
+                    row_sel_vec = (forecast_df.Date == datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d'))
+                    col_sel_vec = (forecast_df.columns == account_row.Name)
+                    log_in_color('cyan', 'debug', 'updating forecast_row ')
+                    log_in_color('cyan', 'debug', 'BEFORE')
+                    log_in_color('cyan', 'debug', forecast_df[row_sel_vec].to_string())
+                    forecast_df.iloc[row_sel_vec, col_sel_vec] = relevant_balance
+                    log_in_color('cyan', 'debug', 'AFTER')
+                    log_in_color('cyan', 'debug', forecast_df[row_sel_vec].to_string())
+
+            else:
+                raise ValueError("""This is an edge case that should not be possible
+                       transaction_is_permitted...............:""" + str(transaction_is_permitted) + """
+                       allow_skip_and_defer...................:""" + str(allow_skip_and_defer) + """
+                       budget_item_row.Deferrable.............:""" + str(budget_item_row.Deferrable) + """
+                       budget_item_row.Partial_Payment_Allowed:""" + str(budget_item_row.Partial_Payment_Allowed) + """
+                       """)
         self.log_stack_depth -= 1
-        #print('returning this forecast row:')
-        #print(forecast_df[forecast_df.Date == datetime.datetime.strptime(date_YYYYMMDD,'%Y%m%d')])
+
+        deferred_df = pd.concat([deferred_df, new_deferred_df])
+        deferred_df.reset_index(drop=True, inplace=True)
+
+        # print('returning this forecast row:')
+        # print(forecast_df[forecast_df.Date == datetime.datetime.strptime(date_YYYYMMDD,'%Y%m%d')])
         log_in_color('white', 'debug', '(end of day ' + str(date_YYYYMMDD) + ') available_balances: ' + str(account_set.getAvailableBalances()), self.log_stack_depth)
 
-        bal_string='  '
+        bal_string = '  '
         for account_index, account_row in account_set.getAccounts().iterrows():
-            bal_string+='$'+str(account_row.Balance)+' '
-
-
-
+            bal_string += '$' + str(account_row.Balance) + ' '
 
         C1 = confirmed_df.shape[0]
         P1 = proposed_df.shape[0]
@@ -829,15 +1053,16 @@ class ExpenseForecast:
         S1 = skipped_df.shape[0]
         T1 = C1 + P1 + D1 + S1
         row_count_string = ' C1:' + str(C1) + '  P1:' + str(P1) + '  D1:' + str(D1) + '  S1:' + str(S1) + '  T1:' + str(T1)
-        #log_in_color('white', 'debug', 'final row state: ' + str(forecast_df[forecast_df.Date == datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d')].to_string()), self.log_stack_depth)
+        # log_in_color('white', 'debug', 'final row state: ' + str(forecast_df[forecast_df.Date == datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d')].to_string()), self.log_stack_depth)
         self.log_stack_depth -= 1
-        log_in_color('green', 'debug', 'END executeTransactionsForDay(priority_level=' + str(priority_level) + ',date=' + str(date_YYYYMMDD) + ') '+str(row_count_string)+str(bal_string), self.log_stack_depth)
+        log_in_color('green', 'debug', 'END executeTransactionsForDay(priority_level=' + str(priority_level) + ',date=' + str(date_YYYYMMDD) + ') ' + str(row_count_string) + str(bal_string),
+                     self.log_stack_depth)
 
-
-        #this method does not return proposed_df, so we can assert that it is empty
+        # this method does not return proposed_df, so we can assert that it is empty
         assert proposed_df.shape[0] == 0
 
         # txn count should be same at beginning and end
+        log_in_color('green','debug',str(T0)+' ?= '+str(T1),self.log_stack_depth)
         assert T0 == T1
 
         self.log_stack_depth -= 1
@@ -850,7 +1075,7 @@ class ExpenseForecast:
         for account_index, account_row in account_set.getAccounts().iterrows():
             bal_string += '$' + str(account_row.Balance) + ' '
 
-        log_in_color('green', 'debug', 'BEGIN calculateInterestAccrualsForDay() '+bal_string, self.log_stack_depth)
+        log_in_color('green', 'debug', 'BEGIN calculateInterestAccrualsForDay() ' + bal_string, self.log_stack_depth)
         # This method will transfer balances from current statement to previous statement for savings and credit accounts
 
         current_date = current_forecast_row_df.Date.iloc[0]
@@ -963,7 +1188,7 @@ class ExpenseForecast:
                 bal_string += '$' + str(account_row.Balance) + ' '
 
             # returns a single forecast row
-            log_in_color('green', 'debug', 'EXIT calculateInterestAccrualsForDay '+bal_string, self.log_stack_depth)
+            log_in_color('green', 'debug', 'EXIT calculateInterestAccrualsForDay ' + bal_string, self.log_stack_depth)
             self.log_stack_depth -= 1
             return current_forecast_row_df
 
@@ -971,7 +1196,7 @@ class ExpenseForecast:
         for account_index, account_row in account_set.getAccounts().iterrows():
             bal_string += '$' + str(account_row.Balance) + ' '
 
-        log_in_color('green', 'debug', 'EXIT calculateInterestAccrualsForDay() '+bal_string, self.log_stack_depth)
+        log_in_color('green', 'debug', 'EXIT calculateInterestAccrualsForDay() ' + bal_string, self.log_stack_depth)
         self.log_stack_depth -= 1
         return current_forecast_row_df  # this runs when there are no interest bearing accounts in the simulation at all
 
@@ -1004,7 +1229,7 @@ class ExpenseForecast:
                     bal_string += '$' + str(account_row2.Balance) + ' '
 
                 self.log_stack_depth += 1
-                log_in_color('green', 'debug', 'BEGIN executeMinimumPayments() '+bal_string, self.log_stack_depth)
+                log_in_color('green', 'debug', 'BEGIN executeMinimumPayments() ' + bal_string, self.log_stack_depth)
                 # print(row)
                 if account_row.Account_Type == 'prev stmt bal':  # cc min payment
 
@@ -1039,7 +1264,7 @@ class ExpenseForecast:
                 for account_index2, account_row2 in account_set.getAccounts().iterrows():
                     bal_string += '$' + str(account_row2.Balance) + ' '
 
-                log_in_color('green', 'debug', 'END  executeMinimumPayments() '+bal_string, self.log_stack_depth)
+                log_in_color('green', 'debug', 'END  executeMinimumPayments() ' + bal_string, self.log_stack_depth)
                 self.log_stack_depth -= 1
 
         return current_forecast_row_df
@@ -1215,14 +1440,14 @@ class ExpenseForecast:
 
         return BudgetSet.BudgetSet(final_budget_items)
 
-    def sync_account_set_w_forecast_day(self,account_set,forecast_df,date_YYYYMMDD):
+    def sync_account_set_w_forecast_day(self, account_set, forecast_df, date_YYYYMMDD):
 
-        try: #if a datetime object was passed instead
+        try:  # if a datetime object was passed instead
             date_YYYYMMDD = date_YYYYMMDD.strftime('%Y%m%d')
         except:
             pass
 
-        d = datetime.datetime.strptime(date_YYYYMMDD,'%Y%m%d')
+        d = datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d')
 
         relevant_forecast_day = forecast_df[forecast_df.Date == d]
 
@@ -1241,13 +1466,13 @@ class ExpenseForecast:
 
             assert sum(row_sel_vec) > 0
 
-            relevant_balance = relevant_forecast_day.iat[0,account_index + 1]
+            relevant_balance = relevant_forecast_day.iat[0, account_index + 1]
             # log_in_color('green','debug','CASE 1 Setting '+account_row.Name+' to '+str(relevant_balance),self.log_stack_depth)
             account_set.accounts[account_index].balance = relevant_balance
 
         return account_set
 
-    def computeOptimalForecast(self, start_date_YYYYMMDD, end_date_YYYYMMDD, confirmed_df, proposed_df, deferred_df, skipped_df, account_set, memo_rule_set, raise_satisfice_failed_exception = True):
+    def computeOptimalForecast(self, start_date_YYYYMMDD, end_date_YYYYMMDD, confirmed_df, proposed_df, deferred_df, skipped_df, account_set, memo_rule_set, raise_satisfice_failed_exception=True):
         """
         One-description.
 
@@ -1284,7 +1509,7 @@ class ExpenseForecast:
             bal_string += '$' + str(account_row.Balance) + ' '
 
         self.log_stack_depth += 1
-        log_in_color('green', 'debug', 'ENTER computeOptimalForecast() '+str(raise_satisfice_failed_exception)+' '+str(row_count_string)+str(bal_string), self.log_stack_depth)
+        log_in_color('green', 'debug', 'ENTER computeOptimalForecast() ' + str(raise_satisfice_failed_exception) + ' ' + str(row_count_string) + str(bal_string), self.log_stack_depth)
 
         full_budget_schedule_df = pd.concat([confirmed_df, proposed_df, deferred_df, skipped_df])
         full_budget_schedule_df.reset_index(drop=True, inplace=True)
@@ -1292,14 +1517,14 @@ class ExpenseForecast:
             assert full_budget_schedule_df.shape[0] == full_budget_schedule_df.drop_duplicates().shape[0]
         except Exception as e:
             log_in_color('red', 'debug', 'a duplicate memo was detected. This is filtered for in ExpenseForecast(), so we know that this was caused by internal logic.')
-            log_in_color('red','debug',full_budget_schedule_df.to_string())
+            log_in_color('red', 'debug', full_budget_schedule_df.to_string())
             raise e
 
         failed_to_satisfice_flag = False
 
-        #log_in_color('cyan', 'debug', 'Full budget schedule:', self.log_stack_depth)
-        #log_in_color('cyan', 'debug', full_budget_schedule_df.to_string(), self.log_stack_depth)
-        log_in_color('cyan', 'debug', 'computeOptimalForecast()', self.log_stack_depth)
+        # log_in_color('cyan', 'debug', 'Full budget schedule:', self.log_stack_depth)
+        # log_in_color('cyan', 'debug', full_budget_schedule_df.to_string(), self.log_stack_depth)
+        # log_in_color('cyan', 'debug', 'computeOptimalForecast()', self.log_stack_depth)
         # log_in_color('cyan', 'debug', 'Confirmed: ', self.log_stack_depth)
         # log_in_color('cyan', 'debug', confirmed_df.to_string(), self.log_stack_depth + 1)
         # log_in_color('cyan', 'debug', 'Proposed: ', self.log_stack_depth)
@@ -1320,61 +1545,46 @@ class ExpenseForecast:
 
         for d in all_days:
             if d == self.start_date:
-                continue #first day is considered final
+                continue  # first day is considered final
 
             bal_string = ' '
             for account_index, account_row in account_set.getAccounts().iterrows():
                 bal_string += '$' + str(account_row.Balance) + ' '
 
-            log_in_color('green', 'info', 'SATISFICE ' + str(d.strftime('%Y-%m-%d'))+bal_string, self.log_stack_depth)
+            log_in_color('green', 'info', 'SATISFICE ' + str(d.strftime('%Y-%m-%d')) + bal_string, self.log_stack_depth)
 
             # print('SATISFICE BEFORE TXN:'+str(forecast_df))
             try:
                 forecast_df, skipped_df, confirmed_df, deferred_df = self.executeTransactionsForDay(account_set, forecast_df=forecast_df, date_YYYYMMDD=d.strftime('%Y%m%d'),
-                                                                                                                memo_set=memo_rule_set, confirmed_df=confirmed_df, proposed_df=proposed_df,
-                                                                                                                deferred_df=deferred_df, skipped_df=skipped_df, priority_level=1,
-                                                                                                                allow_skip_and_defer=False,
-                                                                                                                allow_partial_payments=False)  # this is the implementation of satisfice
+                                                                                                    memo_set=memo_rule_set, confirmed_df=confirmed_df, proposed_df=proposed_df,
+                                                                                                    deferred_df=deferred_df, skipped_df=skipped_df, priority_level=1,
+                                                                                                    allow_skip_and_defer=False,
+                                                                                                    allow_partial_payments=False)  # this is the implementation of satisfice
             except ValueError as e:
 
-                #this method is allowed one account boundary exception. this is the case where satisfice doesn't make it to the end date
-                #we move the end date closer to cope. the new row did not get appended
-                if (re.search('.*Account boundaries were violated.*', str(e.args)).group(0) is not None) and not raise_satisfice_failed_exception:
+                # this method is allowed one account boundary exception. this is the case where satisfice doesn't make it to the end date
+                # we move the end date closer to cope. the new row did not get appended
+                if (re.search('.*Account boundaries were violated.*', str(e.args)) is not None) and not raise_satisfice_failed_exception:
                     self.end_date = d - datetime.timedelta(days=1)
                     failed_to_satisfice_flag = True
-                    log_in_color('green','debug','FAILED TO SATISFICE. Not raising an exception per parameters.')
+                    log_in_color('green', 'debug', 'FAILED TO SATISFICE. Not raising an exception per parameters.')
                     break
                 else:
                     raise e
 
             # print('SATISFICE AFTER TXN:'+str(forecast_df))
 
-            account_set = self.sync_account_set_w_forecast_day(account_set,forecast_df,d)
-
+            account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, d)
 
             forecast_df[forecast_df.Date == d] = self.executeMinimumPayments(account_set, forecast_df[forecast_df.Date == d])
 
-            for account_index, account_row in account_set.getAccounts().iterrows():
-                if (account_index + 1) == account_set.getAccounts().shape[1]:
-                    break
-                row_sel_vec = (forecast_df.Date == d)
-                col_sel_vec = (forecast_df.columns == account_row.Name)
-                relevant_balance = forecast_df.loc[row_sel_vec, col_sel_vec].iloc[0].iloc[0]
-                #log_in_color('green','debug','CASE 2 Setting ' + account_row.Name + ' to ' + str(relevant_balance),self.log_stack_depth)
-                account_set.accounts[account_index].balance = relevant_balance
+            account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, d)
 
             forecast_df[forecast_df.Date == d] = self.calculateInterestAccrualsForDay(account_set, forecast_df[forecast_df.Date == d])  # returns only a forecast row
 
-            for account_index, account_row in account_set.getAccounts().iterrows():
-                if (account_index + 1) == account_set.getAccounts().shape[1]:
-                    break
-                row_sel_vec = (forecast_df.Date == d)
-                col_sel_vec = (forecast_df.columns == account_row.Name)
-                relevant_balance = forecast_df.loc[row_sel_vec, col_sel_vec].iloc[0].iloc[0]
-                #log_in_color('green','debug','CASE 3 Setting ' + account_row.Name + ' to ' + str(relevant_balance),self.log_stack_depth)
-                account_set.accounts[account_index].balance = relevant_balance
+            account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, d)
 
-            print('########### SATISFICE '+row_count_string+' ###########################################################################################################')
+            print('########### SATISFICE ' + row_count_string + ' ###########################################################################################################')
             print(forecast_df.to_string())
             print('##########################################################################################################################################################')
 
@@ -1401,51 +1611,36 @@ class ExpenseForecast:
 
                     log_in_color('green', 'info', 'OPTIMIZE ' + str(priority_index) + ' d:' + str(d) + ' ' + str(row_count_string) + str(bal_string), self.log_stack_depth)
 
-                    for account_index, account_row in account_set.getAccounts().iterrows():
-                        if (account_index + 1) == account_set.getAccounts().shape[1]:
-                            break
-                        row_sel_vec = (forecast_df.Date == d)
-                        col_sel_vec = (forecast_df.columns == account_row.Name)
-                        relevant_balance = forecast_df.loc[row_sel_vec, col_sel_vec].iloc[0].iloc[0]
-                        log_in_color('green','debug','CASE 4 Setting ' + account_row.Name + ' to ' + str(relevant_balance),self.log_stack_depth)
-                        account_set.accounts[account_index].balance = relevant_balance
+                    account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, d)
 
                     forecast_df, skipped_df, confirmed_df, deferred_df = self.executeTransactionsForDay(account_set,
-                                                                                                                    forecast_df=forecast_df,
-                                                                                                                    date_YYYYMMDD=d.strftime('%Y%m%d'),
-                                                                                                                    memo_set=memo_rule_set,
-                                                                                                                    confirmed_df=confirmed_df,
-                                                                                                                    proposed_df=proposed_df,
-                                                                                                                    deferred_df=deferred_df,
-                                                                                                                    skipped_df=skipped_df,
-                                                                                                                    priority_level=priority_index,
-                                                                                                                    allow_skip_and_defer=True,
-                                                                                                                    allow_partial_payments=True)
-                    for account_index, account_row in account_set.getAccounts().iterrows():
-                        if (account_index + 1) == account_set.getAccounts().shape[1]:
-                            break
-                        row_sel_vec = (forecast_df.Date == d)
-                        col_sel_vec = (forecast_df.columns == account_row.Name)
-                        relevant_balance = forecast_df.loc[row_sel_vec, col_sel_vec].iloc[0].iloc[0]
-                        log_in_color('green','debug','CASE 5 Setting ' + account_row.Name + ' to ' + str(relevant_balance),self.log_stack_depth)
-                        account_set.accounts[account_index].balance = relevant_balance
+                                                                                                        forecast_df=forecast_df,
+                                                                                                        date_YYYYMMDD=d.strftime('%Y%m%d'),
+                                                                                                        memo_set=memo_rule_set,
+                                                                                                        confirmed_df=confirmed_df,
+                                                                                                        proposed_df=proposed_df,
+                                                                                                        deferred_df=deferred_df,
+                                                                                                        skipped_df=skipped_df,
+                                                                                                        priority_level=priority_index,
+                                                                                                        allow_skip_and_defer=True,
+                                                                                                        allow_partial_payments=True)
+                    account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, d)
 
-                    print('########### OPTIMIZE '+str(priority_index)+' '+row_count_string+' ###########################################################################################################')
+                    print('########### OPTIMIZE ' + str(
+                        priority_index) + ' ' + row_count_string + ' ###########################################################################################################')
                     print(forecast_df.to_string())
                     print('##########################################################################################################################################################')
 
         if failed_to_satisfice_flag:
-
             not_confirmed_df = confirmed_df.loc[confirmed_df.Date >= self.end_date]
             new_deferred_df = proposed_df.loc[[not x for x in proposed_df.Deferrable]]
-            skipped_df = pd.concat([skipped_df,not_confirmed_df,new_deferred_df])
+            skipped_df = pd.concat([skipped_df, not_confirmed_df, new_deferred_df])
             confirmed_df = confirmed_df.loc[confirmed_df.Date < self.end_date]
             deferred_df = proposed_df.loc[proposed_df.Deferrable]
 
-            skipped_df.reset_index(inplace=True,drop=True)
+            skipped_df.reset_index(inplace=True, drop=True)
             confirmed_df.reset_index(inplace=True, drop=True)
             deferred_df.reset_index(inplace=True, drop=True)
-
 
         C = confirmed_df.shape[0]
         P = proposed_df.shape[0]
@@ -1458,7 +1653,7 @@ class ExpenseForecast:
         for account_index, account_row in account_set.getAccounts().iterrows():
             bal_string += '$' + str(account_row.Balance) + ' '
 
-        log_in_color('green', 'debug', 'EXIT computeOptimalForecast() '+row_count_string+str(bal_string), self.log_stack_depth)
+        log_in_color('green', 'debug', 'EXIT computeOptimalForecast() ' + row_count_string + str(bal_string), self.log_stack_depth)
         self.log_stack_depth -= 1
         return [forecast_df, skipped_df, confirmed_df, deferred_df]
 
