@@ -32,6 +32,7 @@ class MemoRuleSet:
         return str(self)
 
     def findMatchingMemoRule(self, budget_item_row_df):
+        log_in_color('yellow','debug','ENTER findMatchingMemoRule')
 
         memo_df = self.getMemoRules()
         memo_rules_of_matching_priority = memo_df[memo_df.Transaction_Priority == budget_item_row_df.Priority]
@@ -51,11 +52,11 @@ class MemoRuleSet:
             assert sum(match_vec) > 0  # if error, no matches found
             assert sum(match_vec) == 1  # if error, multiple matches found
         except Exception as e:
-
-            print('Memo Set:')
-            print(self.getMemoRules().to_string())
-            print('Budget Item:')
-            print(pd.DataFrame(budget_item_row_df).T)
+            log_in_color('yellow', 'error', 'ERROR')
+            log_in_color('yellow', 'error', 'Memo Set:')
+            log_in_color('yellow', 'error',self.getMemoRules().to_string())
+            log_in_color('yellow', 'error', 'Budget Item:')
+            log_in_color('yellow', 'error',pd.DataFrame(budget_item_row_df).T.to_string())
 
             raise e
 
@@ -66,6 +67,9 @@ class MemoRuleSet:
                                  matching_memo_rule_row.Account_To.iat[0],
                                  matching_memo_rule_row.Transaction_Priority.iat[0])
 
+        log_in_color('yellow', 'error', 'Found matching memo rule: '+str(matching_memo_rule_row.Account_From.iat[0])+' -> '+str(matching_memo_rule_row.Account_To.iat[0]))
+
+        log_in_color('yellow', 'debug', 'EXIT findMatchingMemoRule')
         return MemoRuleSet([relevant_memo])
 
     def addMemoRule(self,memo_regex,account_from,account_to,transaction_priority):
