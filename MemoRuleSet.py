@@ -42,14 +42,15 @@ class MemoRuleSet:
             match_vec.append(False)
 
         for i in range(0, memo_rules_of_matching_priority.shape[0]):
+            memo_row = memo_rules_of_matching_priority.iloc[i,:]
             try:
-                re.search(memo_row.Memo_Regex, budget_item_row_df.Memo).group(0)
+                g = re.search(memo_row.Memo_Regex, budget_item_row_df.Memo).group(0)
                 match_vec[i] = True
             except:
                 match_vec[i] = False
 
         try:
-            assert sum(match_vec) > 0  # if error, no matches found
+            assert sum(match_vec) != 0  # if error, no matches found
             assert sum(match_vec) == 1  # if error, multiple matches found
         except Exception as e:
             log_in_color('yellow', 'error', 'ERROR')
@@ -57,6 +58,8 @@ class MemoRuleSet:
             log_in_color('yellow', 'error',self.getMemoRules().to_string())
             log_in_color('yellow', 'error', 'Budget Item:')
             log_in_color('yellow', 'error',pd.DataFrame(budget_item_row_df).T.to_string())
+            log_in_color('yellow', 'error', 'match vector:')
+            log_in_color('yellow', 'error', match_vec)
 
             raise e
 

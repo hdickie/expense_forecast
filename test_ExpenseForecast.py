@@ -197,8 +197,8 @@ class TestExpenseForecastMethods(unittest.TestCase):
                 non_boilerplate_values__M)).T)  # this very much DOES NOT SCALE. this is intended for small tests
             self.assertTrue(error_ind == 0)
         except Exception as e:
-            print(test_description)
-            print(f.T.to_string())
+            # print(test_description) #todo use log methods
+            # print(f.T.to_string())
             raise e
 
         return E
@@ -583,8 +583,8 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                                      end_date_YYYYMMDD,
                                                      expected_result_df,
                                                      test_description)
-        print('E.deferred_df:')
-        print(E.deferred_df)
+        # print('E.deferred_df:')
+        # print(E.deferred_df)
         assert E.deferred_df.shape[0] == 1
         assert E.deferred_df['Memo'].iloc[0] == 'this should be deferred'
 
@@ -698,17 +698,17 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                                      expected_result_df,
                                                      test_description)
 
-        print('Forecast:')
-        print(E.forecast_df.to_string())
-
-        print('Confirmed:')
-        print(E.confirmed_df.to_string())
-
-        print('Deferred:')
-        print(E.deferred_df.to_string())
-
-        print('Skipped:')
-        print(E.skipped_df.to_string())
+        # print('Forecast:')
+        # print(E.forecast_df.to_string())
+        #
+        # print('Confirmed:')
+        # print(E.confirmed_df.to_string())
+        #
+        # print('Deferred:')
+        # print(E.deferred_df.to_string())
+        #
+        # print('Skipped:')
+        # print(E.skipped_df.to_string())
 
         assert E.deferred_df.shape[0] == 1
         assert E.deferred_df['Memo'].iloc[0] == 'this should be deferred'
@@ -1060,6 +1060,8 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                                      end_date_YYYYMMDD,
                                                      expected_result_df,
                                                      test_description)
+
+        raise NotImplementedError
 
     def test_p5_and_6__expect_skip(self):
         test_description = 'test_p5_and_6__expect_skip'
@@ -1443,14 +1445,14 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                             start_date_YYYYMMDD,
                                             end_date_YYYYMMDD)
 
-        print('Forecast:')
-        print(E.forecast_df.to_string())
-        print('Confirmed:')
-        print(E.confirmed_df.to_string())
-        print('Deferred:')
-        print(E.deferred_df.to_string())
-        print('Skipped:')
-        print(E.skipped_df.to_string())
+        # print('Forecast:')
+        # print(E.forecast_df.to_string())
+        # print('Confirmed:')
+        # print(E.confirmed_df.to_string())
+        # print('Deferred:')
+        # print(E.deferred_df.to_string())
+        # print('Skipped:')
+        # print(E.skipped_df.to_string())
 
     def test_p5_and_6__expect_defer(self):
         test_description = 'test_p5_and_6__expect_defer'
