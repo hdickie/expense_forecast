@@ -570,7 +570,7 @@ class ExpenseForecast:
         new_deferred_df = copy.deepcopy(deferred_df.head(0))
 
         self.log_stack_depth += 1
-        for proposed_item_index, proposed_row_df in proposed_df.iterrows():
+        for proposed_item_index, proposed_row_df in relevant_proposed_df.iterrows():
             amount_ammended = False
             # log_in_color('cyan','debug','Processing proposed or deferred txn:',self.log_stack_depth)
             # log_in_color('cyan','debug',pd.DataFrame(budget_item_row).T.to_string(),self.log_stack_depth)
@@ -776,7 +776,7 @@ class ExpenseForecast:
         self.log_stack_depth -= 1
 
         self.log_stack_depth += 1
-        for deferred_item_index, deferred_row_df in deferred_df.iterrows():
+        for deferred_item_index, deferred_row_df in relevant_deferred_df.iterrows():
             amount_ammended = False
             # log_in_color('cyan','debug','Processing proposed or deferred txn:',self.log_stack_depth)
             # log_in_color('cyan','debug',pd.DataFrame(budget_item_row).T.to_string(),self.log_stack_depth)
@@ -1001,13 +1001,13 @@ class ExpenseForecast:
         log_in_color('green', 'debug', 'END executeTransactionsForDay(priority_level=' + str(priority_level) + ',date=' + str(date_YYYYMMDD) + ') ' + str(row_count_string) + str(bal_string),
                      self.log_stack_depth)
 
-        # this method does not return proposed_df, so we can assert that it is empty
-        assert proposed_df.shape[0] == 0
-
         # txn count should be same at beginning and end
         log_in_color('green','debug',str(T0)+' ?= '+str(T1),self.log_stack_depth)
         try:
             assert T0 == T1
+
+            # this method does not return proposed_df, so we can assert that it is empty
+            #assert proposed_df.shape[0] == 0
         except Exception as e:
 
             if not confirmed_df.empty:
@@ -1562,13 +1562,9 @@ class ExpenseForecast:
             # print('SATISFICE AFTER TXN:'+str(forecast_df))
 
             account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, d)
-
             forecast_df[forecast_df.Date == d] = self.executeMinimumPayments(account_set, forecast_df[forecast_df.Date == d])
-
             account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, d)
-
             forecast_df[forecast_df.Date == d] = self.calculateInterestAccrualsForDay(account_set, forecast_df[forecast_df.Date == d])  # returns only a forecast row
-
             account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, d)
 
             print('########### SATISFICE ' + row_count_string + ' ###########################################################################################################')
@@ -1600,7 +1596,7 @@ class ExpenseForecast:
 
                     account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, d)
 
-                    not_confirmed_sel_vec = (~proposed_df.index.isin(confirmed_df.index))
+                    not_confirmed_sel_vec = (~proposed_df.index.isin(confirmed_df.index)) #i think if we use memo and priority instead of index that this will work
                     not_deferred_sel_vec = (~proposed_df.index.isin(deferred_df.index))
                     not_skipped_sel_vec = (~proposed_df.index.isin(skipped_df.index))
                     remaining_unproposed_sel_vec = (not_confirmed_sel_vec & not_deferred_sel_vec & not_skipped_sel_vec)
@@ -1610,6 +1606,17 @@ class ExpenseForecast:
                     print('!S: '+str(not_skipped_sel_vec))
                     print(' P: '+str(remaining_unproposed_sel_vec))
                     remaining_unproposed_transactions_df = proposed_df[remaining_unproposed_sel_vec]
+
+                    log_in_color('cyan', 'debug', 'Confirmed: ', self.log_stack_depth)
+                    log_in_color('cyan', 'debug', confirmed_df.to_string(), self.log_stack_depth + 1)
+                    log_in_color('cyan', 'debug', 'Proposed: ', self.log_stack_depth)
+                    log_in_color('cyan', 'debug', proposed_df.to_string(), self.log_stack_depth + 1)
+                    log_in_color('cyan', 'debug', 'Deferred: ', self.log_stack_depth)
+                    log_in_color('cyan', 'debug', deferred_df.to_string(), self.log_stack_depth + 1)
+                    log_in_color('cyan', 'debug', 'Skipped: ', self.log_stack_depth)
+                    log_in_color('cyan', 'debug', skipped_df.to_string(), self.log_stack_depth + 1)
+                    log_in_color('cyan', 'debug', 'Remaining unproposed: ', self.log_stack_depth)
+                    log_in_color('cyan', 'debug', remaining_unproposed_transactions_df.to_string(), self.log_stack_depth + 1)
 
                     forecast_df, skipped_df, confirmed_df, deferred_df = self.executeTransactionsForDay(account_set,
                                                                                                         forecast_df=forecast_df,
