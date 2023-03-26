@@ -1186,9 +1186,7 @@ class ExpenseForecast:
     def executeMinimumPayments(self, account_set, current_forecast_row_df):
 
         # the branch logic here assumes the sort order of accounts in account list
-        A = account_set.getAccounts()
-
-        for account_index, account_row in A.iterrows():
+        for account_index, account_row in account_set.getAccounts().iterrows():
             if pd.isnull(account_row.Billing_Start_Dt):
                 continue
 
@@ -1203,7 +1201,7 @@ class ExpenseForecast:
             billing_days = set(generate_date_sequence(account_row.Billing_Start_Dt.strftime('%Y%m%d'), num_days, account_row.Interest_Cadence))
 
             if current_forecast_row_df.Date.iloc[0] == account_row.Billing_Start_Dt:
-                billing_days = set(current_forecast_row_df.Date).union(billing_days)
+                billing_days = set(current_forecast_row_df.Date).union(billing_days) #if the input date matches the start date, add it to the set (bc range where start = end == null set)
 
             if current_forecast_row_df.Date.iloc[0] in billing_days:
 
@@ -1221,13 +1219,13 @@ class ExpenseForecast:
 
                 elif account_row.Account_Type == 'interest':  # loan min payment
 
-                    minimum_payment_amount = A.loc[account_index - 1, :].Balance
+                    minimum_payment_amount = account_set.getAccounts().loc[account_index - 1, :].Balance
                     current_forecast_row_df.Memo += account_row.Name.split(':')[0] + ' loan min payment ($' + str(minimum_payment_amount) + '); '
 
                 if account_row.Account_Type == 'prev stmt bal' or account_row.Account_Type == 'interest':
 
                     payment_toward_prev = min(minimum_payment_amount, account_row.Balance)
-                    payment_toward_curr = min(A.loc[account_index - 1, :].Balance, minimum_payment_amount - payment_toward_prev)
+                    payment_toward_curr = min(account_set.getAccounts().loc[account_index - 1, :].Balance, minimum_payment_amount - payment_toward_prev)
                     surplus_payment = minimum_payment_amount - (payment_toward_prev + payment_toward_curr)
 
                     if (payment_toward_prev + payment_toward_curr) > 0:
@@ -1235,20 +1233,25 @@ class ExpenseForecast:
                                                        # Note that the execute transaction method will split the amount paid between the 2 accounts
                                                        Amount=(payment_toward_prev + payment_toward_curr))
 
-                updated_balances = account_set.getAccounts().Balance
-                for account_index2, account_row2 in account_set.getAccounts().iterrows():
-                    if (account_index + 1) == account_set.getAccounts().shape[1]:
-                        break
-                    relevant_balance = account_set.getAccounts().iloc[account_index2, 1]
-                    col_sel_vec = (current_forecast_row_df.columns == account_row.Name)
-                    current_forecast_row_df.iloc[0, col_sel_vec] = relevant_balance
+        # print('current_forecast_row_df pre-update')
+        # print(current_forecast_row_df.to_string())
+        for account_index, account_row in account_set.getAccounts().iterrows():
+            relevant_balance = account_set.getAccounts().iloc[account_index, 1]
+            col_sel_vec = (current_forecast_row_df.columns == account_row.Name)
+            #print('Setting '+account_row.Name+' to '+str(relevant_balance))
+            current_forecast_row_df.iloc[0, col_sel_vec] = relevant_balance
 
-                bal_string = ''
-                for account_index2, account_row2 in account_set.getAccounts().iterrows():
-                    bal_string += '$' + str(account_row2.Balance) + ' '
+        # print('current_forecast_row_df post-update')
+        # print(current_forecast_row_df.to_string())
 
-                log_in_color('green', 'debug', 'END  executeMinimumPayments() ' + bal_string, self.log_stack_depth)
-                self.log_stack_depth -= 1
+        bal_string = ''
+        for account_index2, account_row2 in account_set.getAccounts().iterrows():
+            bal_string += '$' + str(account_row2.Balance) + ' '
+
+        log_in_color('green', 'debug', 'return this row:', self.log_stack_depth)
+        log_in_color('green', 'debug', current_forecast_row_df.to_string(), self.log_stack_depth)
+        log_in_color('green', 'debug', 'END  executeMinimumPayments() ' + bal_string, self.log_stack_depth)
+        self.log_stack_depth -= 1
 
         return current_forecast_row_df
 
@@ -1424,6 +1427,9 @@ class ExpenseForecast:
         return BudgetSet.BudgetSet(final_budget_items)
 
     def sync_account_set_w_forecast_day(self, account_set, forecast_df, date_YYYYMMDD):
+        # log_in_color('green','debug','ENTER sync_account_set_w_forecast_day(date_YYYYMMDD='+str(date_YYYYMMDD)+')',self.log_stack_depth)
+        # log_in_color('green','debug','Initial account_set:',self.log_stack_depth)
+        # log_in_color('green', 'debug', account_set.getAccounts().to_string(), self.log_stack_depth)
 
         try:  # if a datetime object was passed instead
             date_YYYYMMDD = date_YYYYMMDD.strftime('%Y%m%d')
@@ -1433,6 +1439,9 @@ class ExpenseForecast:
         d = datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d')
 
         relevant_forecast_day = forecast_df[forecast_df.Date == d]
+
+        # log_in_color('green', 'debug', 'relevant forecast row:', self.log_stack_depth)
+        # log_in_color('green', 'debug', relevant_forecast_day.to_string(), self.log_stack_depth)
 
         for account_index, account_row in account_set.getAccounts().iterrows():
             if (account_index + 1) == account_set.getAccounts().shape[1]:
@@ -1453,7 +1462,13 @@ class ExpenseForecast:
             # log_in_color('green','debug','CASE 1 Setting '+account_row.Name+' to '+str(relevant_balance),self.log_stack_depth)
             account_set.accounts[account_index].balance = relevant_balance
 
+        # log_in_color('green', 'debug', 'Final account_set:', self.log_stack_depth)
+        # log_in_color('green', 'debug', account_set.getAccounts().to_string(), self.log_stack_depth)
+        # log_in_color('green', 'debug', 'EXIT sync_account_set_w_forecast_day()', self.log_stack_depth)
         return account_set
+
+    def setForecastRowBalances(self,date_YYYYMMDD,new_row):
+        pass
 
     def computeOptimalForecast(self, start_date_YYYYMMDD, end_date_YYYYMMDD, confirmed_df, proposed_df, deferred_df, skipped_df, account_set, memo_rule_set, raise_satisfice_failed_exception=True):
         """
@@ -1574,14 +1589,19 @@ class ExpenseForecast:
             # print('SATISFICE AFTER TXN:'+str(forecast_df))
 
             account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, d)
-            forecast_df[forecast_df.Date == d] = self.executeMinimumPayments(account_set, forecast_df[forecast_df.Date == d])
+            post_min_payments_row = self.executeMinimumPayments(account_set, forecast_df[forecast_df.Date == d])
+
+            # print('post_min_payments_row:')
+            # print(post_min_payments_row)
+
+            forecast_df[forecast_df.Date == d] = post_min_payments_row
             account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, d)
             forecast_df[forecast_df.Date == d] = self.calculateInterestAccrualsForDay(account_set, forecast_df[forecast_df.Date == d])  # returns only a forecast row
             account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, d)
 
-            # print('########### SATISFICE ' + row_count_string + ' ###########################################################################################################')
-            # print(forecast_df.to_string())
-            # print('##########################################################################################################################################################')
+            log_in_color('white','debug','########### SATISFICE ' + row_count_string + ' ###########################################################################################################')
+            log_in_color('white','debug',forecast_df.to_string())
+            log_in_color('white','debug','##########################################################################################################################################################')
 
         if not failed_to_satisfice_flag:
             unique_priority_indices = full_budget_schedule_df.Priority.unique()
@@ -1643,10 +1663,9 @@ class ExpenseForecast:
                                                                                                         allow_partial_payments=True)
                     account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, d)
 
-                    # print('########### OPTIMIZE ' + str(
-                    #     priority_index) + ' ' + row_count_string + ' ###########################################################################################################')
-                    # print(forecast_df.to_string())
-                    # print('##########################################################################################################################################################')
+                    log_in_color('white','debug','########### OPTIMIZE ' + str(priority_index) + ' ' + row_count_string + ' ###########################################################################################################')
+                    log_in_color('white','debug',forecast_df.to_string())
+                    log_in_color('white','debug','##########################################################################################################################################################')
 
         if failed_to_satisfice_flag:
             not_confirmed_df = confirmed_df.loc[confirmed_df.Date >= self.end_date]
