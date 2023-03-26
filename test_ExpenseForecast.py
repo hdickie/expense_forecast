@@ -344,11 +344,6 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                    accrued_interest=None
                                    )
 
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
-                                     cadence='daily', amount=0, memo='dummy memo',
-                                     deferrable=False,
-                                 partial_payment_allowed=False)
-
         memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1)
 
         expected_result_df = pd.DataFrame({

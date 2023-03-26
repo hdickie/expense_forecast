@@ -134,5 +134,4 @@ def display_test_result(test_name, df1):
     lines_to_print.append(f"{Fore.BLUE}" + ''.ljust(display_width, '#') + f"{Style.RESET_ALL}")
     if not test_passed:
         for line in lines_to_print:
-            #print(line) #use a log method
-            pass
+            log_in_color('white','debug',line)
