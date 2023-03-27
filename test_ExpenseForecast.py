@@ -1289,31 +1289,56 @@ class TestExpenseForecastMethods(unittest.TestCase):
         test_description = 'test_transactions_executed_at_p1_and_p2_and_p3'
 
         start_date_YYYYMMDD = self.start_date_YYYYMMDD
-        end_date_YYYYMMDD = self.end_date_YYYYMMDD
+        end_date_YYYYMMDD = '20000106'
 
         account_set = copy.deepcopy(self.account_set)
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
 
         account_set.addAccount(name='Checking',
-                               balance=1000,
+                               balance=2000,
                                min_balance=0,
                                max_balance=float('Inf'),
                                account_type="checking")
 
-        # budget_set.addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
-        #                          cadence='daily', amount=0, memo='dummy memo',
-        #                          deferrable=False,
-        #                          partial_payment_allowed=False)
-        #
-        # memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1)
+        budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000105', priority=1,
+                                 cadence='daily', amount=100, memo='p1 daily txn',
+                                 deferrable=False,
+                                 partial_payment_allowed=False)
+
+        budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=2,
+                                 cadence='once', amount=100, memo='p2 daily txn 1/2/00',
+                                 deferrable=False,
+                                 partial_payment_allowed=False)
+
+        budget_set.addBudgetItem(start_date_YYYYMMDD='20000103', end_date_YYYYMMDD='20000103', priority=2,
+                                 cadence='once', amount=100, memo='p2 daily txn 1/3/00',
+                                 deferrable=False,
+                                 partial_payment_allowed=False)
+
+        budget_set.addBudgetItem(start_date_YYYYMMDD='20000104', end_date_YYYYMMDD='20000104', priority=2,
+                                 cadence='once', amount=100, memo='p2 daily txn 1/4/00',
+                                 deferrable=False,
+                                 partial_payment_allowed=False)
+
+        budget_set.addBudgetItem(start_date_YYYYMMDD='20000105', end_date_YYYYMMDD='20000105', priority=2,
+                                 cadence='once', amount=100, memo='p2 daily txn 1/5/00',
+                                 deferrable=False,
+                                 partial_payment_allowed=False)
+
+        budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000105', priority=3,
+                                 cadence='daily', amount=100, memo='p3 daily txn',
+                                 deferrable=False,
+                                 partial_payment_allowed=False)
+
+        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=1)
+        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=2)
+        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=3)
 
         expected_result_df = pd.DataFrame({
-            'Date': ['20000101', '20000102', '20000103'],
-            'Checking': [0, 0, 0],
-            'Credit: Curr Stmt Bal': [0, 0, 0],
-            'Credit: Prev Stmt Bal': [0, 0, 0],
-            'Memo': ['', '', '']
+            'Date': ['20000101', '20000102', '20000103', '20000104', '20000105', '20000106'],
+            'Checking': [2000, 1700, 1400, 1100, 800, 800],
+            'Memo': ['', '', '', '', '', '']
         })
         expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d') for x in
                                    expected_result_df.Date]
@@ -1326,7 +1351,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                                          expected_result_df,
                                                          test_description)
 
-        raise NotImplementedError
+        print(E.forecast_df.to_string())
 
     def test_multiple_matching_memo_rule_regex(self):
         # For this test, I want to see:
