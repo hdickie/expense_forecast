@@ -68,6 +68,7 @@ def log_in_color(color,level,msg,stack_depth=0):
 
 def display_test_result(test_name, df1):
     display_width = max([len(x) for x in df1.T.to_string().split('\n')])
+    #display_width = 120
     left_prefix = '# '
 
     lines_to_print = []

@@ -115,8 +115,8 @@ class BudgetSet:
         """
         # log_in_color('green', 'debug','ENTER getBudgetSchedule(start_date_YYYYMMDD='+str(start_date_YYYYMMDD)+',end_date_YYYYMMDD='+str(end_date_YYYYMMDD)+')', 0)
         # log_in_color('green', 'debug','self.budget_items:', 0)
-        for b in self.budget_items:
-            log_in_color('green', 'debug', '\n'+str(b), 0)
+        #for b in self.budget_items:
+        #    log_in_color('green', 'debug', '\n'+str(b), 0)
 
         #print('getBudgetSchedule():')
         #print('self.budget_items:')

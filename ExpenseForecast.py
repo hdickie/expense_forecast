@@ -344,8 +344,7 @@ class ExpenseForecast:
 
         """
 
-        # print('Initial state of forecast:')
-        # print(forecast_df.to_string())
+
 
         # note that for confirmed and deferred we take priority less than or equal to, but for proposed, we only take equal to
         relevant_proposed_df = copy.deepcopy(proposed_df[(proposed_df.Priority == priority_level) & (proposed_df.Date == date_YYYYMMDD)])
@@ -369,7 +368,10 @@ class ExpenseForecast:
         #logger.debug('self.log_stack_depth += 1')
         log_in_color('green', 'debug', 'BEGIN executeTransactionsForDay(priority_level=' + str(priority_level) + ',date=' + str(date_YYYYMMDD) + ') ' + str(row_count_string) + str(bal_string),
                      self.log_stack_depth)
-        log_in_color('white', 'debug', '(start of day) available_balances: ' + str(account_set.getAvailableBalances()), self.log_stack_depth)
+        #log_in_color('white', 'debug', '(start of day) available_balances: ' + str(account_set.getAvailableBalances()), self.log_stack_depth)
+
+        # print('Initial state of forecast (eTFD):')
+        # print(forecast_df.to_string())
 
         # log_in_color('yellow', 'debug', 'Memo Rules:', self.log_stack_depth)
         # log_in_color('yellow', 'debug',memo_set.getMemoRules(), self.log_stack_depth)
@@ -383,28 +385,28 @@ class ExpenseForecast:
         # print('proposed_df.Date == date_YYYYMMDD')
         # print((proposed_df.Date == date_YYYYMMDD))
 
-        if not confirmed_df.empty:
-            log_in_color('cyan', 'debug', 'ALL Confirmed: ', self.log_stack_depth)
-            log_in_color('cyan', 'debug', confirmed_df.to_string(), self.log_stack_depth)
-
-        if not proposed_df.empty:
-            log_in_color('cyan', 'debug', 'ALL Proposed: ', self.log_stack_depth)
-            log_in_color('cyan', 'debug', proposed_df.to_string(), self.log_stack_depth)
-
-        if not deferred_df.empty:
-            log_in_color('cyan', 'debug', 'ALL Deferred: ', self.log_stack_depth)
-            log_in_color('cyan', 'debug', deferred_df.to_string(), self.log_stack_depth)
-
-        if not relevant_confirmed_df.empty:
-            log_in_color('cyan', 'debug', 'Relevant Confirmed: ', self.log_stack_depth)
-            log_in_color('cyan', 'debug', relevant_confirmed_df.to_string(), self.log_stack_depth)
-
-        if not relevant_proposed_df.empty:
-            log_in_color('cyan', 'debug', 'Relevant Proposed: ', self.log_stack_depth)
-            log_in_color('cyan', 'debug', relevant_proposed_df.to_string(), self.log_stack_depth)
-        if not relevant_deferred_df.empty:
-            log_in_color('cyan', 'debug', 'Relevant Deferred: ', self.log_stack_depth)
-            log_in_color('cyan', 'debug', relevant_deferred_df.to_string(), self.log_stack_depth)
+        # if not confirmed_df.empty:
+        #     log_in_color('cyan', 'debug', 'ALL Confirmed: ', self.log_stack_depth)
+        #     log_in_color('cyan', 'debug', confirmed_df.to_string(), self.log_stack_depth)
+        #
+        # if not proposed_df.empty:
+        #     log_in_color('cyan', 'debug', 'ALL Proposed: ', self.log_stack_depth)
+        #     log_in_color('cyan', 'debug', proposed_df.to_string(), self.log_stack_depth)
+        #
+        # if not deferred_df.empty:
+        #     log_in_color('cyan', 'debug', 'ALL Deferred: ', self.log_stack_depth)
+        #     log_in_color('cyan', 'debug', deferred_df.to_string(), self.log_stack_depth)
+        #
+        # if not relevant_confirmed_df.empty:
+        #     log_in_color('cyan', 'debug', 'Relevant Confirmed: ', self.log_stack_depth)
+        #     log_in_color('cyan', 'debug', relevant_confirmed_df.to_string(), self.log_stack_depth)
+        #
+        # if not relevant_proposed_df.empty:
+        #     log_in_color('cyan', 'debug', 'Relevant Proposed: ', self.log_stack_depth)
+        #     log_in_color('cyan', 'debug', relevant_proposed_df.to_string(), self.log_stack_depth)
+        # if not relevant_deferred_df.empty:
+        #     log_in_color('cyan', 'debug', 'Relevant Deferred: ', self.log_stack_depth)
+        #     log_in_color('cyan', 'debug', relevant_deferred_df.to_string(), self.log_stack_depth)
 
         if priority_level == 1 and forecast_df.loc[forecast_df.Date == date_YYYYMMDD].empty and self.end_date >= datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d'):
             # this is the only place where new days get added to a forecast
@@ -507,9 +509,9 @@ class ExpenseForecast:
 
         self.log_stack_depth += 1
         #logger.debug('self.log_stack_depth += 1')
-        log_in_color('green', 'debug', 'BEGIN PROCESSING CONFIRMED TXNS', self.log_stack_depth)
+        #log_in_color('green', 'debug', 'BEGIN PROCESSING CONFIRMED TXNS', self.log_stack_depth)
         for confirmed_index, confirmed_row in relevant_confirmed_df.iterrows():
-            log_in_color('green', 'debug', 'processing confirmed transaction: ' + str(confirmed_row.Memo), self.log_stack_depth)
+            log_in_color('cyan', 'debug', 'processing confirmed transaction: ' + str(confirmed_row.Memo), self.log_stack_depth)
 
             relevant_memo_rule_set = memo_set.findMatchingMemoRule(confirmed_row)
             memo_rule_row = relevant_memo_rule_set.getMemoRules().loc[0,:]
@@ -564,7 +566,7 @@ class ExpenseForecast:
                     # print('Post-append memo: ' + str(forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'].iat[0,0]))
 
                     forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'] += confirmed_row.Memo + ' ($' + str(confirmed_row.Amount) + ') ; '
-        log_in_color('green', 'debug', 'END PROCESSING CONFIRMED TXNS', self.log_stack_depth)
+        #log_in_color('green', 'debug', 'END PROCESSING CONFIRMED TXNS', self.log_stack_depth)
         # log_in_color('cyan', 'debug', 'AFTER', self.log_stack_depth)
         # log_in_color('cyan', 'debug', forecast_df[row_sel_vec].to_string(), self.log_stack_depth)
 
@@ -575,7 +577,7 @@ class ExpenseForecast:
 
         new_deferred_df = copy.deepcopy(deferred_df.head(0))
 
-        log_in_color('green', 'debug', 'BEGIN PROCESSING PROPOSED TXNS', self.log_stack_depth)
+        #log_in_color('green', 'debug', 'BEGIN PROCESSING PROPOSED TXNS', self.log_stack_depth)
         for proposed_item_index, proposed_row_df in relevant_proposed_df.iterrows():
             amount_ammended = False
             # log_in_color('cyan','debug','Processing proposed or deferred txn:',self.log_stack_depth)
@@ -790,9 +792,9 @@ class ExpenseForecast:
                 budget_item_row.Deferrable.............:""" + str(proposed_row_df.Deferrable) + """
                 budget_item_row.Partial_Payment_Allowed:""" + str(proposed_row_df.Partial_Payment_Allowed) + """
                 """)
-        log_in_color('green', 'debug', 'END PROCESSING PROPOSED TXNS', self.log_stack_depth)
+        #log_in_color('green', 'debug', 'END PROCESSING PROPOSED TXNS', self.log_stack_depth)
 
-        log_in_color('green', 'debug', 'BEGIN PROCESSING DEFERRED TXNS', self.log_stack_depth)
+        #log_in_color('green', 'debug', 'BEGIN PROCESSING DEFERRED TXNS', self.log_stack_depth)
         for deferred_item_index, deferred_row_df in relevant_deferred_df.iterrows():
             amount_ammended = False
             # log_in_color('cyan','debug','Processing proposed or deferred txn:',self.log_stack_depth)
@@ -994,7 +996,7 @@ class ExpenseForecast:
                 budget_item_row.Deferrable.............:""" + str(deferred_row_df.Deferrable) + """
                 budget_item_row.Partial_Payment_Allowed:""" + str(deferred_row_df.Partial_Payment_Allowed) + """
                 """)
-        log_in_color('green', 'debug', 'END PROCESSING DEFERRED TXNS', self.log_stack_depth)
+        #log_in_color('green', 'debug', 'END PROCESSING DEFERRED TXNS', self.log_stack_depth)
         self.log_stack_depth -= 1
         #logger.debug('self.log_stack_depth -= 1')
 
@@ -1005,6 +1007,9 @@ class ExpenseForecast:
         new_deferred_df = new_deferred_df.head(0)
         # print('deferred_df after append')
         # print(deferred_df.to_string())
+
+        # print('Final state of forecast (eTFD):')
+        # print(forecast_df.to_string())
 
 
         # print('returning this forecast row:')
@@ -1021,13 +1026,13 @@ class ExpenseForecast:
         S1 = skipped_df.shape[0]
         T1 = C1 + P1 + D1 + S1
         row_count_string = ' C1:' + str(C1) + '  P1:' + str(P1) + '  D1:' + str(D1) + '  S1:' + str(S1) + '  T1:' + str(T1)
-        log_in_color('white', 'debug', 'final forecast state: ' + str(forecast_df.to_string()), self.log_stack_depth)
+        #log_in_color('white', 'debug', 'final forecast state: ' + str(forecast_df.to_string()), self.log_stack_depth)
         #self.log_stack_depth -= 1
         log_in_color('green', 'debug', 'END executeTransactionsForDay(priority_level=' + str(priority_level) + ',date=' + str(date_YYYYMMDD) + ') ' + str(row_count_string) + str(bal_string),
                      self.log_stack_depth)
 
         # txn count should be same at beginning and end
-        log_in_color('green','debug',str(T0)+' ?= '+str(T1),self.log_stack_depth)
+        #log_in_color('green','debug',str(T0)+' ?= '+str(T1),self.log_stack_depth)
         try:
             assert T0 == T1
 
@@ -1035,34 +1040,31 @@ class ExpenseForecast:
             #assert proposed_df.shape[0] == 0
         except Exception as e:
 
-            if not confirmed_df.empty:
-                log_in_color('cyan', 'debug', 'ALL Confirmed: ', self.log_stack_depth)
-                log_in_color('cyan', 'debug', confirmed_df.to_string(), self.log_stack_depth + 1)
-
-            if not proposed_df.empty:
-                log_in_color('cyan', 'debug', 'ALL Proposed: ', self.log_stack_depth)
-                log_in_color('cyan', 'debug', proposed_df.to_string(), self.log_stack_depth + 1)
-
-            if not deferred_df.empty:
-                log_in_color('cyan', 'debug', 'ALL Deferred: ', self.log_stack_depth)
-                log_in_color('cyan', 'debug', deferred_df.to_string(), self.log_stack_depth + 1)
-
-            if not relevant_confirmed_df.empty:
-                log_in_color('cyan', 'debug', 'Relevant Confirmed: ', self.log_stack_depth)
-                log_in_color('cyan', 'debug', relevant_confirmed_df.to_string(), self.log_stack_depth + 1)
-
-            if not relevant_proposed_df.empty:
-                log_in_color('cyan', 'debug', 'Relevant Proposed: ', self.log_stack_depth)
-                log_in_color('cyan', 'debug', relevant_proposed_df.to_string(), self.log_stack_depth + 1)
-
-            if not relevant_deferred_df.empty:
-                log_in_color('cyan', 'debug', 'Relevant Deferred: ', self.log_stack_depth)
-                log_in_color('cyan', 'debug', relevant_deferred_df.to_string(), self.log_stack_depth + 1)
+            # if not confirmed_df.empty:
+            #     log_in_color('cyan', 'debug', 'ALL Confirmed: ', self.log_stack_depth)
+            #     log_in_color('cyan', 'debug', confirmed_df.to_string(), self.log_stack_depth + 1)
+            #
+            # if not proposed_df.empty:
+            #     log_in_color('cyan', 'debug', 'ALL Proposed: ', self.log_stack_depth)
+            #     log_in_color('cyan', 'debug', proposed_df.to_string(), self.log_stack_depth + 1)
+            #
+            # if not deferred_df.empty:
+            #     log_in_color('cyan', 'debug', 'ALL Deferred: ', self.log_stack_depth)
+            #     log_in_color('cyan', 'debug', deferred_df.to_string(), self.log_stack_depth + 1)
+            #
+            # if not relevant_confirmed_df.empty:
+            #     log_in_color('cyan', 'debug', 'Relevant Confirmed: ', self.log_stack_depth)
+            #     log_in_color('cyan', 'debug', relevant_confirmed_df.to_string(), self.log_stack_depth + 1)
+            #
+            # if not relevant_proposed_df.empty:
+            #     log_in_color('cyan', 'debug', 'Relevant Proposed: ', self.log_stack_depth)
+            #     log_in_color('cyan', 'debug', relevant_proposed_df.to_string(), self.log_stack_depth + 1)
+            #
+            # if not relevant_deferred_df.empty:
+            #     log_in_color('cyan', 'debug', 'Relevant Deferred: ', self.log_stack_depth)
+            #     log_in_color('cyan', 'debug', relevant_deferred_df.to_string(), self.log_stack_depth + 1)
 
             raise e
-
-        # print('Final state of forecast:')
-        # print(forecast_df.to_string())
 
         self.log_stack_depth -= 1
         #logger.debug('self.log_stack_depth -= 1')
@@ -1076,7 +1078,7 @@ class ExpenseForecast:
         for account_index, account_row in account_set.getAccounts().iterrows():
             bal_string += '$' + str(account_row.Balance) + ' '
 
-        log_in_color('green', 'debug', 'BEGIN calculateInterestAccrualsForDay() ' + bal_string, self.log_stack_depth)
+        #log_in_color('green', 'debug', 'BEGIN calculateInterestAccrualsForDay() ' + bal_string, self.log_stack_depth)
         # This method will transfer balances from current statement to previous statement for savings and credit accounts
 
         current_date = current_forecast_row_df.Date.iloc[0]
@@ -1092,7 +1094,7 @@ class ExpenseForecast:
                 dseq = set(current_forecast_row_df.Date).union(dseq)
 
             if current_date in dseq:
-                log_in_color('green', 'debug', 'computing interest accruals for:' + str(account_row.Name), self.log_stack_depth)
+                #log_in_color('green', 'debug', 'computing interest accruals for:' + str(account_row.Name), self.log_stack_depth)
                 # print('interest accrual initial conditions:')
                 # print(current_forecast_row_df.to_string())
 
@@ -1197,7 +1199,7 @@ class ExpenseForecast:
         for account_index, account_row in account_set.getAccounts().iterrows():
             bal_string += '$' + str(account_row.Balance) + ' '
 
-        log_in_color('green', 'debug', 'EXIT calculateInterestAccrualsForDay() ' + bal_string, self.log_stack_depth)
+        #log_in_color('green', 'debug', 'EXIT calculateInterestAccrualsForDay() ' + bal_string, self.log_stack_depth)
         self.log_stack_depth -= 1
         #logger.debug('self.log_stack_depth -= 1')
         return current_forecast_row_df  # this runs when there are no interest bearing accounts in the simulation at all
@@ -1210,7 +1212,7 @@ class ExpenseForecast:
 
         self.log_stack_depth += 1
         #logger.debug('self.log_stack_depth += 1')
-        log_in_color('green', 'debug', 'BEGIN executeMinimumPayments() ' + bal_string, self.log_stack_depth)
+        # log_in_color('green', 'debug', 'BEGIN executeMinimumPayments() ' + bal_string, self.log_stack_depth)
 
         # the branch logic here assumes the sort order of accounts in account list
         for account_index, account_row in account_set.getAccounts().iterrows():
@@ -1269,9 +1271,9 @@ class ExpenseForecast:
         for account_index2, account_row2 in account_set.getAccounts().iterrows():
             bal_string += '$' + str(account_row2.Balance) + ' '
 
-        log_in_color('green', 'debug', 'return this row:', self.log_stack_depth)
-        log_in_color('green', 'debug', current_forecast_row_df.to_string(), self.log_stack_depth)
-        log_in_color('green', 'debug', 'END  executeMinimumPayments() ' + bal_string, self.log_stack_depth)
+        # log_in_color('green', 'debug', 'return this row:', self.log_stack_depth)
+        # log_in_color('green', 'debug', current_forecast_row_df.to_string(), self.log_stack_depth)
+        # log_in_color('green', 'debug', 'END  executeMinimumPayments() ' + bal_string, self.log_stack_depth)
         self.log_stack_depth -= 1
         #logger.debug('self.log_stack_depth -= 1')
 
@@ -1451,7 +1453,7 @@ class ExpenseForecast:
         return BudgetSet.BudgetSet(final_budget_items)
 
     def sync_account_set_w_forecast_day(self, account_set, forecast_df, date_YYYYMMDD):
-        # log_in_color('green','debug','ENTER sync_account_set_w_forecast_day(date_YYYYMMDD='+str(date_YYYYMMDD)+')',self.log_stack_depth)
+        log_in_color('green','debug','ENTER sync_account_set_w_forecast_day(date_YYYYMMDD='+str(date_YYYYMMDD)+')',self.log_stack_depth)
         # log_in_color('green','debug','Initial account_set:',self.log_stack_depth)
         # log_in_color('green', 'debug', account_set.getAccounts().to_string(), self.log_stack_depth)
 
@@ -1574,7 +1576,7 @@ class ExpenseForecast:
             for account_index, account_row in account_set.getAccounts().iterrows():
                 bal_string += '$' + str(account_row.Balance) + ' '
 
-            log_in_color('green', 'info', 'BEGIN SATISFICE ' + str(d.strftime('%Y-%m-%d')) + bal_string, self.log_stack_depth)
+            #log_in_color('green', 'info', 'BEGIN SATISFICE ' + str(d.strftime('%Y-%m-%d')) + bal_string, self.log_stack_depth)
 
             # print('SATISFICE BEFORE TXN:'+str(forecast_df))
             try:
@@ -1624,10 +1626,10 @@ class ExpenseForecast:
                 else:
                     raise e
 
-            log_in_color('green', 'info', 'END SATISFICE ' + str(d.strftime('%Y-%m-%d')) + bal_string, self.log_stack_depth)
-            log_in_color('white','debug','########### SATISFICE ' + row_count_string + ' ###########################################################################################################',self.log_stack_depth)
-            log_in_color('white','debug',forecast_df.to_string(),self.log_stack_depth)
-            log_in_color('white','debug','##########################################################################################################################################################',self.log_stack_depth)
+            #log_in_color('green', 'info', 'END SATISFICE ' + str(d.strftime('%Y-%m-%d')) + bal_string, self.log_stack_depth)
+            #log_in_color('white','debug','########### SATISFICE ' + row_count_string + ' ###########################################################################################################',self.log_stack_depth)
+            #log_in_color('white','debug',forecast_df.to_string(),self.log_stack_depth)
+            #log_in_color('white','debug','##########################################################################################################################################################',self.log_stack_depth)
 
         if not failed_to_satisfice_flag:
             unique_priority_indices = full_budget_schedule_df.Priority.unique()
@@ -1650,7 +1652,7 @@ class ExpenseForecast:
                     for account_index, account_row in account_set.getAccounts().iterrows():
                         bal_string += '$' + str(account_row.Balance) + ' '
 
-                    log_in_color('green', 'info', 'OPTIMIZE ' + str(priority_index) + ' d:' + str(d) + ' ' + str(row_count_string) + str(bal_string), self.log_stack_depth)
+                    #log_in_color('green', 'info', 'OPTIMIZE ' + str(priority_index) + ' d:' + str(d) + ' ' + str(row_count_string) + str(bal_string), self.log_stack_depth)
 
                     account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, d)
 
@@ -1676,18 +1678,21 @@ class ExpenseForecast:
                     # print(' P: '+str(remaining_unproposed_sel_vec))
                     remaining_unproposed_transactions_df = proposed_df[remaining_unproposed_sel_vec]
 
-                    log_in_color('cyan', 'debug', 'Confirmed: ', self.log_stack_depth)
-                    log_in_color('cyan', 'debug', confirmed_df.to_string(), self.log_stack_depth + 1)
-                    log_in_color('cyan', 'debug', 'Proposed: ', self.log_stack_depth)
-                    log_in_color('cyan', 'debug', proposed_df.to_string(), self.log_stack_depth + 1)
-                    log_in_color('cyan', 'debug', 'Deferred: ', self.log_stack_depth)
-                    log_in_color('cyan', 'debug', deferred_df.to_string(), self.log_stack_depth + 1)
-                    log_in_color('cyan', 'debug', 'Skipped: ', self.log_stack_depth)
-                    log_in_color('cyan', 'debug', skipped_df.to_string(), self.log_stack_depth + 1)
-                    log_in_color('cyan', 'debug', 'Remaining unproposed: ', self.log_stack_depth)
-                    log_in_color('cyan', 'debug', remaining_unproposed_transactions_df.to_string(), self.log_stack_depth + 1)
+                    # log_in_color('cyan', 'debug', 'Confirmed: ', self.log_stack_depth)
+                    # log_in_color('cyan', 'debug', confirmed_df.to_string(), self.log_stack_depth + 1)
+                    # log_in_color('cyan', 'debug', 'Proposed: ', self.log_stack_depth)
+                    # log_in_color('cyan', 'debug', proposed_df.to_string(), self.log_stack_depth + 1)
+                    # log_in_color('cyan', 'debug', 'Deferred: ', self.log_stack_depth)
+                    # log_in_color('cyan', 'debug', deferred_df.to_string(), self.log_stack_depth + 1)
+                    # log_in_color('cyan', 'debug', 'Skipped: ', self.log_stack_depth)
+                    # log_in_color('cyan', 'debug', skipped_df.to_string(), self.log_stack_depth + 1)
+                    # log_in_color('cyan', 'debug', 'Remaining unproposed: ', self.log_stack_depth)
+                    # log_in_color('cyan', 'debug', remaining_unproposed_transactions_df.to_string(), self.log_stack_depth + 1)
 
                     account_set_before_p2_plus_txn = copy.deepcopy(account_set)
+
+                    # print('pre-txn state of forecast (cOF):'+str(raise_satisfice_failed_exception))
+                    # print(forecast_df.to_string())
 
                     forecast_df, skipped_df, confirmed_df, deferred_df = self.executeTransactionsForDay(account_set,
                                                                                                         forecast_df=forecast_df,
@@ -1701,45 +1706,53 @@ class ExpenseForecast:
                                                                                                         allow_skip_and_defer=True,
                                                                                                         allow_partial_payments=True)
 
+
+
                     account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, d)
 
                     account_set_after_p2_plus_txn = copy.deepcopy(account_set)
 
-                    #we apply the delta to all future rows
-                    account_deltas = account_set_after_p2_plus_txn.getAccounts().Balance - account_set_before_p2_plus_txn.getAccounts().Balance
-                    # print('account_deltas:')
-                    # print(account_deltas)
-
-                    i = 0
-                    for account_index, account_row in account_set.getAccounts().iterrows():
-                        # print('i:'+str(i))
-                        # print('account_row:'+str(account_row))
-                        # print('forecast_df:')
+                    #this branch means that roll-forward only happens during the hypothetical. Otherwise it would happen twice
+                    if raise_satisfice_failed_exception:
+                        # print('post-txn (pre-roll-forward) state of forecast (cOF): '+str(raise_satisfice_failed_exception))
                         # print(forecast_df.to_string())
-                        if forecast_df[forecast_df.Date > d].empty:
-                            break
 
-                        if account_deltas[i] == 0:
+                        #we apply the delta to all future rows
+                        account_deltas = account_set_after_p2_plus_txn.getAccounts().Balance - account_set_before_p2_plus_txn.getAccounts().Balance
+                        # print('account_deltas:')
+                        # print(account_deltas)
+
+                        i = 0
+                        for account_index, account_row in account_set.getAccounts().iterrows():
+                            # print('i:'+str(i))
+                            # print('account_row:'+str(account_row))
+                            # print('forecast_df:')
+                            # print(forecast_df.to_string())
+                            if forecast_df[forecast_df.Date > d].empty:
+                                break
+
+                            if account_deltas[i] == 0:
+                                i += 1
+                                continue
+
+                            #print('forecast_df before roll-forward:')
+                            #print(forecast_df.to_string())
+
+                            row_sel_vec = ( forecast_df.Date > d )
+                            col_sel_vec = ( forecast_df.columns == account_row.Name )
+
+                            forecast_df.loc[row_sel_vec, col_sel_vec] = forecast_df.loc[row_sel_vec, col_sel_vec].add(account_deltas[i])
                             i += 1
-                            continue
 
-                        if not raise_satisfice_failed_exception:
+                        # print('post-roll-forward state of forecast (cOF):'+str(raise_satisfice_failed_exception))
+                        # print(forecast_df.to_string())
 
-                        print('forecast_df before roll-forward:')
-                        print(forecast_df.to_string())
+                        #print('forecast_df after roll-forward:')
+                        #print(forecast_df.to_string())
 
-                        row_sel_vec = ( forecast_df.Date > d )
-                        col_sel_vec = ( forecast_df.columns == account_row.Name )
-
-                        forecast_df.loc[row_sel_vec, col_sel_vec] = forecast_df.loc[row_sel_vec, col_sel_vec].add(account_deltas[i])
-                        i += 1
-
-                        print('forecast_df after roll-forward:')
-                        print(forecast_df.to_string())
-
-                    log_in_color('white','debug','########### OPTIMIZE ' + str(priority_index) + ' ' + row_count_string + ' ###########################################################################################################',self.log_stack_depth)
-                    log_in_color('white','debug',forecast_df.to_string(),self.log_stack_depth)
-                    log_in_color('white','debug','##########################################################################################################################################################',self.log_stack_depth)
+                    #log_in_color('white','debug','########### OPTIMIZE ' + str(priority_index) + ' ' + row_count_string + ' ###########################################################################################################',self.log_stack_depth)
+                    #log_in_color('white','debug',forecast_df.to_string(),self.log_stack_depth)
+                    #log_in_color('white','debug','##########################################################################################################################################################',self.log_stack_depth)
 
         if failed_to_satisfice_flag:
 
@@ -1757,6 +1770,9 @@ class ExpenseForecast:
             skipped_df.reset_index(inplace=True, drop=True)
             confirmed_df.reset_index(inplace=True, drop=True)
             deferred_df.reset_index(inplace=True, drop=True)
+
+        # print('Final state of forecast (cOF):'+str(raise_satisfice_failed_exception))
+        # print(forecast_df.to_string())
 
         C = confirmed_df.shape[0]
         P = proposed_df.shape[0]
