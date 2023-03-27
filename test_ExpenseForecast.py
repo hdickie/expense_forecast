@@ -1011,17 +1011,17 @@ class TestExpenseForecastMethods(unittest.TestCase):
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
 
         account_set.addAccount(name='Checking',
-                               balance=2000,
+                               balance=1000,
                                min_balance=0,
                                max_balance=float('Inf'),
                                account_type="checking")
 
         account_set.addAccount(name='Credit',
-                               balance=500,
+                               balance=1500,
                                min_balance=0,
                                max_balance=20000,
                                account_type="credit",
-                               billing_start_date_YYYYMMDD='20000102',
+                               billing_start_date_YYYYMMDD='20000112',
                                interest_type='Compound',
                                apr=0.05,
                                interest_cadence='Monthly',
@@ -1031,18 +1031,19 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                accrued_interest=None
                                )
 
-        # budget_set.addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
-        #                          cadence='daily', amount=0, memo='dummy memo',
-        #                          deferrable=False,
-        #                          partial_payment_allowed=False)
-        #
-        # memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1)
+        budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=4,
+                                 cadence='once', amount=20000, memo='partial cc payment',
+                                 deferrable=False,
+                                 partial_payment_allowed=True)
+
+        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1)
+        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to='Credit', transaction_priority=4)
 
         expected_result_df = pd.DataFrame({
             'Date': ['20000101', '20000102', '20000103'],
-            'Checking': [2000, 1960, 1960],
-            'Credit: Curr Stmt Bal': [500, 0, 0],
-            'Credit: Prev Stmt Bal': [500, 961.92, 961.92],
+            'Checking': [1000, 0, 0],
+            'Credit: Curr Stmt Bal': [1500, 1000, 1000],
+            'Credit: Prev Stmt Bal': [500, 0, 0],
             'Memo': ['', '', '']
         })
         expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d') for x in
@@ -1056,7 +1057,6 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                                      expected_result_df,
                                                      test_description)
 
-        raise NotImplementedError
 
     def test_p5_and_6__expect_skip(self):
         test_description = 'test_p5_and_6__expect_skip'
