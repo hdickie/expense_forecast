@@ -16,8 +16,8 @@ RESET_COLOR = f"{Style.RESET_ALL}"
 
 import logging
 
-#color_log_format = '%(asctime)s - %(levelname)-8s - %(message)s'
-color_log_format = '%(levelname)-8s - %(message)s'
+color_log_format = '%(asctime)s - %(levelname)-8s - %(message)s'
+#color_log_format = '%(levelname)-8s - %(message)s'
 color_formatter = logging.Formatter(color_log_format)
 col_ch = logging.StreamHandler()
 col_ch.setFormatter(color_formatter)
@@ -32,10 +32,7 @@ col_logger.addHandler(col_ch)
 
 def log_in_color(color,level,msg,stack_depth=0):
 
-    if stack_depth == 0:
-        left_prefix = ''
-    else:
-        left_prefix = ' '
+    left_prefix=str(stack_depth)
     left_prefix = left_prefix.ljust(stack_depth*4,' ') + ' '
 
     for line in str(msg).split('\n'):

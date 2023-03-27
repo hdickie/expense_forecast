@@ -404,8 +404,10 @@ class AccountSet:
                 remaining_prev_balance = a.max_balance - ( prev_balance + curr_balance )
                 balances_dict[a.name.split(':')[0]] = remaining_prev_balance
             else:
+                #log_in_color('magenta', 'debug', 'Unexpected account type: '+str(a.account_type))
                 pass
-                #raise NotImplementedError
+        #     print('balances_dict:')
+        #     print(balances_dict)
         # log_in_color('magenta', 'debug', balances_dict)
         # log_in_color('magenta', 'debug', 'EXIT getAvailableBalances()')
         return balances_dict

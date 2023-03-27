@@ -31,6 +31,9 @@ def generate_date_sequence(start_date_YYYYMMDD,num_days,cadence):
     elif cadence.lower() == "yearly":
         # todo check if this needs an adjustment like the monthly case did
         return_series = pd.date_range(start_date,end_date,freq='Y')
+    else:
+        print('Error: undefind cadence')
+        print('Value was:'+str(cadence))
 
     return return_series
 
@@ -110,10 +113,10 @@ class BudgetSet:
         :param num_days:
         :return:
         """
-        # log_in_color('green', 'debug','getBudgetSchedule(start_date_YYYYMMDD='+str(start_date_YYYYMMDD)+',end_date_YYYYMMDD='+str(end_date_YYYYMMDD)+')', 0)
+        # log_in_color('green', 'debug','ENTER getBudgetSchedule(start_date_YYYYMMDD='+str(start_date_YYYYMMDD)+',end_date_YYYYMMDD='+str(end_date_YYYYMMDD)+')', 0)
         # log_in_color('green', 'debug','self.budget_items:', 0)
-        # for b in self.budget_items:
-        #     log_in_color('green', 'debug', '\n'+str(b), 0)
+        for b in self.budget_items:
+            log_in_color('green', 'debug', '\n'+str(b), 0)
 
         #print('getBudgetSchedule():')
         #print('self.budget_items:')
@@ -122,7 +125,7 @@ class BudgetSet:
         current_budget_schedule = pd.DataFrame({'Date':[],'Priority':[],'Amount':[],'Memo':[],'Deferrable':[],'Partial_Payment_Allowed':[]})
         end_date = datetime.datetime.strptime(str(end_date_YYYYMMDD),'%Y%m%d')
         for budget_item in self.budget_items:
-            relative_num_days = (end_date - budget_item.start_date).days
+            relative_num_days = (budget_item.end_date - budget_item.start_date).days
             relevant_date_sequence = generate_date_sequence(budget_item.start_date.strftime('%Y%m%d'),relative_num_days,budget_item.cadence)
 
             relevant_date_sequence_df = pd.DataFrame(relevant_date_sequence)
@@ -141,6 +144,10 @@ class BudgetSet:
 
         current_budget_schedule.sort_values(inplace=True,axis=0,by="Date")
         current_budget_schedule.reset_index(inplace=True,drop=True)
+
+        # log_in_color('green', 'debug', 'current_budget_schedule:')
+        # log_in_color('green', 'debug', current_budget_schedule.to_string())
+        # log_in_color('green', 'debug', 'EXIT getBudgetSchedule(start_date_YYYYMMDD=' + str(start_date_YYYYMMDD) + ',end_date_YYYYMMDD=' + str(end_date_YYYYMMDD) + ')', 0)
         return current_budget_schedule
 
     def addBudgetItem(self,

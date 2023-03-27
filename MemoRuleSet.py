@@ -70,7 +70,7 @@ class MemoRuleSet:
                                  matching_memo_rule_row.Account_To.iat[0],
                                  matching_memo_rule_row.Transaction_Priority.iat[0])
 
-        log_in_color('yellow', 'error', 'Found matching memo rule: '+str(matching_memo_rule_row.Account_From.iat[0])+' -> '+str(matching_memo_rule_row.Account_To.iat[0]))
+        log_in_color('yellow', 'debug', 'Found matching memo rule: '+str(matching_memo_rule_row.Account_From.iat[0])+' -> '+str(matching_memo_rule_row.Account_To.iat[0]))
 
         log_in_color('yellow', 'debug', 'EXIT findMatchingMemoRule')
         return MemoRuleSet([relevant_memo])

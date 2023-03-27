@@ -36,7 +36,7 @@ class BudgetItem:
         :param str start_date_YYYYMMDD: A string that indicates the start date with format %Y%m%d.
         :param str start_date_YYYYMMDD: A string that indicates the end date with format %Y%m%d.
         :param int priority: An integer >= 1 that indicates priority. See below for priority level meanings.
-        :param str cadence: One of: 'once', 'daily', 'weekly', 'biweekly', 'monthly', 'quarterly', 'yearly'
+        :param str cadence: One of: 'once', 'daily', 'weekly', 'semiweekly', 'monthly', 'quarterly', 'yearly'
         :param float amount: A dollar value for the amount of the transaction. See below for how to handle negative values.
         :param bool deferrable: True if the transaction can be delayed. False if it is a time-sensitive opportunity.
         :param str memo: A label for the transaction.
@@ -109,9 +109,9 @@ class BudgetItem:
         self.cadence = str(self.cadence)
 
         try:
-           assert self.cadence.lower() in ['once','daily','weekly','biweekly','monthly','quarterly','yearly']
+           assert self.cadence.lower() in ['once','daily','weekly','semiweekly','monthly','quarterly','yearly']
         except:
-           exception_value_error_message_string += 'BudgetItem.cadence is not one of: once, daily, weekly, biweekly, monthly, quarterly, yearly\n'
+           exception_value_error_message_string += 'BudgetItem.cadence is not one of: once, daily, weekly, semiweekly, monthly, quarterly, yearly\n'
            exception_value_error_message_string += 'Value was:'+str(self.cadence)+'\n'
            exception_value_error_ind = True
 
