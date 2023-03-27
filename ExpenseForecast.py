@@ -435,7 +435,9 @@ class ExpenseForecast:
             self.log_stack_depth -= 1
             #logger.debug('self.log_stack_depth -= 1')
 
-            ### Does using the return of the hypothetical make this unnecessary ?
+            ### No, this is still necessary
+
+
             # if datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d') != self.start_date:
             #     log_in_color('green', 'debug', 'no items for ' + str(date_YYYYMMDD) + '. Setting this days balances equal to the previous.', self.log_stack_depth)
             #     for i in range(1, len(forecast_df.columns)):
@@ -611,7 +613,8 @@ class ExpenseForecast:
                                             proposed_df=empty_df,
                                             deferred_df=empty_df,
                                             skipped_df=empty_df,
-                                            account_set=copy.deepcopy(account_set),
+                                            account_set=copy.deepcopy(self.sync_account_set_w_forecast_day(account_set, forecast_df, self.start_date.strftime('%Y%m%d'))), #since we resatisfice from the beginning, this should reflect the beginning as well
+                                            #account_set=copy.deepcopy(account_set),
                                             memo_rule_set=memo_set)[0]
 
                 log_in_color('magenta', 'debug', 'END error-check computeOptimalForecast: '+str(proposed_row_df.Memo)+' (SUCCESS)', self.log_stack_depth)
@@ -657,7 +660,7 @@ class ExpenseForecast:
                                                                                         proposed_df=empty_df,
                                                                                         deferred_df=empty_df,
                                                                                         skipped_df=empty_df,
-                                                                                        account_set=copy.deepcopy(account_set),
+                                                                                        account_set=copy.deepcopy(self.sync_account_set_w_forecast_day(account_set, forecast_df, self.start_date.strftime('%Y%m%d'))), #since we resatisfice from the beginning, this should reflect the beginning as well
                                                                                         memo_rule_set=relevant_memo_rule_set)[0]
 
                     log_in_color('magenta', 'debug', 'END error-check computeOptimalForecast: '+str(proposed_row_df.Memo)+' (SUCCESS)', self.log_stack_depth)
@@ -720,6 +723,10 @@ class ExpenseForecast:
 
             elif transaction_is_permitted:
                 log_in_color('green', 'debug', 'Transaction is permitted. Proceeding.', self.log_stack_depth)
+
+                if priority_level > 1:
+                    account_set = self.sync_account_set_w_forecast_day(account_set,forecast_df,date_YYYYMMDD)
+
                 account_set.executeTransaction(Account_From=memo_rule_row.Account_From, Account_To=memo_rule_row.Account_To, Amount=proposed_row_df.Amount, income_flag=False)
                 log_in_color('white', 'debug', 'available_balances immediately after txn: ' + str(account_set.getAvailableBalances()), self.log_stack_depth)
 
@@ -1014,7 +1021,7 @@ class ExpenseForecast:
         S1 = skipped_df.shape[0]
         T1 = C1 + P1 + D1 + S1
         row_count_string = ' C1:' + str(C1) + '  P1:' + str(P1) + '  D1:' + str(D1) + '  S1:' + str(S1) + '  T1:' + str(T1)
-        # log_in_color('white', 'debug', 'final row state: ' + str(forecast_df[forecast_df.Date == datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d')].to_string()), self.log_stack_depth)
+        log_in_color('white', 'debug', 'final forecast state: ' + str(forecast_df.to_string()), self.log_stack_depth)
         #self.log_stack_depth -= 1
         log_in_color('green', 'debug', 'END executeTransactionsForDay(priority_level=' + str(priority_level) + ',date=' + str(date_YYYYMMDD) + ') ' + str(row_count_string) + str(bal_string),
                      self.log_stack_depth)
@@ -1618,9 +1625,9 @@ class ExpenseForecast:
                     raise e
 
             log_in_color('green', 'info', 'END SATISFICE ' + str(d.strftime('%Y-%m-%d')) + bal_string, self.log_stack_depth)
-            log_in_color('white','debug','########### SATISFICE ' + row_count_string + ' ###########################################################################################################')
-            log_in_color('white','debug',forecast_df.to_string())
-            log_in_color('white','debug','##########################################################################################################################################################')
+            log_in_color('white','debug','########### SATISFICE ' + row_count_string + ' ###########################################################################################################',self.log_stack_depth)
+            log_in_color('white','debug',forecast_df.to_string(),self.log_stack_depth)
+            log_in_color('white','debug','##########################################################################################################################################################',self.log_stack_depth)
 
         if not failed_to_satisfice_flag:
             unique_priority_indices = full_budget_schedule_df.Priority.unique()
@@ -1651,22 +1658,22 @@ class ExpenseForecast:
                     p_LJ_d = pd.merge(proposed_df, deferred_df, on=['Date','Memo','Priority'])
                     p_LJ_s = pd.merge(proposed_df, skipped_df, on=['Date','Memo','Priority'])
 
-                    print('p_LJ_c:')
-                    print(p_LJ_c.to_string())
-                    print('p_LJ_d:')
-                    print(p_LJ_d.to_string())
-                    print('p_LJ_s:')
-                    print(p_LJ_s.to_string())
+                    # print('p_LJ_c:')
+                    # print(p_LJ_c.to_string())
+                    # print('p_LJ_d:')
+                    # print(p_LJ_d.to_string())
+                    # print('p_LJ_s:')
+                    # print(p_LJ_s.to_string())
 
                     not_confirmed_sel_vec = (~proposed_df.index.isin( p_LJ_c ))
                     not_deferred_sel_vec = (~proposed_df.index.isin( p_LJ_d ))
                     not_skipped_sel_vec = (~proposed_df.index.isin( p_LJ_s ))
                     remaining_unproposed_sel_vec = (not_confirmed_sel_vec & not_deferred_sel_vec & not_skipped_sel_vec)
 
-                    print('!C: '+str(not_confirmed_sel_vec))
-                    print('!D: '+str(not_deferred_sel_vec))
-                    print('!S: '+str(not_skipped_sel_vec))
-                    print(' P: '+str(remaining_unproposed_sel_vec))
+                    # print('!C: '+str(not_confirmed_sel_vec))
+                    # print('!D: '+str(not_deferred_sel_vec))
+                    # print('!S: '+str(not_skipped_sel_vec))
+                    # print(' P: '+str(remaining_unproposed_sel_vec))
                     remaining_unproposed_transactions_df = proposed_df[remaining_unproposed_sel_vec]
 
                     log_in_color('cyan', 'debug', 'Confirmed: ', self.log_stack_depth)
@@ -1680,6 +1687,8 @@ class ExpenseForecast:
                     log_in_color('cyan', 'debug', 'Remaining unproposed: ', self.log_stack_depth)
                     log_in_color('cyan', 'debug', remaining_unproposed_transactions_df.to_string(), self.log_stack_depth + 1)
 
+                    account_set_before_p2_plus_txn = copy.deepcopy(account_set)
+
                     forecast_df, skipped_df, confirmed_df, deferred_df = self.executeTransactionsForDay(account_set,
                                                                                                         forecast_df=forecast_df,
                                                                                                         date_YYYYMMDD=d.strftime('%Y%m%d'),
@@ -1691,11 +1700,46 @@ class ExpenseForecast:
                                                                                                         priority_level=priority_index,
                                                                                                         allow_skip_and_defer=True,
                                                                                                         allow_partial_payments=True)
+
                     account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, d)
 
-                    log_in_color('white','debug','########### OPTIMIZE ' + str(priority_index) + ' ' + row_count_string + ' ###########################################################################################################')
-                    log_in_color('white','debug',forecast_df.to_string())
-                    log_in_color('white','debug','##########################################################################################################################################################')
+                    account_set_after_p2_plus_txn = copy.deepcopy(account_set)
+
+                    #we apply the delta to all future rows
+                    account_deltas = account_set_after_p2_plus_txn.getAccounts().Balance - account_set_before_p2_plus_txn.getAccounts().Balance
+                    # print('account_deltas:')
+                    # print(account_deltas)
+
+                    i = 0
+                    for account_index, account_row in account_set.getAccounts().iterrows():
+                        # print('i:'+str(i))
+                        # print('account_row:'+str(account_row))
+                        # print('forecast_df:')
+                        # print(forecast_df.to_string())
+                        if forecast_df[forecast_df.Date > d].empty:
+                            break
+
+                        if account_deltas[i] == 0:
+                            i += 1
+                            continue
+
+                        if not raise_satisfice_failed_exception:
+
+                        print('forecast_df before roll-forward:')
+                        print(forecast_df.to_string())
+
+                        row_sel_vec = ( forecast_df.Date > d )
+                        col_sel_vec = ( forecast_df.columns == account_row.Name )
+
+                        forecast_df.loc[row_sel_vec, col_sel_vec] = forecast_df.loc[row_sel_vec, col_sel_vec].add(account_deltas[i])
+                        i += 1
+
+                        print('forecast_df after roll-forward:')
+                        print(forecast_df.to_string())
+
+                    log_in_color('white','debug','########### OPTIMIZE ' + str(priority_index) + ' ' + row_count_string + ' ###########################################################################################################',self.log_stack_depth)
+                    log_in_color('white','debug',forecast_df.to_string(),self.log_stack_depth)
+                    log_in_color('white','debug','##########################################################################################################################################################',self.log_stack_depth)
 
         if failed_to_satisfice_flag:
 
