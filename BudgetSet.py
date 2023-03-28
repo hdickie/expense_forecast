@@ -2,39 +2,44 @@ import BudgetItem, pandas as pd, datetime
 
 from log_methods import log_in_color
 
-def generate_date_sequence(start_date_YYYYMMDD,num_days,cadence):
+def generate_date_sequence(start_date_YYYYMMDD, num_days, cadence):
     """ A wrapper for pd.date_range intended to make code easier to read.
 
     #todo write project_utilities.generate_date_sequence() doctests
     """
+    #log_in_color('green', 'debug', 'ENTER generate_date_sequence(start_date_YYYYMMDD=' + str(start_date_YYYYMMDD) + ',num_days=' + str(num_days) + ',=' + str(cadence) + '):', 0)
+    # print('start_date_YYYYMMDD:'+str(start_date_YYYYMMDD))
+    # print('num_days...........:'+str(num_days))
+    # print('cadence............:'+str(cadence))
 
-    start_date = datetime.datetime.strptime(start_date_YYYYMMDD,'%Y%m%d')
+    start_date = datetime.datetime.strptime(start_date_YYYYMMDD, '%Y%m%d')
     end_date = start_date + datetime.timedelta(days=num_days)
 
     if cadence.lower() == "once":
         return pd.Series(start_date)
     elif cadence.lower() == "daily":
-        return_series = pd.date_range(start_date,end_date,freq='D')
+        return_series = pd.date_range(start_date, end_date, freq='D')
     elif cadence.lower() == "weekly":
-        return_series = pd.date_range(start_date,end_date,freq='W')
+        return_series = pd.date_range(start_date, end_date, freq='W')
     elif cadence.lower() == "semiweekly":
-        return_series = pd.date_range(start_date,end_date,freq='2W')
+        return_series = pd.date_range(start_date, end_date, freq='2W')
     elif cadence.lower() == "monthly":
 
-        day_delta = int(start_date.strftime('%d'))-1
-        first_of_each_relevant_month = pd.date_range(start_date,end_date,freq='MS')
+        day_delta = int(start_date.strftime('%d')) - 1
+        first_of_each_relevant_month = pd.date_range(start_date - datetime.timedelta(days=day_delta), end_date, freq='MS')
 
         return_series = first_of_each_relevant_month + datetime.timedelta(days=day_delta)
     elif cadence.lower() == "quarterly":
-        #todo check if this needs an adjustment like the monthly case did
-        return_series = pd.date_range(start_date,end_date,freq='Q')
+        # todo check if this needs an adjustment like the monthly case did
+        return_series = pd.date_range(start_date, end_date, freq='Q')
     elif cadence.lower() == "yearly":
         # todo check if this needs an adjustment like the monthly case did
-        return_series = pd.date_range(start_date,end_date,freq='Y')
+        return_series = pd.date_range(start_date, end_date, freq='Y')
     else:
-        print('Error: undefind cadence')
-        print('Value was:'+str(cadence))
+        raise ValueError("Undefined cadence in generate_date_sequence: "+str(cadence))
 
+    # log_in_color('green', 'debug', str(return_series), 0)
+    # log_in_color('green', 'debug', 'EXIT generate_date_sequence()', 0)
     return return_series
 
 class BudgetSet:
@@ -115,7 +120,7 @@ class BudgetSet:
         """
         # log_in_color('green', 'debug','ENTER getBudgetSchedule(start_date_YYYYMMDD='+str(start_date_YYYYMMDD)+',end_date_YYYYMMDD='+str(end_date_YYYYMMDD)+')', 0)
         # log_in_color('green', 'debug','self.budget_items:', 0)
-        #for b in self.budget_items:
+        # for b in self.budget_items:
         #    log_in_color('green', 'debug', '\n'+str(b), 0)
 
         #print('getBudgetSchedule():')
@@ -185,6 +190,9 @@ class BudgetSet:
 
         all_current_budget_items = self.getBudgetItems()
         memos_w_matching_priority = all_current_budget_items.loc[all_current_budget_items.Priority == priority,'Memo']
+
+        if cadence.lower() == 'once':
+            assert start_date_YYYYMMDD == end_date_YYYYMMDD
 
         log_in_color('green', 'info', 'addBudgetItem(priority='+str(priority)+',cadence='+str(cadence)+',memo='+str(memo)+',start_date_YYYYMMDD='+str(start_date_YYYYMMDD)+',end_date_YYYYMMDD='+str(end_date_YYYYMMDD)+')')
 

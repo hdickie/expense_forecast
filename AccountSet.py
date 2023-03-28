@@ -1,6 +1,10 @@
 import Account, pandas as pd
 import copy
 from log_methods import log_in_color
+import numpy as np
+
+import BudgetSet #this could be refactored out, and should be in terms of independent dependencies and clear organization, but it works
+import BudgetItem
 
 class AccountSet:
 
@@ -390,32 +394,43 @@ class AccountSet:
                                       raise_exceptions=raise_exceptions)
             self.accounts.append(account)
 
-    def getAvailableBalances(self):
-        #log_in_color('magenta','debug','ENTER getAvailableBalances()')
+    def getBalances(self):
+        #log_in_color('magenta','debug','ENTER getBalances()')
         balances_dict = {}
         for i in range(0,len(self.accounts)):
             a = self.accounts[i]
             if a.account_type == 'checking':
                 balances_dict[a.name] = a.balance
+
             elif a.account_type == 'prev stmt bal':
                 prev_balance = a.balance
                 curr_balance = self.accounts[i-1].balance
 
                 remaining_prev_balance = a.max_balance - ( prev_balance + curr_balance )
                 balances_dict[a.name.split(':')[0]] = remaining_prev_balance
+
+            elif a.account_type == 'principal balance':
+                principal_balance = a.balance
+                interest_balance = self.accounts[i+1].balance
+                balances_dict[a.name.split(':')[0]] = ( principal_balance + interest_balance )
             else:
                 #log_in_color('magenta', 'debug', 'Unexpected account type: '+str(a.account_type))
                 pass
         #     print('balances_dict:')
         #     print(balances_dict)
         # log_in_color('magenta', 'debug', balances_dict)
-        # log_in_color('magenta', 'debug', 'EXIT getAvailableBalances()')
+        # log_in_color('magenta', 'debug', 'EXIT getBalances()')
         return balances_dict
 
     def executeTransaction(self, Account_From, Account_To, Amount,income_flag=False):
 
         if Amount == 0:
             return True
+
+        if Account_To == 'ALL_LOANS':
+            payment_dict = self.allocate_additional_loan_payments(Amount)
+            print('payment_dict:')
+            print(payment_dict)
 
         boundary_error_ind = False
         equivalent_exchange_error_ind = False
@@ -429,7 +444,7 @@ class AccountSet:
         log_in_color('green', 'debug','executeTransaction(Account_From='+Account_From+', Account_To='+Account_To+', Amount='+debug_print_Amount+')')
 
         before_txn_total_available_funds = 0
-        available_funds = self.getAvailableBalances()
+        available_funds = self.getBalances()
         starting_available_funds = copy.deepcopy(available_funds)
 
         log_in_color('magenta', 'debug', 'available_funds:'+str(available_funds))
@@ -492,7 +507,7 @@ class AccountSet:
                 self.accounts[account_from_index].balance -= abs(Amount)
             elif AF_Account_Type == 'credit' or AF_Account_Type == 'loan':
 
-                balance_after_proposed_transaction = self.getAvailableBalances()[self.accounts[account_from_index].name.split(':')[0]] - abs(Amount)
+                balance_after_proposed_transaction = self.getBalances()[self.accounts[account_from_index].name.split(':')[0]] - abs(Amount)
                 #this check assumes that both prev and curr accounts for credit have the same bounds
 
                 # log_in_color('magenta', 'debug', 'account min:' + str(self.accounts[account_from_index].min_balance), 3)
@@ -525,7 +540,7 @@ class AccountSet:
             elif AT_Account_Type == 'credit' or AT_Account_Type == 'loan':
 
                 AT_ANAME = self.accounts[account_to_index].name.split(':')[0]
-                balance_after_proposed_transaction = self.getAvailableBalances()[AT_ANAME] + abs(Amount)
+                balance_after_proposed_transaction = self.getBalances()[AT_ANAME] + abs(Amount)
 
                 try:
                     assert self.accounts[account_to_index].min_balance <= balance_after_proposed_transaction <= self.accounts[account_to_index].max_balance
@@ -558,7 +573,7 @@ class AccountSet:
                 raise NotImplementedError #from types other than checking or credit not yet implemented
 
         after_txn_total_available_funds = 0
-        available_funds = self.getAvailableBalances()
+        available_funds = self.getBalances()
         for a in available_funds.keys():
             after_txn_total_available_funds += available_funds[a]
 
@@ -569,8 +584,13 @@ class AccountSet:
 
         single_account_transaction_ind = ( Account_From == 'None' or Account_To == 'None' )
 
+        debt_payment_ind = ( AT_Account_Type.lower() == 'loan' )
+
         if single_account_transaction_ind and income_flag:
             if round(empirical_delta, 2) != Amount:
+                equivalent_exchange_error_ind = True
+        elif not single_account_transaction_ind and debt_payment_ind:
+            if round(empirical_delta, 2) != (Amount * -2):
                 equivalent_exchange_error_ind = True
         elif single_account_transaction_ind and not income_flag:
             if round(empirical_delta, 2) != (Amount * -1):
@@ -587,10 +607,166 @@ class AccountSet:
             log_in_color('red', 'error', 'FUNDS NOT ACCOUNTED FOR POST-TRANSACTION', 0)
             log_in_color('red', 'error', 'single_account_transaction_ind:'+str(single_account_transaction_ind),0)
             log_in_color('red', 'error', 'income_flag:' + str(income_flag), 0)
+            log_in_color('red', 'error', 'debt_payment_ind:' + str(debt_payment_ind), 0)
             log_in_color('red', 'error', 'starting_available_funds:' + str(starting_available_funds), 0)
-            log_in_color('red', 'error', 'available_funds:' + str(self.getAvailableBalances()), 0)
+            log_in_color('red', 'error', 'available_funds:' + str(self.getBalances()), 0)
+            log_in_color('red', 'error', 'Amount:' + str(Amount), 0)
+            log_in_color('red', 'error', 'empirical_delta:' + str(empirical_delta), 0)
             raise ValueError("Funds not accounted for in AccountSet::executeTransaction()") # Funds not accounted for
 
+
+
+
+    def allocate_additional_loan_payments(self, amount):
+        log_in_color('green','debug','ENTER allocate_additional_loan_payments(amount='+str(amount)+')')
+
+        date_string_YYYYMMDD = '20000101' #this method needs to be refactored
+
+        account_set = copy.deepcopy(self)
+
+        A = account_set.getAccounts()
+        principal_accts_df = A[A.Account_Type == 'principal balance']
+
+        principal_accts_df['Marginal Interest Amount'] = principal_accts_df.Balance * principal_accts_df.APR
+        principal_accts_df['Marginal Interest Rank'] = principal_accts_df['Marginal Interest Amount'].rank(method='dense', ascending=False)
+
+        number_of_phase_space_regions = max(principal_accts_df['Marginal Interest Rank'])
+        # print('number_of_phase_space_regions:'+str(number_of_phase_space_regions))
+
+        all_account_names__1 = [x.split(':') for x in principal_accts_df.Name]
+        all_account_names__2 = [name for sublist in all_account_names__1 for name in sublist]
+        all_account_names = set(all_account_names__2) - set([' Principal Balance'])
+
+        payment_amounts__BudgetSet = BudgetSet.BudgetSet([])
+
+        for i in range(0, int(number_of_phase_space_regions)):
+
+            if amount == 0:
+                break
+
+            # print('i:'+str(i))
+            A = account_set.getAccounts()
+            # print('A:\n')
+            # print(A.to_string())
+
+            principal_accts_df = A[A.Account_Type == 'principal balance']
+            interest_accts_df = A[A.Account_Type == 'interest']
+
+            total_amount_per_loan = {}
+            for acct_name in all_account_names:
+                principal_amt = principal_accts_df.iloc[[acct_name in pa_element for pa_element in principal_accts_df.Name], :].Balance.iloc[0]
+                interest_amt = interest_accts_df.iloc[[acct_name in pa_element for pa_element in principal_accts_df.Name], :].Balance.iloc[0]
+
+                total_amount_per_loan[acct_name] = principal_amt + interest_amt
+
+            P = np.matrix(principal_accts_df.Balance)
+            r = np.matrix(principal_accts_df.APR)
+            P_dot_r = P.T.dot(r)
+
+            reciprocal_rates = []
+            for i in range(0, P.shape[1]):
+                reciprocal_rates.append(1 / r[0, i])
+            reciprocal_rates = np.matrix(reciprocal_rates)
+            # print('reciprocal_rates:')
+            # print(reciprocal_rates.shape)
+            # print(reciprocal_rates)
+
+            # print('P_dot_r:')
+            # print(P_dot_r.shape)
+            # print(np.matrix(P_dot_r))
+
+            marginal_interest_amounts__list = []
+            for i in range(0, P.shape[1]):
+                marginal_interest_amounts__list.append(round(P_dot_r[i, i], 2))
+            # print(marginal_interest_amounts__list)
+            marginal_interest_amounts__matrix = np.matrix(marginal_interest_amounts__list)
+            # print('marginal_interest_amounts__matrix:')
+            # print(marginal_interest_amounts__matrix)
+            marginal_interest_amounts_df = pd.DataFrame(marginal_interest_amounts__list)
+            marginal_interest_amounts_df.columns = ['Marginal Interest Amount']
+            marginal_interest_amounts_df['Marginal Interest Rank'] = marginal_interest_amounts_df['Marginal Interest Amount'].rank(method='dense', ascending=False)
+            # print('marginal_interest_amounts_df:')
+            # print(marginal_interest_amounts_df)
+
+            try:
+                next_lowest_marginal_interest_amount = marginal_interest_amounts_df[marginal_interest_amounts_df['Marginal Interest Rank'] == 2].iloc[0, 0]
+            except Exception as e:
+                next_lowest_marginal_interest_amount = 0
+            # print('next_lowest_marginal_interest_amount:')
+            # print(next_lowest_marginal_interest_amount)
+            marginal_interest_amounts_df__c = copy.deepcopy(marginal_interest_amounts_df)
+
+            # print('marginal_interest_amounts_df__c[marginal_interest_amounts_df__c[Marginal Interest Rank] == 1]')
+            # print(marginal_interest_amounts_df__c['Marginal Interest Rank'] == 1)
+            # print(marginal_interest_amounts_df__c[marginal_interest_amounts_df__c['Marginal Interest Rank'] == 1])
+            # print(marginal_interest_amounts_df__c[marginal_interest_amounts_df__c['Marginal Interest Rank'] == 1]['Marginal Interest Amount'])
+
+            marginal_interest_amounts_df__c.loc[
+                marginal_interest_amounts_df__c['Marginal Interest Rank'] == 1, marginal_interest_amounts_df__c.columns == 'Marginal Interest Amount'] = next_lowest_marginal_interest_amount
+            next_step_marginal_interest_vector = np.matrix(marginal_interest_amounts_df__c['Marginal Interest Amount'])
+            # print('next_step_marginal_interest_vector:\n')
+            # print(next_step_marginal_interest_vector)
+
+            current_state = marginal_interest_amounts__matrix.T.dot(reciprocal_rates)
+            # print('current_state:\n'+str(current_state))
+
+            # print('next_step_marginal_interest_vector:')
+            # print(next_step_marginal_interest_vector)
+
+            next_state = next_step_marginal_interest_vector.T.dot(reciprocal_rates)
+            # print('next_state:\n' + str(next_state))
+
+            delta = current_state - next_state
+            # print('delta:')
+            # print(delta)
+
+            payment_amounts = []
+            for i in range(0, delta.shape[0]):
+                loop__amount = delta[i, i]
+                payment_amounts.append(loop__amount)
+
+            if amount <= sum(payment_amounts):
+                payment_amounts = [a * (amount) / sum(payment_amounts) for a in payment_amounts]
+            # print('amount -> remaining_amount:')
+            # print(str(amount) + ' -> ' + str(amount - sum(payment_amounts)))
+            amount = amount - sum(payment_amounts)
+
+            for i in range(0, delta.shape[0]):
+                loop__to_name = principal_accts_df.Name.iloc[i].split(':')[0]
+                loop__amount = round(payment_amounts[i], 2)
+
+                # print( str( loop__amount ) + ' ' + loop__to_name )
+
+                if loop__amount == 0:
+                    continue
+
+                account_set.executeTransaction(Account_From=None, Account_To=loop__to_name, Amount=loop__amount)
+                payment_amounts__BudgetSet.addBudgetItem(date_string_YYYYMMDD, date_string_YYYYMMDD, 7, 'once', loop__amount, loop__to_name + ' additional payment',False,partial_payment_allowed=False)
+
+        # consolidate payments
+        B = payment_amounts__BudgetSet.getBudgetItems()
+        # print('B:')
+        # print(B.to_string())
+        payment_dict = {}
+        for index, row in B.iterrows():
+            # print('row:')
+            # print(row)
+
+            if row.Memo in payment_dict.keys():
+                payment_dict[row.Memo] = payment_dict[row.Memo] + row.Amount
+            else:
+                payment_dict[row.Memo] = row.Amount
+
+        # final_budget_items = []
+        # for key in payment_dict.keys():
+        #     final_budget_items.append(BudgetItem.BudgetItem(date_string_YYYYMMDD, date_string_YYYYMMDD, 7, 'once', payment_dict[key], False, key, ))
+        # print('final_budget_items:')
+        # print(final_budget_items)
+
+        log_in_color('green', 'debug', 'payment_dict:')
+        log_in_color('green', 'debug', payment_dict)
+        log_in_color('green', 'debug', 'EXIT allocate_additional_loan_payments()')
+        return payment_dict
 
 
     def getAccounts(self):
