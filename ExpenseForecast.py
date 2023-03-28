@@ -578,7 +578,10 @@ class ExpenseForecast:
                     # forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'] += confirmed_row.Memo + ' ; '
                     # print('Post-append memo: ' + str(forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'].iat[0,0]))
 
-                    forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'] += confirmed_row.Memo + ' ($' + str(confirmed_row.Amount) + ') ; '
+                    if confirmed_row.Memo == 'PAY_TO_ALL_LOANS':
+                        forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'] += account_row.Name + ' payment ($' + str(current_balance - relevant_balance) + ') ; '
+                    else:
+                        forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'] += confirmed_row.Memo + ' ($' + str(confirmed_row.Amount) + ') ; '
         #log_in_color('green', 'debug', 'END PROCESSING CONFIRMED TXNS', self.log_stack_depth)
         # log_in_color('cyan', 'debug', 'AFTER', self.log_stack_depth)
         # log_in_color('cyan', 'debug', forecast_df[row_sel_vec].to_string(), self.log_stack_depth)
@@ -1283,7 +1286,9 @@ class ExpenseForecast:
                 # print(row)
                 if account_row.Account_Type == 'prev stmt bal':  # cc min payment
 
-                    minimum_payment_amount = max(40, account_row.Balance * 0.02)
+                    minimum_payment_amount = max(40, account_row.Balance * 0.033) #this is an estimate
+                    #it turns out that the way this really works is that Chase uses 1% PLUS the interest accrued to be charged immediately, not added to the principal
+                    #very much not how I designed this but not earth-shatteringly different
 
 
                     payment_toward_prev = min(minimum_payment_amount, account_row.Balance)
@@ -1732,7 +1737,7 @@ class ExpenseForecast:
         #logger.debug('self.log_stack_depth -= 1')
         return [forecast_df, skipped_df, confirmed_df, deferred_df]
 
-    def plotOverall(self, forecast_df, output_path):
+    def plotOverall(self, output_path):
         """
         Writes to file a plot of all accounts.
 
@@ -1744,8 +1749,8 @@ class ExpenseForecast:
         :return:
         """
         figure(figsize=(14, 6), dpi=80)
-        for i in range(1, forecast_df.shape[1] - 1):
-            plt.plot(forecast_df['Date'], forecast_df.iloc[:, i], label=forecast_df.columns[i])
+        for i in range(1, self.forecast_df.shape[1] - 1):
+            plt.plot(self.forecast_df['Date'], self.forecast_df.iloc[:, i], label=self.forecast_df.columns[i])
 
         ax = plt.subplot(111)
         box = ax.get_position()
@@ -1756,8 +1761,8 @@ class ExpenseForecast:
 
         # TODO plotOverall():: a large number of accounts will require some adjustment here so that the legend is entirely visible
 
-        min_date = min(forecast_df.Date).strftime('%Y-%m-%d')
-        max_date = max(forecast_df.Date).strftime('%Y-%m-%d')
+        min_date = min(self.forecast_df.Date).strftime('%Y-%m-%d')
+        max_date = max(self.forecast_df.Date).strftime('%Y-%m-%d')
         plt.title('Forecast: ' + str(min_date) + ' -> ' + str(max_date))
         plt.savefig(output_path)
 

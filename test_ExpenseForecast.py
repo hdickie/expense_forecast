@@ -1842,19 +1842,20 @@ class TestExpenseForecastMethods(unittest.TestCase):
     def test_my_real_life_data(self):
         test_description = 'test_my_real_life_data'
 
-        # start_date_YYYYMMDD = '20230313'
-        # end_date_YYYYMMDD = '20230831'
+        # start_date_YYYYMMDD = '20230328'
+        # end_date_YYYYMMDD = '20230601'
         # #end_date_YYYYMMDD = '20231231'
 
 
         #2023-08-31  2023-08-31 00:00:00  2144.18               1433.59               15186.7
 
-        start_date_YYYYMMDD = '20230831'
+        start_date_YYYYMMDD = '20230328'
         end_date_YYYYMMDD = '20231231'
 
-        current_checking_balance = 2144.18
-        current_credit_previous_statement_balance = 15186.7
-        current_credit_current_statement_balance = 1433.59
+        current_checking_balance = 2424.62 + 450*4
+        current_credit_previous_statement_balance = 7351.2
+        current_credit_current_total_balance = 7781.47
+        current_credit_current_statement_balance = current_credit_current_total_balance - current_credit_previous_statement_balance
 
         account_set = AccountSet.AccountSet([])
         budget_set = BudgetSet.BudgetSet([])
@@ -1941,10 +1942,10 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                  deferrable=False,
                                  partial_payment_allowed=False)
 
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20230102', end_date_YYYYMMDD=end_date_YYYYMMDD, priority=4,
-                                 cadence='monthly', amount=3611.5, memo='cyclical billing total',
-                                 deferrable=False,
-                                 partial_payment_allowed=False)
+        # budget_set.addBudgetItem(start_date_YYYYMMDD='20230102', end_date_YYYYMMDD=end_date_YYYYMMDD, priority=4,
+        #                          cadence='monthly', amount=3611.5, memo='cyclical billing total',
+        #                          deferrable=False,
+        #                          partial_payment_allowed=True)
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20230317', end_date_YYYYMMDD=end_date_YYYYMMDD, priority=1,
                                  cadence='weekly', amount=450, memo='income',
@@ -1970,7 +1971,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
 
         memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=2)
         memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=3)
-        memo_rule_set.addMemoRule(memo_regex='cyclical billing total', account_from='Checking', account_to=None, transaction_priority=4)
+        #memo_rule_set.addMemoRule(memo_regex='cyclical billing total', account_from='Checking', account_to=None, transaction_priority=4)
         memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=5)
         memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=6)
         memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=7)
@@ -1989,6 +1990,8 @@ class TestExpenseForecastMethods(unittest.TestCase):
         log_in_color('white','debug',E.skipped_df.to_string())
         log_in_color('white', 'debug', 'Forecast:')
         log_in_color('white', 'debug', E.forecast_df.to_string())
+
+        E.plotOverall('./out.png')
 
     def test_p5_and_6__expect_defer(self):
         test_description = 'test_p5_and_6__expect_defer'
@@ -2317,15 +2320,23 @@ class TestExpenseForecastMethods(unittest.TestCase):
         #                                              expected_result_df,
         #                                              test_description)
 
-        E = ExpenseForecast.ExpenseForecast(account_set,
-                                            budget_set,
-                                            memo_rule_set,
-                                            start_date_YYYYMMDD,
-                                            end_date_YYYYMMDD, raise_exceptions=False)
+        # for i in range(300,20000,1000):
+        #     response = account_set.allocate_additional_loan_payments(i)
+        #     print(response)
+        ### pass by manual inspection
+
+
+        # E = ExpenseForecast.ExpenseForecast(account_set,
+        #                                     budget_set,
+        #                                     memo_rule_set,
+        #                                     start_date_YYYYMMDD,
+        #                                     end_date_YYYYMMDD, raise_exceptions=False)
         #
         # print(E.forecast_df.to_string())
+        #
+        # E.forecast_df.to_csv('./out.csv')
 
-        E.forecast_df.to_csv('./out.csv')
+        ### pass by manual inspection
 
 
     # def test_p8__savings(self):

@@ -424,17 +424,25 @@ class AccountSet:
 
     def executeTransaction(self, Account_From, Account_To, Amount,income_flag=False):
 
+        Amount = round(Amount,2)
+
         if Amount == 0:
             return True
 
         if Account_To == 'ALL_LOANS':
-            payment_dict = self.allocate_additional_loan_payments(Amount)
-            print('payment_dict:')
-            print(payment_dict)
+            loan_payment__list = self.allocate_additional_loan_payments(Amount)
+            for i in range(0,len(loan_payment__list)):
+                single_account_loan_payment = loan_payment__list[i]
+                self.executeTransaction(single_account_loan_payment[0], #From
+                                        single_account_loan_payment[1], #To
+                                        single_account_loan_payment[2], #Amount
+                                        income_flag=False)
+            return True
 
         boundary_error_ind = False
         equivalent_exchange_error_ind = False
         debug_print_Amount=str(Amount)
+        debt_payment_ind = False
 
         if Account_From is None:
             Account_From = 'None'
@@ -539,6 +547,8 @@ class AccountSet:
                 log_in_color('magenta', 'debug', 'Paid ' + str(Amount) + ' to ' + Account_To, 0)
             elif AT_Account_Type == 'credit' or AT_Account_Type == 'loan':
 
+                debt_payment_ind = (AT_Account_Type.lower() == 'loan')
+
                 AT_ANAME = self.accounts[account_to_index].name.split(':')[0]
                 balance_after_proposed_transaction = self.getBalances()[AT_ANAME] + abs(Amount)
 
@@ -577,26 +587,25 @@ class AccountSet:
         for a in available_funds.keys():
             after_txn_total_available_funds += available_funds[a]
 
-        empirical_delta = after_txn_total_available_funds - before_txn_total_available_funds
+        empirical_delta = round(after_txn_total_available_funds - before_txn_total_available_funds,2)
 
         if boundary_error_ind:
             raise ValueError("Account boundaries were violated")
 
         single_account_transaction_ind = ( Account_From == 'None' or Account_To == 'None' )
 
-        debt_payment_ind = ( AT_Account_Type.lower() == 'loan' )
 
         if single_account_transaction_ind and income_flag:
-            if round(empirical_delta, 2) != Amount:
+            if empirical_delta != Amount:
                 equivalent_exchange_error_ind = True
         elif not single_account_transaction_ind and debt_payment_ind:
-            if round(empirical_delta, 2) != (Amount * -2):
+            if empirical_delta != (Amount * -2):
                 equivalent_exchange_error_ind = True
         elif single_account_transaction_ind and not income_flag:
-            if round(empirical_delta, 2) != (Amount * -1):
+            if empirical_delta != (Amount * -1):
                 equivalent_exchange_error_ind = True
         elif not single_account_transaction_ind and not income_flag:
-            if round(empirical_delta, 2) != 0:
+            if empirical_delta != 0:
                 equivalent_exchange_error_ind = True
         else:
             equivalent_exchange_error_ind = True
@@ -618,7 +627,17 @@ class AccountSet:
 
 
     def allocate_additional_loan_payments(self, amount):
-        log_in_color('green','debug','ENTER allocate_additional_loan_payments(amount='+str(amount)+')')
+
+        bal_string = ''
+        for account_index, account_row in self.getAccounts().iterrows():
+            bal_string += '$' + str(account_row.Balance) + ' '
+
+        #log_in_color('green','debug','ENTER allocate_additional_loan_payments(amount='+str(amount)+') '+bal_string)
+
+        row_sel_vec = [ x for x in ( self.getAccounts().Name == 'Checking' ) ]
+        if self.getAccounts()[row_sel_vec].Balance.iat[0] < amount:
+            log_in_color('green', 'debug', 'input amount is greater than available balance. Reducing amount.')
+            amount = self.getAccounts().loc[row_sel_vec,:].Balance.iat[0]
 
         date_string_YYYYMMDD = '20000101' #this method needs to be refactored
 
@@ -741,7 +760,7 @@ class AccountSet:
                     continue
 
                 account_set.executeTransaction(Account_From=None, Account_To=loop__to_name, Amount=loop__amount)
-                payment_amounts__BudgetSet.addBudgetItem(date_string_YYYYMMDD, date_string_YYYYMMDD, 7, 'once', loop__amount, loop__to_name + ' additional payment',False,partial_payment_allowed=False)
+                payment_amounts__BudgetSet.addBudgetItem(date_string_YYYYMMDD, date_string_YYYYMMDD, 7, 'once', loop__amount, loop__to_name,False,partial_payment_allowed=False)
 
         # consolidate payments
         B = payment_amounts__BudgetSet.getBudgetItems()
@@ -757,16 +776,16 @@ class AccountSet:
             else:
                 payment_dict[row.Memo] = row.Amount
 
-        # final_budget_items = []
-        # for key in payment_dict.keys():
-        #     final_budget_items.append(BudgetItem.BudgetItem(date_string_YYYYMMDD, date_string_YYYYMMDD, 7, 'once', payment_dict[key], False, key, ))
-        # print('final_budget_items:')
-        # print(final_budget_items)
+        final_txns = []
+        for key in payment_dict.keys():
+            final_txns.append(['Checking',key,payment_dict[key]])
+            #final_budget_items.append(BudgetItem.BudgetItem(date_string_YYYYMMDD, date_string_YYYYMMDD, 7, 'once', payment_dict[key], False, key, ))
 
-        log_in_color('green', 'debug', 'payment_dict:')
-        log_in_color('green', 'debug', payment_dict)
-        log_in_color('green', 'debug', 'EXIT allocate_additional_loan_payments()')
-        return payment_dict
+
+        # log_in_color('green', 'debug', 'final_budget_set:')
+        # log_in_color('green', 'debug', final_budget_set)
+        # log_in_color('green', 'debug', 'EXIT allocate_additional_loan_payments(amount='+str(amount)+')')
+        return final_txns
 
 
     def getAccounts(self):
