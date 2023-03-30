@@ -539,6 +539,18 @@ class ExpenseForecast:
 
             account_set.executeTransaction(Account_From=memo_rule_row.Account_From, Account_To=memo_rule_row.Account_To, Amount=confirmed_row.Amount, income_flag=income_flag)
 
+            # if confirmed_row.Priority == 1: #if priority is not 1, then it will go through proposed or deferred where it gets memo appended
+            # print('Appending memo (CASE 1): ' + str(confirmed_row.Memo))
+            # forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'] += confirmed_row.Memo + ' ; '
+            # print('Post-append memo: ' + str(forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'].iat[0,0]))
+
+            row_sel_vec = (forecast_df.Date == datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d'))
+
+            if confirmed_row.Memo == 'PAY_TO_ALL_LOANS':
+                forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'] += account_row.Name + ' payment ($' + str(current_balance - relevant_balance) + ') ; '
+            else:
+                forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'] += confirmed_row.Memo + ' ($' + str(confirmed_row.Amount) + ') ; '
+
             #update forecast to reflect new balances
             for account_index, account_row in account_set.getAccounts().iterrows():
                 # print('account_row:')
@@ -546,7 +558,7 @@ class ExpenseForecast:
                 if (account_index + 1) == account_set.getAccounts().shape[1]:
                     break
 
-                row_sel_vec = (forecast_df.Date == datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d'))
+
                 col_sel_vec = (forecast_df.columns == account_row.Name)
 
                 # print('d: '+date_YYYYMMDD)
@@ -573,15 +585,7 @@ class ExpenseForecast:
 
                     forecast_df.loc[row_sel_vec, col_sel_vec] = relevant_balance
 
-                    #if confirmed_row.Priority == 1: #if priority is not 1, then it will go through proposed or deferred where it gets memo appended
-                    # print('Appending memo (CASE 1): ' + str(confirmed_row.Memo))
-                    # forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'] += confirmed_row.Memo + ' ; '
-                    # print('Post-append memo: ' + str(forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'].iat[0,0]))
 
-                    if confirmed_row.Memo == 'PAY_TO_ALL_LOANS':
-                        forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'] += account_row.Name + ' payment ($' + str(current_balance - relevant_balance) + ') ; '
-                    else:
-                        forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'] += confirmed_row.Memo + ' ($' + str(confirmed_row.Amount) + ') ; '
         #log_in_color('green', 'debug', 'END PROCESSING CONFIRMED TXNS', self.log_stack_depth)
         # log_in_color('cyan', 'debug', 'AFTER', self.log_stack_depth)
         # log_in_color('cyan', 'debug', forecast_df[row_sel_vec].to_string(), self.log_stack_depth)
@@ -1509,6 +1513,9 @@ class ExpenseForecast:
 
             #log_in_color('green', 'info', 'BEGIN SATISFICE ' + str(d.strftime('%Y-%m-%d')) + bal_string, self.log_stack_depth)
 
+            if not raise_satisfice_failed_exception:  # to report progress
+                log_in_color('white', 'info', str(1) + ' / ' + str(max(full_budget_schedule_df.Priority.unique())) + ' ' + d.strftime('%Y%m%d'))
+
             # print('SATISFICE BEFORE TXN:'+str(forecast_df))
             try:
 
@@ -1573,6 +1580,9 @@ class ExpenseForecast:
                 for d in all_days:
                     if d == self.start_date:
                         continue  # first day is considered final
+
+                    if not raise_satisfice_failed_exception: #to report progress
+                        log_in_color('white','info', str(priority_index) + ' / ' + str(max(unique_priority_indices)) + ' ' + d.strftime('%Y%m%d'))
 
                     C = confirmed_df.shape[0]
                     P = proposed_df.shape[0]
