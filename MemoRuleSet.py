@@ -75,6 +75,10 @@ class MemoRuleSet:
         log_in_color('yellow', 'debug', 'EXIT findMatchingMemoRule')
         return MemoRuleSet([relevant_memo])
 
+
+    def fromExcel(self):
+        raise NotImplementedError
+
     def addMemoRule(self,memo_regex,account_from,account_to,transaction_priority):
         """ Add a <MemoRule> to <list> MemoRuleSet.memo_rules.
 

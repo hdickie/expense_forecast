@@ -212,6 +212,14 @@ class BudgetSet:
         #that is, if amount and date are the same, different memos are required. its fine otherwise
         self.budget_items.append(budget_item)
 
+
+    def fromExcel(self):
+        raise NotImplementedError
+
+    def compareToBudgetSet(self,SecondBudgetSet):
+
+        raise NotImplementedError
+
     def toJSON(self):
         """
         Get a JSON <string> representing the <BudgetSet> object.

@@ -84,7 +84,7 @@ class ExpenseForecast:
         :param budget_set:
         :param memo_rule_set:
         """
-        # print('Starting Expense Forecast...\n')
+        log_in_color('green','info','ExpenseForecast(start_date_YYYYMMDD='+str(start_date_YYYYMMDD)+', end_date_YYYYMMDD='+str(end_date_YYYYMMDD)+')',self.log_stack_depth)
 
         try:
             self.start_date = datetime.datetime.strptime(start_date_YYYYMMDD, '%Y%m%d')
@@ -1425,6 +1425,8 @@ class ExpenseForecast:
     def setForecastRowBalances(self,date_YYYYMMDD,new_row):
         pass
 
+
+    #todo add deferral cadence parameter
     def computeOptimalForecast(self, start_date_YYYYMMDD, end_date_YYYYMMDD, confirmed_df, proposed_df, deferred_df, skipped_df, account_set, memo_rule_set, raise_satisfice_failed_exception=True):
         """
         One-description.
@@ -1678,8 +1680,8 @@ class ExpenseForecast:
                                 i += 1
                                 continue
 
-                            print('forecast_df before roll-forward:')
-                            print(forecast_df.to_string())
+                            # print('forecast_df before roll-forward:')
+                            # print(forecast_df.to_string())
 
                             row_sel_vec = ( forecast_df.Date > d )
                             col_sel_vec = ( forecast_df.columns == account_row.Name )
@@ -1866,8 +1868,23 @@ class ExpenseForecast:
         """
         raise NotImplementedError
 
+    def fromJSON(self):
+
+        raise NotImplementedError
+
+    def getInputFromExcel(self):
+
+        raise NotImplementedError
+
     def to_html(self):
         return self.forecast_df.to_html()
+
+    def appendSummaryLines(self):
+        #include account type totals, marginal interest, net worth
+        raise NotImplementedError
+
+    def getMilestoneDate(self,AccountSet):
+        raise NotImplementedError
 
     def compute_forecast_difference(self, forecast_df, forecast2_df, label='forecast_difference', make_plots=False, plot_directory='.', return_type='dataframe', require_matching_columns=False,
                                     require_matching_date_range=False, append_expected_values=False, diffs_only=False):
@@ -2017,6 +2034,7 @@ class ExpenseForecast:
         return_df = return_df.reindex(sorted(return_df.columns), axis=1)
 
         return return_df
+
 
 
 # written in one line so that test coverage can reach 100%

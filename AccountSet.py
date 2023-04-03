@@ -624,7 +624,8 @@ class AccountSet:
             raise ValueError("Funds not accounted for in AccountSet::executeTransaction()") # Funds not accounted for
 
 
-
+    def fromExcel(self):
+        raise NotImplementedError
 
     def allocate_additional_loan_payments(self, amount):
 

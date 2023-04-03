@@ -5,27 +5,78 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="94004e15-030d-4b7e-a7c4-801fddc59fac" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.~lock.expense_forecast__input.ods#" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/current_situation.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/current_situation.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/current_situation.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/current_situation2.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/current_situation2__20230725__20230814.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/current_situation2__20230731__20230802.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/current_situation__20230725__20230814.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/current_situation__20230731__20230802.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/current_situation__debug.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/current_situation__debug2.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/current_situation__debug3.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/expense_forecast__input.ods" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/profile.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/archive/all_data.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/archive/balances_never_change_womp_womp.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/archive/current_situation.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/archive/current_situation.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/archive/current_situation2.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/archive/current_situation2__20230725__20230814.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/archive/current_situation2__20230731__20230802.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/archive/current_situation__20230725__20230814.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/archive/current_situation__20230731__20230802.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/archive/current_situation__debug.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/archive/current_situation__debug2.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/archive/current_situation__debug3.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/archive/debug_what_i_didnt_quit_my_job_5_weeks.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/archive/difference.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/archive/difference_w_index.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/archive/expense_forecast__input.ods" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/archive/expense_forecast_debug_summary.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/archive/expense_forecast_summary.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/archive/out.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/archive/out.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/archive/out.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/archive/out2.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/archive/profile.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/archive/real_life_test__debug.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/archive/real_life_test__info.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/archive/report_template.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/archive/requirements.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/archive/test_d3.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/archive/tutorial.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/example_multiple_forecast_report.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/example_single_forecast_report.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.coverage" beforeDir="false" afterPath="$PROJECT_DIR$/.coverage" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.~lock.expense_forecast__input.ods#" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.~lock.scratch.ods#" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/AccountSet.py" beforeDir="false" afterPath="$PROJECT_DIR$/AccountSet.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BudgetSet.py" beforeDir="false" afterPath="$PROJECT_DIR$/BudgetSet.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ExpenseForecast.py" beforeDir="false" afterPath="$PROJECT_DIR$/ExpenseForecast.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out.txt" beforeDir="false" afterPath="$PROJECT_DIR$/out.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out2.txt" beforeDir="false" afterPath="$PROJECT_DIR$/out2.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastHandler.py" beforeDir="false" afterPath="$PROJECT_DIR$/ForecastHandler.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/MemoRuleSet.py" beforeDir="false" afterPath="$PROJECT_DIR$/MemoRuleSet.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/all_data.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/archive/relocated_doctests.txt" beforeDir="false" afterPath="$PROJECT_DIR$/archive/relocated_doctests.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/balances_never_change_womp_womp.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/current_situation.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/current_situation.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/current_situation2.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/current_situation2__20230725__20230814.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/current_situation__20230725__20230814.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/current_situation__debug.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/current_situation__debug2.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/current_situation__debug3.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/debug_what_i_didnt_quit_my_job_5_weeks.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/difference.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/difference_w_index.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/expense_forecast__input.ods" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/expense_forecast_debug_summary.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/expense_forecast_summary.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log_methods.py" beforeDir="false" afterPath="$PROJECT_DIR$/log_methods.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out2.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/profile.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/real_life_test__debug.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/real_life_test__info.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/report_template.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/scratch.ods" beforeDir="false" afterPath="$PROJECT_DIR$/scratch.ods" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/scratch.py" beforeDir="false" afterPath="$PROJECT_DIR$/scratch.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/test_ExpenseForecast.py" beforeDir="false" afterPath="$PROJECT_DIR$/test_ExpenseForecast.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test_d3.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tutorial.html" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -61,20 +112,20 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "last_opened_file_path": "C:/Users/HumeD/PycharmProjects/expense_forecast/main.py",
-    "settings.editor.selected.configurable": "preferences.lookFeel"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/HumeD/PycharmProjects/expense_forecast/main.py&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;
   },
-  "keyToStringList": {
-    "com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File": [
-      "Python"
+  &quot;keyToStringList&quot;: {
+    &quot;com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File&quot;: [
+      &quot;Python&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="PyConsoleOptionsProvider">
     <option name="myPythonConsoleState">
       <console-settings sdk-home="C:\Users\HumeD\PycharmProjects\expense_forecast\venv\Scripts\python.exe" working-directory="$PROJECT_DIR$">
