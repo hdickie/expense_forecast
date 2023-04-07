@@ -124,3 +124,12 @@ class ForecastHandler:
         with open(path_to_json) as json_data:
             data = json.load(json_data)
 
+    def run_forecast_from_excel_inputs(self,path_to_excel):
+
+        if not self.input_excel_values_are_valid(str(path_to_excel)):
+            raise ValueError("There was a problem with the excel sheet at this path: "+str(path_to_excel))
+
+        raise NotImplementedError
+
+    def input_excel_values_are_valid(self,path_to_excel):
+        raise NotImplementedError

@@ -208,44 +208,40 @@ class ExpenseForecast:
         skipped_df = copy.deepcopy(proposed_df.head(0))
 
         self.unique_id = str(hash(hash(account_set) + hash(budget_set) + hash(memo_rule_set) + hash(start_date_YYYYMMDD) + hash(end_date_YYYYMMDD)) % 100000).rjust(6,'0')
+
+
+        self.initial_proposed_df = proposed_df
+        self.initial_deferred_df = deferred_df
+        self.initial_skipped_df = skipped_df
+        self.initial_confirmed_df = confirmed_df
+
+
+    def runForecast(self):
         self.start_ts = datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S')
 
 
-        forecast_df, skipped_df, confirmed_df, deferred_df = self.computeOptimalForecast(start_date_YYYYMMDD=start_date_YYYYMMDD, end_date_YYYYMMDD=end_date_YYYYMMDD, confirmed_df=confirmed_df,
-                                                                                         proposed_df=proposed_df, deferred_df=deferred_df, skipped_df=skipped_df, account_set=account_set,
-                                                                                         memo_rule_set=memo_rule_set,
+        forecast_df, skipped_df, confirmed_df, deferred_df = self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date.strftime('%Y%m%d'),
+                                                                                         end_date_YYYYMMDD=self.end_date.strftime('%Y%m%d'),
+                                                                                         confirmed_df=self.initial_confirmed_df,
+                                                                                         proposed_df=self.initial_proposed_df,
+                                                                                         deferred_df=self.initial_deferred_df,
+                                                                                         skipped_df=self.initial_skipped_df,
+                                                                                         account_set=self.initial_account_set,
+                                                                                         memo_rule_set=self.initial_memo_rule_set,
                                                                                          raise_satisfice_failed_exception=False)
-        self.end_ts = datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S')
-
         self.forecast_df = forecast_df
-
-
-        #todo repalces with writing a JSON to file
-
-        # log_in_color('green','info','Writing to ./Forecast__'+run_ts+'.csv')
-        # self.forecast_df.to_csv('./Forecast__'+run_ts+'.csv')
-        log_in_color('green', 'info', 'Writing to ./Forecast__' + self.start_ts + '__' + self.unique_id + '.json')
-        #self.forecast_df.to_csv('./Forecast__' + run_ts + '.json')
-
-        #self.forecast_df.index = self.forecast_df['Date']
-
         self.skipped_df = skipped_df
         self.confirmed_df = confirmed_df
         self.deferred_df = deferred_df
 
-        f = open('Forecast__' + self.start_ts + '__' + self.unique_id + '.json','a')
-        f.write(self.toJSON())
-        f.close()
-
-        # print('self.forecast_df:')
-        # print(self.forecast_df.to_string())
+        self.end_ts = datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S')
 
         try:
-            assert (min(forecast_df.Date) == datetime.datetime.strptime(start_date_YYYYMMDD, '%Y%m%d'))
+            assert (min(forecast_df.Date) == self.start_date)
         except AssertionError as e:
             raise ValueError("""
                         ExpenseForecast() did not include the first day as specified.
-                        start_date_YYYYMMDD=""" + str(start_date_YYYYMMDD) + """
+                        start_date_YYYYMMDD=""" + str(self.start_date.strftime('%Y%m%d')) + """
                         min(forecast_df.Date)=""" + str(min(forecast_df.Date)) + """
                         """)
 
@@ -257,6 +253,24 @@ class ExpenseForecast:
                         self.end_date=""" + str(self.end_date) + """
                         max(forecast_df.Date)=""" + str(max(forecast_df.Date)) + """
                         """)
+
+    def writeToJSONFile(self):
+
+        # log_in_color('green','info','Writing to ./Forecast__'+run_ts+'.csv')
+        # self.forecast_df.to_csv('./Forecast__'+run_ts+'.csv')
+        log_in_color('green', 'info', 'Writing to ./Forecast__' + self.start_ts + '__' + self.unique_id + '.json')
+        #self.forecast_df.to_csv('./Forecast__' + run_ts + '.json')
+
+        #self.forecast_df.index = self.forecast_df['Date']
+
+        f = open('Forecast__' + self.start_ts + '__' + self.unique_id + '.json','a')
+        f.write(self.toJSON())
+        f.close()
+
+        # print('self.forecast_df:')
+        # print(self.forecast_df.to_string())
+
+
 
 
 
