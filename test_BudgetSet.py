@@ -18,7 +18,7 @@ class TestBudgetSetMethods(unittest.TestCase):
     def test_addBudgetItem(self):
         test_budget_set = BudgetSet.BudgetSet()
         test_budget_set.addBudgetItem(start_date_YYYYMMDD='20000101',end_date_YYYYMMDD='20000101', priority=1, cadence='once',
-                                      amount=10, deferrable=False, memo='test 2')
+                                      amount=10, deferrable=False, memo='test 2',partial_payment_allowed=False)
         self.assertEqual('<class \'BudgetSet.BudgetSet\'>', str(type(test_budget_set)))
 
     def test_getBudgetItems(self):
@@ -27,7 +27,7 @@ class TestBudgetSetMethods(unittest.TestCase):
         self.assertIsNotNone(test_df)
 
         test_budget_set.addBudgetItem(start_date_YYYYMMDD='20000101',end_date_YYYYMMDD='20000101',priority=1,cadence='once',
-            amount=10, deferrable=False, memo='test')
+            amount=10, deferrable=False, memo='test',partial_payment_allowed=False)
         test_df = test_budget_set.getBudgetItems()
         self.assertIsNotNone(test_df)
 
@@ -51,7 +51,8 @@ class TestBudgetSetMethods(unittest.TestCase):
         budgetset_str = str(test_budget_set)
         self.assertIsNotNone(budgetset_str)
 
-        test_budget_set.addBudgetItem(start_date_YYYYMMDD='20220101',end_date_YYYYMMDD='20220101', priority=1,cadence='daily',amount=0,deferrable=False,memo='test'
+        test_budget_set.addBudgetItem(start_date_YYYYMMDD='20220101',end_date_YYYYMMDD='20220101', priority=1,cadence='daily',amount=0,deferrable=False,memo='test',
+                                      partial_payment_allowed=False
                                       #,throw_exceptions=False
                                       )
         budgetset_str = str(test_budget_set)

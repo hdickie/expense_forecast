@@ -853,14 +853,14 @@ class AccountSet:
 
         """
 
-        JSON_string = "{\n"
+        JSON_string = "[\n"
         for i in range(0, len(self.accounts)):
             account = self.accounts[i]
             JSON_string += account.toJSON()
             if i + 1 != len(self.accounts):
                 JSON_string += ","
             JSON_string += '\n'
-        JSON_string += '}'
+        JSON_string += ']'
 
         return JSON_string
 

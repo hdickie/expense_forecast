@@ -8,6 +8,8 @@ import copy
 
 import BudgetSet, BudgetItem
 
+pd.options.mode.chained_assignment = None #apparently this warning can throw false positives???
+
 from log_methods import log_in_color
 
 import logging
@@ -66,8 +68,6 @@ def generate_date_sequence(start_date_YYYYMMDD, num_days, cadence):
 
 class ExpenseForecast:
 
-
-
     def __init__(self, account_set, budget_set, memo_rule_set, start_date_YYYYMMDD, end_date_YYYYMMDD, print_debug_messages=True, raise_exceptions=True):
         """
         ExpenseForecast one-line description
@@ -84,7 +84,7 @@ class ExpenseForecast:
         :param budget_set:
         :param memo_rule_set:
         """
-        log_in_color('green','info','ExpenseForecast(start_date_YYYYMMDD='+str(start_date_YYYYMMDD)+', end_date_YYYYMMDD='+str(end_date_YYYYMMDD)+')',self.log_stack_depth)
+        log_in_color('green','info','ExpenseForecast(start_date_YYYYMMDD='+str(start_date_YYYYMMDD)+', end_date_YYYYMMDD='+str(end_date_YYYYMMDD)+')')
 
         try:
             self.start_date = datetime.datetime.strptime(start_date_YYYYMMDD, '%Y%m%d')
@@ -207,15 +207,35 @@ class ExpenseForecast:
         deferred_df = copy.deepcopy(proposed_df.head(0))
         skipped_df = copy.deepcopy(proposed_df.head(0))
 
+        self.unique_id = str(hash(hash(account_set) + hash(budget_set) + hash(memo_rule_set) + hash(start_date_YYYYMMDD) + hash(end_date_YYYYMMDD)) % 100000).rjust(6,'0')
+        self.start_ts = datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S')
+
 
         forecast_df, skipped_df, confirmed_df, deferred_df = self.computeOptimalForecast(start_date_YYYYMMDD=start_date_YYYYMMDD, end_date_YYYYMMDD=end_date_YYYYMMDD, confirmed_df=confirmed_df,
                                                                                          proposed_df=proposed_df, deferred_df=deferred_df, skipped_df=skipped_df, account_set=account_set,
                                                                                          memo_rule_set=memo_rule_set,
                                                                                          raise_satisfice_failed_exception=False)
+        self.end_ts = datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S')
+
         self.forecast_df = forecast_df
+
+
+        #todo repalces with writing a JSON to file
+
+        # log_in_color('green','info','Writing to ./Forecast__'+run_ts+'.csv')
+        # self.forecast_df.to_csv('./Forecast__'+run_ts+'.csv')
+        log_in_color('green', 'info', 'Writing to ./Forecast__' + self.start_ts + '__' + self.unique_id + '.json')
+        #self.forecast_df.to_csv('./Forecast__' + run_ts + '.json')
+
+        #self.forecast_df.index = self.forecast_df['Date']
+
         self.skipped_df = skipped_df
         self.confirmed_df = confirmed_df
         self.deferred_df = deferred_df
+
+        f = open('Forecast__' + self.start_ts + '__' + self.unique_id + '.json','a')
+        f.write(self.toJSON())
+        f.close()
 
         # print('self.forecast_df:')
         # print(self.forecast_df.to_string())
@@ -238,7 +258,7 @@ class ExpenseForecast:
                         max(forecast_df.Date)=""" + str(max(forecast_df.Date)) + """
                         """)
 
-        self.forecast_df.index = self.forecast_df['Date']
+
 
         # write all_data.csv  # self.forecast_df.iloc[:,0:(self.forecast_df.shape[1]-1)].to_csv('all_data.csv',index=False)
 
@@ -629,6 +649,24 @@ class ExpenseForecast:
                 #     print('duplicated memo in updated_confirmed in the proposed or deferred part of the logic')
                 #     raise e
 
+                # date_to_sync = proposed_row_df.Date - datetime.timedelta(days=1)
+                # date_to_sync_YYYYMMDD = date_to_sync.strftime('%Y%m%d')
+                # past_days_that_do_not_need_to_be_recalculated_df = forecast_df[forecast_df.Date <= date_to_sync]
+                #
+                # account_set_for_error_check = copy.deepcopy(self.sync_account_set_w_forecast_day(account_set, forecast_df, date_to_sync ))
+                #
+                # recalculated_future_forecast_df = self.computeOptimalForecast(start_date_YYYYMMDD=date_to_sync_YYYYMMDD,
+                #                                                                     end_date_YYYYMMDD=self.end_date.strftime('%Y%m%d'),
+                #                                                                     confirmed_df=not_yet_validated_confirmed_df,
+                #                                                                     proposed_df=empty_df,
+                #                                                                     deferred_df=empty_df,
+                #                                                                     skipped_df=empty_df,
+                #                                                                     account_set=account_set_for_error_check,
+                #                                                                     memo_rule_set=memo_set)[0]
+                #
+                # hypothetical_future_state_of_forecast = pd.concat([past_days_that_do_not_need_to_be_recalculated_df,recalculated_future_forecast_df])
+                # hypothetical_future_state_of_forecast.reset_index(inplace=True,drop=True)
+
                 hypothetical_future_state_of_forecast = self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date.strftime('%Y%m%d'),
                                             end_date_YYYYMMDD=self.end_date.strftime('%Y%m%d'),
                                             confirmed_df=not_yet_validated_confirmed_df,
@@ -692,6 +730,25 @@ class ExpenseForecast:
                     # except Exception as e:
                     #     print('duplicated memo in updated_confirmed in the proposed or deferred part of the logic')
                     #     raise e
+
+                    # date_to_sync = proposed_row_df.Date - datetime.timedelta(days=1)
+                    # date_to_sync_YYYYMMDD = date_to_sync.strftime('%Y%m%d')
+                    # past_days_that_do_not_need_to_be_recalculated_df = forecast_df[forecast_df.Date <= date_to_sync]
+                    #
+                    # account_set_for_error_check = copy.deepcopy(self.sync_account_set_w_forecast_day(account_set, forecast_df, date_to_sync))
+                    #
+                    # recalculated_future_forecast_df = self.computeOptimalForecast(start_date_YYYYMMDD=date_to_sync_YYYYMMDD,
+                    #                                                               end_date_YYYYMMDD=self.end_date.strftime('%Y%m%d'),
+                    #                                                               confirmed_df=not_yet_validated_confirmed_df,
+                    #                                                               proposed_df=empty_df,
+                    #                                                               deferred_df=empty_df,
+                    #                                                               skipped_df=empty_df,
+                    #                                                               account_set=account_set_for_error_check,
+                    #                                                               memo_rule_set=memo_set)[0]
+                    #
+                    # hypothetical_future_state_of_forecast = pd.concat([past_days_that_do_not_need_to_be_recalculated_df, recalculated_future_forecast_df])
+                    # hypothetical_future_state_of_forecast.reset_index(inplace=True, drop=True)
+
 
                     hypothetical_future_state_of_forecast = self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date.strftime('%Y%m%d'),
                                                                                         end_date_YYYYMMDD=self.end_date.strftime('%Y%m%d'),
@@ -867,6 +924,24 @@ class ExpenseForecast:
                 #     print('duplicated memo in updated_confirmed in the proposed or deferred part of the logic')
                 #     raise e
 
+                # date_to_sync = deferred_row_df.Date - datetime.timedelta(days=1)
+                # date_to_sync_YYYYMMDD = date_to_sync.strftime('%Y%m%d')
+                # past_days_that_do_not_need_to_be_recalculated_df = forecast_df[forecast_df.Date <= date_to_sync]
+                #
+                # account_set_for_error_check = copy.deepcopy(self.sync_account_set_w_forecast_day(account_set, forecast_df, date_to_sync))
+                #
+                # recalculated_future_forecast_df = self.computeOptimalForecast(start_date_YYYYMMDD=date_to_sync_YYYYMMDD,
+                #                                                               end_date_YYYYMMDD=self.end_date.strftime('%Y%m%d'),
+                #                                                               confirmed_df=not_yet_validated_confirmed_df,
+                #                                                               proposed_df=empty_df,
+                #                                                               deferred_df=empty_df,
+                #                                                               skipped_df=empty_df,
+                #                                                               account_set=account_set_for_error_check,
+                #                                                               memo_rule_set=memo_set)[0]
+                #
+                # hypothetical_future_state_of_forecast = pd.concat([past_days_that_do_not_need_to_be_recalculated_df, recalculated_future_forecast_df])
+                # hypothetical_future_state_of_forecast.reset_index(inplace=True, drop=True)
+
                 hypothetical_future_state_of_forecast = self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date.strftime('%Y%m%d'),
                                                                                     end_date_YYYYMMDD=self.end_date.strftime('%Y%m%d'),
                                                                                     confirmed_df=not_yet_validated_confirmed_df,
@@ -917,6 +992,24 @@ class ExpenseForecast:
                     #     print('duplicated memo in updated_confirmed in the proposed or deferred part of the logic')
                     #     raise e
 
+                    # date_to_sync = deferred_row_df.Date - datetime.timedelta(days=1)
+                    # date_to_sync_YYYYMMDD = date_to_sync.strftime('%Y%m%d')
+                    # past_days_that_do_not_need_to_be_recalculated_df = forecast_df[forecast_df.Date <= date_to_sync]
+                    #
+                    # account_set_for_error_check = copy.deepcopy(self.sync_account_set_w_forecast_day(account_set, forecast_df, date_to_sync))
+                    #
+                    # recalculated_future_forecast_df = self.computeOptimalForecast(start_date_YYYYMMDD=date_to_sync_YYYYMMDD,
+                    #                                                               end_date_YYYYMMDD=self.end_date.strftime('%Y%m%d'),
+                    #                                                               confirmed_df=not_yet_validated_confirmed_df,
+                    #                                                               proposed_df=empty_df,
+                    #                                                               deferred_df=empty_df,
+                    #                                                               skipped_df=empty_df,
+                    #                                                               account_set=account_set_for_error_check,
+                    #                                                               memo_rule_set=memo_set)[0]
+                    #
+                    # hypothetical_future_state_of_forecast = pd.concat([past_days_that_do_not_need_to_be_recalculated_df, recalculated_future_forecast_df])
+                    # hypothetical_future_state_of_forecast.reset_index(inplace=True, drop=True)
+
                     hypothetical_future_state_of_forecast = self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date.strftime('%Y%m%d'),
                                                                                         end_date_YYYYMMDD=self.end_date.strftime('%Y%m%d'),
                                                                                         confirmed_df=not_yet_validated_confirmed_df,
@@ -952,7 +1045,7 @@ class ExpenseForecast:
                 # print('Failed to execute deferrable transaction while processing deferred txns. Incrementing date.')
                 # print('Deferred_df before increment:')
                 # print(pd.DataFrame(deferred_row_df).T.to_string())
-                single_proposed_deferred_transaction_df.Date = single_proposed_deferred_transaction_df.Date + datetime.timedelta(days=1)
+                single_proposed_deferred_transaction_df.Date = single_proposed_deferred_transaction_df.Date + datetime.timedelta(days=14)
                 remaining_deferred_df = deferred_df[~deferred_df.index.isin(single_proposed_deferred_transaction_df.index)]
 
                 # print('deferred_df before append (case 3)')
@@ -1516,7 +1609,13 @@ class ExpenseForecast:
             #log_in_color('green', 'info', 'BEGIN SATISFICE ' + str(d.strftime('%Y-%m-%d')) + bal_string, self.log_stack_depth)
 
             if not raise_satisfice_failed_exception:  # to report progress
-                log_in_color('white', 'info', str(1) + ' / ' + str(max(full_budget_schedule_df.Priority.unique())) + ' ' + d.strftime('%Y%m%d'))
+
+                try:
+                    max_priority = max(full_budget_schedule_df.Priority.unique())
+                except:
+                    max_priority = 1
+
+                log_in_color('white', 'info', str(1) + ' / ' + str(max_priority) + ' ' + d.strftime('%Y%m%d'))
 
             # print('SATISFICE BEFORE TXN:'+str(forecast_df))
             try:
@@ -1866,6 +1965,44 @@ class ExpenseForecast:
 
         :return:
         """
+
+        JSON_string = '{'
+
+        unique_id_string = "\"unique_id\":\""+self.unique_id+"\",\n"
+        start_ts_string = "\"start_ts\":\""+self.start_ts+"\",\n"
+        end_ts_string = "\"end_ts\":\""+self.end_ts+"\",\n"
+
+        start_date_string = "\"start_date\":"+self.start_date.strftime('%Y%m%d')+",\n"
+        end_date_string = "\"end_date\":"+self.start_date.strftime('%Y%m%d')+",\n"
+
+        memo_rule_set_string = "\"initial_memo_rule_set\":"+self.initial_memo_rule_set.toJSON()+","
+        initial_account_set_string = "\"initial_account_set\":"+self.initial_account_set.toJSON()+","
+        initial_budget_set_string = "\"initial_budget_set\":"+self.initial_budget_set.toJSON()+","
+
+        forecast_df_string = "\"forecast_df\":"+self.forecast_df.to_json(orient='records',date_format='iso')+",\n"
+        skipped_df_string = "\"skipped_df\":"+self.skipped_df.to_json(orient='records',date_format='iso')+",\n"
+        confirmed_df_string = "\"confirmed_df\":"+self.confirmed_df.to_json(orient='records',date_format='iso')+",\n"
+        deferred_df_string = "\"deferred_df\":"+self.deferred_df.to_json(orient='records',date_format='iso')
+
+        JSON_string += unique_id_string
+        JSON_string += start_ts_string
+        JSON_string += end_ts_string
+        JSON_string += start_date_string
+        JSON_string += end_date_string
+        JSON_string += memo_rule_set_string
+        JSON_string += initial_account_set_string
+        JSON_string += initial_budget_set_string
+        JSON_string += forecast_df_string
+        JSON_string += skipped_df_string
+        JSON_string += confirmed_df_string
+        JSON_string += deferred_df_string
+
+        JSON_string += '}'
+
+        return JSON_string
+
+    def show(self):
+        pass
         raise NotImplementedError
 
     def fromJSON(self):

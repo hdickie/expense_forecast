@@ -131,14 +131,14 @@ class MemoRuleSet:
         """
         Get a JSON <string> representing the <MemoRuleSet> object.\
         """
-        JSON_string = "{\n"
+        JSON_string = "[\n"
         for i in range(0, len(self.memo_rules)):
             memo_rule = self.memo_rules[i]
             JSON_string += memo_rule.toJSON()
             if i+1 != len(self.memo_rules):
                 JSON_string += ","
             JSON_string += '\n'
-        JSON_string += '}'
+        JSON_string += ']'
 
         return JSON_string
 
