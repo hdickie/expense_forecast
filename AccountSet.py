@@ -628,7 +628,6 @@ class AccountSet:
         raise NotImplementedError
 
     def allocate_additional_loan_payments(self, amount):
-
         bal_string = ''
         for account_index, account_row in self.getAccounts().iterrows():
             bal_string += '$' + str(account_row.Balance) + ' '

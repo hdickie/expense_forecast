@@ -10,7 +10,7 @@ import json
 import BudgetSet, AccountSet
 import MemoRuleSet
 
-pd.options.mode.chained_assignment = None #apparently this warning can throw false positives???
+#pd.options.mode.chained_assignment = None #apparently this warning can throw false positives???
 
 from log_methods import log_in_color
 
@@ -98,7 +98,7 @@ def initialize_from_json_file(path_to_json):
                          )
 
         elif Account__dict['Account_Type'].lower() == 'curr stmt bal':
-            credit_acct_name = Account__dict['Name']
+            credit_acct_name = Account__dict['Name'].split(':')[0]
             credit_curr_bal = Account__dict['Balance']
 
         elif Account__dict['Account_Type'].lower() == 'prev stmt bal':
@@ -122,7 +122,7 @@ def initialize_from_json_file(path_to_json):
 
         elif Account__dict['Account_Type'].lower() == 'principal balance':
 
-            loan_acct_name = Account__dict['Name']
+            loan_acct_name = Account__dict['Name'].split(':')[0]
             loan_balance = Account__dict['Balance']
             loan_apr = Account__dict['APR']
             loan_billing_start_date = Account__dict['Billing_Start_Date']
@@ -356,58 +356,50 @@ class ExpenseForecast:
 
 
     def appendSummaryLines(self):
-        print('enter appendSummaryLines()')
         #todo incorporate savings
         #add net gain/loss (requires looking at memo)
-        #add total interest
-        #add interest paid (requires looking at memo)
+        #add cumulative interest paid (requires looking at memo)
 
         account_info = self.initial_account_set.getAccounts()
 
         loan_acct_sel_vec = (account_info.Account_Type == 'principal balance') | (account_info.Account_Type == 'interest')
         cc_acct_sel_vec = (account_info.Account_Type == 'prev stmt bal') | (account_info.Account_Type == 'curr stmt bal')
 
-        print('about to compute loan_acct_info')
-        loan_acct_info = account_info.iloc[loan_acct_sel_vec,:]
-        print('loan_acct_info:')
-        print(loan_acct_info)
-        credit_acct_info = account_info.iloc[cc_acct_sel_vec,:]
-        print('credit_acct_info:')
-        print(credit_acct_info)
+        loan_acct_info = account_info.loc[loan_acct_sel_vec,:]
+        credit_acct_info = account_info.loc[cc_acct_sel_vec,:]
         #savings_acct_info = account_info[account_info.Account_Type.lower() == 'savings', :]
 
-        print('calculating NetWorth line: loan')
         NetWorth = self.forecast_df.Checking
         for loan_account_index, loan_account_row in loan_acct_info.iterrows():
-            NetWorth -= self.forecast_df[:,self.forecast_df.columns == loan_account_row.Name]
+            #loan_acct_col_sel_vec = (self.forecast_df.columns == loan_account_row.Name)
+            #print('loan_acct_col_sel_vec')
+            #print(loan_acct_col_sel_vec)
+            NetWorth = NetWorth - self.forecast_df.loc[:,loan_account_row.Name]
 
-        print('calculating NetWorth line: credit')
         for credit_account_index, credit_account_row in credit_acct_info.iterrows():
-            NetWorth -= self.forecast_df[:,self.forecast_df.columns == credit_account_row.Name]
+            NetWorth = NetWorth - self.forecast_df.loc[:,credit_account_row.Name]
 
         # for savings_account_index, savings_account_row in savings_acct_info.iterrows():
         #     NetWorth += self.forecast_df[:,self.forecast_df.columns == savings_account_row.Name]
 
-        print('calculating LoanTotal line')
-        LoanTotal = self.forecast_df.Checking - self.forecast_df.Checking #I intend to create a column of zeroes
+        LoanTotal = self.forecast_df.Checking - self.forecast_df.Checking
         for loan_account_index, loan_account_row in loan_acct_info.iterrows():
-            LoanTotal += self.forecast_df[:,self.forecast_df.columns == loan_account_row.Name]
+            LoanTotal = LoanTotal + self.forecast_df.loc[:,loan_account_row.Name]
 
-        print('calculating CCDebtTotal line')
-        CCDebtTotal = self.forecast_df.Checking - self.forecast_df.Checking  # I intend to create a column of zeroes
+        CCDebtTotal = self.forecast_df.Checking - self.forecast_df.Checking
         for credit_account_index, credit_account_row in credit_acct_info.iterrows():
-            CCDebtTotal -= self.forecast_df[:, self.forecast_df.columns == credit_account_row.Name]
+            CCDebtTotal = CCDebtTotal + self.forecast_df.loc[:, credit_account_row.Name]
 
+        LiquidTotal = self.forecast_df.Checking #todo savings would go here
 
-        self.forecast_df.NetWorth = NetWorth
-        self.forecast_df.LoanTotal = LoanTotal
-        self.forecast_df.CCDebtTotal = CCDebtTotal
-        #todo move Memo column to rightmost. DO NOT REORDER THE OTHER COLUMNS
+        self.forecast_df['NetWorth'] = NetWorth
+        self.forecast_df['LoanTotal'] = LoanTotal
+        self.forecast_df['CCDebtTotal'] = CCDebtTotal
+        self.forecast_df['LiquidTotal'] = LiquidTotal
 
-        print('Here is the data frame')
-        print(self.forecast_df)
-
-        return self.forecast_df
+        memo_column = copy.deepcopy(self.forecast_df['Memo'])
+        self.forecast_df = self.forecast_df.drop(columns=['Memo'])
+        self.forecast_df['Memo'] = memo_column
 
     def runForecast(self):
         self.start_ts = datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S')
@@ -2056,7 +2048,7 @@ class ExpenseForecast:
         #logger.debug('self.log_stack_depth -= 1')
         return [forecast_df, skipped_df, confirmed_df, deferred_df]
 
-    def plotOverall(self, output_path):
+    def plotNetWorth(self, output_path):
         """
         Writes to file a plot of all accounts.
 
@@ -2068,8 +2060,17 @@ class ExpenseForecast:
         :return:
         """
         figure(figsize=(14, 6), dpi=80)
-        for i in range(1, self.forecast_df.shape[1] - 1):
-            plt.plot(self.forecast_df['Date'], self.forecast_df.iloc[:, i], label=self.forecast_df.columns[i])
+
+        #for i in range(1, self.forecast_df.shape[1] - 1):
+        column_index = self.forecast_df.columns.tolist().index('NetWorth')
+        plt.plot(self.forecast_df['Date'], self.forecast_df.iloc[:, column_index], label='NetWorth')
+
+        bottom, top = plt.ylim()
+
+        if 0 < bottom:
+            plt.ylim(0,top)
+        elif top < 0:
+            plt.ylim(bottom, 0)
 
         ax = plt.subplot(111)
         box = ax.get_position()
@@ -2085,62 +2086,77 @@ class ExpenseForecast:
         plt.title('Forecast: ' + str(min_date) + ' -> ' + str(max_date))
         plt.savefig(output_path)
 
-    def plotAccountTypeTotals(self, forecast_df, output_path):
-        """
-        Writes to file a plot by account type.
 
-        | Test Cases
-        | Expected Successes
-        | S1: ... #todo refactor ExpenseForecast.plotAccountTypeTotals() doctest S1 to use _S1 label
-        |
-        | Expected Fails
-        | F1 ... #todo refactor ExpenseForecast.plotAccountTypeTotals() doctest F1 to use _F1 label
+    def plotAccountTypeTotals(self, output_path):
+        """
+        Writes to file a plot of all accounts.
+
+        Multiple line description.
+
 
         :param forecast_df:
         :param output_path:
         :return:
         """
-        # aggregate by account type: Principal Balance + interest, checking, previous + current statement balance, savings
-        checking_df = pd.DataFrame(forecast_df.Checking.copy())
-        savings_df = pd.DataFrame(forecast_df.Savings.copy())
-        date_df = pd.DataFrame(forecast_df.Date.copy())
-
-        zero_df = pd.DataFrame(np.zeros((checking_df.shape[0], 1)))
-        cc_df = pd.DataFrame(zero_df.copy())
-        loan_df = pd.DataFrame(zero_df.copy())
-
-        cc_colnames = [s for s in forecast_df.columns.tolist() if 'Statement Balance' in s]
-        loan_colnames = [s for s in forecast_df.columns.tolist() if 'Interest' in s] + [s for s in forecast_df.columns.tolist() if 'Principal Balance' in s]
-
-        cc_df = pd.DataFrame(forecast_df.loc[:, cc_colnames].sum(axis=1))
-
-        loan_df = pd.DataFrame(forecast_df.loc[:, loan_colnames].sum(axis=1))
-
-        date_df.reset_index(drop=True, inplace=True)
-        checking_df.reset_index(drop=True, inplace=True)
-        savings_df.reset_index(drop=True, inplace=True)
-        cc_df.reset_index(drop=True, inplace=True)
-        loan_df.reset_index(drop=True, inplace=True)
-
-        loan_df = loan_df.rename(columns={0: "Loan"})
-        cc_df = cc_df.rename(columns={0: "Credit"})
-
-        agg_df = pd.concat([date_df, checking_df, savings_df, cc_df, loan_df], axis=1)
-
         figure(figsize=(14, 6), dpi=80)
-        for i in range(1, agg_df.shape[1]):
-            plt.plot(agg_df['Date'], agg_df.iloc[:, i], label=agg_df.columns[i])
+        relevant_columns_sel_vec = (self.forecast_df.columns == 'Date') | (self.forecast_df.columns == 'LoanTotal') | (self.forecast_df.columns == 'CCDebtTotal') | (self.forecast_df.columns == 'LiquidTotal')
+        relevant_df = self.forecast_df.iloc[:,relevant_columns_sel_vec]
+        for i in range(1, relevant_df.shape[1]):
+            plt.plot(relevant_df['Date'], relevant_df.iloc[:, i], label=relevant_df.columns[i])
+
+        bottom, top = plt.ylim()
+
+        if 0 < bottom:
+            plt.ylim(0,top)
+        elif top < 0:
+            plt.ylim(bottom, 0)
 
         ax = plt.subplot(111)
         box = ax.get_position()
         ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
 
+        # Put a legend below current axis
         ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=4)
 
-        min_date = min(forecast_df.Date).strftime('%Y-%m-%d')
-        max_date = max(forecast_df.Date).strftime('%Y-%m-%d')
+        # TODO plotOverall():: a large number of accounts will require some adjustment here so that the legend is entirely visible
 
-        plt.title('Account Type Totals: ' + str(min_date) + ' -> ' + str(max_date))
+        min_date = min(self.forecast_df.Date).strftime('%Y-%m-%d')
+        max_date = max(self.forecast_df.Date).strftime('%Y-%m-%d')
+        plt.title('Forecast: ' + str(min_date) + ' -> ' + str(max_date))
+        plt.savefig(output_path)
+
+
+
+    def plotAll(self, output_path):
+        """
+        Writes to file a plot of all accounts.
+
+        Multiple line description.
+
+
+        :param forecast_df:
+        :param output_path:
+        :return:
+        """
+        figure(figsize=(14, 6), dpi=80)
+
+        for i in range(1, self.forecast_df.shape[1] - 1):
+            plt.plot(self.forecast_df['Date'], self.forecast_df.iloc[:, i], label=self.forecast_df.columns[i])
+
+
+
+        ax = plt.subplot(111)
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
+
+        # Put a legend below current axis
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=4)
+
+        # TODO plotOverall():: a large number of accounts will require some adjustment here so that the legend is entirely visible
+
+        min_date = min(self.forecast_df.Date).strftime('%Y-%m-%d')
+        max_date = max(self.forecast_df.Date).strftime('%Y-%m-%d')
+        plt.title('Forecast: ' + str(min_date) + ' -> ' + str(max_date))
         plt.savefig(output_path)
 
     def plotMarginalInterest(self, accounts_df, forecast_df, output_path):

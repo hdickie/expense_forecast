@@ -3,7 +3,7 @@
         <html>
         <head>
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Expense Forecast Report</title>
+        <title>Expense Forecast Report #003317</title>
         <style>
         /* Style the tab */
         .tab {
@@ -45,54 +45,657 @@
 
         </head>
         <body>
-        <h1>Expense Forecast Report</h1>
-        <p> to </p>
+        <h1>Expense Forecast Report #003317</h1>
+        <p>2023-04-02 to 2023-11-03</p>
 
         <!-- Tab links -->
         <div class="tab">
-          <button class="tablinks" onclick="openTab(event, 'Summary')">Summary</button>
+          <button class="tablinks active" onclick="openTab(event, 'Summary')">Summary</button>
           <button class="tablinks" onclick="openTab(event, 'NetWorth')">Net Worth</button>
           <button class="tablinks" onclick="openTab(event, 'NetGainLoss')">Net Gain/Loss</button>
           <button class="tablinks" onclick="openTab(event, 'AccountType')">Account Type</button>
-          <button class="tablinks" onclick="openTab(event, 'InterestPaid')">Interest Paid</button>
+          <button class="tablinks" onclick="openTab(event, 'Interest')">Interest</button>
+          <button class="tablinks" onclick="openTab(event, 'Milestone')">Milestone</button>
           <button class="tablinks" onclick="openTab(event, 'All')">All</button>
         </div>
 
         <!-- Tab content -->
         <div id="Summary" class="tabcontent">
           <h3>Summary</h3>
-          <p>Summary text.</p>
-          <img src="">
+          <p>
+        This forecast started at 2023-04-07 14:27:35, took 0:16:53 to complete, and finished at 2023-04-07 14:44:28.
+        </p>
+          <h3>Accounts</h3>
+          <p>
+        The initial conditions and account boundaries are defined as:<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Name</th>
+      <th>Balance</th>
+      <th>Min_Balance</th>
+      <th>Max_Balance</th>
+      <th>Account_Type</th>
+      <th>Billing_Start_Dt</th>
+      <th>Interest_Type</th>
+      <th>APR</th>
+      <th>Interest_Cadence</th>
+      <th>Minimum_Payment</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Checking</td>
+      <td>4224.62</td>
+      <td>0.0</td>
+      <td>inf</td>
+      <td>checking</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Credit: Curr Stmt Bal</td>
+      <td>430.27</td>
+      <td>0.0</td>
+      <td>20000.0</td>
+      <td>curr stmt bal</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Credit: Prev Stmt Bal</td>
+      <td>7351.20</td>
+      <td>0.0</td>
+      <td>20000.0</td>
+      <td>prev stmt bal</td>
+      <td>2023-01-03 00:00:00</td>
+      <td>Compound</td>
+      <td>0.2824</td>
+      <td>Monthly</td>
+      <td>40.0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Loan A: Principal Balance</td>
+      <td>4746.18</td>
+      <td>0.0</td>
+      <td>inf</td>
+      <td>principal balance</td>
+      <td>2023-09-03 00:00:00</td>
+      <td>None</td>
+      <td>0.0466</td>
+      <td>None</td>
+      <td>50.0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Loan A: Interest</td>
+      <td>0.00</td>
+      <td>0.0</td>
+      <td>inf</td>
+      <td>interest</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>Loan B: Principal Balance</td>
+      <td>1919.55</td>
+      <td>0.0</td>
+      <td>inf</td>
+      <td>principal balance</td>
+      <td>2023-09-03 00:00:00</td>
+      <td>None</td>
+      <td>0.0429</td>
+      <td>None</td>
+      <td>50.0</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>Loan B: Interest</td>
+      <td>0.00</td>
+      <td>0.0</td>
+      <td>inf</td>
+      <td>interest</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>Loan C: Principal Balance</td>
+      <td>4726.68</td>
+      <td>0.0</td>
+      <td>inf</td>
+      <td>principal balance</td>
+      <td>2023-09-03 00:00:00</td>
+      <td>None</td>
+      <td>0.0429</td>
+      <td>None</td>
+      <td>50.0</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>Loan C: Interest</td>
+      <td>0.00</td>
+      <td>0.0</td>
+      <td>inf</td>
+      <td>interest</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>Loan D: Principal Balance</td>
+      <td>1823.31</td>
+      <td>0.0</td>
+      <td>inf</td>
+      <td>principal balance</td>
+      <td>2023-09-03 00:00:00</td>
+      <td>None</td>
+      <td>0.0376</td>
+      <td>None</td>
+      <td>50.0</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>Loan D: Interest</td>
+      <td>0.00</td>
+      <td>0.0</td>
+      <td>inf</td>
+      <td>interest</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>Loan E: Principal Balance</td>
+      <td>3359.17</td>
+      <td>0.0</td>
+      <td>inf</td>
+      <td>principal balance</td>
+      <td>2023-09-03 00:00:00</td>
+      <td>None</td>
+      <td>0.0376</td>
+      <td>None</td>
+      <td>50.0</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>Loan E: Interest</td>
+      <td>0.00</td>
+      <td>0.0</td>
+      <td>inf</td>
+      <td>interest</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>Tax Debt: Principal Balance</td>
+      <td>8000.00</td>
+      <td>0.0</td>
+      <td>inf</td>
+      <td>principal balance</td>
+      <td>2023-10-15 00:00:00</td>
+      <td>None</td>
+      <td>0.06</td>
+      <td>None</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>Tax Debt: Interest</td>
+      <td>0.00</td>
+      <td>0.0</td>
+      <td>inf</td>
+      <td>interest</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+  </tbody>
+</table>
+        </p>
+          <h3>Budget Items</h3>
+          <p>
+        These transactions are considered for analysis:<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Start_Date</th>
+      <th>End_Date</th>
+      <th>Priority</th>
+      <th>Cadence</th>
+      <th>Amount</th>
+      <th>Memo</th>
+      <th>Deferrable</th>
+      <th>Partial_Payment_Allowed</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>2023-04-27</td>
+      <td>2023-04-27</td>
+      <td>1</td>
+      <td>once</td>
+      <td>2900.00</td>
+      <td>EMT class</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2023-03-17</td>
+      <td>2023-07-01</td>
+      <td>1</td>
+      <td>weekly</td>
+      <td>450.00</td>
+      <td>unemployment income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>2023-07-15</td>
+      <td>2023-12-31</td>
+      <td>1</td>
+      <td>semiweekly</td>
+      <td>1320.00</td>
+      <td>EMT income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>2023-09-01</td>
+      <td>2023-12-31</td>
+      <td>1</td>
+      <td>monthly</td>
+      <td>1000.00</td>
+      <td>additional cc payment</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>2023-01-01</td>
+      <td>2023-08-30</td>
+      <td>1</td>
+      <td>monthly</td>
+      <td>1918.00</td>
+      <td>2034 33rd ave rent</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>2023-02-01</td>
+      <td>2023-08-30</td>
+      <td>1</td>
+      <td>monthly</td>
+      <td>300.00</td>
+      <td>2034 33rd ave utilities</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>2023-01-27</td>
+      <td>2023-08-30</td>
+      <td>1</td>
+      <td>monthly</td>
+      <td>100.00</td>
+      <td>internet</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>2023-09-01</td>
+      <td>2023-12-31</td>
+      <td>1</td>
+      <td>monthly</td>
+      <td>1500.00</td>
+      <td>jp rent</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>2023-04-02</td>
+      <td>2023-12-31</td>
+      <td>1</td>
+      <td>daily</td>
+      <td>30.00</td>
+      <td>food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>2023-02-17</td>
+      <td>2023-12-31</td>
+      <td>1</td>
+      <td>monthly</td>
+      <td>89.00</td>
+      <td>car insurance</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>2023-03-31</td>
+      <td>2023-12-31</td>
+      <td>1</td>
+      <td>monthly</td>
+      <td>163.09</td>
+      <td>phone bill</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>2023-02-19</td>
+      <td>2023-12-31</td>
+      <td>1</td>
+      <td>monthly</td>
+      <td>8.00</td>
+      <td>hulu</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>2023-02-19</td>
+      <td>2023-12-31</td>
+      <td>1</td>
+      <td>monthly</td>
+      <td>15.00</td>
+      <td>hbo max</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>2023-03-07</td>
+      <td>2023-12-31</td>
+      <td>1</td>
+      <td>monthly</td>
+      <td>33.00</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>2023-04-07</td>
+      <td>2023-12-31</td>
+      <td>1</td>
+      <td>monthly</td>
+      <td>10.00</td>
+      <td>spotify</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>2023-01-01</td>
+      <td>2023-12-31</td>
+      <td>1</td>
+      <td>monthly</td>
+      <td>100.00</td>
+      <td>gas and bus</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>16</th>
+      <td>2023-02-21</td>
+      <td>2023-12-31</td>
+      <td>1</td>
+      <td>monthly</td>
+      <td>175.50</td>
+      <td>health insurance</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+  </tbody>
+</table>
+        </p>
+          <h3>Memo Rules</h3>
+          <p>
+        These decision rules are used:<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Memo_Regex</th>
+      <th>Account_From</th>
+      <th>Account_To</th>
+      <th>Transaction_Priority</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>.*income.*</td>
+      <td>None</td>
+      <td>Checking</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>food</td>
+      <td>Credit</td>
+      <td>None</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>internet</td>
+      <td>Credit</td>
+      <td>None</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>phone bill</td>
+      <td>Credit</td>
+      <td>None</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>car insurance</td>
+      <td>Credit</td>
+      <td>None</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>health insurance</td>
+      <td>Credit</td>
+      <td>None</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>gas and bus</td>
+      <td>Credit</td>
+      <td>None</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>spotify</td>
+      <td>Credit</td>
+      <td>None</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>gym</td>
+      <td>Credit</td>
+      <td>None</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>hbo max</td>
+      <td>Credit</td>
+      <td>None</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>hulu</td>
+      <td>Credit</td>
+      <td>None</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>.*rent.*</td>
+      <td>Checking</td>
+      <td>None</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>.*utilities.*</td>
+      <td>Checking</td>
+      <td>None</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>.*additional cc payment.*</td>
+      <td>Checking</td>
+      <td>Credit</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>.*</td>
+      <td>Credit</td>
+      <td>None</td>
+      <td>2.0</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>.*</td>
+      <td>Credit</td>
+      <td>None</td>
+      <td>3.0</td>
+    </tr>
+    <tr>
+      <th>16</th>
+      <td>.*</td>
+      <td>Checking</td>
+      <td>None</td>
+      <td>4.0</td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>.*</td>
+      <td>Credit</td>
+      <td>None</td>
+      <td>5.0</td>
+    </tr>
+    <tr>
+      <th>18</th>
+      <td>.*</td>
+      <td>Credit</td>
+      <td>None</td>
+      <td>6.0</td>
+    </tr>
+    <tr>
+      <th>19</th>
+      <td>.*</td>
+      <td>Credit</td>
+      <td>None</td>
+      <td>7.0</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>EMT class</td>
+      <td>Credit</td>
+      <td>None</td>
+      <td>1.0</td>
+    </tr>
+  </tbody>
+</table>
+        </p>
         </div>
 
         <div id="NetWorth" class="tabcontent">
           <h3>NetWorth</h3>
-          <p>NetWorth text.</p>
-          <img src="">
+          <p>
+        Net Worth began at $-28,131.74 and fell to $-41,680.39 over 216 days, averaging $-62.73 per day.
+        </p>
+          <img src="./003317_networth_line_plot.png">
         </div>
 
         <div id="NetGainLoss" class="tabcontent">
           <h3>NetGainLoss</h3>
           <p>NetGainLoss text.</p>
-          <img src="">
+          <img src="./003317_netgain_line_plot.png">
         </div>
 
         <div id="AccountType" class="tabcontent">
           <h3>AccountType</h3>
-          <p>AccountType text.</p>
-          <img src="">
+          <p>
+        Loan debt began at $24,574.89 and fell to $24,212.93 over 216 days, averaging $-1.68 per day.
+        <br><br>
+        Credit card debt began at $7,781.47 and rose to $17,889.29 over 216 days, averaging $46.8 per day.
+        <br><br>
+        Liquid cash began at $4,224.62 and fell to $421.83 over 216 days, averaging $-17.61 per day.
+        </p>
+          <img src="./003317_accounttype_line_plot_plot.png">
         </div>
 
-        <div id="InterestPaid" class="tabcontent">
-          <h3>InterestPaid</h3>
-          <p>InterestPaid text.</p>
-          <img src="">
+        <div id="Interest" class="tabcontent">
+          <h3>Interest</h3>
+          <p>Interest text.</p>
+          <img src="./003317_interest_line_plot_plot.png">
+        </div>
+        
+        <div id="Milestone" class="tabcontent">
+          <h3>Milestone</h3>
+          <p>Milestone text.</p>
+          <img src="./003317_milestone_line_plot.png">
         </div>
 
         <div id="All" class="tabcontent">
           <h3>All</h3>
           <p>All text.</p>
-          <img src="">
+          <img src="./003317_all_line_plot.png">
         </div>
 
         <br>
@@ -118,6 +721,9 @@
           document.getElementById(tabName).style.display = "block";
           evt.currentTarget.className += " active";
         }
+        
+        //having this here leaves the Summary tab open when the page first loads
+        document.getElementById("Summary").style.display = "block";
         </script>
 
         </body>

@@ -40,7 +40,7 @@ class ForecastHandler:
                    minimum_payment=account_row.Minimum_Payment,
                    previous_statement_balance=account_row.Previous_Statement_Balance,
                    principal_balance=account_row.Principal_Balance,
-                   accrued_interest=account_row.Accrured_Interest)
+                   accrued_interest=account_row.Accrued_Interest)
 
         for memorule_index, memorule_row in MemoRuleSet_df.iterrows():
             M.addMemoRule(memorule_row.Memo_Regex,memorule_row.Account_From,memorule_row.Account_To,memorule_row.Transaction_Priority)
@@ -80,26 +80,29 @@ class ForecastHandler:
         raise NotImplementedError
 
 
-    def generateCompareTwoForecastsHTMLReport(self,E1, E2):
+    def generateCompareTwoForecastsHTMLReport(self,E1, E2, output_dir='./'):
 
         assert E1.start_date == E2.start_date
         assert E1.end_date == E2.end_date
 
-        start_date = ''
-        end_date = ''
-        summary_plot_path = ''
-        networth_plot_path = ''
-        netgain_plot_path = ''
-        accounttype_plot_path = ''
-        interest_plot_path = ''
-        all_plot_path = ''
+        start_date = E1.start_date
+        end_date = E1.end_date
+
+        report_id = E1.unique_id + '_vs_' + E2.unique_id
+
+        networth_line_plot_path = output_dir + report_id + '_networth_line_plot.png'
+        netgain_line_plot_path = output_dir + report_id + '_netgain_line_plot.png'
+        accounttype_line_plot_path = output_dir + report_id + '_accounttype_line_plot_plot.png'
+        interest_line_plot_path = output_dir + report_id + '_interest_line_plot_plot.png'
+        milestone_line_plot_path = output_dir + report_id + '_milestone_line_plot.png'
+        all_line_plot_path = output_dir + report_id + '_all_line_plot.png'
 
         html_body = """
         <!DOCTYPE html>
         <html>
         <head>
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Expense Forecast Comparison</title>
+        <title>Expense Forecast Comparison """+ E1.unique_id + """ vs. """ + E2.unique_id +"""</title>
         <style>
         /* Style the tab */
         .tab {
@@ -150,7 +153,8 @@ class ForecastHandler:
           <button class="tablinks" onclick="openTab(event, 'NetWorth')">Net Worth</button>
           <button class="tablinks" onclick="openTab(event, 'NetGainLoss')">Net Gain/Loss</button>
           <button class="tablinks" onclick="openTab(event, 'AccountType')">Account Type</button>
-          <button class="tablinks" onclick="openTab(event, 'InterestPaid')">Interest Paid</button>
+          <button class="tablinks" onclick="openTab(event, 'Interest')">Interest</button>
+          <button class="tablinks" onclick="openTab(event, 'Interest')">Milestone</button>
           <button class="tablinks" onclick="openTab(event, 'All')">All</button>
         </div>
 
@@ -158,37 +162,42 @@ class ForecastHandler:
         <div id="Summary" class="tabcontent">
           <h3>Summary</h3>
           <p>Summary text.</p>
-          <img src=\""""+summary_plot_path+"""\">
         </div>
 
         <div id="NetWorth" class="tabcontent">
           <h3>NetWorth</h3>
           <p>NetWorth text.</p>
-          <img src=\""""+networth_plot_path+"""\">
+          <img src=\""""+networth_line_plot_path+"""\">
         </div>
 
         <div id="NetGainLoss" class="tabcontent">
           <h3>NetGainLoss</h3>
           <p>NetGainLoss text.</p>
-          <img src=\""""+netgain_plot_path+"""\">
+          <img src=\""""+netgain_line_plot_path+"""\">
         </div>
 
         <div id="AccountType" class="tabcontent">
           <h3>AccountType</h3>
           <p>AccountType text.</p>
-          <img src=\""""+accounttype_plot_path+"""\">
+          <img src=\""""+accounttype_line_plot_path+"""\">
         </div>
 
-        <div id="InterestPaid" class="tabcontent">
-          <h3>InterestPaid</h3>
-          <p>InterestPaid text.</p>
-          <img src=\""""+interest_plot_path+"""\">
+        <div id="Interest" class="tabcontent">
+          <h3>Interest</h3>
+          <p>Interest text.</p>
+          <img src=\""""+interest_line_plot_path+"""\">
+        </div>
+        
+        <div id="Milestone" class="tabcontent">
+          <h3>Milestone</h3>
+          <p>Milestone text.</p>
+          <img src=\""""+milestone_line_plot_path+"""\">
         </div>
 
         <div id="All" class="tabcontent">
           <h3>All</h3>
           <p>All text.</p>
-          <img src=\""""+all_plot_path+"""\">
+          <img src=\""""+all_line_plot_path+"""\">
         </div>
 
         <br>
@@ -220,26 +229,108 @@ class ForecastHandler:
         </html>
 
         """
-        pass
+
+        with open('out.html','w') as f:
+            f.write(html_body)
 
 
-    def generateHTMLReport(self,E):
+    def generateHTMLReport(self,E,output_dir='./'):
 
-        start_date = E.start_date
-        end_date = E.end_date
-        summary_plot_path = ''
-        networth_plot_path = ''
-        netgain_plot_path = ''
-        accounttype_plot_path = ''
-        interest_plot_path = ''
-        all_plot_path = ''
+        start_date = E.start_date.strftime('%Y-%m-%d')
+        end_date = E.end_date.strftime('%Y-%m-%d')
+
+        report_id = E.unique_id
+
+        start_ts__datetime = datetime.datetime.strptime(E.start_ts,'%Y_%m_%d__%H_%M_%S')
+        end_ts__datetime = datetime.datetime.strptime(E.end_ts, '%Y_%m_%d__%H_%M_%S')
+        simulation_time_elapsed = end_ts__datetime - start_ts__datetime
+
+        #todo add a comment about whether the simulation was able to make it to the end or not.
+        summary_text = """
+        This forecast started at """+str(start_ts__datetime)+""", took """ + str(simulation_time_elapsed) + """ to complete, and finished at """ + str(end_ts__datetime) + """.
+        """
+
+        account_text = """
+        The initial conditions and account boundaries are defined as:"""+E.initial_account_set.getAccounts().to_html()+"""
+        """
+
+        budget_set_text = """
+        These transactions are considered for analysis:"""+E.initial_budget_set.getBudgetItems().to_html()+"""
+        """
+
+        memo_rule_text = """
+        These decision rules are used:"""+E.initial_memo_rule_set.getMemoRules().to_html()+"""
+        """
+
+        initial_networth=E.forecast_df.head(1)['NetWorth'].iat[0]
+        final_networth=E.forecast_df.tail(1)['NetWorth'].iat[0]
+        networth_delta=final_networth-initial_networth
+        num_days = E.forecast_df.shape[0]
+        avg_networth_change=round(networth_delta/float(E.forecast_df.shape[0]),2)
+
+        if networth_delta >= 0:
+            rose_or_fell="rose"
+        else:
+            rose_or_fell="fell"
+
+        networth_text = """
+        Net Worth began at """+str(f"${float(initial_networth):,}")+""" and """+rose_or_fell+""" to """+str(f"${float(final_networth):,}")+""" over """+str(f"{float(num_days):,.0f}")+""" days, averaging """+f"${float(avg_networth_change):,}"+""" per day.
+        """
+
+        initial_loan_total = round(E.forecast_df.head(1).LoanTotal.iat[0],2)
+        final_loan_total = round(E.forecast_df.tail(1).LoanTotal.iat[0],2)
+        loan_delta = round(final_loan_total - initial_loan_total,2)
+        initial_cc_debt_total = round(E.forecast_df.head(1).CCDebtTotal.iat[0],2)
+        final_cc_debt_total = round(E.forecast_df.tail(1).CCDebtTotal.iat[0],2)
+        cc_debt_delta = round(final_cc_debt_total - initial_cc_debt_total,2)
+        initial_liquid_total = round(E.forecast_df.head(1).LiquidTotal.iat[0],2)
+        final_liquid_total = round(E.forecast_df.tail(1).LiquidTotal.iat[0],2)
+        liquid_delta = round(final_liquid_total - initial_liquid_total,2)
+
+        avg_loan_delta = round(loan_delta / num_days,2)
+        avg_cc_debt_delta = round(cc_debt_delta / num_days,2)
+        avg_liquid_delta = round(liquid_delta / num_days,2)
+
+        if avg_loan_delta >= 0:
+            loan_rose_or_fell="rose"
+        else:
+            loan_rose_or_fell = "fell"
+
+        if avg_cc_debt_delta >= 0:
+            cc_debt_rose_or_fell="rose"
+        else:
+            cc_debt_rose_or_fell = "fell"
+
+        if avg_liquid_delta >= 0:
+            liquid_rose_or_fell="rose"
+        else:
+            liquid_rose_or_fell = "fell"
+
+        account_type_text = """
+        Loan debt began at """+str(f"${float(initial_loan_total):,}")+""" and """+loan_rose_or_fell+""" to """+str(f"${float(final_loan_total):,}")+""" over """+str(f"{float(num_days):,.0f}")+""" days, averaging """+f"${float(avg_loan_delta):,}"+""" per day.
+        <br><br>
+        Credit card debt began at """+str(f"${float(initial_cc_debt_total):,}")+""" and """+cc_debt_rose_or_fell+""" to """+str(f"${float(final_cc_debt_total):,}")+""" over """+str(f"{float(num_days):,.0f}")+""" days, averaging """+f"${float(avg_cc_debt_delta):,}"+""" per day.
+        <br><br>
+        Liquid cash began at """+str(f"${float(initial_liquid_total):,}")+""" and """+liquid_rose_or_fell+""" to """+str(f"${float(final_liquid_total):,}")+""" over """+str(f"{float(num_days):,.0f}")+""" days, averaging """+f"${float(avg_liquid_delta):,}"+""" per day.
+        """
+
+        networth_line_plot_path = output_dir + report_id + '_networth_line_plot.png'
+        netgain_line_plot_path = output_dir + report_id + '_netgain_line_plot.png' #todo
+        accounttype_line_plot_path = output_dir + report_id + '_accounttype_line_plot_plot.png'
+        interest_line_plot_path = output_dir + report_id + '_interest_line_plot_plot.png' #todo
+        milestone_line_plot_path = output_dir + report_id + '_milestone_line_plot.png' #todo
+        all_line_plot_path = output_dir + report_id + '_all_line_plot.png'
+
+        E.plotAll(all_line_plot_path)
+        E.plotNetWorth(networth_line_plot_path)
+        E.plotAccountTypeTotals(accounttype_line_plot_path)
 
         html_body = """
         <!DOCTYPE html>
         <html>
         <head>
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Expense Forecast Report</title>
+        <title>Expense Forecast Report #""" + str(report_id) + """</title>
         <style>
         /* Style the tab */
         .tab {
@@ -281,54 +372,66 @@ class ForecastHandler:
 
         </head>
         <body>
-        <h1>Expense Forecast Report</h1>
+        <h1>Expense Forecast Report #""" + str(report_id) + """</h1>
         <p>"""+start_date+""" to """+end_date+"""</p>
 
         <!-- Tab links -->
         <div class="tab">
-          <button class="tablinks" onclick="openTab(event, 'Summary')">Summary</button>
+          <button class="tablinks active" onclick="openTab(event, 'Summary')">Summary</button>
           <button class="tablinks" onclick="openTab(event, 'NetWorth')">Net Worth</button>
           <button class="tablinks" onclick="openTab(event, 'NetGainLoss')">Net Gain/Loss</button>
           <button class="tablinks" onclick="openTab(event, 'AccountType')">Account Type</button>
-          <button class="tablinks" onclick="openTab(event, 'InterestPaid')">Interest Paid</button>
+          <button class="tablinks" onclick="openTab(event, 'Interest')">Interest</button>
+          <button class="tablinks" onclick="openTab(event, 'Milestone')">Milestone</button>
           <button class="tablinks" onclick="openTab(event, 'All')">All</button>
         </div>
 
         <!-- Tab content -->
         <div id="Summary" class="tabcontent">
           <h3>Summary</h3>
-          <p>Summary text.</p>
-          <img src=\""""+summary_plot_path+"""\">
+          <p>"""+summary_text+"""</p>
+          <h3>Accounts</h3>
+          <p>"""+account_text+"""</p>
+          <h3>Budget Items</h3>
+          <p>"""+budget_set_text+"""</p>
+          <h3>Memo Rules</h3>
+          <p>"""+memo_rule_text+"""</p>
         </div>
 
         <div id="NetWorth" class="tabcontent">
           <h3>NetWorth</h3>
-          <p>NetWorth text.</p>
-          <img src=\""""+networth_plot_path+"""\">
+          <p>"""+networth_text+"""</p>
+          <img src=\""""+networth_line_plot_path+"""\">
         </div>
 
         <div id="NetGainLoss" class="tabcontent">
           <h3>NetGainLoss</h3>
           <p>NetGainLoss text.</p>
-          <img src=\""""+netgain_plot_path+"""\">
+          <img src=\""""+netgain_line_plot_path+"""\">
         </div>
 
         <div id="AccountType" class="tabcontent">
           <h3>AccountType</h3>
-          <p>AccountType text.</p>
-          <img src=\""""+accounttype_plot_path+"""\">
+          <p>"""+account_type_text+"""</p>
+          <img src=\""""+accounttype_line_plot_path+"""\">
         </div>
 
-        <div id="InterestPaid" class="tabcontent">
-          <h3>InterestPaid</h3>
-          <p>InterestPaid text.</p>
-          <img src=\""""+interest_plot_path+"""\">
+        <div id="Interest" class="tabcontent">
+          <h3>Interest</h3>
+          <p>Interest text.</p>
+          <img src=\""""+interest_line_plot_path+"""\">
+        </div>
+        
+        <div id="Milestone" class="tabcontent">
+          <h3>Milestone</h3>
+          <p>Milestone text.</p>
+          <img src=\""""+milestone_line_plot_path+"""\">
         </div>
 
         <div id="All" class="tabcontent">
           <h3>All</h3>
           <p>All text.</p>
-          <img src=\""""+all_plot_path+"""\">
+          <img src=\""""+all_line_plot_path+"""\">
         </div>
 
         <br>
@@ -354,6 +457,9 @@ class ForecastHandler:
           document.getElementById(tabName).style.display = "block";
           evt.currentTarget.className += " active";
         }
+        
+        //having this here leaves the Summary tab open when the page first loads
+        document.getElementById("Summary").style.display = "block";
         </script>
 
         </body>

@@ -6,12 +6,12 @@
   <component name="ChangeListManager">
     <list default="true" id="94004e15-030d-4b7e-a7c4-801fddc59fac" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Account.py" beforeDir="false" afterPath="$PROJECT_DIR$/Account.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/AccountSet.py" beforeDir="false" afterPath="$PROJECT_DIR$/AccountSet.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/BudgetSet.py" beforeDir="false" afterPath="$PROJECT_DIR$/BudgetSet.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ExpenseForecast.py" beforeDir="false" afterPath="$PROJECT_DIR$/ExpenseForecast.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ForecastHandler.py" beforeDir="false" afterPath="$PROJECT_DIR$/ForecastHandler.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scratch3.py" beforeDir="false" afterPath="$PROJECT_DIR$/scratch3.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out.html" beforeDir="false" afterPath="$PROJECT_DIR$/out.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out.png" beforeDir="false" afterPath="$PROJECT_DIR$/out.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scratch2.py" beforeDir="false" afterPath="$PROJECT_DIR$/scratch2.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -69,7 +69,7 @@
       </console-settings>
     </option>
   </component>
-  <component name="RunManager" selected="Python.scratch3">
+  <component name="RunManager" selected="Python.scratch2">
     <configuration name="Account" type="PythonConfigurationType" factoryName="Python">
       <module name="expense_forecast" />
       <option name="INTERPRETER_OPTIONS" value="" />
