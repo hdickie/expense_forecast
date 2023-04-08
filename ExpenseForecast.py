@@ -5,8 +5,10 @@ from matplotlib.pyplot import figure
 import datetime
 import re
 import copy
+import json
 
-import BudgetSet, BudgetItem
+import BudgetSet, AccountSet
+import MemoRuleSet
 
 pd.options.mode.chained_assignment = None #apparently this warning can throw false positives???
 
@@ -66,6 +68,142 @@ def generate_date_sequence(start_date_YYYYMMDD, num_days, cadence):
     # log_in_color('green', 'debug', 'EXIT generate_date_sequence()', 0)
     return return_series
 
+def initialize_from_json_file(path_to_json):
+    with open(path_to_json) as json_data:
+        data = json.load(json_data)
+
+    initial_account_set = data['initial_account_set']
+    initial_budget_set = data['initial_budget_set']
+    initial_memo_rule_set = data['initial_memo_rule_set']
+    start_date_YYYYMMDD = data['start_date']
+    end_date_YYYYMMDD = data['end_date']
+
+    A = AccountSet.AccountSet([])
+    B = BudgetSet.BudgetSet([])
+    M = MemoRuleSet.MemoRuleSet([])
+
+    for Account__dict in initial_account_set:
+
+        if Account__dict['Account_Type'].lower() == 'checking':
+            A.addAccount(Account__dict['Name'],
+                         Account__dict['Balance'],
+                         Account__dict['Min_Balance'],
+                         Account__dict['Max_Balance'],
+                         Account__dict['Account_Type'],
+                         Account__dict['Billing_Start_Date'],
+                         Account__dict['Interest_Type'],
+                         Account__dict['APR'],
+                         Account__dict['Interest_Cadence'],
+                         Account__dict['Minimum_Payment']
+                         )
+
+        elif Account__dict['Account_Type'].lower() == 'curr stmt bal':
+            credit_acct_name = Account__dict['Name']
+            credit_curr_bal = Account__dict['Balance']
+
+        elif Account__dict['Account_Type'].lower() == 'prev stmt bal':
+
+            #first curr then prev
+            A.addAccount(name=credit_acct_name,
+                         balance=credit_curr_bal,
+                         min_balance=Account__dict['Min_Balance'],
+                         max_balance=Account__dict['Max_Balance'],
+                         account_type="credit",
+                         billing_start_date_YYYYMMDD=Account__dict['Billing_Start_Date'],
+                         interest_type=Account__dict['Interest_Type'],
+                         apr=Account__dict['APR'],
+                         interest_cadence=Account__dict['Interest_Cadence'],
+                         minimum_payment=Account__dict['Minimum_Payment'],
+                         previous_statement_balance=Account__dict['Balance']
+                         )
+
+            del credit_acct_name
+            del credit_curr_bal
+
+        elif Account__dict['Account_Type'].lower() == 'principal balance':
+
+            loan_acct_name = Account__dict['Name']
+            loan_balance = Account__dict['Balance']
+            loan_apr = Account__dict['APR']
+            loan_billing_start_date = Account__dict['Billing_Start_Date']
+            loan_min_payment = Account__dict['Minimum_Payment']
+
+        elif Account__dict['Account_Type'].lower() == 'interest':
+
+            #principal balance then interest
+
+            A.addAccount(name=loan_acct_name,
+                         balance=loan_balance,
+                         min_balance=Account__dict['Min_Balance'],
+                         max_balance=Account__dict['Max_Balance'],
+                         account_type="loan",
+                         billing_start_date_YYYYMMDD=loan_billing_start_date,
+                         interest_type=Account__dict['Interest_Type'],
+                         apr=loan_apr,
+                         interest_cadence=Account__dict['Interest_Cadence'],
+                         minimum_payment=loan_min_payment,
+                         principal_balance=loan_balance,
+                         accrued_interest=Account__dict['Balance']
+                         )
+
+            del loan_acct_name
+            del loan_balance
+
+        else:
+            raise ValueError('unrecognized account type in ExpenseForecast::initialize_from_json_file: '+str(Account__dict['Account_Type']))
+
+
+    for BudgetItem__dict in initial_budget_set:
+
+        sd_YYYYMMDD = datetime.datetime.strptime(BudgetItem__dict['Start_Date'],'%Y-%m-%d %H:%M:%S').strftime('%Y%m%d')
+        ed_YYYYMMDD = datetime.datetime.strptime(BudgetItem__dict['End_Date'],'%Y-%m-%d %H:%M:%S').strftime('%Y%m%d')
+
+        B.addBudgetItem(start_date_YYYYMMDD=sd_YYYYMMDD,
+                 end_date_YYYYMMDD=ed_YYYYMMDD,
+                 priority=BudgetItem__dict['Priority'],
+                 cadence=BudgetItem__dict['Cadence'],
+                 amount=BudgetItem__dict['Amount'],
+                 memo=BudgetItem__dict['Memo'],
+                 deferrable=BudgetItem__dict['Deferrable'],
+                 partial_payment_allowed=BudgetItem__dict['Partial_Payment_Allowed'])
+
+    for MemoRule__dict in initial_memo_rule_set:
+
+        M.addMemoRule(memo_regex=MemoRule__dict['Memo_Regex'],
+                      account_from=MemoRule__dict['Account_From'],
+                      account_to=MemoRule__dict['Account_To'],
+                      transaction_priority=MemoRule__dict['Transaction_Priority'])
+
+    E = ExpenseForecast(A, B, M,start_date_YYYYMMDD, end_date_YYYYMMDD,print_debug_messages=True)
+
+    E.unique_id = data['unique_id']
+    E.start_ts = data['start_ts']
+    E.end_ts = data['end_ts']
+
+    #it is so dumb that I have to do this
+    f = open('forecast_df_' + str(E.unique_id)+'.json', 'w')
+    f.write(json.dumps(data['forecast_df'],indent=4))
+    f.close()
+
+    f = open('skipped_df_' + str(E.unique_id) + '.json', 'w')
+    f.write(json.dumps(data['skipped_df'],indent=4))
+    f.close()
+
+    f = open('confirmed_df_' + str(E.unique_id) + '.json', 'w')
+    f.write(json.dumps(data['confirmed_df'],indent=4))
+    f.close()
+
+    f = open('deferred_df_' + str(E.unique_id) + '.json', 'w')
+    f.write(json.dumps(data['deferred_df'],indent=4))
+    f.close()
+
+    E.forecast_df = pd.read_json('forecast_df_' + str(E.unique_id) + '.json')
+    E.skipped_df = pd.read_json('skipped_df_' + str(E.unique_id) + '.json')
+    E.confirmed_df = pd.read_json('confirmed_df_' + str(E.unique_id) + '.json')
+    E.deferred_df = pd.read_json('deferred_df_' + str(E.unique_id) + '.json')
+
+    return E
+
 class ExpenseForecast:
 
     def __init__(self, account_set, budget_set, memo_rule_set, start_date_YYYYMMDD, end_date_YYYYMMDD, print_debug_messages=True, raise_exceptions=True):
@@ -87,18 +225,18 @@ class ExpenseForecast:
         log_in_color('green','info','ExpenseForecast(start_date_YYYYMMDD='+str(start_date_YYYYMMDD)+', end_date_YYYYMMDD='+str(end_date_YYYYMMDD)+')')
 
         try:
-            self.start_date = datetime.datetime.strptime(start_date_YYYYMMDD, '%Y%m%d')
+            self.start_date = datetime.datetime.strptime(str(start_date_YYYYMMDD), '%Y%m%d')
         except:
             print('value was:' + str(start_date_YYYYMMDD) + '\n')
             raise ValueError  # Failed to cast start_date_YYYYMMDD to datetime with format %Y%m%d
 
         try:
-            self.end_date = datetime.datetime.strptime(end_date_YYYYMMDD, '%Y%m%d')
+            self.end_date = datetime.datetime.strptime(str(end_date_YYYYMMDD), '%Y%m%d')
         except:
             raise ValueError  # Failed to cast end_date_YYYYMMDD to datetime with format %Y%m%d
 
         if self.start_date >= self.end_date:
-            raise ValueError  # start_date must be before end_date
+            raise ValueError(str(self.start_date)+" >= "+str(self.end_date))  # start_date must be before end_date
 
         accounts_df = account_set.getAccounts()
         if accounts_df.shape[0] == 0:
@@ -168,11 +306,12 @@ class ExpenseForecast:
         cmpnd_sel_vec = accounts_df.Interest_Type.apply(lambda x: x.lower() if x is not None else None) == 'compound'
 
         if print_debug_messages:
-            if error_ind: print(error_text)
+            if error_ind:
+                print(error_text)
 
         if raise_exceptions:
             if error_ind:
-                raise ValueError
+                raise ValueError(error_text)
 
         self.initial_account_set = copy.deepcopy(account_set)
         self.initial_budget_set = copy.deepcopy(budget_set)
@@ -216,6 +355,60 @@ class ExpenseForecast:
         self.initial_confirmed_df = confirmed_df
 
 
+    def appendSummaryLines(self):
+        print('enter appendSummaryLines()')
+        #todo incorporate savings
+        #add net gain/loss (requires looking at memo)
+        #add total interest
+        #add interest paid (requires looking at memo)
+
+        account_info = self.initial_account_set.getAccounts()
+
+        loan_acct_sel_vec = (account_info.Account_Type == 'principal balance') | (account_info.Account_Type == 'interest')
+        cc_acct_sel_vec = (account_info.Account_Type == 'prev stmt bal') | (account_info.Account_Type == 'curr stmt bal')
+
+        print('about to compute loan_acct_info')
+        loan_acct_info = account_info.iloc[loan_acct_sel_vec,:]
+        print('loan_acct_info:')
+        print(loan_acct_info)
+        credit_acct_info = account_info.iloc[cc_acct_sel_vec,:]
+        print('credit_acct_info:')
+        print(credit_acct_info)
+        #savings_acct_info = account_info[account_info.Account_Type.lower() == 'savings', :]
+
+        print('calculating NetWorth line: loan')
+        NetWorth = self.forecast_df.Checking
+        for loan_account_index, loan_account_row in loan_acct_info.iterrows():
+            NetWorth -= self.forecast_df[:,self.forecast_df.columns == loan_account_row.Name]
+
+        print('calculating NetWorth line: credit')
+        for credit_account_index, credit_account_row in credit_acct_info.iterrows():
+            NetWorth -= self.forecast_df[:,self.forecast_df.columns == credit_account_row.Name]
+
+        # for savings_account_index, savings_account_row in savings_acct_info.iterrows():
+        #     NetWorth += self.forecast_df[:,self.forecast_df.columns == savings_account_row.Name]
+
+        print('calculating LoanTotal line')
+        LoanTotal = self.forecast_df.Checking - self.forecast_df.Checking #I intend to create a column of zeroes
+        for loan_account_index, loan_account_row in loan_acct_info.iterrows():
+            LoanTotal += self.forecast_df[:,self.forecast_df.columns == loan_account_row.Name]
+
+        print('calculating CCDebtTotal line')
+        CCDebtTotal = self.forecast_df.Checking - self.forecast_df.Checking  # I intend to create a column of zeroes
+        for credit_account_index, credit_account_row in credit_acct_info.iterrows():
+            CCDebtTotal -= self.forecast_df[:, self.forecast_df.columns == credit_account_row.Name]
+
+
+        self.forecast_df.NetWorth = NetWorth
+        self.forecast_df.LoanTotal = LoanTotal
+        self.forecast_df.CCDebtTotal = CCDebtTotal
+        #todo move Memo column to rightmost. DO NOT REORDER THE OTHER COLUMNS
+
+        print('Here is the data frame')
+        print(self.forecast_df)
+
+        return self.forecast_df
+
     def runForecast(self):
         self.start_ts = datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S')
 
@@ -253,6 +446,7 @@ class ExpenseForecast:
                         self.end_date=""" + str(self.end_date) + """
                         max(forecast_df.Date)=""" + str(max(forecast_df.Date)) + """
                         """)
+
 
     def writeToJSONFile(self):
 
@@ -1987,16 +2181,21 @@ class ExpenseForecast:
         end_ts_string = "\"end_ts\":\""+self.end_ts+"\",\n"
 
         start_date_string = "\"start_date\":"+self.start_date.strftime('%Y%m%d')+",\n"
-        end_date_string = "\"end_date\":"+self.start_date.strftime('%Y%m%d')+",\n"
+        end_date_string = "\"end_date\":"+self.end_date.strftime('%Y%m%d')+",\n"
 
         memo_rule_set_string = "\"initial_memo_rule_set\":"+self.initial_memo_rule_set.toJSON()+","
         initial_account_set_string = "\"initial_account_set\":"+self.initial_account_set.toJSON()+","
         initial_budget_set_string = "\"initial_budget_set\":"+self.initial_budget_set.toJSON()+","
 
-        forecast_df_string = "\"forecast_df\":"+self.forecast_df.to_json(orient='records',date_format='iso')+",\n"
-        skipped_df_string = "\"skipped_df\":"+self.skipped_df.to_json(orient='records',date_format='iso')+",\n"
-        confirmed_df_string = "\"confirmed_df\":"+self.confirmed_df.to_json(orient='records',date_format='iso')+",\n"
-        deferred_df_string = "\"deferred_df\":"+self.deferred_df.to_json(orient='records',date_format='iso')
+        normalized_forecast_df_JSON_string = self.forecast_df.to_json(orient='records',date_format='iso')#.replace('\'','"')
+        normalized_skipped_df_JSON_string = self.skipped_df.to_json(orient='records',date_format='iso')#.replace('\'','"')
+        normalized_confirmed_df_JSON_string = self.confirmed_df.to_json(orient='records',date_format='iso')#.replace('\'','"')
+        normalized_deferred_df_JSON_string = self.deferred_df.to_json(orient='records',date_format='iso')#.replace('\'','"')
+
+        forecast_df_string = "\"forecast_df\":"+normalized_forecast_df_JSON_string+",\n"
+        skipped_df_string = "\"skipped_df\":"+normalized_skipped_df_JSON_string+",\n"
+        confirmed_df_string = "\"confirmed_df\":"+normalized_confirmed_df_JSON_string+",\n"
+        deferred_df_string = "\"deferred_df\":"+normalized_deferred_df_JSON_string
 
         JSON_string += unique_id_string
         JSON_string += start_ts_string
@@ -2030,9 +2229,6 @@ class ExpenseForecast:
     def to_html(self):
         return self.forecast_df.to_html()
 
-    def appendSummaryLines(self):
-        #include account type totals, marginal interest, net worth
-        raise NotImplementedError
 
     def getMilestoneDate(self,AccountSet):
         raise NotImplementedError

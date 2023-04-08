@@ -316,7 +316,7 @@ class AccountSet:
             if accrued_interest is None:
                 raise ValueError #Accrued_Interest cannot be None for account_type=loan
 
-            if principal_balance + accrued_interest != balance:
+            if float(principal_balance) + float(accrued_interest) != float(balance):
                 raise ValueError #Account.Principal_balance + Account.accrued_interest != Account.balance
 
             account = Account.Account(name=name + ': Principal Balance',

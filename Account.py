@@ -196,16 +196,23 @@ class Account:
 
         if account_type.lower() in ['prev stmt bal','principal balance','savings']:
             try:
-                self.billing_start_date=datetime.datetime.strptime(billing_start_date_YYYYMMDD,'%Y%m%d')
+                try:
+                    try:
+                        self.billing_start_date=datetime.datetime.strptime(billing_start_date_YYYYMMDD,'%Y%m%d')
+                    except:
+                        self.billing_start_date = datetime.datetime.strptime(billing_start_date_YYYYMMDD, '%Y-%m-%d %H:%M:%S')
+                except:
+                    self.billing_start_date = datetime.datetime.strptime(billing_start_date_YYYYMMDD, '%Y-%m-%d')
             except:
                 exception_type_error_message_string += 'failed cast Account.billing_start_date_YYYYMMDD to datetime\n'
-                exception_type_error_message_string += 'Value was:' + str(interest_type) + "\n"
+                exception_type_error_message_string += 'Value was:' + str(billing_start_date_YYYYMMDD) + "\n"
                 exception_type_error_ind=True
         else:
-            if billing_start_date_YYYYMMDD is not None:
-                exception_value_error_message_string += "For types other than prev stmt bal, principal balance, or savings, Account.billing_start_date should be None.\n"
-                exception_value_error_message_string += 'Value was:' + str(billing_start_date_YYYYMMDD)+"\n"
-                exception_value_error_ind=True
+            if billing_start_date_YYYYMMDD != 'None':
+                if billing_start_date_YYYYMMDD is not None:
+                    exception_value_error_message_string += "For types other than prev stmt bal, principal balance, or savings, Account.billing_start_date should be None.\n"
+                    exception_value_error_message_string += 'Value was:' + str(billing_start_date_YYYYMMDD)+"\n"
+                    exception_value_error_ind=True
 
         # if account_type.lower() in ['loan']:
         #     try:
@@ -240,10 +247,11 @@ class Account:
                 exception_value_error_message_string += 'Value was:' + str(minimum_payment) + "\n"
                 exception_value_error_ind=True
         else:
-            if minimum_payment is not None:
-                exception_value_error_message_string += "For types other than prev stmt bal or principal balance, Account.minimum_payment should be None.\n"
-                exception_value_error_message_string += 'Value was:' + str(minimum_payment)+"\n"
-                exception_value_error_ind=True
+            if minimum_payment != 'None':
+                if minimum_payment is not None:
+                    exception_value_error_message_string += "For types other than prev stmt bal or principal balance, Account.minimum_payment should be None.\n"
+                    exception_value_error_message_string += 'Value was:' + str(minimum_payment)+"\n"
+                    exception_value_error_ind=True
 
         if print_debug_messages:
             if exception_type_error_ind: print("TypeErrors:\n"+exception_type_error_message_string)

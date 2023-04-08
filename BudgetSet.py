@@ -161,7 +161,7 @@ class BudgetSet:
                  priority,
                  cadence,
                  amount,
-                      memo,
+                 memo,
                  deferrable,
                  partial_payment_allowed,
                  print_debug_messages = True,

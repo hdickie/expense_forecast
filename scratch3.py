@@ -473,15 +473,11 @@ if __name__ == '__main__':
 
     list_of_lists_of_budget_sets = [
         [move_in_w_mom_june_1_pay_800,
-         #move_in_w_mom_june_1_pay_1000,
         move_in_w_mom_july_1_pay_800,
-        #move_in_w_mom_july_1_pay_1000,
         move_in_w_jp_july_1_pay_1500,
         move_in_w_mom_aug_1_pay_800,
-        #move_in_w_mom_aug_1_pay_1000,
         move_in_w_jp_aug_1_pay_1500,
         move_in_w_mom_sep_1_pay_800,
-        #move_in_w_mom_sep_1_pay_1000,
         move_in_w_jp_sep_1_pay_1500
          ], #income
         [
