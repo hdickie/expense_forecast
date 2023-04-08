@@ -868,14 +868,14 @@ class ExpenseForecast:
                 # hypothetical_future_state_of_forecast.reset_index(inplace=True,drop=True)
 
                 hypothetical_future_state_of_forecast = self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date.strftime('%Y%m%d'),
-                                            end_date_YYYYMMDD=self.end_date.strftime('%Y%m%d'),
-                                            confirmed_df=not_yet_validated_confirmed_df,
-                                            proposed_df=empty_df,
-                                            deferred_df=empty_df,
-                                            skipped_df=empty_df,
-                                            account_set=copy.deepcopy(self.sync_account_set_w_forecast_day(account_set, forecast_df, self.start_date.strftime('%Y%m%d'))), #since we resatisfice from the beginning, this should reflect the beginning as well
-                                            #account_set=copy.deepcopy(account_set),
-                                            memo_rule_set=memo_set)[0]
+                                                                                    end_date_YYYYMMDD=self.end_date.strftime('%Y%m%d'),
+                                                                                    confirmed_df=not_yet_validated_confirmed_df,
+                                                                                    proposed_df=empty_df,
+                                                                                    deferred_df=empty_df,
+                                                                                    skipped_df=empty_df,
+                                                                                    account_set=copy.deepcopy(self.sync_account_set_w_forecast_day(account_set, forecast_df, self.start_date.strftime('%Y%m%d'))), #since we resatisfice from the beginning, this should reflect the beginning as well
+                                                                                    #account_set=copy.deepcopy(account_set),
+                                                                                    memo_rule_set=memo_set)[0]
 
                 log_in_color('magenta', 'debug', 'END error-check computeOptimalForecast: '+str(proposed_row_df.Memo)+' (SUCCESS)', self.log_stack_depth)
                 self.log_stack_depth -= 1
@@ -1258,13 +1258,13 @@ class ExpenseForecast:
                 # print(deferred_df.to_string())
 
             elif not transaction_is_permitted and allow_skip_and_defer and not deferred_row_df.Deferrable:
-            #     log_in_color('green', 'debug', 'Appending transaction to skipped_df', self.log_stack_depth)
-            #     skipped_df = pd.concat([skipped_df, pd.DataFrame(deferred_row_df).T])
-            #     # assert skipped_df['Memo'].shape[0] == skipped_df['Memo'].drop_duplicates().shape[0]
-            #
-            #     # this is done only for QC, since we don't return proposed_df
-            #     remaining_unproposed_transactions_df = proposed_df[~proposed_df.index.isin(single_proposed_deferred_transaction_df.index)]
-            #     proposed_df = remaining_unproposed_transactions_df
+                #     log_in_color('green', 'debug', 'Appending transaction to skipped_df', self.log_stack_depth)
+                #     skipped_df = pd.concat([skipped_df, pd.DataFrame(deferred_row_df).T])
+                #     # assert skipped_df['Memo'].shape[0] == skipped_df['Memo'].drop_duplicates().shape[0]
+                #
+                #     # this is done only for QC, since we don't return proposed_df
+                #     remaining_unproposed_transactions_df = proposed_df[~proposed_df.index.isin(single_proposed_deferred_transaction_df.index)]
+                #     proposed_df = remaining_unproposed_transactions_df
                 raise ValueError #this should never happen. if we are processing deferred txns, they should all be deferrable
 
 
@@ -2125,7 +2125,67 @@ class ExpenseForecast:
         plt.title('Forecast: ' + str(min_date) + ' -> ' + str(max_date))
         plt.savefig(output_path)
 
+    def evaulateAccountMilestone(self,account_name,min_balance,max_balance):
 
+        account_info = self.initial_account_set.getAccounts()
+        account_base_names = [ account_info.Name.split(':')[0] for a in account_info.Name ]
+        row_sel_vec = [ a == account_name for a in account_base_names]
+
+        relevant_account_info_rows_df = account_info[row_sel_vec]
+
+        #this df should be either 1 or 2 rows, but have same account type either way
+        assert relevant_account_info_rows_df.Name.unique().shape[0] == 1
+
+        if relevant_account_info_rows_df.shape[0] == 1: #case for checking and savings
+            relevant_time_series_df = self.forecast_df[:,relevant_account_info_rows_df.head(1)['Name'].iat[0]]
+        elif relevant_account_info_rows_df.shape[0] == 2:  # case for credit and loan
+            relevant_time_series_df = self.forecast_df[:, relevant_account_info_rows_df.head(1)['Name'].iat[0]] + self.forecast_df[:, relevant_account_info_rows_df.tail(1)['Name'].iat[0]]
+        else:
+            raise ValueError("undefined edge case in ExpenseForecast::evaulateAccountMilestone""")
+
+        #if the last day of the forecast does not satisfy account bounds, then none of the days of the forecast qualify
+        if not (( min_balance <= relevant_time_series_df.tail(1).Balance ) & ( relevant_time_series_df.tail(1).Balance <= max_balance )):
+            return None
+
+        #if the code reaches this point, then the milestone was for sure reached.
+        #We can find the first day that qualifies my reverseing the sequence and returning the day before the first day that doesnt qualify
+        relevant_time_series_df = relevant_time_series_df.loc[::-1]
+        last_qualifying_date = relevant_time_series_df.head(1).Date
+        for index, row in relevant_time_series_df.iterrows():
+            if (( min_balance <= row.Balance ) & ( row.Balance <= max_balance )):
+                last_qualifying_date = row.Date
+            else:
+                break
+        return last_qualifying_date
+
+    def evaulateMemoMilestone(self,memo_regex):
+        for forecast_index, forecast_row in self.forecast_df.iterrows():
+            m = re.search(memo_regex,forecast_row.Memo)
+            if m is not None:
+                return forecast_row.Date
+        return None
+
+    def evaluateCompositeMilestone(self,list_of_account_milestones,list_of_memo_milestone_memo_regexes):
+        #list_of_account_milestones is lists of 3-tuples that are (string,float,float) for parameters
+
+        num_of_acct_milestones = len(list_of_account_milestones)
+        num_of_memo_milestones = len(list_of_memo_milestone_memo_regexes)
+        account_milestone_dates = [None] * num_of_acct_milestones
+        memo_milestone_dates = [None] * num_of_memo_milestones
+
+        for i in range(0,num_of_acct_milestones):
+            next_milestone = self.evaluateAccountMilestone(list_of_memo_milestone_memo_regexes[i])
+            if next_milestone is None: #disqualified immediately because success requires ALL
+                return None
+            account_milestone_dates[i] = next_milestone
+
+        for i in range(0,num_of_acct_milestones):
+            next_milestone = self.evaulateMemoMilestone(list_of_account_milestones[i][0],list_of_account_milestones[i][1],list_of_account_milestones[i][2])
+            if next_milestone is None:  # disqualified immediately because success requires ALL
+                return None
+            memo_milestone_dates[i] = next_milestone
+
+        return max(account_milestone_dates + memo_milestone_dates)
 
     def plotAll(self, output_path):
         """
