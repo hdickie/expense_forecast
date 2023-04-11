@@ -2,7 +2,7 @@
 "start_ts":"2023_04_07__13_27_36",
 "end_ts":"2023_04_07__13_49_09",
 "start_date":20230402,
-"end_date":20230402,
+"end_date":20231231,
 "initial_memo_rule_set":[
 {
 "Memo_Regex":".*income.*",

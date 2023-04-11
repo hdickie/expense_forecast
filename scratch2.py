@@ -5,10 +5,18 @@ import BudgetSet, AccountSet, MemoRuleSet
 if __name__ == '__main__':
 
     F = ForecastHandler.ForecastHandler()
-    E = ExpenseForecast.initialize_from_json_file(path_to_json='Forecast__2023_04_07__14_27_35__003317.json')
-    E.appendSummaryLines()
 
-    F.generateHTMLReport(E)
+    F.initialize_from_excel_file('expense_forecast__input.ods')
+
+    # E1 = ExpenseForecast.initialize_from_json_file(path_to_json='Forecast__2023_04_07__14_06_02__031534.json')
+    # E1.appendSummaryLines()
+    #
+    # E2 = ExpenseForecast.initialize_from_json_file(path_to_json='Forecast__2023_04_07__13_27_36__020658.json')
+    # E2.appendSummaryLines()
+
+    #print(E1.evaulateMemoMilestone('EMT class'))
+
+    #F.generateCompareTwoForecastsHTMLReport(E1,E2)
 
     # core_budget_set = [['1']]
     #

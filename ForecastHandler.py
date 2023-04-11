@@ -8,6 +8,10 @@ from multiprocessing import Pool
 import AccountSet
 import BudgetSet
 import MemoRuleSet
+import re
+
+import matplotlib.pyplot as plt
+from matplotlib.pyplot import figure
 
 class ForecastHandler:
 
@@ -22,18 +26,22 @@ class ForecastHandler:
         AccountMilestones_df = pd.read_excel(path_to_excel_file, sheet_name='AccountMilestones')
         MemoMilestones_df = pd.read_excel(path_to_excel_file, sheet_name='MemoMilestones')
         CompositeMilestones_df = pd.read_excel(path_to_excel_file, sheet_name='CompositeMilestones')
+
         config_df = pd.read_excel(path_to_excel_file, sheet_name='config')
+        start_date_YYYYMMDD = config_df.Start_Date_YYYYMMDD.iat[0]
+        end_date_YYYYMMDD = config_df.End_Date_YYYYMMDD.iat[0]
+        output_directory = config_df.Output_Directory.iat[0]
 
         A = AccountSet.AccountSet([])
         M = MemoRuleSet.MemoRuleSet([])
 
         for account_index, account_row in AccountSet_df.iterrows():
-            A.addAccount(account_row.Name,
+            A.addAccount(account_row.Account_Name,
                    account_row.Balance,
                    account_row.Min_Balance,
                    account_row.Max_Balance,
                    account_row.Account_Type,
-                   billing_start_date_YYYYMMDD=account_row.Billing_Start_Dt,
+                   billing_start_date_YYYYMMDD=account_row.Billing_Start_Date_YYYYMMDD,
                    interest_type=account_row.Interest_Type,
                    apr=account_row.APR,
                    interest_cadence=account_row.Interest_Cadence,
@@ -45,24 +53,76 @@ class ForecastHandler:
         for memorule_index, memorule_row in MemoRuleSet_df.iterrows():
             M.addMemoRule(memorule_row.Memo_Regex,memorule_row.Account_From,memorule_row.Account_To,memorule_row.Transaction_Priority)
 
-        og_budget_match_vec = [False] * BudgetSet_df.shape[0]
-        og_memo_match_vec = [False] * MemoRuleSet_df.shape[0]
-
+        # number_of_combinations = 1
         set_ids = ChooseOneSet_df.Choose_One_Set_Id.unique()
         set_ids.sort()
+        # for set_id in set_ids:
+        #     all_options_for_set = ChooseOneSet_df[ChooseOneSet_df.Choose_One_Set_Id == set_id,:]
+        #     number_of_combinations = number_of_combinations * all_options_for_set.shape[0]
+        master_list = ['']
         for set_id in set_ids:
-            all_options_for_set = ChooseOneSet_df[ChooseOneSet_df.Choose_One_Set_Id == set_id,:]
-            option_ids = all_options_for_set.Option_Id
-            option_ids.sort()
-            for option_id in option_ids:
-                one_relevant_row_df = ChooseOneSet_df[ (ChooseOneSet_df.Choose_One_Set_Id == set_id) & (ChooseOneSet_df.Option_Id == option_id) ,:]
+            all_options_for_set = ChooseOneSet_df.loc[ChooseOneSet_df.Choose_One_Set_Id == set_id]
+            current_list=[]
+            for option_index, option_row in all_options_for_set.iterrows():
+                for l in master_list:
+                    current_list.append(l + ';' + option_row.Memo_Regex_List)
 
-                for i in range(0,BudgetSet_df.shape[0]):
-                    budget_row = BudgetSet_df.loc[i,:]
+            master_list = current_list
 
-                    for memo_regex in one_relevant_row_df.Memo_Regex_List.split(';'):
-                        pass
-                        #todo left off here
+
+        budget_set_list = []
+        for l in master_list:
+            B = BudgetSet.BudgetSet([])
+            for budget_item_index, budget_item_row in BudgetSet_df.iterrows():
+                for memo_regex in l.split(';'):
+                    if re.search(memo_regex,budget_item_row.Memo) is not None:
+                        B.addBudgetItem(start_date_YYYYMMDD=budget_item_row.Start_Date,
+                         end_date_YYYYMMDD=budget_item_row.End_Date,
+                         priority=budget_item_row.Priority,
+                         cadence=budget_item_row.Cadence,
+                         amount=budget_item_row.Amount,
+                         memo=budget_item_row.Memo,
+                         deferrable=budget_item_row.Deferrable,
+                         partial_payment_allowed=budget_item_row.Partial_Payment_Allowed
+                                        )
+
+                        break
+            budget_set_list.append(B)
+
+
+
+
+        program_start = datetime.datetime.now()
+        scenario_index = 0
+        number_of_returned_forecasts = len(budget_set_list)
+        for B in budget_set_list:
+            loop_start = datetime.datetime.now()
+            print('Starting simulation scenario ' + str(scenario_index))
+            try:
+                E = ExpenseForecast.ExpenseForecast(account_set=copy.deepcopy(A),
+                                                    budget_set=B,
+                                                    memo_rule_set=M,
+                                                    start_date_YYYYMMDD=start_date_YYYYMMDD,
+                                                    end_date_YYYYMMDD=end_date_YYYYMMDD)
+
+                print(E)
+            except Exception as e:
+                print('Simulation scenario ' + str(scenario_index) + ' failed')
+                print(e)
+
+            loop_finish = datetime.datetime.now()
+
+            loop_delta = loop_finish - loop_start
+            time_since_started = loop_finish - program_start
+
+            average_time_per_loop = time_since_started.seconds / (scenario_index + 1)
+            loops_remaining = number_of_returned_forecasts - (scenario_index + 1)
+            ETC = loop_finish + datetime.timedelta(seconds=average_time_per_loop * loops_remaining)
+            progress_string = 'Finished in ' + str(loop_delta.seconds) + ' seconds. ETC: ' + str(ETC.strftime('%Y-%m-%d %H:%M:%S'))
+
+            print(progress_string)
+
+            scenario_index += 1
 
 
         # choose_one_sets__list = []
@@ -75,162 +135,534 @@ class ForecastHandler:
         #     #choose_one_sets__dict[chooseoneset_row.Choose_One_Set_Id].append(chooseoneset_row.Memo_Regex_List)
 
 
-    def outputHTMLreport(self,E):
-        pass
-        raise NotImplementedError
-
-
     def generateCompareTwoForecastsHTMLReport(self,E1, E2, output_dir='./'):
 
         assert E1.start_date == E2.start_date
         assert E1.end_date == E2.end_date
 
-        start_date = E1.start_date
-        end_date = E1.end_date
+        start_date = E1.start_date.strftime('%Y-%m-%d')
+        end_date = E1.end_date.strftime('%Y-%m-%d')
 
-        report_id = E1.unique_id + '_vs_' + E2.unique_id
+        report_1_id = E1.unique_id
+        report_2_id = E2.unique_id
 
-        networth_line_plot_path = output_dir + report_id + '_networth_line_plot.png'
-        netgain_line_plot_path = output_dir + report_id + '_netgain_line_plot.png'
-        accounttype_line_plot_path = output_dir + report_id + '_accounttype_line_plot_plot.png'
-        interest_line_plot_path = output_dir + report_id + '_interest_line_plot_plot.png'
-        milestone_line_plot_path = output_dir + report_id + '_milestone_line_plot.png'
-        all_line_plot_path = output_dir + report_id + '_all_line_plot.png'
+        report_1_start_ts__datetime = datetime.datetime.strptime(E1.start_ts, '%Y_%m_%d__%H_%M_%S')
+        report_1_end_ts__datetime = datetime.datetime.strptime(E1.end_ts, '%Y_%m_%d__%H_%M_%S')
+        report_2_start_ts__datetime = datetime.datetime.strptime(E2.start_ts, '%Y_%m_%d__%H_%M_%S')
+        report_2_end_ts__datetime = datetime.datetime.strptime(E2.end_ts, '%Y_%m_%d__%H_%M_%S')
+        report_1_simulation_time_elapsed = report_1_end_ts__datetime - report_1_start_ts__datetime
+        report_2_simulation_time_elapsed = report_2_end_ts__datetime - report_2_start_ts__datetime
+
+        # todo add a comment about whether the simulation was able to make it to the end or not.
+        summary_text = """
+                Forecast 1 #"""+str(E1.unique_id)+""" started at """ + str(report_1_start_ts__datetime) + """, took """ + str(report_1_simulation_time_elapsed) + """ to complete, and finished at """ + str(report_1_end_ts__datetime) + """.
+                <br>
+                Forecast 2 #"""+str(E2.unique_id)+""" started at """ + str(report_2_start_ts__datetime) + """, took """ + str(report_2_simulation_time_elapsed) + """ to complete, and finished at """ + str(report_2_end_ts__datetime) + """.
+                """
+
+        if E1.initial_account_set.getAccounts().to_string() == E2.initial_account_set.getAccounts().to_string():
+            account_text = """
+            The initial conditions and account boundaries are the same, and are:""" + E1.initial_account_set.getAccounts().to_html() + """
+            """
+        else:
+
+            E1_acct_df = E1.initial_account_set.getAccounts()
+            E2_acct_df = E2.initial_account_set.getAccounts()
+
+            common_accounts_df = pd.merge(E1_acct_df,E2_acct_df,on=["Balance","Min_Balance","Max_Balance","Account_Type","Billing_Start_Dt","Interest_Type","APR","Interest_Cadence","Minimum_Payment"])
+
+            E1_LJ_E2_df = pd.merge(E1_acct_df,E2_acct_df,on=["Balance","Min_Balance","Max_Balance","Account_Type","Billing_Start_Dt","Interest_Type","APR","Interest_Cadence","Minimum_Payment"],how="left",indicator=True)
+            E2_LJ_E1_df = pd.merge(E2_acct_df, E1_acct_df,
+                                   on=["Balance", "Min_Balance", "Max_Balance", "Account_Type", "Billing_Start_Dt", "Interest_Type", "APR", "Interest_Cadence", "Minimum_Payment"], how="left",
+                                   indicator=True)
+
+            accounts_forecast_1_only_df = E1_LJ_E2_df.loc[E1_LJ_E2_df._merge == 'left_only',["Balance", "Min_Balance", "Max_Balance", "Account_Type", "Billing_Start_Dt", "Interest_Type", "APR", "Interest_Cadence", "Minimum_Payment"]]
+            accounts_forecast_2_only_df = E2_LJ_E1_df.loc[E2_LJ_E1_df._merge == 'left_only',["Balance", "Min_Balance", "Max_Balance", "Account_Type", "Billing_Start_Dt", "Interest_Type", "APR", "Interest_Cadence", "Minimum_Payment"]]
+
+            account_text = """
+            The initial conditions and account boundaries were different, and are:
+            <h4>Shared Accounts:</h4>
+            """ + common_accounts_df.to_html() + """
+            <h4>Forecast 1 #"""+report_1_id+""" Only:</h4>
+            """ + accounts_forecast_1_only_df.to_html() + """
+            <h4>Forecast 2 #"""+report_2_id+""" Only:</h4>
+            """ + accounts_forecast_2_only_df.to_html() + """
+            """
+
+        if E1.initial_budget_set.getBudgetItems().to_string() == E2.initial_budget_set.getBudgetItems().to_string():
+            budget_set_text = """
+            The transactions are the same, and are:""" + E1.initial_budget_set.getBudgetItems().to_html() + """
+            """
+        else:
+
+            E1_budget_item_df = E1.initial_budget_set.getBudgetItems()
+            E2_budget_item_df = E2.initial_budget_set.getBudgetItems()
+
+            common_budget_items_df = pd.merge(E1_budget_item_df,E2_budget_item_df,on=["Start_Date","End_Date","Priority","Cadence","Amount","Memo","Deferrable","Partial_Payment_Allowed"])
+
+            E1_LJ_E2_df = pd.merge(E1_budget_item_df,E2_budget_item_df,on=["Start_Date","End_Date","Priority","Cadence","Amount","Memo","Deferrable","Partial_Payment_Allowed"],indicator=True,how="left")
+
+            E2_LJ_E1_df = pd.merge(E2_budget_item_df, E1_budget_item_df, on=["Start_Date", "End_Date", "Priority", "Cadence", "Amount", "Memo", "Deferrable", "Partial_Payment_Allowed"],
+                                   indicator=True, how="left")
+
+            budget_forecast_1_only_df = E1_LJ_E2_df.loc[E1_LJ_E2_df._merge == 'left_only',["Start_Date", "End_Date", "Priority", "Cadence", "Amount", "Memo", "Deferrable", "Partial_Payment_Allowed"]]
+            budget_forecast_2_only_df = E2_LJ_E1_df.loc[E2_LJ_E1_df._merge == 'left_only',["Start_Date", "End_Date", "Priority", "Cadence", "Amount", "Memo", "Deferrable", "Partial_Payment_Allowed"]]
+
+            budget_set_text = """
+            The transactions considered for this analysis are different, and are:
+            <h4>Shared Budget Items:</h4>
+            """ + common_budget_items_df.to_html() + """
+            <h4>Forecast 1 #"""+report_1_id+""" Only:</h4>
+            """ + budget_forecast_1_only_df.to_html() + """
+            <h4>Forecast 2 #"""+report_2_id+""" Only:</h4>
+            """ + budget_forecast_2_only_df.to_html() + """
+            """
+
+        if E1.initial_memo_rule_set.getMemoRules().to_string() == E2.initial_memo_rule_set.getMemoRules().to_string():
+            memo_rule_text = """
+            These decision rules are the same and are:""" + E1.initial_memo_rule_set.getMemoRules().to_html() + """
+            """
+        else:
+
+            E1_memo_rules_df = E1.initial_memo_rule_set.getMemoRules()
+            E2_memo_rules_df = E2.initial_memo_rule_set.getMemoRules()
+
+            common_memo_rules_df = pd.merge(E1_memo_rules_df, E2_memo_rules_df, on=["Memo_Regex", "Account_From", "Account_To", "Transaction_Priority"])
+
+            E1_LJ_E2_df = pd.merge(E1_memo_rules_df, E2_memo_rules_df, on=["Memo_Regex", "Account_From", "Account_To", "Transaction_Priority"],
+                                   indicator=True, how="left")
+
+            E2_LJ_E1_df = pd.merge(E2_memo_rules_df, E1_memo_rules_df, on=["Memo_Regex", "Account_From", "Account_To", "Transaction_Priority"],
+                                   indicator=True, how="left")
+
+            memo_rule_forecast_1_only_df = E1_LJ_E2_df.loc[E1_LJ_E2_df._merge == 'left_only', ["Memo_Regex", "Account_From", "Account_To", "Transaction_Priority"]]
+            memo_rule_forecast_2_only_df = E2_LJ_E1_df.loc[E2_LJ_E1_df._merge == 'left_only', ["Memo_Regex", "Account_From", "Account_To", "Transaction_Priority"]]
+
+            memo_rule_text = """
+            The decision rules used for this analysis are different, and are:
+            <h4>Shared Memo Rules:</h4>
+            """ + common_memo_rules_df.to_html() + """
+            <h4>Forecast 1 #"""+report_1_id+""" Only:</h4>
+            """ + memo_rule_forecast_1_only_df.to_html() + """
+            <h4>Forecast 2 #"""+report_2_id+""" Only:</h4>
+            """ + memo_rule_forecast_2_only_df.to_html() + """
+            """
+
+        assert E1.forecast_df.shape[0] == E2.forecast_df.shape[0]
+        num_days = E1.forecast_df.shape[0]
+
+        report_1_initial_networth = E1.forecast_df.head(1)['NetWorth'].iat[0]
+        report_1_final_networth = E1.forecast_df.tail(1)['NetWorth'].iat[0]
+        report_1_networth_delta = report_1_final_networth - report_1_initial_networth
+        report_1_avg_networth_change = round(report_1_networth_delta / float(E1.forecast_df.shape[0]), 2)
+
+        if report_1_networth_delta >= 0:
+            report_1_networth_rose_or_fell = "rose"
+        else:
+            report_1_networth_rose_or_fell = "fell"
+
+        report_2_initial_networth = E2.forecast_df.head(1)['NetWorth'].iat[0]
+        report_2_final_networth = E2.forecast_df.tail(1)['NetWorth'].iat[0]
+        report_2_networth_delta = report_2_final_networth - report_2_initial_networth
+        report_2_avg_networth_change = round(report_2_networth_delta / float(E1.forecast_df.shape[0]), 2)
+
+        if report_2_networth_delta >= 0:
+            report_2_networth_rose_or_fell = "rose"
+        else:
+            report_2_networth_rose_or_fell = "fell"
+
+        #todo
+        #Networth was higher in Forecast 1, with a final value $XX,XXX greater than the alternative.
+        #The difference in average values for these trends is $XX.XX.
+
+        networth_text = """
+            For forecast 1 #"""+report_1_id+""", Net Worth began at """ + str(f"${float(report_1_initial_networth):,}") + """ and """ + report_1_networth_rose_or_fell + """ to """ + str(f"${float(report_1_final_networth):,}") + """ over """ + str(
+        f"{float(num_days):,.0f}") + """ days, averaging """ + f"${float(report_1_avg_networth_change):,}" + """ per day.
+        <br>
+        For forecast 2 #"""+report_2_id+""", Net Worth began at """ + str(f"${float(report_2_initial_networth):,}") + """ and """ + report_2_networth_rose_or_fell + """ to """ + str(f"${float(report_2_final_networth):,}") + """ over """ + str(
+        f"{float(num_days):,.0f}") + """ days, averaging """ + f"${float(report_2_avg_networth_change):,}" + """ per day.
+        <br><br>
+        """
+        forecast_networth_delta = round(report_2_final_networth - report_1_final_networth,2)
+        if report_1_final_networth >= report_2_final_networth:
+            networth_text += """Forecast 1 #"""+report_1_id+""" ended with a Net Worth """+str(f"${float(forecast_networth_delta):,}")+""" greater than the alternative.  """
+        else:
+            networth_text += """Forecast 2 #"""+report_2_id+""" ended with a Net Worth """+str(f"${float(forecast_networth_delta):,}")+""" greater than the alternative.  """
+
+        report_1_initial_loan_total = round(E1.forecast_df.head(1).LoanTotal.iat[0], 2)
+        report_1_final_loan_total = round(E1.forecast_df.tail(1).LoanTotal.iat[0], 2)
+        report_1_loan_delta = round(report_1_final_loan_total - report_1_initial_loan_total, 2)
+        report_1_initial_cc_debt_total = round(E1.forecast_df.head(1).CCDebtTotal.iat[0], 2)
+        report_1_final_cc_debt_total = round(E1.forecast_df.tail(1).CCDebtTotal.iat[0], 2)
+        report_1_cc_debt_delta = round(report_1_final_cc_debt_total - report_1_initial_cc_debt_total, 2)
+        report_1_initial_liquid_total = round(E1.forecast_df.head(1).LiquidTotal.iat[0], 2)
+        report_1_final_liquid_total = round(E1.forecast_df.tail(1).LiquidTotal.iat[0], 2)
+        report_1_liquid_delta = round(report_1_final_liquid_total - report_1_initial_liquid_total, 2)
+
+        report_1_avg_loan_delta = round(report_1_loan_delta / num_days, 2)
+        report_1_avg_cc_debt_delta = round(report_1_cc_debt_delta / num_days, 2)
+        report_1_avg_liquid_delta = round(report_1_liquid_delta / num_days, 2)
+
+        if report_1_avg_loan_delta >= 0:
+            report_1_loan_rose_or_fell = "rose"
+        else:
+            report_1_loan_rose_or_fell = "fell"
+
+        if report_1_avg_cc_debt_delta >= 0:
+            report_1_cc_debt_rose_or_fell = "rose"
+        else:
+            report_1_cc_debt_rose_or_fell = "fell"
+
+        if report_1_avg_liquid_delta >= 0:
+            report_1_liquid_rose_or_fell = "rose"
+        else:
+            report_1_liquid_rose_or_fell = "fell"
+
+        report_2_initial_loan_total = round(E2.forecast_df.head(1).LoanTotal.iat[0], 2)
+        report_2_final_loan_total = round(E2.forecast_df.tail(1).LoanTotal.iat[0], 2)
+        report_2_loan_delta = round(report_2_final_loan_total - report_2_initial_loan_total, 2)
+        report_2_initial_cc_debt_total = round(E2.forecast_df.head(1).CCDebtTotal.iat[0], 2)
+        report_2_final_cc_debt_total = round(E2.forecast_df.tail(1).CCDebtTotal.iat[0], 2)
+        report_2_cc_debt_delta = round(report_2_final_cc_debt_total - report_2_initial_cc_debt_total, 2)
+        report_2_initial_liquid_total = round(E2.forecast_df.head(1).LiquidTotal.iat[0], 2)
+        report_2_final_liquid_total = round(E2.forecast_df.tail(1).LiquidTotal.iat[0], 2)
+        report_2_liquid_delta = round(report_2_final_liquid_total - report_2_initial_liquid_total, 2)
+
+        report_2_avg_loan_delta = round(report_2_loan_delta / num_days, 2)
+        report_2_avg_cc_debt_delta = round(report_2_cc_debt_delta / num_days, 2)
+        report_2_avg_liquid_delta = round(report_2_liquid_delta / num_days, 2)
+
+        if report_2_avg_loan_delta >= 0:
+            report_2_loan_rose_or_fell = "rose"
+        else:
+            report_2_loan_rose_or_fell = "fell"
+
+        if report_2_avg_cc_debt_delta >= 0:
+            report_2_cc_debt_rose_or_fell = "rose"
+        else:
+            report_2_cc_debt_rose_or_fell = "fell"
+
+        if report_2_avg_liquid_delta >= 0:
+            report_2_liquid_rose_or_fell = "rose"
+        else:
+            report_2_liquid_rose_or_fell = "fell"
+
+        #todo
+        # Less was owed in loans in Forecast 1, with a final value $XX,XXX less than the alternative.
+        # The difference in average values for these trends is $XX.XX.
+
+        # Less was owed on credit cards in Forecast 1, with a final value $XX,XXX less than the alternative.
+        # The difference in average values for these trends is $XX.XX.
+
+        # Liquid total was higher in Forecast 1, with a final value $XX,XXX greater than the alternative.
+        # The difference in average values for these trends is $XX.XX.
+
+
+        loan_debt_delta = round(report_2_final_loan_total - report_1_final_loan_total,2)
+        cc_debt_delta = round(report_2_final_cc_debt_total - report_1_final_cc_debt_total,2)
+        liquid_delta = round(report_2_final_liquid_total - report_1_final_liquid_total,2)
+
+        if loan_debt_delta >= 0:
+            loan_debt_delta_string = """Forecast 2 #"""+report_2_id+""" ended with loan debt """ + str(f"${float(abs(loan_debt_delta)):,}"+""" higher than the alternative.""")
+        else:
+            loan_debt_delta_string = """Forecast 1 #"""+report_1_id+""" ended with loan debt """ + str(f"${float(abs(loan_debt_delta)):,}"+""" higher than the alternative.""")
+
+        if cc_debt_delta >= 0:
+            cc_debt_delta_string = """Forecast 2 #"""+report_2_id+""" ended with credit card debt """ + str(f"${float(abs(cc_debt_delta)):,}"+""" higher than the alternative.""")
+        else:
+            cc_debt_delta_string = """Forecast 1 #"""+report_1_id+""" ended with credit card debt """ + str(f"${float(abs(cc_debt_delta)):,}"+""" higher than the alternative.""")
+
+        if liquid_delta >= 0:
+            liquid_debt_delta_string = """Forecast 2 #"""+report_2_id+""" ended with loan debt """ + str(f"${float(abs(liquid_delta)):,}"+""" higher than the alternative.""")
+        else:
+            liquid_debt_delta_string = """Forecast 1 #"""+report_1_id+""" ended with loan debt """ + str(f"${float(abs(liquid_delta)):,}"+""" higher than the alternative.""")
+
+        account_type_text = """
+                For Forecast 1 #"""+report_1_id+""", Loan debt began at """ + str(f"${float(report_1_initial_loan_total):,}") + """ and """ + report_1_loan_rose_or_fell + """ to """ + str(f"${float(report_1_final_loan_total):,}") + """ over """ + str(
+            f"{float(num_days):,.0f}") + """ days, averaging """ + f"${float(report_1_avg_loan_delta):,}" + """ per day.
+                <br>
+                For forecast 2 #"""+report_2_id+""", Loan debt began at """ + str(f"${float(report_2_initial_loan_total):,}") + """ and """ + report_2_loan_rose_or_fell + """ to """ + str(f"${float(report_2_final_loan_total):,}") + """ over """ + str(
+            f"{float(num_days):,.0f}") + """ days, averaging """ + f"${float(report_2_avg_loan_delta):,}" + """ per day.
+                <br><br>
+                """ + loan_debt_delta_string + """
+                <br><br><br>
+                For forecast 1 #"""+report_1_id+""", Credit card debt began at """ + str(f"${float(report_1_initial_cc_debt_total):,}") + """ and """ + report_1_cc_debt_rose_or_fell + """ to """ + str(
+            f"${float(report_1_final_cc_debt_total):,}") + """ over """ + str(f"{float(num_days):,.0f}") + """ days, averaging """ + f"${float(report_1_avg_cc_debt_delta):,}" + """ per day.
+                <br>
+                For forecast 2 #"""+report_2_id+""", Credit card debt began at """ + str(f"${float(report_2_initial_cc_debt_total):,}") + """ and """ + report_2_cc_debt_rose_or_fell + """ to """ + str(
+            f"${float(report_2_final_cc_debt_total):,}") + """ over """ + str(f"{float(num_days):,.0f}") + """ days, averaging """ + f"${float(report_2_avg_cc_debt_delta):,}" + """ per day.
+                <br><br>
+                """ + cc_debt_delta_string + """
+                <br><br><br>
+                For forecast 1 #"""+report_1_id+""", Liquid cash began at """ + str(f"${float(report_1_initial_liquid_total):,}") + """ and """ + report_1_liquid_rose_or_fell + """ to """ + str(f"${float(report_1_final_liquid_total):,}") + """ over """ + str(
+            f"{float(num_days):,.0f}") + """ days, averaging """ + f"${float(report_1_avg_liquid_delta):,}" + """ per day.
+                <br>
+                For forecast 2 #"""+report_2_id+""", Liquid cash began at """ + str(f"${float(report_2_initial_liquid_total):,}") + """ and """ + report_2_liquid_rose_or_fell + """ to """ + str(f"${float(report_2_final_liquid_total):,}") + """ over """ + str(
+            f"{float(num_days):,.0f}") + """ days, averaging """ + f"${float(report_2_avg_liquid_delta):,}" + """ per day.
+                <br><br>
+                """ + liquid_debt_delta_string + """
+                """
+
+        E1_account_info = E1.initial_account_set.getAccounts()
+        E2_account_info = E2.initial_account_set.getAccounts()
+        E1_account_base_names = set([a.split(':')[0] for a in E1_account_info.Name])
+        E2_account_base_names = set([a.split(':')[0] for a in E2_account_info.Name])
+
+        assert E1_account_base_names == E2_account_base_names
+        E1_aggregated_df = copy.deepcopy(E1.forecast_df.loc[:, ['Date']])
+        E2_aggregated_df = copy.deepcopy(E2.forecast_df.loc[:, ['Date']])
+
+        for account_base_name in E1_account_base_names:
+            E1_col_sel_vec = [account_base_name == a.split(':')[0] for a in E1.forecast_df.columns]
+            E1_col_sel_vec[0] = True  # Date
+            E1_relevant_df = E1.forecast_df.loc[:, E1_col_sel_vec]
+
+            if E1_relevant_df.shape[1] == 2:  # checking and savings case
+                E1_aggregated_df[account_base_name] = E1_relevant_df.iloc[:, 1]
+            elif E1_relevant_df.shape[1] == 3:  # credit and loan
+                E1_aggregated_df[account_base_name] = E1_relevant_df.iloc[:, 1] + E1_relevant_df.iloc[:, 2]
+
+        for account_base_name in E2_account_base_names:
+            E2_col_sel_vec = [account_base_name == a.split(':')[0] for a in E2.forecast_df.columns]
+            E2_col_sel_vec[0] = True  # Date
+            E2_relevant_df = E2.forecast_df.loc[:, E2_col_sel_vec]
+
+            if E2_relevant_df.shape[1] == 2:  # checking and savings case
+                E2_aggregated_df[account_base_name] = E2_relevant_df.iloc[:, 1]
+            elif E2_relevant_df.shape[1] == 3:  # credit and loan
+                E2_aggregated_df[account_base_name] = E2_relevant_df.iloc[:, 1] + E2_relevant_df.iloc[:, 2]
+
+        #relevant_df = pd.merge(E1_aggregated_df, E2_aggregated_df, on=["Date"], suffixes=('_1', '_2'))
+
+        all_text=""
+        E1_account_base_names = list(E1_account_base_names)
+        E1_account_base_names.sort()
+        for aname in E1_account_base_names:
+
+            E1_initial_value = round(E1_aggregated_df.head(1)[aname].iat[0], 2)
+            E1_final_value = round(E1_aggregated_df.tail(1)[aname].iat[0], 2)
+            E1_delta = round(E1_final_value - E1_initial_value, 2)
+            E1_daily_average = round(E1_delta/num_days,2)
+
+            if E1_daily_average >= 0:
+                E1_rose_or_fell="rose"
+            else:
+                E1_rose_or_fell = "fell"
+
+            E2_initial_value = round(E2_aggregated_df.head(1)[aname].iat[0], 2)
+            E2_final_value = round(E2_aggregated_df.tail(1)[aname].iat[0], 2)
+            E2_delta = round(E2_final_value - E2_initial_value, 2)
+            E2_daily_average = round(E2_delta / num_days, 2)
+
+            if E2_daily_average >= 0:
+                E2_rose_or_fell = "rose"
+            else:
+                E2_rose_or_fell = "fell"
+
+            all_single_delta = round(E2_final_value - E1_final_value,2)
+            if all_single_delta >= 0:
+                delta_string = """Forecast 2 #""" + report_2_id + ", " +  aname + """ ended """ + str(f"${float(abs(all_single_delta)):,}" + """ higher than the alternative.""")
+            else:
+                delta_string = """Forecast 1 #""" + report_1_id + ", " + aname + """ ended """ + str(f"${float(abs(all_single_delta)):,}" + """ higher than the alternative.""")
+
+            #str(f"${float(report_2_initial_liquid_total):,}")
+
+            #todo dollar signs and comma formating m
+            line=""" For Forecast 1 #"""+str(E1.unique_id)+""", """+aname+""" began at """+str(f"${float(E1_initial_value):,}")+""" and  """+E1_rose_or_fell+""" to """+str(f"${float(E1_final_value):,}")+""" over  """+str(num_days)+""", averaging  """+str(f"${float(E1_daily_average):,}")+"""  per day. <br>
+            For Forecast 2 #"""+str(E2.unique_id)+""", """+aname+""" began at """+str(f"${float(E2_initial_value):,}")+""" and  """+E2_rose_or_fell+""" to """+str(f"${float(E2_final_value):,}")+""" over  """+str(num_days)+""", averaging  """+str(f"${float(E2_daily_average):,}")+"""  per day. <br><br>   
+            """ + delta_string + """ <br><br><br>
+            """
+            all_text+=line
+
+
+
+
+
+        report_1_networth_line_plot_path = output_dir + report_1_id + '_networth_line_plot.png'
+        report_1_accounttype_line_plot_path = output_dir + report_1_id + '_accounttype_line_plot_plot.png'
+        report_1_all_line_plot_path = output_dir + report_1_id + '_all_line_plot.png'
+
+        report_2_networth_line_plot_path = output_dir + report_2_id + '_networth_line_plot.png'
+        report_2_accounttype_line_plot_path = output_dir + report_2_id + '_accounttype_line_plot_plot.png'
+        report_2_all_line_plot_path = output_dir + report_2_id + '_all_line_plot.png'
+
+        account_type_comparison_plot_path = output_dir + report_1_id + '_vs_' + report_2_id + '_account_type_comparison_plot.png'
+        networth_comparison_plot_path = output_dir + report_1_id + '_vs_' + report_2_id + '_networth_comparison_plot.png'
+        all_comparison_plot_path = output_dir + report_1_id + '_vs_' + report_2_id + '_all_comparison_plot.png'
+
+        E1.plotAll(report_1_all_line_plot_path)
+        E1.plotNetWorth(report_1_networth_line_plot_path)
+        E1.plotAccountTypeTotals(report_1_accounttype_line_plot_path)
+
+        E2.plotAll(report_2_all_line_plot_path)
+        E2.plotNetWorth(report_2_networth_line_plot_path)
+        E2.plotAccountTypeTotals(report_2_accounttype_line_plot_path)
+
+        self.plotAccountTypeComparison(E1,E2,account_type_comparison_plot_path)
+        self.plotNetWorthComparison(E1, E2, networth_comparison_plot_path)
+        self.plotAllComparison(E1, E2, all_comparison_plot_path)
+
+
 
         html_body = """
-        <!DOCTYPE html>
-        <html>
-        <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Expense Forecast Comparison """+ E1.unique_id + """ vs. """ + E2.unique_id +"""</title>
-        <style>
-        /* Style the tab */
-        .tab {
-          overflow: hidden;
-          border: 1px solid #ccc;
-          background-color: #f1f1f1;
-        }
+                <!DOCTYPE html>
+                <html>
+                <head>
+                <meta name="viewport" content="width=device-width, initial-scale=1">
+                <title>Expense Forecast Report #""" + str(report_1_id) + """ vs. #"""+str(report_2_id)+"""</title>
+                <style>
+                /* Style the tab */
+                .tab {
+                  overflow: hidden;
+                  border: 1px solid #ccc;
+                  background-color: #f1f1f1;
+                }
 
-        /* Style the buttons that are used to open the tab content */
-        .tab button {
-          background-color: inherit;
-          float: left;
-          border: none;
-          outline: none;
-          cursor: pointer;
-          padding: 14px 16px;
-          transition: 0.3s;
-        }
+                /* Style the buttons that are used to open the tab content */
+                .tab button {
+                  background-color: inherit;
+                  float: left;
+                  border: none;
+                  outline: none;
+                  cursor: pointer;
+                  padding: 14px 16px;
+                  transition: 0.3s;
+                }
 
-        /* Change background color of buttons on hover */
-        .tab button:hover {
-          background-color: #ddd;
-        }
+                /* Change background color of buttons on hover */
+                .tab button:hover {
+                  background-color: #ddd;
+                }
 
-        /* Create an active/current tablink class */
-        .tab button.active {
-          background-color: #ccc;
-        }
+                /* Create an active/current tablink class */
+                .tab button.active {
+                  background-color: #ccc;
+                }
 
-        /* Style the tab content */
-        .tabcontent {
-          display: none;
-          padding: 6px 12px;
-          border: 1px solid #ccc;
-          border-top: none;
-        }
-        </style>
+                /* Style the tab content */
+                .tabcontent {
+                  display: none;
+                  padding: 6px 12px;
+                  border: 1px solid #ccc;
+                  border-top: none;
+                }
+                </style>
 
 
-        </head>
-        <body>
-        <h1>Expense Forecast Comparison: "Scenario 1" vs. "Scenario 2"</h1>
-        <p>"""+start_date+""" to """+end_date+"""</p>
+                </head>
+                <body>
+                <h1>Expense Forecast Report #""" + str(report_1_id) + """ vs. #"""+str(report_2_id)+"""</h1>
+                <p>""" + start_date + """ to """ + end_date + """</p>
 
-        <!-- Tab links -->
-        <div class="tab">
-          <button class="tablinks" onclick="openTab(event, 'Summary')">Summary</button>
-          <button class="tablinks" onclick="openTab(event, 'NetWorth')">Net Worth</button>
-          <button class="tablinks" onclick="openTab(event, 'NetGainLoss')">Net Gain/Loss</button>
-          <button class="tablinks" onclick="openTab(event, 'AccountType')">Account Type</button>
-          <button class="tablinks" onclick="openTab(event, 'Interest')">Interest</button>
-          <button class="tablinks" onclick="openTab(event, 'Interest')">Milestone</button>
-          <button class="tablinks" onclick="openTab(event, 'All')">All</button>
-        </div>
+                <!-- Tab links -->
+                <div class="tab">
+                  <button class="tablinks active" onclick="openTab(event, 'InputData')">Input Data</button>
+                  <button class="tablinks" onclick="openTab(event, 'NetWorth')">Net Worth</button>
+                  <button class="tablinks" onclick="openTab(event, 'NetGainLoss')">Net Gain/Loss</button>
+                  <button class="tablinks" onclick="openTab(event, 'AccountType')">Account Type</button>
+                  <button class="tablinks" onclick="openTab(event, 'Interest')">Interest</button>
+                  <button class="tablinks" onclick="openTab(event, 'Milestone')">Milestone</button>
+                  <button class="tablinks" onclick="openTab(event, 'All')">All</button>
+                  <button class="tablinks" onclick="openTab(event, 'OutputData')">Output Data</button>
+                </div>
 
-        <!-- Tab content -->
-        <div id="Summary" class="tabcontent">
-          <h3>Summary</h3>
-          <p>Summary text.</p>
-        </div>
+                <!-- Tab content -->
+                <div id="InputData" class="tabcontent">
+                  <h3>Input Data</h3>
+                  <h3>Accounts</h3>
+                  <p>""" + account_text + """</p>
+                  <h3>Budget Items</h3>
+                  <p>""" + budget_set_text + """</p>
+                  <h3>Memo Rules</h3>
+                  <p>""" + memo_rule_text + """</p>
+                </div>
 
-        <div id="NetWorth" class="tabcontent">
-          <h3>NetWorth</h3>
-          <p>NetWorth text.</p>
-          <img src=\""""+networth_line_plot_path+"""\">
-        </div>
+                <div id="NetWorth" class="tabcontent">
+                  <h3>NetWorth</h3>
+                  <p>""" + networth_text + """</p>
+                  <img src=\"""" + networth_comparison_plot_path + """\">
+                  <img src=\"""" + report_1_networth_line_plot_path + """\">
+                  <img src=\"""" + report_2_networth_line_plot_path + """\">
+                </div>
 
-        <div id="NetGainLoss" class="tabcontent">
-          <h3>NetGainLoss</h3>
-          <p>NetGainLoss text.</p>
-          <img src=\""""+netgain_line_plot_path+"""\">
-        </div>
+                <div id="NetGainLoss" class="tabcontent">
+                  <h3>NetGainLoss</h3>
+                  <p>NetGainLoss text.</p>
+                  <img src=\"""" + 'netgain_line_plot_path' + """\">
+                </div>
 
-        <div id="AccountType" class="tabcontent">
-          <h3>AccountType</h3>
-          <p>AccountType text.</p>
-          <img src=\""""+accounttype_line_plot_path+"""\">
-        </div>
+                <div id="AccountType" class="tabcontent">
+                  <h3>AccountType</h3>
+                  <p>""" + account_type_text + """</p>
+                  <img src=\"""" + account_type_comparison_plot_path + """\">
+                  <img src=\"""" + report_1_accounttype_line_plot_path + """\">
+                  <img src=\"""" + report_2_accounttype_line_plot_path + """\">
+                </div>
 
-        <div id="Interest" class="tabcontent">
-          <h3>Interest</h3>
-          <p>Interest text.</p>
-          <img src=\""""+interest_line_plot_path+"""\">
-        </div>
-        
-        <div id="Milestone" class="tabcontent">
-          <h3>Milestone</h3>
-          <p>Milestone text.</p>
-          <img src=\""""+milestone_line_plot_path+"""\">
-        </div>
+                <div id="Interest" class="tabcontent">
+                  <h3>Interest</h3>
+                  <p>Interest text.</p>
+                  <img src=\"""" + 'interest_line_plot_path' + """\">
+                </div>
 
-        <div id="All" class="tabcontent">
-          <h3>All</h3>
-          <p>All text.</p>
-          <img src=\""""+all_line_plot_path+"""\">
-        </div>
+                <div id="Milestone" class="tabcontent">
+                  <h3>Milestone</h3>
+                  <p>Milestone text.</p>
+                  <img src=\"""" + 'milestone_line_plot_path' + """\">
+                </div>
 
-        <br>
+                <div id="All" class="tabcontent">
+                  <h3>All</h3>
+                  <p>"""+all_text+"""</p>
+                  <img src=\"""" + all_comparison_plot_path + """\">
+                  <img src=\"""" + report_1_all_line_plot_path + """\">
+                  <img src=\"""" + report_2_all_line_plot_path + """\">
+                </div>
+                
+                <div id="OutputData" class="tabcontent">
+                  <h3>Output Data</h3>
+                  <p>""" + summary_text + """</p>
+                  <p>The visualized data are below:</p>
+                  <h4>Forecast 1 #"""+str(E1.unique_id)+""":</h4>
+                  """ + E1.forecast_df.to_html() + """
+                  <h4>Forecast 2 #"""+str(E2.unique_id)+""":</h4>
+                  """ + E2.forecast_df.to_html() + """
+                </div>
 
-        <script>
-        function openTab(evt, tabName) {
-          // Declare all variables
-          var i, tabcontent, tablinks;
+                <br>
 
-          // Get all elements with class="tabcontent" and hide them
-          tabcontent = document.getElementsByClassName("tabcontent");
-          for (i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = "none";
-          }
+                <script>
+                function openTab(evt, tabName) {
+                  // Declare all variables
+                  var i, tabcontent, tablinks;
 
-          // Get all elements with class="tablinks" and remove the class "active"
-          tablinks = document.getElementsByClassName("tablinks");
-          for (i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(" active", "");
-          }
+                  // Get all elements with class="tabcontent" and hide them
+                  tabcontent = document.getElementsByClassName("tabcontent");
+                  for (i = 0; i < tabcontent.length; i++) {
+                    tabcontent[i].style.display = "none";
+                  }
 
-          // Show the current tab, and add an "active" class to the button that opened the tab
-          document.getElementById(tabName).style.display = "block";
-          evt.currentTarget.className += " active";
-        }
-        </script>
+                  // Get all elements with class="tablinks" and remove the class "active"
+                  tablinks = document.getElementsByClassName("tablinks");
+                  for (i = 0; i < tablinks.length; i++) {
+                    tablinks[i].className = tablinks[i].className.replace(" active", "");
+                  }
 
-        </body>
-        </html>
+                  // Show the current tab, and add an "active" class to the button that opened the tab
+                  document.getElementById(tabName).style.display = "block";
+                  evt.currentTarget.className += " active";
+                }
 
-        """
+                //having this here leaves the Summary tab open when the page first loads
+                document.getElementById("InputData").style.display = "block";
+                </script>
 
-        with open('out.html','w') as f:
+                </body>
+                </html>
+
+                """
+
+        with open('out.html', 'w') as f:
             f.write(html_body)
 
 
@@ -483,7 +915,6 @@ class ForecastHandler:
 
         raise NotImplementedError
 
-
     def calculateMultipleChooseOne(self,AccountSet,Core_BudgetSet, MemoRuleSet, start_date_YYYYMMDD, end_date_YYYYMMDD, list_of_lists_of_budget_sets):
 
         #the number of returned forecasts will be equal to the product of the lengths of the lists in list_of_lists_of_budget_sets
@@ -544,3 +975,166 @@ class ForecastHandler:
     #
     # def input_excel_values_are_valid(self,path_to_excel):
     #     raise NotImplementedError
+
+
+    def plotAccountTypeComparison(self,E1,E2,output_path):
+        """
+        Single-line description
+
+        Multiple line description.
+
+
+        :param E1:
+        :param E2:
+        :param output_path:
+        :return:
+        """
+        figure(figsize=(14, 6), dpi=80)
+        E1_relevant_columns_sel_vec = (E1.forecast_df.columns == 'Date') | (E1.forecast_df.columns == 'LoanTotal') | (E1.forecast_df.columns == 'CCDebtTotal') | (E1.forecast_df.columns == 'LiquidTotal')
+        E2_relevant_columns_sel_vec = (E2.forecast_df.columns == 'Date') | (E2.forecast_df.columns == 'LoanTotal') | (E2.forecast_df.columns == 'CCDebtTotal') | (E2.forecast_df.columns == 'LiquidTotal')
+        E1_relevant_df = E1.forecast_df.iloc[:, E1_relevant_columns_sel_vec]
+        E2_relevant_df = E2.forecast_df.iloc[:, E2_relevant_columns_sel_vec]
+
+        relevant_df = pd.merge(E1_relevant_df,E2_relevant_df,on=["Date"], suffixes=('_1','_2'))
+
+        # this plot always has 6 lines, so we can make the plot more clear by using warm colors for Forecast 1 and cool colors for Forecast 2
+        relevant_df = relevant_df[['Date','LoanTotal_1','CCDebtTotal_1','LiquidTotal_1','LoanTotal_2','CCDebtTotal_2','LiquidTotal_2']]
+        color_array = ['crimson','orangered','fuchsia','chartreuse','darkgreen','olive']
+
+        for i in range(1, relevant_df.shape[1]):
+            plt.plot(relevant_df['Date'], relevant_df.iloc[:, i], label=relevant_df.columns[i],color=color_array[i-1])
+
+        bottom, top = plt.ylim()
+
+        if 0 < bottom:
+            plt.ylim(0, top)
+        elif top < 0:
+            plt.ylim(bottom, 0)
+
+        ax = plt.subplot(111)
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
+
+        # Put a legend below current axis
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=4)
+
+        min_date = min(E1.forecast_df.Date).strftime('%Y-%m-%d')
+        max_date = max(E1.forecast_df.Date).strftime('%Y-%m-%d')
+        plt.title('Forecast 1 #' + E1.unique_id + ' vs. Forecast 2 #'+E2.unique_id+': ' + str(min_date) + ' -> ' + str(max_date))
+        plt.savefig(output_path)
+
+    def plotNetWorthComparison(self, E1, E2, output_path):
+        """
+        Single-line description
+
+        Multiple line description.
+
+
+        :param E1:
+        :param E2:
+        :param output_path:
+        :return:
+        """
+        figure(figsize=(14, 6), dpi=80)
+        E1_relevant_columns_sel_vec = (E1.forecast_df.columns == 'Date') | (E1.forecast_df.columns == 'NetWorth')
+        E2_relevant_columns_sel_vec = (E2.forecast_df.columns == 'Date') | (E2.forecast_df.columns == 'NetWorth')
+        E1_relevant_df = E1.forecast_df.iloc[:, E1_relevant_columns_sel_vec]
+        E2_relevant_df = E2.forecast_df.iloc[:, E2_relevant_columns_sel_vec]
+
+        relevant_df = pd.merge(E1_relevant_df, E2_relevant_df, on=["Date"], suffixes=('_1', '_2'))
+
+        # this plot always has 6 lines, so we can make the plot more clear by using warm colors for Forecast 1 and cool colors for Forecast 2
+        relevant_df = relevant_df[['Date', 'NetWorth_1', 'NetWorth_2']]
+        color_array = ['fuchsia', 'olive']
+
+        for i in range(1, relevant_df.shape[1]):
+            plt.plot(relevant_df['Date'], relevant_df.iloc[:, i], label=relevant_df.columns[i], color=color_array[i - 1])
+
+        bottom, top = plt.ylim()
+
+        if 0 < bottom:
+            plt.ylim(0, top)
+        elif top < 0:
+            plt.ylim(bottom, 0)
+
+        ax = plt.subplot(111)
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
+
+        # Put a legend below current axis
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=4)
+
+        min_date = min(E1.forecast_df.Date).strftime('%Y-%m-%d')
+        max_date = max(E1.forecast_df.Date).strftime('%Y-%m-%d')
+        plt.title('Forecast 1 #' + E1.unique_id + ' vs. Forecast 2 #' + E2.unique_id + ': ' + str(min_date) + ' -> ' + str(max_date))
+        plt.savefig(output_path)
+
+    def plotAllComparison(self, E1, E2, output_path):
+        """
+        Writes to file a plot of all accounts.
+
+        Multiple line description.
+
+
+        :param forecast_df:
+        :param output_path:
+        :return:
+        """
+        figure(figsize=(14, 6), dpi=80)
+
+        #lets combine curr and prev, principal and interest, and exclude summary lines
+        E1_account_info = E1.initial_account_set.getAccounts()
+        E2_account_info = E2.initial_account_set.getAccounts()
+        E1_account_base_names = set([ a.split(':')[0] for a in E1_account_info.Name])
+        E2_account_base_names = set([a.split(':')[0] for a in E2_account_info.Name])
+
+        assert E1_account_base_names == E2_account_base_names
+
+        E1_aggregated_df = copy.deepcopy(E1.forecast_df.loc[:,['Date']])
+        E2_aggregated_df = copy.deepcopy(E2.forecast_df.loc[:, ['Date']])
+
+        for account_base_name in E1_account_base_names:
+            E1_col_sel_vec = [ account_base_name == a.split(':')[0] for a in E1.forecast_df.columns]
+            E1_col_sel_vec[0] = True #Date
+            E1_relevant_df = E1.forecast_df.loc[:,E1_col_sel_vec]
+
+            if E1_relevant_df.shape[1] == 2: #checking and savings case
+                E1_aggregated_df[account_base_name] = E1_relevant_df.iloc[:,1]
+            elif E1_relevant_df.shape[1] == 3:  #credit and loan
+                E1_aggregated_df[account_base_name] = E1_relevant_df.iloc[:,1] + E1_relevant_df.iloc[:,2]
+
+        for account_base_name in E2_account_base_names:
+            E2_col_sel_vec = [ account_base_name == a.split(':')[0] for a in E2.forecast_df.columns]
+            E2_col_sel_vec[0] = True #Date
+            E2_relevant_df = E2.forecast_df.loc[:,E2_col_sel_vec]
+
+            if E2_relevant_df.shape[1] == 2: #checking and savings case
+                E2_aggregated_df[account_base_name] = E2_relevant_df.iloc[:,1]
+            elif E2_relevant_df.shape[1] == 3:  #credit and loan
+                E2_aggregated_df[account_base_name] = E2_relevant_df.iloc[:,1] + E2_relevant_df.iloc[:,2]
+
+
+        relevant_df = pd.merge(E1_aggregated_df, E2_aggregated_df, on=["Date"], suffixes=('_1', '_2'))
+
+        for i in range(1, relevant_df.shape[1] - 1):
+            plt.plot(relevant_df['Date'], relevant_df.iloc[:, i], label=relevant_df.columns[i])
+
+        bottom, top = plt.ylim()
+        if 0 < bottom:
+            plt.ylim(0, top)
+        elif top < 0:
+            plt.ylim(bottom, 0)
+
+        ax = plt.subplot(111)
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
+
+        # Put a legend below current axis
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=4)
+
+        # TODO plotOverall():: a large number of accounts will require some adjustment here so that the legend is entirely visible
+
+        min_date = min(E1.forecast_df.Date).strftime('%Y-%m-%d')
+        max_date = max(E1.forecast_df.Date).strftime('%Y-%m-%d')
+        plt.title('Forecast 1 #'+E1.unique_id+' vs. Forecast 2 #'+E2.unique_id+': ' + str(min_date) + ' -> ' + str(max_date))
+        plt.savefig(output_path)

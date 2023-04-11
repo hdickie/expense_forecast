@@ -12,20 +12,86 @@ import MemoRuleSet
 
 #pd.options.mode.chained_assignment = None #apparently this warning can throw false positives???
 
-from log_methods import log_in_color
-
 import logging
 
-f_l_format = '%(funcName)s():%(lineno)i: - %(message)s'
-f_l_formatter = logging.Formatter(f_l_format)
-f_l_ch = logging.StreamHandler()
-f_l_ch.setFormatter(f_l_formatter)
-f_l_ch.setLevel(logging.DEBUG)
+log_format = '%(asctime)s - %(levelname)-8s - %(message)s'
+l_formatter = logging.Formatter(log_format)
+
+l_stream = logging.StreamHandler()
+l_stream.setFormatter(l_formatter)
+l_stream.setLevel(logging.DEBUG)
+
+l_file = logging.FileHandler('ExpenseForecast.log')
+l_file.setFormatter(l_formatter)
+l_file.setLevel(logging.DEBUG)
+
 
 logger = logging.getLogger(__name__)
 logger.propagate = False
 logger.handlers.clear()
-logger.addHandler(f_l_ch)
+logger.addHandler(l_stream)
+logger.addHandler(l_file)
+
+
+from colorama import init as colorama_init
+from colorama import Fore
+from colorama import Style
+colorama_init()
+
+BEGIN_RED = f"{Fore.RED}"
+BEGIN_GREEN = f"{Fore.GREEN}"
+BEGIN_YELLOW = f"{Fore.YELLOW}"
+BEGIN_BLUE = f"{Fore.BLUE}"
+BEGIN_MAGENTA = f"{Fore.MAGENTA}"
+BEGIN_WHITE = f"{Fore.WHITE}"
+BEGIN_CYAN = f"{Fore.CYAN}"
+RESET_COLOR = f"{Style.RESET_ALL}"
+
+
+def log_in_color(color,level,msg,stack_depth=0):
+
+    left_prefix=str(stack_depth)
+    left_prefix = left_prefix.ljust(stack_depth*4,' ') + ' '
+
+    for line in str(msg).split('\n'):
+
+        if color.lower() == 'red':
+            line = BEGIN_RED + left_prefix + line + RESET_COLOR
+        elif color.lower() == 'green':
+            line = BEGIN_GREEN + left_prefix + line + RESET_COLOR
+        elif color.lower() == 'yellow':
+            line = BEGIN_YELLOW + left_prefix + line + RESET_COLOR
+        elif color.lower() == 'blue':
+            line = BEGIN_BLUE + left_prefix + line + RESET_COLOR
+        elif color.lower() == 'magenta':
+            line = BEGIN_MAGENTA + left_prefix + line + RESET_COLOR
+        elif color.lower() == 'white':
+            line = BEGIN_WHITE + left_prefix + line + RESET_COLOR
+        elif color.lower() == 'cyan':
+            line = BEGIN_CYAN + left_prefix + line + RESET_COLOR
+
+        if level == 'debug':
+            logger.debug(line)
+        elif level == 'warning':
+            logger.warning(line)
+        elif level == 'error':
+            logger.error(line)
+        elif level == 'info':
+            logger.info(line)
+        elif level == 'critical':
+            logger.critical(line)
+        else:
+            print(line)
+
+
+
+
+
+
+
+
+
+
 
 
 def generate_date_sequence(start_date_YYYYMMDD, num_days, cadence):
@@ -354,7 +420,6 @@ class ExpenseForecast:
         self.initial_skipped_df = skipped_df
         self.initial_confirmed_df = confirmed_df
 
-
     def appendSummaryLines(self):
         #todo incorporate savings
         #add net gain/loss (requires looking at memo)
@@ -421,6 +486,8 @@ class ExpenseForecast:
 
         self.end_ts = datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S')
 
+        self.writeToJSONFile()
+
         try:
             assert (min(forecast_df.Date) == self.start_date)
         except AssertionError as e:
@@ -444,82 +511,18 @@ class ExpenseForecast:
 
         # log_in_color('green','info','Writing to ./Forecast__'+run_ts+'.csv')
         # self.forecast_df.to_csv('./Forecast__'+run_ts+'.csv')
-        log_in_color('green', 'info', 'Writing to ./Forecast__' + self.start_ts + '__' + self.unique_id + '.json')
+        log_in_color('green', 'info', 'Writing to ./Forecast__' + self.unique_id + '__' + self.start_ts + '.json')
         #self.forecast_df.to_csv('./Forecast__' + run_ts + '.json')
 
         #self.forecast_df.index = self.forecast_df['Date']
 
-        f = open('Forecast__' + self.start_ts + '__' + self.unique_id + '.json','a')
+        f = open('Forecast__' + self.unique_id + '__' + self.start_ts + '.json','a')
         f.write(self.toJSON())
         f.close()
-
-        # print('self.forecast_df:')
-        # print(self.forecast_df.to_string())
-
-
-
-
 
         # write all_data.csv  # self.forecast_df.iloc[:,0:(self.forecast_df.shape[1]-1)].to_csv('all_data.csv',index=False)
 
         # self.forecast_df.to_csv('out.csv', index=False)
-
-    #
-    # def account_boundaries_are_violated(self,accounts_df,forecast_df):
-    #     """
-    #     account_boundaries_are_violated single-line description
-    #
-    #     #todo ExpenseForecast.account_boundaries_are_violated() doctests
-    #     | Test Cases
-    #     | Expected Successes
-    #     | S1: ... #todo refactor ExpenseForecast.account_boundaries_are_violated() doctest S1 to use _S1 label
-    #     |
-    #     | Expected Fails
-    #     | F1 ... #todo refactor ExpenseForecast.account_boundaries_are_violated() doctest F1 to use _F1 label
-    #
-    #     :param accounts_df:
-    #     :param forecast_df:
-    #     :return:
-    #     """
-    #     for col_name in forecast_df.columns.tolist():
-    #         if col_name == 'Date' or col_name == 'Memo':
-    #             continue
-    #
-    #         current_column = forecast_df[col_name]
-    #
-    #         acct_boundary__min = float(accounts_df.loc[accounts_df.Name == col_name,'Min_Balance'])
-    #         acct_boundary__max = float(accounts_df.loc[accounts_df.Name == col_name, 'Max_Balance'])
-    #
-    #         min_in_forecast_for_acct = min(current_column)
-    #         max_in_forecast_for_acct = max(current_column)
-    #
-    #         try:
-    #             # print(current_column)
-    #             # print('min_in_forecast_for_acct:'+str(min_in_forecast_for_acct))
-    #             # print('max_in_forecast_for_acct:' + str(max_in_forecast_for_acct))
-    #             # print('acct_boundary__min:' + str(acct_boundary__min))
-    #             # print('acct_boundary__max:' + str(acct_boundary__max))
-    #             # print('')
-    #             # print('')
-    #
-    #             assert float(min_in_forecast_for_acct) >= float(acct_boundary__min)
-    #             assert float(max_in_forecast_for_acct) <= float(acct_boundary__max)
-    #
-    #         except Exception as e:
-    #
-    #             offending_rows__min = forecast_df[current_column < acct_boundary__min]
-    #             offending_rows__max = forecast_df[current_column > acct_boundary__max]
-    #
-    #             # print(e)
-    #             # print('Account Boundary Violation for '+str(col_name)+' in ExpenseForecast.account_boundaries_are_violated()')
-    #             # print('Offending Rows: Minimum')
-    #             # print(offending_rows__min.to_string())
-    #             # print('Offending Rows: Maximum')
-    #             # print(offending_rows__max.to_string())
-    #             return True
-    #     return False
-    #
-    #
 
     def getInitialForecastRow(self):
 
@@ -561,9 +564,6 @@ class ExpenseForecast:
             initial_forecast_row_df.iloc[0, 1 + i] = row.Balance
 
         return initial_forecast_row_df
-
-
-
 
     # we should be able to take skipped out of here
     def executeTransactionsForDay(self, account_set, forecast_df, date_YYYYMMDD, memo_set, confirmed_df, proposed_df, deferred_df, skipped_df, priority_level, allow_partial_payments,
@@ -2083,7 +2083,7 @@ class ExpenseForecast:
 
         min_date = min(self.forecast_df.Date).strftime('%Y-%m-%d')
         max_date = max(self.forecast_df.Date).strftime('%Y-%m-%d')
-        plt.title('Forecast: ' + str(min_date) + ' -> ' + str(max_date))
+        plt.title('Forecast #'+self.unique_id+': ' + str(min_date) + ' -> ' + str(max_date))
         plt.savefig(output_path)
 
 
@@ -2122,7 +2122,7 @@ class ExpenseForecast:
 
         min_date = min(self.forecast_df.Date).strftime('%Y-%m-%d')
         max_date = max(self.forecast_df.Date).strftime('%Y-%m-%d')
-        plt.title('Forecast: ' + str(min_date) + ' -> ' + str(max_date))
+        plt.title('Forecast #'+self.unique_id+': ' + str(min_date) + ' -> ' + str(max_date))
         plt.savefig(output_path)
 
     def evaulateAccountMilestone(self,account_name,min_balance,max_balance):
@@ -2200,10 +2200,30 @@ class ExpenseForecast:
         """
         figure(figsize=(14, 6), dpi=80)
 
-        for i in range(1, self.forecast_df.shape[1] - 1):
-            plt.plot(self.forecast_df['Date'], self.forecast_df.iloc[:, i], label=self.forecast_df.columns[i])
+        #lets combine curr and prev, principal and interest, and exclude summary lines
+        account_info = self.initial_account_set.getAccounts()
+        account_base_names = set([ a.split(':')[0] for a in account_info.Name])
 
+        aggregated_df = copy.deepcopy(self.forecast_df.loc[:,['Date']])
 
+        for account_base_name in account_base_names:
+            col_sel_vec = [ account_base_name == a.split(':')[0] for a in self.forecast_df.columns]
+            col_sel_vec[0] = True #Date
+            relevant_df = self.forecast_df.loc[:,col_sel_vec]
+
+            if relevant_df.shape[1] == 2: #checking and savings case
+                aggregated_df[account_base_name] = relevant_df.iloc[:,1]
+            elif relevant_df.shape[1] == 3:  #credit and loan
+                aggregated_df[account_base_name] = relevant_df.iloc[:,1] + relevant_df.iloc[:,2]
+
+        for i in range(1, aggregated_df.shape[1] - 1):
+            plt.plot(aggregated_df['Date'], aggregated_df.iloc[:, i], label=aggregated_df.columns[i])
+
+        bottom, top = plt.ylim()
+        if 0 < bottom:
+            plt.ylim(0, top)
+        elif top < 0:
+            plt.ylim(bottom, 0)
 
         ax = plt.subplot(111)
         box = ax.get_position()
@@ -2216,7 +2236,7 @@ class ExpenseForecast:
 
         min_date = min(self.forecast_df.Date).strftime('%Y-%m-%d')
         max_date = max(self.forecast_df.Date).strftime('%Y-%m-%d')
-        plt.title('Forecast: ' + str(min_date) + ' -> ' + str(max_date))
+        plt.title('Forecast #'+self.unique_id+': ' + str(min_date) + ' -> ' + str(max_date))
         plt.savefig(output_path)
 
     def plotMarginalInterest(self, accounts_df, forecast_df, output_path):
@@ -2290,24 +2310,16 @@ class ExpenseForecast:
 
         return JSON_string
 
-    def show(self):
-        pass
-        raise NotImplementedError
-
     def fromJSON(self):
 
         raise NotImplementedError
 
     def getInputFromExcel(self):
-
         raise NotImplementedError
 
     def to_html(self):
         return self.forecast_df.to_html()
 
-
-    def getMilestoneDate(self,AccountSet):
-        raise NotImplementedError
 
     def compute_forecast_difference(self, forecast_df, forecast2_df, label='forecast_difference', make_plots=False, plot_directory='.', return_type='dataframe', require_matching_columns=False,
                                     require_matching_date_range=False, append_expected_values=False, diffs_only=False):
