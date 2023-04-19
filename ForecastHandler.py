@@ -1,6 +1,6 @@
 import copy
 import os
-
+import MilestoneSet
 import ExpenseForecast, datetime
 from log_methods import log_in_color
 import BudgetSet
@@ -106,49 +106,10 @@ class ForecastHandler:
                         #print(memo_regex + ' ?= ' + str(budget_item_row.Memo)+" NO")
             budget_set_list.append(B)
 
-        for index, row in AccountMilestones_df.iterrows():
-            if not AccountSet_df.Account_Name.eq(row.Account_Name).any():
-                raise ValueError("Account Name for Milestone not found in accounts: "+str(row.Account_Name))
-
-            if row.Max_Balance < row.Min_Balance:
-                raise ValueError("Min_Balance greater than Max_Balance for Account Milestone")
-
-        self.account_milestones_df = AccountMilestones_df
-
-        for index, row in MemoMilestones_df.iterrows():
-            match_found = False
-            for index2, row2 in BudgetSet_df.iterrows():
-                if re.search(row.Memo_Regex,row2.Memo) is not None:
-                    match_found = True
-
-            if not match_found:
-                raise ValueError("Memo Milestone had no matches in budgetset, so no match was possible.")
-
-        self.memo_milestones_df = MemoMilestones_df
-
-        for index, row in CompositeMilestones_df.iterrows():
-            if row.Milestone1 is not None and not pd.isna(row.Milestone1):
-                if not ( MemoMilestones_df.Milestone_Name.eq(row.Milestone1).any() or AccountMilestones_df.Milestone_Name.eq(row.Milestone1).any()):
-                    raise ValueError("Milestone 1 was not found in Memo or Account milestones:"+str(row.Milestone1))
-
-            if row.Milestone2 is not None and not pd.isna(row.Milestone2):
-                if not ( MemoMilestones_df.Milestone_Name.eq(row.Milestone2).any() or AccountMilestones_df.Milestone_Name.eq(row.Milestone2).any()):
-                    raise ValueError("Milestone 2 was not found in Memo or Account milestones:"+str(row.Milestone2))
-
-            if row.Milestone3 is not None and not pd.isna(row.Milestone3):
-                if not ( MemoMilestones_df.Milestone_Name.eq(row.Milestone3).any() or AccountMilestones_df.Milestone_Name.eq(row.Milestone3).any()):
-                    raise ValueError("Milestone 3 was not found in Memo or Account milestones:"+str(row.Milestone3))
-
-            if row.Milestone4 is not None and not pd.isna(row.Milestone4):
-                if not ( MemoMilestones_df.Milestone_Name.eq(row.Milestone4).any() or AccountMilestones_df.Milestone_Name.eq(row.Milestone4).any()):
-                    raise ValueError("Milestone 4 was not found in Memo or Account milestones:"+str(row.Milestone4))
-
-            if row.Milestone5 is not None and not pd.isna(row.Milestone5):
-                if not ( MemoMilestones_df.Milestone_Name.eq(row.Milestone5).any() or AccountMilestones_df.Milestone_Name.eq(row.Milestone5).any()):
-                    raise ValueError("Milestone 5 was not found in Memo or Account milestones:"+str(row.Milestone5))
-
-
-        self.composite_milestones_df = CompositeMilestones_df
+        milestone_set = MilestoneSet.MilestoneSet(MemoMilestones_df,AccountMilestones_df,CompositeMilestones_df)
+        self.account_milestones_df = milestone_set.account_milestones_df
+        self.memo_milestones_df = milestone_set.memo_milestones_df
+        self.composite_milestones_df = milestone_set.composite_milestones_df
 
         self.initial_account_set = copy.deepcopy(A)
         self.budget_set_list = budget_set_list

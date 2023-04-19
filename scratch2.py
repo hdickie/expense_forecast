@@ -1,14 +1,30 @@
 
 import ForecastHandler, ExpenseForecast
 import BudgetSet, AccountSet, MemoRuleSet
+import MilestoneSet
+
+import CompositeMilestone
 
 if __name__ == '__main__':
+    pass
 
-    F = ForecastHandler.ForecastHandler()
+    account_set = AccountSet.AccountSet([])
+    budget_set = BudgetSet.BudgetSet([])
 
-    F.initialize_from_excel_file('expense_forecast__input.ods')
+    #memo_milestones_df
+    #account_milestones_df
+    #composite_milestones_df
 
-    print(F.read_results_from_disk())
+    CompositeMilestone.CompositeMilestone('milestone name 1','a','b','c')
+    CompositeMilestone.CompositeMilestone('milestone name 2', 'z')
+
+    #MS = MilestoneSet.MilestoneSet(account_set,budget_set,memo_milestones_df,account_milestones_df,composite_milestones_df)
+
+    # F = ForecastHandler.ForecastHandler()
+    #
+    # F.initialize_from_excel_file('expense_forecast__input.ods')
+    #
+    # print(F.read_results_from_disk())
 
     #F.run_forecasts()
 
