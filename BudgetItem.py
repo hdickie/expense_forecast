@@ -81,7 +81,8 @@ class BudgetItem:
         try:
             self.start_date = datetime.datetime.strptime(str(start_date_YYYYMMDD).replace('-',''),'%Y%m%d')
             #todo accept YYYY-MM-DD and YYYYMMDD
-        except:
+        except Exception as e:
+            exception_type_error_message_string += str(e)
             exception_type_error_message_string += 'failed cast BudgetItem.start_date to datetime\n'
             exception_type_error_message_string += 'value was:'+str(start_date_YYYYMMDD)+'\n'
             exception_type_error_ind = True
@@ -89,7 +90,8 @@ class BudgetItem:
         try:
             self.end_date = datetime.datetime.strptime(str(end_date_YYYYMMDD).replace('-',''),'%Y%m%d')
             #todo accept YYYY-MM-DD and YYYYMMDD
-        except:
+        except Exception as e:
+            exception_type_error_message_string += str(e)
             exception_type_error_message_string += 'failed cast BudgetItem.end_date to datetime\n'
             exception_type_error_message_string += 'value was:'+str(end_date_YYYYMMDD)+'\n'
             exception_type_error_ind = True

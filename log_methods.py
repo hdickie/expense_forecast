@@ -21,7 +21,7 @@ color_log_format = '%(asctime)s - %(levelname)-8s - %(message)s'
 color_formatter = logging.Formatter(color_log_format)
 col_ch = logging.StreamHandler()
 col_ch.setFormatter(color_formatter)
-col_ch.setLevel(logging.INFO)
+col_ch.setLevel(logging.DEBUG)
 
 col_logger = logging.getLogger(__name__)
 col_logger.propagate = False

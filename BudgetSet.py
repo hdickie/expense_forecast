@@ -108,6 +108,7 @@ class BudgetSet:
         return all_budget_items_df
 
 
+    #todo interesting that start date paramter did not get used here
     def getBudgetSchedule(self,start_date_YYYYMMDD,end_date_YYYYMMDD):
         """
         Generate a dataframe of proposed transactions

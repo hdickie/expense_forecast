@@ -177,6 +177,7 @@ class Account:
                 self.interest_cadence=str(interest_cadence)
             else:
                 exception_value_error_message_string += "For account_type = prev stmt bal, principal balance, or savings, Account.interest_cadence should be one of: daily, monthly, quarterly, or yearly.\n"
+                exception_value_error_message_string += "Name:"+name+"\n"
                 exception_value_error_message_string += "Value was:" + str(interest_cadence)+"\n"
                 exception_value_error_ind = True
 

@@ -1,4 +1,6 @@
 import copy
+import os
+
 import ExpenseForecast, datetime
 from log_methods import log_in_color
 import BudgetSet
@@ -9,7 +11,7 @@ import AccountSet
 import BudgetSet
 import MemoRuleSet
 import re
-
+import hashlib
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
 
@@ -23,6 +25,7 @@ class ForecastHandler:
         BudgetSet_df = pd.read_excel(path_to_excel_file, sheet_name='BudgetSet')
         MemoRuleSet_df = pd.read_excel(path_to_excel_file, sheet_name='MemoRuleSet')
         ChooseOneSet_df = pd.read_excel(path_to_excel_file, sheet_name='ChooseOneSet')
+
         AccountMilestones_df = pd.read_excel(path_to_excel_file, sheet_name='AccountMilestones')
         MemoMilestones_df = pd.read_excel(path_to_excel_file, sheet_name='MemoMilestones')
         CompositeMilestones_df = pd.read_excel(path_to_excel_file, sheet_name='CompositeMilestones')
@@ -54,20 +57,27 @@ class ForecastHandler:
             M.addMemoRule(memorule_row.Memo_Regex,memorule_row.Account_From,memorule_row.Account_To,memorule_row.Transaction_Priority)
 
         # number_of_combinations = 1
+        self.choose_one_set_df = ChooseOneSet_df
         set_ids = ChooseOneSet_df.Choose_One_Set_Id.unique()
         set_ids.sort()
         # for set_id in set_ids:
         #     all_options_for_set = ChooseOneSet_df[ChooseOneSet_df.Choose_One_Set_Id == set_id,:]
         #     number_of_combinations = number_of_combinations * all_options_for_set.shape[0]
         master_list = ['']
+        master_list_option_ids = ['']
         for set_id in set_ids:
             all_options_for_set = ChooseOneSet_df.loc[ChooseOneSet_df.Choose_One_Set_Id == set_id]
             current_list=[]
+            current_list_option_ids = []
             for option_index, option_row in all_options_for_set.iterrows():
                 for l in master_list:
                     current_list.append(l + ';' + option_row.Memo_Regex_List)
 
+                for l in master_list_option_ids:
+                    current_list_option_ids.append(l+str(set_id)+'='+str(option_row.Option_Id)+' ')
+
             master_list = current_list
+            master_list_option_ids = current_list_option_ids
 
 
         budget_set_list = []
@@ -75,7 +85,11 @@ class ForecastHandler:
             B = BudgetSet.BudgetSet([])
             for budget_item_index, budget_item_row in BudgetSet_df.iterrows():
                 for memo_regex in l.split(';'):
+                    if memo_regex == '':
+                        continue
+
                     if re.search(memo_regex,budget_item_row.Memo) is not None:
+                        #print(memo_regex + ' ?= ' + str(budget_item_row.Memo)+" YES")
                         B.addBudgetItem(start_date_YYYYMMDD=budget_item_row.Start_Date,
                          end_date_YYYYMMDD=budget_item_row.End_Date,
                          priority=budget_item_row.Priority,
@@ -87,28 +101,197 @@ class ForecastHandler:
                                         )
 
                         break
+                    else:
+                        pass
+                        #print(memo_regex + ' ?= ' + str(budget_item_row.Memo)+" NO")
             budget_set_list.append(B)
 
+        for index, row in AccountMilestones_df.iterrows():
+            if not AccountSet_df.Account_Name.eq(row.Account_Name).any():
+                raise ValueError("Account Name for Milestone not found in accounts: "+str(row.Account_Name))
+
+            if row.Max_Balance < row.Min_Balance:
+                raise ValueError("Min_Balance greater than Max_Balance for Account Milestone")
+
+        self.account_milestones_df = AccountMilestones_df
+
+        for index, row in MemoMilestones_df.iterrows():
+            match_found = False
+            for index2, row2 in BudgetSet_df.iterrows():
+                if re.search(row.Memo_Regex,row2.Memo) is not None:
+                    match_found = True
+
+            if not match_found:
+                raise ValueError("Memo Milestone had no matches in budgetset, so no match was possible.")
+
+        self.memo_milestones_df = MemoMilestones_df
+
+        for index, row in CompositeMilestones_df.iterrows():
+            if row.Milestone1 is not None and not pd.isna(row.Milestone1):
+                if not ( MemoMilestones_df.Milestone_Name.eq(row.Milestone1).any() or AccountMilestones_df.Milestone_Name.eq(row.Milestone1).any()):
+                    raise ValueError("Milestone 1 was not found in Memo or Account milestones:"+str(row.Milestone1))
+
+            if row.Milestone2 is not None and not pd.isna(row.Milestone2):
+                if not ( MemoMilestones_df.Milestone_Name.eq(row.Milestone2).any() or AccountMilestones_df.Milestone_Name.eq(row.Milestone2).any()):
+                    raise ValueError("Milestone 2 was not found in Memo or Account milestones:"+str(row.Milestone2))
+
+            if row.Milestone3 is not None and not pd.isna(row.Milestone3):
+                if not ( MemoMilestones_df.Milestone_Name.eq(row.Milestone3).any() or AccountMilestones_df.Milestone_Name.eq(row.Milestone3).any()):
+                    raise ValueError("Milestone 3 was not found in Memo or Account milestones:"+str(row.Milestone3))
+
+            if row.Milestone4 is not None and not pd.isna(row.Milestone4):
+                if not ( MemoMilestones_df.Milestone_Name.eq(row.Milestone4).any() or AccountMilestones_df.Milestone_Name.eq(row.Milestone4).any()):
+                    raise ValueError("Milestone 4 was not found in Memo or Account milestones:"+str(row.Milestone4))
+
+            if row.Milestone5 is not None and not pd.isna(row.Milestone5):
+                if not ( MemoMilestones_df.Milestone_Name.eq(row.Milestone5).any() or AccountMilestones_df.Milestone_Name.eq(row.Milestone5).any()):
+                    raise ValueError("Milestone 5 was not found in Memo or Account milestones:"+str(row.Milestone5))
 
 
+        self.composite_milestones_df = CompositeMilestones_df
 
-        program_start = datetime.datetime.now()
-        scenario_index = 0
+        self.initial_account_set = copy.deepcopy(A)
+        self.budget_set_list = budget_set_list
+        self.initial_memo_rule_set = M
+        self.start_date_YYYYMMDD = start_date_YYYYMMDD
+        self.end_date_YYYYMMDD = end_date_YYYYMMDD
+
+        self.master_list_option_ids = master_list_option_ids
+        self.output_directory = output_directory
+
+        self.config_df = config_df #todo store vars instead
+
+        budget_set_list = self.budget_set_list
+        start_date_YYYYMMDD = self.start_date_YYYYMMDD
+        end_date_YYYYMMDD = self.end_date_YYYYMMDD
+        A = self.initial_account_set
+        M = self.initial_memo_rule_set
+
+        # program_start = datetime.datetime.now()
+        # scenario_index = 0
         number_of_returned_forecasts = len(budget_set_list)
+        EF_pre_run = []
         for B in budget_set_list:
-            loop_start = datetime.datetime.now()
-            print('Starting simulation scenario ' + str(scenario_index))
             try:
                 E = ExpenseForecast.ExpenseForecast(account_set=copy.deepcopy(A),
                                                     budget_set=B,
                                                     memo_rule_set=M,
                                                     start_date_YYYYMMDD=start_date_YYYYMMDD,
                                                     end_date_YYYYMMDD=end_date_YYYYMMDD)
-
-                print(E)
+                #print(E)
+                # E.runForecast()
+                EF_pre_run.append(E)
             except Exception as e:
-                print('Simulation scenario ' + str(scenario_index) + ' failed')
+
                 print(e)
+
+        self.initialized_forecasts = EF_pre_run
+
+
+
+    def read_results_from_disk(self):
+
+        E_objs = []
+        forecast_ids = self.get_individual_forecast_ids()
+        for forecast_id in forecast_ids:
+            forecast_json_file_name_regex_pattern = 'Forecast__' + str(forecast_id) + '__[0-9]{4}_[0-9]{2}_[0-9]{2}__[0-9]{2}_[0-9]{2}_[0-9]{2}\.json'
+            for f in os.listdir(self.output_directory):
+                if re.search(forecast_json_file_name_regex_pattern,f) is not None:
+                    E = ExpenseForecast.initialize_from_json_file(f)
+                    E_objs.append(E)
+
+        #assert that all initial accounts sets matched, then set
+        all_initial_account_set_hashes = [ hashlib.sha1(E.initial_account_set.getAccounts().to_string().encode("utf-8")).hexdigest() for E in E_objs ]
+        print('all_initial_account_set_hashes:')
+        print(all_initial_account_set_hashes)
+        assert min(all_initial_account_set_hashes) == max(all_initial_account_set_hashes)
+        assert len(all_initial_account_set_hashes) == len(E_objs)
+        self.initial_account_set = E_objs[0].initial_account_set
+
+        #assert that all memo rules match, then set
+        all_initial_memo_set_hashes = [ hash(E.initial_memo_rule_set.getMemoRules().to_string()) for E in E_objs ]
+        assert min(all_initial_memo_set_hashes) == max(all_initial_memo_set_hashes)
+        assert len(all_initial_memo_set_hashes) == len(E_objs)
+        self.initial_memo_rule_set = E_objs[0].initial_memo_rule_set
+
+        all_start_dates = [ E.start_date for E in E_objs ]
+        assert min(all_start_dates) == max(all_start_dates)
+        assert len(all_start_dates) == len(E_objs)
+        self.start_date = E_objs[0].start_date
+
+        all_end_dates = [E.end_date for E in E_objs]
+        assert min(all_end_dates) == max(all_end_dates)
+        assert len(all_end_dates) == len(E_objs)
+        self.end_date = E_objs[0].end_date
+
+        #this is not an attribute of ExpenseForecast
+        # all_output_directories = [ hash(E.output_directory) for E in E_objs]
+        # assert min(all_output_directories) == max(all_output_directories)
+        # assert len(all_output_directories) == len(E_objs)
+        # self.output_directory = E_objs[0].output_directory
+
+        #we regenerate option ids because they depend on the ChooseOneSet, and not the individual forecast.
+        #That is, Forecast #N could have the same settings, but different option ids based on what it is being compared to.
+        #Even just moving around the rows in the input excel would change the option ids.  (this would change the unique id as well tho)
+        number_of_combinations = 1
+
+        set_ids = self.choose_one_set_df.Choose_One_Set_Id.unique()
+        set_ids.sort()
+        for set_id in set_ids:
+            all_options_for_set = self.choose_one_set_df.loc[self.choose_one_set_df.Choose_One_Set_Id == set_id,:]
+            number_of_combinations = number_of_combinations * all_options_for_set.shape[0]
+        master_list = ['']
+        master_list_option_ids = ['']
+        for set_id in set_ids:
+            all_options_for_set = self.choose_one_set_df.loc[self.choose_one_set_df.Choose_One_Set_Id == set_id]
+            current_list = []
+            current_list_option_ids = []
+            for option_index, option_row in all_options_for_set.iterrows():
+                for l in master_list:
+                    current_list.append(l + ';' + option_row.Memo_Regex_List)
+
+                for l in master_list_option_ids:
+                    current_list_option_ids.append(l + str(set_id) + '=' + str(option_row.Option_Id) + ' ')
+
+            master_list = current_list
+            master_list_option_ids = current_list_option_ids
+
+        assert len(master_list_option_ids) == len(E_objs)
+        self.master_list_option_ids = master_list_option_ids
+
+        all_account_milestone_df_hashes = [ hash(E.account_milestones_df.to_string()) for E in E_objs ]
+        assert min(all_account_milestone_df_hashes) == max(all_account_milestone_df_hashes) #error here means not all account milestones were the same
+        assert len(all_account_milestone_df_hashes) == len(E_objs) #error here means one of the input forecasts did not have an account_milestone_df
+        self.account_milestones_df = E_objs[0].account_milestones_df
+
+        all_memo_milestone_df_hashes = [ hash(E.memo_milestones_df.to_string()) for E in E_objs ]
+        assert min(all_memo_milestone_df_hashes) == max(all_memo_milestone_df_hashes) #error here means not all memo milestones were the same
+        assert len(all_memo_milestone_df_hashes) == len(E_objs) #error here means one of the input forecasts did not have a memo_milestone_df
+        self.memo_milestones_df = E_objs[0].memo_milestones_df
+
+        all_composite_milestone_df_hashes = [ hash(E.composite_milestones_df.to_string()) for E in E_objs ]
+        assert min(all_composite_milestone_df_hashes) == max(all_composite_milestone_df_hashes) #error here means not all the composite milestones were the same
+        assert len(all_composite_milestone_df_hashes) == len(E_objs) #error here means one of the input forecasts did not have a composite_milestone_df
+        self.composite_milestones_df = E_objs[0].composite_milestones_df
+
+
+    def get_individual_forecast_ids(self):
+        return [ E.unique_id for E in self.initialized_forecasts ]
+
+    def run_forecasts(self):
+
+        number_of_returned_forecasts = len(self.budget_set_list)
+
+        EF_pre_run = self.initialized_forecasts
+
+        program_start = datetime.datetime.now()
+        scenario_index = 0
+        for E in EF_pre_run:
+            loop_start = datetime.datetime.now()
+
+            print('Starting simulation scenario ' + str(scenario_index + 1) + ' / ' + str(number_of_returned_forecasts) + ' #' + E.unique_id)
+            print('Option ids: ' + self.master_list_option_ids[scenario_index])
+            E.runForecast()
 
             loop_finish = datetime.datetime.now()
 
@@ -125,6 +308,8 @@ class ForecastHandler:
             scenario_index += 1
 
 
+
+
         # choose_one_sets__list = []
         # for i in set_ids:
         #     choose_one_sets__list.append([])
@@ -133,7 +318,6 @@ class ForecastHandler:
         # for chooseoneset_index, chooseoneset_row in ChooseOneSet_df.iterrows():
         #     pass
         #     #choose_one_sets__dict[chooseoneset_row.Choose_One_Set_Id].append(chooseoneset_row.Memo_Regex_List)
-
 
     def generateCompareTwoForecastsHTMLReport(self,E1, E2, output_dir='./'):
 
@@ -664,7 +848,6 @@ class ForecastHandler:
 
         with open('out.html', 'w') as f:
             f.write(html_body)
-
 
     def generateHTMLReport(self,E,output_dir='./'):
 

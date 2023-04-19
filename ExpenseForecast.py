@@ -10,7 +10,9 @@ import json
 import BudgetSet, AccountSet
 import MemoRuleSet
 
-#pd.options.mode.chained_assignment = None #apparently this warning can throw false positives???
+import hashlib
+
+pd.options.mode.chained_assignment = None #apparently this warning can throw false positives???
 
 import logging
 
@@ -193,20 +195,21 @@ def initialize_from_json_file(path_to_json):
             loan_apr = Account__dict['APR']
             loan_billing_start_date = Account__dict['Billing_Start_Date']
             loan_min_payment = Account__dict['Minimum_Payment']
+            loan_interest_cadence = Account__dict['Interest_Cadence']
 
         elif Account__dict['Account_Type'].lower() == 'interest':
 
             #principal balance then interest
 
             A.addAccount(name=loan_acct_name,
-                         balance=loan_balance,
+                         balance=float(loan_balance) + float(Account__dict['Balance']),
                          min_balance=Account__dict['Min_Balance'],
                          max_balance=Account__dict['Max_Balance'],
                          account_type="loan",
                          billing_start_date_YYYYMMDD=loan_billing_start_date,
                          interest_type=Account__dict['Interest_Type'],
                          apr=loan_apr,
-                         interest_cadence=Account__dict['Interest_Cadence'],
+                         interest_cadence=loan_interest_cadence,
                          minimum_payment=loan_min_payment,
                          principal_balance=loan_balance,
                          accrued_interest=Account__dict['Balance']
@@ -271,6 +274,31 @@ def initialize_from_json_file(path_to_json):
     return E
 
 class ExpenseForecast:
+
+    def __str__(self):
+
+        left_margin_width = 5
+
+        #whether or not this object has ever been written to disk, we know its file name
+        json_file_name = "Forecast__"+str(self.unique_id)+"__"+self.start_ts+".json"
+
+        return_string = ""
+        return_string += """Forecast  #""" + str(self.unique_id) + """: """+ self.start_date.strftime('%Y%m%d') + """ -> """+ self.end_date.strftime('%Y%m%d') +"\n"
+        return_string += " "+(str(self.initial_account_set.getAccounts().shape[0]) + """ accounts, """ + str(self.initial_budget_set.getBudgetItems().shape[0])  + """  budget items, """ + str(self.initial_memo_rule_set.getMemoRules().shape[0])  + """ memo rules.""").rjust(left_margin_width,' ')+"\n"
+        return_string += " "+json_file_name+"\n"
+
+        if not hasattr(self,'forecast_df'):
+            return_string += """ This forecast has not yet been run. Use runForecast() to compute this forecast. """
+        else:
+            #(if skipped is empty or min skipped priority is greater than 1) AND ( max forecast date == end date ) #todo check this second clause
+
+            return_string += (""" Start timestamp: """ + str(self.start_ts)).rjust(left_margin_width,' ') + "\n"
+            return_string += (""" End timestamp: """ + str(self.end_ts)).rjust(left_margin_width,' ') + "\n"
+
+        return_string += "\n Budget schedule items: \n"
+        return_string += self.initial_budget_set.getBudgetItems().to_string() +"\n"
+
+        return return_string
 
     def __init__(self, account_set, budget_set, memo_rule_set, start_date_YYYYMMDD, end_date_YYYYMMDD, print_debug_messages=True, raise_exceptions=True):
         """
@@ -412,8 +440,27 @@ class ExpenseForecast:
         deferred_df = copy.deepcopy(proposed_df.head(0))
         skipped_df = copy.deepcopy(proposed_df.head(0))
 
-        self.unique_id = str(hash(hash(account_set) + hash(budget_set) + hash(memo_rule_set) + hash(start_date_YYYYMMDD) + hash(end_date_YYYYMMDD)) % 100000).rjust(6,'0')
 
+
+        account_hash = hashlib.sha1(account_set.getAccounts().to_string().encode("utf-8")).hexdigest()
+        budget_hash = hashlib.sha1(budget_set.getBudgetItems().to_string().encode("utf-8")).hexdigest()
+        memo_hash = hashlib.sha1(memo_rule_set.getMemoRules().to_string().encode("utf-8")).hexdigest()
+        start_date_hash = start_date_YYYYMMDD
+        end_date_hash = end_date_YYYYMMDD
+
+        #
+        # print('HASH CALCULATION:')
+        # print('account hash:'+str(account_hash))
+        # print('budget hash:'+str(budget_hash))
+        # print('memo hash:'+str(memo_hash))
+        # print('start_date hash:'+str(start_date_hash))
+        # print('end_date hash:'+str(end_date_hash))
+
+
+        self.unique_id = str(hash( int(account_hash,16) + int(budget_hash,16) + int(memo_hash,16) + start_date_hash + end_date_hash ) % 100000).rjust(6,'0')
+        #
+        # print("unique_id:"+str(self.unique_id))
+        # print("")
 
         self.initial_proposed_df = proposed_df
         self.initial_deferred_df = deferred_df
@@ -476,10 +523,13 @@ class ExpenseForecast:
                                                                                          proposed_df=self.initial_proposed_df,
                                                                                          deferred_df=self.initial_deferred_df,
                                                                                          skipped_df=self.initial_skipped_df,
-                                                                                         account_set=self.initial_account_set,
+                                                                                         account_set=copy.deepcopy(self.initial_account_set),
                                                                                          memo_rule_set=self.initial_memo_rule_set,
                                                                                          raise_satisfice_failed_exception=False)
         self.forecast_df = forecast_df
+
+        self.forecast_df.to_csv('./Forecast_'+self.unique_id+'.csv')
+
         self.skipped_df = skipped_df
         self.confirmed_df = confirmed_df
         self.deferred_df = deferred_df
@@ -2013,6 +2063,8 @@ class ExpenseForecast:
                     #log_in_color('white','debug','##########################################################################################################################################################',self.log_stack_depth)
 
         if failed_to_satisfice_flag:
+            log_in_color('red', 'error', 'Forecast id: ' + str(self.unique_id))
+            log_in_color('red','error','Last day successfully computed: '+str(d))
 
             not_confirmed_sel_vec = [ ( d > self.end_date ) for d in confirmed_df.Date ] #this is using an end date that has been moved forward, so it is > not >=
 
@@ -2310,9 +2362,6 @@ class ExpenseForecast:
 
         return JSON_string
 
-    def fromJSON(self):
-
-        raise NotImplementedError
 
     def getInputFromExcel(self):
         raise NotImplementedError

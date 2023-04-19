@@ -8,6 +8,10 @@ if __name__ == '__main__':
 
     F.initialize_from_excel_file('expense_forecast__input.ods')
 
+    print(F.read_results_from_disk())
+
+    #F.run_forecasts()
+
     # E1 = ExpenseForecast.initialize_from_json_file(path_to_json='Forecast__2023_04_07__14_06_02__031534.json')
     # E1.appendSummaryLines()
     #

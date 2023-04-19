@@ -307,6 +307,30 @@ class AccountSet:
         log_string+=')'
         log_in_color('green', 'info',log_string, 0)
 
+        if billing_start_date_YYYYMMDD == "None":
+            billing_start_date_YYYYMMDD = None
+
+        if interest_type == "None":
+            interest_type = None
+
+        if apr == "None":
+            apr = None
+
+        if interest_cadence == "None":
+            interest_cadence = None
+
+        if minimum_payment == "None":
+            minimum_payment = None
+
+        if previous_statement_balance == "None":
+            previous_statement_balance = None
+
+        if principal_balance == "None":
+            principal_balance = None
+
+        if accrued_interest == "None":
+            accrued_interest = None
+
         # TODO this should be based on interest type or interest AND account type
         if account_type.lower() == 'loan':
 
@@ -317,7 +341,7 @@ class AccountSet:
                 raise ValueError #Accrued_Interest cannot be None for account_type=loan
 
             if float(principal_balance) + float(accrued_interest) != float(balance):
-                raise ValueError #Account.Principal_balance + Account.accrued_interest != Account.balance
+                raise ValueError(name+": "+str(principal_balance)+" + "+str(accrued_interest)+" != "+str(balance)) #Account.Principal_balance + Account.accrued_interest != Account.balance
 
             account = Account.Account(name=name + ': Principal Balance',
                                       balance=principal_balance,

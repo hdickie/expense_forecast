@@ -1,0 +1,82 @@
+2023-04-11 08:03:58,057 - ERROR    - [31m0 Forecast id: 061766[0m
+2023-04-11 08:03:58,058 - ERROR    - [31m0 Last day successfully computed: 2023-04-28 00:00:00[0m
+2023-04-11 08:05:29,803 - ERROR    - [31m0 Forecast id: 091757[0m
+2023-04-11 08:05:29,804 - ERROR    - [31m0 Last day successfully computed: 2023-04-28 00:00:00[0m
+2023-04-11 08:07:01,864 - ERROR    - [31m0 Forecast id: 090742[0m
+2023-04-11 08:07:01,864 - ERROR    - [31m0 Last day successfully computed: 2023-04-28 00:00:00[0m
+2023-04-11 08:08:47,947 - ERROR    - [31m0 Forecast id: 079843[0m
+2023-04-11 08:08:47,947 - ERROR    - [31m0 Last day successfully computed: 2023-04-28 00:00:00[0m
+2023-04-11 08:12:43,878 - ERROR    - [31m0 Forecast id: 050388[0m
+2023-04-11 08:12:43,878 - ERROR    - [31m0 Last day successfully computed: 2023-04-28 00:00:00[0m
+2023-04-11 08:17:34,081 - ERROR    - [31m0 Forecast id: 023864[0m
+2023-04-11 08:17:34,082 - ERROR    - [31m0 Last day successfully computed: 2023-04-28 00:00:00[0m
+2023-04-11 08:19:28,648 - ERROR    - [31m0 Forecast id: 003515[0m
+2023-04-11 08:19:28,648 - ERROR    - [31m0 Last day successfully computed: 2023-04-28 00:00:00[0m
+2023-04-11 08:21:31,463 - ERROR    - [31m0 Forecast id: 078090[0m
+2023-04-11 08:21:31,463 - ERROR    - [31m0 Last day successfully computed: 2023-04-28 00:00:00[0m
+2023-04-11 08:23:54,649 - ERROR    - [31m0 Forecast id: 018748[0m
+2023-04-11 08:23:54,649 - ERROR    - [31m0 Last day successfully computed: 2023-04-28 00:00:00[0m
+2023-04-11 08:28:10,647 - ERROR    - [31m0 Forecast id: 039622[0m
+2023-04-11 08:28:10,659 - ERROR    - [31m0 Last day successfully computed: 2023-04-28 00:00:00[0m
+2023-04-11 09:16:26,339 - ERROR    - [31m0 Forecast id: 078849[0m
+2023-04-11 09:16:26,339 - ERROR    - [31m0 Last day successfully computed: 2023-06-01 00:00:00[0m
+2023-04-11 09:21:00,508 - ERROR    - [31m0 Forecast id: 049081[0m
+2023-04-11 09:21:00,508 - ERROR    - [31m0 Last day successfully computed: 2023-06-01 00:00:00[0m
+2023-04-11 09:25:25,868 - ERROR    - [31m0 Forecast id: 038542[0m
+2023-04-11 09:25:25,869 - ERROR    - [31m0 Last day successfully computed: 2023-06-01 00:00:00[0m
+2023-04-11 09:29:54,576 - ERROR    - [31m0 Forecast id: 038668[0m
+2023-04-11 09:29:54,576 - ERROR    - [31m0 Last day successfully computed: 2023-06-01 00:00:00[0m
+2023-04-11 09:34:19,104 - ERROR    - [31m0 Forecast id: 082455[0m
+2023-04-11 09:34:19,105 - ERROR    - [31m0 Last day successfully computed: 2023-06-01 00:00:00[0m
+2023-04-11 09:38:43,129 - ERROR    - [31m0 Forecast id: 037930[0m
+2023-04-11 09:38:43,129 - ERROR    - [31m0 Last day successfully computed: 2023-06-01 00:00:00[0m
+2023-04-11 09:43:06,667 - ERROR    - [31m0 Forecast id: 037972[0m
+2023-04-11 09:43:06,667 - ERROR    - [31m0 Last day successfully computed: 2023-06-01 00:00:00[0m
+2023-04-11 09:48:43,884 - ERROR    - [31m0 Forecast id: 012545[0m
+2023-04-11 09:48:43,884 - ERROR    - [31m0 Last day successfully computed: 2023-06-01 00:00:00[0m
+2023-04-11 09:54:28,991 - ERROR    - [31m0 Forecast id: 082777[0m
+2023-04-11 09:54:28,993 - ERROR    - [31m0 Last day successfully computed: 2023-06-01 00:00:00[0m
+2023-04-11 10:00:39,552 - ERROR    - [31m0 Forecast id: 072238[0m
+2023-04-11 10:00:39,552 - ERROR    - [31m0 Last day successfully computed: 2023-06-01 00:00:00[0m
+2023-04-11 10:05:30,511 - ERROR    - [31m0 Forecast id: 072364[0m
+2023-04-11 10:05:30,511 - ERROR    - [31m0 Last day successfully computed: 2023-06-01 00:00:00[0m
+2023-04-11 10:09:54,844 - ERROR    - [31m0 Forecast id: 016100[0m
+2023-04-11 10:09:54,844 - ERROR    - [31m0 Last day successfully computed: 2023-06-01 00:00:00[0m
+2023-04-11 10:14:28,260 - ERROR    - [31m0 Forecast id: 071602[0m
+2023-04-11 10:14:28,260 - ERROR    - [31m0 Last day successfully computed: 2023-06-01 00:00:00[0m
+2023-04-11 10:18:54,700 - ERROR    - [31m0 Forecast id: 071143[0m
+2023-04-11 10:18:54,700 - ERROR    - [31m0 Last day successfully computed: 2023-06-01 00:00:00[0m
+2023-04-11 10:23:20,430 - ERROR    - [31m0 Forecast id: 074664[0m
+2023-04-11 10:23:20,430 - ERROR    - [31m0 Last day successfully computed: 2023-06-01 00:00:00[0m
+2023-04-18 13:05:53,486 - ERROR    - [31m0 Forecast id: 084233[0m
+2023-04-18 13:05:53,495 - ERROR    - [31m0 Last day successfully computed: 2023-11-01 00:00:00[0m
+2023-04-18 13:25:32,885 - ERROR    - [31m0 Forecast id: 008969[0m
+2023-04-18 13:25:32,885 - ERROR    - [31m0 Last day successfully computed: 2023-11-01 00:00:00[0m
+2023-04-18 13:45:16,847 - ERROR    - [31m0 Forecast id: 042960[0m
+2023-04-18 13:45:16,847 - ERROR    - [31m0 Last day successfully computed: 2023-11-01 00:00:00[0m
+2023-04-18 14:04:54,177 - ERROR    - [31m0 Forecast id: 039373[0m
+2023-04-18 14:04:54,177 - ERROR    - [31m0 Last day successfully computed: 2023-11-01 00:00:00[0m
+2023-04-18 14:24:42,589 - ERROR    - [31m0 Forecast id: 045755[0m
+2023-04-18 14:24:42,590 - ERROR    - [31m0 Last day successfully computed: 2023-11-01 00:00:00[0m
+2023-04-18 14:44:41,346 - ERROR    - [31m0 Forecast id: 097552[0m
+2023-04-18 14:44:41,346 - ERROR    - [31m0 Last day successfully computed: 2023-11-01 00:00:00[0m
+2023-04-18 15:03:31,416 - ERROR    - [31m0 Forecast id: 027554[0m
+2023-04-18 15:03:31,416 - ERROR    - [31m0 Last day successfully computed: 2023-11-01 00:00:00[0m
+2023-04-18 15:21:27,181 - ERROR    - [31m0 Forecast id: 054925[0m
+2023-04-18 15:21:27,181 - ERROR    - [31m0 Last day successfully computed: 2023-11-01 00:00:00[0m
+2023-04-18 21:12:02,550 - ERROR    - [31m0 Forecast id: 014623[0m
+2023-04-18 21:12:02,550 - ERROR    - [31m0 Last day successfully computed: 2023-11-01 00:00:00[0m
+2023-04-18 21:30:23,804 - ERROR    - [31m0 Forecast id: 087806[0m
+2023-04-18 21:30:23,804 - ERROR    - [31m0 Last day successfully computed: 2023-11-01 00:00:00[0m
+2023-04-18 21:49:01,054 - ERROR    - [31m0 Forecast id: 021544[0m
+2023-04-18 21:49:01,054 - ERROR    - [31m0 Last day successfully computed: 2023-11-01 00:00:00[0m
+2023-04-18 22:05:29,988 - ERROR    - [31m0 Forecast id: 043153[0m
+2023-04-18 22:05:29,988 - ERROR    - [31m0 Last day successfully computed: 2023-11-01 00:00:00[0m
+2023-04-18 22:21:35,943 - ERROR    - [31m0 Forecast id: 091721[0m
+2023-04-18 22:21:35,944 - ERROR    - [31m0 Last day successfully computed: 2023-11-01 00:00:00[0m
+2023-04-18 22:37:34,397 - ERROR    - [31m0 Forecast id: 085934[0m
+2023-04-18 22:37:34,397 - ERROR    - [31m0 Last day successfully computed: 2023-11-01 00:00:00[0m
+2023-04-18 22:53:28,204 - ERROR    - [31m0 Forecast id: 025351[0m
+2023-04-18 22:53:28,204 - ERROR    - [31m0 Last day successfully computed: 2023-11-01 00:00:00[0m
+2023-04-18 23:09:26,938 - ERROR    - [31m0 Forecast id: 074089[0m
+2023-04-18 23:09:26,938 - ERROR    - [31m0 Last day successfully computed: 2023-11-01 00:00:00[0m
