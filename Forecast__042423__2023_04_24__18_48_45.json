@@ -1,0 +1,482 @@
+{"unique_id":"042423",
+"start_ts":"2023_04_24__18_48_45",
+"end_ts":"2023_04_24__18_50_44",
+"start_date":20230407,
+"end_date":20230501,
+"initial_memo_rule_set":[
+{
+"Memo_Regex":".*income.*",
+"Account_From":"None",
+"Account_To":"Checking",
+"Transaction_Priority":"1"
+},
+{
+"Memo_Regex":"food",
+"Account_From":"Credit",
+"Account_To":"None",
+"Transaction_Priority":"1"
+},
+{
+"Memo_Regex":"internet",
+"Account_From":"Credit",
+"Account_To":"None",
+"Transaction_Priority":"1"
+},
+{
+"Memo_Regex":"phone bill",
+"Account_From":"Credit",
+"Account_To":"None",
+"Transaction_Priority":"1"
+},
+{
+"Memo_Regex":"car insurance",
+"Account_From":"Credit",
+"Account_To":"None",
+"Transaction_Priority":"1"
+},
+{
+"Memo_Regex":"health insurance",
+"Account_From":"Credit",
+"Account_To":"None",
+"Transaction_Priority":"1"
+},
+{
+"Memo_Regex":"gas and bus",
+"Account_From":"Credit",
+"Account_To":"None",
+"Transaction_Priority":"1"
+},
+{
+"Memo_Regex":"spotify",
+"Account_From":"Credit",
+"Account_To":"None",
+"Transaction_Priority":"1"
+},
+{
+"Memo_Regex":"gym",
+"Account_From":"Credit",
+"Account_To":"None",
+"Transaction_Priority":"1"
+},
+{
+"Memo_Regex":"hbo max",
+"Account_From":"Credit",
+"Account_To":"None",
+"Transaction_Priority":"1"
+},
+{
+"Memo_Regex":"hulu",
+"Account_From":"Credit",
+"Account_To":"None",
+"Transaction_Priority":"1"
+},
+{
+"Memo_Regex":".*rent.*",
+"Account_From":"Checking",
+"Account_To":"None",
+"Transaction_Priority":"1"
+},
+{
+"Memo_Regex":".*utilities.*",
+"Account_From":"Checking",
+"Account_To":"None",
+"Transaction_Priority":"1"
+},
+{
+"Memo_Regex":".*",
+"Account_From":"Credit",
+"Account_To":"None",
+"Transaction_Priority":"2"
+},
+{
+"Memo_Regex":".*",
+"Account_From":"Credit",
+"Account_To":"None",
+"Transaction_Priority":"3"
+},
+{
+"Memo_Regex":".*cyclical billing total.*",
+"Account_From":"Checking",
+"Account_To":"Credit",
+"Transaction_Priority":"1"
+},
+{
+"Memo_Regex":".*",
+"Account_From":"Credit",
+"Account_To":"None",
+"Transaction_Priority":"5"
+},
+{
+"Memo_Regex":".*",
+"Account_From":"Credit",
+"Account_To":"None",
+"Transaction_Priority":"6"
+},
+{
+"Memo_Regex":".*",
+"Account_From":"Credit",
+"Account_To":"None",
+"Transaction_Priority":"7"
+},
+{
+"Memo_Regex":"EMT class",
+"Account_From":"Credit",
+"Account_To":"None",
+"Transaction_Priority":"1"
+}
+],"initial_account_set":[
+{
+"Name":"Checking",
+"Balance":"4224.62",
+"Min_Balance":"0.0",
+"Max_Balance":"inf",
+"Account_Type":"checking",
+"Billing_Start_Date":"None",
+"Interest_Type":"None",
+"APR":"None",
+"Interest_Cadence":"None",
+"Minimum_Payment":"None"
+},
+{
+"Name":"Credit: Curr Stmt Bal",
+"Balance":"430.27",
+"Min_Balance":"0.0",
+"Max_Balance":"20000.0",
+"Account_Type":"curr stmt bal",
+"Billing_Start_Date":"None",
+"Interest_Type":"None",
+"APR":"None",
+"Interest_Cadence":"None",
+"Minimum_Payment":"None"
+},
+{
+"Name":"Credit: Prev Stmt Bal",
+"Balance":"7351.2",
+"Min_Balance":"0.0",
+"Max_Balance":"20000.0",
+"Account_Type":"prev stmt bal",
+"Billing_Start_Date":"2023-01-03 00:00:00",
+"Interest_Type":"Compound",
+"APR":"0.2824",
+"Interest_Cadence":"monthly",
+"Minimum_Payment":"40.0"
+},
+{
+"Name":"Loan A: Principal Balance",
+"Balance":"4746.18",
+"Min_Balance":"0.0",
+"Max_Balance":"inf",
+"Account_Type":"principal balance",
+"Billing_Start_Date":"2023-09-03 00:00:00",
+"Interest_Type":"Simple",
+"APR":"0.0466",
+"Interest_Cadence":"daily",
+"Minimum_Payment":"50.0"
+},
+{
+"Name":"Loan A: Interest",
+"Balance":"0.0",
+"Min_Balance":"0.0",
+"Max_Balance":"inf",
+"Account_Type":"interest",
+"Billing_Start_Date":"None",
+"Interest_Type":"None",
+"APR":"None",
+"Interest_Cadence":"None",
+"Minimum_Payment":"None"
+},
+{
+"Name":"Loan B: Principal Balance",
+"Balance":"1919.55",
+"Min_Balance":"0.0",
+"Max_Balance":"inf",
+"Account_Type":"principal balance",
+"Billing_Start_Date":"2023-09-03 00:00:00",
+"Interest_Type":"Simple",
+"APR":"0.0429",
+"Interest_Cadence":"daily",
+"Minimum_Payment":"50.0"
+},
+{
+"Name":"Loan B: Interest",
+"Balance":"0.0",
+"Min_Balance":"0.0",
+"Max_Balance":"inf",
+"Account_Type":"interest",
+"Billing_Start_Date":"None",
+"Interest_Type":"None",
+"APR":"None",
+"Interest_Cadence":"None",
+"Minimum_Payment":"None"
+},
+{
+"Name":"Loan C: Principal Balance",
+"Balance":"4726.68",
+"Min_Balance":"0.0",
+"Max_Balance":"inf",
+"Account_Type":"principal balance",
+"Billing_Start_Date":"2023-09-03 00:00:00",
+"Interest_Type":"Simple",
+"APR":"0.0429",
+"Interest_Cadence":"daily",
+"Minimum_Payment":"50.0"
+},
+{
+"Name":"Loan C: Interest",
+"Balance":"0.0",
+"Min_Balance":"0.0",
+"Max_Balance":"inf",
+"Account_Type":"interest",
+"Billing_Start_Date":"None",
+"Interest_Type":"None",
+"APR":"None",
+"Interest_Cadence":"None",
+"Minimum_Payment":"None"
+},
+{
+"Name":"Loan D: Principal Balance",
+"Balance":"1823.31",
+"Min_Balance":"0.0",
+"Max_Balance":"inf",
+"Account_Type":"principal balance",
+"Billing_Start_Date":"2023-09-03 00:00:00",
+"Interest_Type":"Simple",
+"APR":"0.0376",
+"Interest_Cadence":"daily",
+"Minimum_Payment":"50.0"
+},
+{
+"Name":"Loan D: Interest",
+"Balance":"0.0",
+"Min_Balance":"0.0",
+"Max_Balance":"inf",
+"Account_Type":"interest",
+"Billing_Start_Date":"None",
+"Interest_Type":"None",
+"APR":"None",
+"Interest_Cadence":"None",
+"Minimum_Payment":"None"
+},
+{
+"Name":"Loan E: Principal Balance",
+"Balance":"3359.17",
+"Min_Balance":"0.0",
+"Max_Balance":"inf",
+"Account_Type":"principal balance",
+"Billing_Start_Date":"2023-09-03 00:00:00",
+"Interest_Type":"Simple",
+"APR":"0.0376",
+"Interest_Cadence":"daily",
+"Minimum_Payment":"50.0"
+},
+{
+"Name":"Loan E: Interest",
+"Balance":"0.0",
+"Min_Balance":"0.0",
+"Max_Balance":"inf",
+"Account_Type":"interest",
+"Billing_Start_Date":"None",
+"Interest_Type":"None",
+"APR":"None",
+"Interest_Cadence":"None",
+"Minimum_Payment":"None"
+},
+{
+"Name":"Tax Debt: Principal Balance",
+"Balance":"8000.0",
+"Min_Balance":"0.0",
+"Max_Balance":"inf",
+"Account_Type":"principal balance",
+"Billing_Start_Date":"2023-10-15 00:00:00",
+"Interest_Type":"Simple",
+"APR":"0.04",
+"Interest_Cadence":"daily",
+"Minimum_Payment":"0.0"
+},
+{
+"Name":"Tax Debt: Interest",
+"Balance":"0.0",
+"Min_Balance":"0.0",
+"Max_Balance":"inf",
+"Account_Type":"interest",
+"Billing_Start_Date":"None",
+"Interest_Type":"None",
+"APR":"None",
+"Interest_Cadence":"None",
+"Minimum_Payment":"None"
+}
+],"initial_budget_set":[
+{
+"Start_Date":"2023-03-28 00:00:00",
+"End_Date":"2023-06-30 00:00:00",
+"Priority":"1",
+"Cadence":"monthly",
+"Amount":"1918.0",
+"Memo":"rent 2034_33rd_thru_June",
+"Deferrable":"False",
+"Partial_Payment_Allowed":"False"
+},
+{
+"Start_Date":"2023-03-28 00:00:00",
+"End_Date":"2023-06-30 00:00:00",
+"Priority":"1",
+"Cadence":"monthly",
+"Amount":"100.0",
+"Memo":"internet thru_June",
+"Deferrable":"False",
+"Partial_Payment_Allowed":"False"
+},
+{
+"Start_Date":"2023-07-01 00:00:00",
+"End_Date":"2023-12-31 00:00:00",
+"Priority":"1",
+"Cadence":"monthly",
+"Amount":"800.0",
+"Memo":"rent Mom July 1",
+"Deferrable":"False",
+"Partial_Payment_Allowed":"False"
+},
+{
+"Start_Date":"2023-09-01 00:00:00",
+"End_Date":"2023-12-31 00:00:00",
+"Priority":"1",
+"Cadence":"monthly",
+"Amount":"1650.0",
+"Memo":"spotify",
+"Deferrable":"False",
+"Partial_Payment_Allowed":"False"
+},
+{
+"Start_Date":"2023-03-28 00:00:00",
+"End_Date":"2023-07-01 00:00:00",
+"Priority":"1",
+"Cadence":"weekly",
+"Amount":"450.0",
+"Memo":"unemployment income ends july 1",
+"Deferrable":"False",
+"Partial_Payment_Allowed":"False"
+},
+{
+"Start_Date":"2023-06-28 00:00:00",
+"End_Date":"2023-12-31 00:00:00",
+"Priority":"1",
+"Cadence":"semiweekly",
+"Amount":"1320.0",
+"Memo":"EMT income work for 6 months",
+"Deferrable":"False",
+"Partial_Payment_Allowed":"False"
+},
+{
+"Start_Date":"2023-03-28 00:00:00",
+"End_Date":"2023-12-31 00:00:00",
+"Priority":"1",
+"Cadence":"daily",
+"Amount":"30.0",
+"Memo":"food",
+"Deferrable":"False",
+"Partial_Payment_Allowed":"False"
+},
+{
+"Start_Date":"2023-03-28 00:00:00",
+"End_Date":"2023-12-31 00:00:00",
+"Priority":"1",
+"Cadence":"monthly",
+"Amount":"89.0",
+"Memo":"car insurance",
+"Deferrable":"False",
+"Partial_Payment_Allowed":"False"
+},
+{
+"Start_Date":"2023-03-28 00:00:00",
+"End_Date":"2023-12-31 00:00:00",
+"Priority":"1",
+"Cadence":"monthly",
+"Amount":"163.09",
+"Memo":"phone bill",
+"Deferrable":"False",
+"Partial_Payment_Allowed":"False"
+},
+{
+"Start_Date":"2023-03-28 00:00:00",
+"End_Date":"2023-12-31 00:00:00",
+"Priority":"1",
+"Cadence":"monthly",
+"Amount":"8.0",
+"Memo":"hulu",
+"Deferrable":"False",
+"Partial_Payment_Allowed":"False"
+},
+{
+"Start_Date":"2023-03-28 00:00:00",
+"End_Date":"2023-12-31 00:00:00",
+"Priority":"1",
+"Cadence":"monthly",
+"Amount":"15.0",
+"Memo":"hbo max",
+"Deferrable":"False",
+"Partial_Payment_Allowed":"False"
+},
+{
+"Start_Date":"2023-03-28 00:00:00",
+"End_Date":"2023-12-31 00:00:00",
+"Priority":"1",
+"Cadence":"monthly",
+"Amount":"33.0",
+"Memo":"gym",
+"Deferrable":"False",
+"Partial_Payment_Allowed":"False"
+},
+{
+"Start_Date":"2023-03-28 00:00:00",
+"End_Date":"2023-12-31 00:00:00",
+"Priority":"1",
+"Cadence":"monthly",
+"Amount":"10.0",
+"Memo":"spotify",
+"Deferrable":"False",
+"Partial_Payment_Allowed":"False"
+},
+{
+"Start_Date":"2023-03-28 00:00:00",
+"End_Date":"2023-12-31 00:00:00",
+"Priority":"1",
+"Cadence":"monthly",
+"Amount":"100.0",
+"Memo":"gas and bus",
+"Deferrable":"False",
+"Partial_Payment_Allowed":"False"
+},
+{
+"Start_Date":"2023-03-28 00:00:00",
+"End_Date":"2023-12-31 00:00:00",
+"Priority":"1",
+"Cadence":"monthly",
+"Amount":"175.5",
+"Memo":"health insurance",
+"Deferrable":"False",
+"Partial_Payment_Allowed":"False"
+},
+{
+"Start_Date":"2023-06-01 00:00:00",
+"End_Date":"2023-12-31 00:00:00",
+"Priority":"1",
+"Cadence":"monthly",
+"Amount":"1100.0",
+"Memo":"cyclical billing total",
+"Deferrable":"False",
+"Partial_Payment_Allowed":"True"
+},
+{
+"Start_Date":"2023-04-28 00:00:00",
+"End_Date":"2023-04-28 00:00:00",
+"Priority":"1",
+"Cadence":"once",
+"Amount":"2900.0",
+"Memo":"EMT class",
+"Deferrable":"False",
+"Partial_Payment_Allowed":"False"
+}
+],"forecast_df":[{"Date":"2023-04-07T00:00:00.000","Checking":4224.62,"Credit: Curr Stmt Bal":430.27,"Credit: Prev Stmt Bal":7351.2,"Loan A: Principal Balance":4746.18,"Loan A: Interest":0.0,"Loan B: Principal Balance":1919.55,"Loan B: Interest":0.0,"Loan C: Principal Balance":4726.68,"Loan C: Interest":0.0,"Loan D: Principal Balance":1823.31,"Loan D: Interest":0.0,"Loan E: Principal Balance":3359.17,"Loan E: Interest":0.0,"Tax Debt: Principal Balance":8000.0,"Tax Debt: Interest":0.0,"Memo":""},{"Date":"2023-04-08T00:00:00.000","Checking":4224.62,"Credit: Curr Stmt Bal":460.27,"Credit: Prev Stmt Bal":7351.2,"Loan A: Principal Balance":4746.18,"Loan A: Interest":0.0,"Loan B: Principal Balance":1919.55,"Loan B: Interest":0.0,"Loan C: Principal Balance":4726.68,"Loan C: Interest":0.0,"Loan D: Principal Balance":1823.31,"Loan D: Interest":0.0,"Loan E: Principal Balance":3359.17,"Loan E: Interest":0.0,"Tax Debt: Principal Balance":8000.0,"Tax Debt: Interest":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-09T00:00:00.000","Checking":4674.62,"Credit: Curr Stmt Bal":490.27,"Credit: Prev Stmt Bal":7351.2,"Loan A: Principal Balance":4746.18,"Loan A: Interest":0.0,"Loan B: Principal Balance":1919.55,"Loan B: Interest":0.0,"Loan C: Principal Balance":4726.68,"Loan C: Interest":0.0,"Loan D: Principal Balance":1823.31,"Loan D: Interest":0.0,"Loan E: Principal Balance":3359.17,"Loan E: Interest":0.0,"Tax Debt: Principal Balance":8000.0,"Tax Debt: Interest":0.0,"Memo":"unemployment income ends july 1 ($450.0) ; food ($30.0) ; "},{"Date":"2023-04-10T00:00:00.000","Checking":4674.62,"Credit: Curr Stmt Bal":520.27,"Credit: Prev Stmt Bal":7351.2,"Loan A: Principal Balance":4746.18,"Loan A: Interest":0.0,"Loan B: Principal Balance":1919.55,"Loan B: Interest":0.0,"Loan C: Principal Balance":4726.68,"Loan C: Interest":0.0,"Loan D: Principal Balance":1823.31,"Loan D: Interest":0.0,"Loan E: Principal Balance":3359.17,"Loan E: Interest":0.0,"Tax Debt: Principal Balance":8000.0,"Tax Debt: Interest":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-11T00:00:00.000","Checking":4674.62,"Credit: Curr Stmt Bal":550.27,"Credit: Prev Stmt Bal":7351.2,"Loan A: Principal Balance":4746.18,"Loan A: Interest":0.0,"Loan B: Principal Balance":1919.55,"Loan B: Interest":0.0,"Loan C: Principal Balance":4726.68,"Loan C: Interest":0.0,"Loan D: Principal Balance":1823.31,"Loan D: Interest":0.0,"Loan E: Principal Balance":3359.17,"Loan E: Interest":0.0,"Tax Debt: Principal Balance":8000.0,"Tax Debt: Interest":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-12T00:00:00.000","Checking":4674.62,"Credit: Curr Stmt Bal":580.27,"Credit: Prev Stmt Bal":7351.2,"Loan A: Principal Balance":4746.18,"Loan A: Interest":0.0,"Loan B: Principal Balance":1919.55,"Loan B: Interest":0.0,"Loan C: Principal Balance":4726.68,"Loan C: Interest":0.0,"Loan D: Principal Balance":1823.31,"Loan D: Interest":0.0,"Loan E: Principal Balance":3359.17,"Loan E: Interest":0.0,"Tax Debt: Principal Balance":8000.0,"Tax Debt: Interest":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-13T00:00:00.000","Checking":4674.62,"Credit: Curr Stmt Bal":610.27,"Credit: Prev Stmt Bal":7351.2,"Loan A: Principal Balance":4746.18,"Loan A: Interest":0.0,"Loan B: Principal Balance":1919.55,"Loan B: Interest":0.0,"Loan C: Principal Balance":4726.68,"Loan C: Interest":0.0,"Loan D: Principal Balance":1823.31,"Loan D: Interest":0.0,"Loan E: Principal Balance":3359.17,"Loan E: Interest":0.0,"Tax Debt: Principal Balance":8000.0,"Tax Debt: Interest":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-14T00:00:00.000","Checking":4674.62,"Credit: Curr Stmt Bal":640.27,"Credit: Prev Stmt Bal":7351.2,"Loan A: Principal Balance":4746.18,"Loan A: Interest":0.0,"Loan B: Principal Balance":1919.55,"Loan B: Interest":0.0,"Loan C: Principal Balance":4726.68,"Loan C: Interest":0.0,"Loan D: Principal Balance":1823.31,"Loan D: Interest":0.0,"Loan E: Principal Balance":3359.17,"Loan E: Interest":0.0,"Tax Debt: Principal Balance":8000.0,"Tax Debt: Interest":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-15T00:00:00.000","Checking":4674.62,"Credit: Curr Stmt Bal":670.27,"Credit: Prev Stmt Bal":7351.2,"Loan A: Principal Balance":4746.18,"Loan A: Interest":0.0,"Loan B: Principal Balance":1919.55,"Loan B: Interest":0.0,"Loan C: Principal Balance":4726.68,"Loan C: Interest":0.0,"Loan D: Principal Balance":1823.31,"Loan D: Interest":0.0,"Loan E: Principal Balance":3359.17,"Loan E: Interest":0.0,"Tax Debt: Principal Balance":8000.0,"Tax Debt: Interest":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-16T00:00:00.000","Checking":5124.62,"Credit: Curr Stmt Bal":700.27,"Credit: Prev Stmt Bal":7351.2,"Loan A: Principal Balance":4746.18,"Loan A: Interest":0.0,"Loan B: Principal Balance":1919.55,"Loan B: Interest":0.0,"Loan C: Principal Balance":4726.68,"Loan C: Interest":0.0,"Loan D: Principal Balance":1823.31,"Loan D: Interest":0.0,"Loan E: Principal Balance":3359.17,"Loan E: Interest":0.0,"Tax Debt: Principal Balance":8000.0,"Tax Debt: Interest":0.0,"Memo":"unemployment income ends july 1 ($450.0) ; food ($30.0) ; "},{"Date":"2023-04-17T00:00:00.000","Checking":5124.62,"Credit: Curr Stmt Bal":730.27,"Credit: Prev Stmt Bal":7351.2,"Loan A: Principal Balance":4746.18,"Loan A: Interest":0.0,"Loan B: Principal Balance":1919.55,"Loan B: Interest":0.0,"Loan C: Principal Balance":4726.68,"Loan C: Interest":0.0,"Loan D: Principal Balance":1823.31,"Loan D: Interest":0.0,"Loan E: Principal Balance":3359.17,"Loan E: Interest":0.0,"Tax Debt: Principal Balance":8000.0,"Tax Debt: Interest":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-18T00:00:00.000","Checking":5124.62,"Credit: Curr Stmt Bal":760.27,"Credit: Prev Stmt Bal":7351.2,"Loan A: Principal Balance":4746.18,"Loan A: Interest":0.0,"Loan B: Principal Balance":1919.55,"Loan B: Interest":0.0,"Loan C: Principal Balance":4726.68,"Loan C: Interest":0.0,"Loan D: Principal Balance":1823.31,"Loan D: Interest":0.0,"Loan E: Principal Balance":3359.17,"Loan E: Interest":0.0,"Tax Debt: Principal Balance":8000.0,"Tax Debt: Interest":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-19T00:00:00.000","Checking":5124.62,"Credit: Curr Stmt Bal":790.27,"Credit: Prev Stmt Bal":7351.2,"Loan A: Principal Balance":4746.18,"Loan A: Interest":0.0,"Loan B: Principal Balance":1919.55,"Loan B: Interest":0.0,"Loan C: Principal Balance":4726.68,"Loan C: Interest":0.0,"Loan D: Principal Balance":1823.31,"Loan D: Interest":0.0,"Loan E: Principal Balance":3359.17,"Loan E: Interest":0.0,"Tax Debt: Principal Balance":8000.0,"Tax Debt: Interest":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-20T00:00:00.000","Checking":5124.62,"Credit: Curr Stmt Bal":820.27,"Credit: Prev Stmt Bal":7351.2,"Loan A: Principal Balance":4746.18,"Loan A: Interest":0.0,"Loan B: Principal Balance":1919.55,"Loan B: Interest":0.0,"Loan C: Principal Balance":4726.68,"Loan C: Interest":0.0,"Loan D: Principal Balance":1823.31,"Loan D: Interest":0.0,"Loan E: Principal Balance":3359.17,"Loan E: Interest":0.0,"Tax Debt: Principal Balance":8000.0,"Tax Debt: Interest":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-21T00:00:00.000","Checking":5124.62,"Credit: Curr Stmt Bal":850.27,"Credit: Prev Stmt Bal":7351.2,"Loan A: Principal Balance":4746.18,"Loan A: Interest":0.0,"Loan B: Principal Balance":1919.55,"Loan B: Interest":0.0,"Loan C: Principal Balance":4726.68,"Loan C: Interest":0.0,"Loan D: Principal Balance":1823.31,"Loan D: Interest":0.0,"Loan E: Principal Balance":3359.17,"Loan E: Interest":0.0,"Tax Debt: Principal Balance":8000.0,"Tax Debt: Interest":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-22T00:00:00.000","Checking":5124.62,"Credit: Curr Stmt Bal":880.27,"Credit: Prev Stmt Bal":7351.2,"Loan A: Principal Balance":4746.18,"Loan A: Interest":0.0,"Loan B: Principal Balance":1919.55,"Loan B: Interest":0.0,"Loan C: Principal Balance":4726.68,"Loan C: Interest":0.0,"Loan D: Principal Balance":1823.31,"Loan D: Interest":0.0,"Loan E: Principal Balance":3359.17,"Loan E: Interest":0.0,"Tax Debt: Principal Balance":8000.0,"Tax Debt: Interest":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-23T00:00:00.000","Checking":5574.62,"Credit: Curr Stmt Bal":910.27,"Credit: Prev Stmt Bal":7351.2,"Loan A: Principal Balance":4746.18,"Loan A: Interest":0.0,"Loan B: Principal Balance":1919.55,"Loan B: Interest":0.0,"Loan C: Principal Balance":4726.68,"Loan C: Interest":0.0,"Loan D: Principal Balance":1823.31,"Loan D: Interest":0.0,"Loan E: Principal Balance":3359.17,"Loan E: Interest":0.0,"Tax Debt: Principal Balance":8000.0,"Tax Debt: Interest":0.0,"Memo":"unemployment income ends july 1 ($450.0) ; food ($30.0) ; "},{"Date":"2023-04-24T00:00:00.000","Checking":5574.62,"Credit: Curr Stmt Bal":940.27,"Credit: Prev Stmt Bal":7351.2,"Loan A: Principal Balance":4746.18,"Loan A: Interest":0.0,"Loan B: Principal Balance":1919.55,"Loan B: Interest":0.0,"Loan C: Principal Balance":4726.68,"Loan C: Interest":0.0,"Loan D: Principal Balance":1823.31,"Loan D: Interest":0.0,"Loan E: Principal Balance":3359.17,"Loan E: Interest":0.0,"Tax Debt: Principal Balance":8000.0,"Tax Debt: Interest":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-25T00:00:00.000","Checking":5574.62,"Credit: Curr Stmt Bal":970.27,"Credit: Prev Stmt Bal":7351.2,"Loan A: Principal Balance":4746.18,"Loan A: Interest":0.0,"Loan B: Principal Balance":1919.55,"Loan B: Interest":0.0,"Loan C: Principal Balance":4726.68,"Loan C: Interest":0.0,"Loan D: Principal Balance":1823.31,"Loan D: Interest":0.0,"Loan E: Principal Balance":3359.17,"Loan E: Interest":0.0,"Tax Debt: Principal Balance":8000.0,"Tax Debt: Interest":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-26T00:00:00.000","Checking":5574.62,"Credit: Curr Stmt Bal":1000.27,"Credit: Prev Stmt Bal":7351.2,"Loan A: Principal Balance":4746.18,"Loan A: Interest":0.0,"Loan B: Principal Balance":1919.55,"Loan B: Interest":0.0,"Loan C: Principal Balance":4726.68,"Loan C: Interest":0.0,"Loan D: Principal Balance":1823.31,"Loan D: Interest":0.0,"Loan E: Principal Balance":3359.17,"Loan E: Interest":0.0,"Tax Debt: Principal Balance":8000.0,"Tax Debt: Interest":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-27T00:00:00.000","Checking":5574.62,"Credit: Curr Stmt Bal":1030.27,"Credit: Prev Stmt Bal":7351.2,"Loan A: Principal Balance":4746.18,"Loan A: Interest":0.0,"Loan B: Principal Balance":1919.55,"Loan B: Interest":0.0,"Loan C: Principal Balance":4726.68,"Loan C: Interest":0.0,"Loan D: Principal Balance":1823.31,"Loan D: Interest":0.0,"Loan E: Principal Balance":3359.17,"Loan E: Interest":0.0,"Tax Debt: Principal Balance":8000.0,"Tax Debt: Interest":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-28T00:00:00.000","Checking":3656.62,"Credit: Curr Stmt Bal":4653.86,"Credit: Prev Stmt Bal":7351.2,"Loan A: Principal Balance":4746.18,"Loan A: Interest":0.0,"Loan B: Principal Balance":1919.55,"Loan B: Interest":0.0,"Loan C: Principal Balance":4726.68,"Loan C: Interest":0.0,"Loan D: Principal Balance":1823.31,"Loan D: Interest":0.0,"Loan E: Principal Balance":3359.17,"Loan E: Interest":0.0,"Tax Debt: Principal Balance":8000.0,"Tax Debt: Interest":0.0,"Memo":"EMT class ($2900.0) ; rent 2034_33rd_thru_June ($1918.0) ; health insurance ($175.5) ; phone bill ($163.09) ; gas and bus ($100.0) ; internet thru_June ($100.0) ; car insurance ($89.0) ; gym ($33.0) ; food ($30.0) ; hbo max ($15.0) ; spotify ($10.0) ; hulu ($8.0) ; "},{"Date":"2023-04-29T00:00:00.000","Checking":3656.62,"Credit: Curr Stmt Bal":4683.86,"Credit: Prev Stmt Bal":7351.2,"Loan A: Principal Balance":4746.18,"Loan A: Interest":0.0,"Loan B: Principal Balance":1919.55,"Loan B: Interest":0.0,"Loan C: Principal Balance":4726.68,"Loan C: Interest":0.0,"Loan D: Principal Balance":1823.31,"Loan D: Interest":0.0,"Loan E: Principal Balance":3359.17,"Loan E: Interest":0.0,"Tax Debt: Principal Balance":8000.0,"Tax Debt: Interest":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-30T00:00:00.000","Checking":4106.62,"Credit: Curr Stmt Bal":4713.86,"Credit: Prev Stmt Bal":7351.2,"Loan A: Principal Balance":4746.18,"Loan A: Interest":0.0,"Loan B: Principal Balance":1919.55,"Loan B: Interest":0.0,"Loan C: Principal Balance":4726.68,"Loan C: Interest":0.0,"Loan D: Principal Balance":1823.31,"Loan D: Interest":0.0,"Loan E: Principal Balance":3359.17,"Loan E: Interest":0.0,"Tax Debt: Principal Balance":8000.0,"Tax Debt: Interest":0.0,"Memo":"unemployment income ends july 1 ($450.0) ; food ($30.0) ; "},{"Date":"2023-05-01T00:00:00.000","Checking":4106.62,"Credit: Curr Stmt Bal":4743.86,"Credit: Prev Stmt Bal":7351.2,"Loan A: Principal Balance":4746.18,"Loan A: Interest":0.0,"Loan B: Principal Balance":1919.55,"Loan B: Interest":0.0,"Loan C: Principal Balance":4726.68,"Loan C: Interest":0.0,"Loan D: Principal Balance":1823.31,"Loan D: Interest":0.0,"Loan E: Principal Balance":3359.17,"Loan E: Interest":0.0,"Tax Debt: Principal Balance":8000.0,"Tax Debt: Interest":0.0,"Memo":"food ($30.0) ; "}],
+"skipped_df":[],
+"confirmed_df":[{"Date":"2023-04-07T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-08T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-09T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-09T00:00:00.000","Priority":1,"Amount":450.0,"Memo":"unemployment income ends july 1","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-10T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-11T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-12T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-13T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-14T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-15T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-16T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-16T00:00:00.000","Priority":1,"Amount":450.0,"Memo":"unemployment income ends july 1","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-17T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-18T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-19T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-20T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-21T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-22T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-23T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-23T00:00:00.000","Priority":1,"Amount":450.0,"Memo":"unemployment income ends july 1","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-24T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-25T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-26T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-27T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-28T00:00:00.000","Priority":1,"Amount":89.0,"Memo":"car insurance","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-28T00:00:00.000","Priority":1,"Amount":163.09,"Memo":"phone bill","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-28T00:00:00.000","Priority":1,"Amount":8.0,"Memo":"hulu","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-28T00:00:00.000","Priority":1,"Amount":15.0,"Memo":"hbo max","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-28T00:00:00.000","Priority":1,"Amount":33.0,"Memo":"gym","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-28T00:00:00.000","Priority":1,"Amount":10.0,"Memo":"spotify","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-28T00:00:00.000","Priority":1,"Amount":100.0,"Memo":"gas and bus","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-28T00:00:00.000","Priority":1,"Amount":175.5,"Memo":"health insurance","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-28T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-28T00:00:00.000","Priority":1,"Amount":2900.0,"Memo":"EMT class","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-28T00:00:00.000","Priority":1,"Amount":100.0,"Memo":"internet thru_June","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-28T00:00:00.000","Priority":1,"Amount":1918.0,"Memo":"rent 2034_33rd_thru_June","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-29T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-30T00:00:00.000","Priority":1,"Amount":450.0,"Memo":"unemployment income ends july 1","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-30T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-05-01T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false}],
+"deferred_df":[]}

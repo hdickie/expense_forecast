@@ -14,6 +14,33 @@ import re
 import hashlib
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
+import AccountMilestone
+import MemoMilestone
+import CompositeMilestone
+
+
+import logging
+
+log_format = '%(asctime)s - %(levelname)-8s - %(message)s'
+l_formatter = logging.Formatter(log_format)
+
+l_stream = logging.StreamHandler()
+l_stream.setFormatter(l_formatter)
+l_stream.setLevel(logging.INFO)
+
+l_file = logging.FileHandler('ForecastHandler__'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')+'.log')
+l_file.setFormatter(l_formatter)
+l_file.setLevel(logging.INFO)
+
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+logger.propagate = False
+logger.handlers.clear()
+logger.addHandler(l_stream)
+logger.addHandler(l_file)
+
+
 
 class ForecastHandler:
 
@@ -106,10 +133,26 @@ class ForecastHandler:
                         #print(memo_regex + ' ?= ' + str(budget_item_row.Memo)+" NO")
             budget_set_list.append(B)
 
-        milestone_set = MilestoneSet.MilestoneSet(MemoMilestones_df,AccountMilestones_df,CompositeMilestones_df)
-        self.account_milestones_df = milestone_set.account_milestones_df
-        self.memo_milestones_df = milestone_set.memo_milestones_df
-        self.composite_milestones_df = milestone_set.composite_milestones_df
+        account_milestones__list = []
+        for index, row in AccountMilestones_df.iterrows():
+            account_milestones__list.append(AccountMilestone.AccountMilestone(row.Milestone_Name,row.Account_Name,row.Min_Balance,row.Max_Balance))
+
+        memo_milestones__list = []
+        for index, row in MemoMilestones_df.iterrows():
+            memo_milestones__list.append(MemoMilestone.MemoMilestone(row.Milestone_Name,row.Memo_Regex))
+
+        composite_milestones__list = []
+        for index, row in CompositeMilestones_df.iterrows():
+            milestone_names__list = []
+            for i in range(1,CompositeMilestones_df.shape[1]):
+                milestone_names__list.append(row.iat[i])
+
+            composite_milestones__list.append(CompositeMilestone.CompositeMilestone(row.Milestone_Name,account_milestones__list, memo_milestones__list, milestone_names__list))
+
+        milestone_set = MilestoneSet.MilestoneSet(A,B,account_milestones__list,memo_milestones__list,composite_milestones__list)
+        self.account_milestones__list = milestone_set.account_milestones__list
+        self.memo_milestones__list = milestone_set.memo_milestones__list
+        self.composite_milestones__list = milestone_set.composite_milestones__list
 
         self.initial_account_set = copy.deepcopy(A)
         self.budget_set_list = budget_set_list
@@ -138,7 +181,8 @@ class ForecastHandler:
                                                     budget_set=B,
                                                     memo_rule_set=M,
                                                     start_date_YYYYMMDD=start_date_YYYYMMDD,
-                                                    end_date_YYYYMMDD=end_date_YYYYMMDD)
+                                                    end_date_YYYYMMDD=end_date_YYYYMMDD,
+                                                    milestone_set=milestone_set)
                 #print(E)
                 # E.runForecast()
                 EF_pre_run.append(E)
@@ -163,8 +207,8 @@ class ForecastHandler:
 
         #assert that all initial accounts sets matched, then set
         all_initial_account_set_hashes = [ hashlib.sha1(E.initial_account_set.getAccounts().to_string().encode("utf-8")).hexdigest() for E in E_objs ]
-        print('all_initial_account_set_hashes:')
-        print(all_initial_account_set_hashes)
+        logger.info('all_initial_account_set_hashes:')
+        logger.info(all_initial_account_set_hashes)
         assert min(all_initial_account_set_hashes) == max(all_initial_account_set_hashes)
         assert len(all_initial_account_set_hashes) == len(E_objs)
         self.initial_account_set = E_objs[0].initial_account_set
@@ -250,8 +294,8 @@ class ForecastHandler:
         for E in EF_pre_run:
             loop_start = datetime.datetime.now()
 
-            print('Starting simulation scenario ' + str(scenario_index + 1) + ' / ' + str(number_of_returned_forecasts) + ' #' + E.unique_id)
-            print('Option ids: ' + self.master_list_option_ids[scenario_index])
+            logger.info('Starting simulation scenario ' + str(scenario_index + 1) + ' / ' + str(number_of_returned_forecasts) + ' #' + E.unique_id)
+            logger.info('Option ids: ' + self.master_list_option_ids[scenario_index])
             E.runForecast()
 
             loop_finish = datetime.datetime.now()
@@ -264,7 +308,7 @@ class ForecastHandler:
             ETC = loop_finish + datetime.timedelta(seconds=average_time_per_loop * loops_remaining)
             progress_string = 'Finished in ' + str(loop_delta.seconds) + ' seconds. ETC: ' + str(ETC.strftime('%Y-%m-%d %H:%M:%S'))
 
-            print(progress_string)
+            logger.info(progress_string)
 
             scenario_index += 1
 
@@ -1085,7 +1129,7 @@ class ForecastHandler:
             B = BudgetSet.BudgetSet(budget_set)
             # print('B:')
             # print(B.getBudgetItems().to_string())
-            print('Starting simulation scenario '+str(scenario_index))
+            logger.info('Starting simulation scenario '+str(scenario_index))
             try:
                 E = ExpenseForecast.ExpenseForecast(account_set=copy.deepcopy(AccountSet),
                                                         budget_set=B,
@@ -1093,7 +1137,7 @@ class ForecastHandler:
                                                         start_date_YYYYMMDD=start_date_YYYYMMDD,
                                                         end_date_YYYYMMDD=end_date_YYYYMMDD)
             except:
-                print('Simulation scenario '+str(scenario_index)+' failed')
+                logger.info('Simulation scenario '+str(scenario_index)+' failed')
 
             loop_finish = datetime.datetime.now()
 
@@ -1105,7 +1149,7 @@ class ForecastHandler:
             ETC = loop_finish + datetime.timedelta(seconds=average_time_per_loop*loops_remaining)
             progress_string = 'Finished in '+str(loop_delta.seconds)+' seconds. ETC: '+str(ETC.strftime('%Y-%m-%d %H:%M:%S'))
 
-            print(progress_string)
+            logger.info(progress_string)
 
             scenario_index += 1
 

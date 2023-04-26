@@ -18,3 +18,14 @@ class MemoMilestone:
         return_string += "Memo_Regex:" + self.memo_regex + "\n"
 
         return return_string
+
+    def toJSON(self):
+
+        return_string = "{"
+
+        return_string += '"' + "Milestone_Name" + '":"' + self.milestone_name + '"' + "\n"
+        return_string += '"' + "Memo_Regex" + '":"' + self.memo_regex + '"' + "\n"
+
+        return_string = "}"
+
+        return return_string

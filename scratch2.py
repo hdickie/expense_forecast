@@ -1,32 +1,70 @@
 
 import ForecastHandler, ExpenseForecast
 import BudgetSet, AccountSet, MemoRuleSet
-import MilestoneSet
+import MilestoneSet, MemoMilestone, AccountMilestone
 
 import CompositeMilestone
 
+
+import logging
+import datetime
+
+log_format = '%(asctime)s - %(levelname)-8s - %(message)s'
+l_formatter = logging.Formatter(log_format)
+
+l_stream = logging.StreamHandler()
+l_stream.setFormatter(l_formatter)
+l_stream.setLevel(logging.INFO)
+
+l_file = logging.FileHandler('scratch__'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')+'.log')
+l_file.setFormatter(l_formatter)
+l_file.setLevel(logging.INFO)
+
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+logger.propagate = False
+logger.handlers.clear()
+logger.addHandler(l_stream)
+logger.addHandler(l_file)
+
+
 if __name__ == '__main__':
-    pass
 
-    account_set = AccountSet.AccountSet([])
-    budget_set = BudgetSet.BudgetSet([])
-
-    #memo_milestones_df
-    #account_milestones_df
-    #composite_milestones_df
-
-    CompositeMilestone.CompositeMilestone('milestone name 1','a','b','c')
-    CompositeMilestone.CompositeMilestone('milestone name 2', 'z')
-
-    #MS = MilestoneSet.MilestoneSet(account_set,budget_set,memo_milestones_df,account_milestones_df,composite_milestones_df)
-
-    # F = ForecastHandler.ForecastHandler()
+    # account_set = AccountSet.AccountSet([])
     #
-    # F.initialize_from_excel_file('expense_forecast__input.ods')
+    # account_set.addAccount(name='Checking',
+    #                        balance=1000,
+    #                        min_balance=0,
+    #                        max_balance=float('Inf'),
+    #                        account_type="checking")
     #
-    # print(F.read_results_from_disk())
+    # budget_set = BudgetSet.BudgetSet([])
+    # budget_set.addBudgetItem('20000101', '20000101', 1, 'once', '1', 'Core', deferrable=False, partial_payment_allowed=False)
+    #
+    # account_milestone__list = []
+    # memo_milestone__list = []
+    # composite_milestone__list = []
+    # milestone_names_for_composite_milestone = ['Account Milestone 1','Memo Milestone 1']
+    #
+    # account_milestone__list.append(AccountMilestone.AccountMilestone('Account Milestone 1','Checking',0,10000))
+    # memo_milestone__list.append(MemoMilestone.MemoMilestone('Memo Milestone 1', '.*'))
+    #
+    # composite_milestone__list.append( CompositeMilestone.CompositeMilestone('composite milestone name 1',account_milestone__list,memo_milestone__list,milestone_names_for_composite_milestone) )
+    #
+    #
+    #
+    # MS = MilestoneSet.MilestoneSet(account_set,budget_set,account_milestone__list,memo_milestone__list,composite_milestone__list)
 
-    #F.run_forecasts()
+    F = ForecastHandler.ForecastHandler()
+
+    F.initialize_from_excel_file('expense_forecast__milestone_testing__input.ods')
+
+    F.run_forecasts()
+
+    #print(F.read_results_from_disk())
+
+
 
     # E1 = ExpenseForecast.initialize_from_json_file(path_to_json='Forecast__2023_04_07__14_06_02__031534.json')
     # E1.appendSummaryLines()

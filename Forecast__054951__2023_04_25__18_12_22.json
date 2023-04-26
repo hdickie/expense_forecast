@@ -1,0 +1,278 @@
+{"unique_id":"054951",
+"start_ts":"2023_04_25__18_12_22",
+"end_ts":"2023_04_25__18_12_27",
+"start_date":20230407,
+"end_date":20230501,
+"initial_memo_rule_set":[
+{
+"Memo_Regex":".*income.*",
+"Account_From":"None",
+"Account_To":"Checking",
+"Transaction_Priority":"1"
+},
+{
+"Memo_Regex":"food",
+"Account_From":"Credit",
+"Account_To":"None",
+"Transaction_Priority":"1"
+},
+{
+"Memo_Regex":"internet",
+"Account_From":"Credit",
+"Account_To":"None",
+"Transaction_Priority":"1"
+},
+{
+"Memo_Regex":"phone bill",
+"Account_From":"Credit",
+"Account_To":"None",
+"Transaction_Priority":"1"
+},
+{
+"Memo_Regex":"car insurance",
+"Account_From":"Credit",
+"Account_To":"None",
+"Transaction_Priority":"1"
+},
+{
+"Memo_Regex":"health insurance",
+"Account_From":"Credit",
+"Account_To":"None",
+"Transaction_Priority":"1"
+},
+{
+"Memo_Regex":"gas and bus",
+"Account_From":"Credit",
+"Account_To":"None",
+"Transaction_Priority":"1"
+},
+{
+"Memo_Regex":"spotify",
+"Account_From":"Credit",
+"Account_To":"None",
+"Transaction_Priority":"1"
+},
+{
+"Memo_Regex":"gym",
+"Account_From":"Credit",
+"Account_To":"None",
+"Transaction_Priority":"1"
+},
+{
+"Memo_Regex":"hbo max",
+"Account_From":"Credit",
+"Account_To":"None",
+"Transaction_Priority":"1"
+},
+{
+"Memo_Regex":"hulu",
+"Account_From":"Credit",
+"Account_To":"None",
+"Transaction_Priority":"1"
+},
+{
+"Memo_Regex":".*rent.*",
+"Account_From":"Checking",
+"Account_To":"None",
+"Transaction_Priority":"1"
+},
+{
+"Memo_Regex":".*utilities.*",
+"Account_From":"Checking",
+"Account_To":"None",
+"Transaction_Priority":"1"
+},
+{
+"Memo_Regex":".*",
+"Account_From":"Credit",
+"Account_To":"None",
+"Transaction_Priority":"2"
+},
+{
+"Memo_Regex":".*",
+"Account_From":"Credit",
+"Account_To":"None",
+"Transaction_Priority":"3"
+},
+{
+"Memo_Regex":".*cyclical billing total.*",
+"Account_From":"Checking",
+"Account_To":"Credit",
+"Transaction_Priority":"1"
+},
+{
+"Memo_Regex":".*",
+"Account_From":"Credit",
+"Account_To":"None",
+"Transaction_Priority":"5"
+},
+{
+"Memo_Regex":".*",
+"Account_From":"Credit",
+"Account_To":"None",
+"Transaction_Priority":"6"
+},
+{
+"Memo_Regex":".*",
+"Account_From":"Credit",
+"Account_To":"None",
+"Transaction_Priority":"7"
+},
+{
+"Memo_Regex":"EMT class",
+"Account_From":"Credit",
+"Account_To":"None",
+"Transaction_Priority":"1"
+}
+],"initial_account_set":[
+{
+"Name":"Checking",
+"Balance":"3000.0",
+"Min_Balance":"0.0",
+"Max_Balance":"inf",
+"Account_Type":"checking",
+"Billing_Start_Date":"None",
+"Interest_Type":"None",
+"APR":"None",
+"Interest_Cadence":"None",
+"Minimum_Payment":"None"
+},
+{
+"Name":"Credit: Curr Stmt Bal",
+"Balance":"0.0",
+"Min_Balance":"0.0",
+"Max_Balance":"20000.0",
+"Account_Type":"curr stmt bal",
+"Billing_Start_Date":"None",
+"Interest_Type":"None",
+"APR":"None",
+"Interest_Cadence":"None",
+"Minimum_Payment":"None"
+},
+{
+"Name":"Credit: Prev Stmt Bal",
+"Balance":"0.0",
+"Min_Balance":"0.0",
+"Max_Balance":"20000.0",
+"Account_Type":"prev stmt bal",
+"Billing_Start_Date":"2023-01-03 00:00:00",
+"Interest_Type":"Compound",
+"APR":"0.2824",
+"Interest_Cadence":"monthly",
+"Minimum_Payment":"40.0"
+}
+],"initial_budget_set":[
+{
+"Start_Date":"2023-03-28 00:00:00",
+"End_Date":"2023-12-31 00:00:00",
+"Priority":"1",
+"Cadence":"daily",
+"Amount":"30.0",
+"Memo":"food",
+"Deferrable":"False",
+"Partial_Payment_Allowed":"False"
+},
+{
+"Start_Date":"2023-03-28 00:00:00",
+"End_Date":"2023-12-31 00:00:00",
+"Priority":"1",
+"Cadence":"monthly",
+"Amount":"89.0",
+"Memo":"car insurance",
+"Deferrable":"False",
+"Partial_Payment_Allowed":"False"
+},
+{
+"Start_Date":"2023-03-28 00:00:00",
+"End_Date":"2023-12-31 00:00:00",
+"Priority":"1",
+"Cadence":"monthly",
+"Amount":"163.09",
+"Memo":"phone bill",
+"Deferrable":"False",
+"Partial_Payment_Allowed":"False"
+},
+{
+"Start_Date":"2023-03-28 00:00:00",
+"End_Date":"2023-12-31 00:00:00",
+"Priority":"1",
+"Cadence":"monthly",
+"Amount":"8.0",
+"Memo":"hulu",
+"Deferrable":"False",
+"Partial_Payment_Allowed":"False"
+},
+{
+"Start_Date":"2023-03-28 00:00:00",
+"End_Date":"2023-12-31 00:00:00",
+"Priority":"1",
+"Cadence":"monthly",
+"Amount":"15.0",
+"Memo":"hbo max",
+"Deferrable":"False",
+"Partial_Payment_Allowed":"False"
+},
+{
+"Start_Date":"2023-03-28 00:00:00",
+"End_Date":"2023-12-31 00:00:00",
+"Priority":"1",
+"Cadence":"monthly",
+"Amount":"33.0",
+"Memo":"gym",
+"Deferrable":"False",
+"Partial_Payment_Allowed":"False"
+},
+{
+"Start_Date":"2023-03-28 00:00:00",
+"End_Date":"2023-12-31 00:00:00",
+"Priority":"1",
+"Cadence":"monthly",
+"Amount":"10.0",
+"Memo":"spotify",
+"Deferrable":"False",
+"Partial_Payment_Allowed":"False"
+},
+{
+"Start_Date":"2023-03-28 00:00:00",
+"End_Date":"2023-12-31 00:00:00",
+"Priority":"1",
+"Cadence":"monthly",
+"Amount":"100.0",
+"Memo":"gas and bus",
+"Deferrable":"False",
+"Partial_Payment_Allowed":"False"
+},
+{
+"Start_Date":"2023-03-28 00:00:00",
+"End_Date":"2023-12-31 00:00:00",
+"Priority":"1",
+"Cadence":"monthly",
+"Amount":"175.5",
+"Memo":"health insurance",
+"Deferrable":"False",
+"Partial_Payment_Allowed":"False"
+},
+{
+"Start_Date":"2023-03-28 00:00:00",
+"End_Date":"2023-12-31 00:00:00",
+"Priority":"1",
+"Cadence":"semiweekly",
+"Amount":"1000.0",
+"Memo":"income_1k",
+"Deferrable":"False",
+"Partial_Payment_Allowed":"False"
+},
+{
+"Start_Date":"2023-06-01 00:00:00",
+"End_Date":"2023-12-31 00:00:00",
+"Priority":"1",
+"Cadence":"monthly",
+"Amount":"500.0",
+"Memo":"rent_500_june_1",
+"Deferrable":"False",
+"Partial_Payment_Allowed":"False"
+}
+],"forecast_df":[{"Date":"2023-04-07T00:00:00.000","Checking":3000.0,"Credit: Curr Stmt Bal":0.0,"Credit: Prev Stmt Bal":0.0,"Memo":""},{"Date":"2023-04-08T00:00:00.000","Checking":3000.0,"Credit: Curr Stmt Bal":30.0,"Credit: Prev Stmt Bal":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-09T00:00:00.000","Checking":3000.0,"Credit: Curr Stmt Bal":60.0,"Credit: Prev Stmt Bal":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-10T00:00:00.000","Checking":3000.0,"Credit: Curr Stmt Bal":90.0,"Credit: Prev Stmt Bal":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-11T00:00:00.000","Checking":3000.0,"Credit: Curr Stmt Bal":120.0,"Credit: Prev Stmt Bal":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-12T00:00:00.000","Checking":3000.0,"Credit: Curr Stmt Bal":150.0,"Credit: Prev Stmt Bal":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-13T00:00:00.000","Checking":3000.0,"Credit: Curr Stmt Bal":180.0,"Credit: Prev Stmt Bal":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-14T00:00:00.000","Checking":3000.0,"Credit: Curr Stmt Bal":210.0,"Credit: Prev Stmt Bal":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-15T00:00:00.000","Checking":3000.0,"Credit: Curr Stmt Bal":240.0,"Credit: Prev Stmt Bal":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-16T00:00:00.000","Checking":4000.0,"Credit: Curr Stmt Bal":270.0,"Credit: Prev Stmt Bal":0.0,"Memo":"income_1k ($1000.0) ; food ($30.0) ; "},{"Date":"2023-04-17T00:00:00.000","Checking":4000.0,"Credit: Curr Stmt Bal":300.0,"Credit: Prev Stmt Bal":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-18T00:00:00.000","Checking":4000.0,"Credit: Curr Stmt Bal":330.0,"Credit: Prev Stmt Bal":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-19T00:00:00.000","Checking":4000.0,"Credit: Curr Stmt Bal":360.0,"Credit: Prev Stmt Bal":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-20T00:00:00.000","Checking":4000.0,"Credit: Curr Stmt Bal":390.0,"Credit: Prev Stmt Bal":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-21T00:00:00.000","Checking":4000.0,"Credit: Curr Stmt Bal":420.0,"Credit: Prev Stmt Bal":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-22T00:00:00.000","Checking":4000.0,"Credit: Curr Stmt Bal":450.0,"Credit: Prev Stmt Bal":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-23T00:00:00.000","Checking":4000.0,"Credit: Curr Stmt Bal":480.0,"Credit: Prev Stmt Bal":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-24T00:00:00.000","Checking":4000.0,"Credit: Curr Stmt Bal":510.0,"Credit: Prev Stmt Bal":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-25T00:00:00.000","Checking":4000.0,"Credit: Curr Stmt Bal":540.0,"Credit: Prev Stmt Bal":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-26T00:00:00.000","Checking":4000.0,"Credit: Curr Stmt Bal":570.0,"Credit: Prev Stmt Bal":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-27T00:00:00.000","Checking":4000.0,"Credit: Curr Stmt Bal":600.0,"Credit: Prev Stmt Bal":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-28T00:00:00.000","Checking":4000.0,"Credit: Curr Stmt Bal":1223.59,"Credit: Prev Stmt Bal":0.0,"Memo":"health insurance ($175.5) ; phone bill ($163.09) ; gas and bus ($100.0) ; car insurance ($89.0) ; gym ($33.0) ; food ($30.0) ; hbo max ($15.0) ; spotify ($10.0) ; hulu ($8.0) ; "},{"Date":"2023-04-29T00:00:00.000","Checking":4000.0,"Credit: Curr Stmt Bal":1253.59,"Credit: Prev Stmt Bal":0.0,"Memo":"food ($30.0) ; "},{"Date":"2023-04-30T00:00:00.000","Checking":5000.0,"Credit: Curr Stmt Bal":1283.59,"Credit: Prev Stmt Bal":0.0,"Memo":"income_1k ($1000.0) ; food ($30.0) ; "},{"Date":"2023-05-01T00:00:00.000","Checking":5000.0,"Credit: Curr Stmt Bal":1313.59,"Credit: Prev Stmt Bal":0.0,"Memo":"food ($30.0) ; "}],
+"skipped_df":[],
+"confirmed_df":[{"Date":"2023-04-07T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-08T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-09T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-10T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-11T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-12T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-13T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-14T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-15T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-16T00:00:00.000","Priority":1,"Amount":1000.0,"Memo":"income_1k","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-16T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-17T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-18T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-19T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-20T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-21T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-22T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-23T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-24T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-25T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-26T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-27T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-28T00:00:00.000","Priority":1,"Amount":100.0,"Memo":"gas and bus","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-28T00:00:00.000","Priority":1,"Amount":10.0,"Memo":"spotify","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-28T00:00:00.000","Priority":1,"Amount":33.0,"Memo":"gym","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-28T00:00:00.000","Priority":1,"Amount":15.0,"Memo":"hbo max","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-28T00:00:00.000","Priority":1,"Amount":8.0,"Memo":"hulu","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-28T00:00:00.000","Priority":1,"Amount":163.09,"Memo":"phone bill","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-28T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-28T00:00:00.000","Priority":1,"Amount":89.0,"Memo":"car insurance","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-28T00:00:00.000","Priority":1,"Amount":175.5,"Memo":"health insurance","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-29T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-30T00:00:00.000","Priority":1,"Amount":1000.0,"Memo":"income_1k","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-04-30T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false},{"Date":"2023-05-01T00:00:00.000","Priority":1,"Amount":30.0,"Memo":"food","Deferrable":false,"Partial_Payment_Allowed":false}],
+"deferred_df":[]}

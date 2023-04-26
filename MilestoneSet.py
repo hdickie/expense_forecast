@@ -3,7 +3,7 @@ import pandas as pd
 import re
 class MilestoneSet:
 
-    def __init__(self,AccountSet,BudgetSet,memo_milestones__list,account_milestones__list,composite_milestones__list):
+    def __init__(self,account_set,budget_set,account_milestones__list,memo_milestones__list,composite_milestones__list):
 
         # if memo_milestones_df is None:
         #     self.memo_milestones_df = pd.DataFrame({
@@ -32,49 +32,37 @@ class MilestoneSet:
         # else:
         #     self.composite_milestones_df = composite_milestones_df
 
+        for account_milestone in account_milestones__list:
+            all_account_names = set([ a.split(':')[0] for a in account_set.getAccounts().Name ])
+            if not account_milestone.account_name in all_account_names:
+            #if not all_account_names.eq(account_milestone.account_name).any():
+                raise ValueError("Account Name for Milestone not found in accounts: "+str(account_milestone.account_name))
 
-        for index, row in account_milestones_df.iterrows():
-            if not AccountSet.getAccounts().Account_Name.eq(row.Account_Name).any():
-                raise ValueError("Account Name for Milestone not found in accounts: "+str(row.Account_Name))
-
-            if row.Max_Balance < row.Min_Balance:
+            if account_milestone.max_balance < account_milestone.min_balance:
                 raise ValueError("Min_Balance greater than Max_Balance for Account Milestone")
 
-        self.account_milestones_df = account_milestones_df
+        self.account_milestones__list = account_milestones__list
 
-        for index, row in memo_milestones_df.iterrows():
+        for memo_milestone in memo_milestones__list:
             match_found = False
-            for index2, row2 in BudgetSet.getBudgetItems().iterrows():
-                if re.search(row.Memo_Regex,row2.Memo) is not None:
+            for index2, row2 in budget_set.getBudgetItems().iterrows():
+                if re.search(memo_milestone.memo_regex,row2.Memo) is not None:
                     match_found = True
 
             if not match_found:
-                raise ValueError("Memo Milestone had no matches in budgetset, so no match was possible.")
+                raise ValueError("Memo Milestone had no matches in budgetset, so no match during forecast calculation is possible.")
 
-        self.memo_milestones_df = memo_milestones_df
+        self.memo_milestones__list = memo_milestones__list
 
         # todo input validation
-        for index, row in composite_milestones_df.iterrows():
-            if row.Milestone1 is not None and not pd.isna(row.Milestone1):
-                if not ( memo_milestones_df.Milestone_Name.eq(row.Milestone1).any() or account_milestones_df.Milestone_Name.eq(row.Milestone1).any()):
-                    raise ValueError("Milestone 1 was not found in Memo or Account milestones:"+str(row.Milestone1))
+        for composite_milestone in composite_milestones__list:
+            # if composite_milestone.Milestone1 is not None and not pd.isna(row.Milestone1):
+            #     if not ( memo_milestones_df.Milestone_Name.eq(composite_milestone.Milestone1).any() or account_milestones_df.Milestone_Name.eq(composite_milestone.Milestone1).any()):
+            #         raise ValueError("Milestone 1 was not found in Memo or Account milestones:"+str(composite_milestone.Milestone1))
+            pass
 
-            if row.Milestone2 is not None and not pd.isna(row.Milestone2):
-                if not ( memo_milestones_df.Milestone_Name.eq(row.Milestone2).any() or account_milestones_df.Milestone_Name.eq(row.Milestone2).any()):
-                    raise ValueError("Milestone 2 was not found in Memo or Account milestones:"+str(row.Milestone2))
 
-            if row.Milestone3 is not None and not pd.isna(row.Milestone3):
-                if not ( memo_milestones_df.Milestone_Name.eq(row.Milestone3).any() or account_milestones_df.Milestone_Name.eq(row.Milestone3).any()):
-                    raise ValueError("Milestone 3 was not found in Memo or Account milestones:"+str(row.Milestone3))
-
-            if row.Milestone4 is not None and not pd.isna(row.Milestone4):
-                if not ( memo_milestones_df.Milestone_Name.eq(row.Milestone4).any() or account_milestones_df.Milestone_Name.eq(row.Milestone4).any()):
-                    raise ValueError("Milestone 4 was not found in Memo or Account milestones:"+str(row.Milestone4))
-
-            if row.Milestone5 is not None and not pd.isna(row.Milestone5):
-                if not ( memo_milestones_df.Milestone_Name.eq(row.Milestone5).any() or account_milestones_df.Milestone_Name.eq(row.Milestone5).any()):
-                    raise ValueError("Milestone 5 was not found in Memo or Account milestones:"+str(row.Milestone5))
-        self.composite_milestones_df = composite_milestones_df
+        self.composite_milestones__list = composite_milestones__list
 
     def __str__(self):
 
@@ -97,3 +85,42 @@ class MilestoneSet:
 
     def addCompositeMilestone(self,milestone_name,*milestone_names):
         raise NotImplementedError
+
+    def toJSON(self):
+
+        json_string = "{"
+
+        account_milestone_index = 0
+        for a in self.account_milestones__list:
+            account_milestones_json_string = a.toJSON()
+
+            if account_milestone_index != len(self.account_milestones__list):
+                account_milestones_json_string += ","
+
+            account_milestone_index += 1
+
+        memo_milestone_index = 0
+        for m in self.memo_milestones__list:
+            memo_milestones_json_string = m.toJSON()
+
+            if memo_milestone_index != len(self.memo_milestones__list):
+                memo_milestones_json_string += ","
+
+            memo_milestone_index += 1
+
+        composite_milestone_index = 0
+        for c in self.composite_milestones__list:
+            composite_milestones_json_string = c.toJSON()
+
+            if composite_milestone_index != len(self.composite_milestones__list):
+                composite_milestones_json_string += ","
+
+            composite_milestone_index += 1
+
+        json_string += '"' + "AccountMilestone" + '":"' + account_milestones_json_string+ '"'
+        json_string += '"' + "MemoMilestone" + '":"' + memo_milestones_json_string + '"'
+        json_string += '"' + "CompositeMilestone" + '":"' + composite_milestones_json_string + '"'
+
+        json_string += "}"
+
+        return json_string

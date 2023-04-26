@@ -14,6 +14,8 @@ import hashlib
 
 pd.options.mode.chained_assignment = None #apparently this warning can throw false positives???
 
+from log_methods import log_in_color
+
 import logging
 
 log_format = '%(asctime)s - %(levelname)-8s - %(message)s'
@@ -23,79 +25,20 @@ l_stream = logging.StreamHandler()
 l_stream.setFormatter(l_formatter)
 l_stream.setLevel(logging.DEBUG)
 
-l_file = logging.FileHandler('ExpenseForecast.log')
+l_file = logging.FileHandler('ExpenseForecast__'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')+'.log')
 l_file.setFormatter(l_formatter)
 l_file.setLevel(logging.DEBUG)
 
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 logger.propagate = False
 logger.handlers.clear()
 logger.addHandler(l_stream)
 logger.addHandler(l_file)
 
 
-from colorama import init as colorama_init
-from colorama import Fore
-from colorama import Style
-colorama_init()
-
-BEGIN_RED = f"{Fore.RED}"
-BEGIN_GREEN = f"{Fore.GREEN}"
-BEGIN_YELLOW = f"{Fore.YELLOW}"
-BEGIN_BLUE = f"{Fore.BLUE}"
-BEGIN_MAGENTA = f"{Fore.MAGENTA}"
-BEGIN_WHITE = f"{Fore.WHITE}"
-BEGIN_CYAN = f"{Fore.CYAN}"
-RESET_COLOR = f"{Style.RESET_ALL}"
-
-
-def log_in_color(color,level,msg,stack_depth=0):
-
-    left_prefix=str(stack_depth)
-    left_prefix = left_prefix.ljust(stack_depth*4,' ') + ' '
-
-    for line in str(msg).split('\n'):
-
-        if color.lower() == 'red':
-            line = BEGIN_RED + left_prefix + line + RESET_COLOR
-        elif color.lower() == 'green':
-            line = BEGIN_GREEN + left_prefix + line + RESET_COLOR
-        elif color.lower() == 'yellow':
-            line = BEGIN_YELLOW + left_prefix + line + RESET_COLOR
-        elif color.lower() == 'blue':
-            line = BEGIN_BLUE + left_prefix + line + RESET_COLOR
-        elif color.lower() == 'magenta':
-            line = BEGIN_MAGENTA + left_prefix + line + RESET_COLOR
-        elif color.lower() == 'white':
-            line = BEGIN_WHITE + left_prefix + line + RESET_COLOR
-        elif color.lower() == 'cyan':
-            line = BEGIN_CYAN + left_prefix + line + RESET_COLOR
-
-        if level == 'debug':
-            logger.debug(line)
-        elif level == 'warning':
-            logger.warning(line)
-        elif level == 'error':
-            logger.error(line)
-        elif level == 'info':
-            logger.info(line)
-        elif level == 'critical':
-            logger.critical(line)
-        else:
-            print(line)
-
-
-
-
-
-
-
-
-
-
-
-
+#todo since this method is both here and in BudgetSet, I think it should be extracted to a third file called 'generate_date_sequence.py' containing just this method
 def generate_date_sequence(start_date_YYYYMMDD, num_days, cadence):
     """ A wrapper for pd.date_range intended to make code easier to read.
 
@@ -300,7 +243,9 @@ class ExpenseForecast:
 
         return return_string
 
-    def __init__(self, account_set, budget_set, memo_rule_set, start_date_YYYYMMDD, end_date_YYYYMMDD, print_debug_messages=True, raise_exceptions=True):
+    def __init__(self, account_set, budget_set, memo_rule_set, start_date_YYYYMMDD, end_date_YYYYMMDD,
+                 milestone_set,
+                 print_debug_messages=True, raise_exceptions=True): #todo add milestones
         """
         ExpenseForecast one-line description
 
@@ -467,6 +412,8 @@ class ExpenseForecast:
         self.initial_skipped_df = skipped_df
         self.initial_confirmed_df = confirmed_df
 
+        self.milestone_set = milestone_set
+
     def appendSummaryLines(self):
         #todo incorporate savings
         #add net gain/loss (requires looking at memo)
@@ -535,6 +482,24 @@ class ExpenseForecast:
         self.deferred_df = deferred_df
 
         self.end_ts = datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S')
+
+        account_milestone_results__list = []
+        for a_m in self.milestone_set.account_milestones__list:
+            res = self.evaulateAccountMilestone(a_m.account_name,a_m.min_balance,a_m.max_balance)
+            account_milestone_results__list.append(res)
+        self.account_milestone_results__list = account_milestone_results__list
+
+        memo_milestone_results__list = []
+        for m_m in self.milestone_set.memo_milestones__list:
+            res = self.evaulateMemoMilestone(m_m.memo_regex)
+            memo_milestone_results__list.append(res)
+        self.memo_milestone_results__list = memo_milestone_results__list
+
+        composite_milestone_results__list = []
+        for c_m in self.milestone_set.composite_milestones__list:
+            res = self.evaluateCompositeMilestone(self.milestone_set.account_milestones__list,self.milestone_set.memo_milestones__list,c_m)
+            composite_milestone_results__list.append(res)
+        self.composite_milestone_results__list = composite_milestone_results__list
 
         self.writeToJSONFile()
 
@@ -2180,23 +2145,34 @@ class ExpenseForecast:
     def evaulateAccountMilestone(self,account_name,min_balance,max_balance):
 
         account_info = self.initial_account_set.getAccounts()
-        account_base_names = [ account_info.Name.split(':')[0] for a in account_info.Name ]
+        account_base_names = [ a.split(':')[0] for a in account_info.Name ]
         row_sel_vec = [ a == account_name for a in account_base_names]
 
         relevant_account_info_rows_df = account_info[row_sel_vec]
 
         #this df should be either 1 or 2 rows, but have same account type either way
-        assert relevant_account_info_rows_df.Name.unique().shape[0] == 1
+        try:
+            assert relevant_account_info_rows_df.Name.unique().shape[0] == 1
+        except Exception as e:
+            print('relevant_account_info_rows_df:')
+            print(relevant_account_info_rows_df.to_string())
+            print(e)
 
         if relevant_account_info_rows_df.shape[0] == 1: #case for checking and savings
-            relevant_time_series_df = self.forecast_df[:,relevant_account_info_rows_df.head(1)['Name'].iat[0]]
+            col_sel_vec = self.forecast_df.columns == relevant_account_info_rows_df.head(1)['Name'].iat[0]
+            col_sel_vec[0] = True
+            relevant_time_series_df = self.forecast_df.iloc[:, col_sel_vec]
         elif relevant_account_info_rows_df.shape[0] == 2:  # case for credit and loan
-            relevant_time_series_df = self.forecast_df[:, relevant_account_info_rows_df.head(1)['Name'].iat[0]] + self.forecast_df[:, relevant_account_info_rows_df.tail(1)['Name'].iat[0]]
+            col_sel_vec = self.forecast_df.columns == relevant_account_info_rows_df.head(1)['Name'].iat[0]
+            col_sel_vec[0] = True
+
+            relevant_time_series_df = self.forecast_df.iloc[:, col_sel_vec]
         else:
             raise ValueError("undefined edge case in ExpenseForecast::evaulateAccountMilestone""")
 
+        last_value = relevant_time_series_df.tail(1).iat[0,1]
         #if the last day of the forecast does not satisfy account bounds, then none of the days of the forecast qualify
-        if not (( min_balance <= relevant_time_series_df.tail(1).Balance ) & ( relevant_time_series_df.tail(1).Balance <= max_balance )):
+        if not (( min_balance <= last_value ) & ( last_value <= max_balance )):
             return None
 
         #if the code reaches this point, then the milestone was for sure reached.
@@ -2204,7 +2180,10 @@ class ExpenseForecast:
         relevant_time_series_df = relevant_time_series_df.loc[::-1]
         last_qualifying_date = relevant_time_series_df.head(1).Date
         for index, row in relevant_time_series_df.iterrows():
-            if (( min_balance <= row.Balance ) & ( row.Balance <= max_balance )):
+            # print('row:')
+            # print(row)
+            # print(row.iloc[1])
+            if (( min_balance <= row.iloc[1] ) & ( row.iloc[1] <= max_balance )):
                 last_qualifying_date = row.Date
             else:
                 break
@@ -2217,11 +2196,15 @@ class ExpenseForecast:
                 return forecast_row.Date
         return None
 
-    def evaluateCompositeMilestone(self,list_of_account_milestones,list_of_memo_milestone_memo_regexes):
+    def evaluateCompositeMilestone(self,list_of_account_milestones,list_of_memo_milestones,composite_milestone):
         #list_of_account_milestones is lists of 3-tuples that are (string,float,float) for parameters
 
+        #composite milestones may contain some milestones that arent listed in the composite #todo as of 2023-04-25
+
+        num_of_relevant_milestones = 0
+
         num_of_acct_milestones = len(list_of_account_milestones)
-        num_of_memo_milestones = len(list_of_memo_milestone_memo_regexes)
+        num_of_memo_milestones = len(list_of_memo_milestones)
         account_milestone_dates = [None] * num_of_acct_milestones
         memo_milestone_dates = [None] * num_of_memo_milestones
 
@@ -2343,7 +2326,7 @@ class ExpenseForecast:
         forecast_df_string = "\"forecast_df\":"+normalized_forecast_df_JSON_string+",\n"
         skipped_df_string = "\"skipped_df\":"+normalized_skipped_df_JSON_string+",\n"
         confirmed_df_string = "\"confirmed_df\":"+normalized_confirmed_df_JSON_string+",\n"
-        deferred_df_string = "\"deferred_df\":"+normalized_deferred_df_JSON_string
+        deferred_df_string = "\"deferred_df\":"+normalized_deferred_df_JSON_string+",\n"
 
         JSON_string += unique_id_string
         JSON_string += start_ts_string
@@ -2357,6 +2340,11 @@ class ExpenseForecast:
         JSON_string += skipped_df_string
         JSON_string += confirmed_df_string
         JSON_string += deferred_df_string
+
+        JSON_string += "\"milestone_set\":"+self.milestone_set.toJSON()+",\n"
+        JSON_string += "\"account_milestone_results\":"+str(self.account_milestone_results__list)+",\n"
+        JSON_string += "\"memo_milestone_results\":"+str(self.memo_milestone_results__list)+",\n"
+        JSON_string += "\"composite_milestone_results\":"+str(self.composite_milestone_results__list)
 
         JSON_string += '}'
 
