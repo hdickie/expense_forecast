@@ -1,0 +1,24 @@
+2023-04-25 21:18:41,206 - INFO     - Starting simulation scenario 1 / 8 #063187
+2023-04-25 21:18:41,206 - INFO     - Option ids: 0=0 1=0 2=0 
+2023-04-25 21:19:33,253 - INFO     - Finished in 52 seconds. ETC: 2023-04-25 21:25:37
+2023-04-25 21:19:33,253 - INFO     - Starting simulation scenario 2 / 8 #077152
+2023-04-25 21:19:33,253 - INFO     - Option ids: 0=0 1=1 2=0 
+2023-04-25 21:20:29,635 - INFO     - Finished in 56 seconds. ETC: 2023-04-25 21:25:53
+2023-04-25 21:20:29,635 - INFO     - Starting simulation scenario 3 / 8 #055681
+2023-04-25 21:20:29,636 - INFO     - Option ids: 0=0 1=0 2=1 
+2023-04-25 21:21:29,513 - INFO     - Finished in 59 seconds. ETC: 2023-04-25 21:26:09
+2023-04-25 21:21:29,513 - INFO     - Starting simulation scenario 4 / 8 #088387
+2023-04-25 21:21:29,513 - INFO     - Option ids: 0=0 1=1 2=1 
+2023-04-25 21:22:22,708 - INFO     - Finished in 53 seconds. ETC: 2023-04-25 21:26:03
+2023-04-25 21:22:22,710 - INFO     - Starting simulation scenario 5 / 8 #054288
+2023-04-25 21:22:22,710 - INFO     - Option ids: 0=0 1=0 2=2 
+2023-04-25 21:23:15,776 - INFO     - Finished in 53 seconds. ETC: 2023-04-25 21:26:00
+2023-04-25 21:23:15,776 - INFO     - Starting simulation scenario 6 / 8 #098625
+2023-04-25 21:23:15,776 - INFO     - Option ids: 0=0 1=1 2=2 
+2023-04-25 21:24:08,570 - INFO     - Finished in 52 seconds. ETC: 2023-04-25 21:25:57
+2023-04-25 21:24:08,570 - INFO     - Starting simulation scenario 7 / 8 #024405
+2023-04-25 21:24:08,570 - INFO     - Option ids: 0=0 1=0 2=3 
+2023-04-25 21:25:04,356 - INFO     - Finished in 55 seconds. ETC: 2023-04-25 21:25:59
+2023-04-25 21:25:04,356 - INFO     - Starting simulation scenario 8 / 8 #085113
+2023-04-25 21:25:04,356 - INFO     - Option ids: 0=0 1=1 2=3 
+2023-04-25 21:25:56,958 - INFO     - Finished in 52 seconds. ETC: 2023-04-25 21:25:56
