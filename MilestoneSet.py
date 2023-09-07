@@ -91,6 +91,7 @@ class MilestoneSet:
         json_string = "{"
 
         account_milestone_index = 0
+        account_milestones_json_string = ""
         for a in self.account_milestones__list:
             account_milestones_json_string = a.toJSON()
 
@@ -100,6 +101,7 @@ class MilestoneSet:
             account_milestone_index += 1
 
         memo_milestone_index = 0
+        memo_milestones_json_string = ""
         for m in self.memo_milestones__list:
             memo_milestones_json_string = m.toJSON()
 
@@ -109,6 +111,7 @@ class MilestoneSet:
             memo_milestone_index += 1
 
         composite_milestone_index = 0
+        composite_milestones_json_string = ""
         for c in self.composite_milestones__list:
             composite_milestones_json_string = c.toJSON()
 

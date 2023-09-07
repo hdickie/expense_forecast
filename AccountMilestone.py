@@ -27,8 +27,8 @@ class AccountMilestone:
 
         return_string += '"' + "Milestone_Name" + '":"' + self.milestone_name + '"' + "\n"
         return_string += '"' + "Account_Name" + '":"' + self.account_name + '"' + "\n"
-        return_string += '"' + "Min_Balance" + '":"' + self.min_balance + '"' + "\n"
-        return_string += '"' + "Max_Balance" + '":"' + self.max_balance + '"' + "\n"
+        return_string += '"' + "Min_Balance" + '":"' + str(self.min_balance) + '"' + "\n"
+        return_string += '"' + "Max_Balance" + '":"' + str(self.max_balance) + '"' + "\n"
 
         return_string = "}"
 

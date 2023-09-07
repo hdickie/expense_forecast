@@ -207,8 +207,18 @@
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="AccountSet.AccountSet.allocate_additional_loan_payments">
+<span class="sig-name descname"><span class="pre">allocate_additional_loan_payments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">amount</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#AccountSet.AccountSet.allocate_additional_loan_payments" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="AccountSet.AccountSet.executeTransaction">
-<span class="sig-name descname"><span class="pre">executeTransaction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Account_From</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Account_To</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Amount</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#AccountSet.AccountSet.executeTransaction" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">executeTransaction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Account_From</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Account_To</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Amount</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">income_flag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#AccountSet.AccountSet.executeTransaction" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="AccountSet.AccountSet.fromExcel">
+<span class="sig-name descname"><span class="pre">fromExcel</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#AccountSet.AccountSet.fromExcel" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -240,6 +250,11 @@
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="AccountSet.AccountSet.getBalances">
+<span class="sig-name descname"><span class="pre">getBalances</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#AccountSet.AccountSet.getBalances" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="AccountSet.AccountSet.toJSON">
 <span class="sig-name descname"><span class="pre">toJSON</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#AccountSet.AccountSet.toJSON" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get a JSON &lt;string&gt; representation of the &lt;AccountSet&gt; object.</p>
@@ -249,7 +264,7 @@
 
 <span class="target" id="module-BudgetItem"></span><dl class="py class">
 <dt class="sig sig-object py" id="BudgetItem.BudgetItem">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">BudgetItem.</span></span><span class="sig-name descname"><span class="pre">BudgetItem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_date_YYYYMMDD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date_YYYYMMDD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">priority</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cadence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amount</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deferrable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_debug_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raise_exceptions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#BudgetItem.BudgetItem" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">BudgetItem.</span></span><span class="sig-name descname"><span class="pre">BudgetItem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_date_YYYYMMDD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date_YYYYMMDD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">priority</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cadence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amount</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deferrable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partial_payment_allowed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_debug_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raise_exceptions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#BudgetItem.BudgetItem" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a BudgetItem object. Input validation is performed.</p>
 <p>The BudgetItem constructor does not check types, but numerical parameters will raise a ValueError if they cannot be
 cast to float.</p>
@@ -275,7 +290,7 @@ cast to float.</p>
 <li><p><strong>start_date_YYYYMMDD</strong> (<em>str</em>) – A string that indicates the start date with format %Y%m%d.</p></li>
 <li><p><strong>start_date_YYYYMMDD</strong> – A string that indicates the end date with format %Y%m%d.</p></li>
 <li><p><strong>priority</strong> (<em>int</em>) – An integer &gt;= 1 that indicates priority. See below for priority level meanings.</p></li>
-<li><p><strong>cadence</strong> (<em>str</em>) – One of: ‘once’, ‘daily’, ‘weekly’, ‘biweekly’, ‘monthly’, ‘quarterly’, ‘yearly’</p></li>
+<li><p><strong>cadence</strong> (<em>str</em>) – One of: ‘once’, ‘daily’, ‘weekly’, ‘semiweekly’, ‘monthly’, ‘quarterly’, ‘yearly’</p></li>
 <li><p><strong>amount</strong> (<em>float</em>) – A dollar value for the amount of the transaction. See below for how to handle negative values.</p></li>
 <li><p><strong>deferrable</strong> (<em>bool</em>) – True if the transaction can be delayed. False if it is a time-sensitive opportunity.</p></li>
 <li><p><strong>memo</strong> (<em>str</em>) – A label for the transaction.</p></li>
@@ -329,7 +344,7 @@ negative values for Amount are reflected in the memo values but don’t change t
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="BudgetSet.BudgetSet.addBudgetItem">
-<span class="sig-name descname"><span class="pre">addBudgetItem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_date_YYYYMMDD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date_YYYYMMDD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">priority</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cadence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amount</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deferrable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_debug_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raise_exceptions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#BudgetSet.BudgetSet.addBudgetItem" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">addBudgetItem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_date_YYYYMMDD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date_YYYYMMDD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">priority</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cadence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amount</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deferrable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partial_payment_allowed</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_debug_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raise_exceptions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#BudgetSet.BudgetSet.addBudgetItem" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a BudgetItem to list BudgetItem.budget_items.</p>
 <div class="line-block">
 <div class="line">Test Cases</div>
@@ -342,6 +357,16 @@ negative values for Amount are reflected in the memo values but don’t change t
 <div class="line">F2 add a BudgetItem where there are 2 BudgetItems with the same memo</div>
 </div>
 </dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="BudgetSet.BudgetSet.compareToBudgetSet">
+<span class="sig-name descname"><span class="pre">compareToBudgetSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">SecondBudgetSet</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#BudgetSet.BudgetSet.compareToBudgetSet" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="BudgetSet.BudgetSet.fromExcel">
+<span class="sig-name descname"><span class="pre">fromExcel</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#BudgetSet.BudgetSet.fromExcel" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="BudgetSet.BudgetSet.getBudgetItems">
@@ -389,7 +414,7 @@ negative values for Amount are reflected in the memo values but don’t change t
 
 <span class="target" id="module-ExpenseForecast"></span><dl class="py class">
 <dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ExpenseForecast.</span></span><span class="sig-name descname"><span class="pre">ExpenseForecast</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">account_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">budget_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memo_rule_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_date_YYYYMMDD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date_YYYYMMDD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_debug_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raise_exceptions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ExpenseForecast.</span></span><span class="sig-name descname"><span class="pre">ExpenseForecast</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">account_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">budget_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memo_rule_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_date_YYYYMMDD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date_YYYYMMDD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">milestone_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_debug_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raise_exceptions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast" title="Permalink to this definition">¶</a></dt>
 <dd><p>ExpenseForecast one-line description</p>
 <p># todo ExpenseForecast doctests
 | Test Cases
@@ -408,28 +433,9 @@ negative values for Amount are reflected in the memo values but don’t change t
 </dd>
 </dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.account_boundaries_are_violated">
-<span class="sig-name descname"><span class="pre">account_boundaries_are_violated</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">accounts_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forecast_df</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.account_boundaries_are_violated" title="Permalink to this definition">¶</a></dt>
-<dd><p>account_boundaries_are_violated single-line description</p>
-<p>#todo ExpenseForecast.account_boundaries_are_violated() doctests
-| Test Cases
-| Expected Successes
-| S1: … #todo refactor ExpenseForecast.account_boundaries_are_violated() doctest S1 to use _S1 label
-|
-| Expected Fails
-| F1 … #todo refactor ExpenseForecast.account_boundaries_are_violated() doctest F1 to use _F1 label</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>accounts_df</strong> – </p></li>
-<li><p><strong>forecast_df</strong> – </p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p></p>
-</dd>
-</dl>
-</dd></dl>
+<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.appendSummaryLines">
+<span class="sig-name descname"><span class="pre">appendSummaryLines</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.appendSummaryLines" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.calculateInterestAccrualsForDay">
@@ -437,36 +443,10 @@ negative values for Amount are reflected in the memo values but don’t change t
 <dd></dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.computeForecast">
-<span class="sig-name descname"><span class="pre">computeForecast</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.computeForecast" title="Permalink to this definition">¶</a></dt>
-<dd><p>Computes output time-series that represents only non-negotiable spend.</p>
-<div class="line-block">
-<div class="line">Test Cases</div>
-<div class="line">Expected Successes</div>
-<div class="line">S1: … #todo refactor ExpenseForecast.computeForecast() doctest S1 to use _S1 label</div>
-<div class="line"><br /></div>
-<div class="line">Expected Fails</div>
-<div class="line">F1 … #todo refactor ExpenseForecast.computeForecast() doctest F1 to use _F1 label</div>
-</div>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>budget_schedule_df</strong> – </p></li>
-<li><p><strong>account_set_df</strong> – </p></li>
-<li><p><strong>memo_rules_df</strong> – </p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.computeOptimalForecast">
-<span class="sig-name descname"><span class="pre">computeOptimalForecast</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">budget_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memo_rule_set</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.computeOptimalForecast" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">computeOptimalForecast</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_date_YYYYMMDD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date_YYYYMMDD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confirmed_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">proposed_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deferred_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skipped_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memo_rule_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raise_satisfice_failed_exception</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.computeOptimalForecast" title="Permalink to this definition">¶</a></dt>
 <dd><p>One-description.</p>
-<p>Multiple line dsecription.</p>
+<p>Multiple line description.</p>
 <div class="line-block">
 <div class="line">Test Cases</div>
 <div class="line">Expected Successes</div>
@@ -478,9 +458,15 @@ negative values for Amount are reflected in the memo values but don’t change t
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>budget_schedule_df</strong> – </p></li>
-<li><p><strong>account_set_df</strong> – </p></li>
-<li><p><strong>memo_rules_df</strong> – </p></li>
+<li><p><strong>start_date_YYYYMMDD</strong> – </p></li>
+<li><p><strong>end_date_YYYYMMDD</strong> – </p></li>
+<li><p><strong>confirmed_df</strong> – </p></li>
+<li><p><strong>proposed_df</strong> – </p></li>
+<li><p><strong>deferred_df</strong> – </p></li>
+<li><p><strong>skipped_df</strong> – </p></li>
+<li><p><strong>account_set</strong> – </p></li>
+<li><p><strong>memo_rule_set</strong> – </p></li>
+<li><p><strong>raise_satisfice_failed_exception</strong> – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -491,28 +477,62 @@ negative values for Amount are reflected in the memo values but don’t change t
 
 <dl class="py method">
 <dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.compute_forecast_difference">
-<span class="sig-name descname"><span class="pre">compute_forecast_difference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">forecast2_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'forecast_difference'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">make_plots</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_directory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'dataframe'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diffs_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.compute_forecast_difference" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">compute_forecast_difference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">forecast_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forecast2_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'forecast_difference'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">make_plots</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_directory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'dataframe'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">require_matching_columns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">require_matching_date_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append_expected_values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diffs_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.compute_forecast_difference" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.decide__defer_or_execute_or_skip">
-<span class="sig-name descname"><span class="pre">decide__defer_or_execute_or_skip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">updated_budget_schedule_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_set_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forecast_df</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.decide__defer_or_execute_or_skip" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns an empty row (execute or skip), or an updated &lt;DataFrame&gt; of BudgetItems.</p>
-<p>This method accepts a single BudgetItem, along with the AccountSet and Forecast.</p>
-<div class="line-block">
-<div class="line">Test Cases</div>
-<div class="line">Expected Successes</div>
-<div class="line">S1: … #todo refactor ExpenseForecast.decide__defer_or_execute_or_skip() doctest S1 to use _S1 label</div>
-<div class="line"><br /></div>
-<div class="line">Expected Fails</div>
-<div class="line">F1 … #todo refactor ExpenseForecast.decide__defer_or_execute_or_skip() doctest F1 to use _F1 label</div>
-</div>
+<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.evaluateAccountMilestone">
+<span class="sig-name descname"><span class="pre">evaluateAccountMilestone</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">account_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_balance</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.evaluateAccountMilestone" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.evaluateCompositeMilestone">
+<span class="sig-name descname"><span class="pre">evaluateCompositeMilestone</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">list_of_account_milestones</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_of_memo_milestones</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">composite_milestone</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.evaluateCompositeMilestone" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.evaulateMemoMilestone">
+<span class="sig-name descname"><span class="pre">evaulateMemoMilestone</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">memo_regex</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.evaulateMemoMilestone" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.executeMinimumPayments">
+<span class="sig-name descname"><span class="pre">executeMinimumPayments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">account_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_forecast_row_df</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.executeMinimumPayments" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.executeTransactionsForDay">
+<span class="sig-name descname"><span class="pre">executeTransactionsForDay</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">account_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forecast_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_YYYYMMDD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memo_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confirmed_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">proposed_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deferred_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skipped_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">priority_level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_partial_payments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_skip_and_defer</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.executeTransactionsForDay" title="Permalink to this definition">¶</a></dt>
+<dd><p>I want this to be as generic as possible, with no memos or priority levels having dard coded behavior.
+At least a little of this hard-coding does make implementation simpler though.
+Therefore, let all income be priority level one, and be identified by the regex ‘.*income.*’</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.getInitialForecastRow">
+<span class="sig-name descname"><span class="pre">getInitialForecastRow</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.getInitialForecastRow" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.getInputFromExcel">
+<span class="sig-name descname"><span class="pre">getInputFromExcel</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.getInputFromExcel" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.getMinimumFutureAvailableBalances">
+<span class="sig-name descname"><span class="pre">getMinimumFutureAvailableBalances</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">account_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forecast_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_YYYYMMDD</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.getMinimumFutureAvailableBalances" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.plotAccountTypeTotals">
+<span class="sig-name descname"><span class="pre">plotAccountTypeTotals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.plotAccountTypeTotals" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes to file a plot of all accounts.</p>
+<p>Multiple line description.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>updated_budget_schedule_df</strong> – </p></li>
-<li><p><strong>account_set_df</strong> – </p></li>
 <li><p><strong>forecast_df</strong> – </p></li>
+<li><p><strong>output_path</strong> – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -522,27 +542,10 @@ negative values for Amount are reflected in the memo values but don’t change t
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.executeTransactionsForDay">
-<span class="sig-name descname"><span class="pre">executeTransactionsForDay</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">budget_schedule_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memo_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_forecast_row_df</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.executeTransactionsForDay" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.getInitialForecastRow">
-<span class="sig-name descname"><span class="pre">getInitialForecastRow</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.getInitialForecastRow" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.plotAccountTypeTotals">
-<span class="sig-name descname"><span class="pre">plotAccountTypeTotals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">forecast_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.plotAccountTypeTotals" title="Permalink to this definition">¶</a></dt>
-<dd><p>Writes to file a plot by account type.</p>
-<div class="line-block">
-<div class="line">Test Cases</div>
-<div class="line">Expected Successes</div>
-<div class="line">S1: … #todo refactor ExpenseForecast.plotAccountTypeTotals() doctest S1 to use _S1 label</div>
-<div class="line"><br /></div>
-<div class="line">Expected Fails</div>
-<div class="line">F1 … #todo refactor ExpenseForecast.plotAccountTypeTotals() doctest F1 to use _F1 label</div>
-</div>
+<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.plotAll">
+<span class="sig-name descname"><span class="pre">plotAll</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.plotAll" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes to file a plot of all accounts.</p>
+<p>Multiple line description.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -584,8 +587,8 @@ negative values for Amount are reflected in the memo values but don’t change t
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.plotOverall">
-<span class="sig-name descname"><span class="pre">plotOverall</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">forecast_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.plotOverall" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.plotNetWorth">
+<span class="sig-name descname"><span class="pre">plotNetWorth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.plotNetWorth" title="Permalink to this definition">¶</a></dt>
 <dd><p>Writes to file a plot of all accounts.</p>
 <p>Multiple line description.</p>
 <dl class="field-list simple">
@@ -600,6 +603,21 @@ negative values for Amount are reflected in the memo values but don’t change t
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.runForecast">
+<span class="sig-name descname"><span class="pre">runForecast</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.runForecast" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.setForecastRowBalances">
+<span class="sig-name descname"><span class="pre">setForecastRowBalances</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">date_YYYYMMDD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_row</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.setForecastRowBalances" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.sync_account_set_w_forecast_day">
+<span class="sig-name descname"><span class="pre">sync_account_set_w_forecast_day</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">account_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forecast_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_YYYYMMDD</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.sync_account_set_w_forecast_day" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.toJSON">
@@ -618,6 +636,11 @@ negative values for Amount are reflected in the memo values but don’t change t
 <span class="sig-name descname"><span class="pre">to_html</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.to_html" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.writeToJSONFile">
+<span class="sig-name descname"><span class="pre">writeToJSONFile</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.writeToJSONFile" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 <dl class="py function">
@@ -626,6 +649,11 @@ negative values for Amount are reflected in the memo values but don’t change t
 <dd><p>A wrapper for pd.date_range intended to make code easier to read.</p>
 <p>#todo write project_utilities.generate_date_sequence() doctests</p>
 </dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ExpenseForecast.initialize_from_json_file">
+<span class="sig-prename descclassname"><span class="pre">ExpenseForecast.</span></span><span class="sig-name descname"><span class="pre">initialize_from_json_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path_to_json</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.initialize_from_json_file" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <span class="target" id="module-MemoRule"></span><dl class="py class">
 <dt class="sig sig-object py" id="MemoRule.MemoRule">
@@ -729,6 +757,16 @@ negative values for Amount are reflected in the memo values but don’t change t
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="MemoRuleSet.MemoRuleSet.findMatchingMemoRule">
+<span class="sig-name descname"><span class="pre">findMatchingMemoRule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">budget_item_row_df</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#MemoRuleSet.MemoRuleSet.findMatchingMemoRule" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="MemoRuleSet.MemoRuleSet.fromExcel">
+<span class="sig-name descname"><span class="pre">fromExcel</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#MemoRuleSet.MemoRuleSet.fromExcel" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="MemoRuleSet.MemoRuleSet.getMemoRules">
 <span class="sig-name descname"><span class="pre">getMemoRules</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#MemoRuleSet.MemoRuleSet.getMemoRules" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get a &lt;DataFrame&gt; representing the &lt;MemoRuleSet&gt; object.</p>
@@ -769,8 +807,11 @@ negative values for Amount are reflected in the memo values but don’t change t
 </li>
 <li><a class="reference internal" href="#AccountSet.AccountSet"><code class="docutils literal notranslate"><span class="pre">AccountSet</span></code></a><ul>
 <li><a class="reference internal" href="#AccountSet.AccountSet.addAccount"><code class="docutils literal notranslate"><span class="pre">AccountSet.addAccount()</span></code></a></li>
+<li><a class="reference internal" href="#AccountSet.AccountSet.allocate_additional_loan_payments"><code class="docutils literal notranslate"><span class="pre">AccountSet.allocate_additional_loan_payments()</span></code></a></li>
 <li><a class="reference internal" href="#AccountSet.AccountSet.executeTransaction"><code class="docutils literal notranslate"><span class="pre">AccountSet.executeTransaction()</span></code></a></li>
+<li><a class="reference internal" href="#AccountSet.AccountSet.fromExcel"><code class="docutils literal notranslate"><span class="pre">AccountSet.fromExcel()</span></code></a></li>
 <li><a class="reference internal" href="#AccountSet.AccountSet.getAccounts"><code class="docutils literal notranslate"><span class="pre">AccountSet.getAccounts()</span></code></a></li>
+<li><a class="reference internal" href="#AccountSet.AccountSet.getBalances"><code class="docutils literal notranslate"><span class="pre">AccountSet.getBalances()</span></code></a></li>
 <li><a class="reference internal" href="#AccountSet.AccountSet.toJSON"><code class="docutils literal notranslate"><span class="pre">AccountSet.toJSON()</span></code></a></li>
 </ul>
 </li>
@@ -780,6 +821,8 @@ negative values for Amount are reflected in the memo values but don’t change t
 </li>
 <li><a class="reference internal" href="#BudgetSet.BudgetSet"><code class="docutils literal notranslate"><span class="pre">BudgetSet</span></code></a><ul>
 <li><a class="reference internal" href="#BudgetSet.BudgetSet.addBudgetItem"><code class="docutils literal notranslate"><span class="pre">BudgetSet.addBudgetItem()</span></code></a></li>
+<li><a class="reference internal" href="#BudgetSet.BudgetSet.compareToBudgetSet"><code class="docutils literal notranslate"><span class="pre">BudgetSet.compareToBudgetSet()</span></code></a></li>
+<li><a class="reference internal" href="#BudgetSet.BudgetSet.fromExcel"><code class="docutils literal notranslate"><span class="pre">BudgetSet.fromExcel()</span></code></a></li>
 <li><a class="reference internal" href="#BudgetSet.BudgetSet.getBudgetItems"><code class="docutils literal notranslate"><span class="pre">BudgetSet.getBudgetItems()</span></code></a></li>
 <li><a class="reference internal" href="#BudgetSet.BudgetSet.getBudgetSchedule"><code class="docutils literal notranslate"><span class="pre">BudgetSet.getBudgetSchedule()</span></code></a></li>
 <li><a class="reference internal" href="#BudgetSet.BudgetSet.toJSON"><code class="docutils literal notranslate"><span class="pre">BudgetSet.toJSON()</span></code></a></li>
@@ -787,28 +830,40 @@ negative values for Amount are reflected in the memo values but don’t change t
 </li>
 <li><a class="reference internal" href="#BudgetSet.generate_date_sequence"><code class="docutils literal notranslate"><span class="pre">generate_date_sequence()</span></code></a></li>
 <li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast</span></code></a><ul>
-<li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.account_boundaries_are_violated"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.account_boundaries_are_violated()</span></code></a></li>
+<li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.appendSummaryLines"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.appendSummaryLines()</span></code></a></li>
 <li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.calculateInterestAccrualsForDay"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.calculateInterestAccrualsForDay()</span></code></a></li>
-<li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.computeForecast"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.computeForecast()</span></code></a></li>
 <li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.computeOptimalForecast"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.computeOptimalForecast()</span></code></a></li>
 <li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.compute_forecast_difference"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.compute_forecast_difference()</span></code></a></li>
-<li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.decide__defer_or_execute_or_skip"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.decide__defer_or_execute_or_skip()</span></code></a></li>
+<li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.evaluateAccountMilestone"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.evaluateAccountMilestone()</span></code></a></li>
+<li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.evaluateCompositeMilestone"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.evaluateCompositeMilestone()</span></code></a></li>
+<li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.evaulateMemoMilestone"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.evaulateMemoMilestone()</span></code></a></li>
+<li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.executeMinimumPayments"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.executeMinimumPayments()</span></code></a></li>
 <li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.executeTransactionsForDay"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.executeTransactionsForDay()</span></code></a></li>
 <li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.getInitialForecastRow"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.getInitialForecastRow()</span></code></a></li>
+<li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.getInputFromExcel"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.getInputFromExcel()</span></code></a></li>
+<li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.getMinimumFutureAvailableBalances"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.getMinimumFutureAvailableBalances()</span></code></a></li>
 <li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.plotAccountTypeTotals"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.plotAccountTypeTotals()</span></code></a></li>
+<li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.plotAll"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.plotAll()</span></code></a></li>
 <li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.plotMarginalInterest"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.plotMarginalInterest()</span></code></a></li>
-<li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.plotOverall"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.plotOverall()</span></code></a></li>
+<li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.plotNetWorth"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.plotNetWorth()</span></code></a></li>
+<li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.runForecast"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.runForecast()</span></code></a></li>
+<li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.setForecastRowBalances"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.setForecastRowBalances()</span></code></a></li>
+<li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.sync_account_set_w_forecast_day"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.sync_account_set_w_forecast_day()</span></code></a></li>
 <li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.toJSON"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.toJSON()</span></code></a></li>
 <li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.to_html"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.to_html()</span></code></a></li>
+<li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.writeToJSONFile"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.writeToJSONFile()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#ExpenseForecast.generate_date_sequence"><code class="docutils literal notranslate"><span class="pre">generate_date_sequence()</span></code></a></li>
+<li><a class="reference internal" href="#ExpenseForecast.initialize_from_json_file"><code class="docutils literal notranslate"><span class="pre">initialize_from_json_file()</span></code></a></li>
 <li><a class="reference internal" href="#MemoRule.MemoRule"><code class="docutils literal notranslate"><span class="pre">MemoRule</span></code></a><ul>
 <li><a class="reference internal" href="#MemoRule.MemoRule.toJSON"><code class="docutils literal notranslate"><span class="pre">MemoRule.toJSON()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#MemoRuleSet.MemoRuleSet"><code class="docutils literal notranslate"><span class="pre">MemoRuleSet</span></code></a><ul>
 <li><a class="reference internal" href="#MemoRuleSet.MemoRuleSet.addMemoRule"><code class="docutils literal notranslate"><span class="pre">MemoRuleSet.addMemoRule()</span></code></a></li>
+<li><a class="reference internal" href="#MemoRuleSet.MemoRuleSet.findMatchingMemoRule"><code class="docutils literal notranslate"><span class="pre">MemoRuleSet.findMatchingMemoRule()</span></code></a></li>
+<li><a class="reference internal" href="#MemoRuleSet.MemoRuleSet.fromExcel"><code class="docutils literal notranslate"><span class="pre">MemoRuleSet.fromExcel()</span></code></a></li>
 <li><a class="reference internal" href="#MemoRuleSet.MemoRuleSet.getMemoRules"><code class="docutils literal notranslate"><span class="pre">MemoRuleSet.getMemoRules()</span></code></a></li>
 <li><a class="reference internal" href="#MemoRuleSet.MemoRuleSet.toJSON"><code class="docutils literal notranslate"><span class="pre">MemoRuleSet.toJSON()</span></code></a></li>
 </ul>

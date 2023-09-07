@@ -485,7 +485,7 @@ class ExpenseForecast:
 
         account_milestone_results__list = []
         for a_m in self.milestone_set.account_milestones__list:
-            res = self.evaulateAccountMilestone(a_m.account_name,a_m.min_balance,a_m.max_balance)
+            res = self.evaluateAccountMilestone(a_m.account_name,a_m.min_balance,a_m.max_balance)
             account_milestone_results__list.append(res)
         self.account_milestone_results__list = account_milestone_results__list
 
@@ -2142,7 +2142,7 @@ class ExpenseForecast:
         plt.title('Forecast #'+self.unique_id+': ' + str(min_date) + ' -> ' + str(max_date))
         plt.savefig(output_path)
 
-    def evaulateAccountMilestone(self,account_name,min_balance,max_balance):
+    def evaluateAccountMilestone(self,account_name,min_balance,max_balance):
 
         account_info = self.initial_account_set.getAccounts()
         account_base_names = [ a.split(':')[0] for a in account_info.Name ]
@@ -2154,8 +2154,6 @@ class ExpenseForecast:
         try:
             assert relevant_account_info_rows_df.Name.unique().shape[0] == 1
         except Exception as e:
-            print('relevant_account_info_rows_df:')
-            print(relevant_account_info_rows_df.to_string())
             print(e)
 
         if relevant_account_info_rows_df.shape[0] == 1: #case for checking and savings
@@ -2209,13 +2207,15 @@ class ExpenseForecast:
         memo_milestone_dates = [None] * num_of_memo_milestones
 
         for i in range(0,num_of_acct_milestones):
-            next_milestone = self.evaluateAccountMilestone(list_of_memo_milestone_memo_regexes[i])
+            account_milestone = list_of_account_milestones[i]
+            next_milestone = self.evaluateAccountMilestone(account_milestone.account_name,account_milestone.min_balance,account_milestone.max_balance)
             if next_milestone is None: #disqualified immediately because success requires ALL
                 return None
             account_milestone_dates[i] = next_milestone
 
-        for i in range(0,num_of_acct_milestones):
-            next_milestone = self.evaulateMemoMilestone(list_of_account_milestones[i][0],list_of_account_milestones[i][1],list_of_account_milestones[i][2])
+        for i in range(0,num_of_memo_milestones):
+            memo_milestone = list_of_memo_milestones[i]
+            next_milestone = self.evaulateMemoMilestone(memo_milestone.memo_regex)
             if next_milestone is None:  # disqualified immediately because success requires ALL
                 return None
             memo_milestone_dates[i] = next_milestone
@@ -2341,10 +2341,25 @@ class ExpenseForecast:
         JSON_string += confirmed_df_string
         JSON_string += deferred_df_string
 
+        account_milestone_string = ""
+        for a in self.account_milestone_results__list:
+            if a is not None:
+                account_milestone_string = a.strftime('%Y-%m-%d')+" "
+
+        memo_milestone_string = ""
+        for m in self.memo_milestone_results__list:
+            if m is not None:
+                memo_milestone_string = m.strftime('%Y-%m-%d')+" "
+
+        composite_milestone_string = ""
+        for c in self.composite_milestone_results__list:
+            if c is not None:
+                composite_milestone_string = c.strftime('%Y-%m-%d')+" "
+
         JSON_string += "\"milestone_set\":"+self.milestone_set.toJSON()+",\n"
-        JSON_string += "\"account_milestone_results\":"+str(self.account_milestone_results__list)+",\n"
-        JSON_string += "\"memo_milestone_results\":"+str(self.memo_milestone_results__list)+",\n"
-        JSON_string += "\"composite_milestone_results\":"+str(self.composite_milestone_results__list)
+        JSON_string += "\"account_milestone_results\":"+account_milestone_string+",\n"
+        JSON_string += "\"memo_milestone_results\":"+memo_milestone_string+",\n"
+        JSON_string += "\"composite_milestone_results\":"+composite_milestone_string+",\n"
 
         JSON_string += '}'
 

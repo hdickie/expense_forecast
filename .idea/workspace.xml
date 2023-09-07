@@ -5,105 +5,21 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="94004e15-030d-4b7e-a7c4-801fddc59fac" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.~lock.expense_forecast__milestone_testing__input.ods#" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ExpenseForecast__20230425_180600.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ExpenseForecast__20230425_180717.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ExpenseForecast__20230425_181211.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ExpenseForecast__20230425_181437.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ExpenseForecast__20230425_193445.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ExpenseForecast__20230425_193634.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ExpenseForecast__20230425_193914.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ExpenseForecast__20230425_194202.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ForecastHandler__20230425_180601.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ForecastHandler__20230425_180717.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ForecastHandler__20230425_181211.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ForecastHandler__20230425_181437.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ForecastHandler__20230425_193445.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ForecastHandler__20230425_193634.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ForecastHandler__20230425_193914.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ForecastHandler__20230425_194202.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_013893.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_020814.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_023675.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_024405.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_024621.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_042423.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_053558.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_054288.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_054951.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_055681.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_062457.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_063187.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_073359.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_076422.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_077152.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_084383.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_085113.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_085204.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_087076.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_087657.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_088387.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_090991.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_097895.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_098625.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast__013893__2023_04_24__18_42_52.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast__020814__2023_04_24__18_46_46.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast__023675__2023_04_25__18_07_53.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast__023675__2023_04_25__18_12_44.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast__024405__2023_04_25__18_19_42.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast__024621__2023_04_24__18_54_40.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast__042423__2023_04_24__18_48_45.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast__053558__2023_04_25__18_07_43.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast__053558__2023_04_25__18_12_32.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast__054288__2023_04_25__18_18_01.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast__054951__2023_04_25__18_07_31.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast__054951__2023_04_25__18_12_22.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast__055681__2023_04_25__18_16_19.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast__062457__2023_04_25__18_07_20.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast__062457__2023_04_25__18_12_13.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast__063187__2023_04_25__18_14_39.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast__073359__2023_04_24__18_56_39.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast__076422__2023_04_25__18_07_26.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast__076422__2023_04_25__18_12_17.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast__077152__2023_04_25__18_15_30.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast__084383__2023_04_25__18_07_58.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast__084383__2023_04_25__18_12_50.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast__085113__2023_04_25__18_20_33.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast__085204__2023_04_24__18_52_42.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast__087076__2023_04_24__18_44_49.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast__087657__2023_04_25__18_07_38.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast__087657__2023_04_25__18_12_27.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast__088387__2023_04_25__18_17_10.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast__090991__2023_04_24__18_50_44.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast__097895__2023_04_25__18_07_48.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast__097895__2023_04_25__18_12_39.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast__098625__2023_04_25__18_18_51.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/expense_forecast__milestone_testing__input.ods" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/scratch__20230424_183825.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/scratch__20230424_183843.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/scratch__20230424_183939.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/scratch__20230424_184037.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/scratch__20230424_184248.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/scratch__20230425_180601.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/scratch__20230425_180717.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/scratch__20230425_181211.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/scratch__20230425_181437.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/scratch__20230425_193445.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/scratch__20230425_193634.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/scratch__20230425_193914.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/scratch__20230425_194202.log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.coverage" beforeDir="false" afterPath="$PROJECT_DIR$/.coverage" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.~lock.expense_forecast__input.ods#" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/AccountMilestone.py" beforeDir="false" afterPath="$PROJECT_DIR$/AccountMilestone.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CompositeMilestone.py" beforeDir="false" afterPath="$PROJECT_DIR$/CompositeMilestone.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ExpenseForecast.log" beforeDir="false" afterPath="$PROJECT_DIR$/ExpenseForecast.log" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ExpenseForecast.py" beforeDir="false" afterPath="$PROJECT_DIR$/ExpenseForecast.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ForecastHandler.py" beforeDir="false" afterPath="$PROJECT_DIR$/ForecastHandler.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MemoMilestone.py" beforeDir="false" afterPath="$PROJECT_DIR$/MemoMilestone.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/MilestoneSet.py" beforeDir="false" afterPath="$PROJECT_DIR$/MilestoneSet.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/expense_forecast__input.ods" beforeDir="false" afterPath="$PROJECT_DIR$/expense_forecast__input.ods" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/log_methods.py" beforeDir="false" afterPath="$PROJECT_DIR$/log_methods.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scratch2.py" beforeDir="false" afterPath="$PROJECT_DIR$/scratch2.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/_build/doctrees/environment.pickle" beforeDir="false" afterPath="$PROJECT_DIR$/_build/doctrees/environment.pickle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/_build/doctrees/index.doctree" beforeDir="false" afterPath="$PROJECT_DIR$/_build/doctrees/index.doctree" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/_build/html/genindex.html" beforeDir="false" afterPath="$PROJECT_DIR$/_build/html/genindex.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/_build/html/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/_build/html/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/_build/html/objects.inv" beforeDir="false" afterPath="$PROJECT_DIR$/_build/html/objects.inv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/_build/html/searchindex.js" beforeDir="false" afterPath="$PROJECT_DIR$/_build/html/searchindex.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/download_and_process_emails.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/parse_wifi_strength_data_files.py" beforeDir="false" afterPath="$PROJECT_DIR$/parse_wifi_strength_data_files.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scratch4" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -146,20 +62,20 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/HumeD/PycharmProjects/expense_forecast/scratch3.py&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "last_opened_file_path": "C:/Users/HumeD/PycharmProjects/expense_forecast",
+    "settings.editor.selected.configurable": "preferences.lookFeel"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File&quot;: [
-      &quot;Python&quot;
+  "keyToStringList": {
+    "com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File": [
+      "Python"
     ]
   }
-}</component>
+}]]></component>
   <component name="PyConsoleOptionsProvider">
     <option name="myPythonConsoleState">
       <console-settings sdk-home="C:\Users\HumeD\PycharmProjects\expense_forecast\venv\Scripts\python.exe" working-directory="$PROJECT_DIR$">
@@ -168,7 +84,12 @@
       </console-settings>
     </option>
   </component>
-  <component name="RunManager" selected="Python.scratch2">
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\HumeD\OneDrive\Desktop\network-observations" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Python.parse wifi data">
     <configuration name="Account" type="PythonConfigurationType" factoryName="Python">
       <module name="expense_forecast" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -323,6 +244,28 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="download_and_process_emails" type="PythonConfigurationType" factoryName="Python">
+      <module name="expense_forecast" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="C:\Users\HumeD\PycharmProjects\expense_forecast\activate\Scripts\python.exe" />
+      <option name="SDK_NAME" value="Python 3.10 (expense_forecast)" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/download_and_process_emails.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="main" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="expense_forecast" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -337,6 +280,28 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="parse wifi data" type="PythonConfigurationType" factoryName="Python">
+      <module name="expense_forecast" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="C:\Users\HumeD\PycharmProjects\expense_forecast\activate\Scripts\python.exe" />
+      <option name="SDK_NAME" value="Python 3.10 (expense_forecast)" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/OneDrive/Desktop/network-observations" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$USER_HOME$/OneDrive/Desktop/network-observations/parse_wifi_strength_data_files.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -367,30 +332,6 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="scratch2" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
-      <output_file path="log.txt" />
-      <log_file alias="C:\Users\HumeD\PycharmProjects\expense_forecast" path="$PROJECT_DIR$" />
-      <module name="expense_forecast" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scratch2.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
     <configuration name="scratch3" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="expense_forecast" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -405,6 +346,30 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scratch3.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="scratch4" type="PythonConfigurationType" factoryName="Python">
+      <output_file path="log.txt" />
+      <log_file alias="C:\Users\HumeD\PycharmProjects\expense_forecast" path="$PROJECT_DIR$" />
+      <module name="expense_forecast" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scratch4.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -446,7 +411,9 @@
       <item itemvalue="Python.MemoRule" />
       <item itemvalue="Python.doctest_Account" />
       <item itemvalue="Python.project_utilities" />
-      <item itemvalue="Python.scratch2" />
+      <item itemvalue="Python.scratch4" />
+      <item itemvalue="Python.parse wifi data" />
+      <item itemvalue="Python.download_and_process_emails" />
       <item itemvalue="Python.test_AccountSet" />
     </list>
   </component>
