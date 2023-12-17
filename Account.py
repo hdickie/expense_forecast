@@ -198,7 +198,7 @@ class Account:
         if account_type.lower() in ['prev stmt bal','principal balance','savings']:
             self.interest_type=str(interest_type)
 
-            if self.interest_type not in ['simple','compound']:
+            if self.interest_type.lower() not in ['simple','compound']:
                 exception_value_error_message_string += "Interest type was not simple or compound.\n"
                 exception_value_error_message_string += 'Value was:' + str(interest_type) + "\n"
                 exception_value_error_ind = True
