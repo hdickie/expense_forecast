@@ -365,7 +365,7 @@ class TestAccountSetMethods(unittest.TestCase):
         test_account_set.executeTransaction(Account_From='test checking',Account_To=None,Amount=100.0)
         result_vector = list(test_account_set.getAccounts().iloc[:,1])
         self.assertListEqual(result_vector,[900.0, 1000.0, 500.0, 900.0, 100.0])
-        test_account_set.executeTransaction(Account_From=None, Account_To='test checking', Amount=100.0) # the reverse operation as well
+        test_account_set.executeTransaction(Account_From=None, Account_To='test checking', Amount=100.0,income_flag=True) # the reverse operation as well
         result_vector = list(test_account_set.getAccounts().iloc[:, 1])
         self.assertListEqual(result_vector,initial_state_vector)
 
@@ -373,27 +373,24 @@ class TestAccountSetMethods(unittest.TestCase):
         test_account_set.executeTransaction(Account_From='test credit', Account_To=None, Amount=50.0)
         result_vector = list(test_account_set.getAccounts().iloc[:, 1])
         self.assertListEqual(result_vector, [1000.0, 1050.0, 500.0, 900.0, 100.0])
-        test_account_set.executeTransaction(Account_From=None, Account_To='test credit',
-                                            Amount=50)   # the reverse operation as well
+        test_account_set.executeTransaction(Account_From='test checking', Account_To='test credit',Amount=50)   # paying the credit balance
         result_vector = list(test_account_set.getAccounts().iloc[:, 1])
-        self.assertListEqual(result_vector, [1000.0, 1050.0, 450.0, 900.0, 100.0])
+        self.assertListEqual(result_vector, [950.0, 1050.0, 450.0, 900.0, 100.0])
         test_account_set = copy.deepcopy( test_account_set__bkp )
 
         # credit payment, less than total balance, more than prev stmt balance, curr stmt bal != 0
-        test_account_set.executeTransaction(Account_From=None, Account_To='test credit',Amount=501.0)
-        result_vector = list(test_account_set.getAccounts().iloc[:, 1])
-        self.assertListEqual(result_vector, [1000.0, 999.0, 0.0, 900.0, 100.0])
         test_account_set.executeTransaction(Account_From='test credit', Account_To=None, Amount=501.0)
-        result_vector = list(test_account_set.getAccounts().iloc[:, 1])  # the reverse operation
-        self.assertListEqual(result_vector, [1000.0, 1500.0, 0.0, 900.0, 100.0])
+        result_vector = list(test_account_set.getAccounts().iloc[:, 1])
+        self.assertListEqual(result_vector, [1000.0, 1501.0, 500.0, 900.0, 100.0])
+        test_account_set.executeTransaction(Account_From='test checking', Account_To='test credit',Amount=501.0)
+        result_vector = list(test_account_set.getAccounts().iloc[:, 1])
+        self.assertListEqual(result_vector, [499.0, 1500.0, 0.0, 900.0, 100.0])
         test_account_set = copy.deepcopy(test_account_set__bkp)
 
-        test_account_set.executeTransaction(Account_From=None, Account_To='test loan', Amount=100)
+        test_account_set.executeTransaction(Account_From='test checking', Account_To='test loan', Amount=100)
         result_vector = list(test_account_set.getAccounts().iloc[:, 1])
-        self.assertListEqual(result_vector, [1000, 1000, 500, 900, 0])
-        test_account_set.executeTransaction(Account_From='test loan', Account_To=None, Amount=100)
-        result_vector = list(test_account_set.getAccounts().iloc[:, 1]) #the reverse
-        self.assertListEqual(result_vector, [1000, 1000, 500, 1000, 0])
+        self.assertListEqual(result_vector, [900, 1000, 500, 900, 0])
+
 
 
 

@@ -471,9 +471,12 @@ class AccountSet:
 
         if Account_From is None:
             Account_From = 'None'
+            AF_Account_Type = 'None'
 
         if Account_To is None:
             Account_To = 'None'
+            AT_Account_Type = 'None'
+
         log_in_color('green', 'debug','executeTransaction(Account_From='+Account_From+', Account_To='+Account_To+', Amount='+debug_print_Amount+')')
 
         before_txn_total_available_funds = 0
@@ -521,6 +524,16 @@ class AccountSet:
                     AT_Account_Type = self.accounts[account_to_index].account_type
                 else:
                     raise ValueError #if this happens, then validation in ExpenseForecast constructor failed to catch something
+
+        #at this point, we know account types but haven't changed any balances
+        #if income, one account must be checking, and the other must be none
+        if income_flag and AF_Account_Type == 'checking' and AT_Account_Type == 'None':
+            pass #cool
+        elif income_flag and AF_Account_Type == 'None' and AT_Account_Type == 'checking':
+            pass #cool
+        elif income_flag:
+            #not cool
+            raise ValueError("income_flag was True but did not refer to a checking account or referred to multiple accounts")
 
 
         if Account_From != '' and Account_From != 'None':
@@ -864,7 +877,15 @@ class AccountSet:
                                                'Minimum_Payment': [account.minimum_payment]
                                                })
 
-            all_accounts_df = pd.concat([all_accounts_df, new_account_row_df], axis=0)
+            #old line
+            #all_accounts_df = pd.concat([all_accounts_df, new_account_row_df], axis=0)
+
+            #new line
+            if all_accounts_df.shape[0] == 0:
+                all_accounts_df = new_account_row_df
+            else:
+                all_accounts_df = pd.concat([all_accounts_df, new_account_row_df.astype(all_accounts_df.dtypes)])
+
             all_accounts_df.reset_index(drop=True, inplace=True)
 
         # if there are no accounts, I want to return a data frame with 0 rows
@@ -877,14 +898,14 @@ class AccountSet:
 
         """
 
-        JSON_string = "[\n"
+        JSON_string = "{\n"
         for i in range(0, len(self.accounts)):
             account = self.accounts[i]
             JSON_string += account.toJSON()
             if i + 1 != len(self.accounts):
                 JSON_string += ","
             JSON_string += '\n'
-        JSON_string += ']'
+        JSON_string += '}'
 
         return JSON_string
 
