@@ -60,6 +60,8 @@ class Account:
         | Therefore, the only effect the sign of the amount has is on the value inserted to the Memo line.
 
         | Example of the Account constructor:
+        >>> Account()
+        not correct response
         """
         self.name=name
         self.balance=balance
@@ -306,20 +308,6 @@ class Account:
         JSON_string += "\"Minimum_Payment\":" + "\"" + str(self.minimum_payment) + "\"\n"
         JSON_string += "}"
         return JSON_string
-
-    # def to_html(self):
-    #     return pd.DataFrame({
-    #         'Name': [self.name],
-    #         'Balance': [self.balance],
-    #         'Min Balance': [self.min_balance],
-    #         'Max Balance': [self.max_balance],
-    #         'Account Type': [self.account_type],
-    #         'Billing Start Date': [self.billing_start_date],
-    #         'Interest Type': [self.interest_type],
-    #         'APR': [self.apr],
-    #         'Interest Cadence': [self.interest_cadence],
-    #         'Minimum Payment': [self.minimum_payment]
-    #     }).to_html()
 
     # def fromJSON(self,JSON_string):
     #     pass

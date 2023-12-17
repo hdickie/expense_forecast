@@ -192,8 +192,6 @@ class ForecastHandler:
 
         self.initialized_forecasts = EF_pre_run
 
-
-
     def read_results_from_disk(self):
 
         E_objs = []

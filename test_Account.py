@@ -1,195 +1,163 @@
-import unittest
 import Account
-import doctest
-from nose2.tools import params
+import pytest
 import pandas as pd
 
-class TestAccountMethods(unittest.TestCase):
+class TestAccount:
+
+    @pytest.fixture
+    def checkingAccount(self):
+        return NotImplementedError
+
+    @pytest.fixture
+    def creditCurrStmtBalAccount(self):
+        return NotImplementedError
+
+    @pytest.fixture
+    def creditPrevStmtBalAccount(self):
+        return NotImplementedError
+
+    @pytest.fixture
+    def loanPrincipalBalanceSimpleDailyAccount(self):
+        return NotImplementedError
+
+    @pytest.fixture
+    def loanPrincipalBalanceMonthlyCompoundAccount(self):
+        return NotImplementedError
+
+    @pytest.fixture
+    def loanInterestAccount(self):
+        return NotImplementedError
+
 
     def test_Account_doctests(self):
-        doctest.testmod(Account)
+        raise NotImplementedError
 
-    def test_Account_Constructor(self):
-        self.assertEqual('<class \'Account.Account\'>',str( type(
-            Account.Account(name='test account',
-                            balance=0,
-                            min_balance=0,
-                            max_balance=0,
-                            account_type='checking'
-            )
-        ) ) )
+    @pytest.mark.parametrize("name,balance,min_balance,max_balance,account_type,billing_start_date_YYYYMMDD,interest_type,apr,interest_cadence,minimum_payment,print_debug_messages,raise_exceptions",
+                             [("checking", 0, 0, 0, "Checking", None, None, None, None, None, True, True),
+                              ("cc: prev stmt bal", 0, 0, 0, "prev stmt bal", "20000101", "compound", 0.25, "monthly", 50, True, True),
+                              ("cc: curr stmt bal", 0, 0, 0, "curr stmt bal", None, None, None, None, None, True, True),
+                              ("loan simple daily: principal balance", 0, 0, 0, "principal balance", "20000101", "simple", 0.25, "daily", 50, True, True),
+                              ("loan compound monthly: principal balance", 0, 0, 0, "principal balance", "20000101", "compound", 0.25, "monthly", 50, True, True),
+                              ("loan: interest", 0, 0, 0, "interest", None, None, None, None, 50, True, True),
 
-        # bc duck-typing, we dont check data types, but just make sure that the fields are usable the way we want
-        #Account.Account(name='Test Account')
+                              ])
+    def test_Account_constructor_valid_inputs(self, name,  # no default because it is a required field
+                                                balance,
+                                                min_balance,
+                                                max_balance,
+                                                account_type,  # checking, savings, credit, principal balance, interest
+                                                billing_start_date_YYYYMMDD,
+                                                interest_type,
+                                                apr,
+                                                interest_cadence,
+                                                minimum_payment,
+                                                print_debug_messages,
+                                                raise_exceptions):
+        A = Account.Account(name,
+                            balance,
+                            min_balance,
+                            max_balance,
+                            account_type,
+                            billing_start_date_YYYYMMDD,
+                            interest_type,
+                            apr,
+                            interest_cadence,
+                            minimum_payment,
+                            print_debug_messages,
+                            raise_exceptions)
 
-        # check that the right exceptions are raised
-        with self.assertRaises(TypeError):
-            Account.Account(name='test account',
-                            balance='X',
-                            min_balance=0,
-                            max_balance=0,
-                            account_type='checking',print_debug_messages=False)
-
-        with self.assertRaises(ValueError):
-            Account.Account(name='credit prev stmt bal: test account min payment value error',
-                            balance=0,
-                            min_balance=0,
-                            max_balance=0,
-                            apr=0,
-                            billing_start_date_YYYYMMDD='20000101',
-                            account_type='prev stmt bal',
-                            interest_cadence='monthly',
-                            minimum_payment='X',
-                            print_debug_messages=False)
-
-        with self.assertRaises(ValueError):
-            Account.Account(name='account name missing colon character',
-                            balance=0,
-                            min_balance=0,
-                            max_balance=0,
-                            apr=0,
-                            billing_start_date_YYYYMMDD='20000101',
-                            account_type='prev stmt bal',
-                            interest_cadence='monthly',
-                            minimum_payment=0,
-                            print_debug_messages=False)
-
-        with self.assertRaises(ValueError):
-            Account.Account(name='test account',
-                            balance=0,
-                            min_balance=0,
-                            max_balance=0,
-                            account_type='shmecking', print_debug_messages=False)
-
-        with self.assertRaises(ValueError):
-            Account.Account(name='test account type None',
-                            balance=0,
-                            min_balance=0,
-                            max_balance=0,
-                            account_type=None, print_debug_messages=False)
-
-        with self.assertRaises(ValueError):
-            Account.Account(name='test account type credit',
-                            balance=0,
-                            min_balance=0,
-                            max_balance=0,
-                            account_type='credit', print_debug_messages=False)
-
-        with self.assertRaises(TypeError):
-            Account.Account(name='test account',
-                            balance=0,
-                            min_balance='not a float',
-                            max_balance=0,
-                            account_type='checking', print_debug_messages=False)
-
-        with self.assertRaises(TypeError):
-            Account.Account(name='test account',
-                            balance=0,
-                            min_balance=0,
-                            max_balance='not a float',
-                            account_type='checking', print_debug_messages=False)
-
-        with self.assertRaises(ValueError):
-            Account.Account(name='test account',
-                            balance=0,
-                            min_balance=1,
-                            max_balance=-1,
-                            account_type='checking', print_debug_messages=False)
-
-        with self.assertRaises(ValueError):
-            Account.Account(name='test account',
-                            balance=0,
-                            min_balance=0,
-                            max_balance=0,
-                            account_type='checking',
-                            apr=0.05,
-                            print_debug_messages=False)
-
-        with self.assertRaises(ValueError):
-            Account.Account(name='test account',
-                            balance=0,
-                            min_balance=0,
-                            max_balance=0,
-                            account_type='checking',
-                            billing_start_date_YYYYMMDD='20000101',
-                            print_debug_messages=False)
-
-        with self.assertRaises(ValueError):
-            Account.Account(name='test account',
-                            balance=0,
-                            min_balance=0,
-                            max_balance=0,
-                            account_type='checking',
-                            interest_type='non null value',
-                            print_debug_messages=False)
-
-        with self.assertRaises(ValueError):
-            Account.Account(name='test account',
-                            balance=0,
-                            min_balance=0,
-                            max_balance=0,
-                            account_type='checking',
-                            interest_cadence='non null value',
-                            print_debug_messages=False)
-
-        with self.assertRaises(TypeError):
-            Account.Account(name='test account',
-                            balance=0,
-                            min_balance=0,
-                            max_balance=0,
-                            account_type='savings',
-                            billing_start_date_YYYYMMDD='not a date string',
-                            print_debug_messages=False)
-
-        with self.assertRaises(ValueError):
-            Account.Account(name='test account',
-                            balance=0,
-                            min_balance=0,
-                            max_balance=0,
-                            account_type='curr stmt bal',
-                            minimum_payment=5,
-                            print_debug_messages=False)
-
-        with self.assertRaises(TypeError):
-            Account.Account(name='test account',
-                            balance=0,
-                            min_balance=0,
-                            max_balance=0,
-                            account_type='prev stmt bal',
-                            minimum_payment='not a float',
-                            raise_exceptionse=False) #just for debugging this test
-
-        with self.assertRaises(TypeError):
-            Account.Account(name='test account',
-                            balance=0,
-                            min_balance=0,
-                            max_balance=0,
-                            account_type='savings',
-                            billing_start_date_YYYYMMDD='not a date string',
-                            print_debug_messages=False)
+    def test_Account_str(self):
+        raise NotImplementedError
 
 
-    def test_str(self):
-        self.assertIsNotNone(str(Account.Account(name='test account',
-                            balance=0,
-                            min_balance=0,
-                            max_balance=0,
-                            account_type='checking')))
 
-    def test_repr(self):
-        self.assertIsNotNone(repr(Account.Account(name='test account',
-                            balance=0,
-                            min_balance=0,
-                            max_balance=0,
-                            account_type='checking')))
+    @pytest.mark.parametrize("name,balance,min_balance,max_balance,account_type,billing_start_date_YYYYMMDD,interest_type,apr,interest_cadence,minimum_payment,print_debug_messages,raise_exceptions,expected_exception",
+                             [("N/A- invalid account type", 0,0,0,"shmecking",None,None,None,None,None,True,True,ValueError),
+                              ("checking- bal not castable to numeric (None)", None,0,0,"Checking",None,None,None,None,None,True,True,TypeError),
+                              ("checking- bal not castable to numeric (pd.NA)", pd.NA, 0, 0, "Checking", None, None, None, None, None, True, True, TypeError),
+                              ("checking- bal not castable to numeric (string)", "X", 0, 0, "Checking", None, None, None, None, None, True, True, TypeError),
+                              ("checking- min bal not castable to numeric (None)", 0, None, 0, "Checking", None, None, None, None, None, True, True, TypeError),
+                              ("checking- min bal not castable to numeric (pd.NA)", 0, pd.NA, 0, "Checking", None, None, None, None, None, True, True, TypeError),
+                              ("checking- min bal not castable to numeric (string)", 0, "X", 0, "Checking", None, None, None, None, None, True, True, TypeError),
+                              ("checking- max bal not castable to numeric (None)", 0, 0, None, "Checking", None, None, None, None, None, True, True, TypeError),
+                              ("checking- max bal not castable to numeric (pd.NA)", 0, 0, pd.NA, "Checking", None, None, None, None, None, True, True, TypeError),
+                              ("checking- max bal not castable to numeric (string)", 0, 0, "X", "Checking", None, None, None, None, None, True, True, TypeError),
+                              ("checking- min gt max", 0, 10, 0, "Checking", None, None, None, None, None, True, True, ValueError),
+                              ("checking- max lt 0", 0, -100, -10, "Checking", None, None, None, None, None, True, True, ValueError),
+                              ("checking- billing_start_dt is not None", 0, 0, 0, "Checking", 'not None', None, None, None, None, True, True, ValueError),
+                              ("checking- interest_type is not None", 0, 0, 0, "Checking", None, 'not None', None, None, None, True, True, ValueError),
+                              ("checking- apr is not None", 0, 0, 0, "Checking", None, None, 'not None', None, None, True, True, ValueError),
+                              ("checking- interest_cadence is not None", 0, 0, 0, "Checking", None, None, None, 'not None', None, True, True, ValueError),
+                              ("checking- min_payment is not None", 0, 0, 0, "Checking", None, None, None, None, 'not None', True, True, ValueError),
 
-    def test_toJSON(self):
-        test_account = Account.Account(name='test account',
-                            balance=0,
-                            min_balance=0,
-                            max_balance=0,
-                            account_type='checking')
-        test_account_JSON = test_account.toJSON()
-        test_expectation = """{\n"Name":"test account",\n"Balance":"0.0",\n"Min_Balance":"0.0",\n"Max_Balance":"0.0",\n"Account_Type":"checking",\n"Billing_Start_Date":"None",\n"Interest_Type":"None",\n"APR":"None",\n"Interest_Cadence":"None",\n"Minimum_Payment":"None"\n}"""
-        assert test_account_JSON == test_expectation
+                              ("cc- billing_start_dt not castable to date YYYYMMDD: prev stmt bal ", 0,0,0,"prev stmt bal","1234","compound",0.25,"monthly",50,True,True,TypeError),
+                              ("cc- interest_type is not compound: prev stmt bal ", 0, 0, 0, "prev stmt bal", "20000101", "simple", 0.25, "monthly", 50, True, True, ValueError),
+                              ("cc- apr is not castable to numeric (None): prev stmt bal ", 0, 0, 0, "prev stmt bal", "20000101", "compound", None, "monthly", 50, True, True, TypeError),
+                              ("cc- apr is not castable to numeric (pd.NA): prev stmt bal ", 0, 0, 0, "prev stmt bal", "20000101", "compound", pd.NA, "monthly", 50, True, True, TypeError),
+                              ("cc- apr is not castable to numeric (string): prev stmt bal ", 0, 0, 0, "prev stmt bal", "20000101", "compound", "X", "monthly", 50, True, True, TypeError),
+                              ("cc- apr is lt 0: prev stmt bal ", 0, 0, 0, "prev stmt bal", "20000101", "compound", -0.25, "monthly", 50, True, True, ValueError),
+                              ("cc- interest_cadence is not monthly: prev stmt bal ", 0, 0, 0, "prev stmt bal", "20000101", "compound", -0.25, "daily", 50, True, True, ValueError),
+                              ("cc- min_payment is not castable to numeric (None): prev stmt bal ", 0, 0, 0, "prev stmt bal", "20000101", "compound", 0.25, "monthly", None, True, True, TypeError),
+                              ("cc- min_payment is not castable to numeric (pd.NA): prev stmt bal ", 0, 0, 0, "prev stmt bal", "20000101", "compound", 0.25, "monthly", pd.NA, True, True, TypeError),
+                              ("cc- min_payment is not castable to numeric (string): prev stmt bal ", 0, 0, 0, "prev stmt bal", "20000101", "compound", 0.25, "monthly", "X", True, True, TypeError),
+                              ("cc- min_payment lt 0: prev stmt bal ", 0, 0, 0, "prev stmt bal", "20000101", "compound", 0.25, "monthly", -50, True, True, ValueError),
+
+                              ("cc- billing_start_dt is not None: curr stmt bal ", 0, 0, 0, "prev stmt bal", "not None", "compound", 0.25, "monthly", 50, True, True, TypeError),
+                              ("cc- interest_type is not None: curr stmt bal ", 0, 0, 0, "prev stmt bal", None, "compound", 0.25, "monthly", 50, True, True, TypeError),
+                              ("cc- apr is not None: curr stmt bal ", 0, 0, 0, "prev stmt bal", None, None, 0.25, "monthly", 50, True, True, TypeError),
+                              ("cc- interest_cadence is not None: curr stmt bal ", 0, 0, 0, "prev stmt bal", None, None, None, "monthly", 50, True, True, TypeError),
+                              ("cc- min_payment is not None: curr stmt bal ", 0, 0, 0, "prev stmt bal", None, None, None, None, 50, True, True, TypeError),
+
+                              ("loan- billing_start_dt not castable to date YYYYMMDD: principal balance ", 0, 0, 0, "principal balance", "1234", "compound", 0.25, "monthly", 50, True, True, TypeError),
+                              ("loan- interest_type is not simple or compound: principal balance ", 0, 0, 0, "principal balance", "20000101", "shmimple", 0.25, "monthly", 50, True, True, ValueError),
+                              ("loan- apr is not castable to numeric (None): principal balance ", 0, 0, 0, "principal balance", "20000101", "compound", None, "monthly", 50, True, True, TypeError),
+                              ("loan- apr is not castable to numeric (pd.NA): principal balance ", 0, 0, 0, "principal balance", "20000101", "compound", pd.NA, "monthly", 50, True, True, TypeError),
+                              ("loan- apr is not castable to numeric (string): principal balance ", 0, 0, 0, "principal balance", "20000101", "compound", "X", "monthly", 50, True, True, TypeError),
+                              ("loan- apr is lt 0: principal balance ", 0, 0, 0, "principal balance", "20000101", "compound", -0.25, "monthly", 50, True, True, ValueError),
+                              ("loan- interest_cadence is not daily, monthly or yearly: principal balance ", 0, 0, 0, "principal balance", "20000101", "compound", -0.25, "weekly", 50, True, True, ValueError),
+                              ("loan- min_payment is not castable to numeric (None): principal balance ", 0, 0, 0, "principal balance", "20000101", "compound", 0.25, "monthly", None, True, True, TypeError),
+                              ("loan- min_payment is not castable to numeric (pd.NA): principal balance ", 0, 0, 0, "principal balance", "20000101", "compound", 0.25, "monthly", pd.NA, True, True, TypeError),
+                              ("loan- min_payment is not castable to numeric (string): principal balance ", 0, 0, 0, "principal balance", "20000101", "compound", 0.25, "monthly", "X", True, True, TypeError),
+                              ("loan- min_payment lt 0: principal balance ", 0, 0, 0, "principal balance", "20000101", "compound", 0.25, "monthly", -50, True, True, ValueError),
+
+                              ("loan- billing_start_dt is not None: interest ", 0, 0, 0, "interest", "not None", "compound", 0.25, "monthly", 50, True, True, TypeError),
+                              ("loan- interest_type is not None: interest ", 0, 0, 0, "interest", None, "compound", 0.25, "monthly", 50, True, True, TypeError),
+                              ("loan- apr is not None: interest ", 0, 0, 0, "interest", None, None, 0.25, "monthly", 50, True, True, TypeError),
+                              ("loan- interest_cadence is not None: interest ", 0, 0, 0, "interest", None, None, None, "monthly", 50, True, True, TypeError),
+                              ("loan- min_payment is not None: interest ", 0, 0, 0, "interest", None, None, None, None, 50, True, True, TypeError),
+
+                              ])
+    def test_Account_constructor_invalid_inputs(self,name,
+                 balance,
+                 min_balance,
+                 max_balance,
+                 account_type,
+                 billing_start_date_YYYYMMDD,
+                 interest_type,
+                 apr,
+                 interest_cadence,
+                 minimum_payment,
+                 print_debug_messages,
+                 raise_exceptions,
+                 expected_exception):
+
+        with pytest.raises(expected_exception):
+            A = Account.Account(name,
+                                balance,
+                                min_balance,
+                                max_balance,
+                                account_type,
+                                billing_start_date_YYYYMMDD,
+                                interest_type,
+                                apr,
+                                interest_cadence,
+                                minimum_payment,
+                                print_debug_messages,
+                                raise_exceptions)
+
+    def test_Account_repr(self):
+        raise NotImplementedError
+
+    def test_Account_toJSON(self):
+        raise NotImplementedError
 

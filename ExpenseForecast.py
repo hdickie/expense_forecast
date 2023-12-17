@@ -390,8 +390,8 @@ class ExpenseForecast:
         account_hash = hashlib.sha1(account_set.getAccounts().to_string().encode("utf-8")).hexdigest()
         budget_hash = hashlib.sha1(budget_set.getBudgetItems().to_string().encode("utf-8")).hexdigest()
         memo_hash = hashlib.sha1(memo_rule_set.getMemoRules().to_string().encode("utf-8")).hexdigest()
-        start_date_hash = start_date_YYYYMMDD
-        end_date_hash = end_date_YYYYMMDD
+        start_date_hash = int(start_date_YYYYMMDD)
+        end_date_hash = int(end_date_YYYYMMDD)
 
         #
         # print('HASH CALCULATION:')

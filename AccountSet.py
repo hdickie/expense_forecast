@@ -16,6 +16,7 @@ class AccountSet:
 
         :param list accounts__list: A list of Account objects. Empty list by default. Consistency is checked.
         :raises ValueError: if the combination of input parameters is not valid.
+        :raises ValueError: if the combination of input parameters is not valid.
         :raises Other exception types: if members of input list do not have the methods and attributes of an Account object.
         :rtype: AccountSet
 
