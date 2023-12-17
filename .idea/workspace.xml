@@ -5,35 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="94004e15-030d-4b7e-a7c4-801fddc59fac" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/022439_accounttype_line_plot_plot.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/022439_all_line_plot.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/022439_networth_line_plot.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/051901_accounttype_line_plot_plot.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/051901_all_line_plot.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/051901_networth_line_plot.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/053432_accounttype_line_plot_plot.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/053432_all_line_plot.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/053432_networth_line_plot.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_022439.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_051901.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_053432.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/old_tst_Account.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.coverage" beforeDir="false" afterPath="$PROJECT_DIR$/.coverage" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/codeStyles/codeStyleConfig.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/encodings.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/expense_forecast.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/expense_forecast.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Account.py" beforeDir="false" afterPath="$PROJECT_DIR$/Account.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AccountSet.py" beforeDir="false" afterPath="$PROJECT_DIR$/AccountSet.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ExpenseForecast.py" beforeDir="false" afterPath="$PROJECT_DIR$/ExpenseForecast.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ForecastHandler.py" beforeDir="false" afterPath="$PROJECT_DIR$/ForecastHandler.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out.html" beforeDir="false" afterPath="$PROJECT_DIR$/out.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/parse_wifi_strength_data_files.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_Account.py" beforeDir="false" afterPath="$PROJECT_DIR$/test_Account.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
