@@ -161,6 +161,12 @@ class Account:
         if account_type.lower() in ['prev stmt bal','principal balance','savings']:
             try:
                 self.apr=float(apr)
+
+                if self.apr < 0:
+                    exception_value_error_message_string += 'Account.apr must be greater than zero\n'
+                    exception_value_error_message_string += 'Value was:' + str(apr) + "\n"
+                    exception_value_error_ind = True
+
             except:
                 exception_type_error_message_string += 'failed cast Account.apr to float\n'
                 exception_type_error_message_string += 'Value was:' + str(apr) + "\n"
@@ -191,6 +197,12 @@ class Account:
 
         if account_type.lower() in ['prev stmt bal','principal balance','savings']:
             self.interest_type=str(interest_type)
+
+            if self.interest_type not in ['simple','compound']:
+                exception_value_error_message_string += "Interest type was not simple or compound.\n"
+                exception_value_error_message_string += 'Value was:' + str(interest_type) + "\n"
+                exception_value_error_ind = True
+
         else:
             if interest_type is not None and interest_type != 'None':
                 exception_value_error_message_string += "For types other than prev stmt bal, principal balance, or savings, Account.interest_type should be None.\n"
@@ -246,10 +258,16 @@ class Account:
         if account_type.lower() in ['prev stmt bal','principal balance']:
             try:
                 self.minimum_payment=float(minimum_payment)
+
+                if self.minimum_payment < 0:
+                    exception_value_error_message_string += 'Account.minimum_payment must be greater than zero\n'
+                    exception_value_error_message_string += 'Value was:' + str(minimum_payment) + "\n"
+                    exception_value_error_ind = True
+
             except:
-                exception_value_error_message_string += 'failed cast Account.minimum_payment to float\n'
-                exception_value_error_message_string += 'Value was:' + str(minimum_payment) + "\n"
-                exception_value_error_ind=True
+                exception_type_error_message_string += 'failed cast Account.minimum_payment to float\n'
+                exception_type_error_message_string += 'Value was:' + str(minimum_payment) + "\n"
+                exception_type_error_ind=True
         else:
             if minimum_payment != 'None':
                 if minimum_payment is not None:

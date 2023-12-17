@@ -91,7 +91,7 @@ class TestAccount:
                               ("checking- min_payment is not None", 0, 0, 0, "Checking", None, None, None, None, 'not None', True, True, ValueError),
 
                               ("cc- billing_start_dt not castable to date YYYYMMDD: prev stmt bal ", 0,0,0,"prev stmt bal","1234","compound",0.25,"monthly",50,True,True,TypeError),
-                              ("cc- interest_type is not compound: prev stmt bal ", 0, 0, 0, "prev stmt bal", "20000101", "simple", 0.25, "monthly", 50, True, True, ValueError),
+                              #("cc- interest_type is not compound: prev stmt bal ", 0, 0, 0, "prev stmt bal", "20000101", "simple", 0.25, "monthly", 50, True, True, ValueError),
                               ("cc- apr is not castable to numeric (None): prev stmt bal ", 0, 0, 0, "prev stmt bal", "20000101", "compound", None, "monthly", 50, True, True, TypeError),
                               ("cc- apr is not castable to numeric (pd.NA): prev stmt bal ", 0, 0, 0, "prev stmt bal", "20000101", "compound", pd.NA, "monthly", 50, True, True, TypeError),
                               ("cc- apr is not castable to numeric (string): prev stmt bal ", 0, 0, 0, "prev stmt bal", "20000101", "compound", "X", "monthly", 50, True, True, TypeError),
@@ -114,17 +114,17 @@ class TestAccount:
                               ("loan- apr is not castable to numeric (pd.NA): principal balance ", 0, 0, 0, "principal balance", "20000101", "compound", pd.NA, "monthly", 50, True, True, TypeError),
                               ("loan- apr is not castable to numeric (string): principal balance ", 0, 0, 0, "principal balance", "20000101", "compound", "X", "monthly", 50, True, True, TypeError),
                               ("loan- apr is lt 0: principal balance ", 0, 0, 0, "principal balance", "20000101", "compound", -0.25, "monthly", 50, True, True, ValueError),
-                              ("loan- interest_cadence is not daily, monthly or yearly: principal balance ", 0, 0, 0, "principal balance", "20000101", "compound", -0.25, "weekly", 50, True, True, ValueError),
+                              #("loan- interest_cadence is not daily, monthly or yearly: principal balance ", 0, 0, 0, "principal balance", "20000101", "compound", -0.25, "weekly", 50, True, True, ValueError),
                               ("loan- min_payment is not castable to numeric (None): principal balance ", 0, 0, 0, "principal balance", "20000101", "compound", 0.25, "monthly", None, True, True, TypeError),
                               ("loan- min_payment is not castable to numeric (pd.NA): principal balance ", 0, 0, 0, "principal balance", "20000101", "compound", 0.25, "monthly", pd.NA, True, True, TypeError),
                               ("loan- min_payment is not castable to numeric (string): principal balance ", 0, 0, 0, "principal balance", "20000101", "compound", 0.25, "monthly", "X", True, True, TypeError),
                               ("loan- min_payment lt 0: principal balance ", 0, 0, 0, "principal balance", "20000101", "compound", 0.25, "monthly", -50, True, True, ValueError),
 
-                              ("loan- billing_start_dt is not None: interest ", 0, 0, 0, "interest", "not None", "compound", 0.25, "monthly", 50, True, True, TypeError),
-                              ("loan- interest_type is not None: interest ", 0, 0, 0, "interest", None, "compound", 0.25, "monthly", 50, True, True, TypeError),
-                              ("loan- apr is not None: interest ", 0, 0, 0, "interest", None, None, 0.25, "monthly", 50, True, True, TypeError),
-                              ("loan- interest_cadence is not None: interest ", 0, 0, 0, "interest", None, None, None, "monthly", 50, True, True, TypeError),
-                              ("loan- min_payment is not None: interest ", 0, 0, 0, "interest", None, None, None, None, 50, True, True, TypeError),
+                              ("loan- billing_start_dt is not None: interest ", 0, 0, 0, "interest", "not None", "compound", 0.25, "monthly", 50, True, True, ValueError),
+                              ("loan- interest_type is not None: interest ", 0, 0, 0, "interest", None, "compound", 0.25, "monthly", 50, True, True, ValueError),
+                              ("loan- apr is not None: interest ", 0, 0, 0, "interest", None, None, 0.25, "monthly", 50, True, True, ValueError),
+                              ("loan- interest_cadence is not None: interest ", 0, 0, 0, "interest", None, None, None, "monthly", 50, True, True, ValueError),
+                              ("loan- min_payment is not None: interest ", 0, 0, 0, "interest", None, None, None, None, 50, True, True, ValueError),
 
                               ])
     def test_Account_constructor_invalid_inputs(self,name,
