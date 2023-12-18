@@ -96,17 +96,17 @@ def initialize_from_json_file(path_to_json):
     for Account__dict in initial_account_set:
 
         if Account__dict['Account_Type'].lower() == 'checking':
-            A.addAccount(Account__dict['Name'],
-                         Account__dict['Balance'],
-                         Account__dict['Min_Balance'],
-                         Account__dict['Max_Balance'],
-                         Account__dict['Account_Type'],
-                         Account__dict['Billing_Start_Date'],
-                         Account__dict['Interest_Type'],
-                         Account__dict['APR'],
-                         Account__dict['Interest_Cadence'],
-                         Account__dict['Minimum_Payment']
-                         )
+            A.createAccount(Account__dict['Name'],
+                            Account__dict['Balance'],
+                            Account__dict['Min_Balance'],
+                            Account__dict['Max_Balance'],
+                            Account__dict['Account_Type'],
+                            Account__dict['Billing_Start_Date'],
+                            Account__dict['Interest_Type'],
+                            Account__dict['APR'],
+                            Account__dict['Interest_Cadence'],
+                            Account__dict['Minimum_Payment']
+                            )
 
         elif Account__dict['Account_Type'].lower() == 'curr stmt bal':
             credit_acct_name = Account__dict['Name'].split(':')[0]
@@ -115,18 +115,18 @@ def initialize_from_json_file(path_to_json):
         elif Account__dict['Account_Type'].lower() == 'prev stmt bal':
 
             #first curr then prev
-            A.addAccount(name=credit_acct_name,
-                         balance=credit_curr_bal,
-                         min_balance=Account__dict['Min_Balance'],
-                         max_balance=Account__dict['Max_Balance'],
-                         account_type="credit",
-                         billing_start_date_YYYYMMDD=Account__dict['Billing_Start_Date'],
-                         interest_type=Account__dict['Interest_Type'],
-                         apr=Account__dict['APR'],
-                         interest_cadence=Account__dict['Interest_Cadence'],
-                         minimum_payment=Account__dict['Minimum_Payment'],
-                         previous_statement_balance=Account__dict['Balance']
-                         )
+            A.createAccount(name=credit_acct_name,
+                            balance=credit_curr_bal,
+                            min_balance=Account__dict['Min_Balance'],
+                            max_balance=Account__dict['Max_Balance'],
+                            account_type="credit",
+                            billing_start_date_YYYYMMDD=Account__dict['Billing_Start_Date'],
+                            interest_type=Account__dict['Interest_Type'],
+                            apr=Account__dict['APR'],
+                            interest_cadence=Account__dict['Interest_Cadence'],
+                            minimum_payment=Account__dict['Minimum_Payment'],
+                            previous_statement_balance=Account__dict['Balance']
+                            )
 
             del credit_acct_name
             del credit_curr_bal
@@ -144,19 +144,19 @@ def initialize_from_json_file(path_to_json):
 
             #principal balance then interest
 
-            A.addAccount(name=loan_acct_name,
-                         balance=float(loan_balance) + float(Account__dict['Balance']),
-                         min_balance=Account__dict['Min_Balance'],
-                         max_balance=Account__dict['Max_Balance'],
-                         account_type="loan",
-                         billing_start_date_YYYYMMDD=loan_billing_start_date,
-                         interest_type=Account__dict['Interest_Type'],
-                         apr=loan_apr,
-                         interest_cadence=loan_interest_cadence,
-                         minimum_payment=loan_min_payment,
-                         principal_balance=loan_balance,
-                         accrued_interest=Account__dict['Balance']
-                         )
+            A.createAccount(name=loan_acct_name,
+                            balance=float(loan_balance) + float(Account__dict['Balance']),
+                            min_balance=Account__dict['Min_Balance'],
+                            max_balance=Account__dict['Max_Balance'],
+                            account_type="loan",
+                            billing_start_date_YYYYMMDD=loan_billing_start_date,
+                            interest_type=Account__dict['Interest_Type'],
+                            apr=loan_apr,
+                            interest_cadence=loan_interest_cadence,
+                            minimum_payment=loan_min_payment,
+                            principal_balance=loan_balance,
+                            accrued_interest=Account__dict['Balance']
+                            )
 
             del loan_acct_name
             del loan_balance

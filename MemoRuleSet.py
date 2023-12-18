@@ -5,7 +5,7 @@ from log_methods import log_in_color
 
 class MemoRuleSet:
 
-    def __init__(self,memo_rules__list=[]):
+    def __init__(self,memo_rules__list):
         """
         Create a <MemoRuleSet> from a <list> of <MemoRule> objects.
 

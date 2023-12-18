@@ -189,7 +189,7 @@ class TestAccountMethods(unittest.TestCase):
                             min_balance=0,
                             max_balance=0,
                             account_type='checking')
-        test_account_JSON = test_account.toJSON()
+        test_account_JSON = test_account.to_json()
         test_expectation = """{\n"Name":"test account",\n"Balance":"0.0",\n"Min_Balance":"0.0",\n"Max_Balance":"0.0",\n"Account_Type":"checking",\n"Billing_Start_Date":"None",\n"Interest_Type":"None",\n"APR":"None",\n"Interest_Cadence":"None",\n"Minimum_Payment":"None"\n}"""
         assert test_account_JSON == test_expectation
 

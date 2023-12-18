@@ -17,11 +17,11 @@ if __name__ == '__main__':
 
     milestone_set = MilestoneSet.MilestoneSet(account_set,budget_set,[],[],[])
 
-    account_set.addAccount(name='Checking',
-                           balance=5000,
-                           min_balance=0,
-                           max_balance=float('Inf'),
-                           account_type="checking")
+    account_set.createAccount(name='Checking',
+                              balance=5000,
+                              min_balance=0,
+                              max_balance=float('Inf'),
+                              account_type="checking")
 
     budget_set.addBudgetItem(start_date_YYYYMMDD=start_date_YYYYMMDD, end_date_YYYYMMDD=end_date_YYYYMMDD, priority=1,
                              cadence='daily', amount=20, memo='food',

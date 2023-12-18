@@ -44,7 +44,7 @@ def generate_date_sequence(start_date_YYYYMMDD, num_days, cadence):
 
 class BudgetSet:
 
-    def __init__(self,budget_items__list=[]):
+    def __init__(self,budget_items__list):
         """
         Add a budget_item to self.budget_items. Input validation is performed.
 

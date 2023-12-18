@@ -405,7 +405,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
         with self.assertRaises(ValueError): #F2
             ExpenseForecast.ExpenseForecast(account_set, budget_set, memo_rule_set, start_date_YYYYMMDD, end_date_YYYYMMDD)
 
-        account_set.addAccount(name='checking', balance=0, min_balance=0, max_balance=0, account_type="checking" )
+        account_set.createAccount(name='checking', balance=0, min_balance=0, max_balance=0, account_type="checking")
 
         with self.assertRaises(ValueError): #F3
             budget_set.addBudgetItem(start_date_YYYYMMDD='20000101',
@@ -500,26 +500,26 @@ class TestExpenseForecastMethods(unittest.TestCase):
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
 
-        account_set.addAccount(name='Checking',
-                               balance=0,
-                               min_balance=0,
-                               max_balance=float('Inf'),
-                               account_type="checking")
+        account_set.createAccount(name='Checking',
+                                  balance=0,
+                                  min_balance=0,
+                                  max_balance=float('Inf'),
+                                  account_type="checking")
 
-        account_set.addAccount(name='Credit',
-                               balance=0,
-                               min_balance=0,
-                               max_balance=20000,
-                               account_type="credit",
-                               billing_start_date_YYYYMMDD='20000102',
-                               interest_type='Compound',
-                               apr=0.05,
-                               interest_cadence='Monthly',
-                               minimum_payment=40,
-                               previous_statement_balance=0,
-                               principal_balance=None,
-                               accrued_interest=None
-                               )
+        account_set.createAccount(name='Credit',
+                                  balance=0,
+                                  min_balance=0,
+                                  max_balance=20000,
+                                  account_type="credit",
+                                  billing_start_date_YYYYMMDD='20000102',
+                                  interest_type='Compound',
+                                  apr=0.05,
+                                  interest_cadence='Monthly',
+                                  minimum_payment=40,
+                                  previous_statement_balance=0,
+                                  principal_balance=None,
+                                  accrued_interest=None
+                                  )
 
         memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1)
 
@@ -550,26 +550,26 @@ class TestExpenseForecastMethods(unittest.TestCase):
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
 
-        account_set.addAccount(name='Checking',
-                               balance=0,
-                               min_balance=0,
-                               max_balance=float('Inf'),
-                               account_type="checking")
+        account_set.createAccount(name='Checking',
+                                  balance=0,
+                                  min_balance=0,
+                                  max_balance=float('Inf'),
+                                  account_type="checking")
 
-        account_set.addAccount(name='Credit',
-                               balance=0,
-                               min_balance=0,
-                               max_balance=20000,
-                               account_type="credit",
-                               billing_start_date_YYYYMMDD='20000102',
-                               interest_type='Compound',
-                               apr=0.05,
-                               interest_cadence='Monthly',
-                               minimum_payment=40,
-                               previous_statement_balance=0,
-                               principal_balance=None,
-                               accrued_interest=None
-                               )
+        account_set.createAccount(name='Credit',
+                                  balance=0,
+                                  min_balance=0,
+                                  max_balance=20000,
+                                  account_type="credit",
+                                  billing_start_date_YYYYMMDD='20000102',
+                                  interest_type='Compound',
+                                  apr=0.05,
+                                  interest_cadence='Monthly',
+                                  minimum_payment=40,
+                                  previous_statement_balance=0,
+                                  principal_balance=None,
+                                  accrued_interest=None
+                                  )
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=1,
                                  cadence='once', amount=100, memo='test item',
@@ -610,26 +610,26 @@ class TestExpenseForecastMethods(unittest.TestCase):
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
 
-        account_set.addAccount(name='Checking',
-                                   balance=2000,
-                                   min_balance=0,
-                                   max_balance=float('Inf'),
-                                   account_type="checking")
+        account_set.createAccount(name='Checking',
+                                  balance=2000,
+                                  min_balance=0,
+                                  max_balance=float('Inf'),
+                                  account_type="checking")
 
-        account_set.addAccount(name='Credit',
-                                   balance=0,
-                                   min_balance=0,
-                                   max_balance=20000,
-                                   account_type="credit",
-                                   billing_start_date_YYYYMMDD='20000102',
-                                   interest_type='Compound',
-                                   apr=0.05,
-                                   interest_cadence='Monthly',
-                                   minimum_payment=40,
-                                   previous_statement_balance=25,
-                                   principal_balance=None,
-                                   accrued_interest=None
-                                   )
+        account_set.createAccount(name='Credit',
+                                  balance=0,
+                                  min_balance=0,
+                                  max_balance=20000,
+                                  account_type="credit",
+                                  billing_start_date_YYYYMMDD='20000102',
+                                  interest_type='Compound',
+                                  apr=0.05,
+                                  interest_cadence='Monthly',
+                                  minimum_payment=40,
+                                  previous_statement_balance=25,
+                                  principal_balance=None,
+                                  accrued_interest=None
+                                  )
 
         memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1)
 
@@ -661,26 +661,26 @@ class TestExpenseForecastMethods(unittest.TestCase):
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
 
-        account_set.addAccount(name='Checking',
-                               balance=2000,
-                               min_balance=0,
-                               max_balance=float('Inf'),
-                               account_type="checking")
+        account_set.createAccount(name='Checking',
+                                  balance=2000,
+                                  min_balance=0,
+                                  max_balance=float('Inf'),
+                                  account_type="checking")
 
-        account_set.addAccount(name='Credit',
-                               balance=0,
-                               min_balance=0,
-                               max_balance=20000,
-                               account_type="credit",
-                               billing_start_date_YYYYMMDD='20000102',
-                               interest_type='Compound',
-                               apr=0.05,
-                               interest_cadence='Monthly',
-                               minimum_payment=40,
-                               previous_statement_balance=1000,
-                               principal_balance=None,
-                               accrued_interest=None
-                               )
+        account_set.createAccount(name='Credit',
+                                  balance=0,
+                                  min_balance=0,
+                                  max_balance=20000,
+                                  account_type="credit",
+                                  billing_start_date_YYYYMMDD='20000102',
+                                  interest_type='Compound',
+                                  apr=0.05,
+                                  interest_cadence='Monthly',
+                                  minimum_payment=40,
+                                  previous_statement_balance=1000,
+                                  principal_balance=None,
+                                  accrued_interest=None
+                                  )
 
         memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1)
 
@@ -711,26 +711,26 @@ class TestExpenseForecastMethods(unittest.TestCase):
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
 
-        account_set.addAccount(name='Checking',
-                               balance=2000,
-                               min_balance=0,
-                               max_balance=float('Inf'),
-                               account_type="checking")
+        account_set.createAccount(name='Checking',
+                                  balance=2000,
+                                  min_balance=0,
+                                  max_balance=float('Inf'),
+                                  account_type="checking")
 
-        account_set.addAccount(name='Credit',
-                               balance=0,
-                               min_balance=0,
-                               max_balance=20000,
-                               account_type="credit",
-                               billing_start_date_YYYYMMDD='20000102',
-                               interest_type='Compound',
-                               apr=0.05,
-                               interest_cadence='Monthly',
-                               minimum_payment=40,
-                               previous_statement_balance=3000,
-                               principal_balance=None,
-                               accrued_interest=None
-                               )
+        account_set.createAccount(name='Credit',
+                                  balance=0,
+                                  min_balance=0,
+                                  max_balance=20000,
+                                  account_type="credit",
+                                  billing_start_date_YYYYMMDD='20000102',
+                                  interest_type='Compound',
+                                  apr=0.05,
+                                  interest_cadence='Monthly',
+                                  minimum_payment=40,
+                                  previous_statement_balance=3000,
+                                  principal_balance=None,
+                                  accrued_interest=None
+                                  )
 
         memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1)
 
@@ -761,26 +761,26 @@ class TestExpenseForecastMethods(unittest.TestCase):
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
 
-        account_set.addAccount(name='Checking',
-                               balance=0,
-                               min_balance=0,
-                               max_balance=float('Inf'),
-                               account_type="checking")
+        account_set.createAccount(name='Checking',
+                                  balance=0,
+                                  min_balance=0,
+                                  max_balance=float('Inf'),
+                                  account_type="checking")
 
-        account_set.addAccount(name='Credit',
-                               balance=0,
-                               min_balance=0,
-                               max_balance=20000,
-                               account_type="credit",
-                               billing_start_date_YYYYMMDD='20000102',
-                               interest_type='Compound',
-                               apr=0.05,
-                               interest_cadence='Monthly',
-                               minimum_payment=40,
-                               previous_statement_balance=0,
-                               principal_balance=None,
-                               accrued_interest=None
-                               )
+        account_set.createAccount(name='Credit',
+                                  balance=0,
+                                  min_balance=0,
+                                  max_balance=20000,
+                                  account_type="credit",
+                                  billing_start_date_YYYYMMDD='20000102',
+                                  interest_type='Compound',
+                                  apr=0.05,
+                                  interest_cadence='Monthly',
+                                  minimum_payment=40,
+                                  previous_statement_balance=0,
+                                  principal_balance=None,
+                                  accrued_interest=None
+                                  )
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=2,
                                  cadence='once', amount=10, memo='this should be skipped',
@@ -820,26 +820,26 @@ class TestExpenseForecastMethods(unittest.TestCase):
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
 
-        account_set.addAccount(name='Checking',
-                               balance=0,
-                               min_balance=0,
-                               max_balance=float('Inf'),
-                               account_type="checking")
+        account_set.createAccount(name='Checking',
+                                  balance=0,
+                                  min_balance=0,
+                                  max_balance=float('Inf'),
+                                  account_type="checking")
 
-        account_set.addAccount(name='Credit',
-                               balance=0,
-                               min_balance=0,
-                               max_balance=20000,
-                               account_type="credit",
-                               billing_start_date_YYYYMMDD='20000102',
-                               interest_type='Compound',
-                               apr=0.05,
-                               interest_cadence='Monthly',
-                               minimum_payment=40,
-                               previous_statement_balance=0,
-                               principal_balance=None,
-                               accrued_interest=None
-                               )
+        account_set.createAccount(name='Credit',
+                                  balance=0,
+                                  min_balance=0,
+                                  max_balance=20000,
+                                  account_type="credit",
+                                  billing_start_date_YYYYMMDD='20000102',
+                                  interest_type='Compound',
+                                  apr=0.05,
+                                  interest_cadence='Monthly',
+                                  minimum_payment=40,
+                                  previous_statement_balance=0,
+                                  principal_balance=None,
+                                  accrued_interest=None
+                                  )
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=3,
                                  cadence='once', amount=10, memo='this should be deferred',
@@ -880,26 +880,26 @@ class TestExpenseForecastMethods(unittest.TestCase):
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
 
-        account_set.addAccount(name='Checking',
-                               balance=100,
-                               min_balance=0,
-                               max_balance=float('Inf'),
-                               account_type="checking")
+        account_set.createAccount(name='Checking',
+                                  balance=100,
+                                  min_balance=0,
+                                  max_balance=float('Inf'),
+                                  account_type="checking")
 
-        account_set.addAccount(name='Credit',
-                               balance=0,
-                               min_balance=0,
-                               max_balance=20000,
-                               account_type="credit",
-                               billing_start_date_YYYYMMDD='20000102',
-                               interest_type='Compound',
-                               apr=0.05,
-                               interest_cadence='Monthly',
-                               minimum_payment=40,
-                               previous_statement_balance=0,
-                               principal_balance=None,
-                               accrued_interest=None
-                               )
+        account_set.createAccount(name='Credit',
+                                  balance=0,
+                                  min_balance=0,
+                                  max_balance=20000,
+                                  account_type="credit",
+                                  billing_start_date_YYYYMMDD='20000102',
+                                  interest_type='Compound',
+                                  apr=0.05,
+                                  interest_cadence='Monthly',
+                                  minimum_payment=40,
+                                  previous_statement_balance=0,
+                                  principal_balance=None,
+                                  accrued_interest=None
+                                  )
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=2,
                                  cadence='once', amount=100, memo='this should be executed',
@@ -944,11 +944,11 @@ class TestExpenseForecastMethods(unittest.TestCase):
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
 
-        account_set.addAccount(name='Checking',
-                               balance=100,
-                               min_balance=0,
-                               max_balance=float('Inf'),
-                               account_type="checking")
+        account_set.createAccount(name='Checking',
+                                  balance=100,
+                                  min_balance=0,
+                                  max_balance=float('Inf'),
+                                  account_type="checking")
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=2,
                                  cadence='once', amount=100, memo='this should be executed',
@@ -1005,26 +1005,26 @@ class TestExpenseForecastMethods(unittest.TestCase):
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
 
-        account_set.addAccount(name='Checking',
-                               balance=0,
-                               min_balance=0,
-                               max_balance=float('Inf'),
-                               account_type="checking")
+        account_set.createAccount(name='Checking',
+                                  balance=0,
+                                  min_balance=0,
+                                  max_balance=float('Inf'),
+                                  account_type="checking")
 
-        account_set.addAccount(name='Credit',
-                               balance=0,
-                               min_balance=0,
-                               max_balance=20000,
-                               account_type="credit",
-                               billing_start_date_YYYYMMDD='20000102',
-                               interest_type='Compound',
-                               apr=0.05,
-                               interest_cadence='Monthly',
-                               minimum_payment=40,
-                               previous_statement_balance=0,
-                               principal_balance=None,
-                               accrued_interest=None
-                               )
+        account_set.createAccount(name='Credit',
+                                  balance=0,
+                                  min_balance=0,
+                                  max_balance=20000,
+                                  account_type="credit",
+                                  billing_start_date_YYYYMMDD='20000102',
+                                  interest_type='Compound',
+                                  apr=0.05,
+                                  interest_cadence='Monthly',
+                                  minimum_payment=40,
+                                  previous_statement_balance=0,
+                                  principal_balance=None,
+                                  accrued_interest=None
+                                  )
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=4,
                                  cadence='once', amount=100, memo='additional credit card payment',
@@ -1063,26 +1063,26 @@ class TestExpenseForecastMethods(unittest.TestCase):
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
 
 
-        account_set.addAccount(name='Checking',
-                               balance=2000,
-                               min_balance=0,
-                               max_balance=float('Inf'),
-                               account_type="checking")
+        account_set.createAccount(name='Checking',
+                                  balance=2000,
+                                  min_balance=0,
+                                  max_balance=float('Inf'),
+                                  account_type="checking")
 
-        account_set.addAccount(name='Credit',
-                               balance=0,
-                               min_balance=0,
-                               max_balance=20000,
-                               account_type="credit",
-                               billing_start_date_YYYYMMDD='20000102',
-                               interest_type='Compound',
-                               apr=0.05,
-                               interest_cadence='Monthly',
-                               minimum_payment=40,
-                               previous_statement_balance=0,
-                               principal_balance=None,
-                               accrued_interest=None
-                               )
+        account_set.createAccount(name='Credit',
+                                  balance=0,
+                                  min_balance=0,
+                                  max_balance=20000,
+                                  account_type="credit",
+                                  billing_start_date_YYYYMMDD='20000102',
+                                  interest_type='Compound',
+                                  apr=0.05,
+                                  interest_cadence='Monthly',
+                                  minimum_payment=40,
+                                  previous_statement_balance=0,
+                                  principal_balance=None,
+                                  accrued_interest=None
+                                  )
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=4,
                                  cadence='once', amount=100, memo='this should be skipped',
@@ -1123,26 +1123,26 @@ class TestExpenseForecastMethods(unittest.TestCase):
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
 
-        account_set.addAccount(name='Checking',
-                               balance=2000,
-                               min_balance=0,
-                               max_balance=float('Inf'),
-                               account_type="checking")
+        account_set.createAccount(name='Checking',
+                                  balance=2000,
+                                  min_balance=0,
+                                  max_balance=float('Inf'),
+                                  account_type="checking")
 
-        account_set.addAccount(name='Credit',
-                               balance=500,
-                               min_balance=0,
-                               max_balance=20000,
-                               account_type="credit",
-                               billing_start_date_YYYYMMDD='20000112',
-                               interest_type='Compound',
-                               apr=0.05,
-                               interest_cadence='Monthly',
-                               minimum_payment=40,
-                               previous_statement_balance=500,
-                               principal_balance=None,
-                               accrued_interest=None
-                               )
+        account_set.createAccount(name='Credit',
+                                  balance=500,
+                                  min_balance=0,
+                                  max_balance=20000,
+                                  account_type="credit",
+                                  billing_start_date_YYYYMMDD='20000112',
+                                  interest_type='Compound',
+                                  apr=0.05,
+                                  interest_cadence='Monthly',
+                                  minimum_payment=40,
+                                  previous_statement_balance=500,
+                                  principal_balance=None,
+                                  accrued_interest=None
+                                  )
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=4,
                                  cadence='once', amount=800, memo='test pay all prev part of curr',
@@ -1180,26 +1180,26 @@ class TestExpenseForecastMethods(unittest.TestCase):
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
 
 
-        account_set.addAccount(name='Checking',
-                               balance=200,
-                               min_balance=0,
-                               max_balance=float('Inf'),
-                               account_type="checking")
+        account_set.createAccount(name='Checking',
+                                  balance=200,
+                                  min_balance=0,
+                                  max_balance=float('Inf'),
+                                  account_type="checking")
 
-        account_set.addAccount(name='Credit',
-                               balance=500,
-                               min_balance=0,
-                               max_balance=20000,
-                               account_type="credit",
-                               billing_start_date_YYYYMMDD='20000112',
-                               interest_type='Compound',
-                               apr=0.05,
-                               interest_cadence='Monthly',
-                               minimum_payment=40,
-                               previous_statement_balance=500,
-                               principal_balance=None,
-                               accrued_interest=None
-                               )
+        account_set.createAccount(name='Credit',
+                                  balance=500,
+                                  min_balance=0,
+                                  max_balance=20000,
+                                  account_type="credit",
+                                  billing_start_date_YYYYMMDD='20000112',
+                                  interest_type='Compound',
+                                  apr=0.05,
+                                  interest_cadence='Monthly',
+                                  minimum_payment=40,
+                                  previous_statement_balance=500,
+                                  principal_balance=None,
+                                  accrued_interest=None
+                                  )
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=4,
                                  cadence='once', amount=200, memo='additional cc payment test',deferrable=False,
@@ -1237,26 +1237,26 @@ class TestExpenseForecastMethods(unittest.TestCase):
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
 
-        account_set.addAccount(name='Checking',
-                               balance=40,
-                               min_balance=0,
-                               max_balance=float('Inf'),
-                               account_type="checking")
+        account_set.createAccount(name='Checking',
+                                  balance=40,
+                                  min_balance=0,
+                                  max_balance=float('Inf'),
+                                  account_type="checking")
 
-        account_set.addAccount(name='Credit',
-                               balance=500,
-                               min_balance=0,
-                               max_balance=20000,
-                               account_type="credit",
-                               billing_start_date_YYYYMMDD='20000102',
-                               interest_type='Compound',
-                               apr=0.05,
-                               interest_cadence='Monthly',
-                               minimum_payment=40,
-                               previous_statement_balance=500,
-                               principal_balance=None,
-                               accrued_interest=None
-                               )
+        account_set.createAccount(name='Credit',
+                                  balance=500,
+                                  min_balance=0,
+                                  max_balance=20000,
+                                  account_type="credit",
+                                  billing_start_date_YYYYMMDD='20000102',
+                                  interest_type='Compound',
+                                  apr=0.05,
+                                  interest_cadence='Monthly',
+                                  minimum_payment=40,
+                                  previous_statement_balance=500,
+                                  principal_balance=None,
+                                  accrued_interest=None
+                                  )
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=4,
                                  cadence='once', amount=100, memo='additional cc payment test 9',deferrable=False,
@@ -1299,26 +1299,26 @@ class TestExpenseForecastMethods(unittest.TestCase):
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
 
-        account_set.addAccount(name='Checking',
-                               balance=1000,
-                               min_balance=0,
-                               max_balance=float('Inf'),
-                               account_type="checking")
+        account_set.createAccount(name='Checking',
+                                  balance=1000,
+                                  min_balance=0,
+                                  max_balance=float('Inf'),
+                                  account_type="checking")
 
-        account_set.addAccount(name='Credit',
-                               balance=1500,
-                               min_balance=0,
-                               max_balance=20000,
-                               account_type="credit",
-                               billing_start_date_YYYYMMDD='20000112',
-                               interest_type='Compound',
-                               apr=0.05,
-                               interest_cadence='Monthly',
-                               minimum_payment=40,
-                               previous_statement_balance=500,
-                               principal_balance=None,
-                               accrued_interest=None
-                               )
+        account_set.createAccount(name='Credit',
+                                  balance=1500,
+                                  min_balance=0,
+                                  max_balance=20000,
+                                  account_type="credit",
+                                  billing_start_date_YYYYMMDD='20000112',
+                                  interest_type='Compound',
+                                  apr=0.05,
+                                  interest_cadence='Monthly',
+                                  minimum_payment=40,
+                                  previous_statement_balance=500,
+                                  principal_balance=None,
+                                  accrued_interest=None
+                                  )
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=4,
                                  cadence='once', amount=20000, memo='partial cc payment',
@@ -1415,11 +1415,11 @@ class TestExpenseForecastMethods(unittest.TestCase):
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
 
-        account_set.addAccount(name='Checking',
-                               balance=500,
-                               min_balance=0,
-                               max_balance=float('Inf'),
-                               account_type="checking")
+        account_set.createAccount(name='Checking',
+                                  balance=500,
+                                  min_balance=0,
+                                  max_balance=float('Inf'),
+                                  account_type="checking")
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000104', priority=1,
                                  cadence='daily', amount=100, memo='SPEND daily p1 txn',
@@ -1483,11 +1483,11 @@ class TestExpenseForecastMethods(unittest.TestCase):
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
 
-        account_set.addAccount(name='Checking',
-                               balance=400,
-                               min_balance=0,
-                               max_balance=float('Inf'),
-                               account_type="checking")
+        account_set.createAccount(name='Checking',
+                                  balance=400,
+                                  min_balance=0,
+                                  max_balance=float('Inf'),
+                                  account_type="checking")
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000104', end_date_YYYYMMDD='20000104', priority=2,
                                  cadence='once', amount=200, memo='pay 200 after reduced amt txn',
@@ -1540,11 +1540,11 @@ class TestExpenseForecastMethods(unittest.TestCase):
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
 
-        account_set.addAccount(name='Checking',
-                               balance=2000,
-                               min_balance=0,
-                               max_balance=float('Inf'),
-                               account_type="checking")
+        account_set.createAccount(name='Checking',
+                                  balance=2000,
+                                  min_balance=0,
+                                  max_balance=float('Inf'),
+                                  account_type="checking")
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000105', priority=1,
                                  cadence='daily', amount=100, memo='p1 daily txn',
@@ -1605,11 +1605,11 @@ class TestExpenseForecastMethods(unittest.TestCase):
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
 
-        account_set.addAccount(name='Checking',
-                               balance=2000,
-                               min_balance=0,
-                               max_balance=float('Inf'),
-                               account_type="checking")
+        account_set.createAccount(name='Checking',
+                                  balance=2000,
+                                  min_balance=0,
+                                  max_balance=float('Inf'),
+                                  account_type="checking")
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000105', priority=1,
                                  cadence='daily', amount=100, memo='p1 daily txn',
@@ -1677,26 +1677,26 @@ class TestExpenseForecastMethods(unittest.TestCase):
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
 
-        account_set.addAccount(name='Checking',
-                               balance=1000,
-                               min_balance=0,
-                               max_balance=float('Inf'),
-                               account_type="checking")
+        account_set.createAccount(name='Checking',
+                                  balance=1000,
+                                  min_balance=0,
+                                  max_balance=float('Inf'),
+                                  account_type="checking")
 
-        account_set.addAccount(name='Credit',
-                               balance=0,
-                               min_balance=0,
-                               max_balance=20000,
-                               account_type="credit",
-                               billing_start_date_YYYYMMDD='20000102',
-                               interest_type='Compound',
-                               apr=0.05,
-                               interest_cadence='Monthly',
-                               minimum_payment=40,
-                               previous_statement_balance=0,
-                               principal_balance=None,
-                               accrued_interest=None
-                               )
+        account_set.createAccount(name='Credit',
+                                  balance=0,
+                                  min_balance=0,
+                                  max_balance=20000,
+                                  account_type="credit",
+                                  billing_start_date_YYYYMMDD='20000102',
+                                  interest_type='Compound',
+                                  apr=0.05,
+                                  interest_cadence='Monthly',
+                                  minimum_payment=40,
+                                  previous_statement_balance=0,
+                                  principal_balance=None,
+                                  accrued_interest=None
+                                  )
 
         # budget_set.addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
         #                          cadence='daily', amount=0, memo='dummy memo',
@@ -1738,101 +1738,101 @@ class TestExpenseForecastMethods(unittest.TestCase):
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
 
-        account_set.addAccount(name='Checking',
-                               balance=current_checking_balance,
-                               min_balance=0,
-                               max_balance=float('Inf'),
-                               account_type="checking")
+        account_set.createAccount(name='Checking',
+                                  balance=current_checking_balance,
+                                  min_balance=0,
+                                  max_balance=float('Inf'),
+                                  account_type="checking")
 
-        account_set.addAccount(name='Credit',
-                               balance=current_credit_current_statement_balance,
-                               min_balance=0,
-                               max_balance=20000,
-                               account_type="credit",
-                               billing_start_date_YYYYMMDD='20230103',
-                               interest_type='Compound',
-                               apr=0.2824,
-                               interest_cadence='Monthly',
-                               minimum_payment=40,
-                               previous_statement_balance=current_credit_previous_statement_balance,
-                               principal_balance=None,
-                               accrued_interest=None
-                               )
+        account_set.createAccount(name='Credit',
+                                  balance=current_credit_current_statement_balance,
+                                  min_balance=0,
+                                  max_balance=20000,
+                                  account_type="credit",
+                                  billing_start_date_YYYYMMDD='20230103',
+                                  interest_type='Compound',
+                                  apr=0.2824,
+                                  interest_cadence='Monthly',
+                                  minimum_payment=40,
+                                  previous_statement_balance=current_credit_previous_statement_balance,
+                                  principal_balance=None,
+                                  accrued_interest=None
+                                  )
 
-        account_set.addAccount(name='Loan A',
-                               balance=4746.18,
-                               min_balance=0,
-                               max_balance=float("inf"),
-                               account_type="loan",
-                               billing_start_date_YYYYMMDD='20230903',
-                               interest_type='simple',
-                               apr=0.0466,
-                               interest_cadence='daily',
-                               minimum_payment=50,
-                               previous_statement_balance=None,
-                               principal_balance=4746.18,
-                               accrued_interest=0
-                               )
+        account_set.createAccount(name='Loan A',
+                                  balance=4746.18,
+                                  min_balance=0,
+                                  max_balance=float("inf"),
+                                  account_type="loan",
+                                  billing_start_date_YYYYMMDD='20230903',
+                                  interest_type='simple',
+                                  apr=0.0466,
+                                  interest_cadence='daily',
+                                  minimum_payment=50,
+                                  previous_statement_balance=None,
+                                  principal_balance=4746.18,
+                                  accrued_interest=0
+                                  )
 
-        account_set.addAccount(name='Loan B',
-                               balance=1919.55,
-                               min_balance=0,
-                               max_balance=float("inf"),
-                               account_type="loan",
-                               billing_start_date_YYYYMMDD='20230903',
-                               interest_type='simple',
-                               apr=0.0429,
-                               interest_cadence='daily',
-                               minimum_payment=50,
-                               previous_statement_balance=None,
-                               principal_balance=1919.55,
-                               accrued_interest=0
-                               )
+        account_set.createAccount(name='Loan B',
+                                  balance=1919.55,
+                                  min_balance=0,
+                                  max_balance=float("inf"),
+                                  account_type="loan",
+                                  billing_start_date_YYYYMMDD='20230903',
+                                  interest_type='simple',
+                                  apr=0.0429,
+                                  interest_cadence='daily',
+                                  minimum_payment=50,
+                                  previous_statement_balance=None,
+                                  principal_balance=1919.55,
+                                  accrued_interest=0
+                                  )
 
-        account_set.addAccount(name='Loan C',
-                               balance=4726.68,
-                               min_balance=0,
-                               max_balance=float("inf"),
-                               account_type="loan",
-                               billing_start_date_YYYYMMDD='20230903',
-                               interest_type='simple',
-                               apr=0.0429,
-                               interest_cadence='daily',
-                               minimum_payment=50,
-                               previous_statement_balance=None,
-                               principal_balance=4726.68,
-                               accrued_interest=0
-                               )
+        account_set.createAccount(name='Loan C',
+                                  balance=4726.68,
+                                  min_balance=0,
+                                  max_balance=float("inf"),
+                                  account_type="loan",
+                                  billing_start_date_YYYYMMDD='20230903',
+                                  interest_type='simple',
+                                  apr=0.0429,
+                                  interest_cadence='daily',
+                                  minimum_payment=50,
+                                  previous_statement_balance=None,
+                                  principal_balance=4726.68,
+                                  accrued_interest=0
+                                  )
 
-        account_set.addAccount(name='Loan D',
-                               balance=1823.31,
-                               min_balance=0,
-                               max_balance=float("inf"),
-                               account_type="loan",
-                               billing_start_date_YYYYMMDD='20230903',
-                               interest_type='simple',
-                               apr=0.0376,
-                               interest_cadence='daily',
-                               minimum_payment=50,
-                               previous_statement_balance=None,
-                               principal_balance=1823.31,
-                               accrued_interest=0
-                               )
+        account_set.createAccount(name='Loan D',
+                                  balance=1823.31,
+                                  min_balance=0,
+                                  max_balance=float("inf"),
+                                  account_type="loan",
+                                  billing_start_date_YYYYMMDD='20230903',
+                                  interest_type='simple',
+                                  apr=0.0376,
+                                  interest_cadence='daily',
+                                  minimum_payment=50,
+                                  previous_statement_balance=None,
+                                  principal_balance=1823.31,
+                                  accrued_interest=0
+                                  )
 
-        account_set.addAccount(name='Loan E',
-                               balance=3359.17,
-                               min_balance=0,
-                               max_balance=float("inf"),
-                               account_type="loan",
-                               billing_start_date_YYYYMMDD='20230903',
-                               interest_type='simple',
-                               apr=0.0376,
-                               interest_cadence='daily',
-                               minimum_payment=50,
-                               previous_statement_balance=None,
-                               principal_balance=3359.17,
-                               accrued_interest=0
-                               )
+        account_set.createAccount(name='Loan E',
+                                  balance=3359.17,
+                                  min_balance=0,
+                                  max_balance=float("inf"),
+                                  account_type="loan",
+                                  billing_start_date_YYYYMMDD='20230903',
+                                  interest_type='simple',
+                                  apr=0.0376,
+                                  interest_cadence='daily',
+                                  minimum_payment=50,
+                                  previous_statement_balance=None,
+                                  principal_balance=3359.17,
+                                  accrued_interest=0
+                                  )
 
         #print(account_set.getAvailableBalances()) #pass by manual inspection
     #
@@ -2076,26 +2076,26 @@ class TestExpenseForecastMethods(unittest.TestCase):
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
 
-        account_set.addAccount(name='Checking',
-                               balance=0,
-                               min_balance=0,
-                               max_balance=float('Inf'),
-                               account_type="checking")
+        account_set.createAccount(name='Checking',
+                                  balance=0,
+                                  min_balance=0,
+                                  max_balance=float('Inf'),
+                                  account_type="checking")
 
-        account_set.addAccount(name='Credit',
-                               balance=40,
-                               min_balance=0,
-                               max_balance=20000,
-                               account_type="credit",
-                               billing_start_date_YYYYMMDD='20000103',
-                               interest_type='Compound',
-                               apr=0.05,
-                               interest_cadence='Monthly',
-                               minimum_payment=40,
-                               previous_statement_balance=0,
-                               principal_balance=None,
-                               accrued_interest=None
-                               )
+        account_set.createAccount(name='Credit',
+                                  balance=40,
+                                  min_balance=0,
+                                  max_balance=20000,
+                                  account_type="credit",
+                                  billing_start_date_YYYYMMDD='20000103',
+                                  interest_type='Compound',
+                                  apr=0.05,
+                                  interest_cadence='Monthly',
+                                  minimum_payment=40,
+                                  previous_statement_balance=0,
+                                  principal_balance=None,
+                                  accrued_interest=None
+                                  )
 
         # budget_set.addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
         #                          cadence='daily', amount=0, memo='dummy memo',
@@ -2301,26 +2301,26 @@ class TestExpenseForecastMethods(unittest.TestCase):
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
 
-        account_set.addAccount(name='Checking',
-                               balance=1000,
-                               min_balance=0,
-                               max_balance=float('Inf'),
-                               account_type="checking")
+        account_set.createAccount(name='Checking',
+                                  balance=1000,
+                                  min_balance=0,
+                                  max_balance=float('Inf'),
+                                  account_type="checking")
 
-        account_set.addAccount(name='Credit',
-                               balance=0,
-                               min_balance=0,
-                               max_balance=20000,
-                               account_type="credit",
-                               billing_start_date_YYYYMMDD='20000102',
-                               interest_type='Compound',
-                               apr=0.05,
-                               interest_cadence='Monthly',
-                               minimum_payment=40,
-                               previous_statement_balance=0,
-                               principal_balance=None,
-                               accrued_interest=None
-                               )
+        account_set.createAccount(name='Credit',
+                                  balance=0,
+                                  min_balance=0,
+                                  max_balance=20000,
+                                  account_type="credit",
+                                  billing_start_date_YYYYMMDD='20000102',
+                                  interest_type='Compound',
+                                  apr=0.05,
+                                  interest_cadence='Monthly',
+                                  minimum_payment=40,
+                                  previous_statement_balance=0,
+                                  principal_balance=None,
+                                  accrued_interest=None
+                                  )
 
         # budget_set.addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
         #                          cadence='daily', amount=0, memo='dummy memo',
@@ -2358,101 +2358,101 @@ class TestExpenseForecastMethods(unittest.TestCase):
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
 
-        account_set.addAccount(name='Checking',
-                               balance=2000,
-                               min_balance=0,
-                               max_balance=float('Inf'),
-                               account_type="checking")
+        account_set.createAccount(name='Checking',
+                                  balance=2000,
+                                  min_balance=0,
+                                  max_balance=float('Inf'),
+                                  account_type="checking")
 
-        account_set.addAccount(name='Credit',
-                               balance=0,
-                               min_balance=0,
-                               max_balance=20000,
-                               account_type="credit",
-                               billing_start_date_YYYYMMDD='20230103',
-                               interest_type='Compound',
-                               apr=0.2824,
-                               interest_cadence='Monthly',
-                               minimum_payment=40,
-                               previous_statement_balance=0,
-                               principal_balance=None,
-                               accrued_interest=None
-                               )
+        account_set.createAccount(name='Credit',
+                                  balance=0,
+                                  min_balance=0,
+                                  max_balance=20000,
+                                  account_type="credit",
+                                  billing_start_date_YYYYMMDD='20230103',
+                                  interest_type='Compound',
+                                  apr=0.2824,
+                                  interest_cadence='Monthly',
+                                  minimum_payment=40,
+                                  previous_statement_balance=0,
+                                  principal_balance=None,
+                                  accrued_interest=None
+                                  )
 
-        account_set.addAccount(name='Loan A',
-                               balance=4746.18,
-                               min_balance=0,
-                               max_balance=float("inf"),
-                               account_type="loan",
-                               billing_start_date_YYYYMMDD='20230903',
-                               interest_type='simple',
-                               apr=0.0466,
-                               interest_cadence='daily',
-                               minimum_payment=50,
-                               previous_statement_balance=None,
-                               principal_balance=4746.18,
-                               accrued_interest=0
-                               )
+        account_set.createAccount(name='Loan A',
+                                  balance=4746.18,
+                                  min_balance=0,
+                                  max_balance=float("inf"),
+                                  account_type="loan",
+                                  billing_start_date_YYYYMMDD='20230903',
+                                  interest_type='simple',
+                                  apr=0.0466,
+                                  interest_cadence='daily',
+                                  minimum_payment=50,
+                                  previous_statement_balance=None,
+                                  principal_balance=4746.18,
+                                  accrued_interest=0
+                                  )
 
-        account_set.addAccount(name='Loan B',
-                               balance=1919.55,
-                               min_balance=0,
-                               max_balance=float("inf"),
-                               account_type="loan",
-                               billing_start_date_YYYYMMDD='20230903',
-                               interest_type='simple',
-                               apr=0.0429,
-                               interest_cadence='daily',
-                               minimum_payment=50,
-                               previous_statement_balance=None,
-                               principal_balance=1919.55,
-                               accrued_interest=0
-                               )
+        account_set.createAccount(name='Loan B',
+                                  balance=1919.55,
+                                  min_balance=0,
+                                  max_balance=float("inf"),
+                                  account_type="loan",
+                                  billing_start_date_YYYYMMDD='20230903',
+                                  interest_type='simple',
+                                  apr=0.0429,
+                                  interest_cadence='daily',
+                                  minimum_payment=50,
+                                  previous_statement_balance=None,
+                                  principal_balance=1919.55,
+                                  accrued_interest=0
+                                  )
 
-        account_set.addAccount(name='Loan C',
-                               balance=4726.68,
-                               min_balance=0,
-                               max_balance=float("inf"),
-                               account_type="loan",
-                               billing_start_date_YYYYMMDD='20230903',
-                               interest_type='simple',
-                               apr=0.0429,
-                               interest_cadence='daily',
-                               minimum_payment=50,
-                               previous_statement_balance=None,
-                               principal_balance=4726.68,
-                               accrued_interest=0
-                               )
+        account_set.createAccount(name='Loan C',
+                                  balance=4726.68,
+                                  min_balance=0,
+                                  max_balance=float("inf"),
+                                  account_type="loan",
+                                  billing_start_date_YYYYMMDD='20230903',
+                                  interest_type='simple',
+                                  apr=0.0429,
+                                  interest_cadence='daily',
+                                  minimum_payment=50,
+                                  previous_statement_balance=None,
+                                  principal_balance=4726.68,
+                                  accrued_interest=0
+                                  )
 
-        account_set.addAccount(name='Loan D',
-                               balance=1823.31,
-                               min_balance=0,
-                               max_balance=float("inf"),
-                               account_type="loan",
-                               billing_start_date_YYYYMMDD='20230903',
-                               interest_type='simple',
-                               apr=0.0376,
-                               interest_cadence='daily',
-                               minimum_payment=50,
-                               previous_statement_balance=None,
-                               principal_balance=1823.31,
-                               accrued_interest=0
-                               )
+        account_set.createAccount(name='Loan D',
+                                  balance=1823.31,
+                                  min_balance=0,
+                                  max_balance=float("inf"),
+                                  account_type="loan",
+                                  billing_start_date_YYYYMMDD='20230903',
+                                  interest_type='simple',
+                                  apr=0.0376,
+                                  interest_cadence='daily',
+                                  minimum_payment=50,
+                                  previous_statement_balance=None,
+                                  principal_balance=1823.31,
+                                  accrued_interest=0
+                                  )
 
-        account_set.addAccount(name='Loan E',
-                               balance=3359.17,
-                               min_balance=0,
-                               max_balance=float("inf"),
-                               account_type="loan",
-                               billing_start_date_YYYYMMDD='20230903',
-                               interest_type='simple',
-                               apr=0.0376,
-                               interest_cadence='daily',
-                               minimum_payment=50,
-                               previous_statement_balance=None,
-                               principal_balance=3359.17,
-                               accrued_interest=0
-                               )
+        account_set.createAccount(name='Loan E',
+                                  balance=3359.17,
+                                  min_balance=0,
+                                  max_balance=float("inf"),
+                                  account_type="loan",
+                                  billing_start_date_YYYYMMDD='20230903',
+                                  interest_type='simple',
+                                  apr=0.0376,
+                                  interest_cadence='daily',
+                                  minimum_payment=50,
+                                  previous_statement_balance=None,
+                                  principal_balance=3359.17,
+                                  accrued_interest=0
+                                  )
 
 
         memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=1)
@@ -2505,86 +2505,86 @@ class TestExpenseForecastMethods(unittest.TestCase):
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
 
-        account_set.addAccount(name='Checking',
-                               balance=1000,
-                               min_balance=0,
-                               max_balance=float('Inf'),
-                               account_type="checking")
+        account_set.createAccount(name='Checking',
+                                  balance=1000,
+                                  min_balance=0,
+                                  max_balance=float('Inf'),
+                                  account_type="checking")
 
-        account_set.addAccount(name='Loan A',
-                               balance=4746.18,
-                               min_balance=0,
-                               max_balance=float("inf"),
-                               account_type="loan",
-                               billing_start_date_YYYYMMDD='20230903',
-                               interest_type='simple',
-                               apr=0.0466,
-                               interest_cadence='daily',
-                               minimum_payment=50,
-                               previous_statement_balance=None,
-                               principal_balance=4746.18,
-                               accrued_interest=0
-                               )
+        account_set.createAccount(name='Loan A',
+                                  balance=4746.18,
+                                  min_balance=0,
+                                  max_balance=float("inf"),
+                                  account_type="loan",
+                                  billing_start_date_YYYYMMDD='20230903',
+                                  interest_type='simple',
+                                  apr=0.0466,
+                                  interest_cadence='daily',
+                                  minimum_payment=50,
+                                  previous_statement_balance=None,
+                                  principal_balance=4746.18,
+                                  accrued_interest=0
+                                  )
 
-        account_set.addAccount(name='Loan B',
-                               balance=1919.55,
-                               min_balance=0,
-                               max_balance=float("inf"),
-                               account_type="loan",
-                               billing_start_date_YYYYMMDD='20230903',
-                               interest_type='simple',
-                               apr=0.0429,
-                               interest_cadence='daily',
-                               minimum_payment=50,
-                               previous_statement_balance=None,
-                               principal_balance=1919.55,
-                               accrued_interest=0
-                               )
+        account_set.createAccount(name='Loan B',
+                                  balance=1919.55,
+                                  min_balance=0,
+                                  max_balance=float("inf"),
+                                  account_type="loan",
+                                  billing_start_date_YYYYMMDD='20230903',
+                                  interest_type='simple',
+                                  apr=0.0429,
+                                  interest_cadence='daily',
+                                  minimum_payment=50,
+                                  previous_statement_balance=None,
+                                  principal_balance=1919.55,
+                                  accrued_interest=0
+                                  )
 
-        account_set.addAccount(name='Loan C',
-                               balance=4726.68,
-                               min_balance=0,
-                               max_balance=float("inf"),
-                               account_type="loan",
-                               billing_start_date_YYYYMMDD='20230903',
-                               interest_type='simple',
-                               apr=0.0429,
-                               interest_cadence='daily',
-                               minimum_payment=50,
-                               previous_statement_balance=None,
-                               principal_balance=4726.68,
-                               accrued_interest=0
-                               )
+        account_set.createAccount(name='Loan C',
+                                  balance=4726.68,
+                                  min_balance=0,
+                                  max_balance=float("inf"),
+                                  account_type="loan",
+                                  billing_start_date_YYYYMMDD='20230903',
+                                  interest_type='simple',
+                                  apr=0.0429,
+                                  interest_cadence='daily',
+                                  minimum_payment=50,
+                                  previous_statement_balance=None,
+                                  principal_balance=4726.68,
+                                  accrued_interest=0
+                                  )
 
-        account_set.addAccount(name='Loan D',
-                               balance=1823.31,
-                               min_balance=0,
-                               max_balance=float("inf"),
-                               account_type="loan",
-                               billing_start_date_YYYYMMDD='20230903',
-                               interest_type='simple',
-                               apr=0.0376,
-                               interest_cadence='daily',
-                               minimum_payment=50,
-                               previous_statement_balance=None,
-                               principal_balance=1823.31,
-                               accrued_interest=0
-                               )
+        account_set.createAccount(name='Loan D',
+                                  balance=1823.31,
+                                  min_balance=0,
+                                  max_balance=float("inf"),
+                                  account_type="loan",
+                                  billing_start_date_YYYYMMDD='20230903',
+                                  interest_type='simple',
+                                  apr=0.0376,
+                                  interest_cadence='daily',
+                                  minimum_payment=50,
+                                  previous_statement_balance=None,
+                                  principal_balance=1823.31,
+                                  accrued_interest=0
+                                  )
 
-        account_set.addAccount(name='Loan E',
-                               balance=3359.17,
-                               min_balance=0,
-                               max_balance=float("inf"),
-                               account_type="loan",
-                               billing_start_date_YYYYMMDD='20230903',
-                               interest_type='simple',
-                               apr=0.0376,
-                               interest_cadence='daily',
-                               minimum_payment=50,
-                               previous_statement_balance=None,
-                               principal_balance=3359.17,
-                               accrued_interest=0
-                               )
+        account_set.createAccount(name='Loan E',
+                                  balance=3359.17,
+                                  min_balance=0,
+                                  max_balance=float("inf"),
+                                  account_type="loan",
+                                  billing_start_date_YYYYMMDD='20230903',
+                                  interest_type='simple',
+                                  apr=0.0376,
+                                  interest_cadence='daily',
+                                  minimum_payment=50,
+                                  previous_statement_balance=None,
+                                  principal_balance=3359.17,
+                                  accrued_interest=0
+                                  )
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20230901', end_date_YYYYMMDD='20240901', priority=1,
                                  cadence='semiweekly', amount=2000, memo='income',

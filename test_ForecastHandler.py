@@ -42,11 +42,11 @@ class TestForecastHandlerMethods(unittest.TestCase):
 
         memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=1)
 
-        account_set.addAccount(name='Checking',
-                               balance=1000,
-                               min_balance=0,
-                               max_balance=float('Inf'),
-                               account_type="checking")
+        account_set.createAccount(name='Checking',
+                                  balance=1000,
+                                  min_balance=0,
+                                  max_balance=float('Inf'),
+                                  account_type="checking")
 
         CoreBudgetSet = BudgetSet.BudgetSet([])
         CoreBudgetSet.addBudgetItem('20000102', '20000102', 1, 'once', '1', 'Core', deferrable=False, partial_payment_allowed=False)

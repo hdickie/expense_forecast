@@ -4,41 +4,13 @@ import pandas as pd
 
 class TestAccount:
 
-    @pytest.fixture
-    def checkingAccount(self):
-        return NotImplementedError
-
-    @pytest.fixture
-    def creditCurrStmtBalAccount(self):
-        return NotImplementedError
-
-    @pytest.fixture
-    def creditPrevStmtBalAccount(self):
-        return NotImplementedError
-
-    @pytest.fixture
-    def loanPrincipalBalanceSimpleDailyAccount(self):
-        return NotImplementedError
-
-    @pytest.fixture
-    def loanPrincipalBalanceMonthlyCompoundAccount(self):
-        return NotImplementedError
-
-    @pytest.fixture
-    def loanInterestAccount(self):
-        return NotImplementedError
-
-
-    def test_Account_doctests(self):
-        raise NotImplementedError
-
     @pytest.mark.parametrize("name,balance,min_balance,max_balance,account_type,billing_start_date_YYYYMMDD,interest_type,apr,interest_cadence,minimum_payment,print_debug_messages,raise_exceptions",
                              [("checking", 0, 0, 0, "Checking", None, None, None, None, None, True, True),
                               ("cc: prev stmt bal", 0, 0, 0, "prev stmt bal", "20000101", "compound", 0.25, "monthly", 50, True, True),
                               ("cc: curr stmt bal", 0, 0, 0, "curr stmt bal", None, None, None, None, None, True, True),
                               ("loan simple daily: principal balance", 0, 0, 0, "principal balance", "20000101", "simple", 0.25, "daily", 50, True, True),
                               ("loan compound monthly: principal balance", 0, 0, 0, "principal balance", "20000101", "compound", 0.25, "monthly", 50, True, True),
-                              ("loan: interest", 0, 0, 0, "interest", None, None, None, None, 50, True, True),
+                              ("loan: interest", 0, 0, 0, "interest", None, None, None, None, None, True, True),
 
                               ])
     def test_Account_constructor_valid_inputs(self, name,  # no default because it is a required field
@@ -66,13 +38,15 @@ class TestAccount:
                             print_debug_messages,
                             raise_exceptions)
 
-    def test_Account_str(self):
-        raise NotImplementedError
-
-
-
     @pytest.mark.parametrize("name,balance,min_balance,max_balance,account_type,billing_start_date_YYYYMMDD,interest_type,apr,interest_cadence,minimum_payment,print_debug_messages,raise_exceptions,expected_exception",
-                             [("N/A- invalid account type", 0,0,0,"shmecking",None,None,None,None,None,True,True,ValueError),
+                             [("typo- invalid account type", 0,0,0,"shmecking",None,None,None,None,None,True,True,ValueError),
+                              ("NoneType- no account type", 0, 0, 0, None, None, None, None, None, None, True,True, ValueError),
+                              ("context warning for account type- used credit type", 0, 0, 0, 'credit', None, None, None, None, None, True, True,ValueError),
+                              ("context warning for account type- used loan type", 0, 0, 0, 'loan', None, None, None,None, None, True, True, ValueError),
+
+                              ("name missing colon- prev stmt bal", 0, 0, 0, 'prev stmt bal', "20000101", 'compound',0, 'monthly',0, True, True, ValueError),
+                              ("name missing colon- prev stmt bal", 0, 0, 0, 'principal balance', "20000101", 'simple',0, 'daily',0, True, True, ValueError),
+
                               ("checking- bal not castable to numeric (None)", None,0,0,"Checking",None,None,None,None,None,True,True,TypeError),
                               ("checking- bal not castable to numeric (pd.NA)", pd.NA, 0, 0, "Checking", None, None, None, None, None, True, True, TypeError),
                               ("checking- bal not castable to numeric (string)", "X", 0, 0, "Checking", None, None, None, None, None, True, True, TypeError),
@@ -155,9 +129,40 @@ class TestAccount:
                                 print_debug_messages,
                                 raise_exceptions)
 
-    def test_Account_repr(self):
-        raise NotImplementedError
+    def test_to_json(self):
+        test_account = Account.Account(name="test checking",
+                                       balance=0,
+                                       min_balance=0,
+                                       max_balance=0,
+                                       account_type='checking')
 
-    def test_Account_toJSON(self):
-        raise NotImplementedError
+        test_expectation = """{"Name":{"0":"test checking"},"""
+        test_expectation += """"Balance":{"0":0.0},"""
+        test_expectation += """"Min Balance":{"0":0.0},"""
+        test_expectation += """"Max Balance":{"0":0.0},"""
+        test_expectation += """"Account Type":{"0":"checking"},"""
+        test_expectation += """"Billing Start Date":{"0":null},"""
+        test_expectation += """"Interest Type":{"0":null},"""
+        test_expectation += """"APR":{"0":null},"""
+        test_expectation += """"Interest Cadence":{"0":null},"""
+        test_expectation += """"Minimum Payment":{"0":null}}"""
 
+        assert test_account.to_json() == test_expectation
+
+    def test_str(self):
+        test_account = Account.Account(name="test checking",
+                                       balance=0,
+                                       min_balance=0,
+                                       max_balance=0,
+                                       account_type='checking')
+
+        assert str(test_account) == test_account.to_json()
+
+    def test_repr(self):
+        test_account = Account.Account(name="test checking",
+                                       balance=0,
+                                       min_balance=0,
+                                       max_balance=0,
+                                       account_type='checking')
+
+        assert repr(test_account) == test_account.to_json()

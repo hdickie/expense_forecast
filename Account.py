@@ -81,8 +81,7 @@ class Account:
         exception_value_error_message_string=""
 
         if account_type is None:
-            account_type = 'None' \
-                           ''
+            account_type = 'None'
             self.account_type = "None" # to avoid exceptions when string methods are used
 
         if account_type.lower() in ['credit','loan']:
@@ -287,15 +286,13 @@ class Account:
             if exception_value_error_ind:
                 raise ValueError
 
+    def to_json(self):
+        """
+        :rtype: string
+        """
 
-
-    def __repr__(self):
-        return str(self)
-
-    def __str__(self):
-
-        single_account_df=pd.DataFrame({
-            'Name':[self.name],
+        return pd.DataFrame({
+            'Name': [self.name],
             'Balance': [self.balance],
             'Min Balance': [self.min_balance],
             'Max Balance': [self.max_balance],
@@ -305,27 +302,13 @@ class Account:
             'APR': [self.apr],
             'Interest Cadence': [self.interest_cadence],
             'Minimum Payment': [self.minimum_payment]
-        })
+        }).to_json(orient='records')
 
-        return single_account_df.to_string()
+    def __str__(self):
+        return self.to_json()
 
-    def toJSON(self):
-        """
-        :rtype: string
-        """
-        JSON_string="{\n"
-        JSON_string += "\"Name\":"+"\""+str(self.name)+"\",\n"
-        JSON_string += "\"Balance\":" + "\"" + str(self.balance) + "\",\n"
-        JSON_string += "\"Min_Balance\":" + "\"" + str(self.min_balance) + "\",\n"
-        JSON_string += "\"Max_Balance\":" + "\"" + str(self.max_balance) + "\",\n"
-        JSON_string += "\"Account_Type\":" + "\"" + str(self.account_type) + "\",\n"
-        JSON_string += "\"Billing_Start_Date\":" + "\"" + str(self.billing_start_date) + "\",\n"
-        JSON_string += "\"Interest_Type\":" + "\"" + str(self.interest_type) + "\",\n"
-        JSON_string += "\"APR\":" + "\"" + str(self.apr) + "\",\n"
-        JSON_string += "\"Interest_Cadence\":" + "\"" + str(self.interest_cadence) + "\",\n"
-        JSON_string += "\"Minimum_Payment\":" + "\"" + str(self.minimum_payment) + "\"\n"
-        JSON_string += "}"
-        return JSON_string
+    def __repr__(self):
+        return self.to_json()
 
     # def fromJSON(self,JSON_string):
     #     pass

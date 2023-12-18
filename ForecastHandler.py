@@ -66,19 +66,19 @@ class ForecastHandler:
         M = MemoRuleSet.MemoRuleSet([])
 
         for account_index, account_row in AccountSet_df.iterrows():
-            A.addAccount(account_row.Account_Name,
-                   account_row.Balance,
-                   account_row.Min_Balance,
-                   account_row.Max_Balance,
-                   account_row.Account_Type,
-                   billing_start_date_YYYYMMDD=account_row.Billing_Start_Date_YYYYMMDD,
-                   interest_type=account_row.Interest_Type,
-                   apr=account_row.APR,
-                   interest_cadence=account_row.Interest_Cadence,
-                   minimum_payment=account_row.Minimum_Payment,
-                   previous_statement_balance=account_row.Previous_Statement_Balance,
-                   principal_balance=account_row.Principal_Balance,
-                   accrued_interest=account_row.Accrued_Interest)
+            A.createAccount(account_row.Account_Name,
+                            account_row.Balance,
+                            account_row.Min_Balance,
+                            account_row.Max_Balance,
+                            account_row.Account_Type,
+                            billing_start_date_YYYYMMDD=account_row.Billing_Start_Date_YYYYMMDD,
+                            interest_type=account_row.Interest_Type,
+                            apr=account_row.APR,
+                            interest_cadence=account_row.Interest_Cadence,
+                            minimum_payment=account_row.Minimum_Payment,
+                            previous_statement_balance=account_row.Previous_Statement_Balance,
+                            principal_balance=account_row.Principal_Balance,
+                            accrued_interest=account_row.Accrued_Interest)
 
         for memorule_index, memorule_row in MemoRuleSet_df.iterrows():
             M.addMemoRule(memorule_row.Memo_Regex,memorule_row.Account_From,memorule_row.Account_To,memorule_row.Transaction_Priority)
