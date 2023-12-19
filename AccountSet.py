@@ -835,6 +835,10 @@ class AccountSet:
                     loop__amount = 0
                 payment_amounts.append(loop__amount)
 
+            total_interest_on_loans_w_non_0_payment = 0
+            for i in range(0,len(payment_amounts)):
+                if principal_balance_delta[i, i] > 0:
+                    total_interest_on_loans_w_non_0_payment += interest_accts_df.iloc[i,:].Balance
 
             if amount <= sum(payment_amounts):
                 payment_amounts = [round(a * (amount) / sum(payment_amounts),2) for a in payment_amounts]
