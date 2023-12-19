@@ -5,51 +5,50 @@ import pandas as pd
 
 class CompositeMilestone:
 
-    def __init__(self,milestone_name,account_milestones__list, memo_milestones__list, *milestone_names):
+    def __init__(self,milestone_name,account_milestones__list, memo_milestones__list):
         self.milestone_name = milestone_name
+        self.account_milestones = account_milestones__list
+        self.memo_milestones = memo_milestones__list
 
-        account_milestone_names = [a.milestone_name for a in account_milestones__list]
-        memo_milestone_names = [m.milestone_name for m in memo_milestones__list]
-
-        #this needs to explictily record account and memo mielstones, and also not retain any information that is not relevant
-
-        component_milestones__list = []
-        #for m_name in milestone_names:
-        milestone_names = milestone_names[0] #the input is a table with the input list as the first element. kind of janky...
-        for i in range(0,len(milestone_names)):
-            m_name = milestone_names[i]
-
-            if pd.isna(m_name):
-                continue
-
-            if m_name not in account_milestone_names and m_name not in memo_milestone_names:
-                raise ValueError("Milestone \'"+str(m_name)+"\' not found in either account or memo milestones")
-            component_milestones__list.append(m_name)
-
-        self.component_milestones__list = component_milestones__list
 
     def __str__(self):
 
         return_string = ""
 
-        return_string += "Milestone_Name:"+self.milestone_name+"\n"
-        milestone_index = 1
-        for component_milestone_name in self.component_milestones__list:
-            return_string += "Milestone"+str(milestone_index)+":"+component_milestone_name+"\n"
-            milestone_index += 1
+        am_df = pd.DataFrame({ 'Milestone_Name': [],
+            'Account_Name': [],
+            'Min_Balance': [],
+            'Max_Balance': [] })
+
+        for a in self.account_milestones:
+            am_df = pd.concat([ am_df, pd.DataFrame({'Milestone_Name': [a.milestone_name], 'Account_Name': [a.account_name], 'Min_Balance': [a.min_balance], 'Max_Balance': [a.max_balance]}) ])
+
+        mm_df = pd.DataFrame({ 'Milestone_Name': [], 'Memo_Regex': []})
+        for m in self.memo_milestones:
+            mm_df = pd.concat( [ mm_df, pd.DataFrame({'Milestone_Name': [m.milestone_name], 'Milestone_Regex': [m.memo_regex]}) ] )
+
+        return_string += 'Composite Milestone\n'
+        return_string += am_df.to_string()
+        return_string += '\n'
+        return_string += mm_df.to_string()
 
         return return_string
 
 
-    def toJSON(self):
+    def to_json(self):
 
         return_string = "{"
+        for i in range(0,len(self.account_milestones)):
+            a = self.account_milestones[i]
+            return_string += self.account_milestones[0].to_json()+'\n'
+            if i < (len(self.account_milestones)-1):
+                return_string += ','
 
-        return_string += '"' + "Milestone_Name:" + '":"' + self.milestone_name + '"' + "\n"
-        milestone_index = 1
-        for component_milestone_name in self.component_milestones__list:
-            return_string += '"' + "Milestone" + str(milestone_index) + '":"' + component_milestone_name + '"' + "\n"
-            milestone_index += 1
+        for i in range(0, len(self.memo_milestones)):
+            a = self.memo_milestones[i]
+            return_string += self.memo_milestones[0].to_json() + '\n'
+            if i < (len(self.memo_milestones) - 1):
+                return_string += ','
 
         return_string += "}"
 

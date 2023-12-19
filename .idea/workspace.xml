@@ -7,15 +7,20 @@
     <list default="true" id="94004e15-030d-4b7e-a7c4-801fddc59fac" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.coverage" beforeDir="false" afterPath="$PROJECT_DIR$/.coverage" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Account.py" beforeDir="false" afterPath="$PROJECT_DIR$/Account.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AccountSet.py" beforeDir="false" afterPath="$PROJECT_DIR$/AccountSet.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/BudgetItem.py" beforeDir="false" afterPath="$PROJECT_DIR$/BudgetItem.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/AccountMilestone.py" beforeDir="false" afterPath="$PROJECT_DIR$/AccountMilestone.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/BudgetSet.py" beforeDir="false" afterPath="$PROJECT_DIR$/BudgetSet.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CompositeMilestone.py" beforeDir="false" afterPath="$PROJECT_DIR$/CompositeMilestone.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/MemoMilestone.py" beforeDir="false" afterPath="$PROJECT_DIR$/MemoMilestone.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/MemoRule.py" beforeDir="false" afterPath="$PROJECT_DIR$/MemoRule.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/MemoRuleSet.py" beforeDir="false" afterPath="$PROJECT_DIR$/MemoRuleSet.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/MilestoneSet.py" beforeDir="false" afterPath="$PROJECT_DIR$/MilestoneSet.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main2.py" beforeDir="false" afterPath="$PROJECT_DIR$/main2.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_Account.py" beforeDir="false" afterPath="$PROJECT_DIR$/test_Account.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_AccountSet.py" beforeDir="false" afterPath="$PROJECT_DIR$/test_AccountSet.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_BudgetItem.py" beforeDir="false" afterPath="$PROJECT_DIR$/test_BudgetItem.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_BudgetSet.py" beforeDir="false" afterPath="$PROJECT_DIR$/test_BudgetSet.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test_AccountMilestone.py" beforeDir="false" afterPath="$PROJECT_DIR$/test_AccountMilestone.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test_CompositeMilestone.py" beforeDir="false" afterPath="$PROJECT_DIR$/test_CompositeMilestone.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test_MemoMilestone.py" beforeDir="false" afterPath="$PROJECT_DIR$/test_MemoMilestone.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test_MemoRule.py" beforeDir="false" afterPath="$PROJECT_DIR$/test_MemoRule.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test_MemoRuleSet.py" beforeDir="false" afterPath="$PROJECT_DIR$/test_MemoRuleSet.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test_MilestoneSet.py" beforeDir="false" afterPath="$PROJECT_DIR$/test_MilestoneSet.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -453,12 +458,14 @@
           <line>172</line>
           <option name="timeStamp" value="4" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/BudgetSet.py</url>
-          <line>208</line>
-          <option name="timeStamp" value="7" />
-        </line-breakpoint>
       </breakpoints>
+      <default-breakpoints>
+        <breakpoint type="python-exception">
+          <properties notifyOnTerminate="true" exception="BaseException">
+            <option name="notifyOnTerminate" value="true" />
+          </properties>
+        </breakpoint>
+      </default-breakpoints>
     </breakpoint-manager>
     <watches-manager>
       <configuration name="PythonConfigurationType">

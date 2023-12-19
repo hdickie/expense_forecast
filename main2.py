@@ -6,16 +6,10 @@ import BudgetSet
 import MemoRuleSet
 import MilestoneSet
 import ForecastHandler
+import AccountMilestone
+
+from test_MemoRuleSet import TestMemoRuleSetMethods
 
 if __name__ == '__main__':
-      test_budget_set = BudgetSet.BudgetSet([])
-      test_budget_set.addBudgetItem(start_date_YYYYMMDD='20220101', end_date_YYYYMMDD='20220101', priority=1,
-                                    cadence='daily', amount=10, deferrable=False, memo='test',
-                                    partial_payment_allowed=False
-                                    # ,throw_exceptions=False
-                                    )
-      test_budget_set.addBudgetItem(start_date_YYYYMMDD='20220101', end_date_YYYYMMDD='20220101', priority=1,
-                                    cadence='daily', amount=10, deferrable=False, memo='test',
-                                    partial_payment_allowed=False
-                                    # ,throw_exceptions=False
-                                    )
+      A = AccountMilestone.AccountMilestone('Milestone_Name','Account_Name',0,100)
+      print(A)

@@ -134,10 +134,8 @@ class MemoRule:
 
         return single_memo_rule_df.to_string()
 
-    def __repr__(self):
-        return str(self)
 
-    def toJSON(self):
+    def to_json(self):
         """
         Get a JSON <string> representing the <MemoRule> object.
         """

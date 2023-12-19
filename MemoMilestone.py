@@ -1,5 +1,5 @@
 
-import re
+import re, pandas as pd
 class MemoMilestone:
 
     def __init__(self,Milestone_Name,Memo_Regex):
@@ -12,14 +12,12 @@ class MemoMilestone:
             raise e
 
     def __str__(self):
-        return_string = ""
+        return pd.DataFrame({
+            'Milestone_Name': [self.milestone_name],
+            'Memo_Regex': [self.memo_regex]
+        }).to_string()
 
-        return_string += "Milestone_Name:" + self.milestone_name + "\n"
-        return_string += "Memo_Regex:" + self.memo_regex + "\n"
-
-        return return_string
-
-    def toJSON(self):
+    def to_json(self):
 
         return_string = "{"
 

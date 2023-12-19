@@ -31,11 +31,11 @@ class MemoRuleSet:
     def __repr__(self):
         return str(self)
 
-    def findMatchingMemoRule(self, budget_item_row_df):
+    def findMatchingMemoRule(self, budget_item):
         log_in_color('yellow','debug','ENTER findMatchingMemoRule')
 
         memo_df = self.getMemoRules()
-        memo_rules_of_matching_priority = memo_df[memo_df.Transaction_Priority == budget_item_row_df.Priority]
+        memo_rules_of_matching_priority = memo_df[memo_df.Transaction_Priority == budget_item.priority]
 
         match_vec = []
         for memo_index, memo_row in memo_rules_of_matching_priority.iterrows():
@@ -44,24 +44,30 @@ class MemoRuleSet:
         for i in range(0, memo_rules_of_matching_priority.shape[0]):
             memo_row = memo_rules_of_matching_priority.iloc[i,:]
             try:
-                g = re.search(memo_row.Memo_Regex, budget_item_row_df.Memo).group(0)
+                g = re.search(memo_row.Memo_Regex, budget_item.memo).group(0)
                 match_vec[i] = True
-            except:
+            except Exception as e:
+                print(e)
                 match_vec[i] = False
 
         try:
             assert sum(match_vec) != 0  # if error, no matches found
+        except Exception as e:
+            log_in_color('yellow', 'error', 'ERROR')
+            log_in_color('yellow', 'error', 'No matches found for memo:'+budget_item.memo)
+            log_in_color('yellow', 'error', 'Memo Set:')
+            log_in_color('yellow', 'error',self)
+            raise ValueError
+
+        try:
             assert sum(match_vec) == 1  # if error, multiple matches found
         except Exception as e:
             log_in_color('yellow', 'error', 'ERROR')
-            log_in_color('yellow', 'error', 'Memo Set:')
-            log_in_color('yellow', 'error',self.getMemoRules().to_string())
-            log_in_color('yellow', 'error', 'Budget Item:')
-            log_in_color('yellow', 'error',pd.DataFrame(budget_item_row_df).T.to_string())
+            log_in_color('yellow', 'error', 'Multiple matches found for memo:'+budget_item.memo)
             log_in_color('yellow', 'error', 'match vector:')
             log_in_color('yellow', 'error', match_vec)
 
-            raise e
+            raise ValueError
 
         matching_memo_rule_row = memo_rules_of_matching_priority[match_vec]
 
@@ -76,8 +82,8 @@ class MemoRuleSet:
         return MemoRuleSet([relevant_memo])
 
 
-    def fromExcel(self):
-        raise NotImplementedError
+    # def fromExcel(self):
+    #     raise NotImplementedError
 
     def addMemoRule(self,memo_regex,account_from,account_to,transaction_priority):
         """ Add a <MemoRule> to <list> MemoRuleSet.memo_rules.
@@ -127,18 +133,18 @@ class MemoRuleSet:
 
         return all_memo_rules_df
 
-    def toJSON(self):
+    def to_json(self):
         """
         Get a JSON <string> representing the <MemoRuleSet> object.\
         """
-        JSON_string = "[\n"
+        JSON_string = "{\n"
         for i in range(0, len(self.memo_rules)):
             memo_rule = self.memo_rules[i]
-            JSON_string += memo_rule.toJSON()
+            JSON_string += memo_rule.to_json()
             if i+1 != len(self.memo_rules):
                 JSON_string += ","
             JSON_string += '\n'
-        JSON_string += ']'
+        JSON_string += '}'
 
         return JSON_string
 
