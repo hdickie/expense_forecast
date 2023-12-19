@@ -81,8 +81,10 @@ class Account:
         exception_value_error_message_string=""
 
         if account_type is None:
-            account_type = 'None'
-            self.account_type = "None" # to avoid exceptions when string methods are used
+            raise ValueError("Account_Type cannot be None.")
+            self.account_type = account_type.lower()
+            #account_type = 'None'
+            #self.account_type = "None" # to avoid exceptions when string methods are used
 
         if account_type.lower() in ['credit','loan']:
             exception_value_error_message_string += 'WARNING: Account.account_type was one of: credit, loan\n'
@@ -291,6 +293,32 @@ class Account:
         :rtype: string
         """
 
+        bsd = self.billing_start_date
+        if self.billing_start_date is not None:
+            try:
+                bsd = self.billing_start_date.strftime('%Y-%m-%d')
+            except: #if datetime, then format, else its a string so do nothing
+                pass
+
+        cast_dtypes_to_string_df = pd.DataFrame({
+            'Name': [self.name],
+            'Balance': [self.balance],
+            'Min Balance': [self.min_balance],
+            'Max Balance': [self.max_balance],
+            'Account Type': [self.account_type],
+            'Billing Start Date': [bsd],
+            'Interest Type': [self.interest_type],
+            'APR': [self.apr],
+            'Interest Cadence': [self.interest_cadence],
+            'Minimum Payment': [self.minimum_payment]
+        })
+
+        return cast_dtypes_to_string_df.to_json(orient='records')
+
+
+
+
+    def __str__(self):
         return pd.DataFrame({
             'Name': [self.name],
             'Balance': [self.balance],
@@ -302,13 +330,8 @@ class Account:
             'APR': [self.apr],
             'Interest Cadence': [self.interest_cadence],
             'Minimum Payment': [self.minimum_payment]
-        }).to_json(orient='records')
+        }).to_string()
 
-    def __str__(self):
-        return self.to_json()
-
-    def __repr__(self):
-        return self.to_json()
 
     # def fromJSON(self,JSON_string):
     #     pass

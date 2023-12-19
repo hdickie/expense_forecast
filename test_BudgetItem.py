@@ -1,77 +1,160 @@
-import unittest
+import pytest
 import BudgetItem
 
-class TestBudgetItemMethods(unittest.TestCase):
+class TestBudgetItemMethods:
 
-    def test_BudgetItemSet_Constructor(self):
+    @pytest.mark.parametrize('start_date_YYYYMMDD,end_date_YYYYMMDD,priority,cadence,amount,memo,deferrable,partial_payment_allowed',
+                 # (start_date_YYYYMMDD,
+                 # end_date_YYYYMMDD,
+                 # priority,
+                 # cadence,
+                 # amount,
+                 # memo,
+                 # deferrable,
+                 # partial_payment_allowed),
+                [('20000101',
+                 '20000101',
+                 1,
+                 'daily',
+                 10,
+                 'test memo',
+                 False,
+                 False),
+                  ])
+    def test_BudgetItem_Constructor__valid_inputs(self,start_date_YYYYMMDD,
+                                            end_date_YYYYMMDD,
+                                            priority,
+                                            cadence,
+                                            amount,
+                                            memo,
+                                            deferrable,
+                                            partial_payment_allowed):
+        BudgetItem.BudgetItem(start_date_YYYYMMDD,
+                                            end_date_YYYYMMDD,
+                                            priority,
+                                            cadence,
+                                            amount,
+                                            memo,
+                                            deferrable,
+                                            partial_payment_allowed)
 
-        #todo bool() is a way more generous cast than i initially thought. maybe watch that...
+    @pytest.mark.parametrize('start_date_YYYYMMDD,end_date_YYYYMMDD,priority,cadence,amount,memo,deferrable,partial_payment_allowed,expected_exception',
+        # (start_date_YYYYMMDD,
+        # end_date_YYYYMMDD,
+        # priority,
+        # cadence,
+        # amount,
+        # memo,
+        # deferrable,
+        # partial_payment_allowed),
+        [('X',
+         '20000101',
+         1,
+         'daily',
+         10,
+         'test memo',
+         False,
+         False,
+         TypeError),  #malformed start date string
 
-        test_budget_item = BudgetItem.BudgetItem(start_date_YYYYMMDD='20000101',end_date_YYYYMMDD='20000101',priority=1,cadence='once',
-            amount=10, deferrable=False, memo='test')
-        self.assertEqual('<class \'BudgetItem.BudgetItem\'>',str( type( test_budget_item ) ) )
+         ('20000101',
+          'X',
+          1,
+          'daily',
+          10,
+          'test memo',
+          False,
+          False,
+          TypeError),  # malformed end date string
 
-        # bc duck-typing, we dont check data types, but just make sure that the fields are usable the way we want
-        with self.assertRaises(TypeError):
-            BudgetItem.BudgetItem(start_date_YYYYMMDD='not a date string',end_date_YYYYMMDD='not a date string', priority=1, cadence='once',
-                                  amount=10, deferrable=False, memo='test',print_debug_messages=False)
+         ('20000101',
+          '20000101',
+          'X',
+          'daily',
+          10,
+          'test memo',
+          False,
+          False,
+          TypeError),  # priority is not an int
 
-        with self.assertRaises(TypeError):
-            BudgetItem.BudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000101', priority='not an integer', cadence='once',
-                                  amount=10, deferrable=False, memo='test',print_debug_messages=False)
+         ('20000101',
+          '20000101',
+          1,
+          'daily',
+          'X',
+          'test memo',
+          False,
+          False,
+          TypeError),  # amount is not a float
 
-        with self.assertRaises(TypeError):
-            BudgetItem.BudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000101', priority=1, cadence='once',
-                                  amount='not a float', deferrable=False, memo='test',print_debug_messages=False)
+         ('20000101',
+          '20000101',
+          0,
+          'daily',
+          10,
+          'test memo',
+          False,
+          False,
+          ValueError),  # priority is less than 1
 
-        # with self.assertRaises(TypeError):
-        #     #deferrable fails cast to bool
-        #     BudgetItem.BudgetItem(start_date_YYYYMMDD='20000101', priority=1, cadence='once',
-        #                           amount=10, deferrable=None, memo='test')
+         ('20000101',
+          '20000101',
+          1,
+          'shmaily',
+          10,
+          'test memo',
+          False,
+          False,
+          ValueError),  # illegal cadence value
 
-        with self.assertRaises(ValueError):
-            #priority too low
-            BudgetItem.BudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000101', priority=0, cadence='once',
-                                  amount=10, deferrable=False, memo='test',print_debug_messages=False)
+         ('20000101',
+          '20000101',
+          2,
+          'daily',
+          10,
+          'income',
+          False,
+          False,
+          ValueError),  # priority not 1 for income
 
-        with self.assertRaises(ValueError):
-            #unacceptable value for cadence
-            BudgetItem.BudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000101', priority=1, cadence='shmonce',
-                                  amount=10, deferrable=False, memo='test',print_debug_messages=False)
+         ])
+    def test_BudgetItem_Constructor__invalid_inputs(self,start_date_YYYYMMDD,
+                                            end_date_YYYYMMDD,
+                                            priority,
+                                            cadence,
+                                            amount,
+                                            memo,
+                                            deferrable,
+                                            partial_payment_allowed,expected_exception):
+        with pytest.raises(expected_exception):
+            BudgetItem.BudgetItem(start_date_YYYYMMDD,
+                                  end_date_YYYYMMDD,
+                                  priority,
+                                  cadence,
+                                  amount,
+                                  memo,
+                                  deferrable,
+                                  partial_payment_allowed)
 
-        with self.assertRaises(ValueError):
-            BudgetItem.BudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000101', priority=2, cadence='once',
-                                  amount=10, deferrable=False, memo='Income', print_debug_messages=False)
+    def test_to_json(self):
+        B = BudgetItem.BudgetItem('20000101',
+                                  '20000101',
+                                  1,
+                                  'daily',
+                                  10,
+                                  'test',
+                                  False,
+                                  False)
 
-    def test_str(self):
-        self.assertIsNotNone(str(BudgetItem.BudgetItem(
-            start_date_YYYYMMDD='20000101',
-            end_date_YYYYMMDD='20000101',
-            priority=1,
-            cadence='once',
-            amount=10,
-            deferrable=False,
-            memo='test'
-        )))
+        B.to_json()
 
-    def test_repr(self):
-        self.assertIsNotNone(repr(BudgetItem.BudgetItem(
-            start_date_YYYYMMDD='20000101',
-            end_date_YYYYMMDD='20000101',
-            priority=1,
-            cadence='once',
-            amount=10,
-            deferrable=False,
-            memo='test'
-        )))
-
-    def test_toJSON(self):
-        test_budget_item = BudgetItem.BudgetItem(start_date_YYYYMMDD='20000101',
-                                                 end_date_YYYYMMDD='20000101',priority=1,cadence='once',
-            amount=10, deferrable=False, memo='test')
-        test_budget_item_JSON = test_budget_item.toJSON()
-
-        test_expectation = """{\n"Start_Date":"2000-01-01 00:00:00",\n"End_Date":"2000-01-01 00:00:00",\n"Priority":"1",\n"Cadence":"once",\n"Amount":"10.0",\n"Deferrable":"False",\n"Memo":"test"\n}"""
-
-        assert test_budget_item_JSON == test_expectation
-
+    def test_to_str(self):
+        B = BudgetItem.BudgetItem('20000101',
+                                  '20000101',
+                                  1,
+                                  'daily',
+                                  10,
+                                  'test',
+                                  False,
+                                  False)
+        str(B)

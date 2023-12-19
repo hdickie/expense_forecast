@@ -66,8 +66,6 @@ class BudgetSet:
     def __str__(self):
         return self.getBudgetItems().to_string()
 
-    def __repr__(self):
-        return str(self)
 
     def getBudgetItems(self):
         """
@@ -190,7 +188,7 @@ class BudgetSet:
                  print_debug_messages,raise_exceptions)
 
         all_current_budget_items = self.getBudgetItems()
-        memos_w_matching_priority = all_current_budget_items.loc[all_current_budget_items.Priority == priority,'Memo']
+        memos_w_matching_priority = list(all_current_budget_items.loc[all_current_budget_items.Priority == priority,:].Memo)
 
         if cadence.lower() == 'once':
             assert start_date_YYYYMMDD == end_date_YYYYMMDD
@@ -203,8 +201,10 @@ class BudgetSet:
         #
         # print('all_current_budget_items:')
         # print(all_current_budget_items)
-        # print('memos_w_matching_priority:')
-        # print(memos_w_matching_priority)
+        print('memo:')
+        print(memo)
+        print('memos_w_matching_priority:')
+        print(memos_w_matching_priority)
 
         if memo in memos_w_matching_priority:
             raise ValueError #A budget item with this priority and memo already exists
@@ -214,26 +214,25 @@ class BudgetSet:
         self.budget_items.append(budget_item)
 
 
-    def fromExcel(self):
-        raise NotImplementedError
+    # def fromExcel(self):
+    #     raise NotImplementedError
+    #
+    # def compareToBudgetSet(self,SecondBudgetSet):
+    #     raise NotImplementedError
 
-    def compareToBudgetSet(self,SecondBudgetSet):
-
-        raise NotImplementedError
-
-    def toJSON(self):
+    def to_json(self):
         """
         Get a JSON <string> representing the <BudgetSet> object.
 
         """
-        JSON_string = "[\n"
+        JSON_string = "{\n"
         for i in range(0, len(self.budget_items)):
             budget_item = self.budget_items[i]
-            JSON_string += budget_item.toJSON()
+            JSON_string += budget_item.to_json()
             if i+1 != len(self.budget_items):
                 JSON_string += ","
             JSON_string += '\n'
-        JSON_string += ']'
+        JSON_string += '}'
         return JSON_string
 
     # def fromJSON(self,JSON_string):

@@ -62,10 +62,10 @@ class AccountSet:
 
         """
         #print('enter AccountSet()')
-        if accounts__list is None:
-            accounts__list = []
-            self.accounts = accounts__list
-            return
+        # if accounts__list is None: #this parameter is required so this check is not needed
+        #     accounts__list = []
+        #     self.accounts = accounts__list
+        #     return
 
         value_error_text = ""
         value_error_ind = False
@@ -90,9 +90,8 @@ class AccountSet:
                                    'interest_type', 'apr', 'interest_cadence', 'minimum_payment']
 
             for obj in self.accounts:
-                if set(required_attributes) & set(dir(obj)) != set(required_attributes):
-                    #print(self.accounts)
-                    raise ValueError("An object in the input list did not have all the attributes an Account is expected to have.") #An object in the input list did not have all the attributes an Account is expected to have.
+                # An object in the input list did not have all the attributes an Account is expected to have.
+                if set(required_attributes) & set(dir(obj)) != set(required_attributes): raise ValueError("An object in the input list did not have all the attributes an Account is expected to have.")
 
             accounts_df = self.getAccounts()
 
@@ -258,18 +257,14 @@ class AccountSet:
                 if value_error_ind: raise ValueError
         #print('exit AccountSet()')
 
-    def __str__(self):
-        return self.to_json()
+    def __str__(self): return self.getAccounts().to_string()
 
-    def __repr__(self):
-        return self.to_json()
-
-    def addAccount(self,list_of_accounts):
-        #todo check a multiple is not being created
-        #check that prev has a curr, and princ has an interest
-        #check not receiving too many accounts
-        #check not empty
-        self.accounts += list_of_accounts
+    # def addAccount(self,list_of_accounts):
+    #     #todo check a multiple is not being created
+    #     #check that prev has a curr, and princ has an interest
+    #     #check not receiving too many accounts
+    #     #check not empty
+    #     self.accounts += list_of_accounts
 
     def createAccount(self,
                       name,
@@ -720,6 +715,7 @@ class AccountSet:
         all_account_names = set(all_account_names__2) - set([' Principal Balance'])
 
         payment_amounts__BudgetSet = BudgetSet.BudgetSet([])
+        payment_amount_tuple_list = []
 
         for i in range(0, int(number_of_phase_space_regions)):
 
@@ -857,7 +853,20 @@ class AccountSet:
                     continue
 
                 account_set.executeTransaction(Account_From=checking_acct_name, Account_To=loop__to_name, Amount=round(loop__amount,2))
-                payment_amounts__BudgetSet.addBudgetItem(date_string_YYYYMMDD, date_string_YYYYMMDD, 7, 'once', round(loop__amount,2), loop__to_name,False,partial_payment_allowed=False)
+                #payment_amounts__BudgetSet.addBudgetItem(date_string_YYYYMMDD, date_string_YYYYMMDD, 7, 'once', round(loop__amount,2), loop__to_name,False,partial_payment_allowed=False)
+                payment_amount_tuple_list.append((loop__to_name,round(loop__amount,2)))
+
+        unique_payment_amount_tuple_dict = {}
+        for tp in payment_amount_tuple_list:
+            if tp[0] not in unique_payment_amount_tuple_dict:
+                unique_payment_amount_tuple_dict[tp[0]] = tp[1]
+            else:
+                unique_payment_amount_tuple_dict[tp[0]] += tp[1]
+
+        for key, value in unique_payment_amount_tuple_dict.items():
+            payment_amounts__BudgetSet.addBudgetItem(date_string_YYYYMMDD, date_string_YYYYMMDD, 7, 'once',
+                                                     round(value, 2), key, False,
+                                                     partial_payment_allowed=False)
 
         # consolidate payments
         B = payment_amounts__BudgetSet.getBudgetItems()

@@ -156,39 +156,32 @@ class BudgetItem:
                 raise ValueError
 
     def __str__(self):
-        single_budget_item_df = pd.DataFrame({
-            'Start_Date': [self.start_date],
-            'End_Date': [self.end_date],
+        return pd.DataFrame({
+            'Start_Date': [self.start_date.strftime('%Y%m%d')],
+            'End_Date': [self.end_date.strftime('%Y%m%d')],
             'Priority': [self.priority],
             'Cadence': [self.cadence],
             'Amount': [self.amount],
             'Memo': [self.memo],
             'Deferrable': [self.deferrable],
             'Partial_Payment_Allowed': [self.partial_payment_allowed]
+        }).to_string()
 
-        })
-
-        return single_budget_item_df.to_string()
-
-    def __repr__(self):
-        return str(self)
-
-    def toJSON(self):
+    def to_json(self):
         """
         Get a <string> representing the <BudgetItem> object.
 
         """
-        JSON_string = "{\n"
-        JSON_string += "\"Start_Date\":" + "\"" + str(self.start_date) + "\",\n"
-        JSON_string += "\"End_Date\":" + "\"" + str(self.end_date) + "\",\n"
-        JSON_string += "\"Priority\":" + "\"" + str(self.priority) + "\",\n"
-        JSON_string += "\"Cadence\":" + "\"" + str(self.cadence) + "\",\n"
-        JSON_string += "\"Amount\":" + "\"" + str(self.amount) + "\",\n"
-        JSON_string += "\"Memo\":" + "\"" + str(self.memo) + "\",\n"
-        JSON_string += "\"Deferrable\":" + "\"" + str(self.deferrable) + "\",\n"
-        JSON_string += "\"Partial_Payment_Allowed\":" + "\"" + str(self.partial_payment_allowed) + "\"\n"
-        JSON_string += "}"
-        return JSON_string
+        return pd.DataFrame({
+            'Start_Date': [self.start_date.strftime('%Y%m%d')],
+            'End_Date': [self.end_date.strftime('%Y%m%d')],
+            'Priority': [self.priority],
+            'Cadence': [self.cadence],
+            'Amount': [self.amount],
+            'Memo': [self.memo],
+            'Deferrable': [self.deferrable],
+            'Partial_Payment_Allowed': [self.partial_payment_allowed]
+        }).to_json(orient="records")
 
     # def fromJSON(self,JSON_string):
     #     pass
