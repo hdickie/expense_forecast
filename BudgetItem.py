@@ -62,8 +62,8 @@ class BudgetItem:
 
         """
 
-        self.start_date = start_date_YYYYMMDD
-        self.end_date = end_date_YYYYMMDD
+        self.start_date_YYYYMMDD = start_date_YYYYMMDD
+        self.end_date_YYYYMMDD = end_date_YYYYMMDD
         self.priority = priority
         self.cadence = cadence
         self.amount = amount
@@ -79,8 +79,8 @@ class BudgetItem:
 
 
         try:
-            self.start_date = datetime.datetime.strptime(str(start_date_YYYYMMDD).replace('-',''),'%Y%m%d')
-            #todo accept YYYY-MM-DD and YYYYMMDD
+            # todo input validation for date string format
+            datetime.datetime.strptime(str(start_date_YYYYMMDD).replace('-', ''), '%Y%m%d')
         except Exception as e:
             exception_type_error_message_string += str(e)
             exception_type_error_message_string += 'failed cast BudgetItem.start_date to datetime\n'
@@ -88,8 +88,8 @@ class BudgetItem:
             exception_type_error_ind = True
 
         try:
-            self.end_date = datetime.datetime.strptime(str(end_date_YYYYMMDD).replace('-',''),'%Y%m%d')
-            #todo accept YYYY-MM-DD and YYYYMMDD
+            # todo input validation for date string format
+            datetime.datetime.strptime(str(end_date_YYYYMMDD).replace('-', ''), '%Y%m%d')
         except Exception as e:
             exception_type_error_message_string += str(e)
             exception_type_error_message_string += 'failed cast BudgetItem.end_date to datetime\n'
@@ -157,8 +157,8 @@ class BudgetItem:
 
     def __str__(self):
         return pd.DataFrame({
-            'Start_Date': [self.start_date.strftime('%Y%m%d')],
-            'End_Date': [self.end_date.strftime('%Y%m%d')],
+            'Start_Date': [self.start_date_YYYYMMDD],
+            'End_Date': [self.end_date_YYYYMMDD],
             'Priority': [self.priority],
             'Cadence': [self.cadence],
             'Amount': [self.amount],
@@ -173,8 +173,8 @@ class BudgetItem:
 
         """
         return pd.DataFrame({
-            'Start_Date': [self.start_date.strftime('%Y%m%d')],
-            'End_Date': [self.end_date.strftime('%Y%m%d')],
+            'Start_Date': [self.start_date_YYYYMMDD],
+            'End_Date': [self.end_date_YYYYMMDD],
             'Priority': [self.priority],
             'Cadence': [self.cadence],
             'Amount': [self.amount],

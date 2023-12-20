@@ -25,17 +25,29 @@ class MemoRuleSet:
         for memo_rule in memo_rules__list:
             self.memo_rules.append(memo_rule)
 
+        #todo do the memoruleset version of this
+        #
+        # if len(self.accounts) > 0:
+        #     required_attributes = ['name', 'balance', 'min_balance', 'max_balance', 'account_type',
+        #                            'billing_start_date_YYYYMMDD',
+        #                            'interest_type', 'apr', 'interest_cadence', 'minimum_payment']
+        #
+        #     for obj in self.accounts:
+        #         # An object in the input list did not have all the attributes an Account is expected to have.
+        #         if set(required_attributes) & set(dir(obj)) != set(required_attributes): raise ValueError("An object in the input list did not have all the attributes an Account is expected to have.")
+
+
     def __str__(self):
         return self.getMemoRules().to_string()
 
     def __repr__(self):
         return str(self)
 
-    def findMatchingMemoRule(self, budget_item):
+    def findMatchingMemoRule(self, txn_memo,transaction_priority):
         log_in_color('yellow','debug','ENTER findMatchingMemoRule')
 
         memo_df = self.getMemoRules()
-        memo_rules_of_matching_priority = memo_df[memo_df.Transaction_Priority == budget_item.priority]
+        memo_rules_of_matching_priority = memo_df[memo_df.Transaction_Priority == transaction_priority]
 
         match_vec = []
         for memo_index, memo_row in memo_rules_of_matching_priority.iterrows():
@@ -44,7 +56,7 @@ class MemoRuleSet:
         for i in range(0, memo_rules_of_matching_priority.shape[0]):
             memo_row = memo_rules_of_matching_priority.iloc[i,:]
             try:
-                g = re.search(memo_row.Memo_Regex, budget_item.memo).group(0)
+                g = re.search(memo_row.Memo_Regex, txn_memo).group(0)
                 match_vec[i] = True
             except Exception as e:
                 print(e)
@@ -54,7 +66,7 @@ class MemoRuleSet:
             assert sum(match_vec) != 0  # if error, no matches found
         except Exception as e:
             log_in_color('yellow', 'error', 'ERROR')
-            log_in_color('yellow', 'error', 'No matches found for memo:'+budget_item.memo)
+            log_in_color('yellow', 'error', 'No matches found for memo:'+str(txn_memo))
             log_in_color('yellow', 'error', 'Memo Set:')
             log_in_color('yellow', 'error',self)
             raise ValueError
@@ -63,7 +75,7 @@ class MemoRuleSet:
             assert sum(match_vec) == 1  # if error, multiple matches found
         except Exception as e:
             log_in_color('yellow', 'error', 'ERROR')
-            log_in_color('yellow', 'error', 'Multiple matches found for memo:'+budget_item.memo)
+            log_in_color('yellow', 'error', 'Multiple matches found for memo:'+str(txn_memo))
             log_in_color('yellow', 'error', 'match vector:')
             log_in_color('yellow', 'error', match_vec)
 

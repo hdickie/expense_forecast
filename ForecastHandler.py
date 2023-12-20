@@ -217,15 +217,15 @@ class ForecastHandler:
         assert len(all_initial_memo_set_hashes) == len(E_objs)
         self.initial_memo_rule_set = E_objs[0].initial_memo_rule_set
 
-        all_start_dates = [ E.start_date for E in E_objs ]
+        all_start_dates = [E.start_date_YYYYMMDD for E in E_objs]
         assert min(all_start_dates) == max(all_start_dates)
         assert len(all_start_dates) == len(E_objs)
-        self.start_date = E_objs[0].start_date
+        self.start_date = E_objs[0].start_date_YYYYMMDD
 
-        all_end_dates = [E.end_date for E in E_objs]
+        all_end_dates = [E.end_date_YYYYMMDD for E in E_objs]
         assert min(all_end_dates) == max(all_end_dates)
         assert len(all_end_dates) == len(E_objs)
-        self.end_date = E_objs[0].end_date
+        self.end_date = E_objs[0].end_date_YYYYMMDD
 
         #this is not an attribute of ExpenseForecast
         # all_output_directories = [ hash(E.output_directory) for E in E_objs]
@@ -324,11 +324,11 @@ class ForecastHandler:
 
     def generateCompareTwoForecastsHTMLReport(self,E1, E2, output_dir='./'):
 
-        assert E1.start_date == E2.start_date
-        assert E1.end_date == E2.end_date
+        assert E1.start_date_YYYYMMDD == E2.start_date_YYYYMMDD
+        assert E1.end_date_YYYYMMDD == E2.end_date_YYYYMMDD
 
-        start_date = E1.start_date.strftime('%Y-%m-%d')
-        end_date = E1.end_date.strftime('%Y-%m-%d')
+        start_date = E1.start_date_YYYYMMDD.strftime('%Y-%m-%d')
+        end_date = E1.end_date_YYYYMMDD.strftime('%Y-%m-%d')
 
         report_1_id = E1.unique_id
         report_2_id = E2.unique_id
@@ -854,8 +854,8 @@ class ForecastHandler:
 
     def generateHTMLReport(self,E,output_dir='./'):
 
-        start_date = E.start_date.strftime('%Y-%m-%d')
-        end_date = E.end_date.strftime('%Y-%m-%d')
+        start_date = E.start_date_YYYYMMDD.strftime('%Y-%m-%d')
+        end_date = E.end_date_YYYYMMDD.strftime('%Y-%m-%d')
 
         report_id = E.unique_id
 

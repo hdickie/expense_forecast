@@ -1,70 +1,46 @@
-import unittest
+import unittest, pytest
 import AccountSet,BudgetSet,MemoRuleSet,ExpenseForecast
 import pandas as pd, numpy as np
 import datetime, logging
+
+import BudgetItem
+import MemoRule
+
 pd.options.mode.chained_assignment = None #apparently this warning can throw false positives???
-
+import MilestoneSet
 from log_methods import log_in_color
-
+import Account, BudgetSet, MemoRuleSet
 import copy
 
-def generate_date_sequence(start_date_YYYYMMDD,num_days,cadence):
-    """ A wrapper for pd.date_range intended to make code easier to read.
-
-    #todo write project_utilities.generate_date_sequence() doctests
-    """
-
-    start_date = datetime.datetime.strptime(start_date_YYYYMMDD,'%Y%m%d')
-    end_date = start_date + datetime.timedelta(days=num_days)
-
-    if cadence.lower() == "once":
-        return pd.Series(start_date)
-    elif cadence.lower() == "daily":
-        return_series = pd.date_range(start_date,end_date,freq='D')
-    elif cadence.lower() == "weekly":
-        return_series = pd.date_range(start_date,end_date,freq='W')
-    elif cadence.lower() == "biweekly":
-        return_series = pd.date_range(start_date,end_date,freq='2W')
-    elif cadence.lower() == "monthly":
-
-        day_delta = int(start_date.strftime('%d'))-1
-        first_of_each_relevant_month = pd.date_range(start_date - datetime.timedelta(days=1),end_date,freq='MS')
-
-        return_series = first_of_each_relevant_month + datetime.timedelta(days=day_delta)
-    elif cadence.lower() == "quarterly":
-        #todo check if this needs an adjustment like the monthly case did
-        return_series = pd.date_range(start_date,end_date,freq='Q')
-    elif cadence.lower() == "yearly":
-        # todo check if this needs an adjustment like the monthly case did
-        return_series = pd.date_range(start_date,end_date,freq='Y')
-    else:
-        print('undefined edge case in generate_date_sequence()')
-        print('start_date_YYYYMMDD:'+str(start_date_YYYYMMDD))
-        print('num_days:'+str(num_days))
-        print('cadence:'+str(cadence))
-
-    return return_series
+from generate_date_sequence import generate_date_sequence
 
 from log_methods import display_test_result
 
-class TestExpenseForecastMethods(unittest.TestCase):
+def checking_acct():
+    return Account.Account('checking',1000,0,10000,'checking',None,None,None,None,None)
 
-    def setUp(self):
-        #print('Running setUp')
-        self.account_set = AccountSet.AccountSet([])
-        self.budget_set = BudgetSet.BudgetSet([])
-        self.memo_rule_set = MemoRuleSet.MemoRuleSet([])
-        self.start_date_YYYYMMDD = '20000101'
-        self.end_date_YYYYMMDD = '20000103'
+def txn_budget_item():
+    return BudgetItem.BudgetItem('20000101','20000101',1,'once',10,'test txn',False,False)
 
-        self.og_dir = dir()
+def match_all_checking_memo_rule():
+    return MemoRule.MemoRule('.*','checking',None,1)
 
-        #print('exiting setup')
+def match_test_txn_checking_memo_rule():
+    return MemoRule.MemoRule('test txn', 'checking', None, 1)
 
-    def tearDown(self):
-        #print('Running tearDown')
-        pass
-        #print('exiting tearDown')
+def match_test_txn_credit_memo_rule():
+    return MemoRule.MemoRule('test txn', 'credit', None, 1)
+
+class TestExpenseForecastMethods:
+
+    start_date_YYYYMMDD = '20000101'
+    end_date_YYYYMMDD = '20000103'
+
+    account_set = AccountSet.AccountSet([])
+    budget_set = BudgetSet.BudgetSet([])
+    memo_rule_set = MemoRuleSet.MemoRuleSet([])
+    milestone_set = MilestoneSet.MilestoneSet(account_set,budget_set,[],[],[])
+
 
     def account_boundaries_are_violated(self,accounts_df,forecast_df):
 
@@ -378,65 +354,123 @@ class TestExpenseForecastMethods(unittest.TestCase):
     #
     #     E.plotOverall('./current_situation2__'+start_date_YYYYMMDD+'__'+end_date_YYYYMMDD+'.png')
 
-    def test_ExpenseForecast_Constructor(self):
-        """
-        |
-        | Test Cases
-        | Expected Successes
-        | S1: Base case. More complex tests will go in other methods.
-        |
-        | Expected Fails
-        | F1: start date is after end date
-        | F2: Pass in empty AccountSet, BudgetSet, MemoRuleSet objects
-        | F3: A budget memo x priority element does not have a matching regex in memo rule set
-        | F4: A memo rule has an account that does not exist in AccountSet
-        """
 
-        account_set = self.account_set
-        budget_set = self.budget_set
-        memo_rule_set = self.memo_rule_set
-        start_date_YYYYMMDD = self.start_date_YYYYMMDD
-        end_date_YYYYMMDD = self.end_date_YYYYMMDD
+    @pytest.mark.parametrize('account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set',
 
-        with self.assertRaises(ValueError): #F1
-            #switch started and end date to provoke error
-            ExpenseForecast.ExpenseForecast(account_set, budget_set, memo_rule_set,end_date_YYYYMMDD, start_date_YYYYMMDD)
+                             [(AccountSet.AccountSet([checking_acct()]),
+                              BudgetSet.BudgetSet([txn_budget_item()]),
+                              MemoRuleSet.MemoRuleSet([match_test_txn_checking_memo_rule()]),
+                              '19991231',
+                              '20000101',
+                              MilestoneSet.MilestoneSet(
+                                  AccountSet.AccountSet([]),
+                                  BudgetSet.BudgetSet([]),
+                                  [],
+                                  [],
+                                  []),
+                              )
 
-        with self.assertRaises(ValueError): #F2
-            ExpenseForecast.ExpenseForecast(account_set, budget_set, memo_rule_set, start_date_YYYYMMDD, end_date_YYYYMMDD)
+                             # (AccountSet.AccountSet([]),
+                             #  BudgetSet.BudgetSet([]),
+                             #  MemoRuleSet.MemoRuleSet([]),
+                             #  start_date_YYYYMMDD,
+                             #  end_date_YYYYMMDD,
+                             #  MilestoneSet.MilestoneSet([])
+                             #  ),
 
-        account_set.createAccount(name='checking', balance=0, min_balance=0, max_balance=0, account_type="checking")
+                             ])
+    def test_ExpenseForecast_Constructor__valid_inputs(self,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set):
+        ExpenseForecast.ExpenseForecast(account_set,
+                                        budget_set,
+                                        memo_rule_set,
+                                        start_date_YYYYMMDD,
+                                        end_date_YYYYMMDD,
+                                        milestone_set,
+                                        print_debug_messages=False)
 
-        with self.assertRaises(ValueError): #F3
-            budget_set.addBudgetItem(start_date_YYYYMMDD='20000101',
-                                     end_date_YYYYMMDD='20000101',
-                                     priority=1,
-                                     cadence='once',
-                                     amount=10,
-                                     deferrable=False,
-                                     memo='test',
-                                 partial_payment_allowed=False,
-                                     print_debug_messages=False)
+    @pytest.mark.parametrize('account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_exception',
 
-            #Since there are no memo rules, this will cause the intended error
+                             [(AccountSet.AccountSet([]),
+                              BudgetSet.BudgetSet([]),
+                              MemoRuleSet.MemoRuleSet([]),
+                              '20000101',
+                              '19991231',
+                              MilestoneSet.MilestoneSet(
+                                AccountSet.AccountSet([]),
+                                BudgetSet.BudgetSet([]),
+                                [],
+                                [],
+                              []),
+                              ValueError
+                              ),  #end date before start date
+
+                              (AccountSet.AccountSet([]),
+                               BudgetSet.BudgetSet([]),
+                               MemoRuleSet.MemoRuleSet([]),
+                               '19991231',
+                               '20000101',
+                               MilestoneSet.MilestoneSet(
+                                   AccountSet.AccountSet([]),
+                                   BudgetSet.BudgetSet([]),
+                                   [],
+                                   [],
+                                   []),
+                               ValueError
+                               ),  # empty account_set
+
+                              (AccountSet.AccountSet([checking_acct()]),
+                               BudgetSet.BudgetSet([txn_budget_item()]),
+                               MemoRuleSet.MemoRuleSet([]),
+                               '19991231',
+                               '20000101',
+                               MilestoneSet.MilestoneSet(
+                                   AccountSet.AccountSet([]),
+                                   BudgetSet.BudgetSet([]),
+                                   [],
+                                   [],
+                                   []),
+                               ValueError
+                               ), # A budget memo x priority element does not have a matching regex in memo rule set
+
+                              (AccountSet.AccountSet([checking_acct()]),
+                               BudgetSet.BudgetSet([txn_budget_item()]),
+                               MemoRuleSet.MemoRuleSet([match_test_txn_credit_memo_rule()]),
+                               '19991231',
+                               '20000101',
+                               MilestoneSet.MilestoneSet(
+                                   AccountSet.AccountSet([]),
+                                   BudgetSet.BudgetSet([]),
+                                   [],
+                                   [],
+                                   []),
+                               ValueError
+                               ),  #A memo rule has an account that does not exist in AccountSet
+
+                              # (AccountSet.AccountSet([]),
+                              #  BudgetSet.BudgetSet([]),
+                              #  MemoRuleSet.MemoRuleSet([]),
+                              #  'start_date_YYYYMMDD',
+                              #  'end_date_YYYYMMDD',
+                              #  MilestoneSet.MilestoneSet(
+                              #      AccountSet.AccountSet([]),
+                              #      BudgetSet.BudgetSet([]),
+                              #      [],
+                              #      [],
+                              #      []),
+                              #  ValueError
+                              #  ),
+
+                              ])
+    def test_ExpenseForecast_Constructor__invalid_inputs(self,account_set,budget_set,memo_rule_set,
+                                                         start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_exception):
+        with pytest.raises(expected_exception):
             ExpenseForecast.ExpenseForecast(account_set,
-                                            budget_set,
-                                            memo_rule_set,
-                                            start_date_YYYYMMDD,
-                                            end_date_YYYYMMDD,
-                                            print_debug_messages=False)
-
-        with self.assertRaises(ValueError):  # F4
-            budget_set = BudgetSet.BudgetSet()
-            memo_rule_set.addMemoRule(memo_regex='.*',account_from='doesnt exist',account_to=None,transaction_priority=1)
-            ExpenseForecast.ExpenseForecast(account_set,
-                                            budget_set,
-                                            memo_rule_set,
-                                            start_date_YYYYMMDD,
-                                            end_date_YYYYMMDD,
-                                            print_debug_messages=False)
-
-        ### Debug Message Tests
+                                        budget_set,
+                                        memo_rule_set,
+                                        start_date_YYYYMMDD,
+                                        end_date_YYYYMMDD,
+                                        milestone_set,
+                                        print_debug_messages=False)
 
 
     def compute_forecast_and_actual_vs_expected(self,
@@ -445,15 +479,20 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                                 memo_rule_set,
                                                 start_date_YYYYMMDD,
                                                 end_date_YYYYMMDD,
+                                                milestone_set,
                                                 expected_result_df,
                                                 test_description):
 
         E = ExpenseForecast.ExpenseForecast(account_set, budget_set,
                                             memo_rule_set,
                                             start_date_YYYYMMDD,
-                                            end_date_YYYYMMDD, raise_exceptions=False)
+                                            end_date_YYYYMMDD,
+                                            milestone_set,
+                                            raise_exceptions=False)
 
-        d = E.compute_forecast_difference(E.forecast_df,expected_result_df,
+        E.runForecast()
+
+        d = E.compute_forecast_difference(copy.deepcopy(E.forecast_df),copy.deepcopy(expected_result_df),
                                           label=test_description,
                                           make_plots=False,
                                           diffs_only=True,
@@ -462,7 +501,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                           append_expected_values=False,
                                           return_type='dataframe')
 
-        f = E.compute_forecast_difference(E.forecast_df,expected_result_df,
+        f = E.compute_forecast_difference(copy.deepcopy(E.forecast_df),copy.deepcopy(expected_result_df),
                                           label=test_description,
                                           make_plots=False,
                                           diffs_only=False,
@@ -470,6 +509,8 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                           require_matching_date_range=True,
                                           append_expected_values=True,
                                           return_type='dataframe')
+
+        print(f.T.to_string())
 
         try:
             display_test_result(test_description, d)
@@ -482,7 +523,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
 
             error_ind = sum(sum(np.square(
                 non_boilerplate_values__M)).T)  # this very much DOES NOT SCALE. this is intended for small tests
-            self.assertTrue(error_ind == 0)
+            assert error_ind == 0
         except Exception as e:
             # print(test_description) #todo use log methods
             # print(f.T.to_string())
@@ -499,6 +540,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
         account_set = copy.deepcopy(self.account_set)
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
+        milestone_set = copy.deepcopy(self.milestone_set)
 
         account_set.createAccount(name='Checking',
                                   balance=0,
@@ -538,8 +580,10 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                                      memo_rule_set,
                                                      start_date_YYYYMMDD,
                                                      end_date_YYYYMMDD,
+                                                     milestone_set,
                                                      expected_result_df,
                                                      test_description)
+
     def test_p1_only__income_and_payment_on_same_day(self):
         test_description = 'test_p1_only__income_and_payment_on_same_day'
 
@@ -549,6 +593,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
         account_set = copy.deepcopy(self.account_set)
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
+        milestone_set = copy.deepcopy(self.milestone_set)
 
         account_set.createAccount(name='Checking',
                                   balance=0,
@@ -598,6 +643,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                                      memo_rule_set,
                                                      start_date_YYYYMMDD,
                                                      end_date_YYYYMMDD,
+                                                         milestone_set,
                                                      expected_result_df,
                                                      test_description)
     def test_p1_only__cc_payment__prev_bal_25__expect_25(self):
@@ -609,6 +655,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
         account_set = copy.deepcopy(self.account_set)
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
+        milestone_set = copy.deepcopy(self.milestone_set)
 
         account_set.createAccount(name='Checking',
                                   balance=2000,
@@ -648,6 +695,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                                 memo_rule_set,
                                                 start_date_YYYYMMDD,
                                                 end_date_YYYYMMDD,
+                                                         milestone_set,
                                                 expected_result_df,
                                                 test_description)
 
@@ -660,6 +708,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
         account_set = copy.deepcopy(self.account_set)
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
+        milestone_set = copy.deepcopy(self.milestone_set)
 
         account_set.createAccount(name='Checking',
                                   balance=2000,
@@ -699,6 +748,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                                      memo_rule_set,
                                                      start_date_YYYYMMDD,
                                                      end_date_YYYYMMDD,
+                                                         milestone_set,
                                                      expected_result_df,
                                                      test_description)
     def test_p1_only__cc_payment_prev_bal_3000__expect_60(self):
@@ -710,6 +760,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
         account_set = copy.deepcopy(self.account_set)
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
+        milestone_set = copy.deepcopy(self.milestone_set)
 
         account_set.createAccount(name='Checking',
                                   balance=2000,
@@ -749,6 +800,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                                      memo_rule_set,
                                                      start_date_YYYYMMDD,
                                                      end_date_YYYYMMDD,
+                                                         milestone_set,
                                                      expected_result_df,
                                                      test_description)
     def test_p2_and_3__expect_skip(self):
@@ -760,6 +812,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
         account_set = copy.deepcopy(self.account_set)
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
+        milestone_set = copy.deepcopy(self.milestone_set)
 
         account_set.createAccount(name='Checking',
                                   balance=0,
@@ -805,6 +858,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                                      memo_rule_set,
                                                      start_date_YYYYMMDD,
                                                      end_date_YYYYMMDD,
+                                                         milestone_set,
                                                      expected_result_df,
                                                      test_description)
 
@@ -819,6 +873,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
         account_set = copy.deepcopy(self.account_set)
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
+        milestone_set = copy.deepcopy(self.milestone_set)
 
         account_set.createAccount(name='Checking',
                                   balance=0,
@@ -863,6 +918,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                                      memo_rule_set,
                                                      start_date_YYYYMMDD,
                                                      end_date_YYYYMMDD,
+                                                         milestone_set,
                                                      expected_result_df,
                                                      test_description)
         # print('E.deferred_df:')
@@ -879,6 +935,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
         account_set = copy.deepcopy(self.account_set)
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
+        milestone_set = copy.deepcopy(self.milestone_set)
 
         account_set.createAccount(name='Checking',
                                   balance=100,
@@ -929,6 +986,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                                      memo_rule_set,
                                                      start_date_YYYYMMDD,
                                                      end_date_YYYYMMDD,
+                                                         milestone_set,
                                                      expected_result_df,
                                                      test_description)
 
@@ -943,6 +1001,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
         account_set = copy.deepcopy(self.account_set)
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
+        milestone_set = copy.deepcopy(self.milestone_set)
 
         account_set.createAccount(name='Checking',
                                   balance=100,
@@ -977,6 +1036,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                                      memo_rule_set,
                                                      start_date_YYYYMMDD,
                                                      end_date_YYYYMMDD,
+                                                         milestone_set,
                                                      expected_result_df,
                                                      test_description)
 
@@ -1004,6 +1064,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
         account_set = copy.deepcopy(self.account_set)
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
+        milestone_set = copy.deepcopy(self.milestone_set)
 
         account_set.createAccount(name='Checking',
                                   balance=0,
@@ -1049,6 +1110,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                                      memo_rule_set,
                                                      start_date_YYYYMMDD,
                                                      end_date_YYYYMMDD,
+                                                         milestone_set,
                                                      expected_result_df,
                                                      test_description)
     def test_p4__cc_payment__no_prev_balance__pay_100__expect_skip(self):
@@ -1061,7 +1123,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
         account_set = copy.deepcopy(self.account_set)
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
-
+        milestone_set = copy.deepcopy(self.milestone_set)
 
         account_set.createAccount(name='Checking',
                                   balance=2000,
@@ -1107,6 +1169,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                                      memo_rule_set,
                                                      start_date_YYYYMMDD,
                                                      end_date_YYYYMMDD,
+                                                         milestone_set,
                                                      expected_result_df,
                                                      test_description)
 
@@ -1122,6 +1185,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
         account_set = copy.deepcopy(self.account_set)
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
+        milestone_set = copy.deepcopy(self.milestone_set)
 
         account_set.createAccount(name='Checking',
                                   balance=2000,
@@ -1167,6 +1231,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                                      memo_rule_set,
                                                      start_date_YYYYMMDD,
                                                      end_date_YYYYMMDD,
+                                                         milestone_set,
                                                      expected_result_df,
                                                      test_description)
     def test_p4__cc_payment__pay_part_of_prev_balance__expect_200(self):
@@ -1178,7 +1243,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
         account_set = copy.deepcopy(self.account_set)
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
-
+        milestone_set = copy.deepcopy(self.milestone_set)
 
         account_set.createAccount(name='Checking',
                                   balance=200,
@@ -1225,6 +1290,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                                      memo_rule_set,
                                                      start_date_YYYYMMDD,
                                                      end_date_YYYYMMDD,
+                                                         milestone_set,
                                                      expected_result_df,
                                                      test_description)
     def test_p4__cc_payment__non_0_prev_balance_but_no_funds__expect_0(self):
@@ -1236,6 +1302,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
         account_set = copy.deepcopy(self.account_set)
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
+        milestone_set = copy.deepcopy(self.milestone_set)
 
         account_set.createAccount(name='Checking',
                                   balance=40,
@@ -1281,6 +1348,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                                      memo_rule_set,
                                                      start_date_YYYYMMDD,
                                                      end_date_YYYYMMDD,
+                                                         milestone_set,
                                                      expected_result_df,
                                                      test_description)
 
@@ -1298,6 +1366,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
         account_set = copy.deepcopy(self.account_set)
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
+        milestone_set = copy.deepcopy(self.milestone_set)
 
         account_set.createAccount(name='Checking',
                                   balance=1000,
@@ -1343,6 +1412,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                                      memo_rule_set,
                                                      start_date_YYYYMMDD,
                                                      end_date_YYYYMMDD,
+                                                         milestone_set,
                                                      expected_result_df,
                                                      test_description)
 
@@ -1404,7 +1474,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
     #                                                  test_description)
     #     raise NotImplementedError
 
-    def test_execute_defer_after_receving_income_2_days_later(self):
+    def test_execute_defer_after_receiving_income_2_days_later(self):
 
         test_description = 'test_execute_defer_after_receving_income_2_days_later'
 
@@ -1414,6 +1484,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
         account_set = copy.deepcopy(self.account_set)
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
+        milestone_set = copy.deepcopy(self.milestone_set)
 
         account_set.createAccount(name='Checking',
                                   balance=500,
@@ -1459,6 +1530,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
                                                          memo_rule_set,
                                                          start_date_YYYYMMDD,
                                                          end_date_YYYYMMDD,
+                                                         milestone_set,
                                                          expected_result_df,
                                                          test_description)
 
@@ -1482,6 +1554,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
         account_set = copy.deepcopy(self.account_set)
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
+        milestone_set = copy.deepcopy(self.milestone_set)
 
         account_set.createAccount(name='Checking',
                                   balance=400,
@@ -1539,6 +1612,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
         account_set = copy.deepcopy(self.account_set)
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
+        milestone_set = copy.deepcopy(self.milestone_set)
 
         account_set.createAccount(name='Checking',
                                   balance=2000,
@@ -1604,6 +1678,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
         account_set = copy.deepcopy(self.account_set)
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
+        milestone_set = copy.deepcopy(self.milestone_set)
 
         account_set.createAccount(name='Checking',
                                   balance=2000,
@@ -1676,6 +1751,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
         account_set = copy.deepcopy(self.account_set)
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
+        milestone_set = copy.deepcopy(self.milestone_set)
 
         account_set.createAccount(name='Checking',
                                   balance=1000,
@@ -1737,6 +1813,7 @@ class TestExpenseForecastMethods(unittest.TestCase):
         account_set = copy.deepcopy(self.account_set)
         budget_set = copy.deepcopy(self.budget_set)
         memo_rule_set = copy.deepcopy(self.memo_rule_set)
+        milestone_set = copy.deepcopy(self.milestone_set)
 
         account_set.createAccount(name='Checking',
                                   balance=current_checking_balance,
