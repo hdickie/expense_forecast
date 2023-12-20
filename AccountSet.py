@@ -86,7 +86,7 @@ class AccountSet:
 
         if len(self.accounts) > 0:
             required_attributes = ['name', 'balance', 'min_balance', 'max_balance', 'account_type',
-                                   'billing_start_date',
+                                   'billing_start_date_YYYYMMDD',
                                    'interest_type', 'apr', 'interest_cadence', 'minimum_payment']
 
             for obj in self.accounts:
@@ -512,15 +512,16 @@ class AccountSet:
             if AF_base_name_match_count == 2:
                 if self.accounts[account_from_index].account_type == 'curr stmt bal':
                     AF_Account_Type = 'credit'
-                elif self.accounts[account_from_index].account_type == 'principal balance':
-                    AF_Account_Type = 'loan'
+                # elif self.accounts[account_from_index].account_type == 'principal balance':
+                #     AF_Account_Type = 'loan'
                 elif self.accounts[account_from_index].account_type == 'checking':
                     AF_Account_Type = 'checking'
             elif AF_base_name_match_count == 1:
                 AF_Account_Type = self.accounts[account_from_index].account_type
-            else:
-                raise ValueError #if this happens, then validation in ExpenseForecast constructor failed to catch something
+            else: raise ValueError #if this happens, then validation in ExpenseForecast constructor failed to catch something
             #AT_base_name_match_count = account_base_names.count(Account_To)
+        else:
+            AF_Account_Type = 'None'
 
         if Account_To is not None:
             if Account_To != '' and Account_To != 'None':
@@ -535,8 +536,9 @@ class AccountSet:
                         AT_Account_Type = 'checking'
                 elif AT_base_name_match_count == 1:
                     AT_Account_Type = self.accounts[account_to_index].account_type
-                else:
-                    raise ValueError #if this happens, then validation in ExpenseForecast constructor failed to catch something
+                else: raise ValueError #if this happens, then validation in ExpenseForecast constructor failed to catch something
+            else:
+                AT_Account_Type = 'None'
 
         #at this point, we know account types but haven't changed any balances
         #if income, one account must be checking, and the other must be none
@@ -544,11 +546,13 @@ class AccountSet:
             pass #cool
         elif income_flag and AF_Account_Type == 'None' and AT_Account_Type == 'checking':
             pass #cool
-        elif income_flag:
-            #not cool
-            raise ValueError("income_flag was True but did not refer to a checking account or referred to multiple accounts")
+
+        #not cool
+        elif income_flag: raise ValueError("income_flag was True but did not refer to a checking account or referred to multiple accounts")
 
 
+        #overdraft credit txn
+        #overcredit credit txn
         if Account_From != '' and Account_From != 'None':
             if AF_Account_Type == 'checking':
 
@@ -938,7 +942,7 @@ class AccountSet:
                                                'Min_Balance': [account.min_balance],
                                                'Max_Balance': [account.max_balance],
                                                'Account_Type': [account.account_type],
-                                               'Billing_Start_Dt': [account.billing_start_date],
+                                               'Billing_Start_Dt': [account.billing_start_date_YYYYMMDD],
                                                'Interest_Type': [account.interest_type],
                                                'APR': [account.apr],
                                                'Interest_Cadence': [account.interest_cadence],

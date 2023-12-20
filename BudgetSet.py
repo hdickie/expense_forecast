@@ -2,6 +2,8 @@ import BudgetItem, pandas as pd, datetime
 
 from log_methods import log_in_color
 
+from generate_date_sequence import generate_date_sequence
+
 class BudgetSet:
 
     def __init__(self,budget_items__list):
@@ -23,6 +25,18 @@ class BudgetSet:
         for budget_item in budget_items__list:
             self.budget_items.append(budget_item)
 
+        #todo do the budgetitem version of this
+        #
+        # if len(self.accounts) > 0:
+        #     required_attributes = ['name', 'balance', 'min_balance', 'max_balance', 'account_type',
+        #                            'billing_start_date_YYYYMMDD',
+        #                            'interest_type', 'apr', 'interest_cadence', 'minimum_payment']
+        #
+        #     for obj in self.accounts:
+        #         # An object in the input list did not have all the attributes an Account is expected to have.
+        #         if set(required_attributes) & set(dir(obj)) != set(required_attributes): raise ValueError("An object in the input list did not have all the attributes an Account is expected to have.")
+
+
     def __str__(self):
         return self.getBudgetItems().to_string()
 
@@ -39,8 +53,8 @@ class BudgetSet:
                                         })
 
         for budget_item in self.budget_items:
-            new_budget_item_row_df = pd.DataFrame({'Start_Date': [budget_item.start_date],
-                                                   'End_Date': [budget_item.end_date],
+            new_budget_item_row_df = pd.DataFrame({'Start_Date': [budget_item.start_date_YYYYMMDD],
+                                                   'End_Date': [budget_item.end_date_YYYYMMDD],
                                                'Priority': [budget_item.priority],
                                                'Cadence': [budget_item.cadence],
                                                'Amount': [budget_item.amount],
@@ -89,8 +103,8 @@ class BudgetSet:
         current_budget_schedule = pd.DataFrame({'Date':[],'Priority':[],'Amount':[],'Memo':[],'Deferrable':[],'Partial_Payment_Allowed':[]})
         end_date = datetime.datetime.strptime(str(end_date_YYYYMMDD),'%Y%m%d')
         for budget_item in self.budget_items:
-            relative_num_days = (budget_item.end_date - budget_item.start_date).days
-            relevant_date_sequence = generate_date_sequence(budget_item.start_date.strftime('%Y%m%d'),relative_num_days,budget_item.cadence)
+            relative_num_days = (datetime.datetime.strptime(budget_item.end_date_YYYYMMDD,'%Y%m%d') - datetime.datetime.strptime(budget_item.start_date_YYYYMMDD,'%Y%m%d')).days
+            relevant_date_sequence = generate_date_sequence(budget_item.start_date_YYYYMMDD, relative_num_days, budget_item.cadence)
 
             relevant_date_sequence_df = pd.DataFrame(relevant_date_sequence)
             relevant_date_sequence_df = relevant_date_sequence_df.rename(columns={0:"Date"})

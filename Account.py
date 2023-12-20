@@ -68,7 +68,7 @@ class Account:
         self.min_balance=min_balance
         self.max_balance=max_balance
         self.account_type=account_type
-        self.billing_start_date=billing_start_date_YYYYMMDD
+        self.billing_start_date_YYYYMMDD=billing_start_date_YYYYMMDD
         self.interest_type=interest_type
         self.apr=apr
         self.interest_cadence=interest_cadence
@@ -212,13 +212,15 @@ class Account:
 
         if account_type.lower() in ['prev stmt bal','principal balance','savings']:
             try:
+                # dont actually do the cast
                 try:
+                    self.billing_start_date_YYYYMMDD = billing_start_date_YYYYMMDD
                     try:
-                        self.billing_start_date = datetime.datetime.strptime(str(billing_start_date_YYYYMMDD),'%Y%m%d')
+                        datetime.datetime.strptime(str(billing_start_date_YYYYMMDD), '%Y%m%d')
                     except:
-                        self.billing_start_date = datetime.datetime.strptime(str(billing_start_date_YYYYMMDD), '%Y-%m-%d %H:%M:%S')
+                        datetime.datetime.strptime(str(billing_start_date_YYYYMMDD), '%Y-%m-%d %H:%M:%S')
                 except:
-                    self.billing_start_date = datetime.datetime.strptime(str(billing_start_date_YYYYMMDD), '%Y-%m-%d')
+                    datetime.datetime.strptime(str(billing_start_date_YYYYMMDD), '%Y-%m-%d')
             except Exception as e:
                 exception_type_error_message_string += str(e)
                 exception_type_error_message_string += 'failed cast Account.billing_start_date_YYYYMMDD to datetime\n'
@@ -293,10 +295,10 @@ class Account:
         :rtype: string
         """
 
-        bsd = self.billing_start_date
-        if self.billing_start_date is not None:
+        bsd = self.billing_start_date_YYYYMMDD
+        if self.billing_start_date_YYYYMMDD is not None:
             try:
-                bsd = self.billing_start_date.strftime('%Y-%m-%d')
+                bsd = self.billing_start_date_YYYYMMDD.strftime('%Y-%m-%d')
             except: #if datetime, then format, else its a string so do nothing
                 pass
 
@@ -325,7 +327,7 @@ class Account:
             'Min Balance': [self.min_balance],
             'Max Balance': [self.max_balance],
             'Account Type': [self.account_type],
-            'Billing Start Date': [self.billing_start_date],
+            'Billing Start Date': [self.billing_start_date_YYYYMMDD],
             'Interest Type': [self.interest_type],
             'APR': [self.apr],
             'Interest Cadence': [self.interest_cadence],

@@ -92,12 +92,12 @@ class TestMemoRuleSetMethods:
         B_T = txn_budget_item()
 
         with pytest.raises(ValueError):
-            M_E.findMatchingMemoRule(B_I.budget_items[0]) #no match found
+            M_E.findMatchingMemoRule(B_I.budget_items[0].memo,1) #no match found
 
         with pytest.raises(ValueError):
-            M_AI.findMatchingMemoRule(B_I.budget_items[0]) #multiple matches
+            M_AI.findMatchingMemoRule(B_I.budget_items[0].memo,1) #multiple matches
 
         with pytest.raises(ValueError):
-            M_I.findMatchingMemoRule(B_T.budget_items[0]) #non-trivial non-match
+            M_I.findMatchingMemoRule(B_T.budget_items[0].memo,1) #non-trivial non-match
 
-        M_A.findMatchingMemoRule(B_I.budget_items[0])
+        M_A.findMatchingMemoRule(B_I.budget_items[0].memo,1)

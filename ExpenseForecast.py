@@ -6,7 +6,7 @@ import datetime
 import re
 import copy
 import json
-
+import BudgetItem
 import BudgetSet, AccountSet
 import MemoRuleSet
 
@@ -186,7 +186,7 @@ class ExpenseForecast:
         json_file_name = "Forecast__"+str(self.unique_id)+"__"+self.start_ts+".json"
 
         return_string = ""
-        return_string += """Forecast  #""" + str(self.unique_id) + """: """+ self.start_date.strftime('%Y%m%d') + """ -> """+ self.end_date.strftime('%Y%m%d') +"\n"
+        return_string += """Forecast  #""" + str(self.unique_id) + """: """+ self.start_date_YYYYMMDD + """ -> """+ self.end_date_YYYYMMDD +"\n"
         return_string += " "+(str(self.initial_account_set.getAccounts().shape[0]) + """ accounts, """ + str(self.initial_budget_set.getBudgetItems().shape[0])  + """  budget items, """ + str(self.initial_memo_rule_set.getMemoRules().shape[0])  + """ memo rules.""").rjust(left_margin_width,' ')+"\n"
         return_string += " "+json_file_name+"\n"
 
@@ -224,18 +224,20 @@ class ExpenseForecast:
         log_in_color('green','info','ExpenseForecast(start_date_YYYYMMDD='+str(start_date_YYYYMMDD)+', end_date_YYYYMMDD='+str(end_date_YYYYMMDD)+')')
 
         try:
-            self.start_date = datetime.datetime.strptime(str(start_date_YYYYMMDD), '%Y%m%d')
+            datetime.datetime.strptime(str(start_date_YYYYMMDD), '%Y%m%d')
+            self.start_date_YYYYMMDD = start_date_YYYYMMDD
         except:
             print('value was:' + str(start_date_YYYYMMDD) + '\n')
             raise ValueError  # Failed to cast start_date_YYYYMMDD to datetime with format %Y%m%d
 
         try:
-            self.end_date = datetime.datetime.strptime(str(end_date_YYYYMMDD), '%Y%m%d')
+            datetime.datetime.strptime(str(end_date_YYYYMMDD), '%Y%m%d')
+            self.end_date_YYYYMMDD = end_date_YYYYMMDD
         except:
             raise ValueError  # Failed to cast end_date_YYYYMMDD to datetime with format %Y%m%d
 
-        if self.start_date >= self.end_date:
-            raise ValueError(str(self.start_date)+" >= "+str(self.end_date))  # start_date must be before end_date
+        if datetime.datetime.strptime(str(start_date_YYYYMMDD), '%Y%m%d') >= datetime.datetime.strptime(str(end_date_YYYYMMDD), '%Y%m%d'):
+            raise ValueError(str(self.start_date_YYYYMMDD)+" >= "+str(self.end_date_YYYYMMDD))  # start_date must be before end_date
 
         accounts_df = account_set.getAccounts()
         if accounts_df.shape[0] == 0:
@@ -332,7 +334,12 @@ class ExpenseForecast:
         # print('very initial proposed_df:')
         # print(proposed_df.to_string())
 
-        proposed_df = proposed_df[(self.start_date <= proposed_df.Date) & (proposed_df.Date <= self.end_date)]
+        #lb_sel_vec = (datetime.datetime.strptime(self.start_date_YYYYMMDD, '%Y%m%d') <= datetime.datetime.strptime(proposed_df.Date, '%Y%m%d'))
+        lb_sel_vec = [ datetime.datetime.strptime(self.start_date_YYYYMMDD, '%Y%m%d') <= datetime.datetime.strptime(d, '%Y%m%d') for d in proposed_df.Date ]
+        #rb_sel_vec = (datetime.datetime.strptime(proposed_df.Date, '%Y%m%d') <= datetime.datetime.strptime(str(end_date_YYYYMMDD), '%Y%m%d'))
+        rb_sel_vec = [ datetime.datetime.strptime(d, '%Y%m%d') <= datetime.datetime.strptime(self.start_date_YYYYMMDD, '%Y%m%d') for d in proposed_df.Date ]
+
+        proposed_df = proposed_df.iloc[lb_sel_vec and rb_sel_vec,:]
         proposed_df.reset_index(drop=True, inplace=True)
 
         # take priority 1 items and put them in confirmed
@@ -424,8 +431,8 @@ class ExpenseForecast:
         self.start_ts = datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S')
 
 
-        forecast_df, skipped_df, confirmed_df, deferred_df = self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date.strftime('%Y%m%d'),
-                                                                                         end_date_YYYYMMDD=self.end_date.strftime('%Y%m%d'),
+        forecast_df, skipped_df, confirmed_df, deferred_df = self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date_YYYYMMDD,
+                                                                                         end_date_YYYYMMDD=self.end_date_YYYYMMDD,
                                                                                          confirmed_df=self.initial_confirmed_df,
                                                                                          proposed_df=self.initial_proposed_df,
                                                                                          deferred_df=self.initial_deferred_df,
@@ -464,20 +471,20 @@ class ExpenseForecast:
         self.writeToJSONFile()
 
         try:
-            assert (min(forecast_df.Date) == self.start_date)
+            assert (min(forecast_df.Date) == self.start_date_YYYYMMDD)
         except AssertionError as e:
             raise ValueError("""
                         ExpenseForecast() did not include the first day as specified.
-                        start_date_YYYYMMDD=""" + str(self.start_date.strftime('%Y%m%d')) + """
+                        start_date_YYYYMMDD=""" + str(self.start_date_YYYYMMDD) + """
                         min(forecast_df.Date)=""" + str(min(forecast_df.Date)) + """
                         """)
 
         try:
-            assert (max(forecast_df.Date) == self.end_date)  # it is important that we use self.end_date here for the case when satisfice fails to not raise and exception
+            assert (max(forecast_df.Date) == self.end_date_YYYYMMDD)  # it is important that we use self.end_date here for the case when satisfice fails to not raise and exception
         except AssertionError as e:
             raise ValueError("""
                         ExpenseForecast() did not include the last day as specified.
-                        self.end_date=""" + str(self.end_date) + """
+                        self.end_date=""" + str(self.end_date_YYYYMMDD) + """
                         max(forecast_df.Date)=""" + str(max(forecast_df.Date)) + """
                         """)
 
@@ -492,7 +499,7 @@ class ExpenseForecast:
         #self.forecast_df.index = self.forecast_df['Date']
 
         f = open('Forecast__' + self.unique_id + '__' + self.start_ts + '.json','a')
-        f.write(self.toJSON())
+        f.write(self.to_json())
         f.close()
 
         # write all_data.csv  # self.forecast_df.iloc[:,0:(self.forecast_df.shape[1]-1)].to_csv('all_data.csv',index=False)
@@ -501,7 +508,7 @@ class ExpenseForecast:
 
     def getInitialForecastRow(self):
 
-        min_sched_date = self.start_date
+        min_sched_date = self.start_date_YYYYMMDD
         account_set_df = self.initial_account_set.getAccounts()
 
         date_only_df = pd.DataFrame(['Date', min_sched_date]).T
@@ -604,26 +611,32 @@ class ExpenseForecast:
         # if not deferred_df.empty:
         #     log_in_color('cyan', 'debug', 'ALL Deferred: ', self.log_stack_depth)
         #     log_in_color('cyan', 'debug', deferred_df.to_string(), self.log_stack_depth)
-        #
-        # if not relevant_confirmed_df.empty:
-        #     log_in_color('cyan', 'debug', 'Relevant Confirmed: ', self.log_stack_depth)
-        #     log_in_color('cyan', 'debug', relevant_confirmed_df.to_string(), self.log_stack_depth)
-        #
-        # if not relevant_proposed_df.empty:
-        #     log_in_color('cyan', 'debug', 'Relevant Proposed: ', self.log_stack_depth)
-        #     log_in_color('cyan', 'debug', relevant_proposed_df.to_string(), self.log_stack_depth)
-        # if not relevant_deferred_df.empty:
-        #     log_in_color('cyan', 'debug', 'Relevant Deferred: ', self.log_stack_depth)
-        #     log_in_color('cyan', 'debug', relevant_deferred_df.to_string(), self.log_stack_depth)
 
-        if priority_level == 1 and forecast_df.loc[forecast_df.Date == date_YYYYMMDD].empty and self.end_date >= datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d'):
+        if not relevant_confirmed_df.empty:
+            log_in_color('cyan', 'debug', 'Relevant Confirmed: ', self.log_stack_depth)
+            log_in_color('cyan', 'debug', relevant_confirmed_df.to_string(), self.log_stack_depth)
+
+        if not relevant_proposed_df.empty:
+            log_in_color('cyan', 'debug', 'Relevant Proposed: ', self.log_stack_depth)
+            log_in_color('cyan', 'debug', relevant_proposed_df.to_string(), self.log_stack_depth)
+        if not relevant_deferred_df.empty:
+            log_in_color('cyan', 'debug', 'Relevant Deferred: ', self.log_stack_depth)
+            log_in_color('cyan', 'debug', relevant_deferred_df.to_string(), self.log_stack_depth)
+
+
+        date_sel_vec = [(d == date_YYYYMMDD) for d in forecast_df.Date]
+        if priority_level == 1 and forecast_df.loc[ date_sel_vec ].empty and datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d') <= datetime.datetime.strptime(self.end_date_YYYYMMDD, '%Y%m%d'):
             # this is the only place where new days get added to a forecast
-            previous_row_df = copy.deepcopy(forecast_df.loc[forecast_df.Date == (datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d') - datetime.timedelta(days=1))])
-            previous_row_df.Date = datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d')
-            previous_row_df.Memo = ''
+
+            dates_as_datetime_dtype = [datetime.datetime.strptime(d, '%Y%m%d') for d in forecast_df.Date]
+            prev_date_as_datetime_dtype = (datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d') - datetime.timedelta(days=1))
+            sel_vec = [ d == prev_date_as_datetime_dtype for d in dates_as_datetime_dtype]
+            new_row_df = copy.deepcopy(forecast_df.loc[ sel_vec ])
+            new_row_df.Date = date_YYYYMMDD
+            new_row_df.Memo = ''
             #print('APPENDING NEW DAY: ' + date_YYYYMMDD)
             #print(previous_row_df.to_string())
-            forecast_df = pd.concat([forecast_df, previous_row_df])
+            forecast_df = pd.concat([forecast_df, new_row_df])
             forecast_df.reset_index(drop=True, inplace=True)
 
         if (priority_level != 1 and relevant_proposed_df.empty and relevant_confirmed_df.empty and relevant_deferred_df.empty) | (priority_level == 1 and relevant_confirmed_df.empty):
@@ -720,8 +733,7 @@ class ExpenseForecast:
         #log_in_color('green', 'debug', 'BEGIN PROCESSING CONFIRMED TXNS', self.log_stack_depth)
         for confirmed_index, confirmed_row in relevant_confirmed_df.iterrows():
             log_in_color('cyan', 'debug', 'processing confirmed transaction: ' + str(confirmed_row.Memo), self.log_stack_depth)
-
-            relevant_memo_rule_set = memo_set.findMatchingMemoRule(confirmed_row)
+            relevant_memo_rule_set = memo_set.findMatchingMemoRule(confirmed_row.Memo,confirmed_row.Priority)
             memo_rule_row = relevant_memo_rule_set.getMemoRules().loc[0,:]
 
             m_income = re.search('income', confirmed_row.Memo)
@@ -795,10 +807,10 @@ class ExpenseForecast:
         #log_in_color('green', 'debug', 'BEGIN PROCESSING PROPOSED TXNS', self.log_stack_depth)
         for proposed_item_index, proposed_row_df in relevant_proposed_df.iterrows():
             amount_ammended = False
-            # log_in_color('cyan','debug','Processing proposed or deferred txn:',self.log_stack_depth)
-            # log_in_color('cyan','debug',pd.DataFrame(budget_item_row).T.to_string(),self.log_stack_depth)
+            log_in_color('cyan','debug','Processing proposed or deferred txn:',self.log_stack_depth)
+            log_in_color('cyan','debug',pd.DataFrame(proposed_row_df).T.to_string(),self.log_stack_depth)
 
-            relevant_memo_rule_set = memo_set.findMatchingMemoRule(proposed_row_df)
+            relevant_memo_rule_set = memo_set.findMatchingMemoRule(proposed_row_df.Memo,proposed_row_df.Priority)
             memo_rule_row = relevant_memo_rule_set.getMemoRules().loc[0,:]
 
             hypothetical_future_state_of_forecast = copy.deepcopy(forecast_df.head(0))
@@ -842,13 +854,13 @@ class ExpenseForecast:
                 # hypothetical_future_state_of_forecast = pd.concat([past_days_that_do_not_need_to_be_recalculated_df,recalculated_future_forecast_df])
                 # hypothetical_future_state_of_forecast.reset_index(inplace=True,drop=True)
 
-                hypothetical_future_state_of_forecast = self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date.strftime('%Y%m%d'),
-                                                                                    end_date_YYYYMMDD=self.end_date.strftime('%Y%m%d'),
+                hypothetical_future_state_of_forecast = self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date_YYYYMMDD,
+                                                                                    end_date_YYYYMMDD=self.end_date_YYYYMMDD,
                                                                                     confirmed_df=not_yet_validated_confirmed_df,
                                                                                     proposed_df=empty_df,
                                                                                     deferred_df=empty_df,
                                                                                     skipped_df=empty_df,
-                                                                                    account_set=copy.deepcopy(self.sync_account_set_w_forecast_day(account_set, forecast_df, self.start_date.strftime('%Y%m%d'))), #since we resatisfice from the beginning, this should reflect the beginning as well
+                                                                                    account_set=copy.deepcopy(self.sync_account_set_w_forecast_day(account_set, forecast_df, self.start_date_YYYYMMDD)), #since we resatisfice from the beginning, this should reflect the beginning as well
                                                                                     #account_set=copy.deepcopy(account_set),
                                                                                     memo_rule_set=memo_set)[0]
 
@@ -925,13 +937,13 @@ class ExpenseForecast:
                     # hypothetical_future_state_of_forecast.reset_index(inplace=True, drop=True)
 
 
-                    hypothetical_future_state_of_forecast = self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date.strftime('%Y%m%d'),
-                                                                                        end_date_YYYYMMDD=self.end_date.strftime('%Y%m%d'),
+                    hypothetical_future_state_of_forecast = self.computeOptimalForecast(start_date_YYYYMMDD=self.start_dateYYYYMMDD,
+                                                                                        end_date_YYYYMMDD=self.end_date_YYYYMMDD,
                                                                                         confirmed_df=not_yet_validated_confirmed_df,
                                                                                         proposed_df=empty_df,
                                                                                         deferred_df=empty_df,
                                                                                         skipped_df=empty_df,
-                                                                                        account_set=copy.deepcopy(self.sync_account_set_w_forecast_day(account_set, forecast_df, self.start_date.strftime('%Y%m%d'))), #since we resatisfice from the beginning, this should reflect the beginning as well
+                                                                                        account_set=copy.deepcopy(self.sync_account_set_w_forecast_day(account_set, forecast_df, self.start_date_YYYYMMDD)), #since we resatisfice from the beginning, this should reflect the beginning as well
                                                                                         memo_rule_set=memo_set)[0]
 
                     log_in_color('magenta', 'debug', 'END error-check computeOptimalForecast: '+str(proposed_row_df.Memo)+' (SUCCESS)', self.log_stack_depth)
@@ -1069,10 +1081,10 @@ class ExpenseForecast:
             # log_in_color('cyan','debug','Processing proposed or deferred txn:',self.log_stack_depth)
             # log_in_color('cyan','debug',pd.DataFrame(budget_item_row).T.to_string(),self.log_stack_depth)
 
-            if deferred_row_df.Date > self.end_date:
+            if datetime.datetime.strptime(deferred_row_df.Date,'%Y%m%d') > datetime.datetime.strptime(self.end_date,'%Y%m%d'):
                 continue
 
-            relevant_memo_rule_set = memo_set.findMatchingMemoRule(deferred_row_df)
+            relevant_memo_rule_set = memo_set.findMatchingMemoRule(deferred_row_df.Memo,deferred_row_df.Priority)
             memo_rule_row = relevant_memo_rule_set.getMemoRules().loc[0, :]
 
             hypothetical_future_state_of_forecast = copy.deepcopy(forecast_df.head(0))
@@ -1117,14 +1129,14 @@ class ExpenseForecast:
                 # hypothetical_future_state_of_forecast = pd.concat([past_days_that_do_not_need_to_be_recalculated_df, recalculated_future_forecast_df])
                 # hypothetical_future_state_of_forecast.reset_index(inplace=True, drop=True)
 
-                hypothetical_future_state_of_forecast = self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date.strftime('%Y%m%d'),
-                                                                                    end_date_YYYYMMDD=self.end_date.strftime('%Y%m%d'),
+                hypothetical_future_state_of_forecast = self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date_YYYYMMDD,
+                                                                                    end_date_YYYYMMDD=self.end_date_YYYYMMDD,
                                                                                     confirmed_df=not_yet_validated_confirmed_df,
                                                                                     proposed_df=empty_df,
                                                                                     deferred_df=empty_df,
                                                                                     skipped_df=empty_df,
                                                                                     account_set=copy.deepcopy(
-                                                                                        self.sync_account_set_w_forecast_day(account_set, forecast_df, self.start_date.strftime('%Y%m%d'))),
+                                                                                        self.sync_account_set_w_forecast_day(account_set, forecast_df, self.start_date_YYYYMMDD)),
                                                                                     memo_rule_set=memo_set)[0]
 
                 log_in_color('magenta', 'debug', 'END error-check computeOptimalForecast: ' + str(deferred_row_df.Memo) + ' (SUCCESS)', self.log_stack_depth)
@@ -1185,8 +1197,8 @@ class ExpenseForecast:
                     # hypothetical_future_state_of_forecast = pd.concat([past_days_that_do_not_need_to_be_recalculated_df, recalculated_future_forecast_df])
                     # hypothetical_future_state_of_forecast.reset_index(inplace=True, drop=True)
 
-                    hypothetical_future_state_of_forecast = self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date.strftime('%Y%m%d'),
-                                                                                        end_date_YYYYMMDD=self.end_date.strftime('%Y%m%d'),
+                    hypothetical_future_state_of_forecast = self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date_YYYYMMDD,
+                                                                                        end_date_YYYYMMDD=self.end_date_YYYYMMDD,
                                                                                         confirmed_df=not_yet_validated_confirmed_df,
                                                                                         proposed_df=empty_df,
                                                                                         deferred_df=empty_df,
@@ -1404,8 +1416,8 @@ class ExpenseForecast:
         for account_index, account_row in account_set.getAccounts().iterrows():
             if account_row.Interest_Cadence == 'None' or account_row.Interest_Cadence is None or account_row.Interest_Cadence == '':  # ithink this may be refactored. i think this will explode if interest_cadence is None
                 continue
-            num_days = (current_date - account_row.Billing_Start_Dt).days
-            dseq = generate_date_sequence(start_date_YYYYMMDD=account_row.Billing_Start_Dt.strftime('%Y%m%d'), num_days=num_days, cadence=account_row.Interest_Cadence)
+            num_days = (datetime.datetime.strptime(current_date,'%Y%m%d') - datetime.datetime.strptime(account_row.Billing_Start_Dt,'%Y%m%d')).days
+            dseq = generate_date_sequence(start_date_YYYYMMDD=account_row.Billing_Start_Dt, num_days=num_days, cadence=account_row.Interest_Cadence)
 
             if current_forecast_row_df.Date.iloc[0] == account_row.Billing_Start_Dt:
                 dseq = set(current_forecast_row_df.Date).union(dseq)
@@ -1533,6 +1545,11 @@ class ExpenseForecast:
 
         # the branch logic here assumes the sort order of accounts in account list
         for account_index, account_row in account_set.getAccounts().iterrows():
+
+            #not sure why both of these checks are necessary
+            if account_row.Billing_Start_Dt == 'None':
+                continue
+
             if pd.isnull(account_row.Billing_Start_Dt):
                 continue
 
@@ -1543,9 +1560,9 @@ class ExpenseForecast:
             # print('row.Billing_Start_Dt:')
             # print(row.Billing_Start_Dt)
 
-            num_days = (current_forecast_row_df.Date.iloc[0] - account_row.Billing_Start_Dt).days
+            num_days = (datetime.datetime.strptime(current_forecast_row_df.Date.iloc[0],'%Y%m%d') - datetime.datetime.strptime(account_row.Billing_Start_Dt,'%Y%m%d')).days
             #billing_days = set(generate_date_sequence(account_row.Billing_Start_Dt.strftime('%Y%m%d'), num_days, account_row.Interest_Cadence))
-            billing_days = set(generate_date_sequence(account_row.Billing_Start_Dt.strftime('%Y%m%d'), num_days, 'monthly'))
+            billing_days = set(generate_date_sequence(account_row.Billing_Start_Dt, num_days, 'monthly'))
 
             if current_forecast_row_df.Date.iloc[0] == account_row.Billing_Start_Dt:
                 billing_days = set(current_forecast_row_df.Date).union(billing_days) #if the input date matches the start date, add it to the set (bc range where start = end == null set)
@@ -1654,14 +1671,7 @@ class ExpenseForecast:
         # log_in_color('green','debug','Initial account_set:',self.log_stack_depth)
         # log_in_color('green', 'debug', account_set.getAccounts().to_string(), self.log_stack_depth)
 
-        try:  # if a datetime object was passed instead
-            date_YYYYMMDD = date_YYYYMMDD.strftime('%Y%m%d')
-        except:
-            pass
-
-        d = datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d')
-
-        relevant_forecast_day = forecast_df[forecast_df.Date == d]
+        relevant_forecast_day = forecast_df[forecast_df.Date == date_YYYYMMDD]
 
         # log_in_color('green', 'debug', 'relevant forecast row:', self.log_stack_depth)
         # log_in_color('green', 'debug', relevant_forecast_day.to_string(), self.log_stack_depth)
@@ -1675,7 +1685,7 @@ class ExpenseForecast:
             # print('d:')
             # print(d)
 
-            row_sel_vec = (forecast_df.Date == d)
+            row_sel_vec = (forecast_df.Date == date_YYYYMMDD)
             # print('row_sel_vec:')
             # print(row_sel_vec)
 
@@ -1769,12 +1779,12 @@ class ExpenseForecast:
             raise ValueError("uneven stack depth. It is likely there is as semantic error upstream. ")
 
         all_days = pd.date_range(datetime.datetime.strptime(start_date_YYYYMMDD, '%Y%m%d'), datetime.datetime.strptime(end_date_YYYYMMDD, '%Y%m%d'))
+        all_days = [ d.strftime('%Y%m%d') for d in all_days ]
         forecast_df = self.getInitialForecastRow()
-        # print('initial_forecast_row:'+str(forecast_df))
-        # budget_schedule_df = budget_set.getBudgetSchedule(start_date_YYYYMMDD, end_date_YYYYMMDD)
+        #budget_schedule_df = budget_set.getBudgetSchedule(start_date_YYYYMMDD, end_date_YYYYMMDD)
 
         for d in all_days:
-            if d == self.start_date:
+            if d == self.start_date_YYYYMMDD:
                 continue  # first day is considered final
 
             bal_string = ' '
@@ -1784,13 +1794,11 @@ class ExpenseForecast:
             #log_in_color('green', 'info', 'BEGIN SATISFICE ' + str(d.strftime('%Y-%m-%d')) + bal_string, self.log_stack_depth)
 
             if not raise_satisfice_failed_exception:  # to report progress
-
                 try:
                     max_priority = max(full_budget_schedule_df.Priority.unique())
                 except:
                     max_priority = 1
-
-                log_in_color('white', 'info', str(1) + ' / ' + str(max_priority) + ' ' + d.strftime('%Y%m%d'))
+                log_in_color('white', 'info', str(1) + ' / ' + str(max_priority) + ' ' + d)
 
             # print('SATISFICE BEFORE TXN:'+str(forecast_df))
             try:
@@ -1807,7 +1815,7 @@ class ExpenseForecast:
 
 
 
-                forecast_df, skipped_df, confirmed_df, deferred_df = self.executeTransactionsForDay(account_set, forecast_df=forecast_df, date_YYYYMMDD=d.strftime('%Y%m%d'),
+                forecast_df, skipped_df, confirmed_df, deferred_df = self.executeTransactionsForDay(account_set, forecast_df=forecast_df, date_YYYYMMDD=d,
                                                                                                     memo_set=memo_rule_set, confirmed_df=confirmed_df, proposed_df=remaining_unproposed_transactions_df,
                                                                                                     deferred_df=deferred_df, skipped_df=skipped_df, priority_level=1,
                                                                                                     allow_skip_and_defer=False,
@@ -1854,7 +1862,7 @@ class ExpenseForecast:
                     continue
 
                 for d in all_days:
-                    if d == self.start_date:
+                    if d == self.start_date_YYYYMMDD:
                         continue  # first day is considered final
 
                     if not raise_satisfice_failed_exception: #to report progress
@@ -1991,13 +1999,13 @@ class ExpenseForecast:
             log_in_color('red', 'error', 'Forecast id: ' + str(self.unique_id))
             log_in_color('red','error','Last day successfully computed: '+str(d))
 
-            not_confirmed_sel_vec = [ ( d > self.end_date ) for d in confirmed_df.Date ] #this is using an end date that has been moved forward, so it is > not >=
+            not_confirmed_sel_vec = [ ( datetime.datetime.strptime(d,'%Y%m%d') > datetime.datetime.strptime(self.end_date_YYYYMMDD,'%Y%m%d') ) for d in confirmed_df.Date ] #this is using an end date that has been moved forward, so it is > not >=
 
             not_confirmed_df = confirmed_df.loc[ not_confirmed_sel_vec ]
             new_deferred_df = proposed_df.loc[[not x for x in proposed_df.Deferrable]]
             skipped_df = pd.concat([skipped_df, not_confirmed_df, new_deferred_df])
 
-            confirmed_sel_vec = [ ( d <= self.end_date ) for d in confirmed_df.Date ]
+            confirmed_sel_vec = [ ( d <= datetime.datetime.strptime(self.end_date_YYYYMMDD,'%Y%m%d') ) for d in confirmed_df.Date ]
             confirmed_df = confirmed_df.loc[ confirmed_sel_vec ]
 
             deferred_df = proposed_df.loc[proposed_df.Deferrable]
@@ -2256,11 +2264,11 @@ class ExpenseForecast:
         # todo plotMarginalInterest():: this will have to get the cc interest from the memo line
         raise NotImplementedError
 
-    def toJSON(self):
+    def to_json(self):
         """
         Returns a JSON string representing the ExpenseForecast object.
 
-        #todo ExpenseForecast.toJSON() say what the columns are
+        #todo ExpenseForecast.to_json() say what the columns are
 
         :return:
         """
@@ -2271,12 +2279,12 @@ class ExpenseForecast:
         start_ts_string = "\"start_ts\":\""+self.start_ts+"\",\n"
         end_ts_string = "\"end_ts\":\""+self.end_ts+"\",\n"
 
-        start_date_string = "\"start_date\":"+self.start_date.strftime('%Y%m%d')+",\n"
-        end_date_string = "\"end_date\":"+self.end_date.strftime('%Y%m%d')+",\n"
+        start_date_string = "\"start_date\":"+self.start_date_YYYYMMDD+",\n"
+        end_date_string = "\"end_date\":"+self.end_date_YYYYMMDD+",\n"
 
-        memo_rule_set_string = "\"initial_memo_rule_set\":"+self.initial_memo_rule_set.toJSON()+","
-        initial_account_set_string = "\"initial_account_set\":"+self.initial_account_set.toJSON()+","
-        initial_budget_set_string = "\"initial_budget_set\":"+self.initial_budget_set.toJSON()+","
+        memo_rule_set_string = "\"initial_memo_rule_set\":"+self.initial_memo_rule_set.to_json()+","
+        initial_account_set_string = "\"initial_account_set\":"+self.initial_account_set.to_json()+","
+        initial_budget_set_string = "\"initial_budget_set\":"+self.initial_budget_set.to_json()+","
 
         normalized_forecast_df_JSON_string = self.forecast_df.to_json(orient='records',date_format='iso')#.replace('\'','"')
         normalized_skipped_df_JSON_string = self.skipped_df.to_json(orient='records',date_format='iso')#.replace('\'','"')
@@ -2316,7 +2324,7 @@ class ExpenseForecast:
             if c is not None:
                 composite_milestone_string = c.strftime('%Y-%m-%d')+" "
 
-        JSON_string += "\"milestone_set\":"+self.milestone_set.toJSON()+",\n"
+        JSON_string += "\"milestone_set\":"+self.milestone_set.to_json()+",\n"
         JSON_string += "\"account_milestone_results\":"+account_milestone_string+",\n"
         JSON_string += "\"memo_milestone_results\":"+memo_milestone_string+",\n"
         JSON_string += "\"composite_milestone_results\":"+composite_milestone_string+",\n"
@@ -2336,7 +2344,9 @@ class ExpenseForecast:
     def compute_forecast_difference(self, forecast_df, forecast2_df, label='forecast_difference', make_plots=False, plot_directory='.', return_type='dataframe', require_matching_columns=False,
                                     require_matching_date_range=False, append_expected_values=False, diffs_only=False):
 
-        forecast_df = self.forecast_df.reindex(sorted(forecast_df.columns), axis=1)
+        forecast_df['Date'] = forecast_df.Date.apply(lambda x: datetime.datetime.strptime(x,'%Y%m%d'),0)
+
+        forecast_df = forecast_df.reindex(sorted(forecast_df.columns), axis=1)
         forecast2_df = forecast2_df.reindex(sorted(forecast2_df.columns), axis=1)
 
         forecast_df.reset_index(inplace=True, drop=True)
@@ -2377,14 +2387,6 @@ class ExpenseForecast:
                 print('ERROR: ATTEMPTED TO TAKE DIFF OF FORECASTS WITH DIFFERENT DATE RANGE')
                 print('LHS: ' + str(min(forecast_df['Date'])) + ' - ' + str(max(forecast_df['Date'])))
                 print('RHS: ' + str(min(forecast2_df['Date'])) + ' - ' + str(max(forecast2_df['Date'])))
-                # print('# Check Min Date Range:')
-                # print('min(self.forecast_df[\'Date\']):'+str())
-                # print('min(forecast_df2[\'Date\']):'+str())
-                # print('')
-                # print('# Check Max Date Range:')
-                # print('max(self.forecast_df[\'Date\']):'+str())
-                # print('max(forecast_df2[\'Date\']):'+str())
-                # print('')
                 raise e
         else:
             overlapping_date_range = set(forecast_df['Date']) & set(forecast2_df['Date'])

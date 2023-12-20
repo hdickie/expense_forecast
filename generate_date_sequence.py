@@ -15,7 +15,7 @@ def generate_date_sequence(start_date_YYYYMMDD, num_days, cadence):
     end_date = start_date + datetime.timedelta(days=num_days)
 
     if cadence.lower() == "once":
-        return pd.Series(start_date)
+        return pd.Series(start_date_YYYYMMDD)
     elif cadence.lower() == "daily":
         return_series = pd.date_range(start_date, end_date, freq='D')
     elif cadence.lower() == "weekly":
@@ -36,6 +36,8 @@ def generate_date_sequence(start_date_YYYYMMDD, num_days, cadence):
         return_series = pd.date_range(start_date, end_date, freq='Y')
     else:
         raise ValueError("Undefined cadence in generate_date_sequence: "+str(cadence))
+
+    return_series = [ d.strftime('%Y%m%d') for d in return_series ]
 
     # log_in_color('green', 'debug', str(return_series), 0)
     # log_in_color('green', 'debug', 'EXIT generate_date_sequence()', 0)
