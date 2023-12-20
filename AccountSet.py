@@ -588,7 +588,7 @@ class AccountSet:
 
                 self.accounts[account_from_index].balance += abs(Amount)
             else:
-                raise NotImplementedError #from types other than checking or credit not yet implemented
+                raise NotImplementedError("account type was: "+str(AF_Account_Type)) #from types other than checking or credit not yet implemented
 
             if not boundary_error_ind:
                 log_in_color('magenta', 'debug', 'Paid ' + str(Amount) + ' from ' + Account_From, 0)
@@ -635,7 +635,7 @@ class AccountSet:
                     log_in_color('magenta', 'debug', 'Paid ' + str(Amount) + ' to ' + str(self.accounts[account_to_index + 1].name), 0)
                     self.accounts[account_to_index + 1].balance -= Amount
             else:
-                raise NotImplementedError #from types other than checking or credit not yet implemented
+                raise NotImplementedError("account type was: "+str(AF_Account_Type)) #from types other than checking or credit not yet implemented
 
         after_txn_total_available_funds = 0
         available_funds = self.getBalances()

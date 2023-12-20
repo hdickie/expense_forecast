@@ -1575,8 +1575,9 @@ class ExpenseForecast:
                 # print(row)
                 if account_row.Account_Type == 'prev stmt bal':  # cc min payment
 
-                    minimum_payment_amount = max(40, account_row.Balance * 0.033) #this is an estimate
-                    #it turns out that the way this really works is that Chase uses 1% PLUS the interest accrued to be charged immediately, not added to the principal
+                    #minimum_payment_amount = max(40, account_row.Balance * 0.033) #this is an estimate
+                    minimum_payment_amount = max(40, account_row.Balance * account_row.APR/12)
+                    #todo it turns out that the way this really works is that Chase uses 1% PLUS the interest accrued to be charged immediately, not added to the principal
                     #very much not how I designed this but not earth-shatteringly different
 
 
