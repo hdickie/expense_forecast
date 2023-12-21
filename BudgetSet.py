@@ -96,9 +96,9 @@ class BudgetSet:
         # for b in self.budget_items:
         #    log_in_color('green', 'debug', '\n'+str(b), 0)
 
-        #print('getBudgetSchedule():')
-        #print('self.budget_items:')
-        #print(self.budget_items)
+        # log_in_color('green', 'debug', 'getBudgetSchedule():')
+        # log_in_color('green', 'debug', 'self.budget_items:')
+        # log_in_color('green', 'debug', self.budget_items)
 
         current_budget_schedule = pd.DataFrame({'Date':[],'Priority':[],'Amount':[],'Memo':[],'Deferrable':[],'Partial_Payment_Allowed':[]})
         end_date = datetime.datetime.strptime(str(end_date_YYYYMMDD),'%Y%m%d')

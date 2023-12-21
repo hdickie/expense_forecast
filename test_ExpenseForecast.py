@@ -29,8 +29,19 @@ def credit_acct_list(prev_balance,curr_balance,apr):
                       raise_exceptions=True)
     return A.accounts
 
-def txn_budget_item_once_list(amount,priority,memo):
-    return [BudgetItem.BudgetItem('20000102','20000102',priority,'once',amount,memo,False,False)]
+
+def credit_bsd12_acct_list(prev_balance,curr_balance,apr):
+    A = AccountSet.AccountSet([])
+    A.createAccount('Credit', curr_balance, 0, 20000, 'credit', '20000112', 'compound', apr, 'monthly', 40,
+                    prev_balance,
+                    principal_balance=None,
+                    accrued_interest=None,
+                    print_debug_messages=True,
+                    raise_exceptions=True)
+    return A.accounts
+
+def txn_budget_item_once_list(amount,priority,memo,deferrable,partial_payment_allowed):
+    return [BudgetItem.BudgetItem('20000102','20000102',priority,'once',amount,memo,deferrable,partial_payment_allowed)]
 
 def match_all_p1_checking_memo_rule_list():
     return [MemoRule.MemoRule('.*','Checking',None,1)]
@@ -75,7 +86,7 @@ class TestExpenseForecastMethods:
     @pytest.mark.parametrize('account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set',
 
                              [(AccountSet.AccountSet(checking_acct_list(10)),
-                              BudgetSet.BudgetSet(txn_budget_item_once_list(10,1,'test txn')),
+                              BudgetSet.BudgetSet(txn_budget_item_once_list(10,1,'test txn',False,False)),
                               MemoRuleSet.MemoRuleSet(match_p1_test_txn_checking_memo_rule_list()),
                               '19991231',
                               '20000101',
@@ -136,7 +147,7 @@ class TestExpenseForecastMethods:
                                ),  # empty account_set
 
                               (AccountSet.AccountSet(checking_acct_list(10)),
-                               BudgetSet.BudgetSet(txn_budget_item_once_list(10,1,'test txn')),
+                               BudgetSet.BudgetSet(txn_budget_item_once_list(10,1,'test txn',False,False)),
                                MemoRuleSet.MemoRuleSet([]),
                                '19991231',
                                '20000101',
@@ -150,7 +161,7 @@ class TestExpenseForecastMethods:
                                ), # A budget memo x priority element does not have a matching regex in memo rule set
 
                               (AccountSet.AccountSet(checking_acct_list(10)),
-                               BudgetSet.BudgetSet(txn_budget_item_once_list(10,1,'test txn')),
+                               BudgetSet.BudgetSet(txn_budget_item_once_list(10,1,'test txn',False,False)),
                                MemoRuleSet.MemoRuleSet(match_p1_test_txn_credit_memo_rule_list()),
                                '19991231',
                                '20000101',
@@ -269,7 +280,7 @@ class TestExpenseForecastMethods:
                                 (
                                 'test_p1_only__income_and_payment_on_same_day',
                                 AccountSet.AccountSet(checking_acct_list(0) + credit_acct_list(0, 0, 0.05)),
-                                BudgetSet.BudgetSet(txn_budget_item_once_list(100,1, 'income') + txn_budget_item_once_list(100,1, 'test txn')),
+                                BudgetSet.BudgetSet(txn_budget_item_once_list(100,1, 'income',False,False) + txn_budget_item_once_list(100,1, 'test txn',False,False)),
                                 MemoRuleSet.MemoRuleSet(match_p1_test_txn_checking_memo_rule_list() + income_rule_list()),
                                 '20000101',
                                 '20000103',
@@ -328,9 +339,9 @@ class TestExpenseForecastMethods:
                                 MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
                                 pd.DataFrame({
                                     'Date': ['20000101', '20000102', '20000103'],
-                                    'Checking': [2000, 1940, 1940],
+                                    'Checking': [2000, 1960, 1960],
                                     'Credit: Curr Stmt Bal': [0, 0, 0],
-                                    'Credit: Prev Stmt Bal': [3000, 2952.25, 2952.25],
+                                    'Credit: Prev Stmt Bal': [3000, 2972.33, 2972.33],
                                     'Memo': ['', '', '']
                                 })
                                 ),
@@ -338,7 +349,7 @@ class TestExpenseForecastMethods:
                             (
                             'test_p2_and_3__expect_skip',
                             AccountSet.AccountSet(checking_acct_list(0) + credit_acct_list(0, 0, 0.05)),
-                            BudgetSet.BudgetSet(txn_budget_item_once_list(10,2, 'this should be skipped')),
+                            BudgetSet.BudgetSet(txn_budget_item_once_list(10,2, 'this should be skipped',False,False)),
                             MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*', account_from='Checking', account_to=None,transaction_priority=1),
                                                      MemoRule.MemoRule(memo_regex='.*', account_from='Checking', account_to=None,transaction_priority=2)]),
                             '20000101',
@@ -352,6 +363,409 @@ class TestExpenseForecastMethods:
                             'Memo': ['', '', '']
                             })
                             ),
+
+        (
+                'test_p2_and_3__expect_defer',
+                AccountSet.AccountSet(checking_acct_list(0) + credit_acct_list(0, 0, 0.05)),
+                BudgetSet.BudgetSet(txn_budget_item_once_list(10, 2, 'this should be deferred',True,False)),
+                MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*', account_from='Checking', account_to=None,
+                                                           transaction_priority=1),
+                                         MemoRule.MemoRule(memo_regex='.*', account_from='Checking', account_to=None,
+                                                           transaction_priority=2),
+                                         MemoRule.MemoRule(memo_regex='.*', account_from='Checking', account_to=None,
+                                                           transaction_priority=3)]),
+                '20000101',
+                '20000103',
+                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                pd.DataFrame({
+                    'Date': ['20000101', '20000102', '20000103'],
+                    'Checking': [0, 0, 0],
+                    'Credit: Curr Stmt Bal': [0, 0, 0],
+                    'Credit: Prev Stmt Bal': [0, 0, 0],
+                    'Memo': ['', '', '']
+                })
+        ),
+
+        (
+                'test_p2_and_3__p3_item_skipped_bc_p2',
+                AccountSet.AccountSet(checking_acct_list(100)),
+                BudgetSet.BudgetSet(txn_budget_item_once_list(100, 2, 'this should be executed', False, False) + txn_budget_item_once_list(100, 3, 'this should be skipped', False, False)),
+                MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*', account_from='Checking', account_to=None,
+                                                           transaction_priority=1),
+                                         MemoRule.MemoRule(memo_regex='.*', account_from='Checking', account_to=None,
+                                                           transaction_priority=2),
+                                         MemoRule.MemoRule(memo_regex='.*', account_from='Checking', account_to=None,
+                                                           transaction_priority=3)
+                                         ]),
+                '20000101',
+                '20000103',
+                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                pd.DataFrame({
+                    'Date': ['20000101', '20000102', '20000103'],
+                    'Checking': [100, 0, 0],
+                    'Memo': ['', '', '']
+                })
+        ),
+
+        (
+                'test_p2_and_3__p3_item_deferred_bc_p2',
+                AccountSet.AccountSet(checking_acct_list(100)),
+                BudgetSet.BudgetSet(txn_budget_item_once_list(100, 2, 'this should be executed', False,
+                                                              False) + txn_budget_item_once_list(100, 3,
+                                                                                                 'this should be deferred',
+                                                                                                 True, False)),
+                MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*', account_from='Checking', account_to=None,
+                                                           transaction_priority=1),
+                                         MemoRule.MemoRule(memo_regex='.*', account_from='Checking', account_to=None,
+                                                           transaction_priority=2),
+                                         MemoRule.MemoRule(memo_regex='.*', account_from='Checking', account_to=None,
+                                                           transaction_priority=3)
+                                         ]),
+                '20000101',
+                '20000103',
+                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                pd.DataFrame({
+                    'Date': ['20000101', '20000102', '20000103'],
+                    'Checking': [100, 0, 0],
+                    'Memo': ['', '', '']
+                })
+        ),
+
+        (
+                'test_p4__cc_payment__no_prev_balance__pay_100__no_funds__expect_skip',
+                AccountSet.AccountSet(checking_acct_list(0) + credit_acct_list(0,0,0.05)),
+                BudgetSet.BudgetSet(txn_budget_item_once_list(100, 4, 'additional credit card payment', False,
+                                                              False)),
+                MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*', account_from='Checking', account_to=None,
+                                                           transaction_priority=1),
+                                         MemoRule.MemoRule(memo_regex='.*', account_from='Checking', account_to=None,
+                                                           transaction_priority=4)
+                                         ]),
+                '20000101',
+                '20000103',
+                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                pd.DataFrame({
+                    'Date': ['20000101', '20000102', '20000103'],
+                    'Checking': [0, 0, 0],
+                    'Credit: Curr Stmt Bal': [0, 0, 0],
+                    'Credit: Prev Stmt Bal': [0, 0, 0],
+                    'Memo': ['', '', '']
+                })
+        ),
+
+        (
+                'test_p4__cc_payment__no_prev_balance__pay_100__expect_skip',
+                AccountSet.AccountSet(checking_acct_list(2000) + credit_acct_list(0, 0, 0.05)),
+                BudgetSet.BudgetSet(txn_budget_item_once_list(100, 4, 'this should be skipped', False,
+                                                              False)),
+                MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*', account_from='Credit', account_to=None,
+                                                           transaction_priority=1),
+                                         MemoRule.MemoRule(memo_regex='.*', account_from='Checking', account_to='Credit',
+                                                           transaction_priority=4)
+                                         ]),
+                '20000101',
+                '20000103',
+                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                pd.DataFrame({
+                    'Date': ['20000101', '20000102', '20000103'],
+                    'Checking': [2000, 2000, 2000],
+                    'Credit: Curr Stmt Bal': [0, 0, 0],
+                    'Credit: Prev Stmt Bal': [0, 0, 0],
+                    'Memo': ['', '', '']
+                })
+        ),
+
+        (
+                'test_p4__cc_payment__pay_all_of_prev_part_of_curr__expect_800',
+                AccountSet.AccountSet(checking_acct_list(2000) + credit_bsd12_acct_list(500, 500, 0.05)),
+                BudgetSet.BudgetSet(txn_budget_item_once_list(800, 4, 'test pay all prev part of curr', False,
+                                                              False)),
+                MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*', account_from='Credit', account_to=None,
+                                                           transaction_priority=1),
+                                         MemoRule.MemoRule(memo_regex='.*', account_from='Checking',
+                                                           account_to='Credit',
+                                                           transaction_priority=4)
+                                         ]),
+                '20000101',
+                '20000103',
+                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                pd.DataFrame({
+                    'Date': ['20000101', '20000102', '20000103'],
+                    'Checking': [2000, 1200, 1200],
+                    'Credit: Curr Stmt Bal': [500, 200, 200],
+                    'Credit: Prev Stmt Bal': [500, 0, 0],
+                    'Memo': ['', '', '']
+                })
+        ),
+
+        (
+                'test_p4__cc_payment__pay_part_of_prev_balance__expect_200',
+                AccountSet.AccountSet(checking_acct_list(200) + credit_bsd12_acct_list(500, 500, 0.05)),
+                BudgetSet.BudgetSet(txn_budget_item_once_list(200, 4, 'additional cc payment test', False,
+                                                              False)),
+                MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*', account_from='Credit', account_to=None,
+                                                           transaction_priority=1),
+                                         MemoRule.MemoRule(memo_regex='.*additional cc payment.*', account_from='Checking',
+                                                           account_to='Credit',
+                                                           transaction_priority=4)
+                                         ]),
+                '20000101',
+                '20000103',
+                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                pd.DataFrame({
+                    'Date': ['20000101', '20000102', '20000103'],
+                    'Checking': [200, 0, 0],
+                    'Credit: Curr Stmt Bal': [500, 500, 500],
+                    'Credit: Prev Stmt Bal': [500, 300, 300],
+                    'Memo': ['', '', '']
+                })
+        ),
+
+        (
+                'test_p4__cc_payment__non_0_prev_balance_but_no_funds__expect_0',
+                AccountSet.AccountSet(checking_acct_list(40) + credit_acct_list(500, 500, 0.05)),
+                BudgetSet.BudgetSet(txn_budget_item_once_list(100, 4, 'additional cc payment test', False,
+                                                              False)),
+                MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*', account_from='Credit', account_to=None,
+                                                           transaction_priority=1),
+                                         MemoRule.MemoRule(memo_regex='.*additional cc payment.*',
+                                                           account_from='Checking',
+                                                           account_to='Credit',
+                                                           transaction_priority=4)
+                                         ]),
+                '20000101',
+                '20000103',
+                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                pd.DataFrame({
+                    'Date': ['20000101', '20000102', '20000103'],
+                    'Checking': [40, 0, 0],
+                    'Credit: Curr Stmt Bal': [500, 0, 0],
+                    'Credit: Prev Stmt Bal': [500,961.92, 961.92],
+                    'Memo': ['', '', '']
+                })
+        ),
+
+        (
+                'test_p4__cc_payment__partial_of_indicated_amount',
+                AccountSet.AccountSet(checking_acct_list(1000) + credit_bsd12_acct_list(500, 1500, 0.05)),
+                BudgetSet.BudgetSet(txn_budget_item_once_list(20000, 4, 'partial cc payment', False,
+                                                              True)),
+                MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*', account_from='Credit', account_to=None,
+                                                           transaction_priority=1),
+                                         MemoRule.MemoRule(memo_regex='.*',
+                                                           account_from='Checking',
+                                                           account_to='Credit',
+                                                           transaction_priority=4)
+                                         ]),
+                '20000101',
+                '20000103',
+                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                pd.DataFrame({
+                    'Date': ['20000101', '20000102', '20000103'],
+                    'Checking': [1000, 0, 0],
+                    'Credit: Curr Stmt Bal': [1500, 1000, 1000],
+                    'Credit: Prev Stmt Bal': [500, 0, 0],
+                    'Memo': ['', '', '']
+                })
+        ), # 12/21 4AM this is coded correctly and the test fail is bc of algo
+
+        (
+                'test_execute_defer_after_receiving_income_2_days_later',
+                AccountSet.AccountSet(checking_acct_list(500)),
+                BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000102','20000102',1,'once',100,'SPEND daily p1 txn', False,False),
+                                     BudgetItem.BudgetItem('20000103', '20000103', 1, 'once', 100, 'SPEND daily p1 txn',False, False),
+                                     BudgetItem.BudgetItem('20000104', '20000104', 1, 'once', 100, 'SPEND daily p1 txn',False, False),
+                                     BudgetItem.BudgetItem('20000105', '20000105', 1, 'once', 100, 'SPEND daily p1 txn',False, False)
+                                     ] +
+                                    txn_budget_item_once_list(200, 1, '200 income on 1/4', False,False) +
+                                    txn_budget_item_once_list(400, 2, 'SPEND p2 txn deferred from 1/2 to 1/4', True,False) +
+                                    txn_budget_item_once_list(400, 3, 'SPEND p3 txn on 1/3 that is skipped bc later lower priority_index txn', False, False)
+
+
+                                    ),
+                MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='SPEND.*',
+                                                           account_from='Checking',
+                                                           account_to=None,
+                                                           transaction_priority=1),
+                                         MemoRule.MemoRule(memo_regex='.*income.*',
+                                                           account_from=None,
+                                                           account_to='Checking',
+                                                           transaction_priority=1),
+                                         MemoRule.MemoRule(memo_regex='SPEND.*',
+                                                           account_from='Checking',
+                                                           account_to=None,
+                                                           transaction_priority=2),
+                                         MemoRule.MemoRule(memo_regex='SPEND.*',
+                                                           account_from='Checking',
+                                                           account_to=None,
+                                                           transaction_priority=3)
+                                         ]),
+                '20000101',
+                '20000105', #note that this is later than the test defined above
+                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                pd.DataFrame({
+                    'Date': ['20000101', '20000102', '20000103', '20000104', '20000105'],
+                    'Checking': [500, 400, 300, 0, 0],
+                    'Memo': ['', '', '', '', '']
+                })
+        ), # 12/21 445AM this is coded correctly and the test fail is bc of algo
+
+        (
+                'test_execute_at_reduced_amount_bc_later_higher_priority_txn',
+                AccountSet.AccountSet(checking_acct_list(400)),
+                BudgetSet.BudgetSet(
+                    [BudgetItem.BudgetItem('20000104', '20000104', 2, 'once', 200, 'pay 200 after reduced amt txn', False, False),
+                     BudgetItem.BudgetItem('20000103', '20000103', 3, 'once', 400, 'pay reduced amount', False, True)
+                     ] +
+                    txn_budget_item_once_list(200, 2, 'pay 200 after reduced amt txn', False, False) +
+                    txn_budget_item_once_list(400, 3,'pay reduced amount',False, True)
+
+                    ),
+                MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*',
+                                                           account_from='Checking',
+                                                           account_to=None,
+                                                           transaction_priority=1),
+                                         MemoRule.MemoRule(memo_regex='.*',
+                                                           account_from='Checking',
+                                                           account_to=None,
+                                                           transaction_priority=2),
+                                         MemoRule.MemoRule(memo_regex='.*',
+                                                           account_from='Checking',
+                                                           account_to=None,
+                                                           transaction_priority=3)
+                                         ]),
+                '20000101',
+                '20000105',  # note that this is later than the test defined above
+                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                pd.DataFrame({
+                    'Date': ['20000101', '20000102', '20000103', '20000104', '20000105'],
+                    'Checking': [400, 400, 200, 0, 0],
+                    'Memo': ['', '', '', '', '']
+                })
+        ),  #this test cas coded correctly. the fail is bc of algo. 12/12 5:21AM
+
+        (
+                'test_transactions_executed_at_p1_and_p2',
+                AccountSet.AccountSet(checking_acct_list(2000)),
+                BudgetSet.BudgetSet(
+                    [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'p1 daily txn',False, False),
+                     BudgetItem.BudgetItem('20000103', '20000103', 1, 'once', 100, 'p1 daily txn',False, False),
+                     BudgetItem.BudgetItem('20000104', '20000104', 1, 'once', 100, 'p1 daily txn',False, False),
+                     BudgetItem.BudgetItem('20000105', '20000105', 1, 'once', 100, 'p1 daily txn', False, False),
+
+                     BudgetItem.BudgetItem('20000102', '20000102', 2, 'once', 100, 'p2 daily txn 1/2/00', False, False),
+                     BudgetItem.BudgetItem('20000103', '20000103', 2, 'once', 100, 'p2 daily txn 1/3/00', False, False),
+                     BudgetItem.BudgetItem('20000104', '20000104', 2, 'once', 100, 'p2 daily txn 1/4/00', False, False),
+                     BudgetItem.BudgetItem('20000105', '20000105', 2, 'once', 100, 'p2 daily txn 1/5/00', False, False)
+                     ]
+
+                ),
+                MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*',
+                                                           account_from='Checking',
+                                                           account_to=None,
+                                                           transaction_priority=1),
+                                         MemoRule.MemoRule(memo_regex='.*',
+                                                           account_from='Checking',
+                                                           account_to=None,
+                                                           transaction_priority=2)
+                                         ]),
+                '20000101',
+                '20000106',  # note that this is later than the test defined above
+                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                pd.DataFrame({
+                    'Date': ['20000101', '20000102', '20000103', '20000104', '20000105', '20000106'],
+                    'Checking': [2000, 1800, 1600, 1400, 1200, 1200],
+                    'Memo': ['', '', '', '', '','']
+                })
+        ),
+
+            (
+            'test_transactions_executed_at_p1_and_p2_and_p3',
+            AccountSet.AccountSet(checking_acct_list(2000)),
+            BudgetSet.BudgetSet(
+                [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'p1 daily txn 1/2/00', False, False),
+                 BudgetItem.BudgetItem('20000103', '20000103', 1, 'once', 100, 'p1 daily txn 1/3/00', False, False),
+                 BudgetItem.BudgetItem('20000104', '20000104', 1, 'once', 100, 'p1 daily txn 1/4/00', False, False),
+                 BudgetItem.BudgetItem('20000105', '20000105', 1, 'once', 100, 'p1 daily txn 1/5/00', False, False),
+
+                 BudgetItem.BudgetItem('20000102', '20000102', 2, 'once', 100, 'p2 daily txn 1/2/00', False, False),
+                 BudgetItem.BudgetItem('20000103', '20000103', 2, 'once', 100, 'p2 daily txn 1/3/00', False, False),
+                 BudgetItem.BudgetItem('20000104', '20000104', 2, 'once', 100, 'p2 daily txn 1/4/00', False, False),
+                 BudgetItem.BudgetItem('20000105', '20000105', 2, 'once', 100, 'p2 daily txn 1/5/00', False, False),
+
+                 BudgetItem.BudgetItem('20000102', '20000102', 3, 'once', 100, 'p3 daily txn 1/2/00', False, False),
+                 BudgetItem.BudgetItem('20000103', '20000103', 3, 'once', 100, 'p3 daily txn 1/3/00', False, False),
+                 BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', False, False),
+                 BudgetItem.BudgetItem('20000105', '20000105', 3, 'once', 100, 'p3 daily txn 1/5/00', False, False)
+                 ]
+
+            ),
+            MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*',
+                                                       account_from='Checking',
+                                                       account_to=None,
+                                                       transaction_priority=1),
+                                     MemoRule.MemoRule(memo_regex='.*',
+                                                       account_from='Checking',
+                                                       account_to=None,
+                                                       transaction_priority=2),
+                                     MemoRule.MemoRule(memo_regex='.*',
+                                                       account_from='Checking',
+                                                       account_to=None,
+                                                       transaction_priority=3)
+                                     ]),
+            '20000101',
+            '20000106',  # note that this is later than the test defined above
+            MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+            pd.DataFrame({
+                'Date': ['20000101', '20000102', '20000103', '20000104', '20000105', '20000106'],
+                'Checking': [2000, 1700, 1400, 1100, 800, 800],
+                'Memo': ['', '', '', '', '', '']
+            })
+        ),
+
+        (
+                'test_transactions_executed_at_p1_and_p2_and_p3',
+                AccountSet.AccountSet(checking_acct_list(2000)),
+                BudgetSet.BudgetSet(
+                    [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'p1 daily txn 1/2/00', False, False),
+                     BudgetItem.BudgetItem('20000103', '20000103', 1, 'once', 100, 'p1 daily txn 1/3/00', False, False),
+                     BudgetItem.BudgetItem('20000104', '20000104', 1, 'once', 100, 'p1 daily txn 1/4/00', False, False),
+                     BudgetItem.BudgetItem('20000105', '20000105', 1, 'once', 100, 'p1 daily txn 1/5/00', False, False),
+
+                     BudgetItem.BudgetItem('20000102', '20000102', 2, 'once', 100, 'p2 daily txn 1/2/00', False, False),
+                     BudgetItem.BudgetItem('20000103', '20000103', 2, 'once', 100, 'p2 daily txn 1/3/00', False, False),
+                     BudgetItem.BudgetItem('20000104', '20000104', 2, 'once', 100, 'p2 daily txn 1/4/00', False, False),
+                     BudgetItem.BudgetItem('20000105', '20000105', 2, 'once', 100, 'p2 daily txn 1/5/00', False, False),
+
+                     BudgetItem.BudgetItem('20000102', '20000102', 3, 'once', 100, 'p3 daily txn 1/2/00', False, False),
+                     BudgetItem.BudgetItem('20000103', '20000103', 3, 'once', 100, 'p3 daily txn 1/3/00', False, False),
+                     BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', False, False),
+                     BudgetItem.BudgetItem('20000105', '20000105', 3, 'once', 100, 'p3 daily txn 1/5/00', False, False)
+                     ]
+
+                ),
+                MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*',
+                                                           account_from='Checking',
+                                                           account_to=None,
+                                                           transaction_priority=1),
+                                         MemoRule.MemoRule(memo_regex='.*',
+                                                           account_from='Checking',
+                                                           account_to=None,
+                                                           transaction_priority=2),
+                                         MemoRule.MemoRule(memo_regex='.*',
+                                                           account_from='Checking',
+                                                           account_to=None,
+                                                           transaction_priority=3)
+                                         ]),
+                '20000101',
+                '20000106',  # note that this is later than the test defined above
+                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                pd.DataFrame({
+                    'Date': ['20000101', '20000102', '20000103', '20000104', '20000105', '20000106'],
+                    'Checking': [2000, 1700, 1400, 1100, 800, 800],
+                    'Memo': ['', '', '', '', '', '']
+                })
+        ),
 
                                 # (
                                 #         'test_p1_only_no_budget_items',
@@ -386,558 +800,6 @@ class TestExpenseForecastMethods:
                                                      test_description)
 
 
-
-    def test_p2_and_3__expect_defer(self):
-        test_description = 'test_p2_and_3__expect_defer'
-
-        start_date_YYYYMMDD = self.start_date_YYYYMMDD
-        end_date_YYYYMMDD = self.end_date_YYYYMMDD
-
-        account_set = copy.deepcopy(self.account_set)
-        budget_set = copy.deepcopy(self.budget_set)
-        memo_rule_set = copy.deepcopy(self.memo_rule_set)
-        milestone_set = copy.deepcopy(self.milestone_set)
-
-        account_set.createAccount(name='Checking',
-                                  balance=0,
-                                  min_balance=0,
-                                  max_balance=float('Inf'),
-                                  account_type="checking")
-
-        account_set.createAccount(name='Credit',
-                                  balance=0,
-                                  min_balance=0,
-                                  max_balance=20000,
-                                  account_type="credit",
-                                  billing_start_date_YYYYMMDD='20000102',
-                                  interest_type='Compound',
-                                  apr=0.05,
-                                  interest_cadence='Monthly',
-                                  minimum_payment=40,
-                                  previous_statement_balance=0,
-                                  principal_balance=None,
-                                  accrued_interest=None
-                                  )
-
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=3,
-                                 cadence='once', amount=10, memo='this should be deferred',
-                                 deferrable=True,
-                                 partial_payment_allowed=False)
-
-        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=1)
-        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=3)
-
-        expected_result_df = pd.DataFrame({
-            'Date': ['20000101', '20000102', '20000103'],
-            'Checking': [0, 0, 0],
-            'Credit: Curr Stmt Bal': [0, 0, 0],
-            'Credit: Prev Stmt Bal': [0, 0, 0],
-            'Memo': ['', '', '']
-        })
-        expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d') for x in expected_result_df.Date]
-
-        E = self.compute_forecast_and_actual_vs_expected(account_set,
-                                                     budget_set,
-                                                     memo_rule_set,
-                                                     start_date_YYYYMMDD,
-                                                     end_date_YYYYMMDD,
-                                                         milestone_set,
-                                                     expected_result_df,
-                                                     test_description)
-        # print('E.deferred_df:')
-        # print(E.deferred_df)
-        assert E.deferred_df.shape[0] == 1
-        assert E.deferred_df['Memo'].iloc[0] == 'this should be deferred'
-
-    def test_p2_and_3__p3_item_skipped_bc_p2(self):
-        test_description = 'test_p2_and_3__p3_item_skipped_bc_p2'
-
-        start_date_YYYYMMDD = self.start_date_YYYYMMDD
-        end_date_YYYYMMDD = self.end_date_YYYYMMDD
-
-        account_set = copy.deepcopy(self.account_set)
-        budget_set = copy.deepcopy(self.budget_set)
-        memo_rule_set = copy.deepcopy(self.memo_rule_set)
-        milestone_set = copy.deepcopy(self.milestone_set)
-
-        account_set.createAccount(name='Checking',
-                                  balance=100,
-                                  min_balance=0,
-                                  max_balance=float('Inf'),
-                                  account_type="checking")
-
-        account_set.createAccount(name='Credit',
-                                  balance=0,
-                                  min_balance=0,
-                                  max_balance=20000,
-                                  account_type="credit",
-                                  billing_start_date_YYYYMMDD='20000102',
-                                  interest_type='Compound',
-                                  apr=0.05,
-                                  interest_cadence='Monthly',
-                                  minimum_payment=40,
-                                  previous_statement_balance=0,
-                                  principal_balance=None,
-                                  accrued_interest=None
-                                  )
-
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=2,
-                                 cadence='once', amount=100, memo='this should be executed',
-                                 deferrable=False,
-                                 partial_payment_allowed=False)
-
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=3,
-                                 cadence='once', amount=100, memo='this should be skipped',
-                                 deferrable=False,
-                                 partial_payment_allowed=False)
-
-        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=1)
-        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=2)
-        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=3)
-
-        expected_result_df = pd.DataFrame({
-            'Date': ['20000101', '20000102', '20000103'],
-            'Checking': [100, 0, 0],
-            'Credit: Curr Stmt Bal': [0, 0, 0],
-            'Credit: Prev Stmt Bal': [0, 0, 0],
-            'Memo': ['', '', '']
-        })
-        expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d') for x in expected_result_df.Date]
-
-        E = self.compute_forecast_and_actual_vs_expected(account_set,
-                                                     budget_set,
-                                                     memo_rule_set,
-                                                     start_date_YYYYMMDD,
-                                                     end_date_YYYYMMDD,
-                                                         milestone_set,
-                                                     expected_result_df,
-                                                     test_description)
-
-        assert E.skipped_df.shape[0] == 1
-        assert E.skipped_df['Memo'].iloc[0] == 'this should be skipped'
-    def test_p2_and_3__p3_item_deferred_bc_p2(self):
-        test_description = 'test_p2_and_3__p3_item_deferred_bc_p2'
-
-        start_date_YYYYMMDD = self.start_date_YYYYMMDD
-        end_date_YYYYMMDD = self.end_date_YYYYMMDD
-
-        account_set = copy.deepcopy(self.account_set)
-        budget_set = copy.deepcopy(self.budget_set)
-        memo_rule_set = copy.deepcopy(self.memo_rule_set)
-        milestone_set = copy.deepcopy(self.milestone_set)
-
-        account_set.createAccount(name='Checking',
-                                  balance=100,
-                                  min_balance=0,
-                                  max_balance=float('Inf'),
-                                  account_type="checking")
-
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=2,
-                                 cadence='once', amount=100, memo='this should be executed',
-                                 deferrable=False,
-                                 partial_payment_allowed=False)
-
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=3,
-                                 cadence='once', amount=100, memo='this should be deferred',
-                                 deferrable=True,
-                                 partial_payment_allowed=False)
-
-        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=1)
-        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=2)
-        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=3)
-
-        expected_result_df = pd.DataFrame({
-            'Date': ['20000101', '20000102', '20000103'],
-            'Checking': [100, 0, 0],
-            'Memo': ['', '', '']
-        })
-        expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d') for x in
-                                   expected_result_df.Date]
-
-        E = self.compute_forecast_and_actual_vs_expected(account_set,
-                                                     budget_set,
-                                                     memo_rule_set,
-                                                     start_date_YYYYMMDD,
-                                                     end_date_YYYYMMDD,
-                                                         milestone_set,
-                                                     expected_result_df,
-                                                     test_description)
-
-        # print('Forecast:')
-        # print(E.forecast_df.to_string())
-        #
-        # print('Confirmed:')
-        # print(E.confirmed_df.to_string())
-        #
-        # print('Deferred:')
-        # print(E.deferred_df.to_string())
-        #
-        # print('Skipped:')
-        # print(E.skipped_df.to_string())
-
-        assert E.deferred_df.shape[0] == 1
-        assert E.deferred_df['Memo'].iloc[0] == 'this should be deferred'
-
-    def test_p4__cc_payment__no_prev_balance__pay_100__no_funds__expect_skip(self):
-        test_description = 'test_cc_payment__optimize__no_prev_balance__pay_100__no_funds__expect_skip'
-
-        start_date_YYYYMMDD = self.start_date_YYYYMMDD
-        end_date_YYYYMMDD = self.end_date_YYYYMMDD
-
-        account_set = copy.deepcopy(self.account_set)
-        budget_set = copy.deepcopy(self.budget_set)
-        memo_rule_set = copy.deepcopy(self.memo_rule_set)
-        milestone_set = copy.deepcopy(self.milestone_set)
-
-        account_set.createAccount(name='Checking',
-                                  balance=0,
-                                  min_balance=0,
-                                  max_balance=float('Inf'),
-                                  account_type="checking")
-
-        account_set.createAccount(name='Credit',
-                                  balance=0,
-                                  min_balance=0,
-                                  max_balance=20000,
-                                  account_type="credit",
-                                  billing_start_date_YYYYMMDD='20000102',
-                                  interest_type='Compound',
-                                  apr=0.05,
-                                  interest_cadence='Monthly',
-                                  minimum_payment=40,
-                                  previous_statement_balance=0,
-                                  principal_balance=None,
-                                  accrued_interest=None
-                                  )
-
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=4,
-                                 cadence='once', amount=100, memo='additional credit card payment',
-                                 deferrable=False,
-                                 partial_payment_allowed=False)
-
-        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1)
-        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=4)
-
-        expected_result_df = pd.DataFrame({
-            'Date': ['20000101', '20000102', '20000103'],
-            'Checking': [0, 0, 0],
-            'Credit: Curr Stmt Bal': [0, 0, 0],
-            'Credit: Prev Stmt Bal': [0, 0, 0],
-            'Memo': ['', '', '']
-        })
-        expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d') for x in
-                                   expected_result_df.Date]
-
-        E = self.compute_forecast_and_actual_vs_expected(account_set,
-                                                     budget_set,
-                                                     memo_rule_set,
-                                                     start_date_YYYYMMDD,
-                                                     end_date_YYYYMMDD,
-                                                         milestone_set,
-                                                     expected_result_df,
-                                                     test_description)
-    def test_p4__cc_payment__no_prev_balance__pay_100__expect_skip(self):
-        test_description = 'test_cc_payment__optimize__no_prev_balance__pay_100__expect_skip'
-
-
-        start_date_YYYYMMDD = self.start_date_YYYYMMDD
-        end_date_YYYYMMDD = self.end_date_YYYYMMDD
-
-        account_set = copy.deepcopy(self.account_set)
-        budget_set = copy.deepcopy(self.budget_set)
-        memo_rule_set = copy.deepcopy(self.memo_rule_set)
-        milestone_set = copy.deepcopy(self.milestone_set)
-
-        account_set.createAccount(name='Checking',
-                                  balance=2000,
-                                  min_balance=0,
-                                  max_balance=float('Inf'),
-                                  account_type="checking")
-
-        account_set.createAccount(name='Credit',
-                                  balance=0,
-                                  min_balance=0,
-                                  max_balance=20000,
-                                  account_type="credit",
-                                  billing_start_date_YYYYMMDD='20000102',
-                                  interest_type='Compound',
-                                  apr=0.05,
-                                  interest_cadence='Monthly',
-                                  minimum_payment=40,
-                                  previous_statement_balance=0,
-                                  principal_balance=None,
-                                  accrued_interest=None
-                                  )
-
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=4,
-                                 cadence='once', amount=100, memo='this should be skipped',
-                                 deferrable=False,
-                                 partial_payment_allowed=False)
-
-        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1)
-        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to='Credit', transaction_priority=4)
-
-        expected_result_df = pd.DataFrame({
-            'Date': ['20000101', '20000102', '20000103'],
-            'Checking': [2000, 2000, 2000],
-            'Credit: Curr Stmt Bal': [0, 0, 0],
-            'Credit: Prev Stmt Bal': [0, 0, 0],
-            'Memo': ['', '', '']
-        })
-        expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d') for x in
-                                   expected_result_df.Date]
-
-        E = self.compute_forecast_and_actual_vs_expected(account_set,
-                                                     budget_set,
-                                                     memo_rule_set,
-                                                     start_date_YYYYMMDD,
-                                                     end_date_YYYYMMDD,
-                                                         milestone_set,
-                                                     expected_result_df,
-                                                     test_description)
-
-        assert E.skipped_df.shape[0] == 1
-        assert E.skipped_df['Memo'].iloc[0] == 'this should be skipped'
-
-    def test_p4__cc_payment__pay_all_of_prev_part_of_curr__expect_800(self):
-        test_description = 'test_cc_payment__optimize__pay_all_of_prev_part_of_curr__expect_800'
-
-        start_date_YYYYMMDD = self.start_date_YYYYMMDD
-        end_date_YYYYMMDD = self.end_date_YYYYMMDD
-
-        account_set = copy.deepcopy(self.account_set)
-        budget_set = copy.deepcopy(self.budget_set)
-        memo_rule_set = copy.deepcopy(self.memo_rule_set)
-        milestone_set = copy.deepcopy(self.milestone_set)
-
-        account_set.createAccount(name='Checking',
-                                  balance=2000,
-                                  min_balance=0,
-                                  max_balance=float('Inf'),
-                                  account_type="checking")
-
-        account_set.createAccount(name='Credit',
-                                  balance=500,
-                                  min_balance=0,
-                                  max_balance=20000,
-                                  account_type="credit",
-                                  billing_start_date_YYYYMMDD='20000112',
-                                  interest_type='Compound',
-                                  apr=0.05,
-                                  interest_cadence='Monthly',
-                                  minimum_payment=40,
-                                  previous_statement_balance=500,
-                                  principal_balance=None,
-                                  accrued_interest=None
-                                  )
-
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=4,
-                                 cadence='once', amount=800, memo='test pay all prev part of curr',
-                                 deferrable=False,
-                                 partial_payment_allowed=False)
-
-        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1)
-        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to='Credit', transaction_priority=4)
-
-        expected_result_df = pd.DataFrame({
-            'Date': ['20000101', '20000102', '20000103'],
-            'Checking': [2000, 1200, 1200],
-            'Credit: Curr Stmt Bal': [500, 200, 200],
-            'Credit: Prev Stmt Bal': [500, 0, 0],
-            'Memo': ['', '', '']
-        })
-        expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d') for x in
-                                   expected_result_df.Date]
-
-        E = self.compute_forecast_and_actual_vs_expected(account_set,
-                                                     budget_set,
-                                                     memo_rule_set,
-                                                     start_date_YYYYMMDD,
-                                                     end_date_YYYYMMDD,
-                                                         milestone_set,
-                                                     expected_result_df,
-                                                     test_description)
-    def test_p4__cc_payment__pay_part_of_prev_balance__expect_200(self):
-        test_description = 'test_cc_payment__optimize__pay_part_of_prev_balance__expect_200'
-
-        start_date_YYYYMMDD = self.start_date_YYYYMMDD
-        end_date_YYYYMMDD = self.end_date_YYYYMMDD
-
-        account_set = copy.deepcopy(self.account_set)
-        budget_set = copy.deepcopy(self.budget_set)
-        memo_rule_set = copy.deepcopy(self.memo_rule_set)
-        milestone_set = copy.deepcopy(self.milestone_set)
-
-        account_set.createAccount(name='Checking',
-                                  balance=200,
-                                  min_balance=0,
-                                  max_balance=float('Inf'),
-                                  account_type="checking")
-
-        account_set.createAccount(name='Credit',
-                                  balance=500,
-                                  min_balance=0,
-                                  max_balance=20000,
-                                  account_type="credit",
-                                  billing_start_date_YYYYMMDD='20000112',
-                                  interest_type='Compound',
-                                  apr=0.05,
-                                  interest_cadence='Monthly',
-                                  minimum_payment=40,
-                                  previous_statement_balance=500,
-                                  principal_balance=None,
-                                  accrued_interest=None
-                                  )
-
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=4,
-                                 cadence='once', amount=200, memo='additional cc payment test',deferrable=False,
-                                 partial_payment_allowed=True)
-
-
-        memo_rule_set.addMemoRule(memo_regex='.*',account_from='Credit',account_to=None,transaction_priority=1)
-
-        memo_rule_set.addMemoRule(memo_regex='.*additional cc payment.*', account_from='Checking', account_to='Credit', transaction_priority=4)
-
-        expected_result_df = pd.DataFrame({
-            'Date': ['20000101', '20000102', '20000103'],
-            'Checking': [200, 0, 0],
-            'Credit: Curr Stmt Bal': [500, 500, 500],
-            'Credit: Prev Stmt Bal': [500, 300, 300],
-            'Memo': ['', '', '']
-        })
-        expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d') for x in expected_result_df.Date]
-        ### END
-
-        E = self.compute_forecast_and_actual_vs_expected(account_set,
-                                                     budget_set,
-                                                     memo_rule_set,
-                                                     start_date_YYYYMMDD,
-                                                     end_date_YYYYMMDD,
-                                                         milestone_set,
-                                                     expected_result_df,
-                                                     test_description)
-    def test_p4__cc_payment__non_0_prev_balance_but_no_funds__expect_0(self):
-        test_description = 'test_cc_payment__optimize__non_0_prev_balance_but_no_funds__expect_0'
-
-        start_date_YYYYMMDD = self.start_date_YYYYMMDD
-        end_date_YYYYMMDD = self.end_date_YYYYMMDD
-
-        account_set = copy.deepcopy(self.account_set)
-        budget_set = copy.deepcopy(self.budget_set)
-        memo_rule_set = copy.deepcopy(self.memo_rule_set)
-        milestone_set = copy.deepcopy(self.milestone_set)
-
-        account_set.createAccount(name='Checking',
-                                  balance=40,
-                                  min_balance=0,
-                                  max_balance=float('Inf'),
-                                  account_type="checking")
-
-        account_set.createAccount(name='Credit',
-                                  balance=500,
-                                  min_balance=0,
-                                  max_balance=20000,
-                                  account_type="credit",
-                                  billing_start_date_YYYYMMDD='20000102',
-                                  interest_type='Compound',
-                                  apr=0.05,
-                                  interest_cadence='Monthly',
-                                  minimum_payment=40,
-                                  previous_statement_balance=500,
-                                  principal_balance=None,
-                                  accrued_interest=None
-                                  )
-
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=4,
-                                 cadence='once', amount=100, memo='additional cc payment test 9',deferrable=False,
-                                 partial_payment_allowed=True)
-
-
-        memo_rule_set.addMemoRule(memo_regex='.*',account_from='Credit',account_to=None,transaction_priority=1)
-
-        memo_rule_set.addMemoRule(memo_regex='.*additional cc payment.*', account_from='Checking', account_to='Credit', transaction_priority=4)
-
-        expected_result_df = pd.DataFrame({
-            'Date': ['20000101', '20000102', '20000103'],
-            'Checking': [40, 0, 0],
-            'Credit: Curr Stmt Bal': [500, 0, 0],
-            'Credit: Prev Stmt Bal': [500,961.92, 961.92],
-            'Memo': ['', '', '']
-        })
-        expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d') for x in expected_result_df.Date]
-
-        E = self.compute_forecast_and_actual_vs_expected(account_set,
-                                                     budget_set,
-                                                     memo_rule_set,
-                                                     start_date_YYYYMMDD,
-                                                     end_date_YYYYMMDD,
-                                                         milestone_set,
-                                                     expected_result_df,
-                                                     test_description)
-
-        #print(E.forecast_df.to_string())
-
-        #assert E.skipped_df.shape[0] == 1 #this should be checking for the additional payment memo
-        # todo i need to decide what the expected behavior is here. giving this a pass for now because i wwnt to move on
-        #I looked at it and this test is passing (for now) so I'm just moving on
-    def test_p4__cc_payment__partial_of_indicated_amount(self):
-        test_description = 'test_p4__cc_payment__partial_of_indicated_amount'
-
-        start_date_YYYYMMDD = self.start_date_YYYYMMDD
-        end_date_YYYYMMDD = self.end_date_YYYYMMDD
-
-        account_set = copy.deepcopy(self.account_set)
-        budget_set = copy.deepcopy(self.budget_set)
-        memo_rule_set = copy.deepcopy(self.memo_rule_set)
-        milestone_set = copy.deepcopy(self.milestone_set)
-
-        account_set.createAccount(name='Checking',
-                                  balance=1000,
-                                  min_balance=0,
-                                  max_balance=float('Inf'),
-                                  account_type="checking")
-
-        account_set.createAccount(name='Credit',
-                                  balance=1500,
-                                  min_balance=0,
-                                  max_balance=20000,
-                                  account_type="credit",
-                                  billing_start_date_YYYYMMDD='20000112',
-                                  interest_type='Compound',
-                                  apr=0.05,
-                                  interest_cadence='Monthly',
-                                  minimum_payment=40,
-                                  previous_statement_balance=500,
-                                  principal_balance=None,
-                                  accrued_interest=None
-                                  )
-
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=4,
-                                 cadence='once', amount=20000, memo='partial cc payment',
-                                 deferrable=False,
-                                 partial_payment_allowed=True)
-
-        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1)
-        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to='Credit', transaction_priority=4)
-
-        expected_result_df = pd.DataFrame({
-            'Date': ['20000101', '20000102', '20000103'],
-            'Checking': [1000, 0, 0],
-            'Credit: Curr Stmt Bal': [1500, 1000, 1000],
-            'Credit: Prev Stmt Bal': [500, 0, 0],
-            'Memo': ['', '', '']
-        })
-        expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d') for x in
-                                   expected_result_df.Date]
-
-        E = self.compute_forecast_and_actual_vs_expected(account_set,
-                                                     budget_set,
-                                                     memo_rule_set,
-                                                     start_date_YYYYMMDD,
-                                                     end_date_YYYYMMDD,
-                                                         milestone_set,
-                                                     expected_result_df,
-                                                     test_description)
 
     #
     # def test_p5_and_6__expect_skip(self):
@@ -997,269 +859,6 @@ class TestExpenseForecastMethods:
     #                                                  test_description)
     #     raise NotImplementedError
 
-    def test_execute_defer_after_receiving_income_2_days_later(self):
-
-        test_description = 'test_execute_defer_after_receving_income_2_days_later'
-
-        start_date_YYYYMMDD = self.start_date_YYYYMMDD
-        end_date_YYYYMMDD = '20000105'
-
-        account_set = copy.deepcopy(self.account_set)
-        budget_set = copy.deepcopy(self.budget_set)
-        memo_rule_set = copy.deepcopy(self.memo_rule_set)
-        milestone_set = copy.deepcopy(self.milestone_set)
-
-        account_set.createAccount(name='Checking',
-                                  balance=500,
-                                  min_balance=0,
-                                  max_balance=float('Inf'),
-                                  account_type="checking")
-
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000104', priority=1,
-                                 cadence='daily', amount=100, memo='SPEND daily p1 txn',
-                                 deferrable=False,
-                                 partial_payment_allowed=False)
-
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000104', end_date_YYYYMMDD='20000104', priority=1,
-                                 cadence='once', amount=200, memo='200 income on 1/4',
-                                 deferrable=False,
-                                 partial_payment_allowed=False)
-
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=2,
-                                 cadence='once', amount=400, memo='SPEND p2 txn deferred from 1/2 to 1/4',
-                                 deferrable=True,
-                                 partial_payment_allowed=False)
-
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000103', end_date_YYYYMMDD='20000103', priority=3,
-                                 cadence='once', amount=400, memo='SPEND p3 txn on 1/3 that is skipped bc later lower priority_index txn',
-                                 deferrable=False,
-                                 partial_payment_allowed=False)
-
-        memo_rule_set.addMemoRule(memo_regex='SPEND.*', account_from='Checking', account_to=None, transaction_priority=1)
-        memo_rule_set.addMemoRule(memo_regex='.*income.*', account_from=None, account_to='Checking', transaction_priority=1)
-        memo_rule_set.addMemoRule(memo_regex='SPEND.*', account_from='Checking', account_to=None, transaction_priority=2)
-        memo_rule_set.addMemoRule(memo_regex='SPEND.*', account_from='Checking', account_to=None, transaction_priority=3)
-
-        expected_result_df = pd.DataFrame({
-            'Date': ['20000101', '20000102', '20000103', '20000104', '20000105'],
-            'Checking': [500, 400, 300, 0, 0],
-            'Memo': ['', '', '', '', '']
-        })
-        expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d') for x in
-                                   expected_result_df.Date]
-
-        E = self.compute_forecast_and_actual_vs_expected(account_set,
-                                                         budget_set,
-                                                         memo_rule_set,
-                                                         start_date_YYYYMMDD,
-                                                         end_date_YYYYMMDD,
-                                                         milestone_set,
-                                                         expected_result_df,
-                                                         test_description)
-
-        # E = ExpenseForecast.ExpenseForecast(account_set,
-        #                                     budget_set,
-        #                                     memo_rule_set,
-        #                                     start_date_YYYYMMDD,
-        #                                     end_date_YYYYMMDD, raise_exceptions=False)
-        #
-        # print(E.forecast_df.to_string())
-
-
-
-    def test_execute_at_reduced_amount_bc_later_higher_priority_txn(self):
-
-        test_description = 'test_execute_at_reduced_amount_bc_later_higher_priority_txn'
-
-        start_date_YYYYMMDD = self.start_date_YYYYMMDD
-        end_date_YYYYMMDD = '20000105'
-
-        account_set = copy.deepcopy(self.account_set)
-        budget_set = copy.deepcopy(self.budget_set)
-        memo_rule_set = copy.deepcopy(self.memo_rule_set)
-        milestone_set = copy.deepcopy(self.milestone_set)
-
-        account_set.createAccount(name='Checking',
-                                  balance=400,
-                                  min_balance=0,
-                                  max_balance=float('Inf'),
-                                  account_type="checking")
-
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000104', end_date_YYYYMMDD='20000104', priority=2,
-                                 cadence='once', amount=200, memo='pay 200 after reduced amt txn',
-                                 deferrable=False,
-                                 partial_payment_allowed=False)
-
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000103', end_date_YYYYMMDD='20000103', priority=3,
-                                 cadence='once', amount=400, memo='pay reduced amount',
-                                 deferrable=False,
-                                 partial_payment_allowed=True)
-
-        #
-        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=1)
-        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=2)
-        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=3)
-
-        expected_result_df = pd.DataFrame({
-            'Date': ['20000101', '20000102', '20000103', '20000104', '20000105'],
-            'Checking': [400, 400, 200, 0, 0],
-            'Memo': ['', '', '', '', '']
-        })
-        expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d') for x in
-                                   expected_result_df.Date]
-
-        # E = self.compute_forecast_and_actual_vs_expected(account_set,
-        #                                                  budget_set,
-        #                                                  memo_rule_set,
-        #                                                  start_date_YYYYMMDD,
-        #                                                  end_date_YYYYMMDD,
-        #                                                  expected_result_df,
-        #                                                  test_description)
-
-        E = ExpenseForecast.ExpenseForecast(account_set,
-                                            budget_set,
-                                            memo_rule_set,
-                                            start_date_YYYYMMDD,
-                                            end_date_YYYYMMDD, raise_exceptions=False)
-
-        print(E.forecast_df.to_string())
-
-
-    def test_transactions_executed_at_p1_and_p2(self):
-
-        test_description = 'test_transactions_executed_at_p1_and_p2'
-
-        start_date_YYYYMMDD = self.start_date_YYYYMMDD
-        end_date_YYYYMMDD = '20000106'
-
-        account_set = copy.deepcopy(self.account_set)
-        budget_set = copy.deepcopy(self.budget_set)
-        memo_rule_set = copy.deepcopy(self.memo_rule_set)
-        milestone_set = copy.deepcopy(self.milestone_set)
-
-        account_set.createAccount(name='Checking',
-                                  balance=2000,
-                                  min_balance=0,
-                                  max_balance=float('Inf'),
-                                  account_type="checking")
-
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000105', priority=1,
-                                 cadence='daily', amount=100, memo='p1 daily txn',
-                                 deferrable=False,
-                                 partial_payment_allowed=False)
-
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=2,
-                                 cadence='once', amount=100, memo='p2 daily txn 1/2/00',
-                                 deferrable=False,
-                                 partial_payment_allowed=False)
-
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000103', end_date_YYYYMMDD='20000103', priority=2,
-                                 cadence='once', amount=100, memo='p2 daily txn 1/3/00',
-                                 deferrable=False,
-                                 partial_payment_allowed=False)
-
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000104', end_date_YYYYMMDD='20000104', priority=2,
-                                 cadence='once', amount=100, memo='p2 daily txn 1/4/00',
-                                 deferrable=False,
-                                 partial_payment_allowed=False)
-
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000105', end_date_YYYYMMDD='20000105', priority=2,
-                                 cadence='once', amount=100, memo='p2 daily txn 1/5/00',
-                                 deferrable=False,
-                                 partial_payment_allowed=False)
-
-
-        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=1)
-        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=2)
-
-        expected_result_df = pd.DataFrame({
-            'Date': ['20000101', '20000102', '20000103', '20000104', '20000105', '20000106'],
-            'Checking': [2000, 1800, 1600, 1400, 1200, 1200],
-            'Memo': ['', '', '', '', '', '']
-        })
-        expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d') for x in
-                                   expected_result_df.Date]
-
-        E = self.compute_forecast_and_actual_vs_expected(account_set,
-                                                         budget_set,
-                                                         memo_rule_set,
-                                                         start_date_YYYYMMDD,
-                                                         end_date_YYYYMMDD,
-                                                         expected_result_df,
-                                                         test_description)
-
-        #print(E.forecast_df)
-
-
-    def test_transactions_executed_at_p1_and_p2_and_p3(self):
-
-        test_description = 'test_transactions_executed_at_p1_and_p2_and_p3'
-
-        start_date_YYYYMMDD = self.start_date_YYYYMMDD
-        end_date_YYYYMMDD = '20000106'
-
-        account_set = copy.deepcopy(self.account_set)
-        budget_set = copy.deepcopy(self.budget_set)
-        memo_rule_set = copy.deepcopy(self.memo_rule_set)
-        milestone_set = copy.deepcopy(self.milestone_set)
-
-        account_set.createAccount(name='Checking',
-                                  balance=2000,
-                                  min_balance=0,
-                                  max_balance=float('Inf'),
-                                  account_type="checking")
-
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000105', priority=1,
-                                 cadence='daily', amount=100, memo='p1 daily txn',
-                                 deferrable=False,
-                                 partial_payment_allowed=False)
-
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=2,
-                                 cadence='once', amount=100, memo='p2 daily txn 1/2/00',
-                                 deferrable=False,
-                                 partial_payment_allowed=False)
-
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000103', end_date_YYYYMMDD='20000103', priority=2,
-                                 cadence='once', amount=100, memo='p2 daily txn 1/3/00',
-                                 deferrable=False,
-                                 partial_payment_allowed=False)
-
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000104', end_date_YYYYMMDD='20000104', priority=2,
-                                 cadence='once', amount=100, memo='p2 daily txn 1/4/00',
-                                 deferrable=False,
-                                 partial_payment_allowed=False)
-
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000105', end_date_YYYYMMDD='20000105', priority=2,
-                                 cadence='once', amount=100, memo='p2 daily txn 1/5/00',
-                                 deferrable=False,
-                                 partial_payment_allowed=False)
-
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000105', priority=3,
-                                 cadence='daily', amount=100, memo='p3 daily txn',
-                                 deferrable=False,
-                                 partial_payment_allowed=False)
-
-        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=1)
-        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=2)
-        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=3)
-
-        expected_result_df = pd.DataFrame({
-            'Date': ['20000101', '20000102', '20000103', '20000104', '20000105', '20000106'],
-            'Checking': [2000, 1700, 1400, 1100, 800, 800],
-            'Memo': ['', '', '', '', '', '']
-        })
-        expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d') for x in
-                                   expected_result_df.Date]
-
-        E = self.compute_forecast_and_actual_vs_expected(account_set,
-                                                         budget_set,
-                                                         memo_rule_set,
-                                                         start_date_YYYYMMDD,
-                                                         end_date_YYYYMMDD,
-                                                         expected_result_df,
-                                                         test_description)
-
-        print(E.forecast_df.to_string())
 
     def test_multiple_matching_memo_rule_regex(self):
         # For this test, I want to see:

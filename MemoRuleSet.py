@@ -59,7 +59,6 @@ class MemoRuleSet:
                 g = re.search(memo_row.Memo_Regex, txn_memo).group(0)
                 match_vec[i] = True
             except Exception as e:
-                print(e)
                 match_vec[i] = False
 
         try:
