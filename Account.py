@@ -82,7 +82,6 @@ class Account:
 
         if account_type is None:
             raise ValueError("Account_Type cannot be None.")
-            self.account_type = account_type.lower()
             #account_type = 'None'
             #self.account_type = "None" # to avoid exceptions when string methods are used
 

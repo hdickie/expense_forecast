@@ -450,11 +450,10 @@ class AccountSet:
                 principal_balance = a.balance
                 interest_balance = self.accounts[i+1].balance
                 balances_dict[a.name.split(':')[0]] = ( principal_balance + interest_balance )
-            else:
-                #log_in_color('magenta', 'debug', 'Unexpected account type: '+str(a.account_type))
-                pass
-        #     print('balances_dict:')
-        #     print(balances_dict)
+            elif a.account_type == 'interest':
+                pass #this is handled in the principal balance case
+            else: raise ValueError('Account Type not recognized: ' +str(a.account_type) )
+
         # log_in_color('magenta', 'debug', balances_dict)
         # log_in_color('magenta', 'debug', 'EXIT getBalances()')
         return balances_dict
@@ -468,6 +467,8 @@ class AccountSet:
 
         if Account_To == 'ALL_LOANS':
             loan_payment__list = self.allocate_additional_loan_payments(Amount)
+            print('loan_payment__list:')
+            print(loan_payment__list)
             for i in range(0,len(loan_payment__list)):
                 single_account_loan_payment = loan_payment__list[i]
                 self.executeTransaction(single_account_loan_payment[0], #From
