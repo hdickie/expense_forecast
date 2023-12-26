@@ -286,7 +286,9 @@ class ExpenseForecast:
         distinct_memo_priority_combinations__from_budget = budget_df[['Priority', 'Memo']].drop_duplicates()
         distinct_memo_priority_combinations__from_memo = memo_df[['Transaction_Priority', 'Memo_Regex']]  # should be no duplicates
 
+        #make sure no non matches
         any_matches_found_at_all = False
+        budget_items_with_matches = [] #each budget item should get appended once
         for budget_index, budget_row in distinct_memo_priority_combinations__from_budget.iterrows():
             match_found = False
             for memo_index, memo_row in distinct_memo_priority_combinations__from_memo.iterrows():
@@ -294,6 +296,7 @@ class ExpenseForecast:
                     m = re.search(memo_row.Memo_Regex, budget_row.Memo)
                     if m is not None:
                         match_found = True
+                        budget_items_with_matches.append((budget_row.Memo,budget_row.Priority))
                         any_matches_found_at_all = True
                         continue
 
@@ -301,6 +304,13 @@ class ExpenseForecast:
                 error_text += "No regex match found for memo:\'" + str(budget_row.Memo) + "\'\n"
 
         if any_matches_found_at_all == False:
+            error_ind = True
+
+        if len(budget_items_with_matches) != len(set(budget_items_with_matches)):
+            error_text += "At least one budget item had multiple matches:\n"
+            for i in range(0,len(budget_items_with_matches)-1):
+                if budget_items_with_matches[i] == budget_items_with_matches[i+1]:
+                    error_text += str(budget_items_with_matches[i])+"\n"
             error_ind = True
 
         smpl_sel_vec = accounts_df.Interest_Type.apply(lambda x: x.lower() if x is not None else None) == 'simple'
@@ -1860,10 +1870,10 @@ class ExpenseForecast:
                 # this method is allowed one account boundary exception. this is the case where satisfice doesn't make it to the end date
                 # we move the end date closer to cope. the new row did not get appended
                 if (re.search('.*Account boundaries were violated.*', str(e.args)) is not None) and not raise_satisfice_failed_exception:
-                    self.end_date = d - datetime.timedelta(days=1)
+                    self.end_date = datetime.datetime.strptime(d, '%Y%m%d') - datetime.timedelta(days=1)
                     failed_to_satisfice_flag = True
                     log_in_color('green', 'debug', 'FAILED TO SATISFICE. Not raising an exception per parameters.')
-                    log_in_color('green', 'info', 'BEGIN SATISFICE ' + str(d.strftime('%Y-%m-%d')) + bal_string, self.log_stack_depth)
+                    log_in_color('green', 'info', 'BEGIN SATISFICE ' + str(d) + bal_string, self.log_stack_depth)
                     break
                 else:
                     raise e
@@ -2025,7 +2035,7 @@ class ExpenseForecast:
             new_deferred_df = proposed_df.loc[[not x for x in proposed_df.Deferrable]]
             skipped_df = pd.concat([skipped_df, not_confirmed_df, new_deferred_df])
 
-            confirmed_sel_vec = [ ( d <= datetime.datetime.strptime(self.end_date_YYYYMMDD,'%Y%m%d') ) for d in confirmed_df.Date ]
+            confirmed_sel_vec = [ ( datetime.datetime.strptime(d,'%Y%m%d') <= datetime.datetime.strptime(self.end_date_YYYYMMDD,'%Y%m%d') ) for d in confirmed_df.Date ]
             confirmed_df = confirmed_df.loc[ confirmed_sel_vec ]
 
             deferred_df = proposed_df.loc[proposed_df.Deferrable]

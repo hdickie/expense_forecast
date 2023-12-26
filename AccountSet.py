@@ -3,7 +3,7 @@ import copy
 from log_methods import log_in_color
 import logging
 import numpy as np
-
+import datetime
 import BudgetSet #this could be refactored out, and should be in terms of independent dependencies and clear organization, but it works
 import BudgetItem
 
@@ -416,20 +416,21 @@ class AccountSet:
                                       print_debug_messages=print_debug_messages,
                                       raise_exceptions=raise_exceptions)
             self.accounts.append(account)
-        else:
+        elif account_type.lower() == 'checking':
             account = Account.Account(name=name,
                                       balance=balance,
                                       min_balance=min_balance,
                                       max_balance=max_balance,
                                       account_type=account_type,
-                                      billing_start_date_YYYYMMDD=billing_start_date_YYYYMMDD,
-                                      interest_type=interest_type,
-                                      apr=apr,
-                                      interest_cadence=interest_cadence,
-                                      minimum_payment=minimum_payment,
+                                      billing_start_date_YYYYMMDD=None,
+                                      interest_type=None,
+                                      apr=None,
+                                      interest_cadence=None,
+                                      minimum_payment=None,
                                       print_debug_messages=print_debug_messages,
                                       raise_exceptions=raise_exceptions)
             self.accounts.append(account)
+        else: raise NotImplementedError
 
     def getBalances(self):
         #log_in_color('magenta','debug','ENTER getBalances()')
@@ -445,7 +446,8 @@ class AccountSet:
 
                 remaining_prev_balance = a.max_balance - ( prev_balance + curr_balance )
                 balances_dict[a.name.split(':')[0]] = remaining_prev_balance
-
+            elif a.account_type == 'curr stmt bal':
+                pass #handled above
             elif a.account_type == 'principal balance':
                 principal_balance = a.balance
                 interest_balance = self.accounts[i+1].balance
@@ -459,7 +461,7 @@ class AccountSet:
         return balances_dict
 
     def executeTransaction(self, Account_From, Account_To, Amount,income_flag=False):
-
+        #print('ENTER executeTransaction('+str(Account_From)+','+str(Account_To)+','+str(Amount)+')')
         Amount = round(Amount,2)
 
         if Amount == 0:
@@ -467,8 +469,8 @@ class AccountSet:
 
         if Account_To == 'ALL_LOANS':
             loan_payment__list = self.allocate_additional_loan_payments(Amount)
-            print('loan_payment__list:')
-            print(loan_payment__list)
+            #print('loan_payment__list:')
+            #print(loan_payment__list)
             for i in range(0,len(loan_payment__list)):
                 single_account_loan_payment = loan_payment__list[i]
                 self.executeTransaction(single_account_loan_payment[0], #From
@@ -515,8 +517,7 @@ class AccountSet:
                     AF_Account_Type = 'credit'
                 # elif self.accounts[account_from_index].account_type == 'principal balance':
                 #     AF_Account_Type = 'loan'
-                elif self.accounts[account_from_index].account_type == 'checking':
-                    AF_Account_Type = 'checking'
+                else: raise ValueError #this would happen if there were 2 accounts w same base name that are not cc accounts in the Account_From field
             elif AF_base_name_match_count == 1:
                 AF_Account_Type = self.accounts[account_from_index].account_type
             else: raise ValueError #if this happens, then validation in ExpenseForecast constructor failed to catch something
@@ -533,8 +534,7 @@ class AccountSet:
                         AT_Account_Type = 'credit'
                     elif self.accounts[account_to_index].account_type == 'principal balance':
                         AT_Account_Type = 'loan'
-                    elif self.accounts[account_to_index].account_type == 'checking':
-                        AT_Account_Type = 'checking'
+                    else: raise ValueError #this would happen if there were 2 accts w same basename, not cc or loan, and in Account_From field
                 elif AT_base_name_match_count == 1:
                     AT_Account_Type = self.accounts[account_to_index].account_type
                 else: raise ValueError #if this happens, then validation in ExpenseForecast constructor failed to catch something
@@ -543,11 +543,8 @@ class AccountSet:
 
         #at this point, we know account types but haven't changed any balances
         #if income, one account must be checking, and the other must be none
-        if income_flag and AF_Account_Type == 'checking' and AT_Account_Type == 'None':
+        if income_flag and AF_Account_Type == 'None' and AT_Account_Type == 'checking':
             pass #cool
-        elif income_flag and AF_Account_Type == 'None' and AT_Account_Type == 'checking':
-            pass #cool
-
         #not cool
         elif income_flag: raise ValueError("income_flag was True but did not refer to a checking account or referred to multiple accounts")
 
@@ -588,8 +585,7 @@ class AccountSet:
                     boundary_error_ind = True
 
                 self.accounts[account_from_index].balance += abs(Amount)
-            else:
-                raise NotImplementedError("account type was: "+str(AF_Account_Type)) #from types other than checking or credit not yet implemented
+            else: raise NotImplementedError("account type was: "+str(AF_Account_Type)) #from types other than checking or credit not yet implemented
 
             if not boundary_error_ind:
                 log_in_color('magenta', 'debug', 'Paid ' + str(Amount) + ' from ' + Account_From, 0)
@@ -635,8 +631,7 @@ class AccountSet:
                 else: #pay down the previous statement balance
                     log_in_color('magenta', 'debug', 'Paid ' + str(Amount) + ' to ' + str(self.accounts[account_to_index + 1].name), 0)
                     self.accounts[account_to_index + 1].balance -= Amount
-            else:
-                raise NotImplementedError("account type was: "+str(AF_Account_Type)) #from types other than checking or credit not yet implemented
+            else: raise NotImplementedError("account type was: "+str(AF_Account_Type)) #from types other than checking or credit not yet implemented
 
         after_txn_total_available_funds = 0
         available_funds = self.getBalances()
@@ -661,21 +656,147 @@ class AccountSet:
         else: equivalent_exchange_error_ind = True
             #raise ValueError("impossible error in  AccountSet::executeTransaction(). if 2 accounts were indicated, then the pre-post delta must be 0.") #this should not be possible.
 
+        #in contrast to the boundary violation error, this could should never run if this project has been designed correctly.
+        equivalent_exchange_error_text = ''
+        equivalent_exchange_error_text += 'FUNDS NOT ACCOUNTED FOR POST-TRANSACTION' +'\n'
+        equivalent_exchange_error_text += 'single_account_transaction_ind:'+str(single_account_transaction_ind) +'\n'
+        equivalent_exchange_error_text += 'income_flag:' + str(income_flag) +'\n'
+        equivalent_exchange_error_text += 'debt_payment_ind:' + str(debt_payment_ind) +'\n'
+        equivalent_exchange_error_text += 'starting_available_funds:' + str(starting_available_funds) +'\n'
+        equivalent_exchange_error_text += 'available_funds:' + str(self.getBalances()) +'\n'
+        equivalent_exchange_error_text += 'Amount:' + str(Amount) +'\n'
+        equivalent_exchange_error_text += 'empirical_delta:' + str(empirical_delta) +'\n'
         if equivalent_exchange_error_ind:
-            log_in_color('red', 'error', '', 0)
-            log_in_color('red', 'error', 'FUNDS NOT ACCOUNTED FOR POST-TRANSACTION', 0)
-            log_in_color('red', 'error', 'single_account_transaction_ind:'+str(single_account_transaction_ind),0)
-            log_in_color('red', 'error', 'income_flag:' + str(income_flag), 0)
-            log_in_color('red', 'error', 'debt_payment_ind:' + str(debt_payment_ind), 0)
-            log_in_color('red', 'error', 'starting_available_funds:' + str(starting_available_funds), 0)
-            log_in_color('red', 'error', 'available_funds:' + str(self.getBalances()), 0)
-            log_in_color('red', 'error', 'Amount:' + str(Amount), 0)
-            log_in_color('red', 'error', 'empirical_delta:' + str(empirical_delta), 0)
+            log_in_color('red', 'error', equivalent_exchange_error_text, 0)
             raise ValueError("Funds not accounted for in AccountSet::executeTransaction()") # Funds not accounted for
 
 
-    def fromExcel(self):
-        raise NotImplementedError
+    def from_excel(self,path):
+        self.accounts = []
+        A_df = pd.read_excel(path)
+
+        # "Name": "test",
+        # "Balance": "0.0",
+        # "Min_Balance": "0.0",
+        # "Max_Balance": "0.0",
+        # "Account_Type": "checking",
+        # "Billing_Start_Date": "None",
+        # "Interest_Type": "None",
+        # "APR": "None",
+        # "Interest_Cadence": "None",
+        # "Minimum_Payment": "None"
+
+        #info for paired accounts needs to be in one row, so we have to iterate over once
+        expect_secondary_acct = False
+        name = None
+        balance = None
+        min_balance = None
+        max_balance = None
+        billing_start_date_YYYYMMDD = None
+        interest_type = None
+        apr = None
+        interest_cadence = None
+        minimum_payment = None
+        for index, row in A_df.iterrows():
+            if expect_secondary_acct:
+                assert min_balance == row.Min_Balance
+                assert max_balance == row.Max_Balance
+                assert name.split(':')[0] == row.Name.split(':')[0] #these are the only checks createAccount cant catch
+            else:
+                name = row.Name
+                balance = row.Balance
+                min_balance = row.Min_Balance
+                max_balance = row.Max_Balance
+
+                billing_start_date_YYYYMMDD = row.Billing_Start_Dt
+                interest_type = row.Interest_Type
+                apr = row.APR
+                interest_cadence = row.Interest_Cadence
+                minimum_payment = row.Minimum_Payment
+
+            if row.Account_Type == 'checking':
+                self.createAccount(name,
+                      balance,
+                      min_balance,
+                      max_balance,
+                      'checking')
+            elif (row.Account_Type == 'curr stmt bal' or row.Account_Type == 'interest'
+                  or row.Account_Type == 'prev stmt bal' or row.Account_Type == 'principal balance') and not expect_secondary_acct: #we cant count on row order here
+                expect_secondary_acct = True
+                continue
+            elif row.Account_Type == 'prev stmt bal' and expect_secondary_acct:
+                expect_secondary_acct = False
+                self.createAccount(name.split(':')[0],
+                                balance,
+                                min_balance,
+                                max_balance,
+                                'credit',
+                                billing_start_date_YYYYMMDD=int(row.Billing_Start_Dt),
+                                interest_type=row.Interest_Type,
+                                apr=row.APR,
+                                interest_cadence=row.Interest_Cadence,
+                                minimum_payment=row.Minimum_Payment,
+                                previous_statement_balance=row.Balance,
+                                principal_balance=None,
+                                accrued_interest=None)
+            elif row.Account_Type == 'curr stmt bal' and expect_secondary_acct:
+                expect_secondary_acct = False
+                self.createAccount(name.split(':')[0],
+                                row.Balance,
+                                min_balance,
+                                max_balance,
+                                'loan',
+                               billing_start_date_YYYYMMDD=int(billing_start_date_YYYYMMDD),
+                               interest_type=interest_type,
+                               apr=apr,
+                               interest_cadence=interest_cadence,
+                               minimum_payment=minimum_payment,
+                               previous_statement_balance=balance,
+                               principal_balance=None,
+                               accrued_interest=None)
+            elif row.Account_Type == 'principal balance' and expect_secondary_acct:
+                expect_secondary_acct = False
+                self.createAccount(name.split(':')[0],
+                                balance + row.Balance,
+                                min_balance,
+                                max_balance,
+                                'loan',
+                                billing_start_date_YYYYMMDD=int(row.Billing_Start_Dt),
+                                interest_type=row.Interest_Type,
+                                apr=row.APR,
+                                interest_cadence=row.Interest_Cadence,
+                                minimum_payment=row.Minimum_Payment,
+                                previous_statement_balance=None,
+                                principal_balance=balance,
+                                accrued_interest=row.Balance)
+            elif row.Account_Type == 'interest' and expect_secondary_acct:
+                expect_secondary_acct = False
+                self.createAccount(name.split(':')[0],
+                                balance + row.Balance,
+                                min_balance,
+                                max_balance,
+                                'loan',
+                                billing_start_date_YYYYMMDD=int(billing_start_date_YYYYMMDD),
+                                interest_type=interest_type,
+                                apr=apr,
+                                interest_cadence=interest_cadence,
+                                minimum_payment=minimum_payment,
+                                previous_statement_balance=None,
+                                principal_balance=balance,
+                                accrued_interest=row.Balance)
+            else: raise NotImplementedError #an unexpected account type was found, or expect_secondary_acct was set inappropriately
+
+
+
+            # previous_statement_balance = row.Previous_Statement_Balance
+            # principal_balance = row.Principal_Balance
+            # accrued_interest = row.Accrued_Interest
+
+    def to_excel(self,path):
+        A = self.getAccounts()
+        #A['Billing_Start_Dt'] = pd.to_datetime(A['Billing_Start_Dt'])
+        #print(A.dtypes)
+        A.to_excel(path)
 
     def allocate_additional_loan_payments(self, amount):
         bal_string = ''
@@ -889,12 +1010,12 @@ class AccountSet:
 
         final_txns = []
         for key in payment_dict.keys():
-            final_txns.append(['Checking',key,payment_dict[key]])
+            final_txns.append([checking_acct_name,key,payment_dict[key]])
             #final_budget_items.append(BudgetItem.BudgetItem(date_string_YYYYMMDD, date_string_YYYYMMDD, 7, 'once', payment_dict[key], False, key, ))
 
 
-        # log_in_color('green', 'debug', 'final_budget_set:')
-        # log_in_color('green', 'debug', final_budget_set)
+        #log_in_color('green', 'debug', 'final_txns:')
+        #log_in_color('green', 'debug', final_txns)
         log_in_color('green', 'debug', 'EXIT allocate_additional_loan_payments(amount='+str(amount)+')')
         return final_txns
 

@@ -213,16 +213,19 @@ class Account:
             try:
                 # dont actually do the cast
                 try:
-                    self.billing_start_date_YYYYMMDD = billing_start_date_YYYYMMDD
                     try:
                         datetime.datetime.strptime(str(billing_start_date_YYYYMMDD), '%Y%m%d')
+                        self.billing_start_date_YYYYMMDD = billing_start_date_YYYYMMDD
                     except:
-                        datetime.datetime.strptime(str(billing_start_date_YYYYMMDD), '%Y-%m-%d %H:%M:%S')
+                        d = datetime.datetime.strptime(str(billing_start_date_YYYYMMDD), '%Y-%m-%d %H:%M:%S')
+                        self.billing_start_date_YYYYMMDD = d.strftime('%Y%m%d')
                 except:
-                    datetime.datetime.strptime(str(billing_start_date_YYYYMMDD), '%Y-%m-%d')
+                    d = datetime.datetime.strptime(str(billing_start_date_YYYYMMDD), '%Y-%m-%d')
+                    self.billing_start_date_YYYYMMDD = d.strftime('%Y%m%d')
             except Exception as e:
                 exception_type_error_message_string += str(e)
-                exception_type_error_message_string += 'failed cast Account.billing_start_date_YYYYMMDD to datetime\n'
+                exception_type_error_message_string += ' failed cast Account.billing_start_date_YYYYMMDD to datetime\n'
+                exception_type_error_message_string += 'Account name was: ' + str(name) + '\n'
                 exception_type_error_message_string += 'Value was:' + str(billing_start_date_YYYYMMDD) + "\n"
                 exception_type_error_ind=True
         else:

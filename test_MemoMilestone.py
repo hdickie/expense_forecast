@@ -15,3 +15,4 @@ class TestMemoMilestoneMethods:
     def test_str(self):
         str(MemoMilestone.MemoMilestone('milestone_name','memo_regex'))
 
+
