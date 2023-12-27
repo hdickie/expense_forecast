@@ -1,4 +1,0 @@
-,Date,Checking,Loan A: Principal Balance,Loan A: Interest,Loan B: Principal Balance,Loan B: Interest,Loan C: Principal Balance,Loan C: Interest,Memo
-0,20000101,2000.0,4746.18,0.0,1919.55,0.0,4726.68,0.0,
-1,20000102,2000.0,4746.18,0.0,1919.55,0.0,4726.68,0.0,
-2,20000103,1850.0,4696.18,0.6,1869.55,0.22,4676.68,0.55,Loan A loan min payment ($50.0); Loan B loan min payment ($50.0); Loan C loan min payment ($50.0); 
