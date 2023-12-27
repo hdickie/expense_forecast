@@ -8,10 +8,10 @@ class TestAccountMilestoneMethods:
         AccountMilestone.AccountMilestone('Milestone_Name','Account_Name',0,100)
 
     def test_AccountMilestone_constructor__invalid_inputs(self):
-        with pytest.raises(AssertionError):
+        with pytest.raises(ValueError):
             AccountMilestone.AccountMilestone('Milestone_Name', 'Account_Name', 'X', 100)
 
-        with pytest.raises(AssertionError):
+        with pytest.raises(ValueError):
             AccountMilestone.AccountMilestone('Milestone_Name', 'Account_Name', 0, 'X')
 
     def test_str(self):

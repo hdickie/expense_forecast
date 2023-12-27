@@ -6,11 +6,17 @@ import datetime
 import re
 import copy
 import json
+
+import AccountMilestone
+import CompositeMilestone
+import MemoMilestone
 import BudgetItem
 import BudgetSet, AccountSet
 import MemoRuleSet
 
 import hashlib
+
+import MilestoneSet
 
 pd.options.mode.chained_assignment = None #apparently this warning can throw false positives???
 
@@ -39,6 +45,116 @@ logger.handlers.clear()
 logger.addHandler(l_stream)
 logger.addHandler(l_file)
 
+def initialize_from_excel_file(path_to_excel_file):
+
+    account_set_df = pd.read_excel(path_to_excel_file,sheet_name='AccountSet')
+    budget_set_df = pd.read_excel(path_to_excel_file, sheet_name='BudgetSet')
+    memo_rule_set_df = pd.read_excel(path_to_excel_file, sheet_name='MemoRuleSet')
+    choose_one_set_df = pd.read_excel(path_to_excel_file, sheet_name='ChooseOneSet')
+    account_milestones_df = pd.read_excel(path_to_excel_file, sheet_name='AccountMilestones')
+    memo_milestones_df = pd.read_excel(path_to_excel_file, sheet_name='MemoMilestones')
+    composite_milestones_df = pd.read_excel(path_to_excel_file, sheet_name='CompositeMilestones')
+    config_df = pd.read_excel(path_to_excel_file, sheet_name='config')
+
+    A = AccountSet.AccountSet([])
+    expect_curr_bal_acct = False
+    expect_prev_bal_acct = False
+    expect_principal_bal_acct = False
+    expect_interest_acct = False
+
+    billing_start_date = None
+    interest_type = None
+    apr = None
+    interest_cadence = None
+    minimum_payment = None
+    previous_statement_balance = None
+    current_statement_balance = None
+    principal_balance = None
+    accrued_interest = None
+    for index, row in account_set_df.iterrows():
+        if row.Account_Type.lower() == 'checking':
+            A.createAccount(row.Name,row.Balance,row.Min_Balance,row.Max_Balance,'checking',None,None,None,None,None,None,None,None)
+
+        if row.Account_Type.lower() == 'curr stmt bal' and not expect_curr_bal_acct:
+            current_statement_balance = row.Balance
+            expect_prev_bal_acct = True
+            continue
+
+        if row.Account_Type.lower() == 'prev stmt bal' and not expect_prev_bal_acct:
+            previous_statement_balance = row.Balance
+            interest_cadence = row.Interest_Cadence
+            minimum_payment = row.Minimum_Payment
+            billing_start_date = row.Billing_Start_Date
+            interest_type = row.Interest_Type
+            apr = row.APR
+
+            expect_curr_bal_acct = True
+            continue
+
+        if row.Account_Type.lower() == 'interest' and not expect_interest_acct:
+            accrued_interest = row.Balance
+            expect_principal_bal_acct = True
+            continue
+
+        if row.Account_Type.lower() == 'principal balance' and not expect_principal_bal_acct:
+            principal_balance = row.Balance
+            interest_cadence = row.Interest_Cadence
+            minimum_payment = row.Minimum_Payment
+            billing_start_date = row.Billing_Start_Date
+            interest_type = row.Interest_Type
+            apr = row.APR
+            expect_interest_acct = True
+            continue
+
+        #todo i was tired when I wrote these likely worth a second look
+        if row.Account_Type.lower() == 'curr stmt bal' and expect_curr_bal_acct:
+            A.createAccount(row.Name.split(':')[0],row.Balance,row.Min_Balance,row.Max_Balance,'credit',billing_start_date,interest_type,apr,interest_cadence,minimum_payment,previous_statement_balance,None,None)
+            expect_curr_bal_acct = False
+
+        if row.Account_Type.lower() == 'prev stmt bal' and expect_prev_bal_acct:
+            A.createAccount(row.Name.split(':')[0],current_statement_balance,row.Min_Balance,row.Max_Balance,'credit',row.Billing_Start_Dt,row.interest_type,row.APR,row.interest_cadence,row.minimum_payment,previous_statement_balance,None,None,None)
+            expect_prev_bal_acct = False
+
+        if row.Account_Type.lower() == 'interest' and expect_interest_acct:
+            A.createAccount(row.Name.split(':')[0],row.Balance + principal_balance,row.Min_Balance,row.Max_Balance,'loan',billing_start_date,interest_type,apr,interest_cadence,minimum_payment,None,principal_balance,row.Balance)
+            expect_interest_acct = False
+
+        if row.Account_Type.lower() == 'principal balance' and expect_principal_bal_acct:
+            A.createAccount(row.Name.splt(':')[0],row.Balance + accrued_interest,row.Min_Balance,row.Max_Balance,'loan',row.Billing_Start_Date_YYYYMMDD,row.interest_type,row.APR,row.interet_Cadence,row.Minimum_Payment,None,row.Balance,accrued_interest)
+            expect_principal_bal_acct = False
+
+    B = BudgetSet.BudgetSet([])
+    for index, row in budget_set_df.iterrows():
+        B.addBudgetItem(row.Start_Date,row.End_Date,row.Priority,row.Cadence,row.Amount,row.Memo,row.Deferrable,row.Partial_Payment_Allowed)
+
+    M = MemoRuleSet.MemoRuleSet([])
+    for index, row in memo_rule_set_df.iterrows():
+        M.addMemoRule(row.Memo_Regex,row.Account_From,row.Account_To,row.Transaction_Priority)
+
+    # for index, row in choose_one_set_df.iterrows():
+    #     pass
+
+    am__list = []
+    for index, row in account_milestones_df.iterrows():
+        am__list.append(AccountMilestone.AccountMilestone(row.Milestone_Name,row.Account_Name,row.Min_Balance,row.Max_Balance))
+
+    mm__list = []
+    for index, row in memo_milestones_df.iterrows():
+        mm__list.append(MemoMilestone.MemoMilestone(row.Milestone_Name,row.Memo_Regex))
+
+    cm__list = []
+    #todo
+    #for index, row in composite_milestones_df.iterrows():
+    #    cm__list.append(CompositeMilestone.CompositeMilestone(row.Milestone_Name,))
+
+    MS = MilestoneSet.MilestoneSet(A,B,am__list,mm__list,cm__list)
+
+    start_date_YYYYMMDD = config_df.Start_Date_YYYYMMDD[0]
+    end_date_YYYYMMDD = config_df.End_Date_YYYYMMDD[0]
+
+    return ExpenseForecast(A,B,M,start_date_YYYYMMDD,end_date_YYYYMMDD,MS)
+
+
 def initialize_from_json_file(path_to_json):
     with open(path_to_json) as json_data:
         data = json.load(json_data)
@@ -48,13 +164,15 @@ def initialize_from_json_file(path_to_json):
     initial_memo_rule_set = data['initial_memo_rule_set']
     start_date_YYYYMMDD = data['start_date']
     end_date_YYYYMMDD = data['end_date']
+    milestone_set = data['milestone_set']
 
     A = AccountSet.AccountSet([])
     B = BudgetSet.BudgetSet([])
     M = MemoRuleSet.MemoRuleSet([])
+    MS = MilestoneSet.MilestoneSet(A,B,[],[],[])
 
     for Account__dict in initial_account_set:
-
+        Account__dict = Account__dict[0] #the dict came in a list
         if Account__dict['Account_Type'].lower() == 'checking':
             A.createAccount(Account__dict['Name'],
                             Account__dict['Balance'],
@@ -126,9 +244,9 @@ def initialize_from_json_file(path_to_json):
 
 
     for BudgetItem__dict in initial_budget_set:
-
-        sd_YYYYMMDD = datetime.datetime.strptime(BudgetItem__dict['Start_Date'],'%Y-%m-%d %H:%M:%S').strftime('%Y%m%d')
-        ed_YYYYMMDD = datetime.datetime.strptime(BudgetItem__dict['End_Date'],'%Y-%m-%d %H:%M:%S').strftime('%Y%m%d')
+        BudgetItem__dict = BudgetItem__dict[0]
+        sd_YYYYMMDD = BudgetItem__dict['Start_Date']
+        ed_YYYYMMDD = BudgetItem__dict['End_Date']
 
         B.addBudgetItem(start_date_YYYYMMDD=sd_YYYYMMDD,
                  end_date_YYYYMMDD=ed_YYYYMMDD,
@@ -140,13 +258,33 @@ def initialize_from_json_file(path_to_json):
                  partial_payment_allowed=BudgetItem__dict['Partial_Payment_Allowed'])
 
     for MemoRule__dict in initial_memo_rule_set:
-
+        #MemoRule__dict = MemoRule__dict[0]
         M.addMemoRule(memo_regex=MemoRule__dict['Memo_Regex'],
                       account_from=MemoRule__dict['Account_From'],
                       account_to=MemoRule__dict['Account_To'],
                       transaction_priority=MemoRule__dict['Transaction_Priority'])
 
-    E = ExpenseForecast(A, B, M,start_date_YYYYMMDD, end_date_YYYYMMDD,print_debug_messages=True)
+    #todo idk what the data structure is here i have to develop the test more
+    for am in milestone_set["account_milestones"]:
+        MS.addAccountMilestone(am['Milestone_Name'],am['Account_Name'],am['Min_Balance'],am['Max_Balance'])
+
+    for mm in milestone_set["memo_milestones"]:
+        MS.addMemoMilestone(mm['Milestone_Name'],mm['Memo_Regex'])
+
+    #milestone_name,account_milestones__list, memo_milestones__list
+    for cm in milestone_set["composite_milestones"]:
+
+        account_milestones__list = []
+        for acc_mil in cm['account_milestones']:
+            account_milestones__list.append(AccountMilestone.AccountMilestone(acc_mil['Milestone_Name'],acc_mil['Account_Name'],acc_mil['Min_Balance'],acc_mil['Max_Balance']))
+
+        memo_milestones__list = []
+        for memo_mil in cm['memo_milestones']:
+            memo_milestones__list.append(MemoMilestone.MemoMilestone(memo_mil['Milestone_Name'],memo_mil['Memo_Regex']))
+
+        MS.addCompositeMilestone(cm['Milestone_Name'],account_milestones__list,memo_milestones__list)
+
+    E = ExpenseForecast(A, B, M,start_date_YYYYMMDD, end_date_YYYYMMDD, MS, print_debug_messages=True)
 
     E.unique_id = data['unique_id']
     E.start_ts = data['start_ts']
@@ -205,7 +343,7 @@ class ExpenseForecast:
 
     def __init__(self, account_set, budget_set, memo_rule_set, start_date_YYYYMMDD, end_date_YYYYMMDD,
                  milestone_set,
-                 print_debug_messages=True, raise_exceptions=True): #todo add milestones
+                 print_debug_messages=True, raise_exceptions=True):
         """
         ExpenseForecast one-line description
 
@@ -225,14 +363,14 @@ class ExpenseForecast:
 
         try:
             datetime.datetime.strptime(str(start_date_YYYYMMDD), '%Y%m%d')
-            self.start_date_YYYYMMDD = start_date_YYYYMMDD
+            self.start_date_YYYYMMDD = str(start_date_YYYYMMDD)
         except:
             print('value was:' + str(start_date_YYYYMMDD) + '\n')
             raise ValueError  # Failed to cast start_date_YYYYMMDD to datetime with format %Y%m%d
 
         try:
             datetime.datetime.strptime(str(end_date_YYYYMMDD), '%Y%m%d')
-            self.end_date_YYYYMMDD = end_date_YYYYMMDD
+            self.end_date_YYYYMMDD = str(end_date_YYYYMMDD)
         except:
             raise ValueError  # Failed to cast end_date_YYYYMMDD to datetime with format %Y%m%d
 
@@ -437,14 +575,16 @@ class ExpenseForecast:
     def runForecast(self):
         self.start_ts = datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S')
 
-        C = self.initial_confirmed_df.shape[0]
-        P = self.initial_proposed_df.shape[0]
-        D = self.initial_deferred_df.shape[0]
-        S = self.initial_skipped_df.shape[0]
-        T = C + P + D + S
+        # C = self.initial_confirmed_df.shape[0]
+        # P = self.initial_proposed_df.shape[0]
+        # D = self.initial_deferred_df.shape[0]
+        # S = self.initial_skipped_df.shape[0]
+        # T = C + P + D + S
 
         #log_in_color('green', 'debug', 'ENTER runForecast() C:'+str(C)+'  P:'+str(P)+'  D:'+str(D)+'  S:'+str(S)+'  T:'+str(T), self.log_stack_depth)
         #log_in_color('green', 'debug', str(self) , self.log_stack_depth)
+
+        self.final_account_set = copy.deepcopy(self.initial_account_set)
 
         forecast_df, skipped_df, confirmed_df, deferred_df = self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date_YYYYMMDD,
                                                                                          end_date_YYYYMMDD=self.end_date_YYYYMMDD,
@@ -452,7 +592,7 @@ class ExpenseForecast:
                                                                                          proposed_df=self.initial_proposed_df,
                                                                                          deferred_df=self.initial_deferred_df,
                                                                                          skipped_df=self.initial_skipped_df,
-                                                                                         account_set=copy.deepcopy(self.initial_account_set),
+                                                                                         account_set=self.final_account_set,
                                                                                          memo_rule_set=self.initial_memo_rule_set,
                                                                                          raise_satisfice_failed_exception=False)
         self.forecast_df = forecast_df
@@ -984,7 +1124,7 @@ class ExpenseForecast:
             if not transaction_is_permitted and allow_skip_and_defer and proposed_row_df.Deferrable:
                 log_in_color('green', 'debug', 'Appending transaction to deferred_df', self.log_stack_depth)
 
-                proposed_row_df.Date = proposed_row_df.Date + datetime.timedelta(days = 1)
+                proposed_row_df.Date = datetime.datetime.strptime(proposed_row_df.Date, '%Y%m%d') + datetime.timedelta(days = 1)
 
                 # print('new_deferred_df before append (case 1)')
                 # print(new_deferred_df.to_string())
@@ -2343,21 +2483,27 @@ class ExpenseForecast:
         for a in self.account_milestone_results__list:
             if a is not None:
                 account_milestone_string = a.strftime('%Y-%m-%d')+" "
+        if account_milestone_string == "":
+            account_milestone_string = "[]"
 
         memo_milestone_string = ""
         for m in self.memo_milestone_results__list:
             if m is not None:
                 memo_milestone_string = m.strftime('%Y-%m-%d')+" "
+        if memo_milestone_string == "":
+            memo_milestone_string = "[]"
 
         composite_milestone_string = ""
         for c in self.composite_milestone_results__list:
             if c is not None:
                 composite_milestone_string = c.strftime('%Y-%m-%d')+" "
+        if composite_milestone_string == "":
+            composite_milestone_string = "[]"
 
         JSON_string += "\"milestone_set\":"+self.milestone_set.to_json()+",\n"
         JSON_string += "\"account_milestone_results\":"+account_milestone_string+",\n"
         JSON_string += "\"memo_milestone_results\":"+memo_milestone_string+",\n"
-        JSON_string += "\"composite_milestone_results\":"+composite_milestone_string+",\n"
+        JSON_string += "\"composite_milestone_results\":"+composite_milestone_string
 
         JSON_string += '}'
 
@@ -2514,7 +2660,30 @@ class ExpenseForecast:
 
         return return_df
 
+    def to_excel(self,path):
 
+        #first page, run parameters
+        account_set_df = self.initial_account_set.getAccounts()
+        budget_set_df = self.initial_budget_set.getBudgetItems()
+        memo_rule_set_df = self.initial_memo_rule_set.getMemoRules()
+        choose_one_set_df = pd.DataFrame() #todo
+        account_milestones_df = self.milestone_set.getAccountMilestonesDF()
+        memo_milestones_df = self.milestone_set.getMemoMilestonesDF()
+        composite_milestones_df = self.milestone_set.getCompositeMilestonesDF()
+        config_df = self.getConfigDF()
+
+        with pd.ExcelWriter(path, engine='openpyxl') as writer:
+            account_set_df.to_excel(writer, sheet_name='AccountSet',index=False)
+            budget_set_df.to_excel(writer, sheet_name='BudgetSet',index=False)
+            memo_rule_set_df.to_excel(writer, sheet_name='MemoRuleSet',index=False)
+            choose_one_set_df.to_excel(writer, sheet_name='ChooseOneSet',index=False)
+            account_milestones_df.to_excel(writer, sheet_name='AccountMilestones',index=False)
+            memo_milestones_df.to_excel(writer, sheet_name='MemoMilestones',index=False)
+            composite_milestones_df.to_excel(writer, sheet_name='CompositeMilestones',index=False)
+            config_df.to_excel(writer, sheet_name='config',index=False)
+
+    def getConfigDF(self):
+        return pd.DataFrame({'Start_Date_YYYYMMDD':[self.start_date_YYYYMMDD],'End_Date_YYYYMMDD':[self.end_date_YYYYMMDD]})
 
 # written in one line so that test coverage can reach 100%
 # if __name__ == "__main__": import doctest ; doctest.testmod()

@@ -307,14 +307,14 @@ class Account:
         cast_dtypes_to_string_df = pd.DataFrame({
             'Name': [self.name],
             'Balance': [self.balance],
-            'Min Balance': [self.min_balance],
-            'Max Balance': [self.max_balance],
-            'Account Type': [self.account_type],
-            'Billing Start Date': [bsd],
-            'Interest Type': [self.interest_type],
+            'Min_Balance': [self.min_balance],
+            'Max_Balance': [self.max_balance],
+            'Account_Type': [self.account_type],
+            'Billing_Start_Date': [bsd],
+            'Interest_Type': [self.interest_type],
             'APR': [self.apr],
-            'Interest Cadence': [self.interest_cadence],
-            'Minimum Payment': [self.minimum_payment]
+            'Interest_Cadence': [self.interest_cadence],
+            'Minimum_Payment': [self.minimum_payment]
         })
 
         return cast_dtypes_to_string_df.to_json(orient='records')

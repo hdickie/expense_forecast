@@ -1,9 +1,12 @@
 import unittest, pytest
+
+import AccountMilestone
 import AccountSet,BudgetSet,MemoRuleSet,ExpenseForecast
 import pandas as pd, numpy as np
 import datetime, logging
-
+import tempfile
 import BudgetItem
+import MemoMilestone
 import MemoRule
 
 pd.options.mode.chained_assignment = None #apparently this warning can throw false positives???
@@ -17,7 +20,7 @@ from generate_date_sequence import generate_date_sequence
 from log_methods import display_test_result
 
 def checking_acct_list(balance):
-    return [Account.Account('Checking',balance,0,float('Inf'),'checking',None,None,None,None,None)]
+    return [Account.Account('Checking',balance,0,100000,'checking',None,None,None,None,None)]
 
 def credit_acct_list(prev_balance,curr_balance,apr):
     A = AccountSet.AccountSet([])
@@ -770,25 +773,7 @@ class TestExpenseForecastMethods:
                 })
         ),
 
-        # (
-        #         'test_p5_and_6__expect_defer',
-        #         AccountSet.AccountSet(checking_acct_list(1000)),
-        #         BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000102', '20000102', 5, 'once', 100, 'p5 txn 1/2/00', False, False),
-        #                              BudgetItem.BudgetItem('20000102', '20000102', 6, 'once', 1000, 'p6 deferrable txn 1/2/00', True, False),
-        #                              ]),
-        #         MemoRuleSet.MemoRuleSet( [
-        #             MemoRule.MemoRule('.*','Checking',None,5),
-        #             MemoRule.MemoRule('.*', 'Checking', None, 6)
-        #         ] ),
-        #         '20000101',
-        #         '20000103',
-        #         MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
-        #         pd.DataFrame({
-        #             'Date': ['20000101', '20000102', '20000103'],
-        #             'Checking': [1000, 900, 900],
-        #             'Memo': ['', '', '']
-        #         })
-        # ),
+
 
                                 # (
                                 #         'test_p1_only_no_budget_items',
@@ -821,7 +806,77 @@ class TestExpenseForecastMethods:
                                                      milestone_set,
                                                      expected_result_df,
                                                      test_description)
+    @pytest.mark.parametrize('test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df,expected_memo_of_deferred_txn,expected_deferred_date',[
+    (
+            'test_p5_and_6__expect_defer',
+            AccountSet.AccountSet(checking_acct_list(1000)),
+            BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000102', '20000102', 5, 'once', 100, 'p5 txn 1/2/00', False, False),
+                                 BudgetItem.BudgetItem('20000102', '20000102', 6, 'once', 1000, 'p6 deferrable txn 1/2/00', True, False),
+                                 ]),
+            MemoRuleSet.MemoRuleSet( [
+                MemoRule.MemoRule('.*','Checking',None,5),
+                MemoRule.MemoRule('.*', 'Checking', None, 6)
+            ] ),
+            '20000101',
+            '20000103',
+            MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+            pd.DataFrame({
+                'Date': ['20000101', '20000102', '20000103'],
+                'Checking': [1000, 900, 900],
+                'Memo': ['', '', '']
+            }),
+            'p6 deferrable txn 1/2/00',
+            None #deferred but never executed
+    ),
 
+        (
+                'test_p5_and_6__expect_defer__daily',
+                AccountSet.AccountSet(checking_acct_list(1000)),
+                BudgetSet.BudgetSet(
+                    [BudgetItem.BudgetItem('20000102', '20000102', 5, 'once', 100, 'p5 txn 1/2/00', False, False),
+                     BudgetItem.BudgetItem('20000103', '20000103', 1, 'once', 100, 'income 1/3/00', False, False),
+                     BudgetItem.BudgetItem('20000102', '20000102', 6, 'once', 1000, 'p6 deferrable txn 1/2/00', True,
+                                           False),
+                     ]),
+                MemoRuleSet.MemoRuleSet([
+                    MemoRule.MemoRule('.*', None, 'Checking', 1),
+                    MemoRule.MemoRule('.*', 'Checking', None, 5),
+                    MemoRule.MemoRule('.*', 'Checking', None, 6)
+                ]),
+                '20000101',
+                '20000103',
+                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                pd.DataFrame({
+                    'Date': ['20000101', '20000102', '20000103'],
+                    'Checking': [1000, 900, 0],
+                    'Memo': ['', '', '']
+                }),
+                'p6 deferrable txn 1/2/00',
+                '20000103'
+        ),
+
+    ])
+    def test_deferrals(self, test_description, account_set, budget_set, memo_rule_set, start_date_YYYYMMDD,
+                           end_date_YYYYMMDD, milestone_set, expected_result_df, expected_memo_of_deferred_txn,
+                       expected_deferred_date):
+
+        expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d') for x in
+                                   expected_result_df.Date]
+
+        E = self.compute_forecast_and_actual_vs_expected(account_set,
+                                                         budget_set,
+                                                         memo_rule_set,
+                                                         start_date_YYYYMMDD,
+                                                         end_date_YYYYMMDD,
+                                                         milestone_set,
+                                                         expected_result_df,
+                                                         test_description)
+
+        if expected_deferred_date is not None:
+            assert expected_result_df.loc[ (expected_result_df.Date == expected_deferred_date) , 'Memo'] == expected_memo_of_deferred_txn
+        else:
+            assert E.deferred_df.shape[0] == 1
+            assert E.deferred_df.loc[0, 'Memo'] == expected_memo_of_deferred_txn
 
 
     def test_multiple_matching_memo_rule_regex(self):
@@ -1065,11 +1120,126 @@ class TestExpenseForecastMethods:
             print(record)
 
 
+    def test_run_from_json_at_path(self):
+
+        sd = '20000101'
+        ed = '20000103'
+
+        A = AccountSet.AccountSet(checking_acct_list(2000))
+        B = BudgetSet.BudgetSet(
+            [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'p1 daily txn 1/2/00', False, False),
+             BudgetItem.BudgetItem('20000102', '20000102', 2, 'once', 100, 'p2 daily txn 1/2/00', False, False),
+             BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', False, False)
+             ]
+        )
+        M = MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*',
+                                                   account_from='Checking',
+                                                   account_to=None,
+                                                   transaction_priority=1),
+                                 MemoRule.MemoRule(memo_regex='.*',
+                                                   account_from='Checking',
+                                                   account_to=None,
+                                                   transaction_priority=2),
+                                 MemoRule.MemoRule(memo_regex='.*',
+                                                   account_from='Checking',
+                                                   account_to=None,
+                                                   transaction_priority=3)
+                                 ])
+        MS = MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], [])
+        MS.addAccountMilestone('test account milestone','Checking',0,100)
+        MS.addMemoMilestone('test memo milestone','specific regex')
+        MS.addAccountMilestone('test account milestone', 'Checking', 0, 200)
+        MS.addMemoMilestone('test memo milestone', 'specific regex 2')
+
+        AM = AccountMilestone.AccountMilestone('test account milestone 2','Checking',0,100)
+        MM = MemoMilestone.MemoMilestone('test memo milestone 2','other specific regex')
+
+        MS.addCompositeMilestone('test composite milestone',[AM],[MM])
+        MS.addCompositeMilestone('test composite milestone 1', [AM], [MM])
+
+        E1 = ExpenseForecast.ExpenseForecast(A,B,M,sd,ed,MS)
+        E1.runForecast()
+        with open ('tmp_json_abc123_zzzzz.json','w') as f:
+            J = E1.to_json()
+            f.write(J)
+
+        E2 = ExpenseForecast.initialize_from_json_file('tmp_json_abc123_zzzzz.json')
+        E2.runForecast()
+
+        E1_str_lines = str(E1).split('\n')
+        E2_str_lines = str(E2).split('\n')
+
+        comparable_E1_str_lines = []
+        for l in E1_str_lines:
+            if 'Start timestamp' not in l and 'End timestamp' not in l and 'Forecast__' not in l:
+                comparable_E1_str_lines.append(l)
+
+        comparable_E2_str_lines = []
+        for l in E2_str_lines:
+            if 'Start timestamp' not in l and 'End timestamp' not in l and 'Forecast__' not in l:
+                comparable_E2_str_lines.append(l)
+
+        # print('------------------------------------------------------------------------------------')
+        # for l in comparable_E1_str_lines:
+        #     print(l)
+        # print('------------------------------------------------------------------------------------')
+        # for l in comparable_E2_str_lines:
+        #     print(l)
+        # print('------------------------------------------------------------------------------------')
+
+        assert comparable_E1_str_lines == comparable_E2_str_lines
+
     def test_run_from_excel_at_path(self):
 
+        sd = '20000101'
+        ed = '20000103'
 
+        A = AccountSet.AccountSet(checking_acct_list(2000))
+        B = BudgetSet.BudgetSet(
+            [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'p1 daily txn 1/2/00', False, False),
+             BudgetItem.BudgetItem('20000102', '20000102', 2, 'once', 100, 'p2 daily txn 1/2/00', False, False),
+             BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', False, False)
+             ]
+        )
+        M = MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*',
+                                                   account_from='Checking',
+                                                   account_to=None,
+                                                   transaction_priority=1),
+                                 MemoRule.MemoRule(memo_regex='.*',
+                                                   account_from='Checking',
+                                                   account_to=None,
+                                                   transaction_priority=2),
+                                 MemoRule.MemoRule(memo_regex='.*',
+                                                   account_from='Checking',
+                                                   account_to=None,
+                                                   transaction_priority=3)
+                                 ])
+        MS = MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], [])
 
-        raise NotImplementedError
+        E1 = ExpenseForecast.ExpenseForecast(A,B,M,sd,ed,MS)
+
+        fname = 'test_run_from_excel_at_path.xlsx'
+        print('Writing E1 to excel as '+str(fname))
+        E1.to_excel(fname)
+        E2 = ExpenseForecast.initialize_from_excel_file(fname)
+
+        E1.runForecast()
+        E2.runForecast()
+
+        E1_str_lines = str(E1).split('\n')
+        E2_str_lines = str(E2).split('\n')
+
+        comparable_E1_str_lines = []
+        for l in E1_str_lines:
+            if 'Start timestamp' not in l and 'End timestamp' not in l and 'Forecast__' not in l:
+                comparable_E1_str_lines.append(l)
+
+        comparable_E2_str_lines = []
+        for l in E2_str_lines:
+            if 'Start timestamp' not in l and 'End timestamp' not in l and 'Forecast__' not in l:
+                comparable_E2_str_lines.append(l)
+
+        assert comparable_E1_str_lines == comparable_E2_str_lines
 
     def test_forecast_longer_than_satisfice(self):
         #if satisfice fails on the second day of the forecast, there is weirdness

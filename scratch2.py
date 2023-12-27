@@ -264,7 +264,7 @@ if __name__ == '__main__':
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_execute_at_reduced_amount_bc_later_higher_priority_txn-account_set16-budget_set16-memo_rule_set16-20000101-20000105-milestone_set16-expected_result_df16]
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_dont_recompute_past_days_for_p2plus_transactions - NotImplementedError
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_dont_output_logs_during_execution - NotImplementedError
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_run_from_excel_at_path - NotImplementedError
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_p5_and_6__expect_defer - AttributeError: 'TestExpenseForecastMethods' object has no attribute 'start_dat...
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_p7__additional_loan_payments - AttributeError: 'TestExpenseForecastMethods' object has no attribute 'acc...
 # FAILED test_ForecastHandler.py::TestForecastHandlerMethods::test_ForecastHandler_Constructor - NotImplementedError
+# account milestone failed to evaluate, but the account name didnt exist in ExpenseForecast, so this should have been caught in the constructor for ExpenseForecast

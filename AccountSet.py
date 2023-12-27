@@ -1091,13 +1091,13 @@ class AccountSet:
         Get a JSON <string> representation of the <AccountSet> object.
 
         """
-        JSON_string = "{\n"
+        JSON_string = "[\n"
         for i in range(0, len(self.accounts)):
             JSON_string += self.accounts[i].to_json()
             if i + 1 != len(self.accounts):
                 JSON_string += ","
             JSON_string += '\n'
-        JSON_string += '}'
+        JSON_string += ']'
 
         return JSON_string
 

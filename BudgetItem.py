@@ -62,8 +62,8 @@ class BudgetItem:
 
         """
 
-        self.start_date_YYYYMMDD = start_date_YYYYMMDD
-        self.end_date_YYYYMMDD = end_date_YYYYMMDD
+        self.start_date_YYYYMMDD = str(start_date_YYYYMMDD)
+        self.end_date_YYYYMMDD = str(end_date_YYYYMMDD)
         self.priority = priority
         self.cadence = cadence
         self.amount = amount

@@ -31,7 +31,7 @@ class CompositeMilestone:
         for m in self.memo_milestones__list:
             mm_df = pd.concat( [ mm_df, pd.DataFrame({'Milestone_Name': [m.milestone_name], 'Milestone_Regex': [m.memo_regex]}) ] )
 
-        return_string += 'Composite Milestone\n'
+        return_string += 'Composite Milestone: ' + self.milestone_name +'\n'
         return_string += am_df.to_string()
         return_string += '\n'
         return_string += mm_df.to_string()
@@ -41,19 +41,23 @@ class CompositeMilestone:
 
     def to_json(self):
 
-        return_string = "{"
+        return_string = "{\"Milestone_Name\":\""+self.milestone_name+"\",\"account_milestones\":"
+
+        return_string += "["
         for i in range(0,len(self.account_milestones__list)):
             a = self.account_milestones__list[i]
-            return_string += self.account_milestones__list[0].to_json()+'\n'
+            return_string += a.to_json()+'\n'
             if i < (len(self.account_milestones__list)-1):
                 return_string += ','
 
+        return_string += "],\"memo_milestones\":["
+
         for i in range(0, len(self.memo_milestones__list)):
-            a = self.memo_milestones__list[i]
-            return_string += self.memo_milestones__list[0].to_json() + '\n'
+            m = self.memo_milestones__list[i]
+            return_string += m.to_json() + '\n'
             if i < (len(self.memo_milestones__list) - 1):
                 return_string += ','
 
-        return_string += "}"
+        return_string += "]\n}"
 
         return return_string

@@ -199,14 +199,14 @@ class BudgetSet:
         Get a JSON <string> representing the <BudgetSet> object.
 
         """
-        JSON_string = "{\n"
+        JSON_string = "[\n"
         for i in range(0, len(self.budget_items)):
             budget_item = self.budget_items[i]
             JSON_string += budget_item.to_json()
             if i+1 != len(self.budget_items):
                 JSON_string += ","
             JSON_string += '\n'
-        JSON_string += '}'
+        JSON_string += ']'
         return JSON_string
 
     # def fromJSON(self,JSON_string):

@@ -80,39 +80,83 @@ class MilestoneSet:
         json_string = "{"
 
         account_milestone_index = 0
-        account_milestones_json_string = ""
+        account_milestones_json_string = "["
         for a in self.account_milestones__list:
-            account_milestones_json_string = a.to_json()
+            account_milestones_json_string += a.to_json()
 
-            if account_milestone_index != len(self.account_milestones__list):
+            if account_milestone_index != len(self.account_milestones__list) - 1:
                 account_milestones_json_string += ","
 
             account_milestone_index += 1
+        account_milestones_json_string += "]"
 
         memo_milestone_index = 0
-        memo_milestones_json_string = ""
+        memo_milestones_json_string = "["
         for m in self.memo_milestones__list:
-            memo_milestones_json_string = m.to_json()
+            memo_milestones_json_string += m.to_json()
 
-            if memo_milestone_index != len(self.memo_milestones__list):
+            if memo_milestone_index != len(self.memo_milestones__list) - 1:
                 memo_milestones_json_string += ","
 
             memo_milestone_index += 1
+        memo_milestones_json_string += "]"
 
         composite_milestone_index = 0
-        composite_milestones_json_string = ""
+        composite_milestones_json_string = "["
         for c in self.composite_milestones__list:
-            composite_milestones_json_string = c.to_json()
+            composite_milestones_json_string += c.to_json()
 
-            if composite_milestone_index != len(self.composite_milestones__list):
+            if composite_milestone_index != len(self.composite_milestones__list) - 1:
                 composite_milestones_json_string += ","
 
             composite_milestone_index += 1
+        composite_milestones_json_string += "]"
 
-        json_string += '"' + "AccountMilestone" + '":"' + account_milestones_json_string+ '"'
-        json_string += '"' + "MemoMilestone" + '":"' + memo_milestones_json_string + '"'
-        json_string += '"' + "CompositeMilestone" + '":"' + composite_milestones_json_string + '"'
+        json_string += '"' + "account_milestones" + '":' + account_milestones_json_string + ","
+        json_string += '"' + "memo_milestones" + '":' + memo_milestones_json_string + ","
+        json_string += '"' + "composite_milestones" + '":' + composite_milestones_json_string
 
         json_string += "}"
 
         return json_string
+
+    def getAccountMilestonesDF(self):
+
+        account_milestones_df = pd.DataFrame({'Milestone_Name': [],
+                                        'Account_Name': [],
+                                        'Min_Balance': [],
+                                        'Max_Balance': []
+                                        })
+
+        for a in self.account_milestones__list:
+            account_milestones_df = pd.concat([account_milestones_df,
+                          pd.DataFrame({'Milestone_Name': [a.Milestone_Name],
+                                        'Account_Name': [a.Account_Name],
+                                        'Min_Balance': [a.Min_Balance],
+                                        'Max_Balance': [a.Max_Balance]
+                                        })])
+
+        return account_milestones_df
+
+    def getMemoMilestonesDF(self):
+        memo_milestones_df = pd.DataFrame({'Milestone_Name': [],
+                                        'Memo_Regex': []
+                                        })
+
+        for m in self.memo_milestones__list:
+            memo_milestones_df = pd.concat([memo_milestones_df,
+                          pd.DataFrame({'Milestone_Name': [m.Milestone_Name],
+                                        'Memo_Regex': [m.Account_Name]
+                                        })])
+        return memo_milestones_df
+
+    def getCompositeMilestonesDF(self):
+        composite_milestones_df = pd.DataFrame({'Milestone_Name': [],
+                                        'Milestone1': [],
+                                        'Milestone2': [],
+                                        'Milestone3': [],
+                                        'Milestone4': [],
+                                        'Milestone5': []
+                                        })
+
+        return composite_milestones_df
