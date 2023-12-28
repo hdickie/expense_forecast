@@ -84,7 +84,7 @@ def initialize_from_excel_file(path_to_excel_file):
             previous_statement_balance = row.Balance
             interest_cadence = row.Interest_Cadence
             minimum_payment = row.Minimum_Payment
-            billing_start_date = row.Billing_Start_Date
+            billing_start_date = str(int(row.Billing_Start_Date))
             interest_type = row.Interest_Type
             apr = row.APR
 
@@ -100,7 +100,7 @@ def initialize_from_excel_file(path_to_excel_file):
             principal_balance = row.Balance
             interest_cadence = row.Interest_Cadence
             minimum_payment = row.Minimum_Payment
-            billing_start_date = row.Billing_Start_Date
+            billing_start_date = str(int(row.Billing_Start_Dt))
             interest_type = row.Interest_Type
             apr = row.APR
             expect_interest_acct = True
@@ -112,7 +112,7 @@ def initialize_from_excel_file(path_to_excel_file):
             expect_curr_bal_acct = False
 
         if row.Account_Type.lower() == 'prev stmt bal' and expect_prev_bal_acct:
-            A.createAccount(row.Name.split(':')[0],current_statement_balance,row.Min_Balance,row.Max_Balance,'credit',row.Billing_Start_Dt,row.interest_type,row.APR,row.interest_cadence,row.minimum_payment,previous_statement_balance,None,None,None)
+            A.createAccount(row.Name.split(':')[0],current_statement_balance,row.Min_Balance,row.Max_Balance,'credit',str(int(row.Billing_Start_Dt)),row.Interest_Type,row.APR,row.Interest_Cadence,row.Minimum_Payment,row.Balance,None,None,None)
             expect_prev_bal_acct = False
 
         if row.Account_Type.lower() == 'interest' and expect_interest_acct:
@@ -120,7 +120,7 @@ def initialize_from_excel_file(path_to_excel_file):
             expect_interest_acct = False
 
         if row.Account_Type.lower() == 'principal balance' and expect_principal_bal_acct:
-            A.createAccount(row.Name.splt(':')[0],row.Balance + accrued_interest,row.Min_Balance,row.Max_Balance,'loan',row.Billing_Start_Date_YYYYMMDD,row.interest_type,row.APR,row.interet_Cadence,row.Minimum_Payment,None,row.Balance,accrued_interest)
+            A.createAccount(row.Name.splt(':')[0],row.Balance + accrued_interest,row.Min_Balance,row.Max_Balance,'loan',str(int(row.Billing_Start_Dt)),row.interest_type,row.APR,row.interet_Cadence,row.Minimum_Payment,None,row.Balance,accrued_interest)
             expect_principal_bal_acct = False
 
     B = BudgetSet.BudgetSet([])
@@ -219,6 +219,7 @@ def initialize_from_json_file(path_to_json):
             loan_billing_start_date = Account__dict['Billing_Start_Date']
             loan_min_payment = Account__dict['Minimum_Payment']
             loan_interest_cadence = Account__dict['Interest_Cadence']
+            loan_interest_type = Account__dict['Interest_Type']
 
         elif Account__dict['Account_Type'].lower() == 'interest':
 
@@ -230,7 +231,7 @@ def initialize_from_json_file(path_to_json):
                             max_balance=Account__dict['Max_Balance'],
                             account_type="loan",
                             billing_start_date_YYYYMMDD=loan_billing_start_date,
-                            interest_type=Account__dict['Interest_Type'],
+                            interest_type=loan_interest_type,
                             apr=loan_apr,
                             interest_cadence=loan_interest_cadence,
                             minimum_payment=loan_min_payment,
@@ -322,21 +323,26 @@ class ExpenseForecast:
 
         left_margin_width = 5
 
-        #whether or not this object has ever been written to disk, we know its file name
-        json_file_name = "Forecast__"+str(self.unique_id)+"__"+self.start_ts+".json"
-
         return_string = ""
-        return_string += """Forecast  #""" + str(self.unique_id) + """: """+ self.start_date_YYYYMMDD + """ -> """+ self.end_date_YYYYMMDD +"\n"
-        return_string += " "+(str(self.initial_account_set.getAccounts().shape[0]) + """ accounts, """ + str(self.initial_budget_set.getBudgetItems().shape[0])  + """  budget items, """ + str(self.initial_memo_rule_set.getMemoRules().shape[0])  + """ memo rules.""").rjust(left_margin_width,' ')+"\n"
-        return_string += " "+json_file_name+"\n"
 
         if not hasattr(self,'forecast_df'):
             return_string += """ This forecast has not yet been run. Use runForecast() to compute this forecast. """
+            json_file_name = "FILE NAME UNDEFINED"
         else:
             #(if skipped is empty or min skipped priority is greater than 1) AND ( max forecast date == end date ) #todo check this second clause
 
             return_string += (""" Start timestamp: """ + str(self.start_ts)).rjust(left_margin_width,' ') + "\n"
             return_string += (""" End timestamp: """ + str(self.end_ts)).rjust(left_margin_width,' ') + "\n"
+
+            #whether or not this object has ever been written to disk, we know its file name
+            json_file_name = "Forecast__"+str(self.unique_id)+"__"+self.start_ts+".json"
+
+
+        return_string += """Forecast  #""" + str(self.unique_id) + """: """+ self.start_date_YYYYMMDD + """ -> """+ self.end_date_YYYYMMDD +"\n"
+        return_string += " "+(str(self.initial_account_set.getAccounts().shape[0]) + """ accounts, """ + str(self.initial_budget_set.getBudgetItems().shape[0])  + """  budget items, """ + str(self.initial_memo_rule_set.getMemoRules().shape[0])  + """ memo rules.""").rjust(left_margin_width,' ')+"\n"
+        return_string += " "+json_file_name+"\n"
+
+
 
         return_string += "\n Budget schedule items: \n"
         return_string += self.initial_budget_set.getBudgetItems().to_string() +"\n"
@@ -422,39 +428,40 @@ class ExpenseForecast:
             error_text += str(A) + '\n'
             error_ind = True
 
-        # for each budget item memo x priority combo, there is at least 1 memo_regex x priority that matches
-        distinct_memo_priority_combinations__from_budget = budget_df[['Priority', 'Memo']].drop_duplicates()
-        distinct_memo_priority_combinations__from_memo = memo_df[['Transaction_Priority', 'Memo_Regex']]  # should be no duplicates
+        if budget_df.shape[0] > 0:
+            # for each budget item memo x priority combo, there is at least 1 memo_regex x priority that matches
+            distinct_memo_priority_combinations__from_budget = budget_df[['Priority', 'Memo']].drop_duplicates()
+            distinct_memo_priority_combinations__from_memo = memo_df[['Transaction_Priority', 'Memo_Regex']]  # should be no duplicates
 
-        #make sure no non matches
-        any_matches_found_at_all = False
-        budget_items_with_matches = [] #each budget item should get appended once
-        for budget_index, budget_row in distinct_memo_priority_combinations__from_budget.iterrows():
-            match_found = False
-            for memo_index, memo_row in distinct_memo_priority_combinations__from_memo.iterrows():
-                if budget_row.Priority == memo_row.Transaction_Priority:
-                    m = re.search(memo_row.Memo_Regex, budget_row.Memo)
-                    if m is not None:
-                        match_found = True
-                        budget_items_with_matches.append((budget_row.Memo,budget_row.Priority))
-                        any_matches_found_at_all = True
-                        continue
+            #make sure no non matches
+            any_matches_found_at_all = False
+            budget_items_with_matches = [] #each budget item should get appended once
+            for budget_index, budget_row in distinct_memo_priority_combinations__from_budget.iterrows():
+                match_found = False
+                for memo_index, memo_row in distinct_memo_priority_combinations__from_memo.iterrows():
+                    if budget_row.Priority == memo_row.Transaction_Priority:
+                        m = re.search(memo_row.Memo_Regex, budget_row.Memo)
+                        if m is not None:
+                            match_found = True
+                            budget_items_with_matches.append((budget_row.Memo,budget_row.Priority))
+                            any_matches_found_at_all = True
+                            continue
 
-            if match_found == False:
-                error_text += "No regex match found for memo:\'" + str(budget_row.Memo) + "\'\n"
+                if match_found == False:
+                    error_text += "No regex match found for memo:\'" + str(budget_row.Memo) + "\'\n"
 
-        if any_matches_found_at_all == False:
-            error_ind = True
+            if any_matches_found_at_all == False:
+                error_ind = True
 
-        if len(budget_items_with_matches) != len(set(budget_items_with_matches)):
-            error_text += "At least one budget item had multiple matches:\n"
-            for i in range(0,len(budget_items_with_matches)-1):
-                if budget_items_with_matches[i] == budget_items_with_matches[i+1]:
-                    error_text += str(budget_items_with_matches[i])+"\n"
-            error_ind = True
+            if len(budget_items_with_matches) != len(set(budget_items_with_matches)):
+                error_text += "At least one budget item had multiple matches:\n"
+                for i in range(0,len(budget_items_with_matches)-1):
+                    if budget_items_with_matches[i] == budget_items_with_matches[i+1]:
+                        error_text += str(budget_items_with_matches[i])+"\n"
+                error_ind = True
 
-        smpl_sel_vec = accounts_df.Interest_Type.apply(lambda x: x.lower() if x is not None else None) == 'simple'
-        cmpnd_sel_vec = accounts_df.Interest_Type.apply(lambda x: x.lower() if x is not None else None) == 'compound'
+        #smpl_sel_vec = accounts_df.Interest_Type.apply(lambda x: x.lower() if x is not None else None) == 'simple'
+        #cmpnd_sel_vec = accounts_df.Interest_Type.apply(lambda x: x.lower() if x is not None else None) == 'compound'
 
         if print_debug_messages:
             if error_ind:
@@ -462,6 +469,7 @@ class ExpenseForecast:
 
         if raise_exceptions:
             if error_ind:
+                log_in_color('red', 'error', error_text)
                 raise ValueError(error_text)
 
         self.initial_account_set = copy.deepcopy(account_set)
@@ -847,15 +855,20 @@ class ExpenseForecast:
         memo_set_df = memo_set.getMemoRules()
         relevant_memo_set_df = memo_set_df[memo_set_df.Transaction_Priority == priority_level]
 
-        if (priority_level == 1) and not relevant_proposed_df.empty:
-            # not sure if this sort needs to happen for both but it doesnt hurt anything
-            # It's not SUPPOSED to be necessary, but bad user input could mean this is necessary, so let's keep it
-            income_rows_sel_vec = [re.search('.*income.*', str(memo)) is not None for memo in relevant_proposed_df.Memo]
-            income_rows_df = relevant_proposed_df[income_rows_sel_vec]
-            non_income_rows_df = relevant_proposed_df[[not x for x in income_rows_sel_vec]]
-            non_income_rows_df.sort_values(by=['Amount'], inplace=True, ascending=False)
-            relevant_proposed_df = pd.concat([income_rows_df, non_income_rows_df])
-            relevant_proposed_df.reset_index(drop=True, inplace=True)
+
+        ##this block never executed during testing, so lets enforce that
+        #it makes sense that proposed_df should be empty if priority level is 1
+        if priority_level == 1:
+            assert relevant_proposed_df.empty
+        # if (priority_level == 1) and not relevant_proposed_df.empty:
+        #     # not sure if this sort needs to happen for both but it doesnt hurt anything
+        #     # It's not SUPPOSED to be necessary, but bad user input could mean this is necessary, so let's keep it
+        #     income_rows_sel_vec = [re.search('.*income.*', str(memo)) is not None for memo in relevant_proposed_df.Memo]
+        #     income_rows_df = relevant_proposed_df[income_rows_sel_vec]
+        #     non_income_rows_df = relevant_proposed_df[[not x for x in income_rows_sel_vec]]
+        #     non_income_rows_df.sort_values(by=['Amount'], inplace=True, ascending=False)
+        #     relevant_proposed_df = pd.concat([income_rows_df, non_income_rows_df])
+        #     relevant_proposed_df.reset_index(drop=True, inplace=True)
 
         if (priority_level == 1) and not relevant_confirmed_df.empty:
             income_rows_sel_vec = [re.search('.*income.*', str(memo)) is not None for memo in relevant_confirmed_df.Memo]
@@ -868,10 +881,11 @@ class ExpenseForecast:
         if priority_level == 1 and confirmed_df.shape[0] > 0 and deferred_df.shape[0] > 0:
             raise ValueError("Design assumption violated.")
 
-        if priority_level == 1 and (allow_skip_and_defer or allow_partial_payments):
-            log_in_color('white', 'debug', 'Nonsense combination of parameters. Edit input and try again.', self.log_stack_depth)
-            log_in_color('white', 'debug', '(if priority_level = 1, then allow_skip_and_defer and allow_partial_payments must both be false)', self.log_stack_depth)
-            raise ValueError("Design assumption violated. executeTransactionsForDay() :: if priority_level = 1, then allow_skip_and_defer and allow_partial_payments must both be false")
+        ### this was added to input validation for BudgetItem
+        # if priority_level == 1 and (allow_skip_and_defer or allow_partial_payments):
+        #     log_in_color('white', 'debug', 'Nonsense combination of parameters. Edit input and try again.', self.log_stack_depth)
+        #     log_in_color('white', 'debug', '(if priority_level = 1, then allow_skip_and_defer and allow_partial_payments must both be false)', self.log_stack_depth)
+        #     raise ValueError("Design assumption violated. executeTransactionsForDay() :: if priority_level = 1, then allow_skip_and_defer and allow_partial_payments must both be false")
 
         if priority_level > 1:
             # the account_set needs to be updated to reflect what the balances were for this day
@@ -910,10 +924,10 @@ class ExpenseForecast:
 
             row_sel_vec = (forecast_df.Date == date_YYYYMMDD)
 
-            if confirmed_row.Memo == 'PAY_TO_ALL_LOANS':
-                forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'] += account_row.Name + ' payment ($' + str(current_balance - relevant_balance) + ') ; '
-            else:
-                forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'] += confirmed_row.Memo + ' ($' + str(confirmed_row.Amount) + ') ; '
+            #if confirmed_row.Memo == 'PAY_TO_ALL_LOANS':
+            #    forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'] += account_row.Name + ' payment ($' + str(current_balance - relevant_balance) + ') ; '
+            #else:
+            forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'] += confirmed_row.Memo + ' ($' + str(confirmed_row.Amount) + ') ; '
 
             #update forecast to reflect new balances
             for account_index, account_row in account_set.getAccounts().iterrows():
@@ -1537,35 +1551,36 @@ class ExpenseForecast:
             #assert proposed_df.shape[0] == 0
         except Exception as e:
 
-            inital_txn_count_string = 'Before consideration: C0:' + str(C0) + '  P0:' + str(P0) + '  D0:' + str(D0) + '  S0:' + str(S0) + '  T0:' + str(T0)
-            final_txn_count_string = 'After consideration: C1:' + str(C1) + '  P1:' + str(P1) + '  D1:' + str(D1) + '  S1:' + str(S1) + '  T1:' + str(T1)
-
-            log_in_color('cyan', 'debug', str(inital_txn_count_string))
-            log_in_color('cyan', 'debug', str(final_txn_count_string))
-
-            if not confirmed_df.empty:
-                log_in_color('cyan', 'debug', 'ALL Confirmed: ', self.log_stack_depth)
-                log_in_color('cyan', 'debug', confirmed_df.to_string(), self.log_stack_depth + 1)
-
-            if not proposed_df.empty:
-                log_in_color('cyan', 'debug', 'ALL Proposed: ', self.log_stack_depth)
-                log_in_color('cyan', 'debug', proposed_df.to_string(), self.log_stack_depth + 1)
-
-            if not deferred_df.empty:
-                log_in_color('cyan', 'debug', 'ALL Deferred: ', self.log_stack_depth)
-                log_in_color('cyan', 'debug', deferred_df.to_string(), self.log_stack_depth + 1)
-
-            if not relevant_confirmed_df.empty:
-                log_in_color('cyan', 'debug', 'Relevant Confirmed: ', self.log_stack_depth)
-                log_in_color('cyan', 'debug', relevant_confirmed_df.to_string(), self.log_stack_depth + 1)
-
-            if not relevant_proposed_df.empty:
-                log_in_color('cyan', 'debug', 'Relevant Proposed: ', self.log_stack_depth)
-                log_in_color('cyan', 'debug', relevant_proposed_df.to_string(), self.log_stack_depth + 1)
-
-            if not relevant_deferred_df.empty:
-                log_in_color('cyan', 'debug', 'Relevant Deferred: ', self.log_stack_depth)
-                log_in_color('cyan', 'debug', relevant_deferred_df.to_string(), self.log_stack_depth + 1)
+            ### this was good during development but lowers coverage now that i dont need it so commenting it out
+            # inital_txn_count_string = 'Before consideration: C0:' + str(C0) + '  P0:' + str(P0) + '  D0:' + str(D0) + '  S0:' + str(S0) + '  T0:' + str(T0)
+            # final_txn_count_string = 'After consideration: C1:' + str(C1) + '  P1:' + str(P1) + '  D1:' + str(D1) + '  S1:' + str(S1) + '  T1:' + str(T1)
+            #
+            # log_in_color('cyan', 'debug', str(inital_txn_count_string))
+            # log_in_color('cyan', 'debug', str(final_txn_count_string))
+            #
+            # if not confirmed_df.empty:
+            #     log_in_color('cyan', 'debug', 'ALL Confirmed: ', self.log_stack_depth)
+            #     log_in_color('cyan', 'debug', confirmed_df.to_string(), self.log_stack_depth + 1)
+            #
+            # if not proposed_df.empty:
+            #     log_in_color('cyan', 'debug', 'ALL Proposed: ', self.log_stack_depth)
+            #     log_in_color('cyan', 'debug', proposed_df.to_string(), self.log_stack_depth + 1)
+            #
+            # if not deferred_df.empty:
+            #     log_in_color('cyan', 'debug', 'ALL Deferred: ', self.log_stack_depth)
+            #     log_in_color('cyan', 'debug', deferred_df.to_string(), self.log_stack_depth + 1)
+            #
+            # if not relevant_confirmed_df.empty:
+            #     log_in_color('cyan', 'debug', 'Relevant Confirmed: ', self.log_stack_depth)
+            #     log_in_color('cyan', 'debug', relevant_confirmed_df.to_string(), self.log_stack_depth + 1)
+            #
+            # if not relevant_proposed_df.empty:
+            #     log_in_color('cyan', 'debug', 'Relevant Proposed: ', self.log_stack_depth)
+            #     log_in_color('cyan', 'debug', relevant_proposed_df.to_string(), self.log_stack_depth + 1)
+            #
+            # if not relevant_deferred_df.empty:
+            #     log_in_color('cyan', 'debug', 'Relevant Deferred: ', self.log_stack_depth)
+            #     log_in_color('cyan', 'debug', relevant_deferred_df.to_string(), self.log_stack_depth + 1)
 
             raise e
 
@@ -1646,9 +1661,9 @@ class ExpenseForecast:
                     raise NotImplementedError  # Compound, Daily
 
                 elif account_row.Interest_Type.lower() == 'simple' and account_row.Interest_Cadence.lower() == 'yearly':
-                    # print('CASE 7 : Simple, Monthly')
+                    # print('CASE 7 : Simple, Yearly')
 
-                    raise NotImplementedError  # Simple, Monthly
+                    raise NotImplementedError  # Simple, Yearly
 
                 elif account_row.Interest_Type.lower() == 'simple' and account_row.Interest_Cadence.lower() == 'quarterly':
                     # print('CASE 8 : Simple, Quarterly')
@@ -1879,10 +1894,6 @@ class ExpenseForecast:
         #log_in_color('green', 'debug', account_set.getAccounts().to_string(), self.log_stack_depth)
         log_in_color('green', 'debug', 'EXIT sync_account_set_w_forecast_day()', self.log_stack_depth)
         return account_set
-
-    def setForecastRowBalances(self,date_YYYYMMDD,new_row):
-        pass
-
 
     #todo add deferral cadence parameter
     def computeOptimalForecast(self, start_date_YYYYMMDD, end_date_YYYYMMDD, confirmed_df, proposed_df, deferred_df, skipped_df, account_set, memo_rule_set, raise_satisfice_failed_exception=True):
@@ -2119,7 +2130,20 @@ class ExpenseForecast:
                             continue
                         #print(str(i))
                         #print(str(forecast_df.loc[forecast_df.Date == d, i]) + ' -> ' + str(forecast_row_w_new_interest_values.iloc[0,i]))
-                        forecast_df.iloc[forecast_df.Date == d, i] = forecast_row_w_new_interest_values.iloc[0,i]
+
+                        #if this payment is on the same day as a minimum payment, then we want to take that into account
+                        #therefore, if todays value is lower than yesterdays value, keep it, else keep the new higher value
+                        #this would not work if the incremental interest was greater than the minimum payment !!! #todo address this
+
+                        # print('forecast_df.loc[forecast_df.Date == d, forecast_row_w_new_interest_values.columns[i]].iat[0]:')
+                        # print(forecast_df.loc[forecast_df.Date == d, forecast_row_w_new_interest_values.columns[i]].iat[0] )
+                        # print('forecast_row_w_new_interest_values.iloc[0,i]')
+                        # print(forecast_row_w_new_interest_values.iloc[0,i])
+
+                        if forecast_df.loc[forecast_df.Date == d, forecast_row_w_new_interest_values.columns[i]].iat[0] < forecast_row_w_new_interest_values.iloc[0,i]:
+                            pass
+                        else:
+                            forecast_df.loc[forecast_df.Date == d, forecast_row_w_new_interest_values.columns[i]] = forecast_row_w_new_interest_values.iloc[0,i]
                     #print('forecast_df')
                     #print(forecast_df.to_string())
 
@@ -2515,21 +2539,21 @@ class ExpenseForecast:
         account_milestone_string = ""
         for a in self.account_milestone_results__list:
             if a is not None:
-                account_milestone_string = a.strftime('%Y-%m-%d')+" "
+                account_milestone_string = a+" "
         if account_milestone_string == "":
             account_milestone_string = "[]"
 
         memo_milestone_string = ""
         for m in self.memo_milestone_results__list:
             if m is not None:
-                memo_milestone_string = m.strftime('%Y-%m-%d')+" "
+                memo_milestone_string = m+" "
         if memo_milestone_string == "":
             memo_milestone_string = "[]"
 
         composite_milestone_string = ""
         for c in self.composite_milestone_results__list:
             if c is not None:
-                composite_milestone_string = c.strftime('%Y-%m-%d')+" "
+                composite_milestone_string = c+" "
         if composite_milestone_string == "":
             composite_milestone_string = "[]"
 
@@ -2542,9 +2566,6 @@ class ExpenseForecast:
 
         return JSON_string
 
-
-    def getInputFromExcel(self):
-        raise NotImplementedError
 
     def to_html(self):
         return self.forecast_df.to_html()
@@ -2714,6 +2735,18 @@ class ExpenseForecast:
             memo_milestones_df.to_excel(writer, sheet_name='MemoMilestones',index=False)
             composite_milestones_df.to_excel(writer, sheet_name='CompositeMilestones',index=False)
             config_df.to_excel(writer, sheet_name='config',index=False)
+
+            #todo
+            #run info
+            #unique_id, start_ts, end_ts
+            #forecast_df
+            #skipped_df
+            #confirmed_df
+            #deferred_df
+            #account milestone results
+            #memo milestone results
+            #composite milestone results
+
 
     def getConfigDF(self):
         return pd.DataFrame({'Start_Date_YYYYMMDD':[self.start_date_YYYYMMDD],'End_Date_YYYYMMDD':[self.end_date_YYYYMMDD]})

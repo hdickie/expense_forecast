@@ -117,6 +117,26 @@ class TestBudgetItemMethods:
           False,
           ValueError),  # priority not 1 for income
 
+         ('20000101',
+          '20000101',
+          1,
+          'daily',
+          10,
+          'test',
+          True,
+          False,
+          ValueError),  # deferrable must be false for p1
+
+         ('20000101',
+          '20000101',
+          1,
+          'daily',
+          10,
+          'test',
+          False,
+          True,
+          ValueError),  # partial_payment_allowed must be false for p1
+
          ])
     def test_BudgetItem_Constructor__invalid_inputs(self,start_date_YYYYMMDD,
                                             end_date_YYYYMMDD,

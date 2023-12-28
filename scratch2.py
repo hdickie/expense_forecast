@@ -139,7 +139,7 @@ if __name__ == '__main__':
     milestone_set = MilestoneSet.MilestoneSet(account_set, budget_set, [], [], [])
 
     E = ExpenseForecast.ExpenseForecast(account_set, budget_set, memo_rule_set, start_date_YYYYMMDD, end_date_YYYYMMDD,
-                                        milestone_set)
+                                        milestone_set,True)
 
     E.runForecast()
 
@@ -237,10 +237,7 @@ if __name__ == '__main__':
     #
     # F.calculateMultipleChooseOne(account_set, CoreBudgetSet , memo_rule_set, '20000101', '20000103', list_of_lists_of_budget_sets)
 #
-# FAILED test_AccountSet.py::TestAccountSet::test_allocate_additional_loan_payments__valid_inputs[account_set8-1500-expected_payments8] - AssertionError: assert [['test ch...
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_dont_recompute_past_days_for_p2plus_transactions - NotImplementedError
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_run_from_json_at_path - json.decoder.JSONDecodeError: Expecting ',' delimiter: line 31 column 1 (char 570)
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_p7__additional_loan_payments - AttributeError: 'TestExpenseForecastMethods' object has no attribute 'acc...
 # FAILED test_ForecastHandler.py::TestForecastHandlerMethods::test_ForecastHandler_Constructor - NotImplementedError
 
 # account milestone failed to evaluate, but the account name didnt exist in ExpenseForecast, so this should have been caught in the constructor for ExpenseForecast

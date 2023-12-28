@@ -151,12 +151,22 @@ class MilestoneSet:
         return memo_milestones_df
 
     def getCompositeMilestonesDF(self):
-        composite_milestones_df = pd.DataFrame({'Milestone_Name': [],
-                                        'Milestone1': [],
-                                        'Milestone2': [],
-                                        'Milestone3': [],
-                                        'Milestone4': [],
-                                        'Milestone5': []
-                                        })
+        composite_milestones__account_df = pd.DataFrame({'Composite_Milestone_Name': [],
+                                                'Account_Name': [],
+                                                'Min_Balance': [],
+                                                'Max_Balance': []
+                                                })
 
-        return composite_milestones_df
+        composite_milestones__memo_df = pd.DataFrame({'Composite_Milestone_Name': [],
+                                                         'Milestone_Name': [],
+                                                         'Memo_Regex': []
+                                                         })
+
+        for cm in self.composite_milestones__list:
+            for a in cm.account_milestones__list:
+                pass
+
+            for m in cm.memo_milestones__list:
+                pass
+
+        return [composite_milestones__account_df, composite_milestones__memo_df]

@@ -143,6 +143,14 @@ class BudgetItem:
             exception_value_error_message_string += 'Value was:'+str(self.priority)
             exception_value_error_ind = True
 
+        if self.priority == 1 and self.deferrable:
+            exception_value_error_message_string += 'If priority = 1, the Deferrable must be False.\n'
+            exception_value_error_ind = True
+
+        if self.priority == 1 and self.partial_payment_allowed:
+            exception_value_error_message_string += 'If priority = 1, the Partial_Payment_Allowed must be False.\n'
+            exception_value_error_ind = True
+
         if print_debug_messages:
             if exception_type_error_ind: print(exception_type_error_message_string)
 

@@ -771,55 +771,6 @@ class TestAccountSet:
     #                                        accrued_interest=None
     #                                        )
 
-
-    #Expected Values for loan payment allocation
-    #       I      P       R
-    # A     0      1000    0.1
-    # B     0      1500    0.01
-    # C     0      2500    0.05
-    # ---
-    # 100 => 100 C
-    # 500 => 500 C
-    # 1500 => 1332 C, 333 A
-    # 4900 => 2484.62 C, 992.31 A, 1423.08 B
-
-    #       I      P       R
-    # A     100    1000    0.1
-    # B     100    1500    0.01
-    # C     100    2500    0.05
-    # ---
-    # 100 => 100 C
-    # 500 => 500 C
-    # 1500 => 1266.67 C, 433.33 A
-    # 4900 => 2538.46 C, 1292.31 B, 1069.23 A
-
-    @pytest.mark.parametrize(
-        "account_set,amount,expected_payments",
-        [#(one_loan__p_1000__i_100__apr_01(),0,[]), #make a payment of zero should return an empty list
-         (one_loan__p_1000__i_100__apr_01(),100,[['test checking', 'test loan A', 100.0]]), #simple first case
-         (two_loans__p_1000__i_100__apr_01___p_1500__i_100__apr_001(),100,[['test checking', 'test loan A', 100.0]]),
-         (three_loans__p_1000__i_000__apr_01___p_1500__i_000__apr_001___p_2500__i_000__apr_005(), 100,[['test checking', 'test loan C', 100.0]]),
-         (three_loans__p_1000__i_000__apr_01___p_1500__i_000__apr_001___p_2500__i_000__apr_005(), 500,[['test checking', 'test loan C', 500.0]]),
-         (three_loans__p_1000__i_000__apr_01___p_1500__i_000__apr_001___p_2500__i_000__apr_005(), 1500,[['test checking', 'test loan C', 1166.67],['test checking', 'test loan A', 333.33]]),
-         (three_loans__p_1000__i_000__apr_01___p_1500__i_000__apr_001___p_2500__i_000__apr_005(), 4900, [['test checking', 'test loan C', 2484.62],['test checking', 'test loan A', 992.31],['test checking', 'test loan B', 1423.08]]),
-
-         (three_loans__p_1000__i_100__apr_01___p_1500__i_100__apr_001___p_2500__i_100__apr_005(), 100,[['test checking', 'test loan C', 100.0]]),
-         (three_loans__p_1000__i_100__apr_01___p_1500__i_100__apr_001___p_2500__i_100__apr_005(), 500,[['test checking', 'test loan C', 500.0]]),
-
-         #this is a valid test case that the current algo fails. the implemented algorithm as of 12/18 is not perfect, but getting it right would require a lot more work and a few more test cases.
-         (three_loans__p_1000__i_100__apr_01___p_1500__i_100__apr_001___p_2500__i_100__apr_005(),1500,[['test checking', 'test loan C', 1266.67],['test checking', 'test loan A', 433.33]]),
-         (three_loans__p_1000__i_100__apr_01___p_1500__i_100__apr_001___p_2500__i_100__apr_005(),4900,[['test checking', 'test loan C', 2541.46],['test checking', 'test loan A', 1070.73],['test checking', 'test loan B', 1287.80]]),
-
-         (three_loans__p_1000__i_100__apr_01___p_1500__i_100__apr_001___p_2500__i_100__apr_005(), 5300,
-         [['test checking', 'test loan C', 2600], ['test checking', 'test loan A', 1100],
-         ['test checking', 'test loan B', 1600]]), #overpay
-        ])
-    def test_allocate_additional_loan_payments__valid_inputs(self,account_set,amount,expected_payments):
-        #print(account_set.allocate_additional_loan_payments(amount))
-        assert account_set.allocate_additional_loan_payments(amount) == expected_payments
-        #account_set.executeTransaction('test checking','ALL_LOANS',amount)
-
-
     # def test_allocate_additional_loan_payments__invalid_inputs(self,account_set,amount,expected_exception):
     #     pass
 
@@ -1280,3 +1231,12 @@ class TestAccountSet:
             # print('A4.getAccounts().to_string():')
             # print(A4.getAccounts().to_string())
             assert TA.getAccounts().to_string() == A4.getAccounts().to_string()
+
+#tests to implement
+#from excel, curr stmt bal is second row
+#from excel, principal balance is second row
+#pay loan, amount was greater than available balance (and less than loan cost)
+
+
+#functionality?
+#loan allocation being broken out in memo

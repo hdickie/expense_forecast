@@ -223,7 +223,7 @@ class Account:
                     d = datetime.datetime.strptime(str(billing_start_date_YYYYMMDD), '%Y-%m-%d')
                     self.billing_start_date_YYYYMMDD = d.strftime('%Y%m%d')
             except Exception as e:
-                exception_type_error_message_string += str(e)
+                exception_type_error_message_string += str(e) + '\n'
                 exception_type_error_message_string += ' failed cast Account.billing_start_date_YYYYMMDD to datetime\n'
                 exception_type_error_message_string += 'Account name was: ' + str(name) + '\n'
                 exception_type_error_message_string += 'Value was:' + str(billing_start_date_YYYYMMDD) + "\n"
@@ -287,10 +287,10 @@ class Account:
 
         if raise_exceptions:
             if exception_type_error_ind:
-                raise TypeError
+                raise TypeError(exception_type_error_message_string)
 
             if exception_value_error_ind:
-                raise ValueError
+                raise ValueError(exception_value_error_message_string)
 
     def to_json(self):
         """
