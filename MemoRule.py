@@ -139,6 +139,9 @@ class MemoRule:
         """
         Get a JSON <string> representing the <MemoRule> object.
         """
+
+        #todo in other places I used pd.DataFrame().to_json(orient="records")
+
         JSON_string = "{\n"
         JSON_string += "\"Memo_Regex\":" + "\"" + str(self.memo_regex) + "\",\n"
         JSON_string += "\"Account_From\":" + "\"" + str(self.account_from) + "\",\n"

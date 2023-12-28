@@ -304,20 +304,34 @@ class Account:
             except: #if datetime, then format, else its a string so do nothing
                 pass
 
-        cast_dtypes_to_string_df = pd.DataFrame({
-            'Name': [self.name],
-            'Balance': [self.balance],
-            'Min_Balance': [self.min_balance],
-            'Max_Balance': [self.max_balance],
-            'Account_Type': [self.account_type],
-            'Billing_Start_Date': [bsd],
-            'Interest_Type': [self.interest_type],
-            'APR': [self.apr],
-            'Interest_Cadence': [self.interest_cadence],
-            'Minimum_Payment': [self.minimum_payment]
-        })
+        JSON_string = "{\n"
+        JSON_string += "\"Name\":" + "\"" + str(self.name) + "\",\n"
+        JSON_string += "\"Balance\":" + "\"" + str(self.balance) + "\",\n"
+        JSON_string += "\"Min_Balance\":" + "\"" + str(self.min_balance) + "\",\n"
+        JSON_string += "\"Max_Balance\":" + "\"" + str(self.max_balance) + "\",\n"
+        JSON_string += "\"Account_Type\":" + "\"" + str(self.account_type) + "\",\n"
+        JSON_string += "\"Billing_Start_Date\":" + "\"" + str(bsd) + "\",\n"
+        JSON_string += "\"Interest_Type\":" + "\"" + str(self.interest_type) + "\",\n"
+        JSON_string += "\"APR\":" + "\"" + str(self.apr) + "\",\n"
+        JSON_string += "\"Interest_Cadence\":" + "\"" + str(self.interest_cadence) + "\",\n"
+        JSON_string += "\"Minimum_Payment\":" + "\"" + str(self.minimum_payment) + "\"\n"
+        JSON_string += "}"
+        return JSON_string
 
-        return cast_dtypes_to_string_df.to_json(orient='records')
+        # cast_dtypes_to_string_df = pd.DataFrame({
+        #     'Name': [self.name],
+        #     'Balance': [self.balance],
+        #     'Min_Balance': [self.min_balance],
+        #     'Max_Balance': [self.max_balance],
+        #     'Account_Type': [self.account_type],
+        #     'Billing_Start_Date': [bsd],
+        #     'Interest_Type': [self.interest_type],
+        #     'APR': [self.apr],
+        #     'Interest_Cadence': [self.interest_cadence],
+        #     'Minimum_Payment': [self.minimum_payment]
+        # })
+        #
+        # return cast_dtypes_to_string_df.to_json(orient='records')
 
 
 

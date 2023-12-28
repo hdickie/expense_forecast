@@ -120,42 +120,21 @@ if __name__ == '__main__':
     memo_rule_set = MemoRuleSet.MemoRuleSet([])
 
     account_set.createAccount(name='Checking',
-                              balance=1000,
+                              balance=5000,
                               min_balance=0,
                               max_balance=float('Inf'),
                               account_type="checking")
 
-    account_set.createAccount(name='Credit',
-                              balance=0,
-                              min_balance=0,
-                              max_balance=20000,
-                              account_type="credit",
-                              billing_start_date_YYYYMMDD='20000102',
-                              interest_type='Compound',
-                              apr=0.05,
-                              interest_cadence='Monthly',
-                              minimum_payment=40,
-                              previous_statement_balance=0,
-                              principal_balance=None,
-                              accrued_interest=None
-                              )
+    account_set.createAccount('Loan A',1100,0,9999,'loan','20000102','simple',0.1,'daily',50,None,1000,100)
+    account_set.createAccount('Loan B', 1100, 0, 9999, 'loan', '20000102', 'simple', 0.05, 'daily', 50, None, 1000, 100)
+    account_set.createAccount('Loan C', 1100, 0, 9999, 'loan', '20000102', 'simple', 0.01, 'daily', 50, None, 1000, 100)
 
-    budget_set.addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
-                             cadence='daily', amount=0, memo='dummy memo',
+    budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=7,
+                             cadence='once', amount=1900, memo='additional loan payment',
                              deferrable=False,
-                             partial_payment_allowed=False)
+                             partial_payment_allowed=True)
 
-    memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1)
-
-    expected_result_df = pd.DataFrame({
-        'Date': ['20000101', '20000102', '20000103'],
-        'Checking': [1000, 0, 0],
-        'Credit: Curr Stmt Bal': [0, 0, 0],
-        'Credit: Prev Stmt Bal': [0, 0, 0],
-        'Memo': ['', '', '']
-    })
-    expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d') for x in
-                               expected_result_df.Date]
+    memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to='ALL_LOANS', transaction_priority=7)
 
     milestone_set = MilestoneSet.MilestoneSet(account_set, budget_set, [], [], [])
 
@@ -163,6 +142,8 @@ if __name__ == '__main__':
                                         milestone_set)
 
     E.runForecast()
+
+    print(E.forecast_df.to_string())
 
     # A4 = AccountSet.AccountSet(checking() + cc(499, 501, 0.05, '20000102') + compound_loan_A_no_interest())
     # A4.to_excel('/Users/hume/Github/expense_forecast/A1.xlsx')
@@ -255,16 +236,11 @@ if __name__ == '__main__':
     # memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=1)
     #
     # F.calculateMultipleChooseOne(account_set, CoreBudgetSet , memo_rule_set, '20000101', '20000103', list_of_lists_of_budget_sets)
-
 #
 # FAILED test_AccountSet.py::TestAccountSet::test_allocate_additional_loan_payments__valid_inputs[account_set8-1500-expected_payments8] - AssertionError: assert [['test ch...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p2_and_3__expect_defer-account_set6-budget_set6-memo_rule_set6-20000101-20000103-milestone_set6-expected_result_df6]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p2_and_3__p3_item_deferred_bc_p2-account_set8-budget_set8-memo_rule_set8-20000101-20000103-milestone_set8-expected_result_df8]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_execute_defer_after_receiving_income_2_days_later-account_set15-budget_set15-memo_rule_set15-20000101-20000105-milestone_set15-expected_result_df15]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_execute_at_reduced_amount_bc_later_higher_priority_txn-account_set16-budget_set16-memo_rule_set16-20000101-20000105-milestone_set16-expected_result_df16]
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_dont_recompute_past_days_for_p2plus_transactions - NotImplementedError
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_dont_output_logs_during_execution - NotImplementedError
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_p5_and_6__expect_defer - AttributeError: 'TestExpenseForecastMethods' object has no attribute 'start_dat...
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_run_from_json_at_path - json.decoder.JSONDecodeError: Expecting ',' delimiter: line 31 column 1 (char 570)
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_p7__additional_loan_payments - AttributeError: 'TestExpenseForecastMethods' object has no attribute 'acc...
 # FAILED test_ForecastHandler.py::TestForecastHandlerMethods::test_ForecastHandler_Constructor - NotImplementedError
+
 # account milestone failed to evaluate, but the account name didnt exist in ExpenseForecast, so this should have been caught in the constructor for ExpenseForecast

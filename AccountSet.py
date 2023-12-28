@@ -566,6 +566,7 @@ class AccountSet:
                     boundary_error_ind = True
 
                 self.accounts[account_from_index].balance -= abs(Amount)
+                self.accounts[account_from_index].balance = round(self.accounts[account_from_index].balance,2)
             elif AF_Account_Type == 'credit' or AF_Account_Type == 'loan':
 
                 balance_after_proposed_transaction = self.getBalances()[self.accounts[account_from_index].name.split(':')[0]] - abs(Amount)
@@ -585,6 +586,7 @@ class AccountSet:
                     boundary_error_ind = True
 
                 self.accounts[account_from_index].balance += abs(Amount)
+                self.accounts[account_from_index].balance = round(self.accounts[account_from_index].balance,2)
             else: raise NotImplementedError("account type was: "+str(AF_Account_Type)) #from types other than checking or credit not yet implemented
 
             if not boundary_error_ind:
@@ -596,6 +598,7 @@ class AccountSet:
             if AT_Account_Type == 'checking':
 
                 self.accounts[account_to_index].balance += abs(Amount)
+                self.accounts[account_to_index].balance = round(self.accounts[account_to_index].balance,2)
                 log_in_color('magenta', 'debug', 'Paid ' + str(Amount) + ' to ' + Account_To, 0)
             elif AT_Account_Type == 'credit' or AT_Account_Type == 'loan':
 
@@ -621,17 +624,21 @@ class AccountSet:
 
                 #if the amount we are playing on credit card is more than the previous statement balance
                 if abs(Amount) >= self.accounts[account_to_index+1].balance:
-                    remaining_to_pay = abs(Amount) - self.accounts[account_to_index + 1].balance
+                    remaining_to_pay = round(abs(Amount) - self.accounts[account_to_index + 1].balance,2)
                     log_in_color('magenta', 'debug','Paid ' + str(self.accounts[account_to_index + 1].balance) + ' to ' + str(self.accounts[account_to_index + 1].name), 0)
                     self.accounts[account_to_index + 1].balance = 0
 
                     #this has the potential to overpay, but we consider that upstreams problem
                     self.accounts[account_to_index].balance -= remaining_to_pay
+                    self.accounts[account_to_index].balance = round(self.accounts[account_to_index].balance,2)
                     log_in_color('magenta', 'debug', 'Paid ' + str(remaining_to_pay) + ' to ' + self.accounts[account_to_index].name, 0)
                 else: #pay down the previous statement balance
                     log_in_color('magenta', 'debug', 'Paid ' + str(Amount) + ' to ' + str(self.accounts[account_to_index + 1].name), 0)
                     self.accounts[account_to_index + 1].balance -= Amount
+                    self.accounts[account_to_index + 1].balance = round(self.accounts[account_to_index + 1].balance,2)
             else: raise NotImplementedError("account type was: "+str(AF_Account_Type)) #from types other than checking or credit not yet implemented
+
+
 
         after_txn_total_available_funds = 0
         available_funds = self.getBalances()

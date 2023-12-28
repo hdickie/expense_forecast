@@ -1112,12 +1112,12 @@ class TestAccountSet:
 
         test_account_set_JSON = test_to_json_account_set.to_json()
 
-        test_expectation = "{\n" + test_to_json_account_set.accounts[0].to_json() + ",\n"
+        test_expectation = "[\n" + test_to_json_account_set.accounts[0].to_json() + ",\n"
         test_expectation += test_to_json_account_set.accounts[1].to_json() + ",\n"
         test_expectation += test_to_json_account_set.accounts[2].to_json() + ",\n"
         test_expectation += test_to_json_account_set.accounts[3].to_json() + ",\n"
         test_expectation += test_to_json_account_set.accounts[4].to_json()
-        test_expectation += "\n}"
+        test_expectation += "\n]"
 
         assert test_account_set_JSON == test_expectation
 

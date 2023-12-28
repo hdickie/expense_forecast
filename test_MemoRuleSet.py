@@ -79,7 +79,7 @@ class TestMemoRuleSetMethods:
                                                                         transaction_priority=2)
                                                       ])
         test_memo_rule_set_JSON = test_memo_rule_set.to_json()
-        test_expectation = """{\n{\n"Memo_Regex":".*",\n"Account_From":"noodle",\n"Account_To":"",\n"Transaction_Priority":"1"\n},\n{\n"Memo_Regex":".*",\n"Account_From":"poodle",\n"Account_To":"",\n"Transaction_Priority":"2"\n}\n}"""
+        test_expectation = """[\n{\n"Memo_Regex":".*",\n"Account_From":"noodle",\n"Account_To":"",\n"Transaction_Priority":"1"\n},\n{\n"Memo_Regex":".*",\n"Account_From":"poodle",\n"Account_To":"",\n"Transaction_Priority":"2"\n}\n]"""
 
         assert test_memo_rule_set_JSON == test_expectation
 

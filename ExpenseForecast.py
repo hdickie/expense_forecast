@@ -172,7 +172,9 @@ def initialize_from_json_file(path_to_json):
     MS = MilestoneSet.MilestoneSet(A,B,[],[],[])
 
     for Account__dict in initial_account_set:
-        Account__dict = Account__dict[0] #the dict came in a list
+        #print('Account__dict:')
+        #print(Account__dict)
+        #Account__dict = Account__dict[0] #the dict came in a list
         if Account__dict['Account_Type'].lower() == 'checking':
             A.createAccount(Account__dict['Name'],
                             Account__dict['Balance'],
@@ -730,7 +732,7 @@ class ExpenseForecast:
 
         bal_string = '  '
         for account_index, account_row in account_set.getAccounts().iterrows():
-            bal_string += '$' + str(account_row.Balance) + ' '
+            bal_string += '$' + str(round(account_row.Balance,2)) + ' '
 
         row_count_string = ' C0:' + str(C0) + '  P0:' + str(P0) + '  D0:' + str(D0) + '  S0:' + str(S0) + '  T0:' + str(T0)
 
@@ -807,7 +809,7 @@ class ExpenseForecast:
 
             bal_string = '  '
             for account_index, account_row in account_set.getAccounts().iterrows():
-                bal_string += '$' + str(account_row.Balance) + ' '
+                bal_string += '$' + str(round(account_row.Balance,2)) + ' '
 
             log_in_color('green', 'debug', 'END executeTransactionsForDay(priority_level=' + str(priority_level) + ',date=' + str(date_YYYYMMDD) + ') ' + str(row_count_string) + str(bal_string),self.log_stack_depth)
             self.log_stack_depth -= 1
@@ -1124,7 +1126,7 @@ class ExpenseForecast:
             if not transaction_is_permitted and allow_skip_and_defer and proposed_row_df.Deferrable:
                 log_in_color('green', 'debug', 'Appending transaction to deferred_df', self.log_stack_depth)
 
-                proposed_row_df.Date = datetime.datetime.strptime(proposed_row_df.Date, '%Y%m%d') + datetime.timedelta(days = 1)
+                proposed_row_df.Date = (datetime.datetime.strptime(proposed_row_df.Date, '%Y%m%d') + datetime.timedelta(days = 1)).strftime('%Y%m%d')
 
                 # print('new_deferred_df before append (case 1)')
                 # print(new_deferred_df.to_string())
@@ -1241,7 +1243,7 @@ class ExpenseForecast:
             # log_in_color('cyan','debug','Processing proposed or deferred txn:',self.log_stack_depth)
             # log_in_color('cyan','debug',pd.DataFrame(budget_item_row).T.to_string(),self.log_stack_depth)
 
-            if datetime.datetime.strptime(deferred_row_df.Date,'%Y%m%d') > datetime.datetime.strptime(self.end_date,'%Y%m%d'):
+            if datetime.datetime.strptime(deferred_row_df.Date,'%Y%m%d') > datetime.datetime.strptime(self.end_date_YYYYMMDD,'%Y%m%d'):
                 continue
 
             relevant_memo_rule_set = memo_set.findMatchingMemoRule(deferred_row_df.Memo,deferred_row_df.Priority)
@@ -1392,14 +1394,17 @@ class ExpenseForecast:
                 # print('Failed to execute deferrable transaction while processing deferred txns. Incrementing date.')
                 # print('Deferred_df before increment:')
                 # print(pd.DataFrame(deferred_row_df).T.to_string())
-                single_proposed_deferred_transaction_df.Date = single_proposed_deferred_transaction_df.Date + datetime.timedelta(days=14)
+
+                # todo the number being 1 here means deferrable txns DRAMATICALLY slows down performance. 14 is recommended.
+                # If all other attempts to optimize fail, then adjust this. I think there are faster ways to get this same result.
+                single_proposed_deferred_transaction_df.Date = (datetime.datetime.strptime(single_proposed_deferred_transaction_df.Date.iat[0],'%Y%m%d') + datetime.timedelta(days=1)).strftime('%Y%m%d')
                 remaining_deferred_df = deferred_df[~deferred_df.index.isin(single_proposed_deferred_transaction_df.index)]
 
                 # print('deferred_df before append (case 3)')
                 # print(deferred_df.to_string())
                 deferred_df = pd.concat([remaining_deferred_df, single_proposed_deferred_transaction_df])
-                # print('deferred_df after append')
-                # print(deferred_df.to_string())
+                #log_in_color('green', 'debug', 'deferred_df after append')
+                #log_in_color('green', 'debug', deferred_df.to_string())
 
                 # print('Deferred_df after increment:')
                 # print(deferred_df.to_string())
@@ -1442,17 +1447,20 @@ class ExpenseForecast:
 
                 # log_in_color('white', 'debug', 'available_balances after recalculate future: ' + str(account_set.getBalances()), self.log_stack_depth)
 
-                forecast_rows_to_keep_df = forecast_df[forecast_df.Date < datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d')]
+                row_sel_vec = [ datetime.datetime.strptime(d,'%Y%m%d') < datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d') for d in forecast_df.Date ]
+                forecast_rows_to_keep_df = forecast_df.loc[ row_sel_vec, : ]
+                #forecast_rows_to_keep_df = forecast_df[forecast_df.Date < datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d')]
                 # print('forecast_with_accurately_updated_future_rows:')
                 # print(forecast_with_accurately_updated_future_rows)
-                new_forecast_rows_df = forecast_with_accurately_updated_future_rows[forecast_with_accurately_updated_future_rows.Date >= datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d')]
+                row_sel_vec = [ datetime.datetime.strptime(d,'%Y%m%d') >= datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d') for d in forecast_with_accurately_updated_future_rows.Date ]
+                new_forecast_rows_df = forecast_with_accurately_updated_future_rows.loc[row_sel_vec,:]
 
                 forecast_df = pd.concat([forecast_rows_to_keep_df, new_forecast_rows_df])
                 assert forecast_df.shape[0] == forecast_df.drop_duplicates().shape[0]
                 forecast_df.reset_index(drop=True, inplace=True)
 
-                row_sel_vec = [x for x in (forecast_df.Date == datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d'))]
-                col_sel_vec = (forecast_df.columns == "Memo")
+                #row_sel_vec = [x for x in (forecast_df.Date == datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d'))]
+                #col_sel_vec = (forecast_df.columns == "Memo")
 
                 # print('Appending memo (CASE 2): ' + str(proposed_row_df.Memo))
                 # if amount_ammended:
@@ -1469,7 +1477,7 @@ class ExpenseForecast:
                         break
                     relevant_balance = account_set.getAccounts().iloc[account_index, 1]
 
-                    row_sel_vec = (forecast_df.Date == datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d'))
+                    row_sel_vec = (forecast_df.Date == date_YYYYMMDD)
                     col_sel_vec = (forecast_df.columns == account_row.Name)
                     # log_in_color('cyan', 'debug', 'updating forecast_row ')
                     # log_in_color('cyan', 'debug', 'BEFORE')
@@ -1507,7 +1515,7 @@ class ExpenseForecast:
 
         bal_string = '  '
         for account_index, account_row in account_set.getAccounts().iterrows():
-            bal_string += '$' + str(account_row.Balance) + ' '
+            bal_string += '$' + str(round(account_row.Balance,2)) + ' '
 
         C1 = confirmed_df.shape[0]
         P1 = proposed_df.shape[0]
@@ -1569,11 +1577,11 @@ class ExpenseForecast:
         self.log_stack_depth += 1
         #logger.debug('self.log_stack_depth += 1')
 
-        bal_string = '  '
+        bal_string = ' '
         for account_index, account_row in account_set.getAccounts().iterrows():
-            bal_string += '$' + str(account_row.Balance) + ' '
+            bal_string += '$' + str(round(account_row.Balance,2)) + ' '
 
-        #log_in_color('green', 'debug', 'BEGIN calculateInterestAccrualsForDay() ' + bal_string, self.log_stack_depth)
+        log_in_color('blue', 'debug', 'BEGIN calculateInterestAccrualsForDay() '+ current_forecast_row_df.Date.iat[0] + bal_string, self.log_stack_depth)
         # This method will transfer balances from current statement to previous statement for savings and credit accounts
 
         current_date = current_forecast_row_df.Date.iloc[0]
@@ -1608,9 +1616,10 @@ class ExpenseForecast:
 
                     accrued_interest = account_row.APR * account_row.Balance / 12
                     account_set.accounts[account_index].balance += accrued_interest
+                    account_set.accounts[account_index].balance = round(account_set.accounts[account_index].balance,2)
 
                     # move curr stmt bal to previous
-                    prev_stmt_balance = account_set.accounts[account_index - 1].balance
+                    prev_stmt_balance = round(account_set.accounts[account_index - 1].balance,2)
 
                     # prev_acct_name = account_set.accounts[account_index - 1].name
                     # curr_acct_name = account_set.accounts[account_index].name
@@ -1665,7 +1674,8 @@ class ExpenseForecast:
                     # print('CASE 12 : Simple, Daily')
 
                     accrued_interest = account_row.APR * account_row.Balance / 365.25
-                    account_set.accounts[account_index + 1].balance += round(accrued_interest, 2)  # this is the interest account
+                    account_set.accounts[account_index + 1].balance += accrued_interest  # this is the interest account
+                    account_set.accounts[account_index + 1].balance = round(account_set.accounts[account_index + 1].balance,2)
 
             else:
                 # ('There were no interest bearing items for this day')
@@ -1679,22 +1689,22 @@ class ExpenseForecast:
 
                 relevant_balance = account_set.getAccounts().iloc[account_index, 1]
                 col_sel_vec = (current_forecast_row_df.columns == account_row.Name)
-                current_forecast_row_df.iloc[0, col_sel_vec] = relevant_balance
+                current_forecast_row_df.iloc[0, col_sel_vec] = round(relevant_balance,2)
 
             bal_string = ''
             for account_index, account_row in account_set.getAccounts().iterrows():
-                bal_string += '$' + str(account_row.Balance) + ' '
+                bal_string += '$' + str(round(account_row.Balance,2)) + ' '
 
             # # returns a single forecast row
             # log_in_color('green', 'debug', 'EXIT calculateInterestAccrualsForDay ' + bal_string, self.log_stack_depth)
             # self.log_stack_depth -= 1
             # return current_forecast_row_df
 
-        bal_string = ''
+        bal_string = ' '
         for account_index, account_row in account_set.getAccounts().iterrows():
-            bal_string += '$' + str(account_row.Balance) + ' '
+            bal_string += '$' + str(round(account_row.Balance,2)) + ' '
 
-        #log_in_color('green', 'debug', 'EXIT calculateInterestAccrualsForDay() ' + bal_string, self.log_stack_depth)
+        log_in_color('blue', 'debug', 'EXIT  calculateInterestAccrualsForDay() '+ current_forecast_row_df.Date.iat[0] + bal_string, self.log_stack_depth)
         self.log_stack_depth -= 1
         #logger.debug('self.log_stack_depth -= 1')
         return current_forecast_row_df  # this runs when there are no interest bearing accounts in the simulation at all
@@ -1703,7 +1713,7 @@ class ExpenseForecast:
 
         bal_string = ''
         for account_index2, account_row2 in account_set.getAccounts().iterrows():
-            bal_string += '$' + str(account_row2.Balance) + ' '
+            bal_string += '$' + str(round(account_row2.Balance,2)) + ' '
 
         self.log_stack_depth += 1
         #logger.debug('self.log_stack_depth += 1')
@@ -1742,14 +1752,14 @@ class ExpenseForecast:
                 if account_row.Account_Type == 'prev stmt bal':  # cc min payment
 
                     #minimum_payment_amount = max(40, account_row.Balance * 0.033) #this is an estimate
-                    minimum_payment_amount = max(40, account_row.Balance * account_row.APR/12)
+                    minimum_payment_amount = round(max(40, account_row.Balance * account_row.APR/12),2)
                     #todo it turns out that the way this really works is that Chase uses 1% PLUS the interest accrued to be charged immediately, not added to the principal
                     #very much not how I designed this but not earth-shatteringly different
 
 
-                    payment_toward_prev = min(minimum_payment_amount, account_row.Balance)
-                    payment_toward_curr = min(account_set.getAccounts().loc[account_index - 1, :].Balance, minimum_payment_amount - payment_toward_prev)
-                    surplus_payment = minimum_payment_amount - (payment_toward_prev + payment_toward_curr)
+                    payment_toward_prev = round(min(minimum_payment_amount, account_row.Balance),2)
+                    payment_toward_curr = round(min(account_set.getAccounts().loc[account_index - 1, :].Balance, minimum_payment_amount - payment_toward_prev),2)
+                    surplus_payment = round(minimum_payment_amount - (payment_toward_prev + payment_toward_curr),2)
 
                     if (payment_toward_prev + payment_toward_curr) > 0:
                         account_set.executeTransaction(Account_From='Checking', Account_To=account_row.Name.split(':')[0],
@@ -1759,9 +1769,9 @@ class ExpenseForecast:
 
                 elif account_row.Account_Type == 'principal balance':  # loan min payment
 
-                    minimum_payment_amount = account_set.getAccounts().loc[account_index, :].Minimum_Payment
-                    current_debt_balance = account_set.getBalances()[account_row.Name.split(':')[0]]
-                    loan_payment_amount = min(current_debt_balance,minimum_payment_amount)
+                    minimum_payment_amount = round(account_set.getAccounts().loc[account_index, :].Minimum_Payment,2)
+                    current_debt_balance = round(account_set.getBalances()[account_row.Name.split(':')[0]],2)
+                    loan_payment_amount = round(min(current_debt_balance,minimum_payment_amount),2)
 
                     if loan_payment_amount > 0:
                         account_set.executeTransaction(Account_From='Checking', Account_To=account_row.Name.split(':')[0],
@@ -1787,7 +1797,7 @@ class ExpenseForecast:
             relevant_balance = account_set.getAccounts().iloc[account_index, 1]
             col_sel_vec = (current_forecast_row_df.columns == account_row.Name)
             #print('Setting '+account_row.Name+' to '+str(relevant_balance))
-            current_forecast_row_df.iloc[0, col_sel_vec] = relevant_balance
+            current_forecast_row_df.iloc[0, col_sel_vec] = round(relevant_balance,2)
 
         # print('current_forecast_row_df post-update')
         # print(current_forecast_row_df.to_string())
@@ -1866,8 +1876,8 @@ class ExpenseForecast:
             account_set.accounts[account_index].balance = relevant_balance
 
         # log_in_color('green', 'debug', 'Final account_set:', self.log_stack_depth)
-        # log_in_color('green', 'debug', account_set.getAccounts().to_string(), self.log_stack_depth)
-        # log_in_color('green', 'debug', 'EXIT sync_account_set_w_forecast_day()', self.log_stack_depth)
+        #log_in_color('green', 'debug', account_set.getAccounts().to_string(), self.log_stack_depth)
+        log_in_color('green', 'debug', 'EXIT sync_account_set_w_forecast_day()', self.log_stack_depth)
         return account_set
 
     def setForecastRowBalances(self,date_YYYYMMDD,new_row):
@@ -1968,7 +1978,7 @@ class ExpenseForecast:
                     max_priority = max(full_budget_schedule_df.Priority.unique())
                 except:
                     max_priority = 1
-                log_in_color('white', 'info', str(1) + ' / ' + str(max_priority) + ' ' + d)
+                log_in_color('white', 'info', 'p' + str(1) + ' / ' + str(max_priority) + ' ' + d)
 
             # print('SATISFICE BEFORE TXN:'+str(forecast_df))
             try:
@@ -2036,7 +2046,7 @@ class ExpenseForecast:
                         continue  # first day is considered final
 
                     if not raise_satisfice_failed_exception: #to report progress
-                        log_in_color('white','info', str(priority_index) + ' / ' + str(max(unique_priority_indices)) + ' ' + d)
+                        log_in_color('white','info','p' + str(priority_index) + ' / ' + str(max(unique_priority_indices)) + ' ' + str(d))
 
                     C = confirmed_df.shape[0]
                     P = proposed_df.shape[0]
@@ -2091,6 +2101,29 @@ class ExpenseForecast:
                     # print('pre-txn state of forecast (cOF):'+str(raise_satisfice_failed_exception))
                     # print(forecast_df.to_string())
 
+                    #only for interest accounts, we will overwrite todays value based on the values from yesterday
+                    #this is needed because future days would have interest added based on the OG amount despite payment if we did not do this
+                    yesterday_date_string = (datetime.datetime.strptime(d,'%Y%m%d') - datetime.timedelta(days = 1)).strftime('%Y%m%d')
+                    yesterdays_values = self.sync_account_set_w_forecast_day( account_set, forecast_df, yesterday_date_string )
+                    forecast_row_w_new_interest_values = self.calculateInterestAccrualsForDay(yesterdays_values, forecast_df[forecast_df.Date == yesterday_date_string])  # returns only a forecast row
+                    forecast_row_w_new_interest_values.Date = d
+                    forecast_row_w_new_interest_values.Memo = ''
+                    #print('forecast_row_w_new_interest_values:')
+                    #print(forecast_row_w_new_interest_values.to_string())
+
+                    #print('forecast_row_w_new_interest_values:')
+                    #print(forecast_row_w_new_interest_values.to_string())
+
+                    for i in range(0,forecast_row_w_new_interest_values.shape[1]):
+                        if not ': Interest' in forecast_row_w_new_interest_values.columns[i]:
+                            continue
+                        #print(str(i))
+                        #print(str(forecast_df.loc[forecast_df.Date == d, i]) + ' -> ' + str(forecast_row_w_new_interest_values.iloc[0,i]))
+                        forecast_df.iloc[forecast_df.Date == d, i] = forecast_row_w_new_interest_values.iloc[0,i]
+                    #print('forecast_df')
+                    #print(forecast_df.to_string())
+
+
                     forecast_df, skipped_df, confirmed_df, deferred_df = self.executeTransactionsForDay(account_set,
                                                                                                         forecast_df=forecast_df,
                                                                                                         date_YYYYMMDD=d,
@@ -2104,8 +2137,8 @@ class ExpenseForecast:
                                                                                                         allow_partial_payments=True)
 
 
-
                     account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, d)
+
 
                     account_set_after_p2_plus_txn = copy.deepcopy(account_set)
 
@@ -2196,7 +2229,7 @@ class ExpenseForecast:
 
         bal_string = '  '
         for account_index, account_row in account_set.getAccounts().iterrows():
-            bal_string += '$' + str(account_row.Balance) + ' '
+            bal_string += '$' + str(round(account_row.Balance,2)) + ' '
 
         log_in_color('green', 'debug', 'EXIT computeOptimalForecast() ' + row_count_string + str(bal_string), self.log_stack_depth)
         self.log_stack_depth -= 1
@@ -2545,14 +2578,14 @@ class ExpenseForecast:
                 assert set(forecast_df.columns) == set(forecast2_df.columns)
             except Exception as e:
                 print('ERROR: ATTEMPTED TO TAKE DIFF OF FORECASTS WITH DIFFERENT COLUMNS')
-                # print('# Check Number of Columns:')
-                # print('self.forecast_df.shape[1]:'+str(self.forecast_df.shape[1]))
-                # print('forecast2_df.shape[1]....:'+str(forecast2_df.shape[1]))
-                # print('')
-                # print('# Check Column Names:')
-                # print('set(self.forecast_df.columns):'+str(set(self.forecast_df.columns) ))
-                # print('set(forecast2_df.columns)....:'+str(set(forecast2_df.columns)))
-                # print('')
+                print('# Check Number of Columns:')
+                print('self.forecast_df.shape[1]:'+str(self.forecast_df.shape[1]))
+                print('forecast2_df.shape[1]....:'+str(forecast2_df.shape[1]))
+                print('')
+                print('# Check Column Names:')
+                print('set(self.forecast_df.columns):'+str(set(self.forecast_df.columns) ))
+                print('set(forecast2_df.columns)....:'+str(set(forecast2_df.columns)))
+                print('')
                 raise e
 
         if require_matching_date_range:
