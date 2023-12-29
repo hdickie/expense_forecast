@@ -53,8 +53,21 @@ def initialize_from_excel_file(path_to_excel_file):
     choose_one_set_df = pd.read_excel(path_to_excel_file, sheet_name='ChooseOneSet')
     account_milestones_df = pd.read_excel(path_to_excel_file, sheet_name='AccountMilestones')
     memo_milestones_df = pd.read_excel(path_to_excel_file, sheet_name='MemoMilestones')
-    composite_milestones_df = pd.read_excel(path_to_excel_file, sheet_name='CompositeMilestones')
+    composite_account_milestones_df = pd.read_excel(path_to_excel_file, sheet_name='CompositeAccountMilestones')
+    composite_memo_milestones_df = pd.read_excel(path_to_excel_file, sheet_name='CompositeMemoMilestones')
     config_df = pd.read_excel(path_to_excel_file, sheet_name='config')
+
+    try:
+        run_info_df = pd.read_excel(path_to_excel_file,sheet_name='run_info')
+        forecast_df = pd.read_excel(path_to_excel_file, sheet_name='Forecast')
+        skipped_df = pd.read_excel(path_to_excel_file, sheet_name='Skipped')
+        confirmed_df = pd.read_excel(path_to_excel_file, sheet_name='Confirmed')
+        deferred_df = pd.read_excel(path_to_excel_file, sheet_name='Deferred')
+        milestone_results_df = pd.read_excel(path_to_excel_file, sheet_name='MilestoneResults')
+    except Exception as e:
+        pass #if forecast was not run this will happen
+
+
 
     A = AccountSet.AccountSet([])
     expect_curr_bal_acct = False
@@ -84,7 +97,7 @@ def initialize_from_excel_file(path_to_excel_file):
             previous_statement_balance = row.Balance
             interest_cadence = row.Interest_Cadence
             minimum_payment = row.Minimum_Payment
-            billing_start_date = str(int(row.Billing_Start_Date))
+            billing_start_date = str(int(row.Billing_Start_Dt))
             interest_type = row.Interest_Type
             apr = row.APR
 
@@ -120,7 +133,7 @@ def initialize_from_excel_file(path_to_excel_file):
             expect_interest_acct = False
 
         if row.Account_Type.lower() == 'principal balance' and expect_principal_bal_acct:
-            A.createAccount(row.Name.splt(':')[0],row.Balance + accrued_interest,row.Min_Balance,row.Max_Balance,'loan',str(int(row.Billing_Start_Dt)),row.interest_type,row.APR,row.interet_Cadence,row.Minimum_Payment,None,row.Balance,accrued_interest)
+            A.createAccount(row.Name.split(':')[0],row.Balance + accrued_interest,row.Min_Balance,row.Max_Balance,'loan',str(int(row.Billing_Start_Dt)),row.Interest_Type,row.APR,row.Interest_Cadence,row.Minimum_Payment,None,row.Balance,accrued_interest)
             expect_principal_bal_acct = False
 
     B = BudgetSet.BudgetSet([])
@@ -152,7 +165,21 @@ def initialize_from_excel_file(path_to_excel_file):
     start_date_YYYYMMDD = config_df.Start_Date_YYYYMMDD[0]
     end_date_YYYYMMDD = config_df.End_Date_YYYYMMDD[0]
 
-    return ExpenseForecast(A,B,M,start_date_YYYYMMDD,end_date_YYYYMMDD,MS)
+    E = ExpenseForecast(A,B,M,start_date_YYYYMMDD,end_date_YYYYMMDD,MS)
+
+    try:
+        E.start_ts = run_info_df.start_ts.iat[0]
+        E.end_ts = run_info_df.end_ts.iat[0]
+
+        E.forecast_df = forecast_df
+        E.skipped_df = skipped_df
+        E.confirmed_df = confirmed_df
+        E.deferred_df = deferred_df
+        E.milestone_results_df = milestone_results_df
+    except Exception as e:
+        pass #will happen if forecast was not run
+
+    return E
 
 
 def initialize_from_json_file(path_to_json):
@@ -314,6 +341,8 @@ def initialize_from_json_file(path_to_json):
     E.skipped_df = pd.read_json('skipped_df_' + str(E.unique_id) + '.json')
     E.confirmed_df = pd.read_json('confirmed_df_' + str(E.unique_id) + '.json')
     E.deferred_df = pd.read_json('deferred_df_' + str(E.unique_id) + '.json')
+
+    #milestone results
 
     return E
 
@@ -618,19 +647,19 @@ class ExpenseForecast:
         account_milestone_results__list = []
         for a_m in self.milestone_set.account_milestones__list:
             res = self.evaluateAccountMilestone(a_m.account_name,a_m.min_balance,a_m.max_balance)
-            account_milestone_results__list.append(res)
+            account_milestone_results__list.append((a_m.milestone_name,res))
         self.account_milestone_results__list = account_milestone_results__list
 
         memo_milestone_results__list = []
         for m_m in self.milestone_set.memo_milestones__list:
             res = self.evaulateMemoMilestone(m_m.memo_regex)
-            memo_milestone_results__list.append(res)
+            memo_milestone_results__list.append((m_m.milestone_name,res))
         self.memo_milestone_results__list = memo_milestone_results__list
 
         composite_milestone_results__list = []
         for c_m in self.milestone_set.composite_milestones__list:
-            res = self.evaluateCompositeMilestone(self.milestone_set.account_milestones__list,self.milestone_set.memo_milestones__list,c_m)
-            composite_milestone_results__list.append(res)
+            res = self.evaluateCompositeMilestone(self.milestone_set.account_milestones__list,self.milestone_set.memo_milestones__list)
+            composite_milestone_results__list.append((c_m.milestone_name,res))
         self.composite_milestone_results__list = composite_milestone_results__list
 
         self.writeToJSONFile()
@@ -652,7 +681,6 @@ class ExpenseForecast:
                         self.end_date=""" + str(self.end_date_YYYYMMDD) + """
                         max(forecast_df.Date)=""" + str(max(forecast_df.Date)) + """
                         """)
-
 
     def writeToJSONFile(self):
 
@@ -927,7 +955,9 @@ class ExpenseForecast:
             #if confirmed_row.Memo == 'PAY_TO_ALL_LOANS':
             #    forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'] += account_row.Name + ' payment ($' + str(current_balance - relevant_balance) + ') ; '
             #else:
-            forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'] += confirmed_row.Memo + ' ($' + str(confirmed_row.Amount) + ') ; '
+
+            if memo_rule_row.Account_To != 'ALL_LOANS':
+                forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'] += confirmed_row.Memo + ' ($' + str(confirmed_row.Amount) + ') ; '
 
             #update forecast to reflect new balances
             for account_index, account_row in account_set.getAccounts().iterrows():
@@ -962,6 +992,8 @@ class ExpenseForecast:
                     # log_in_color('cyan', 'debug', forecast_df[row_sel_vec].to_string(), self.log_stack_depth)
 
                     forecast_df.loc[row_sel_vec, col_sel_vec] = relevant_balance
+                    if memo_rule_row.Account_To == 'ALL_LOANS' and account_row.Name != memo_rule_row.Account_From:
+                        forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'] += str(account_row.Name)+' additional loan payment ($' + str(round(current_balance - relevant_balance,2)) + ') ; '
 
 
         #log_in_color('green', 'debug', 'END PROCESSING CONFIRMED TXNS', self.log_stack_depth)
@@ -2260,85 +2292,8 @@ class ExpenseForecast:
         #logger.debug('self.log_stack_depth -= 1')
         return [forecast_df, skipped_df, confirmed_df, deferred_df]
 
-    def plotNetWorth(self, output_path):
-        """
-        Writes to file a plot of all accounts.
-
-        Multiple line description.
-
-
-        :param forecast_df:
-        :param output_path:
-        :return:
-        """
-        figure(figsize=(14, 6), dpi=80)
-
-        #for i in range(1, self.forecast_df.shape[1] - 1):
-        column_index = self.forecast_df.columns.tolist().index('NetWorth')
-        plt.plot(self.forecast_df['Date'], self.forecast_df.iloc[:, column_index], label='NetWorth')
-
-        bottom, top = plt.ylim()
-
-        if 0 < bottom:
-            plt.ylim(0,top)
-        elif top < 0:
-            plt.ylim(bottom, 0)
-
-        ax = plt.subplot(111)
-        box = ax.get_position()
-        ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
-
-        # Put a legend below current axis
-        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=4)
-
-        # TODO plotOverall():: a large number of accounts will require some adjustment here so that the legend is entirely visible
-
-        min_date = min(self.forecast_df.Date).strftime('%Y-%m-%d')
-        max_date = max(self.forecast_df.Date).strftime('%Y-%m-%d')
-        plt.title('Forecast #'+self.unique_id+': ' + str(min_date) + ' -> ' + str(max_date))
-        plt.savefig(output_path)
-
-
-    def plotAccountTypeTotals(self, output_path):
-        """
-        Writes to file a plot of all accounts.
-
-        Multiple line description.
-
-
-        :param forecast_df:
-        :param output_path:
-        :return:
-        """
-        figure(figsize=(14, 6), dpi=80)
-        relevant_columns_sel_vec = (self.forecast_df.columns == 'Date') | (self.forecast_df.columns == 'LoanTotal') | (self.forecast_df.columns == 'CCDebtTotal') | (self.forecast_df.columns == 'LiquidTotal')
-        relevant_df = self.forecast_df.iloc[:,relevant_columns_sel_vec]
-        for i in range(1, relevant_df.shape[1]):
-            plt.plot(relevant_df['Date'], relevant_df.iloc[:, i], label=relevant_df.columns[i])
-
-        bottom, top = plt.ylim()
-
-        if 0 < bottom:
-            plt.ylim(0,top)
-        elif top < 0:
-            plt.ylim(bottom, 0)
-
-        ax = plt.subplot(111)
-        box = ax.get_position()
-        ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
-
-        # Put a legend below current axis
-        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=4)
-
-        # TODO plotOverall():: a large number of accounts will require some adjustment here so that the legend is entirely visible
-
-        min_date = min(self.forecast_df.Date).strftime('%Y-%m-%d')
-        max_date = max(self.forecast_df.Date).strftime('%Y-%m-%d')
-        plt.title('Forecast #'+self.unique_id+': ' + str(min_date) + ' -> ' + str(max_date))
-        plt.savefig(output_path)
-
     def evaluateAccountMilestone(self,account_name,min_balance,max_balance):
-
+        log_in_color('yellow','debug','ENTER evaluateAccountMilestone('+str(account_name)+','+str(min_balance)+','+str(max_balance)+')')
         account_info = self.initial_account_set.getAccounts()
         account_base_names = [ a.split(':')[0] for a in account_info.Name ]
         row_sel_vec = [ a == account_name for a in account_base_names]
@@ -2366,6 +2321,7 @@ class ExpenseForecast:
         last_value = relevant_time_series_df.tail(1).iat[0,1]
         #if the last day of the forecast does not satisfy account bounds, then none of the days of the forecast qualify
         if not (( min_balance <= last_value ) & ( last_value <= max_balance )):
+            log_in_color('yellow', 'debug','EXIT evaluateAccountMilestone(' + str(account_name) + ',' + str(min_balance) + ',' + str(max_balance) + ')')
             return None
 
         #if the code reaches this point, then the milestone was for sure reached.
@@ -2380,116 +2336,44 @@ class ExpenseForecast:
                 last_qualifying_date = row.Date
             else:
                 break
+        log_in_color('yellow', 'debug','EXIT evaluateAccountMilestone(' + str(account_name) + ',' + str(min_balance) + ',' + str(max_balance) + ')')
         return last_qualifying_date
 
     def evaulateMemoMilestone(self,memo_regex):
+        log_in_color('yellow', 'debug','ENTER evaluateMemoMilestone(' + str(memo_regex)+')')
         for forecast_index, forecast_row in self.forecast_df.iterrows():
             m = re.search(memo_regex,forecast_row.Memo)
             if m is not None:
+                log_in_color('yellow', 'debug', 'EXIT evaluateMemoMilestone(' + str(memo_regex) + ')')
                 return forecast_row.Date
+        log_in_color('yellow', 'debug', 'EXIT evaluateMemoMilestone(' + str(memo_regex) + ')')
         return None
 
-    def evaluateCompositeMilestone(self,list_of_account_milestones,list_of_memo_milestones,composite_milestone):
+    def evaluateCompositeMilestone(self,list_of_account_milestones,list_of_memo_milestones):
         #list_of_account_milestones is lists of 3-tuples that are (string,float,float) for parameters
 
         #composite milestones may contain some milestones that arent listed in the composite #todo as of 2023-04-25
 
-        num_of_relevant_milestones = 0
-
         num_of_acct_milestones = len(list_of_account_milestones)
         num_of_memo_milestones = len(list_of_memo_milestones)
-        account_milestone_dates = [None] * num_of_acct_milestones
-        memo_milestone_dates = [None] * num_of_memo_milestones
+        account_milestone_dates = []
+        memo_milestone_dates = []
 
         for i in range(0,num_of_acct_milestones):
             account_milestone = list_of_account_milestones[i]
-            next_milestone = self.evaluateAccountMilestone(account_milestone.account_name,account_milestone.min_balance,account_milestone.max_balance)
-            if next_milestone is None: #disqualified immediately because success requires ALL
+            am_result = self.evaluateAccountMilestone(account_milestone.account_name,account_milestone.min_balance,account_milestone.max_balance)
+            if am_result is None: #disqualified immediately because success requires ALL
                 return None
-            account_milestone_dates[i] = next_milestone
+            account_milestone_dates.append(am_result)
 
         for i in range(0,num_of_memo_milestones):
             memo_milestone = list_of_memo_milestones[i]
-            next_milestone = self.evaulateMemoMilestone(memo_milestone.memo_regex)
-            if next_milestone is None:  # disqualified immediately because success requires ALL
+            mm_result = self.evaulateMemoMilestone(memo_milestone.memo_regex)
+            if mm_result is None:  # disqualified immediately because success requires ALL
                 return None
-            memo_milestone_dates[i] = next_milestone
+            memo_milestone_dates.append(mm_result)
 
         return max(account_milestone_dates + memo_milestone_dates)
-
-    def plotAll(self, output_path):
-        """
-        Writes to file a plot of all accounts.
-
-        Multiple line description.
-
-
-        :param forecast_df:
-        :param output_path:
-        :return:
-        """
-        figure(figsize=(14, 6), dpi=80)
-
-        #lets combine curr and prev, principal and interest, and exclude summary lines
-        account_info = self.initial_account_set.getAccounts()
-        account_base_names = set([ a.split(':')[0] for a in account_info.Name])
-
-        aggregated_df = copy.deepcopy(self.forecast_df.loc[:,['Date']])
-
-        for account_base_name in account_base_names:
-            col_sel_vec = [ account_base_name == a.split(':')[0] for a in self.forecast_df.columns]
-            col_sel_vec[0] = True #Date
-            relevant_df = self.forecast_df.loc[:,col_sel_vec]
-
-            if relevant_df.shape[1] == 2: #checking and savings case
-                aggregated_df[account_base_name] = relevant_df.iloc[:,1]
-            elif relevant_df.shape[1] == 3:  #credit and loan
-                aggregated_df[account_base_name] = relevant_df.iloc[:,1] + relevant_df.iloc[:,2]
-
-        for i in range(1, aggregated_df.shape[1] - 1):
-            plt.plot(aggregated_df['Date'], aggregated_df.iloc[:, i], label=aggregated_df.columns[i])
-
-        bottom, top = plt.ylim()
-        if 0 < bottom:
-            plt.ylim(0, top)
-        elif top < 0:
-            plt.ylim(bottom, 0)
-
-        ax = plt.subplot(111)
-        box = ax.get_position()
-        ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
-
-        # Put a legend below current axis
-        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=4)
-
-        # TODO plotOverall():: a large number of accounts will require some adjustment here so that the legend is entirely visible
-
-        min_date = min(self.forecast_df.Date).strftime('%Y-%m-%d')
-        max_date = max(self.forecast_df.Date).strftime('%Y-%m-%d')
-        plt.title('Forecast #'+self.unique_id+': ' + str(min_date) + ' -> ' + str(max_date))
-        plt.savefig(output_path)
-
-    def plotMarginalInterest(self, accounts_df, forecast_df, output_path):
-        """
-        Writes a plot of spend on interest from all sources.
-
-        Multiple line description.
-
-        | Test Cases
-        | Expected Successes
-        | S1: ... #todo refactor ExpenseForecast.plotMarginalInterest() doctest S1 to use _S1 label
-        |
-        | Expected Fails
-        | F1 ... #todo refactor ExpenseForecast.plotMarginalInterest() doctest F1 to use _F1 label
-
-
-        :param accounts_df:
-        :param forecast_df:
-        :param output_path:
-        :return:
-        """
-        # todo plotMarginalInterest():: this will have to get the cc interest from the memo line
-        raise NotImplementedError
 
     def to_json(self):
         """
@@ -2536,26 +2420,29 @@ class ExpenseForecast:
         JSON_string += confirmed_df_string
         JSON_string += deferred_df_string
 
-        account_milestone_string = ""
-        for a in self.account_milestone_results__list:
-            if a is not None:
-                account_milestone_string = a+" "
-        if account_milestone_string == "":
-            account_milestone_string = "[]"
+        account_milestone_string = "{"
+        for i in range(0,len(self.account_milestone_results__list)):
+            a = self.account_milestone_results__list[i]
+            account_milestone_string += '"'+str(a[0])+'":"'+str(a[1])+'"'
+            if i != (len(self.account_milestone_results__list)-1):
+                account_milestone_string+=","
+        account_milestone_string+="}"
 
-        memo_milestone_string = ""
-        for m in self.memo_milestone_results__list:
-            if m is not None:
-                memo_milestone_string = m+" "
-        if memo_milestone_string == "":
-            memo_milestone_string = "[]"
+        memo_milestone_string = "{"
+        for i in range(0, len(self.memo_milestone_results__list)):
+            m = self.memo_milestone_results__list[i]
+            memo_milestone_string += '"'+str(m[0])+'":"'+str(m[1])+'"'
+            if i != (len(self.memo_milestone_results__list) - 1):
+                memo_milestone_string += ","
+        memo_milestone_string += "}"
 
-        composite_milestone_string = ""
-        for c in self.composite_milestone_results__list:
-            if c is not None:
-                composite_milestone_string = c+" "
-        if composite_milestone_string == "":
-            composite_milestone_string = "[]"
+        composite_milestone_string = "{"
+        for i in range(0, len(self.composite_milestone_results__list)):
+            c = self.composite_milestone_results__list[i]
+            composite_milestone_string += '"'+str(c[0])+'":"'+str(a[1])+'"'
+            if i != (len(self.composite_milestone_results__list) - 1):
+                composite_milestone_string += ","
+        composite_milestone_string += "}"
 
         JSON_string += "\"milestone_set\":"+self.milestone_set.to_json()+",\n"
         JSON_string += "\"account_milestone_results\":"+account_milestone_string+",\n"
@@ -2566,10 +2453,8 @@ class ExpenseForecast:
 
         return JSON_string
 
-
     def to_html(self):
         return self.forecast_df.to_html()
-
 
     def compute_forecast_difference(self, forecast_df, forecast2_df, label='forecast_difference', make_plots=False, plot_directory='.', return_type='dataframe', require_matching_columns=False,
                                     require_matching_date_range=False, append_expected_values=False, diffs_only=False):
@@ -2714,6 +2599,34 @@ class ExpenseForecast:
 
         return return_df
 
+    def getMilestoneResultsDF(self):
+        if not hasattr(self,'forecast_df'):
+            print('Forecast has not been run, so there are no results.')
+            return
+
+        milestone_results_df = pd.DataFrame({'Milestone_Name':[],
+                                             'Result_Date':[]})
+
+        for a in self.account_milestone_results__list:
+            milestone_results_df = pd.concat([milestone_results_df,
+                                              pd.DataFrame({'Milestone_Name': [a[0]],
+                                                            'Result_Date': [a[1]]})
+                                              ])
+
+        for m in self.memo_milestone_results__list:
+            milestone_results_df = pd.concat([milestone_results_df,
+                                              pd.DataFrame({'Milestone_Name': [m[0]],
+                                                            'Result_Date': [m[1]]})
+                                              ])
+
+        for c in self.composite_milestone_results__list:
+            milestone_results_df = pd.concat([milestone_results_df,
+                                              pd.DataFrame({'Milestone_Name': [c[0]],
+                                                            'Result_Date': [c[1]]})
+                                              ])
+
+        return milestone_results_df
+
     def to_excel(self,path):
 
         #first page, run parameters
@@ -2723,8 +2636,12 @@ class ExpenseForecast:
         choose_one_set_df = pd.DataFrame() #todo
         account_milestones_df = self.milestone_set.getAccountMilestonesDF()
         memo_milestones_df = self.milestone_set.getMemoMilestonesDF()
-        composite_milestones_df = self.milestone_set.getCompositeMilestonesDF()
+        composite_milestones__list = self.milestone_set.getCompositeMilestones_lists()
+        composite_account_milestones_df = composite_milestones__list[0]
+        composite_memo_milestones_df = composite_milestones__list[1]
+
         config_df = self.getConfigDF()
+        run_info_df = self.getRunInfoDF()
 
         with pd.ExcelWriter(path, engine='openpyxl') as writer:
             account_set_df.to_excel(writer, sheet_name='AccountSet',index=False)
@@ -2733,23 +2650,35 @@ class ExpenseForecast:
             choose_one_set_df.to_excel(writer, sheet_name='ChooseOneSet',index=False)
             account_milestones_df.to_excel(writer, sheet_name='AccountMilestones',index=False)
             memo_milestones_df.to_excel(writer, sheet_name='MemoMilestones',index=False)
-            composite_milestones_df.to_excel(writer, sheet_name='CompositeMilestones',index=False)
+            composite_account_milestones_df.to_excel(writer, sheet_name='CompositeAccountMilestones',index=False)
+            composite_memo_milestones_df.to_excel(writer, sheet_name='CompositeMemoMilestones', index=False)
             config_df.to_excel(writer, sheet_name='config',index=False)
 
-            #todo
-            #run info
-            #unique_id, start_ts, end_ts
-            #forecast_df
-            #skipped_df
-            #confirmed_df
-            #deferred_df
-            #account milestone results
-            #memo milestone results
-            #composite milestone results
 
+            if hasattr(self,'forecast_df'):
+                run_info_df.to_excel(writer, sheet_name='run_info', index=False)
+                self.forecast_df.to_excel(writer, sheet_name='Forecast', index=False)
+                self.skipped_df.to_excel(writer, sheet_name='Skipped', index=False)
+                self.confirmed_df.to_excel(writer, sheet_name='Confirmed', index=False)
+                self.deferred_df.to_excel(writer, sheet_name='Deferred', index=False)
+                self.getMilestoneResultsDF().to_excel(writer, sheet_name='MilestoneResults', index=False)
+
+    def getRunInfoDF(self):
+        if hasattr(self, 'forecast_df'):
+            return pd.DataFrame(
+                {'start_ts': [self.start_ts],
+                 'end_ts': [self.end_ts],
+                 'unique_id': [self.unique_id]
+                 })
+        return pd.DataFrame(
+            {'start_ts': [],
+             'end_ts': [],
+             'unique_id': []
+             })
 
     def getConfigDF(self):
         return pd.DataFrame({'Start_Date_YYYYMMDD':[self.start_date_YYYYMMDD],'End_Date_YYYYMMDD':[self.end_date_YYYYMMDD]})
+
 
 # written in one line so that test coverage can reach 100%
 # if __name__ == "__main__": import doctest ; doctest.testmod()

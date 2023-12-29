@@ -477,6 +477,7 @@ class AccountSet:
                                         single_account_loan_payment[1], #To
                                         single_account_loan_payment[2], #Amount
                                         income_flag=False)
+                #todo append memo here
             return
 
         boundary_error_ind = False

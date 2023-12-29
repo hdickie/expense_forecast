@@ -1324,3 +1324,172 @@ class ForecastHandler:
         max_date = max(E1.forecast_df.Date).strftime('%Y-%m-%d')
         plt.title('Forecast 1 #'+E1.unique_id+' vs. Forecast 2 #'+E2.unique_id+': ' + str(min_date) + ' -> ' + str(max_date))
         plt.savefig(output_path)
+
+
+
+    def plotAccountTypeTotals(self, expense_forecast, output_path):
+        """
+        Writes to file a plot of all accounts.
+
+        Multiple line description.
+
+
+        :param forecast_df:
+        :param output_path:
+        :return:
+        """
+
+        assert hasattr(expense_forecast,'forecast_df')
+
+        figure(figsize=(14, 6), dpi=80)
+        relevant_columns_sel_vec = (expense_forecast.forecast_df.columns == 'Date') | (expense_forecast.forecast_df.columns == 'LoanTotal') | (expense_forecast.forecast_df.columns == 'CCDebtTotal') | (expense_forecast.forecast_df.columns == 'LiquidTotal')
+        relevant_df = expense_forecast.forecast_df.iloc[:,relevant_columns_sel_vec]
+        for i in range(1, relevant_df.shape[1]):
+            plt.plot(relevant_df['Date'], relevant_df.iloc[:, i], label=relevant_df.columns[i])
+
+        bottom, top = plt.ylim()
+
+        if 0 < bottom:
+            plt.ylim(0,top)
+        elif top < 0:
+            plt.ylim(bottom, 0)
+
+        ax = plt.subplot(111)
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
+
+        # Put a legend below current axis
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=4)
+
+        # TODO plotOverall():: a large number of accounts will require some adjustment here so that the legend is entirely visible
+
+        min_date = min(expense_forecast.forecast_df.Date).strftime('%Y-%m-%d')
+        max_date = max(expense_forecast.forecast_df.Date).strftime('%Y-%m-%d')
+        plt.title('Forecast #'+expense_forecast.unique_id+': ' + str(min_date) + ' -> ' + str(max_date))
+        plt.savefig(output_path)
+
+
+
+    def plotNetWorth(self, expense_forecast, output_path):
+        """
+        Writes to file a plot of all accounts.
+
+        Multiple line description.
+
+
+        :param forecast_df:
+        :param output_path:
+        :return:
+        """
+
+        assert hasattr(expense_forecast,'forecast_df')
+
+        figure(figsize=(14, 6), dpi=80)
+
+        #for i in range(1, self.forecast_df.shape[1] - 1):
+        column_index = expense_forecast.forecast_df.columns.tolist().index('NetWorth')
+        plt.plot(expense_forecast.forecast_df['Date'], expense_forecast.forecast_df.iloc[:, column_index], label='NetWorth')
+
+        bottom, top = plt.ylim()
+
+        if 0 < bottom:
+            plt.ylim(0,top)
+        elif top < 0:
+            plt.ylim(bottom, 0)
+
+        ax = plt.subplot(111)
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
+
+        # Put a legend below current axis
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=4)
+
+        # TODO plotOverall():: a large number of accounts will require some adjustment here so that the legend is entirely visible
+
+        min_date = min(expense_forecast.forecast_df.Date).strftime('%Y-%m-%d')
+        max_date = max(expense_forecast.forecast_df.Date).strftime('%Y-%m-%d')
+        plt.title('Forecast #'+expense_forecast.unique_id+': ' + str(min_date) + ' -> ' + str(max_date))
+        plt.savefig(output_path)
+
+
+
+
+    def plotAll(self, expense_forecast, output_path):
+        """
+        Writes to file a plot of all accounts.
+
+        Multiple line description.
+
+
+        :param forecast_df:
+        :param output_path:
+        :return:
+        """
+
+        assert hasattr(expense_forecast,'forecast_df')
+
+        figure(figsize=(14, 6), dpi=80)
+
+        #lets combine curr and prev, principal and interest, and exclude summary lines
+        account_info = expense_forecast.initial_account_set.getAccounts()
+        account_base_names = set([ a.split(':')[0] for a in account_info.Name])
+
+        aggregated_df = copy.deepcopy(expense_forecast.forecast_df.loc[:,['Date']])
+
+        for account_base_name in account_base_names:
+            col_sel_vec = [ account_base_name == a.split(':')[0] for a in expense_forecast.forecast_df.columns]
+            col_sel_vec[0] = True #Date
+            relevant_df = expense_forecast.forecast_df.loc[:,col_sel_vec]
+
+            if relevant_df.shape[1] == 2: #checking and savings case
+                aggregated_df[account_base_name] = relevant_df.iloc[:,1]
+            elif relevant_df.shape[1] == 3:  #credit and loan
+                aggregated_df[account_base_name] = relevant_df.iloc[:,1] + relevant_df.iloc[:,2]
+
+        for i in range(1, aggregated_df.shape[1] - 1):
+            plt.plot(aggregated_df['Date'], aggregated_df.iloc[:, i], label=aggregated_df.columns[i])
+
+        bottom, top = plt.ylim()
+        if 0 < bottom:
+            plt.ylim(0, top)
+        elif top < 0:
+            plt.ylim(bottom, 0)
+
+        ax = plt.subplot(111)
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
+
+        # Put a legend below current axis
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=4)
+
+        # TODO plotOverall():: a large number of accounts will require some adjustment here so that the legend is entirely visible
+
+        min_date = min(expense_forecast.forecast_df.Date).strftime('%Y-%m-%d')
+        max_date = max(expense_forecast.forecast_df.Date).strftime('%Y-%m-%d')
+        plt.title('Forecast #'+expense_forecast.unique_id+': ' + str(min_date) + ' -> ' + str(max_date))
+        plt.savefig(output_path)
+
+    def plotMarginalInterest(self, expense_forecast, accounts_df, forecast_df, output_path):
+        """
+        Writes a plot of spend on interest from all sources.
+
+        Multiple line description.
+
+        | Test Cases
+        | Expected Successes
+        | S1: ... #todo refactor ExpenseForecast.plotMarginalInterest() doctest S1 to use _S1 label
+        |
+        | Expected Fails
+        | F1 ... #todo refactor ExpenseForecast.plotMarginalInterest() doctest F1 to use _F1 label
+
+
+        :param accounts_df:
+        :param forecast_df:
+        :param output_path:
+        :return:
+        """
+        # todo plotMarginalInterest():: this will have to get the cc interest from the memo line
+
+        assert hasattr(expense_forecast,'forecast_df')
+
+        raise NotImplementedError

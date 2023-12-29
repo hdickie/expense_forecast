@@ -130,10 +130,10 @@ class MilestoneSet:
 
         for a in self.account_milestones__list:
             account_milestones_df = pd.concat([account_milestones_df,
-                          pd.DataFrame({'Milestone_Name': [a.Milestone_Name],
-                                        'Account_Name': [a.Account_Name],
-                                        'Min_Balance': [a.Min_Balance],
-                                        'Max_Balance': [a.Max_Balance]
+                          pd.DataFrame({'Milestone_Name': [a.milestone_name],
+                                        'Account_Name': [a.account_name],
+                                        'Min_Balance': [a.min_balance],
+                                        'Max_Balance': [a.max_balance]
                                         })])
 
         return account_milestones_df
@@ -145,12 +145,12 @@ class MilestoneSet:
 
         for m in self.memo_milestones__list:
             memo_milestones_df = pd.concat([memo_milestones_df,
-                          pd.DataFrame({'Milestone_Name': [m.Milestone_Name],
-                                        'Memo_Regex': [m.Account_Name]
+                          pd.DataFrame({'Milestone_Name': [m.milestone_name],
+                                        'Memo_Regex': [m.memo_regex]
                                         })])
         return memo_milestones_df
 
-    def getCompositeMilestonesDF(self):
+    def getCompositeMilestones_lists(self):
         composite_milestones__account_df = pd.DataFrame({'Composite_Milestone_Name': [],
                                                 'Account_Name': [],
                                                 'Min_Balance': [],
@@ -164,9 +164,21 @@ class MilestoneSet:
 
         for cm in self.composite_milestones__list:
             for a in cm.account_milestones__list:
-                pass
+                composite_milestones__account_df = pd.concat([composite_milestones__account_df,
+                                                              pd.DataFrame({'Composite_Milestone_Name': [cm.milestone_name],
+                                                                            'Account_Name': [a.account_name],
+                                                                            'Min_Balance': [a.min_balance],
+                                                                            'Max_Balance': [a.max_balance]
+                                                                            })
+                                                              ])
 
             for m in cm.memo_milestones__list:
-                pass
+                composite_milestones__memo_df = pd.concat([composite_milestones__memo_df,
+                                                           pd.DataFrame({'Composite_Milestone_Name': [
+                                                               cm.milestone_name],
+                                                                         'Account_Name': [m.milestone_name],
+                                                                         'Min_Balance': [m.memo_regex]
+                                                                         })
+                                                           ])
 
         return [composite_milestones__account_df, composite_milestones__memo_df]

@@ -6,6 +6,7 @@ import pandas as pd, numpy as np
 import datetime, logging
 import tempfile
 import BudgetItem
+import CompositeMilestone
 import MemoMilestone
 import MemoRule
 
@@ -290,6 +291,20 @@ class TestExpenseForecastMethods:
             error_ind = round(float(sum(sum(np.square(
                 non_boilerplate_values__M)).T)),2)  # this very much DOES NOT SCALE. this is intended for small tests
             assert error_ind == 0
+
+            try:
+                for i in range(0,expected_result_df.shape[0]):
+                    assert expected_result_df.loc[i,'Memo'] == E.forecast_df.loc[i,'Memo']
+            except Exception as e:
+                log_in_color('red','error','Forecasts matched but the memo did not')
+                date_memo1_memo2_df = pd.DataFrame()
+                date_memo1_memo2_df['Date'] = expected_result_df.Date
+                date_memo1_memo2_df['Expected_Memo'] = expected_result_df.Memo
+                date_memo1_memo2_df['Actual_Memo'] = E.forecast_df.Memo
+                log_in_color('red', 'error', date_memo1_memo2_df.to_string())
+                raise e
+
+
         except Exception as e:
             # print(test_description) #todo use log methods
             # print(f.T.to_string())
@@ -328,7 +343,7 @@ class TestExpenseForecastMethods:
                                 'Checking': [0, 0, 0],
                                 'Credit: Curr Stmt Bal': [0, 0, 0],
                                 'Credit: Prev Stmt Bal': [0, 0, 0],
-                                'Memo': ['', '', '']
+                                'Memo': ['', 'income ($100.0) ; test txn ($100.0) ; ', '']
                                 })
                                 ),
 
@@ -345,7 +360,7 @@ class TestExpenseForecastMethods:
                                     'Checking': [2000, 1975, 1975],
                                     'Credit: Curr Stmt Bal': [0, 0, 0],
                                     'Credit: Prev Stmt Bal': [25, 0, 0],
-                                    'Memo': ['', '', '']
+                                    'Memo': ['', 'Credit cc min payment ($40) ; ', '']
                                 })
                                 ),
 
@@ -363,7 +378,7 @@ class TestExpenseForecastMethods:
                                     'Checking': [2000, 1960, 1960],
                                     'Credit: Curr Stmt Bal': [0, 0, 0],
                                     'Credit: Prev Stmt Bal': [1000, 964, 964],  # this amount should have interest added
-                                    'Memo': ['', '', '']
+                                    'Memo': ['', 'Credit cc min payment ($40) ; ', '']
                                 })
                                 ),
 
@@ -380,7 +395,7 @@ class TestExpenseForecastMethods:
                                     'Checking': [2000, 1960, 1960],
                                     'Credit: Curr Stmt Bal': [0, 0, 0],
                                     'Credit: Prev Stmt Bal': [3000, 2972.33, 2972.33],
-                                    'Memo': ['', '', '']
+                                    'Memo': ['', 'Credit cc min payment ($40) ; ', '']
                                 })
                                 ),
 
@@ -441,7 +456,7 @@ class TestExpenseForecastMethods:
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103'],
                     'Checking': [100, 0, 0],
-                    'Memo': ['', '', '']
+                    'Memo': ['', 'this should be executed ($100.0) ; ', '']
                 })
         ),
 
@@ -465,7 +480,7 @@ class TestExpenseForecastMethods:
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103'],
                     'Checking': [100, 0, 0],
-                    'Memo': ['', '', '']
+                    'Memo': ['', 'this should be executed ($100.0) ; ', '']
                 })
         ),
 
@@ -532,7 +547,7 @@ class TestExpenseForecastMethods:
                     'Checking': [2000, 1200, 1200],
                     'Credit: Curr Stmt Bal': [500, 200, 200],
                     'Credit: Prev Stmt Bal': [500, 0, 0],
-                    'Memo': ['', '', '']
+                    'Memo': ['', 'test pay all prev part of curr ($800.0) ; ', '']
                 })
         ),
 
@@ -555,7 +570,7 @@ class TestExpenseForecastMethods:
                     'Checking': [200, 0, 0],
                     'Credit: Curr Stmt Bal': [500, 500, 500],
                     'Credit: Prev Stmt Bal': [500, 300, 300],
-                    'Memo': ['', '', '']
+                    'Memo': ['', 'additional cc payment test ($200.0) ; ', '']
                 })
         ),
 
@@ -579,7 +594,7 @@ class TestExpenseForecastMethods:
                     'Checking': [40, 0, 0],
                     'Credit: Curr Stmt Bal': [500, 0, 0],
                     'Credit: Prev Stmt Bal': [500,961.92, 961.92],
-                    'Memo': ['', '', '']
+                    'Memo': ['', 'Credit cc min payment ($40) ; ', '']
                 })
         ),
 
@@ -603,7 +618,7 @@ class TestExpenseForecastMethods:
                     'Checking': [1000, 0, 0],
                     'Credit: Curr Stmt Bal': [1500, 1000, 1000],
                     'Credit: Prev Stmt Bal': [500, 0, 0],
-                    'Memo': ['', '', '']
+                    'Memo': ['', 'partial cc payment ($1000.0) ; ', '']
                 })
         ), # 12/21 4AM this is coded correctly and the test fail is bc of algo
 
@@ -619,9 +634,6 @@ class TestExpenseForecastMethods:
                                      BudgetItem.BudgetItem('20000104', '20000104', 1, 'once', 200, '200 income on 1/4',False, False), #500
                                      BudgetItem.BudgetItem('20000104', '20000104', 1, 'once', 100, 'SPEND daily p1 txn',False, False), #400
                                      BudgetItem.BudgetItem('20000102', '20000102', 2, 'once', 400, 'SPEND p2 txn deferred from 1/2 to 1/4', True, False) #EOD 0
-
-
-
 
                                      ]
                                     ),
@@ -648,7 +660,7 @@ class TestExpenseForecastMethods:
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103', '20000104'],
                     'Checking': [500, 400, 300, 0],
-                    'Memo': ['', '', '', '']
+                    'Memo': ['', 'SPEND daily p1 txn ($100.0) ; ', 'SPEND daily p1 txn ($100.0) ; ', '200 income on 1/4 ($200.0) ; SPEND daily p1 txn ($100.0) ; SPEND p2 txn deferred from 1/2 to 1/4 ($400.0) ; ']
                 })
         ),
 
@@ -681,7 +693,7 @@ class TestExpenseForecastMethods:
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103', '20000104', '20000105'],
                     'Checking': [400, 400, 200, 0, 0],
-                    'Memo': ['', '', '', '', '']
+                    'Memo': ['', '', 'pay reduced amount ($200.0) ; ', 'pay 200 after reduced amt txn ($200.0) ; ', '']
                 })
         ),  #this test cas coded correctly. the fail is bc of algo. 12/12 5:21AM
 
@@ -716,7 +728,7 @@ class TestExpenseForecastMethods:
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103', '20000104', '20000105', '20000106'],
                     'Checking': [2000, 1800, 1600, 1400, 1200, 1200],
-                    'Memo': ['', '', '', '', '','']
+                    'Memo': ['', 'p1 daily txn ($100.0) ; p2 daily txn 1/2/00 ($100.0) ; ', 'p1 daily txn ($100.0) ; p2 daily txn 1/3/00 ($100.0) ; ', 'p1 daily txn ($100.0) ; p2 daily txn 1/4/00 ($100.0) ; ', 'p1 daily txn ($100.0) ; p2 daily txn 1/5/00 ($100.0) ; ','']
                 })
         ),
 
@@ -760,53 +772,53 @@ class TestExpenseForecastMethods:
             pd.DataFrame({
                 'Date': ['20000101', '20000102', '20000103', '20000104', '20000105', '20000106'],
                 'Checking': [2000, 1700, 1400, 1100, 800, 800],
-                'Memo': ['', '', '', '', '', '']
+                'Memo': ['', 'p1 daily txn 1/2/00 ($100.0) ; p2 daily txn 1/2/00 ($100.0) ; p3 daily txn 1/2/00 ($100.0) ; ', 'p1 daily txn 1/3/00 ($100.0) ; p2 daily txn 1/3/00 ($100.0) ; p3 daily txn 1/3/00 ($100.0) ; ', 'p1 daily txn 1/4/00 ($100.0) ; p2 daily txn 1/4/00 ($100.0) ; p3 daily txn 1/4/00 ($100.0) ; ', 'p1 daily txn 1/5/00 ($100.0) ; p2 daily txn 1/5/00 ($100.0) ; p3 daily txn 1/5/00 ($100.0) ; ','']
             })
         ),
 
-        (
-                'test_transactions_executed_at_p1_and_p2_and_p3',
-                AccountSet.AccountSet(checking_acct_list(2000)),
-                BudgetSet.BudgetSet(
-                    [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'p1 daily txn 1/2/00', False, False),
-                     BudgetItem.BudgetItem('20000103', '20000103', 1, 'once', 100, 'p1 daily txn 1/3/00', False, False),
-                     BudgetItem.BudgetItem('20000104', '20000104', 1, 'once', 100, 'p1 daily txn 1/4/00', False, False),
-                     BudgetItem.BudgetItem('20000105', '20000105', 1, 'once', 100, 'p1 daily txn 1/5/00', False, False),
-
-                     BudgetItem.BudgetItem('20000102', '20000102', 2, 'once', 100, 'p2 daily txn 1/2/00', False, False),
-                     BudgetItem.BudgetItem('20000103', '20000103', 2, 'once', 100, 'p2 daily txn 1/3/00', False, False),
-                     BudgetItem.BudgetItem('20000104', '20000104', 2, 'once', 100, 'p2 daily txn 1/4/00', False, False),
-                     BudgetItem.BudgetItem('20000105', '20000105', 2, 'once', 100, 'p2 daily txn 1/5/00', False, False),
-
-                     BudgetItem.BudgetItem('20000102', '20000102', 3, 'once', 100, 'p3 daily txn 1/2/00', False, False),
-                     BudgetItem.BudgetItem('20000103', '20000103', 3, 'once', 100, 'p3 daily txn 1/3/00', False, False),
-                     BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', False, False),
-                     BudgetItem.BudgetItem('20000105', '20000105', 3, 'once', 100, 'p3 daily txn 1/5/00', False, False)
-                     ]
-
-                ),
-                MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*',
-                                                           account_from='Checking',
-                                                           account_to=None,
-                                                           transaction_priority=1),
-                                         MemoRule.MemoRule(memo_regex='.*',
-                                                           account_from='Checking',
-                                                           account_to=None,
-                                                           transaction_priority=2),
-                                         MemoRule.MemoRule(memo_regex='.*',
-                                                           account_from='Checking',
-                                                           account_to=None,
-                                                           transaction_priority=3)
-                                         ]),
-                '20000101',
-                '20000106',  # note that this is later than the test defined above
-                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
-                pd.DataFrame({
-                    'Date': ['20000101', '20000102', '20000103', '20000104', '20000105', '20000106'],
-                    'Checking': [2000, 1700, 1400, 1100, 800, 800],
-                    'Memo': ['', '', '', '', '', '']
-                })
-        ),
+        # (
+        #         'test_transactions_executed_at_p1_and_p2_and_p3',
+        #         AccountSet.AccountSet(checking_acct_list(2000)),
+        #         BudgetSet.BudgetSet(
+        #             [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'p1 daily txn 1/2/00', False, False),
+        #              BudgetItem.BudgetItem('20000103', '20000103', 1, 'once', 100, 'p1 daily txn 1/3/00', False, False),
+        #              BudgetItem.BudgetItem('20000104', '20000104', 1, 'once', 100, 'p1 daily txn 1/4/00', False, False),
+        #              BudgetItem.BudgetItem('20000105', '20000105', 1, 'once', 100, 'p1 daily txn 1/5/00', False, False),
+        #
+        #              BudgetItem.BudgetItem('20000102', '20000102', 2, 'once', 100, 'p2 daily txn 1/2/00', False, False),
+        #              BudgetItem.BudgetItem('20000103', '20000103', 2, 'once', 100, 'p2 daily txn 1/3/00', False, False),
+        #              BudgetItem.BudgetItem('20000104', '20000104', 2, 'once', 100, 'p2 daily txn 1/4/00', False, False),
+        #              BudgetItem.BudgetItem('20000105', '20000105', 2, 'once', 100, 'p2 daily txn 1/5/00', False, False),
+        #
+        #              BudgetItem.BudgetItem('20000102', '20000102', 3, 'once', 100, 'p3 daily txn 1/2/00', False, False),
+        #              BudgetItem.BudgetItem('20000103', '20000103', 3, 'once', 100, 'p3 daily txn 1/3/00', False, False),
+        #              BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', False, False),
+        #              BudgetItem.BudgetItem('20000105', '20000105', 3, 'once', 100, 'p3 daily txn 1/5/00', False, False)
+        #              ]
+        #
+        #         ),
+        #         MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*',
+        #                                                    account_from='Checking',
+        #                                                    account_to=None,
+        #                                                    transaction_priority=1),
+        #                                  MemoRule.MemoRule(memo_regex='.*',
+        #                                                    account_from='Checking',
+        #                                                    account_to=None,
+        #                                                    transaction_priority=2),
+        #                                  MemoRule.MemoRule(memo_regex='.*',
+        #                                                    account_from='Checking',
+        #                                                    account_to=None,
+        #                                                    transaction_priority=3)
+        #                                  ]),
+        #         '20000101',
+        #         '20000106',  # note that this is later than the test defined above
+        #         MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+        #         pd.DataFrame({
+        #             'Date': ['20000101', '20000102', '20000103', '20000104', '20000105', '20000106'],
+        #             'Checking': [2000, 1700, 1400, 1100, 800, 800],
+        #             'Memo': ['', '', '', '', '', '']
+        #         })
+        # ),
 
 
         ( 'test_p7__additional_loan_payment__amt_10',
@@ -828,7 +840,7 @@ class TestExpenseForecastMethods:
                     'Loan B: Interest': [100, 50.14, 50.28],
                     'Loan C: Principal Balance': [1000, 1000, 1000],
                     'Loan C: Interest': [100, 50.03, 50.06],
-                    'Memo': ['', '', '']
+                    'Memo': ['', 'Loan A loan min payment ($50.0); Loan B loan min payment ($50.0); Loan C loan min payment ($50.0); Loan A: Interest additional loan payment ($10.0) ; ', '']
                 })
         ),
 
@@ -855,7 +867,7 @@ class TestExpenseForecastMethods:
              'Loan B: Interest': [100, 50.14, 50.28],
              'Loan C: Principal Balance': [1000, 1000, 1000],
              'Loan C: Interest': [100, 50.03, 50.06],
-             'Memo': ['', '', '']
+             'Memo': ['', 'Loan A loan min payment ($50.0); Loan B loan min payment ($50.0); Loan C loan min payment ($50.0); Loan A: Principal Balance additional loan payment ($59.73) ; Loan A: Interest additional loan payment ($50.27) ; ', '']
          })
          ),
 
@@ -883,7 +895,7 @@ class TestExpenseForecastMethods:
              'Loan B: Interest': [100, 43.52, 43.66],
              'Loan C: Principal Balance': [1000, 1000, 1000],
              'Loan C: Interest': [ 100, 50.03, 50.06 ],
-             'Memo': ['', '', '']
+             'Memo': ['', 'Loan A loan min payment ($50.0); Loan B loan min payment ($50.0); Loan C loan min payment ($50.0); Loan A: Principal Balance additional loan payment ($503.11) ; Loan A: Interest additional loan payment ($50.27) ; Loan B: Interest additional loan payment ($6.62) ; ', '']
          })
          ), #todo double check this math
 
@@ -911,7 +923,7 @@ class TestExpenseForecastMethods:
              'Loan B: Interest': [100, 9.52, 9.66],
              'Loan C: Principal Balance': [1000, 1000, 1000],
              'Loan C: Interest': [100, 50.03,50.06],
-             'Memo': ['', '', '']
+             'Memo': ['', 'Loan A loan min payment ($50.0); Loan B loan min payment ($50.0); Loan C loan min payment ($50.0); Loan A: Principal Balance additional loan payment ($519.11) ; Loan A: Interest additional loan payment ($50.27) ; Loan B: Interest additional loan payment ($40.62) ; ', '']
          })
          ),  # todo check this math
 
@@ -940,7 +952,7 @@ class TestExpenseForecastMethods:
              'Loan B: Interest': [100, 0, 0.03],
              'Loan C: Principal Balance': [1000, 972.57, 972.57],
              'Loan C: Interest': [100, 0, 0.03],
-             'Memo': ['', '', '']
+             'Memo': ['', 'Loan A loan min payment ($50.0); Loan B loan min payment ($50.0); Loan C loan min payment ($50.0); Loan A: Principal Balance additional loan payment ($907.38) ; Loan A: Interest additional loan payment ($50.27) ; Loan B: Principal Balance additional loan payment ($814.75) ; Loan B: Interest additional loan payment ($50.14) ; Loan C: Principal Balance additional loan payment ($27.43) ; Loan C: Interest additional loan payment ($50.03) ; ', '']
          })
          ),
 
@@ -968,7 +980,7 @@ class TestExpenseForecastMethods:
              'Loan B: Interest': [100, 0, 0],
              'Loan C: Principal Balance': [1000, 0, 0],
              'Loan C: Interest': [100, 0, 0],
-             'Memo': ['', '', '']
+             'Memo': ['', 'Loan A loan min payment ($50.0); Loan B loan min payment ($50.0); Loan C loan min payment ($50.0); Loan A: Principal Balance additional loan payment ($1000.0) ; Loan A: Interest additional loan payment ($50.27) ; Loan B: Principal Balance additional loan payment ($1000.0) ; Loan B: Interest additional loan payment ($50.14) ; Loan C: Principal Balance additional loan payment ($1000.0) ; Loan C: Interest additional loan payment ($50.03) ; ', '']
          })
          ),
 
@@ -1021,7 +1033,7 @@ class TestExpenseForecastMethods:
             pd.DataFrame({
                 'Date': ['20000101', '20000102', '20000103'],
                 'Checking': [1000, 900, 900],
-                'Memo': ['', '', '']
+                'Memo': ['', 'p5 txn 1/2/00 ($100.0) ; ', '']
             }),
             'p6 deferrable txn 1/2/00',
             None #deferred but never executed
@@ -1046,7 +1058,7 @@ class TestExpenseForecastMethods:
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103'],
                     'Checking': [1000, 900, 0],
-                    'Memo': ['', '', '']
+                    'Memo': ['', 'p5 txn 1/2/00 ($100.0) ; ', 'income 1/3/00 ($100.0) ; p6 deferrable txn 1/2/00 ($1000.0) ; ']
                 }),
                 'p6 deferrable txn 1/2/00 ($1000.0)',
                 '20000103'
@@ -1426,8 +1438,8 @@ class TestExpenseForecastMethods:
         MS = MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], [])
         MS.addAccountMilestone('test account milestone','Checking',0,100)
         MS.addMemoMilestone('test memo milestone','specific regex')
-        MS.addAccountMilestone('test account milestone', 'Checking', 0, 200)
-        MS.addMemoMilestone('test memo milestone', 'specific regex 2')
+        MS.addAccountMilestone('test account milestone 2', 'Checking', 0, 200)
+        MS.addMemoMilestone('test memo milestone 2', 'specific regex 2')
 
         AM = AccountMilestone.AccountMilestone('test account milestone 2','Checking',0,100)
         MM = MemoMilestone.MemoMilestone('test memo milestone 2','other specific regex')
@@ -1475,8 +1487,8 @@ class TestExpenseForecastMethods:
 
         A = AccountSet.AccountSet(checking_acct_list(2000) + credit_acct_list(100,100,0.01) + non_trivial_loan('test loan',100,0,0.01))
         B = BudgetSet.BudgetSet(
-            [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'p1 daily txn 1/2/00', False, False),
-             BudgetItem.BudgetItem('20000102', '20000102', 2, 'once', 100, 'p2 daily txn 1/2/00', False, False),
+            [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'specific regex', False, False),
+             BudgetItem.BudgetItem('20000102', '20000102', 2, 'once', 100, 'specific regex 2', False, False),
              BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', False, False)
              ]
         )
@@ -1528,6 +1540,31 @@ class TestExpenseForecastMethods:
                 comparable_E2_str_lines.append(l)
 
         assert comparable_E1_str_lines == comparable_E2_str_lines
+
+        #initialize w account rows in reverse order for coverage
+        account_set_df = pd.read_excel(fname, sheet_name='AccountSet')
+        account_set_df = account_set_df.iloc[::-1] #reverse order of rows
+        budget_set_df = pd.read_excel(fname, sheet_name='BudgetSet')
+        memo_rule_set_df = pd.read_excel(fname, sheet_name='MemoRuleSet')
+        choose_one_set_df = pd.read_excel(fname, sheet_name='ChooseOneSet')
+        account_milestones_df = pd.read_excel(fname, sheet_name='AccountMilestones')
+        memo_milestones_df = pd.read_excel(fname, sheet_name='MemoMilestones')
+        composite_account_milestones_df = pd.read_excel(fname, sheet_name='CompositeAccountMilestones')
+        composite_memo_milestones_df = pd.read_excel(fname, sheet_name='CompositeMemoMilestones')
+        config_df = pd.read_excel(fname, sheet_name='config')
+
+        with pd.ExcelWriter(fname, engine='openpyxl') as writer:
+            account_set_df.to_excel(writer, sheet_name='AccountSet',index=False)
+            budget_set_df.to_excel(writer, sheet_name='BudgetSet',index=False)
+            memo_rule_set_df.to_excel(writer, sheet_name='MemoRuleSet',index=False)
+            choose_one_set_df.to_excel(writer, sheet_name='ChooseOneSet',index=False)
+            account_milestones_df.to_excel(writer, sheet_name='AccountMilestones',index=False)
+            memo_milestones_df.to_excel(writer, sheet_name='MemoMilestones',index=False)
+            composite_account_milestones_df.to_excel(writer, sheet_name='CompositeAccountMilestones',index=False)
+            composite_memo_milestones_df.to_excel(writer, sheet_name='CompositeMemoMilestones', index=False)
+            config_df.to_excel(writer, sheet_name='config',index=False)
+
+        E1_reverse = ExpenseForecast.initialize_from_excel_file(fname)
 
     def test_forecast_longer_than_satisfice(self):
         #if satisfice fails on the second day of the forecast, there is weirdness
@@ -1699,7 +1736,7 @@ class TestExpenseForecastMethods:
             'Loan D: Interest': [0, 0, 0],
             'Loan E: Principal Balance': [25, 0, 0],
             'Loan E: Interest': [0, 0, 0],
-            'Memo': ['', '', '']
+            'Memo': ['', 'Loan A loan min payment ($50.0); Loan B loan min payment ($50.0); Loan C loan min payment ($50.0); Loan D loan min payment ($50.0); Loan E loan min payment ($50.0); ', '']
         })
         expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d') for x in
                                    expected_result_df.Date]
@@ -2124,7 +2161,7 @@ class TestExpenseForecastMethods:
 
         for i in range(0,len(account_milestone_names)):
             try:
-                assert E.account_milestone_results__list[i] == expected_milestone_dates[i]
+                assert E.account_milestone_results__list[i][1] == expected_milestone_dates[i]
             except Exception as e:
                 print(str(account_milestone_names[i]) + ' did not match expected milestone date')
                 print('Received: '+ str(E.account_milestone_results__list[i]))
@@ -2157,65 +2194,57 @@ class TestExpenseForecastMethods:
 
         for i in range(0,len(memo_milestone_names)):
             try:
-                assert E.memo_milestone_results__list[i] == expected_milestone_dates[i]
+                assert E.memo_milestone_results__list[i][1] == expected_milestone_dates[i]
             except Exception as e:
                 print(str(memo_milestone_names[i]) + ' did not match expected milestone date')
                 print('Received: '+ str(E.memo_milestone_results__list[i]))
                 print('Expected: ' + str(expected_milestone_dates[i]))
                 raise e
 
-    # @pytest.mark.parametrize(
-    #     'test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,composite_milestone_names,expected_milestone_dates',
-    #     [
-    #         (
-    #                 'test_p1_only_no_budget_items',
-    #                 AccountSet.AccountSet(checking_acct_list(0) + credit_acct_list(0, 0, 0.05)),
-    #                 BudgetSet.BudgetSet([]),
-    #                 MemoRuleSet.MemoRuleSet(match_p1_test_txn_checking_memo_rule_list()),
-    #                 '20000101',
-    #                 '20000103',
-    #                 MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
-    #                 pd.DataFrame({
-    #                     'Date': ['20000101', '20000102', '20000103'],
-    #                     'Checking': [0, 0, 0],
-    #                     'Credit: Curr Stmt Bal': [0, 0, 0],
-    #                     'Credit: Prev Stmt Bal': [0, 0, 0],
-    #                     'Memo': ['', '', '']
-    #                 })
-    #         ),
-    #     ])
-    # def test_evaluate_composite_milestone(self):
-    #     raise NotImplementedError #todo uncomment this when there is a legit test case
-    #
-    #     E = ExpenseForecast.ExpenseForecast(account_set, budget_set, memo_rule_set, start_date_YYYYMMDD, end_date_YYYYMMDD,
-    #                                         milestone_set)
-    #
-    #     assert len(composite_milestone_names) == len(expected_milestone_dates)
-    #
-    #     for i in range(0, len(composite_milestone_names)):
-    #         try:
-    #             assert E.composite_milestone_results__list[i] == expected_milestone_dates[i]
-    #         except Exception as e:
-    #             print(str(composite_milestone_names[i]) + ' did not match expected milestone date')
-    #             print('Received: ' + str(E.composite_milestone_results__list[i]))
-    #             print('Expected: ' + str(expected_milestone_dates[i]))
-    #             raise e
+    @pytest.mark.parametrize(
+        'test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,composite_milestone_names,expected_milestone_dates',
+        [
+            (
+                    'test composite milestone',
+                    AccountSet.AccountSet(checking_acct_list(10) + credit_acct_list(0, 0, 0.05)),
+                    BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000102','20000102',1,'once',10,'memo milestone')]),
+                    MemoRuleSet.MemoRuleSet([MemoRule.MemoRule('.*','Checking',None,1)]),
+                    '20000101',
+                    '20000103',
+                    MilestoneSet.MilestoneSet(
+                        AccountSet.AccountSet(checking_acct_list(10) + credit_acct_list(0, 0, 0.05)),
+                        BudgetSet.BudgetSet(
+                            [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'memo milestone')]),
+                        [AccountMilestone.AccountMilestone('test account milestone','Checking',0,0)],
+                        [MemoMilestone.MemoMilestone('test memo milestone', 'memo milestone')],
+                        [CompositeMilestone.CompositeMilestone('test composite milestone',
+                                                               [AccountMilestone.AccountMilestone('test account milestone','Checking',0,0)],
+                                                               [MemoMilestone.MemoMilestone('test memo milestone', 'memo milestone')])]),
+                    ['test composite milestone'],
+                    ['20000102']
+            ),
+        ])
+    def test_evaluate_composite_milestone(self,test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,composite_milestone_names,expected_milestone_dates):
+
+        E = ExpenseForecast.ExpenseForecast(account_set, budget_set, memo_rule_set, start_date_YYYYMMDD, end_date_YYYYMMDD,
+                                            milestone_set)
+        E.runForecast()
+        assert len(composite_milestone_names) == len(expected_milestone_dates)
+
+        for i in range(0, len(composite_milestone_names)):
+            try:
+                assert E.composite_milestone_results__list[i][1] == expected_milestone_dates[i]
+            except Exception as e:
+                print(str(composite_milestone_names[i]) + ' did not match expected milestone date')
+                print('Received: ' + str(E.composite_milestone_results__list[i]))
+                print('Expected: ' + str(expected_milestone_dates[i]))
+                raise e
 
 
 ###tests to implement
-#initialize from excel. prev tmt bal acct first in list and interest acct first in list (this does not happen programmatically)
 #initialize from json  prev tmt bal acct first in list and interest acct first in list (this does not happen programmatically) (this functionality is not yet supported)
-
-#all types of milestones in to_excel test ?
-
-#evaluate account milestone
-#evaluate composite milestone
-#evaluate memo milestone
-
-#add memo to tests
-
-#compute_forecast_difference tests?
 #loan payments when insufficient funds?
+#double check: i am not convinced that from_json is handling evaluated milestones correctly
 
 #SPEED OPTIMIZATION
 
@@ -2230,3 +2259,4 @@ class TestExpenseForecastMethods:
 #plot account type totals
 #plot all
 #plot marginal interest
+
