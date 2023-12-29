@@ -143,14 +143,40 @@ if __name__ == '__main__':
 
     milestone_set = MilestoneSet.MilestoneSet(account_set, budget_set, [], [], [])
 
-    E = ExpenseForecast.ExpenseForecast(account_set, budget_set, memo_rule_set, start_date_YYYYMMDD, end_date_YYYYMMDD,
-                                        milestone_set,True)
+    E = ExpenseForecast.ExpenseForecast(account_set, budget_set, memo_rule_set, start_date_YYYYMMDD, end_date_YYYYMMDD,milestone_set,True)
 
 
-    #E.runForecast()
     print(datetime.datetime.now())
-    profile.run("E.runForecast()")
+    E.runForecast()    #15.1 seconds
+    print(E.forecast_df.to_string())
+    #profile.run("E.runForecast()") #4 minutes. so code is about 16x slower when profiled in this example
     print(datetime.datetime.now())
+
+# 2023-12-28 23:45:35.864182
+# 0      Date Checking Loan A: Principal Balance Loan A: Interest Loan B: Principal Balance Loan B: Interest Loan C: Principal Balance Loan C: Interest                                                                                                                                                                                                                                                                                                                                                                                                                                                      Memo
+# 0  20000101   5000.0                    1000.0            100.0                    1000.0            100.0                    1000.0            100.0
+# 1  20000102   2950.0                     92.62              0.0                    185.25              0.0                    972.57              0.0  Loan A loan min payment ($50.0); Loan B loan min payment ($50.0); Loan C loan min payment ($50.0); Loan A: Principal Balance additional loan payment ($907.38) ; Loan A: Interest additional loan payment ($50.27) ; Loan B: Principal Balance additional loan payment ($814.75) ; Loan B: Interest additional loan payment ($50.14) ; Loan C: Principal Balance additional loan payment ($27.43) ; Loan C: Interest additional loan payment ($50.03) ;
+# 2  20000103   2950.0                     92.62             0.03                    185.25             0.03                    972.57             0.03
+# 2023-12-28 23:45:50.864258
+
+
+
+    #print(E.start_ts)
+    #print(E.end_ts)
+    #2 minutes 58 seconds w 20000101 -> 20000201
+
+
+
+    #methods that need to be broken apart
+    #computeOptimalForecast
+    #runForecast
+
+    ### primary offenders
+    #   8    0.022    0.003   53.759    6.720 ExpenseForecast.py:1624(calculateInterestAccrualsForDay)
+    #  28    0.010    0.000   27.895    0.996 ExpenseForecast.py:1897(sync_account_set_w_forecast_day)
+    # 2/1    0.005    0.002  103.103  103.103 ExpenseForecast.py:1932(computeOptimalForecast)
+    # 8/4    0.006    0.001   59.612   14.903 ExpenseForecast.py:745(executeTransactionsForDay)
+
     
 # /usr/local/bin/python3.8 /Users/hume/Github/expense_forecast/scratch2.py
 # 2023-12-28 22:21:48.313858
@@ -1566,11 +1592,6 @@ if __name__ == '__main__':
     
     
     
-
-    #print(E.forecast_df.to_string())
-    #print(E.start_ts)
-    #print(E.end_ts)
-    #2 minutes 58 seconds
 
     # A4 = AccountSet.AccountSet(checking() + cc(499, 501, 0.05, '20000102') + compound_loan_A_no_interest())
     # A4.to_excel('/Users/hume/Github/expense_forecast/A1.xlsx')

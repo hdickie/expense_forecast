@@ -2241,10 +2241,50 @@ class TestExpenseForecastMethods:
                 raise e
 
 
+    def test_runForecast_v2(self):
+        start_date_YYYYMMDD = '20000101'
+        end_date_YYYYMMDD = '20000103'
+
+        account_set = AccountSet.AccountSet([])
+        budget_set = BudgetSet.BudgetSet([])
+        memo_rule_set = MemoRuleSet.MemoRuleSet([])
+
+        account_set.createAccount(name='Checking',
+                                  balance=5000,
+                                  min_balance=0,
+                                  max_balance=float('Inf'),
+                                  account_type="checking")
+
+        account_set.createAccount('Loan A', 1100, 0, 9999, 'loan', '20000102', 'simple', 0.1, 'daily', 50, None, 1000,
+                                  100)
+        account_set.createAccount('Loan B', 1100, 0, 9999, 'loan', '20000102', 'simple', 0.05, 'daily', 50, None, 1000,
+                                  100)
+        account_set.createAccount('Loan C', 1100, 0, 9999, 'loan', '20000102', 'simple', 0.01, 'daily', 50, None, 1000,
+                                  100)
+
+        budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=7,
+                                 cadence='once', amount=1900, memo='additional loan payment',
+                                 deferrable=False,
+                                 partial_payment_allowed=True)
+
+        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to='ALL_LOANS',
+                                  transaction_priority=7)
+
+        milestone_set = MilestoneSet.MilestoneSet(account_set, budget_set, [], [], [])
+
+        E = ExpenseForecast.ExpenseForecast(account_set, budget_set, memo_rule_set, start_date_YYYYMMDD,
+                                            end_date_YYYYMMDD, milestone_set, True)
+        E.runForecast_v2()
+        print(E.forecast_df.to_string())
+        raise AssertionError
+
 ###tests to implement
 #initialize from json  prev tmt bal acct first in list and interest acct first in list (this does not happen programmatically) (this functionality is not yet supported)
 #loan payments when insufficient funds?
 #double check: i am not convinced that from_json is handling evaluated milestones correctly
+
+# I need test cases for what happens to skipped, deferred, confirmed, proposed in the event of a failed satisfice
+
 
 #SPEED OPTIMIZATION
 
