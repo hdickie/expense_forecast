@@ -1,5 +1,3 @@
-
-
 from colorama import init as colorama_init
 from colorama import Fore
 from colorama import Style
@@ -16,21 +14,25 @@ RESET_COLOR = f"{Style.RESET_ALL}"
 
 import logging
 
-color_log_format = '%(asctime)s - %(levelname)-8s - %(message)s'
-#color_log_format = '%(levelname)-8s - %(message)s'
-color_formatter = logging.Formatter(color_log_format)
-col_ch = logging.StreamHandler()
-col_ch.setFormatter(color_formatter)
-col_ch.setLevel(logging.DEBUG)
+def setup_logger(logger_name, log_file, level=logging.DEBUG):
+    l = logging.getLogger(logger_name)
+    formatter = logging.Formatter('%(asctime)s - %(levelname)-8s - %(message)s')
+    fileHandler = logging.FileHandler(log_file, mode='w')
+    fileHandler.setFormatter(formatter)
+    streamHandler = logging.StreamHandler()
+    streamHandler.setFormatter(formatter)
 
-col_logger = logging.getLogger(__name__)
-col_logger.propagate = False
-col_logger.handlers.clear()
-col_logger.addHandler(col_ch)
+    l.setLevel(level)
+    l.addHandler(fileHandler)
+    l.addHandler(streamHandler)
+    l.propagate = False
+    return l
+#
+# setup_logger('root','main.log')
+# col_logger = logging.getLogger('root')
 
-def log_in_color(color,level,msg,stack_depth=0):
-
-    left_prefix=str(stack_depth)
+def log_in_color(logger,color,level,msg,stack_depth=0):
+    left_prefix = str(stack_depth)
     left_prefix = left_prefix.ljust(stack_depth*4,' ') + ' '
 
     for line in str(msg).split('\n'):
@@ -51,15 +53,15 @@ def log_in_color(color,level,msg,stack_depth=0):
             line = BEGIN_CYAN + left_prefix + line + RESET_COLOR
 
         if level == 'debug':
-            col_logger.debug(line)
+            logger.debug(line)
         elif level == 'warning':
-            col_logger.warning(line)
+            logger.warning(line)
         elif level == 'error':
-            col_logger.error(line)
+            logger.error(line)
         elif level == 'info':
-            col_logger.info(line)
+            logger.info(line)
         elif level == 'critical':
-            col_logger.critical(line)
+            logger.critical(line)
         else:
             print(line)
 

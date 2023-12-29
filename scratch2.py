@@ -9,31 +9,12 @@ import ExpenseForecast
 import pandas as pd
 import logging
 import datetime
-
+#import logging_tree
+from log_methods import setup_logger
 import profile
 
-log_format = '%(asctime)s - %(levelname)-8s - %(message)s'
-l_formatter = logging.Formatter(log_format)
 
-l_stream = logging.StreamHandler()
-l_stream.setFormatter(l_formatter)
-#l_stream.setLevel(logging.INFO)
-l_stream.setLevel(logging.CRITICAL)
-
-l_file = logging.FileHandler('scratch__'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')+'.log')
-l_file.setFormatter(l_formatter)
-#l_file.setLevel(logging.INFO)
-l_file.setLevel(logging.CRITICAL)
-
-
-logger = logging.getLogger(__name__)
-#logger.setLevel(logging.INFO)
-logger.setLevel(logging.CRITICAL)
-logger.propagate = False
-logger.handlers.clear()
-logger.addHandler(l_stream)
-logger.addHandler(l_file)
-
+logger = setup_logger('scratch', 'scratch.log', level=logging.DEBUG)
 
 def compound_loan_A():
     A = AccountSet.AccountSet([])
@@ -117,6 +98,45 @@ def three_loans__p_1000__i_000__apr_01___p_1500__i_000__apr_001___p_2500__i_000_
     return AccountSet.AccountSet(checking() + compound_loan_A_no_interest() + compound_loan_B_no_interest() + compound_loan_C_no_interest())
 
 if __name__ == '__main__':
+    # start_date_YYYYMMDD = '20000101'
+    # end_date_YYYYMMDD = '20000103'
+    #
+    # account_set = AccountSet.AccountSet([])
+    # budget_set = BudgetSet.BudgetSet([])
+    # memo_rule_set = MemoRuleSet.MemoRuleSet([])
+    #
+    # account_set.createAccount(name='Checking',
+    #                           balance=5000,
+    #                           min_balance=0,
+    #                           max_balance=float('Inf'),
+    #                           account_type="checking")
+    #
+    # account_set.createAccount('Loan A',1100,0,9999,'loan','20000102','simple',0.1,'daily',50,None,1000,100)
+    # account_set.createAccount('Loan B', 1100, 0, 9999, 'loan', '20000102', 'simple', 0.05, 'daily', 50, None, 1000, 100)
+    # account_set.createAccount('Loan C', 1100, 0, 9999, 'loan', '20000102', 'simple', 0.01, 'daily', 50, None, 1000, 100)
+    #
+    # budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=7,
+    #                          cadence='once', amount=1900, memo='additional loan payment',
+    #                          deferrable=False,
+    #                          partial_payment_allowed=True)
+    #
+    # memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to='ALL_LOANS', transaction_priority=7)
+    #
+    # milestone_set = MilestoneSet.MilestoneSet(account_set, budget_set, [], [], [])
+    #
+    # E = ExpenseForecast.ExpenseForecast(account_set, budget_set, memo_rule_set, start_date_YYYYMMDD, end_date_YYYYMMDD,milestone_set,True)
+    #
+    #
+    # print(datetime.datetime.now())
+    # E.runForecast()    #15.1 seconds
+    # print(E.forecast_df.to_string())
+    # #profile.run("E.runForecast()") #4 minutes. so code is about 16x slower when profiled in this example
+    # print(datetime.datetime.now())
+
+    #print('logger:')
+    #print(logger)
+    #logging_tree.printout()
+
     start_date_YYYYMMDD = '20000101'
     end_date_YYYYMMDD = '20000103'
 
@@ -130,27 +150,28 @@ if __name__ == '__main__':
                               max_balance=float('Inf'),
                               account_type="checking")
 
-    account_set.createAccount('Loan A',1100,0,9999,'loan','20000102','simple',0.1,'daily',50,None,1000,100)
-    account_set.createAccount('Loan B', 1100, 0, 9999, 'loan', '20000102', 'simple', 0.05, 'daily', 50, None, 1000, 100)
-    account_set.createAccount('Loan C', 1100, 0, 9999, 'loan', '20000102', 'simple', 0.01, 'daily', 50, None, 1000, 100)
+    account_set.createAccount('Loan A', 1100, 0, 9999, 'loan', '20000102', 'simple', 0.1, 'daily', 50, None, 1000,
+                              100)
+    account_set.createAccount('Loan B', 1100, 0, 9999, 'loan', '20000102', 'simple', 0.05, 'daily', 50, None, 1000,
+                              100)
+    account_set.createAccount('Loan C', 1100, 0, 9999, 'loan', '20000102', 'simple', 0.01, 'daily', 50, None, 1000,
+                              100)
 
     budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=7,
                              cadence='once', amount=1900, memo='additional loan payment',
                              deferrable=False,
                              partial_payment_allowed=True)
 
-    memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to='ALL_LOANS', transaction_priority=7)
+    memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to='ALL_LOANS',
+                              transaction_priority=7)
 
     milestone_set = MilestoneSet.MilestoneSet(account_set, budget_set, [], [], [])
 
-    E = ExpenseForecast.ExpenseForecast(account_set, budget_set, memo_rule_set, start_date_YYYYMMDD, end_date_YYYYMMDD,milestone_set,True)
-
-
-    print(datetime.datetime.now())
-    E.runForecast()    #15.1 seconds
+    E = ExpenseForecast.ExpenseForecast(account_set, budget_set, memo_rule_set, start_date_YYYYMMDD,
+                                        end_date_YYYYMMDD, milestone_set, True)
+    E.runForecast_v2()
     print(E.forecast_df.to_string())
-    #profile.run("E.runForecast()") #4 minutes. so code is about 16x slower when profiled in this example
-    print(datetime.datetime.now())
+    raise AssertionError
 
 # 2023-12-28 23:45:35.864182
 # 0      Date Checking Loan A: Principal Balance Loan A: Interest Loan B: Principal Balance Loan B: Interest Loan C: Principal Balance Loan C: Interest                                                                                                                                                                                                                                                                                                                                                                                                                                                      Memo

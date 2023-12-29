@@ -1,8 +1,12 @@
 import BudgetItem, pandas as pd, datetime
-
 from log_methods import log_in_color
 
 from generate_date_sequence import generate_date_sequence
+import logging
+
+from log_methods import setup_logger
+logger = setup_logger('BudgetSet', 'BudgetSet.log', level=logging.WARNING)
+
 
 class BudgetSet:
 
@@ -91,14 +95,14 @@ class BudgetSet:
         :param num_days:
         :return:
         """
-        # log_in_color('green', 'debug','ENTER getBudgetSchedule(start_date_YYYYMMDD='+str(start_date_YYYYMMDD)+',end_date_YYYYMMDD='+str(end_date_YYYYMMDD)+')', 0)
-        # log_in_color('green', 'debug','self.budget_items:', 0)
+        # log_in_color(logger,'green', 'debug','ENTER getBudgetSchedule(start_date_YYYYMMDD='+str(start_date_YYYYMMDD)+',end_date_YYYYMMDD='+str(end_date_YYYYMMDD)+')', 0)
+        # log_in_color(logger,'green', 'debug','self.budget_items:', 0)
         # for b in self.budget_items:
-        #    log_in_color('green', 'debug', '\n'+str(b), 0)
+        #    log_in_color(logger,'green', 'debug', '\n'+str(b), 0)
 
-        # log_in_color('green', 'debug', 'getBudgetSchedule():')
-        # log_in_color('green', 'debug', 'self.budget_items:')
-        # log_in_color('green', 'debug', self.budget_items)
+        # log_in_color(logger,'green', 'debug', 'getBudgetSchedule():')
+        # log_in_color(logger,'green', 'debug', 'self.budget_items:')
+        # log_in_color(logger,'green', 'debug', self.budget_items)
 
         current_budget_schedule = pd.DataFrame({'Date':[],'Priority':[],'Amount':[],'Memo':[],'Deferrable':[],'Partial_Payment_Allowed':[]})
         end_date = datetime.datetime.strptime(str(end_date_YYYYMMDD),'%Y%m%d')
@@ -123,9 +127,9 @@ class BudgetSet:
         current_budget_schedule.sort_values(inplace=True,axis=0,by="Date")
         current_budget_schedule.reset_index(inplace=True,drop=True)
 
-        # log_in_color('green', 'debug', 'current_budget_schedule:')
-        # log_in_color('green', 'debug', current_budget_schedule.to_string())
-        # log_in_color('green', 'debug', 'EXIT getBudgetSchedule(start_date_YYYYMMDD=' + str(start_date_YYYYMMDD) + ',end_date_YYYYMMDD=' + str(end_date_YYYYMMDD) + ')', 0)
+        # log_in_color(logger,'green', 'debug', 'current_budget_schedule:')
+        # log_in_color(logger,'green', 'debug', current_budget_schedule.to_string())
+        # log_in_color(logger,'green', 'debug', 'EXIT getBudgetSchedule(start_date_YYYYMMDD=' + str(start_date_YYYYMMDD) + ',end_date_YYYYMMDD=' + str(end_date_YYYYMMDD) + ')', 0)
         return current_budget_schedule
 
     def addBudgetItem(self,
@@ -167,7 +171,7 @@ class BudgetSet:
         if cadence.lower() == 'once':
             assert start_date_YYYYMMDD == end_date_YYYYMMDD
 
-        log_in_color('green', 'info', 'addBudgetItem(priority='+str(priority)+',cadence='+str(cadence)+',memo='+str(memo)+',start_date_YYYYMMDD='+str(start_date_YYYYMMDD)+',end_date_YYYYMMDD='+str(end_date_YYYYMMDD)+')')
+        log_in_color(logger,'green', 'info', 'addBudgetItem(priority='+str(priority)+',cadence='+str(cadence)+',memo='+str(memo)+',start_date_YYYYMMDD='+str(start_date_YYYYMMDD)+',end_date_YYYYMMDD='+str(end_date_YYYYMMDD)+')')
 
         # print('BUDGET SET TEST 1')
         # print(memo)

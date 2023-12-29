@@ -3,13 +3,12 @@ import copy
 from log_methods import log_in_color
 import logging
 import numpy as np
-import datetime
 import BudgetSet #this could be refactored out, and should be in terms of independent dependencies and clear organization, but it works
-import BudgetItem
 
-logger = logging.getLogger()
-#logger.setLevel(logging.DEBUG)
-logger.setLevel(logging.CRITICAL)
+from log_methods import setup_logger
+
+logger = setup_logger('AccountSet','AccountSet.log',logging.WARNING)
+
 
 class AccountSet:
 
@@ -319,7 +318,7 @@ class AccountSet:
             log_string+=',billing_start_date_YYYYMMDD='+str(billing_start_date_YYYYMMDD)+',apr='+str(apr)+',principal_balance='+str(principal_balance)+',accrued_interest='+str(accrued_interest)
 
         log_string+=')'
-        log_in_color('green', 'info',log_string, 0)
+        log_in_color(logger,'green', 'info',log_string, 0)
 
         if billing_start_date_YYYYMMDD is None:
             billing_start_date_YYYYMMDD = "None"
@@ -434,7 +433,7 @@ class AccountSet:
         else: raise NotImplementedError
 
     def getBalances(self):
-        #log_in_color('magenta','debug','ENTER getBalances()')
+        #log_in_color(logger,'magenta','debug','ENTER getBalances()')
         balances_dict = {}
         for i in range(0,len(self.accounts)):
             a = self.accounts[i]
@@ -457,8 +456,8 @@ class AccountSet:
                 pass #this is handled in the principal balance case
             else: raise ValueError('Account Type not recognized: ' +str(a.account_type) )
 
-        # log_in_color('magenta', 'debug', balances_dict)
-        # log_in_color('magenta', 'debug', 'EXIT getBalances()')
+        # log_in_color(logger,'magenta', 'debug', balances_dict)
+        # log_in_color(logger,'magenta', 'debug', 'EXIT getBalances()')
         return balances_dict
 
     def executeTransaction(self, Account_From, Account_To, Amount,income_flag=False):
@@ -494,14 +493,14 @@ class AccountSet:
             Account_To = 'None'
             AT_Account_Type = 'None'
 
-        #log_in_color('green', 'debug','executeTransaction(Account_From='+Account_From+', Account_To='+Account_To+', Amount='+debug_print_Amount+')')
+        #log_in_color(logger,'green', 'debug','executeTransaction(Account_From='+Account_From+', Account_To='+Account_To+', Amount='+debug_print_Amount+')')
         #print('executeTransaction(Account_From=' + str(Account_From) + ', Account_To=' + str(Account_To) + ', Amount=' + str(debug_print_Amount) + ')')
 
         before_txn_total_available_funds = 0
         available_funds = self.getBalances()
         starting_available_funds = copy.deepcopy(available_funds)
 
-        log_in_color('magenta', 'debug', 'available_funds:'+str(available_funds))
+        log_in_color(logger,'magenta', 'debug', 'available_funds:'+str(available_funds))
 
         for a in available_funds.keys():
             before_txn_total_available_funds += available_funds[a]
@@ -560,11 +559,11 @@ class AccountSet:
                 try:
                     assert self.accounts[account_from_index].min_balance <= balance_after_proposed_transaction <= self.accounts[account_from_index].max_balance
                 except Exception as e:
-                    log_in_color('red', 'error', '')
-                    log_in_color('red','error','transaction violated Account_From boundaries:')
-                    log_in_color('red', 'error', str(e))
-                    log_in_color('red', 'error', 'Account_From:\n'+str(self.accounts[account_from_index]))
-                    log_in_color('red', 'error', 'Amount:'+str(Amount))
+                    log_in_color(logger,'red', 'error', '')
+                    log_in_color(logger,'red','error','transaction violated Account_From boundaries:')
+                    log_in_color(logger,'red', 'error', str(e))
+                    log_in_color(logger,'red', 'error', 'Account_From:\n'+str(self.accounts[account_from_index]))
+                    log_in_color(logger,'red', 'error', 'Amount:'+str(Amount))
                     boundary_error_ind = True
 
                 self.accounts[account_from_index].balance -= abs(Amount)
@@ -574,17 +573,17 @@ class AccountSet:
                 balance_after_proposed_transaction = self.getBalances()[self.accounts[account_from_index].name.split(':')[0]] - abs(Amount)
                 #this check assumes that both prev and curr accounts for credit have the same bounds
 
-                # log_in_color('magenta', 'debug', 'account min:' + str(self.accounts[account_from_index].min_balance), 3)
-                # log_in_color('magenta', 'debug', 'account max:' + str(self.accounts[account_from_index].max_balance), 3)
-                # log_in_color('magenta', 'debug', 'balance_after_proposed_transaction:' + str(balance_after_proposed_transaction), 3)
+                # log_in_color(logger,'magenta', 'debug', 'account min:' + str(self.accounts[account_from_index].min_balance), 3)
+                # log_in_color(logger,'magenta', 'debug', 'account max:' + str(self.accounts[account_from_index].max_balance), 3)
+                # log_in_color(logger,'magenta', 'debug', 'balance_after_proposed_transaction:' + str(balance_after_proposed_transaction), 3)
 
                 try:
                     assert self.accounts[account_from_index].min_balance <= balance_after_proposed_transaction <= self.accounts[account_from_index].max_balance
                 except Exception as e:
-                    log_in_color('red', 'error', 'transaction violated Account_From boundaries:')
-                    log_in_color('red', 'error', str(e))
-                    log_in_color('red', 'error', 'Account_From:\n' + str(self.accounts[account_from_index]))
-                    log_in_color('red', 'error', 'Amount:' + str(Amount))
+                    log_in_color(logger,'red', 'error', 'transaction violated Account_From boundaries:')
+                    log_in_color(logger,'red', 'error', str(e))
+                    log_in_color(logger,'red', 'error', 'Account_From:\n' + str(self.accounts[account_from_index]))
+                    log_in_color(logger,'red', 'error', 'Amount:' + str(Amount))
                     boundary_error_ind = True
 
                 self.accounts[account_from_index].balance += abs(Amount)
@@ -592,7 +591,7 @@ class AccountSet:
             else: raise NotImplementedError("account type was: "+str(AF_Account_Type)) #from types other than checking or credit not yet implemented
 
             if not boundary_error_ind:
-                log_in_color('magenta', 'debug', 'Paid ' + str(Amount) + ' from ' + Account_From, 0)
+                log_in_color(logger,'magenta', 'debug', 'Paid ' + str(Amount) + ' from ' + Account_From, 0)
 
 
 
@@ -601,7 +600,7 @@ class AccountSet:
 
                 self.accounts[account_to_index].balance += abs(Amount)
                 self.accounts[account_to_index].balance = round(self.accounts[account_to_index].balance,2)
-                log_in_color('magenta', 'debug', 'Paid ' + str(Amount) + ' to ' + Account_To, 0)
+                log_in_color(logger,'magenta', 'debug', 'Paid ' + str(Amount) + ' to ' + Account_To, 0)
             elif AT_Account_Type == 'credit' or AT_Account_Type == 'loan':
 
                 debt_payment_ind = (AT_Account_Type.lower() == 'loan')
@@ -613,29 +612,29 @@ class AccountSet:
                     #print('assert '+str(self.accounts[account_to_index].min_balance)+' <= '+str(balance_after_proposed_transaction)+' <= '+str(self.accounts[account_to_index].max_balance))
                     assert self.accounts[account_to_index].min_balance <= balance_after_proposed_transaction <= self.accounts[account_to_index].max_balance
                 except Exception as e:
-                    log_in_color('red', 'error', '')
-                    log_in_color('red','error','transaction violated Account_To boundaries:')
-                    log_in_color('red', 'error', str(e))
-                    log_in_color('red', 'error', 'Account_To:\n'+str(self.accounts[account_to_index]))
-                    log_in_color('red', 'error', 'Amount:'+str(Amount))
+                    log_in_color(logger,'red', 'error', '')
+                    log_in_color(logger,'red','error','transaction violated Account_To boundaries:')
+                    log_in_color(logger,'red', 'error', str(e))
+                    log_in_color(logger,'red', 'error', 'Account_To:\n'+str(self.accounts[account_to_index]))
+                    log_in_color(logger,'red', 'error', 'Amount:'+str(Amount))
                     boundary_error_ind = True
 
-                # log_in_color('magenta', 'debug', 'account min:' + str(self.accounts[account_to_index].min_balance), 3)
-                # log_in_color('magenta', 'debug', 'account max:' + str(self.accounts[account_to_index].max_balance), 3)
-                # log_in_color('magenta', 'debug', 'balance_after_proposed_transaction:' + str(balance_after_proposed_transaction), 3)
+                # log_in_color(logger,'magenta', 'debug', 'account min:' + str(self.accounts[account_to_index].min_balance), 3)
+                # log_in_color(logger,'magenta', 'debug', 'account max:' + str(self.accounts[account_to_index].max_balance), 3)
+                # log_in_color(logger,'magenta', 'debug', 'balance_after_proposed_transaction:' + str(balance_after_proposed_transaction), 3)
 
                 #if the amount we are playing on credit card is more than the previous statement balance
                 if abs(Amount) >= self.accounts[account_to_index+1].balance:
                     remaining_to_pay = round(abs(Amount) - self.accounts[account_to_index + 1].balance,2)
-                    log_in_color('magenta', 'debug','Paid ' + str(self.accounts[account_to_index + 1].balance) + ' to ' + str(self.accounts[account_to_index + 1].name), 0)
+                    log_in_color(logger,'magenta', 'debug','Paid ' + str(self.accounts[account_to_index + 1].balance) + ' to ' + str(self.accounts[account_to_index + 1].name), 0)
                     self.accounts[account_to_index + 1].balance = 0
 
                     #this has the potential to overpay, but we consider that upstreams problem
                     self.accounts[account_to_index].balance -= remaining_to_pay
                     self.accounts[account_to_index].balance = round(self.accounts[account_to_index].balance,2)
-                    log_in_color('magenta', 'debug', 'Paid ' + str(remaining_to_pay) + ' to ' + self.accounts[account_to_index].name, 0)
+                    log_in_color(logger,'magenta', 'debug', 'Paid ' + str(remaining_to_pay) + ' to ' + self.accounts[account_to_index].name, 0)
                 else: #pay down the previous statement balance
-                    log_in_color('magenta', 'debug', 'Paid ' + str(Amount) + ' to ' + str(self.accounts[account_to_index + 1].name), 0)
+                    log_in_color(logger,'magenta', 'debug', 'Paid ' + str(Amount) + ' to ' + str(self.accounts[account_to_index + 1].name), 0)
                     self.accounts[account_to_index + 1].balance -= Amount
                     self.accounts[account_to_index + 1].balance = round(self.accounts[account_to_index + 1].balance,2)
             else: raise NotImplementedError("account type was: "+str(AF_Account_Type)) #from types other than checking or credit not yet implemented
@@ -676,7 +675,7 @@ class AccountSet:
         equivalent_exchange_error_text += 'Amount:' + str(Amount) +'\n'
         equivalent_exchange_error_text += 'empirical_delta:' + str(empirical_delta) +'\n'
         if equivalent_exchange_error_ind:
-            log_in_color('red', 'error', equivalent_exchange_error_text, 0)
+            log_in_color(logger,'red', 'error', equivalent_exchange_error_text, 0)
             raise ValueError("Funds not accounted for in AccountSet::executeTransaction()") # Funds not accounted for
 
 
@@ -812,12 +811,12 @@ class AccountSet:
         for account_index, account_row in self.getAccounts().iterrows():
             bal_string += '$' + str(account_row.Balance) + ' '
 
-        log_in_color('green','debug','ENTER allocate_additional_loan_payments(amount='+str(amount)+') '+bal_string)
+        log_in_color(logger,'green','debug','ENTER allocate_additional_loan_payments(amount='+str(amount)+') '+bal_string)
 
         row_sel_vec = [ x for x in ( self.getAccounts().Account_Type == 'checking' ) ]
         checking_acct_name = self.getAccounts()[row_sel_vec].Name[0] #we use this waaay later during executeTransaction
         if self.getAccounts()[row_sel_vec].Balance.iat[0] < amount:
-            log_in_color('green', 'debug', 'input amount is greater than available balance. Reducing amount.')
+            log_in_color(logger,'green', 'debug', 'input amount is greater than available balance. Reducing amount.')
             amount = self.getAccounts().loc[row_sel_vec,:].Balance.iat[0]
 
         date_string_YYYYMMDD = '20000101' #this method needs to be refactored
@@ -831,18 +830,18 @@ class AccountSet:
         principal_accts_df['Marginal Interest Rank'] = principal_accts_df['Marginal Interest Amount'].rank(method='dense', ascending=False)
 
         number_of_phase_space_regions = max(principal_accts_df['Marginal Interest Rank'])
-        # log_in_color('yellow', 'debug','Explanation of the loan payment algorithm:')
-        # log_in_color('yellow', 'debug', 'FACT 1: The optimal loan payment pays the loan with the highest marginal interest first.')
-        # log_in_color('yellow', 'debug','FACT 2: If two loans have different balances and APRs, but will accrue the same amount of additional interest the next day, then it is at this point that we begin to split our next dollar between the two loans in proportion to the APR.')
-        # log_in_color('yellow', 'debug','We would know that our allocation is optimal when the marginal interest for both loans stays the same.')
-        # log_in_color('yellow', 'debug','Then we will reach a point where we are splitting our next dollar between two loans, then three... (assuming there are this many loans)')
-        # log_in_color('yellow', 'debug','This algorithm finds these points to allocate payment.')
-        # log_in_color('yellow', 'debug', 'If you plot this on a graph, the behavior changes when a new loan joins the group that is being paid proportionally. The space between these points is referred to as a phase space region.')
-        # log_in_color('yellow', 'debug',
+        # log_in_color(logger,'yellow', 'debug','Explanation of the loan payment algorithm:')
+        # log_in_color(logger,'yellow', 'debug', 'FACT 1: The optimal loan payment pays the loan with the highest marginal interest first.')
+        # log_in_color(logger,'yellow', 'debug','FACT 2: If two loans have different balances and APRs, but will accrue the same amount of additional interest the next day, then it is at this point that we begin to split our next dollar between the two loans in proportion to the APR.')
+        # log_in_color(logger,'yellow', 'debug','We would know that our allocation is optimal when the marginal interest for both loans stays the same.')
+        # log_in_color(logger,'yellow', 'debug','Then we will reach a point where we are splitting our next dollar between two loans, then three... (assuming there are this many loans)')
+        # log_in_color(logger,'yellow', 'debug','This algorithm finds these points to allocate payment.')
+        # log_in_color(logger,'yellow', 'debug', 'If you plot this on a graph, the behavior changes when a new loan joins the group that is being paid proportionally. The space between these points is referred to as a phase space region.')
+        # log_in_color(logger,'yellow', 'debug',
         #              'The following table shows the order in which loans will be paid. Marginal Interest Rank 1 will be paid until the Marginal Interest Amount is equal to the account with Marginal Interest Rank 2, etc.')
         # print(principal_accts_df.loc[:,('Name','Balance','Marginal Interest Amount','Marginal Interest Rank')].to_string())
 
-        #log_in_color('yellow', 'debug', 'number_of_phase_space_regions:'+str(number_of_phase_space_regions))
+        #log_in_color(logger,'yellow', 'debug', 'number_of_phase_space_regions:'+str(number_of_phase_space_regions))
         # print('number_of_phase_space_regions:'+str(number_of_phase_space_regions))
 
         all_account_names__1 = [x.split(':') for x in principal_accts_df.Name]
@@ -857,7 +856,7 @@ class AccountSet:
             if amount == 0:
                 break
 
-            log_in_color('yellow', 'debug','Phase space region index: '+str(i))
+            log_in_color(logger,'yellow', 'debug','Phase space region index: '+str(i))
             A = account_set.getAccounts()
             #print('A:\n')
             #print(A.to_string())
@@ -1023,9 +1022,9 @@ class AccountSet:
             #final_budget_items.append(BudgetItem.BudgetItem(date_string_YYYYMMDD, date_string_YYYYMMDD, 7, 'once', payment_dict[key], False, key, ))
 
 
-        #log_in_color('green', 'debug', 'final_txns:')
-        #log_in_color('green', 'debug', final_txns)
-        log_in_color('green', 'debug', 'EXIT allocate_additional_loan_payments(amount='+str(amount)+')')
+        #log_in_color(logger,'green', 'debug', 'final_txns:')
+        #log_in_color(logger,'green', 'debug', final_txns)
+        log_in_color(logger,'green', 'debug', 'EXIT allocate_additional_loan_payments(amount='+str(amount)+')')
         return final_txns
 
 

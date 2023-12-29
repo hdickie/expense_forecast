@@ -2,6 +2,11 @@
 import MemoRule, pandas as pd
 import re
 from log_methods import log_in_color
+import logging
+
+from log_methods import setup_logger
+logger = setup_logger('MemoRuleSet', 'MemoRuleSet.log', level=logging.WARNING)
+
 
 class MemoRuleSet:
 
@@ -44,7 +49,7 @@ class MemoRuleSet:
         return str(self)
 
     def findMatchingMemoRule(self, txn_memo,transaction_priority):
-        log_in_color('yellow','debug','ENTER findMatchingMemoRule')
+        log_in_color(logger,'yellow','debug','ENTER findMatchingMemoRule')
 
         memo_df = self.getMemoRules()
         memo_rules_of_matching_priority = memo_df[memo_df.Transaction_Priority == transaction_priority]
@@ -64,19 +69,19 @@ class MemoRuleSet:
         try:
             assert sum(match_vec) != 0  # if error, no matches found
         except Exception as e:
-            log_in_color('yellow', 'error', 'ERROR')
-            log_in_color('yellow', 'error', 'No matches found for memo:'+str(txn_memo))
-            log_in_color('yellow', 'error', 'Memo Set:')
-            log_in_color('yellow', 'error',self)
+            log_in_color(logger,'yellow', 'error', 'ERROR')
+            log_in_color(logger,'yellow', 'error', 'No matches found for memo:'+str(txn_memo))
+            log_in_color(logger,'yellow', 'error', 'Memo Set:')
+            log_in_color(logger,'yellow', 'error',self)
             raise ValueError
 
         try:
             assert sum(match_vec) == 1  # if error, multiple matches found
         except Exception as e:
-            log_in_color('yellow', 'error', 'ERROR')
-            log_in_color('yellow', 'error', 'Multiple matches found for memo:'+str(txn_memo))
-            log_in_color('yellow', 'error', 'match vector:')
-            log_in_color('yellow', 'error', match_vec)
+            log_in_color(logger,'yellow', 'error', 'ERROR')
+            log_in_color(logger,'yellow', 'error', 'Multiple matches found for memo:'+str(txn_memo))
+            log_in_color(logger,'yellow', 'error', 'match vector:')
+            log_in_color(logger,'yellow', 'error', match_vec)
 
             raise ValueError
 
@@ -87,9 +92,9 @@ class MemoRuleSet:
                                  matching_memo_rule_row.Account_To.iat[0],
                                  matching_memo_rule_row.Transaction_Priority.iat[0])
 
-        log_in_color('yellow', 'debug', 'Found matching memo rule: '+str(matching_memo_rule_row.Account_From.iat[0])+' -> '+str(matching_memo_rule_row.Account_To.iat[0]))
+        log_in_color(logger,'yellow', 'debug', 'Found matching memo rule: '+str(matching_memo_rule_row.Account_From.iat[0])+' -> '+str(matching_memo_rule_row.Account_To.iat[0]))
 
-        log_in_color('yellow', 'debug', 'EXIT findMatchingMemoRule')
+        log_in_color(logger,'yellow', 'debug', 'EXIT findMatchingMemoRule')
         return MemoRuleSet([relevant_memo])
 
 
@@ -109,7 +114,7 @@ class MemoRuleSet:
         | F3 add a BudgetItem with a memo and priority that matches a BudgetItem already in self.budgetItems (different from and to) #todo refactor MemoRuleSet.addMemoRule() doctest F3 to use _F3 label
 
         """
-        log_in_color('green','info','addMemoRule(memo_regex='+str(memo_regex)+',account_from='+str(account_from)+',account_to='+str(account_to)+',transaction_priority='+str(transaction_priority)+')')
+        log_in_color(logger,'green','info','addMemoRule(memo_regex='+str(memo_regex)+',account_from='+str(account_from)+',account_to='+str(account_to)+',transaction_priority='+str(transaction_priority)+')')
 
         current_memo_rules_df = self.getMemoRules()
         memo_rules_of_same_priority_df = current_memo_rules_df.loc[current_memo_rules_df.Transaction_Priority == transaction_priority,:]
