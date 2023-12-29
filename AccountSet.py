@@ -8,7 +8,8 @@ import BudgetSet #this could be refactored out, and should be in terms of indepe
 import BudgetItem
 
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
+#logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.CRITICAL)
 
 class AccountSet:
 

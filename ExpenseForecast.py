@@ -31,12 +31,13 @@ l_formatter = logging.Formatter(log_format)
 
 l_stream = logging.StreamHandler()
 l_stream.setFormatter(l_formatter)
-l_stream.setLevel(logging.DEBUG)
+#l_stream.setLevel(logging.DEBUG)
+l_stream.setLevel(logging.CRITICAL)
 
 l_file = logging.FileHandler('ExpenseForecast__'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')+'.log')
 l_file.setFormatter(l_formatter)
-l_file.setLevel(logging.DEBUG)
-
+#l_file.setLevel(logging.DEBUG)
+l_file.setLevel(logging.CRITICAL)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
