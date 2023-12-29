@@ -2362,19 +2362,19 @@ class ExpenseForecast:
     #propagate into the future and raise exception if account boundaries are violated
     def propagateTransactionsIntoTheFuture(self, account_set_before_p2_plus_txn, forecast_df, date_string_YYYYMMDD):
 
-        log_in_color(logger,'blue','info','propagateTransactionsIntoTheFuture('+str(date_string_YYYYMMDD)+')')
-        log_in_color(logger,'blue','info','account_set_before_p2_plus_txn:')
-        log_in_color(logger,'blue','info',account_set_before_p2_plus_txn.getAccounts().to_string())
+        log_in_color(logger,'blue','debug','propagateTransactionsIntoTheFuture('+str(date_string_YYYYMMDD)+')')
+        log_in_color(logger,'blue','debug','account_set_before_p2_plus_txn:')
+        log_in_color(logger,'blue','debug',account_set_before_p2_plus_txn.getAccounts().iloc[:,0:2].T.to_string())
 
 
         account_set_after_p2_plus_txn = self.sync_account_set_w_forecast_day(copy.deepcopy(account_set_before_p2_plus_txn), forecast_df, date_string_YYYYMMDD)
-        log_in_color(logger,'blue','info','account_set_after_p2_plus_txn:')
-        log_in_color(logger,'blue', 'info', account_set_after_p2_plus_txn.getAccounts().to_string())
+        log_in_color(logger,'blue','debug','account_set_after_p2_plus_txn:')
+        log_in_color(logger,'blue', 'debug', account_set_after_p2_plus_txn.getAccounts().iloc[:,0:2].T.to_string())
 
         # we apply the delta to all future rows
         account_deltas = account_set_after_p2_plus_txn.getAccounts().Balance - account_set_before_p2_plus_txn.getAccounts().Balance
-        log_in_color(logger,'blue','info','account_deltas:')
-        log_in_color(logger,'blue','info',account_deltas)
+        log_in_color(logger,'blue','debug','account_deltas:')
+        log_in_color(logger,'blue','debug',account_deltas)
 
         i = 0
         for account_index, account_row in account_set_after_p2_plus_txn.getAccounts().iterrows():
@@ -2385,13 +2385,13 @@ class ExpenseForecast:
                 i += 1
                 continue
 
-            row_sel_vec = (forecast_df.Date > date_string_YYYYMMDD)
+            row_sel_vec = (forecast_df.Date > date_string_YYYYMMDD) #only future rows
             col_sel_vec = (forecast_df.columns == account_row.Name)
 
             forecast_df.loc[row_sel_vec, col_sel_vec] = forecast_df.loc[row_sel_vec, col_sel_vec].add(
                 account_deltas[i])
-            log_in_color(logger,'blue','debug','post propogation forecast_df:')
-            log_in_color(logger,'blue','debug',forecast_df.iloc[:,0:8].to_string())
+            log_in_color(logger,'blue','info','post propogation forecast_df:')
+            log_in_color(logger,'blue','info',forecast_df.iloc[:,0:8].to_string())
 
             # check account boundaries
             min_future_acct_bal = min(forecast_df.loc[row_sel_vec, col_sel_vec].values)
@@ -2493,6 +2493,7 @@ class ExpenseForecast:
                 # since the budget schedule does not have Account_From and Account_To, we infer which accounts were
                 # affected by comparing the before and after, hence this method accepts the prior and current state
                 # to modify forecast_df
+                # todo Also, in the OG algorithm we used raise_satisfice_exception to prevent the roll-forward being repeated. this is where im stuck rn
                 forecast_df = self.propagateTransactionsIntoTheFuture(account_set_before_p2_plus_txn, forecast_df, date_string_YYYYMMDD)
 
         return forecast_df, skipped_df, confirmed_df, deferred_df

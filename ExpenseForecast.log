@@ -1,29 +1,6 @@
-2023-12-29 03:24:27,932 - INFO     - [32m0 ExpenseForecast(start_date_YYYYMMDD=20000101, end_date_YYYYMMDD=20000103)[0m
-2023-12-29 03:24:42,943 - INFO     - [34m0 propagateTransactionsIntoTheFuture(20000102)[0m
-2023-12-29 03:24:42,943 - INFO     - [34m0 account_set_before_p2_plus_txn:[0m
-2023-12-29 03:24:42,963 - INFO     - [34m0                         Name  Balance  Min_Balance  Max_Balance       Account_Type Billing_Start_Dt Interest_Type   APR Interest_Cadence Minimum_Payment[0m
-2023-12-29 03:24:42,963 - INFO     - [34m0 0                   Checking  4850.00          0.0          inf           checking             None          None  None             None            None[0m
-2023-12-29 03:24:42,963 - INFO     - [34m0 1  Loan A: Principal Balance  1000.00          0.0       9999.0  principal balance         20000102        simple   0.1            daily            50.0[0m
-2023-12-29 03:24:42,963 - INFO     - [34m0 2           Loan A: Interest    50.27          0.0       9999.0           interest             None          None  None             None            None[0m
-2023-12-29 03:24:42,963 - INFO     - [34m0 3  Loan B: Principal Balance  1000.00          0.0       9999.0  principal balance         20000102        simple  0.05            daily            50.0[0m
-2023-12-29 03:24:42,963 - INFO     - [34m0 4           Loan B: Interest    50.14          0.0       9999.0           interest             None          None  None             None            None[0m
-2023-12-29 03:24:42,963 - INFO     - [34m0 5  Loan C: Principal Balance  1000.00          0.0       9999.0  principal balance         20000102        simple  0.01            daily            50.0[0m
-2023-12-29 03:24:42,963 - INFO     - [34m0 6           Loan C: Interest    50.03          0.0       9999.0           interest             None          None  None             None            None[0m
-2023-12-29 03:24:43,094 - INFO     - [34m0 account_set_after_p2_plus_txn:[0m
-2023-12-29 03:24:43,114 - INFO     - [34m0                         Name  Balance  Min_Balance  Max_Balance       Account_Type Billing_Start_Dt Interest_Type   APR Interest_Cadence Minimum_Payment[0m
-2023-12-29 03:24:43,114 - INFO     - [34m0 0                   Checking  2950.00          0.0          inf           checking             None          None  None             None            None[0m
-2023-12-29 03:24:43,114 - INFO     - [34m0 1  Loan A: Principal Balance    92.62          0.0       9999.0  principal balance         20000102        simple   0.1            daily            50.0[0m
-2023-12-29 03:24:43,114 - INFO     - [34m0 2           Loan A: Interest     0.00          0.0       9999.0           interest             None          None  None             None            None[0m
-2023-12-29 03:24:43,114 - INFO     - [34m0 3  Loan B: Principal Balance   185.25          0.0       9999.0  principal balance         20000102        simple  0.05            daily            50.0[0m
-2023-12-29 03:24:43,114 - INFO     - [34m0 4           Loan B: Interest     0.00          0.0       9999.0           interest             None          None  None             None            None[0m
-2023-12-29 03:24:43,114 - INFO     - [34m0 5  Loan C: Principal Balance   972.57          0.0       9999.0  principal balance         20000102        simple  0.01            daily            50.0[0m
-2023-12-29 03:24:43,114 - INFO     - [34m0 6           Loan C: Interest     0.00          0.0       9999.0           interest             None          None  None             None            None[0m
-2023-12-29 03:24:43,146 - INFO     - [34m0 account_deltas:[0m
-2023-12-29 03:24:43,147 - INFO     - [34m0 0   -1900.00[0m
-2023-12-29 03:24:43,147 - INFO     - [34m0 1    -907.38[0m
-2023-12-29 03:24:43,147 - INFO     - [34m0 2     -50.27[0m
-2023-12-29 03:24:43,147 - INFO     - [34m0 3    -814.75[0m
-2023-12-29 03:24:43,147 - INFO     - [34m0 4     -50.14[0m
-2023-12-29 03:24:43,147 - INFO     - [34m0 5     -27.43[0m
-2023-12-29 03:24:43,148 - INFO     - [34m0 6     -50.03[0m
-2023-12-29 03:24:43,148 - INFO     - [34m0 Name: Balance, dtype: float64[0m
+2023-12-29 15:01:52,774 - INFO     - [32m0 ExpenseForecast(start_date_YYYYMMDD=20000101, end_date_YYYYMMDD=20000103)[0m
+2023-12-29 15:01:52,928 - INFO     - [37m0 p1 / 7 20000102[0m
+2023-12-29 15:01:54,936 - INFO     - [37m0 p1 / 7 20000103[0m
+2023-12-29 15:01:56,788 - INFO     - [37m0 p7 / 7 20000102[0m
+2023-12-29 15:02:07,726 - INFO     - [37m0 p7 / 7 20000103[0m
+2023-12-29 15:02:09,388 - INFO     - [32m0 Writing to ./Forecast__032282__2023_12_29__15_01_52.json[0m

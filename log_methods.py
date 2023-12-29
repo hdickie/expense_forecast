@@ -66,7 +66,7 @@ def log_in_color(logger,color,level,msg,stack_depth=0):
             print(line)
 
 
-def display_test_result(test_name, df1):
+def display_test_result(logger,test_name, df1):
     display_width = max([len(x) for x in df1.T.to_string().split('\n')])
     #display_width = 120
     left_prefix = '# '
@@ -132,4 +132,4 @@ def display_test_result(test_name, df1):
     lines_to_print.append(f"{Fore.BLUE}" + ''.ljust(display_width, '#') + f"{Style.RESET_ALL}")
     if not test_passed:
         for line in lines_to_print:
-            log_in_color('white','debug',line)
+            log_in_color(logger,'white','debug',line)

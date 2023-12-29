@@ -811,7 +811,7 @@ class AccountSet:
         for account_index, account_row in self.getAccounts().iterrows():
             bal_string += '$' + str(account_row.Balance) + ' '
 
-        log_in_color(logger,'green','debug','ENTER allocate_additional_loan_payments(amount='+str(amount)+') '+bal_string)
+        log_in_color(logger,'blue','INFO','ENTER allocate_additional_loan_payments(amount='+str(amount)+') '+bal_string)
 
         row_sel_vec = [ x for x in ( self.getAccounts().Account_Type == 'checking' ) ]
         checking_acct_name = self.getAccounts()[row_sel_vec].Name[0] #we use this waaay later during executeTransaction
@@ -884,29 +884,33 @@ class AccountSet:
             # P1 = M1 * R^-1
             # this is equivalent to taking the next desired state of marginal interest amounts and right multiplying by a vector of the reciprocal rates
 
-            P = np.matrix(principal_accts_df.Balance)
-            r = np.matrix(principal_accts_df.APR)
-            P_dot_r = P.T.dot(r) #this represents marginal interest
+            #P = np.matrix(principal_accts_df.Balance)
+            #todo learn more about numpy ndarray and improve this
+            P = np.array(principal_accts_df.Balance)
+            P = P[:,None]
 
-            reciprocal_rates = []
-            for i in range(0, P.shape[1]):
-                reciprocal_rates.append(1 / r[0, i])
-            reciprocal_rates = np.matrix(reciprocal_rates)
-            # print('reciprocal_rates:')
-            # print(reciprocal_rates.shape)
-            # print(reciprocal_rates)
+            #r = np.matrix(principal_accts_df.APR)
+            r = np.array(principal_accts_df.APR)
+            r = r[:, None]
+
+            #reciprocal_rates = []
+            #for i in range(0, P.shape[1]):
+            #    reciprocal_rates.append(1 / r[0, i])
+            #reciprocal_rates = np.matrix(reciprocal_rates)\
 
             #print('P_dot_r:')
             #print(np.matrix(P_dot_r))
 
-            marginal_interest_amounts__list = []
-            for i in range(0, P.shape[1]):
-                marginal_interest_amounts__list.append(round(P_dot_r[i, i], 2))
+            marginal_interest_amounts = np.diag(P.dot(r.T))#this represents marginal interest
+            #marginal_interest_amounts__list = []
+            #for i in range(0, P.shape[1]):
+            #    marginal_interest_amounts__list.append(round(P_dot_r[i, i], 2))
             # print(marginal_interest_amounts__list)
-            marginal_interest_amounts__matrix = np.matrix(marginal_interest_amounts__list)
+            #marginal_interest_amounts__matrix = np.matrix(marginal_interest_amounts__list)
             #print('marginal_interest_amounts__matrix:')
             #print(marginal_interest_amounts__matrix)
-            marginal_interest_amounts_df = pd.DataFrame(marginal_interest_amounts__list)
+
+            marginal_interest_amounts_df = pd.DataFrame(marginal_interest_amounts)
             marginal_interest_amounts_df.columns = ['Marginal Interest Amount']
             marginal_interest_amounts_df['Marginal Interest Rank'] = marginal_interest_amounts_df['Marginal Interest Amount'].rank(method='dense', ascending=False)
             #print('marginal_interest_amounts_df:')
@@ -918,7 +922,7 @@ class AccountSet:
                 next_lowest_marginal_interest_amount = 0
             #print('next_lowest_marginal_interest_amount:')
             #print(next_lowest_marginal_interest_amount)
-            marginal_interest_amounts_df__c = copy.deepcopy(marginal_interest_amounts_df)
+            marginal_interest_amounts_df__c = pd.DataFrame(marginal_interest_amounts_df,copy=True)
 
             # print('marginal_interest_amounts_df__c[marginal_interest_amounts_df__c[Marginal Interest Rank] == 1]')
             # print(marginal_interest_amounts_df__c['Marginal Interest Rank'] == 1)
@@ -927,7 +931,8 @@ class AccountSet:
 
             marginal_interest_amounts_df__c.loc[
                 marginal_interest_amounts_df__c['Marginal Interest Rank'] == 1, marginal_interest_amounts_df__c.columns == 'Marginal Interest Amount'] = next_lowest_marginal_interest_amount
-            next_step_marginal_interest_vector = np.matrix(marginal_interest_amounts_df__c['Marginal Interest Amount']) #this corresponds to the M1 vector
+            next_step_marginal_interest_vector = np.array(marginal_interest_amounts_df__c['Marginal Interest Amount']) #this corresponds to the M1 vector
+            next_step_marginal_interest_vector = next_step_marginal_interest_vector[:,None]
             #print('next_step_marginal_interest_vector:\n')
             #print(next_step_marginal_interest_vector)
 
@@ -941,33 +946,45 @@ class AccountSet:
             #print('current_state:\n'+str(current_state))
 
             #print('next_step_marginal_interest_vector:')
-            #print(next_step_marginal_interest_vector)
+            #rint(next_step_marginal_interest_vector)
 
-            next_principal_balance_state = next_step_marginal_interest_vector.T.dot(reciprocal_rates) #this corresponds to the P1 vector, and tells us how much we can pay before our strategy must change
-            # print('next_state:\n' + str(next_state))
+            reciprocal_rates = 1 / r
 
-            principal_balance_delta = current_principal_balance_state - next_principal_balance_state
-            # print('delta:')
-            # print(delta)
+            #print('reciprocal_rates:')
+            #print(reciprocal_rates)
+
+            next_principal_balance_state = np.diag(next_step_marginal_interest_vector.dot(reciprocal_rates.T))  #this corresponds to the P1 vector, and tells us how much we can pay before our strategy must change
+
+            #print('current_principal_balance_state:\n' + str(current_principal_balance_state))
+            #print('next_principal_balance_state:\n' + str(next_principal_balance_state))
+
+            principal_balance_delta = (current_principal_balance_state.T - next_principal_balance_state).T
+            #print('principal_balance_delta:')
+            #print(principal_balance_delta)
+
+            log_in_color(logger, 'blue', 'INFO', 'principal_balance_delta:')
+            log_in_color(logger, 'blue', 'INFO', str(principal_balance_delta))
+
 
             payment_amounts = []
             for i in range(0, principal_balance_delta.shape[0]):
 
                 # if we pay at all, then we add the interest as well.
-                current_loan_interest = interest_accts_df.iloc[i,:].Balance
-                proposed_payment_on_principal = principal_balance_delta[i, i]
+                current_loan_interest = np.array(interest_accts_df.iloc[i,:].Balance) #this is a 1 x 1 array
+
+                proposed_payment_on_principal = principal_balance_delta
 
                 #todo, currently, if the final payment includes interest, then the total gets distributed across multiple loans and does not go to interest first
                 #to fix this, we need to add a interest_paid indicator, and then check for it around line 840 below (written 12/18/23)
-                if proposed_payment_on_principal > 0:
-                    loop__amount = round(proposed_payment_on_principal + current_loan_interest,2)
+                if proposed_payment_on_principal[i][0] > 0:
+                    loop__amount = round(proposed_payment_on_principal[i][0] + current_loan_interest,2)
                 else:
                     loop__amount = 0
                 payment_amounts.append(loop__amount)
 
             total_interest_on_loans_w_non_0_payment = 0
             for i in range(0,len(payment_amounts)):
-                if principal_balance_delta[i, i] > 0:
+                if principal_balance_delta[i] > 0:
                     total_interest_on_loans_w_non_0_payment += interest_accts_df.iloc[i,:].Balance
 
             if amount <= sum(payment_amounts):
@@ -1024,7 +1041,7 @@ class AccountSet:
 
         #log_in_color(logger,'green', 'debug', 'final_txns:')
         #log_in_color(logger,'green', 'debug', final_txns)
-        log_in_color(logger,'green', 'debug', 'EXIT allocate_additional_loan_payments(amount='+str(amount)+')')
+        log_in_color(logger,'blue', 'INFO', 'EXIT allocate_additional_loan_payments(amount='+str(amount)+')')
         return final_txns
 
 

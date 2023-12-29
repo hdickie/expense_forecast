@@ -17,6 +17,8 @@ import Account, BudgetSet, MemoRuleSet
 import copy
 
 from generate_date_sequence import generate_date_sequence
+from log_methods import setup_logger
+logger = setup_logger('test_ExpenseForecast', 'test_ExpenseForecast.log', level=logging.DEBUG)
 
 from log_methods import display_test_result
 
@@ -280,13 +282,16 @@ class TestExpenseForecastMethods:
         print(f.T.to_string())
 
         try:
-            display_test_result(test_description, d)
+            display_test_result(logger,test_description, d)
         except Exception as e:
             raise e
 
         try:
             sel_vec = (d.columns != 'Date') & (d.columns != 'Memo')
-            non_boilerplate_values__M = np.matrix(d.iloc[:, sel_vec])
+
+            #non_boilerplate_values__M = np.matrix(d.iloc[:, sel_vec])
+            non_boilerplate_values__M = np.array(d.iloc[:, sel_vec])
+            non_boilerplate_values__M = non_boilerplate_values__M[:,None]
 
             error_ind = round(float(sum(sum(np.square(
                 non_boilerplate_values__M)).T)),2)  # this very much DOES NOT SCALE. this is intended for small tests
@@ -1941,7 +1946,7 @@ class TestExpenseForecastMethods:
     #     # Display Results
     #     for i in range(0, len(test_descriptions)):
     #         try:
-    #             display_test_result(test_descriptions[i], differences[i])
+    #             display_test_result(logger,test_descriptions[i], differences[i])
     #         except Exception as e:
     #             print(e)
     #
@@ -2120,7 +2125,7 @@ class TestExpenseForecastMethods:
         print(f.T.to_string())
 
         try:
-            display_test_result(test_description, d)
+            display_test_result(logger,test_description, d)
         except Exception as e:
             raise e
 

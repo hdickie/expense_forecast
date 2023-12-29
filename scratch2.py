@@ -169,7 +169,7 @@ if __name__ == '__main__':
 
     E = ExpenseForecast.ExpenseForecast(account_set, budget_set, memo_rule_set, start_date_YYYYMMDD,
                                         end_date_YYYYMMDD, milestone_set, True)
-    E.runForecast_v2()
+    E.runForecast()
     print(E.forecast_df.to_string())
     raise AssertionError
 
