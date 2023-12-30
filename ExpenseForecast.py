@@ -857,7 +857,6 @@ class ExpenseForecast:
         log_in_color(logger, 'green', 'info', 'ENTER processConfirmedTransactions( C:'+str(relevant_confirmed_df.shape[0])+' )', self.log_stack_depth)
         self.log_stack_depth += 1
 
-
         for confirmed_index, confirmed_row in relevant_confirmed_df.iterrows():
             relevant_memo_rule_set = memo_set.findMatchingMemoRule(confirmed_row.Memo, confirmed_row.Priority)
             memo_rule_row = relevant_memo_rule_set.getMemoRules().loc[0, :]
@@ -876,17 +875,22 @@ class ExpenseForecast:
         log_in_color(logger, 'green', 'info', 'EXIT processConfirmedTransactions()', self.log_stack_depth)
         return forecast_df
 
-    def processProposedTransactions(self, account_set, forecast_df, date_YYYYMMDD, memo_set, confirmed_df, relevant_proposed_df, priority_level, allow_partial_payments, allow_skip_and_defer):
+    def processProposedTransactions(self, account_set, forecast_df, date_YYYYMMDD, memo_set, confirmed_df, relevant_proposed_df, priority_level):
         log_in_color(logger, 'green', 'info', 'ENTER processProposedTransactions( P:'+str(relevant_proposed_df.shape[0])+' )', self.log_stack_depth)
         self.log_stack_depth += 1
 
-        new_deferred_df = pd.DataFrame({'Date': [], 'Priority': [], 'Amount': [], 'Memo': [], 'Deferrable': [], 'Partial_Payment_Allowed': []})
-        skipped_df = pd.DataFrame({'Date': [], 'Priority': [], 'Amount': [], 'Memo': [], 'Deferrable': [], 'Partial_Payment_Allowed': []})
+        new_deferred_df = relevant_proposed_df.head(0) #to preserve schema
+        new_skipped_df = relevant_proposed_df.head(0)
+        new_confirmed_df = relevant_proposed_df.head(0)
+
+        #new_deferred_df = pd.DataFrame({'Date': [], 'Priority': [], 'Amount': [], 'Memo': [], 'Deferrable': [], 'Partial_Payment_Allowed': []})
+        #new_skipped_df = pd.DataFrame({'Date': [], 'Priority': [], 'Amount': [], 'Memo': [], 'Deferrable': [], 'Partial_Payment_Allowed': []})
+        #new_confirmed_df = pd.DataFrame({'Date': [], 'Priority': [], 'Amount': [], 'Memo': [], 'Deferrable': [], 'Partial_Payment_Allowed': []})
 
         if relevant_proposed_df.shape[0] == 0:
             self.log_stack_depth -= 1
             log_in_color(logger, 'green', 'info', 'EXIT processProposedTransactions()', self.log_stack_depth)
-            return forecast_df, confirmed_df, new_deferred_df, skipped_df
+            return forecast_df, new_confirmed_df, new_deferred_df, new_skipped_df
 
         for proposed_item_index, proposed_row_df in relevant_proposed_df.iterrows():
 
@@ -903,7 +907,7 @@ class ExpenseForecast:
             else:
                 hypothetical_future_state_of_forecast = None
 
-            if not transaction_is_permitted and allow_partial_payments and proposed_row_df.Partial_Payment_Allowed:
+            if not transaction_is_permitted and proposed_row_df.Partial_Payment_Allowed:
                 proposed_row_df.Amount = account_set.getBalances()[memo_rule_row.Account_From]
 
                 try:
@@ -913,8 +917,11 @@ class ExpenseForecast:
                     reduced_amt = min_fut_avl_bals[memo_rule_row.Account_From]
                     proposed_row_df.Amount = reduced_amt
 
-                    not_yet_validated_confirmed_df = copy.deepcopy(
-                        pd.concat([confirmed_df, proposed_row_df]))
+                    #not_yet_validated_confirmed_df = copy.deepcopy(
+                    #    pd.concat([confirmed_df, proposed_row_df]))
+
+                    not_yet_validated_confirmed_df = confirmed_df.append(proposed_row_df)
+
                     empty_df = pd.DataFrame({'Date': [], 'Priority': [], 'Amount': [], 'Memo': [], 'Deferrable': [],
                                              'Partial_Payment_Allowed': []})
 
@@ -942,7 +949,7 @@ class ExpenseForecast:
                 if transaction_is_permitted:
                     amount_ammended = True
 
-            if not transaction_is_permitted and allow_skip_and_defer and proposed_row_df.Deferrable:
+            if not transaction_is_permitted and proposed_row_df.Deferrable:
 
                 proposed_row_df.Date = (datetime.datetime.strptime(proposed_row_df.Date, '%Y%m%d') + datetime.timedelta(
                     days=1)).strftime('%Y%m%d')
@@ -953,16 +960,12 @@ class ExpenseForecast:
                     ~relevant_proposed_df.index.isin(proposed_row_df.index)]
                 proposed_df = remaining_unproposed_transactions_df
 
-            elif not transaction_is_permitted and allow_skip_and_defer and not proposed_row_df.Deferrable:
-                skipped_df = pd.concat([skipped_df, pd.DataFrame(proposed_row_df).T])
+            elif not transaction_is_permitted and not proposed_row_df.Deferrable:
+                skipped_df = pd.concat([new_skipped_df, pd.DataFrame(proposed_row_df).T])
 
                 remaining_unproposed_transactions_df = relevant_proposed_df[
                     ~relevant_proposed_df.index.isin(proposed_row_df.index)]
                 proposed_df = remaining_unproposed_transactions_df
-
-            elif not transaction_is_permitted and not allow_skip_and_defer:
-                raise ValueError(
-                    'Partial payment, skip and defer were not allowed (either by txn parameter or method call), and transaction failed to obtain approval.')
 
             elif transaction_is_permitted:
 
@@ -973,8 +976,8 @@ class ExpenseForecast:
                                                Account_To=memo_rule_row.Account_To, Amount=proposed_row_df.Amount,
                                                income_flag=False)
 
-                #confirmed_df = pd.concat([confirmed_df, pd.DataFrame(proposed_row_df).T])
-                confirmed_df = confirmed_df.append(proposed_row_df)
+                confirmed_df = pd.concat([confirmed_df, pd.DataFrame(proposed_row_df).T])
+                #new_confirmed_df = new_confirmed_df.append(proposed_row_df)
 
                 remaining_unproposed_transactions_df = relevant_proposed_df[
                     ~relevant_proposed_df.index.isin(proposed_row_df.index)]
@@ -1009,34 +1012,36 @@ class ExpenseForecast:
             else:
                 raise ValueError("""This is an edge case that should not be possible
                         transaction_is_permitted...............:""" + str(transaction_is_permitted) + """
-                        allow_skip_and_defer...................:""" + str(allow_skip_and_defer) + """
                         budget_item_row.Deferrable.............:""" + str(proposed_row_df.Deferrable) + """
                         budget_item_row.Partial_Payment_Allowed:""" + str(proposed_row_df.Partial_Payment_Allowed) + """
                         """)
 
         self.log_stack_depth -= 1
         log_in_color(logger, 'green', 'info', 'EXIT processProposedTransactions()', self.log_stack_depth)
-        return forecast_df, confirmed_df, new_deferred_df, skipped_df
+        return forecast_df, new_confirmed_df, new_deferred_df, new_skipped_df
 
     # eTDF
     #account_set, forecast_df, date_YYYYMMDD, memo_set, confirmed_df, proposed_df, deferred_df, skipped_df, priority_level, allow_partial_payments, allow_skip_and_defer
 
     #account_set, forecast_df, date_YYYYMMDD, memo_set,              ,    relevant_deferred_df,             priority_level, allow_partial_payments, allow_skip_and_defer
-    def processDeferredTransactions(self,account_set, forecast_df, date_YYYYMMDD, memo_set, relevant_deferred_df, priority_level, allow_partial_payments, allow_skip_and_defer):
+    def processDeferredTransactions(self,account_set, forecast_df, date_YYYYMMDD, memo_set, relevant_deferred_df, priority_level, confirmed_df):
         log_in_color(logger, 'green', 'info','ENTER processDeferredTransactions( D:'+str(relevant_deferred_df.shape[0])+' )', self.log_stack_depth)
         self.log_stack_depth += 1
 
+        #new_confirmed_df = pd.DataFrame(
+        #    {'Date': [], 'Priority': [], 'Amount': [], 'Memo': [], 'Deferrable': [], 'Partial_Payment_Allowed': []})
+        #new_deferred_df = pd.DataFrame(
+        #    {'Date': [], 'Priority': [], 'Amount': [], 'Memo': [], 'Deferrable': [], 'Partial_Payment_Allowed': []})
+        new_confirmed_df = confirmed_df.head(0) #to preserve schema
+        new_deferred_df = relevant_deferred_df.head(0)  # to preserve schema. same as above line btw
+
         if relevant_deferred_df.shape[0] == 0:
-            confirmed_df = pd.DataFrame({'Date':[],'Priority':[],'Amount':[],'Memo':[],'Deferrable':[],'Partial_Payment_Allowed':[]})
-            deferred_df = pd.DataFrame({'Date':[],'Priority':[],'Amount':[],'Memo':[],'Deferrable':[],'Partial_Payment_Allowed':[]})
 
             self.log_stack_depth -= 1
             log_in_color(logger, 'green', 'info', 'EXIT processDeferredTransactions()', self.log_stack_depth)
-            return forecast_df, confirmed_df, deferred_df
+            return forecast_df, new_confirmed_df, new_deferred_df
 
-        confirmed_df = pd.DataFrame({'Date':[],'Priority':[],'Amount':[],'Memo':[],'Deferrable':[],'Partial_Payment_Allowed':[]})
         for deferred_item_index, deferred_row_df in relevant_deferred_df.iterrows():
-            amount_ammended = False
             if datetime.datetime.strptime(deferred_row_df.Date, '%Y%m%d') > datetime.datetime.strptime(
                     self.end_date_YYYYMMDD, '%Y%m%d'):
                 continue
@@ -1073,60 +1078,14 @@ class ExpenseForecast:
 
                 transaction_is_permitted = False
 
-            if not transaction_is_permitted and allow_partial_payments and deferred_row_df.Partial_Payment_Allowed:  # todo i think that this never gets executed bc deferred payments cannot be partial
-
-                deferred_row_df.Amount = account_set.getBalances()[memo_rule_row.Account_From]
-
-                try:
-
-                    min_fut_avl_bals = self.getMinimumFutureAvailableBalances(account_set, forecast_df, date_YYYYMMDD)
-                    reduced_amt = min(min_fut_avl_bals[
-                                          memo_rule_row.Account_From])  # no need to add the OG amount to this because it was already rejected
-                    deferred_row_df.Amount = reduced_amt
-
-                    not_yet_validated_confirmed_df = copy.deepcopy(
-                        pd.concat([confirmed_df, deferred_row_df]))
-
-                    # furthermore, since we are not processing any more proposed transactions in this one-adjustment simulation, there is no need to pass any proposed transactions to this method call
-                    empty_df = pd.DataFrame({'Date':[],'Priority':[],'Amount':[],'Memo':[],'Deferrable':[],'Partial_Payment_Allowed':[]})
-
-                    hypothetical_future_state_of_forecast = \
-                    self.computeOptimalForecast(start_date_YYYYMMDD=self.start_date_YYYYMMDD,
-                                                end_date_YYYYMMDD=self.end_date_YYYYMMDD,
-                                                confirmed_df=not_yet_validated_confirmed_df,
-                                                proposed_df=empty_df,
-                                                deferred_df=empty_df,
-                                                skipped_df=empty_df,
-                                                account_set=copy.deepcopy(account_set),
-                                                memo_rule_set=memo_set)[0]
-
-                    transaction_is_permitted = True
-                except ValueError as e:
-                    if re.search('.*Account boundaries were violated.*',
-                                 str(e.args)) is None:
-                        raise e
-
-                    transaction_is_permitted = False
-
-                if transaction_is_permitted:
-                    amount_ammended = True
-
-            if not transaction_is_permitted and allow_skip_and_defer and deferred_row_df.Deferrable:
+            if not transaction_is_permitted and deferred_row_df.Deferrable:
                 deferred_row_df.Date = (
                             datetime.datetime.strptime(deferred_row_df.Date,
                                                        '%Y%m%d') + datetime.timedelta(days=1)).strftime('%Y%m%d')
-                remaining_deferred_df = relevant_deferred_df[
-                    ~relevant_deferred_df.index.isin(deferred_row_df.index)]
+                #_deferred_df = relevant_deferred_df[    ~relevant_deferred_df.index.isin(deferred_row_df.index)]
 
-                relevant_deferred_df = pd.concat([remaining_deferred_df, deferred_row_df])
-
-            elif not transaction_is_permitted and allow_skip_and_defer and not deferred_row_df.Deferrable:
-                raise ValueError  # this should never happen. if we are processing deferred txns, they should all be deferrable
-
-
-            elif not transaction_is_permitted and not allow_skip_and_defer:
-                raise ValueError(
-                    'Partial payment, skip and defer were not allowed (either by txn parameter or method call), and transaction failed to obtain approval.')
+                #relevant_deferred_df = pd.concat([remaining_deferred_df, deferred_row_df])
+                new_deferred_df = new_deferred_df.append(deferred_row_df)
 
             elif transaction_is_permitted:
 
@@ -1138,7 +1097,7 @@ class ExpenseForecast:
                                                income_flag=False)
 
 
-                confirmed_df = pd.concat([confirmed_df, pd.DataFrame(deferred_row_df).T])
+                new_confirmed_df = pd.concat([new_confirmed_df, pd.DataFrame(deferred_row_df).T])
 
                 remaining_unproposed_deferred_transactions_df = relevant_deferred_df[
                     ~relevant_deferred_df.index.isin(deferred_row_df.index)]
@@ -1172,17 +1131,16 @@ class ExpenseForecast:
             else:
                 raise ValueError("""This is an edge case that should not be possible
                         transaction_is_permitted...............:""" + str(transaction_is_permitted) + """
-                        allow_skip_and_defer...................:""" + str(allow_skip_and_defer) + """
                         budget_item_row.Deferrable.............:""" + str(deferred_row_df.Deferrable) + """
                         budget_item_row.Partial_Payment_Allowed:""" + str(deferred_row_df.Partial_Payment_Allowed) + """
                         """)
 
         self.log_stack_depth -= 1
         log_in_color(logger, 'green', 'info', 'EXIT processDeferredTransactions()', self.log_stack_depth)
-        return forecast_df, confirmed_df, relevant_deferred_df
+        return forecast_df, new_confirmed_df, new_deferred_df
 
 
-    def executeTransactionsForDay(self, account_set, forecast_df, date_YYYYMMDD, memo_set, confirmed_df, proposed_df, deferred_df, skipped_df, priority_level, allow_partial_payments, allow_skip_and_defer):
+    def executeTransactionsForDay(self, account_set, forecast_df, date_YYYYMMDD, memo_set, confirmed_df, proposed_df, deferred_df, skipped_df, priority_level):
         """
 
                 I want this to be as generic as possible, with no memos or priority levels having dard coded behavior.
@@ -1238,37 +1196,65 @@ class ExpenseForecast:
         if priority_level > 1:
             account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, date_YYYYMMDD)
 
+        log_in_color(logger,'green','debug','eTFD :: before processConfirmed',self.log_stack_depth)
         forecast_df = self.processConfirmedTransactions(forecast_df, relevant_confirmed_df,memo_set,account_set,date_YYYYMMDD)
+        log_in_color(logger, 'green', 'debug', 'eTFD :: after processConfirmed', self.log_stack_depth)
 
+        log_in_color(logger, 'green', 'debug', 'eTFD :: before processProposed', self.log_stack_depth)
         forecast_df, new_confirmed_df, new_deferred_df, new_skipped_df = self.processProposedTransactions(account_set,
                                                                                                   forecast_df,
                                                                                                   date_YYYYMMDD,
                                                                                                   memo_set,
                                                                                                   confirmed_df,
                                                                                                   relevant_proposed_df,
-                                                                                                  priority_level,
-                                                                                                  allow_partial_payments,
-                                                                                                  allow_skip_and_defer)
+                                                                                                  priority_level)
+        log_in_color(logger, 'green', 'debug', 'eTFD :: after processProposed', self.log_stack_depth)
+
+        log_in_color(logger, 'white', 'info', 'new_confirmed_df:', self.log_stack_depth)
+        log_in_color(logger, 'white', 'info', new_confirmed_df.to_string(), self.log_stack_depth)
+
+        log_in_color(logger, 'white', 'info', 'new_deferred_df:', self.log_stack_depth)
+        log_in_color(logger, 'white', 'info', new_deferred_df.to_string(), self.log_stack_depth)
+
+        log_in_color(logger, 'white', 'info', 'new_skipped_df:', self.log_stack_depth)
+        log_in_color(logger, 'white', 'info', new_skipped_df.to_string(), self.log_stack_depth)
 
         confirmed_df = pd.concat([confirmed_df, new_confirmed_df])
+        confirmed_df.reset_index(drop=True, inplace=True)
+
         deferred_df = pd.concat([deferred_df, new_deferred_df])
+        deferred_df.reset_index(drop=True, inplace=True)
+
         skipped_df = pd.concat([skipped_df, new_skipped_df])
+        skipped_df.reset_index(drop=True, inplace=True)
 
-        log_in_color(logger, 'white', 'info','new_confirmed_df:',self.log_stack_depth)
-        log_in_color(logger, 'white', 'info',new_confirmed_df.to_string(),self.log_stack_depth)
+        log_in_color(logger, 'white', 'info','updated confirmed_df:',self.log_stack_depth)
+        log_in_color(logger, 'white', 'info',confirmed_df.to_string(),self.log_stack_depth)
 
-        log_in_color(logger, 'white', 'info','new_deferred_df:',self.log_stack_depth)
-        log_in_color(logger, 'white', 'info',new_deferred_df.to_string(),self.log_stack_depth)
+        log_in_color(logger, 'white', 'info','updated deferred_df:',self.log_stack_depth)
+        log_in_color(logger, 'white', 'info',deferred_df.to_string(),self.log_stack_depth)
 
-        log_in_color(logger, 'white', 'info','new_skipped_df:',self.log_stack_depth)
-        log_in_color(logger, 'white', 'info',new_skipped_df.to_string(),self.log_stack_depth)
+        log_in_color(logger, 'white', 'info','updated skipped_df:',self.log_stack_depth)
+        log_in_color(logger, 'white', 'info',skipped_df.to_string(),self.log_stack_depth)
 
+        relevant_deferred_before_processing = pd.DataFrame(relevant_deferred_df,copy=True) #we need this to remove old txns if they stay deferred
 
-
-        forecast_df, new_confirmed_df, new_deferred_df = self.processDeferredTransactions(account_set, forecast_df, date_YYYYMMDD, memo_set, relevant_deferred_df, priority_level, allow_partial_payments, allow_skip_and_defer)
+        log_in_color(logger, 'green', 'debug', 'eTFD :: before processDeferred', self.log_stack_depth)
+        forecast_df, new_confirmed_df, new_deferred_df = self.processDeferredTransactions(account_set, forecast_df, date_YYYYMMDD, memo_set, pd.DataFrame(relevant_deferred_df,copy=True), priority_level, confirmed_df)
+        log_in_color(logger, 'green', 'debug', 'eTFD :: after processDeferred', self.log_stack_depth)
 
         confirmed_df = pd.concat([confirmed_df, new_confirmed_df])
-        deferred_df = pd.concat([deferred_df, new_deferred_df])
+        confirmed_df.reset_index(drop=True, inplace=True)
+
+        p_LJ_c = pd.merge(proposed_df, confirmed_df, on=['Date', 'Memo', 'Priority'])
+
+        #deferred_df = deferred_df - relevant + new. index won't be the same as OG
+        #this is the inverse of how we selected the relevant rows
+        not_relevant_deferred_df = pd.DataFrame(deferred_df[(deferred_df.Priority > priority_level) | (deferred_df.Date != date_YYYYMMDD)],copy=True)
+
+        deferred_df = pd.concat([not_relevant_deferred_df,new_deferred_df])
+        #deferred_df = not_relevant_deferred_df.append(new_deferred_df)
+        deferred_df.reset_index(drop=True, inplace=True)
 
         C1 = confirmed_df.shape[0]
         D1 = deferred_df.shape[0]
@@ -2678,9 +2664,7 @@ class ExpenseForecast:
                                                                                                     proposed_df=remaining_unproposed_transactions_df,
                                                                                                     deferred_df=deferred_df,
                                                                                                     skipped_df=skipped_df,
-                                                                                                    priority_level=priority_index,
-                                                                                                    allow_skip_and_defer=True,
-                                                                                                    allow_partial_payments=True)
+                                                                                                    priority_level=priority_index)
 
                 #log_in_color(logger, 'yellow', 'info', 'proposed after eTFD:')
                 #log_in_color(logger, 'yellow', 'info', proposed_df.to_string())
@@ -2697,7 +2681,7 @@ class ExpenseForecast:
                     forecast_df = self.propagateTransactionsIntoTheFuture(account_set_before_p2_plus_txn, forecast_df, date_string_YYYYMMDD)
 
         self.log_stack_depth -= 1
-        log_in_color(logger, 'magenta', 'info', 'EXIT assessPotentialOptimizations()',self.log_stack_depth)
+        log_in_color(logger, 'magenta', 'info', 'EXIT assessPotentialOptimizations() C:'+str(confirmed_df.shape[0])+' D:'+str(deferred_df.shape[0])+' S:'+str(skipped_df.shape[0]),self.log_stack_depth)
         return forecast_df, skipped_df, confirmed_df, deferred_df
 
     def cleanUpAfterFailedSatisfice(self, confirmed_df, proposed_df, deferred_df, skipped_df):
@@ -2745,9 +2729,7 @@ class ExpenseForecast:
                                                     proposed_df=confirmed_df.head(0), #no proposed txns in satisfice
                                                     deferred_df=confirmed_df.head(0), #no deferred txns in satisfice
                                                     skipped_df=confirmed_df.head(0),  #no skipped txns in satisfice
-                                                    priority_level=1,
-                                                    allow_skip_and_defer=False,
-                                                    allow_partial_payments=False)
+                                                    priority_level=1)
                 #print('forecast after eTFD:')
                 #print(forecast_df.to_string())
 
@@ -2821,7 +2803,7 @@ class ExpenseForecast:
             confirmed_df, deferred_df, skipped_df = self.cleanUpAfterFailedSatisfice(confirmed_df, proposed_df, deferred_df, skipped_df)
 
         self.log_stack_depth -= 1
-        log_in_color(logger, 'cyan', 'info', 'EXIT computeOptimalForecast()', self.log_stack_depth)
+        log_in_color(logger, 'cyan', 'info', 'EXIT computeOptimalForecast() C:'+str(confirmed_df.shape[0])+' D:'+str(deferred_df.shape[0])+' S:'+str(skipped_df.shape[0]), self.log_stack_depth)
         return [forecast_df, skipped_df, confirmed_df, deferred_df]
 
 

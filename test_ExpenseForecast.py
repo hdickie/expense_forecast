@@ -1113,6 +1113,8 @@ class TestExpenseForecastMethods:
             assert sum(row_sel_vec) == 1 #if 0, then deferred date was not found
             assert expected_memo_of_deferred_txn in E.forecast_df.loc[ row_sel_vec , 'Memo'].iat[0]
         else:
+            print('E.deferred_df')
+            print(E.deferred_df.to_string())
             assert E.deferred_df.shape[0] == 1
             assert E.deferred_df.loc[0, 'Memo'] == expected_memo_of_deferred_txn
 
@@ -2246,43 +2248,6 @@ class TestExpenseForecastMethods:
                 raise e
 
 
-    def test_runForecast_v2(self):
-        start_date_YYYYMMDD = '20000101'
-        end_date_YYYYMMDD = '20000103'
-
-        account_set = AccountSet.AccountSet([])
-        budget_set = BudgetSet.BudgetSet([])
-        memo_rule_set = MemoRuleSet.MemoRuleSet([])
-
-        account_set.createAccount(name='Checking',
-                                  balance=5000,
-                                  min_balance=0,
-                                  max_balance=float('Inf'),
-                                  account_type="checking")
-
-        account_set.createAccount('Loan A', 1100, 0, 9999, 'loan', '20000102', 'simple', 0.1, 'daily', 50, None, 1000,
-                                  100)
-        account_set.createAccount('Loan B', 1100, 0, 9999, 'loan', '20000102', 'simple', 0.05, 'daily', 50, None, 1000,
-                                  100)
-        account_set.createAccount('Loan C', 1100, 0, 9999, 'loan', '20000102', 'simple', 0.01, 'daily', 50, None, 1000,
-                                  100)
-
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=7,
-                                 cadence='once', amount=1900, memo='additional loan payment',
-                                 deferrable=False,
-                                 partial_payment_allowed=True)
-
-        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to='ALL_LOANS',
-                                  transaction_priority=7)
-
-        milestone_set = MilestoneSet.MilestoneSet(account_set, budget_set, [], [], [])
-
-        E = ExpenseForecast.ExpenseForecast(account_set, budget_set, memo_rule_set, start_date_YYYYMMDD,
-                                            end_date_YYYYMMDD, milestone_set, True)
-        E.runForecast_v2()
-        print(E.forecast_df.to_string())
-        raise AssertionError
-
 ###tests to implement
 #initialize from json  prev tmt bal acct first in list and interest acct first in list (this does not happen programmatically) (this functionality is not yet supported)
 #loan payments when insufficient funds?
@@ -2326,16 +2291,8 @@ class TestExpenseForecastMethods:
 
 ### all latest
 # 13 fails
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p4__cc_payment__partial_of_indicated_amount-account_set14-budget_set14-memo_rule_set14-20000101-20000103-milestone_set14-expected_result_df14]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_execute_defer_after_receiving_income_2_days_later-account_set15-budget_set15-memo_rule_set15-20000101-20000104-milestone_set15-expected_result_df15]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_execute_at_reduced_amount_bc_later_higher_priority_txn-account_set16-budget_set16-memo_rule_set16-20000101-20000105-milestone_set16-expected_result_df16]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_transactions_executed_at_p1_and_p2-account_set17-budget_set17-memo_rule_set17-20000101-20000106-milestone_set17-expected_result_df17]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_transactions_executed_at_p1_and_p2_and_p3-account_set18-budget_set18-memo_rule_set18-20000101-20000106-milestone_set18-expected_result_df18]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_deferrals[test_p5_and_6__expect_defer-account_set0-budget_set0-memo_rule_set0-20000101-20000103-milestone_set0-expected_result_df0-p6 deferrable txn 1/2/00-None]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_deferrals[test_p5_and_6__expect_defer__daily-account_set1-budget_set1-memo_rule_set1-20000101-20000103-milestone_set1-expected_result_df1-p6 deferrable txn 1/2/00 ($1000.0)-20000103]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_deferrals[test_expect_defer_past_end_of_forecast-account_set2-budget_set2-memo_rule_set2-20000101-20000103-milestone_set2-expected_result_df2-deferred past end-None]
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_dont_recompute_past_days_for_p2plus_transactions - NotImplementedError
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_forecast_longer_than_satisfice - AttributeError: 'bool' object has no attribute 'shape'
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_interest_types_and_cadences_at_most_monthly - NotImplementedError
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_quarter_and_year_long_interest_cadences - NotImplementedError
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_runForecast_v2 - AttributeError: 'ExpenseForecast' object has no attribute 'runForecast_v2'
+
