@@ -795,6 +795,7 @@ class ExpenseForecast:
         return income_flag
 
     def updateBalancesAndMemo(self, forecast_df, account_set, confirmed_row, memo_rule_row, date_YYYYMMDD):
+        log_in_color(logger, 'green', 'info', 'ENTER updateBalancesAndMemo()',self.log_stack_depth)
 
         row_sel_vec = (forecast_df.Date == date_YYYYMMDD)
         if memo_rule_row.Account_To != 'ALL_LOANS':
@@ -816,6 +817,8 @@ class ExpenseForecast:
                     forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'] += str(
                         account_row.Name) + ' additional loan payment ($' + str(
                         round(current_balance - relevant_balance, 2)) + ') ; '
+
+        log_in_color(logger, 'green', 'info', 'EXIT updateBalancesAndMemo()', self.log_stack_depth)
         return forecast_df
 
     def attemptTransaction(self, forecast_df, account_set, memo_set, confirmed_df, proposed_row_df):
@@ -851,7 +854,7 @@ class ExpenseForecast:
             return False
 
     def processConfirmedTransactions(self, forecast_df, relevant_confirmed_df,memo_set,account_set,date_YYYYMMDD):
-        log_in_color(logger, 'green', 'info', 'ENTER processProposedTransactions()', self.log_stack_depth)
+        log_in_color(logger, 'green', 'info', 'ENTER processConfirmedTransactions()', self.log_stack_depth)
         self.log_stack_depth += 1
 
         for confirmed_index, confirmed_row in relevant_confirmed_df.iterrows():
@@ -869,7 +872,7 @@ class ExpenseForecast:
                                                      date_YYYYMMDD)
 
         self.log_stack_depth -= 1
-        log_in_color(logger, 'green', 'info', 'EXIT processProposedTransactions()', self.log_stack_depth)
+        log_in_color(logger, 'green', 'info', 'EXIT processConfirmedTransactions()', self.log_stack_depth)
         return forecast_df
 
     def processProposedTransactions(self, account_set, forecast_df, date_YYYYMMDD, memo_set, relevant_proposed_df, priority_level, allow_partial_payments, allow_skip_and_defer):
@@ -1229,22 +1232,6 @@ class ExpenseForecast:
 
         if isP1 and noMatchingDayInForecast and notPastEndOfForecast:
             forecast_df = self.addANewDayToTheForecast(forecast_df, date_YYYYMMDD)
-            self.log_stack_depth -= 1
-
-            C1 = confirmed_df.shape[0]
-            P1 = proposed_df.shape[0]
-            D1 = deferred_df.shape[0]
-            S1 = skipped_df.shape[0]
-            T1 = C1 + P1 + D1 + S1
-            row_count_string = ' C1:' + str(C1) + '  P1:' + str(P1) + '  D1:' + str(D1) + '  S1:' + str(
-                S1) + '  T1:' + str(T1)
-
-            bal_string = '  '
-            for account_index, account_row in account_set.getAccounts().iterrows():
-                bal_string += '$' + str(round(account_row.Balance, 2)) + ' '
-
-            log_in_color(logger, 'green', 'info','EXIT executeTransactionsForDay_v2(priority_level=' + str(priority_level) + ',date=' + str(date_YYYYMMDD) + ') ' + str(row_count_string) + str(bal_string), self.log_stack_depth)
-            return [forecast_df, skipped_df, confirmed_df, deferred_df]
 
         if isP1 and thereArePendingConfirmedTransactions:
             relevant_confirmed_df = self.sortTxnsToPutIncomeFirst(relevant_confirmed_df)
@@ -2597,9 +2584,16 @@ class ExpenseForecast:
         self.log_stack_depth += 1
         all_days = forecast_df.Date #todo havent tested this, but forecast_df has been satisficed so it has all the dates
 
+        log_in_color(logger, 'magenta', 'info', 'confirmed_df:', self.log_stack_depth)
         log_in_color(logger, 'magenta', 'info', confirmed_df.to_string(), self.log_stack_depth)
+
+        log_in_color(logger, 'magenta', 'info', 'proposed_df:', self.log_stack_depth)
         log_in_color(logger, 'magenta', 'info', proposed_df.to_string(), self.log_stack_depth)
+
+        log_in_color(logger, 'magenta', 'info', 'deferred_df:', self.log_stack_depth)
         log_in_color(logger, 'magenta', 'info', deferred_df.to_string(), self.log_stack_depth)
+
+        log_in_color(logger, 'magenta', 'info', 'skipped_df:', self.log_stack_depth)
         log_in_color(logger, 'magenta', 'info', skipped_df.to_string(), self.log_stack_depth)
 
         # Schema is: Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed

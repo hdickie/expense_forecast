@@ -301,12 +301,12 @@ class TestExpenseForecastMethods:
                 for i in range(0,expected_result_df.shape[0]):
                     assert expected_result_df.loc[i,'Memo'] == E.forecast_df.loc[i,'Memo']
             except Exception as e:
-                log_in_color('red','error','Forecasts matched but the memo did not')
+                log_in_color(logger,'red','error','Forecasts matched but the memo did not')
                 date_memo1_memo2_df = pd.DataFrame()
                 date_memo1_memo2_df['Date'] = expected_result_df.Date
                 date_memo1_memo2_df['Expected_Memo'] = expected_result_df.Memo
                 date_memo1_memo2_df['Actual_Memo'] = E.forecast_df.Memo
-                log_in_color('red', 'error', date_memo1_memo2_df.to_string())
+                log_in_color(logger,'red', 'error', date_memo1_memo2_df.to_string())
                 raise e
 
 
@@ -1624,14 +1624,14 @@ class TestExpenseForecastMethods:
         with pytest.raises(ValueError):
             E.runForecast()
 
-        # log_in_color('white', 'debug', 'Confirmed:')
-        # log_in_color('white', 'debug', E.confirmed_df.to_string())
-        # log_in_color('white', 'debug', 'Deferred:')
-        # log_in_color('white', 'debug', E.deferred_df.to_string())
-        # log_in_color('white', 'debug', 'Skipped:')
-        # log_in_color('white', 'debug', E.skipped_df.to_string())
-        # log_in_color('white', 'debug', 'Forecast:')
-        # log_in_color('white', 'debug', E.forecast_df.to_string())
+        # log_in_color(logger,'white', 'debug', 'Confirmed:')
+        # log_in_color(logger,'white', 'debug', E.confirmed_df.to_string())
+        # log_in_color(logger,'white', 'debug', 'Deferred:')
+        # log_in_color(logger,'white', 'debug', E.deferred_df.to_string())
+        # log_in_color(logger,'white', 'debug', 'Skipped:')
+        # log_in_color(logger,'white', 'debug', E.skipped_df.to_string())
+        # log_in_color(logger,'white', 'debug', 'Forecast:')
+        # log_in_color(logger,'white', 'debug', E.forecast_df.to_string())
 
 
     def test_minimum_loan_payments(self):
@@ -2305,7 +2305,14 @@ class TestExpenseForecastMethods:
 #plot all
 #plot marginal interest
 
-
-
-
+#
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_execute_defer_after_receiving_income_2_days_later-account_set15-budget_set15-memo_rule_set15-20000101-20000104-milestone_set15-expected_result_df15]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_transactions_executed_at_p1_and_p2-account_set17-budget_set17-memo_rule_set17-20000101-20000106-milestone_set17-expected_result_df17]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_transactions_executed_at_p1_and_p2_and_p3-account_set18-budget_set18-memo_rule_set18-20000101-20000106-milestone_set18-expected_result_df18]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_deferrals[test_p5_and_6__expect_defer__daily-account_set1-budget_set1-memo_rule_set1-20000101-20000103-milestone_set1-expected_result_df1-p6 deferrable txn 1/2/00 ($1000.0)-20000103]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_dont_recompute_past_days_for_p2plus_transactions - NotImplementedError
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_forecast_longer_than_satisfice - Failed: DID NOT RAISE <class 'ValueError'>
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_interest_types_and_cadences_at_most_monthly - NotImplementedError
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_quarter_and_year_long_interest_cadences - NotImplementedError
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_runForecast_v2 - AssertionError
 
