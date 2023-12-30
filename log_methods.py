@@ -31,9 +31,62 @@ def setup_logger(logger_name, log_file, level=logging.DEBUG):
 # setup_logger('root','main.log')
 # col_logger = logging.getLogger('root')
 
+def log_in_color_with_breadcrumbs(logger,color,level,msg,stack_depth=0,color_stack=[]):
+    left_prefix = ' '
+
+    if len(color_stack) > 0:
+        for c in color_stack:
+            if c.lower() == 'red':
+                left_prefix += BEGIN_RED + '.'.ljust(4) + RESET_COLOR
+            elif c.lower() == 'green':
+                left_prefix += BEGIN_GREEN + '.'.ljust(4) + RESET_COLOR
+            elif c.lower() == 'yellow':
+                left_prefix += BEGIN_YELLOW + '.'.ljust(4) + RESET_COLOR
+            elif c.lower() == 'blue':
+                left_prefix += BEGIN_BLUE + '.'.ljust(4) + RESET_COLOR
+            elif c.lower() == 'magenta':
+                left_prefix += BEGIN_MAGENTA + '.'.ljust(4) + RESET_COLOR
+            elif c.lower() == 'white':
+                left_prefix += BEGIN_WHITE + '.'.ljust(4) + RESET_COLOR
+            elif c.lower() == 'cyan':
+                left_prefix += BEGIN_CYAN + '.'.ljust(4) + RESET_COLOR
+    else:
+        left_prefix = left_prefix.ljust(stack_depth * 4, ' ') + ' '
+
+    level = level.lower()
+    for line in str(msg).split('\n'):
+        if color.lower() == 'red':
+            line = BEGIN_RED + str(stack_depth) + RESET_COLOR + left_prefix + BEGIN_RED + line
+        elif color.lower() == 'green':
+            line = BEGIN_GREEN + str(stack_depth) + RESET_COLOR + left_prefix + BEGIN_GREEN + line + RESET_COLOR
+        elif color.lower() == 'yellow':
+            line = BEGIN_YELLOW + str(stack_depth) + RESET_COLOR + left_prefix + BEGIN_YELLOW + line + RESET_COLOR
+        elif color.lower() == 'blue':
+            line = BEGIN_BLUE + str(stack_depth) + RESET_COLOR + left_prefix + BEGIN_BLUE + line + RESET_COLOR
+        elif color.lower() == 'magenta':
+            line = BEGIN_MAGENTA + str(stack_depth) + RESET_COLOR + left_prefix + BEGIN_MAGENTA + line + RESET_COLOR
+        elif color.lower() == 'white':
+            line = BEGIN_WHITE + str(stack_depth) + RESET_COLOR + left_prefix + BEGIN_WHITE + line + RESET_COLOR
+        elif color.lower() == 'cyan':
+            line = BEGIN_CYAN + str(stack_depth) + RESET_COLOR + left_prefix + BEGIN_CYAN + line + RESET_COLOR
+
+        if level == 'debug':
+            logger.debug(line)
+        elif level == 'warning':
+            logger.warning(line)
+        elif level == 'error':
+            logger.error(line)
+        elif level == 'info':
+            logger.info(line)
+        elif level == 'critical':
+            logger.critical(line)
+        else:
+            print(line)
+
 def log_in_color(logger,color,level,msg,stack_depth=0):
     left_prefix = str(stack_depth)
     left_prefix = left_prefix.ljust(stack_depth*4,' ') + ' '
+    level = level.lower()
 
     for line in str(msg).split('\n'):
 

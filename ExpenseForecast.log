@@ -1,6 +1,704 @@
-2023-12-29 15:01:52,774 - INFO     - [32m0 ExpenseForecast(start_date_YYYYMMDD=20000101, end_date_YYYYMMDD=20000103)[0m
-2023-12-29 15:01:52,928 - INFO     - [37m0 p1 / 7 20000102[0m
-2023-12-29 15:01:54,936 - INFO     - [37m0 p1 / 7 20000103[0m
-2023-12-29 15:01:56,788 - INFO     - [37m0 p7 / 7 20000102[0m
-2023-12-29 15:02:07,726 - INFO     - [37m0 p7 / 7 20000103[0m
-2023-12-29 15:02:09,388 - INFO     - [32m0 Writing to ./Forecast__032282__2023_12_29__15_01_52.json[0m
+2023-12-29 20:59:55,395 - INFO     - [32m0 ExpenseForecast(start_date_YYYYMMDD=20000101, end_date_YYYYMMDD=20000103)[0m
+2023-12-29 20:59:55,447 - INFO     - [34m0 ENTER computeOptimalForecast()[0m
+2023-12-29 20:59:55,447 - INFO     - [34m1    confirmed_df:[0m
+2023-12-29 20:59:55,449 - INFO     - [34m1           Date Priority Amount           Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:55,449 - INFO     - [34m1    0  20000103        1  100.0  income 1/3/00      False                   False[0m
+2023-12-29 20:59:55,449 - INFO     - [34m1    proposed_df:[0m
+2023-12-29 20:59:55,451 - INFO     - [34m1           Date Priority  Amount                      Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:55,451 - INFO     - [34m1    0  20000102        5   100.0             p5 txn 1/2/00      False                   False[0m
+2023-12-29 20:59:55,452 - INFO     - [34m1    1  20000102        6  1000.0  p6 deferrable txn 1/2/00       True                   False[0m
+2023-12-29 20:59:55,452 - INFO     - [34m1    deferred_df:[0m
+2023-12-29 20:59:55,452 - INFO     - [34m1    Empty DataFrame[0m
+2023-12-29 20:59:55,453 - INFO     - [34m1    Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:55,453 - INFO     - [34m1    Index: [][0m
+2023-12-29 20:59:55,453 - INFO     - [34m1    skipped_df:[0m
+2023-12-29 20:59:55,454 - INFO     - [34m1    Empty DataFrame[0m
+2023-12-29 20:59:55,454 - INFO     - [34m1    Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:55,454 - INFO     - [34m1    Index: [][0m
+2023-12-29 20:59:55,460 - INFO     - [34m1    ENTER satisfice()[0m
+2023-12-29 20:59:55,461 - INFO     - [32m2        ENTER executeTransactionsForDay_v2(priority_level=1,date=20000102)  C0:1  P0:0  D0:0  S0:0  T0:1  $1000.0 [0m
+2023-12-29 20:59:55,467 - INFO     - [32m2        EXIT executeTransactionsForDay_v2(priority_level=1,date=20000102)  C1:1  P1:0  D1:0  S1:0  T1:1  $1000.0 [0m
+2023-12-29 20:59:55,468 - DEBUG    - [34m2        ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:55,471 - DEBUG    - [34m2        EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,473 - DEBUG    - [34m2        ENTER executeMinimumPayments() $1000.0 [0m
+2023-12-29 20:59:55,478 - DEBUG    - [34m2        EXIT  executeMinimumPayments() $1000.0 [0m
+2023-12-29 20:59:55,479 - DEBUG    - [34m2        ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:55,482 - DEBUG    - [34m2        EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,484 - DEBUG    - [34m2        ENTER calculateInterestAccrualsForDay() 20000102 $1000.0 [0m
+2023-12-29 20:59:55,487 - DEBUG    - [34m2        EXIT  calculateInterestAccrualsForDay() 20000102 $1000.0 [0m
+2023-12-29 20:59:55,489 - INFO     - [32m2        ENTER executeTransactionsForDay_v2(priority_level=1,date=20000103)  C0:1  P0:0  D0:0  S0:0  T0:1  $1000.0 [0m
+2023-12-29 20:59:55,494 - INFO     - [32m2        EXIT executeTransactionsForDay_v2(priority_level=1,date=20000103)  C1:1  P1:0  D1:0  S1:0  T1:1  $1000.0 [0m
+2023-12-29 20:59:55,494 - DEBUG    - [34m2        ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000103)[0m
+2023-12-29 20:59:55,497 - DEBUG    - [34m2        EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,500 - DEBUG    - [34m2        ENTER executeMinimumPayments() $1000.0 [0m
+2023-12-29 20:59:55,510 - DEBUG    - [34m2        EXIT  executeMinimumPayments() $1000.0 [0m
+2023-12-29 20:59:55,511 - DEBUG    - [34m2        ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000103)[0m
+2023-12-29 20:59:55,516 - DEBUG    - [34m2        EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,520 - DEBUG    - [34m2        ENTER calculateInterestAccrualsForDay() 20000103 $1000.0 [0m
+2023-12-29 20:59:55,523 - DEBUG    - [34m2        EXIT  calculateInterestAccrualsForDay() 20000103 $1000.0 [0m
+2023-12-29 20:59:55,524 - INFO     - [34m1    EXIT satisfice()[0m
+2023-12-29 20:59:55,525 - INFO     - [35m1    ENTER assessPotentialOptimizations( F:3 C:1 P:2 D:0 S:0 )[0m
+2023-12-29 20:59:55,528 - INFO     - [35m2               Date Priority Amount           Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:55,528 - INFO     - [35m2        0  20000103        1  100.0  income 1/3/00      False                   False[0m
+2023-12-29 20:59:55,531 - INFO     - [35m2               Date Priority  Amount                      Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:55,532 - INFO     - [35m2        0  20000102        5   100.0             p5 txn 1/2/00      False                   False[0m
+2023-12-29 20:59:55,532 - INFO     - [35m2        1  20000102        6  1000.0  p6 deferrable txn 1/2/00       True                   False[0m
+2023-12-29 20:59:55,532 - INFO     - [35m2        Empty DataFrame[0m
+2023-12-29 20:59:55,533 - INFO     - [35m2        Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:55,533 - INFO     - [35m2        Index: [][0m
+2023-12-29 20:59:55,534 - INFO     - [35m2        Empty DataFrame[0m
+2023-12-29 20:59:55,534 - INFO     - [35m2        Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:55,534 - INFO     - [35m2        Index: [][0m
+2023-12-29 20:59:55,535 - INFO     - [35m2        p5 20000102[0m
+2023-12-29 20:59:55,535 - INFO     - [34m2        ENTER updateProposedTransactionsBasedOnOtherSets( C:1 P:2 D:0 S:0 )[0m
+2023-12-29 20:59:55,538 - INFO     - [34m2               Date Priority Amount           Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:55,538 - INFO     - [34m2        0  20000103        1  100.0  income 1/3/00      False                   False[0m
+2023-12-29 20:59:55,542 - INFO     - [34m2               Date Priority  Amount                      Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:55,542 - INFO     - [34m2        0  20000102        5   100.0             p5 txn 1/2/00      False                   False[0m
+2023-12-29 20:59:55,542 - INFO     - [34m2        1  20000102        6  1000.0  p6 deferrable txn 1/2/00       True                   False[0m
+2023-12-29 20:59:55,543 - INFO     - [34m2        Empty DataFrame[0m
+2023-12-29 20:59:55,543 - INFO     - [34m2        Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:55,543 - INFO     - [34m2        Index: [][0m
+2023-12-29 20:59:55,544 - INFO     - [34m2        Empty DataFrame[0m
+2023-12-29 20:59:55,544 - INFO     - [34m2        Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:55,544 - INFO     - [34m2        Index: [][0m
+2023-12-29 20:59:55,553 - INFO     - [34m2        EXIT updateProposedTransactionsBasedOnOtherSets[0m
+2023-12-29 20:59:55,553 - DEBUG    - [34m2        ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:55,557 - DEBUG    - [34m2        EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,557 - DEBUG    - [34m2        ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:55,563 - DEBUG    - [34m2        EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,563 - DEBUG    - [34m2        ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000101)[0m
+2023-12-29 20:59:55,568 - DEBUG    - [34m2        EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,571 - DEBUG    - [34m2        ENTER calculateInterestAccrualsForDay() 20000101 $1000.0 [0m
+2023-12-29 20:59:55,575 - DEBUG    - [34m2        EXIT  calculateInterestAccrualsForDay() 20000101 $1000.0 [0m
+2023-12-29 20:59:55,581 - INFO     - [32m2        ENTER executeTransactionsForDay(priority_level=5,date=20000102)  C0:1  P0:2  D0:0  S0:0  T0:3  $1000.0 [0m
+2023-12-29 20:59:55,581 - DEBUG    - [36m3            Relevant Proposed: [0m
+2023-12-29 20:59:55,584 - DEBUG    - [36m3                   Date Priority Amount           Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:55,584 - DEBUG    - [36m3            0  20000102        5  100.0  p5 txn 1/2/00      False                   False[0m
+2023-12-29 20:59:55,588 - DEBUG    - [34m3            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:55,592 - DEBUG    - [34m3            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,593 - INFO     - [32m4                eTDF :: BEGIN processing confirmed txns[0m
+2023-12-29 20:59:55,593 - INFO     - [32m4                eTDF :: END processing confirmed txns[0m
+2023-12-29 20:59:55,593 - INFO     - [32m4                eTDF :: BEGIN processing proposed txns[0m
+2023-12-29 20:59:55,593 - DEBUG    - [36m4                Processing proposed or deferred txn:[0m
+2023-12-29 20:59:55,597 - DEBUG    - [36m4                       Date Priority Amount           Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:55,597 - DEBUG    - [36m4                0  20000102        5  100.0  p5 txn 1/2/00      False                   False[0m
+2023-12-29 20:59:55,606 - DEBUG    - [37m4                (pre transaction) available_balances: {'Checking': 1000.0}[0m
+2023-12-29 20:59:55,606 - DEBUG    - [32m4                Checking transaction to see if it violates account boundaries[0m
+2023-12-29 20:59:55,606 - DEBUG    - [35m5                    ENTER error-check computeOptimalForecast: p5 txn 1/2/00[0m
+2023-12-29 20:59:55,607 - DEBUG    - [34m5                    ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000101)[0m
+2023-12-29 20:59:55,612 - DEBUG    - [34m5                    EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,612 - INFO     - [34m5                    ENTER computeOptimalForecast()[0m
+2023-12-29 20:59:55,613 - INFO     - [34m6                        confirmed_df:[0m
+2023-12-29 20:59:55,616 - INFO     - [34m6                               Date Priority Amount           Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:55,616 - INFO     - [34m6                        0  20000103        1  100.0  income 1/3/00      False                   False[0m
+2023-12-29 20:59:55,616 - INFO     - [34m6                        0  20000102        5  100.0  p5 txn 1/2/00      False                   False[0m
+2023-12-29 20:59:55,616 - INFO     - [34m6                        proposed_df:[0m
+2023-12-29 20:59:55,617 - INFO     - [34m6                        Empty DataFrame[0m
+2023-12-29 20:59:55,617 - INFO     - [34m6                        Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:55,617 - INFO     - [34m6                        Index: [][0m
+2023-12-29 20:59:55,617 - INFO     - [34m6                        deferred_df:[0m
+2023-12-29 20:59:55,618 - INFO     - [34m6                        Empty DataFrame[0m
+2023-12-29 20:59:55,618 - INFO     - [34m6                        Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:55,618 - INFO     - [34m6                        Index: [][0m
+2023-12-29 20:59:55,618 - INFO     - [34m6                        skipped_df:[0m
+2023-12-29 20:59:55,619 - INFO     - [34m6                        Empty DataFrame[0m
+2023-12-29 20:59:55,619 - INFO     - [34m6                        Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:55,619 - INFO     - [34m6                        Index: [][0m
+2023-12-29 20:59:55,627 - INFO     - [34m6                        ENTER satisfice()[0m
+2023-12-29 20:59:55,629 - INFO     - [32m7                            ENTER executeTransactionsForDay_v2(priority_level=1,date=20000102)  C0:2  P0:0  D0:0  S0:0  T0:2  $1000.0 [0m
+2023-12-29 20:59:55,635 - INFO     - [32m7                            EXIT executeTransactionsForDay_v2(priority_level=1,date=20000102)  C1:2  P1:0  D1:0  S1:0  T1:2  $1000.0 [0m
+2023-12-29 20:59:55,635 - DEBUG    - [34m7                            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:55,640 - DEBUG    - [34m7                            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,643 - DEBUG    - [34m7                            ENTER executeMinimumPayments() $1000.0 [0m
+2023-12-29 20:59:55,649 - DEBUG    - [34m7                            EXIT  executeMinimumPayments() $1000.0 [0m
+2023-12-29 20:59:55,650 - DEBUG    - [34m7                            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:55,655 - DEBUG    - [34m7                            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,659 - DEBUG    - [34m7                            ENTER calculateInterestAccrualsForDay() 20000102 $1000.0 [0m
+2023-12-29 20:59:55,663 - DEBUG    - [34m7                            EXIT  calculateInterestAccrualsForDay() 20000102 $1000.0 [0m
+2023-12-29 20:59:55,667 - INFO     - [32m7                            ENTER executeTransactionsForDay_v2(priority_level=1,date=20000103)  C0:2  P0:0  D0:0  S0:0  T0:2  $1000.0 [0m
+2023-12-29 20:59:55,674 - INFO     - [32m7                            EXIT executeTransactionsForDay_v2(priority_level=1,date=20000103)  C1:2  P1:0  D1:0  S1:0  T1:2  $1000.0 [0m
+2023-12-29 20:59:55,674 - DEBUG    - [34m7                            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000103)[0m
+2023-12-29 20:59:55,679 - DEBUG    - [34m7                            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,681 - DEBUG    - [34m7                            ENTER executeMinimumPayments() $1000.0 [0m
+2023-12-29 20:59:55,688 - DEBUG    - [34m7                            EXIT  executeMinimumPayments() $1000.0 [0m
+2023-12-29 20:59:55,689 - DEBUG    - [34m7                            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000103)[0m
+2023-12-29 20:59:55,694 - DEBUG    - [34m7                            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,696 - DEBUG    - [34m7                            ENTER calculateInterestAccrualsForDay() 20000103 $1000.0 [0m
+2023-12-29 20:59:55,699 - DEBUG    - [34m7                            EXIT  calculateInterestAccrualsForDay() 20000103 $1000.0 [0m
+2023-12-29 20:59:55,699 - INFO     - [34m6                        EXIT satisfice()[0m
+2023-12-29 20:59:55,700 - INFO     - [35m6                        ENTER assessPotentialOptimizations( F:3 C:2 P:0 D:0 S:0 )[0m
+2023-12-29 20:59:55,703 - INFO     - [35m7                                   Date Priority Amount           Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:55,703 - INFO     - [35m7                            0  20000103        1  100.0  income 1/3/00      False                   False[0m
+2023-12-29 20:59:55,703 - INFO     - [35m7                            0  20000102        5  100.0  p5 txn 1/2/00      False                   False[0m
+2023-12-29 20:59:55,704 - INFO     - [35m7                            Empty DataFrame[0m
+2023-12-29 20:59:55,705 - INFO     - [35m7                            Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:55,705 - INFO     - [35m7                            Index: [][0m
+2023-12-29 20:59:55,706 - INFO     - [35m7                            Empty DataFrame[0m
+2023-12-29 20:59:55,706 - INFO     - [35m7                            Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:55,706 - INFO     - [35m7                            Index: [][0m
+2023-12-29 20:59:55,707 - INFO     - [35m7                            Empty DataFrame[0m
+2023-12-29 20:59:55,707 - INFO     - [35m7                            Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:55,708 - INFO     - [35m7                            Index: [][0m
+2023-12-29 20:59:55,709 - INFO     - [35m7                            p5 20000102[0m
+2023-12-29 20:59:55,709 - INFO     - [34m7                            ENTER updateProposedTransactionsBasedOnOtherSets( C:2 P:0 D:0 S:0 )[0m
+2023-12-29 20:59:55,713 - INFO     - [34m7                                   Date Priority Amount           Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:55,713 - INFO     - [34m7                            0  20000103        1  100.0  income 1/3/00      False                   False[0m
+2023-12-29 20:59:55,713 - INFO     - [34m7                            0  20000102        5  100.0  p5 txn 1/2/00      False                   False[0m
+2023-12-29 20:59:55,714 - INFO     - [34m7                            Empty DataFrame[0m
+2023-12-29 20:59:55,714 - INFO     - [34m7                            Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:55,714 - INFO     - [34m7                            Index: [][0m
+2023-12-29 20:59:55,715 - INFO     - [34m7                            Empty DataFrame[0m
+2023-12-29 20:59:55,715 - INFO     - [34m7                            Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:55,715 - INFO     - [34m7                            Index: [][0m
+2023-12-29 20:59:55,716 - INFO     - [34m7                            Empty DataFrame[0m
+2023-12-29 20:59:55,716 - INFO     - [34m7                            Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:55,716 - INFO     - [34m7                            Index: [][0m
+2023-12-29 20:59:55,723 - INFO     - [34m7                            EXIT updateProposedTransactionsBasedOnOtherSets[0m
+2023-12-29 20:59:55,723 - DEBUG    - [34m7                            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:55,727 - DEBUG    - [34m7                            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,727 - DEBUG    - [34m7                            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:55,730 - DEBUG    - [34m7                            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,730 - DEBUG    - [34m7                            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000101)[0m
+2023-12-29 20:59:55,733 - DEBUG    - [34m7                            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,735 - DEBUG    - [34m7                            ENTER calculateInterestAccrualsForDay() 20000101 $1000.0 [0m
+2023-12-29 20:59:55,738 - DEBUG    - [34m7                            EXIT  calculateInterestAccrualsForDay() 20000101 $1000.0 [0m
+2023-12-29 20:59:55,742 - INFO     - [32m7                            ENTER executeTransactionsForDay(priority_level=5,date=20000102)  C0:2  P0:0  D0:0  S0:0  T0:2  $1000.0 [0m
+2023-12-29 20:59:55,742 - DEBUG    - [36m8                                Relevant Confirmed: [0m
+2023-12-29 20:59:55,745 - DEBUG    - [36m8                                       Date Priority Amount           Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:55,745 - DEBUG    - [36m8                                0  20000102        5  100.0  p5 txn 1/2/00      False                   False[0m
+2023-12-29 20:59:55,748 - DEBUG    - [34m8                                ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:55,751 - DEBUG    - [34m8                                EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,751 - INFO     - [32m9                                    eTDF :: BEGIN processing confirmed txns[0m
+2023-12-29 20:59:55,752 - DEBUG    - [36m9                                    processing confirmed transaction: p5 txn 1/2/00[0m
+2023-12-29 20:59:55,765 - INFO     - [32m9                                    eTDF :: END processing confirmed txns[0m
+2023-12-29 20:59:55,766 - INFO     - [32m9                                    eTDF :: BEGIN processing proposed txns[0m
+2023-12-29 20:59:55,766 - INFO     - [32m9                                    eTDF :: END processing proposed txns[0m
+2023-12-29 20:59:55,766 - INFO     - [32m9                                    eTDF :: BEGIN processing deferred txns[0m
+2023-12-29 20:59:55,766 - INFO     - [32m9                                    eTDF :: END processing deferred txns[0m
+2023-12-29 20:59:55,767 - DEBUG    - [37m8                                (end of day 20000102) available_balances: {'Checking': 900.0}[0m
+2023-12-29 20:59:55,768 - DEBUG    - [32m8                                EXIT executeTransactionsForDay(priority_level=5,date=20000102)  C1:2  P1:0  D1:0  S1:0  T1:2  $900.0 [0m
+2023-12-29 20:59:55,768 - DEBUG    - [34m7                            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:55,771 - DEBUG    - [34m7                            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,772 - DEBUG    - [34m7                            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:55,775 - DEBUG    - [34m7                            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,781 - INFO     - [35m7                            p5 20000103[0m
+2023-12-29 20:59:55,781 - INFO     - [34m7                            ENTER updateProposedTransactionsBasedOnOtherSets( C:2 P:0 D:0 S:0 )[0m
+2023-12-29 20:59:55,783 - INFO     - [34m7                                   Date Priority Amount           Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:55,783 - INFO     - [34m7                            0  20000103        1  100.0  income 1/3/00      False                   False[0m
+2023-12-29 20:59:55,784 - INFO     - [34m7                            0  20000102        5  100.0  p5 txn 1/2/00      False                   False[0m
+2023-12-29 20:59:55,784 - INFO     - [34m7                            Empty DataFrame[0m
+2023-12-29 20:59:55,784 - INFO     - [34m7                            Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:55,784 - INFO     - [34m7                            Index: [][0m
+2023-12-29 20:59:55,785 - INFO     - [34m7                            Empty DataFrame[0m
+2023-12-29 20:59:55,785 - INFO     - [34m7                            Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:55,785 - INFO     - [34m7                            Index: [][0m
+2023-12-29 20:59:55,786 - INFO     - [34m7                            Empty DataFrame[0m
+2023-12-29 20:59:55,786 - INFO     - [34m7                            Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:55,786 - INFO     - [34m7                            Index: [][0m
+2023-12-29 20:59:55,793 - INFO     - [34m7                            EXIT updateProposedTransactionsBasedOnOtherSets[0m
+2023-12-29 20:59:55,793 - DEBUG    - [34m7                            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000103)[0m
+2023-12-29 20:59:55,796 - DEBUG    - [34m7                            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,796 - DEBUG    - [34m7                            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000103)[0m
+2023-12-29 20:59:55,799 - DEBUG    - [34m7                            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,800 - DEBUG    - [34m7                            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:55,805 - DEBUG    - [34m7                            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,808 - DEBUG    - [34m7                            ENTER calculateInterestAccrualsForDay() 20000102 $900.0 [0m
+2023-12-29 20:59:55,812 - DEBUG    - [34m7                            EXIT  calculateInterestAccrualsForDay() 20000102 $900.0 [0m
+2023-12-29 20:59:55,817 - INFO     - [32m7                            ENTER executeTransactionsForDay(priority_level=5,date=20000103)  C0:2  P0:0  D0:0  S0:0  T0:2  $900.0 [0m
+2023-12-29 20:59:55,817 - DEBUG    - [37m8                                (end of day 20000103) available_balances: {'Checking': 900.0}[0m
+2023-12-29 20:59:55,820 - INFO     - [32m7                            EXIT executeTransactionsForDay(priority_level=5,date=20000103)  C1:2  P1:0  D1:0  S1:0  T1:2  $900.0 [0m
+2023-12-29 20:59:55,820 - DEBUG    - [34m7                            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000103)[0m
+2023-12-29 20:59:55,824 - DEBUG    - [34m7                            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,824 - DEBUG    - [34m7                            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000103)[0m
+2023-12-29 20:59:55,829 - DEBUG    - [34m7                            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,834 - INFO     - [35m6                        EXIT assessPotentialOptimizations()[0m
+2023-12-29 20:59:55,834 - INFO     - [34m5                    EXIT computeOptimalForecast()[0m
+2023-12-29 20:59:55,834 - DEBUG    - [35m5                    END error-check computeOptimalForecast: p5 txn 1/2/00 (SUCCESS)[0m
+2023-12-29 20:59:55,835 - DEBUG    - [32m4                Transaction is permitted. Proceeding.[0m
+2023-12-29 20:59:55,835 - DEBUG    - [34m4                ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:55,840 - DEBUG    - [34m4                EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,842 - DEBUG    - [37m4                available_balances immediately after txn: {'Checking': 900.0}[0m
+2023-12-29 20:59:55,851 - INFO     - [32m4                eTDF :: END processing proposed txns[0m
+2023-12-29 20:59:55,852 - INFO     - [32m4                eTDF :: BEGIN processing deferred txns[0m
+2023-12-29 20:59:55,852 - INFO     - [32m4                eTDF :: END processing deferred txns[0m
+2023-12-29 20:59:55,853 - DEBUG    - [37m3            (end of day 20000102) available_balances: {'Checking': 900.0}[0m
+2023-12-29 20:59:55,855 - DEBUG    - [32m3            EXIT executeTransactionsForDay(priority_level=5,date=20000102)  C1:2  P1:1  D1:0  S1:0  T1:3  $900.0 [0m
+2023-12-29 20:59:55,855 - DEBUG    - [34m2        ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:55,860 - DEBUG    - [34m2        EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,860 - INFO     - [35m2        p5 20000103[0m
+2023-12-29 20:59:55,860 - INFO     - [34m2        ENTER updateProposedTransactionsBasedOnOtherSets( C:2 P:2 D:0 S:0 )[0m
+2023-12-29 20:59:55,864 - INFO     - [34m2               Date Priority Amount           Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:55,864 - INFO     - [34m2        0  20000103        1  100.0  income 1/3/00      False                   False[0m
+2023-12-29 20:59:55,864 - INFO     - [34m2        0  20000102        5  100.0  p5 txn 1/2/00      False                   False[0m
+2023-12-29 20:59:55,868 - INFO     - [34m2               Date Priority  Amount                      Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:55,868 - INFO     - [34m2        0  20000102        5   100.0             p5 txn 1/2/00      False                   False[0m
+2023-12-29 20:59:55,868 - INFO     - [34m2        1  20000102        6  1000.0  p6 deferrable txn 1/2/00       True                   False[0m
+2023-12-29 20:59:55,869 - INFO     - [34m2        Empty DataFrame[0m
+2023-12-29 20:59:55,870 - INFO     - [34m2        Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:55,870 - INFO     - [34m2        Index: [][0m
+2023-12-29 20:59:55,870 - INFO     - [34m2        Empty DataFrame[0m
+2023-12-29 20:59:55,870 - INFO     - [34m2        Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:55,871 - INFO     - [34m2        Index: [][0m
+2023-12-29 20:59:55,880 - INFO     - [34m2        EXIT updateProposedTransactionsBasedOnOtherSets[0m
+2023-12-29 20:59:55,880 - DEBUG    - [34m2        ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000103)[0m
+2023-12-29 20:59:55,883 - DEBUG    - [34m2        EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,884 - DEBUG    - [34m2        ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000103)[0m
+2023-12-29 20:59:55,888 - DEBUG    - [34m2        EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,888 - DEBUG    - [34m2        ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:55,892 - DEBUG    - [34m2        EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,895 - DEBUG    - [34m2        ENTER calculateInterestAccrualsForDay() 20000102 $900.0 [0m
+2023-12-29 20:59:55,899 - DEBUG    - [34m2        EXIT  calculateInterestAccrualsForDay() 20000102 $900.0 [0m
+2023-12-29 20:59:55,904 - INFO     - [32m2        ENTER executeTransactionsForDay(priority_level=5,date=20000103)  C0:2  P0:2  D0:0  S0:0  T0:4  $900.0 [0m
+2023-12-29 20:59:55,905 - DEBUG    - [37m3            (end of day 20000103) available_balances: {'Checking': 900.0}[0m
+2023-12-29 20:59:55,907 - INFO     - [32m2        EXIT executeTransactionsForDay(priority_level=5,date=20000103)  C1:2  P1:2  D1:0  S1:0  T1:4  $900.0 [0m
+2023-12-29 20:59:55,907 - DEBUG    - [34m2        ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000103)[0m
+2023-12-29 20:59:55,911 - DEBUG    - [34m2        EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,912 - INFO     - [35m2        p6 20000102[0m
+2023-12-29 20:59:55,912 - INFO     - [34m2        ENTER updateProposedTransactionsBasedOnOtherSets( C:2 P:2 D:0 S:0 )[0m
+2023-12-29 20:59:55,915 - INFO     - [34m2               Date Priority Amount           Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:55,915 - INFO     - [34m2        0  20000103        1  100.0  income 1/3/00      False                   False[0m
+2023-12-29 20:59:55,915 - INFO     - [34m2        0  20000102        5  100.0  p5 txn 1/2/00      False                   False[0m
+2023-12-29 20:59:55,918 - INFO     - [34m2               Date Priority  Amount                      Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:55,918 - INFO     - [34m2        0  20000102        5   100.0             p5 txn 1/2/00      False                   False[0m
+2023-12-29 20:59:55,919 - INFO     - [34m2        1  20000102        6  1000.0  p6 deferrable txn 1/2/00       True                   False[0m
+2023-12-29 20:59:55,919 - INFO     - [34m2        Empty DataFrame[0m
+2023-12-29 20:59:55,920 - INFO     - [34m2        Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:55,920 - INFO     - [34m2        Index: [][0m
+2023-12-29 20:59:55,921 - INFO     - [34m2        Empty DataFrame[0m
+2023-12-29 20:59:55,921 - INFO     - [34m2        Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:55,921 - INFO     - [34m2        Index: [][0m
+2023-12-29 20:59:55,930 - INFO     - [34m2        EXIT updateProposedTransactionsBasedOnOtherSets[0m
+2023-12-29 20:59:55,930 - DEBUG    - [34m2        ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:55,934 - DEBUG    - [34m2        EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,935 - DEBUG    - [34m2        ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:55,938 - DEBUG    - [34m2        EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,939 - DEBUG    - [34m2        ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000101)[0m
+2023-12-29 20:59:55,942 - DEBUG    - [34m2        EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,945 - DEBUG    - [34m2        ENTER calculateInterestAccrualsForDay() 20000101 $1000.0 [0m
+2023-12-29 20:59:55,949 - DEBUG    - [34m2        EXIT  calculateInterestAccrualsForDay() 20000101 $1000.0 [0m
+2023-12-29 20:59:55,955 - INFO     - [32m2        ENTER executeTransactionsForDay(priority_level=6,date=20000102)  C0:2  P0:2  D0:0  S0:0  T0:4  $1000.0 [0m
+2023-12-29 20:59:55,955 - DEBUG    - [36m3            Relevant Proposed: [0m
+2023-12-29 20:59:55,957 - DEBUG    - [36m3                   Date Priority  Amount                      Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:55,957 - DEBUG    - [36m3            1  20000102        6  1000.0  p6 deferrable txn 1/2/00       True                   False[0m
+2023-12-29 20:59:55,963 - DEBUG    - [34m3            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:55,967 - DEBUG    - [34m3            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,968 - INFO     - [32m4                eTDF :: BEGIN processing confirmed txns[0m
+2023-12-29 20:59:55,968 - INFO     - [32m4                eTDF :: END processing confirmed txns[0m
+2023-12-29 20:59:55,968 - INFO     - [32m4                eTDF :: BEGIN processing proposed txns[0m
+2023-12-29 20:59:55,969 - DEBUG    - [36m4                Processing proposed or deferred txn:[0m
+2023-12-29 20:59:55,972 - DEBUG    - [36m4                       Date Priority  Amount                      Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:55,972 - DEBUG    - [36m4                1  20000102        6  1000.0  p6 deferrable txn 1/2/00       True                   False[0m
+2023-12-29 20:59:55,980 - DEBUG    - [37m4                (pre transaction) available_balances: {'Checking': 900.0}[0m
+2023-12-29 20:59:55,980 - DEBUG    - [32m4                Checking transaction to see if it violates account boundaries[0m
+2023-12-29 20:59:55,980 - DEBUG    - [35m5                    ENTER error-check computeOptimalForecast: p6 deferrable txn 1/2/00[0m
+2023-12-29 20:59:55,981 - DEBUG    - [34m5                    ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000101)[0m
+2023-12-29 20:59:55,986 - DEBUG    - [34m5                    EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:55,986 - INFO     - [34m5                    ENTER computeOptimalForecast()[0m
+2023-12-29 20:59:55,986 - INFO     - [34m6                        confirmed_df:[0m
+2023-12-29 20:59:55,989 - INFO     - [34m6                               Date Priority  Amount                      Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:55,989 - INFO     - [34m6                        0  20000103        1   100.0             income 1/3/00      False                   False[0m
+2023-12-29 20:59:55,989 - INFO     - [34m6                        0  20000102        5   100.0             p5 txn 1/2/00      False                   False[0m
+2023-12-29 20:59:55,989 - INFO     - [34m6                        1  20000102        6  1000.0  p6 deferrable txn 1/2/00       True                   False[0m
+2023-12-29 20:59:55,989 - INFO     - [34m6                        proposed_df:[0m
+2023-12-29 20:59:55,990 - INFO     - [34m6                        Empty DataFrame[0m
+2023-12-29 20:59:55,990 - INFO     - [34m6                        Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:55,990 - INFO     - [34m6                        Index: [][0m
+2023-12-29 20:59:55,990 - INFO     - [34m6                        deferred_df:[0m
+2023-12-29 20:59:55,991 - INFO     - [34m6                        Empty DataFrame[0m
+2023-12-29 20:59:55,991 - INFO     - [34m6                        Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:55,991 - INFO     - [34m6                        Index: [][0m
+2023-12-29 20:59:55,991 - INFO     - [34m6                        skipped_df:[0m
+2023-12-29 20:59:55,992 - INFO     - [34m6                        Empty DataFrame[0m
+2023-12-29 20:59:55,992 - INFO     - [34m6                        Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:55,992 - INFO     - [34m6                        Index: [][0m
+2023-12-29 20:59:56,000 - INFO     - [34m6                        ENTER satisfice()[0m
+2023-12-29 20:59:56,003 - INFO     - [32m7                            ENTER executeTransactionsForDay_v2(priority_level=1,date=20000102)  C0:3  P0:0  D0:0  S0:0  T0:3  $1000.0 [0m
+2023-12-29 20:59:56,010 - INFO     - [32m7                            EXIT executeTransactionsForDay_v2(priority_level=1,date=20000102)  C1:3  P1:0  D1:0  S1:0  T1:3  $1000.0 [0m
+2023-12-29 20:59:56,010 - DEBUG    - [34m7                            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:56,016 - DEBUG    - [34m7                            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,018 - DEBUG    - [34m7                            ENTER executeMinimumPayments() $1000.0 [0m
+2023-12-29 20:59:56,026 - DEBUG    - [34m7                            EXIT  executeMinimumPayments() $1000.0 [0m
+2023-12-29 20:59:56,027 - DEBUG    - [34m7                            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:56,031 - DEBUG    - [34m7                            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,034 - DEBUG    - [34m7                            ENTER calculateInterestAccrualsForDay() 20000102 $1000.0 [0m
+2023-12-29 20:59:56,037 - DEBUG    - [34m7                            EXIT  calculateInterestAccrualsForDay() 20000102 $1000.0 [0m
+2023-12-29 20:59:56,040 - INFO     - [32m7                            ENTER executeTransactionsForDay_v2(priority_level=1,date=20000103)  C0:3  P0:0  D0:0  S0:0  T0:3  $1000.0 [0m
+2023-12-29 20:59:56,047 - INFO     - [32m7                            EXIT executeTransactionsForDay_v2(priority_level=1,date=20000103)  C1:3  P1:0  D1:0  S1:0  T1:3  $1000.0 [0m
+2023-12-29 20:59:56,047 - DEBUG    - [34m7                            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000103)[0m
+2023-12-29 20:59:56,050 - DEBUG    - [34m7                            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,052 - DEBUG    - [34m7                            ENTER executeMinimumPayments() $1000.0 [0m
+2023-12-29 20:59:56,058 - DEBUG    - [34m7                            EXIT  executeMinimumPayments() $1000.0 [0m
+2023-12-29 20:59:56,059 - DEBUG    - [34m7                            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000103)[0m
+2023-12-29 20:59:56,063 - DEBUG    - [34m7                            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,065 - DEBUG    - [34m7                            ENTER calculateInterestAccrualsForDay() 20000103 $1000.0 [0m
+2023-12-29 20:59:56,068 - DEBUG    - [34m7                            EXIT  calculateInterestAccrualsForDay() 20000103 $1000.0 [0m
+2023-12-29 20:59:56,069 - INFO     - [34m6                        EXIT satisfice()[0m
+2023-12-29 20:59:56,069 - INFO     - [35m6                        ENTER assessPotentialOptimizations( F:3 C:3 P:0 D:0 S:0 )[0m
+2023-12-29 20:59:56,072 - INFO     - [35m7                                   Date Priority  Amount                      Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:56,072 - INFO     - [35m7                            0  20000103        1   100.0             income 1/3/00      False                   False[0m
+2023-12-29 20:59:56,072 - INFO     - [35m7                            0  20000102        5   100.0             p5 txn 1/2/00      False                   False[0m
+2023-12-29 20:59:56,072 - INFO     - [35m7                            1  20000102        6  1000.0  p6 deferrable txn 1/2/00       True                   False[0m
+2023-12-29 20:59:56,073 - INFO     - [35m7                            Empty DataFrame[0m
+2023-12-29 20:59:56,073 - INFO     - [35m7                            Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:56,073 - INFO     - [35m7                            Index: [][0m
+2023-12-29 20:59:56,074 - INFO     - [35m7                            Empty DataFrame[0m
+2023-12-29 20:59:56,074 - INFO     - [35m7                            Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:56,074 - INFO     - [35m7                            Index: [][0m
+2023-12-29 20:59:56,074 - INFO     - [35m7                            Empty DataFrame[0m
+2023-12-29 20:59:56,075 - INFO     - [35m7                            Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:56,075 - INFO     - [35m7                            Index: [][0m
+2023-12-29 20:59:56,076 - INFO     - [35m7                            p5 20000102[0m
+2023-12-29 20:59:56,076 - INFO     - [34m7                            ENTER updateProposedTransactionsBasedOnOtherSets( C:3 P:0 D:0 S:0 )[0m
+2023-12-29 20:59:56,078 - INFO     - [34m7                                   Date Priority  Amount                      Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:56,078 - INFO     - [34m7                            0  20000103        1   100.0             income 1/3/00      False                   False[0m
+2023-12-29 20:59:56,078 - INFO     - [34m7                            0  20000102        5   100.0             p5 txn 1/2/00      False                   False[0m
+2023-12-29 20:59:56,079 - INFO     - [34m7                            1  20000102        6  1000.0  p6 deferrable txn 1/2/00       True                   False[0m
+2023-12-29 20:59:56,079 - INFO     - [34m7                            Empty DataFrame[0m
+2023-12-29 20:59:56,079 - INFO     - [34m7                            Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:56,079 - INFO     - [34m7                            Index: [][0m
+2023-12-29 20:59:56,080 - INFO     - [34m7                            Empty DataFrame[0m
+2023-12-29 20:59:56,080 - INFO     - [34m7                            Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:56,080 - INFO     - [34m7                            Index: [][0m
+2023-12-29 20:59:56,081 - INFO     - [34m7                            Empty DataFrame[0m
+2023-12-29 20:59:56,081 - INFO     - [34m7                            Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:56,081 - INFO     - [34m7                            Index: [][0m
+2023-12-29 20:59:56,089 - INFO     - [34m7                            EXIT updateProposedTransactionsBasedOnOtherSets[0m
+2023-12-29 20:59:56,089 - DEBUG    - [34m7                            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:56,093 - DEBUG    - [34m7                            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,093 - DEBUG    - [34m7                            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:56,097 - DEBUG    - [34m7                            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,097 - DEBUG    - [34m7                            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000101)[0m
+2023-12-29 20:59:56,100 - DEBUG    - [34m7                            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,103 - DEBUG    - [34m7                            ENTER calculateInterestAccrualsForDay() 20000101 $1000.0 [0m
+2023-12-29 20:59:56,106 - DEBUG    - [34m7                            EXIT  calculateInterestAccrualsForDay() 20000101 $1000.0 [0m
+2023-12-29 20:59:56,112 - INFO     - [32m7                            ENTER executeTransactionsForDay(priority_level=5,date=20000102)  C0:3  P0:0  D0:0  S0:0  T0:3  $1000.0 [0m
+2023-12-29 20:59:56,112 - DEBUG    - [36m8                                Relevant Confirmed: [0m
+2023-12-29 20:59:56,114 - DEBUG    - [36m8                                       Date Priority Amount           Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:56,114 - DEBUG    - [36m8                                0  20000102        5  100.0  p5 txn 1/2/00      False                   False[0m
+2023-12-29 20:59:56,118 - DEBUG    - [34m8                                ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:56,121 - DEBUG    - [34m8                                EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,121 - INFO     - [32m9                                    eTDF :: BEGIN processing confirmed txns[0m
+2023-12-29 20:59:56,122 - DEBUG    - [36m9                                    processing confirmed transaction: p5 txn 1/2/00[0m
+2023-12-29 20:59:56,134 - INFO     - [32m9                                    eTDF :: END processing confirmed txns[0m
+2023-12-29 20:59:56,134 - INFO     - [32m9                                    eTDF :: BEGIN processing proposed txns[0m
+2023-12-29 20:59:56,134 - INFO     - [32m9                                    eTDF :: END processing proposed txns[0m
+2023-12-29 20:59:56,135 - INFO     - [32m9                                    eTDF :: BEGIN processing deferred txns[0m
+2023-12-29 20:59:56,135 - INFO     - [32m9                                    eTDF :: END processing deferred txns[0m
+2023-12-29 20:59:56,135 - DEBUG    - [37m8                                (end of day 20000102) available_balances: {'Checking': 900.0}[0m
+2023-12-29 20:59:56,137 - DEBUG    - [32m8                                EXIT executeTransactionsForDay(priority_level=5,date=20000102)  C1:3  P1:0  D1:0  S1:0  T1:3  $900.0 [0m
+2023-12-29 20:59:56,137 - DEBUG    - [34m7                            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:56,141 - DEBUG    - [34m7                            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,141 - DEBUG    - [34m7                            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:56,144 - DEBUG    - [34m7                            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,151 - INFO     - [35m7                            p5 20000103[0m
+2023-12-29 20:59:56,151 - INFO     - [34m7                            ENTER updateProposedTransactionsBasedOnOtherSets( C:3 P:0 D:0 S:0 )[0m
+2023-12-29 20:59:56,154 - INFO     - [34m7                                   Date Priority  Amount                      Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:56,154 - INFO     - [34m7                            0  20000103        1   100.0             income 1/3/00      False                   False[0m
+2023-12-29 20:59:56,154 - INFO     - [34m7                            0  20000102        5   100.0             p5 txn 1/2/00      False                   False[0m
+2023-12-29 20:59:56,154 - INFO     - [34m7                            1  20000102        6  1000.0  p6 deferrable txn 1/2/00       True                   False[0m
+2023-12-29 20:59:56,154 - INFO     - [34m7                            Empty DataFrame[0m
+2023-12-29 20:59:56,155 - INFO     - [34m7                            Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:56,155 - INFO     - [34m7                            Index: [][0m
+2023-12-29 20:59:56,155 - INFO     - [34m7                            Empty DataFrame[0m
+2023-12-29 20:59:56,155 - INFO     - [34m7                            Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:56,156 - INFO     - [34m7                            Index: [][0m
+2023-12-29 20:59:56,156 - INFO     - [34m7                            Empty DataFrame[0m
+2023-12-29 20:59:56,156 - INFO     - [34m7                            Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:56,156 - INFO     - [34m7                            Index: [][0m
+2023-12-29 20:59:56,164 - INFO     - [34m7                            EXIT updateProposedTransactionsBasedOnOtherSets[0m
+2023-12-29 20:59:56,164 - DEBUG    - [34m7                            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000103)[0m
+2023-12-29 20:59:56,167 - DEBUG    - [34m7                            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,167 - DEBUG    - [34m7                            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000103)[0m
+2023-12-29 20:59:56,170 - DEBUG    - [34m7                            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,170 - DEBUG    - [34m7                            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:56,174 - DEBUG    - [34m7                            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,176 - DEBUG    - [34m7                            ENTER calculateInterestAccrualsForDay() 20000102 $900.0 [0m
+2023-12-29 20:59:56,180 - DEBUG    - [34m7                            EXIT  calculateInterestAccrualsForDay() 20000102 $900.0 [0m
+2023-12-29 20:59:56,185 - INFO     - [32m7                            ENTER executeTransactionsForDay(priority_level=5,date=20000103)  C0:3  P0:0  D0:0  S0:0  T0:3  $900.0 [0m
+2023-12-29 20:59:56,186 - DEBUG    - [37m8                                (end of day 20000103) available_balances: {'Checking': 900.0}[0m
+2023-12-29 20:59:56,187 - INFO     - [32m7                            EXIT executeTransactionsForDay(priority_level=5,date=20000103)  C1:3  P1:0  D1:0  S1:0  T1:3  $900.0 [0m
+2023-12-29 20:59:56,187 - DEBUG    - [34m7                            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000103)[0m
+2023-12-29 20:59:56,191 - DEBUG    - [34m7                            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,191 - DEBUG    - [34m7                            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000103)[0m
+2023-12-29 20:59:56,194 - DEBUG    - [34m7                            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,199 - INFO     - [35m7                            p6 20000102[0m
+2023-12-29 20:59:56,199 - INFO     - [34m7                            ENTER updateProposedTransactionsBasedOnOtherSets( C:3 P:0 D:0 S:0 )[0m
+2023-12-29 20:59:56,202 - INFO     - [34m7                                   Date Priority  Amount                      Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:56,202 - INFO     - [34m7                            0  20000103        1   100.0             income 1/3/00      False                   False[0m
+2023-12-29 20:59:56,202 - INFO     - [34m7                            0  20000102        5   100.0             p5 txn 1/2/00      False                   False[0m
+2023-12-29 20:59:56,202 - INFO     - [34m7                            1  20000102        6  1000.0  p6 deferrable txn 1/2/00       True                   False[0m
+2023-12-29 20:59:56,203 - INFO     - [34m7                            Empty DataFrame[0m
+2023-12-29 20:59:56,203 - INFO     - [34m7                            Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:56,203 - INFO     - [34m7                            Index: [][0m
+2023-12-29 20:59:56,204 - INFO     - [34m7                            Empty DataFrame[0m
+2023-12-29 20:59:56,204 - INFO     - [34m7                            Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:56,204 - INFO     - [34m7                            Index: [][0m
+2023-12-29 20:59:56,204 - INFO     - [34m7                            Empty DataFrame[0m
+2023-12-29 20:59:56,205 - INFO     - [34m7                            Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:56,205 - INFO     - [34m7                            Index: [][0m
+2023-12-29 20:59:56,212 - INFO     - [34m7                            EXIT updateProposedTransactionsBasedOnOtherSets[0m
+2023-12-29 20:59:56,212 - DEBUG    - [34m7                            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:56,216 - DEBUG    - [34m7                            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,216 - DEBUG    - [34m7                            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:56,219 - DEBUG    - [34m7                            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,219 - DEBUG    - [34m7                            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000101)[0m
+2023-12-29 20:59:56,222 - DEBUG    - [34m7                            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,224 - DEBUG    - [34m7                            ENTER calculateInterestAccrualsForDay() 20000101 $1000.0 [0m
+2023-12-29 20:59:56,227 - DEBUG    - [34m7                            EXIT  calculateInterestAccrualsForDay() 20000101 $1000.0 [0m
+2023-12-29 20:59:56,231 - INFO     - [32m7                            ENTER executeTransactionsForDay(priority_level=6,date=20000102)  C0:3  P0:0  D0:0  S0:0  T0:3  $1000.0 [0m
+2023-12-29 20:59:56,231 - DEBUG    - [36m8                                Relevant Confirmed: [0m
+2023-12-29 20:59:56,233 - DEBUG    - [36m8                                       Date Priority  Amount                      Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:56,234 - DEBUG    - [36m8                                1  20000102        6  1000.0  p6 deferrable txn 1/2/00       True                   False[0m
+2023-12-29 20:59:56,237 - DEBUG    - [34m8                                ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:56,240 - DEBUG    - [34m8                                EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,241 - INFO     - [32m9                                    eTDF :: BEGIN processing confirmed txns[0m
+2023-12-29 20:59:56,241 - DEBUG    - [36m9                                    processing confirmed transaction: p6 deferrable txn 1/2/00[0m
+2023-12-29 20:59:56,253 - DEBUG    - [35m9                                    END error-check computeOptimalForecast: p6 deferrable txn 1/2/00 (FAIL)[0m
+2023-12-29 20:59:56,254 - DEBUG    - [32m8                                Appending transaction to deferred_df[0m
+2023-12-29 20:59:56,255 - INFO     - [32m8                                eTDF :: END processing proposed txns[0m
+2023-12-29 20:59:56,255 - INFO     - [32m8                                eTDF :: BEGIN processing deferred txns[0m
+2023-12-29 20:59:56,256 - INFO     - [32m8                                eTDF :: END processing deferred txns[0m
+2023-12-29 20:59:56,256 - DEBUG    - [37m7                            (end of day 20000102) available_balances: {'Checking': 1000.0}[0m
+2023-12-29 20:59:56,258 - DEBUG    - [32m7                            EXIT executeTransactionsForDay(priority_level=6,date=20000102)  C1:2  P1:1  D1:1  S1:0  T1:4  $1000.0 [0m
+2023-12-29 20:59:56,259 - DEBUG    - [34m6                        ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:56,263 - DEBUG    - [34m6                        EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,263 - INFO     - [35m6                        p6 20000103[0m
+2023-12-29 20:59:56,263 - INFO     - [34m6                        ENTER updateProposedTransactionsBasedOnOtherSets( C:2 P:2 D:1 S:0 )[0m
+2023-12-29 20:59:56,266 - INFO     - [34m6                               Date Priority Amount           Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:56,266 - INFO     - [34m6                        0  20000103        1  100.0  income 1/3/00      False                   False[0m
+2023-12-29 20:59:56,266 - INFO     - [34m6                        0  20000102        5  100.0  p5 txn 1/2/00      False                   False[0m
+2023-12-29 20:59:56,268 - INFO     - [34m6                               Date Priority  Amount                      Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:56,268 - INFO     - [34m6                        0  20000102        5   100.0             p5 txn 1/2/00      False                   False[0m
+2023-12-29 20:59:56,268 - INFO     - [34m6                        1  20000102        6  1000.0  p6 deferrable txn 1/2/00       True                   False[0m
+2023-12-29 20:59:56,271 - INFO     - [34m6                               Date Priority  Amount                      Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:56,271 - INFO     - [34m6                        0  20000103        6  1000.0  p6 deferrable txn 1/2/00       True                   False[0m
+2023-12-29 20:59:56,272 - INFO     - [34m6                        Empty DataFrame[0m
+2023-12-29 20:59:56,272 - INFO     - [34m6                        Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:56,272 - INFO     - [34m6                        Index: [][0m
+2023-12-29 20:59:56,279 - INFO     - [34m6                        EXIT updateProposedTransactionsBasedOnOtherSets[0m
+2023-12-29 20:59:56,279 - DEBUG    - [34m6                        ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000103)[0m
+2023-12-29 20:59:56,283 - DEBUG    - [34m6                        EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,283 - DEBUG    - [34m6                        ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000103)[0m
+2023-12-29 20:59:56,286 - DEBUG    - [34m6                        EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,286 - DEBUG    - [34m6                        ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:56,289 - DEBUG    - [34m6                        EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,291 - DEBUG    - [34m6                        ENTER calculateInterestAccrualsForDay() 20000102 $900.0 [0m
+2023-12-29 20:59:56,294 - DEBUG    - [34m6                        EXIT  calculateInterestAccrualsForDay() 20000102 $900.0 [0m
+2023-12-29 20:59:56,298 - INFO     - [32m6                        ENTER executeTransactionsForDay(priority_level=6,date=20000103)  C0:2  P0:2  D0:1  S0:0  T0:5  $900.0 [0m
+2023-12-29 20:59:56,299 - DEBUG    - [36m7                            Relevant Deferred: [0m
+2023-12-29 20:59:56,301 - DEBUG    - [36m7                                   Date Priority  Amount                      Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:56,301 - DEBUG    - [36m7                            0  20000103        6  1000.0  p6 deferrable txn 1/2/00       True                   False[0m
+2023-12-29 20:59:56,304 - DEBUG    - [34m7                            ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000103)[0m
+2023-12-29 20:59:56,307 - DEBUG    - [34m7                            EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,308 - INFO     - [32m8                                eTDF :: BEGIN processing confirmed txns[0m
+2023-12-29 20:59:56,308 - INFO     - [32m8                                eTDF :: END processing confirmed txns[0m
+2023-12-29 20:59:56,308 - INFO     - [32m8                                eTDF :: BEGIN processing proposed txns[0m
+2023-12-29 20:59:56,308 - INFO     - [32m8                                eTDF :: END processing proposed txns[0m
+2023-12-29 20:59:56,308 - INFO     - [32m8                                eTDF :: BEGIN processing deferred txns[0m
+2023-12-29 20:59:56,314 - DEBUG    - [37m8                                (pre transaction) available_balances: {'Checking': 900.0}[0m
+2023-12-29 20:59:56,314 - DEBUG    - [32m8                                Checking transaction to see if it violates account boundaries[0m
+2023-12-29 20:59:56,314 - DEBUG    - [35m9                                    BEGIN error-check computeOptimalForecast: p6 deferrable txn 1/2/00[0m
+2023-12-29 20:59:56,315 - DEBUG    - [34m9                                    ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000101)[0m
+2023-12-29 20:59:56,318 - DEBUG    - [34m9                                    EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,319 - INFO     - [34m9                                    ENTER computeOptimalForecast()[0m
+2023-12-29 20:59:56,319 - INFO     - [34m10                                       confirmed_df:[0m
+2023-12-29 20:59:56,321 - INFO     - [34m10                                              Date Priority  Amount                      Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:56,321 - INFO     - [34m10                                       0  20000103        1   100.0             income 1/3/00      False                   False[0m
+2023-12-29 20:59:56,321 - INFO     - [34m10                                       0  20000102        5   100.0             p5 txn 1/2/00      False                   False[0m
+2023-12-29 20:59:56,322 - INFO     - [34m10                                       0  20000103        6  1000.0  p6 deferrable txn 1/2/00       True                   False[0m
+2023-12-29 20:59:56,322 - INFO     - [34m10                                       proposed_df:[0m
+2023-12-29 20:59:56,322 - INFO     - [34m10                                       Empty DataFrame[0m
+2023-12-29 20:59:56,322 - INFO     - [34m10                                       Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:56,322 - INFO     - [34m10                                       Index: [][0m
+2023-12-29 20:59:56,323 - INFO     - [34m10                                       deferred_df:[0m
+2023-12-29 20:59:56,323 - INFO     - [34m10                                       Empty DataFrame[0m
+2023-12-29 20:59:56,323 - INFO     - [34m10                                       Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:56,323 - INFO     - [34m10                                       Index: [][0m
+2023-12-29 20:59:56,323 - INFO     - [34m10                                       skipped_df:[0m
+2023-12-29 20:59:56,324 - INFO     - [34m10                                       Empty DataFrame[0m
+2023-12-29 20:59:56,324 - INFO     - [34m10                                       Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:56,324 - INFO     - [34m10                                       Index: [][0m
+2023-12-29 20:59:56,329 - INFO     - [34m10                                       ENTER satisfice()[0m
+2023-12-29 20:59:56,331 - INFO     - [32m11                                           ENTER executeTransactionsForDay_v2(priority_level=1,date=20000102)  C0:3  P0:0  D0:0  S0:0  T0:3  $1000.0 [0m
+2023-12-29 20:59:56,336 - INFO     - [32m11                                           EXIT executeTransactionsForDay_v2(priority_level=1,date=20000102)  C1:3  P1:0  D1:0  S1:0  T1:3  $1000.0 [0m
+2023-12-29 20:59:56,336 - DEBUG    - [34m11                                           ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:56,340 - DEBUG    - [34m11                                           EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,342 - DEBUG    - [34m11                                           ENTER executeMinimumPayments() $1000.0 [0m
+2023-12-29 20:59:56,348 - DEBUG    - [34m11                                           EXIT  executeMinimumPayments() $1000.0 [0m
+2023-12-29 20:59:56,349 - DEBUG    - [34m11                                           ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:56,352 - DEBUG    - [34m11                                           EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,354 - DEBUG    - [34m11                                           ENTER calculateInterestAccrualsForDay() 20000102 $1000.0 [0m
+2023-12-29 20:59:56,356 - DEBUG    - [34m11                                           EXIT  calculateInterestAccrualsForDay() 20000102 $1000.0 [0m
+2023-12-29 20:59:56,359 - INFO     - [32m11                                           ENTER executeTransactionsForDay_v2(priority_level=1,date=20000103)  C0:3  P0:0  D0:0  S0:0  T0:3  $1000.0 [0m
+2023-12-29 20:59:56,364 - INFO     - [32m11                                           EXIT executeTransactionsForDay_v2(priority_level=1,date=20000103)  C1:3  P1:0  D1:0  S1:0  T1:3  $1000.0 [0m
+2023-12-29 20:59:56,365 - DEBUG    - [34m11                                           ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000103)[0m
+2023-12-29 20:59:56,368 - DEBUG    - [34m11                                           EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,370 - DEBUG    - [34m11                                           ENTER executeMinimumPayments() $1000.0 [0m
+2023-12-29 20:59:56,375 - DEBUG    - [34m11                                           EXIT  executeMinimumPayments() $1000.0 [0m
+2023-12-29 20:59:56,376 - DEBUG    - [34m11                                           ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000103)[0m
+2023-12-29 20:59:56,380 - DEBUG    - [34m11                                           EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,382 - DEBUG    - [34m11                                           ENTER calculateInterestAccrualsForDay() 20000103 $1000.0 [0m
+2023-12-29 20:59:56,385 - DEBUG    - [34m11                                           EXIT  calculateInterestAccrualsForDay() 20000103 $1000.0 [0m
+2023-12-29 20:59:56,387 - INFO     - [34m10                                       EXIT satisfice()[0m
+2023-12-29 20:59:56,387 - INFO     - [35m10                                       ENTER assessPotentialOptimizations( F:3 C:3 P:0 D:0 S:0 )[0m
+2023-12-29 20:59:56,389 - INFO     - [35m11                                                  Date Priority  Amount                      Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:56,390 - INFO     - [35m11                                           0  20000103        1   100.0             income 1/3/00      False                   False[0m
+2023-12-29 20:59:56,390 - INFO     - [35m11                                           0  20000102        5   100.0             p5 txn 1/2/00      False                   False[0m
+2023-12-29 20:59:56,390 - INFO     - [35m11                                           0  20000103        6  1000.0  p6 deferrable txn 1/2/00       True                   False[0m
+2023-12-29 20:59:56,390 - INFO     - [35m11                                           Empty DataFrame[0m
+2023-12-29 20:59:56,391 - INFO     - [35m11                                           Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:56,391 - INFO     - [35m11                                           Index: [][0m
+2023-12-29 20:59:56,391 - INFO     - [35m11                                           Empty DataFrame[0m
+2023-12-29 20:59:56,392 - INFO     - [35m11                                           Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:56,392 - INFO     - [35m11                                           Index: [][0m
+2023-12-29 20:59:56,392 - INFO     - [35m11                                           Empty DataFrame[0m
+2023-12-29 20:59:56,393 - INFO     - [35m11                                           Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:56,393 - INFO     - [35m11                                           Index: [][0m
+2023-12-29 20:59:56,394 - INFO     - [35m11                                           p5 20000102[0m
+2023-12-29 20:59:56,394 - INFO     - [34m11                                           ENTER updateProposedTransactionsBasedOnOtherSets( C:3 P:0 D:0 S:0 )[0m
+2023-12-29 20:59:56,397 - INFO     - [34m11                                                  Date Priority  Amount                      Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:56,397 - INFO     - [34m11                                           0  20000103        1   100.0             income 1/3/00      False                   False[0m
+2023-12-29 20:59:56,397 - INFO     - [34m11                                           0  20000102        5   100.0             p5 txn 1/2/00      False                   False[0m
+2023-12-29 20:59:56,397 - INFO     - [34m11                                           0  20000103        6  1000.0  p6 deferrable txn 1/2/00       True                   False[0m
+2023-12-29 20:59:56,398 - INFO     - [34m11                                           Empty DataFrame[0m
+2023-12-29 20:59:56,398 - INFO     - [34m11                                           Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:56,398 - INFO     - [34m11                                           Index: [][0m
+2023-12-29 20:59:56,399 - INFO     - [34m11                                           Empty DataFrame[0m
+2023-12-29 20:59:56,399 - INFO     - [34m11                                           Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:56,399 - INFO     - [34m11                                           Index: [][0m
+2023-12-29 20:59:56,400 - INFO     - [34m11                                           Empty DataFrame[0m
+2023-12-29 20:59:56,400 - INFO     - [34m11                                           Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:56,400 - INFO     - [34m11                                           Index: [][0m
+2023-12-29 20:59:56,409 - INFO     - [34m11                                           EXIT updateProposedTransactionsBasedOnOtherSets[0m
+2023-12-29 20:59:56,409 - DEBUG    - [34m11                                           ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:56,413 - DEBUG    - [34m11                                           EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,413 - DEBUG    - [34m11                                           ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:56,416 - DEBUG    - [34m11                                           EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,417 - DEBUG    - [34m11                                           ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000101)[0m
+2023-12-29 20:59:56,420 - DEBUG    - [34m11                                           EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,422 - DEBUG    - [34m11                                           ENTER calculateInterestAccrualsForDay() 20000101 $1000.0 [0m
+2023-12-29 20:59:56,426 - DEBUG    - [34m11                                           EXIT  calculateInterestAccrualsForDay() 20000101 $1000.0 [0m
+2023-12-29 20:59:56,432 - INFO     - [32m11                                           ENTER executeTransactionsForDay(priority_level=5,date=20000102)  C0:3  P0:0  D0:0  S0:0  T0:3  $1000.0 [0m
+2023-12-29 20:59:56,433 - DEBUG    - [36m12                                               Relevant Confirmed: [0m
+2023-12-29 20:59:56,436 - DEBUG    - [36m12                                                      Date Priority Amount           Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:56,436 - DEBUG    - [36m12                                               0  20000102        5  100.0  p5 txn 1/2/00      False                   False[0m
+2023-12-29 20:59:56,440 - DEBUG    - [34m12                                               ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:56,444 - DEBUG    - [34m12                                               EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,444 - INFO     - [32m13                                                   eTDF :: BEGIN processing confirmed txns[0m
+2023-12-29 20:59:56,444 - DEBUG    - [36m13                                                   processing confirmed transaction: p5 txn 1/2/00[0m
+2023-12-29 20:59:56,458 - INFO     - [32m13                                                   eTDF :: END processing confirmed txns[0m
+2023-12-29 20:59:56,459 - INFO     - [32m13                                                   eTDF :: BEGIN processing proposed txns[0m
+2023-12-29 20:59:56,459 - INFO     - [32m13                                                   eTDF :: END processing proposed txns[0m
+2023-12-29 20:59:56,459 - INFO     - [32m13                                                   eTDF :: BEGIN processing deferred txns[0m
+2023-12-29 20:59:56,459 - INFO     - [32m13                                                   eTDF :: END processing deferred txns[0m
+2023-12-29 20:59:56,460 - DEBUG    - [37m12                                               (end of day 20000102) available_balances: {'Checking': 900.0}[0m
+2023-12-29 20:59:56,461 - DEBUG    - [32m12                                               EXIT executeTransactionsForDay(priority_level=5,date=20000102)  C1:3  P1:0  D1:0  S1:0  T1:3  $900.0 [0m
+2023-12-29 20:59:56,461 - DEBUG    - [34m11                                           ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:56,464 - DEBUG    - [34m11                                           EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,465 - DEBUG    - [34m11                                           ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:56,468 - DEBUG    - [34m11                                           EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,475 - INFO     - [35m11                                           p5 20000103[0m
+2023-12-29 20:59:56,475 - INFO     - [34m11                                           ENTER updateProposedTransactionsBasedOnOtherSets( C:3 P:0 D:0 S:0 )[0m
+2023-12-29 20:59:56,478 - INFO     - [34m11                                                  Date Priority  Amount                      Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:56,478 - INFO     - [34m11                                           0  20000103        1   100.0             income 1/3/00      False                   False[0m
+2023-12-29 20:59:56,478 - INFO     - [34m11                                           0  20000102        5   100.0             p5 txn 1/2/00      False                   False[0m
+2023-12-29 20:59:56,478 - INFO     - [34m11                                           0  20000103        6  1000.0  p6 deferrable txn 1/2/00       True                   False[0m
+2023-12-29 20:59:56,479 - INFO     - [34m11                                           Empty DataFrame[0m
+2023-12-29 20:59:56,479 - INFO     - [34m11                                           Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:56,480 - INFO     - [34m11                                           Index: [][0m
+2023-12-29 20:59:56,481 - INFO     - [34m11                                           Empty DataFrame[0m
+2023-12-29 20:59:56,481 - INFO     - [34m11                                           Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:56,481 - INFO     - [34m11                                           Index: [][0m
+2023-12-29 20:59:56,482 - INFO     - [34m11                                           Empty DataFrame[0m
+2023-12-29 20:59:56,482 - INFO     - [34m11                                           Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:56,482 - INFO     - [34m11                                           Index: [][0m
+2023-12-29 20:59:56,489 - INFO     - [34m11                                           EXIT updateProposedTransactionsBasedOnOtherSets[0m
+2023-12-29 20:59:56,489 - DEBUG    - [34m11                                           ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000103)[0m
+2023-12-29 20:59:56,492 - DEBUG    - [34m11                                           EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,492 - DEBUG    - [34m11                                           ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000103)[0m
+2023-12-29 20:59:56,496 - DEBUG    - [34m11                                           EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,496 - DEBUG    - [34m11                                           ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:56,499 - DEBUG    - [34m11                                           EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,501 - DEBUG    - [34m11                                           ENTER calculateInterestAccrualsForDay() 20000102 $900.0 [0m
+2023-12-29 20:59:56,504 - DEBUG    - [34m11                                           EXIT  calculateInterestAccrualsForDay() 20000102 $900.0 [0m
+2023-12-29 20:59:56,508 - INFO     - [32m11                                           ENTER executeTransactionsForDay(priority_level=5,date=20000103)  C0:3  P0:0  D0:0  S0:0  T0:3  $900.0 [0m
+2023-12-29 20:59:56,509 - DEBUG    - [37m12                                               (end of day 20000103) available_balances: {'Checking': 900.0}[0m
+2023-12-29 20:59:56,510 - INFO     - [32m11                                           EXIT executeTransactionsForDay(priority_level=5,date=20000103)  C1:3  P1:0  D1:0  S1:0  T1:3  $900.0 [0m
+2023-12-29 20:59:56,510 - DEBUG    - [34m11                                           ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000103)[0m
+2023-12-29 20:59:56,513 - DEBUG    - [34m11                                           EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,514 - DEBUG    - [34m11                                           ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000103)[0m
+2023-12-29 20:59:56,517 - DEBUG    - [34m11                                           EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,521 - INFO     - [35m11                                           p6 20000102[0m
+2023-12-29 20:59:56,521 - INFO     - [34m11                                           ENTER updateProposedTransactionsBasedOnOtherSets( C:3 P:0 D:0 S:0 )[0m
+2023-12-29 20:59:56,524 - INFO     - [34m11                                                  Date Priority  Amount                      Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:56,524 - INFO     - [34m11                                           0  20000103        1   100.0             income 1/3/00      False                   False[0m
+2023-12-29 20:59:56,524 - INFO     - [34m11                                           0  20000102        5   100.0             p5 txn 1/2/00      False                   False[0m
+2023-12-29 20:59:56,524 - INFO     - [34m11                                           0  20000103        6  1000.0  p6 deferrable txn 1/2/00       True                   False[0m
+2023-12-29 20:59:56,525 - INFO     - [34m11                                           Empty DataFrame[0m
+2023-12-29 20:59:56,525 - INFO     - [34m11                                           Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:56,525 - INFO     - [34m11                                           Index: [][0m
+2023-12-29 20:59:56,525 - INFO     - [34m11                                           Empty DataFrame[0m
+2023-12-29 20:59:56,526 - INFO     - [34m11                                           Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:56,526 - INFO     - [34m11                                           Index: [][0m
+2023-12-29 20:59:56,526 - INFO     - [34m11                                           Empty DataFrame[0m
+2023-12-29 20:59:56,526 - INFO     - [34m11                                           Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:56,527 - INFO     - [34m11                                           Index: [][0m
+2023-12-29 20:59:56,533 - INFO     - [34m11                                           EXIT updateProposedTransactionsBasedOnOtherSets[0m
+2023-12-29 20:59:56,534 - DEBUG    - [34m11                                           ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:56,537 - DEBUG    - [34m11                                           EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,537 - DEBUG    - [34m11                                           ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:56,540 - DEBUG    - [34m11                                           EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,540 - DEBUG    - [34m11                                           ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000101)[0m
+2023-12-29 20:59:56,543 - DEBUG    - [34m11                                           EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,545 - DEBUG    - [34m11                                           ENTER calculateInterestAccrualsForDay() 20000101 $1000.0 [0m
+2023-12-29 20:59:56,548 - DEBUG    - [34m11                                           EXIT  calculateInterestAccrualsForDay() 20000101 $1000.0 [0m
+2023-12-29 20:59:56,551 - INFO     - [32m11                                           ENTER executeTransactionsForDay(priority_level=6,date=20000102)  C0:3  P0:0  D0:0  S0:0  T0:3  $1000.0 [0m
+2023-12-29 20:59:56,552 - DEBUG    - [37m12                                               (end of day 20000102) available_balances: {'Checking': 1000.0}[0m
+2023-12-29 20:59:56,553 - INFO     - [32m11                                           EXIT executeTransactionsForDay(priority_level=6,date=20000102)  C1:3  P1:0  D1:0  S1:0  T1:3  $1000.0 [0m
+2023-12-29 20:59:56,553 - DEBUG    - [34m11                                           ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:56,556 - DEBUG    - [34m11                                           EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,556 - DEBUG    - [34m11                                           ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:56,559 - DEBUG    - [34m11                                           EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,563 - INFO     - [35m11                                           p6 20000103[0m
+2023-12-29 20:59:56,563 - INFO     - [34m11                                           ENTER updateProposedTransactionsBasedOnOtherSets( C:3 P:0 D:0 S:0 )[0m
+2023-12-29 20:59:56,566 - INFO     - [34m11                                                  Date Priority  Amount                      Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:56,566 - INFO     - [34m11                                           0  20000103        1   100.0             income 1/3/00      False                   False[0m
+2023-12-29 20:59:56,566 - INFO     - [34m11                                           0  20000102        5   100.0             p5 txn 1/2/00      False                   False[0m
+2023-12-29 20:59:56,566 - INFO     - [34m11                                           0  20000103        6  1000.0  p6 deferrable txn 1/2/00       True                   False[0m
+2023-12-29 20:59:56,567 - INFO     - [34m11                                           Empty DataFrame[0m
+2023-12-29 20:59:56,567 - INFO     - [34m11                                           Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:56,567 - INFO     - [34m11                                           Index: [][0m
+2023-12-29 20:59:56,568 - INFO     - [34m11                                           Empty DataFrame[0m
+2023-12-29 20:59:56,568 - INFO     - [34m11                                           Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:56,568 - INFO     - [34m11                                           Index: [][0m
+2023-12-29 20:59:56,568 - INFO     - [34m11                                           Empty DataFrame[0m
+2023-12-29 20:59:56,569 - INFO     - [34m11                                           Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2023-12-29 20:59:56,569 - INFO     - [34m11                                           Index: [][0m
+2023-12-29 20:59:56,575 - INFO     - [34m11                                           EXIT updateProposedTransactionsBasedOnOtherSets[0m
+2023-12-29 20:59:56,575 - DEBUG    - [34m11                                           ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000103)[0m
+2023-12-29 20:59:56,578 - DEBUG    - [34m11                                           EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,579 - DEBUG    - [34m11                                           ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000103)[0m
+2023-12-29 20:59:56,581 - DEBUG    - [34m11                                           EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,582 - DEBUG    - [34m11                                           ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000102)[0m
+2023-12-29 20:59:56,585 - DEBUG    - [34m11                                           EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,586 - DEBUG    - [34m11                                           ENTER calculateInterestAccrualsForDay() 20000102 $900.0 [0m
+2023-12-29 20:59:56,589 - DEBUG    - [34m11                                           EXIT  calculateInterestAccrualsForDay() 20000102 $900.0 [0m
+2023-12-29 20:59:56,593 - INFO     - [32m11                                           ENTER executeTransactionsForDay(priority_level=6,date=20000103)  C0:3  P0:0  D0:0  S0:0  T0:3  $900.0 [0m
+2023-12-29 20:59:56,593 - DEBUG    - [36m12                                               Relevant Confirmed: [0m
+2023-12-29 20:59:56,595 - DEBUG    - [36m12                                                      Date Priority  Amount                      Memo Deferrable Partial_Payment_Allowed[0m
+2023-12-29 20:59:56,595 - DEBUG    - [36m12                                               0  20000103        6  1000.0  p6 deferrable txn 1/2/00       True                   False[0m
+2023-12-29 20:59:56,599 - DEBUG    - [34m12                                               ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000103)[0m
+2023-12-29 20:59:56,602 - DEBUG    - [34m12                                               EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,602 - INFO     - [32m13                                                   eTDF :: BEGIN processing confirmed txns[0m
+2023-12-29 20:59:56,602 - DEBUG    - [36m13                                                   processing confirmed transaction: p6 deferrable txn 1/2/00[0m
+2023-12-29 20:59:56,614 - DEBUG    - [35m13                                                   END error-check computeOptimalForecast: p6 deferrable txn 1/2/00 (FAIL)[0m
+2023-12-29 20:59:56,614 - DEBUG    - [32m12                                               Appending transaction to deferred_df[0m
+2023-12-29 20:59:56,615 - INFO     - [32m12                                               eTDF :: END processing deferred txns[0m
+2023-12-29 20:59:56,616 - DEBUG    - [37m11                                           (end of day 20000103) available_balances: {'Checking': 1000.0}[0m
+2023-12-29 20:59:56,617 - DEBUG    - [32m11                                           EXIT executeTransactionsForDay(priority_level=6,date=20000103)  C1:2  P1:2  D1:1  S1:0  T1:5  $1000.0 [0m
+2023-12-29 20:59:56,618 - DEBUG    - [34m10                                       ENTER sync_account_set_w_forecast_day(date_YYYYMMDD=20000103)[0m
+2023-12-29 20:59:56,621 - DEBUG    - [34m10                                       EXIT sync_account_set_w_forecast_day()[0m
+2023-12-29 20:59:56,621 - INFO     - [35m9                                    EXIT assessPotentialOptimizations()[0m
+2023-12-29 20:59:56,621 - INFO     - [34m8                                EXIT computeOptimalForecast()[0m
+2023-12-29 20:59:56,623 - INFO     - [32m0 Writing to ./Forecast__041343__2023_12_29__20_59_55.json[0m

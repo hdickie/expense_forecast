@@ -807,11 +807,11 @@ class AccountSet:
         A.to_excel(path)
 
     def allocate_additional_loan_payments(self, amount):
-        bal_string = ''
-        for account_index, account_row in self.getAccounts().iterrows():
-            bal_string += '$' + str(account_row.Balance) + ' '
+        #bal_string = ''
+        #for account_index, account_row in self.getAccounts().iterrows():
+        #    bal_string += '$' + str(account_row.Balance) + ' '
 
-        log_in_color(logger,'blue','INFO','ENTER allocate_additional_loan_payments(amount='+str(amount)+') '+bal_string)
+        #log_in_color(logger,'blue','INFO','ENTER allocate_additional_loan_payments(amount='+str(amount)+') '+bal_string)
 
         row_sel_vec = [ x for x in ( self.getAccounts().Account_Type == 'checking' ) ]
         checking_acct_name = self.getAccounts()[row_sel_vec].Name[0] #we use this waaay later during executeTransaction
@@ -962,8 +962,8 @@ class AccountSet:
             #print('principal_balance_delta:')
             #print(principal_balance_delta)
 
-            log_in_color(logger, 'blue', 'INFO', 'principal_balance_delta:')
-            log_in_color(logger, 'blue', 'INFO', str(principal_balance_delta))
+            # log_in_color(logger, 'blue', 'INFO', 'principal_balance_delta:')
+            # log_in_color(logger, 'blue', 'INFO', str(principal_balance_delta))
 
 
             payment_amounts = []
@@ -1041,7 +1041,7 @@ class AccountSet:
 
         #log_in_color(logger,'green', 'debug', 'final_txns:')
         #log_in_color(logger,'green', 'debug', final_txns)
-        log_in_color(logger,'blue', 'INFO', 'EXIT allocate_additional_loan_payments(amount='+str(amount)+')')
+        #log_in_color(logger,'blue', 'INFO', 'EXIT allocate_additional_loan_payments(amount='+str(amount)+')')
         return final_txns
 
 

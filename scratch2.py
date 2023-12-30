@@ -97,45 +97,35 @@ def three_loans__p_1000__i_100__apr_01___p_1500__i_100__apr_001___p_2500__i_100_
 def three_loans__p_1000__i_000__apr_01___p_1500__i_000__apr_001___p_2500__i_000__apr_005():
     return AccountSet.AccountSet(checking() + compound_loan_A_no_interest() + compound_loan_B_no_interest() + compound_loan_C_no_interest())
 
-if __name__ == '__main__':
-    # start_date_YYYYMMDD = '20000101'
-    # end_date_YYYYMMDD = '20000103'
-    #
-    # account_set = AccountSet.AccountSet([])
-    # budget_set = BudgetSet.BudgetSet([])
-    # memo_rule_set = MemoRuleSet.MemoRuleSet([])
-    #
-    # account_set.createAccount(name='Checking',
-    #                           balance=5000,
-    #                           min_balance=0,
-    #                           max_balance=float('Inf'),
-    #                           account_type="checking")
-    #
-    # account_set.createAccount('Loan A',1100,0,9999,'loan','20000102','simple',0.1,'daily',50,None,1000,100)
-    # account_set.createAccount('Loan B', 1100, 0, 9999, 'loan', '20000102', 'simple', 0.05, 'daily', 50, None, 1000, 100)
-    # account_set.createAccount('Loan C', 1100, 0, 9999, 'loan', '20000102', 'simple', 0.01, 'daily', 50, None, 1000, 100)
-    #
-    # budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=7,
-    #                          cadence='once', amount=1900, memo='additional loan payment',
-    #                          deferrable=False,
-    #                          partial_payment_allowed=True)
-    #
-    # memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to='ALL_LOANS', transaction_priority=7)
-    #
-    # milestone_set = MilestoneSet.MilestoneSet(account_set, budget_set, [], [], [])
-    #
-    # E = ExpenseForecast.ExpenseForecast(account_set, budget_set, memo_rule_set, start_date_YYYYMMDD, end_date_YYYYMMDD,milestone_set,True)
-    #
-    #
-    # print(datetime.datetime.now())
-    # E.runForecast()    #15.1 seconds
-    # print(E.forecast_df.to_string())
-    # #profile.run("E.runForecast()") #4 minutes. so code is about 16x slower when profiled in this example
-    # print(datetime.datetime.now())
+from log_methods import log_in_color_with_breadcrumbs
 
-    #print('logger:')
-    #print(logger)
-    #logging_tree.printout()
+if __name__ == '__main__':
+
+    # log_color_stack = []
+    # log_in_color_with_breadcrumbs(logger, 'red','debug','red log message')
+    # log_color_stack.append('red')
+    #
+    # log_in_color_with_breadcrumbs(logger, 'yellow', 'debug', 'yellow log message',1,log_color_stack)
+    # log_color_stack.append('yellow')
+    #
+    # log_in_color_with_breadcrumbs(logger, 'green', 'debug', 'green log message',2,log_color_stack)
+    # log_color_stack.append('green')
+    #
+    # log_in_color_with_breadcrumbs(logger, 'magenta', 'debug', 'magenta log message',3,log_color_stack)
+    # log_color_stack.append('magenta')
+    #
+    # log_in_color_with_breadcrumbs(logger, 'white', 'debug', 'white log message', 4, log_color_stack)
+    #
+    # log_color_stack.pop()
+    # log_in_color_with_breadcrumbs(logger, 'magenta', 'debug', 'magenta log message', 3, log_color_stack)
+    #
+    # log_in_color_with_breadcrumbs(logger, 'green', 'debug', 'green log message', 2, log_color_stack)
+    #
+    # log_color_stack.pop()
+    # log_in_color_with_breadcrumbs(logger, 'yellow', 'debug', 'yellow log message', 1, log_color_stack)
+    #
+    # log_color_stack.pop()
+    # log_in_color_with_breadcrumbs(logger, 'red', 'debug', 'red log message')
 
     start_date_YYYYMMDD = '20000101'
     end_date_YYYYMMDD = '20000103'
@@ -169,7 +159,7 @@ if __name__ == '__main__':
 
     E = ExpenseForecast.ExpenseForecast(account_set, budget_set, memo_rule_set, start_date_YYYYMMDD,
                                         end_date_YYYYMMDD, milestone_set, True)
-    E.runForecast()
+    E.runForecast_v2()
     print(E.forecast_df.to_string())
     raise AssertionError
 
