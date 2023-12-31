@@ -462,7 +462,7 @@ class AccountSet:
 
     def executeTransaction(self, Account_From, Account_To, Amount, income_flag=False):
         #print('ENTER executeTransaction('+str(Account_From)+','+str(Account_To)+','+str(Amount)+')')
-        Amount = Amount
+        Amount = round(Amount,2)
 
         if Amount == 0:
             return
@@ -669,35 +669,41 @@ class AccountSet:
         for a in available_funds.keys():
             after_txn_total_available_funds += available_funds[a]
 
-        empirical_delta = after_txn_total_available_funds - before_txn_total_available_funds
+        empirical_delta = round(after_txn_total_available_funds - before_txn_total_available_funds,2)
 
         if boundary_error_ind: raise ValueError("Account boundaries were violated\n"+error_msg)
 
         single_account_transaction_ind = ( Account_From == 'None' or Account_To == 'None' )
 
-
+        explanation_of_mismatch_string = ''
         if single_account_transaction_ind and income_flag:
             if empirical_delta != Amount: equivalent_exchange_error_ind = True
+            explanation_of_mismatch_string += str(empirical_delta) + ' != ' + str(Amount)
         elif not single_account_transaction_ind and debt_payment_ind:
             if empirical_delta != (Amount * -2): equivalent_exchange_error_ind = True
+            explanation_of_mismatch_string += str(empirical_delta) + ' != -2 * ' + str(Amount)
         elif single_account_transaction_ind and not income_flag:
             if empirical_delta != (Amount * -1): equivalent_exchange_error_ind = True
+            explanation_of_mismatch_string += str(empirical_delta) + ' != -1 * ' + str(Amount)
         elif not single_account_transaction_ind and not income_flag:
             if empirical_delta != 0: equivalent_exchange_error_ind = True
+            explanation_of_mismatch_string += str(empirical_delta) + ' != 0'
         else: equivalent_exchange_error_ind = True
             #raise ValueError("impossible error in  AccountSet::executeTransaction(). if 2 accounts were indicated, then the pre-post delta must be 0.") #this should not be possible.
 
-        #in contrast to the boundary violation error, this could should never run if this project has been designed correctly.
-        equivalent_exchange_error_text = ''
-        equivalent_exchange_error_text += 'FUNDS NOT ACCOUNTED FOR POST-TRANSACTION' +'\n'
-        equivalent_exchange_error_text += 'single_account_transaction_ind:'+str(single_account_transaction_ind) +'\n'
-        equivalent_exchange_error_text += 'income_flag:' + str(income_flag) +'\n'
-        equivalent_exchange_error_text += 'debt_payment_ind:' + str(debt_payment_ind) +'\n'
-        equivalent_exchange_error_text += 'starting_available_funds:' + str(starting_available_funds) +'\n'
-        equivalent_exchange_error_text += 'available_funds:' + str(self.getBalances()) +'\n'
-        equivalent_exchange_error_text += 'Amount:' + str(Amount) +'\n'
-        equivalent_exchange_error_text += 'empirical_delta:' + str(empirical_delta) +'\n'
+
         if equivalent_exchange_error_ind:
+            # in contrast to the boundary violation error, this could should never run if this project has been designed correctly.
+            equivalent_exchange_error_text = ''
+            equivalent_exchange_error_text += 'FUNDS NOT ACCOUNTED FOR POST-TRANSACTION' + '\n'
+            equivalent_exchange_error_text += 'single_account_transaction_ind:' + str(single_account_transaction_ind) + '\n'
+            equivalent_exchange_error_text += 'income_flag:' + str(income_flag) + '\n'
+            equivalent_exchange_error_text += 'debt_payment_ind:' + str(debt_payment_ind) + '\n'
+            equivalent_exchange_error_text += 'starting_available_funds:' + str(starting_available_funds) + '\n'
+            equivalent_exchange_error_text += 'available_funds:' + str(self.getBalances()) + '\n'
+            equivalent_exchange_error_text += 'Amount:' + str(Amount) + '\n'
+            equivalent_exchange_error_text += 'empirical_delta:' + str(empirical_delta) + '\n'
+            equivalent_exchange_error_text += explanation_of_mismatch_string + '\n'
             log_in_color(logger,'red', 'error', equivalent_exchange_error_text, 0)
             raise ValueError("Funds not accounted for in AccountSet::executeTransaction()") # Funds not accounted for
 
@@ -829,6 +835,17 @@ class AccountSet:
         #print(A.dtypes)
         A.to_excel(path)
 
+
+    #this algorithm does not work because satisfice can be affected by optimizations
+    #that is, p1 transactions will disappear if some p7 transactions occur before it
+    #Here is the  case that made me realize this:
+    #the algorithm receives the forecast with satisfice payments already made
+    #however, then an additional payment is made that reduces the principal balance
+    #consequently, the satisficed payment has now overpaid interest
+    #...
+    #...
+    #...
+    #definitely troublesome
     def allocate_additional_loan_payments(self, amount):
         #bal_string = ''
         #for account_index, account_row in self.getAccounts().iterrows():
@@ -839,7 +856,7 @@ class AccountSet:
         row_sel_vec = [ x for x in ( self.getAccounts().Account_Type == 'checking' ) ]
         checking_acct_name = self.getAccounts()[row_sel_vec].Name[0] #we use this waaay later during executeTransaction
         if self.getAccounts()[row_sel_vec].Balance.iat[0] < amount:
-            log_in_color(logger,'green', 'debug', 'input amount is greater than available balance. Reducing amount.')
+            log_in_color(logger,'green', 'info', 'input amount is greater than available balance. Reducing amount.')
             amount = self.getAccounts().loc[row_sel_vec,:].Balance.iat[0]
 
         date_string_YYYYMMDD = '20000101' #this method needs to be refactored
@@ -998,7 +1015,6 @@ class AccountSet:
                 proposed_payment_on_principal = principal_balance_delta
 
                 #todo, currently, if the final payment includes interest, then the total gets distributed across multiple loans and does not go to interest first
-                #to fix this, we need to add a interest_paid indicator, and then check for it around line 840 below (written 12/18/23)
                 if proposed_payment_on_principal[i][0] > 0:
                     loop__amount = round(proposed_payment_on_principal[i][0] + current_loan_interest,2)
                 else:
@@ -1066,7 +1082,6 @@ class AccountSet:
         #log_in_color(logger,'green', 'debug', final_txns)
         #log_in_color(logger,'blue', 'INFO', 'EXIT allocate_additional_loan_payments(amount='+str(amount)+')')
         return final_txns
-
 
     def getAccounts(self):
         """
