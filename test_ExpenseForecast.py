@@ -2133,7 +2133,8 @@ class TestExpenseForecastMethods:
 
         try:
             sel_vec = (d.columns != 'Date') & (d.columns != 'Memo')
-            non_boilerplate_values__M = np.matrix(d.iloc[:, sel_vec])
+            #on_boilerplate_values__M = np.matrix(d.iloc[:, sel_vec])
+            non_boilerplate_values__M = np.ndarray(d.iloc[:, sel_vec])
 
             error_ind = round(float(sum(sum(np.square(
                 non_boilerplate_values__M)).T)), 2)  # this very much DOES NOT SCALE. this is intended for small tests
@@ -2270,27 +2271,9 @@ class TestExpenseForecastMethods:
 #plot all
 #plot marginal interest
 
-# not cOF_v0
-# 7 fails
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_execute_defer_after_receiving_income_2_days_later-account_set15-budget_set15-memo_rule_set15-20000101-20000104-milestone_set15-expected_result_df15]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_dont_recompute_past_days_for_p2plus_transactions - NotImplementedError
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_forecast_longer_than_satisfice - Failed: DID NOT RAISE <class 'ValueError'>
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_interest_types_and_cadences_at_most_monthly - NotImplementedError
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_quarter_and_year_long_interest_cadences - NotImplementedError
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_runForecast_v2 - AssertionError
-# FAILED test_ForecastHandler.py::TestForecastHandlerMethods::test_ForecastHandler_Constructor - NotImplementedError
-
-# cOF_v0
-# 6 fails
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_dont_recompute_past_days_for_p2plus_transactions - NotImplementedError
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_forecast_longer_than_satisfice - Failed: DID NOT RAISE <class 'ValueError'>
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_interest_types_and_cadences_at_most_monthly - NotImplementedError
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_quarter_and_year_long_interest_cadences - NotImplementedError
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_runForecast_v2 - AssertionError
-# FAILED test_ForecastHandler.py::TestForecastHandlerMethods::test_ForecastHandler_Constructor - NotImplementedError
 
 ### all latest
-# 13 fails
+# 5 fails
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_dont_recompute_past_days_for_p2plus_transactions - NotImplementedError
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_forecast_longer_than_satisfice - AttributeError: 'bool' object has no attribute 'shape'
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_interest_types_and_cadences_at_most_monthly - NotImplementedError

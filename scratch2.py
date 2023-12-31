@@ -128,7 +128,7 @@ if __name__ == '__main__':
     # log_in_color_with_breadcrumbs(logger, 'red', 'debug', 'red log message')
 
     start_date_YYYYMMDD = '20000101'
-    end_date_YYYYMMDD = '20000103'
+    end_date_YYYYMMDD = '20000201'
 
     account_set = AccountSet.AccountSet([])
     budget_set = BudgetSet.BudgetSet([])
@@ -160,8 +160,8 @@ if __name__ == '__main__':
     E = ExpenseForecast.ExpenseForecast(account_set, budget_set, memo_rule_set, start_date_YYYYMMDD,
                                         end_date_YYYYMMDD, milestone_set, True)
     print(datetime.datetime.now())
-    #E.runForecast()
-    profile.run('E.runForecast()')
+    #profile.run('E.runForecast()') #python -m cProfile -s tottime myscript.py
+    E.runForecast() #
     print(datetime.datetime.now())
     #print(E.forecast_df.to_string())
 
