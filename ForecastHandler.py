@@ -20,26 +20,8 @@ import CompositeMilestone
 
 
 import logging
-
-log_format = '%(asctime)s - %(levelname)-8s - %(message)s'
-l_formatter = logging.Formatter(log_format)
-
-l_stream = logging.StreamHandler()
-l_stream.setFormatter(l_formatter)
-l_stream.setLevel(logging.INFO)
-
-l_file = logging.FileHandler('ForecastHandler__'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')+'.log')
-l_file.setFormatter(l_formatter)
-l_file.setLevel(logging.INFO)
-
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-logger.propagate = False
-logger.handlers.clear()
-logger.addHandler(l_stream)
-logger.addHandler(l_file)
-
+from log_methods import setup_logger
+logger = setup_logger('ForecastHandler', './log/ForecastHandler.log', level=logging.DEBUG)
 
 
 class ForecastHandler:
@@ -276,7 +258,6 @@ class ForecastHandler:
         assert min(all_composite_milestone_df_hashes) == max(all_composite_milestone_df_hashes) #error here means not all the composite milestones were the same
         assert len(all_composite_milestone_df_hashes) == len(E_objs) #error here means one of the input forecasts did not have a composite_milestone_df
         self.composite_milestones_df = E_objs[0].composite_milestones_df
-
 
     def get_individual_forecast_ids(self):
         return [ E.unique_id for E in self.initialized_forecasts ]
@@ -854,8 +835,8 @@ class ForecastHandler:
 
     def generateHTMLReport(self,E,output_dir='./'):
 
-        start_date = E.start_date_YYYYMMDD.strftime('%Y-%m-%d')
-        end_date = E.end_date_YYYYMMDD.strftime('%Y-%m-%d')
+        start_date = datetime.datetime.strptime(E.start_date_YYYYMMDD,'%Y%m%d').strftime('%Y-%m-%d')
+        end_date = datetime.datetime.strptime(E.end_date_YYYYMMDD,'%Y%m%d').strftime('%Y-%m-%d')
 
         report_id = E.unique_id
 
@@ -878,6 +859,18 @@ class ForecastHandler:
 
         memo_rule_text = """
         These decision rules are used:"""+E.initial_memo_rule_set.getMemoRules().to_html()+"""
+        """
+
+        account_milestone_text = """
+        These account milestones are defined:"""+E.milestone_set.getAccountMilestonesDF().to_html()+"""
+        """
+
+        memo_milestone_text = """
+        These memo milestones are defined:"""+E.milestone_set.getMemoMilestonesDF().to_html()+"""
+        """
+
+        composite_milestone_text = """
+        These composite milestones are defined:"""+E.milestone_set.getCompositeMilestonesDF().to_html()+"""
         """
 
         initial_networth=E.forecast_df.head(1)['NetWorth'].iat[0]
@@ -939,9 +932,13 @@ class ForecastHandler:
         milestone_line_plot_path = output_dir + report_id + '_milestone_line_plot.png' #todo
         all_line_plot_path = output_dir + report_id + '_all_line_plot.png'
 
-        E.plotAll(all_line_plot_path)
-        E.plotNetWorth(networth_line_plot_path)
-        E.plotAccountTypeTotals(accounttype_line_plot_path)
+        #E.plotAll(all_line_plot_path)
+        #E.plotNetWorth(networth_line_plot_path)
+        #E.plotAccountTypeTotals(accounttype_line_plot_path)
+
+        self.plotAll(E,all_line_plot_path)
+        self.plotNetWorth(E, networth_line_plot_path)
+        self.plotAccountTypeTotals(E, accounttype_line_plot_path)
 
         html_body = """
         <!DOCTYPE html>
@@ -1002,6 +999,7 @@ class ForecastHandler:
           <button class="tablinks" onclick="openTab(event, 'Interest')">Interest</button>
           <button class="tablinks" onclick="openTab(event, 'Milestone')">Milestone</button>
           <button class="tablinks" onclick="openTab(event, 'All')">All</button>
+          <button class="tablinks" onclick="openTab(event, 'Output Data')">Output Data</button>
         </div>
 
         <!-- Tab content -->
@@ -1014,6 +1012,12 @@ class ForecastHandler:
           <p>"""+budget_set_text+"""</p>
           <h3>Memo Rules</h3>
           <p>"""+memo_rule_text+"""</p>
+          <h3>Account Milestones</h3>
+          <p>"""+account_milestone_text+"""</p>
+          <h3>Memo Milestones</h3>
+          <p>"""+memo_milestone_text+"""</p>
+          <h3>Composite Milestones</h3>
+          <p>"""+composite_milestone_text+"""</p>
         </div>
 
         <div id="NetWorth" class="tabcontent">
@@ -1052,6 +1056,14 @@ class ForecastHandler:
           <img src=\""""+all_line_plot_path+"""\">
         </div>
 
+        <div id="Output Data" class="tabcontent">
+          <h3>Output Data</h3>
+          <p>""" + summary_text + """</p>
+          <p>The visualized data are below:</p>
+          <h4>Forecast 1 #"""+str(E.unique_id)+""":</h4>
+          """ + E.forecast_df.to_html() + """
+        </div>
+
         <br>
 
         <script>
@@ -1088,16 +1100,21 @@ class ForecastHandler:
         with open('out.html','w') as f:
             f.write(html_body)
 
-    def getRuntimeEstimate(self,AccountSet,BudgetSet, MemoRuleSet, start_date_YYYYMMDD, end_date_YYYYMMDD):
-        log_in_color('green','debug','getRuntimeEstimate(start_date_YYYYMMDD='+str(start_date_YYYYMMDD)+',end_date_YYYYMMDD='+str(end_date_YYYYMMDD)+')')
-        log_in_color('green', 'debug', 'Length of forecast:')
-        log_in_color('green', 'debug', 'Non-deferrable, partial-payment not allowed:')
-        log_in_color('green', 'debug', 'Partial-payment allowed:')
-        log_in_color('green', 'debug', 'Deferrable:')
-        #number of days * 7.5 seconds
-        # for each non-deferrable, partial-payment-not-allowed proposed item, add (end_date - date) * 7.5 seconds
+    def getRuntimeEstimate(self,expense_forecast):
+        E = expense_forecast
+        log_in_color('green', 'debug','getRuntimeEstimate(start_date_YYYYMMDD='+str(E.start_date_YYYYMMDD)+',end_date_YYYYMMDD='+str(E.end_date_YYYYMMDD)+')')
+
+        budget_schedule_df = E.initial_budget_set.getBudgetSchedule(E.start_date_YYYYMMDD,E.end_date_YYYYMMDD)
+
+        #budget_schedule_df
+
+        # "Date" "Priority" "Amount" "Memo" "Deferrable" "Partial_Payment_Allowed"
+
+        # day length = 1.88 seconds on my mac
+        # satisfice_time = number of days * day_length
+        # for each non-deferrable, partial-payment-not-allowed proposed item, add (end_date - date) * day_length
         # for each partial payment allowed item, add [ (end_date - date) * 7.5 seconds, (end_date - date) * 7.5 seconds * 2 ] to get an range time estimate
-        # for each deferrable payment, add [ (end_date - date) * 7.5 seconds, ( 1 + FLOOR( (end_date - date) / 14) )^2 / 2 * 7.5 seconds ]
+        # for each deferrable payment, add [ (end_date - date) * day_length, ( 1 + FLOOR( (end_date - date) / 14) )^2 / 2 * day_length ]
 
         raise NotImplementedError
 
@@ -1325,8 +1342,6 @@ class ForecastHandler:
         plt.title('Forecast 1 #'+E1.unique_id+' vs. Forecast 2 #'+E2.unique_id+': ' + str(min_date) + ' -> ' + str(max_date))
         plt.savefig(output_path)
 
-
-
     def plotAccountTypeTotals(self, expense_forecast, output_path):
         """
         Writes to file a plot of all accounts.
@@ -1362,13 +1377,13 @@ class ForecastHandler:
         ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=4)
 
         # TODO plotOverall():: a large number of accounts will require some adjustment here so that the legend is entirely visible
+        date_as_datetime_type = [datetime.datetime.strptime(d, '%Y%m%d') for d in expense_forecast.forecast_df.Date]
 
-        min_date = min(expense_forecast.forecast_df.Date).strftime('%Y-%m-%d')
-        max_date = max(expense_forecast.forecast_df.Date).strftime('%Y-%m-%d')
+        min_date = min(date_as_datetime_type).strftime('%Y-%m-%d')
+        max_date = max(date_as_datetime_type).strftime('%Y-%m-%d')
         plt.title('Forecast #'+expense_forecast.unique_id+': ' + str(min_date) + ' -> ' + str(max_date))
+        plt.xticks(rotation=90)
         plt.savefig(output_path)
-
-
 
     def plotNetWorth(self, expense_forecast, output_path):
         """
@@ -1406,13 +1421,13 @@ class ForecastHandler:
 
         # TODO plotOverall():: a large number of accounts will require some adjustment here so that the legend is entirely visible
 
-        min_date = min(expense_forecast.forecast_df.Date).strftime('%Y-%m-%d')
-        max_date = max(expense_forecast.forecast_df.Date).strftime('%Y-%m-%d')
+        date_as_datetime_type = [datetime.datetime.strptime(d, '%Y%m%d') for d in expense_forecast.forecast_df.Date]
+
+        min_date = min(date_as_datetime_type).strftime('%Y-%m-%d')
+        max_date = max(date_as_datetime_type).strftime('%Y-%m-%d')
         plt.title('Forecast #'+expense_forecast.unique_id+': ' + str(min_date) + ' -> ' + str(max_date))
+        plt.xticks(rotation=90)
         plt.savefig(output_path)
-
-
-
 
     def plotAll(self, expense_forecast, output_path):
         """
@@ -1464,9 +1479,12 @@ class ForecastHandler:
 
         # TODO plotOverall():: a large number of accounts will require some adjustment here so that the legend is entirely visible
 
-        min_date = min(expense_forecast.forecast_df.Date).strftime('%Y-%m-%d')
-        max_date = max(expense_forecast.forecast_df.Date).strftime('%Y-%m-%d')
+        date_as_datetime_type = [ datetime.datetime.strptime(d,'%Y%m%d') for d in expense_forecast.forecast_df.Date]
+
+        min_date = min(date_as_datetime_type).strftime('%Y-%m-%d')
+        max_date = max(date_as_datetime_type).strftime('%Y-%m-%d')
         plt.title('Forecast #'+expense_forecast.unique_id+': ' + str(min_date) + ' -> ' + str(max_date))
+        plt.xticks(rotation=90)
         plt.savefig(output_path)
 
     def plotMarginalInterest(self, expense_forecast, accounts_df, forecast_df, output_path):
@@ -1493,3 +1511,4 @@ class ForecastHandler:
         assert hasattr(expense_forecast,'forecast_df')
 
         raise NotImplementedError
+

@@ -1,83 +1,110 @@
-import unittest
+import pytest
+
+import AccountMilestone
+import CompositeMilestone
+import ExpenseForecast
 import ForecastHandler, AccountSet, BudgetSet, MemoRuleSet
 import pandas as pd, numpy as np
 import datetime, logging
+
+import MemoMilestone
+import MilestoneSet
+
 pd.options.mode.chained_assignment = None #apparently this warning can throw false positives???
 
 from log_methods import log_in_color
+from log_methods import setup_logger
+logger = setup_logger('test_ForecastHandler', './log/test_ForecastHandler.log', level=logging.DEBUG)
 
 import copy
 
-class TestForecastHandlerMethods(unittest.TestCase):
-
-    def setUp(self):
-        #print('Running setUp')
-        self.account_set = AccountSet.AccountSet([])
-        self.budget_set = BudgetSet.BudgetSet([])
-        self.memo_rule_set = MemoRuleSet.MemoRuleSet([])
-        self.start_date_YYYYMMDD = '20000101'
-        self.end_date_YYYYMMDD = '20000103'
-
-        self.og_dir = dir()
-
-        #print('exiting setup')
-
-    def tearDown(self):
-        #print('Running tearDown')
-        pass
-        #print('exiting tearDown')
+class TestForecastHandlerMethods:
 
     def test_ForecastHandler_Constructor(self):
         raise NotImplementedError
 
     def test_calculateMultipleChooseOne(self):
+        raise NotImplementedError
+
+    def test_generateCompareTwoForecastsHTMLReport(self):
+        raise NotImplementedError
+
+    def test_generateHTMLReport(self):
+
+        start_date_YYYYMMDD = '20240101'
+        end_date_YYYYMMDD = '20240201'
+
+        A = AccountSet.AccountSet([])
+        A.createAccount('Checking',2000,0,999999,'checking')
+        A.createAccount('Credit', 2000, 0, 999999, 'credit','20240107','compound',0.24,'monthly',60,2000)
+        A.createAccount('Loan A', 2000, 0, 999999, 'loan','20240103','simple',0.05,'daily',20,None,1000,1000)
+
+
+        B = BudgetSet.BudgetSet([])
+        B.addBudgetItem(start_date_YYYYMMDD,end_date_YYYYMMDD,1,'daily',30,'SPEND food',False,False)
+        B.addBudgetItem('20240114', '20240114', 2, 'once', 2000, 'big purchase 1', False, False)
+        B.addBudgetItem('20240114', '20240114', 3, 'once', 2000, 'big purchase 2', False, False)
+
+        M = MemoRuleSet.MemoRuleSet([])
+        M.addMemoRule('.*income.*', None, 'Checking', 1)
+        M.addMemoRule('SPEND.*','Checking',None,1)
+        M.addMemoRule('.*', 'Checking', None, 2)
+        M.addMemoRule('.*', 'Checking', None, 3)
+
+        A1 = AccountMilestone.AccountMilestone('Checking 1000','Checking',1000,1000)
+        A2 = AccountMilestone.AccountMilestone('Credit 1000', 'Credit', 1000, 1000)
+        A3 = AccountMilestone.AccountMilestone('Loan A', 'Credit', 1000, 1000)
+
+        M1 = MemoMilestone.MemoMilestone('big purchase 1','.*big purchase 1.*')
+        M2 = MemoMilestone.MemoMilestone('big purchase 2', '.*big purchase 2.*')
+
+        CM1 = CompositeMilestone.CompositeMilestone('All 1k',[A1,A2,A3],[])
+        CM2 = CompositeMilestone.CompositeMilestone('both purchases', [], [M1,M2])
+        CM3 = CompositeMilestone.CompositeMilestone('All 1k and both purchases', [A1, A2, A3], [M1, M2])
+
+        MS = MilestoneSet.MilestoneSet(A,B,[A1,A2,A3],[M1,M2],[CM1,CM2,CM3])
+
+        E = ExpenseForecast.ExpenseForecast(A,
+                                            B,
+                                            M,
+                                            start_date_YYYYMMDD,
+                                            end_date_YYYYMMDD,
+                                            MS)
+        E.runForecast()
 
         F = ForecastHandler.ForecastHandler()
 
+        F.generateHTMLReport(E)
+        raise AssertionError
 
-        account_set = self.account_set
-        memo_rule_set = self.memo_rule_set
-        start_date_YYYYMMDD = '20000101'
-        end_date_YYYYMMDD = '20000103'
+    def tests_calculateMultipleChooseOne(self):
+        raise NotImplementedError
 
-        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=1)
+    def test_plotAccountTypeComparison(self):
+        raise NotImplementedError
 
-        account_set.createAccount(name='Checking',
-                                  balance=1000,
-                                  min_balance=0,
-                                  max_balance=float('Inf'),
-                                  account_type="checking")
+    def test_plotNetWorthComparison(self):
+        raise NotImplementedError
 
-        CoreBudgetSet = BudgetSet.BudgetSet([])
-        CoreBudgetSet.addBudgetItem('20000102', '20000102', 1, 'once', '1', 'Core', deferrable=False, partial_payment_allowed=False)
+    def test_plotAllComparison(self):
+        raise NotImplementedError
 
-        BudgetSetA2 = BudgetSet.BudgetSet([])
-        BudgetSetA2.addBudgetItem('20000102', '20000102', 1, 'once', '1', 'A2', deferrable=False, partial_payment_allowed=False)
+    def test_plotAccountTypeTotals(self):
+        raise NotImplementedError
 
-        BudgetSetB2 = BudgetSet.BudgetSet([])
-        BudgetSetB2.addBudgetItem('20000102', '20000102', 1, 'once', '1', 'B2', deferrable=False, partial_payment_allowed=False)
+    def test_plotNetWorth(self):
+        raise NotImplementedError
 
-        BudgetSetC3 = BudgetSet.BudgetSet([])
-        BudgetSetC3.addBudgetItem('20000102', '20000102', 1, 'once', '1', 'C3', deferrable=False, partial_payment_allowed=False)
+    def test_plotAll(self):
+        raise NotImplementedError
 
-        BudgetSetD3 = BudgetSet.BudgetSet([])
-        BudgetSetD3.addBudgetItem('20000102', '20000102', 1, 'once', '1', 'D3', deferrable=False, partial_payment_allowed=False)
+    def test_plotMarginalInterest(self):
+        raise NotImplementedError
 
-        BudgetSetE3 = BudgetSet.BudgetSet([])
-        BudgetSetE3.addBudgetItem('20000102', '20000102', 1, 'once', '1', 'E3', deferrable=False, partial_payment_allowed=False)
 
-        BudgetSetF4 = BudgetSet.BudgetSet([])
-        BudgetSetF4.addBudgetItem('20000102', '20000102', 1, 'once', '1', 'F4', deferrable=False, partial_payment_allowed=False)
+# FORECAST HANDLER
+#plot networth
+#plot account type totals
+#plot all
+#plot marginal interest
 
-        list_of_lists_of_budget_sets = [
-            [BudgetSetA2, BudgetSetB2],
-            [BudgetSetC3, BudgetSetD3, BudgetSetE3],
-            [BudgetSetF4]
-        ]
-
-        F.calculateMultipleChooseOne(AccountSet=copy.deepcopy(account_set),
-                                     Core_BudgetSet=CoreBudgetSet,
-                                     MemoRuleSet=memo_rule_set,
-                                     start_date_YYYYMMDD=start_date_YYYYMMDD,
-                                     end_date_YYYYMMDD=end_date_YYYYMMDD,
-                                     list_of_lists_of_budget_sets=list_of_lists_of_budget_sets)

@@ -7,7 +7,7 @@ import BudgetSet #this could be refactored out, and should be in terms of indepe
 
 from log_methods import setup_logger
 
-logger = setup_logger('AccountSet','AccountSet.log',logging.WARNING)
+logger = setup_logger('AccountSet','./log/AccountSet.log',logging.INFO)
 
 
 class AccountSet:
@@ -460,9 +460,9 @@ class AccountSet:
         # log_in_color(logger,'magenta', 'debug', 'EXIT getBalances()')
         return balances_dict
 
-    def executeTransaction(self, Account_From, Account_To, Amount,income_flag=False):
+    def executeTransaction(self, Account_From, Account_To, Amount, income_flag=False):
         #print('ENTER executeTransaction('+str(Account_From)+','+str(Account_To)+','+str(Amount)+')')
-        Amount = round(Amount,2)
+        Amount = Amount
 
         if Amount == 0:
             return
@@ -481,6 +481,7 @@ class AccountSet:
             return
 
         boundary_error_ind = False
+        error_msg = ""
         equivalent_exchange_error_ind = False
         debug_print_Amount=str(Amount)
         debt_payment_ind = False
@@ -556,18 +557,25 @@ class AccountSet:
             if AF_Account_Type == 'checking':
 
                 balance_after_proposed_transaction = self.accounts[account_from_index].balance - abs(Amount)
+
+                if abs(balance_after_proposed_transaction) < 0.01:
+                    balance_after_proposed_transaction = 0 #rounding errors are a bitch
+
                 try:
                     assert self.accounts[account_from_index].min_balance <= balance_after_proposed_transaction <= self.accounts[account_from_index].max_balance
                 except Exception as e:
-                    log_in_color(logger,'red', 'error', '')
-                    log_in_color(logger,'red','error','transaction violated Account_From boundaries:')
-                    log_in_color(logger,'red', 'error', str(e))
-                    log_in_color(logger,'red', 'error', 'Account_From:\n'+str(self.accounts[account_from_index]))
-                    log_in_color(logger,'red', 'error', 'Amount:'+str(Amount))
+                    log_in_color(logger,'red', 'info', '')
+                    log_in_color(logger,'red','info','transaction violated Account_From boundaries:')
+                    log_in_color(logger,'red', 'info', str(e))
+                    log_in_color(logger,'red', 'info', 'Account_From:\n'+str(self.accounts[account_from_index]))
+                    log_in_color(logger,'red', 'info', 'Amount:'+str(Amount))
+                    error_msg += 'transaction violated Account_From boundaries:\n'
+                    error_msg += 'Account_From:\n'+str(self.accounts[account_from_index])+'\n'
+                    error_msg += 'Amount:'+str(Amount)+'\n'
                     boundary_error_ind = True
 
                 self.accounts[account_from_index].balance -= abs(Amount)
-                self.accounts[account_from_index].balance = round(self.accounts[account_from_index].balance,2)
+                self.accounts[account_from_index].balance = self.accounts[account_from_index].balance
             elif AF_Account_Type == 'credit' or AF_Account_Type == 'loan':
 
                 balance_after_proposed_transaction = self.getBalances()[self.accounts[account_from_index].name.split(':')[0]] - abs(Amount)
@@ -580,18 +588,21 @@ class AccountSet:
                 try:
                     assert self.accounts[account_from_index].min_balance <= balance_after_proposed_transaction <= self.accounts[account_from_index].max_balance
                 except Exception as e:
-                    log_in_color(logger,'red', 'error', 'transaction violated Account_From boundaries:')
-                    log_in_color(logger,'red', 'error', str(e))
-                    log_in_color(logger,'red', 'error', 'Account_From:\n' + str(self.accounts[account_from_index]))
-                    log_in_color(logger,'red', 'error', 'Amount:' + str(Amount))
+                    log_in_color(logger,'red', 'info', 'transaction violated Account_From boundaries:')
+                    log_in_color(logger,'red', 'info', str(e))
+                    log_in_color(logger,'red', 'info', 'Account_From:\n' + str(self.accounts[account_from_index]))
+                    log_in_color(logger,'red', 'info', 'Amount:' + str(Amount))
+                    error_msg += 'transaction violated Account_From boundaries:\n'
+                    error_msg += 'Account_From:\n' + str(self.accounts[account_from_index]) + '\n'
+                    error_msg += 'Amount:' + str(Amount) + '\n'
                     boundary_error_ind = True
 
                 self.accounts[account_from_index].balance += abs(Amount)
-                self.accounts[account_from_index].balance = round(self.accounts[account_from_index].balance,2)
+                self.accounts[account_from_index].balance = self.accounts[account_from_index].balance
             else: raise NotImplementedError("account type was: "+str(AF_Account_Type)) #from types other than checking or credit not yet implemented
 
             if not boundary_error_ind:
-                log_in_color(logger,'magenta', 'debug', 'Paid ' + str(Amount) + ' from ' + Account_From, 0)
+                log_in_color(logger,'magenta', 'info', 'Paid ' + str(Amount) + ' from ' + Account_From, 0)
 
 
 
@@ -599,8 +610,8 @@ class AccountSet:
             if AT_Account_Type == 'checking':
 
                 self.accounts[account_to_index].balance += abs(Amount)
-                self.accounts[account_to_index].balance = round(self.accounts[account_to_index].balance,2)
-                log_in_color(logger,'magenta', 'debug', 'Paid ' + str(Amount) + ' to ' + Account_To, 0)
+                #self.accounts[account_to_index].balance = self.accounts[account_to_index].balance
+                log_in_color(logger,'magenta', 'info', 'Paid ' + str(Amount) + ' to ' + Account_To, 0)
             elif AT_Account_Type == 'credit' or AT_Account_Type == 'loan':
 
                 debt_payment_ind = (AT_Account_Type.lower() == 'loan')
@@ -608,15 +619,21 @@ class AccountSet:
                 AT_ANAME = self.accounts[account_to_index].name.split(':')[0]
                 balance_after_proposed_transaction = self.getBalances()[AT_ANAME] - abs(Amount)
 
+                if abs(balance_after_proposed_transaction) < 0.01:
+                    balance_after_proposed_transaction = 0
+
                 try:
                     #print('assert '+str(self.accounts[account_to_index].min_balance)+' <= '+str(balance_after_proposed_transaction)+' <= '+str(self.accounts[account_to_index].max_balance))
                     assert self.accounts[account_to_index].min_balance <= balance_after_proposed_transaction <= self.accounts[account_to_index].max_balance
                 except Exception as e:
-                    log_in_color(logger,'red', 'error', '')
-                    log_in_color(logger,'red','error','transaction violated Account_To boundaries:')
-                    log_in_color(logger,'red', 'error', str(e))
-                    log_in_color(logger,'red', 'error', 'Account_To:\n'+str(self.accounts[account_to_index]))
-                    log_in_color(logger,'red', 'error', 'Amount:'+str(Amount))
+                    log_in_color(logger,'red', 'info', '')
+                    log_in_color(logger,'red','info','transaction violated Account_To boundaries:')
+                    log_in_color(logger,'red', 'info', str(e))
+                    log_in_color(logger,'red', 'info', 'Account_To:\n'+str(self.accounts[account_to_index]))
+                    log_in_color(logger,'red', 'info', 'Amount:'+str(Amount))
+                    error_msg += 'transaction violated Account_To boundaries:\n'
+                    error_msg += 'Account_From:\n' + str(self.accounts[account_to_index]) + '\n'
+                    error_msg += 'Amount:' + str(Amount) + '\n'
                     boundary_error_ind = True
 
                 # log_in_color(logger,'magenta', 'debug', 'account min:' + str(self.accounts[account_to_index].min_balance), 3)
@@ -624,19 +641,25 @@ class AccountSet:
                 # log_in_color(logger,'magenta', 'debug', 'balance_after_proposed_transaction:' + str(balance_after_proposed_transaction), 3)
 
                 #if the amount we are playing on credit card is more than the previous statement balance
+                #OR amt payed on interest is more than the total
                 if abs(Amount) >= self.accounts[account_to_index+1].balance:
-                    remaining_to_pay = round(abs(Amount) - self.accounts[account_to_index + 1].balance,2)
-                    log_in_color(logger,'magenta', 'debug','Paid ' + str(self.accounts[account_to_index + 1].balance) + ' to ' + str(self.accounts[account_to_index + 1].name), 0)
+                    remaining_to_pay = abs(Amount) - self.accounts[account_to_index + 1].balance
+                    log_in_color(logger,'magenta', 'info','Paid ' + str(self.accounts[account_to_index + 1].balance) + ' to ' + str(self.accounts[account_to_index + 1].name), 0)
                     self.accounts[account_to_index + 1].balance = 0
 
                     #this has the potential to overpay, but we consider that upstreams problem
                     self.accounts[account_to_index].balance -= remaining_to_pay
-                    self.accounts[account_to_index].balance = round(self.accounts[account_to_index].balance,2)
-                    log_in_color(logger,'magenta', 'debug', 'Paid ' + str(remaining_to_pay) + ' to ' + self.accounts[account_to_index].name, 0)
+
+                    if abs(self.accounts[account_to_index].balance) < 0.01:
+                        self.accounts[account_to_index].balance = 0
+
+                    #self.accounts[account_to_index].balance = self.accounts[account_to_index].balance
+                    log_in_color(logger,'magenta', 'info', 'Paid ' + str(remaining_to_pay) + ' to ' + self.accounts[account_to_index].name, 0)
                 else: #pay down the previous statement balance
-                    log_in_color(logger,'magenta', 'debug', 'Paid ' + str(Amount) + ' to ' + str(self.accounts[account_to_index + 1].name), 0)
+                    log_in_color(logger,'magenta', 'info', 'Paid ' + str(Amount) + ' to ' + str(self.accounts[account_to_index + 1].name), 0)
                     self.accounts[account_to_index + 1].balance -= Amount
-                    self.accounts[account_to_index + 1].balance = round(self.accounts[account_to_index + 1].balance,2)
+                    if abs(self.accounts[account_to_index + 1].balance) < 0.01:
+                        self.accounts[account_to_index + 1].balance = 0
             else: raise NotImplementedError("account type was: "+str(AF_Account_Type)) #from types other than checking or credit not yet implemented
 
 
@@ -646,9 +669,9 @@ class AccountSet:
         for a in available_funds.keys():
             after_txn_total_available_funds += available_funds[a]
 
-        empirical_delta = round(after_txn_total_available_funds - before_txn_total_available_funds,2)
+        empirical_delta = after_txn_total_available_funds - before_txn_total_available_funds
 
-        if boundary_error_ind: raise ValueError("Account boundaries were violated")
+        if boundary_error_ind: raise ValueError("Account boundaries were violated\n"+error_msg)
 
         single_account_transaction_ind = ( Account_From == 'None' or Account_To == 'None' )
 
@@ -988,24 +1011,24 @@ class AccountSet:
                     total_interest_on_loans_w_non_0_payment += interest_accts_df.iloc[i,:].Balance
 
             if amount <= sum(payment_amounts):
-                payment_amounts = [round(a * (amount) / sum(payment_amounts),2) for a in payment_amounts]
+                payment_amounts = [a * (amount) / sum(payment_amounts) for a in payment_amounts]
             # print('payment_amounts:' + str(payment_amounts))
             # print('amount -> remaining_amount:')
             # print(str(amount) + ' -> ' + str(amount - sum(payment_amounts)))
-            amount = round(amount - sum(payment_amounts),2)
+            amount = amount - sum(payment_amounts)
 
             for i in range(0, principal_balance_delta.shape[0]):
                 loop__to_name = principal_accts_df.Name.iloc[i].split(':')[0]
-                loop__amount = round(payment_amounts[i], 2)
+                loop__amount = payment_amounts[i]
 
                 # print( str( loop__amount ) + ' ' + loop__to_name )
 
                 if loop__amount == 0:
                     continue
 
-                account_set.executeTransaction(Account_From=checking_acct_name, Account_To=loop__to_name, Amount=round(loop__amount,2))
+                account_set.executeTransaction(Account_From=checking_acct_name, Account_To=loop__to_name, Amount=loop__amount)
                 #payment_amounts__BudgetSet.addBudgetItem(date_string_YYYYMMDD, date_string_YYYYMMDD, 7, 'once', round(loop__amount,2), loop__to_name,False,partial_payment_allowed=False)
-                payment_amount_tuple_list.append((loop__to_name,round(loop__amount,2)))
+                payment_amount_tuple_list.append((loop__to_name,loop__amount))
 
         unique_payment_amount_tuple_dict = {}
         for tp in payment_amount_tuple_list:
@@ -1016,7 +1039,7 @@ class AccountSet:
 
         for key, value in unique_payment_amount_tuple_dict.items():
             payment_amounts__BudgetSet.addBudgetItem(date_string_YYYYMMDD, date_string_YYYYMMDD, 7, 'once',
-                                                     round(value, 2), key, False,
+                                                     value, key, False,
                                                      partial_payment_allowed=False)
 
         # consolidate payments
@@ -1029,9 +1052,9 @@ class AccountSet:
             # print(row)
 
             if row.Memo in payment_dict.keys():
-                payment_dict[row.Memo] = payment_dict[row.Memo] + round(row.Amount,2)
+                payment_dict[row.Memo] = payment_dict[row.Memo] + row.Amount
             else:
-                payment_dict[row.Memo] = round(row.Amount,2)
+                payment_dict[row.Memo] = row.Amount
 
         final_txns = []
         for key in payment_dict.keys():

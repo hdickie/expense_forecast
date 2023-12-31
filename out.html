@@ -3,7 +3,7 @@
         <html>
         <head>
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Expense Forecast Report #022439</title>
+        <title>Expense Forecast Report #004474</title>
         <style>
         /* Style the tab */
         .tab {
@@ -45,8 +45,8 @@
 
         </head>
         <body>
-        <h1>Expense Forecast Report #022439</h1>
-        <p>2023-10-11 to 2023-11-12</p>
+        <h1>Expense Forecast Report #004474</h1>
+        <p>2024-01-01 to 2024-02-05</p>
 
         <!-- Tab links -->
         <div class="tab">
@@ -57,13 +57,14 @@
           <button class="tablinks" onclick="openTab(event, 'Interest')">Interest</button>
           <button class="tablinks" onclick="openTab(event, 'Milestone')">Milestone</button>
           <button class="tablinks" onclick="openTab(event, 'All')">All</button>
+          <button class="tablinks" onclick="openTab(event, 'Output Data')">Output Data</button>
         </div>
 
         <!-- Tab content -->
         <div id="Summary" class="tabcontent">
           <h3>Summary</h3>
           <p>
-        This forecast started at 2023-10-11 20:18:02, took 0:00:01 to complete, and finished at 2023-10-11 20:18:03.
+        This forecast started at 2023-12-31 00:27:50, took 0:06:49 to complete, and finished at 2023-12-31 00:34:39.
         </p>
           <h3>Accounts</h3>
           <p>
@@ -89,8 +90,86 @@
       <td>Checking</td>
       <td>2000.0</td>
       <td>0.0</td>
-      <td>inf</td>
+      <td>999999.0</td>
       <td>checking</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Loan A: Principal Balance</td>
+      <td>5000.0</td>
+      <td>0.0</td>
+      <td>999999.0</td>
+      <td>principal balance</td>
+      <td>20240103</td>
+      <td>simple</td>
+      <td>0.1</td>
+      <td>daily</td>
+      <td>50.0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Loan A: Interest</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>999999.0</td>
+      <td>interest</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Loan B: Principal Balance</td>
+      <td>5000.0</td>
+      <td>0.0</td>
+      <td>999999.0</td>
+      <td>principal balance</td>
+      <td>20240103</td>
+      <td>simple</td>
+      <td>0.05</td>
+      <td>daily</td>
+      <td>50.0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Loan B: Interest</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>999999.0</td>
+      <td>interest</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>Loan C: Principal Balance</td>
+      <td>5000.0</td>
+      <td>0.0</td>
+      <td>999999.0</td>
+      <td>principal balance</td>
+      <td>20240103</td>
+      <td>simple</td>
+      <td>0.01</td>
+      <td>daily</td>
+      <td>50.0</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>Loan C: Interest</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>999999.0</td>
+      <td>interest</td>
       <td>None</td>
       <td>None</td>
       <td>None</td>
@@ -119,25 +198,36 @@
   <tbody>
     <tr>
       <th>0</th>
-      <td>2023-10-11</td>
-      <td>2024-01-01</td>
+      <td>20240101</td>
+      <td>20240205</td>
       <td>1</td>
       <td>daily</td>
-      <td>20.0</td>
-      <td>food</td>
+      <td>30.0</td>
+      <td>SPEND food</td>
       <td>False</td>
       <td>False</td>
     </tr>
     <tr>
       <th>1</th>
-      <td>2023-10-11</td>
-      <td>2024-01-01</td>
+      <td>20240101</td>
+      <td>20240205</td>
       <td>1</td>
       <td>semiweekly</td>
-      <td>-450.0</td>
+      <td>1500.0</td>
       <td>income</td>
       <td>False</td>
       <td>False</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>20240103</td>
+      <td>20240205</td>
+      <td>7</td>
+      <td>monthly</td>
+      <td>1500.0</td>
+      <td>additional loan payment</td>
+      <td>False</td>
+      <td>True</td>
     </tr>
   </tbody>
 </table>
@@ -157,17 +247,129 @@
   <tbody>
     <tr>
       <th>0</th>
-      <td>.*</td>
+      <td>.*income.*</td>
+      <td>None</td>
+      <td>Checking</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>SPEND.*</td>
       <td>Checking</td>
       <td>None</td>
       <td>1.0</td>
     </tr>
     <tr>
-      <th>1</th>
-      <td>.*</td>
+      <th>2</th>
+      <td>additional loan payment</td>
       <td>Checking</td>
-      <td>None</td>
-      <td>2.0</td>
+      <td>ALL_LOANS</td>
+      <td>7.0</td>
+    </tr>
+  </tbody>
+</table>
+        </p>
+          <h3>Account Milestones</h3>
+          <p>
+        These account milestones are defined:<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Milestone_Name</th>
+      <th>Account_Name</th>
+      <th>Min_Balance</th>
+      <th>Max_Balance</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Loan A 0</td>
+      <td>Loan A</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Loan A 1000</td>
+      <td>Loan A</td>
+      <td>1000.0</td>
+      <td>1000.0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Loan B 0</td>
+      <td>Loan B</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Loan B 1000</td>
+      <td>Loan B</td>
+      <td>1000.0</td>
+      <td>1000.0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Loan C 0</td>
+      <td>Loan C</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>Loan C 1000</td>
+      <td>Loan C</td>
+      <td>1000.0</td>
+      <td>1000.0</td>
+    </tr>
+  </tbody>
+</table>
+        </p>
+          <h3>Memo Milestones</h3>
+          <p>
+        These memo milestones are defined:<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Milestone_Name</th>
+      <th>Memo_Regex</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+        </p>
+          <h3>Composite Milestones</h3>
+          <p>
+        These composite milestones are defined:<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Composite_Milestone_Name</th>
+      <th>Milestone_Type</th>
+      <th>Milestone_Name</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>All 1k</td>
+      <td>Account</td>
+      <td>Loan A 1000</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>All 1k</td>
+      <td>Account</td>
+      <td>Loan B 1000</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>All 1k</td>
+      <td>Account</td>
+      <td>Loan C 1000</td>
     </tr>
   </tbody>
 </table>
@@ -177,45 +379,652 @@
         <div id="NetWorth" class="tabcontent">
           <h3>NetWorth</h3>
           <p>
-        Net Worth began at $2,000.0 and fell to $10.0 over 33 days, averaging $-60.3 per day.
+        Net Worth began at $-13,000.0 and rose to $-9,624.03 over 36 days, averaging $93.78 per day.
         </p>
-          <img src="./022439_networth_line_plot.png">
+          <img src="./004474_networth_line_plot.png">
         </div>
 
         <div id="NetGainLoss" class="tabcontent">
           <h3>NetGainLoss</h3>
           <p>NetGainLoss text.</p>
-          <img src="./022439_netgain_line_plot.png">
+          <img src="./004474_netgain_line_plot.png">
         </div>
 
         <div id="AccountType" class="tabcontent">
           <h3>AccountType</h3>
           <p>
-        Loan debt began at $0.0 and rose to $0.0 over 33 days, averaging $0.0 per day.
+        Loan debt began at $15,000.0 and fell to $14,774.03 over 36 days, averaging $-6.28 per day.
         <br><br>
-        Credit card debt began at $0.0 and rose to $0.0 over 33 days, averaging $0.0 per day.
+        Credit card debt began at $0.0 and rose to $0.0 over 36 days, averaging $0.0 per day.
         <br><br>
-        Liquid cash began at $2,000.0 and fell to $10.0 over 33 days, averaging $-60.3 per day.
+        Liquid cash began at $2,000.0 and rose to $5,150.0 over 36 days, averaging $87.5 per day.
         </p>
-          <img src="./022439_accounttype_line_plot_plot.png">
+          <img src="./004474_accounttype_line_plot_plot.png">
         </div>
 
         <div id="Interest" class="tabcontent">
           <h3>Interest</h3>
           <p>Interest text.</p>
-          <img src="./022439_interest_line_plot_plot.png">
+          <img src="./004474_interest_line_plot_plot.png">
         </div>
         
         <div id="Milestone" class="tabcontent">
           <h3>Milestone</h3>
           <p>Milestone text.</p>
-          <img src="./022439_milestone_line_plot.png">
+          <img src="./004474_milestone_line_plot.png">
         </div>
 
         <div id="All" class="tabcontent">
           <h3>All</h3>
           <p>All text.</p>
-          <img src="./022439_all_line_plot.png">
+          <img src="./004474_all_line_plot.png">
+        </div>
+
+        <div id="Output Data" class="tabcontent">
+          <h3>Output Data</h3>
+          <p>
+        This forecast started at 2023-12-31 00:27:50, took 0:06:49 to complete, and finished at 2023-12-31 00:34:39.
+        </p>
+          <p>The visualized data are below:</p>
+          <h4>Forecast 1 #004474:</h4>
+          <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Date</th>
+      <th>Checking</th>
+      <th>Loan A: Principal Balance</th>
+      <th>Loan A: Interest</th>
+      <th>Loan B: Principal Balance</th>
+      <th>Loan B: Interest</th>
+      <th>Loan C: Principal Balance</th>
+      <th>Loan C: Interest</th>
+      <th>NetWorth</th>
+      <th>LoanTotal</th>
+      <th>CCDebtTotal</th>
+      <th>LiquidTotal</th>
+      <th>Memo</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>20240101</td>
+      <td>2000</td>
+      <td>5000.00</td>
+      <td>0.00</td>
+      <td>5000.00</td>
+      <td>0.00</td>
+      <td>5000.00</td>
+      <td>0.00</td>
+      <td>-13000.00</td>
+      <td>15000.00</td>
+      <td>0</td>
+      <td>2000</td>
+      <td></td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>20240102</td>
+      <td>1970</td>
+      <td>5000.00</td>
+      <td>0.00</td>
+      <td>5000.00</td>
+      <td>0.00</td>
+      <td>5000.00</td>
+      <td>0.00</td>
+      <td>-13030.00</td>
+      <td>15000.00</td>
+      <td>0</td>
+      <td>1970</td>
+      <td>SPEND food ($30.0) ;</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>20240103</td>
+      <td>1790</td>
+      <td>4950.00</td>
+      <td>0.00</td>
+      <td>4950.00</td>
+      <td>0.00</td>
+      <td>4950.00</td>
+      <td>0.00</td>
+      <td>-13060.00</td>
+      <td>14850.00</td>
+      <td>0</td>
+      <td>1790</td>
+      <td>SPEND food ($30.0) ; Loan A loan min payment ($50.0); Loan B loan min payment ($50.0); Loan C loan min payment ($50.0);</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>20240104</td>
+      <td>1760</td>
+      <td>4950.00</td>
+      <td>1.36</td>
+      <td>4950.00</td>
+      <td>0.68</td>
+      <td>4950.00</td>
+      <td>0.14</td>
+      <td>-13092.18</td>
+      <td>14852.18</td>
+      <td>0</td>
+      <td>1760</td>
+      <td>SPEND food ($30.0) ;</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>20240105</td>
+      <td>1730</td>
+      <td>4950.00</td>
+      <td>2.72</td>
+      <td>4950.00</td>
+      <td>1.36</td>
+      <td>4950.00</td>
+      <td>0.28</td>
+      <td>-13124.36</td>
+      <td>14854.36</td>
+      <td>0</td>
+      <td>1730</td>
+      <td>SPEND food ($30.0) ;</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>20240106</td>
+      <td>1700</td>
+      <td>4950.00</td>
+      <td>4.08</td>
+      <td>4950.00</td>
+      <td>2.04</td>
+      <td>4950.00</td>
+      <td>0.42</td>
+      <td>-13156.54</td>
+      <td>14856.54</td>
+      <td>0</td>
+      <td>1700</td>
+      <td>SPEND food ($30.0) ;</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>20240107</td>
+      <td>3170</td>
+      <td>4950.00</td>
+      <td>5.44</td>
+      <td>4950.00</td>
+      <td>2.72</td>
+      <td>4950.00</td>
+      <td>0.56</td>
+      <td>-11688.72</td>
+      <td>14858.72</td>
+      <td>0</td>
+      <td>3170</td>
+      <td>income ($1500.0) ; SPEND food ($30.0) ;</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>20240108</td>
+      <td>3140</td>
+      <td>4950.00</td>
+      <td>6.80</td>
+      <td>4950.00</td>
+      <td>3.40</td>
+      <td>4950.00</td>
+      <td>0.70</td>
+      <td>-11720.90</td>
+      <td>14860.90</td>
+      <td>0</td>
+      <td>3140</td>
+      <td>SPEND food ($30.0) ;</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>20240109</td>
+      <td>3110</td>
+      <td>4950.00</td>
+      <td>8.16</td>
+      <td>4950.00</td>
+      <td>4.08</td>
+      <td>4950.00</td>
+      <td>0.84</td>
+      <td>-11753.08</td>
+      <td>14863.08</td>
+      <td>0</td>
+      <td>3110</td>
+      <td>SPEND food ($30.0) ;</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>20240110</td>
+      <td>3080</td>
+      <td>4950.00</td>
+      <td>9.52</td>
+      <td>4950.00</td>
+      <td>4.76</td>
+      <td>4950.00</td>
+      <td>0.98</td>
+      <td>-11785.26</td>
+      <td>14865.26</td>
+      <td>0</td>
+      <td>3080</td>
+      <td>SPEND food ($30.0) ;</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>20240111</td>
+      <td>3050</td>
+      <td>4950.00</td>
+      <td>10.88</td>
+      <td>4950.00</td>
+      <td>5.44</td>
+      <td>4950.00</td>
+      <td>1.12</td>
+      <td>-11817.44</td>
+      <td>14867.44</td>
+      <td>0</td>
+      <td>3050</td>
+      <td>SPEND food ($30.0) ;</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>20240112</td>
+      <td>3020</td>
+      <td>4950.00</td>
+      <td>12.24</td>
+      <td>4950.00</td>
+      <td>6.12</td>
+      <td>4950.00</td>
+      <td>1.26</td>
+      <td>-11849.62</td>
+      <td>14869.62</td>
+      <td>0</td>
+      <td>3020</td>
+      <td>SPEND food ($30.0) ;</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>20240113</td>
+      <td>2990</td>
+      <td>4950.00</td>
+      <td>13.60</td>
+      <td>4950.00</td>
+      <td>6.80</td>
+      <td>4950.00</td>
+      <td>1.40</td>
+      <td>-11881.80</td>
+      <td>14871.80</td>
+      <td>0</td>
+      <td>2990</td>
+      <td>SPEND food ($30.0) ;</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>20240114</td>
+      <td>2960</td>
+      <td>4950.00</td>
+      <td>14.96</td>
+      <td>4950.00</td>
+      <td>7.48</td>
+      <td>4950.00</td>
+      <td>1.54</td>
+      <td>-11913.98</td>
+      <td>14873.98</td>
+      <td>0</td>
+      <td>2960</td>
+      <td>SPEND food ($30.0) ;</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>20240115</td>
+      <td>2930</td>
+      <td>4950.00</td>
+      <td>16.32</td>
+      <td>4950.00</td>
+      <td>8.16</td>
+      <td>4950.00</td>
+      <td>1.68</td>
+      <td>-11946.16</td>
+      <td>14876.16</td>
+      <td>0</td>
+      <td>2930</td>
+      <td>SPEND food ($30.0) ;</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>20240116</td>
+      <td>2900</td>
+      <td>4950.00</td>
+      <td>17.68</td>
+      <td>4950.00</td>
+      <td>8.84</td>
+      <td>4950.00</td>
+      <td>1.82</td>
+      <td>-11978.34</td>
+      <td>14878.34</td>
+      <td>0</td>
+      <td>2900</td>
+      <td>SPEND food ($30.0) ;</td>
+    </tr>
+    <tr>
+      <th>16</th>
+      <td>20240117</td>
+      <td>2870</td>
+      <td>4950.00</td>
+      <td>19.04</td>
+      <td>4950.00</td>
+      <td>9.52</td>
+      <td>4950.00</td>
+      <td>1.96</td>
+      <td>-12010.52</td>
+      <td>14880.52</td>
+      <td>0</td>
+      <td>2870</td>
+      <td>SPEND food ($30.0) ;</td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>20240118</td>
+      <td>2840</td>
+      <td>4950.00</td>
+      <td>20.40</td>
+      <td>4950.00</td>
+      <td>10.20</td>
+      <td>4950.00</td>
+      <td>2.10</td>
+      <td>-12042.70</td>
+      <td>14882.70</td>
+      <td>0</td>
+      <td>2840</td>
+      <td>SPEND food ($30.0) ;</td>
+    </tr>
+    <tr>
+      <th>18</th>
+      <td>20240119</td>
+      <td>2810</td>
+      <td>4950.00</td>
+      <td>21.76</td>
+      <td>4950.00</td>
+      <td>10.88</td>
+      <td>4950.00</td>
+      <td>2.24</td>
+      <td>-12074.88</td>
+      <td>14884.88</td>
+      <td>0</td>
+      <td>2810</td>
+      <td>SPEND food ($30.0) ;</td>
+    </tr>
+    <tr>
+      <th>19</th>
+      <td>20240120</td>
+      <td>2780</td>
+      <td>4950.00</td>
+      <td>23.12</td>
+      <td>4950.00</td>
+      <td>11.56</td>
+      <td>4950.00</td>
+      <td>2.38</td>
+      <td>-12107.06</td>
+      <td>14887.06</td>
+      <td>0</td>
+      <td>2780</td>
+      <td>SPEND food ($30.0) ;</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>20240121</td>
+      <td>4250</td>
+      <td>4950.00</td>
+      <td>24.48</td>
+      <td>4950.00</td>
+      <td>12.24</td>
+      <td>4950.00</td>
+      <td>2.52</td>
+      <td>-10639.24</td>
+      <td>14889.24</td>
+      <td>0</td>
+      <td>4250</td>
+      <td>income ($1500.0) ; SPEND food ($30.0) ;</td>
+    </tr>
+    <tr>
+      <th>21</th>
+      <td>20240122</td>
+      <td>4220</td>
+      <td>4950.00</td>
+      <td>25.84</td>
+      <td>4950.00</td>
+      <td>12.92</td>
+      <td>4950.00</td>
+      <td>2.66</td>
+      <td>-10671.42</td>
+      <td>14891.42</td>
+      <td>0</td>
+      <td>4220</td>
+      <td>SPEND food ($30.0) ;</td>
+    </tr>
+    <tr>
+      <th>22</th>
+      <td>20240123</td>
+      <td>4190</td>
+      <td>4950.00</td>
+      <td>27.20</td>
+      <td>4950.00</td>
+      <td>13.60</td>
+      <td>4950.00</td>
+      <td>2.80</td>
+      <td>-10703.60</td>
+      <td>14893.60</td>
+      <td>0</td>
+      <td>4190</td>
+      <td>SPEND food ($30.0) ;</td>
+    </tr>
+    <tr>
+      <th>23</th>
+      <td>20240124</td>
+      <td>4160</td>
+      <td>4950.00</td>
+      <td>28.56</td>
+      <td>4950.00</td>
+      <td>14.28</td>
+      <td>4950.00</td>
+      <td>2.94</td>
+      <td>-10735.78</td>
+      <td>14895.78</td>
+      <td>0</td>
+      <td>4160</td>
+      <td>SPEND food ($30.0) ;</td>
+    </tr>
+    <tr>
+      <th>24</th>
+      <td>20240125</td>
+      <td>4130</td>
+      <td>4950.00</td>
+      <td>29.92</td>
+      <td>4950.00</td>
+      <td>14.96</td>
+      <td>4950.00</td>
+      <td>3.08</td>
+      <td>-10767.96</td>
+      <td>14897.96</td>
+      <td>0</td>
+      <td>4130</td>
+      <td>SPEND food ($30.0) ;</td>
+    </tr>
+    <tr>
+      <th>25</th>
+      <td>20240126</td>
+      <td>4100</td>
+      <td>4950.00</td>
+      <td>31.28</td>
+      <td>4950.00</td>
+      <td>15.64</td>
+      <td>4950.00</td>
+      <td>3.22</td>
+      <td>-10800.14</td>
+      <td>14900.14</td>
+      <td>0</td>
+      <td>4100</td>
+      <td>SPEND food ($30.0) ;</td>
+    </tr>
+    <tr>
+      <th>26</th>
+      <td>20240127</td>
+      <td>4070</td>
+      <td>4950.00</td>
+      <td>32.64</td>
+      <td>4950.00</td>
+      <td>16.32</td>
+      <td>4950.00</td>
+      <td>3.36</td>
+      <td>-10832.32</td>
+      <td>14902.32</td>
+      <td>0</td>
+      <td>4070</td>
+      <td>SPEND food ($30.0) ;</td>
+    </tr>
+    <tr>
+      <th>27</th>
+      <td>20240128</td>
+      <td>4040</td>
+      <td>4950.00</td>
+      <td>34.00</td>
+      <td>4950.00</td>
+      <td>17.00</td>
+      <td>4950.00</td>
+      <td>3.50</td>
+      <td>-10864.50</td>
+      <td>14904.50</td>
+      <td>0</td>
+      <td>4040</td>
+      <td>SPEND food ($30.0) ;</td>
+    </tr>
+    <tr>
+      <th>28</th>
+      <td>20240129</td>
+      <td>4010</td>
+      <td>4950.00</td>
+      <td>35.36</td>
+      <td>4950.00</td>
+      <td>17.68</td>
+      <td>4950.00</td>
+      <td>3.64</td>
+      <td>-10896.68</td>
+      <td>14906.68</td>
+      <td>0</td>
+      <td>4010</td>
+      <td>SPEND food ($30.0) ;</td>
+    </tr>
+    <tr>
+      <th>29</th>
+      <td>20240130</td>
+      <td>3980</td>
+      <td>4950.00</td>
+      <td>36.72</td>
+      <td>4950.00</td>
+      <td>18.36</td>
+      <td>4950.00</td>
+      <td>3.78</td>
+      <td>-10928.86</td>
+      <td>14908.86</td>
+      <td>0</td>
+      <td>3980</td>
+      <td>SPEND food ($30.0) ;</td>
+    </tr>
+    <tr>
+      <th>30</th>
+      <td>20240131</td>
+      <td>3950</td>
+      <td>4950.00</td>
+      <td>38.08</td>
+      <td>4950.00</td>
+      <td>19.04</td>
+      <td>4950.00</td>
+      <td>3.92</td>
+      <td>-10961.04</td>
+      <td>14911.04</td>
+      <td>0</td>
+      <td>3950</td>
+      <td>SPEND food ($30.0) ;</td>
+    </tr>
+    <tr>
+      <th>31</th>
+      <td>20240201</td>
+      <td>3920</td>
+      <td>4950.00</td>
+      <td>39.44</td>
+      <td>4950.00</td>
+      <td>19.72</td>
+      <td>4950.00</td>
+      <td>4.06</td>
+      <td>-10993.22</td>
+      <td>14913.22</td>
+      <td>0</td>
+      <td>3920</td>
+      <td>SPEND food ($30.0) ;</td>
+    </tr>
+    <tr>
+      <th>32</th>
+      <td>20240202</td>
+      <td>3890</td>
+      <td>4950.00</td>
+      <td>40.80</td>
+      <td>4950.00</td>
+      <td>20.40</td>
+      <td>4950.00</td>
+      <td>4.20</td>
+      <td>-11025.40</td>
+      <td>14915.40</td>
+      <td>0</td>
+      <td>3890</td>
+      <td>SPEND food ($30.0) ;</td>
+    </tr>
+    <tr>
+      <th>33</th>
+      <td>20240203</td>
+      <td>3710</td>
+      <td>4942.16</td>
+      <td>1.35</td>
+      <td>4921.08</td>
+      <td>0.67</td>
+      <td>4904.34</td>
+      <td>0.13</td>
+      <td>-11059.73</td>
+      <td>14769.73</td>
+      <td>0</td>
+      <td>3710</td>
+      <td>SPEND food ($30.0) ; Loan A loan min payment ($50.0); Loan B loan min payment ($50.0); Loan C loan min payment ($50.0);</td>
+    </tr>
+    <tr>
+      <th>34</th>
+      <td>20240204</td>
+      <td>5180</td>
+      <td>4942.16</td>
+      <td>2.70</td>
+      <td>4921.08</td>
+      <td>1.34</td>
+      <td>4904.34</td>
+      <td>0.26</td>
+      <td>-9591.88</td>
+      <td>14771.88</td>
+      <td>0</td>
+      <td>5180</td>
+      <td>income ($1500.0) ; SPEND food ($30.0) ;</td>
+    </tr>
+    <tr>
+      <th>35</th>
+      <td>20240205</td>
+      <td>5150</td>
+      <td>4942.16</td>
+      <td>4.05</td>
+      <td>4921.08</td>
+      <td>2.01</td>
+      <td>4904.34</td>
+      <td>0.39</td>
+      <td>-9624.03</td>
+      <td>14774.03</td>
+      <td>0</td>
+      <td>5150</td>
+      <td>SPEND food ($30.0) ;</td>
+    </tr>
+  </tbody>
+</table>
         </div>
 
         <br>

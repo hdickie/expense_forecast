@@ -73,6 +73,7 @@ class MilestoneSet:
         self.account_milestones__list += [ AccountMilestone.AccountMilestone(milestone_name,account_name,min_balance,max_balance) ]
 
     def addCompositeMilestone(self,milestone_name,account_milestones__list, memo_milestones__list):
+        #todo raise error if input milestones did not already exist
         self.composite_milestones__list += [ CompositeMilestone.CompositeMilestone(milestone_name,account_milestones__list, memo_milestones__list) ]
 
     def to_json(self):
@@ -135,7 +136,7 @@ class MilestoneSet:
                                         'Min_Balance': [a.min_balance],
                                         'Max_Balance': [a.max_balance]
                                         })])
-
+        account_milestones_df.reset_index(drop=True, inplace=True)
         return account_milestones_df
 
     def getMemoMilestonesDF(self):
@@ -148,7 +149,29 @@ class MilestoneSet:
                           pd.DataFrame({'Milestone_Name': [m.milestone_name],
                                         'Memo_Regex': [m.memo_regex]
                                         })])
+        memo_milestones_df.reset_index(drop=True,inplace=True)
         return memo_milestones_df
+
+    def getCompositeMilestonesDF(self):
+        composite_milestone_df = pd.DataFrame({'Composite_Milestone_Name': [],
+                                               'Milestone_Type': [],
+                                               'Milestone_Name': []
+                                           })
+
+        for cm in self.composite_milestones__list:
+            for am in cm.account_milestones__list:
+                composite_milestone_df = pd.concat([composite_milestone_df, pd.DataFrame({'Composite_Milestone_Name': [cm.milestone_name],
+                                               'Milestone_Type': ['Account'],
+                                               'Milestone_Name': [am.milestone_name]
+                                           }) ])
+
+            for mm in cm.memo_milestones__list:
+                composite_milestone_df = pd.concat([composite_milestone_df,pd.DataFrame({'Composite_Milestone_Name': [cm.milestone_name],
+                                               'Milestone_Type': ['Memo'],
+                                               'Milestone_Name': [mm.milestone_name]
+                                           })])
+        composite_milestone_df.reset_index(drop=True, inplace=True)
+        return composite_milestone_df
 
     def getCompositeMilestones_lists(self):
         composite_milestones__account_df = pd.DataFrame({'Composite_Milestone_Name': [],

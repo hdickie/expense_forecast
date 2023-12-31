@@ -1,20 +1,20 @@
 
-#import ForecastHandler, ExpenseForecast
+import ForecastHandler, ExpenseForecast
 import BudgetSet, AccountSet, MemoRuleSet
-#import MilestoneSet, MemoMilestone, AccountMilestone
+import MilestoneSet, MemoMilestone, AccountMilestone
 
-#import CompositeMilestone
+import CompositeMilestone
 import MilestoneSet
 import ExpenseForecast
 import pandas as pd
 import logging
 import datetime
 #import logging_tree
-from log_methods import setup_logger
 import profile
+from log_methods import setup_logger
 
 
-logger = setup_logger('scratch', 'scratch.log', level=logging.DEBUG)
+logger = setup_logger('scratch', './log/scratch.log', level=logging.DEBUG)
 
 def compound_loan_A():
     A = AccountSet.AccountSet([])
@@ -100,6 +100,53 @@ def three_loans__p_1000__i_000__apr_01___p_1500__i_000__apr_001___p_2500__i_000_
 from log_methods import log_in_color_with_breadcrumbs
 
 if __name__ == '__main__':
+    # start_date_YYYYMMDD = '20240101'
+    # end_date_YYYYMMDD = '20240205'
+    #
+    # A = AccountSet.AccountSet([])
+    # A.createAccount('Checking', 2000, 0, 999999, 'checking')
+    # A.createAccount('Loan A', 5000, 0, 999999, 'loan', '20240103', 'simple', 0.1, 'daily', 50, None, 5000, 0)
+    # A.createAccount('Loan B', 5000, 0, 999999, 'loan', '20240103', 'simple', 0.05, 'daily', 50, None, 5000, 0)
+    # A.createAccount('Loan C', 5000, 0, 999999, 'loan', '20240103', 'simple', 0.01, 'daily', 50, None, 5000, 0)
+    #
+    # B = BudgetSet.BudgetSet([])
+    # B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 30, 'SPEND food', False, False)
+    # B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'semiweekly', 1500, 'income', False, False)
+    # B.addBudgetItem('20240103', end_date_YYYYMMDD, 7, 'monthly', 1500, 'additional loan payment', False, True)
+    #
+    # M = MemoRuleSet.MemoRuleSet([])
+    # M.addMemoRule('.*income.*', None, 'Checking', 1)
+    # M.addMemoRule('SPEND.*', 'Checking', None, 1)
+    # M.addMemoRule('additional loan payment', 'Checking', 'ALL_LOANS', 7)
+    #
+    # A1 = AccountMilestone.AccountMilestone('Loan A 0', 'Loan A', 0, 0)
+    # A2 = AccountMilestone.AccountMilestone('Loan A 1000', 'Loan A', 1000, 1000)
+    # A3 = AccountMilestone.AccountMilestone('Loan B 0', 'Loan B', 0, 0)
+    # A4 = AccountMilestone.AccountMilestone('Loan B 1000', 'Loan B', 1000, 1000)
+    # A5 = AccountMilestone.AccountMilestone('Loan C 0', 'Loan C', 0, 0)
+    # A6 = AccountMilestone.AccountMilestone('Loan C 1000', 'Loan C', 1000, 1000)
+    # #
+    # # M1 = MemoMilestone.MemoMilestone('big purchase 1', '.*big purchase 1.*')
+    # # M2 = MemoMilestone.MemoMilestone('big purchase 2', '.*big purchase 2.*')
+    #
+    # CM1 = CompositeMilestone.CompositeMilestone('All 1k', [A2, A4, A6], [])
+    # #CM3 = CompositeMilestone.CompositeMilestone('All 1k and both purchases', [A1, A2, A3], [M1, M2])
+    #
+    # MS = MilestoneSet.MilestoneSet(A, B, [A1, A2, A3, A4, A5, A6], [], [CM1])
+    #
+    # E = ExpenseForecast.ExpenseForecast(A,
+    #                                     B,
+    #                                     M,
+    #                                     start_date_YYYYMMDD,
+    #                                     end_date_YYYYMMDD,
+    #                                     MS)
+    # E.runForecast()
+
+    E = ExpenseForecast.initialize_from_json_file('./out/Forecast__004474__2023_12_31__00_27_50.json')
+
+    F = ForecastHandler.ForecastHandler()
+
+    F.generateHTMLReport(E)
 
     # log_color_stack = []
     # log_in_color_with_breadcrumbs(logger, 'red','debug','red log message')
@@ -127,42 +174,42 @@ if __name__ == '__main__':
     # log_color_stack.pop()
     # log_in_color_with_breadcrumbs(logger, 'red', 'debug', 'red log message')
 
-    start_date_YYYYMMDD = '20000101'
-    end_date_YYYYMMDD = '20000201'
-
-    account_set = AccountSet.AccountSet([])
-    budget_set = BudgetSet.BudgetSet([])
-    memo_rule_set = MemoRuleSet.MemoRuleSet([])
-
-    account_set.createAccount(name='Checking',
-                              balance=5000,
-                              min_balance=0,
-                              max_balance=float('Inf'),
-                              account_type="checking")
-
-    account_set.createAccount('Loan A', 1100, 0, 9999, 'loan', '20000102', 'simple', 0.1, 'daily', 50, None, 1000,
-                              100)
-    account_set.createAccount('Loan B', 1100, 0, 9999, 'loan', '20000102', 'simple', 0.05, 'daily', 50, None, 1000,
-                              100)
-    account_set.createAccount('Loan C', 1100, 0, 9999, 'loan', '20000102', 'simple', 0.01, 'daily', 50, None, 1000,
-                              100)
-
-    budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=7,
-                             cadence='once', amount=1900, memo='additional loan payment',
-                             deferrable=False,
-                             partial_payment_allowed=True)
-
-    memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to='ALL_LOANS',
-                              transaction_priority=7)
-
-    milestone_set = MilestoneSet.MilestoneSet(account_set, budget_set, [], [], [])
-
-    E = ExpenseForecast.ExpenseForecast(account_set, budget_set, memo_rule_set, start_date_YYYYMMDD,
-                                        end_date_YYYYMMDD, milestone_set, True)
-    print(datetime.datetime.now())
-    #profile.run('E.runForecast()') #python -m cProfile -s tottime myscript.py
-    E.runForecast() #
-    print(datetime.datetime.now())
+    # start_date_YYYYMMDD = '20000101'
+    # end_date_YYYYMMDD = '20000201'
+    #
+    # account_set = AccountSet.AccountSet([])
+    # budget_set = BudgetSet.BudgetSet([])
+    # memo_rule_set = MemoRuleSet.MemoRuleSet([])
+    #
+    # account_set.createAccount(name='Checking',
+    #                           balance=5000,
+    #                           min_balance=0,
+    #                           max_balance=float('Inf'),
+    #                           account_type="checking")
+    #
+    # account_set.createAccount('Loan A', 1100, 0, 9999, 'loan', '20000102', 'simple', 0.1, 'daily', 50, None, 1000,
+    #                           100)
+    # account_set.createAccount('Loan B', 1100, 0, 9999, 'loan', '20000102', 'simple', 0.05, 'daily', 50, None, 1000,
+    #                           100)
+    # account_set.createAccount('Loan C', 1100, 0, 9999, 'loan', '20000102', 'simple', 0.01, 'daily', 50, None, 1000,
+    #                           100)
+    #
+    # budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=7,
+    #                          cadence='once', amount=1900, memo='additional loan payment',
+    #                          deferrable=False,
+    #                          partial_payment_allowed=True)
+    #
+    # memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to='ALL_LOANS',
+    #                           transaction_priority=7)
+    #
+    # milestone_set = MilestoneSet.MilestoneSet(account_set, budget_set, [], [], [])
+    #
+    # E = ExpenseForecast.ExpenseForecast(account_set, budget_set, memo_rule_set, start_date_YYYYMMDD,
+    #                                     end_date_YYYYMMDD, milestone_set, True)
+    # print(datetime.datetime.now())
+    # #profile.run('E.runForecast()') #python -m cProfile -s tottime myscript.py
+    # E.runForecast() #
+    # print(datetime.datetime.now())
     #print(E.forecast_df.to_string())
 
 # 2023-12-28 23:45:35.864182

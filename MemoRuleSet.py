@@ -5,7 +5,7 @@ from log_methods import log_in_color
 import logging
 
 from log_methods import setup_logger
-logger = setup_logger('MemoRuleSet', 'MemoRuleSet.log', level=logging.WARNING)
+logger = setup_logger('MemoRuleSet', './log/MemoRuleSet.log', level=logging.WARNING)
 
 
 class MemoRuleSet:

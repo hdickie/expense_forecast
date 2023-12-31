@@ -5,7 +5,7 @@ from generate_date_sequence import generate_date_sequence
 import logging
 
 from log_methods import setup_logger
-logger = setup_logger('BudgetSet', 'BudgetSet.log', level=logging.WARNING)
+logger = setup_logger('BudgetSet', './log/BudgetSet.log', level=logging.WARNING)
 
 
 class BudgetSet:

@@ -18,7 +18,7 @@ import copy
 
 from generate_date_sequence import generate_date_sequence
 from log_methods import setup_logger
-logger = setup_logger('test_ExpenseForecast', 'test_ExpenseForecast.log', level=logging.DEBUG)
+logger = setup_logger('test_ExpenseForecast', './log/test_ExpenseForecast.log', level=logging.DEBUG)
 
 from log_methods import display_test_result
 
@@ -1456,12 +1456,12 @@ class TestExpenseForecastMethods:
 
         E1 = ExpenseForecast.ExpenseForecast(A,B,M,sd,ed,MS)
         E1.runForecast()
-        with open ('tmp_json_abc123_zzzzz.json','w') as f:
+        with open ('./out/tmp_json_abc123_zzzzz.json','w') as f:
             J = E1.to_json()
             print(J)
             f.write(J)
 
-        E2 = ExpenseForecast.initialize_from_json_file('tmp_json_abc123_zzzzz.json')
+        E2 = ExpenseForecast.initialize_from_json_file('./out/tmp_json_abc123_zzzzz.json')
         E2.runForecast()
 
         E1_str_lines = str(E1).split('\n')
@@ -1526,7 +1526,7 @@ class TestExpenseForecastMethods:
 
         E1 = ExpenseForecast.ExpenseForecast(A,B,M,sd,ed,MS)
 
-        fname = 'test_run_from_excel_at_path.xlsx'
+        fname = './out/test_run_from_excel_at_path.xlsx'
         E1.to_excel(fname)
         E2 = ExpenseForecast.initialize_from_excel_file(fname)
 
@@ -2264,13 +2264,6 @@ class TestExpenseForecastMethods:
 #compound quarterly interest
 #simple quarterly interest
 #other interest cadences and types
-
-# FORECAST HANDLER
-#plot networth
-#plot account type totals
-#plot all
-#plot marginal interest
-
 
 ### all latest
 # 5 fails
