@@ -142,11 +142,11 @@ if __name__ == '__main__':
                                         MS)
     E.runForecast()
 
-    #E = ExpenseForecast.initialize_from_json_file('./out/Forecast__004474__2023_12_31__00_27_50.json')
+    #E = ExpenseForecast.initialize_from_json_file('./out/Forecast__004474__2023_12_31__02_30_43.json')
+    E.appendSummaryLines()
 
     F = ForecastHandler.ForecastHandler()
-
-    F.generateHTMLReport(E)
+    F.generateHTMLReport(E,'./out/')
 
     # log_color_stack = []
     # log_in_color_with_breadcrumbs(logger, 'red','debug','red log message')

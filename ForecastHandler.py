@@ -17,7 +17,7 @@ from matplotlib.pyplot import figure
 import AccountMilestone
 import MemoMilestone
 import CompositeMilestone
-
+import matplotlib.dates
 
 import logging
 from log_methods import setup_logger
@@ -302,6 +302,117 @@ class ForecastHandler:
         # for chooseoneset_index, chooseoneset_row in ChooseOneSet_df.iterrows():
         #     pass
         #     #choose_one_sets__dict[chooseoneset_row.Choose_One_Set_Id].append(chooseoneset_row.Memo_Regex_List)
+
+    def plotMilestoneDates(self,expense_forecast,output_path):
+        assert hasattr(expense_forecast, 'forecast_df')
+
+        AM = expense_forecast.account_milestone_results
+        MM = expense_forecast.memo_milestone_results
+        CM = expense_forecast.composite_milestone_results
+
+        # print('AM:')
+        # print(AM)
+        # print('MM:')
+        # print(MM)
+        # print('CM:')
+        # print(CM)
+
+        # total_not_None_account_milestone_dates = sum([ x is not None for x in AM ])
+        # total_not_None_memo_milestone_dates = sum([ x is not None for x in MM ])
+        # total_not_None_composite_milestone_dates = sum([ x is not None for x in CM ])
+        # total_not_None_milestone_dates = total_not_None_account_milestone_dates + total_not_None_memo_milestone_dates + total_not_None_composite_milestone_dates
+
+        data_x = []
+        data_y = []
+        date_counter = 0
+
+        am_keys = []
+        for am_key, am_value in AM.items():
+            if am_value == 'None':
+                continue
+            am_keys.append(am_key)
+            data_x.append(am_value)
+            data_y.append(date_counter)
+            date_counter += 1
+
+        mm_keys = []
+        for mm_key, mm_value in MM.items():
+            if mm_value == 'None':
+                continue
+            mm_keys.append(mm_key)
+            data_x.append(mm_value)
+            data_y.append(date_counter)
+            date_counter += 1
+
+        cm_keys = []
+        for cm_key, cm_value in CM.items():
+            if cm_value == 'None':
+                continue
+            cm_keys.append(cm_key)
+            data_x.append(cm_value)
+            data_y.append(date_counter)
+            date_counter += 1
+
+        figure(figsize=(14, 6), dpi=80)
+        fig, ax = plt.subplots()
+
+        data_x = [ datetime.datetime.strptime(x,'%Y%m%d') for x in data_x ]
+
+        plt.scatter(data_x, data_y)
+        #plt.scatter(data_x, data_y)
+
+        #matplotlib.
+
+        left, right = plt.xlim()
+        print('left, right')
+        print((left, right))
+
+        left_int_ts = matplotlib.dates.date2num(datetime.datetime.strptime(expense_forecast.start_date_YYYYMMDD,'%Y%m%d'))
+        right_int_ts = matplotlib.dates.date2num(datetime.datetime.strptime(expense_forecast.end_date_YYYYMMDD,'%Y%m%d'))
+
+        print('left_int_ts:')
+        print(left_int_ts)
+        print('right_int_ts:')
+        print(right_int_ts)
+
+        all_keys = am_keys + mm_keys + cm_keys
+        for i, txt in enumerate(all_keys):
+            ax.annotate(txt, (data_x[i], data_y[i]))
+
+        # left = max(left_int_ts, left)
+        # right = min(right_int_ts, right)
+
+
+
+        # if left < left_int_ts:
+        #     left = left_int_ts
+        #
+        # if right < right_int_ts:
+        #     right = right_int_ts
+
+        plt.xlim(left,right)
+
+        bottom, top = plt.ylim()
+        if 0 < bottom:
+            plt.ylim(0, top)
+        elif top < 0:
+            plt.ylim(bottom, 0)
+
+        ax = plt.subplot(111)
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
+
+        # Put a legend below current axis
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=4)
+
+        # TODO plotOverall():: a large number of accounts will require some adjustment here so that the legend is entirely visible
+        date_as_datetime_type = [datetime.datetime.strptime(d, '%Y%m%d') for d in expense_forecast.forecast_df.Date]
+
+        min_date = min(date_as_datetime_type).strftime('%Y-%m-%d')
+        max_date = max(date_as_datetime_type).strftime('%Y-%m-%d')
+        plt.title('Forecast #' + expense_forecast.unique_id + ': ' + str(min_date) + ' -> ' + str(max_date))
+        plt.xticks(rotation=90)
+        plt.savefig(output_path)
 
     def generateCompareTwoForecastsHTMLReport(self,E1, E2, output_dir='./'):
 
@@ -925,20 +1036,27 @@ class ForecastHandler:
         Liquid cash began at """+str(f"${float(initial_liquid_total):,}")+""" and """+liquid_rose_or_fell+""" to """+str(f"${float(final_liquid_total):,}")+""" over """+str(f"{float(num_days):,.0f}")+""" days, averaging """+f"${float(avg_liquid_delta):,}"+""" per day.
         """
 
-        networth_line_plot_path = output_dir + report_id + '_networth_line_plot.png'
-        netgain_line_plot_path = output_dir + report_id + '_netgain_line_plot.png' #todo
-        accounttype_line_plot_path = output_dir + report_id + '_accounttype_line_plot_plot.png'
-        interest_line_plot_path = output_dir + report_id + '_interest_line_plot_plot.png' #todo
-        milestone_line_plot_path = output_dir + report_id + '_milestone_line_plot.png' #todo
-        all_line_plot_path = output_dir + report_id + '_all_line_plot.png'
+        #these plots will be output in the same directory as the final document, so output_dir path prefix is not needed
+        networth_line_plot_path =  report_id + '_networth_line_plot.png'
+        net_gain_loss_line_plot_path =  report_id + '_net_gain_loss_line_plot.png'
+        accounttype_line_plot_path =  report_id + '_accounttype_line_plot.png'
+        marginal_interest_line_plot_path =  report_id + '_marginal_interest_line_plot.png'
+        milestone_scatter_plot_path =  report_id + '_milestone_scatter_plot.png'
+        all_line_plot_path =  report_id + '_all_line_plot.png'
+
 
         #E.plotAll(all_line_plot_path)
         #E.plotNetWorth(networth_line_plot_path)
         #E.plotAccountTypeTotals(accounttype_line_plot_path)
 
-        self.plotAll(E,all_line_plot_path)
-        self.plotNetWorth(E, networth_line_plot_path)
-        self.plotAccountTypeTotals(E, accounttype_line_plot_path)
+        self.plotAll(E,output_dir + all_line_plot_path)
+        self.plotNetWorth(E, output_dir + networth_line_plot_path)
+        self.plotAccountTypeTotals(E, output_dir + accounttype_line_plot_path)
+        self.plotMarginalInterest(E, output_dir + marginal_interest_line_plot_path)
+        self.plotNetGainLoss(E, output_dir + net_gain_loss_line_plot_path)
+        self.plotMilestoneDates(E,output_dir + milestone_scatter_plot_path)
+
+        #print(E.forecast_df.to_string())
 
         html_body = """
         <!DOCTYPE html>
@@ -1029,7 +1147,7 @@ class ForecastHandler:
         <div id="NetGainLoss" class="tabcontent">
           <h3>NetGainLoss</h3>
           <p>NetGainLoss text.</p>
-          <img src=\""""+netgain_line_plot_path+"""\">
+          <img src=\""""+net_gain_loss_line_plot_path+"""\">
         </div>
 
         <div id="AccountType" class="tabcontent">
@@ -1041,13 +1159,13 @@ class ForecastHandler:
         <div id="Interest" class="tabcontent">
           <h3>Interest</h3>
           <p>Interest text.</p>
-          <img src=\""""+interest_line_plot_path+"""\">
+          <img src=\""""+marginal_interest_line_plot_path+"""\">
         </div>
         
         <div id="Milestone" class="tabcontent">
           <h3>Milestone</h3>
           <p>Milestone text.</p>
-          <img src=\""""+milestone_line_plot_path+"""\">
+          <img src=\""""+milestone_scatter_plot_path+"""\">
         </div>
 
         <div id="All" class="tabcontent">
@@ -1097,7 +1215,7 @@ class ForecastHandler:
 
         """
 
-        with open('out.html','w') as f:
+        with open(output_dir+'out.html','w') as f:
             f.write(html_body)
 
     def getRuntimeEstimate(self,expense_forecast):
@@ -1385,6 +1503,74 @@ class ForecastHandler:
         plt.xticks(rotation=90)
         plt.savefig(output_path)
 
+    def plotNetGainLoss(self, expense_forecast, output_path):
+        assert hasattr(expense_forecast, 'forecast_df')
+
+        figure(figsize=(14, 6), dpi=80)
+
+        # for i in range(1, self.forecast_df.shape[1] - 1):
+        column_index = expense_forecast.forecast_df.columns.tolist().index('NetGain')
+        plt.plot(expense_forecast.forecast_df['Date'], expense_forecast.forecast_df.iloc[:, column_index],
+                 label='NetGain')
+
+        column_index = expense_forecast.forecast_df.columns.tolist().index('NetLoss')
+        plt.plot(expense_forecast.forecast_df['Date'], expense_forecast.forecast_df.iloc[:, column_index],
+                 label='NetLoss')
+
+        bottom, top = plt.ylim()
+
+        if 0 < bottom:
+            plt.ylim(0, top)
+        elif top < 0:
+            plt.ylim(bottom, 0)
+
+        ax = plt.subplot(111)
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
+
+        # Put a legend below current axis
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=4)
+
+        date_as_datetime_type = [datetime.datetime.strptime(d, '%Y%m%d') for d in expense_forecast.forecast_df.Date]
+
+        min_date = min(date_as_datetime_type).strftime('%Y-%m-%d')
+        max_date = max(date_as_datetime_type).strftime('%Y-%m-%d')
+        plt.title('Forecast #' + expense_forecast.unique_id + ': ' + str(min_date) + ' -> ' + str(max_date))
+        plt.xticks(rotation=90)
+        plt.savefig(output_path)
+
+    def plotMarginalInterest(self,expense_foreast,output_path):
+        assert hasattr(expense_forecast, 'forecast_df')
+
+        figure(figsize=(14, 6), dpi=80)
+
+        # for i in range(1, self.forecast_df.shape[1] - 1):
+        column_index = expense_forecast.forecast_df.columns.tolist().index('MarginalInterest')
+        plt.plot(expense_forecast.forecast_df['Date'], expense_forecast.forecast_df.iloc[:, column_index],
+                 label='MarginalInterest')
+
+        bottom, top = plt.ylim()
+
+        if 0 < bottom:
+            plt.ylim(0, top)
+        elif top < 0:
+            plt.ylim(bottom, 0)
+
+        ax = plt.subplot(111)
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
+
+        # Put a legend below current axis
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=4)
+
+        date_as_datetime_type = [datetime.datetime.strptime(d, '%Y%m%d') for d in expense_forecast.forecast_df.Date]
+
+        min_date = min(date_as_datetime_type).strftime('%Y-%m-%d')
+        max_date = max(date_as_datetime_type).strftime('%Y-%m-%d')
+        plt.title('Forecast #' + expense_forecast.unique_id + ': ' + str(min_date) + ' -> ' + str(max_date))
+        plt.xticks(rotation=90)
+        plt.savefig(output_path)
+
     def plotNetWorth(self, expense_forecast, output_path):
         """
         Writes to file a plot of all accounts.
@@ -1487,19 +1673,11 @@ class ForecastHandler:
         plt.xticks(rotation=90)
         plt.savefig(output_path)
 
-    def plotMarginalInterest(self, expense_forecast, accounts_df, forecast_df, output_path):
+    def plotMarginalInterest(self, expense_forecast, output_path):
         """
         Writes a plot of spend on interest from all sources.
 
         Multiple line description.
-
-        | Test Cases
-        | Expected Successes
-        | S1: ... #todo refactor ExpenseForecast.plotMarginalInterest() doctest S1 to use _S1 label
-        |
-        | Expected Fails
-        | F1 ... #todo refactor ExpenseForecast.plotMarginalInterest() doctest F1 to use _F1 label
-
 
         :param accounts_df:
         :param forecast_df:
@@ -1507,8 +1685,37 @@ class ForecastHandler:
         :return:
         """
         # todo plotMarginalInterest():: this will have to get the cc interest from the memo line
-
+        #print('plotMarginalInterest('+str(output_path)+')')
         assert hasattr(expense_forecast,'forecast_df')
 
-        raise NotImplementedError
+        figure(figsize=(14, 6), dpi=80)
+
+        # for i in range(1, self.forecast_df.shape[1] - 1):
+        column_index = expense_forecast.forecast_df.columns.tolist().index('MarginalInterest')
+        plt.plot(expense_forecast.forecast_df['Date'], expense_forecast.forecast_df.iloc[:, column_index],
+                 label='MarginalInterest')
+
+        bottom, top = plt.ylim()
+
+        if 0 < bottom:
+            plt.ylim(0, top)
+        elif top < 0:
+            plt.ylim(bottom, 0)
+
+        ax = plt.subplot(111)
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
+
+        # Put a legend below current axis
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=4)
+
+        # TODO plotOverall():: a large number of accounts will require some adjustment here so that the legend is entirely visible
+
+        date_as_datetime_type = [datetime.datetime.strptime(d, '%Y%m%d') for d in expense_forecast.forecast_df.Date]
+
+        min_date = min(date_as_datetime_type).strftime('%Y-%m-%d')
+        max_date = max(date_as_datetime_type).strftime('%Y-%m-%d')
+        plt.title('Forecast #' + expense_forecast.unique_id + ': ' + str(min_date) + ' -> ' + str(max_date))
+        plt.xticks(rotation=90)
+        plt.savefig(output_path)
 

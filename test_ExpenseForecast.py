@@ -2272,3 +2272,4 @@ class TestExpenseForecastMethods:
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_interest_types_and_cadences_at_most_monthly - NotImplementedError
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_quarter_and_year_long_interest_cadences - NotImplementedError
 
+#todo I want to get a conceptual handle of when/where rounding happens
