@@ -328,8 +328,11 @@ class ForecastHandler:
 
         am_keys = []
         for am_key, am_value in AM.items():
+            #impute none as max
+            if am_value is None:
+                am_value = expense_forecast.end_date_YYYYMMDD
             if am_value == 'None':
-                continue
+                am_value = expense_forecast.end_date_YYYYMMDD
             am_keys.append(am_key)
             data_x.append(am_value)
             data_y.append(date_counter)
@@ -337,8 +340,11 @@ class ForecastHandler:
 
         mm_keys = []
         for mm_key, mm_value in MM.items():
+            #impute none as max
+            if mm_value is None:
+                mm_value = expense_forecast.end_date_YYYYMMDD
             if mm_value == 'None':
-                continue
+                mm_value = expense_forecast.end_date_YYYYMMDD
             mm_keys.append(mm_key)
             data_x.append(mm_value)
             data_y.append(date_counter)
@@ -346,8 +352,11 @@ class ForecastHandler:
 
         cm_keys = []
         for cm_key, cm_value in CM.items():
+            #impute none as max
+            if cm_value is None:
+                cm_value = expense_forecast.end_date_YYYYMMDD
             if cm_value == 'None':
-                continue
+                cm_value = expense_forecast.end_date_YYYYMMDD
             cm_keys.append(cm_key)
             data_x.append(cm_value)
             data_y.append(date_counter)
@@ -361,34 +370,17 @@ class ForecastHandler:
         plt.scatter(data_x, data_y)
         #plt.scatter(data_x, data_y)
 
-        #matplotlib.
-
         left, right = plt.xlim()
-        print('left, right')
-        print((left, right))
 
         left_int_ts = matplotlib.dates.date2num(datetime.datetime.strptime(expense_forecast.start_date_YYYYMMDD,'%Y%m%d'))
         right_int_ts = matplotlib.dates.date2num(datetime.datetime.strptime(expense_forecast.end_date_YYYYMMDD,'%Y%m%d'))
-
-        print('left_int_ts:')
-        print(left_int_ts)
-        print('right_int_ts:')
-        print(right_int_ts)
 
         all_keys = am_keys + mm_keys + cm_keys
         for i, txt in enumerate(all_keys):
             ax.annotate(txt, (data_x[i], data_y[i]))
 
-        # left = max(left_int_ts, left)
-        # right = min(right_int_ts, right)
-
-
-
-        # if left < left_int_ts:
-        #     left = left_int_ts
-        #
-        # if right < right_int_ts:
-        #     right = right_int_ts
+        left = max(left_int_ts, left)
+        right = min(right_int_ts, right)
 
         plt.xlim(left,right)
 
@@ -401,6 +393,8 @@ class ForecastHandler:
         ax = plt.subplot(111)
         box = ax.get_position()
         ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
+
+        #todo remove legend bc points are labeled
 
         # Put a legend below current axis
         ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=4)
@@ -419,8 +413,8 @@ class ForecastHandler:
         assert E1.start_date_YYYYMMDD == E2.start_date_YYYYMMDD
         assert E1.end_date_YYYYMMDD == E2.end_date_YYYYMMDD
 
-        start_date = E1.start_date_YYYYMMDD.strftime('%Y-%m-%d')
-        end_date = E1.end_date_YYYYMMDD.strftime('%Y-%m-%d')
+        # start_date = E1.start_date_YYYYMMDD.strftime('%Y-%m-%d')
+        # end_date = E1.end_date_YYYYMMDD.strftime('%Y-%m-%d')
 
         report_1_id = E1.unique_id
         report_2_id = E2.unique_id
@@ -568,14 +562,14 @@ class ForecastHandler:
         else:
             networth_text += """Forecast 2 #"""+report_2_id+""" ended with a Net Worth """+str(f"${float(forecast_networth_delta):,}")+""" greater than the alternative.  """
 
-        report_1_initial_loan_total = round(E1.forecast_df.head(1).LoanTotal.iat[0], 2)
-        report_1_final_loan_total = round(E1.forecast_df.tail(1).LoanTotal.iat[0], 2)
+        report_1_initial_loan_total = round(E1.forecast_df.head(1)['Loan Total'].iat[0], 2)
+        report_1_final_loan_total = round(E1.forecast_df.tail(1)['Loan Total'].iat[0], 2)
         report_1_loan_delta = round(report_1_final_loan_total - report_1_initial_loan_total, 2)
-        report_1_initial_cc_debt_total = round(E1.forecast_df.head(1).CCDebtTotal.iat[0], 2)
-        report_1_final_cc_debt_total = round(E1.forecast_df.tail(1).CCDebtTotal.iat[0], 2)
+        report_1_initial_cc_debt_total = round(E1.forecast_df.head(1)['CC Debt Total'].iat[0], 2)
+        report_1_final_cc_debt_total = round(E1.forecast_df.tail(1)['CC Debt Total'].iat[0], 2)
         report_1_cc_debt_delta = round(report_1_final_cc_debt_total - report_1_initial_cc_debt_total, 2)
-        report_1_initial_liquid_total = round(E1.forecast_df.head(1).LiquidTotal.iat[0], 2)
-        report_1_final_liquid_total = round(E1.forecast_df.tail(1).LiquidTotal.iat[0], 2)
+        report_1_initial_liquid_total = round(E1.forecast_df.head(1)['Liquid Total'].iat[0], 2)
+        report_1_final_liquid_total = round(E1.forecast_df.tail(1)['Liquid Total'].iat[0], 2)
         report_1_liquid_delta = round(report_1_final_liquid_total - report_1_initial_liquid_total, 2)
 
         report_1_avg_loan_delta = round(report_1_loan_delta / num_days, 2)
@@ -597,14 +591,14 @@ class ForecastHandler:
         else:
             report_1_liquid_rose_or_fell = "fell"
 
-        report_2_initial_loan_total = round(E2.forecast_df.head(1).LoanTotal.iat[0], 2)
-        report_2_final_loan_total = round(E2.forecast_df.tail(1).LoanTotal.iat[0], 2)
+        report_2_initial_loan_total = round(E2.forecast_df.head(1)['Loan Total'].iat[0], 2)
+        report_2_final_loan_total = round(E2.forecast_df.tail(1)['Loan Total'].iat[0], 2)
         report_2_loan_delta = round(report_2_final_loan_total - report_2_initial_loan_total, 2)
-        report_2_initial_cc_debt_total = round(E2.forecast_df.head(1).CCDebtTotal.iat[0], 2)
-        report_2_final_cc_debt_total = round(E2.forecast_df.tail(1).CCDebtTotal.iat[0], 2)
+        report_2_initial_cc_debt_total = round(E2.forecast_df.head(1)['CC Debt Total'].iat[0], 2)
+        report_2_final_cc_debt_total = round(E2.forecast_df.tail(1)['CC Debt Total'].iat[0], 2)
         report_2_cc_debt_delta = round(report_2_final_cc_debt_total - report_2_initial_cc_debt_total, 2)
-        report_2_initial_liquid_total = round(E2.forecast_df.head(1).LiquidTotal.iat[0], 2)
-        report_2_final_liquid_total = round(E2.forecast_df.tail(1).LiquidTotal.iat[0], 2)
+        report_2_initial_liquid_total = round(E2.forecast_df.head(1)['Liquid Total'].iat[0], 2)
+        report_2_final_liquid_total = round(E2.forecast_df.tail(1)['Liquid Total'].iat[0], 2)
         report_2_liquid_delta = round(report_2_final_liquid_total - report_2_initial_liquid_total, 2)
 
         report_2_avg_loan_delta = round(report_2_loan_delta / num_days, 2)
@@ -754,9 +748,6 @@ class ForecastHandler:
             all_text+=line
 
 
-
-
-
         report_1_networth_line_plot_path = output_dir + report_1_id + '_networth_line_plot.png'
         report_1_accounttype_line_plot_path = output_dir + report_1_id + '_accounttype_line_plot_plot.png'
         report_1_all_line_plot_path = output_dir + report_1_id + '_all_line_plot.png'
@@ -769,13 +760,15 @@ class ForecastHandler:
         networth_comparison_plot_path = output_dir + report_1_id + '_vs_' + report_2_id + '_networth_comparison_plot.png'
         all_comparison_plot_path = output_dir + report_1_id + '_vs_' + report_2_id + '_all_comparison_plot.png'
 
-        E1.plotAll(report_1_all_line_plot_path)
-        E1.plotNetWorth(report_1_networth_line_plot_path)
-        E1.plotAccountTypeTotals(report_1_accounttype_line_plot_path)
 
-        E2.plotAll(report_2_all_line_plot_path)
-        E2.plotNetWorth(report_2_networth_line_plot_path)
-        E2.plotAccountTypeTotals(report_2_accounttype_line_plot_path)
+
+        self.plotAll(E1,report_1_all_line_plot_path)
+        self.plotNetWorth(E1,report_1_networth_line_plot_path)
+        self.plotAccountTypeTotals(E1,report_1_accounttype_line_plot_path)
+
+        self.plotAll(E2, report_2_all_line_plot_path)
+        self.plotNetWorth(E2, report_2_networth_line_plot_path)
+        self.plotAccountTypeTotals(E2, report_2_accounttype_line_plot_path)
 
         self.plotAccountTypeComparison(E1,E2,account_type_comparison_plot_path)
         self.plotNetWorthComparison(E1, E2, networth_comparison_plot_path)
@@ -831,7 +824,7 @@ class ForecastHandler:
                 </head>
                 <body>
                 <h1>Expense Forecast Report #""" + str(report_1_id) + """ vs. #"""+str(report_2_id)+"""</h1>
-                <p>""" + start_date + """ to """ + end_date + """</p>
+                <p>""" + E1.start_date_YYYYMMDD + """ to """ + E1.end_date_YYYYMMDD + """</p>
 
                 <!-- Tab links -->
                 <div class="tab">
@@ -984,8 +977,8 @@ class ForecastHandler:
         These composite milestones are defined:"""+E.milestone_set.getCompositeMilestonesDF().to_html()+"""
         """
 
-        initial_networth=E.forecast_df.head(1)['NetWorth'].iat[0]
-        final_networth=E.forecast_df.tail(1)['NetWorth'].iat[0]
+        initial_networth=E.forecast_df.head(1)['Net Worth'].iat[0]
+        final_networth=E.forecast_df.tail(1)['Net Worth'].iat[0]
         networth_delta=final_networth-initial_networth
         num_days = E.forecast_df.shape[0]
         avg_networth_change=round(networth_delta/float(E.forecast_df.shape[0]),2)
@@ -999,14 +992,14 @@ class ForecastHandler:
         Net Worth began at """+str(f"${float(initial_networth):,}")+""" and """+rose_or_fell+""" to """+str(f"${float(final_networth):,}")+""" over """+str(f"{float(num_days):,.0f}")+""" days, averaging """+f"${float(avg_networth_change):,}"+""" per day.
         """
 
-        initial_loan_total = round(E.forecast_df.head(1).LoanTotal.iat[0],2)
-        final_loan_total = round(E.forecast_df.tail(1).LoanTotal.iat[0],2)
+        initial_loan_total = round(E.forecast_df.head(1)['Loan Total'].iat[0],2)
+        final_loan_total = round(E.forecast_df.tail(1)['Loan Total'].iat[0],2)
         loan_delta = round(final_loan_total - initial_loan_total,2)
-        initial_cc_debt_total = round(E.forecast_df.head(1).CCDebtTotal.iat[0],2)
-        final_cc_debt_total = round(E.forecast_df.tail(1).CCDebtTotal.iat[0],2)
+        initial_cc_debt_total = round(E.forecast_df.head(1)['CC Debt Total'].iat[0],2)
+        final_cc_debt_total = round(E.forecast_df.tail(1)['CC Debt Total'].iat[0],2)
         cc_debt_delta = round(final_cc_debt_total - initial_cc_debt_total,2)
-        initial_liquid_total = round(E.forecast_df.head(1).LiquidTotal.iat[0],2)
-        final_liquid_total = round(E.forecast_df.tail(1).LiquidTotal.iat[0],2)
+        initial_liquid_total = round(E.forecast_df.head(1)['Liquid Total'].iat[0],2)
+        final_liquid_total = round(E.forecast_df.tail(1)['Liquid Total'].iat[0],2)
         liquid_delta = round(final_liquid_total - initial_liquid_total,2)
 
         avg_loan_delta = round(loan_delta / num_days,2)
@@ -1311,15 +1304,15 @@ class ForecastHandler:
         :return:
         """
         figure(figsize=(14, 6), dpi=80)
-        E1_relevant_columns_sel_vec = (E1.forecast_df.columns == 'Date') | (E1.forecast_df.columns == 'LoanTotal') | (E1.forecast_df.columns == 'CCDebtTotal') | (E1.forecast_df.columns == 'LiquidTotal')
-        E2_relevant_columns_sel_vec = (E2.forecast_df.columns == 'Date') | (E2.forecast_df.columns == 'LoanTotal') | (E2.forecast_df.columns == 'CCDebtTotal') | (E2.forecast_df.columns == 'LiquidTotal')
+        E1_relevant_columns_sel_vec = (E1.forecast_df.columns == 'Date') | (E1.forecast_df.columns == 'Loan Total') | (E1.forecast_df.columns == 'CC Debt Total') | (E1.forecast_df.columns == 'Liquid Total')
+        E2_relevant_columns_sel_vec = (E2.forecast_df.columns == 'Date') | (E2.forecast_df.columns == 'Loan Total') | (E2.forecast_df.columns == 'CC Debt Total') | (E2.forecast_df.columns == 'Liquid Total')
         E1_relevant_df = E1.forecast_df.iloc[:, E1_relevant_columns_sel_vec]
         E2_relevant_df = E2.forecast_df.iloc[:, E2_relevant_columns_sel_vec]
 
         relevant_df = pd.merge(E1_relevant_df,E2_relevant_df,on=["Date"], suffixes=('_1','_2'))
 
         # this plot always has 6 lines, so we can make the plot more clear by using warm colors for Forecast 1 and cool colors for Forecast 2
-        relevant_df = relevant_df[['Date','LoanTotal_1','CCDebtTotal_1','LiquidTotal_1','LoanTotal_2','CCDebtTotal_2','LiquidTotal_2']]
+        relevant_df = relevant_df[['Date','Loan Total_1','CC Debt Total_1','Liquid Total_1','Loan Total_2','CC Debt Total_2','Liquid Total_2']]
         color_array = ['crimson','orangered','fuchsia','chartreuse','darkgreen','olive']
 
         for i in range(1, relevant_df.shape[1]):
@@ -1339,8 +1332,9 @@ class ForecastHandler:
         # Put a legend below current axis
         ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=4)
 
-        min_date = min(E1.forecast_df.Date).strftime('%Y-%m-%d')
-        max_date = max(E1.forecast_df.Date).strftime('%Y-%m-%d')
+
+        min_date = min([ datetime.datetime.strptime(d,'%Y%m%d') for d in E1.forecast_df.Date])
+        max_date = max([ datetime.datetime.strptime(d,'%Y%m%d') for d in E1.forecast_df.Date])
         plt.title('Forecast 1 #' + E1.unique_id + ' vs. Forecast 2 #'+E2.unique_id+': ' + str(min_date) + ' -> ' + str(max_date))
         plt.savefig(output_path)
 
@@ -1357,15 +1351,15 @@ class ForecastHandler:
         :return:
         """
         figure(figsize=(14, 6), dpi=80)
-        E1_relevant_columns_sel_vec = (E1.forecast_df.columns == 'Date') | (E1.forecast_df.columns == 'NetWorth')
-        E2_relevant_columns_sel_vec = (E2.forecast_df.columns == 'Date') | (E2.forecast_df.columns == 'NetWorth')
+        E1_relevant_columns_sel_vec = (E1.forecast_df.columns == 'Date') | (E1.forecast_df.columns == 'Net Worth')
+        E2_relevant_columns_sel_vec = (E2.forecast_df.columns == 'Date') | (E2.forecast_df.columns == 'Net Worth')
         E1_relevant_df = E1.forecast_df.iloc[:, E1_relevant_columns_sel_vec]
         E2_relevant_df = E2.forecast_df.iloc[:, E2_relevant_columns_sel_vec]
 
         relevant_df = pd.merge(E1_relevant_df, E2_relevant_df, on=["Date"], suffixes=('_1', '_2'))
 
         # this plot always has 6 lines, so we can make the plot more clear by using warm colors for Forecast 1 and cool colors for Forecast 2
-        relevant_df = relevant_df[['Date', 'NetWorth_1', 'NetWorth_2']]
+        relevant_df = relevant_df[['Date', 'Net Worth_1', 'Net Worth_2']]
         color_array = ['fuchsia', 'olive']
 
         for i in range(1, relevant_df.shape[1]):
@@ -1385,8 +1379,8 @@ class ForecastHandler:
         # Put a legend below current axis
         ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=4)
 
-        min_date = min(E1.forecast_df.Date).strftime('%Y-%m-%d')
-        max_date = max(E1.forecast_df.Date).strftime('%Y-%m-%d')
+        min_date = min([datetime.datetime.strptime(d, '%Y%m%d') for d in E1.forecast_df.Date])
+        max_date = max([datetime.datetime.strptime(d, '%Y%m%d') for d in E1.forecast_df.Date])
         plt.title('Forecast 1 #' + E1.unique_id + ' vs. Forecast 2 #' + E2.unique_id + ': ' + str(min_date) + ' -> ' + str(max_date))
         plt.savefig(output_path)
 
@@ -1455,8 +1449,8 @@ class ForecastHandler:
 
         # TODO plotOverall():: a large number of accounts will require some adjustment here so that the legend is entirely visible
 
-        min_date = min(E1.forecast_df.Date).strftime('%Y-%m-%d')
-        max_date = max(E1.forecast_df.Date).strftime('%Y-%m-%d')
+        min_date = min([datetime.datetime.strptime(d, '%Y%m%d') for d in E1.forecast_df.Date])
+        max_date = max([datetime.datetime.strptime(d, '%Y%m%d') for d in E1.forecast_df.Date])
         plt.title('Forecast 1 #'+E1.unique_id+' vs. Forecast 2 #'+E2.unique_id+': ' + str(min_date) + ' -> ' + str(max_date))
         plt.savefig(output_path)
 
@@ -1475,7 +1469,7 @@ class ForecastHandler:
         assert hasattr(expense_forecast,'forecast_df')
 
         figure(figsize=(14, 6), dpi=80)
-        relevant_columns_sel_vec = (expense_forecast.forecast_df.columns == 'Date') | (expense_forecast.forecast_df.columns == 'LoanTotal') | (expense_forecast.forecast_df.columns == 'CCDebtTotal') | (expense_forecast.forecast_df.columns == 'LiquidTotal')
+        relevant_columns_sel_vec = (expense_forecast.forecast_df.columns == 'Date') | (expense_forecast.forecast_df.columns == 'Loan Total') | (expense_forecast.forecast_df.columns == 'CC Debt Total') | (expense_forecast.forecast_df.columns == 'Liquid Total')
         relevant_df = expense_forecast.forecast_df.iloc[:,relevant_columns_sel_vec]
         for i in range(1, relevant_df.shape[1]):
             plt.plot(relevant_df['Date'], relevant_df.iloc[:, i], label=relevant_df.columns[i])
@@ -1509,13 +1503,13 @@ class ForecastHandler:
         figure(figsize=(14, 6), dpi=80)
 
         # for i in range(1, self.forecast_df.shape[1] - 1):
-        column_index = expense_forecast.forecast_df.columns.tolist().index('NetGain')
+        column_index = expense_forecast.forecast_df.columns.tolist().index('Net Gain')
         plt.plot(expense_forecast.forecast_df['Date'], expense_forecast.forecast_df.iloc[:, column_index],
-                 label='NetGain')
+                 label='Net Gain')
 
-        column_index = expense_forecast.forecast_df.columns.tolist().index('NetLoss')
+        column_index = expense_forecast.forecast_df.columns.tolist().index('Net Loss')
         plt.plot(expense_forecast.forecast_df['Date'], expense_forecast.forecast_df.iloc[:, column_index],
-                 label='NetLoss')
+                 label='Net Loss')
 
         bottom, top = plt.ylim()
 
@@ -1539,37 +1533,37 @@ class ForecastHandler:
         plt.xticks(rotation=90)
         plt.savefig(output_path)
 
-    def plotMarginalInterest(self,expense_foreast,output_path):
-        assert hasattr(expense_forecast, 'forecast_df')
-
-        figure(figsize=(14, 6), dpi=80)
-
-        # for i in range(1, self.forecast_df.shape[1] - 1):
-        column_index = expense_forecast.forecast_df.columns.tolist().index('MarginalInterest')
-        plt.plot(expense_forecast.forecast_df['Date'], expense_forecast.forecast_df.iloc[:, column_index],
-                 label='MarginalInterest')
-
-        bottom, top = plt.ylim()
-
-        if 0 < bottom:
-            plt.ylim(0, top)
-        elif top < 0:
-            plt.ylim(bottom, 0)
-
-        ax = plt.subplot(111)
-        box = ax.get_position()
-        ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
-
-        # Put a legend below current axis
-        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=4)
-
-        date_as_datetime_type = [datetime.datetime.strptime(d, '%Y%m%d') for d in expense_forecast.forecast_df.Date]
-
-        min_date = min(date_as_datetime_type).strftime('%Y-%m-%d')
-        max_date = max(date_as_datetime_type).strftime('%Y-%m-%d')
-        plt.title('Forecast #' + expense_forecast.unique_id + ': ' + str(min_date) + ' -> ' + str(max_date))
-        plt.xticks(rotation=90)
-        plt.savefig(output_path)
+    # def plotMarginalInterest(self,expense_forecast,output_path):
+    #     assert hasattr(expense_forecast, 'forecast_df')
+    #
+    #     figure(figsize=(14, 6), dpi=80)
+    #
+    #     # for i in range(1, self.forecast_df.shape[1] - 1):
+    #     column_index = expense_forecast.forecast_df.columns.tolist().index('Marginal Interest')
+    #     plt.plot(expense_forecast.forecast_df['Date'], expense_forecast.forecast_df.iloc[:, column_index],
+    #              label='Marginal Interest')
+    #
+    #     bottom, top = plt.ylim()
+    #
+    #     if 0 < bottom:
+    #         plt.ylim(0, top)
+    #     elif top < 0:
+    #         plt.ylim(bottom, 0)
+    #
+    #     ax = plt.subplot(111)
+    #     box = ax.get_position()
+    #     ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
+    #
+    #     # Put a legend below current axis
+    #     ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=4)
+    #
+    #     date_as_datetime_type = [datetime.datetime.strptime(d, '%Y%m%d') for d in expense_forecast.forecast_df.Date]
+    #
+    #     min_date = min(date_as_datetime_type).strftime('%Y-%m-%d')
+    #     max_date = max(date_as_datetime_type).strftime('%Y-%m-%d')
+    #     plt.title('Forecast #' + expense_forecast.unique_id + ': ' + str(min_date) + ' -> ' + str(max_date))
+    #     plt.xticks(rotation=90)
+    #     plt.savefig(output_path)
 
     def plotNetWorth(self, expense_forecast, output_path):
         """
@@ -1588,8 +1582,8 @@ class ForecastHandler:
         figure(figsize=(14, 6), dpi=80)
 
         #for i in range(1, self.forecast_df.shape[1] - 1):
-        column_index = expense_forecast.forecast_df.columns.tolist().index('NetWorth')
-        plt.plot(expense_forecast.forecast_df['Date'], expense_forecast.forecast_df.iloc[:, column_index], label='NetWorth')
+        column_index = expense_forecast.forecast_df.columns.tolist().index('Net Worth')
+        plt.plot(expense_forecast.forecast_df['Date'], expense_forecast.forecast_df.iloc[:, column_index], label='Net Worth')
 
         bottom, top = plt.ylim()
 
@@ -1691,9 +1685,9 @@ class ForecastHandler:
         figure(figsize=(14, 6), dpi=80)
 
         # for i in range(1, self.forecast_df.shape[1] - 1):
-        column_index = expense_forecast.forecast_df.columns.tolist().index('MarginalInterest')
+        column_index = expense_forecast.forecast_df.columns.tolist().index('Marginal Interest')
         plt.plot(expense_forecast.forecast_df['Date'], expense_forecast.forecast_df.iloc[:, column_index],
-                 label='MarginalInterest')
+                 label='Marginal Interest')
 
         bottom, top = plt.ylim()
 

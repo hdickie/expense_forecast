@@ -14,7 +14,7 @@ class MilestoneSet:
             if not account_milestone.account_name in all_account_names:
                 raise ValueError("Account Name for Milestone not found in accounts: "+str(account_milestone.account_name))
 
-        self.account_milestones__list = account_milestones__list
+        self.account_milestones = account_milestones__list
 
         for memo_milestone in memo_milestones__list:
             match_found = False
@@ -25,10 +25,10 @@ class MilestoneSet:
             if not match_found:
                 raise ValueError("Memo Milestone had no matches in budgetset, so no match during forecast calculation is possible.")
 
-        self.memo_milestones__list = memo_milestones__list
+        self.memo_milestones = memo_milestones__list
 
         for cm in composite_milestones__list:
-            for account_milestone in cm.account_milestones__list:
+            for account_milestone in cm.account_milestones:
                 all_account_names = set([ a.split(':')[0] for a in account_set.getAccounts().Name ])
                 if not account_milestone.account_name in all_account_names:
                     raise ValueError("Account Name for Milestone in Composite Milestone not found in accounts: "+str(account_milestone.account_name))
@@ -42,7 +42,7 @@ class MilestoneSet:
                 if not match_found:
                     raise ValueError("Memo Milestone in Composite Milestone had no matches in budgetset, so no match during forecast calculation is possible.")
 
-        self.composite_milestones__list = composite_milestones__list
+        self.composite_milestones = composite_milestones__list
 
     def __str__(self):
 
@@ -67,14 +67,14 @@ class MilestoneSet:
 
 
     def addMemoMilestone(self,milestone_name,memo_regex_string):
-        self.memo_milestones__list += [ MemoMilestone.MemoMilestone(milestone_name,memo_regex_string) ]
+        self.memo_milestones += [ MemoMilestone.MemoMilestone(milestone_name,memo_regex_string) ]
 
     def addAccountMilestone(self,milestone_name,account_name,min_balance,max_balance):
-        self.account_milestones__list += [ AccountMilestone.AccountMilestone(milestone_name,account_name,min_balance,max_balance) ]
+        self.account_milestones += [ AccountMilestone.AccountMilestone(milestone_name,account_name,min_balance,max_balance) ]
 
     def addCompositeMilestone(self,milestone_name,account_milestones__list, memo_milestones__list):
         #todo raise error if input milestones did not already exist
-        self.composite_milestones__list += [ CompositeMilestone.CompositeMilestone(milestone_name,account_milestones__list, memo_milestones__list) ]
+        self.composite_milestones += [ CompositeMilestone.CompositeMilestone(milestone_name,account_milestones__list, memo_milestones__list) ]
 
     def to_json(self):
 
@@ -82,10 +82,10 @@ class MilestoneSet:
 
         account_milestone_index = 0
         account_milestones_json_string = "["
-        for a in self.account_milestones__list:
+        for a in self.account_milestones:
             account_milestones_json_string += a.to_json()
 
-            if account_milestone_index != len(self.account_milestones__list) - 1:
+            if account_milestone_index != len(self.account_milestones) - 1:
                 account_milestones_json_string += ","
 
             account_milestone_index += 1
@@ -93,10 +93,10 @@ class MilestoneSet:
 
         memo_milestone_index = 0
         memo_milestones_json_string = "["
-        for m in self.memo_milestones__list:
+        for m in self.memo_milestones:
             memo_milestones_json_string += m.to_json()
 
-            if memo_milestone_index != len(self.memo_milestones__list) - 1:
+            if memo_milestone_index != len(self.memo_milestones) - 1:
                 memo_milestones_json_string += ","
 
             memo_milestone_index += 1
@@ -104,10 +104,10 @@ class MilestoneSet:
 
         composite_milestone_index = 0
         composite_milestones_json_string = "["
-        for c in self.composite_milestones__list:
+        for c in self.composite_milestones:
             composite_milestones_json_string += c.to_json()
 
-            if composite_milestone_index != len(self.composite_milestones__list) - 1:
+            if composite_milestone_index != len(self.composite_milestones) - 1:
                 composite_milestones_json_string += ","
 
             composite_milestone_index += 1
@@ -129,7 +129,7 @@ class MilestoneSet:
                                         'Max_Balance': []
                                         })
 
-        for a in self.account_milestones__list:
+        for a in self.account_milestones:
             account_milestones_df = pd.concat([account_milestones_df,
                           pd.DataFrame({'Milestone_Name': [a.milestone_name],
                                         'Account_Name': [a.account_name],
@@ -144,7 +144,7 @@ class MilestoneSet:
                                         'Memo_Regex': []
                                         })
 
-        for m in self.memo_milestones__list:
+        for m in self.memo_milestones:
             memo_milestones_df = pd.concat([memo_milestones_df,
                           pd.DataFrame({'Milestone_Name': [m.milestone_name],
                                         'Memo_Regex': [m.memo_regex]
@@ -158,14 +158,14 @@ class MilestoneSet:
                                                'Milestone_Name': []
                                            })
 
-        for cm in self.composite_milestones__list:
-            for am in cm.account_milestones__list:
+        for cm in self.composite_milestones:
+            for am in cm.account_milestones:
                 composite_milestone_df = pd.concat([composite_milestone_df, pd.DataFrame({'Composite_Milestone_Name': [cm.milestone_name],
                                                'Milestone_Type': ['Account'],
                                                'Milestone_Name': [am.milestone_name]
                                            }) ])
 
-            for mm in cm.memo_milestones__list:
+            for mm in cm.memo_milestones:
                 composite_milestone_df = pd.concat([composite_milestone_df,pd.DataFrame({'Composite_Milestone_Name': [cm.milestone_name],
                                                'Milestone_Type': ['Memo'],
                                                'Milestone_Name': [mm.milestone_name]
@@ -185,8 +185,8 @@ class MilestoneSet:
                                                          'Memo_Regex': []
                                                          })
 
-        for cm in self.composite_milestones__list:
-            for a in cm.account_milestones__list:
+        for cm in self.composite_milestones:
+            for a in cm.account_milestones:
                 composite_milestones__account_df = pd.concat([composite_milestones__account_df,
                                                               pd.DataFrame({'Composite_Milestone_Name': [cm.milestone_name],
                                                                             'Account_Name': [a.account_name],
@@ -195,7 +195,7 @@ class MilestoneSet:
                                                                             })
                                                               ])
 
-            for m in cm.memo_milestones__list:
+            for m in cm.memo_milestones:
                 composite_milestones__memo_df = pd.concat([composite_milestones__memo_df,
                                                            pd.DataFrame({'Composite_Milestone_Name': [
                                                                cm.milestone_name],
