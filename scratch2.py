@@ -163,9 +163,9 @@ if __name__ == '__main__':
     E2.appendSummaryLines()
 
     F = ForecastHandler.ForecastHandler()
-    #F.generateHTMLReport(E1,'./out/')
+    F.generateHTMLReport(E1,'./out/')
 
-    F.generateCompareTwoForecastsHTMLReport(E1,E2,'./out/')
+    #F.generateCompareTwoForecastsHTMLReport(E1,E2,'./out/')
 
     # log_color_stack = []
     # log_in_color_with_breadcrumbs(logger, 'red','debug','red log message')

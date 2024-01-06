@@ -12,8 +12,6 @@ logger = setup_logger('AccountSet','./log/AccountSet.log',logging.INFO)
 
 class AccountSet:
 
-    #TODO passing this without arguments caused accounts__list to get values from some older scope. Therefore, AccountSet() doesn't work as expected.
-    # (I expected the default parameter defined below to be used!)
     def __init__(self, accounts__list, print_debug_messages=True, raise_exceptions=True):
         """
         Creates an AccountSet object. Possible Account Types are: Checking, Credit, Loan, Savings. Consistency is checked.
@@ -61,11 +59,6 @@ class AccountSet:
 
 
         """
-        #print('enter AccountSet()')
-        # if accounts__list is None: #this parameter is required so this check is not needed
-        #     accounts__list = []
-        #     self.accounts = accounts__list
-        #     return
 
         value_error_text = ""
         value_error_ind = False
@@ -73,16 +66,7 @@ class AccountSet:
         type_error_text = ""
         type_error_ind = False
 
-        # IMPORTANT NOTE: the previous statement balance and interest accounts should be the index after
-        # im sure there is a fancier/smarter design but the logic I have implemented in ExpenseForecast assumes this
-
-        #print('BEFORE accounts__list:' + str(accounts__list))
         self.accounts = accounts__list
-        #print('AFTER  accounts__list:'+str(accounts__list))
-
-            # if credit or loan accounts are being added via this method, they should already be consistent.
-            # FOR THAT REASON, adding accounts this way is not recommended.
-            # therefore, once all accounts have been added to self.accounts, we check for consistency
 
         if len(self.accounts) > 0:
             required_attributes = ['name', 'balance', 'min_balance', 'max_balance', 'account_type',
@@ -93,36 +77,16 @@ class AccountSet:
                 # An object in the input list did not have all the attributes an Account is expected to have.
                 if set(required_attributes) & set(dir(obj)) != set(required_attributes): raise ValueError("An object in the input list did not have all the attributes an Account is expected to have.")
 
+            # todo sort the accounts in account list so that pbal is before interest, and curr before prev
+
+            # todo check a multiple is not being created
+
             accounts_df = self.getAccounts()
 
-            # print('accounts_df:')
-            # print(accounts_df.to_string())
-            # print('accounts_df.Account_Type:')
-            # print(accounts_df.Account_Type)
-            # print('accounts_df.Account_Type.isin([Principal Balance, Interest]):')
-            # print(accounts_df.Account_Type.isin(['Principal Balance', 'Interest']))
-            # print('accounts_df.Account_Type.isin([Prev Stmt Bal, Curr Stmt Bal]):')
-            # print(accounts_df.Account_Type.isin(['Prev Stmt Bal', 'Curr Stmt Bal']))
-
-            # print('accounts_df.loc[accounts_df.Account_Type.isin([Principal Balance, Interest],:)]')
-            # print(accounts_df.loc[
-            #     accounts_df.Account_Type.isin(['Principal Balance', 'Interest']),:])
-
-            # print('accounts_df.loc[accounts_df.Account_Type.isin([Principal Balance, Interest],:)]')
-            # print(accounts_df.loc[
-            #       accounts_df.Account_Type.isin(['Prev Stmt Bal', 'Curr Stmt Bal']), :])
-
-            # index_of_name_column=accounts_df.columns.tolist().index('Name')
             loan_check_name__series = accounts_df.loc[
                 accounts_df.Account_Type.isin(['principal balance', 'interest']), 'Name']
             cc_check__name__series = accounts_df.loc[
                 accounts_df.Account_Type.isin(['prev stmt bal', 'curr stmt bal']), 'Name']
-
-            # print('loan_check_name__series:')
-            # print(loan_check_name__series)
-
-            # print('cc_check__name__series:')
-            # print(cc_check__name__series)
 
             loan_pb_acct__list = list()
             loan_interest_acct__list = list()
@@ -130,17 +94,10 @@ class AccountSet:
                 acct_name = acct.split(':')[0]
                 acct_type = acct.split(':')[1].lower().strip()
 
-                # print('acct_name:' + str(acct_name))
-                # print('acct_type:' + str(acct_type))
-
                 if acct_type.lower() == 'principal balance':
                     loan_pb_acct__list.append(acct_name)
                 elif acct_type.lower() == 'interest':
                     loan_interest_acct__list.append(acct_name)
-                # else:
-                #     print('this should be impossible')
-                #     print('value was:' + str(acct_type))
-                #     raise ValueError
 
             cc_prv_acct__list = list()
             cc_curr_acct__list = list()
@@ -148,17 +105,10 @@ class AccountSet:
                 acct_name = acct.split(':')[0]
                 acct_type = acct.split(':')[1].lower().strip()
 
-                # print('acct_name:'+str(acct_name))
-                # print('acct_type:'+str(acct_type))
-
                 if acct_type.lower() == 'prev stmt bal':
                     cc_prv_acct__list.append(acct_name)
                 elif acct_type.lower() == 'curr stmt bal':
                     cc_curr_acct__list.append(acct_name)
-                # else:
-                #     print('this should be impossible')
-                #     print('value was:'+str(acct_type))
-                #     raise ValueError
 
             if (set(loan_pb_acct__list) & set(loan_interest_acct__list)) != set(loan_pb_acct__list) or \
                     (set(loan_pb_acct__list) & set(loan_interest_acct__list)) != set(loan_interest_acct__list):
@@ -168,7 +118,7 @@ class AccountSet:
                 value_error_text += 'loan_interest_acct__list:\n'
                 value_error_text += str(loan_interest_acct__list) + "\n"
                 value_error_ind = True
-                raise ValueError("The intersection of Principal Balance and Interest accounts was not equal to the union.") #The intersection of Principal Balance and Interest accounts was not equal to the union.
+                raise ValueError("The intersection of Principal Balance and Interest accounts was not equal to the union.")
 
             if set(cc_prv_acct__list) & set(cc_curr_acct__list) != set(cc_prv_acct__list) or \
                 set(cc_prv_acct__list) & set(cc_curr_acct__list) != set(cc_curr_acct__list):
@@ -178,7 +128,7 @@ class AccountSet:
                 value_error_text += 'cc_curr_acct__list:\n'
                 value_error_text += str(cc_curr_acct__list) + "\n"
                 value_error_ind = True
-                raise ValueError("The intersection of Prev Stmt Bal and Curr Stmt Bal accounts was not equal to the union.") #The intersection of Prev Stmt Bal and Curr Stmt Bal accounts was not equal to the union.
+                raise ValueError("The intersection of Prev Stmt Bal and Curr Stmt Bal accounts was not equal to the union.")
 
             #at this point, all accounts have been added to self.accounts, been verified to have the necessary attributes
             #and confirmed that related accounts are present. Therefore, we can now check for consistent parameters
@@ -259,13 +209,6 @@ class AccountSet:
 
     def __str__(self): return self.getAccounts().to_string()
 
-    # def addAccount(self,list_of_accounts):
-    #     #todo check a multiple is not being created
-    #     #check that prev has a curr, and princ has an interest
-    #     #check not receiving too many accounts
-    #     #check not empty
-    #     self.accounts += list_of_accounts
-
     def createAccount(self,
                       name,
                       balance,
@@ -286,28 +229,10 @@ class AccountSet:
         """
         Add an Account to list AccountSet.accounts. For credit and loan type accounts, previous statement balance and interest accounts are created.
 
-        | Test Cases
-        | Expected Successes
-        | S1: add Checking #todo refactor AccountSet.addAccount() doctest S1 to use _S1 label
-        | S2: add Savings #todo refactor AccountSet.addAccount() doctest S2 to use _S2 label
-        | S3: add Credit #todo refactor AccountSet.addAccount() doctest S3 to use _S3 label
-        | S4: add Loan #todo refactor AccountSet.addAccount() doctest S4 to use _S4 label
-        |
-        | Expected Fails
-        | F1: add a second checking account  #todo refactor AccountSet.addAccount() doctest F1 to use _F1 label
-        | F2: add an account with the same name as an existing account #todo refactor AccountSet.addAccount() doctest F2 to use _F2 label
-        | F3: Savings - Prev Stmt Bal + Cur Stmt Bal violates account boundary #todo refactor AccountSet.addAccount() doctest F3 to use _F3 label
-        | F4: Loan - Principal Balance + Interest != Balance #todo refactor AccountSet.addAccount() doctest F4 to use _F4 label
-        |
-        |
 
-        #todo implement test: for each account with interest_type == 'Simple', there should be principal balance and an interest acct
-        # this check has been implemented by account_type, but not by interest_type
-        # for each account with interest_type == 'Compound', there should be prev bal and curr bal accts
-        # i am 100% not mad about redundancy here
         """
 
-        #todo disallow adding a second checking account
+        #todo disallow adding a second checking account (even better, refactor so that that is not necessary)
 
         log_string='createAccount(name='+str(name)+',balance='+str(balance)+',account_type='+str(account_type)
         if account_type == 'checking':
@@ -318,7 +243,7 @@ class AccountSet:
             log_string+=',billing_start_date_YYYYMMDD='+str(billing_start_date_YYYYMMDD)+',apr='+str(apr)+',principal_balance='+str(principal_balance)+',accrued_interest='+str(accrued_interest)
 
         log_string+=')'
-        log_in_color(logger,'green', 'info',log_string, 0)
+        log_in_color(logger,'green', 'debug',log_string, 0)
 
         if billing_start_date_YYYYMMDD is None:
             billing_start_date_YYYYMMDD = "None"
@@ -344,17 +269,16 @@ class AccountSet:
         if accrued_interest is None:
             accrued_interest = "None"
 
-        # TODO this should be based on interest type or interest AND account type
         if account_type.lower() == 'loan':
 
             if principal_balance == 'None':
-                raise ValueError #Prinicipal_Balance cannot be None for account_type=loan
+                raise ValueError
 
             if accrued_interest == 'None':
-                raise ValueError #Accrued_Interest cannot be None for account_type=loan
+                raise ValueError
 
             if float(principal_balance) + float(accrued_interest) != float(balance):
-                raise ValueError(name+": "+str(principal_balance)+" + "+str(accrued_interest)+" != "+str(balance)) #Account.Principal_balance + Account.accrued_interest != Account.balance
+                raise ValueError(name+": "+str(principal_balance)+" + "+str(accrued_interest)+" != "+str(balance))
 
             account = Account.Account(name=name + ': Principal Balance',
                                       balance=principal_balance,
@@ -477,7 +401,6 @@ class AccountSet:
                                         single_account_loan_payment[1], #To
                                         single_account_loan_payment[2], #Amount
                                         income_flag=False)
-                #todo append memo here
             return
 
         boundary_error_ind = False
@@ -564,11 +487,11 @@ class AccountSet:
                 try:
                     assert self.accounts[account_from_index].min_balance <= balance_after_proposed_transaction <= self.accounts[account_from_index].max_balance
                 except Exception as e:
-                    log_in_color(logger,'red', 'info', '')
-                    log_in_color(logger,'red','info','transaction violated Account_From boundaries:')
-                    log_in_color(logger,'red', 'info', str(e))
-                    log_in_color(logger,'red', 'info', 'Account_From:\n'+str(self.accounts[account_from_index]))
-                    log_in_color(logger,'red', 'info', 'Amount:'+str(Amount))
+                    log_in_color(logger,'red', 'debug', '')
+                    log_in_color(logger,'red','debug','transaction violated Account_From boundaries:')
+                    log_in_color(logger,'red', 'debug', str(e))
+                    log_in_color(logger,'red', 'debug', 'Account_From:\n'+str(self.accounts[account_from_index]))
+                    log_in_color(logger,'red', 'debug', 'Amount:'+str(Amount))
                     error_msg += 'transaction violated Account_From boundaries:\n'
                     error_msg += 'Account_From:\n'+str(self.accounts[account_from_index])+'\n'
                     error_msg += 'Amount:'+str(Amount)+'\n'
@@ -588,10 +511,10 @@ class AccountSet:
                 try:
                     assert self.accounts[account_from_index].min_balance <= balance_after_proposed_transaction <= self.accounts[account_from_index].max_balance
                 except Exception as e:
-                    log_in_color(logger,'red', 'info', 'transaction violated Account_From boundaries:')
-                    log_in_color(logger,'red', 'info', str(e))
-                    log_in_color(logger,'red', 'info', 'Account_From:\n' + str(self.accounts[account_from_index]))
-                    log_in_color(logger,'red', 'info', 'Amount:' + str(Amount))
+                    log_in_color(logger,'red', 'debug', 'transaction violated Account_From boundaries:')
+                    log_in_color(logger,'red', 'debug', str(e))
+                    log_in_color(logger,'red', 'debug', 'Account_From:\n' + str(self.accounts[account_from_index]))
+                    log_in_color(logger,'red', 'debug', 'Amount:' + str(Amount))
                     error_msg += 'transaction violated Account_From boundaries:\n'
                     error_msg += 'Account_From:\n' + str(self.accounts[account_from_index]) + '\n'
                     error_msg += 'Amount:' + str(Amount) + '\n'
@@ -602,7 +525,7 @@ class AccountSet:
             else: raise NotImplementedError("account type was: "+str(AF_Account_Type)) #from types other than checking or credit not yet implemented
 
             if not boundary_error_ind:
-                log_in_color(logger,'magenta', 'info', 'Paid ' + str(Amount) + ' from ' + Account_From, 0)
+                log_in_color(logger,'magenta', 'debug', 'Paid ' + str(Amount) + ' from ' + Account_From, 0)
 
 
 
@@ -611,7 +534,7 @@ class AccountSet:
 
                 self.accounts[account_to_index].balance += abs(Amount)
                 #self.accounts[account_to_index].balance = self.accounts[account_to_index].balance
-                log_in_color(logger,'magenta', 'info', 'Paid ' + str(Amount) + ' to ' + Account_To, 0)
+                log_in_color(logger,'magenta', 'debug', 'Paid ' + str(Amount) + ' to ' + Account_To, 0)
             elif AT_Account_Type == 'credit' or AT_Account_Type == 'loan':
 
                 debt_payment_ind = (AT_Account_Type.lower() == 'loan')
@@ -626,11 +549,11 @@ class AccountSet:
                     #print('assert '+str(self.accounts[account_to_index].min_balance)+' <= '+str(balance_after_proposed_transaction)+' <= '+str(self.accounts[account_to_index].max_balance))
                     assert self.accounts[account_to_index].min_balance <= balance_after_proposed_transaction <= self.accounts[account_to_index].max_balance
                 except Exception as e:
-                    log_in_color(logger,'red', 'info', '')
-                    log_in_color(logger,'red','info','transaction violated Account_To boundaries:')
-                    log_in_color(logger,'red', 'info', str(e))
-                    log_in_color(logger,'red', 'info', 'Account_To:\n'+str(self.accounts[account_to_index]))
-                    log_in_color(logger,'red', 'info', 'Amount:'+str(Amount))
+                    log_in_color(logger,'red', 'debug', '')
+                    log_in_color(logger,'red','debug','transaction violated Account_To boundaries:')
+                    log_in_color(logger,'red', 'debug', str(e))
+                    log_in_color(logger,'red', 'debug', 'Account_To:\n'+str(self.accounts[account_to_index]))
+                    log_in_color(logger,'red', 'debug', 'Amount:'+str(Amount))
                     error_msg += 'transaction violated Account_To boundaries:\n'
                     error_msg += 'Account_From:\n' + str(self.accounts[account_to_index]) + '\n'
                     error_msg += 'Amount:' + str(Amount) + '\n'
@@ -644,7 +567,7 @@ class AccountSet:
                 #OR amt payed on interest is more than the total
                 if abs(Amount) >= self.accounts[account_to_index+1].balance:
                     remaining_to_pay = abs(Amount) - self.accounts[account_to_index + 1].balance
-                    log_in_color(logger,'magenta', 'info','Paid ' + str(self.accounts[account_to_index + 1].balance) + ' to ' + str(self.accounts[account_to_index + 1].name), 0)
+                    log_in_color(logger,'magenta', 'debug','Paid ' + str(self.accounts[account_to_index + 1].balance) + ' to ' + str(self.accounts[account_to_index + 1].name), 0)
                     self.accounts[account_to_index + 1].balance = 0
 
                     #this has the potential to overpay, but we consider that upstreams problem
@@ -654,9 +577,9 @@ class AccountSet:
                         self.accounts[account_to_index].balance = 0
 
                     #self.accounts[account_to_index].balance = self.accounts[account_to_index].balance
-                    log_in_color(logger,'magenta', 'info', 'Paid ' + str(remaining_to_pay) + ' to ' + self.accounts[account_to_index].name, 0)
+                    log_in_color(logger,'magenta', 'debug', 'Paid ' + str(remaining_to_pay) + ' to ' + self.accounts[account_to_index].name, 0)
                 else: #pay down the previous statement balance
-                    log_in_color(logger,'magenta', 'info', 'Paid ' + str(Amount) + ' to ' + str(self.accounts[account_to_index + 1].name), 0)
+                    log_in_color(logger,'magenta', 'debug', 'Paid ' + str(Amount) + ' to ' + str(self.accounts[account_to_index + 1].name), 0)
                     self.accounts[account_to_index + 1].balance -= Amount
                     if abs(self.accounts[account_to_index + 1].balance) < 0.01:
                         self.accounts[account_to_index + 1].balance = 0
@@ -825,10 +748,6 @@ class AccountSet:
 
 
 
-            # previous_statement_balance = row.Previous_Statement_Balance
-            # principal_balance = row.Principal_Balance
-            # accrued_interest = row.Accrued_Interest
-
     def to_excel(self,path):
         A = self.getAccounts()
         #A['Billing_Start_Dt'] = pd.to_datetime(A['Billing_Start_Dt'])
@@ -851,12 +770,12 @@ class AccountSet:
         #for account_index, account_row in self.getAccounts().iterrows():
         #    bal_string += '$' + str(account_row.Balance) + ' '
 
-        #log_in_color(logger,'blue','INFO','ENTER allocate_additional_loan_payments(amount='+str(amount)+') '+bal_string)
+        #log_in_color(logger,'blue','debug','ENTER allocate_additional_loan_payments(amount='+str(amount)+') '+bal_string)
 
         row_sel_vec = [ x for x in ( self.getAccounts().Account_Type == 'checking' ) ]
         checking_acct_name = self.getAccounts()[row_sel_vec].Name[0] #we use this waaay later during executeTransaction
         if self.getAccounts()[row_sel_vec].Balance.iat[0] < amount:
-            log_in_color(logger,'green', 'info', 'input amount is greater than available balance. Reducing amount.')
+            log_in_color(logger,'green', 'debug', 'input amount is greater than available balance. Reducing amount.')
             amount = self.getAccounts().loc[row_sel_vec,:].Balance.iat[0]
 
         date_string_YYYYMMDD = '20000101' #this method needs to be refactored
@@ -1002,8 +921,8 @@ class AccountSet:
             #print('principal_balance_delta:')
             #print(principal_balance_delta)
 
-            # log_in_color(logger, 'blue', 'INFO', 'principal_balance_delta:')
-            # log_in_color(logger, 'blue', 'INFO', str(principal_balance_delta))
+            # log_in_color(logger, 'blue', 'debug', 'principal_balance_delta:')
+            # log_in_color(logger, 'blue', 'debug', str(principal_balance_delta))
 
 
             payment_amounts = []
@@ -1080,7 +999,7 @@ class AccountSet:
 
         #log_in_color(logger,'green', 'debug', 'final_txns:')
         #log_in_color(logger,'green', 'debug', final_txns)
-        #log_in_color(logger,'blue', 'INFO', 'EXIT allocate_additional_loan_payments(amount='+str(amount)+')')
+        #log_in_color(logger,'blue', 'debug', 'EXIT allocate_additional_loan_payments(amount='+str(amount)+')')
         return final_txns
 
     def getAccounts(self):

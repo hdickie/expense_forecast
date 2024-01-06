@@ -1584,11 +1584,11 @@ class ForecastHandler:
 
         figure(figsize=(14, 6), dpi=80)
 
-        #for i in range(1, self.forecast_df.shape[1] - 1):
         column_index = expense_forecast.forecast_df.columns.tolist().index('Net Worth')
         plt.plot(expense_forecast.forecast_df['Date'], expense_forecast.forecast_df.iloc[:, column_index], label='Net Worth')
 
         bottom, top = plt.ylim()
+        top = top * 1.1 #otherwise doesnt show up if line is super flat
 
         if 0 < bottom:
             plt.ylim(0,top)

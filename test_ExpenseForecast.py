@@ -25,7 +25,7 @@ from log_methods import display_test_result
 def checking_acct_list(balance):
     return [Account.Account('Checking',balance,0,100000,'checking',None,None,None,None,None)]
 
-def credit_acct_list(prev_balance,curr_balance,apr):
+def credit_acct_list(curr_balance,prev_balance,apr):
     A = AccountSet.AccountSet([])
     A.createAccount('Credit', curr_balance, 0, 20000, 'credit', '20000102', 'compound', apr, 'monthly', 40,
                       prev_balance,
@@ -299,7 +299,7 @@ class TestExpenseForecastMethods:
 
             try:
                 for i in range(0,expected_result_df.shape[0]):
-                    assert expected_result_df.loc[i,'Memo'] == E.forecast_df.loc[i,'Memo']
+                    assert expected_result_df.loc[i,'Memo'].strip() == E.forecast_df.loc[i,'Memo'].strip()
             except Exception as e:
                 log_in_color(logger,'red','error','Forecasts matched but the memo did not')
                 date_memo1_memo2_df = pd.DataFrame()
@@ -348,12 +348,12 @@ class TestExpenseForecastMethods:
                                 'Checking': [0, 0, 0],
                                 'Credit: Curr Stmt Bal': [0, 0, 0],
                                 'Credit: Prev Stmt Bal': [0, 0, 0],
-                                'Memo': ['', 'income ($100.0) ; test txn ($100.0) ; ', '']
+                                'Memo': ['', 'income (Checking +$100.0); test txn (Checking -$100.0);', '']
                                 })
                                 ),
 
                                 (
-                                'test_cc_payment__satisfice__prev_bal_25__expect_25',
+                                'test_cc_payment__satisfice__curr_bal_25__expect_25',
                                 AccountSet.AccountSet(checking_acct_list(2000) + credit_acct_list(25, 0, 0.05)),
                                 BudgetSet.BudgetSet([]),
                                 MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1)]),
@@ -363,15 +363,15 @@ class TestExpenseForecastMethods:
                                 pd.DataFrame({
                                     'Date': ['20000101', '20000102', '20000103'],
                                     'Checking': [2000, 1975, 1975],
-                                    'Credit: Curr Stmt Bal': [0, 0, 0],
-                                    'Credit: Prev Stmt Bal': [25, 0, 0],
-                                    'Memo': ['', 'Credit cc min payment ($40) ; ', '']
+                                    'Credit: Curr Stmt Bal': [25, 0, 0],
+                                    'Credit: Prev Stmt Bal': [0, 0, 0],
+                                    'Memo': ['', 'cc min payment (Credit: Prev Stmt Bal -$25.0);', '']
                                 })
                                 ),
 
                                 (
                                 'test_cc_payment__satisfice__prev_bal_1000__expect_40',
-                                AccountSet.AccountSet(checking_acct_list(2000) + credit_acct_list(1000, 0, 0.05)),
+                                AccountSet.AccountSet(checking_acct_list(2000) + credit_acct_list(0, 1000, 0.05)),
                                 BudgetSet.BudgetSet([]),
                                 MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*', account_from='Credit', account_to=None,
                                                                        transaction_priority=1)]),
@@ -382,14 +382,14 @@ class TestExpenseForecastMethods:
                                     'Date': ['20000101', '20000102', '20000103'],
                                     'Checking': [2000, 1960, 1960],
                                     'Credit: Curr Stmt Bal': [0, 0, 0],
-                                    'Credit: Prev Stmt Bal': [1000, 964, 964],  # this amount should have interest added
-                                    'Memo': ['', 'Credit cc min payment ($40) ; ', '']
+                                    'Credit: Prev Stmt Bal': [1000, 964.17, 964.17],
+                                    'Memo': ['', 'cc min payment (Credit: Prev Stmt Bal -$40);', '']
                                 })
                                 ),
 
                                 (
                                 'test_cc_payment__satisfice__prev_bal_3000__expect_60',
-                                AccountSet.AccountSet(checking_acct_list(2000) + credit_acct_list(3000, 0, 0.05)),
+                                AccountSet.AccountSet(checking_acct_list(2000) + credit_acct_list(0, 3000, 0.05)),
                                 BudgetSet.BudgetSet([]),
                                 MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*', account_from='Credit', account_to=None,transaction_priority=1)]),
                                 '20000101',
@@ -399,8 +399,8 @@ class TestExpenseForecastMethods:
                                     'Date': ['20000101', '20000102', '20000103'],
                                     'Checking': [2000, 1960, 1960],
                                     'Credit: Curr Stmt Bal': [0, 0, 0],
-                                    'Credit: Prev Stmt Bal': [3000, 2972.33, 2972.33],
-                                    'Memo': ['', 'Credit cc min payment ($40) ; ', '']
+                                    'Credit: Prev Stmt Bal': [3000, 2972.5, 2972.5],
+                                    'Memo': ['', 'cc min payment (Credit: Prev Stmt Bal -$40);', '']
                                 })
                                 ),
 
@@ -461,7 +461,7 @@ class TestExpenseForecastMethods:
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103'],
                     'Checking': [100, 0, 0],
-                    'Memo': ['', 'this should be executed ($100.0) ; ', '']
+                    'Memo': ['', 'this should be executed (Checking -$100.0);', '']
                 })
         ),
 
@@ -485,7 +485,7 @@ class TestExpenseForecastMethods:
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103'],
                     'Checking': [100, 0, 0],
-                    'Memo': ['', 'this should be executed ($100.0) ; ', '']
+                    'Memo': ['', 'this should be executed (Checking -$100.0);', '']
                 })
         ),
 
@@ -552,7 +552,7 @@ class TestExpenseForecastMethods:
                     'Checking': [2000, 1200, 1200],
                     'Credit: Curr Stmt Bal': [500, 200, 200],
                     'Credit: Prev Stmt Bal': [500, 0, 0],
-                    'Memo': ['', 'test pay all prev part of curr ($800.0) ; ', '']
+                    'Memo': ['', 'test pay all prev part of curr (Checking -$800.0);', '']
                 })
         ),
 
@@ -575,7 +575,7 @@ class TestExpenseForecastMethods:
                     'Checking': [200, 0, 0],
                     'Credit: Curr Stmt Bal': [500, 500, 500],
                     'Credit: Prev Stmt Bal': [500, 300, 300],
-                    'Memo': ['', 'additional cc payment test ($200.0) ; ', '']
+                    'Memo': ['', 'additional cc payment test (Checking -$200.0);', '']
                 })
         ),
 
@@ -598,8 +598,8 @@ class TestExpenseForecastMethods:
                     'Date': ['20000101', '20000102', '20000103'],
                     'Checking': [40, 0, 0],
                     'Credit: Curr Stmt Bal': [500, 0, 0],
-                    'Credit: Prev Stmt Bal': [500,961.92, 961.92],
-                    'Memo': ['', 'Credit cc min payment ($40) ; ', '']
+                    'Credit: Prev Stmt Bal': [500,962.08, 962.08],
+                    'Memo': ['', 'cc min payment (Credit: Prev Stmt Bal -$40);', '']
                 })
         ),
 
@@ -623,7 +623,7 @@ class TestExpenseForecastMethods:
                     'Checking': [1000, 0, 0],
                     'Credit: Curr Stmt Bal': [1500, 1000, 1000],
                     'Credit: Prev Stmt Bal': [500, 0, 0],
-                    'Memo': ['', 'partial cc payment ($1000.0) ; ', '']
+                    'Memo': ['', 'partial cc payment (Checking -$1000.0);', '']
                 })
         ), # 12/21 4AM this is coded correctly and the test fail is bc of algo
 
@@ -665,7 +665,9 @@ class TestExpenseForecastMethods:
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103', '20000104'],
                     'Checking': [500, 400, 300, 0],
-                    'Memo': ['', 'SPEND daily p1 txn ($100.0) ; ', 'SPEND daily p1 txn ($100.0) ; ', '200 income on 1/4 ($200.0) ; SPEND daily p1 txn ($100.0) ; SPEND p2 txn deferred from 1/2 to 1/4 ($400.0) ; ']
+                    'Memo': ['', 'SPEND daily p1 txn (Checking -$100.0);',
+                             'SPEND daily p1 txn (Checking -$100.0);',
+                             '200 income on 1/4 (Checking +$200.0); SPEND daily p1 txn (Checking -$100.0); SPEND p2 txn deferred from 1/2 to 1/4 (Checking -$400.0);']
                 })
         ),
 
@@ -698,7 +700,7 @@ class TestExpenseForecastMethods:
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103', '20000104', '20000105'],
                     'Checking': [400, 400, 200, 0, 0],
-                    'Memo': ['', '', 'pay reduced amount ($200.0) ; ', 'pay 200 after reduced amt txn ($200.0) ; ', '']
+                    'Memo': ['', '', 'pay reduced amount (Checking -$200.0);', 'pay 200 after reduced amt txn (Checking -$200.0);', '']
                 })
         ),  #this test cas coded correctly. the fail is bc of algo. 12/12 5:21AM
 
@@ -733,7 +735,12 @@ class TestExpenseForecastMethods:
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103', '20000104', '20000105', '20000106'],
                     'Checking': [2000, 1800, 1600, 1400, 1200, 1200],
-                    'Memo': ['', 'p1 daily txn ($100.0) ; p2 daily txn 1/2/00 ($100.0) ; ', 'p1 daily txn ($100.0) ; p2 daily txn 1/3/00 ($100.0) ; ', 'p1 daily txn ($100.0) ; p2 daily txn 1/4/00 ($100.0) ; ', 'p1 daily txn ($100.0) ; p2 daily txn 1/5/00 ($100.0) ; ','']
+                    'Memo': ['',
+                             'p1 daily txn (Checking -$100.0); p2 daily txn 1/2/00 (Checking -$100.0);',
+                             'p1 daily txn (Checking -$100.0); p2 daily txn 1/3/00 (Checking -$100.0);',
+                             'p1 daily txn (Checking -$100.0); p2 daily txn 1/4/00 (Checking -$100.0);',
+                             'p1 daily txn (Checking -$100.0); p2 daily txn 1/5/00 (Checking -$100.0);',
+                             '']
                 })
         ),
 
@@ -777,7 +784,12 @@ class TestExpenseForecastMethods:
             pd.DataFrame({
                 'Date': ['20000101', '20000102', '20000103', '20000104', '20000105', '20000106'],
                 'Checking': [2000, 1700, 1400, 1100, 800, 800],
-                'Memo': ['', 'p1 daily txn 1/2/00 ($100.0) ; p2 daily txn 1/2/00 ($100.0) ; p3 daily txn 1/2/00 ($100.0) ; ', 'p1 daily txn 1/3/00 ($100.0) ; p2 daily txn 1/3/00 ($100.0) ; p3 daily txn 1/3/00 ($100.0) ; ', 'p1 daily txn 1/4/00 ($100.0) ; p2 daily txn 1/4/00 ($100.0) ; p3 daily txn 1/4/00 ($100.0) ; ', 'p1 daily txn 1/5/00 ($100.0) ; p2 daily txn 1/5/00 ($100.0) ; p3 daily txn 1/5/00 ($100.0) ; ','']
+                'Memo': ['',
+                         'p1 daily txn 1/2/00 (Checking -$100.0); p2 daily txn 1/2/00 (Checking -$100.0); p3 daily txn 1/2/00 (Checking -$100.0);',
+                         'p1 daily txn 1/3/00 (Checking -$100.0); p2 daily txn 1/3/00 (Checking -$100.0); p3 daily txn 1/3/00 (Checking -$100.0);',
+                         'p1 daily txn 1/4/00 (Checking -$100.0); p2 daily txn 1/4/00 (Checking -$100.0); p3 daily txn 1/4/00 (Checking -$100.0);',
+                         'p1 daily txn 1/5/00 (Checking -$100.0); p2 daily txn 1/5/00 (Checking -$100.0); p3 daily txn 1/5/00 (Checking -$100.0);',
+                         '']
             })
         ),
 
@@ -845,7 +857,7 @@ class TestExpenseForecastMethods:
                     'Loan B: Interest': [100, 50.14, 50.28],
                     'Loan C: Principal Balance': [1000, 1000, 1000],
                     'Loan C: Interest': [100, 50.03, 50.06],
-                    'Memo': ['', 'Loan A loan min payment ($50.0); Loan B loan min payment ($50.0); Loan C loan min payment ($50.0); Loan A: Interest additional loan payment ($10.0) ; ', '']
+                    'Memo': ['', 'loan min payment (Loan A: Interest -$50.0); loan min payment (Loan B: Interest -$50.0); loan min payment (Loan C: Interest -$50.0); additional loan payment (Loan A: Interest -$10.0); ', '']
                 })
         ),
 
@@ -872,7 +884,7 @@ class TestExpenseForecastMethods:
              'Loan B: Interest': [100, 50.14, 50.28],
              'Loan C: Principal Balance': [1000, 1000, 1000],
              'Loan C: Interest': [100, 50.03, 50.06],
-             'Memo': ['', 'Loan A loan min payment ($50.0); Loan B loan min payment ($50.0); Loan C loan min payment ($50.0); Loan A: Principal Balance additional loan payment ($59.73) ; Loan A: Interest additional loan payment ($50.27) ; ', '']
+             'Memo': ['', 'Loan A loan min payment ($50.0); Loan B loan min payment ($50.0); Loan C loan min payment ($50.0); Loan A: Principal Balance additional loan payment ($59.73) ; Loan A: Interest additional loan payment ($50.27) ;    loan min payment (Loan A: Interest -$50.0);  loan min payment (Loan B: Interest -$50.0);  loan min payment (Loan C: Interest -$50.0);  additional loan payment (Loan A: Principal Balance -$59.73);  additional loan payment (Loan A: Interest -$50.27);', '']
          })
          ),
 
@@ -900,7 +912,7 @@ class TestExpenseForecastMethods:
              'Loan B: Interest': [100, 43.52, 43.66],
              'Loan C: Principal Balance': [1000, 1000, 1000],
              'Loan C: Interest': [ 100, 50.03, 50.06 ],
-             'Memo': ['', 'Loan A loan min payment ($50.0); Loan B loan min payment ($50.0); Loan C loan min payment ($50.0); Loan A: Principal Balance additional loan payment ($503.11) ; Loan A: Interest additional loan payment ($50.27) ; Loan B: Interest additional loan payment ($6.62) ; ', '']
+             'Memo': ['', 'loan min payment (Loan A: Interest -$50.0);  loan min payment (Loan B: Interest -$50.0);  loan min payment (Loan C: Interest -$50.0);  additional loan payment (Loan A: Principal Balance -$503.11);  additional loan payment (Loan A: Interest -$50.27);  additional loan payment (Loan B: Interest -$6.62);', '']
          })
          ), #todo double check this math
 
@@ -928,7 +940,7 @@ class TestExpenseForecastMethods:
              'Loan B: Interest': [100, 9.52, 9.66],
              'Loan C: Principal Balance': [1000, 1000, 1000],
              'Loan C: Interest': [100, 50.03,50.06],
-             'Memo': ['', 'Loan A loan min payment ($50.0); Loan B loan min payment ($50.0); Loan C loan min payment ($50.0); Loan A: Principal Balance additional loan payment ($519.11) ; Loan A: Interest additional loan payment ($50.27) ; Loan B: Interest additional loan payment ($40.62) ; ', '']
+             'Memo': ['', 'loan min payment (Loan A: Interest -$50.0);  loan min payment (Loan B: Interest -$50.0);  loan min payment (Loan C: Interest -$50.0);  additional loan payment (Loan A: Principal Balance -$519.11);  additional loan payment (Loan A: Interest -$50.27);  additional loan payment (Loan B: Interest -$40.62);', '']
          })
          ),  # todo check this math
 
@@ -957,7 +969,7 @@ class TestExpenseForecastMethods:
              'Loan B: Interest': [100, 0, 0.03],
              'Loan C: Principal Balance': [1000, 972.57, 972.57],
              'Loan C: Interest': [100, 0, 0.03],
-             'Memo': ['', 'Loan A loan min payment ($50.0); Loan B loan min payment ($50.0); Loan C loan min payment ($50.0); Loan A: Principal Balance additional loan payment ($907.38) ; Loan A: Interest additional loan payment ($50.27) ; Loan B: Principal Balance additional loan payment ($814.75) ; Loan B: Interest additional loan payment ($50.14) ; Loan C: Principal Balance additional loan payment ($27.43) ; Loan C: Interest additional loan payment ($50.03) ; ', '']
+             'Memo': ['', '2000-01-02  Loan A loan min payment ($50.0); Loan B loan min payment ($50.0); Loan C loan min payment ($50.0); Loan A: Principal Balance additional loan payment ($907.38) ; Loan A: Interest additional loan payment ($50.27) ; Loan B: Principal Balance additional loan payment ($814.75) ; Loan B: Interest additional loan payment ($50.14) ; Loan C: Principal Balance additional loan payment ($27.43) ; Loan C: Interest additional loan payment ($50.03) ;    loan min payment (Loan A: Interest -$50.0);  loan min payment (Loan B: Interest -$50.0);  loan min payment (Loan C: Interest -$50.0);  additional loan payment (Loan A: Principal Balance -$907.38);  additional loan payment (Loan A: Interest -$50.27);  additional loan payment (Loan B: Principal Balance -$814.75);  additional loan payment (Loan B: Interest -$50.14);  additional loan payment (Loan C: Principal Balance -$27.43);  additional loan payment (Loan C: Interest -$50.03);', '']
          })
          ),
 
@@ -985,7 +997,7 @@ class TestExpenseForecastMethods:
              'Loan B: Interest': [100, 0, 0],
              'Loan C: Principal Balance': [1000, 0, 0],
              'Loan C: Interest': [100, 0, 0],
-             'Memo': ['', 'Loan A loan min payment ($50.0); Loan B loan min payment ($50.0); Loan C loan min payment ($50.0); Loan A: Principal Balance additional loan payment ($1000.0) ; Loan A: Interest additional loan payment ($50.27) ; Loan B: Principal Balance additional loan payment ($1000.0) ; Loan B: Interest additional loan payment ($50.14) ; Loan C: Principal Balance additional loan payment ($1000.0) ; Loan C: Interest additional loan payment ($50.03) ; ', '']
+             'Memo': ['', 'Loan A loan min payment ($50.0); Loan B loan min payment ($50.0); Loan C loan min payment ($50.0); Loan A: Principal Balance additional loan payment ($1000.0) ; Loan A: Interest additional loan payment ($50.27) ; Loan B: Principal Balance additional loan payment ($1000.0) ; Loan B: Interest additional loan payment ($50.14) ; Loan C: Principal Balance additional loan payment ($1000.0) ; Loan C: Interest additional loan payment ($50.03) ;    loan min payment (Loan A: Interest -$50.0);  loan min payment (Loan B: Interest -$50.0);  loan min payment (Loan C: Interest -$50.0);  additional loan payment (Loan A: Principal Balance -$1000.0);  additional loan payment (Loan A: Interest -$50.27);  additional loan payment (Loan B: Principal Balance -$1000.0);  additional loan payment (Loan B: Interest -$50.14);  additional loan payment (Loan C: Principal Balance -$1000.0);  additional loan payment (Loan C: Interest -$50.03);', '']
          })
          ),
 
@@ -2249,6 +2261,10 @@ class TestExpenseForecastMethods:
                 raise e
 
 
+    def test_propagateOptimizationTransactionsIntoTheFuture(self):
+        # account_set_before_p2_plus_txn, forecast_df, date_string_YYYYMMDD
+        pass
+
 ###tests to implement
 #initialize from json  prev tmt bal acct first in list and interest acct first in list (this does not happen programmatically) (this functionality is not yet supported)
 #loan payments when insufficient funds?
@@ -2273,3 +2289,4 @@ class TestExpenseForecastMethods:
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_quarter_and_year_long_interest_cadences - NotImplementedError
 
 #todo I want to get a conceptual handle of when/where rounding happens
+

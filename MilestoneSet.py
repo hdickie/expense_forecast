@@ -48,19 +48,19 @@ class MilestoneSet:
 
         return_string = ""
 
-        count_of_milestones = str(len(self.memo_milestones__list)) + str(len(self.account_milestones__list)) + str(len(self.composite_milestones__list))
+        count_of_milestones = str(len(self.memo_milestones)) + str(len(self.account_milestones)) + str(len(self.composite_milestones))
         return_string += "Total # of Milestones: "+str(count_of_milestones)+"\n"
 
         return_string += "Memo Milestones:\n"
-        for M in self.memo_milestones__list:
+        for M in self.memo_milestones:
             return_string += str(M)+"\n"
 
         return_string += "Account Milestones:\n"
-        for A in self.account_milestones__list:
+        for A in self.account_milestones:
             return_string += str(A) + "\n"
 
         return_string += "Composite Milestones:\n"
-        for C in self.composite_milestones__list:
+        for C in self.composite_milestones:
             return_string += str(C) + "\n"
 
         return return_string
