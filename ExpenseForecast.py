@@ -2558,7 +2558,7 @@ class ExpenseForecast:
         bal_string = ' '
         for index, row in account_set.getAccounts().iterrows():
             bal_string += '$'+str(row.Balance) + ' '
-        log_in_color(logger,'cyan','debug','ENTER sync_account_set_w_forecast_day(date_YYYYMMDD='+str(date_YYYYMMDD)+')'+bal_string,self.log_stack_depth)
+        log_in_color(logger,'cyan','info','ENTER sync_account_set_w_forecast_day(date_YYYYMMDD='+str(date_YYYYMMDD)+')'+bal_string,self.log_stack_depth)
         # log_in_color(logger,'green','debug','Initial account_set:',self.log_stack_depth)
         # log_in_color(logger,'green', 'debug', account_set.getAccounts().to_string(), self.log_stack_depth)
 
@@ -2596,11 +2596,125 @@ class ExpenseForecast:
         bal_string = ' '
         for index, row in account_set.getAccounts().iterrows():
             bal_string += '$' + str(row.Balance) + ' '
-        log_in_color(logger,'cyan','debug','EXIT sync_account_set_w_forecast_day(date_YYYYMMDD='+str(date_YYYYMMDD)+')'+bal_string,self.log_stack_depth)
+        log_in_color(logger,'cyan','info','EXIT sync_account_set_w_forecast_day(date_YYYYMMDD='+str(date_YYYYMMDD)+')'+bal_string,self.log_stack_depth)
         return account_set
 
-    #propagate into the future and raise exception if account boundaries are violated
+
     def propagateOptimizationTransactionsIntoTheFuture(self, account_set_before_p2_plus_txn, forecast_df, date_string_YYYYMMDD):
+        log_in_color(logger, 'magenta', 'info',
+                     'ENTER propagateOptimizationTransactionsIntoTheFuture(' + str(date_string_YYYYMMDD) + ')',
+                     self.log_stack_depth)
+
+        account_set_after_p2_plus_txn = self.sync_account_set_w_forecast_day(
+            copy.deepcopy(account_set_before_p2_plus_txn), forecast_df, date_string_YYYYMMDD)
+
+        A_df = account_set_after_p2_plus_txn.getAccounts()
+        B_df = account_set_before_p2_plus_txn.getAccounts()
+
+        account_deltas = A_df.Balance - B_df.Balance
+        for i in range(0, len(account_deltas)):
+            account_deltas[i] = round(account_deltas[i], 2)
+            assert account_deltas[i] <= 0  # sanity check
+        account_deltas = pd.DataFrame(account_deltas).T
+
+        future_rows_only_row_sel_vec = [
+            datetime.datetime.strptime(d, '%Y%m%d') > datetime.datetime.strptime(date_string_YYYYMMDD, '%Y%m%d') for d
+            in forecast_df.Date]
+        future_rows_only_df = forecast_df.iloc[future_rows_only_row_sel_vec, :]
+        future_rows_only_df.reset_index(drop=True, inplace=True)
+
+        interest_accrual_dates__list_of_lists = []
+        for a_index, a_row in A_df.iterrows():
+            if a_row.Interest_Cadence is None:
+                interest_accrual_dates__list_of_lists.append([])
+                continue
+            if a_row.Interest_Cadence == 'None':
+                interest_accrual_dates__list_of_lists.append([])
+                continue
+
+            num_days = (datetime.datetime.strptime(self.end_date_YYYYMMDD, '%Y%m%d') - datetime.datetime.strptime(
+                a_row.Billing_Start_Dt, '%Y%m%d')).days
+            account_specific_iad = generate_date_sequence(a_row.Billing_Start_Dt, num_days, a_row.Interest_Cadence)
+            interest_accrual_dates__list_of_lists.append(account_specific_iad)
+
+        for f_i, f_row in future_rows_only_df.iterrows():
+            f_row = pd.DataFrame(f_row).T
+            f_row.reset_index(drop=True,inplace=True)
+
+            for a_i in range(1,forecast_df.shape[1]-1): #left bound is 1 bc skip Date
+                account_row = A_df.iloc[a_i - 1,:]
+
+                if account_deltas.iloc[0, a_i - 1] == 0:
+                    continue  # if no optimization was made, then satisfice does not need to be edited
+
+                if f_i == future_rows_only_df.shape[0]:
+                    continue  # last day of forecast so we can stop
+
+                pass
+
+        i = 0
+        for account_index, account_row in account_set_after_p2_plus_txn.getAccounts().iterrows():
+
+            # if this method has been called on the last day of the forecast, there is no work to do
+            if forecast_df[forecast_df.Date > date_string_YYYYMMDD].empty:
+                break
+
+            if account_deltas.iloc[0, i] == 0:
+                i += 1
+                continue
+
+            # row_sel_vec = (forecast_df.Date > date_string_YYYYMMDD) #only future rows
+            col_sel_vec = (forecast_df.columns == account_row.Name)
+
+            # if not an interest bearing account, we can do this
+            log_in_color(logger, 'white', 'debug', 'account_row.Account_Type: ' + str(account_row.Account_Type))
+            if account_row.Account_Type == 'checking' or account_row.Account_Type == 'principal balance' or account_row.Account_Type == 'curr stmt bal':
+
+                log_in_color(logger, 'magenta', 'info', 'before delta applied:')
+                log_in_color(logger, 'magenta', 'info', future_rows_only_df.to_string())
+                future_rows_only_df.iloc[:, col_sel_vec] += account_deltas.iloc[0, i]
+                log_in_color(logger, 'magenta', 'info', 'after delta applied:')
+                log_in_color(logger, 'magenta', 'info', future_rows_only_df.to_string())
+
+            # check account boundaries
+            min_future_acct_bal = min(future_rows_only_df.loc[:, col_sel_vec].values)
+            max_future_acct_bal = max(future_rows_only_df.loc[:, col_sel_vec].values)
+
+            try:
+                assert account_row.Min_Balance <= min_future_acct_bal
+            except AssertionError:
+                error_msg = "Failure in propagateOptimizationTransactionsIntoTheFuture\n"
+                error_msg += "Account boundaries were violated\n"
+                error_msg += "account_row.Min_Balance <= min_future_acct_bal was not True\n"
+                error_msg += str(account_row.Min_Balance) + " <= " + str(min_future_acct_bal) + '\n'
+                error_msg += future_rows_only_df.to_string()
+                raise ValueError(error_msg)
+
+            try:
+                assert account_row.Max_Balance >= max_future_acct_bal
+            except AssertionError:
+                error_msg = "Failure in propagateOptimizationTransactionsIntoTheFuture\n"
+                error_msg += "Account boundaries were violated\n"
+                error_msg += "account_row.Max_Balance >= max_future_acct_bal was not True\n"
+                error_msg += str(account_row.Max_Balance) + " <= " + str(max_future_acct_bal) + '\n'
+                error_msg += future_rows_only_df.to_string()
+                raise ValueError(error_msg)
+            i += 1
+
+        # log_in_color(logger, 'white', 'debug','forecast before final prop edit')
+        # log_in_color(logger, 'white', 'debug', forecast_df.to_string())
+        forecast_df.iloc[future_rows_only_row_sel_vec, :] = future_rows_only_df
+        # log_in_color(logger, 'white', 'debug', 'forecast after final prop edit')
+        # log_in_color(logger, 'white', 'debug', forecast_df.to_string())
+        log_in_color(logger, 'magenta', 'info', 'AFTER')
+        log_in_color(logger, 'magenta', 'info', forecast_df.to_string())
+        log_in_color(logger, 'magenta', 'info',
+                     'EXIT propagateOptimizationTransactionsIntoTheFuture(' + str(date_string_YYYYMMDD) + ')',
+                     self.log_stack_depth)
+        return forecast_df
+
+    #propagate into the future and raise exception if account boundaries are violated
+    def propagateOptimizationTransactionsIntoTheFuture_v0(self, account_set_before_p2_plus_txn, forecast_df, date_string_YYYYMMDD):
 
         log_in_color(logger,'magenta','info','ENTER propagateOptimizationTransactionsIntoTheFuture('+str(date_string_YYYYMMDD)+')',self.log_stack_depth)
         log_in_color(logger, 'magenta', 'info', 'BEFORE')
@@ -2624,12 +2738,17 @@ class ExpenseForecast:
             account_deltas[i] = round(account_deltas[i],2)
             assert account_deltas[i] <= 0 #sanity check
         account_deltas = pd.DataFrame(account_deltas).T
+        log_in_color(logger, 'magenta', 'info', 'account_deltas:')
+        log_in_color(logger, 'magenta', 'info', account_deltas.to_string())
 
         future_rows_only_row_sel_vec = [
             datetime.datetime.strptime(d, '%Y%m%d') > datetime.datetime.strptime(date_string_YYYYMMDD, '%Y%m%d') for d
             in forecast_df.Date]
         future_rows_only_df = forecast_df.iloc[future_rows_only_row_sel_vec, :]
         future_rows_only_df.reset_index(drop=True,inplace=True)
+
+        log_in_color(logger, 'magenta', 'info', 'sanity check 1')
+        log_in_color(logger, 'magenta', 'info', future_rows_only_df.to_string())
 
         account_base_names = [ a.split(':')[0] for a in A_df.Name ]
 
@@ -2673,7 +2792,9 @@ class ExpenseForecast:
                     # log_in_color(logger, 'white', 'debug', 'f_row:')
                     # log_in_color(logger, 'white', 'debug', f_row.to_string())
                     # log_in_color(logger, 'white', 'debug', 'SET '+str(f_row.Date.iat[0])+', '+account_row.Name+' = '+str(account_row.Balance))
-                    future_rows_only_df.iloc[0, a_i] = account_row.Balance
+
+                    pass
+                    #future_rows_only_df.iloc[0, a_i] = account_row.Balance #todo this is a problem
                     #continue
 
                 #if date range based on account_row.billing_start_dt self.end_date_YYYYMMDD includes and f_row.Date
@@ -3024,8 +3145,11 @@ class ExpenseForecast:
                 if future_rows_only_df.shape[0] == 1:
                     pass #if there only was 1 row, this means we do nothing
                 else:
-
+                    log_in_color(logger, 'magenta', 'info', 'before delta applied:')
+                    log_in_color(logger, 'magenta', 'info', future_rows_only_df.to_string())
                     future_rows_only_df.iloc[:, col_sel_vec] += account_deltas.iloc[0,i]
+                    log_in_color(logger, 'magenta', 'info', 'after delta applied:')
+                    log_in_color(logger, 'magenta', 'info', future_rows_only_df.to_string())
 
                     # #i only wanted to apply the above delta to all except the first row
                     # #not quite sure how to do that so this is fine
@@ -3356,6 +3480,11 @@ class ExpenseForecast:
     def computeOptimalForecast(self, start_date_YYYYMMDD, end_date_YYYYMMDD, confirmed_df, proposed_df, deferred_df, skipped_df, account_set, memo_rule_set, raise_satisfice_failed_exception=True):
         log_in_color(logger,'cyan','info','ENTER computeOptimalForecast()',self.log_stack_depth)
         self.log_stack_depth += 1
+
+        confirmed_df.reset_index(drop=True,inplace=True)
+        proposed_df.reset_index(drop=True,inplace=True)
+        deferred_df.reset_index(drop=True,inplace=True)
+        skipped_df.reset_index(drop=True,inplace=True)
 
         log_in_color(logger, 'cyan', 'info', 'confirmed_df:', self.log_stack_depth)
         log_in_color(logger, 'cyan', 'info', confirmed_df.to_string(), self.log_stack_depth)
