@@ -101,18 +101,19 @@ from log_methods import log_in_color_with_breadcrumbs
 
 if __name__ == '__main__':
 
-    rerun = True
+    rerun = False
 
     if rerun:
+
         start_date_YYYYMMDD = '20240101'
         end_date_YYYYMMDD = '20240205'
 
         A = AccountSet.AccountSet([])
         A.createAccount('Checking', 5000, 0, 999999, 'checking')
         #A.createAccount('Credit', 1000, 0,   999999, 'credit', '20240103', 'compound', 0.24, 'monthly', 60, 1000)
-        A.createAccount('Loan A', 5000, 0, 999999, 'loan', '20230103', 'simple', 0.1, 'daily', 50, None, 5000, 0)
-        A.createAccount('Loan B', 5000, 0, 999999, 'loan', '20230103', 'simple', 0.05, 'daily', 50, None, 5000, 0)
-        A.createAccount('Loan C', 5000, 0, 999999, 'loan', '20230103', 'simple', 0.01, 'daily', 50, None, 5000, 0)
+        A.createAccount('Loan A', 1100, 0, 999999, 'loan', '20230103', 'simple', 0.1, 'daily', 50, None, 1000, 100)
+        A.createAccount('Loan B', 1100, 0, 999999, 'loan', '20230103', 'simple', 0.05, 'daily', 50, None, 1000, 100)
+        A.createAccount('Loan C', 1100, 0, 999999, 'loan', '20230103', 'simple', 0.01, 'daily', 50, None, 1000, 100)
 
 
 
@@ -120,7 +121,7 @@ if __name__ == '__main__':
         B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 30, 'SPEND food', False, False)
         B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'semiweekly', 1500, 'income', False, False)
         #B.addBudgetItem('20240103', end_date_YYYYMMDD, 6, 'monthly', 500, 'additional cc payment', False, True)
-        B.addBudgetItem('20240103', end_date_YYYYMMDD, 7, 'monthly', 500, 'additional loan payment', False, True)
+        B.addBudgetItem('20240103', end_date_YYYYMMDD, 7, 'semiweekly', 1500, 'additional loan payment', False, True)
 
         M = MemoRuleSet.MemoRuleSet([])
         M.addMemoRule('.*income.*', None, 'Checking', 1)
@@ -151,18 +152,20 @@ if __name__ == '__main__':
                                             MS)
         E1.runForecast()
     else:
-        E1 = ExpenseForecast.initialize_from_json_file('./out/Forecast__046967__2024_01_04__05_52_06.json')
+        E1 = ExpenseForecast.initialize_from_json_file('./out/Forecast__032966__2024_01_05__18_40_58.json')
 
     E1.appendSummaryLines()
 
-
-    #E2 = ExpenseForecast.initialize_from_json_file('./out/Forecast__064647__2023_12_31__02_51_40.json')
-    #E2.appendSummaryLines()
+    # Forecast__032966__2024_01_05__18_40_58.json - the below but sans 1 payment
+    # Forecast__061883__2024_01_05__18_48_40.json - paid off loans
+    #
+    E2 = ExpenseForecast.initialize_from_json_file('./out/Forecast__061883__2024_01_05__18_48_40.json')
+    E2.appendSummaryLines()
 
     F = ForecastHandler.ForecastHandler()
-    F.generateHTMLReport(E1,'./out/')
+    #F.generateHTMLReport(E1,'./out/')
 
-    #F.generateCompareTwoForecastsHTMLReport(E1,E2,'./out/')
+    F.generateCompareTwoForecastsHTMLReport(E1,E2,'./out/')
 
     # log_color_stack = []
     # log_in_color_with_breadcrumbs(logger, 'red','debug','red log message')

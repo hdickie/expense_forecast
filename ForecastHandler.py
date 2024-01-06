@@ -524,8 +524,8 @@ class ForecastHandler:
         assert E1.forecast_df.shape[0] == E2.forecast_df.shape[0]
         num_days = E1.forecast_df.shape[0]
 
-        report_1_initial_networth = E1.forecast_df.head(1)['NetWorth'].iat[0]
-        report_1_final_networth = E1.forecast_df.tail(1)['NetWorth'].iat[0]
+        report_1_initial_networth = E1.forecast_df.head(1)['Net Worth'].iat[0]
+        report_1_final_networth = E1.forecast_df.tail(1)['Net Worth'].iat[0]
         report_1_networth_delta = report_1_final_networth - report_1_initial_networth
         report_1_avg_networth_change = round(report_1_networth_delta / float(E1.forecast_df.shape[0]), 2)
 
@@ -534,8 +534,8 @@ class ForecastHandler:
         else:
             report_1_networth_rose_or_fell = "fell"
 
-        report_2_initial_networth = E2.forecast_df.head(1)['NetWorth'].iat[0]
-        report_2_final_networth = E2.forecast_df.tail(1)['NetWorth'].iat[0]
+        report_2_initial_networth = E2.forecast_df.head(1)['Net Worth'].iat[0]
+        report_2_final_networth = E2.forecast_df.tail(1)['Net Worth'].iat[0]
         report_2_networth_delta = report_2_final_networth - report_2_initial_networth
         report_2_avg_networth_change = round(report_2_networth_delta / float(E1.forecast_df.shape[0]), 2)
 
@@ -824,7 +824,7 @@ class ForecastHandler:
                 </head>
                 <body>
                 <h1>Expense Forecast Report #""" + str(report_1_id) + """ vs. #"""+str(report_2_id)+"""</h1>
-                <p>""" + E1.start_date_YYYYMMDD + """ to """ + E1.end_date_YYYYMMDD + """</p>
+                <p>""" + datetime.datetime.strptime(E1.start_date_YYYYMMDD,'%Y%m%d').strftime('%Y-%m-%d') + """ to """ + datetime.datetime.strptime(E1.end_date_YYYYMMDD,'%Y%m%d').strftime('%Y-%m-%d') + """</p>
 
                 <!-- Tab links -->
                 <div class="tab">
@@ -1336,6 +1336,7 @@ class ForecastHandler:
         min_date = min([ datetime.datetime.strptime(d,'%Y%m%d') for d in E1.forecast_df.Date])
         max_date = max([ datetime.datetime.strptime(d,'%Y%m%d') for d in E1.forecast_df.Date])
         plt.title('Forecast 1 #' + E1.unique_id + ' vs. Forecast 2 #'+E2.unique_id+': ' + str(min_date) + ' -> ' + str(max_date))
+        plt.xticks(rotation=90)
         plt.savefig(output_path)
 
     def plotNetWorthComparison(self, E1, E2, output_path):
@@ -1382,6 +1383,7 @@ class ForecastHandler:
         min_date = min([datetime.datetime.strptime(d, '%Y%m%d') for d in E1.forecast_df.Date])
         max_date = max([datetime.datetime.strptime(d, '%Y%m%d') for d in E1.forecast_df.Date])
         plt.title('Forecast 1 #' + E1.unique_id + ' vs. Forecast 2 #' + E2.unique_id + ': ' + str(min_date) + ' -> ' + str(max_date))
+        plt.xticks(rotation=90)
         plt.savefig(output_path)
 
     def plotAllComparison(self, E1, E2, output_path):
@@ -1452,6 +1454,7 @@ class ForecastHandler:
         min_date = min([datetime.datetime.strptime(d, '%Y%m%d') for d in E1.forecast_df.Date])
         max_date = max([datetime.datetime.strptime(d, '%Y%m%d') for d in E1.forecast_df.Date])
         plt.title('Forecast 1 #'+E1.unique_id+' vs. Forecast 2 #'+E2.unique_id+': ' + str(min_date) + ' -> ' + str(max_date))
+        plt.xticks(rotation=90)
         plt.savefig(output_path)
 
     def plotAccountTypeTotals(self, expense_forecast, output_path):
@@ -1632,7 +1635,7 @@ class ForecastHandler:
         aggregated_df = copy.deepcopy(expense_forecast.forecast_df.loc[:,['Date']])
 
         for account_base_name in account_base_names:
-            col_sel_vec = [ account_base_name == a.split(':')[0] for a in expense_forecast.forecast_df.columns]
+            col_sel_vec = [ account_base_name == a.split(':')[0] for a in expense_forecast.forecast_df.columns ]
             col_sel_vec[0] = True #Date
             relevant_df = expense_forecast.forecast_df.loc[:,col_sel_vec]
 
@@ -1641,8 +1644,10 @@ class ForecastHandler:
             elif relevant_df.shape[1] == 3:  #credit and loan
                 aggregated_df[account_base_name] = relevant_df.iloc[:,1] + relevant_df.iloc[:,2]
 
-        for i in range(1, aggregated_df.shape[1] - 1):
-            plt.plot(aggregated_df['Date'], aggregated_df.iloc[:, i], label=aggregated_df.columns[i])
+            plt.plot(aggregated_df['Date'], aggregated_df[account_base_name], label=account_base_name)
+
+        #for i in range(1, aggregated_df.shape[1] - 1):
+        #   pass
 
         bottom, top = plt.ylim()
         if 0 < bottom:
