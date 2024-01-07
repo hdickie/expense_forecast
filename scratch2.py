@@ -101,7 +101,7 @@ from log_methods import log_in_color_with_breadcrumbs
 
 if __name__ == '__main__':
 
-    rerun = False
+    rerun = True
 
     if rerun:
 

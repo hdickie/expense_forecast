@@ -2604,6 +2604,8 @@ class ExpenseForecast:
         log_in_color(logger, 'magenta', 'info',
                      'ENTER propagateOptimizationTransactionsIntoTheFuture(' + str(date_string_YYYYMMDD) + ')',
                      self.log_stack_depth)
+        log_in_color(logger, 'magenta', 'info', 'BEFORE')
+        log_in_color(logger, 'magenta', 'info', forecast_df.to_string())
 
         account_set_after_p2_plus_txn = self.sync_account_set_w_forecast_day(
             copy.deepcopy(account_set_before_p2_plus_txn), forecast_df, date_string_YYYYMMDD)
@@ -2616,6 +2618,9 @@ class ExpenseForecast:
             account_deltas[i] = round(account_deltas[i], 2)
             assert account_deltas[i] <= 0  # sanity check
         account_deltas = pd.DataFrame(account_deltas).T
+
+        log_in_color(logger, 'magenta', 'info', 'account_deltas:')
+        log_in_color(logger, 'magenta', 'info', account_deltas)
 
         future_rows_only_row_sel_vec = [
             datetime.datetime.strptime(d, '%Y%m%d') > datetime.datetime.strptime(date_string_YYYYMMDD, '%Y%m%d') for d
@@ -2637,6 +2642,8 @@ class ExpenseForecast:
             account_specific_iad = generate_date_sequence(a_row.Billing_Start_Dt, num_days, a_row.Interest_Cadence)
             interest_accrual_dates__list_of_lists.append(account_specific_iad)
 
+        log_in_color(logger, 'white', 'info', 'future_rows_only_df:')
+        log_in_color(logger, 'white', 'info', future_rows_only_df.to_string())
         for f_i, f_row in future_rows_only_df.iterrows():
             f_row = pd.DataFrame(f_row).T
             f_row.reset_index(drop=True,inplace=True)
@@ -2650,7 +2657,55 @@ class ExpenseForecast:
                 if f_i == future_rows_only_df.shape[0]:
                     continue  # last day of forecast so we can stop
 
-                pass
+                pbal_interest_accrual_dates = interest_accrual_dates__list_of_lists[a_i - 2]
+
+                # criterion_1 = str(f_row.Date.iat[0] in interest_accrual_dates__list_of_lists[a_i - 1])
+                # criterion_2 = str(account_row.Account_Type == 'interest')
+                #
+                # log_in_color(logger, 'white', 'info', 'Date:'+str(f_row.Date.iat[0]))
+                # log_in_color(logger, 'white', 'info', 'interest_accrual_dates__list_of_lists:'+str(interest_accrual_dates__list_of_lists[a_i - 1]))
+                # log_in_color(logger, 'white', 'info', 'account type:' + str(account_row.Account_Type))
+                #
+                # log_in_color(logger, 'white', 'info', 'Branch Criteria:' + str(criterion_1) + ' ' + criterion_2)
+
+                if f_row.Date.iat[0] in pbal_interest_accrual_dates and account_row.Account_Type == 'interest':
+
+                    pbal_account_row = A_df.iloc[a_i - 2, :]
+
+                    interest_denominator = -1
+                    if pbal_account_row.Interest_Cadence == 'daily':
+                        interest_denominator = 365.25
+                    elif pbal_account_row.Interest_Cadence == 'weekly':
+                        interest_denominator = 52.18
+                    elif pbal_account_row.Interest_Cadence == 'semiweekly':
+                        interest_denominator = 26.09
+                    elif pbal_account_row.Interest_Cadence == 'monthly':
+                        interest_denominator = 12
+                    elif pbal_account_row.Interest_Cadence == 'yearly':
+                        interest_denominator = 1
+
+                    new_marginal_interest = pbal_account_row.Balance * pbal_account_row.APR / interest_denominator
+
+                    # log_in_color(logger, 'white', 'info', ('(Pbal)').ljust(30, '.') + ':' + str(pbal_account_row.Balance))
+                    # log_in_color(logger, 'white', 'info', ('(APR)').ljust(30, '.') + ':' + str(pbal_account_row.APR))
+                    # log_in_color(logger, 'white', 'info', ('f_i').ljust(30, '.') + ':' + str(f_i))
+                    # log_in_color(logger, 'white', 'info', ('future_rows_only_df.iloc[f_i - 1, a_i]').ljust(30, '.') + ':' + str(future_rows_only_df.iloc[f_i - 1, a_i]))
+                    # log_in_color(logger, 'white', 'info',('(Prev Interest, '+str(f_row.Date.iat[0])+')').ljust(30, '.') + ':' + str(future_rows_only_df.iloc[f_i, a_i]))
+
+                    if f_i == 0:
+                        future_rows_only_df.iloc[f_i, a_i] = account_row.Balance
+                    else:
+                        future_rows_only_df.iloc[f_i, a_i] = future_rows_only_df.iloc[f_i - 1, a_i]
+                    future_rows_only_df.iloc[f_i, a_i] += new_marginal_interest
+                    future_rows_only_df.iloc[f_i, a_i] = round(future_rows_only_df.iloc[f_i, a_i],2)
+
+                    # log_in_color(logger, 'white', 'info','new interest value'.ljust(30, '.') + ':' + str(future_rows_only_df.iloc[f_i, a_i]))
+
+
+
+
+
+
 
         i = 0
         for account_index, account_row in account_set_after_p2_plus_txn.getAccounts().iterrows():
@@ -2668,13 +2723,13 @@ class ExpenseForecast:
 
             # if not an interest bearing account, we can do this
             log_in_color(logger, 'white', 'debug', 'account_row.Account_Type: ' + str(account_row.Account_Type))
-            if account_row.Account_Type == 'checking' or account_row.Account_Type == 'principal balance' or account_row.Account_Type == 'curr stmt bal':
+            if account_row.Account_Type != 'interest': #if pbal was paid as well, this subtraction of a constant would not suffice
 
-                log_in_color(logger, 'magenta', 'info', 'before delta applied:')
-                log_in_color(logger, 'magenta', 'info', future_rows_only_df.to_string())
+                # log_in_color(logger, 'magenta', 'info', 'before delta applied:')
+                # log_in_color(logger, 'magenta', 'info', future_rows_only_df.to_string())
                 future_rows_only_df.iloc[:, col_sel_vec] += account_deltas.iloc[0, i]
-                log_in_color(logger, 'magenta', 'info', 'after delta applied:')
-                log_in_color(logger, 'magenta', 'info', future_rows_only_df.to_string())
+                # log_in_color(logger, 'magenta', 'info', 'after delta applied:')
+                # log_in_color(logger, 'magenta', 'info', future_rows_only_df.to_string())
 
             # check account boundaries
             min_future_acct_bal = min(future_rows_only_df.loc[:, col_sel_vec].values)
@@ -3138,7 +3193,7 @@ class ExpenseForecast:
 
             #if not an interest bearing account, we can do this
             log_in_color(logger,'white','debug','account_row.Account_Type: '+str(account_row.Account_Type))
-            if account_row.Account_Type == 'checking' or account_row.Account_Type == 'principal balance' or account_row.Account_Type == 'curr stmt bal':
+            if account_row.Account_Type != 'interest':
                 #forecast_df.loc[row_sel_vec, col_sel_vec] = forecast_df.loc[row_sel_vec, col_sel_vec] + account_deltas.iloc[0,i]
 
                 #since the first row was already set equal to post txn balances, we skip the first row
@@ -4313,19 +4368,11 @@ if __name__ == "__main__":
 
 # TODO
 # Failed Tests
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_transactions_executed_at_p1_and_p2_and_p3-account_set18-budget_set18-memo_rule_set18-20000101-20000106-milestone_set18-expected_result_df18]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_10-account_set19-budget_set19-memo_rule_set19-20000101-20000103-milestone_set19-expected_result_df19]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_110-account_set20-budget_set20-memo_rule_set20-20000101-20000103-milestone_set20-expected_result_df20]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_560-account_set21-budget_set21-memo_rule_set21-20000101-20000103-milestone_set21-expected_result_df21]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_610-account_set22-budget_set22-memo_rule_set22-20000101-20000103-milestone_set22-expected_result_df22]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_1900-account_set23-budget_set23-memo_rule_set23-20000101-20000103-milestone_set23-expected_result_df23]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_overpay-account_set24-budget_set24-memo_rule_set24-20000101-20000103-milestone_set24-expected_result_df24]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_deferrals[test_p5_and_6__expect_defer-account_set0-budget_set0-memo_rule_set0-20000101-20000103-milestone_set0-expected_result_df0-p6 deferrable txn 1/2/00-None]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_deferrals[test_p5_and_6__expect_defer__daily-account_set1-budget_set1-memo_rule_set1-20000101-20000103-milestone_set1-expected_result_df1-p6 deferrable txn 1/2/00 ($1000.0)-20000103]
+
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_dont_recompute_past_days_for_p2plus_transactions - NotImplementedError
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_run_from_excel_at_path - assert ['ExpenseFore...Payment', ...] == ['ExpenseFore...Payment', ...]
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_forecast_longer_than_satisfice - AttributeError: 'bool' object has no attribute 'shape'
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_minimum_loan_payments - assert 3.7 == 0
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_minimum_loan_payments - assert 119700.94 == 0
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_interest_types_and_cadences_at_most_monthly - NotImplementedError
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_quarter_and_year_long_interest_cadences - NotImplementedError
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_summary_lines - AssertionError
@@ -4336,11 +4383,15 @@ if __name__ == "__main__":
 
 
 
+
+
+
 # Have to Have
 # correct memo of future min loan payments when there are past additional loan payments
 # marginal interest calculation in few days after additional loan payments seems wrong (too low)
 # Marginal interest does not remove the influence of payment
 # account milestones for cc and loans need to take both accounts into consideration
+# semiweekly date sequence does not have the correct offset
 
 # Nice to Have
 # Display Budget Schedule as well or instead of BudgetSet

@@ -857,7 +857,7 @@ class TestExpenseForecastMethods:
                     'Loan B: Interest': [100, 50.14, 50.28],
                     'Loan C: Principal Balance': [1000, 1000, 1000],
                     'Loan C: Interest': [100, 50.03, 50.06],
-                    'Memo': ['', 'loan min payment (Loan A: Interest -$50.0); loan min payment (Loan B: Interest -$50.0); loan min payment (Loan C: Interest -$50.0); additional loan payment (Loan A: Interest -$10.0); ', '']
+                    'Memo': ['', 'loan min payment (Loan A: Interest -$50.0);  loan min payment (Loan B: Interest -$50.0);  loan min payment (Loan C: Interest -$50.0);  additional loan payment (Loan A: Interest -$10.0);', '']
                 })
         ),
 
@@ -884,7 +884,7 @@ class TestExpenseForecastMethods:
              'Loan B: Interest': [100, 50.14, 50.28],
              'Loan C: Principal Balance': [1000, 1000, 1000],
              'Loan C: Interest': [100, 50.03, 50.06],
-             'Memo': ['', 'Loan A loan min payment ($50.0); Loan B loan min payment ($50.0); Loan C loan min payment ($50.0); Loan A: Principal Balance additional loan payment ($59.73) ; Loan A: Interest additional loan payment ($50.27) ;    loan min payment (Loan A: Interest -$50.0);  loan min payment (Loan B: Interest -$50.0);  loan min payment (Loan C: Interest -$50.0);  additional loan payment (Loan A: Principal Balance -$59.73);  additional loan payment (Loan A: Interest -$50.27);', '']
+             'Memo': ['', 'loan min payment (Loan A: Interest -$50.0);  loan min payment (Loan B: Interest -$50.0);  loan min payment (Loan C: Interest -$50.0);  additional loan payment (Loan A: Principal Balance -$59.73);  additional loan payment (Loan A: Interest -$50.27);', '']
          })
          ),
 
@@ -969,7 +969,7 @@ class TestExpenseForecastMethods:
              'Loan B: Interest': [100, 0, 0.03],
              'Loan C: Principal Balance': [1000, 972.57, 972.57],
              'Loan C: Interest': [100, 0, 0.03],
-             'Memo': ['', '2000-01-02  Loan A loan min payment ($50.0); Loan B loan min payment ($50.0); Loan C loan min payment ($50.0); Loan A: Principal Balance additional loan payment ($907.38) ; Loan A: Interest additional loan payment ($50.27) ; Loan B: Principal Balance additional loan payment ($814.75) ; Loan B: Interest additional loan payment ($50.14) ; Loan C: Principal Balance additional loan payment ($27.43) ; Loan C: Interest additional loan payment ($50.03) ;    loan min payment (Loan A: Interest -$50.0);  loan min payment (Loan B: Interest -$50.0);  loan min payment (Loan C: Interest -$50.0);  additional loan payment (Loan A: Principal Balance -$907.38);  additional loan payment (Loan A: Interest -$50.27);  additional loan payment (Loan B: Principal Balance -$814.75);  additional loan payment (Loan B: Interest -$50.14);  additional loan payment (Loan C: Principal Balance -$27.43);  additional loan payment (Loan C: Interest -$50.03);', '']
+             'Memo': ['', 'loan min payment (Loan A: Interest -$50.0);  loan min payment (Loan B: Interest -$50.0);  loan min payment (Loan C: Interest -$50.0);  additional loan payment (Loan A: Principal Balance -$907.38);  additional loan payment (Loan A: Interest -$50.27);  additional loan payment (Loan B: Principal Balance -$814.75);  additional loan payment (Loan B: Interest -$50.14);  additional loan payment (Loan C: Principal Balance -$27.43);  additional loan payment (Loan C: Interest -$50.03);', '']
          })
          ),
 
@@ -997,7 +997,7 @@ class TestExpenseForecastMethods:
              'Loan B: Interest': [100, 0, 0],
              'Loan C: Principal Balance': [1000, 0, 0],
              'Loan C: Interest': [100, 0, 0],
-             'Memo': ['', 'Loan A loan min payment ($50.0); Loan B loan min payment ($50.0); Loan C loan min payment ($50.0); Loan A: Principal Balance additional loan payment ($1000.0) ; Loan A: Interest additional loan payment ($50.27) ; Loan B: Principal Balance additional loan payment ($1000.0) ; Loan B: Interest additional loan payment ($50.14) ; Loan C: Principal Balance additional loan payment ($1000.0) ; Loan C: Interest additional loan payment ($50.03) ;    loan min payment (Loan A: Interest -$50.0);  loan min payment (Loan B: Interest -$50.0);  loan min payment (Loan C: Interest -$50.0);  additional loan payment (Loan A: Principal Balance -$1000.0);  additional loan payment (Loan A: Interest -$50.27);  additional loan payment (Loan B: Principal Balance -$1000.0);  additional loan payment (Loan B: Interest -$50.14);  additional loan payment (Loan C: Principal Balance -$1000.0);  additional loan payment (Loan C: Interest -$50.03);', '']
+             'Memo': ['', 'loan min payment (Loan A: Interest -$50.0);  loan min payment (Loan B: Interest -$50.0);  loan min payment (Loan C: Interest -$50.0);  additional loan payment (Loan A: Principal Balance -$1000.0);  additional loan payment (Loan A: Interest -$50.27);  additional loan payment (Loan B: Principal Balance -$1000.0);  additional loan payment (Loan B: Interest -$50.14);  additional loan payment (Loan C: Principal Balance -$1000.0);  additional loan payment (Loan C: Interest -$50.03);', '']
          })
          ),
 
@@ -1050,7 +1050,7 @@ class TestExpenseForecastMethods:
             pd.DataFrame({
                 'Date': ['20000101', '20000102', '20000103'],
                 'Checking': [1000, 900, 900],
-                'Memo': ['', 'p5 txn 1/2/00 ($100.0) ; ', '']
+                'Memo': ['', 'p5 txn 1/2/00 (Checking -$100.0);', '']
             }),
             'p6 deferrable txn 1/2/00',
             None #deferred but never executed
@@ -1075,9 +1075,9 @@ class TestExpenseForecastMethods:
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103'],
                     'Checking': [1000, 900, 0],
-                    'Memo': ['', 'p5 txn 1/2/00 ($100.0) ; ', 'income 1/3/00 ($100.0) ; p6 deferrable txn 1/2/00 ($1000.0) ; ']
+                    'Memo': ['', 'p5 txn 1/2/00 (Checking -$100.0); ', 'income 1/3/00 (Checking +$100.0); p6 deferrable txn 1/2/00 (Checking -$1000.0);']
                 }),
-                'p6 deferrable txn 1/2/00 ($1000.0)',
+                'p6 deferrable txn 1/2/00 (Checking -$1000.0)',
                 '20000103'
         ),
 
@@ -1669,7 +1669,7 @@ class TestExpenseForecastMethods:
                                   min_balance=0,
                                   max_balance=float("inf"),
                                   account_type="loan",
-                                  billing_start_date_YYYYMMDD='20000102',
+                                  billing_start_date_YYYYMMDD='20000202',
                                   interest_type='simple',
                                   apr=0.05,
                                   interest_cadence='daily',
@@ -1684,7 +1684,7 @@ class TestExpenseForecastMethods:
                                   min_balance=0,
                                   max_balance=float("inf"),
                                   account_type="loan",
-                                  billing_start_date_YYYYMMDD='20000102',
+                                  billing_start_date_YYYYMMDD='20000202',
                                   interest_type='simple',
                                   apr=0.05,
                                   interest_cadence='daily',
@@ -1699,7 +1699,7 @@ class TestExpenseForecastMethods:
                                   min_balance=0,
                                   max_balance=float("inf"),
                                   account_type="loan",
-                                  billing_start_date_YYYYMMDD='20000102',
+                                  billing_start_date_YYYYMMDD='20000202',
                                   interest_type='simple',
                                   apr=0.05,
                                   interest_cadence='daily',
@@ -1714,7 +1714,7 @@ class TestExpenseForecastMethods:
                                   min_balance=0,
                                   max_balance=float("inf"),
                                   account_type="loan",
-                                  billing_start_date_YYYYMMDD='20000102',
+                                  billing_start_date_YYYYMMDD='20000202',
                                   interest_type='simple',
                                   apr=0.12,
                                   interest_cadence='daily',
@@ -1729,7 +1729,7 @@ class TestExpenseForecastMethods:
                                   min_balance=0,
                                   max_balance=float("inf"),
                                   account_type="loan",
-                                  billing_start_date_YYYYMMDD='20000102',
+                                  billing_start_date_YYYYMMDD='20000202',
                                   interest_type='simple',
                                   apr=0.12,
                                   interest_cadence='daily',
@@ -2261,9 +2261,44 @@ class TestExpenseForecastMethods:
                 raise e
 
 
-    def test_propagateOptimizationTransactionsIntoTheFuture(self):
-        # account_set_before_p2_plus_txn, forecast_df, date_string_YYYYMMDD
-        pass
+    def test_multiple_additional_loan_payments(self):
+        start_date_YYYYMMDD = '20240101'
+        end_date_YYYYMMDD = '20240205'
+
+        A = AccountSet.AccountSet([])
+        A.createAccount('Checking', 5000, 0, 999999, 'checking')
+        A.createAccount('Loan A', 1100, 0, 999999, 'loan', '20230103', 'simple', 0.1, 'daily', 50, None, 1000, 100)
+        A.createAccount('Loan B', 1100, 0, 999999, 'loan', '20230103', 'simple', 0.05, 'daily', 50, None, 1000, 100)
+        A.createAccount('Loan C', 1100, 0, 999999, 'loan', '20230103', 'simple', 0.01, 'daily', 50, None, 1000, 100)
+
+        B = BudgetSet.BudgetSet([])
+        B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 30, 'SPEND food', False, False)
+        B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'semiweekly', 1500, 'income', False, False)
+        B.addBudgetItem('20240103', end_date_YYYYMMDD, 7, 'semiweekly', 1500, 'additional loan payment', False, True)
+
+        M = MemoRuleSet.MemoRuleSet([])
+        M.addMemoRule('.*income.*', None, 'Checking', 1)
+        M.addMemoRule('SPEND.*', 'Checking', None, 1)
+        M.addMemoRule('additional loan payment', 'Checking', 'ALL_LOANS', 7)
+
+        A1 = AccountMilestone.AccountMilestone('Loan A 0', 'Loan A', 0, 0)
+        A2 = AccountMilestone.AccountMilestone('Loan A 1000', 'Loan A', 1000, 1000)
+        A3 = AccountMilestone.AccountMilestone('Loan B 0', 'Loan B', 0, 0)
+        A4 = AccountMilestone.AccountMilestone('Loan B 1000', 'Loan B', 1000, 1000)
+        A5 = AccountMilestone.AccountMilestone('Loan C 0', 'Loan C', 0, 0)
+        A6 = AccountMilestone.AccountMilestone('Loan C 1000', 'Loan C', 1000, 1000)
+
+        CM1 = CompositeMilestone.CompositeMilestone('All 1k', [A2, A4, A6], [])
+
+        MS = MilestoneSet.MilestoneSet(A, B, [A1, A2, A3, A4, A5, A6], [], [CM1])
+
+        E = ExpenseForecast.ExpenseForecast(A,
+                                             B,
+                                             M,
+                                             start_date_YYYYMMDD,
+                                             end_date_YYYYMMDD,
+                                             MS)
+
 
 ###tests to implement
 #initialize from json  prev tmt bal acct first in list and interest acct first in list (this does not happen programmatically) (this functionality is not yet supported)
