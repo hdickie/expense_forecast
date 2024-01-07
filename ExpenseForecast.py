@@ -558,22 +558,11 @@ class ExpenseForecast:
         self.initial_budget_set = copy.deepcopy(budget_set)
         self.initial_memo_rule_set = copy.deepcopy(memo_rule_set)
 
-        # forecast_df = self.getInitialForecastRow()
-        #
-        # deferred_df = pd.DataFrame(
-        #     {'Date': [], 'Priority': [], 'Amount': [], 'Memo': [], 'Deferrable': [], 'Partial_Payment_Allowed': []})
-        # skipped_df = pd.DataFrame(
-        #     {'Date': [], 'Priority': [], 'Amount': [], 'Memo': [], 'Deferrable': [], 'Partial_Payment_Allowed': []})
-        # confirmed_df = pd.DataFrame(
-        #     {'Date': [], 'Priority': [], 'Amount': [], 'Memo': [], 'Deferrable': [], 'Partial_Payment_Allowed': []})
-
         self.log_stack_depth = 0
 
         proposed_df = budget_set.getBudgetSchedule(start_date_YYYYMMDD, end_date_YYYYMMDD)
 
-        #lb_sel_vec = (datetime.datetime.strptime(self.start_date_YYYYMMDD, '%Y%m%d') <= datetime.datetime.strptime(proposed_df.Date, '%Y%m%d'))
         lb_sel_vec = [ datetime.datetime.strptime(self.start_date_YYYYMMDD, '%Y%m%d') <= datetime.datetime.strptime(d, '%Y%m%d') for d in proposed_df.Date ]
-        #rb_sel_vec = (datetime.datetime.strptime(proposed_df.Date, '%Y%m%d') <= datetime.datetime.strptime(str(end_date_YYYYMMDD), '%Y%m%d'))
         rb_sel_vec = [ datetime.datetime.strptime(d, '%Y%m%d') <= datetime.datetime.strptime(self.end_date_YYYYMMDD, '%Y%m%d') for d in proposed_df.Date ]
 
         proposed_df = proposed_df.iloc[lb_sel_vec and rb_sel_vec,:]
@@ -597,7 +586,7 @@ class ExpenseForecast:
         start_date_hash = int(start_date_YYYYMMDD)
         end_date_hash = int(end_date_YYYYMMDD)
 
-        #
+
         # print('HASH CALCULATION:')
         # print('account hash:'+str(account_hash))
         # print('budget hash:'+str(budget_hash))
@@ -607,7 +596,7 @@ class ExpenseForecast:
 
 
         self.unique_id = str(hash( int(account_hash,16) + int(budget_hash,16) + int(memo_hash,16) + start_date_hash + end_date_hash ) % 100000).rjust(6,'0')
-        #
+
         # print("unique_id:"+str(self.unique_id))
         # print("")
 
@@ -621,6 +610,57 @@ class ExpenseForecast:
         self.account_milestone_results = []
         self.memo_milestone_results = []
         self.composite_milestone_results = []
+
+    def evaluateMilestones(self):
+
+        account_milestone_results = {}
+        for a_m in self.milestone_set.account_milestones:
+            res = self.evaluateAccountMilestone(a_m.account_name, a_m.min_balance, a_m.max_balance)
+            account_milestone_results[a_m.milestone_name] = res
+        self.account_milestone_results = account_milestone_results
+
+        memo_milestone_results = {}
+        for m_m in self.milestone_set.memo_milestones:
+            res = self.evaulateMemoMilestone(m_m.memo_regex)
+            memo_milestone_results[m_m.milestone_name] = res
+        self.memo_milestone_results = memo_milestone_results
+
+        composite_milestone_results = {}
+        for c_m in self.milestone_set.composite_milestones:
+            res = self.evaluateCompositeMilestone(self.milestone_set.account_milestones,
+                                                  self.milestone_set.memo_milestones)
+            composite_milestone_results[c_m.milestone_name] = res
+        self.composite_milestone_results = composite_milestone_results
+
+    def getAccountMilestoneResultsDF(self):
+        return_df = pd.DataFrame({'Milestone_Name':[],'Date':[]})
+        for key, value in self.account_milestone_results.items():
+            try:
+                value = datetime.datetime.strptime(value, '%Y%m%d')
+            except:
+                value = None
+            return_df = pd.concat([return_df, pd.DataFrame({'Milestone_Name':[key],'Date':[ value ] })])
+        return return_df
+
+    def getMemoMilestoneResultsDF(self):
+        return_df = pd.DataFrame({'Milestone_Name': [], 'Date': []})
+        for key, value in self.memo_milestone_results.items():
+            try:
+                value = datetime.datetime.strptime(value, '%Y%m%d')
+            except:
+                value = None
+            return_df = pd.concat([return_df, pd.DataFrame({'Milestone_Name': [key], 'Date': [value]})])
+        return return_df
+
+    def getCompositeMilestoneResultsDF(self):
+        return_df = pd.DataFrame({'Milestone_Name': [], 'Date': []})
+        for key, value in self.composite_milestone_results.items():
+            try:
+                value = datetime.datetime.strptime(value, '%Y%m%d')
+            except:
+                value = None
+            return_df = pd.concat([return_df, pd.DataFrame({'Milestone_Name': [key], 'Date': [value]})])
+        return return_df
 
     def appendSummaryLines(self):
         #todo incorporate savings
@@ -759,30 +799,7 @@ class ExpenseForecast:
 
         self.end_ts = datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S')
 
-        #account_milestone_results = []
-        account_milestone_results = {}
-        for a_m in self.milestone_set.account_milestones:
-            res = self.evaluateAccountMilestone(a_m.account_name, a_m.min_balance, a_m.max_balance)
-            #account_milestone_results.append((a_m.milestone_name, res))
-            account_milestone_results[a_m.milestone_name] = res
-        self.account_milestone_results = account_milestone_results
-
-        #memo_milestone_results = []
-        memo_milestone_results = {}
-        for m_m in self.milestone_set.memo_milestones:
-            res = self.evaulateMemoMilestone(m_m.memo_regex)
-            #memo_milestone_results.append((m_m.milestone_name, res))
-            memo_milestone_results[m_m.milestone_name] = res
-        self.memo_milestone_results = memo_milestone_results
-
-        #composite_milestone_results = []
-        composite_milestone_results = {}
-        for c_m in self.milestone_set.composite_milestones:
-            res = self.evaluateCompositeMilestone(self.milestone_set.account_milestones,
-                                                  self.milestone_set.memo_milestones)
-            #composite_milestone_results.append((c_m.milestone_name, res))
-            composite_milestone_results[c_m.milestone_name] = res
-        self.composite_milestone_results = composite_milestone_results
+        self.evaluateMilestones()
 
         log_in_color(logger, 'white', 'debug','Finished Forecast')
 
@@ -1176,7 +1193,7 @@ class ExpenseForecast:
             if not transaction_is_permitted and deferred_row_df.Deferrable:
                 deferred_row_df.Date = (
                             datetime.datetime.strptime(deferred_row_df.Date,
-                                                       '%Y%m%d') + datetime.timedelta(days=1)).strftime('%Y%m%d')
+                                                       '%Y%m%d') + datetime.timedelta(days=5)).strftime('%Y%m%d') #todo deferral cadence
                 #_deferred_df = relevant_deferred_df[    ~relevant_deferred_df.index.isin(deferred_row_df.index)]
 
                 new_deferred_df = pd.concat([new_deferred_df,pd.DataFrame(deferred_row_df).T])
@@ -4372,33 +4389,43 @@ if __name__ == "__main__":
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_dont_recompute_past_days_for_p2plus_transactions - NotImplementedError
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_run_from_excel_at_path - assert ['ExpenseFore...Payment', ...] == ['ExpenseFore...Payment', ...]
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_forecast_longer_than_satisfice - AttributeError: 'bool' object has no attribute 'shape'
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_minimum_loan_payments - assert 119700.94 == 0
+
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_interest_types_and_cadences_at_most_monthly - NotImplementedError
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_quarter_and_year_long_interest_cadences - NotImplementedError
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_summary_lines - AssertionError
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_evaluate_account_milestone[test_account_milestone-account_set0-budget_set0-memo_rule_set0-20000101-20000103-milestone_set0-account_milestone_names0-expected_milestone_dates0]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_evaluate_memo_milestone[test_memo_milestone-account_set0-budget_set0-memo_rule_set0-20000101-20000103-milestone_set0-memo_milestone_names0-expected_milestone_dates0]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_evaluate_composite_milestone[test composite milestone-account_set0-budget_set0-memo_rule_set0-20000101-20000103-milestone_set0-composite_milestone_names0-expected_milestone_dates0]
+
+# for compare, E1 is Forecast_032132
+#
+#
 
 
 
-
-
-
+# New Features
+# Implement ChooseOneSet
 
 # Have to Have
 # correct memo of future min loan payments when there are past additional loan payments
 # marginal interest calculation in few days after additional loan payments seems wrong (too low)
 # Marginal interest does not remove the influence of payment
 # account milestones for cc and loans need to take both accounts into consideration
-# semiweekly date sequence does not have the correct offset
+# output milestone results as table
 
 # Nice to Have
 # Display Budget Schedule as well or instead of BudgetSet
 # Commas in number strings
 # Hyphenated date format in plots
 # if no milestones, draw a plot with text that says that instead
+# Comparing forecasts of different date
+# evaluate new milestones on completed forecasts
+# map colors
+# Handling of point labels on milestone plot. they get chopped off if they are on bound w long label names.
+
+# Speed optimizations
+# multithreading for ChooseOneSet
+# dynamic programming for recursive calls (note: probs best to write temporary files indexed by hash so program doesnt hog ram)
 
 # Big Effort Design Improvements
 # Atm (1/5/2024), an account 'Checking' is hard coded. This should be replaced by an input parameter
 #    allowing one of potentially multiple checking accounts to be marked as 'primary' and used for these operations
+# Implement deferral cadence parameter
+# Does MilestoneSet need to take AccountSet and BudgetSet as arguments?

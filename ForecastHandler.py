@@ -310,18 +310,6 @@ class ForecastHandler:
         MM = expense_forecast.memo_milestone_results
         CM = expense_forecast.composite_milestone_results
 
-        # print('AM:')
-        # print(AM)
-        # print('MM:')
-        # print(MM)
-        # print('CM:')
-        # print(CM)
-
-        # total_not_None_account_milestone_dates = sum([ x is not None for x in AM ])
-        # total_not_None_memo_milestone_dates = sum([ x is not None for x in MM ])
-        # total_not_None_composite_milestone_dates = sum([ x is not None for x in CM ])
-        # total_not_None_milestone_dates = total_not_None_account_milestone_dates + total_not_None_memo_milestone_dates + total_not_None_composite_milestone_dates
-
         data_x = []
         data_y = []
         date_counter = 0
@@ -379,8 +367,11 @@ class ForecastHandler:
         for i, txt in enumerate(all_keys):
             ax.annotate(txt, (data_x[i], data_y[i]))
 
-        left = max(left_int_ts, left)
-        right = min(right_int_ts, right)
+        #left = min(left_int_ts, left)
+        #right = max(right_int_ts, right)
+
+        left = left_int_ts
+        right = right_int_ts
 
         plt.xlim(left,right)
 
@@ -418,6 +409,8 @@ class ForecastHandler:
 
         report_1_id = E1.unique_id
         report_2_id = E2.unique_id
+
+        report_file_name = 'compare_'+str(report_1_id)+'_'+str(report_2_id)
 
         report_1_start_ts__datetime = datetime.datetime.strptime(E1.start_ts, '%Y_%m_%d__%H_%M_%S')
         report_1_end_ts__datetime = datetime.datetime.strptime(E1.end_ts, '%Y_%m_%d__%H_%M_%S')
@@ -748,31 +741,31 @@ class ForecastHandler:
             all_text+=line
 
 
-        report_1_networth_line_plot_path = output_dir + report_1_id + '_networth_line_plot.png'
-        report_1_accounttype_line_plot_path = output_dir + report_1_id + '_accounttype_line_plot_plot.png'
-        report_1_all_line_plot_path = output_dir + report_1_id + '_all_line_plot.png'
+        report_1_networth_line_plot_path = report_1_id + '_networth_line_plot.png'
+        report_1_accounttype_line_plot_path = report_1_id + '_accounttype_line_plot_plot.png'
+        report_1_all_line_plot_path = report_1_id + '_all_line_plot.png'
 
-        report_2_networth_line_plot_path = output_dir + report_2_id + '_networth_line_plot.png'
-        report_2_accounttype_line_plot_path = output_dir + report_2_id + '_accounttype_line_plot_plot.png'
-        report_2_all_line_plot_path = output_dir + report_2_id + '_all_line_plot.png'
+        report_2_networth_line_plot_path = report_2_id + '_networth_line_plot.png'
+        report_2_accounttype_line_plot_path = report_2_id + '_accounttype_line_plot_plot.png'
+        report_2_all_line_plot_path = report_2_id + '_all_line_plot.png'
 
-        account_type_comparison_plot_path = output_dir + report_1_id + '_vs_' + report_2_id + '_account_type_comparison_plot.png'
-        networth_comparison_plot_path = output_dir + report_1_id + '_vs_' + report_2_id + '_networth_comparison_plot.png'
-        all_comparison_plot_path = output_dir + report_1_id + '_vs_' + report_2_id + '_all_comparison_plot.png'
+        account_type_comparison_plot_path = report_1_id + '_vs_' + report_2_id + '_account_type_comparison_plot.png'
+        networth_comparison_plot_path = report_1_id + '_vs_' + report_2_id + '_networth_comparison_plot.png'
+        all_comparison_plot_path = report_1_id + '_vs_' + report_2_id + '_all_comparison_plot.png'
 
 
 
-        self.plotAll(E1,report_1_all_line_plot_path)
-        self.plotNetWorth(E1,report_1_networth_line_plot_path)
-        self.plotAccountTypeTotals(E1,report_1_accounttype_line_plot_path)
+        self.plotAll(E1,output_dir + report_1_all_line_plot_path)
+        self.plotNetWorth(E1,output_dir + report_1_networth_line_plot_path)
+        self.plotAccountTypeTotals(E1,output_dir + report_1_accounttype_line_plot_path)
 
-        self.plotAll(E2, report_2_all_line_plot_path)
-        self.plotNetWorth(E2, report_2_networth_line_plot_path)
-        self.plotAccountTypeTotals(E2, report_2_accounttype_line_plot_path)
+        self.plotAll(E2, output_dir + report_2_all_line_plot_path)
+        self.plotNetWorth(E2, output_dir + report_2_networth_line_plot_path)
+        self.plotAccountTypeTotals(E2, output_dir + report_2_accounttype_line_plot_path)
 
-        self.plotAccountTypeComparison(E1,E2,account_type_comparison_plot_path)
-        self.plotNetWorthComparison(E1, E2, networth_comparison_plot_path)
-        self.plotAllComparison(E1, E2, all_comparison_plot_path)
+        self.plotAccountTypeComparison(E1,E2, output_dir + account_type_comparison_plot_path)
+        self.plotNetWorthComparison(E1, E2, output_dir + networth_comparison_plot_path)
+        self.plotAllComparison(E1, E2, output_dir + all_comparison_plot_path)
 
 
 
@@ -835,7 +828,7 @@ class ForecastHandler:
                   <button class="tablinks" onclick="openTab(event, 'Interest')">Interest</button>
                   <button class="tablinks" onclick="openTab(event, 'Milestone')">Milestone</button>
                   <button class="tablinks" onclick="openTab(event, 'All')">All</button>
-                  <button class="tablinks" onclick="openTab(event, 'OutputData')">Output Data</button>
+                  <button class="tablinks" onclick="openTab(event, 'ForecastResults')">Forecast Results</button>
                 </div>
 
                 <!-- Tab content -->
@@ -891,8 +884,8 @@ class ForecastHandler:
                   <img src=\"""" + report_2_all_line_plot_path + """\">
                 </div>
                 
-                <div id="OutputData" class="tabcontent">
-                  <h3>Output Data</h3>
+                <div id="ForecastResults" class="tabcontent">
+                  <h3>Forecast Results</h3>
                   <p>""" + summary_text + """</p>
                   <p>The visualized data are below:</p>
                   <h4>Forecast 1 #"""+str(E1.unique_id)+""":</h4>
@@ -934,7 +927,7 @@ class ForecastHandler:
 
                 """
 
-        with open('out.html', 'w') as f:
+        with open(output_dir+report_file_name+'.html', 'w') as f:
             f.write(html_body)
 
     def generateHTMLReport(self,E,output_dir='./'):
@@ -943,6 +936,8 @@ class ForecastHandler:
         end_date = datetime.datetime.strptime(E.end_date_YYYYMMDD,'%Y%m%d').strftime('%Y-%m-%d')
 
         report_id = E.unique_id
+
+        output_file_name = 'Forecast_'+str(report_id)
 
         start_ts__datetime = datetime.datetime.strptime(E.start_ts,'%Y_%m_%d__%H_%M_%S')
         end_ts__datetime = datetime.datetime.strptime(E.end_ts, '%Y_%m_%d__%H_%M_%S')
@@ -977,9 +972,9 @@ class ForecastHandler:
         These composite milestones are defined:"""+E.milestone_set.getCompositeMilestonesDF().to_html()+"""
         """
 
-        initial_networth=E.forecast_df.head(1)['Net Worth'].iat[0]
-        final_networth=E.forecast_df.tail(1)['Net Worth'].iat[0]
-        networth_delta=final_networth-initial_networth
+        initial_networth=round(E.forecast_df.head(1)['Net Worth'].iat[0],2)
+        final_networth=round(E.forecast_df.tail(1)['Net Worth'].iat[0],2)
+        networth_delta=round(final_networth-initial_networth,2)
         num_days = E.forecast_df.shape[0]
         avg_networth_change=round(networth_delta/float(E.forecast_df.shape[0]),2)
 
@@ -1028,6 +1023,39 @@ class ForecastHandler:
         <br><br>
         Liquid cash began at """+str(f"${float(initial_liquid_total):,}")+""" and """+liquid_rose_or_fell+""" to """+str(f"${float(final_liquid_total):,}")+""" over """+str(f"{float(num_days):,.0f}")+""" days, averaging """+f"${float(avg_liquid_delta):,}"+""" per day.
         """
+
+        total_gain = round(sum(E.forecast_df['Net Gain']),2)
+        avg_daily_gain = round(total_gain / E.forecast_df.shape[0],2)
+
+        total_loss = round(sum(E.forecast_df['Net Loss']), 2)
+        avg_daily_loss = round(total_loss / E.forecast_df.shape[0], 2)
+
+        net_gain_loss_text = "Total gain was "+str(f"${float(total_gain):,}")+" over "+str(E.forecast_df.shape[0])+" days, averaging "+str(f"${float(avg_daily_gain):,}")+" per day.<br><br>"
+        net_gain_loss_text += "Total loss was "+str(f"-${float(total_loss):,}")+" over "+str(E.forecast_df.shape[0])+" days, averaging "+str(f"-${float(avg_daily_loss):,}")+" per day."
+
+        total_interest_accrued = round(sum(E.forecast_df['Marginal Interest']), 2)
+        avg_interest_accrued = round(total_interest_accrued / E.forecast_df.shape[0], 2)
+
+        interest_text = "Total interest accrued was "+str(f"${float(total_interest_accrued):,}")+" over "+str(E.forecast_df.shape[0])+" days, averaging "+str(f"${float(avg_interest_accrued):,}")+" per day."
+
+
+
+        am_result_df = E.getAccountMilestoneResultsDF()
+        mm_result_df = E.getMemoMilestoneResultsDF()
+        cm_result_df = E.getCompositeMilestoneResultsDF()
+
+        achieved_am_count = am_result_df[am_result_df.Date < datetime.datetime.strptime(E.end_date_YYYYMMDD,'%Y%m%d')].shape[0]
+        achieved_mm_count = mm_result_df[mm_result_df.Date < datetime.datetime.strptime(E.end_date_YYYYMMDD,'%Y%m%d')].shape[0]
+        achieved_cm_count = cm_result_df[cm_result_df.Date < datetime.datetime.strptime(E.end_date_YYYYMMDD,'%Y%m%d')].shape[0]
+        total_milestone_count = am_result_df.shape[0] + mm_result_df.shape[0] + cm_result_df.shape[0]
+        achieved_milestone_count = achieved_am_count + achieved_mm_count + achieved_cm_count
+
+        milestone_text = str(total_milestone_count)+" milestones were defined, and "+str(achieved_milestone_count)+" were achieved before the end of the forecast.<br>"
+        milestone_text += "Note that unachieved milestones are displayed on the last day of the forecast."
+
+        transaction_schedule_text = "All transactions are displayed below."
+
+        all_plot_page_text = ""
 
         #these plots will be output in the same directory as the final document, so output_dir path prefix is not needed
         networth_line_plot_path =  report_id + '_networth_line_plot.png'
@@ -1103,19 +1131,20 @@ class ForecastHandler:
 
         <!-- Tab links -->
         <div class="tab">
-          <button class="tablinks active" onclick="openTab(event, 'Summary')">Summary</button>
+          <button class="tablinks active" onclick="openTab(event, 'ForecastParameters')">Forecast Parameters</button>
           <button class="tablinks" onclick="openTab(event, 'NetWorth')">Net Worth</button>
-          <button class="tablinks" onclick="openTab(event, 'NetGainLoss')">Net Gain/Loss</button>
+          <button class="tablinks" onclick="openTab(event, 'NetGainLoss')">Net Gain & Loss</button>
           <button class="tablinks" onclick="openTab(event, 'AccountType')">Account Type</button>
           <button class="tablinks" onclick="openTab(event, 'Interest')">Interest</button>
-          <button class="tablinks" onclick="openTab(event, 'Milestone')">Milestone</button>
+          <button class="tablinks" onclick="openTab(event, 'Milestones')">Milestones</button>
           <button class="tablinks" onclick="openTab(event, 'All')">All</button>
-          <button class="tablinks" onclick="openTab(event, 'Output Data')">Output Data</button>
+          <button class="tablinks" onclick="openTab(event, 'TransactionSchedule')">Transaction Schedule</button>
+          <button class="tablinks" onclick="openTab(event, 'Forecast Results')">Forecast Results</button>
         </div>
 
         <!-- Tab content -->
-        <div id="Summary" class="tabcontent">
-          <h3>Summary</h3>
+        <div id="ForecastParameters" class="tabcontent">
+          <h3>Forecast Parameters</h3>
           <p>"""+summary_text+"""</p>
           <h3>Accounts</h3>
           <p>"""+account_text+"""</p>
@@ -1132,43 +1161,58 @@ class ForecastHandler:
         </div>
 
         <div id="NetWorth" class="tabcontent">
-          <h3>NetWorth</h3>
+          <h3>Net Worth</h3>
           <p>"""+networth_text+"""</p>
           <img src=\""""+networth_line_plot_path+"""\">
         </div>
 
         <div id="NetGainLoss" class="tabcontent">
-          <h3>NetGainLoss</h3>
-          <p>NetGainLoss text.</p>
+          <h3>Net Gain & Loss</h3>
+          <p>""" + net_gain_loss_text + """</p>
           <img src=\""""+net_gain_loss_line_plot_path+"""\">
         </div>
 
         <div id="AccountType" class="tabcontent">
-          <h3>AccountType</h3>
+          <h3>Account Type</h3>
           <p>"""+account_type_text+"""</p>
           <img src=\""""+accounttype_line_plot_path+"""\">
         </div>
 
         <div id="Interest" class="tabcontent">
           <h3>Interest</h3>
-          <p>Interest text.</p>
+          <p>""" + interest_text + """</p>
           <img src=\""""+marginal_interest_line_plot_path+"""\">
         </div>
         
-        <div id="Milestone" class="tabcontent">
-          <h3>Milestone</h3>
-          <p>Milestone text.</p>
+        <div id="Milestones" class="tabcontent">
+          <h3>Milestones</h3>
+          <p>""" + milestone_text + """</p>
+          
           <img src=\""""+milestone_scatter_plot_path+"""\">
+          
+          <h4>Account Milestones</h4>
+          """ + E.getAccountMilestoneResultsDF().to_html() + """ <br>
+          <h4>Memo Milestones</h4>
+          """ + E.getMemoMilestoneResultsDF().to_html() + """ <br>
+          <h4>Composite Milestones</h4>
+          """ + E.getCompositeMilestoneResultsDF().to_html() + """ <br>
+          
         </div>
 
         <div id="All" class="tabcontent">
           <h3>All</h3>
-          <p>All text.</p>
+          <p>""" + all_plot_page_text + """</p>
           <img src=\""""+all_line_plot_path+"""\">
         </div>
+        
+        <div id="TransactionSchedule" class="tabcontent">
+          <h3>Transaction Schedule</h3>
+          <p>""" + transaction_schedule_text + """</p>
+          """ + E.confirmed_df.to_html() + """
+        </div>
 
-        <div id="Output Data" class="tabcontent">
-          <h3>Output Data</h3>
+        <div id="Forecast Results" class="tabcontent">
+          <h3>Forecast Results</h3>
           <p>""" + summary_text + """</p>
           <p>The visualized data are below:</p>
           <h4>Forecast 1 #"""+str(E.unique_id)+""":</h4>
@@ -1199,8 +1243,8 @@ class ForecastHandler:
           evt.currentTarget.className += " active";
         }
         
-        //having this here leaves the Summary tab open when the page first loads
-        document.getElementById("Summary").style.display = "block";
+        //having this here leaves the ForecastParameters tab open when the page first loads
+        document.getElementById("ForecastParameters").style.display = "block";
         </script>
 
         </body>
@@ -1208,7 +1252,7 @@ class ForecastHandler:
 
         """
 
-        with open(output_dir+'out.html','w') as f:
+        with open(output_dir+output_file_name+'.html','w') as f:
             f.write(html_body)
 
     def getRuntimeEstimate(self,expense_forecast):

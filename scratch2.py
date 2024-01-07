@@ -101,48 +101,50 @@ from log_methods import log_in_color_with_breadcrumbs
 
 if __name__ == '__main__':
 
-    rerun = True
+    # I want account milestones, memo milestones, composite milestones with min, non-boundary and max values that are diff for each
+
+    rerun = False
+
+    start_date_YYYYMMDD = '20240101'
+    end_date_YYYYMMDD = '20240205'
+
+    A = AccountSet.AccountSet([])
+    A.createAccount('Checking', 6000, 0, 999999, 'checking')
+    A.createAccount('Credit', 1000, 0, 999999, 'credit', '20240103', 'compound', 0.24, 'monthly', 60, 1000)
+    A.createAccount('Loan A', 1100, 0, 999999, 'loan', '20230103', 'simple', 0.1, 'daily', 50, None, 1000, 100)
+    A.createAccount('Loan B', 1100, 0, 999999, 'loan', '20230103', 'simple', 0.05, 'daily', 50, None, 1000, 100)
+    A.createAccount('Loan C', 1100, 0, 999999, 'loan', '20230103', 'simple', 0.01, 'daily', 50, None, 1000, 100)
+
+    B = BudgetSet.BudgetSet([])
+    B.addBudgetItem('20240120', '20240120', 1, 'once', 10_000, 'income', False, False)
+    # B.addBudgetItem('20240201', '20240201', 1, 'once', 10_000, 'income 2', False, False)
+    B.addBudgetItem('20240117', '20240117', 2, 'once', 10_000, '10k txn', True, False)
+    B.addBudgetItem('20240103', end_date_YYYYMMDD, 6, 'semiweekly', 1500, 'additional cc payment', False, True)
+    B.addBudgetItem('20240103', end_date_YYYYMMDD, 7, 'semiweekly', 1500, 'additional loan payment', False, True)
+
+    M = MemoRuleSet.MemoRuleSet([])
+    M.addMemoRule('.*income.*', None, 'Checking', 1)
+    M.addMemoRule('10k txn', 'Checking', None, 2)
+    M.addMemoRule('additional cc payment', 'Checking', 'Credit', 6)
+    M.addMemoRule('additional loan payment', 'Checking', 'ALL_LOANS', 7)
+
+    A1 = AccountMilestone.AccountMilestone('Checking 10k', 'Checking', 10_000, 999_999)
+    # A2 = AccountMilestone.AccountMilestone('Loan A 1000', 'Loan A', 1000, 1000)
+    # A3 = AccountMilestone.AccountMilestone('Loan B 0', 'Loan B', 0, 0)
+    # A4 = AccountMilestone.AccountMilestone('Loan B 1000', 'Loan B', 1000, 1000)
+    # A5 = AccountMilestone.AccountMilestone('Loan C 0', 'Loan C', 0, 0)
+    # A6 = AccountMilestone.AccountMilestone('Loan C 1000', 'Loan C', 1000, 1000)
+
+    M1 = MemoMilestone.MemoMilestone('big purchase 1', '.*10k txn.*')
+    # M2 = MemoMilestone.MemoMilestone('big purchase 2', '.*big purchase 2.*')
+
+    CM1 = CompositeMilestone.CompositeMilestone('All 1k', [A1], [M1])
+    # CM3 = CompositeMilestone.CompositeMilestone('All 1k and both purchases', [A1, A2, A3], [M1, M2])
+
+    MS = MilestoneSet.MilestoneSet(A, B, [A1], [M1], [CM1])
+    # MS = MilestoneSet.MilestoneSet(A, B, [A1, A2, A3, A4, A5, A6], [], [CM1])
 
     if rerun:
-
-        start_date_YYYYMMDD = '20240101'
-        end_date_YYYYMMDD = '20240205'
-
-        A = AccountSet.AccountSet([])
-        A.createAccount('Checking', 5000, 0, 999999, 'checking')
-        #A.createAccount('Credit', 1000, 0,   999999, 'credit', '20240103', 'compound', 0.24, 'monthly', 60, 1000)
-        A.createAccount('Loan A', 1100, 0, 999999, 'loan', '20230103', 'simple', 0.1, 'daily', 50, None, 1000, 100)
-        A.createAccount('Loan B', 1100, 0, 999999, 'loan', '20230103', 'simple', 0.05, 'daily', 50, None, 1000, 100)
-        A.createAccount('Loan C', 1100, 0, 999999, 'loan', '20230103', 'simple', 0.01, 'daily', 50, None, 1000, 100)
-
-
-
-        B = BudgetSet.BudgetSet([])
-        B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 30, 'SPEND food', False, False)
-        B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'semiweekly', 1500, 'income', False, False)
-        #B.addBudgetItem('20240103', end_date_YYYYMMDD, 6, 'monthly', 500, 'additional cc payment', False, True)
-        B.addBudgetItem('20240103', end_date_YYYYMMDD, 7, 'semiweekly', 1500, 'additional loan payment', False, True)
-
-        M = MemoRuleSet.MemoRuleSet([])
-        M.addMemoRule('.*income.*', None, 'Checking', 1)
-        M.addMemoRule('SPEND.*', 'Checking', None, 1)
-        #M.addMemoRule('additional cc payment', 'Checking', 'Credit', 6)
-        M.addMemoRule('additional loan payment', 'Checking', 'ALL_LOANS', 7)
-
-        A1 = AccountMilestone.AccountMilestone('Loan A 0', 'Loan A', 0, 0)
-        A2 = AccountMilestone.AccountMilestone('Loan A 1000', 'Loan A', 1000, 1000)
-        A3 = AccountMilestone.AccountMilestone('Loan B 0', 'Loan B', 0, 0)
-        A4 = AccountMilestone.AccountMilestone('Loan B 1000', 'Loan B', 1000, 1000)
-        A5 = AccountMilestone.AccountMilestone('Loan C 0', 'Loan C', 0, 0)
-        A6 = AccountMilestone.AccountMilestone('Loan C 1000', 'Loan C', 1000, 1000)
-        #
-        # M1 = MemoMilestone.MemoMilestone('big purchase 1', '.*big purchase 1.*')
-        # M2 = MemoMilestone.MemoMilestone('big purchase 2', '.*big purchase 2.*')
-
-        CM1 = CompositeMilestone.CompositeMilestone('All 1k', [A2, A4, A6], [])
-        #CM3 = CompositeMilestone.CompositeMilestone('All 1k and both purchases', [A1, A2, A3], [M1, M2])
-
-        MS = MilestoneSet.MilestoneSet(A, B, [A1, A2, A3, A4, A5, A6], [], [CM1])
 
         E1 = ExpenseForecast.ExpenseForecast(A,
                                             B,
@@ -152,20 +154,31 @@ if __name__ == '__main__':
                                             MS)
         E1.runForecast()
     else:
-        E1 = ExpenseForecast.initialize_from_json_file('./out/Forecast__032966__2024_01_05__18_40_58.json')
+        E1 = ExpenseForecast.initialize_from_json_file('./out/Forecast__032132__2024_01_07__01_00_53.json')
 
     E1.appendSummaryLines()
 
-    # Forecast__032966__2024_01_05__18_40_58.json - the below but sans 1 payment
-    # Forecast__061883__2024_01_05__18_48_40.json - paid off loans
-    #
-    E2 = ExpenseForecast.initialize_from_json_file('./out/Forecast__061883__2024_01_05__18_48_40.json')
+
+    E2 = ExpenseForecast.initialize_from_json_file('./out/Forecast__034121__2024_01_07__02_19_43.json')
     E2.appendSummaryLines()
+
+    #let's redefine and re-evaluate milestones
+    A1 = AccountMilestone.AccountMilestone('Checking 10k', 'Checking', 10_000, 999_999)
+    M1 = MemoMilestone.MemoMilestone('big purchase 1', '.*10k txn.*')
+    CM1 = CompositeMilestone.CompositeMilestone('Checking 10k and big purchase', [A1], [M1])
+    MS = MilestoneSet.MilestoneSet(A, B, [A1], [M1], [CM1])
+
+    E1.milestone_set = MS
+    E2.milestone_set = MS
+
+    E1.evaluateMilestones()
+    E2.evaluateMilestones()
 
     F = ForecastHandler.ForecastHandler()
     F.generateHTMLReport(E1,'./out/')
+    F.generateHTMLReport(E2, './out/')
 
-    #F.generateCompareTwoForecastsHTMLReport(E1,E2,'./out/')
+    F.generateCompareTwoForecastsHTMLReport(E1,E2,'./out/')
 
     # log_color_stack = []
     # log_in_color_with_breadcrumbs(logger, 'red','debug','red log message')

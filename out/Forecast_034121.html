@@ -50,21 +50,22 @@
 
         <!-- Tab links -->
         <div class="tab">
-          <button class="tablinks active" onclick="openTab(event, 'Summary')">Summary</button>
+          <button class="tablinks active" onclick="openTab(event, 'ForecastParameters')">Forecast Parameters</button>
           <button class="tablinks" onclick="openTab(event, 'NetWorth')">Net Worth</button>
-          <button class="tablinks" onclick="openTab(event, 'NetGainLoss')">Net Gain/Loss</button>
+          <button class="tablinks" onclick="openTab(event, 'NetGainLoss')">Net Gain & Loss</button>
           <button class="tablinks" onclick="openTab(event, 'AccountType')">Account Type</button>
           <button class="tablinks" onclick="openTab(event, 'Interest')">Interest</button>
-          <button class="tablinks" onclick="openTab(event, 'Milestone')">Milestone</button>
+          <button class="tablinks" onclick="openTab(event, 'Milestones')">Milestones</button>
           <button class="tablinks" onclick="openTab(event, 'All')">All</button>
-          <button class="tablinks" onclick="openTab(event, 'Output Data')">Output Data</button>
+          <button class="tablinks" onclick="openTab(event, 'TransactionSchedule')">Transaction Schedule</button>
+          <button class="tablinks" onclick="openTab(event, 'Forecast Results')">Forecast Results</button>
         </div>
 
         <!-- Tab content -->
-        <div id="Summary" class="tabcontent">
-          <h3>Summary</h3>
+        <div id="ForecastParameters" class="tabcontent">
+          <h3>Forecast Parameters</h3>
           <p>
-        This forecast started at 2024-01-06 22:46:11, took 1:11:27 to complete, and finished at 2024-01-06 23:57:38.
+        This forecast started at 2024-01-07 02:19:43, took 1:16:25 to complete, and finished at 2024-01-07 03:36:08.
         </p>
           <h3>Accounts</h3>
           <p>
@@ -326,6 +327,13 @@
     </tr>
   </thead>
   <tbody>
+    <tr>
+      <th>0</th>
+      <td>Checking 10k</td>
+      <td>Checking</td>
+      <td>10000.0</td>
+      <td>999999.0</td>
+    </tr>
   </tbody>
 </table>
         </p>
@@ -340,6 +348,11 @@
     </tr>
   </thead>
   <tbody>
+    <tr>
+      <th>0</th>
+      <td>big purchase 1</td>
+      <td>.*10k txn.*</td>
+    </tr>
   </tbody>
 </table>
         </p>
@@ -355,27 +368,39 @@
     </tr>
   </thead>
   <tbody>
+    <tr>
+      <th>0</th>
+      <td>Checking 10k and big purchase</td>
+      <td>Account</td>
+      <td>Checking 10k</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Checking 10k and big purchase</td>
+      <td>Memo</td>
+      <td>big purchase 1</td>
+    </tr>
   </tbody>
 </table>
         </p>
         </div>
 
         <div id="NetWorth" class="tabcontent">
-          <h3>NetWorth</h3>
+          <h3>Net Worth</h3>
           <p>
-        Net Worth began at $700.0 and fell to $485.80800000000124 over 36 days, averaging $-5.95 per day.
+        Net Worth began at $700.0 and fell to $485.81 over 36 days, averaging $-5.95 per day.
         </p>
           <img src="034121_networth_line_plot.png">
         </div>
 
         <div id="NetGainLoss" class="tabcontent">
-          <h3>NetGainLoss</h3>
-          <p>NetGainLoss text.</p>
+          <h3>Net Gain & Loss</h3>
+          <p>Total gain was $10,000.0 over 36 days, averaging $277.78 per day.<br><br>Total loss was -$11,500.0 over 36 days, averaging -$319.44 per day.</p>
           <img src="034121_net_gain_loss_line_plot.png">
         </div>
 
         <div id="AccountType" class="tabcontent">
-          <h3>AccountType</h3>
+          <h3>Account Type</h3>
           <p>
         Loan debt began at $3,300.0 and fell to $148.72 over 36 days, averaging $-87.54 per day.
         <br><br>
@@ -388,26 +413,154 @@
 
         <div id="Interest" class="tabcontent">
           <h3>Interest</h3>
-          <p>Interest text.</p>
+          <p>Total interest accrued was $-100.0 over 36 days, averaging $-2.78 per day.</p>
           <img src="034121_marginal_interest_line_plot.png">
         </div>
         
-        <div id="Milestone" class="tabcontent">
-          <h3>Milestone</h3>
-          <p>Milestone text.</p>
+        <div id="Milestones" class="tabcontent">
+          <h3>Milestones</h3>
+          <p>3 milestones were defined, and 1 were achieved before the end of the forecast.<br>Note that unachieved milestones are displayed on the last day of the forecast.</p>
+          
           <img src="034121_milestone_scatter_plot.png">
+          
+          <h4>Account Milestones</h4>
+          <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Milestone_Name</th>
+      <th>Date</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Checking 10k</td>
+      <td>None</td>
+    </tr>
+  </tbody>
+</table> <br>
+          <h4>Memo Milestones</h4>
+          <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Milestone_Name</th>
+      <th>Date</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>big purchase 1</td>
+      <td>2024-01-23</td>
+    </tr>
+  </tbody>
+</table> <br>
+          <h4>Composite Milestones</h4>
+          <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Milestone_Name</th>
+      <th>Date</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Checking 10k and big purchase</td>
+      <td>None</td>
+    </tr>
+  </tbody>
+</table> <br>
+          
         </div>
 
         <div id="All" class="tabcontent">
           <h3>All</h3>
-          <p>All text.</p>
+          <p></p>
           <img src="034121_all_line_plot.png">
         </div>
+        
+        <div id="TransactionSchedule" class="tabcontent">
+          <h3>Transaction Schedule</h3>
+          <p>Transaction schedule text.</p>
+          <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Date</th>
+      <th>Priority</th>
+      <th>Amount</th>
+      <th>Memo</th>
+      <th>Deferrable</th>
+      <th>Partial_Payment_Allowed</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>20240120</td>
+      <td>1</td>
+      <td>10000</td>
+      <td>income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>20240123</td>
+      <td>2</td>
+      <td>10000</td>
+      <td>10k txn</td>
+      <td>True</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>20240107</td>
+      <td>6</td>
+      <td>1500</td>
+      <td>additional cc payment</td>
+      <td>False</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>20240107</td>
+      <td>7</td>
+      <td>1500</td>
+      <td>additional loan payment</td>
+      <td>False</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>20240121</td>
+      <td>7</td>
+      <td>1500</td>
+      <td>additional loan payment</td>
+      <td>False</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>20240204</td>
+      <td>7</td>
+      <td>1500</td>
+      <td>additional loan payment</td>
+      <td>False</td>
+      <td>True</td>
+    </tr>
+  </tbody>
+</table>
+        </div>
 
-        <div id="Output Data" class="tabcontent">
-          <h3>Output Data</h3>
+        <div id="Forecast Results" class="tabcontent">
+          <h3>Forecast Results</h3>
           <p>
-        This forecast started at 2024-01-06 22:46:11, took 1:11:27 to complete, and finished at 2024-01-06 23:57:38.
+        This forecast started at 2024-01-07 02:19:43, took 1:16:25 to complete, and finished at 2024-01-07 03:36:08.
         </p>
           <p>The visualized data are below:</p>
           <h4>Forecast 1 #034121:</h4>
@@ -439,713 +592,713 @@
     <tr>
       <th>0</th>
       <td>20240101</td>
-      <td>6000.0</td>
-      <td>1000.0</td>
-      <td>1000.0</td>
-      <td>1000.0</td>
-      <td>100.0</td>
-      <td>1000.0</td>
-      <td>100.0</td>
-      <td>1000.0</td>
-      <td>100.0</td>
+      <td>6000.00</td>
+      <td>1000</td>
+      <td>1000.000</td>
+      <td>1000.00</td>
+      <td>100.00</td>
+      <td>1000.00</td>
+      <td>100.00</td>
+      <td>1000.00</td>
+      <td>100.00</td>
       <td>0.00</td>
       <td>0</td>
       <td>0</td>
-      <td>700.0</td>
-      <td>3300.0</td>
-      <td>2000.0</td>
-      <td>6000.0</td>
+      <td>700.000</td>
+      <td>3300.00</td>
+      <td>2000.000</td>
+      <td>6000.00</td>
       <td></td>
     </tr>
     <tr>
       <th>1</th>
       <td>20240102</td>
-      <td>6000.0</td>
-      <td>1000.0</td>
-      <td>1000.0</td>
-      <td>1000.0</td>
+      <td>6000.00</td>
+      <td>1000</td>
+      <td>1000.000</td>
+      <td>1000.00</td>
       <td>100.27</td>
-      <td>1000.0</td>
+      <td>1000.00</td>
       <td>100.14</td>
-      <td>1000.0</td>
+      <td>1000.00</td>
       <td>100.03</td>
       <td>0.27</td>
       <td>0</td>
       <td>0</td>
-      <td>699.56</td>
+      <td>699.560</td>
       <td>3300.44</td>
-      <td>2000.0</td>
-      <td>6000.0</td>
+      <td>2000.000</td>
+      <td>6000.00</td>
       <td></td>
     </tr>
     <tr>
       <th>2</th>
       <td>20240103</td>
-      <td>5809.6</td>
-      <td>0.0</td>
-      <td>1979.6</td>
-      <td>1000.0</td>
+      <td>5809.60</td>
+      <td>0</td>
+      <td>1979.600</td>
+      <td>1000.00</td>
       <td>50.54</td>
-      <td>1000.0</td>
+      <td>1000.00</td>
       <td>50.28</td>
-      <td>1000.0</td>
+      <td>1000.00</td>
       <td>50.06</td>
       <td>-49.73</td>
       <td>0</td>
       <td>0</td>
-      <td>679.12</td>
+      <td>679.120</td>
       <td>3150.88</td>
-      <td>1979.6</td>
-      <td>5809.6</td>
+      <td>1979.600</td>
+      <td>5809.60</td>
       <td>cc min payment (Credit: Prev Stmt Bal -$40.4);  loan min payment (Loan A: Interest -$50.0);  loan min payment (Loan B: Interest -$50.0);  loan min payment (Loan C: Interest -$50.0);</td>
     </tr>
     <tr>
       <th>3</th>
       <td>20240104</td>
-      <td>5809.6</td>
-      <td>0.0</td>
-      <td>1979.6</td>
-      <td>1000.0</td>
+      <td>5809.60</td>
+      <td>0</td>
+      <td>1979.600</td>
+      <td>1000.00</td>
       <td>50.81</td>
-      <td>1000.0</td>
+      <td>1000.00</td>
       <td>50.42</td>
-      <td>1000.0</td>
+      <td>1000.00</td>
       <td>50.09</td>
       <td>0.27</td>
       <td>0</td>
       <td>0</td>
-      <td>678.68</td>
+      <td>678.680</td>
       <td>3151.32</td>
-      <td>1979.6</td>
-      <td>5809.6</td>
+      <td>1979.600</td>
+      <td>5809.60</td>
       <td></td>
     </tr>
     <tr>
       <th>4</th>
       <td>20240105</td>
-      <td>5809.6</td>
-      <td>0.0</td>
-      <td>1979.6</td>
-      <td>1000.0</td>
+      <td>5809.60</td>
+      <td>0</td>
+      <td>1979.600</td>
+      <td>1000.00</td>
       <td>51.08</td>
-      <td>1000.0</td>
+      <td>1000.00</td>
       <td>50.56</td>
-      <td>1000.0</td>
+      <td>1000.00</td>
       <td>50.12</td>
       <td>0.27</td>
       <td>0</td>
       <td>0</td>
-      <td>678.24</td>
+      <td>678.240</td>
       <td>3151.76</td>
-      <td>1979.6</td>
-      <td>5809.6</td>
+      <td>1979.600</td>
+      <td>5809.60</td>
       <td></td>
     </tr>
     <tr>
       <th>5</th>
       <td>20240106</td>
-      <td>5809.6</td>
-      <td>0.0</td>
-      <td>1979.6</td>
-      <td>1000.0</td>
+      <td>5809.60</td>
+      <td>0</td>
+      <td>1979.600</td>
+      <td>1000.00</td>
       <td>51.35</td>
-      <td>1000.0</td>
-      <td>50.7</td>
-      <td>1000.0</td>
+      <td>1000.00</td>
+      <td>50.70</td>
+      <td>1000.00</td>
       <td>50.15</td>
       <td>0.27</td>
       <td>0</td>
       <td>0</td>
-      <td>677.8</td>
-      <td>3152.2</td>
-      <td>1979.6</td>
-      <td>5809.6</td>
+      <td>677.800</td>
+      <td>3152.20</td>
+      <td>1979.600</td>
+      <td>5809.60</td>
       <td></td>
     </tr>
     <tr>
       <th>6</th>
       <td>20240107</td>
-      <td>2809.6</td>
-      <td>0.0</td>
-      <td>479.6</td>
+      <td>2809.60</td>
+      <td>0</td>
+      <td>479.600</td>
       <td>196.72</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>405.74</td>
-      <td>0.0</td>
-      <td>1000.0</td>
+      <td>0.00</td>
+      <td>1000.00</td>
       <td>50.18</td>
       <td>-51.35</td>
       <td>0</td>
       <td>1500</td>
-      <td>677.36</td>
+      <td>677.360</td>
       <td>1652.64</td>
-      <td>479.6</td>
-      <td>2809.6</td>
+      <td>479.600</td>
+      <td>2809.60</td>
       <td>additional cc payment (Checking -$1500.0);  additional loan payment (Loan A: Principal Balance -$803.28);  additional loan payment (Loan A: Interest -$51.62);  additional loan payment (Loan B: Principal Balance -$594.26);  additional loan payment (Loan B: Interest -$50.84);</td>
     </tr>
     <tr>
       <th>7</th>
       <td>20240108</td>
-      <td>2809.6</td>
-      <td>0.0</td>
-      <td>479.6</td>
+      <td>2809.60</td>
+      <td>0</td>
+      <td>479.600</td>
       <td>196.72</td>
       <td>0.05</td>
       <td>405.74</td>
       <td>0.06</td>
-      <td>1000.0</td>
+      <td>1000.00</td>
       <td>50.21</td>
       <td>0.05</td>
       <td>0</td>
       <td>0</td>
-      <td>677.22</td>
+      <td>677.220</td>
       <td>1652.78</td>
-      <td>479.6</td>
-      <td>2809.6</td>
+      <td>479.600</td>
+      <td>2809.60</td>
       <td></td>
     </tr>
     <tr>
       <th>8</th>
       <td>20240109</td>
-      <td>2809.6</td>
-      <td>0.0</td>
-      <td>479.6</td>
+      <td>2809.60</td>
+      <td>0</td>
+      <td>479.600</td>
       <td>196.72</td>
-      <td>0.1</td>
+      <td>0.10</td>
       <td>405.74</td>
       <td>0.12</td>
-      <td>1000.0</td>
+      <td>1000.00</td>
       <td>50.24</td>
       <td>0.05</td>
       <td>0</td>
       <td>0</td>
-      <td>677.08</td>
+      <td>677.080</td>
       <td>1652.92</td>
-      <td>479.6</td>
-      <td>2809.6</td>
+      <td>479.600</td>
+      <td>2809.60</td>
       <td></td>
     </tr>
     <tr>
       <th>9</th>
       <td>20240110</td>
-      <td>2809.6</td>
-      <td>0.0</td>
-      <td>479.6</td>
+      <td>2809.60</td>
+      <td>0</td>
+      <td>479.600</td>
       <td>196.72</td>
       <td>0.15</td>
       <td>405.74</td>
       <td>0.18</td>
-      <td>1000.0</td>
+      <td>1000.00</td>
       <td>50.27</td>
       <td>0.05</td>
       <td>0</td>
       <td>0</td>
-      <td>676.94</td>
+      <td>676.940</td>
       <td>1653.06</td>
-      <td>479.6</td>
-      <td>2809.6</td>
+      <td>479.600</td>
+      <td>2809.60</td>
       <td></td>
     </tr>
     <tr>
       <th>10</th>
       <td>20240111</td>
-      <td>2809.6</td>
-      <td>0.0</td>
-      <td>479.6</td>
+      <td>2809.60</td>
+      <td>0</td>
+      <td>479.600</td>
       <td>196.72</td>
-      <td>0.2</td>
+      <td>0.20</td>
       <td>405.74</td>
       <td>0.24</td>
-      <td>1000.0</td>
-      <td>50.3</td>
+      <td>1000.00</td>
+      <td>50.30</td>
       <td>0.05</td>
       <td>0</td>
       <td>0</td>
-      <td>676.8</td>
-      <td>1653.2</td>
-      <td>479.6</td>
-      <td>2809.6</td>
+      <td>676.800</td>
+      <td>1653.20</td>
+      <td>479.600</td>
+      <td>2809.60</td>
       <td></td>
     </tr>
     <tr>
       <th>11</th>
       <td>20240112</td>
-      <td>2809.6</td>
-      <td>0.0</td>
-      <td>479.6</td>
+      <td>2809.60</td>
+      <td>0</td>
+      <td>479.600</td>
       <td>196.72</td>
       <td>0.25</td>
       <td>405.74</td>
-      <td>0.3</td>
-      <td>1000.0</td>
+      <td>0.30</td>
+      <td>1000.00</td>
       <td>50.33</td>
       <td>0.05</td>
       <td>0</td>
       <td>0</td>
-      <td>676.66</td>
+      <td>676.660</td>
       <td>1653.34</td>
-      <td>479.6</td>
-      <td>2809.6</td>
+      <td>479.600</td>
+      <td>2809.60</td>
       <td></td>
     </tr>
     <tr>
       <th>12</th>
       <td>20240113</td>
-      <td>2809.6</td>
-      <td>0.0</td>
-      <td>479.6</td>
+      <td>2809.60</td>
+      <td>0</td>
+      <td>479.600</td>
       <td>196.72</td>
-      <td>0.3</td>
+      <td>0.30</td>
       <td>405.74</td>
       <td>0.36</td>
-      <td>1000.0</td>
+      <td>1000.00</td>
       <td>50.36</td>
       <td>0.05</td>
       <td>0</td>
       <td>0</td>
-      <td>676.52</td>
+      <td>676.520</td>
       <td>1653.48</td>
-      <td>479.6</td>
-      <td>2809.6</td>
+      <td>479.600</td>
+      <td>2809.60</td>
       <td></td>
     </tr>
     <tr>
       <th>13</th>
       <td>20240114</td>
-      <td>2809.6</td>
-      <td>0.0</td>
-      <td>479.6</td>
+      <td>2809.60</td>
+      <td>0</td>
+      <td>479.600</td>
       <td>196.72</td>
       <td>0.35</td>
       <td>405.74</td>
       <td>0.42</td>
-      <td>1000.0</td>
+      <td>1000.00</td>
       <td>50.39</td>
       <td>0.05</td>
       <td>0</td>
       <td>0</td>
-      <td>676.38</td>
+      <td>676.380</td>
       <td>1653.62</td>
-      <td>479.6</td>
-      <td>2809.6</td>
+      <td>479.600</td>
+      <td>2809.60</td>
       <td></td>
     </tr>
     <tr>
       <th>14</th>
       <td>20240115</td>
-      <td>2809.6</td>
-      <td>0.0</td>
-      <td>479.6</td>
+      <td>2809.60</td>
+      <td>0</td>
+      <td>479.600</td>
       <td>196.72</td>
-      <td>0.4</td>
+      <td>0.40</td>
       <td>405.74</td>
       <td>0.48</td>
-      <td>1000.0</td>
+      <td>1000.00</td>
       <td>50.42</td>
       <td>0.05</td>
       <td>0</td>
       <td>0</td>
-      <td>676.24</td>
+      <td>676.240</td>
       <td>1653.76</td>
-      <td>479.6</td>
-      <td>2809.6</td>
+      <td>479.600</td>
+      <td>2809.60</td>
       <td></td>
     </tr>
     <tr>
       <th>15</th>
       <td>20240116</td>
-      <td>2809.6</td>
-      <td>0.0</td>
-      <td>479.6</td>
+      <td>2809.60</td>
+      <td>0</td>
+      <td>479.600</td>
       <td>196.72</td>
       <td>0.45</td>
       <td>405.74</td>
       <td>0.54</td>
-      <td>1000.0</td>
+      <td>1000.00</td>
       <td>50.45</td>
       <td>0.05</td>
       <td>0</td>
       <td>0</td>
-      <td>676.1</td>
-      <td>1653.9</td>
-      <td>479.6</td>
-      <td>2809.6</td>
+      <td>676.100</td>
+      <td>1653.90</td>
+      <td>479.600</td>
+      <td>2809.60</td>
       <td></td>
     </tr>
     <tr>
       <th>16</th>
       <td>20240117</td>
-      <td>2809.6</td>
-      <td>0.0</td>
-      <td>479.6</td>
+      <td>2809.60</td>
+      <td>0</td>
+      <td>479.600</td>
       <td>196.72</td>
-      <td>0.5</td>
+      <td>0.50</td>
       <td>405.74</td>
-      <td>0.6</td>
-      <td>1000.0</td>
+      <td>0.60</td>
+      <td>1000.00</td>
       <td>50.48</td>
       <td>0.05</td>
       <td>0</td>
       <td>0</td>
-      <td>675.96</td>
+      <td>675.960</td>
       <td>1654.04</td>
-      <td>479.6</td>
-      <td>2809.6</td>
+      <td>479.600</td>
+      <td>2809.60</td>
       <td></td>
     </tr>
     <tr>
       <th>17</th>
       <td>20240118</td>
-      <td>2809.6</td>
-      <td>0.0</td>
-      <td>479.6</td>
+      <td>2809.60</td>
+      <td>0</td>
+      <td>479.600</td>
       <td>196.72</td>
       <td>0.55</td>
       <td>405.74</td>
       <td>0.66</td>
-      <td>1000.0</td>
+      <td>1000.00</td>
       <td>50.51</td>
       <td>0.05</td>
       <td>0</td>
       <td>0</td>
-      <td>675.82</td>
+      <td>675.820</td>
       <td>1654.18</td>
-      <td>479.6</td>
-      <td>2809.6</td>
+      <td>479.600</td>
+      <td>2809.60</td>
       <td></td>
     </tr>
     <tr>
       <th>18</th>
       <td>20240119</td>
-      <td>2809.6</td>
-      <td>0.0</td>
-      <td>479.6</td>
+      <td>2809.60</td>
+      <td>0</td>
+      <td>479.600</td>
       <td>196.72</td>
-      <td>0.6</td>
+      <td>0.60</td>
       <td>405.74</td>
       <td>0.72</td>
-      <td>1000.0</td>
+      <td>1000.00</td>
       <td>50.54</td>
       <td>0.05</td>
       <td>0</td>
       <td>0</td>
-      <td>675.68</td>
+      <td>675.680</td>
       <td>1654.32</td>
-      <td>479.6</td>
-      <td>2809.6</td>
+      <td>479.600</td>
+      <td>2809.60</td>
       <td></td>
     </tr>
     <tr>
       <th>19</th>
       <td>20240120</td>
-      <td>12809.6</td>
-      <td>0.0</td>
-      <td>479.6</td>
+      <td>12809.60</td>
+      <td>0</td>
+      <td>479.600</td>
       <td>196.72</td>
       <td>0.65</td>
       <td>405.74</td>
       <td>0.78</td>
-      <td>1000.0</td>
+      <td>1000.00</td>
       <td>50.57</td>
       <td>0.05</td>
       <td>10000</td>
       <td>0</td>
-      <td>10675.54</td>
+      <td>10675.540</td>
       <td>1654.46</td>
-      <td>479.6</td>
-      <td>12809.6</td>
+      <td>479.600</td>
+      <td>12809.60</td>
       <td>income (Checking +$10000.0);</td>
     </tr>
     <tr>
       <th>20</th>
       <td>20240121</td>
-      <td>11309.6</td>
-      <td>0.0</td>
-      <td>479.6</td>
+      <td>11309.60</td>
+      <td>0</td>
+      <td>479.600</td>
       <td>11.45</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>22.89</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>120.26</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>-0.65</td>
       <td>0</td>
       <td>0</td>
-      <td>10675.4</td>
-      <td>154.6</td>
-      <td>479.6</td>
-      <td>11309.6</td>
+      <td>10675.400</td>
+      <td>154.60</td>
+      <td>479.600</td>
+      <td>11309.60</td>
       <td>additional loan payment (Loan A: Principal Balance -$185.27);  additional loan payment (Loan A: Interest -$0.7);  additional loan payment (Loan B: Principal Balance -$382.85);  additional loan payment (Loan B: Interest -$0.84);  additional loan payment (Loan C: Principal Balance -$879.74);  additional loan payment (Loan C: Interest -$50.6);</td>
     </tr>
     <tr>
       <th>21</th>
       <td>20240122</td>
-      <td>11309.6</td>
-      <td>0.0</td>
-      <td>479.6</td>
+      <td>11309.60</td>
+      <td>0</td>
+      <td>479.600</td>
       <td>11.45</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>22.89</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>120.26</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>0.00</td>
       <td>0</td>
       <td>0</td>
-      <td>10675.4</td>
-      <td>154.6</td>
-      <td>479.6</td>
-      <td>11309.6</td>
+      <td>10675.400</td>
+      <td>154.60</td>
+      <td>479.600</td>
+      <td>11309.60</td>
       <td></td>
     </tr>
     <tr>
       <th>22</th>
       <td>20240123</td>
-      <td>1309.6</td>
-      <td>0.0</td>
-      <td>479.6</td>
+      <td>1309.60</td>
+      <td>0</td>
+      <td>479.600</td>
       <td>11.45</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>22.89</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>120.26</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>0.00</td>
       <td>0</td>
       <td>10000</td>
-      <td>675.4</td>
-      <td>154.6</td>
-      <td>479.6</td>
-      <td>1309.6</td>
+      <td>675.400</td>
+      <td>154.60</td>
+      <td>479.600</td>
+      <td>1309.60</td>
       <td>10k txn (Checking -$10000.0);</td>
     </tr>
     <tr>
       <th>23</th>
       <td>20240124</td>
-      <td>1309.6</td>
-      <td>0.0</td>
-      <td>479.6</td>
+      <td>1309.60</td>
+      <td>0</td>
+      <td>479.600</td>
       <td>11.45</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>22.89</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>120.26</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>0.00</td>
       <td>0</td>
       <td>0</td>
-      <td>675.4</td>
-      <td>154.6</td>
-      <td>479.6</td>
-      <td>1309.6</td>
+      <td>675.400</td>
+      <td>154.60</td>
+      <td>479.600</td>
+      <td>1309.60</td>
       <td></td>
     </tr>
     <tr>
       <th>24</th>
       <td>20240125</td>
-      <td>1309.6</td>
-      <td>0.0</td>
-      <td>479.6</td>
+      <td>1309.60</td>
+      <td>0</td>
+      <td>479.600</td>
       <td>11.45</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>22.89</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>120.26</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>0.00</td>
       <td>0</td>
       <td>0</td>
-      <td>675.4</td>
-      <td>154.6</td>
-      <td>479.6</td>
-      <td>1309.6</td>
+      <td>675.400</td>
+      <td>154.60</td>
+      <td>479.600</td>
+      <td>1309.60</td>
       <td></td>
     </tr>
     <tr>
       <th>25</th>
       <td>20240126</td>
-      <td>1309.6</td>
-      <td>0.0</td>
-      <td>479.6</td>
+      <td>1309.60</td>
+      <td>0</td>
+      <td>479.600</td>
       <td>11.45</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>22.89</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>120.26</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>0.00</td>
       <td>0</td>
       <td>0</td>
-      <td>675.4</td>
-      <td>154.6</td>
-      <td>479.6</td>
-      <td>1309.6</td>
+      <td>675.400</td>
+      <td>154.60</td>
+      <td>479.600</td>
+      <td>1309.60</td>
       <td></td>
     </tr>
     <tr>
       <th>26</th>
       <td>20240127</td>
-      <td>1309.6</td>
-      <td>0.0</td>
-      <td>479.6</td>
+      <td>1309.60</td>
+      <td>0</td>
+      <td>479.600</td>
       <td>11.45</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>22.89</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>120.26</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>0.00</td>
       <td>0</td>
       <td>0</td>
-      <td>675.4</td>
-      <td>154.6</td>
-      <td>479.6</td>
-      <td>1309.6</td>
+      <td>675.400</td>
+      <td>154.60</td>
+      <td>479.600</td>
+      <td>1309.60</td>
       <td></td>
     </tr>
     <tr>
       <th>27</th>
       <td>20240128</td>
-      <td>1309.6</td>
-      <td>0.0</td>
-      <td>479.6</td>
+      <td>1309.60</td>
+      <td>0</td>
+      <td>479.600</td>
       <td>11.45</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>22.89</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>120.26</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>0.00</td>
       <td>0</td>
       <td>0</td>
-      <td>675.4</td>
-      <td>154.6</td>
-      <td>479.6</td>
-      <td>1309.6</td>
+      <td>675.400</td>
+      <td>154.60</td>
+      <td>479.600</td>
+      <td>1309.60</td>
       <td></td>
     </tr>
     <tr>
       <th>28</th>
       <td>20240129</td>
-      <td>1309.6</td>
-      <td>0.0</td>
-      <td>479.6</td>
+      <td>1309.60</td>
+      <td>0</td>
+      <td>479.600</td>
       <td>11.45</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>22.89</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>120.26</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>0.00</td>
       <td>0</td>
       <td>0</td>
-      <td>675.4</td>
-      <td>154.6</td>
-      <td>479.6</td>
-      <td>1309.6</td>
+      <td>675.400</td>
+      <td>154.60</td>
+      <td>479.600</td>
+      <td>1309.60</td>
       <td></td>
     </tr>
     <tr>
       <th>29</th>
       <td>20240130</td>
-      <td>1309.6</td>
-      <td>0.0</td>
-      <td>479.6</td>
+      <td>1309.60</td>
+      <td>0</td>
+      <td>479.600</td>
       <td>11.45</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>22.89</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>120.26</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>0.00</td>
       <td>0</td>
       <td>0</td>
-      <td>675.4</td>
-      <td>154.6</td>
-      <td>479.6</td>
-      <td>1309.6</td>
+      <td>675.400</td>
+      <td>154.60</td>
+      <td>479.600</td>
+      <td>1309.60</td>
       <td></td>
     </tr>
     <tr>
       <th>30</th>
       <td>20240131</td>
-      <td>1309.6</td>
-      <td>0.0</td>
-      <td>479.6</td>
+      <td>1309.60</td>
+      <td>0</td>
+      <td>479.600</td>
       <td>11.45</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>22.89</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>120.26</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>0.00</td>
       <td>0</td>
       <td>0</td>
-      <td>675.4</td>
-      <td>154.6</td>
-      <td>479.6</td>
-      <td>1309.6</td>
+      <td>675.400</td>
+      <td>154.60</td>
+      <td>479.600</td>
+      <td>1309.60</td>
       <td></td>
     </tr>
     <tr>
       <th>31</th>
       <td>20240201</td>
-      <td>1309.6</td>
-      <td>0.0</td>
-      <td>479.6</td>
+      <td>1309.60</td>
+      <td>0</td>
+      <td>479.600</td>
       <td>11.45</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>22.89</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>120.26</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>0.00</td>
       <td>0</td>
       <td>0</td>
-      <td>675.4</td>
-      <td>154.6</td>
-      <td>479.6</td>
-      <td>1309.6</td>
+      <td>675.400</td>
+      <td>154.60</td>
+      <td>479.600</td>
+      <td>1309.60</td>
       <td></td>
     </tr>
     <tr>
       <th>32</th>
       <td>20240202</td>
-      <td>1309.6</td>
-      <td>0.0</td>
-      <td>479.6</td>
+      <td>1309.60</td>
+      <td>0</td>
+      <td>479.600</td>
       <td>11.45</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>22.89</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>120.26</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>0.00</td>
       <td>0</td>
       <td>0</td>
-      <td>675.4</td>
-      <td>154.6</td>
-      <td>479.6</td>
-      <td>1309.6</td>
+      <td>675.400</td>
+      <td>154.60</td>
+      <td>479.600</td>
+      <td>1309.60</td>
       <td></td>
     </tr>
     <tr>
       <th>33</th>
       <td>20240203</td>
       <td>1119.22</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>478.812</td>
       <td>11.45</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>22.89</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>120.26</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>0.00</td>
       <td>0</td>
       <td>0</td>
       <td>485.808</td>
-      <td>154.6</td>
+      <td>154.60</td>
       <td>478.812</td>
       <td>1119.22</td>
       <td>cc min payment (Credit: Prev Stmt Bal -$40.38);  loan min payment (Loan A: Interest -$50.0);  loan min payment (Loan B: Interest -$50.0);  loan min payment (Loan C: Interest -$50.0);</td>
@@ -1154,14 +1307,14 @@
       <th>34</th>
       <td>20240204</td>
       <td>1113.34</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>478.812</td>
       <td>11.44</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>22.88</td>
-      <td>0.0</td>
-      <td>114.4</td>
-      <td>0.0</td>
+      <td>0.00</td>
+      <td>114.40</td>
+      <td>0.00</td>
       <td>0.00</td>
       <td>0</td>
       <td>0</td>
@@ -1175,14 +1328,14 @@
       <th>35</th>
       <td>20240205</td>
       <td>1113.34</td>
-      <td>0.0</td>
+      <td>0</td>
       <td>478.812</td>
       <td>11.44</td>
-      <td>0.0</td>
+      <td>0.00</td>
       <td>22.88</td>
-      <td>0.0</td>
-      <td>114.4</td>
-      <td>0.0</td>
+      <td>0.00</td>
+      <td>114.40</td>
+      <td>0.00</td>
       <td>0.00</td>
       <td>0</td>
       <td>0</td>
@@ -1220,8 +1373,8 @@
           evt.currentTarget.className += " active";
         }
         
-        //having this here leaves the Summary tab open when the page first loads
-        document.getElementById("Summary").style.display = "block";
+        //having this here leaves the ForecastParameters tab open when the page first loads
+        document.getElementById("ForecastParameters").style.display = "block";
         </script>
 
         </body>
