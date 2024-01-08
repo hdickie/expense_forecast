@@ -355,10 +355,23 @@ class ForecastHandler:
 
         data_x = [ datetime.datetime.strptime(x,'%Y%m%d') for x in data_x ]
 
-        plt.scatter(data_x, data_y)
-        #plt.scatter(data_x, data_y)
+        no_of_account_milestones = len(am_keys)
+        am_sel_range = slice(0,(no_of_account_milestones-1))
 
-        left, right = plt.xlim()
+        no_of_memo_milestones = len(mm_keys)
+        mm_sel_range = slice((no_of_account_milestones-1),(no_of_account_milestones+no_of_memo_milestones-1))
+
+        no_of_composite_milestones = len(cm_keys)
+        cm_sel_range = slice((no_of_account_milestones+no_of_memo_milestones-1),(no_of_account_milestones+no_of_memo_milestones+no_of_composite_milestones-1))
+
+        if no_of_account_milestones > 0:
+            plt.scatter(data_x[am_sel_range], data_y[am_sel_range],color="red")
+
+        if no_of_memo_milestones > 0:
+            plt.scatter(data_x[mm_sel_range], data_y[mm_sel_range],color="blue")
+
+        if no_of_composite_milestones > 0:
+            plt.scatter(data_x[cm_sel_range], data_y[cm_sel_range],color="purple")
 
         left_int_ts = matplotlib.dates.date2num(datetime.datetime.strptime(expense_forecast.start_date_YYYYMMDD,'%Y%m%d'))
         right_int_ts = matplotlib.dates.date2num(datetime.datetime.strptime(expense_forecast.end_date_YYYYMMDD,'%Y%m%d'))
@@ -366,9 +379,6 @@ class ForecastHandler:
         all_keys = am_keys + mm_keys + cm_keys
         for i, txt in enumerate(all_keys):
             ax.annotate(txt, (data_x[i], data_y[i]))
-
-        #left = min(left_int_ts, left)
-        #right = max(right_int_ts, right)
 
         left = left_int_ts
         right = right_int_ts
@@ -385,7 +395,7 @@ class ForecastHandler:
         box = ax.get_position()
         ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
 
-        #todo remove legend bc points are labeled
+        #todo add color legend ( not pont bc points are labeled )
 
         # Put a legend below current axis
         ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=4)

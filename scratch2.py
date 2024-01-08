@@ -154,7 +154,7 @@ if __name__ == '__main__':
                                             MS)
         E1.runForecast()
     else:
-        E1 = ExpenseForecast.initialize_from_json_file('./out/Forecast__032132__2024_01_07__01_00_53.json')
+        E1 = ExpenseForecast.initialize_from_json_file('./out/Forecast__044304__2024_01_08__03_28_45.json')
 
     E1.appendSummaryLines()
     F = ForecastHandler.ForecastHandler()
