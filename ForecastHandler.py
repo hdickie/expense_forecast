@@ -1036,7 +1036,8 @@ class ForecastHandler:
         total_interest_accrued = round(sum(E.forecast_df['Marginal Interest']), 2)
         avg_interest_accrued = round(total_interest_accrued / E.forecast_df.shape[0], 2)
 
-        interest_text = "Total interest accrued was "+str(f"${float(total_interest_accrued):,}")+" over "+str(E.forecast_df.shape[0])+" days, averaging "+str(f"${float(avg_interest_accrued):,}")+" per day."
+        interest_text = "Total interest accrued was "+str(f"${float(total_interest_accrued):,}")+" over "+str(E.forecast_df.shape[0])+" days, averaging "+str(f"${float(avg_interest_accrued):,}")+" per day.<br>"
+        interest_text += "This plot shows the new interest by day, not the total interest at a given time."
 
 
 
@@ -1727,13 +1728,10 @@ class ForecastHandler:
         :param output_path:
         :return:
         """
-        # todo plotMarginalInterest():: this will have to get the cc interest from the memo line
-        #print('plotMarginalInterest('+str(output_path)+')')
-        assert hasattr(expense_forecast,'forecast_df')
 
+        assert hasattr(expense_forecast,'forecast_df')
         figure(figsize=(14, 6), dpi=80)
 
-        # for i in range(1, self.forecast_df.shape[1] - 1):
         column_index = expense_forecast.forecast_df.columns.tolist().index('Marginal Interest')
         plt.plot(expense_forecast.forecast_df['Date'], expense_forecast.forecast_df.iloc[:, column_index],
                  label='Marginal Interest')

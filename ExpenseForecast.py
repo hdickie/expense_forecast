@@ -663,9 +663,6 @@ class ExpenseForecast:
         return return_df
 
     def appendSummaryLines(self):
-        #todo incorporate savings
-        #add net gain/loss (requires looking at memo)
-        #add cumulative interest paid (requires looking at memo)
 
         account_info = self.initial_account_set.getAccounts()
 
@@ -697,23 +694,112 @@ class ExpenseForecast:
         for credit_account_index, credit_account_row in credit_acct_info.iterrows():
             CCDebtTotal = CCDebtTotal + self.forecast_df.loc[:, credit_account_row.Name]
 
+
+        #todo incorporate cc interest
         self.forecast_df['Marginal Interest'] = 0
         loan_interest_acct_sel_vec = (account_info.Account_Type == 'interest')
+        cc_curr_stmt_acct_sel_vec = (account_info.Account_Type == 'curr stmt bal')
+        cc_prev_stmt_acct_sel_vec = (account_info.Account_Type == 'prev stmt bal')
+
         loan_interest_acct_info = account_info.loc[loan_interest_acct_sel_vec, :]
+        cc_curr_stmt_acct_info = account_info.loc[cc_curr_stmt_acct_sel_vec, :]
+        cc_prev_stmt_acct_info = account_info.loc[cc_prev_stmt_acct_sel_vec, :]
+
         previous_row = None
         for index, row in self.forecast_df.iterrows():
             if index == 0:
                 previous_row = row
                 continue
+
+            prev_curr_stmt_bal = pd.DataFrame(previous_row).T.iloc[:, cc_curr_stmt_acct_info.index + 1].T
+            today_curr_stmt_bal = pd.DataFrame(row).T.iloc[:, cc_curr_stmt_acct_info.index + 1].T
+            prev_prev_stmt_bal = pd.DataFrame(previous_row).T.iloc[:, cc_prev_stmt_acct_info.index + 1].T
+            today_prev_stmt_bal = pd.DataFrame(row).T.iloc[:, cc_prev_stmt_acct_info.index + 1].T
             prev_interest = pd.DataFrame(previous_row).T.iloc[:, loan_interest_acct_info.index + 1].T
             today_interest = pd.DataFrame(row).T.iloc[:,loan_interest_acct_info.index + 1].T
 
+            delta = 0
+
+            #this is needless
+            assert prev_curr_stmt_bal.shape[0] == prev_prev_stmt_bal.shape[0]
+
+            #additional loan payment
+            #loan min payment
+            #memo has cc min payment on days where
+
+
+            if 'cc min payment' in row.Memo:
+                if prev_curr_stmt_bal.shape[0] > 0:
+                    partial_MI_value = 0
+                    for i in range(0, prev_curr_stmt_bal.shape[1]):
+                        # #once payments are added this is correct
+                        # print('prev_curr_stmt_bal.iloc[0,i]:')
+                        # print(prev_curr_stmt_bal.iloc[0,i])
+                        # print('prev_prev_stmt_bal.iloc[0,i]:')
+                        # print(prev_prev_stmt_bal.iloc[0, i])
+                        # print('today_prev_stmt_bal.iloc[0,i]:')
+                        # print(today_prev_stmt_bal.iloc[0, i])
+                        partial_MI_value = prev_curr_stmt_bal.iloc[0,i] + prev_prev_stmt_bal.iloc[0,i] - today_prev_stmt_bal.iloc[0,i]
+                        # print('partial_MI_value:')
+                        # print(partial_MI_value)
+
+                    memo_line = row.Memo
+                    memo_line_items = memo_line.split(';')
+                    for memo_line_item in memo_line_items:
+                        memo_line_item = memo_line_item.strip()
+                        if memo_line_item == '':
+                            continue
+
+                        if 'cc min payment' in memo_line_item or 'additional cc payment' in memo_line_item:
+                            value_match = re.search('\(([A-Za-z0-9_ :]*) ([-+]?\$.*)\)$', memo_line_item)
+
+                            # we actually don't care which accounts this is for bc aggregation so no need to extract
+                            # value from group
+                            line_item_account_name = value_match.group(1)
+
+                            line_item_value_string = value_match.group(2)
+                            line_item_value_string = line_item_value_string.replace('(', '').replace(')', '').replace(
+                                '$', '')
+
+
+                            line_item_value = float(line_item_value_string)
+
+                            # this did not work
+                            #partial_MI_value += abs(line_item_value)
+
+                            delta += abs(partial_MI_value) #partial_MI_value here is always negative I think
+
+                    self.forecast_df.loc[index, 'Marginal Interest'] += delta
+
             if prev_interest.shape[0] > 0:
-                for i in range(0,prev_interest.shape[1]):
-                    delta = (float(today_interest.iloc[0,i]) - float(prev_interest.iloc[0,i]))
-                    self.forecast_df.loc[index,'Marginal Interest'] += delta
-                previous_row = row
-            #todo good enough to visualize output. need to remove the influnce of income line items
+                delta = 0
+                for i in range(0,prev_interest.shape[0]):
+                    new_delta = round((float(today_interest.iloc[i,0]) - float(prev_interest.iloc[i,0])),2)
+                    #print(row.Date + ' ' + str(delta) + ' += balance delta (' + str(new_delta) + ') yields: ' + str(round(delta + new_delta,2)))
+                    delta = round(delta + new_delta,2)
+
+
+                if 'loan min payment' in row.Memo or 'loan payment' in row.Memo:
+                    memo_line = row.Memo
+                    memo_line_items = memo_line.split(';')
+                    for memo_line_item in memo_line_items:
+                        memo_line_item = memo_line_item.strip()
+                        if memo_line_item == '':
+                            continue
+                        value_match = re.search('\(([A-Za-z0-9_ :]*) ([-+]?\$.*)\)$', memo_line_item)
+                        line_item_account_name = value_match.group(1)
+                        if ': Interest' in line_item_account_name:
+                            line_item_value_string = value_match.group(2)
+                            line_item_value_string = line_item_value_string.replace('(', '').replace(')', '').replace('$', '')
+                            line_item_value = float(line_item_value_string)
+                            new_delta = round(abs(line_item_value),2) #this was already subtracted above, so we are putting it back
+                            #print(row.Date + ' ' + str(delta) + ' += memo delta ' + str(new_delta) + ' yields: ' + str(round(delta + new_delta,2)))
+                            delta = round(delta + new_delta,2)
+
+                self.forecast_df.loc[index,'Marginal Interest'] += delta
+                #print('')
+
+            previous_row = row
 
         # net gain/loss
         self.forecast_df['Net Gain'] = 0
@@ -4408,17 +4494,15 @@ if __name__ == "__main__":
 # marginal interest calculation in few days after additional loan payments seems wrong (too low)
 # Marginal interest does not remove the influence of payment
 # account milestones for cc and loans need to take both accounts into consideration
-# output milestone results as table
+# additional cc payment memo needs to be enforced in order for marginal interest plots to work
 
 # Nice to Have
-# Display Budget Schedule as well or instead of BudgetSet
-# Commas in number strings
 # Hyphenated date format in plots
 # if no milestones, draw a plot with text that says that instead
 # Comparing forecasts of different date
-# evaluate new milestones on completed forecasts
-# map colors
+# define colors for plots
 # Handling of point labels on milestone plot. they get chopped off if they are on bound w long label names.
+# milestone point color by type
 
 # Speed optimizations
 # multithreading for ChooseOneSet
@@ -4429,3 +4513,30 @@ if __name__ == "__main__":
 #    allowing one of potentially multiple checking accounts to be marked as 'primary' and used for these operations
 # Implement deferral cadence parameter
 # Does MilestoneSet need to take AccountSet and BudgetSet as arguments?
+
+### Bite-sized tasks:
+### Same as above, but sorted by the order that I want to do them
+# correct marginal interest inference
+# correct account milestone calculation for loan and cc
+# correct memo of satisficed loan payment when additional loan payments occur
+# correct memo of satisficed cc interest accrual when additional cc payments occur
+# write multiple additional loan payment test
+# write multiple additional cc payment test (this for sure still needs to be implemented)
+# in comparison report, if report 2 contains 0 items report 1 doesnt have, output a sentence instead of a 0-row table
+# Milestone type by point color
+# Define standard colors for plots
+# milestone comparison plot
+# move line plot legends to the right
+# modify initialize_from_excel/json to account for if forecast has been run or not and summary lines appended
+# tests for initialize_from_excel
+# tests for failed satisifce
+# tests for to_excel
+
+# test marginal interest when min and additional payment on same day for both loan and cc
+# the transposes seem to be handled inconsistently when calculating marginal interest. im worried new tests will break it
+
+### Project Wrapup requirements
+# review todos
+# docstrings
+# git repo
+# github pages demo page
