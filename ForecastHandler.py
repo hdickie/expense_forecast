@@ -1226,7 +1226,7 @@ class ForecastHandler:
           <h3>Forecast Results</h3>
           <p>""" + summary_text + """</p>
           <p>The visualized data are below:</p>
-          <h4>Forecast 1 #"""+str(E.unique_id)+""":</h4>
+          <h4>Forecast #"""+str(E.unique_id)+""":</h4>
           """ + E.forecast_df.to_html() + """
         </div>
 
@@ -1263,8 +1263,10 @@ class ForecastHandler:
 
         """
 
+
         with open(output_dir+output_file_name+'.html','w') as f:
             f.write(html_body)
+        log_in_color(logger,'green','info','Finished writing single forecast report to '+output_dir+output_file_name+'.html')
 
     def getRuntimeEstimate(self,expense_forecast):
         E = expense_forecast

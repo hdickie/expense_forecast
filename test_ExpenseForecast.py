@@ -2263,54 +2263,184 @@ class TestExpenseForecastMethods:
                 print('Received: ' + str(E.composite_milestone_results[cm_name]))
                 print('Expected: ' + str(expected_milestone_dates[i]))
                 raise e
-    #
-    #
-    # def test_multiple_additional_loan_payments(self):
-    #     start_date_YYYYMMDD = '20240101'
-    #     end_date_YYYYMMDD = '20240205'
-    #
-    #     A = AccountSet.AccountSet([])
-    #     A.createAccount('Checking', 5000, 0, 999999, 'checking')
-    #     A.createAccount('Loan A', 5100, 0, 999999, 'loan', '20230103', 'simple', 0.4, 'daily', 50, None, 5000, 100)
-    #     A.createAccount('Loan B', 5100, 0, 999999, 'loan', '20230103', 'simple', 0.2, 'daily', 50, None, 5000, 100)
-    #     A.createAccount('Loan C', 5100, 0, 999999, 'loan', '20230103', 'simple', 0.1, 'daily', 50, None, 5000, 100)
-    #
-    #     B = BudgetSet.BudgetSet([])
-    #     B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 30, 'SPEND food', False, False)
-    #     B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'semiweekly', 1500, 'income', False, False)
-    #     B.addBudgetItem('20240103', end_date_YYYYMMDD, 7, 'semiweekly', 1500, 'additional loan payment', False, True)
-    #
-    #     M = MemoRuleSet.MemoRuleSet([])
-    #     M.addMemoRule('.*income.*', None, 'Checking', 1)
-    #     M.addMemoRule('SPEND.*', 'Checking', None, 1)
-    #     M.addMemoRule('additional loan payment', 'Checking', 'ALL_LOANS', 7)
-    #
-    #     A1 = AccountMilestone.AccountMilestone('Loan A 0', 'Loan A', 0, 0)
-    #     A2 = AccountMilestone.AccountMilestone('Loan A 1000', 'Loan A', 1000, 1000)
-    #     A3 = AccountMilestone.AccountMilestone('Loan B 0', 'Loan B', 0, 0)
-    #     A4 = AccountMilestone.AccountMilestone('Loan B 1000', 'Loan B', 1000, 1000)
-    #     A5 = AccountMilestone.AccountMilestone('Loan C 0', 'Loan C', 0, 0)
-    #     A6 = AccountMilestone.AccountMilestone('Loan C 1000', 'Loan C', 1000, 1000)
-    #
-    #     CM1 = CompositeMilestone.CompositeMilestone('All 1k', [A2, A4, A6], [])
-    #
-    #     MS = MilestoneSet.MilestoneSet(A, B, [A1, A2, A3, A4, A5, A6], [], [CM1])
-    #
-    #     E = ExpenseForecast.ExpenseForecast(A,
-    #                                          B,
-    #                                          M,
-    #                                          start_date_YYYYMMDD,
-    #                                          end_date_YYYYMMDD,
-    #                                          MS)
-    #     E.runForecast()
-    #     E.appendSummaryLines()
-    #
-    #     # this is just for me to review
-    #     F = ForecastHandler.ForecastHandler()
-    #     F.generateHTMLReport(E) #Forecast_042307.html
-    #
-    #     #todo assert E attributes for test
-    #     raise NotImplementedError
+
+    def test_multiple_additional_loan_payments__expect_eliminate_future_min_payments(self):
+        start_date_YYYYMMDD = '20240101'
+        end_date_YYYYMMDD = '20240205'
+
+        A = AccountSet.AccountSet([])
+        A.createAccount('Checking', 5000, 0, 999999, 'checking')
+        A.createAccount('Loan A', 3600, 0, 999999, 'loan', '20230103', 'simple', 0.4, 'daily', 50, None, 3500, 100)
+
+        B = BudgetSet.BudgetSet([])
+        B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'semiweekly', 1500, 'income', False, False)
+        B.addBudgetItem('20240103', end_date_YYYYMMDD, 7, 'semiweekly', 2000, 'additional loan payment', False, True)
+
+        M = MemoRuleSet.MemoRuleSet([])
+        M.addMemoRule('.*income.*', None, 'Checking', 1)
+        M.addMemoRule('additional loan payment', 'Checking', 'ALL_LOANS', 7)
+
+        MS = MilestoneSet.MilestoneSet(A, B, [], [], [])
+
+        E = ExpenseForecast.ExpenseForecast(A,
+                                             B,
+                                             M,
+                                             start_date_YYYYMMDD,
+                                             end_date_YYYYMMDD,
+                                             MS)
+        E.runForecast()
+        E.appendSummaryLines()
+
+        # this is just for me to review
+        F = ForecastHandler.ForecastHandler()
+        F.generateHTMLReport(E) #.html
+
+        final_state_df = E.forecast_df.tail(1)
+        assert final_state_df.iloc[0,:].Memo.strip() == ''  # loan should already have been paid off. If fail, there will be an additional payment here
+
+    def test_multiple_additional_loan_payments_on_consecutive_days(self):
+        start_date_YYYYMMDD = '20240101'
+        end_date_YYYYMMDD = '20240205'
+
+        A = AccountSet.AccountSet([])
+        A.createAccount('Checking', 5000, 0, 999999, 'checking')
+        A.createAccount('Loan A', 3600, 0, 999999, 'loan', '20230103', 'simple', 0.4, 'daily', 50, None, 3500, 100)
+
+        B = BudgetSet.BudgetSet([])
+        B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'semiweekly', 1500, 'income', False, False)
+        B.addBudgetItem('20240110', '20240110', 7, 'once', 1000, 'additional loan payment 1', False, True)
+        B.addBudgetItem('20240111', '20240111', 7, 'once', 1000, 'additional loan payment 2', False, True)
+        B.addBudgetItem('20240112', '20240112', 7, 'once', 1000, 'additional loan payment 3', False, True)
+        B.addBudgetItem('20240113', '20240113', 7, 'once', 1000, 'additional loan payment 4', False, True)
+
+        M = MemoRuleSet.MemoRuleSet([])
+        M.addMemoRule('.*income.*', None, 'Checking', 1)
+        M.addMemoRule('additional loan payment', 'Checking', 'ALL_LOANS', 7)
+
+        MS = MilestoneSet.MilestoneSet(A, B, [], [], [])
+
+        E = ExpenseForecast.ExpenseForecast(A,
+                                            B,
+                                            M,
+                                            start_date_YYYYMMDD,
+                                            end_date_YYYYMMDD,
+                                            MS)
+        E.runForecast()
+        E.appendSummaryLines()
+
+        # this is just for me to review
+        F = ForecastHandler.ForecastHandler()
+        F.generateHTMLReport(E)  # .html
+
+        final_state_df = E.forecast_df.tail(1)
+
+        #I'm not sure what the check should be here but this looks correct
+        #assert final_state_df.iloc[0,:].Memo.strip() == ''  #./Forecast_091547.html
+
+
+    def test_additional_loan_payments_overpayment(self):
+        start_date_YYYYMMDD = '20240101'
+        end_date_YYYYMMDD = '20240205'
+
+        A = AccountSet.AccountSet([])
+        A.createAccount('Checking', 5000, 0, 999999, 'checking')
+        A.createAccount('Loan A', 3600, 0, 999999, 'loan', '20230103', 'simple', 0.4, 'daily', 50, None, 3500, 100)
+
+        B = BudgetSet.BudgetSet([])
+        B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'semiweekly', 1500, 'income', False, False)
+        B.addBudgetItem('20240110', '20240110', 7, 'once', 10000, 'additional loan payment 1', False, True)
+
+        M = MemoRuleSet.MemoRuleSet([])
+        M.addMemoRule('.*income.*', None, 'Checking', 1)
+        M.addMemoRule('additional loan payment', 'Checking', 'ALL_LOANS', 7)
+
+        MS = MilestoneSet.MilestoneSet(A, B, [], [], [])
+
+        E = ExpenseForecast.ExpenseForecast(A,
+                                            B,
+                                            M,
+                                            start_date_YYYYMMDD,
+                                            end_date_YYYYMMDD,
+                                            MS)
+        E.runForecast()
+        E.appendSummaryLines()
+
+        # this is just for me to review
+        F = ForecastHandler.ForecastHandler()
+        F.generateHTMLReport(E)  # .html
+
+        final_state_df = E.forecast_df.tail(1)
+        assert final_state_df.iloc[0,2] == 0 #pbal
+        assert final_state_df.iloc[0, 2] == 0 #interest
+
+
+    def test_additional_cc_payments_overpayment(self):
+        start_date_YYYYMMDD = '20240101'
+        end_date_YYYYMMDD = '20240205'
+
+        A = AccountSet.AccountSet([])
+        A.createAccount('Checking', 5000, 0, 999999, 'checking')
+        A.createAccount('Credit', 1800, 0, 999999, 'credit', '20230103', 'compound', 0.4, 'monthly', 50, 1800, None, None)
+
+        B = BudgetSet.BudgetSet([])
+        B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'semiweekly', 1500, 'income', False, False)
+        B.addBudgetItem('20240110', '20240110', 2, 'once', 10000, 'additional cc payment', False, True)
+
+        M = MemoRuleSet.MemoRuleSet([])
+        M.addMemoRule('.*income.*', None, 'Checking', 1)
+        M.addMemoRule('additional cc payment', 'Checking', 'Credit', 2)
+
+        MS = MilestoneSet.MilestoneSet(A, B, [], [], [])
+
+        E = ExpenseForecast.ExpenseForecast(A,
+                                            B,
+                                            M,
+                                            start_date_YYYYMMDD,
+                                            end_date_YYYYMMDD,
+                                            MS)
+        E.runForecast()
+        E.appendSummaryLines()
+
+        # this is just for me to review
+        F = ForecastHandler.ForecastHandler()
+        F.generateHTMLReport(E)  # .html
+
+        final_state_df = E.forecast_df.tail(1)
+
+    def test_additional_cc_payments_expect_eliminate_future_min_payments(self):
+        start_date_YYYYMMDD = '20240101'
+        end_date_YYYYMMDD = '20240205'
+
+        A = AccountSet.AccountSet([])
+        A.createAccount('Checking', 5000, 0, 999999, 'checking')
+        A.createAccount('Loan A', 3600, 0, 999999, 'loan', '20230103', 'simple', 0.4, 'daily', 50, None, 3500, 100)
+
+        B = BudgetSet.BudgetSet([])
+        B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'semiweekly', 1500, 'income', False, False)
+        B.addBudgetItem('20240110', '20240110', 7, 'once', 10000, 'additional loan payment 1', False, True)
+
+        M = MemoRuleSet.MemoRuleSet([])
+        M.addMemoRule('.*income.*', None, 'Checking', 1)
+        M.addMemoRule('additional loan payment', 'Checking', 'ALL_LOANS', 7)
+
+        MS = MilestoneSet.MilestoneSet(A, B, [], [], [])
+
+        E = ExpenseForecast.ExpenseForecast(A,
+                                            B,
+                                            M,
+                                            start_date_YYYYMMDD,
+                                            end_date_YYYYMMDD,
+                                            MS)
+        E.runForecast()
+        E.appendSummaryLines()
+
+        # this is just for me to review
+        F = ForecastHandler.ForecastHandler()
+        F.generateHTMLReport(E)  # .html
+
+        final_state_df = E.forecast_df.tail(1)
+        raise NotImplementedError
+
     #
     #
     # def test_multiple_additional_cc_payments(self):
