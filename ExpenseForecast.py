@@ -163,6 +163,7 @@ def initialize_from_excel_file(path_to_excel_file):
 
     return E
 
+#whether or not the expense forecast has been run will be determined at runtime
 def initialize_from_json_file(path_to_json):
     with open(path_to_json) as json_data:
         data = json.load(json_data)
@@ -280,7 +281,6 @@ def initialize_from_json_file(path_to_json):
                       account_to=MemoRule__dict['Account_To'],
                       transaction_priority=MemoRule__dict['Transaction_Priority'])
 
-    #todo idk what the data structure is here i have to develop the test more
     for am in milestone_set["account_milestones"]:
         MS.addAccountMilestone(am['Milestone_Name'],am['Account_Name'],am['Min_Balance'],am['Max_Balance'])
 
@@ -300,40 +300,23 @@ def initialize_from_json_file(path_to_json):
         MS.addCompositeMilestone(cm['Milestone_Name'],account_milestones__list,memo_milestones__list)
 
     E = ExpenseForecast(A, B, M,start_date_YYYYMMDD, end_date_YYYYMMDD, MS, print_debug_messages=True)
-    #print('data:')
-    #print(data)
-
-    # print('data[account_milestone_results]')
-    # print(data['account_milestone_results'])
 
     # print('data:')
     # for key, value in data.items():
     #     print('key:'+str(key))
     #     print('value:' + str(value))
 
-    # am_results = []
-    # for am_result in data['account_milestone_results']:
-    #     am_results.append(am_result)
-    # E.account_milestone_results = am_results
     E.account_milestone_results = data['account_milestone_results']
 
-    # mm_results = []
-    # for mm_result in data['account_milestone_results']:
-    #     mm_results.append(mm_result)
-    # E.memo_milestone_results = mm_results
     E.memo_milestone_results = data['memo_milestone_results']
 
-    # cm_results = []
-    # for cm_result in data['account_milestone_results']:
-    #     cm_results.append(cm_result)
-    # E.composite_milestone_results = cm_results
     E.composite_milestone_results = data['composite_milestone_results']
 
     E.unique_id = data['unique_id']
     E.start_ts = data['start_ts']
     E.end_ts = data['end_ts']
 
-    #it is so dumb that I have to do this
+    #it is so dumb that I have to do this just to interpret string as json
     f = open('./out/forecast_df_' + str(E.unique_id)+'.json', 'w')
     f.write(json.dumps(data['forecast_df'],indent=4))
     f.close()
@@ -356,7 +339,7 @@ def initialize_from_json_file(path_to_json):
     E.deferred_df = pd.read_json('./out/deferred_df_' + str(E.unique_id) + '.json')
 
     E.forecast_df.Date = [ str(d) for d in E.forecast_df.Date ]
-    #milestone results
+    #todo milestone results
 
     return E
 
@@ -627,8 +610,8 @@ class ExpenseForecast:
 
         composite_milestone_results = {}
         for c_m in self.milestone_set.composite_milestones:
-            res = self.evaluateCompositeMilestone(self.milestone_set.account_milestones,
-                                                  self.milestone_set.memo_milestones)
+            res = self.evaluateCompositeMilestone(c_m.account_milestones,
+                                                  c_m.memo_milestones)
             composite_milestone_results[c_m.milestone_name] = res
         self.composite_milestone_results = composite_milestone_results
 
@@ -4663,12 +4646,15 @@ class ExpenseForecast:
     #     return [forecast_df, skipped_df, confirmed_df, deferred_df]
 
     def evaluateAccountMilestone(self,account_name,min_balance,max_balance):
-        log_in_color(logger,'yellow','debug','ENTER evaluateAccountMilestone('+str(account_name)+','+str(min_balance)+','+str(max_balance)+')')
+        log_in_color(logger,'yellow','info','ENTER evaluateAccountMilestone('+str(account_name)+','+str(min_balance)+','+str(max_balance)+')',self.log_stack_depth)
+        self.log_stack_depth += 1
         account_info = self.initial_account_set.getAccounts()
         account_base_names = [ a.split(':')[0] for a in account_info.Name ]
         row_sel_vec = [ a == account_name for a in account_base_names]
 
         relevant_account_info_rows_df = account_info[row_sel_vec]
+        #log_in_color(logger, 'yellow', 'info', 'relevant_account_info_rows_df:')
+        #log_in_color(logger, 'yellow', 'info',relevant_account_info_rows_df.to_string())
 
         #this df should be either 1 or 2 rows, but have same account type either way
         try:
@@ -4680,46 +4666,103 @@ class ExpenseForecast:
             col_sel_vec = self.forecast_df.columns == relevant_account_info_rows_df.head(1)['Name'].iat[0]
             col_sel_vec[0] = True
             relevant_time_series_df = self.forecast_df.iloc[:, col_sel_vec]
+
+            # a valid success date stays valid until the end
+            found_a_valid_success_date = False
+            success_date = None
+            for index, row in relevant_time_series_df.iterrows():
+                current_value = relevant_time_series_df.iloc[index, 1]
+                if ((min_balance <= current_value) & (current_value <= max_balance)) and not found_a_valid_success_date:
+                    found_a_valid_success_date = True
+                    success_date = row.Date
+                    log_in_color(logger, 'yellow', 'info', 'success_date:'+str(success_date),self.log_stack_depth)
+                elif ((min_balance > current_value) | (current_value > max_balance)):
+                    found_a_valid_success_date = False
+                    success_date = None
+                    log_in_color(logger, 'yellow', 'info', 'success_date:None',self.log_stack_depth)
+
         elif relevant_account_info_rows_df.shape[0] == 2:  # case for credit and loan
-            col_sel_vec = self.forecast_df.columns == relevant_account_info_rows_df.head(1)['Name'].iat[0]
-            col_sel_vec[0] = True
+            curr_stmt_bal_acct_name = relevant_account_info_rows_df.iloc[0,0]
+            prev_stmt_bal_acct_name = relevant_account_info_rows_df.iloc[1, 0]
+
+            # log_in_color(logger, 'yellow', 'info', 'curr_stmt_bal_acct_name:')
+            # log_in_color(logger, 'yellow', 'info', curr_stmt_bal_acct_name)
+            # log_in_color(logger, 'yellow', 'info', 'prev_stmt_bal_acct_name:')
+            # log_in_color(logger, 'yellow', 'info', prev_stmt_bal_acct_name)
+
+            col_sel_vec = self.forecast_df.columns == curr_stmt_bal_acct_name
+            col_sel_vec = col_sel_vec | (self.forecast_df.columns == prev_stmt_bal_acct_name)
+            col_sel_vec[0] = True #Date
+
+            # log_in_color(logger, 'yellow', 'info', 'col_sel_vec:')
+            # log_in_color(logger, 'yellow', 'info', col_sel_vec)
 
             relevant_time_series_df = self.forecast_df.iloc[:, col_sel_vec]
+
+            #a valid success date stays valid until the end
+            found_a_valid_success_date = False
+            success_date = None
+            for index, row in relevant_time_series_df.iterrows():
+                current_value = relevant_time_series_df.iloc[index,1] + relevant_time_series_df.iloc[index,2]
+                if ((min_balance <= current_value) & (current_value <= max_balance)) and not found_a_valid_success_date:
+                    found_a_valid_success_date = True
+                    success_date = row.Date
+                    log_in_color(logger, 'yellow', 'info', 'success_date:' + str(success_date),self.log_stack_depth)
+                elif ((min_balance > current_value) | (current_value > max_balance)):
+                    found_a_valid_success_date = False
+                    success_date = None
+                    log_in_color(logger, 'yellow', 'info', 'success_date:None',self.log_stack_depth)
+
         else:
             raise ValueError("undefined edge case in ExpenseForecast::evaulateAccountMilestone""")
 
-        last_value = relevant_time_series_df.tail(1).iat[0,1]
-        #if the last day of the forecast does not satisfy account bounds, then none of the days of the forecast qualify
-        if not (( min_balance <= last_value ) & ( last_value <= max_balance )):
-            log_in_color(logger,'yellow', 'debug','EXIT evaluateAccountMilestone(' + str(account_name) + ',' + str(min_balance) + ',' + str(max_balance) + ')')
-            return None
+        # log_in_color(logger, 'yellow', 'info', 'relevant_time_series_df:')
+        # log_in_color(logger, 'yellow', 'info', relevant_time_series_df.to_string())
+        #
+        # log_in_color(logger, 'yellow', 'info', 'last_value:')
+        # log_in_color(logger, 'yellow', 'info', last_value)
 
-        #if the code reaches this point, then the milestone was for sure reached.
-        #We can find the first day that qualifies my reverseing the sequence and returning the day before the first day that doesnt qualify
-        relevant_time_series_df = relevant_time_series_df.loc[::-1]
-        last_qualifying_date = relevant_time_series_df.head(1).Date
-        for index, row in relevant_time_series_df.iterrows():
-            # print('row:')
-            # print(row)
-            # print(row.iloc[1])
-            if (( min_balance <= row.iloc[1] ) & ( row.iloc[1] <= max_balance )):
-                last_qualifying_date = row.Date
-            else:
-                break
-        log_in_color(logger,'yellow', 'debug','EXIT evaluateAccountMilestone(' + str(account_name) + ',' + str(min_balance) + ',' + str(max_balance) + ')')
-        return last_qualifying_date
+
+
+        #
+        # #if the last day of the forecast does not satisfy account bounds, then none of the days of the forecast qualify
+        # if not (( min_balance <= last_value ) & ( last_value <= max_balance )):
+        #     log_in_color(logger,'yellow', 'info','EXIT evaluateAccountMilestone(' + str(account_name) + ',' + str(min_balance) + ',' + str(max_balance) + ') None')
+        #     return None
+        #
+        # #if the code reaches this point, then the milestone was for sure reached.
+        # #We can find the first day that qualifies my reverseing the sequence and returning the day before the first day that doesnt qualify
+        # relevant_time_series_df = relevant_time_series_df.loc[::-1]
+        # last_qualifying_date = relevant_time_series_df.head(1).Date.iat[0]
+        # for index, row in relevant_time_series_df.iterrows():
+        #     # print('row:')
+        #     # print(row)
+        #     # print(row.iloc[1])
+        #     if (( min_balance <= row.iloc[1] ) & ( row.iloc[1] <= max_balance )):
+        #         last_qualifying_date = row.Date.iat[0]
+        #     else:
+        #         break
+        self.log_stack_depth -= 1
+        log_in_color(logger,'yellow', 'info','EXIT evaluateAccountMilestone(' + str(account_name) + ',' + str(min_balance) + ',' + str(max_balance) + ') '+str(success_date),self.log_stack_depth)
+        return success_date
 
     def evaulateMemoMilestone(self,memo_regex):
-        log_in_color(logger,'yellow', 'debug','ENTER evaluateMemoMilestone(' + str(memo_regex)+')')
+        log_in_color(logger,'yellow', 'debug','ENTER evaluateMemoMilestone(' + str(memo_regex)+')',self.log_stack_depth)
+        self.log_stack_depth += 1
         for forecast_index, forecast_row in self.forecast_df.iterrows():
             m = re.search(memo_regex,forecast_row.Memo)
             if m is not None:
-                log_in_color(logger,'yellow', 'debug', 'EXIT evaluateMemoMilestone(' + str(memo_regex) + ')')
+                self.log_stack_depth -= 1
+                log_in_color(logger,'yellow', 'debug', 'EXIT evaluateMemoMilestone(' + str(memo_regex) + ')',self.log_stack_depth)
                 return forecast_row.Date
-        log_in_color(logger,'yellow', 'debug', 'EXIT evaluateMemoMilestone(' + str(memo_regex) + ')')
+
+        self.log_stack_depth -= 1
+        log_in_color(logger,'yellow', 'debug', 'EXIT evaluateMemoMilestone(' + str(memo_regex) + ')',self.log_stack_depth)
         return None
 
     def evaluateCompositeMilestone(self,list_of_account_milestones,list_of_memo_milestones):
+        log_in_color(logger, 'yellow', 'info', 'ENTER evaluateCompositeMilestone()',self.log_stack_depth)
+        self.log_stack_depth += 1
         #list_of_account_milestones is lists of 3-tuples that are (string,float,float) for parameters
 
         #composite milestones may contain some milestones that arent listed in the composite #todo as of 2023-04-25
@@ -4733,6 +4776,8 @@ class ExpenseForecast:
             account_milestone = list_of_account_milestones[i]
             am_result = self.evaluateAccountMilestone(account_milestone.account_name,account_milestone.min_balance,account_milestone.max_balance)
             if am_result is None: #disqualified immediately because success requires ALL
+                self.log_stack_depth -= 1
+                log_in_color(logger, 'yellow', 'info', 'EXIT evaluateCompositeMilestone() None',self.log_stack_depth)
                 return None
             account_milestone_dates.append(am_result)
 
@@ -4740,10 +4785,15 @@ class ExpenseForecast:
             memo_milestone = list_of_memo_milestones[i]
             mm_result = self.evaulateMemoMilestone(memo_milestone.memo_regex)
             if mm_result is None:  # disqualified immediately because success requires ALL
+                self.log_stack_depth -= 1
+                log_in_color(logger, 'yellow', 'info', 'EXIT evaluateCompositeMilestone() None',self.log_stack_depth)
                 return None
             memo_milestone_dates.append(mm_result)
 
-        return max(account_milestone_dates + memo_milestone_dates)
+        result_date = max(account_milestone_dates + memo_milestone_dates)
+        log_in_color(logger, 'yellow', 'info', 'EXIT evaluateCompositeMilestone() '+str(result_date),self.log_stack_depth)
+        self.log_stack_depth -= 1
+        return result_date
 
     def to_json(self):
         """
@@ -5100,9 +5150,13 @@ if __name__ == "__main__":
 # Implement ChooseOneSet
 # multithreading for ChooseOneSet
 # dynamic programming for recursive calls (note: probs best to write temporary files indexed by hash so program doesnt hog ram)
+# EXPLAIN log of call stack BEFORE running so we can can use this for runtime estimate
+#    once we have this, computing some examples makes predicting runtime easy, but confidence bands will be large
 
 # Have to Have
 # marginal interest calculation in few days after additional loan payments seems wrong (too low)
+# account name 'Credit' is hardcoded in additional cc payment memo computation
+# EXPLAIN in plain english
 
 # Nice to Have
 # Hyphenated date format in plots
@@ -5110,29 +5164,25 @@ if __name__ == "__main__":
 # Comparing forecasts of different date
 # define colors for plots
 # Handling of point labels on milestone plot. they get chopped off if they are on bound w long label names.
-# milestone point color by type
 
 
 # Big Effort Design Improvements
 # Atm (1/5/2024), an account 'Checking' is hard coded. This should be replaced by an input parameter
 #    allowing one of potentially multiple checking accounts to be marked as 'primary' and used for these operations
+
 # Implement deferral cadence parameter
 # set default deferral cadence to lookahead to next income
 # Does MilestoneSet need to take AccountSet and BudgetSet as arguments?
-# additional cc payment memo needs to be enforced in order for marginal interest plots to work
+# modify createAccount into createLoanAccount and createCreditCardAccount?
 
 ### Bite-sized tasks:
 #i want like hastags appended to url when i click on tabs so it stays there when i refresh
-# marginal interest does not account for cc payments on same day?
 # tests for edge cases involving things close together or at end of forecast
 # write test for pay off loan early (make sure the memo field is correct)
 # write test for pay off cc debt early
-# correct memo of satisficed cc interest accrual when additional cc payments occur
 # write multiple additional loan payment test
 # write multiple additional cc payment test (this for sure still needs to be implemented)
 # add color legend to milestone plot
-# correct account milestone calculation for cc
-# correct account milestone calculation for loan
 # in comparison report, if report 2 contains 0 items report 1 doesnt have, output a sentence instead of a 0-row table
 # Define standard colors for plots
 # milestone comparison plot
@@ -5142,7 +5192,7 @@ if __name__ == "__main__":
 # tests for failed satisifce
 # tests for to_excel
 
-# test marginal interest when min and additional payment on same day for both loan and cc
+# test marginal interest when min and additional payment on same day for loan
 # the transposes seem to be handled inconsistently when calculating marginal interest. im worried new tests will break it
 
 ### Project Wrapup requirements
@@ -5152,7 +5202,7 @@ if __name__ == "__main__":
 # github pages demo page
 
 #error if ALL_LOANS put in memo rule when it doesnt make sense
-#daily interset not allowed w credit
+#daily interest not allowed w credit
 #check that start and end date the same produce at least 1 budget item on that day for any cadence
 
 
