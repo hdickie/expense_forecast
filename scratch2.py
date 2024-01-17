@@ -106,11 +106,11 @@ if __name__ == '__main__':
     rerun = True
 
     start_date_YYYYMMDD = '20240101'
-    end_date_YYYYMMDD = '20240205'
+    end_date_YYYYMMDD = '20240105'
 
     A = AccountSet.AccountSet([])
     A.createAccount('Checking', 6000, 0, 999999, 'checking')
-    A.createAccount('Credit', 1000, 0, 999999, 'credit', '20240103', 'compound', 0.24, 'monthly', 60, 1000)
+    A.createAccount('Credit', 1000, 0, 999999, 'credit', '20240103', 'compound', 0.24, 'monthly', 60, 10000)
     #A.createAccount('Loan A', 5100, 0, 999999, 'loan', '20230103', 'simple', 0.1, 'daily', 50, None, 5000, 100)
     #A.createAccount('Loan B', 1100, 0, 999999, 'loan', '20230103', 'simple', 0.05, 'daily', 50, None, 1000, 100)
     #A.createAccount('Loan C', 1100, 0, 999999, 'loan', '20230103', 'simple', 0.01, 'daily', 50, None, 1000, 100)
@@ -119,7 +119,7 @@ if __name__ == '__main__':
     #B.addBudgetItem('20240120', '20240120', 1, 'once', 10_000, 'income', False, False)
     # B.addBudgetItem('20240201', '20240201', 1, 'once', 10_000, 'income 2', False, False)
     #B.addBudgetItem('20240117', '20240117', 2, 'once', 10_000, '10k txn', True, False)
-    B.addBudgetItem('20240103', end_date_YYYYMMDD, 6, 'semiweekly', 1000, 'additional cc payment', False, True)
+    B.addBudgetItem('20240103', '20240103', 6, 'once', 5000, 'additional cc payment', False, True)
     #B.addBudgetItem('20240103', end_date_YYYYMMDD, 7, 'semiweekly', 1500, 'additional loan payment', False, True)
     #B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 1, 'food', False, False)
 

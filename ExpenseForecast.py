@@ -727,22 +727,15 @@ class ExpenseForecast:
             #loan min payment
             #memo has cc min payment on days where
 
-
+            #cc min payment is 1% of balance plus interest. min pay = bal*0.01 + interest
+            # therefore interest = min pay - bal*0.01
             if 'cc min payment' in row.Memo:
-                if prev_curr_stmt_bal.shape[0] > 0:
-                    partial_MI_value = 0
-                    for i in range(0, prev_curr_stmt_bal.shape[1]):
-                        # #once payments are added this is correct
-                        # print('prev_curr_stmt_bal.iloc[0,i]:')
-                        # print(prev_curr_stmt_bal.iloc[0,i])
-                        # print('prev_prev_stmt_bal.iloc[0,i]:')
-                        # print(prev_prev_stmt_bal.iloc[0, i])
-                        # print('today_prev_stmt_bal.iloc[0,i]:')
-                        # print(today_prev_stmt_bal.iloc[0, i])
-                        partial_MI_value = prev_curr_stmt_bal.iloc[0,i] + prev_prev_stmt_bal.iloc[0,i] - today_prev_stmt_bal.iloc[0,i]
-                        # print('partial_MI_value:')
-                        # print(partial_MI_value)
+                if prev_prev_stmt_bal.shape[0] > 0:
+                    prev_stmt_total = 0
+                    for i in range(0, prev_prev_stmt_bal.shape[1]):
+                        prev_stmt_total += prev_prev_stmt_bal.iloc[0,i]
 
+                    min_payment_total = 0
                     memo_line = row.Memo
                     memo_line_items = memo_line.split(';')
                     for memo_line_item in memo_line_items:
@@ -750,26 +743,20 @@ class ExpenseForecast:
                         if memo_line_item == '':
                             continue
 
-                        if 'cc min payment' in memo_line_item or 'additional cc payment' in memo_line_item:
+                        if 'cc min payment' in memo_line_item:
                             value_match = re.search('\(([A-Za-z0-9_ :]*) ([-+]?\$.*)\)$', memo_line_item)
-
-                            # we actually don't care which accounts this is for bc aggregation so no need to extract
-                            # value from group
-                            line_item_account_name = value_match.group(1)
 
                             line_item_value_string = value_match.group(2)
                             line_item_value_string = line_item_value_string.replace('(', '').replace(')', '').replace(
                                 '$', '')
 
-
                             line_item_value = float(line_item_value_string)
 
-                            # this did not work
-                            #partial_MI_value += abs(line_item_value)
+                            min_payment_total += abs(line_item_value)
 
-                            delta += abs(partial_MI_value) #partial_MI_value here is always negative I think
-
-                    self.forecast_df.loc[index, 'Marginal Interest'] += delta
+                # cc min payment is 1% of balance plus interest. min pay = bal*0.01 + interest
+                # therefore interest = min pay - bal*0.01
+                self.forecast_df.loc[index, 'Marginal Interest'] += ( min_payment_total - prev_stmt_total*0.01 )
 
             if prev_interest.shape[0] > 0:
                 delta = 0
@@ -2576,6 +2563,9 @@ class ExpenseForecast:
                                                                                           '%Y%m%d')).days
 
             billing_days = set(generate_date_sequence(account_row.Billing_Start_Dt, num_days, 'monthly'))
+            # log_in_color(logger, 'cyan', 'info', 'executeCreditCardMinimumPayments()', self.log_stack_depth)
+            # log_in_color(logger, 'cyan', 'info', 'billing_days', self.log_stack_depth)
+            # log_in_color(logger, 'cyan', 'info', billing_days, self.log_stack_depth)
 
             if current_forecast_row_df.Date.iloc[0] == account_row.Billing_Start_Dt:
                 billing_days = set(current_forecast_row_df.Date).union(
@@ -2593,9 +2583,10 @@ class ExpenseForecast:
 
                     # it turns out that the way this really works is that Chase uses 1% PLUS the interest accrued to be charged immediately, not added to the principal
                     # todo the above has been encoded, todo is check against statements to confirm
-                    interest_to_be_charged_immediately = current_previous_statement_balance * ( account_row.APR / 12 + 0.01 )
+                    interest_to_be_charged_immediately = current_previous_statement_balance * ( account_row.APR / 12 )
+                    amount_charged_toward_balance = current_previous_statement_balance * 0.01
 
-                    minimum_payment_amount = max(40, interest_to_be_charged_immediately)
+                    minimum_payment_amount = max(40, interest_to_be_charged_immediately + amount_charged_toward_balance)
 
                     # very much not how I designed this but not earth-shatteringly different
 
@@ -2624,11 +2615,12 @@ class ExpenseForecast:
             col_sel_vec = (current_forecast_row_df.columns == account_row.Name)
             current_forecast_row_df.iloc[0, col_sel_vec] = relevant_balance
 
-            #todo move curr to prev. the parent code syncs account set so its fine that account_set is out of sync
-            if account_row.Account_Type == 'prev stmt bal':
-                addition_to_prev_stmt_bal = account_set.getAccounts().iloc[account_index - 1, 1]
-                current_forecast_row_df.iloc[0, account_index] = 0
-                current_forecast_row_df.iloc[0, account_index + 1] += addition_to_prev_stmt_bal
+            #move curr to prev. the parent code syncs account set so its fine that account_set is out of sync
+            if current_forecast_row_df.Date.iloc[0] in billing_days:
+                if account_row.Account_Type == 'prev stmt bal':
+                    addition_to_prev_stmt_bal = account_set.getAccounts().iloc[account_index - 1, 1]
+                    current_forecast_row_df.iloc[0, account_index] = 0
+                    current_forecast_row_df.iloc[0, account_index + 1] += addition_to_prev_stmt_bal
 
 
 
@@ -5132,7 +5124,6 @@ if __name__ == "__main__":
 ### Bite-sized tasks:
 #i want like hastags appended to url when i click on tabs so it stays there when i refresh
 # marginal interest does not account for cc payments on same day?
-# overpaid additional cc payments didnt cause error when on last day of forecast
 # tests for edge cases involving things close together or at end of forecast
 # write test for pay off loan early (make sure the memo field is correct)
 # write test for pay off cc debt early
