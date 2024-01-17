@@ -385,7 +385,7 @@ class AccountSet:
         return balances_dict
 
     def executeTransaction(self, Account_From, Account_To, Amount, income_flag=False):
-        #print('ENTER executeTransaction('+str(Account_From)+','+str(Account_To)+','+str(Amount)+')')
+        log_in_color(logger,'white', 'debug','ENTER executeTransaction('+str(Account_From)+','+str(Account_To)+','+str(Amount)+')')
         Amount = round(Amount,2)
 
         if Amount == 0:
@@ -539,8 +539,17 @@ class AccountSet:
 
                 debt_payment_ind = (AT_Account_Type.lower() == 'loan')
 
-                AT_ANAME = self.accounts[account_to_index].name.split(':')[0]
-                balance_after_proposed_transaction = self.getBalances()[AT_ANAME] - abs(Amount)
+                #we can't use this here
+                #AT_ANAME = self.accounts[account_to_index].name.split(':')[0]
+                #balance_after_proposed_transaction = self.getBalances()[AT_ANAME] - abs(Amount)
+
+                AT_basename = self.accounts[account_to_index].name.split(':')[0]
+                row_sel_vec = [ AT_basename in aname for aname in self.getAccounts().Name ]
+                relevant_rows_df = self.getAccounts().iloc[row_sel_vec,1] #col 1 is balance
+
+                assert relevant_rows_df.shape[0] == 2
+
+                balance_after_proposed_transaction = sum(relevant_rows_df) - abs(Amount)
 
                 if abs(balance_after_proposed_transaction) < 0.01:
                     balance_after_proposed_transaction = 0

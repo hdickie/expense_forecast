@@ -812,7 +812,7 @@ class ExpenseForecast:
                 if memo_line_item == '':
                     continue
 
-                if 'loan min payment' in memo_line_item or 'cc min payment' in memo_line_item:
+                if 'loan min payment' in memo_line_item or 'cc min payment' in memo_line_item or 'additional cc payment':
                     continue
 
                 # print('memo_line_item:')
@@ -844,11 +844,17 @@ class ExpenseForecast:
 
                 line_item_value = float(line_item_value_string)
                 if 'income' in memo_line_item.lower():
-                    pass # add to net gain
                     self.forecast_df.loc[index,'Net Gain'] += abs(line_item_value)
                 else:
-                    pass #add to net loss
                     self.forecast_df.loc[index,'Net Loss'] += abs(line_item_value)
+
+            if self.forecast_df.loc[index,'Net Loss'] > 0 and self.forecast_df.loc[index,'Net Gain'] > 0:
+                if self.forecast_df.loc[index,'Net Gain'] > self.forecast_df.loc[index,'Net Loss']:
+                    self.forecast_df.loc[index, 'Net Gain'] -= self.forecast_df.loc[index,'Net Loss']
+                    self.forecast_df.loc[index, 'Net Loss'] = 0
+                else:
+                    self.forecast_df.loc[index, 'Net Loss'] -= self.forecast_df.loc[index, 'Net Gain']
+                    self.forecast_df.loc[index, 'Net Gain'] = 0
 
 
         LiquidTotal = self.forecast_df.Checking #todo savings would go here
@@ -1015,7 +1021,7 @@ class ExpenseForecast:
 
                 #todo replace this with account type
                 if memo_rule_row.Account_To == 'Credit' and account_row.Name != memo_rule_row.Account_From:
-                    forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'] += ' additional cc payment (' + str(account_row.Name) + ' -$' + str(round(current_balance - relevant_balance, 2)) + '); '
+                    forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'] += ' additional cc payment (' + str(account_row.Name) + ' $' + str(round(current_balance - relevant_balance, 2)) + '); '
 
         #log_in_color(logger, 'green', 'debug', 'EXIT updateBalancesAndMemo()', self.log_stack_depth)
         return forecast_df
@@ -1115,7 +1121,7 @@ class ExpenseForecast:
                 log_in_color(logger, 'green', 'debug', str(result_of_attempt), self.log_stack_depth)
                 hypothetical_future_state_of_forecast = None
 
-            #todo this should use attempt transacton again
+
             if not transaction_is_permitted and proposed_row_df.Partial_Payment_Allowed:
 
                 #try:
@@ -1140,30 +1146,33 @@ class ExpenseForecast:
                 else:
                     reduced_amt = af_max
 
-                proposed_row_df.Amount = reduced_amt
+                if reduced_amt == 0:
+                    log_in_color(logger, 'cyan', 'debug', 'reduced amt is 0 so we abandon the txn', self.log_stack_depth)
+                elif reduced_amt > 0:
+                    proposed_row_df.Amount = reduced_amt
 
-                log_in_color(logger, 'cyan', 'info', 'new proposed txn:', self.log_stack_depth)
-                log_in_color(logger, 'cyan', 'info', proposed_row_df.to_string(), self.log_stack_depth)
+                    log_in_color(logger, 'cyan', 'info', 'new proposed txn:', self.log_stack_depth)
+                    log_in_color(logger, 'cyan', 'info', proposed_row_df.to_string(), self.log_stack_depth)
 
 
 
 
-                # False if not permitted, updated forecast if it is permitted
-                result_of_attempt = self.attemptTransaction(forecast_df, copy.deepcopy(account_set), memo_set,
-                                                            confirmed_df,
-                                                            proposed_row_df)
+                    # False if not permitted, updated forecast if it is permitted
+                    result_of_attempt = self.attemptTransaction(forecast_df, copy.deepcopy(account_set), memo_set,
+                                                                confirmed_df,
+                                                                proposed_row_df)
 
-                transaction_is_permitted = isinstance(result_of_attempt, pd.DataFrame)
-                log_in_color(logger, 'green', 'debug', 'result_of_attempt:', self.log_stack_depth)
-                if transaction_is_permitted:
-                    hypothetical_future_state_of_forecast = result_of_attempt
-                    log_in_color(logger, 'green', 'debug', result_of_attempt.to_string(), self.log_stack_depth)
-                    account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, date_YYYYMMDD)
-                    log_in_color(logger, 'green', 'info', 'Partial Payment success', self.log_stack_depth)
-                else:
-                    log_in_color(logger, 'green', 'debug', str(result_of_attempt), self.log_stack_depth)
-                    hypothetical_future_state_of_forecast = None
-                    log_in_color(logger, 'red', 'info', 'Partial Payment fail', self.log_stack_depth)
+                    transaction_is_permitted = isinstance(result_of_attempt, pd.DataFrame)
+                    log_in_color(logger, 'green', 'debug', 'result_of_attempt:', self.log_stack_depth)
+                    if transaction_is_permitted:
+                        hypothetical_future_state_of_forecast = result_of_attempt
+                        log_in_color(logger, 'green', 'debug', result_of_attempt.to_string(), self.log_stack_depth)
+                        account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, date_YYYYMMDD)
+                        log_in_color(logger, 'green', 'info', 'Partial Payment success', self.log_stack_depth)
+                    else:
+                        log_in_color(logger, 'green', 'debug', str(result_of_attempt), self.log_stack_depth)
+                        hypothetical_future_state_of_forecast = None
+                        log_in_color(logger, 'red', 'info', 'Partial Payment fail', self.log_stack_depth)
 
                     # not_yet_validated_confirmed_df = pd.concat([confirmed_df,pd.DataFrame(proposed_row_df).T])
                     #
@@ -3211,8 +3220,8 @@ class ExpenseForecast:
                         if len(memo_line_items_relevant_to_minimum_payment) == 1:
                             # e.g. cc min payment (Credit: Prev Stmt Bal -$149.24);
 
-                            log_in_color(logger, 'magenta', 'info', 'f_row before recalculated cc min payment:')
-                            log_in_color(logger, 'magenta', 'info', f_row.to_string())
+                            #log_in_color(logger, 'magenta', 'info', 'f_row before recalculated cc min payment:')
+                            #log_in_color(logger, 'magenta', 'info', f_row.to_string())
 
                             account_name_match = re.search('\((.*)-\$(.*)\)',memo_line_items_relevant_to_minimum_payment[0])
                             account_name = account_name_match.group(1).strip()
@@ -3229,8 +3238,8 @@ class ExpenseForecast:
                             future_rows_only_df.iloc[row_sel_vec,col_sel_vec] += og_amount
 
                             memo_to_replace = memo_line_items_relevant_to_minimum_payment[0]+';'
-                            log_in_color(logger, 'magenta', 'info', 'memo_to_replace:')
-                            log_in_color(logger, 'magenta', 'info', memo_to_replace)
+                            #log_in_color(logger, 'magenta', 'info', 'memo_to_replace:')
+                            #log_in_color(logger, 'magenta', 'info', memo_to_replace)
                             new_memo = future_rows_only_df.iloc[row_sel_vec, :].Memo.iat[0].replace(memo_to_replace, '')
                             f_row.Memo = new_memo
 
@@ -3252,16 +3261,16 @@ class ExpenseForecast:
                                 future_rows_only_df.iloc[f_i, col_sel_vec] += (current_tmrw_value - current_today_value)
                                 future_rows_only_df.iloc[row_sel_vec, col_sel_vec] -= ( current_tmrw_value - current_today_value )
 
-                            log_in_color(logger, 'magenta', 'info', 'updated_forecast_df_row after recalculated cc min payment:')
-                            log_in_color(logger, 'magenta', 'info', updated_forecast_df_row.to_string())
+                            #log_in_color(logger, 'magenta', 'info', 'updated_forecast_df_row after recalculated cc min payment:')
+                            #log_in_color(logger, 'magenta', 'info', updated_forecast_df_row.to_string())
 
                             row_sel_vec = [d == datetime.datetime.strptime(f_row.Date.iat[0], '%Y%m%d') for d in future_rows_only_df__date]
 
-                            log_in_color(logger, 'magenta', 'info', 'new_memo:')
-                            log_in_color(logger, 'magenta', 'info', new_memo)
+                            #log_in_color(logger, 'magenta', 'info', 'new_memo:')
+                            #log_in_color(logger, 'magenta', 'info', new_memo)
 
-                            log_in_color(logger, 'magenta', 'info', 'f_row after recalculated cc min payment:')
-                            log_in_color(logger, 'magenta', 'info', updated_forecast_df_row.to_string())
+                            #log_in_color(logger, 'magenta', 'info', 'f_row after recalculated cc min payment:')
+                            #log_in_color(logger, 'magenta', 'info', updated_forecast_df_row.to_string())
                             future_rows_only_df.iloc[row_sel_vec, :] = updated_forecast_df_row
 
 
@@ -5097,10 +5106,11 @@ if __name__ == "__main__":
 
 # New Features
 # Implement ChooseOneSet
+# multithreading for ChooseOneSet
+# dynamic programming for recursive calls (note: probs best to write temporary files indexed by hash so program doesnt hog ram)
 
 # Have to Have
 # marginal interest calculation in few days after additional loan payments seems wrong (too low)
-# add note to transaction schedule explaining that the table does not show minimum payments
 
 # Nice to Have
 # Hyphenated date format in plots
@@ -5110,9 +5120,6 @@ if __name__ == "__main__":
 # Handling of point labels on milestone plot. they get chopped off if they are on bound w long label names.
 # milestone point color by type
 
-# Speed optimizations
-# multithreading for ChooseOneSet
-# dynamic programming for recursive calls (note: probs best to write temporary files indexed by hash so program doesnt hog ram)
 
 # Big Effort Design Improvements
 # Atm (1/5/2024), an account 'Checking' is hard coded. This should be replaced by an input parameter
@@ -5123,10 +5130,10 @@ if __name__ == "__main__":
 # additional cc payment memo needs to be enforced in order for marginal interest plots to work
 
 ### Bite-sized tasks:
-# marginal interset does not account for cc payments on same day?
+#i want like hastags appended to url when i click on tabs so it stays there when i refresh
+# marginal interest does not account for cc payments on same day?
 # overpaid additional cc payments didnt cause error when on last day of forecast
 # tests for edge cases involving things close together or at end of forecast
-# net loss is picking up cc payments as loss when it shouldnt
 # write test for pay off loan early (make sure the memo field is correct)
 # write test for pay off cc debt early
 # correct memo of satisficed cc interest accrual when additional cc payments occur

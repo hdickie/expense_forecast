@@ -1064,7 +1064,7 @@ class ForecastHandler:
         milestone_text = str(total_milestone_count)+" milestones were defined, and "+str(achieved_milestone_count)+" were achieved before the end of the forecast.<br>"
         milestone_text += "Note that unachieved milestones are displayed on the last day of the forecast."
 
-        transaction_schedule_text = "All transactions are displayed below."
+        transaction_schedule_text = "Transactions are displayed below. Note that loan and credit card minimum payments are not shown."
 
         all_plot_page_text = ""
 

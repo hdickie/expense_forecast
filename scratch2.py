@@ -121,7 +121,7 @@ if __name__ == '__main__':
     #B.addBudgetItem('20240117', '20240117', 2, 'once', 10_000, '10k txn', True, False)
     B.addBudgetItem('20240103', end_date_YYYYMMDD, 6, 'semiweekly', 1000, 'additional cc payment', False, True)
     #B.addBudgetItem('20240103', end_date_YYYYMMDD, 7, 'semiweekly', 1500, 'additional loan payment', False, True)
-    B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 1, 'food', False, False)
+    #B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 1, 'food', False, False)
 
     M = MemoRuleSet.MemoRuleSet([])
     M.addMemoRule('.*income.*', None, 'Checking', 1)
