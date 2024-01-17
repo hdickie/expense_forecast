@@ -19,6 +19,9 @@ pd.options.mode.chained_assignment = None #apparently this warning can throw fal
 
 logger = setup_logger('ExpenseForecast', './log/ExpenseForecast.log', level=logging.INFO)
 
+#whether or not the expense forecast has been run will be determined at runtime
+#this can return a list of initialized ExpenseForecast objects from ChooseOneSet
+#therefore, even if no ChooseOneSets, return the single ExpenseForecast in a list
 def initialize_from_excel_file(path_to_excel_file):
 
     account_set_df = pd.read_excel(path_to_excel_file,sheet_name='AccountSet')
@@ -161,9 +164,10 @@ def initialize_from_excel_file(path_to_excel_file):
     except Exception as e:
         pass #will happen if forecast was not run
 
-    return E
+    return [ E ]
 
 #whether or not the expense forecast has been run will be determined at runtime
+#returns a list of ExpenseForecast objects
 def initialize_from_json_file(path_to_json):
     with open(path_to_json) as json_data:
         data = json.load(json_data)
@@ -341,7 +345,7 @@ def initialize_from_json_file(path_to_json):
     E.forecast_df.Date = [ str(d) for d in E.forecast_df.Date ]
     #todo milestone results
 
-    return E
+    return [ E ]
 
 class ExpenseForecast:
 
@@ -866,18 +870,17 @@ class ExpenseForecast:
         log_in_color(logger, 'white', 'debug','Finished Forecast')
 
         #self.forecast_df.to_csv('./out//Forecast_' + self.unique_id + '.csv') #this is only the forecast not the whole ExpenseForecast object
-        self.writeToJSONFile() #this is the whole ExpenseForecast object #todo this should accept a path parameter
+        #self.writeToJSONFile() #this is the whole ExpenseForecast object #todo this should accept a path parameter
 
     def writeToJSONFile(self):
 
-        # log_in_color(logger,'green',''debug'','Writing to ./Forecast__'+run_ts+'.csv')
         # self.forecast_df.to_csv('./Forecast__'+run_ts+'.csv')
-        log_in_color(logger,'green', 'debug', 'Writing to ./out/Forecast__' + self.unique_id + '__' + self.start_ts + '.json')
+        log_in_color(logger,'green', 'info', 'Writing to ./out/Forecast_' + self.unique_id + '.json')
         #self.forecast_df.to_csv('./Forecast__' + run_ts + '.json')
 
         #self.forecast_df.index = self.forecast_df['Date']
 
-        f = open('./out/Forecast__' + self.unique_id + '__' + self.start_ts + '.json','a')
+        f = open('./out/Forecast__' + self.unique_id + '.json','a')
         f.write(self.to_json())
         f.close()
 
@@ -1103,26 +1106,27 @@ class ExpenseForecast:
                 af_max = min_fut_avl_bals[memo_rule_row.Account_From]
                 if memo_rule_row.Account_To is not None:
                     account_base_names = [ a.split(':')[0] for a in account_set.getAccounts().Name ]
-                    log_in_color(logger, 'cyan', 'info', 'account_base_names:'+str(account_base_names), self.log_stack_depth)
+                    #log_in_color(logger, 'cyan', 'info', 'account_base_names:'+str(account_base_names), self.log_stack_depth)
                     row_sel_vec = [ a == memo_rule_row.Account_To for a in account_base_names]
 
                     relevant_account_rows_df = account_set.getAccounts()[row_sel_vec]
 
                     at_max = sum(relevant_account_rows_df.Balance)
-                    log_in_color(logger, 'cyan', 'info', 'af_max:' + str(af_max),self.log_stack_depth)
-                    log_in_color(logger, 'cyan', 'info', 'at_max:' + str(at_max), self.log_stack_depth)
+                    #log_in_color(logger, 'cyan', 'info', 'af_max:' + str(af_max),self.log_stack_depth)
+                    #log_in_color(logger, 'cyan', 'info', 'at_max:' + str(at_max), self.log_stack_depth)
                     reduced_amt = min(af_max,at_max)
-                    log_in_color(logger, 'cyan', 'info', 'account_base_name:' + str(reduced_amt),self.log_stack_depth)
+                    #log_in_color(logger, 'cyan', 'info', 'account_base_name:' + str(reduced_amt),self.log_stack_depth)
                 else:
                     reduced_amt = af_max
 
                 if reduced_amt == 0:
-                    log_in_color(logger, 'cyan', 'debug', 'reduced amt is 0 so we abandon the txn', self.log_stack_depth)
+                    #log_in_color(logger, 'cyan', 'debug', 'reduced amt is 0 so we abandon the txn', self.log_stack_depth)
+                    pass
                 elif reduced_amt > 0:
                     proposed_row_df.Amount = reduced_amt
 
-                    log_in_color(logger, 'cyan', 'info', 'new proposed txn:', self.log_stack_depth)
-                    log_in_color(logger, 'cyan', 'info', proposed_row_df.to_string(), self.log_stack_depth)
+                    #log_in_color(logger, 'cyan', 'info', 'new proposed txn:', self.log_stack_depth)
+                    #log_in_color(logger, 'cyan', 'info', proposed_row_df.to_string(), self.log_stack_depth)
 
 
 
@@ -2484,7 +2488,7 @@ class ExpenseForecast:
 
                     accrued_interest = account_row.APR * account_row.Balance / 365.25
                     account_set.accounts[account_index + 1].balance += accrued_interest  # this is the interest account
-                    account_set.accounts[account_index + 1].balance = round(account_set.accounts[account_index + 1].balance,2)
+                    #account_set.accounts[account_index + 1].balance = round(account_set.accounts[account_index + 1].balance,2)
                     if abs(account_set.accounts[account_index + 1].balance) < 0.01:
                         account_set.accounts[account_index + 1].balance = 0
                     #account_set.accounts[account_index + 1].balance = account_set.accounts[account_index + 1].balance
@@ -2573,9 +2577,11 @@ class ExpenseForecast:
 
                     # very much not how I designed this but not earth-shatteringly different
 
-                    payment_toward_prev = round(min(minimum_payment_amount, current_previous_statement_balance), 2)
-                    payment_toward_curr = round(min(current_current_statement_balance,
-                                                    minimum_payment_amount - payment_toward_prev), 2)
+                    #payment_toward_prev = round(min(minimum_payment_amount, current_previous_statement_balance), 2)
+                    #payment_toward_curr = round(min(current_current_statement_balance,minimum_payment_amount - payment_toward_prev), 2)
+
+                    payment_toward_prev = min(minimum_payment_amount, current_previous_statement_balance)
+                    payment_toward_curr = min(current_current_statement_balance, minimum_payment_amount - payment_toward_prev)
 
                     if (payment_toward_prev + payment_toward_curr) > 0:
                         account_set.executeTransaction(Account_From='Checking',
@@ -2599,8 +2605,8 @@ class ExpenseForecast:
             current_forecast_row_df.iloc[0, col_sel_vec] = relevant_balance
 
             #move curr to prev. the parent code syncs account set so its fine that account_set is out of sync
-            if current_forecast_row_df.Date.iloc[0] in billing_days:
-                if account_row.Account_Type == 'prev stmt bal':
+            if account_row.Account_Type == 'prev stmt bal':
+                if current_forecast_row_df.Date.iloc[0] in billing_days:
                     addition_to_prev_stmt_bal = account_set.getAccounts().iloc[account_index - 1, 1]
                     current_forecast_row_df.iloc[0, account_index] = 0
                     current_forecast_row_df.iloc[0, account_index + 1] += addition_to_prev_stmt_bal
@@ -2697,8 +2703,11 @@ class ExpenseForecast:
                     current_interest_balance = account_set.getAccounts().loc[account_index + 1, :].Balance
                     current_debt_balance = current_pbal_balance + current_interest_balance
 
-                    payment_toward_interest = round(min(minimum_payment_amount, current_interest_balance),2)
-                    payment_toward_principal = round(min(current_pbal_balance, minimum_payment_amount - payment_toward_interest),2)
+                    # payment_toward_interest = round(min(minimum_payment_amount, current_interest_balance),2)
+                    # payment_toward_principal = round(min(current_pbal_balance, minimum_payment_amount - payment_toward_interest),2)
+
+                    payment_toward_interest = min(minimum_payment_amount, current_interest_balance)
+                    payment_toward_principal = min(current_pbal_balance, minimum_payment_amount - payment_toward_interest)
 
                     #old
                     #current_debt_balance = account_set.getBalances()[account_row.Name.split(':')[0]]
@@ -2851,7 +2860,7 @@ class ExpenseForecast:
 
         account_deltas = A_df.Balance - B_df.Balance
         for i in range(0, len(account_deltas)):
-            account_deltas[i] = round(account_deltas[i], 2)
+            #account_deltas[i] = round(account_deltas[i], 2)
 
             try:
                 if A_df.iloc[i,4] in ('checking','principal balance','interest'):
@@ -2873,6 +2882,9 @@ class ExpenseForecast:
             in forecast_df.Date]
         future_rows_only_df = forecast_df.iloc[future_rows_only_row_sel_vec, :]
         future_rows_only_df.reset_index(drop=True, inplace=True)
+
+        # log_in_color(logger, 'magenta', 'info', 'future_rows_only_df (top of propagateOptimizationTransactionsIntoTheFuture):')
+        # log_in_color(logger, 'magenta', 'info', future_rows_only_df.to_string())
 
         interest_accrual_dates__list_of_lists = []
         for a_index, a_row in A_df.iterrows():
@@ -2968,7 +2980,7 @@ class ExpenseForecast:
                             #across interest and pbal if there was an additional payment in the past
                             account_base_name = f_row.columns[a_i].split(':')[0]
 
-                            pbal_before_min_payment_applied = future_rows_only_df.iloc[f_i, a_i - 1]
+
 
                             pbal_account_row = A_df.iloc[a_i - 2, :]
 
@@ -2984,9 +2996,17 @@ class ExpenseForecast:
                             elif pbal_account_row.Interest_Cadence == 'yearly':
                                 interest_denominator = 1
 
+                            # todo this is negative and has not been corrected yet
+                            pbal_before_min_payment_applied = future_rows_only_df.iloc[f_i, a_i - 1]
+
                             new_marginal_interest = pbal_before_min_payment_applied * pbal_account_row.APR / interest_denominator
                             interest_before_min_payment_applied = future_rows_only_df.iloc[f_i - 1, a_i] + new_marginal_interest
+
                             future_rows_only_df.iloc[f_i, a_i] = interest_before_min_payment_applied
+
+                            # log_in_color(logger, 'white', 'info',
+                            #              'future_rows_only_df (after case 4):')
+                            # log_in_color(logger, 'white', 'info', future_rows_only_df.to_string())
 
 
                             #log_in_color(logger, 'magenta', 'info', 'pbal_before_min_payment_applied:'+str(pbal_before_min_payment_applied))
@@ -3028,6 +3048,8 @@ class ExpenseForecast:
                                 #log_in_color(logger, 'magenta', 'info', 'future_rows_only_df:')
                                 #log_in_color(logger, 'magenta', 'info', future_rows_only_df.to_string())
 
+                                # log_in_color(logger, 'white', 'info', 'BEFORE (og pymnt was single account):')
+                                # log_in_color(logger, 'white', 'info', future_rows_only_df.to_string())
 
                                 if ': Interest' in account_name:
                                     if og_amount > interest_before_min_payment_applied:
@@ -3106,6 +3128,9 @@ class ExpenseForecast:
                                         # we can reapply the min payment to the same account
                                         future_rows_only_df.iloc[row_sel_vec, a_i - 1] -= og_amount
 
+                                # log_in_color(logger, 'white', 'info', 'AFTER (og pymnt was single account):')
+                                # log_in_color(logger, 'white', 'info', future_rows_only_df.to_string())
+
                                 # log_in_color(logger, 'magenta', 'info', 'future_rows_only_df:')
                                 # log_in_color(logger, 'magenta', 'info', future_rows_only_df.to_string())
 
@@ -3151,6 +3176,22 @@ class ExpenseForecast:
 
                                 # log_in_color(logger, 'magenta', 'info', 'future_rows_only_df before edit:')
                                 # log_in_color(logger, 'magenta', 'info', future_rows_only_df.to_string() )
+
+                                # log_in_color(logger, 'white', 'info', 'OG PBAL AMT:')
+                                # log_in_color(logger, 'white', 'info', str(og_pbal_amount))
+                                # log_in_color(logger, 'white', 'info', 'OG INTEREST AMT:')
+                                # log_in_color(logger, 'white', 'info', str(og_interest_amount))
+                                # log_in_color(logger, 'white', 'info', 'REPLACEMENT PBAL AMT:')
+                                # log_in_color(logger, 'white', 'info', str(memo_pbal_amount))
+                                # log_in_color(logger, 'white', 'info', 'REPLACEMENT INTEREST AMT:')
+                                # log_in_color(logger, 'white', 'info', str(amt_to_pay_toward_interest))
+                                # log_in_color(logger, 'white', 'info', 'BEFORE (og pmt was 2 accts):')
+                                # log_in_color(logger, 'white', 'info', future_rows_only_df.to_string())
+
+
+
+
+
                                 future_rows_only_df.iloc[row_sel_vec, a_i - 1] -= amt_to_pay_toward_pbal
 
                                 #rounding errors
@@ -3173,6 +3214,9 @@ class ExpenseForecast:
                                 future_rows_only_df.loc[f_i, 'Memo'] = future_rows_only_df.loc[f_i, 'Memo'].replace(memo_line_items_relevant_to_minimum_payment[0], replacement_pbal_memo)
                                 future_rows_only_df.loc[f_i, 'Memo'] = future_rows_only_df.loc[f_i, 'Memo'].replace(memo_line_items_relevant_to_minimum_payment[1], replacement_interest_memo)
                                 future_rows_only_df.loc[f_i, 'Memo'] = future_rows_only_df.loc[f_i, 'Memo'].replace(';;;', ';')  #not sure this is right
+
+                                # log_in_color(logger, 'white', 'info', 'AFTER (og pmt was 2 accts):')
+                                # log_in_color(logger, 'white', 'info', future_rows_only_df.to_string())
 
                         else:
                             pass  # loan was already paid off
@@ -3229,12 +3273,21 @@ class ExpenseForecast:
                             if f_i == future_rows_only_df.shape[0]:
                                 pass
                             else:
+
+                                # log_in_color(logger, 'white', 'info', 'BEFORE (case 3):')
+                                # log_in_color(logger, 'white', 'info', future_rows_only_df.to_string())
+
                                 #todo this logic does not seem rock solid to me
                                 current_tmrw_value = future_rows_only_df.iloc[f_i + 1, a_i]
                                 current_today_value = updated_forecast_df_row.iloc[0, a_i]
                                 #row_sel_vec includes the day current being processed, which has already been applied the delta
                                 future_rows_only_df.iloc[f_i, col_sel_vec] += (current_tmrw_value - current_today_value)
                                 future_rows_only_df.iloc[row_sel_vec, col_sel_vec] -= ( current_tmrw_value - current_today_value )
+
+                                # log_in_color(logger, 'white', 'info', 'AFTER (case 3):')
+                                # log_in_color(logger, 'white', 'info', future_rows_only_df.to_string())
+
+
 
                             #log_in_color(logger, 'magenta', 'info', 'updated_forecast_df_row after recalculated cc min payment:')
                             #log_in_color(logger, 'magenta', 'info', updated_forecast_df_row.to_string())
@@ -3414,9 +3467,9 @@ class ExpenseForecast:
 
         # df.round(2) did not work so I have resorted to the below instead
         # todo this could be done better
-        for f_i, f_row in future_rows_only_df.iterrows():
-            for a_i, a_row in A_df.iterrows():
-                future_rows_only_df.iloc[f_i,a_i + 1] = round(future_rows_only_df.iloc[f_i,a_i + 1],2)
+        # for f_i, f_row in future_rows_only_df.iterrows():
+        #     for a_i, a_row in A_df.iterrows():
+        #         future_rows_only_df.iloc[f_i,a_i + 1] = round(future_rows_only_df.iloc[f_i,a_i + 1],2)
 
 
         # check if account boundaries are violated
@@ -4267,9 +4320,7 @@ class ExpenseForecast:
         satisfice_success = self.satisfice(all_days, confirmed_df, account_set, memo_rule_set, forecast_df, raise_satisfice_failed_exception )
         #print('after satisfice')
 
-
-
-        if satisfice_success is not None:
+        if isinstance(satisfice_success, pd.DataFrame):
 
             # raise_satisfice_failed_exception is only False at the top level, so this will not print during recursion
             if not raise_satisfice_failed_exception:
@@ -5133,80 +5184,100 @@ if __name__ == "__main__":
 
 # TODO
 # Failed Tests
-
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_payment__satisfice__curr_bal_25__expect_25-account_set2-budget_set2-memo_rule_set2-20000101-20000103-milestone_set2-expected_result_df2]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_payment__satisfice__prev_bal_1000__expect_40-account_set3-budget_set3-memo_rule_set3-20000101-20000103-milestone_set3-expected_result_df3]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_payment__satisfice__prev_bal_3000__expect_60-account_set4-budget_set4-memo_rule_set4-20000101-20000103-milestone_set4-expected_result_df4]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p4__cc_payment__pay_all_of_prev_part_of_curr__expect_800-account_set11-budget_set11-memo_rule_set11-20000101-20000103-milestone_set11-expected_result_df11]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p4__cc_payment__pay_part_of_prev_balance__expect_200-account_set12-budget_set12-memo_rule_set12-20000101-20000103-milestone_set12-expected_result_df12]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p4__cc_payment__non_0_prev_balance_but_no_funds__expect_0-account_set13-budget_set13-memo_rule_set13-20000101-20000103-milestone_set13-expected_result_df13]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p4__cc_payment__partial_of_indicated_amount-account_set14-budget_set14-memo_rule_set14-20000101-20000103-milestone_set14-expected_result_df14]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_execute_defer_after_receiving_income_2_days_later-account_set15-budget_set15-memo_rule_set15-20000101-20000104-milestone_set15-expected_result_df15]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_execute_at_reduced_amount_bc_later_higher_priority_txn-account_set16-budget_set16-memo_rule_set16-20000101-20000105-milestone_set16-expected_result_df16]
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_dont_recompute_past_days_for_p2plus_transactions - NotImplementedError
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_run_from_excel_at_path - assert ['ExpenseFore...Payment', ...] == ['ExpenseFore...Payment', ...]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_forecast_longer_than_satisfice - AttributeError: 'bool' object has no attribute 'shape'
-
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_initialize_from_json_not_yet_run - AttributeError: 'ExpenseForecast' object has no attribute 'start_ts'
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_initialize_from_json_already_run__no_append - FileNotFoundError: [Errno 2] No such file or directory: '....
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_initialize_from_json_already_run__yes_append - FileNotFoundError: [Errno 2] No such file or directory: '...
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_run_from_json_at_path - AttributeError: 'list' object has no attribute 'runForecast'
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_run_from_excel_at_path - AttributeError: 'MilestoneSet' object has no attribute 'getCompositeMilestones_...
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_interest_types_and_cadences_at_most_monthly - NotImplementedError
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_quarter_and_year_long_interest_cadences - NotImplementedError
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_summary_lines - AssertionError
-
-# for compare, E1 is Forecast_032132
-
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_multiple_additional_loan_payments__expect_eliminate_future_min_payments - AssertionError: assert 'additi...
 
 
-# New Features
-# Implement ChooseOneSet
-# multithreading for ChooseOneSet
+
+
+
+# Speed Optimizations
+#     multithreading for ChooseOneSet
 # dynamic programming for recursive calls (note: probs best to write temporary files indexed by hash so program doesnt hog ram)
+# set default deferral cadence to lookahead to next income
+
+# Implement ChooseOneSet
 # EXPLAIN log of call stack BEFORE running so we can can use this for runtime estimate
 #    once we have this, computing some examples makes predicting runtime easy, but confidence bands will be large
-
-# Have to Have
-# marginal interest calculation in few days after additional loan payments seems wrong (too low)
-# account name 'Credit' is hardcoded in additional cc payment memo computation
 # EXPLAIN in plain english
 
-# Nice to Have
-# Hyphenated date format in plots
-# if no milestones, draw a plot with text that says that instead
-# Comparing forecasts of different date
-# define colors for plots
-# Handling of point labels on milestone plot. they get chopped off if they are on bound w long label names.
-
-
-# Big Effort Design Improvements
+# Known Semantic Errors / Weak points
+# account name 'Credit' is hardcoded in additional cc payment memo computation
 # Atm (1/5/2024), an account 'Checking' is hard coded. This should be replaced by an input parameter
 #    allowing one of potentially multiple checking accounts to be marked as 'primary' and used for these operations
 
-# Implement deferral cadence parameter
-# set default deferral cadence to lookahead to next income
-# Does MilestoneSet need to take AccountSet and BudgetSet as arguments?
-# modify createAccount into createLoanAccount and createCreditCardAccount?
+# Potential errors
+# marginal interest calculation in few days after additional loan payments seems wrong (too low)
+# the transposes seem to be handled inconsistently when calculating marginal interest. im worried new tests will break it
+# technically min cc payments can be applied to both accounts,
+#    but prev balanced is moved to curr on same day so it doesnt matter
+#    and I did not fix the code to reflect this because
+#    it would never cause something illogical
 
-### Bite-sized tasks:
-#i want like hastags appended to url when i click on tabs so it stays there when i refresh
-# tests for edge cases involving things close together or at end of forecast
+# Tests to write
 # write test for pay off loan early (make sure the memo field is correct)
 # write test for pay off cc debt early
-# write multiple additional loan payment test
-# write multiple additional cc payment test (this for sure still needs to be implemented)
-# add color legend to milestone plot
-# in comparison report, if report 2 contains 0 items report 1 doesnt have, output a sentence instead of a 0-row table
-# Define standard colors for plots
-# milestone comparison plot
-# move line plot legends to the right
-# modify initialize_from_excel/json to account for if forecast has been run or not and summary lines appended
 # tests for initialize_from_excel
 # tests for failed satisifce
 # tests for to_excel
-
+# NO NEED UNLESS COVERAGE:
 # test marginal interest when min and additional payment on same day for loan
-# the transposes seem to be handled inconsistently when calculating marginal interest. im worried new tests will break it
+# tests for edge cases involving things close together or at end of forecast
 
-### Project Wrapup requirements
+# Open Questions
+# Does MilestoneSet need to take AccountSet and BudgetSet as arguments?
+# modify createAccount into createLoanAccount and createCreditCardAccount?
+# have unfulfilled milestones just not plotted instead of to the right?
+
+# Standard Forecasts for tests
+# Pay off loan early...:
+# Pay off cc debt early:
+# failed satisfice.....:
+# choose one A_X.......:
+# choose one A_Y.......:
+# choose one A_Z.......:
+# choose one B_X.......:
+# choose one B_Y.......:
+# choose one B_Z.......:
+
+
+### Bite-sized tasks:
+# milestone comparison plot
+# Define standard colors for plots
+# make error if ALL_LOANS put in memo rule when it doesnt make sense
+# make daily interest not allowed w credit
+# check that start and end date the same produce at least 1 budget item on that day for any cadence
+# if no milestones, draw a plot with text that says that instead
+# in comparison report, if report 2 contains 0 items report 1 doesnt have, output a sentence instead of a 0-row table
+# modify initialize_from_excel/json to account for if forecast has been run or not and summary lines appended
+# Hyphenated date format in plots
+# Comparing forecasts of different date
+# i want like hashtags appended to url when i click on tabs so it stays there when i refresh
+
+
+
+### Project Wrap-up requirements
 # review todos
 # docstrings
 # git repo
 # github pages demo page
 
-#error if ALL_LOANS put in memo rule when it doesnt make sense
-#daily interest not allowed w credit
-#check that start and end date the same produce at least 1 budget item on that day for any cadence
 
 
-# technically min cc payments can be applied to both accounts,
-# but prev balanced is moved to curr on same day so it doesnt matter
-# and I did not fix the code to reflect this because
-# it would never cause something illogical

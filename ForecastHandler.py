@@ -18,7 +18,7 @@ import AccountMilestone
 import MemoMilestone
 import CompositeMilestone
 import matplotlib.dates
-
+import matplotlib.patches as mpatches
 import logging
 from log_methods import setup_logger
 logger = setup_logger('ForecastHandler', './log/ForecastHandler.log', level=logging.DEBUG)
@@ -395,10 +395,10 @@ class ForecastHandler:
         box = ax.get_position()
         ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
 
-        #todo add color legend ( not pont bc points are labeled )
-
-        # Put a legend below current axis
-        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=4)
+        red_patch = mpatches.Patch(color='red', label='account')
+        blue_patch = mpatches.Patch(color='blue', label='memo')
+        purple_patch = mpatches.Patch(color='purple', label='composite')
+        plt.legend(handles=[red_patch,blue_patch,purple_patch],bbox_to_anchor=(1.15, 1), loc='upper right')
 
         # TODO plotOverall():: a large number of accounts will require some adjustment here so that the legend is entirely visible
         date_as_datetime_type = [datetime.datetime.strptime(d, '%Y%m%d') for d in expense_forecast.forecast_df.Date]

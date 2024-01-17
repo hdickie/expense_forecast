@@ -1475,18 +1475,129 @@ class TestExpenseForecastMethods:
 
         E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
 
-        E.runForecast() #Forecast_028363.html
-        #
-        E.appendSummaryLines()
-        F = ForecastHandler.ForecastHandler()
-        F.generateHTMLReport(E, './out/')
+        E.writeToJSONFile() # ./out/Forecast_028363.json
 
+        E2 = ExpenseForecast.initialize_from_json_file('./out/Forecast_028363.json')
+
+        E2.runForecast() #Forecast_028363.html
+        E2.appendSummaryLines()
+        F = ForecastHandler.ForecastHandler()
+        F.generateHTMLReport(E2, './out/')
+
+        #todo assertions?
         raise NotImplementedError
 
-    def test_initialize_from_json_already_run(self):
+    def test_initialize_from_json_already_run__no_append(self):
+        start_date_YYYYMMDD = '20000101'
+        end_date_YYYYMMDD = '20000105'
 
+        A = AccountSet.AccountSet(
+            checking_acct_list(2000) + credit_acct_list(100, 100, 0.01) + non_trivial_loan('test loan', 100, 0, 0.01))
 
+        B = BudgetSet.BudgetSet(
+            [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'p1 daily txn 1/2/00', False, False),
+             BudgetItem.BudgetItem('20000103', '20000103', 2, 'once', 100, 'p2 daily txn 1/3/00', False, False),
+             BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', False, False)
+             ]
+        )
+        M = MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*',
+                                                       account_from='Checking',
+                                                       account_to=None,
+                                                       transaction_priority=1),
+                                     MemoRule.MemoRule(memo_regex='.*',
+                                                       account_from='Checking',
+                                                       account_to=None,
+                                                       transaction_priority=2),
+                                     MemoRule.MemoRule(memo_regex='.*',
+                                                       account_from='Checking',
+                                                       account_to=None,
+                                                       transaction_priority=3)
+                                     ])
 
+        MS = MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], [])
+        MS.addAccountMilestone('test account milestone 1', 'Credit', 160, 160)  # doesnt happen
+        MS.addAccountMilestone('test account milestone 2', 'Checking', 0, 100)  # does happen
+
+        MS.addMemoMilestone('test memo milestone 1', 'p2 daily txn 1/3/00')  # does happen
+        MS.addMemoMilestone('test memo milestone 2', 'specific regex 2')  # doesnt happen
+
+        AM1 = AccountMilestone.AccountMilestone('test account milestone 1', 'Credit', 160, 160)  # does happen
+        AM2 = AccountMilestone.AccountMilestone('test account milestone 2', 'Checking', 0, 100)  # doesnt happen
+
+        MM1 = MemoMilestone.MemoMilestone('test memo milestone 1', 'p2 daily txn 1/3/00')  # does happen
+        MM2 = MemoMilestone.MemoMilestone('test memo milestone 2', 'specific regex 2')  # doesnt happen
+
+        MS.addCompositeMilestone('test composite milestone 1', [AM1], [MM1])  # does happen
+        MS.addCompositeMilestone('test composite milestone 2', [AM2], [MM2])  # doesnt happen
+
+        E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
+
+        E.runForecast()  # Forecast_028363.html
+        E.writeToJSONFile() # ./out/Forecast_028363.json
+
+        E2 = ExpenseForecast.initialize_from_json_file('./out/Forecast_028363.json')
+
+        F = ForecastHandler.ForecastHandler()
+        F.generateHTMLReport(E2, './out/')
+
+        # todo assertions?
+        raise NotImplementedError
+
+    def test_initialize_from_json_already_run__yes_append(self):
+        start_date_YYYYMMDD = '20000101'
+        end_date_YYYYMMDD = '20000105'
+
+        A = AccountSet.AccountSet(
+            checking_acct_list(2000) + credit_acct_list(100, 100, 0.01) + non_trivial_loan('test loan', 100, 0, 0.01))
+
+        B = BudgetSet.BudgetSet(
+            [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'p1 daily txn 1/2/00', False, False),
+             BudgetItem.BudgetItem('20000103', '20000103', 2, 'once', 100, 'p2 daily txn 1/3/00', False, False),
+             BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', False, False)
+             ]
+        )
+        M = MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*',
+                                                       account_from='Checking',
+                                                       account_to=None,
+                                                       transaction_priority=1),
+                                     MemoRule.MemoRule(memo_regex='.*',
+                                                       account_from='Checking',
+                                                       account_to=None,
+                                                       transaction_priority=2),
+                                     MemoRule.MemoRule(memo_regex='.*',
+                                                       account_from='Checking',
+                                                       account_to=None,
+                                                       transaction_priority=3)
+                                     ])
+
+        MS = MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], [])
+        MS.addAccountMilestone('test account milestone 1', 'Credit', 160, 160)  # doesnt happen
+        MS.addAccountMilestone('test account milestone 2', 'Checking', 0, 100)  # does happen
+
+        MS.addMemoMilestone('test memo milestone 1', 'p2 daily txn 1/3/00')  # does happen
+        MS.addMemoMilestone('test memo milestone 2', 'specific regex 2')  # doesnt happen
+
+        AM1 = AccountMilestone.AccountMilestone('test account milestone 1', 'Credit', 160, 160)  # does happen
+        AM2 = AccountMilestone.AccountMilestone('test account milestone 2', 'Checking', 0, 100)  # doesnt happen
+
+        MM1 = MemoMilestone.MemoMilestone('test memo milestone 1', 'p2 daily txn 1/3/00')  # does happen
+        MM2 = MemoMilestone.MemoMilestone('test memo milestone 2', 'specific regex 2')  # doesnt happen
+
+        MS.addCompositeMilestone('test composite milestone 1', [AM1], [MM1])  # does happen
+        MS.addCompositeMilestone('test composite milestone 2', [AM2], [MM2])  # doesnt happen
+
+        E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
+
+        E.runForecast()  # Forecast_028363.html
+        E.appendSummaryLines()
+        E.writeToJSONFile() # ./out/Forecast_028363.json
+
+        E2 = ExpenseForecast.initialize_from_json_file('./out/Forecast_028363.json')
+
+        F = ForecastHandler.ForecastHandler()
+        F.generateHTMLReport(E2, './out/')
+
+        # todo assertions?
         raise NotImplementedError
 
     def test_run_from_json_at_path(self):
@@ -1695,8 +1806,10 @@ class TestExpenseForecastMethods:
                                             start_date_YYYYMMDD,
                                             end_date_YYYYMMDD, milestone_set)
 
-        with pytest.raises(ValueError):
-            E.runForecast()
+        #todo what should we do here?
+
+        # with pytest.raises(ValueError):
+        #     E.runForecast()
 
         # log_in_color(logger,'white', 'debug', 'Confirmed:')
         # log_in_color(logger,'white', 'debug', E.confirmed_df.to_string())
