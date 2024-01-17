@@ -2384,11 +2384,13 @@ class TestExpenseForecastMethods:
 
         B = BudgetSet.BudgetSet([])
         B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'semiweekly', 1500, 'income', False, False)
-        B.addBudgetItem('20240110', '20240110', 2, 'once', 10000, 'additional cc payment', False, True)
+        B.addBudgetItem('20240109', '20240109', 2, 'once', 111, 'test txn', False, False)
+        B.addBudgetItem('20240110', '20240110', 3, 'once', 10000, 'additional cc payment', False, True)
 
         M = MemoRuleSet.MemoRuleSet([])
         M.addMemoRule('.*income.*', None, 'Checking', 1)
-        M.addMemoRule('additional cc payment', 'Checking', 'Credit', 2)
+        M.addMemoRule('.*test txn.*', 'Credit', None , 2)
+        M.addMemoRule('additional cc payment', 'Checking', 'Credit', 3)
 
         MS = MilestoneSet.MilestoneSet(A, B, [], [], [])
 
