@@ -14,7 +14,9 @@ from log_methods import log_in_color
 from log_methods import setup_logger
 import logging
 from generate_date_sequence import generate_date_sequence
+import numpy as np
 import xlsxwriter
+import CompositeMilestone
 
 pd.options.mode.chained_assignment = None #apparently this warning can throw false positives???
 
@@ -26,14 +28,23 @@ logger = setup_logger('ExpenseForecast', './log/ExpenseForecast.log', level=logg
 def initialize_from_excel_file(path_to_excel_file):
 
     summary_df = pd.read_excel(path_to_excel_file, sheet_name='Summary')
+
+    summary_df = summary_df.T
+    summary_df.columns = summary_df.iloc[0,:]
+    summary_df.drop(summary_df.index[0], inplace=True)
+
+    summary_df['start_date_YYYYMMDD'] = str(int(summary_df['start_date_YYYYMMDD']))
+    summary_df['end_date_YYYYMMDD'] = str(int(summary_df['end_date_YYYYMMDD']))
+    summary_df['unique_id'] = str(int(summary_df['unique_id'])).rjust(6,'0')
+
+
     account_set_df = pd.read_excel(path_to_excel_file,sheet_name='AccountSet')
     budget_set_df = pd.read_excel(path_to_excel_file, sheet_name='BudgetSet')
     memo_rule_set_df = pd.read_excel(path_to_excel_file, sheet_name='MemoRuleSet')
     choose_one_set_df = pd.read_excel(path_to_excel_file, sheet_name='ChooseOneSet')
     account_milestones_df = pd.read_excel(path_to_excel_file, sheet_name='AccountMilestones')
     memo_milestones_df = pd.read_excel(path_to_excel_file, sheet_name='MemoMilestones')
-    #composite_account_milestones_df = pd.read_excel(path_to_excel_file, sheet_name='CompositeAccountMilestones')
-    #composite_memo_milestones_df = pd.read_excel(path_to_excel_file, sheet_name='CompositeMemoMilestones')
+    composite_milestones_df = pd.read_excel(path_to_excel_file, sheet_name='CompositeMilestones')
 
 
     #These are here to remove the 'might be referenced before assignment' warning
@@ -49,7 +60,7 @@ def initialize_from_excel_file(path_to_excel_file):
         skipped_df = pd.read_excel(path_to_excel_file, sheet_name='Skipped')
         confirmed_df = pd.read_excel(path_to_excel_file, sheet_name='Confirmed')
         deferred_df = pd.read_excel(path_to_excel_file, sheet_name='Deferred')
-        milestone_results_df = pd.read_excel(path_to_excel_file, sheet_name='MilestoneResults')
+        milestone_results_df = pd.read_excel(path_to_excel_file, sheet_name='Milestone Results')
     except Exception as e:
         pass #if forecast was not run this will happen
 
@@ -134,36 +145,97 @@ def initialize_from_excel_file(path_to_excel_file):
     #     pass
 
     am__list = []
+    am__dict = {}
     for index, row in account_milestones_df.iterrows():
-        am__list.append(AccountMilestone.AccountMilestone(row.Milestone_Name,row.Account_Name,row.Min_Balance,row.Max_Balance))
+        AM = AccountMilestone.AccountMilestone(row.Milestone_Name,row.Account_Name,row.Min_Balance,row.Max_Balance)
+        am__list.append(AM)
+        am__dict[row.Milestone_Name] = AM
 
     mm__list = []
+    mm__dict = {}
     for index, row in memo_milestones_df.iterrows():
-        mm__list.append(MemoMilestone.MemoMilestone(row.Milestone_Name,row.Memo_Regex))
+        MM = MemoMilestone.MemoMilestone(row.Milestone_Name,row.Memo_Regex)
+        mm__list.append(MM)
+        mm__dict[row.Milestone_Name] = MM
 
+    #(self,milestone_name,account_milestones__list, memo_milestones__list)
     cm__list = []
-    #todo
-    #for index, row in composite_milestones_df.iterrows():
-    #    cm__list.append(CompositeMilestone.CompositeMilestone(row.Milestone_Name,))
+    composite_milestones = {}
+    for index, row in composite_milestones_df.iterrows():
+        if row.Composite_Milestone_Name not in composite_milestones.keys():
+            composite_milestones[row.Composite_Milestone_Name] = {'Account':[],'Memo':[]}
 
+        if row.Milestone_Type == 'Account':
+            composite_milestones[row.Composite_Milestone_Name]['Account'].append(am__dict[row.Milestone_Name])
+        elif row.Milestone_Type == 'Memo':
+            composite_milestones[row.Composite_Milestone_Name]['Memo'].append(mm__dict[row.Milestone_Name])
+
+
+    for key, value in composite_milestones.items():
+
+        # component_account_milestones = []
+        # for am_name in value['Account']:
+        #     component_account_milestones.append( am__dict[am_name] )
+        #
+        # component_memo_milestones = []
+        # for mm_name in value['Memo']:
+        #     component_memo_milestones.append( mm__dict[mm_name] )
+
+        cm__list.append(CompositeMilestone.CompositeMilestone(key, composite_milestones[key]['Account'], composite_milestones[key]['Memo']))
+
+    #(self,account_set,budget_set,account_milestones__list,memo_milestones__list,composite_milestones__list)
     MS = MilestoneSet.MilestoneSet(A,B,am__list,mm__list,cm__list)
 
-    start_date_YYYYMMDD = config_df.Start_Date_YYYYMMDD[0]
-    end_date_YYYYMMDD = config_df.End_Date_YYYYMMDD[0]
+    start_date_YYYYMMDD = summary_df.start_date_YYYYMMDD.iat[0]
+    end_date_YYYYMMDD = summary_df.end_date_YYYYMMDD.iat[0]
 
     E = ExpenseForecast(A,B,M,start_date_YYYYMMDD,end_date_YYYYMMDD,MS)
 
-    try:
-        E.start_ts = run_info_df.start_ts.iat[0]
-        E.end_ts = run_info_df.end_ts.iat[0]
+    #todo load results from excel
+    if forecast_df is not None:
+
+        # print('summary_df.start_ts.iat[0]:')
+        # print(summary_df.start_ts.iat[0])
+        # if np.isnan(summary_df.start_ts.iat[0]):
+        #     E.start_ts = 'None'
+        # else:
+        E.start_ts = summary_df.start_ts.iat[0]
+
+        # if np.isnan(summary_df.end_ts.iat[0]):
+        #     E.end_ts = 'None'
+        # else:
+        E.end_ts = summary_df.end_ts.iat[0]
 
         E.forecast_df = forecast_df
+        E.forecast_df['Date'] = [ str(d) for d in E.forecast_df['Date'] ]
+
+        E.forecast_df = E.forecast_df.replace(np.NaN,'')
+
         E.skipped_df = skipped_df
+        E.skipped_df['Date'] = [str(d) for d in E.skipped_df['Date']]
+
         E.confirmed_df = confirmed_df
+        E.confirmed_df['Date'] = [str(d) for d in E.confirmed_df['Date']]
+
         E.deferred_df = deferred_df
-        E.milestone_results_df = milestone_results_df
-    except Exception as e:
-        pass #will happen if forecast was not run
+        E.deferred_df['Date'] = [str(d) for d in E.deferred_df['Date']]
+
+        #todo this needs to be parsed
+        E.account_milestone_results = {}
+        E.memo_milestone_results = {}
+        E.composite_milestone_results = {}
+        for index, row in milestone_results_df.iterrows():
+            if row.Milestone_Type == 'Account':
+                E.account_milestone_results[row.Milestone_Name] = str(row.Result_Date)
+            elif row.Milestone_Type == 'Memo':
+                E.memo_milestone_results[row.Milestone_Name] = str(row.Result_Date)
+            elif row.Milestone_Type == 'Composite':
+                E.composite_milestone_results[row.Milestone_Name] = str(row.Result_Date)
+            else:
+                raise ValueError("Unknown Milestone result type encountered while reading excel file.")
+
+
+
 
     return [ E ]
 
@@ -5144,25 +5216,38 @@ class ExpenseForecast:
             return
 
         milestone_results_df = pd.DataFrame({'Milestone_Name':[],
+                                             'Milestone_Type': [],
                                              'Result_Date':[]})
 
-        for a in self.account_milestone_results:
+        for key, value in self.account_milestone_results.items():
             milestone_results_df = pd.concat([milestone_results_df,
-                                              pd.DataFrame({'Milestone_Name': [a[0]],
-                                                            'Result_Date': [a[1]]})
-                                              ])
+                                                  pd.DataFrame({'Milestone_Name': [ key ], 'Milestone_Type': [ 'Account' ], 'Result_Date': [ value ]}) ])
 
-        for m in self.memo_milestone_results:
+        for key, value in self.memo_milestone_results.items():
             milestone_results_df = pd.concat([milestone_results_df,
-                                              pd.DataFrame({'Milestone_Name': [m[0]],
-                                                            'Result_Date': [m[1]]})
-                                              ])
+                                                  pd.DataFrame({'Milestone_Name': [ key ], 'Milestone_Type': [ 'Memo' ], 'Result_Date': [ value ]}) ])
 
-        for c in self.composite_milestone_results:
+        for key, value in self.composite_milestone_results.items():
             milestone_results_df = pd.concat([milestone_results_df,
-                                              pd.DataFrame({'Milestone_Name': [c[0]],
-                                                            'Result_Date': [c[1]]})
-                                              ])
+                                                  pd.DataFrame({'Milestone_Name': [ key ], 'Milestone_Type': [ 'Composite' ], 'Result_Date': [ value ]}) ])
+
+        # for a in self.account_milestone_results:
+        #     milestone_results_df = pd.concat([milestone_results_df,
+        #                                       pd.DataFrame({'Milestone_Name': [a[0]],
+        #                                                     'Result_Date': [a[1]]})
+        #                                       ])
+        #
+        # for m in self.memo_milestone_results:
+        #     milestone_results_df = pd.concat([milestone_results_df,
+        #                                       pd.DataFrame({'Milestone_Name': [m[0]],
+        #                                                     'Result_Date': [m[1]]})
+        #                                       ])
+        #
+        # for c in self.composite_milestone_results:
+        #     milestone_results_df = pd.concat([milestone_results_df,
+        #                                       pd.DataFrame({'Milestone_Name': [c[0]],
+        #                                                     'Result_Date': [c[1]]})
+        #                                       ])
 
         return milestone_results_df
 
@@ -5177,6 +5262,7 @@ class ExpenseForecast:
         account_milestones_df = self.milestone_set.getAccountMilestonesDF()
         memo_milestones_df = self.milestone_set.getMemoMilestonesDF()
         composite_milestones_df = self.milestone_set.getCompositeMilestonesDF()
+        milestone_results_df = self.getMilestoneResultsDF()
 
         with pd.ExcelWriter(output_dir+'/Forecast_'+self.unique_id+'.xlsx', engine='xlsxwriter') as writer:
             summary_df.to_excel(writer, sheet_name='Summary', index=False)
@@ -5252,8 +5338,12 @@ class ExpenseForecast:
                     col_idx = self.deferred_df.columns.get_loc(column)
                     writer.sheets['Deferred'].set_column(col_idx, col_idx, column_length)
 
+                milestone_results_df.to_excel(writer, sheet_name='Milestone Results', index=False)
+                for column in milestone_results_df:
+                    column_length = max(milestone_results_df[column].astype(str).map(len).max(), len(column))
+                    col_idx = milestone_results_df.columns.get_loc(column)
+                    writer.sheets['Milestone Results'].set_column(col_idx, col_idx, column_length)
 
-                #self.getMilestoneResultsDF().to_excel(writer, sheet_name='MilestoneResults', index=False)
 
     def getSummaryPageForExcelLandingPageDF(self):
 

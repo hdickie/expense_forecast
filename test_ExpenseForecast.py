@@ -1439,7 +1439,8 @@ class TestExpenseForecastMethods:
         B = BudgetSet.BudgetSet(
             [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'p1 daily txn 1/2/00', False, False),
              BudgetItem.BudgetItem('20000103', '20000103', 2, 'once', 100, 'p2 daily txn 1/3/00', False, False),
-             BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', False, False)
+             BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', False, False),
+             BudgetItem.BudgetItem('20010101', '20010101', 3, 'once', 100, 'specific regex 2', False, False)
              ]
         )
         M = MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*',
@@ -1476,9 +1477,9 @@ class TestExpenseForecastMethods:
 
         # E1.runForecast()  # Forecast_028363.html
         # E1.appendSummaryLines()
-        E1.to_excel('./out')  # ./out/Forecast_028363.xlsx
+        E1.to_excel('./out')  # ./out/Forecast_059039.xlsx
 
-        E2_list = ExpenseForecast.initialize_from_excel_file('./out/Forecast_028363.xlsx')
+        E2_list = ExpenseForecast.initialize_from_excel_file('./out/Forecast_059039.xlsx')
         E2 = E2_list[0]
 
         # before runForecast
@@ -1502,7 +1503,8 @@ class TestExpenseForecastMethods:
         B = BudgetSet.BudgetSet(
             [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'p1 daily txn 1/2/00', False, False),
              BudgetItem.BudgetItem('20000103', '20000103', 2, 'once', 100, 'p2 daily txn 1/3/00', False, False),
-             BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', False, False)
+             BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', False, False),
+             BudgetItem.BudgetItem('20010101', '20010101', 3, 'once', 100, 'specific regex 2', False, False)
              ]
         )
         M = MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*',
@@ -1540,7 +1542,7 @@ class TestExpenseForecastMethods:
         E1.runForecast()  # Forecast_028363.html
         E1.to_excel('./out')  # ./out/Forecast_028363.xlsx
 
-        E2_list = ExpenseForecast.initialize_from_excel_file('./out/Forecast_028363.xlsx')
+        E2_list = ExpenseForecast.initialize_from_excel_file('./out/Forecast_059039.xlsx')
         E2 = E2_list[0]
 
         # before runForecast
@@ -1573,11 +1575,15 @@ class TestExpenseForecastMethods:
 
         for index, row in E1.forecast_df.iterrows():
             for c_index in range(0, E1.forecast_df.shape[1]):
-                if c_index != 0 and c_index != (E1.forecast_df.shape[1] - 1):
-                    assert round(E1.forecast_df.iloc[index, c_index], 2) == round(E2.forecast_df.iloc[index, c_index],
-                                                                                  2)
+                if c_index != 0 and c_index != E1.forecast_df.columns.tolist().index('Memo'):
+                    assert round(E1.forecast_df.iloc[index, c_index], 2) == round(E2.forecast_df.iloc[index, c_index],2)
                 else:
-                    assert E1.forecast_df.iloc[index, c_index] == E2.forecast_df.iloc[index, c_index]
+                    try:
+                        assert E1.forecast_df.iloc[index, c_index] == E2.forecast_df.iloc[index, c_index]
+                    except Exception as e:
+                        print(index,c_index)
+                        print(e.args)
+                        raise e
 
     def test_initialize_from_excel_already_run__yes_append(self):
         start_date_YYYYMMDD = '20000101'
@@ -1589,7 +1595,8 @@ class TestExpenseForecastMethods:
         B = BudgetSet.BudgetSet(
             [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'p1 daily txn 1/2/00', False, False),
              BudgetItem.BudgetItem('20000103', '20000103', 2, 'once', 100, 'p2 daily txn 1/3/00', False, False),
-             BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', False, False)
+             BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', False, False),
+             BudgetItem.BudgetItem('20010101', '20010101', 3, 'once', 100, 'specific regex 2', False, False)
              ]
         )
         M = MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*',
@@ -1628,7 +1635,7 @@ class TestExpenseForecastMethods:
         E1.appendSummaryLines()
         E1.to_excel('./out')  # ./out/Forecast_028363.xlsx
 
-        E2_list = ExpenseForecast.initialize_from_excel_file('./out/Forecast_028363.xlsx')
+        E2_list = ExpenseForecast.initialize_from_excel_file('./out/Forecast_059039.xlsx')
         E2 = E2_list[0]
 
         # before runForecast
