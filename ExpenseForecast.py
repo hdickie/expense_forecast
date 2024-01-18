@@ -14,6 +14,7 @@ from log_methods import log_in_color
 from log_methods import setup_logger
 import logging
 from generate_date_sequence import generate_date_sequence
+import xlsxwriter
 
 pd.options.mode.chained_assignment = None #apparently this warning can throw false positives???
 
@@ -24,15 +25,16 @@ logger = setup_logger('ExpenseForecast', './log/ExpenseForecast.log', level=logg
 #therefore, even if no ChooseOneSets, return the single ExpenseForecast in a list
 def initialize_from_excel_file(path_to_excel_file):
 
+    summary_df = pd.read_excel(path_to_excel_file, sheet_name='Summary')
     account_set_df = pd.read_excel(path_to_excel_file,sheet_name='AccountSet')
     budget_set_df = pd.read_excel(path_to_excel_file, sheet_name='BudgetSet')
     memo_rule_set_df = pd.read_excel(path_to_excel_file, sheet_name='MemoRuleSet')
     choose_one_set_df = pd.read_excel(path_to_excel_file, sheet_name='ChooseOneSet')
     account_milestones_df = pd.read_excel(path_to_excel_file, sheet_name='AccountMilestones')
     memo_milestones_df = pd.read_excel(path_to_excel_file, sheet_name='MemoMilestones')
-    composite_account_milestones_df = pd.read_excel(path_to_excel_file, sheet_name='CompositeAccountMilestones')
-    composite_memo_milestones_df = pd.read_excel(path_to_excel_file, sheet_name='CompositeMemoMilestones')
-    config_df = pd.read_excel(path_to_excel_file, sheet_name='config')
+    #composite_account_milestones_df = pd.read_excel(path_to_excel_file, sheet_name='CompositeAccountMilestones')
+    #composite_memo_milestones_df = pd.read_excel(path_to_excel_file, sheet_name='CompositeMemoMilestones')
+
 
     #These are here to remove the 'might be referenced before assignment' warning
     run_info_df = None
@@ -43,7 +45,6 @@ def initialize_from_excel_file(path_to_excel_file):
     milestone_results_df = None
 
     try:
-        run_info_df = pd.read_excel(path_to_excel_file,sheet_name='run_info')
         forecast_df = pd.read_excel(path_to_excel_file, sheet_name='Forecast')
         skipped_df = pd.read_excel(path_to_excel_file, sheet_name='Skipped')
         confirmed_df = pd.read_excel(path_to_excel_file, sheet_name='Confirmed')
@@ -310,40 +311,44 @@ def initialize_from_json_file(path_to_json):
     #     print('key:'+str(key))
     #     print('value:' + str(value))
 
-    E.account_milestone_results = data['account_milestone_results']
+    if 'start_ts' in data.keys():
+        E.account_milestone_results = data['account_milestone_results']
+        E.memo_milestone_results = data['memo_milestone_results']
+        E.composite_milestone_results = data['composite_milestone_results']
+        E.start_ts = data['start_ts']
+        E.end_ts = data['end_ts']
 
-    E.memo_milestone_results = data['memo_milestone_results']
+        # it is so dumb that I have to do this just to interpret string as json
+        f = open('./out/forecast_df_' + str(E.unique_id) + '.json', 'w')
+        f.write(json.dumps(data['forecast_df'], indent=4))
+        f.close()
 
-    E.composite_milestone_results = data['composite_milestone_results']
+        f = open('./out/skipped_df_' + str(E.unique_id) + '.json', 'w')
+        f.write(json.dumps(data['skipped_df'], indent=4))
+        f.close()
+
+        f = open('./out/confirmed_df_' + str(E.unique_id) + '.json', 'w')
+        f.write(json.dumps(data['confirmed_df'], indent=4))
+        f.close()
+
+        f = open('./out/deferred_df_' + str(E.unique_id) + '.json', 'w')
+        f.write(json.dumps(data['deferred_df'], indent=4))
+        f.close()
+
+        E.forecast_df = pd.read_json('./out/forecast_df_' + str(E.unique_id) + '.json')
+        E.skipped_df = pd.read_json('./out/skipped_df_' + str(E.unique_id) + '.json')
+        E.confirmed_df = pd.read_json('./out/confirmed_df_' + str(E.unique_id) + '.json')
+        E.deferred_df = pd.read_json('./out/deferred_df_' + str(E.unique_id) + '.json')
+
+        E.forecast_df.Date = [str(d) for d in E.forecast_df.Date]
+        if E.skipped_df.shape[0] > 0:
+            E.skipped_df.Date = [str(d) for d in E.skipped_df.Date]
+        if E.confirmed_df.shape[0] > 0:
+            E.confirmed_df.Date = [str(d) for d in E.confirmed_df.Date]
+        if E.deferred_df.shape[0] > 0:
+            E.deferred_df.Date = [str(d) for d in E.deferred_df.Date]
 
     E.unique_id = data['unique_id']
-    E.start_ts = data['start_ts']
-    E.end_ts = data['end_ts']
-
-    #it is so dumb that I have to do this just to interpret string as json
-    f = open('./out/forecast_df_' + str(E.unique_id)+'.json', 'w')
-    f.write(json.dumps(data['forecast_df'],indent=4))
-    f.close()
-
-    f = open('./out/skipped_df_' + str(E.unique_id) + '.json', 'w')
-    f.write(json.dumps(data['skipped_df'],indent=4))
-    f.close()
-
-    f = open('./out/confirmed_df_' + str(E.unique_id) + '.json', 'w')
-    f.write(json.dumps(data['confirmed_df'],indent=4))
-    f.close()
-
-    f = open('./out/deferred_df_' + str(E.unique_id) + '.json', 'w')
-    f.write(json.dumps(data['deferred_df'],indent=4))
-    f.close()
-
-    E.forecast_df = pd.read_json('./out/forecast_df_' + str(E.unique_id) + '.json')
-    E.skipped_df = pd.read_json('./out/skipped_df_' + str(E.unique_id) + '.json')
-    E.confirmed_df = pd.read_json('./out/confirmed_df_' + str(E.unique_id) + '.json')
-    E.deferred_df = pd.read_json('./out/deferred_df_' + str(E.unique_id) + '.json')
-
-    E.forecast_df.Date = [ str(d) for d in E.forecast_df.Date ]
-    #todo milestone results
 
     return [ E ]
 
@@ -872,15 +877,15 @@ class ExpenseForecast:
         #self.forecast_df.to_csv('./out//Forecast_' + self.unique_id + '.csv') #this is only the forecast not the whole ExpenseForecast object
         #self.writeToJSONFile() #this is the whole ExpenseForecast object #todo this should accept a path parameter
 
-    def writeToJSONFile(self):
+    def writeToJSONFile(self, output_dir):
 
         # self.forecast_df.to_csv('./Forecast__'+run_ts+'.csv')
-        log_in_color(logger,'green', 'info', 'Writing to ./out/Forecast_' + self.unique_id + '.json')
+        log_in_color(logger,'green', 'info', 'Writing to '+str(output_dir)+'/Forecast_' + self.unique_id + '.json')
         #self.forecast_df.to_csv('./Forecast__' + run_ts + '.json')
 
         #self.forecast_df.index = self.forecast_df['Date']
 
-        f = open('./out/Forecast__' + self.unique_id + '.json','a')
+        f = open(str(output_dir)+'/Forecast_' + self.unique_id + '.json','w')
         f.write(self.to_json())
         f.close()
 
@@ -2563,27 +2568,49 @@ class ExpenseForecast:
                 # print(row)
                 if account_row.Account_Type == 'prev stmt bal':  # cc min payment
 
-                    #log_in_color(logger, 'cyan', 'info', 'executeMinimumPayments() ' + bal_string, self.log_stack_depth)
+                    log_in_color(logger, 'cyan', 'info', 'executeCreditCardMinimumPayments() ' + bal_string, self.log_stack_depth)
 
                     current_current_statement_balance = account_set.getAccounts().loc[account_index - 1, :].Balance
                     current_previous_statement_balance = account_row.Balance
 
                     # it turns out that the way this really works is that Chase uses 1% PLUS the interest accrued to be charged immediately, not added to the principal
                     # todo the above has been encoded, todo is check against statements to confirm
-                    interest_to_be_charged_immediately = current_previous_statement_balance * ( account_row.APR / 12 )
+                    interest_to_be_charged_immediately = round(current_previous_statement_balance * ( account_row.APR / 12 ),2)
                     amount_charged_toward_balance = current_previous_statement_balance * 0.01
 
-                    minimum_payment_amount = max(40, interest_to_be_charged_immediately + amount_charged_toward_balance)
+                    if account_row.Minimum_Payment < ( interest_to_be_charged_immediately + amount_charged_toward_balance):
 
-                    # very much not how I designed this but not earth-shatteringly different
+                        payment_toward_prev = amount_charged_toward_balance
+                        payment_toward_curr = min(amount_charged_toward_balance - payment_toward_prev,current_current_statement_balance)
 
-                    #payment_toward_prev = round(min(minimum_payment_amount, current_previous_statement_balance), 2)
-                    #payment_toward_curr = round(min(current_current_statement_balance,minimum_payment_amount - payment_toward_prev), 2)
+                    elif account_row.Minimum_Payment >= ( interest_to_be_charged_immediately + amount_charged_toward_balance):
 
-                    payment_toward_prev = min(minimum_payment_amount, current_previous_statement_balance)
-                    payment_toward_curr = min(current_current_statement_balance, minimum_payment_amount - payment_toward_prev)
+                        # if account_row.Minimum_Payment > amount_charged_toward_balance, THEN
+                        # account_row.Minimum_Payment > current_previous_statement_balance BECAUSE
+                        # amount_charged_toward_balance = current_previous_statement_balance * 0.1
 
+                        if account_row.Minimum_Payment > current_previous_statement_balance:
+                            payment_toward_prev = current_previous_statement_balance
+
+                            payment_toward_curr = min(( account_row.Minimum_Payment - payment_toward_prev ),current_current_statement_balance)
+
+                        else:
+                            payment_toward_prev = account_row.Minimum_Payment - interest_to_be_charged_immediately
+                            payment_toward_curr = 0
+
+                    if interest_to_be_charged_immediately > 0:
+
+                        # interest change
+                        account_set.executeTransaction(Account_From='Checking',
+                                                       Account_To=None,
+                                                       # Note that the execute transaction method will split the amount paid between the 2 accounts
+                                                       Amount=interest_to_be_charged_immediately)
+                        current_forecast_row_df.Memo += ' cc interest (Checking -$' + str(interest_to_be_charged_immediately) + ');'
+
+
+                    # if interest_to_be_charged_immediately > 0 then this is also true
                     if (payment_toward_prev + payment_toward_curr) > 0:
+
                         account_set.executeTransaction(Account_From='Checking',
                                                        Account_To=account_row.Name.split(':')[0],
                                                        # Note that the execute transaction method will split the amount paid between the 2 accounts
@@ -2591,10 +2618,10 @@ class ExpenseForecast:
 
                         if payment_toward_prev > 0:
                             current_forecast_row_df.Memo += ' cc min payment (' + account_row.Name.split(':')[
-                                0] + ': Prev Stmt Bal -$' + str(payment_toward_prev) + '); '
+                                0] + ': Prev Stmt Bal -$' + str(payment_toward_prev) + ');'
                         if payment_toward_curr > 0:
                             current_forecast_row_df.Memo += ' cc min payment (' + account_row.Name.split(':')[
-                                0] + ': Curr Stmt Bal -$' + str(payment_toward_curr) + '); '
+                                0] + ': Curr Stmt Bal -$' + str(payment_toward_curr) + ');'
 
 
 
@@ -3137,39 +3164,50 @@ class ExpenseForecast:
                             else:
                                 assert len(memo_line_items_relevant_to_minimum_payment) == 2
 
+                                log_in_color(logger, 'white', 'info', 'future_rows_only_df BEFORE:')
+                                log_in_color(logger, 'white', 'info', future_rows_only_df.to_string())
+
+                                og_interest_payment_memo_line_item = memo_line_items_relevant_to_minimum_payment[0]
+                                og_pbal_payment_memo_line_item = memo_line_items_relevant_to_minimum_payment[1]
+                                og_interest_payment_amount_match = re.search('\(.*-\$(.*)\)',
+                                                                             og_interest_payment_memo_line_item)
+                                og_pbal_payment_amount_match = re.search('\(.*-\$(.*)\)',
+                                                                         og_pbal_payment_memo_line_item)
+                                og_interest_amount = float(og_interest_payment_amount_match.group(1))
+                                og_pbal_amount = float(og_pbal_payment_amount_match.group(1))
+
+                                amt_to_pay_toward_interest = future_rows_only_df.iloc[f_i - 1, a_i]
+                                amt_to_pay_toward_pbal = og_interest_amount - amt_to_pay_toward_interest
+
+                                memo_pbal_amount = og_pbal_amount + amt_to_pay_toward_pbal
+
+                                if future_rows_only_df.iloc[f_i, a_i - 1] <= 0:
+                                    # log_in_color(logger, 'magenta', 'info','overpayment by min payment detected')
+                                    future_rows_only_df.iloc[row_sel_vec, a_i - 1] = 0
+                                    memo_pbal_amount = 0
+                                else:
+                                    future_rows_only_df.iloc[row_sel_vec, a_i - 1] -= amt_to_pay_toward_pbal
+
+                                pbal_before_min_payment_applied = future_rows_only_df.iloc[f_i, a_i - 1]
+
+                                new_marginal_interest = pbal_before_min_payment_applied * pbal_account_row.APR / interest_denominator
+                                interest_before_min_payment_applied = future_rows_only_df.iloc[
+                                                                          f_i - 1, a_i] + new_marginal_interest
+
+                                future_rows_only_df.iloc[f_i, a_i] = interest_before_min_payment_applied
+
                                 acount_name_match = re.search('\((.*)-\$(.*)\)',
                                                               memo_line_items_relevant_to_minimum_payment[0])
                                 account_name = acount_name_match.group(1)
                                 account_base_name = account_name.split(':')[0]
 
-                                og_interest_payment_memo_line_item = memo_line_items_relevant_to_minimum_payment[0]
-                                og_pbal_payment_memo_line_item = memo_line_items_relevant_to_minimum_payment[1]
-
-                                og_interest_payment_amount_match = re.search('\(.*-\$(.*)\)',
-                                                                             og_interest_payment_memo_line_item)
-                                og_pbal_payment_amount_match = re.search('\(.*-\$(.*)\)', og_pbal_payment_memo_line_item)
-
-
-                                amt_to_pay_toward_interest = future_rows_only_df.iloc[f_i - 1, a_i]
-
-                                og_interest_amount = float(og_interest_payment_amount_match.group(1))
-                                og_pbal_amount = float(og_pbal_payment_amount_match.group(1))
-
                                 # already_paid_toward_pbal = future_rows_only_df.iloc[f_i - 1, a_i - 1] - future_rows_only_df.iloc[f_i, a_i - 1]
-                                #log_in_color(logger, 'magenta', 'info','already_paid_toward_pbal:' + str(already_paid_toward_pbal))
+                                # log_in_color(logger, 'magenta', 'info','already_paid_toward_pbal:' + str(already_paid_toward_pbal))
                                 # log_in_color(logger, 'magenta', 'info','og_pbal_amount:' + str(og_pbal_amount))
                                 # log_in_color(logger, 'magenta', 'info','already_paid_toward_pbal:' + str(already_paid_toward_pbal))
                                 # log_in_color(logger, 'magenta', 'info','amt_to_pay_toward_interest:' + str(amt_to_pay_toward_interest))
 
-                                amt_to_pay_toward_pbal = og_interest_amount - amt_to_pay_toward_interest
-
-                                memo_pbal_amount = og_pbal_amount + amt_to_pay_toward_pbal
-
-                                #if a past additional payment made this min payment not necessary
-                                if future_rows_only_df.iloc[f_i, a_i - 1] <= 0:
-                                    # log_in_color(logger, 'magenta', 'info','overpayment by min payment detected')
-                                    amt_to_pay_toward_pbal = -1 * amt_to_pay_toward_pbal #the min payment needs to be reversed
-                                    memo_pbal_amount = 0
+                                # if a past additional payment made this min payment not necessary
 
                                 # log_in_color(logger, 'magenta', 'info','amt_to_pay_toward_pbal:' + str(amt_to_pay_toward_pbal))
                                 # log_in_color(logger, 'magenta', 'info','(amt_to_pay_toward_interest - og_interest_amount):' + str(amt_to_pay_toward_interest - og_interest_amount))
@@ -3188,13 +3226,7 @@ class ExpenseForecast:
                                 # log_in_color(logger, 'white', 'info', 'BEFORE (og pmt was 2 accts):')
                                 # log_in_color(logger, 'white', 'info', future_rows_only_df.to_string())
 
-
-
-
-
-                                future_rows_only_df.iloc[row_sel_vec, a_i - 1] -= amt_to_pay_toward_pbal
-
-                                #rounding errors
+                                # rounding errors
                                 if abs(future_rows_only_df.iloc[f_i, a_i - 1]) < 0.01:
                                     future_rows_only_df.iloc[row_sel_vec, a_i - 1] = 0
 
@@ -3206,17 +3238,23 @@ class ExpenseForecast:
                                 replacement_interest_memo = ''
 
                                 if memo_pbal_amount > 0:
-                                    replacement_pbal_memo = ' loan min payment (' + account_base_name + ': Principal Balance -$' + str(round(memo_pbal_amount,2)) + ')'
+                                    replacement_pbal_memo = ' loan min payment (' + account_base_name + ': Principal Balance -$' + str(
+                                        round(memo_pbal_amount, 2)) + ')'
 
                                 if amt_to_pay_toward_interest > 0:
-                                    replacement_interest_memo = ' loan min payment (' + account_base_name + ': Interest -$' + str(round(amt_to_pay_toward_interest,2)) + ')'
+                                    replacement_interest_memo = ' loan min payment (' + account_base_name + ': Interest -$' + str(
+                                        round(amt_to_pay_toward_interest, 2)) + ')'
 
-                                future_rows_only_df.loc[f_i, 'Memo'] = future_rows_only_df.loc[f_i, 'Memo'].replace(memo_line_items_relevant_to_minimum_payment[0], replacement_pbal_memo)
-                                future_rows_only_df.loc[f_i, 'Memo'] = future_rows_only_df.loc[f_i, 'Memo'].replace(memo_line_items_relevant_to_minimum_payment[1], replacement_interest_memo)
-                                future_rows_only_df.loc[f_i, 'Memo'] = future_rows_only_df.loc[f_i, 'Memo'].replace(';;;', ';')  #not sure this is right
+                                future_rows_only_df.loc[f_i, 'Memo'] = future_rows_only_df.loc[f_i, 'Memo'].replace(
+                                    memo_line_items_relevant_to_minimum_payment[0], replacement_pbal_memo)
+                                future_rows_only_df.loc[f_i, 'Memo'] = future_rows_only_df.loc[f_i, 'Memo'].replace(
+                                    memo_line_items_relevant_to_minimum_payment[1], replacement_interest_memo)
+                                future_rows_only_df.loc[f_i, 'Memo'] = future_rows_only_df.loc[f_i, 'Memo'].replace(
+                                    ';;;',
+                                    ';')  # not sure this is right
 
-                                # log_in_color(logger, 'white', 'info', 'AFTER (og pmt was 2 accts):')
-                                # log_in_color(logger, 'white', 'info', future_rows_only_df.to_string())
+                                log_in_color(logger, 'white', 'info', 'future_rows_only_df AFTER:')
+                                log_in_color(logger, 'white', 'info', future_rows_only_df.to_string())
 
                         else:
                             pass  # loan was already paid off
@@ -3467,9 +3505,9 @@ class ExpenseForecast:
 
         # df.round(2) did not work so I have resorted to the below instead
         # todo this could be done better
-        # for f_i, f_row in future_rows_only_df.iterrows():
-        #     for a_i, a_row in A_df.iterrows():
-        #         future_rows_only_df.iloc[f_i,a_i + 1] = round(future_rows_only_df.iloc[f_i,a_i + 1],2)
+        for f_i, f_row in future_rows_only_df.iterrows():
+            for a_i, a_row in A_df.iterrows():
+                future_rows_only_df.iloc[f_i,a_i + 1] = round(future_rows_only_df.iloc[f_i,a_i + 1],2)
 
 
         # check if account boundaries are violated
@@ -4720,7 +4758,7 @@ class ExpenseForecast:
 
             # a valid success date stays valid until the end
             found_a_valid_success_date = False
-            success_date = None
+            success_date = 'None'
             for index, row in relevant_time_series_df.iterrows():
                 current_value = relevant_time_series_df.iloc[index, 1]
                 if ((min_balance <= current_value) & (current_value <= max_balance)) and not found_a_valid_success_date:
@@ -4729,7 +4767,7 @@ class ExpenseForecast:
                     log_in_color(logger, 'yellow', 'info', 'success_date:'+str(success_date),self.log_stack_depth)
                 elif ((min_balance > current_value) | (current_value > max_balance)):
                     found_a_valid_success_date = False
-                    success_date = None
+                    success_date = 'None'
                     log_in_color(logger, 'yellow', 'info', 'success_date:None',self.log_stack_depth)
 
         elif relevant_account_info_rows_df.shape[0] == 2:  # case for credit and loan
@@ -4752,7 +4790,7 @@ class ExpenseForecast:
 
             #a valid success date stays valid until the end
             found_a_valid_success_date = False
-            success_date = None
+            success_date = 'None'
             for index, row in relevant_time_series_df.iterrows():
                 current_value = relevant_time_series_df.iloc[index,1] + relevant_time_series_df.iloc[index,2]
                 if ((min_balance <= current_value) & (current_value <= max_balance)) and not found_a_valid_success_date:
@@ -4761,7 +4799,7 @@ class ExpenseForecast:
                     log_in_color(logger, 'yellow', 'info', 'success_date:' + str(success_date),self.log_stack_depth)
                 elif ((min_balance > current_value) | (current_value > max_balance)):
                     found_a_valid_success_date = False
-                    success_date = None
+                    success_date = 'None'
                     log_in_color(logger, 'yellow', 'info', 'success_date:None',self.log_stack_depth)
 
         else:
@@ -4809,7 +4847,7 @@ class ExpenseForecast:
 
         self.log_stack_depth -= 1
         log_in_color(logger,'yellow', 'debug', 'EXIT evaluateMemoMilestone(' + str(memo_regex) + ')',self.log_stack_depth)
-        return None
+        return 'None'
 
     def evaluateCompositeMilestone(self,list_of_account_milestones,list_of_memo_milestones):
         log_in_color(logger, 'yellow', 'info', 'ENTER evaluateCompositeMilestone()',self.log_stack_depth)
@@ -4858,8 +4896,10 @@ class ExpenseForecast:
         JSON_string = '{'
 
         unique_id_string = "\"unique_id\":\""+self.unique_id+"\",\n"
-        start_ts_string = "\"start_ts\":\""+self.start_ts+"\",\n"
-        end_ts_string = "\"end_ts\":\""+self.end_ts+"\",\n"
+
+        if hasattr(self,'start_ts'):
+            start_ts_string = "\"start_ts\":\""+self.start_ts+"\",\n"
+            end_ts_string = "\"end_ts\":\""+self.end_ts+"\",\n"
 
         start_date_string = "\"start_date\":"+self.start_date_YYYYMMDD+",\n"
         end_date_string = "\"end_date\":"+self.end_date_YYYYMMDD+",\n"
@@ -4868,81 +4908,83 @@ class ExpenseForecast:
         initial_account_set_string = "\"initial_account_set\":"+self.initial_account_set.to_json()+","
         initial_budget_set_string = "\"initial_budget_set\":"+self.initial_budget_set.to_json()+","
 
-        normalized_forecast_df_JSON_string = self.forecast_df.to_json(orient='records',date_format='iso')#.replace('\'','"')
-        normalized_skipped_df_JSON_string = self.skipped_df.to_json(orient='records',date_format='iso')#.replace('\'','"')
-        normalized_confirmed_df_JSON_string = self.confirmed_df.to_json(orient='records',date_format='iso')#.replace('\'','"')
-        normalized_deferred_df_JSON_string = self.deferred_df.to_json(orient='records',date_format='iso')#.replace('\'','"')
+        if hasattr(self, 'start_ts'):
+            tmp__forecast_df = self.forecast_df.copy()
+            tmp__skipped_df = self.skipped_df.copy()
+            tmp__confirmed_df = self.confirmed_df.copy()
+            tmp__deferred_df = self.deferred_df.copy()
 
-        forecast_df_string = "\"forecast_df\":"+normalized_forecast_df_JSON_string+",\n"
-        skipped_df_string = "\"skipped_df\":"+normalized_skipped_df_JSON_string+",\n"
-        confirmed_df_string = "\"confirmed_df\":"+normalized_confirmed_df_JSON_string+",\n"
-        deferred_df_string = "\"deferred_df\":"+normalized_deferred_df_JSON_string+",\n"
+
+            tmp__forecast_df['Date'] = tmp__forecast_df['Date'].astype(str)
+            if tmp__skipped_df.shape[0] > 0:
+                tmp__skipped_df['Date'] = tmp__skipped_df['Date'].astype(str)
+            tmp__confirmed_df['Date'] = tmp__confirmed_df['Date'].astype(str)
+            if tmp__deferred_df.shape[0] > 0:
+                tmp__deferred_df['Date'] = tmp__deferred_df['Date'].astype(str)
+
+
+            normalized_forecast_df_JSON_string = tmp__forecast_df.to_json(orient='records',date_format='iso')
+            normalized_skipped_df_JSON_string = tmp__skipped_df.to_json(orient='records',date_format='iso')
+            normalized_confirmed_df_JSON_string = tmp__confirmed_df.to_json(orient='records',date_format='iso')
+            normalized_deferred_df_JSON_string = tmp__deferred_df.to_json(orient='records',date_format='iso')
+
+            forecast_df_string = "\"forecast_df\":"+normalized_forecast_df_JSON_string+",\n"
+            skipped_df_string = "\"skipped_df\":"+normalized_skipped_df_JSON_string+",\n"
+            confirmed_df_string = "\"confirmed_df\":"+normalized_confirmed_df_JSON_string+",\n"
+            deferred_df_string = "\"deferred_df\":"+normalized_deferred_df_JSON_string+",\n"
 
         JSON_string += unique_id_string
-        JSON_string += start_ts_string
-        JSON_string += end_ts_string
+
+        if hasattr(self, 'start_ts'):
+            JSON_string += start_ts_string
+            JSON_string += end_ts_string
+
         JSON_string += start_date_string
         JSON_string += end_date_string
         JSON_string += memo_rule_set_string
         JSON_string += initial_account_set_string
         JSON_string += initial_budget_set_string
-        JSON_string += forecast_df_string
-        JSON_string += skipped_df_string
-        JSON_string += confirmed_df_string
-        JSON_string += deferred_df_string
 
-        # account_milestone_string = "{"
-        # for i in range(0,len(self.account_milestone_results)):
-        #     a = self.account_milestone_results[i]
-        #     account_milestone_string += '"'+str(a[0])+'":"'+str(a[1])+'"'
-        #     if i != (len(self.account_milestone_results)-1):
-        #         account_milestone_string+=","
-        # account_milestone_string+="}"
-        account_milestone_string = "{"
-        i = 0
-        for key, value in self.account_milestone_results.items():
-            account_milestone_string += '"' + str(key) + '":"' + str(value) + '"'
-            if i != (len(self.account_milestone_results) - 1):
-                account_milestone_string += ","
-            i += 1
-        account_milestone_string += "}"
+        if hasattr(self, 'start_ts'):
+            JSON_string += forecast_df_string
+            JSON_string += skipped_df_string
+            JSON_string += confirmed_df_string
+            JSON_string += deferred_df_string
 
-        # memo_milestone_string = "{"
-        # for i in range(0, len(self.memo_milestone_results)):
-        #     m = self.memo_milestone_results[i]
-        #     memo_milestone_string += '"'+str(m[0])+'":"'+str(m[1])+'"'
-        #     if i != (len(self.memo_milestone_results) - 1):
-        #         memo_milestone_string += ","
-        # memo_milestone_string += "}"
-        memo_milestone_string = "{"
-        i = 0
-        for key, value in self.memo_milestone_results.items():
-            memo_milestone_string += '"' + str(key) + '":"' + str(value) + '"'
-            if i != (len(self.memo_milestone_results) - 1):
-                memo_milestone_string += ","
-            i += 1
-        memo_milestone_string += "}"
+            account_milestone_string = "{"
+            i = 0
+            for key, value in self.account_milestone_results.items():
+                account_milestone_string += '"' + str(key) + '":"' + str(value) + '"'
+                if i != (len(self.account_milestone_results) - 1):
+                    account_milestone_string += ","
+                i += 1
+            account_milestone_string += "}"
 
-        # composite_milestone_string = "{"
-        # for i in range(0, len(self.composite_milestone_results)):
-        #     c = self.composite_milestone_results[i]
-        #     composite_milestone_string += '"'+str(c[0])+'":"'+str(a[1])+'"'
-        #     if i != (len(self.composite_milestone_results) - 1):
-        #         composite_milestone_string += ","
-        # composite_milestone_string += "}"
-        composite_milestone_string = "{"
-        i = 0
-        for key, value in self.composite_milestone_results.items():
-            composite_milestone_string += '"' + str(key) + '":"' + str(value) + '"'
-            if i != (len(self.composite_milestone_results) - 1):
-                composite_milestone_string += ","
-            i += 1
-        composite_milestone_string += "}"
+            memo_milestone_string = "{"
+            i = 0
+            for key, value in self.memo_milestone_results.items():
+                memo_milestone_string += '"' + str(key) + '":"' + str(value) + '"'
+                if i != (len(self.memo_milestone_results) - 1):
+                    memo_milestone_string += ","
+                i += 1
+            memo_milestone_string += "}"
 
-        JSON_string += "\"milestone_set\":"+self.milestone_set.to_json()+",\n"
-        JSON_string += "\"account_milestone_results\":"+account_milestone_string+",\n"
-        JSON_string += "\"memo_milestone_results\":"+memo_milestone_string+",\n"
-        JSON_string += "\"composite_milestone_results\":"+composite_milestone_string
+            composite_milestone_string = "{"
+            i = 0
+            for key, value in self.composite_milestone_results.items():
+                composite_milestone_string += '"' + str(key) + '":"' + str(value) + '"'
+                if i != (len(self.composite_milestone_results) - 1):
+                    composite_milestone_string += ","
+                i += 1
+            composite_milestone_string += "}"
+
+        JSON_string += "\"milestone_set\":"+self.milestone_set.to_json()
+
+        if hasattr(self, 'start_ts'):
+            JSON_string += ",\n"
+            JSON_string += "\"account_milestone_results\":"+account_milestone_string+",\n"
+            JSON_string += "\"memo_milestone_results\":"+memo_milestone_string+",\n"
+            JSON_string += "\"composite_milestone_results\":"+composite_milestone_string
 
         JSON_string += '}'
 
@@ -5124,57 +5166,117 @@ class ExpenseForecast:
 
         return milestone_results_df
 
-    def to_excel(self,path):
+    def to_excel(self,output_dir):
 
         #first page, run parameters
+        summary_df = self.getSummaryPageForExcelLandingPageDF()
         account_set_df = self.initial_account_set.getAccounts()
         budget_set_df = self.initial_budget_set.getBudgetItems()
         memo_rule_set_df = self.initial_memo_rule_set.getMemoRules()
         choose_one_set_df = pd.DataFrame() #todo
         account_milestones_df = self.milestone_set.getAccountMilestonesDF()
         memo_milestones_df = self.milestone_set.getMemoMilestonesDF()
-        composite_milestones = self.milestone_set.getCompositeMilestones_lists()
-        composite_account_milestones_df = composite_milestones[0]
-        composite_memo_milestones_df = composite_milestones[1]
+        composite_milestones_df = self.milestone_set.getCompositeMilestonesDF()
 
-        config_df = self.getConfigDF()
-        run_info_df = self.getRunInfoDF()
+        with pd.ExcelWriter(output_dir+'/Forecast_'+self.unique_id+'.xlsx', engine='xlsxwriter') as writer:
+            summary_df.to_excel(writer, sheet_name='Summary', index=False)
+            for column in summary_df:
+                column_length = max(summary_df[column].astype(str).map(len).max(), len(column))
+                col_idx = summary_df.columns.get_loc(column)
+                writer.sheets['Summary'].set_column(col_idx, col_idx, column_length)
 
-        with pd.ExcelWriter(path, engine='openpyxl') as writer:
             account_set_df.to_excel(writer, sheet_name='AccountSet',index=False)
-            budget_set_df.to_excel(writer, sheet_name='BudgetSet',index=False)
-            memo_rule_set_df.to_excel(writer, sheet_name='MemoRuleSet',index=False)
-            choose_one_set_df.to_excel(writer, sheet_name='ChooseOneSet',index=False)
-            account_milestones_df.to_excel(writer, sheet_name='AccountMilestones',index=False)
-            memo_milestones_df.to_excel(writer, sheet_name='MemoMilestones',index=False)
-            composite_account_milestones_df.to_excel(writer, sheet_name='CompositeAccountMilestones',index=False)
-            composite_memo_milestones_df.to_excel(writer, sheet_name='CompositeMemoMilestones', index=False)
-            config_df.to_excel(writer, sheet_name='config',index=False)
+            for column in account_set_df:
+                column_length = max(account_set_df[column].astype(str).map(len).max(), len(column))
+                col_idx = account_set_df.columns.get_loc(column)
+                writer.sheets['AccountSet'].set_column(col_idx, col_idx, column_length)
 
+            budget_set_df.to_excel(writer, sheet_name='BudgetSet',index=False)
+            for column in budget_set_df:
+                column_length = max(budget_set_df[column].astype(str).map(len).max(), len(column))
+                col_idx = budget_set_df.columns.get_loc(column)
+                writer.sheets['BudgetSet'].set_column(col_idx, col_idx, column_length)
+
+            memo_rule_set_df.to_excel(writer, sheet_name='MemoRuleSet',index=False)
+            for column in memo_rule_set_df:
+                column_length = max(memo_rule_set_df[column].astype(str).map(len).max(), len(column))
+                col_idx = memo_rule_set_df.columns.get_loc(column)
+                writer.sheets['MemoRuleSet'].set_column(col_idx, col_idx, column_length)
+
+            choose_one_set_df.to_excel(writer, sheet_name='ChooseOneSet',index=False)
+            for column in choose_one_set_df:
+                column_length = max(choose_one_set_df[column].astype(str).map(len).max(), len(column))
+                col_idx = choose_one_set_df.columns.get_loc(column)
+                writer.sheets['ChooseOneSet'].set_column(col_idx, col_idx, column_length)
+
+            account_milestones_df.to_excel(writer, sheet_name='AccountMilestones',index=False)
+            for column in account_milestones_df:
+                column_length = max(account_milestones_df[column].astype(str).map(len).max(), len(column))
+                col_idx = account_milestones_df.columns.get_loc(column)
+                writer.sheets['AccountMilestones'].set_column(col_idx, col_idx, column_length)
+
+            memo_milestones_df.to_excel(writer, sheet_name='MemoMilestones',index=False)
+            for column in memo_milestones_df:
+                column_length = max(memo_milestones_df[column].astype(str).map(len).max(), len(column))
+                col_idx = memo_milestones_df.columns.get_loc(column)
+                writer.sheets['MemoMilestones'].set_column(col_idx, col_idx, column_length)
+
+            composite_milestones_df.to_excel(writer, sheet_name='CompositeMilestones',index=False)
+            for column in composite_milestones_df:
+                column_length = max(composite_milestones_df[column].astype(str).map(len).max(), len(column))
+                col_idx = composite_milestones_df.columns.get_loc(column)
+                writer.sheets['CompositeMilestones'].set_column(col_idx, col_idx, column_length)
 
             if hasattr(self,'forecast_df'):
-                run_info_df.to_excel(writer, sheet_name='run_info', index=False)
                 self.forecast_df.to_excel(writer, sheet_name='Forecast', index=False)
+                for column in self.forecast_df:
+                    column_length = max(self.forecast_df[column].astype(str).map(len).max(), len(column))
+                    col_idx = self.forecast_df.columns.get_loc(column)
+                    writer.sheets['Forecast'].set_column(col_idx, col_idx, column_length)
+
                 self.skipped_df.to_excel(writer, sheet_name='Skipped', index=False)
+                for column in self.skipped_df:
+                    column_length = max(self.skipped_df[column].astype(str).map(len).max(), len(column))
+                    col_idx = self.skipped_df.columns.get_loc(column)
+                    writer.sheets['Skipped'].set_column(col_idx, col_idx, column_length)
+
                 self.confirmed_df.to_excel(writer, sheet_name='Confirmed', index=False)
+                for column in self.confirmed_df:
+                    column_length = max(self.confirmed_df[column].astype(str).map(len).max(), len(column))
+                    col_idx = self.confirmed_df.columns.get_loc(column)
+                    writer.sheets['Confirmed'].set_column(col_idx, col_idx, column_length)
+
                 self.deferred_df.to_excel(writer, sheet_name='Deferred', index=False)
-                self.getMilestoneResultsDF().to_excel(writer, sheet_name='MilestoneResults', index=False)
+                for column in self.deferred_df:
+                    column_length = max(self.deferred_df[column].astype(str).map(len).max(), len(column))
+                    col_idx = self.deferred_df.columns.get_loc(column)
+                    writer.sheets['Deferred'].set_column(col_idx, col_idx, column_length)
 
-    def getRunInfoDF(self):
+
+                #self.getMilestoneResultsDF().to_excel(writer, sheet_name='MilestoneResults', index=False)
+
+    def getSummaryPageForExcelLandingPageDF(self):
+
         if hasattr(self, 'forecast_df'):
-            return pd.DataFrame(
-                {'start_ts': [self.start_ts],
-                 'end_ts': [self.end_ts],
-                 'unique_id': [self.unique_id]
-                 })
-        return pd.DataFrame(
-            {'start_ts': [],
-             'end_ts': [],
-             'unique_id': []
-             })
+            return_df = pd.DataFrame(
+                {'start_date_YYYYMMDD': [self.start_date_YYYYMMDD],
+                 'end_date_YYYYMMDD': [self.end_date_YYYYMMDD],
+                 'unique_id': [self.unique_id],
+                    'start_ts': [self.start_ts],
+                 'end_ts': [self.end_ts]
+                 }).T
+        else:
+            return_df = pd.DataFrame(
+                {'start_date_YYYYMMDD': [self.start_date_YYYYMMDD],
+                 'end_date_YYYYMMDD': [self.end_date_YYYYMMDD],
+                 'unique_id': [self.unique_id],
+                 'start_ts': [None],
+                 'end_ts': [None]
+                 }).T
 
-    def getConfigDF(self):
-        return pd.DataFrame({'Start_Date_YYYYMMDD':[self.start_date_YYYYMMDD],'End_Date_YYYYMMDD':[self.end_date_YYYYMMDD]})
+        return_df.reset_index(inplace=True)
+        return_df = return_df.rename(columns={'index':'Field',0:'Value'})
+        return return_df
 
 
 # written in one line so that test coverage can reach 100%
@@ -5184,25 +5286,16 @@ if __name__ == "__main__":
 
 # TODO
 # Failed Tests
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_payment__satisfice__curr_bal_25__expect_25-account_set2-budget_set2-memo_rule_set2-20000101-20000103-milestone_set2-expected_result_df2]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_payment__satisfice__prev_bal_1000__expect_40-account_set3-budget_set3-memo_rule_set3-20000101-20000103-milestone_set3-expected_result_df3]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_payment__satisfice__prev_bal_3000__expect_60-account_set4-budget_set4-memo_rule_set4-20000101-20000103-milestone_set4-expected_result_df4]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p4__cc_payment__pay_all_of_prev_part_of_curr__expect_800-account_set11-budget_set11-memo_rule_set11-20000101-20000103-milestone_set11-expected_result_df11]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p4__cc_payment__pay_part_of_prev_balance__expect_200-account_set12-budget_set12-memo_rule_set12-20000101-20000103-milestone_set12-expected_result_df12]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p4__cc_payment__non_0_prev_balance_but_no_funds__expect_0-account_set13-budget_set13-memo_rule_set13-20000101-20000103-milestone_set13-expected_result_df13]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p4__cc_payment__partial_of_indicated_amount-account_set14-budget_set14-memo_rule_set14-20000101-20000103-milestone_set14-expected_result_df14]
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_execute_defer_after_receiving_income_2_days_later-account_set15-budget_set15-memo_rule_set15-20000101-20000104-milestone_set15-expected_result_df15]
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_execute_at_reduced_amount_bc_later_higher_priority_txn-account_set16-budget_set16-memo_rule_set16-20000101-20000105-milestone_set16-expected_result_df16]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_560-account_set21-budget_set21-memo_rule_set21-20000101-20000103-milestone_set21-expected_result_df21]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_610-account_set22-budget_set22-memo_rule_set22-20000101-20000103-milestone_set22-expected_result_df22]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_1900-account_set23-budget_set23-memo_rule_set23-20000101-20000103-milestone_set23-expected_result_df23]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_overpay-account_set24-budget_set24-memo_rule_set24-20000101-20000103-milestone_set24-expected_result_df24]
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_dont_recompute_past_days_for_p2plus_transactions - NotImplementedError
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_initialize_from_json_not_yet_run - AttributeError: 'ExpenseForecast' object has no attribute 'start_ts'
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_initialize_from_json_already_run__no_append - FileNotFoundError: [Errno 2] No such file or directory: '....
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_initialize_from_json_already_run__yes_append - FileNotFoundError: [Errno 2] No such file or directory: '...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_run_from_json_at_path - AttributeError: 'list' object has no attribute 'runForecast'
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_run_from_excel_at_path - AttributeError: 'MilestoneSet' object has no attribute 'getCompositeMilestones_...
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_interest_types_and_cadences_at_most_monthly - NotImplementedError
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_quarter_and_year_long_interest_cadences - NotImplementedError
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_summary_lines - AssertionError
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_multiple_additional_loan_payments__expect_eliminate_future_min_payments - AssertionError: assert 'additi...
 
 
 
@@ -5230,6 +5323,8 @@ if __name__ == "__main__":
 #    but prev balanced is moved to curr on same day so it doesnt matter
 #    and I did not fix the code to reflect this because
 #    it would never cause something illogical
+# Is principal balance sometimes negative in the MI calculation before it gets corrected?
+#     I fixed this in the 2 memo line item base, but im not sure if it applies to other cases as well
 
 # Tests to write
 # write test for pay off loan early (make sure the memo field is correct)
@@ -5240,6 +5335,7 @@ if __name__ == "__main__":
 # NO NEED UNLESS COVERAGE:
 # test marginal interest when min and additional payment on same day for loan
 # tests for edge cases involving things close together or at end of forecast
+# initialize from json with accounts in atypical order
 
 # Open Questions
 # Does MilestoneSet need to take AccountSet and BudgetSet as arguments?
@@ -5259,6 +5355,7 @@ if __name__ == "__main__":
 
 
 ### Bite-sized tasks:
+# there is sometimes extra whitespace on cc and maybe also loan payment memos
 # milestone comparison plot
 # Define standard colors for plots
 # make error if ALL_LOANS put in memo rule when it doesnt make sense
