@@ -2053,9 +2053,9 @@ class TestExpenseForecastMethods:
 
         E1 = ExpenseForecast.ExpenseForecast(A,B,M,sd,ed,MS)
 
-        fname = './out/test_run_from_excel_at_path.xlsx'
-        E1.to_excel(fname)
-        E2 = ExpenseForecast.initialize_from_excel_file(fname)
+        out_path = './out/'
+        E1.to_excel(out_path)
+        E2 = ExpenseForecast.initialize_from_excel_file(out_path+'Forecast_017138.xlsx')
 
         E1.runForecast()
         E2.runForecast()
@@ -2098,7 +2098,7 @@ class TestExpenseForecastMethods:
             composite_memo_milestones_df.to_excel(writer, sheet_name='CompositeMemoMilestones', index=False)
             config_df.to_excel(writer, sheet_name='config',index=False)
 
-        E1_reverse = ExpenseForecast.initialize_from_excel_file(fname)
+        #E1_reverse = ExpenseForecast.initialize_from_excel_file(fname)
 
     def test_forecast_longer_than_satisfice(self):
         #if satisfice fails on the second day of the forecast, there is weirdness

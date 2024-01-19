@@ -29,150 +29,150 @@ class ForecastHandler:
     def __init__(self):
         pass
 
-    def initialize_from_excel_file(self,path_to_excel_file):
-        AccountSet_df = pd.read_excel(path_to_excel_file, sheet_name='AccountSet')
-        BudgetSet_df = pd.read_excel(path_to_excel_file, sheet_name='BudgetSet')
-        MemoRuleSet_df = pd.read_excel(path_to_excel_file, sheet_name='MemoRuleSet')
-        ChooseOneSet_df = pd.read_excel(path_to_excel_file, sheet_name='ChooseOneSet')
-
-        AccountMilestones_df = pd.read_excel(path_to_excel_file, sheet_name='AccountMilestones')
-        MemoMilestones_df = pd.read_excel(path_to_excel_file, sheet_name='MemoMilestones')
-        CompositeMilestones_df = pd.read_excel(path_to_excel_file, sheet_name='CompositeMilestones')
-
-        config_df = pd.read_excel(path_to_excel_file, sheet_name='config')
-        start_date_YYYYMMDD = config_df.Start_Date_YYYYMMDD.iat[0]
-        end_date_YYYYMMDD = config_df.End_Date_YYYYMMDD.iat[0]
-        output_directory = config_df.Output_Directory.iat[0]
-
-        A = AccountSet.AccountSet([])
-        M = MemoRuleSet.MemoRuleSet([])
-
-        for account_index, account_row in AccountSet_df.iterrows():
-            A.createAccount(account_row.Account_Name,
-                            account_row.Balance,
-                            account_row.Min_Balance,
-                            account_row.Max_Balance,
-                            account_row.Account_Type,
-                            billing_start_date_YYYYMMDD=account_row.Billing_Start_Date_YYYYMMDD,
-                            interest_type=account_row.Interest_Type,
-                            apr=account_row.APR,
-                            interest_cadence=account_row.Interest_Cadence,
-                            minimum_payment=account_row.Minimum_Payment,
-                            previous_statement_balance=account_row.Previous_Statement_Balance,
-                            principal_balance=account_row.Principal_Balance,
-                            accrued_interest=account_row.Accrued_Interest)
-
-        for memorule_index, memorule_row in MemoRuleSet_df.iterrows():
-            M.addMemoRule(memorule_row.Memo_Regex,memorule_row.Account_From,memorule_row.Account_To,memorule_row.Transaction_Priority)
-
-        # number_of_combinations = 1
-        self.choose_one_set_df = ChooseOneSet_df
-        set_ids = ChooseOneSet_df.Choose_One_Set_Id.unique()
-        set_ids.sort()
-        # for set_id in set_ids:
-        #     all_options_for_set = ChooseOneSet_df[ChooseOneSet_df.Choose_One_Set_Id == set_id,:]
-        #     number_of_combinations = number_of_combinations * all_options_for_set.shape[0]
-        master_list = ['']
-        master_list_option_ids = ['']
-        for set_id in set_ids:
-            all_options_for_set = ChooseOneSet_df.loc[ChooseOneSet_df.Choose_One_Set_Id == set_id]
-            current_list=[]
-            current_list_option_ids = []
-            for option_index, option_row in all_options_for_set.iterrows():
-                for l in master_list:
-                    current_list.append(l + ';' + option_row.Memo_Regex_List)
-
-                for l in master_list_option_ids:
-                    current_list_option_ids.append(l+str(set_id)+'='+str(option_row.Option_Id)+' ')
-
-            master_list = current_list
-            master_list_option_ids = current_list_option_ids
-
-
-        budget_set_list = []
-        for l in master_list:
-            B = BudgetSet.BudgetSet([])
-            for budget_item_index, budget_item_row in BudgetSet_df.iterrows():
-                for memo_regex in l.split(';'):
-                    if memo_regex == '':
-                        continue
-
-                    if re.search(memo_regex,budget_item_row.Memo) is not None:
-                        #print(memo_regex + ' ?= ' + str(budget_item_row.Memo)+" YES")
-                        B.addBudgetItem(start_date_YYYYMMDD=budget_item_row.Start_Date,
-                         end_date_YYYYMMDD=budget_item_row.End_Date,
-                         priority=budget_item_row.Priority,
-                         cadence=budget_item_row.Cadence,
-                         amount=budget_item_row.Amount,
-                         memo=budget_item_row.Memo,
-                         deferrable=budget_item_row.Deferrable,
-                         partial_payment_allowed=budget_item_row.Partial_Payment_Allowed
-                                        )
-
-                        break
-                    else:
-                        pass
-                        #print(memo_regex + ' ?= ' + str(budget_item_row.Memo)+" NO")
-            budget_set_list.append(B)
-
-        account_milestones__list = []
-        for index, row in AccountMilestones_df.iterrows():
-            account_milestones__list.append(AccountMilestone.AccountMilestone(row.Milestone_Name,row.Account_Name,row.Min_Balance,row.Max_Balance))
-
-        memo_milestones__list = []
-        for index, row in MemoMilestones_df.iterrows():
-            memo_milestones__list.append(MemoMilestone.MemoMilestone(row.Milestone_Name,row.Memo_Regex))
-
-        composite_milestones__list = []
-        for index, row in CompositeMilestones_df.iterrows():
-            milestone_names__list = []
-            for i in range(1,CompositeMilestones_df.shape[1]):
-                milestone_names__list.append(row.iat[i])
-
-            composite_milestones__list.append(CompositeMilestone.CompositeMilestone(row.Milestone_Name,account_milestones__list, memo_milestones__list, milestone_names__list))
-
-        milestone_set = MilestoneSet.MilestoneSet(A,B,account_milestones__list,memo_milestones__list,composite_milestones__list)
-        self.account_milestones__list = milestone_set.account_milestones__list
-        self.memo_milestones__list = milestone_set.memo_milestones__list
-        self.composite_milestones__list = milestone_set.composite_milestones__list
-
-        self.initial_account_set = copy.deepcopy(A)
-        self.budget_set_list = budget_set_list
-        self.initial_memo_rule_set = M
-        self.start_date_YYYYMMDD = start_date_YYYYMMDD
-        self.end_date_YYYYMMDD = end_date_YYYYMMDD
-
-        self.master_list_option_ids = master_list_option_ids
-        self.output_directory = output_directory
-
-        self.config_df = config_df #todo store vars instead
-
-        budget_set_list = self.budget_set_list
-        start_date_YYYYMMDD = self.start_date_YYYYMMDD
-        end_date_YYYYMMDD = self.end_date_YYYYMMDD
-        A = self.initial_account_set
-        M = self.initial_memo_rule_set
-
-        # program_start = datetime.datetime.now()
-        # scenario_index = 0
-        number_of_returned_forecasts = len(budget_set_list)
-        EF_pre_run = []
-        for B in budget_set_list:
-            try:
-                E = ExpenseForecast.ExpenseForecast(account_set=copy.deepcopy(A),
-                                                    budget_set=B,
-                                                    memo_rule_set=M,
-                                                    start_date_YYYYMMDD=start_date_YYYYMMDD,
-                                                    end_date_YYYYMMDD=end_date_YYYYMMDD,
-                                                    milestone_set=milestone_set)
-                #print(E)
-                # E.runForecast()
-                EF_pre_run.append(E)
-            except Exception as e:
-
-                print(e)
-
-        self.initialized_forecasts = EF_pre_run
+    # def initialize_from_excel_file(self,path_to_excel_file):
+    #     AccountSet_df = pd.read_excel(path_to_excel_file, sheet_name='AccountSet')
+    #     BudgetSet_df = pd.read_excel(path_to_excel_file, sheet_name='BudgetSet')
+    #     MemoRuleSet_df = pd.read_excel(path_to_excel_file, sheet_name='MemoRuleSet')
+    #     ChooseOneSet_df = pd.read_excel(path_to_excel_file, sheet_name='ChooseOneSet')
+    #
+    #     AccountMilestones_df = pd.read_excel(path_to_excel_file, sheet_name='AccountMilestones')
+    #     MemoMilestones_df = pd.read_excel(path_to_excel_file, sheet_name='MemoMilestones')
+    #     CompositeMilestones_df = pd.read_excel(path_to_excel_file, sheet_name='CompositeMilestones')
+    #
+    #     config_df = pd.read_excel(path_to_excel_file, sheet_name='config')
+    #     start_date_YYYYMMDD = config_df.Start_Date_YYYYMMDD.iat[0]
+    #     end_date_YYYYMMDD = config_df.End_Date_YYYYMMDD.iat[0]
+    #     output_directory = config_df.Output_Directory.iat[0]
+    #
+    #     A = AccountSet.AccountSet([])
+    #     M = MemoRuleSet.MemoRuleSet([])
+    #
+    #     for account_index, account_row in AccountSet_df.iterrows():
+    #         A.createAccount(account_row.Account_Name,
+    #                         account_row.Balance,
+    #                         account_row.Min_Balance,
+    #                         account_row.Max_Balance,
+    #                         account_row.Account_Type,
+    #                         billing_start_date_YYYYMMDD=account_row.Billing_Start_Date_YYYYMMDD,
+    #                         interest_type=account_row.Interest_Type,
+    #                         apr=account_row.APR,
+    #                         interest_cadence=account_row.Interest_Cadence,
+    #                         minimum_payment=account_row.Minimum_Payment,
+    #                         previous_statement_balance=account_row.Previous_Statement_Balance,
+    #                         principal_balance=account_row.Principal_Balance,
+    #                         accrued_interest=account_row.Accrued_Interest)
+    #
+    #     for memorule_index, memorule_row in MemoRuleSet_df.iterrows():
+    #         M.addMemoRule(memorule_row.Memo_Regex,memorule_row.Account_From,memorule_row.Account_To,memorule_row.Transaction_Priority)
+    #
+    #     # number_of_combinations = 1
+    #     self.choose_one_set_df = ChooseOneSet_df
+    #     set_ids = ChooseOneSet_df.Choose_One_Set_Id.unique()
+    #     set_ids.sort()
+    #     # for set_id in set_ids:
+    #     #     all_options_for_set = ChooseOneSet_df[ChooseOneSet_df.Choose_One_Set_Id == set_id,:]
+    #     #     number_of_combinations = number_of_combinations * all_options_for_set.shape[0]
+    #     master_list = ['']
+    #     master_list_option_ids = ['']
+    #     for set_id in set_ids:
+    #         all_options_for_set = ChooseOneSet_df.loc[ChooseOneSet_df.Choose_One_Set_Id == set_id]
+    #         current_list=[]
+    #         current_list_option_ids = []
+    #         for option_index, option_row in all_options_for_set.iterrows():
+    #             for l in master_list:
+    #                 current_list.append(l + ';' + option_row.Memo_Regex_List)
+    #
+    #             for l in master_list_option_ids:
+    #                 current_list_option_ids.append(l+str(set_id)+'='+str(option_row.Option_Id)+' ')
+    #
+    #         master_list = current_list
+    #         master_list_option_ids = current_list_option_ids
+    #
+    #
+    #     budget_set_list = []
+    #     for l in master_list:
+    #         B = BudgetSet.BudgetSet([])
+    #         for budget_item_index, budget_item_row in BudgetSet_df.iterrows():
+    #             for memo_regex in l.split(';'):
+    #                 if memo_regex == '':
+    #                     continue
+    #
+    #                 if re.search(memo_regex,budget_item_row.Memo) is not None:
+    #                     #print(memo_regex + ' ?= ' + str(budget_item_row.Memo)+" YES")
+    #                     B.addBudgetItem(start_date_YYYYMMDD=budget_item_row.Start_Date,
+    #                      end_date_YYYYMMDD=budget_item_row.End_Date,
+    #                      priority=budget_item_row.Priority,
+    #                      cadence=budget_item_row.Cadence,
+    #                      amount=budget_item_row.Amount,
+    #                      memo=budget_item_row.Memo,
+    #                      deferrable=budget_item_row.Deferrable,
+    #                      partial_payment_allowed=budget_item_row.Partial_Payment_Allowed
+    #                                     )
+    #
+    #                     break
+    #                 else:
+    #                     pass
+    #                     #print(memo_regex + ' ?= ' + str(budget_item_row.Memo)+" NO")
+    #         budget_set_list.append(B)
+    #
+    #     account_milestones__list = []
+    #     for index, row in AccountMilestones_df.iterrows():
+    #         account_milestones__list.append(AccountMilestone.AccountMilestone(row.Milestone_Name,row.Account_Name,row.Min_Balance,row.Max_Balance))
+    #
+    #     memo_milestones__list = []
+    #     for index, row in MemoMilestones_df.iterrows():
+    #         memo_milestones__list.append(MemoMilestone.MemoMilestone(row.Milestone_Name,row.Memo_Regex))
+    #
+    #     composite_milestones__list = []
+    #     for index, row in CompositeMilestones_df.iterrows():
+    #         milestone_names__list = []
+    #         for i in range(1,CompositeMilestones_df.shape[1]):
+    #             milestone_names__list.append(row.iat[i])
+    #
+    #         composite_milestones__list.append(CompositeMilestone.CompositeMilestone(row.Milestone_Name,account_milestones__list, memo_milestones__list, milestone_names__list))
+    #
+    #     milestone_set = MilestoneSet.MilestoneSet(A,B,account_milestones__list,memo_milestones__list,composite_milestones__list)
+    #     self.account_milestones__list = milestone_set.account_milestones__list
+    #     self.memo_milestones__list = milestone_set.memo_milestones__list
+    #     self.composite_milestones__list = milestone_set.composite_milestones__list
+    #
+    #     self.initial_account_set = copy.deepcopy(A)
+    #     self.budget_set_list = budget_set_list
+    #     self.initial_memo_rule_set = M
+    #     self.start_date_YYYYMMDD = start_date_YYYYMMDD
+    #     self.end_date_YYYYMMDD = end_date_YYYYMMDD
+    #
+    #     self.master_list_option_ids = master_list_option_ids
+    #     self.output_directory = output_directory
+    #
+    #     self.config_df = config_df #todo store vars instead
+    #
+    #     budget_set_list = self.budget_set_list
+    #     start_date_YYYYMMDD = self.start_date_YYYYMMDD
+    #     end_date_YYYYMMDD = self.end_date_YYYYMMDD
+    #     A = self.initial_account_set
+    #     M = self.initial_memo_rule_set
+    #
+    #     # program_start = datetime.datetime.now()
+    #     # scenario_index = 0
+    #     number_of_returned_forecasts = len(budget_set_list)
+    #     EF_pre_run = []
+    #     for B in budget_set_list:
+    #         try:
+    #             E = ExpenseForecast.ExpenseForecast(account_set=copy.deepcopy(A),
+    #                                                 budget_set=B,
+    #                                                 memo_rule_set=M,
+    #                                                 start_date_YYYYMMDD=start_date_YYYYMMDD,
+    #                                                 end_date_YYYYMMDD=end_date_YYYYMMDD,
+    #                                                 milestone_set=milestone_set)
+    #             #print(E)
+    #             # E.runForecast()
+    #             EF_pre_run.append(E)
+    #         except Exception as e:
+    #
+    #             print(e)
+    #
+    #     self.initialized_forecasts = EF_pre_run
 
     def read_results_from_disk(self):
 
@@ -1268,23 +1268,23 @@ class ForecastHandler:
             f.write(html_body)
         log_in_color(logger,'green','info','Finished writing single forecast report to '+output_dir+output_file_name+'.html')
 
-    def getRuntimeEstimate(self,expense_forecast):
-        E = expense_forecast
-        log_in_color('green', 'debug','getRuntimeEstimate(start_date_YYYYMMDD='+str(E.start_date_YYYYMMDD)+',end_date_YYYYMMDD='+str(E.end_date_YYYYMMDD)+')')
-
-        budget_schedule_df = E.initial_budget_set.getBudgetSchedule(E.start_date_YYYYMMDD,E.end_date_YYYYMMDD)
-
-        #budget_schedule_df
-
-        # "Date" "Priority" "Amount" "Memo" "Deferrable" "Partial_Payment_Allowed"
-
-        # day length = 1.88 seconds on my mac
-        # satisfice_time = number of days * day_length
-        # for each non-deferrable, partial-payment-not-allowed proposed item, add (end_date - date) * day_length
-        # for each partial payment allowed item, add [ (end_date - date) * 7.5 seconds, (end_date - date) * 7.5 seconds * 2 ] to get an range time estimate
-        # for each deferrable payment, add [ (end_date - date) * day_length, ( 1 + FLOOR( (end_date - date) / 14) )^2 / 2 * day_length ]
-
-        raise NotImplementedError
+    # def getRuntimeEstimate(self,expense_forecast):
+    #     E = expense_forecast
+    #     log_in_color('green', 'debug','getRuntimeEstimate(start_date_YYYYMMDD='+str(E.start_date_YYYYMMDD)+',end_date_YYYYMMDD='+str(E.end_date_YYYYMMDD)+')')
+    #
+    #     budget_schedule_df = E.initial_budget_set.getBudgetSchedule(E.start_date_YYYYMMDD,E.end_date_YYYYMMDD)
+    #
+    #     #budget_schedule_df
+    #
+    #     # "Date" "Priority" "Amount" "Memo" "Deferrable" "Partial_Payment_Allowed"
+    #
+    #     # day length = 1.88 seconds on my mac
+    #     # satisfice_time = number of days * day_length
+    #     # for each non-deferrable, partial-payment-not-allowed proposed item, add (end_date - date) * day_length
+    #     # for each partial payment allowed item, add [ (end_date - date) * 7.5 seconds, (end_date - date) * 7.5 seconds * 2 ] to get an range time estimate
+    #     # for each deferrable payment, add [ (end_date - date) * day_length, ( 1 + FLOOR( (end_date - date) / 14) )^2 / 2 * day_length ]
+    #
+    #     raise NotImplementedError
 
     def calculateMultipleChooseOne(self,AccountSet,Core_BudgetSet, MemoRuleSet, start_date_YYYYMMDD, end_date_YYYYMMDD, list_of_lists_of_budget_sets):
 
@@ -1335,17 +1335,6 @@ class ForecastHandler:
             logger.info(progress_string)
 
             scenario_index += 1
-
-    #
-    # def run_forecast_from_excel_inputs(self,path_to_excel):
-    #
-    #     if not self.input_excel_values_are_valid(str(path_to_excel)):
-    #         raise ValueError("There was a problem with the excel sheet at this path: "+str(path_to_excel))
-    #
-    #     raise NotImplementedError
-    #
-    # def input_excel_values_are_valid(self,path_to_excel):
-    #     raise NotImplementedError
 
 
     def plotAccountTypeComparison(self,E1,E2,output_path):
@@ -1592,38 +1581,6 @@ class ForecastHandler:
         plt.title('Forecast #' + expense_forecast.unique_id + ': ' + str(min_date) + ' -> ' + str(max_date))
         plt.xticks(rotation=90)
         plt.savefig(output_path)
-
-    # def plotMarginalInterest(self,expense_forecast,output_path):
-    #     assert hasattr(expense_forecast, 'forecast_df')
-    #
-    #     figure(figsize=(14, 6), dpi=80)
-    #
-    #     # for i in range(1, self.forecast_df.shape[1] - 1):
-    #     column_index = expense_forecast.forecast_df.columns.tolist().index('Marginal Interest')
-    #     plt.plot(expense_forecast.forecast_df['Date'], expense_forecast.forecast_df.iloc[:, column_index],
-    #              label='Marginal Interest')
-    #
-    #     bottom, top = plt.ylim()
-    #
-    #     if 0 < bottom:
-    #         plt.ylim(0, top)
-    #     elif top < 0:
-    #         plt.ylim(bottom, 0)
-    #
-    #     ax = plt.subplot(111)
-    #     box = ax.get_position()
-    #     ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
-    #
-    #     # Put a legend below current axis
-    #     ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=4)
-    #
-    #     date_as_datetime_type = [datetime.datetime.strptime(d, '%Y%m%d') for d in expense_forecast.forecast_df.Date]
-    #
-    #     min_date = min(date_as_datetime_type).strftime('%Y-%m-%d')
-    #     max_date = max(date_as_datetime_type).strftime('%Y-%m-%d')
-    #     plt.title('Forecast #' + expense_forecast.unique_id + ': ' + str(min_date) + ' -> ' + str(max_date))
-    #     plt.xticks(rotation=90)
-    #     plt.savefig(output_path)
 
     def plotNetWorth(self, expense_forecast, output_path):
         """

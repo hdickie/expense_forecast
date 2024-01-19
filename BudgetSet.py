@@ -14,19 +14,30 @@ class BudgetSet:
         """
         Add a budget_item to self.budget_items. Input validation is performed.
 
-        | Test Cases
-        | Expected Successes
-        | S1: input an empty list #todo refactor BudgetSet.BudgetSet() doctest S1 to use _S1 label
-        | S1: input a list of BudgetItem objects #todo refactor BudgetSet.BudgetSet() doctest S2 to use _S2 label
-        |
-        | Expected Fails
-        | F1 input a list with objects that are not BudgetItem type. Do this without explicitly checking type. #todo refactor BudgetSet.BudgetSet() doctest F1 to use _F1 label
-        | F2 input a list with a BudgetItem with a memo that matches a BudgetItem already in self.budget_items
-
         :param budget_items__list:
         """
         self.budget_items = []
         for budget_item in budget_items__list:
+
+            current_budget_items_df = self.getBudgetItems()
+            p_sel_vec = (current_budget_items_df.Priority == budget_item.priority)
+            m_sel_vec = (current_budget_items_df.Memo == budget_item.memo)
+
+            sd_sel_vec = (current_budget_items_df.Start_Date == budget_item.start_date_YYYYMMDD)
+            ed_sel_vec = (current_budget_items_df.End_Date == budget_item.end_date_YYYYMMDD)
+            d_sel_vec = ( sd_sel_vec & ed_sel_vec )
+
+            # print('current_budget_items_df:')
+            # print(current_budget_items_df.to_string())
+            # print('p_sel_vec:')
+            # print(p_sel_vec)
+            # print('m_sel_vec:')
+            # print(m_sel_vec)
+
+            if not current_budget_items_df[ p_sel_vec & m_sel_vec & d_sel_vec ].empty:
+                raise ValueError("A duplicate budget item was detected")
+
+
             self.budget_items.append(budget_item)
 
         #todo do the budgetitem version of this
@@ -172,17 +183,6 @@ class BudgetSet:
             assert start_date_YYYYMMDD == end_date_YYYYMMDD
 
         log_in_color(logger,'green', 'info', 'addBudgetItem(priority='+str(priority)+',cadence='+str(cadence)+',memo='+str(memo)+',start_date_YYYYMMDD='+str(start_date_YYYYMMDD)+',end_date_YYYYMMDD='+str(end_date_YYYYMMDD)+')')
-
-        # print('BUDGET SET TEST 1')
-        # print(memo)
-        # print(str(priority))
-        #
-        # print('all_current_budget_items:')
-        # print(all_current_budget_items)
-        # print('memo:')
-        # print(memo)
-        # print('memos_w_matching_priority:')
-        # print(memos_w_matching_priority)
 
         if memo in memos_w_matching_priority:
             raise ValueError #A budget item with this priority and memo already exists

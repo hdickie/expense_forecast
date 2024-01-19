@@ -48,7 +48,6 @@ def initialize_from_excel_file(path_to_excel_file):
 
 
     #These are here to remove the 'might be referenced before assignment' warning
-    run_info_df = None
     forecast_df = None
     skipped_df = None
     confirmed_df = None
@@ -141,9 +140,6 @@ def initialize_from_excel_file(path_to_excel_file):
     for index, row in memo_rule_set_df.iterrows():
         M.addMemoRule(row.Memo_Regex,row.Account_From,row.Account_To,row.Transaction_Priority)
 
-    # for index, row in choose_one_set_df.iterrows():
-    #     pass
-
     am__list = []
     am__dict = {}
     for index, row in account_milestones_df.iterrows():
@@ -191,19 +187,14 @@ def initialize_from_excel_file(path_to_excel_file):
 
     E = ExpenseForecast(A,B,M,start_date_YYYYMMDD,end_date_YYYYMMDD,MS)
 
-    #todo load results from excel
+    #todo
+    for index, row in choose_one_set_df.iterrows():
+        pass
+
     if forecast_df is not None:
 
-        # print('summary_df.start_ts.iat[0]:')
-        # print(summary_df.start_ts.iat[0])
-        # if np.isnan(summary_df.start_ts.iat[0]):
-        #     E.start_ts = 'None'
-        # else:
         E.start_ts = summary_df.start_ts.iat[0]
 
-        # if np.isnan(summary_df.end_ts.iat[0]):
-        #     E.end_ts = 'None'
-        # else:
         E.end_ts = summary_df.end_ts.iat[0]
 
         E.forecast_df = forecast_df
@@ -220,7 +211,6 @@ def initialize_from_excel_file(path_to_excel_file):
         E.deferred_df = deferred_df
         E.deferred_df['Date'] = [str(d) for d in E.deferred_df['Date']]
 
-        #todo this needs to be parsed
         E.account_milestone_results = {}
         E.memo_milestone_results = {}
         E.composite_milestone_results = {}
@@ -5383,9 +5373,10 @@ if __name__ == "__main__":
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_1900-account_set23-budget_set23-memo_rule_set23-20000101-20000103-milestone_set23-expected_result_df23]
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_overpay-account_set24-budget_set24-memo_rule_set24-20000101-20000103-milestone_set24-expected_result_df24]
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_dont_recompute_past_days_for_p2plus_transactions - NotImplementedError
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_run_from_excel_at_path - AttributeError: 'MilestoneSet' object has no attribute 'getCompositeMilestones_...
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_run_from_excel_at_path - KeyError: 'test account milestone 2'
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_interest_types_and_cadences_at_most_monthly - NotImplementedError
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_quarter_and_year_long_interest_cadences - NotImplementedError
+
 
 
 
@@ -5445,6 +5436,7 @@ if __name__ == "__main__":
 
 
 ### Bite-sized tasks:
+# use json module consistently
 # there is sometimes extra whitespace on cc and maybe also loan payment memos
 # milestone comparison plot
 # Define standard colors for plots
@@ -5453,7 +5445,6 @@ if __name__ == "__main__":
 # check that start and end date the same produce at least 1 budget item on that day for any cadence
 # if no milestones, draw a plot with text that says that instead
 # in comparison report, if report 2 contains 0 items report 1 doesnt have, output a sentence instead of a 0-row table
-# modify initialize_from_excel/json to account for if forecast has been run or not and summary lines appended
 # Hyphenated date format in plots
 # Comparing forecasts of different date
 # i want like hashtags appended to url when i click on tabs so it stays there when i refresh
