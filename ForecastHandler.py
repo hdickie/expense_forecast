@@ -20,9 +20,15 @@ import CompositeMilestone
 import matplotlib.dates
 import matplotlib.patches as mpatches
 import logging
+import numpy as np
+
 from log_methods import setup_logger
 logger = setup_logger('ForecastHandler', './log/ForecastHandler.log', level=logging.DEBUG)
 
+# e.g. custom_cycler = (cycler(color=['c', 'm', 'y', 'k']) + cycler(lw=[1, 2, 3, 4]))
+# here, lw results in different types of dotted lines
+default_color_cycle_list = ['blue','orange','green']
+lw_cycle_list = [1, 2, 3, 4]
 
 class ForecastHandler:
 
@@ -173,123 +179,123 @@ class ForecastHandler:
     #             print(e)
     #
     #     self.initialized_forecasts = EF_pre_run
+    #
+    # def read_results_from_disk(self):
+    #
+    #     E_objs = []
+    #     forecast_ids = self.get_individual_forecast_ids()
+    #     for forecast_id in forecast_ids:
+    #         forecast_json_file_name_regex_pattern = 'Forecast__' + str(forecast_id) + '__[0-9]{4}_[0-9]{2}_[0-9]{2}__[0-9]{2}_[0-9]{2}_[0-9]{2}\.json'
+    #         for f in os.listdir(self.output_directory):
+    #             if re.search(forecast_json_file_name_regex_pattern,f) is not None:
+    #                 E = ExpenseForecast.initialize_from_json_file(f)
+    #                 E_objs.append(E)
+    #
+    #     #assert that all initial accounts sets matched, then set
+    #     all_initial_account_set_hashes = [ hashlib.sha1(E.initial_account_set.getAccounts().to_string().encode("utf-8")).hexdigest() for E in E_objs ]
+    #     logger.info('all_initial_account_set_hashes:')
+    #     logger.info(all_initial_account_set_hashes)
+    #     assert min(all_initial_account_set_hashes) == max(all_initial_account_set_hashes)
+    #     assert len(all_initial_account_set_hashes) == len(E_objs)
+    #     self.initial_account_set = E_objs[0].initial_account_set
+    #
+    #     #assert that all memo rules match, then set
+    #     all_initial_memo_set_hashes = [ hash(E.initial_memo_rule_set.getMemoRules().to_string()) for E in E_objs ]
+    #     assert min(all_initial_memo_set_hashes) == max(all_initial_memo_set_hashes)
+    #     assert len(all_initial_memo_set_hashes) == len(E_objs)
+    #     self.initial_memo_rule_set = E_objs[0].initial_memo_rule_set
+    #
+    #     all_start_dates = [E.start_date_YYYYMMDD for E in E_objs]
+    #     assert min(all_start_dates) == max(all_start_dates)
+    #     assert len(all_start_dates) == len(E_objs)
+    #     self.start_date = E_objs[0].start_date_YYYYMMDD
+    #
+    #     all_end_dates = [E.end_date_YYYYMMDD for E in E_objs]
+    #     assert min(all_end_dates) == max(all_end_dates)
+    #     assert len(all_end_dates) == len(E_objs)
+    #     self.end_date = E_objs[0].end_date_YYYYMMDD
+    #
+    #     #this is not an attribute of ExpenseForecast
+    #     # all_output_directories = [ hash(E.output_directory) for E in E_objs]
+    #     # assert min(all_output_directories) == max(all_output_directories)
+    #     # assert len(all_output_directories) == len(E_objs)
+    #     # self.output_directory = E_objs[0].output_directory
+    #
+    #     #we regenerate option ids because they depend on the ChooseOneSet, and not the individual forecast.
+    #     #That is, Forecast #N could have the same settings, but different option ids based on what it is being compared to.
+    #     #Even just moving around the rows in the input excel would change the option ids.  (this would change the unique id as well tho)
+    #     number_of_combinations = 1
+    #
+    #     set_ids = self.choose_one_set_df.Choose_One_Set_Id.unique()
+    #     set_ids.sort()
+    #     for set_id in set_ids:
+    #         all_options_for_set = self.choose_one_set_df.loc[self.choose_one_set_df.Choose_One_Set_Id == set_id,:]
+    #         number_of_combinations = number_of_combinations * all_options_for_set.shape[0]
+    #     master_list = ['']
+    #     master_list_option_ids = ['']
+    #     for set_id in set_ids:
+    #         all_options_for_set = self.choose_one_set_df.loc[self.choose_one_set_df.Choose_One_Set_Id == set_id]
+    #         current_list = []
+    #         current_list_option_ids = []
+    #         for option_index, option_row in all_options_for_set.iterrows():
+    #             for l in master_list:
+    #                 current_list.append(l + ';' + option_row.Memo_Regex_List)
+    #
+    #             for l in master_list_option_ids:
+    #                 current_list_option_ids.append(l + str(set_id) + '=' + str(option_row.Option_Id) + ' ')
+    #
+    #         master_list = current_list
+    #         master_list_option_ids = current_list_option_ids
+    #
+    #     assert len(master_list_option_ids) == len(E_objs)
+    #     self.master_list_option_ids = master_list_option_ids
+    #
+    #     all_account_milestone_df_hashes = [ hash(E.account_milestones_df.to_string()) for E in E_objs ]
+    #     assert min(all_account_milestone_df_hashes) == max(all_account_milestone_df_hashes) #error here means not all account milestones were the same
+    #     assert len(all_account_milestone_df_hashes) == len(E_objs) #error here means one of the input forecasts did not have an account_milestone_df
+    #     self.account_milestones_df = E_objs[0].account_milestones_df
+    #
+    #     all_memo_milestone_df_hashes = [ hash(E.memo_milestones_df.to_string()) for E in E_objs ]
+    #     assert min(all_memo_milestone_df_hashes) == max(all_memo_milestone_df_hashes) #error here means not all memo milestones were the same
+    #     assert len(all_memo_milestone_df_hashes) == len(E_objs) #error here means one of the input forecasts did not have a memo_milestone_df
+    #     self.memo_milestones_df = E_objs[0].memo_milestones_df
+    #
+    #     all_composite_milestone_df_hashes = [ hash(E.composite_milestones_df.to_string()) for E in E_objs ]
+    #     assert min(all_composite_milestone_df_hashes) == max(all_composite_milestone_df_hashes) #error here means not all the composite milestones were the same
+    #     assert len(all_composite_milestone_df_hashes) == len(E_objs) #error here means one of the input forecasts did not have a composite_milestone_df
+    #     self.composite_milestones_df = E_objs[0].composite_milestones_df
+    #
+    # def get_individual_forecast_ids(self):
+    #     return [ E.unique_id for E in self.initialized_forecasts ]
 
-    def read_results_from_disk(self):
-
-        E_objs = []
-        forecast_ids = self.get_individual_forecast_ids()
-        for forecast_id in forecast_ids:
-            forecast_json_file_name_regex_pattern = 'Forecast__' + str(forecast_id) + '__[0-9]{4}_[0-9]{2}_[0-9]{2}__[0-9]{2}_[0-9]{2}_[0-9]{2}\.json'
-            for f in os.listdir(self.output_directory):
-                if re.search(forecast_json_file_name_regex_pattern,f) is not None:
-                    E = ExpenseForecast.initialize_from_json_file(f)
-                    E_objs.append(E)
-
-        #assert that all initial accounts sets matched, then set
-        all_initial_account_set_hashes = [ hashlib.sha1(E.initial_account_set.getAccounts().to_string().encode("utf-8")).hexdigest() for E in E_objs ]
-        logger.info('all_initial_account_set_hashes:')
-        logger.info(all_initial_account_set_hashes)
-        assert min(all_initial_account_set_hashes) == max(all_initial_account_set_hashes)
-        assert len(all_initial_account_set_hashes) == len(E_objs)
-        self.initial_account_set = E_objs[0].initial_account_set
-
-        #assert that all memo rules match, then set
-        all_initial_memo_set_hashes = [ hash(E.initial_memo_rule_set.getMemoRules().to_string()) for E in E_objs ]
-        assert min(all_initial_memo_set_hashes) == max(all_initial_memo_set_hashes)
-        assert len(all_initial_memo_set_hashes) == len(E_objs)
-        self.initial_memo_rule_set = E_objs[0].initial_memo_rule_set
-
-        all_start_dates = [E.start_date_YYYYMMDD for E in E_objs]
-        assert min(all_start_dates) == max(all_start_dates)
-        assert len(all_start_dates) == len(E_objs)
-        self.start_date = E_objs[0].start_date_YYYYMMDD
-
-        all_end_dates = [E.end_date_YYYYMMDD for E in E_objs]
-        assert min(all_end_dates) == max(all_end_dates)
-        assert len(all_end_dates) == len(E_objs)
-        self.end_date = E_objs[0].end_date_YYYYMMDD
-
-        #this is not an attribute of ExpenseForecast
-        # all_output_directories = [ hash(E.output_directory) for E in E_objs]
-        # assert min(all_output_directories) == max(all_output_directories)
-        # assert len(all_output_directories) == len(E_objs)
-        # self.output_directory = E_objs[0].output_directory
-
-        #we regenerate option ids because they depend on the ChooseOneSet, and not the individual forecast.
-        #That is, Forecast #N could have the same settings, but different option ids based on what it is being compared to.
-        #Even just moving around the rows in the input excel would change the option ids.  (this would change the unique id as well tho)
-        number_of_combinations = 1
-
-        set_ids = self.choose_one_set_df.Choose_One_Set_Id.unique()
-        set_ids.sort()
-        for set_id in set_ids:
-            all_options_for_set = self.choose_one_set_df.loc[self.choose_one_set_df.Choose_One_Set_Id == set_id,:]
-            number_of_combinations = number_of_combinations * all_options_for_set.shape[0]
-        master_list = ['']
-        master_list_option_ids = ['']
-        for set_id in set_ids:
-            all_options_for_set = self.choose_one_set_df.loc[self.choose_one_set_df.Choose_One_Set_Id == set_id]
-            current_list = []
-            current_list_option_ids = []
-            for option_index, option_row in all_options_for_set.iterrows():
-                for l in master_list:
-                    current_list.append(l + ';' + option_row.Memo_Regex_List)
-
-                for l in master_list_option_ids:
-                    current_list_option_ids.append(l + str(set_id) + '=' + str(option_row.Option_Id) + ' ')
-
-            master_list = current_list
-            master_list_option_ids = current_list_option_ids
-
-        assert len(master_list_option_ids) == len(E_objs)
-        self.master_list_option_ids = master_list_option_ids
-
-        all_account_milestone_df_hashes = [ hash(E.account_milestones_df.to_string()) for E in E_objs ]
-        assert min(all_account_milestone_df_hashes) == max(all_account_milestone_df_hashes) #error here means not all account milestones were the same
-        assert len(all_account_milestone_df_hashes) == len(E_objs) #error here means one of the input forecasts did not have an account_milestone_df
-        self.account_milestones_df = E_objs[0].account_milestones_df
-
-        all_memo_milestone_df_hashes = [ hash(E.memo_milestones_df.to_string()) for E in E_objs ]
-        assert min(all_memo_milestone_df_hashes) == max(all_memo_milestone_df_hashes) #error here means not all memo milestones were the same
-        assert len(all_memo_milestone_df_hashes) == len(E_objs) #error here means one of the input forecasts did not have a memo_milestone_df
-        self.memo_milestones_df = E_objs[0].memo_milestones_df
-
-        all_composite_milestone_df_hashes = [ hash(E.composite_milestones_df.to_string()) for E in E_objs ]
-        assert min(all_composite_milestone_df_hashes) == max(all_composite_milestone_df_hashes) #error here means not all the composite milestones were the same
-        assert len(all_composite_milestone_df_hashes) == len(E_objs) #error here means one of the input forecasts did not have a composite_milestone_df
-        self.composite_milestones_df = E_objs[0].composite_milestones_df
-
-    def get_individual_forecast_ids(self):
-        return [ E.unique_id for E in self.initialized_forecasts ]
-
-    def run_forecasts(self):
-
-        number_of_returned_forecasts = len(self.budget_set_list)
-
-        EF_pre_run = self.initialized_forecasts
-
-        program_start = datetime.datetime.now()
-        scenario_index = 0
-        for E in EF_pre_run:
-            loop_start = datetime.datetime.now()
-
-            logger.info('Starting simulation scenario ' + str(scenario_index + 1) + ' / ' + str(number_of_returned_forecasts) + ' #' + E.unique_id)
-            logger.info('Option ids: ' + self.master_list_option_ids[scenario_index])
-            E.runForecast()
-
-            loop_finish = datetime.datetime.now()
-
-            loop_delta = loop_finish - loop_start
-            time_since_started = loop_finish - program_start
-
-            average_time_per_loop = time_since_started.seconds / (scenario_index + 1)
-            loops_remaining = number_of_returned_forecasts - (scenario_index + 1)
-            ETC = loop_finish + datetime.timedelta(seconds=average_time_per_loop * loops_remaining)
-            progress_string = 'Finished in ' + str(loop_delta.seconds) + ' seconds. ETC: ' + str(ETC.strftime('%Y-%m-%d %H:%M:%S'))
-
-            logger.info(progress_string)
-
-            scenario_index += 1
+    # def run_forecasts(self):
+    #
+    #     number_of_returned_forecasts = len(self.budget_set_list)
+    #
+    #     EF_pre_run = self.initialized_forecasts
+    #
+    #     program_start = datetime.datetime.now()
+    #     scenario_index = 0
+    #     for E in EF_pre_run:
+    #         loop_start = datetime.datetime.now()
+    #
+    #         logger.info('Starting simulation scenario ' + str(scenario_index + 1) + ' / ' + str(number_of_returned_forecasts) + ' #' + E.unique_id)
+    #         logger.info('Option ids: ' + self.master_list_option_ids[scenario_index])
+    #         E.runForecast()
+    #
+    #         loop_finish = datetime.datetime.now()
+    #
+    #         loop_delta = loop_finish - loop_start
+    #         time_since_started = loop_finish - program_start
+    #
+    #         average_time_per_loop = time_since_started.seconds / (scenario_index + 1)
+    #         loops_remaining = number_of_returned_forecasts - (scenario_index + 1)
+    #         ETC = loop_finish + datetime.timedelta(seconds=average_time_per_loop * loops_remaining)
+    #         progress_string = 'Finished in ' + str(loop_delta.seconds) + ' seconds. ETC: ' + str(ETC.strftime('%Y-%m-%d %H:%M:%S'))
+    #
+    #         logger.info(progress_string)
+    #
+    #         scenario_index += 1
 
 
 
@@ -302,6 +308,164 @@ class ForecastHandler:
         # for chooseoneset_index, chooseoneset_row in ChooseOneSet_df.iterrows():
         #     pass
         #     #choose_one_sets__dict[chooseoneset_row.Choose_One_Set_Id].append(chooseoneset_row.Memo_Regex_List)
+
+    def plotMilestoneComparison(self,E1,E2,output_path):
+        assert hasattr(E1, 'forecast_df')
+        assert hasattr(E2, 'forecast_df')
+
+        AM_1 = E1.account_milestone_results
+        MM_1 = E1.memo_milestone_results
+        CM_1 = E1.composite_milestone_results
+        AM_2 = E2.account_milestone_results
+        MM_2 = E2.memo_milestone_results
+        CM_2 = E2.composite_milestone_results
+
+        data_x1 = []
+        data_x2 = []
+        data_y = []
+        date_counter = 0
+
+        am_keys_1 = []
+        for am_key, am_value in AM_1.items():
+
+            am_keys_1.append(am_key)
+            data_x1.append(am_value)
+            data_y.append(date_counter)
+            date_counter += 1
+
+        mm_keys_1 = []
+        for mm_key, mm_value in MM_1.items():
+
+            mm_keys_1.append(mm_key)
+            data_x1.append(mm_value)
+            data_y.append(date_counter)
+            date_counter += 1
+
+        cm_keys_1 = []
+        for cm_key, cm_value in CM_1.items():
+
+            cm_keys_1.append(cm_key)
+            data_x1.append(cm_value)
+            data_y.append(date_counter)
+            date_counter += 1
+
+        am_keys_2 = []
+        for am_key, am_value in AM_2.items():
+            # impute none as max
+            if am_value is None:
+                am_value = E2.end_date_YYYYMMDD
+            if am_value == 'None':
+                am_value = E2.end_date_YYYYMMDD
+            data_x2.append(am_value)
+            am_keys_2.append(am_key)
+
+        mm_keys_2 = []
+        for mm_key, mm_value in MM_2.items():
+            # impute none as max
+            if mm_value is None:
+                mm_value = E2.end_date_YYYYMMDD
+            if mm_value == 'None':
+                mm_value = E2.end_date_YYYYMMDD
+            data_x2.append(mm_value)
+            mm_keys_2.append(mm_key)
+
+        cm_keys_2 = []
+        for cm_key, cm_value in CM_2.items():
+            # impute none as max
+            if cm_value is None:
+                cm_value = E2.end_date_YYYYMMDD
+            if cm_value == 'None':
+                cm_value = E2.end_date_YYYYMMDD
+            data_x2.append(cm_value)
+            cm_keys_2.append(cm_key)
+
+        figure(figsize=(14, 6), dpi=80)
+        fig, ax = plt.subplots()
+
+
+        for i in range(0,len(data_x1)):
+            x = data_x1[i]
+            if x == 'None':
+                data_x1[i] = None
+            elif x is not None:
+                data_x1[i] = datetime.datetime.strptime(x, '%Y%m%d')
+
+        for i in range(0,len(data_x2)):
+            x = data_x2[i]
+            if x == 'None':
+                data_x1[i] = None
+            elif x is not None:
+                data_x2[i] = datetime.datetime.strptime(x, '%Y%m%d')
+
+        no_of_account_milestones = len(am_keys_1)
+        am_sel_range = slice(0, (no_of_account_milestones - 1))
+
+        no_of_memo_milestones = len(mm_keys_1)
+        mm_sel_range = slice((no_of_account_milestones - 1), (no_of_account_milestones + no_of_memo_milestones - 1))
+
+        no_of_composite_milestones = len(cm_keys_1)
+        cm_sel_range = slice((no_of_account_milestones + no_of_memo_milestones - 1),
+                             (no_of_account_milestones + no_of_memo_milestones + no_of_composite_milestones - 1))
+
+        no_of_milestones = no_of_account_milestones + no_of_memo_milestones + no_of_composite_milestones
+
+        #todo plot points sometimes dont show but annotations do?
+
+        if no_of_account_milestones > 0:
+            plt.scatter(data_x1[am_sel_range], data_y[am_sel_range], color="red", marker="o")
+            plt.scatter(data_x2[am_sel_range], data_y[am_sel_range], color="red", marker="*")
+
+        if no_of_memo_milestones > 0:
+            plt.scatter(data_x1[mm_sel_range], data_y[mm_sel_range], color="blue", marker="o")
+            plt.scatter(data_x2[mm_sel_range], data_y[mm_sel_range], color="blue", marker="*")
+
+        if no_of_composite_milestones > 0:
+            plt.scatter(data_x1[cm_sel_range], data_y[cm_sel_range], color="purple", marker="o")
+            plt.scatter(data_x2[cm_sel_range], data_y[cm_sel_range], color="purple", marker="*")
+
+
+
+        all_keys_1 = am_keys_1 + mm_keys_1 + cm_keys_1
+        all_keys_2 = am_keys_2 + mm_keys_2 + cm_keys_2
+
+        for i, txt in enumerate(all_keys_1):
+            ax.annotate(txt, (data_x1[i], data_y[i]))
+
+        for i, txt in enumerate(all_keys_2):
+            ax.annotate(txt, (data_x2[i], data_y[i]))
+
+        left_int_ts = matplotlib.dates.date2num(datetime.datetime.strptime(E1.start_date_YYYYMMDD, '%Y%m%d'))
+        right_int_ts = matplotlib.dates.date2num(datetime.datetime.strptime(E1.end_date_YYYYMMDD, '%Y%m%d'))
+
+        left = left_int_ts
+        right = right_int_ts
+
+        plt.xlim(left, right)
+
+        plt.ylim(-0.5,no_of_milestones - 0.5)
+
+        ax = plt.subplot(111)
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
+
+        red_patch = mpatches.Patch(color='red', label='account')
+        blue_patch = mpatches.Patch(color='blue', label='memo')
+        purple_patch = mpatches.Patch(color='purple', label='composite')
+
+        #todo add a second legend for the shape of the point
+        # also, i dont like that labels get chopped off
+        # todo labels are highly likely to overlap on this plot so think about that
+        plt.legend(handles=[red_patch, blue_patch, purple_patch], bbox_to_anchor=(1.15, 1), loc='upper right')
+
+        # TODO plotOverall():: a large number of accounts will require some adjustment here so that the legend is entirely visible
+        date_as_datetime_type = [datetime.datetime.strptime(d, '%Y%m%d') for d in E1.forecast_df.Date]
+
+        min_date = min(date_as_datetime_type).strftime('%Y-%m-%d')
+        max_date = max(date_as_datetime_type).strftime('%Y-%m-%d')
+        plt.title('Forecast 1 #' + E1.unique_id + ' vs. Forecast 2 #' + E2.unique_id + ': ' + str(min_date) + ' -> ' + str(max_date))
+        plt.xticks(rotation=90)
+        plt.savefig(output_path)
+        matplotlib.pyplot.close()
 
     def plotMilestoneDates(self,expense_forecast,output_path):
         assert hasattr(expense_forecast, 'forecast_df')
@@ -408,8 +572,9 @@ class ForecastHandler:
         plt.title('Forecast #' + expense_forecast.unique_id + ': ' + str(min_date) + ' -> ' + str(max_date))
         plt.xticks(rotation=90)
         plt.savefig(output_path)
+        matplotlib.pyplot.close()
 
-    def generateCompareTwoForecastsHTMLReport(self,E1, E2, output_dir='./'):
+    def generateCompareTwoForecastsHTMLReport(self,E1, E2, output_dir='./',parent_report_path=None):
 
         assert E1.start_date_YYYYMMDD == E2.start_date_YYYYMMDD
         assert E1.end_date_YYYYMMDD == E2.end_date_YYYYMMDD
@@ -524,6 +689,20 @@ class ForecastHandler:
             """ + memo_rule_forecast_2_only_df.to_html() + """
             """
 
+        assert E1.milestone_set.to_json() == E2.milestone_set.to_json()
+
+        account_milestone_text = """
+                These account milestones are defined:""" + E1.milestone_set.getAccountMilestonesDF().to_html() + """
+                """
+
+        memo_milestone_text = """
+                These memo milestones are defined:""" + E1.milestone_set.getMemoMilestonesDF().to_html() + """
+                """
+
+        composite_milestone_text = """
+                These composite milestones are defined:""" + E1.milestone_set.getCompositeMilestonesDF().to_html() + """
+                """
+
         assert E1.forecast_df.shape[0] == E2.forecast_df.shape[0]
         num_days = E1.forecast_df.shape[0]
 
@@ -564,6 +743,10 @@ class ForecastHandler:
             networth_text += """Forecast 1 #"""+report_1_id+""" ended with a Net Worth """+str(f"${float(forecast_networth_delta):,}")+""" greater than the alternative.  """
         else:
             networth_text += """Forecast 2 #"""+report_2_id+""" ended with a Net Worth """+str(f"${float(forecast_networth_delta):,}")+""" greater than the alternative.  """
+
+
+        netgainloss_text = ""
+
 
         report_1_initial_loan_total = round(E1.forecast_df.head(1)['Loan Total'].iat[0], 2)
         report_1_final_loan_total = round(E1.forecast_df.tail(1)['Loan Total'].iat[0], 2)
@@ -710,6 +893,12 @@ class ForecastHandler:
 
         #relevant_df = pd.merge(E1_aggregated_df, E2_aggregated_df, on=["Date"], suffixes=('_1', '_2'))
 
+        interest_text = ""
+
+        milestone_text = ""
+
+        transaction_schedule_text = ""
+
         all_text=""
         E1_account_base_names = list(E1_account_base_names)
         E1_account_base_names.sort()
@@ -743,7 +932,7 @@ class ForecastHandler:
 
             #str(f"${float(report_2_initial_liquid_total):,}")
 
-            #todo dollar signs and comma formating m
+            #todo dollar signs and comma formatting m
             line=""" For Forecast 1 #"""+str(E1.unique_id)+""", """+aname+""" began at """+str(f"${float(E1_initial_value):,}")+""" and  """+E1_rose_or_fell+""" to """+str(f"${float(E1_final_value):,}")+""" over  """+str(num_days)+""", averaging  """+str(f"${float(E1_daily_average):,}")+"""  per day. <br>
             For Forecast 2 #"""+str(E2.unique_id)+""", """+aname+""" began at """+str(f"${float(E2_initial_value):,}")+""" and  """+E2_rose_or_fell+""" to """+str(f"${float(E2_final_value):,}")+""" over  """+str(num_days)+""", averaging  """+str(f"${float(E2_daily_average):,}")+"""  per day. <br><br>   
             """ + delta_string + """ <br><br><br>
@@ -752,32 +941,48 @@ class ForecastHandler:
 
 
         report_1_networth_line_plot_path = report_1_id + '_networth_line_plot.png'
+        report_1_netgain_loss_plot_path = report_1_id + '_net_gain_loss_line_plot.png'
         report_1_accounttype_line_plot_path = report_1_id + '_accounttype_line_plot_plot.png'
+        report_1_marginal_interest_plot_path = report_1_id + '_marginal_interest_line_plot.png'
+        report_1_milestone_plot_path = report_1_id + '_milestone_line_plot.png'
         report_1_all_line_plot_path = report_1_id + '_all_line_plot.png'
 
+
         report_2_networth_line_plot_path = report_2_id + '_networth_line_plot.png'
+        report_2_netgain_loss_plot_path = report_2_id + '_net_gain_loss_line_plot.png'
         report_2_accounttype_line_plot_path = report_2_id + '_accounttype_line_plot_plot.png'
+        report_2_marginal_interest_plot_path = report_2_id + '_marginal_interest_line_plot.png'
+        report_2_milestone_plot_path = report_2_id + '_milestone_line_plot.png'
         report_2_all_line_plot_path = report_2_id + '_all_line_plot.png'
 
-        account_type_comparison_plot_path = report_1_id + '_vs_' + report_2_id + '_account_type_comparison_plot.png'
+
         networth_comparison_plot_path = report_1_id + '_vs_' + report_2_id + '_networth_comparison_plot.png'
+        netgain_loss_comparison_plot_path = report_1_id + '_vs_' + report_2_id + '_net_gain_loss_comparison_plot.png'
+        account_type_comparison_plot_path = report_1_id + '_vs_' + report_2_id + '_account_type_comparison_plot.png'
+        marginal_interest_comparison_plot_path = report_1_id + '_vs_' + report_2_id + '_marginal_interest_comparison_plot.png'
+        milestone_comparison_plot_path = report_1_id + '_vs_' + report_2_id + '_milestone_comparison_plot.png'
         all_comparison_plot_path = report_1_id + '_vs_' + report_2_id + '_all_comparison_plot.png'
 
-
-
-        self.plotAll(E1,output_dir + report_1_all_line_plot_path)
-        self.plotNetWorth(E1,output_dir + report_1_networth_line_plot_path)
+        self.plotNetWorth(E1, output_dir + report_1_networth_line_plot_path, line_color_cycle_list=['blue'],linestyle='solid')
+        self.plotNetGainLoss(E1, output_dir + report_1_netgain_loss_plot_path, line_color_cycle_list=['green', 'red'],linestyle='solid')
         self.plotAccountTypeTotals(E1,output_dir + report_1_accounttype_line_plot_path)
+        self.plotMarginalInterest(E1,output_dir + report_1_marginal_interest_plot_path,linestyle='solid')
+        self.plotMilestoneDates(E1,output_dir + report_1_milestone_plot_path)
+        self.plotAll(E1, output_dir + report_1_all_line_plot_path)
 
+        self.plotNetWorth(E2, output_dir + report_2_networth_line_plot_path,line_color_cycle_list=['blue'],linestyle='dashed')
+        self.plotNetGainLoss(E2, output_dir + report_2_netgain_loss_plot_path, line_color_cycle_list=['green', 'red'],linestyle='dashed')
+        self.plotAccountTypeTotals(E2, output_dir + report_2_accounttype_line_plot_path,linestyle='dashed')
+        self.plotMarginalInterest(E2,output_dir + report_2_marginal_interest_plot_path,linestyle='dashed')
+        self.plotMilestoneDates(E2, output_dir + report_2_milestone_plot_path)
         self.plotAll(E2, output_dir + report_2_all_line_plot_path)
-        self.plotNetWorth(E2, output_dir + report_2_networth_line_plot_path)
-        self.plotAccountTypeTotals(E2, output_dir + report_2_accounttype_line_plot_path)
 
+        self.plotNetWorthComparison(E1, E2, output_dir + networth_comparison_plot_path, line_color_cycle_list=['blue'])
+        self.plotNetGainLossComparison(E1, E2, output_dir + netgain_loss_comparison_plot_path)
         self.plotAccountTypeComparison(E1,E2, output_dir + account_type_comparison_plot_path)
-        self.plotNetWorthComparison(E1, E2, output_dir + networth_comparison_plot_path)
+        self.plotMarginalInterestComparison(E1, E2, output_dir + marginal_interest_comparison_plot_path)
+        self.plotMilestoneComparison(E1, E2, output_dir + milestone_comparison_plot_path)
         self.plotAllComparison(E1, E2, output_dir + all_comparison_plot_path)
-
-
 
         html_body = """
                 <!DOCTYPE html>
@@ -831,25 +1036,33 @@ class ForecastHandler:
 
                 <!-- Tab links -->
                 <div class="tab">
-                  <button class="tablinks active" onclick="openTab(event, 'InputData')">Input Data</button>
+                  <button class="tablinks active" onclick="openTab(event, 'ForecastParameters')">Forecast Parameters</button>
                   <button class="tablinks" onclick="openTab(event, 'NetWorth')">Net Worth</button>
-                  <button class="tablinks" onclick="openTab(event, 'NetGainLoss')">Net Gain/Loss</button>
+                  <button class="tablinks" onclick="openTab(event, 'NetGainLoss')">Net Gain & Loss</button>
                   <button class="tablinks" onclick="openTab(event, 'AccountType')">Account Type</button>
                   <button class="tablinks" onclick="openTab(event, 'Interest')">Interest</button>
                   <button class="tablinks" onclick="openTab(event, 'Milestone')">Milestone</button>
                   <button class="tablinks" onclick="openTab(event, 'All')">All</button>
+                  <button class="tablinks" onclick="openTab(event, 'TransactionSchedule')">Transaction Schedule</button>
                   <button class="tablinks" onclick="openTab(event, 'ForecastResults')">Forecast Results</button>
                 </div>
 
                 <!-- Tab content -->
-                <div id="InputData" class="tabcontent">
-                  <h3>Input Data</h3>
+                <div id="ForecastParameters" class="tabcontent">
+                  <h3>Forecast Parameters</h3>
+                  """ + summary_text + """
                   <h3>Accounts</h3>
                   <p>""" + account_text + """</p>
                   <h3>Budget Items</h3>
                   <p>""" + budget_set_text + """</p>
                   <h3>Memo Rules</h3>
                   <p>""" + memo_rule_text + """</p>
+                  <h3>Account Milestones</h3>
+                  <p>"""+account_milestone_text+"""</p>
+                  <h3>Memo Milestones</h3>
+                  <p>"""+memo_milestone_text+"""</p>
+                  <h3>Composite Milestones</h3>
+                  <p>"""+composite_milestone_text+"""</p>
                 </div>
 
                 <div id="NetWorth" class="tabcontent">
@@ -861,13 +1074,16 @@ class ForecastHandler:
                 </div>
 
                 <div id="NetGainLoss" class="tabcontent">
-                  <h3>NetGainLoss</h3>
-                  <p>NetGainLoss text.</p>
-                  <img src=\"""" + 'netgain_line_plot_path' + """\">
+                  <h3>Net Gain & Loss</h3>
+                  <p>"""+netgainloss_text+"""</p>
+                   
+                  <img src=\"""" + netgain_loss_comparison_plot_path + """\">
+                  <img src=\"""" + report_1_netgain_loss_plot_path + """\">
+                  <img src=\"""" + report_2_netgain_loss_plot_path + """\">
                 </div>
 
                 <div id="AccountType" class="tabcontent">
-                  <h3>AccountType</h3>
+                  <h3>Account Type</h3>
                   <p>""" + account_type_text + """</p>
                   <img src=\"""" + account_type_comparison_plot_path + """\">
                   <img src=\"""" + report_1_accounttype_line_plot_path + """\">
@@ -876,14 +1092,31 @@ class ForecastHandler:
 
                 <div id="Interest" class="tabcontent">
                   <h3>Interest</h3>
-                  <p>Interest text.</p>
-                  <img src=\"""" + 'interest_line_plot_path' + """\">
+                  <p>"""+interest_text+"""</p>
+                  
+                  <img src=\"""" + marginal_interest_comparison_plot_path + """\">
+                  <img src=\"""" + report_1_marginal_interest_plot_path + """\">
+                  <img src=\"""" + report_2_marginal_interest_plot_path + """\">
+                  
                 </div>
 
                 <div id="Milestone" class="tabcontent">
                   <h3>Milestone</h3>
-                  <p>Milestone text.</p>
-                  <img src=\"""" + 'milestone_line_plot_path' + """\">
+                  <p>"""+milestone_text+"""</p>
+                  <img src=\"""" + milestone_comparison_plot_path + """\">
+                  <br>
+                  <img src=\"""" + report_1_milestone_plot_path + """\">
+                  <br>
+                  <img src=\"""" + report_2_milestone_plot_path + """\">
+                  <h4>Account Milestones</h4>
+                  """ + E1.getAccountMilestoneResultsDF().to_html() + """ <br>
+                  """ + E2.getAccountMilestoneResultsDF().to_html() + """ <br>
+                  <h4>Memo Milestones</h4>
+                  """ + E1.getMemoMilestoneResultsDF().to_html() + """ <br>
+                  """ + E2.getMemoMilestoneResultsDF().to_html() + """ <br>
+                  <h4>Composite Milestones</h4>
+                  """ + E1.getCompositeMilestoneResultsDF().to_html() + """ <br>
+                  """ + E2.getCompositeMilestoneResultsDF().to_html() + """ <br>
                 </div>
 
                 <div id="All" class="tabcontent">
@@ -894,6 +1127,11 @@ class ForecastHandler:
                   <img src=\"""" + report_2_all_line_plot_path + """\">
                 </div>
                 
+                <div id="TransactionSchedule" class="tabcontent">
+                  <h3>Transaction Schedule</h3>
+                  """ + transaction_schedule_text + """
+                </div>
+
                 <div id="ForecastResults" class="tabcontent">
                   <h3>Forecast Results</h3>
                   <p>""" + summary_text + """</p>
@@ -904,7 +1142,7 @@ class ForecastHandler:
                   """ + E2.forecast_df.to_html() + """
                 </div>
 
-                <br>
+                
 
                 <script>
                 function openTab(evt, tabName) {
@@ -929,18 +1167,18 @@ class ForecastHandler:
                 }
 
                 //having this here leaves the Summary tab open when the page first loads
-                document.getElementById("InputData").style.display = "block";
+                document.getElementById("ForecastParameters").style.display = "block";
                 </script>
 
                 </body>
                 </html>
-
                 """
 
+        log_in_color(logger, 'green', 'info','Writing forecast comparison report to ' + output_dir + report_file_name + '.html')
         with open(output_dir+report_file_name+'.html', 'w') as f:
             f.write(html_body)
 
-    def generateHTMLReport(self,E,output_dir='./'):
+    def generateHTMLReport(self,E,output_dir='./',parent_report_path=None):
 
         start_date = datetime.datetime.strptime(E.start_date_YYYYMMDD,'%Y%m%d').strftime('%Y-%m-%d')
         end_date = datetime.datetime.strptime(E.end_date_YYYYMMDD,'%Y%m%d').strftime('%Y-%m-%d')
@@ -953,8 +1191,13 @@ class ForecastHandler:
         end_ts__datetime = datetime.datetime.strptime(E.end_ts, '%Y_%m_%d__%H_%M_%S')
         simulation_time_elapsed = end_ts__datetime - start_ts__datetime
 
+        if parent_report_path is not None:
+            parent_report_text = """This report was generated alongside some others. See <a href=\"""" + parent_report_path + """\">this page</a> for information about related forecasts."""
+        else:
+            parent_report_text = ""
+
         #todo add a comment about whether the simulation was able to make it to the end or not.
-        summary_text = """
+        summary_text =  """
         This forecast started at """+str(start_ts__datetime)+""", took """ + str(simulation_time_elapsed) + """ to complete, and finished at """ + str(end_ts__datetime) + """.
         """
 
@@ -1138,7 +1381,7 @@ class ForecastHandler:
         </head>
         <body>
         <h1>Expense Forecast Report #""" + str(report_id) + """</h1>
-        <p>"""+start_date+""" to """+end_date+"""</p>
+        <p>"""+start_date+""" to """+end_date+ " " + parent_report_text + """</p>
 
         <!-- Tab links -->
         <div class="tab">
@@ -1286,41 +1529,35 @@ class ForecastHandler:
     #
     #     raise NotImplementedError
 
-    def calculateMultipleChooseOne(self,AccountSet,Core_BudgetSet, MemoRuleSet, start_date_YYYYMMDD, end_date_YYYYMMDD, list_of_lists_of_budget_sets):
+    def initialize_forecasts_with_scenario_set(self,account_set,scenario_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set):
 
-        #the number of returned forecasts will be equal to the product of the lengths of the lists in list_of_lists_of_budget_sets
-        length_of_lists = [ len(x) for x in list_of_lists_of_budget_sets]
-        number_of_returned_forecasts = 1
-        for l in length_of_lists:
-            number_of_returned_forecasts = number_of_returned_forecasts * l
+        forecast_dict = {}
+        for key__scenario_name, value__budget_set in scenario_set.scenarios.items():
+            #account_set, budget_set, memo_rule_set, start_date_YYYYMMDD, end_date_YYYYMMDD,milestone_set,
+            E = ExpenseForecast.ExpenseForecast(account_set=copy.deepcopy(account_set),
+                                                                budget_set=copy.deepcopy(value__budget_set),
+                                                                memo_rule_set=memo_rule_set,
+                                                                start_date_YYYYMMDD=start_date_YYYYMMDD,
+                                                                end_date_YYYYMMDD=end_date_YYYYMMDD,
+                                                                milestone_set=milestone_set)
+            forecast_dict[key__scenario_name] = E
 
-        #at this point, our return variable is the correct size, and has an empty list for each budget set
-        master_list = [Core_BudgetSet.budget_items] #this is a list of lists of budget items
-        for list_of_budget_sets in list_of_lists_of_budget_sets:
-            current_list = []
+        #return fict of ExpenseForecasts that have not been run
+        return forecast_dict
 
-            for budget_set in list_of_budget_sets:
-                for master_budget_item_list in master_list:
-                    current_list.append(budget_set.budget_items + master_budget_item_list)
-
-            master_list = current_list
+    def run_forecast_set(self, E__dict):
 
         program_start = datetime.datetime.now()
         scenario_index = 0
-        for budget_set in master_list:
+        for scenario_name, scenario_E in E__dict.items():
+            log_in_color(logger, 'white', 'info','Starting simulation scenario '+str(scenario_index)+' / '+str(len(E__dict))+': '+str(scenario_name))
+
             loop_start = datetime.datetime.now()
-            B = BudgetSet.BudgetSet(budget_set)
-            # print('B:')
-            # print(B.getBudgetItems().to_string())
-            logger.info('Starting simulation scenario '+str(scenario_index))
+
             try:
-                E = ExpenseForecast.ExpenseForecast(account_set=copy.deepcopy(AccountSet),
-                                                        budget_set=B,
-                                                        memo_rule_set=MemoRuleSet,
-                                                        start_date_YYYYMMDD=start_date_YYYYMMDD,
-                                                        end_date_YYYYMMDD=end_date_YYYYMMDD)
+                E__dict[scenario_name] = scenario_E.runForecast()
             except:
-                logger.info('Simulation scenario '+str(scenario_index)+' failed')
+                log_in_color(logger,'red','error','simulation scenario '+str(scenario_index)+' / '+str(len(E__dict))+': '+str(scenario_name)+' FAILED')
 
             loop_finish = datetime.datetime.now()
 
@@ -1328,16 +1565,15 @@ class ForecastHandler:
             time_since_started = loop_finish - program_start
 
             average_time_per_loop = time_since_started.seconds / (scenario_index + 1)
-            loops_remaining = number_of_returned_forecasts - (scenario_index + 1)
+            loops_remaining = len(E__dict) - (scenario_index + 1)
             ETC = loop_finish + datetime.timedelta(seconds=average_time_per_loop*loops_remaining)
             progress_string = 'Finished in '+str(loop_delta.seconds)+' seconds. ETC: '+str(ETC.strftime('%Y-%m-%d %H:%M:%S'))
 
-            logger.info(progress_string)
+            log_in_color(logger, 'white', 'info',progress_string)
 
             scenario_index += 1
 
-
-    def plotAccountTypeComparison(self,E1,E2,output_path):
+    def plotAccountTypeComparison(self,E1,E2,output_path, line_color_cycle_list=['blue','orange','green'], lw_cycle=['1','3']):
         """
         Single-line description
 
@@ -1350,6 +1586,8 @@ class ForecastHandler:
         :return:
         """
         figure(figsize=(14, 6), dpi=80)
+        plt.gca().set_prop_cycle(plt.cycler(color=line_color_cycle_list))
+
         E1_relevant_columns_sel_vec = (E1.forecast_df.columns == 'Date') | (E1.forecast_df.columns == 'Loan Total') | (E1.forecast_df.columns == 'CC Debt Total') | (E1.forecast_df.columns == 'Liquid Total')
         E2_relevant_columns_sel_vec = (E2.forecast_df.columns == 'Date') | (E2.forecast_df.columns == 'Loan Total') | (E2.forecast_df.columns == 'CC Debt Total') | (E2.forecast_df.columns == 'Liquid Total')
         E1_relevant_df = E1.forecast_df.iloc[:, E1_relevant_columns_sel_vec]
@@ -1359,10 +1597,16 @@ class ForecastHandler:
 
         # this plot always has 6 lines, so we can make the plot more clear by using warm colors for Forecast 1 and cool colors for Forecast 2
         relevant_df = relevant_df[['Date','Loan Total_1','CC Debt Total_1','Liquid Total_1','Loan Total_2','CC Debt Total_2','Liquid Total_2']]
-        color_array = ['crimson','orangered','fuchsia','chartreuse','darkgreen','olive']
+        color_array = ['orange','blue','green','orange','blue','green']
 
+        x_values = [datetime.datetime.strptime(d, '%Y%m%d') for d in relevant_df['Date']]
         for i in range(1, relevant_df.shape[1]):
-            plt.plot(relevant_df['Date'], relevant_df.iloc[:, i], label=relevant_df.columns[i],color=color_array[i-1])
+            if i > 3:
+                ls = 'dashed'
+            else:
+                ls = 'solid'
+
+            plt.plot(x_values, relevant_df.iloc[:, i], label=relevant_df.columns[i],color=color_array[i-1],linestyle=ls)
 
         bottom, top = plt.ylim()
 
@@ -1384,8 +1628,9 @@ class ForecastHandler:
         plt.title('Forecast 1 #' + E1.unique_id + ' vs. Forecast 2 #'+E2.unique_id+': ' + str(min_date) + ' -> ' + str(max_date))
         plt.xticks(rotation=90)
         plt.savefig(output_path)
+        matplotlib.pyplot.close()
 
-    def plotNetWorthComparison(self, E1, E2, output_path):
+    def plotNetWorthComparison(self, E1, E2, output_path, line_color_cycle_list=['blue']):
         """
         Single-line description
 
@@ -1398,6 +1643,8 @@ class ForecastHandler:
         :return:
         """
         figure(figsize=(14, 6), dpi=80)
+        plt.gca().set_prop_cycle(plt.cycler(color=line_color_cycle_list))
+
         E1_relevant_columns_sel_vec = (E1.forecast_df.columns == 'Date') | (E1.forecast_df.columns == 'Net Worth')
         E2_relevant_columns_sel_vec = (E2.forecast_df.columns == 'Date') | (E2.forecast_df.columns == 'Net Worth')
         E1_relevant_df = E1.forecast_df.iloc[:, E1_relevant_columns_sel_vec]
@@ -1407,10 +1654,16 @@ class ForecastHandler:
 
         # this plot always has 6 lines, so we can make the plot more clear by using warm colors for Forecast 1 and cool colors for Forecast 2
         relevant_df = relevant_df[['Date', 'Net Worth_1', 'Net Worth_2']]
-        color_array = ['fuchsia', 'olive']
 
         for i in range(1, relevant_df.shape[1]):
-            plt.plot(relevant_df['Date'], relevant_df.iloc[:, i], label=relevant_df.columns[i], color=color_array[i - 1])
+            if i == 1:
+                ls = 'solid'
+                label = 'Net Worth '+str(E1.unique_id)
+            elif i == 2:
+                ls = 'dashed'
+                label = 'Net Worth ' + str(E2.unique_id)
+            x_values = [datetime.datetime.strptime(d, '%Y%m%d') for d in relevant_df['Date']]
+            plt.plot(x_values, relevant_df.iloc[:, i], label=label,linestyle=ls)
 
         bottom, top = plt.ylim()
 
@@ -1431,8 +1684,9 @@ class ForecastHandler:
         plt.title('Forecast 1 #' + E1.unique_id + ' vs. Forecast 2 #' + E2.unique_id + ': ' + str(min_date) + ' -> ' + str(max_date))
         plt.xticks(rotation=90)
         plt.savefig(output_path)
+        matplotlib.pyplot.close()
 
-    def plotAllComparison(self, E1, E2, output_path):
+    def plotMarginalInterestComparison(self, E1, E2, output_path):
         """
         Writes to file a plot of all accounts.
 
@@ -1444,6 +1698,126 @@ class ForecastHandler:
         :return:
         """
         figure(figsize=(14, 6), dpi=80)
+
+        E1_relevant_columns_sel_vec = (E1.forecast_df.columns == 'Date') | (E1.forecast_df.columns == 'Marginal Interest')
+        E2_relevant_columns_sel_vec = (E2.forecast_df.columns == 'Date') | (E2.forecast_df.columns == 'Marginal Interest')
+        E1_relevant_df = E1.forecast_df.iloc[:, E1_relevant_columns_sel_vec]
+        E2_relevant_df = E2.forecast_df.iloc[:, E2_relevant_columns_sel_vec]
+
+        relevant_df = pd.merge(E1_relevant_df, E2_relevant_df, on=["Date"], suffixes=('_1', '_2'))
+
+        # this plot always has 6 lines, so we can make the plot more clear by using warm colors for Forecast 1 and cool colors for Forecast 2
+        relevant_df = relevant_df[['Date', 'Marginal Interest_1', 'Marginal Interest_2']]
+
+        for i in range(1, relevant_df.shape[1]):
+            if i == 1:
+                ls = 'solid'
+                label = 'Marginal Interest ' + str(E1.unique_id)
+            elif i == 2:
+                ls = 'dashed'
+                label = 'Marginal Interest ' + str(E2.unique_id)
+            x_values = [datetime.datetime.strptime(d, '%Y%m%d') for d in relevant_df['Date']]
+            plt.plot(x_values, relevant_df.iloc[:, i], color='blue', label=label, linestyle=ls)
+
+        bottom, top = plt.ylim()
+
+        if 0 < bottom:
+            plt.ylim(0, top)
+        elif top < 0:
+            plt.ylim(bottom, 0)
+
+        ax = plt.subplot(111)
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
+
+        # Put a legend below current axis
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=4)
+
+        min_date = min([datetime.datetime.strptime(d, '%Y%m%d') for d in E1.forecast_df.Date])
+        max_date = max([datetime.datetime.strptime(d, '%Y%m%d') for d in E1.forecast_df.Date])
+        plt.title(
+            'Forecast 1 #' + E1.unique_id + ' vs. Forecast 2 #' + E2.unique_id + ': ' + str(min_date) + ' -> ' + str(
+                max_date))
+        plt.xticks(rotation=90)
+        plt.savefig(output_path)
+        matplotlib.pyplot.close()
+
+    def plotNetGainLossComparison(self, E1, E2, output_path):
+        """
+        Writes to file a plot of all accounts.
+
+        Multiple line description.
+
+
+        :param forecast_df:
+        :param output_path:
+        :return:
+        """
+
+        figure(figsize=(14, 6), dpi=80)
+
+        # lets combine curr and prev, principal and interest, and exclude summary lines
+        E1_account_info = E1.initial_account_set.getAccounts()
+        E2_account_info = E2.initial_account_set.getAccounts()
+        E1_account_base_names = set([a.split(':')[0] for a in E1_account_info.Name])
+        E2_account_base_names = set([a.split(':')[0] for a in E2_account_info.Name])
+
+        assert E1_account_base_names == E2_account_base_names
+
+
+        relevant_df = pd.merge(E1.forecast_df, E2.forecast_df, on=["Date"], suffixes=('_1', '_2'))
+
+        x_values = [datetime.datetime.strptime(d, '%Y%m%d') for d in relevant_df['Date']]
+
+        column_index = relevant_df.columns.tolist().index('Net Gain_1')
+        plt.plot(x_values, relevant_df.iloc[:, column_index], color = 'green', label='Net Gain '+str(E1.unique_id), linestyle='solid')
+
+        column_index = relevant_df.columns.tolist().index('Net Gain_2')
+        plt.plot(x_values, relevant_df.iloc[:, column_index], color = 'green', label='Net Gain '+str(E2.unique_id), linestyle='dashed')
+
+        column_index = relevant_df.columns.tolist().index('Net Loss_1')
+        plt.plot(x_values, relevant_df.iloc[:, column_index], color = 'red', label='Net Loss '+str(E1.unique_id), linestyle='solid')
+
+        column_index = relevant_df.columns.tolist().index('Net Loss_2')
+        plt.plot(x_values, relevant_df.iloc[:, column_index], color = 'red', label='Net Loss '+str(E2.unique_id), linestyle='dashed')
+
+        bottom, top = plt.ylim()
+        if 0 < bottom:
+            plt.ylim(0, top)
+        elif top < 0:
+            plt.ylim(bottom, 0)
+
+        ax = plt.subplot(111)
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
+
+        # Put a legend below current axis
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=4)
+
+        # TODO plotOverall():: a large number of accounts will require some adjustment here so that the legend is entirely visible
+
+        min_date = min([datetime.datetime.strptime(d, '%Y%m%d') for d in E1.forecast_df.Date])
+        max_date = max([datetime.datetime.strptime(d, '%Y%m%d') for d in E1.forecast_df.Date])
+        plt.title(
+            'Forecast 1 #' + E1.unique_id + ' vs. Forecast 2 #' + E2.unique_id + ': ' + str(min_date) + ' -> ' + str(
+                max_date))
+        plt.xticks(rotation=90)
+        plt.savefig(output_path)
+        matplotlib.pyplot.close()
+
+    def plotAllComparison(self, E1, E2, output_path, line_color_cycle_list=['blue'], lw_cycle=['1','3']):
+        """
+        Writes to file a plot of all accounts.
+
+        Multiple line description.
+
+
+        :param forecast_df:
+        :param output_path:
+        :return:
+        """
+        figure(figsize=(14, 6), dpi=80)
+        plt.gca().set_prop_cycle(plt.cycler(color=line_color_cycle_list))
 
         #lets combine curr and prev, principal and interest, and exclude summary lines
         E1_account_info = E1.initial_account_set.getAccounts()
@@ -1479,8 +1853,9 @@ class ForecastHandler:
 
         relevant_df = pd.merge(E1_aggregated_df, E2_aggregated_df, on=["Date"], suffixes=('_1', '_2'))
 
+        x_values = [datetime.datetime.strptime(d, '%Y%m%d') for d in relevant_df['Date']]
         for i in range(1, relevant_df.shape[1] - 1):
-            plt.plot(relevant_df['Date'], relevant_df.iloc[:, i], label=relevant_df.columns[i])
+            plt.plot(x_values, relevant_df.iloc[:, i], label=relevant_df.columns[i])
 
         bottom, top = plt.ylim()
         if 0 < bottom:
@@ -1502,8 +1877,9 @@ class ForecastHandler:
         plt.title('Forecast 1 #'+E1.unique_id+' vs. Forecast 2 #'+E2.unique_id+': ' + str(min_date) + ' -> ' + str(max_date))
         plt.xticks(rotation=90)
         plt.savefig(output_path)
+        matplotlib.pyplot.close()
 
-    def plotAccountTypeTotals(self, expense_forecast, output_path):
+    def plotAccountTypeTotals(self, expense_forecast, output_path, line_color_cycle_list=['blue','orange','green'], linestyle='solid'):
         """
         Writes to file a plot of all accounts.
 
@@ -1518,10 +1894,20 @@ class ForecastHandler:
         assert hasattr(expense_forecast,'forecast_df')
 
         figure(figsize=(14, 6), dpi=80)
+        plt.gca().set_prop_cycle(plt.cycler(color=line_color_cycle_list))
+
         relevant_columns_sel_vec = (expense_forecast.forecast_df.columns == 'Date') | (expense_forecast.forecast_df.columns == 'Loan Total') | (expense_forecast.forecast_df.columns == 'CC Debt Total') | (expense_forecast.forecast_df.columns == 'Liquid Total')
         relevant_df = expense_forecast.forecast_df.iloc[:,relevant_columns_sel_vec]
+
+        x_values = [datetime.datetime.strptime(d, '%Y%m%d') for d in relevant_df['Date']]
         for i in range(1, relevant_df.shape[1]):
-            plt.plot(relevant_df['Date'], relevant_df.iloc[:, i], label=relevant_df.columns[i])
+            if i == 1:
+                label = 'CC Debt Total '+str(expense_forecast.unique_id)
+            elif i == 2:
+                label = 'Loan Total '+str(expense_forecast.unique_id)
+            elif i == 3:
+                label = 'Liquid Total '+str(expense_forecast.unique_id)
+            plt.plot(x_values, relevant_df.iloc[:, i], label=label,linestyle=linestyle)
 
         bottom, top = plt.ylim()
 
@@ -1545,20 +1931,23 @@ class ForecastHandler:
         plt.title('Forecast #'+expense_forecast.unique_id+': ' + str(min_date) + ' -> ' + str(max_date))
         plt.xticks(rotation=90)
         plt.savefig(output_path)
+        matplotlib.pyplot.close()
 
-    def plotNetGainLoss(self, expense_forecast, output_path):
+    def plotNetGainLoss(self, expense_forecast, output_path, line_color_cycle_list=['green','red'],linestyle='solid'):
         assert hasattr(expense_forecast, 'forecast_df')
 
         figure(figsize=(14, 6), dpi=80)
+        plt.gca().set_prop_cycle(plt.cycler(color=line_color_cycle_list))
+
+        x_values = [datetime.datetime.strptime(d, '%Y%m%d') for d in expense_forecast.forecast_df['Date']]
 
         # for i in range(1, self.forecast_df.shape[1] - 1):
         column_index = expense_forecast.forecast_df.columns.tolist().index('Net Gain')
-        plt.plot(expense_forecast.forecast_df['Date'], expense_forecast.forecast_df.iloc[:, column_index],
-                 label='Net Gain')
+        plt.plot(x_values, expense_forecast.forecast_df.iloc[:, column_index],
+                 label='Net Gain '+str(expense_forecast.unique_id))
 
         column_index = expense_forecast.forecast_df.columns.tolist().index('Net Loss')
-        plt.plot(expense_forecast.forecast_df['Date'], expense_forecast.forecast_df.iloc[:, column_index],
-                 label='Net Loss')
+        plt.plot(x_values, expense_forecast.forecast_df.iloc[:, column_index],label='Net Loss '+str(expense_forecast.unique_id),linestyle=linestyle)
 
         bottom, top = plt.ylim()
 
@@ -1581,8 +1970,9 @@ class ForecastHandler:
         plt.title('Forecast #' + expense_forecast.unique_id + ': ' + str(min_date) + ' -> ' + str(max_date))
         plt.xticks(rotation=90)
         plt.savefig(output_path)
+        matplotlib.pyplot.close()
 
-    def plotNetWorth(self, expense_forecast, output_path):
+    def plotNetWorth(self, expense_forecast, output_path, line_color_cycle_list=['blue'], linestyle='solid'):
         """
         Writes to file a plot of all accounts.
 
@@ -1597,9 +1987,11 @@ class ForecastHandler:
         assert hasattr(expense_forecast,'forecast_df')
 
         figure(figsize=(14, 6), dpi=80)
+        plt.gca().set_prop_cycle(plt.cycler(color=line_color_cycle_list))
 
         column_index = expense_forecast.forecast_df.columns.tolist().index('Net Worth')
-        plt.plot(expense_forecast.forecast_df['Date'], expense_forecast.forecast_df.iloc[:, column_index], label='Net Worth')
+        x_values = [ datetime.datetime.strptime(d,'%Y%m%d') for d in expense_forecast.forecast_df['Date'] ]
+        plt.plot( x_values, expense_forecast.forecast_df.iloc[:, column_index], label='Net Worth '+str(expense_forecast.unique_id),linestyle=linestyle)
 
         bottom, top = plt.ylim()
         top = top * 1.1 #otherwise doesnt show up if line is super flat
@@ -1625,8 +2017,9 @@ class ForecastHandler:
         plt.title('Forecast #'+expense_forecast.unique_id+': ' + str(min_date) + ' -> ' + str(max_date))
         plt.xticks(rotation=90)
         plt.savefig(output_path)
+        matplotlib.pyplot.close()
 
-    def plotAll(self, expense_forecast, output_path):
+    def plotAll(self, expense_forecast, output_path, line_color_cycle_list=default_color_cycle_list):
         """
         Writes to file a plot of all accounts.
 
@@ -1641,6 +2034,7 @@ class ForecastHandler:
         assert hasattr(expense_forecast,'forecast_df')
 
         figure(figsize=(14, 6), dpi=80)
+        plt.gca().set_prop_cycle(plt.cycler(color=line_color_cycle_list))
 
         #lets combine curr and prev, principal and interest, and exclude summary lines
         account_info = expense_forecast.initial_account_set.getAccounts()
@@ -1658,7 +2052,8 @@ class ForecastHandler:
             elif relevant_df.shape[1] == 3:  #credit and loan
                 aggregated_df[account_base_name] = relevant_df.iloc[:,1] + relevant_df.iloc[:,2]
 
-            plt.plot(aggregated_df['Date'], aggregated_df[account_base_name], label=account_base_name)
+            x_values = [datetime.datetime.strptime(d, '%Y%m%d') for d in aggregated_df['Date']]
+            plt.plot(x_values, aggregated_df[account_base_name], label=account_base_name)
 
         #for i in range(1, aggregated_df.shape[1] - 1):
         #   pass
@@ -1685,8 +2080,9 @@ class ForecastHandler:
         plt.title('Forecast #'+expense_forecast.unique_id+': ' + str(min_date) + ' -> ' + str(max_date))
         plt.xticks(rotation=90)
         plt.savefig(output_path)
+        matplotlib.pyplot.close()
 
-    def plotMarginalInterest(self, expense_forecast, output_path):
+    def plotMarginalInterest(self, expense_forecast, output_path, linestyle='solid'):
         """
         Writes a plot of spend on interest from all sources.
 
@@ -1700,10 +2096,12 @@ class ForecastHandler:
 
         assert hasattr(expense_forecast,'forecast_df')
         figure(figsize=(14, 6), dpi=80)
+        plt.gca().set_prop_cycle(plt.cycler(color=['blue']))
 
         column_index = expense_forecast.forecast_df.columns.tolist().index('Marginal Interest')
-        plt.plot(expense_forecast.forecast_df['Date'], expense_forecast.forecast_df.iloc[:, column_index],
-                 label='Marginal Interest')
+        x_values = [datetime.datetime.strptime(d, '%Y%m%d') for d in expense_forecast.forecast_df['Date']]
+        plt.plot(x_values, expense_forecast.forecast_df.iloc[:, column_index],
+                 label='Marginal Interest ' + str(expense_forecast.unique_id),linestyle=linestyle)
 
         bottom, top = plt.ylim()
 
@@ -1719,8 +2117,6 @@ class ForecastHandler:
         # Put a legend below current axis
         ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=4)
 
-        # TODO plotOverall():: a large number of accounts will require some adjustment here so that the legend is entirely visible
-
         date_as_datetime_type = [datetime.datetime.strptime(d, '%Y%m%d') for d in expense_forecast.forecast_df.Date]
 
         min_date = min(date_as_datetime_type).strftime('%Y-%m-%d')
@@ -1728,4 +2124,329 @@ class ForecastHandler:
         plt.title('Forecast #' + expense_forecast.unique_id + ': ' + str(min_date) + ' -> ' + str(max_date))
         plt.xticks(rotation=90)
         plt.savefig(output_path)
+        matplotlib.pyplot.close()
 
+    def generateScenarioSetHTMLReport(self, expense_forecast__dict, output_dir='./'):
+
+        report_id = '000000'
+        output_report_path = output_dir + 'ForecastSummary.html'
+
+        list_of_forecast_links_html = ""
+        for E_key, E_value in expense_forecast__dict.items():
+            self.generateHTMLReport(E_value,output_dir,output_report_path)
+            list_of_forecast_links_html += "<a href=\"Forecast_"+str(E_value.unique_id)+".html\">Forecast "+str(E_value.unique_id)+" "+str(E_key)+"</a><br>"
+
+        milestone_difference_table_df = self.calculateMilestoneDifferenceTable(expense_forecast__dict)
+        milestone_difference_table_html = milestone_difference_table_df.to_html()
+
+        html_body = """
+                <!DOCTYPE html>
+                <html>
+                <head>
+                <meta name="viewport" content="width=device-width, initial-scale=1">
+                <title>Expense ForecastSet Report #""" + str(report_id) + """</title>
+                <style>
+                /* Style the tab */
+                .tab {
+                  overflow: hidden;
+                  border: 1px solid #ccc;
+                  background-color: #f1f1f1;
+                }
+
+                /* Style the buttons that are used to open the tab content */
+                .tab button {
+                  background-color: inherit;
+                  float: left;
+                  border: none;
+                  outline: none;
+                  cursor: pointer;
+                  padding: 14px 16px;
+                  transition: 0.3s;
+                }
+
+                /* Change background color of buttons on hover */
+                .tab button:hover {
+                  background-color: #ddd;
+                }
+
+                /* Create an active/current tablink class */
+                .tab button.active {
+                  background-color: #ccc;
+                }
+
+                /* Style the tab content */
+                .tabcontent {
+                  display: none;
+                  padding: 6px 12px;
+                  border: 1px solid #ccc;
+                  border-top: none;
+                }
+                </style>
+
+
+                </head>
+                <body>
+                <h1>Expense Forecast Summary Report #""" + str(report_id) + """</h1>
+                
+                <!-- Tab links -->
+                <div class="tab">
+                  <button class="tablinks active" onclick="openTab(event, 'Summary')">Summary</button>
+                </div>
+
+                <!-- Tab content -->
+                <div id="Summary" class="tabcontent">
+                  <h3>Summary</h3>
+                  """ + list_of_forecast_links_html + """ <br>
+                  """ + milestone_difference_table_html + """
+                </div>
+
+                <script>
+                function openTab(evt, tabName) {
+                  // Declare all variables
+                  var i, tabcontent, tablinks;
+
+                  // Get all elements with class="tabcontent" and hide them
+                  tabcontent = document.getElementsByClassName("tabcontent");
+                  for (i = 0; i < tabcontent.length; i++) {
+                    tabcontent[i].style.display = "none";
+                  }
+
+                  // Get all elements with class="tablinks" and remove the class "active"
+                  tablinks = document.getElementsByClassName("tablinks");
+                  for (i = 0; i < tablinks.length; i++) {
+                    tablinks[i].className = tablinks[i].className.replace(" active", "");
+                  }
+
+                  // Show the current tab, and add an "active" class to the button that opened the tab
+                  document.getElementById(tabName).style.display = "block";
+                  evt.currentTarget.className += " active";
+                }
+
+                //having this here leaves the ForecastParameters tab open when the page first loads
+                document.getElementById("Summary").style.display = "block";
+                </script>
+
+                </body>
+                </html>
+
+                """
+
+        with open(output_report_path,'w') as f:
+            f.write(html_body)
+        log_in_color(logger,'green','info','Finished writing scenario report to '+output_report_path)
+
+    def calculateMilestoneDifferenceTable(self, expense_forecast__dict):
+
+        milestone_result_tables = []
+        all_table_df = pd.DataFrame({'Forecast_Id': [], 'Scenario_Id': [], 'Milestone_Type': [], 'Milestone_Name': [], 'Milestone_Date': []})
+        for forecast_key, forecast_value in expense_forecast__dict.items():
+            milestone_result_table_df = pd.DataFrame({'Forecast_Id': [], 'Scenario_Id': [], 'Milestone_Type': [], 'Milestone_Name': [], 'Milestone_Date': []})
+            for milestone_name, milestone_value in forecast_value.account_milestone_results.items():
+                new_row_df = pd.DataFrame({'Forecast_Id': [str(forecast_value.unique_id)], 'Scenario_Id': [forecast_key], 'Milestone_Type':['Account'],'Milestone_Name':[milestone_name],'Milestone_Date':[milestone_value]})
+                milestone_result_table_df = pd.concat([milestone_result_table_df,new_row_df])
+                all_table_df = pd.concat([all_table_df,new_row_df])
+
+            for milestone_name, milestone_value in forecast_value.memo_milestone_results.items():
+                new_row_df = pd.DataFrame({'Forecast_Id': [str(forecast_value.unique_id)], 'Scenario_Id': [forecast_key], 'Milestone_Type':['Memo'],'Milestone_Name':[milestone_name],'Milestone_Date':[milestone_value]})
+                milestone_result_table_df = pd.concat([milestone_result_table_df,new_row_df])
+                all_table_df = pd.concat([all_table_df, new_row_df])
+
+            for milestone_name, milestone_value in forecast_value.composite_milestone_results.items():
+                new_row_df = pd.DataFrame({'Forecast_Id': [str(forecast_value.unique_id)], 'Scenario_Id': [forecast_key], 'Milestone_Type':['Composite'],'Milestone_Name':[milestone_name],'Milestone_Date':[milestone_value]})
+                milestone_result_table_df = pd.concat([milestone_result_table_df,new_row_df])
+                all_table_df = pd.concat([all_table_df, new_row_df])
+
+            milestone_result_tables.append(milestone_result_table_df)
+
+        milestone_result_tables_df = pd.DataFrame()
+        for m in milestone_result_tables:
+            milestone_result_tables_df['Milestone Name'] = m.Milestone_Name
+            for index, row in m.iterrows():
+                milestone_result_tables_df[m.Forecast_Id] = row.Milestone_Date
+
+        # for m in milestone_result_tables:
+        #     if milestone_result_tables_df is None:
+        #         milestone_result_tables_df = pd.DataFrame({'Milestone_Name':[]})
+        #         milestone_result_tables_df = m
+        #         continue
+        #
+        #     for index, row in m.iterrows():
+        #         milestone_result_tables_df[row.Forecast_Id] = row.Milestone_Date
+        #
+        #     milestone_result_tables_df = pd.concat([milestone_result_tables_df,m])
+        #Milestone Name, Forecast_1, Forecast_2, Forecast_3
+
+        milestone_result_tables_df.reset_index(drop=True, inplace=True)
+
+        # all_table_df.reset_index(drop=True,inplace=True)
+        # all_table_df.sort_values(by=['Milestone_Name','Milestone_Date'],inplace=True)
+        return milestone_result_tables_df
+
+    def plotScenarioSetMilestoneDifferences(self,expense_forecast__dict, line_color_cycle_list=['blue','red','purple']):
+        #assert hasattr(expense_forecast, 'forecast_df')
+
+        figure(figsize=(14, 6), dpi=80)
+        fig, ax = plt.subplots()
+        plt.gca().set_prop_cycle(plt.cycler(color=line_color_cycle_list)) #todo use this param
+
+        #horizontal bar chart so y_values are same for each
+        data_y = []
+        all_keys = None
+        for E_key, E_value in expense_forecast__dict.items():
+            date_counter = 0
+
+            AM = E_value.account_milestone_results
+            MM = E_value.memo_milestone_results
+            CM = E_value.composite_milestone_results
+
+            am_keys = []
+            for am_key, am_value in AM.items():
+                # impute none as max
+                if am_value is None:
+                    am_value = E_value.end_date_YYYYMMDD
+                if am_value == 'None':
+                    am_value = E_value.end_date_YYYYMMDD
+                am_keys.append(am_key)
+                data_y.append(date_counter)
+                date_counter += 1
+
+            mm_keys = []
+            for mm_key, mm_value in MM.items():
+                # impute none as max
+                if mm_value is None:
+                    mm_value = E_value.end_date_YYYYMMDD
+                if mm_value == 'None':
+                    mm_value = E_value.end_date_YYYYMMDD
+                mm_keys.append(mm_key)
+                data_y.append(date_counter)
+                date_counter += 1
+
+            cm_keys = []
+            for cm_key, cm_value in CM.items():
+                # impute none as max
+                if cm_value is None:
+                    cm_value = E_value.end_date_YYYYMMDD
+                if cm_value == 'None':
+                    cm_value = E_value.end_date_YYYYMMDD
+                cm_keys.append(cm_key)
+                data_y.append(date_counter)
+                date_counter += 1
+
+            all_keys = am_keys + mm_keys + cm_keys
+            break
+
+        x_values_list = []
+        for E_key, E_value in expense_forecast__dict.items():
+            AM = E_value.account_milestone_results
+            MM = E_value.memo_milestone_results
+            CM = E_value.composite_milestone_results
+
+            data_x = []
+            date_counter = 0
+
+            am_keys = []
+            for am_key, am_value in AM.items():
+                # impute none as max
+                if am_value is None:
+                    am_value = E_value.end_date_YYYYMMDD
+                if am_value == 'None':
+                    am_value = E_value.end_date_YYYYMMDD
+                am_keys.append(am_key)
+                data_x.append(am_value)
+                date_counter += 1
+
+            mm_keys = []
+            for mm_key, mm_value in MM.items():
+                # impute none as max
+                if mm_value is None:
+                    mm_value = E_value.end_date_YYYYMMDD
+                if mm_value == 'None':
+                    mm_value = E_value.end_date_YYYYMMDD
+                mm_keys.append(mm_key)
+                data_x.append(mm_value)
+                date_counter += 1
+
+            cm_keys = []
+            for cm_key, cm_value in CM.items():
+                # impute none as max
+                if cm_value is None:
+                    cm_value = E_value.end_date_YYYYMMDD
+                if cm_value == 'None':
+                    cm_value = E_value.end_date_YYYYMMDD
+                cm_keys.append(cm_key)
+                data_x.append(cm_value)
+                date_counter += 1
+
+            x_values_list.append(data_x)
+
+        #transpose nested lists
+        x_values_list = np.array(x_values_list).T.tolist()
+
+
+            # data_x = [datetime.datetime.strptime(x, '%Y%m%d') for x in data_x]
+
+            # no_of_account_milestones = len(am_keys)
+            # am_sel_range = slice(0, (no_of_account_milestones - 1))
+            #
+            # no_of_memo_milestones = len(mm_keys)
+            # mm_sel_range = slice((no_of_account_milestones - 1), (no_of_account_milestones + no_of_memo_milestones - 1))
+            #
+            # no_of_composite_milestones = len(cm_keys)
+            # cm_sel_range = slice((no_of_account_milestones + no_of_memo_milestones - 1),
+            #                      (no_of_account_milestones + no_of_memo_milestones + no_of_composite_milestones - 1))
+            #
+            # if no_of_account_milestones > 0:
+            #     plt.scatter(data_x[am_sel_range], data_y[am_sel_range], color="red")
+            #
+            # if no_of_memo_milestones > 0:
+            #     plt.scatter(data_x[mm_sel_range], data_y[mm_sel_range], color="blue")
+            #
+            # if no_of_composite_milestones > 0:
+            #     plt.scatter(data_x[cm_sel_range], data_y[cm_sel_range], color="purple")
+            #
+            # left_int_ts = matplotlib.dates.date2num(
+            #     datetime.datetime.strptime(E_value.start_date_YYYYMMDD, '%Y%m%d'))
+            # right_int_ts = matplotlib.dates.date2num(
+            #     datetime.datetime.strptime(E_value.end_date_YYYYMMDD, '%Y%m%d'))
+            #
+            # all_keys = am_keys + mm_keys + cm_keys
+            # for i, txt in enumerate(all_keys):
+            #     ax.annotate(txt, (data_x[i], data_y[i]))
+
+        # left = left_int_ts
+        # right = right_int_ts
+        #
+        # plt.xlim(left, right)
+
+        bottom, top = plt.ylim()
+        if 0 < bottom:
+            plt.ylim(0, top)
+        elif top < 0:
+            plt.ylim(bottom, 0)
+
+        ax = plt.subplot(111)
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
+
+            # red_patch = mpatches.Patch(color='red', label='account')
+            # blue_patch = mpatches.Patch(color='blue', label='memo')
+            # purple_patch = mpatches.Patch(color='purple', label='composite')
+            # plt.legend(handles=[red_patch, blue_patch, purple_patch], bbox_to_anchor=(1.15, 1), loc='upper right')
+
+            # TODO plotOverall():: a large number of accounts will require some adjustment here so that the legend is entirely visible
+
+        date_as_datetime_type = [datetime.datetime.strptime(d, '%Y%m%d') for d in E_value.forecast_df.Date]
+
+        min_date = min(date_as_datetime_type).strftime('%Y-%m-%d')
+        max_date = max(date_as_datetime_type).strftime('%Y-%m-%d')
+
+        plt.title('Milestones' + ': ' + str(min_date) + ' -> ' + str(max_date))
+
+        index = 0
+        for x_values in x_values_list:
+            plt.bar(x_values, index, 0.4, label=all_keys[index])
+            index += 1
+
+        plt.xticks(rotation=90)
+        plt.savefig('ScenarioSetMilestoneDifferences.png')
+        matplotlib.pyplot.close()

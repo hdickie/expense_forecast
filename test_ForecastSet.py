@@ -1,17 +1,17 @@
 import pytest
-import ScenarioSet
+import ForecastSet
 import BudgetSet
 import BudgetItem
 
-class TestScenarioSet:
+class TestForecastSet:
 
     @pytest.mark.parametrize('core_budget_set,option_budget_set',
 
                              [(BudgetSet.BudgetSet([]),BudgetSet.BudgetSet([]))]
 
                              )
-    def test_ScenarioSetConstructor(self,core_budget_set,option_budget_set):
-        S = ScenarioSet.ScenarioSet(core_budget_set,option_budget_set)
+    def test_ForecastSetConstructor(self,core_budget_set,option_budget_set):
+        S = ForecastSet.ForecastSet(core_budget_set, option_budget_set)
 
     @pytest.mark.parametrize('core_budget_set,option_budget_set',
 
@@ -34,10 +34,10 @@ class TestScenarioSet:
                               ]
 
                              )
-    def test_ScenarioSetConstructor__expect_fail(self, core_budget_set, option_budget_set):
+    def test_ForecastSetConstructor__expect_fail(self, core_budget_set, option_budget_set):
 
         with pytest.raises(ValueError):
-            S = ScenarioSet.ScenarioSet(core_budget_set, option_budget_set)
+            S = ForecastSet.ForecastSet(core_budget_set, option_budget_set)
 
     @pytest.mark.parametrize('core_budget_set,option_budget_set',
 
@@ -57,7 +57,7 @@ class TestScenarioSet:
 
                               ])
     def test_addScenario(self,core_budget_set,option_budget_set):
-        S = ScenarioSet.ScenarioSet(core_budget_set,option_budget_set)
+        S = ForecastSet.ForecastSet(core_budget_set, option_budget_set)
 
         S.addScenario(['.*A.*'])
         S.addScenario(['.*B.*'])
@@ -86,7 +86,7 @@ class TestScenarioSet:
 
                               ])
     def test_addChoiceToAllScenarios(self,core_budget_set,option_budget_set):
-        S = ScenarioSet.ScenarioSet(core_budget_set, option_budget_set)
+        S = ForecastSet.ForecastSet(core_budget_set, option_budget_set)
 
         scenario_A = ['.*A.*']
         scenario_B = ['.*B.*']
@@ -123,8 +123,8 @@ class TestScenarioSet:
                                     ])),
 
                              ])
-    def test_ScenarioSet_to_json(self,core_budget_set,option_budget_set):
-        S = ScenarioSet.ScenarioSet(core_budget_set, option_budget_set)
+    def test_ForecastSet_to_json(self,core_budget_set,option_budget_set):
+        S = ForecastSet.ForecastSet(core_budget_set, option_budget_set)
 
         scenario_A = ['.*A.*']
         scenario_B = ['.*B.*']

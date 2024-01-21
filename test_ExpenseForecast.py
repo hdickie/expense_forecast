@@ -104,8 +104,6 @@ class TestExpenseForecastMethods:
                               '19991231',
                               '20000101',
                               MilestoneSet.MilestoneSet(
-                                  AccountSet.AccountSet([]),
-                                  BudgetSet.BudgetSet([]),
                                   [],
                                   [],
                                   []),
@@ -138,8 +136,6 @@ class TestExpenseForecastMethods:
                                   'incorrect date format',
                                   '20000103',
                                   MilestoneSet.MilestoneSet(
-                                      AccountSet.AccountSet([]),
-                                      BudgetSet.BudgetSet([]),
                                       [],
                                       [],
                                       []),
@@ -152,8 +148,6 @@ class TestExpenseForecastMethods:
                                   '20000101',
                                   'incorrect date format',
                                   MilestoneSet.MilestoneSet(
-                                      AccountSet.AccountSet([]),
-                                      BudgetSet.BudgetSet([]),
                                       [],
                                       [],
                                       []),
@@ -166,8 +160,6 @@ class TestExpenseForecastMethods:
                               '20000101',
                               '19991231',
                               MilestoneSet.MilestoneSet(
-                                AccountSet.AccountSet([]),
-                                BudgetSet.BudgetSet([]),
                                 [],
                                 [],
                               []),
@@ -180,8 +172,6 @@ class TestExpenseForecastMethods:
                                '19991231',
                                '20000101',
                                MilestoneSet.MilestoneSet(
-                                   AccountSet.AccountSet([]),
-                                   BudgetSet.BudgetSet([]),
                                    [],
                                    [],
                                    []),
@@ -194,8 +184,6 @@ class TestExpenseForecastMethods:
                                '19991231',
                                '20000101',
                                MilestoneSet.MilestoneSet(
-                                   AccountSet.AccountSet([]),
-                                   BudgetSet.BudgetSet([]),
                                    [],
                                    [],
                                    []),
@@ -208,8 +196,6 @@ class TestExpenseForecastMethods:
                                '19991231',
                                '20000101',
                                MilestoneSet.MilestoneSet(
-                                   AccountSet.AccountSet([]),
-                                   BudgetSet.BudgetSet([]),
                                    [],
                                    [],
                                    []),
@@ -222,8 +208,6 @@ class TestExpenseForecastMethods:
                               #  'start_date_YYYYMMDD',
                               #  'end_date_YYYYMMDD',
                               #  MilestoneSet.MilestoneSet(
-                              #      AccountSet.AccountSet([]),
-                              #      BudgetSet.BudgetSet([]),
                               #      [],
                               #      [],
                               #      []),
@@ -326,7 +310,7 @@ class TestExpenseForecastMethods:
                               MemoRuleSet.MemoRuleSet(match_p1_test_txn_checking_memo_rule_list()),
                               '20000101',
                               '20000103',
-                              MilestoneSet.MilestoneSet(AccountSet.AccountSet([]),BudgetSet.BudgetSet([]),[],[],[]),
+                              MilestoneSet.MilestoneSet([],[],[]),
                               pd.DataFrame({
                                   'Date': ['20000101', '20000102', '20000103'],
                                   'Checking': [0, 0, 0],
@@ -343,7 +327,7 @@ class TestExpenseForecastMethods:
                                 MemoRuleSet.MemoRuleSet(match_p1_test_txn_checking_memo_rule_list() + income_rule_list()),
                                 '20000101',
                                 '20000103',
-                                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                                MilestoneSet.MilestoneSet( [], [], []),
                                 pd.DataFrame({
                                 'Date': ['20000101', '20000102', '20000103'],
                                 'Checking': [0, 0, 0],
@@ -360,7 +344,7 @@ class TestExpenseForecastMethods:
                                 MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1)]),
                                 '20000101',
                                 '20000103',
-                                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                                MilestoneSet.MilestoneSet( [], [], []),
                                 pd.DataFrame({
                                     'Date': ['20000101', '20000102', '20000103'],
                                     'Checking': [2000, 1975, 1975],
@@ -378,7 +362,7 @@ class TestExpenseForecastMethods:
                                                                        transaction_priority=1)]),
                                 '20000101',
                                 '20000103',
-                                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                                MilestoneSet.MilestoneSet( [], [], []),
                                 pd.DataFrame({
                                     'Date': ['20000101', '20000102', '20000103'],
                                     'Checking': [2000, 1960, 1960],
@@ -395,7 +379,7 @@ class TestExpenseForecastMethods:
                                 MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*', account_from='Credit', account_to=None,transaction_priority=1)]),
                                 '20000101',
                                 '20000103',
-                                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                                MilestoneSet.MilestoneSet( [], [], []),
                                 pd.DataFrame({
                                     'Date': ['20000101', '20000102', '20000103'],
                                     'Checking': [2000, 1940, 1940],
@@ -413,7 +397,7 @@ class TestExpenseForecastMethods:
                                                      MemoRule.MemoRule(memo_regex='.*', account_from='Checking', account_to=None,transaction_priority=2)]),
                             '20000101',
                             '20000103',
-                            MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                            MilestoneSet.MilestoneSet( [], [], []),
                             pd.DataFrame({
                             'Date': ['20000101', '20000102', '20000103'],
                             'Checking': [0, 0, 0],
@@ -435,7 +419,7 @@ class TestExpenseForecastMethods:
                                                            transaction_priority=3)]),
                 '20000101',
                 '20000103',
-                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                MilestoneSet.MilestoneSet( [], [], []),
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103'],
                     'Checking': [0, 0, 0],
@@ -458,7 +442,7 @@ class TestExpenseForecastMethods:
                                          ]),
                 '20000101',
                 '20000103',
-                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                MilestoneSet.MilestoneSet( [], [], []),
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103'],
                     'Checking': [100, 0, 0],
@@ -482,7 +466,7 @@ class TestExpenseForecastMethods:
                                          ]),
                 '20000101',
                 '20000103',
-                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                MilestoneSet.MilestoneSet( [], [], []),
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103'],
                     'Checking': [100, 0, 0],
@@ -502,7 +486,7 @@ class TestExpenseForecastMethods:
                                          ]),
                 '20000101',
                 '20000103',
-                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                MilestoneSet.MilestoneSet( [], [], []),
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103'],
                     'Checking': [0, 0, 0],
@@ -524,7 +508,7 @@ class TestExpenseForecastMethods:
                                          ]),
                 '20000101',
                 '20000103',
-                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                MilestoneSet.MilestoneSet( [], [], []),
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103'],
                     'Checking': [2000, 2000, 2000],
@@ -547,7 +531,7 @@ class TestExpenseForecastMethods:
                                          ]),
                 '20000101',
                 '20000103',
-                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                MilestoneSet.MilestoneSet( [], [], []),
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103'],
                     'Checking': [2000, 1200, 1200],
@@ -570,7 +554,7 @@ class TestExpenseForecastMethods:
                                          ]),
                 '20000101',
                 '20000103',
-                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                MilestoneSet.MilestoneSet( [], [], []),
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103'],
                     'Checking': [200, 0, 0],
@@ -594,7 +578,7 @@ class TestExpenseForecastMethods:
                                          ]),
                 '20000101',
                 '20000103',
-                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                MilestoneSet.MilestoneSet( [], [], []),
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103'],
                     'Checking': [40, 0, 0],
@@ -618,7 +602,7 @@ class TestExpenseForecastMethods:
                                          ]),
                 '20000101',
                 '20000103',
-                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                MilestoneSet.MilestoneSet( [], [], []),
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103'],
                     'Checking': [1000, 0, 0],
@@ -662,7 +646,7 @@ class TestExpenseForecastMethods:
                                          ]),
                 '20000101',
                 '20000104', #note that this is later than the test defined above
-                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                MilestoneSet.MilestoneSet( [], [], []),
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103', '20000104'],
                     'Checking': [500, 400, 300, 0],
@@ -697,7 +681,7 @@ class TestExpenseForecastMethods:
                                          ]),
                 '20000101',
                 '20000105',  # note that this is later than the test defined above
-                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                MilestoneSet.MilestoneSet( [], [], []),
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103', '20000104', '20000105'],
                     'Checking': [400, 400, 200, 0, 0],
@@ -732,7 +716,7 @@ class TestExpenseForecastMethods:
                                          ]),
                 '20000101',
                 '20000106',  # note that this is later than the test defined above
-                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                MilestoneSet.MilestoneSet( [], [], []),
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103', '20000104', '20000105', '20000106'],
                     'Checking': [2000, 1800, 1600, 1400, 1200, 1200],
@@ -781,7 +765,7 @@ class TestExpenseForecastMethods:
                                      ]),
             '20000101',
             '20000106',  # note that this is later than the test defined above
-            MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+            MilestoneSet.MilestoneSet( [], [], []),
             pd.DataFrame({
                 'Date': ['20000101', '20000102', '20000103', '20000104', '20000105', '20000106'],
                 'Checking': [2000, 1700, 1400, 1100, 800, 800],
@@ -830,7 +814,7 @@ class TestExpenseForecastMethods:
         #                                  ]),
         #         '20000101',
         #         '20000106',  # note that this is later than the test defined above
-        #         MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+        #         MilestoneSet.MilestoneSet( [], [], []),
         #         pd.DataFrame({
         #             'Date': ['20000101', '20000102', '20000103', '20000104', '20000105', '20000106'],
         #             'Checking': [2000, 1700, 1400, 1100, 800, 800],
@@ -848,7 +832,7 @@ class TestExpenseForecastMethods:
                 ]),
                 '20000101',
                 '20000103',
-                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                MilestoneSet.MilestoneSet( [], [], []),
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103'],
                     'Checking': [5000, 4840, 4840],
@@ -875,7 +859,7 @@ class TestExpenseForecastMethods:
          ]),
          '20000101',
          '20000103',
-         MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+         MilestoneSet.MilestoneSet( [], [], []),
          pd.DataFrame({
              'Date': ['20000101', '20000102', '20000103'],
              'Checking': [5000, 4740, 4740],
@@ -903,7 +887,7 @@ class TestExpenseForecastMethods:
          ]),
          '20000101',
          '20000103',
-         MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+         MilestoneSet.MilestoneSet( [], [], []),
          pd.DataFrame({
              'Date': ['20000101', '20000102', '20000103'],
              'Checking': [5000, 5000 - 150 - 560, 5000 - 150 - 560],
@@ -931,7 +915,7 @@ class TestExpenseForecastMethods:
          ]),
          '20000101',
          '20000103',
-         MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+         MilestoneSet.MilestoneSet( [], [], []),
          pd.DataFrame({
              'Date': ['20000101', '20000102', '20000103'],
              'Checking': [5000, 5000 - 150 - 610, 5000 - 150 - 610],
@@ -960,7 +944,7 @@ class TestExpenseForecastMethods:
          ]),
          '20000101',
          '20000103',
-         MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+         MilestoneSet.MilestoneSet( [], [], []),
          pd.DataFrame({
              'Date': ['20000101', '20000102', '20000103'],
              'Checking': [5000, 5000 - 150 - 1900, 5000 - 150 - 1900],
@@ -988,7 +972,7 @@ class TestExpenseForecastMethods:
          ]),
          '20000101',
          '20000103',
-         MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+         MilestoneSet.MilestoneSet( [], [], []),
          pd.DataFrame({
              'Date': ['20000101', '20000102', '20000103'],
              'Checking': [5000, 1699.56, 1699.56],
@@ -1009,7 +993,7 @@ class TestExpenseForecastMethods:
                                 #         MemoRuleSet.MemoRuleSet(match_p1_test_txn_checking_memo_rule_list()),
                                 #         '20000101',
                                 #         '20000103',
-                                #         MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                                #         MilestoneSet.MilestoneSet( [], [], []),
                                 #         pd.DataFrame({
                                 #             'Date': ['20000101', '20000102', '20000103'],
                                 #             'Checking': [0, 0, 0],
@@ -1047,7 +1031,7 @@ class TestExpenseForecastMethods:
             ] ),
             '20000101',
             '20000103',
-            MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+            MilestoneSet.MilestoneSet( [], [], []),
             pd.DataFrame({
                 'Date': ['20000101', '20000102', '20000103'],
                 'Checking': [1000, 900, 900],
@@ -1072,7 +1056,7 @@ class TestExpenseForecastMethods:
                 ]),
                 '20000101',
                 '20000103',
-                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                MilestoneSet.MilestoneSet( [], [], []),
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103'],
                     'Checking': [1000, 900, 0],
@@ -1094,7 +1078,7 @@ class TestExpenseForecastMethods:
                 ]),
                 '20000101',
                 '20000103',
-                MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], []),
+                MilestoneSet.MilestoneSet( [], [], []),
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103'],
                     'Checking': [1000, 1000, 1000],
@@ -1457,7 +1441,7 @@ class TestExpenseForecastMethods:
                                                        transaction_priority=3)
                                      ])
 
-        MS = MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], [])
+        MS = MilestoneSet.MilestoneSet( [], [], [])
         MS.addAccountMilestone('test account milestone 1', 'Credit', 160, 160)  # doesnt happen
         MS.addAccountMilestone('test account milestone 2', 'Checking', 0, 100)  # does happen
 
@@ -1521,7 +1505,7 @@ class TestExpenseForecastMethods:
                                                        transaction_priority=3)
                                      ])
 
-        MS = MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], [])
+        MS = MilestoneSet.MilestoneSet( [], [], [])
         MS.addAccountMilestone('test account milestone 1', 'Credit', 160, 160)  # doesnt happen
         MS.addAccountMilestone('test account milestone 2', 'Checking', 0, 100)  # does happen
 
@@ -1613,7 +1597,7 @@ class TestExpenseForecastMethods:
                                                        transaction_priority=3)
                                      ])
 
-        MS = MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], [])
+        MS = MilestoneSet.MilestoneSet( [], [], [])
         MS.addAccountMilestone('test account milestone 1', 'Credit', 160, 160)  # doesnt happen
         MS.addAccountMilestone('test account milestone 2', 'Checking', 0, 100)  # does happen
 
@@ -1703,7 +1687,7 @@ class TestExpenseForecastMethods:
                                                        transaction_priority=3)
                                      ])
 
-        MS = MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], [])
+        MS = MilestoneSet.MilestoneSet( [], [], [])
         MS.addAccountMilestone('test account milestone 1', 'Credit', 160, 160)  # doesnt happen
         MS.addAccountMilestone('test account milestone 2', 'Checking', 0, 100)  # does happen
 
@@ -1793,7 +1777,7 @@ class TestExpenseForecastMethods:
                                                        transaction_priority=3)
                                      ])
 
-        MS = MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], [])
+        MS = MilestoneSet.MilestoneSet( [], [], [])
         MS.addAccountMilestone('test account milestone 1', 'Credit', 160, 160)  # doesnt happen
         MS.addAccountMilestone('test account milestone 2', 'Checking', 0, 100)  # does happen
 
@@ -1880,7 +1864,7 @@ class TestExpenseForecastMethods:
                                                        transaction_priority=3)
                                      ])
 
-        MS = MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], [])
+        MS = MilestoneSet.MilestoneSet( [], [], [])
         MS.addAccountMilestone('test account milestone 1', 'Credit', 160, 160)  # doesnt happen
         MS.addAccountMilestone('test account milestone 2', 'Checking', 0, 100)  # does happen
 
@@ -1969,7 +1953,7 @@ class TestExpenseForecastMethods:
                                                    account_to=None,
                                                    transaction_priority=3)
                                  ])
-        MS = MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], [])
+        MS = MilestoneSet.MilestoneSet( [], [], [])
         MS.addAccountMilestone('test account milestone','Checking',0,100)
         MS.addMemoMilestone('test memo milestone','specific regex')
         MS.addAccountMilestone('test account milestone 2', 'Checking', 0, 200)
@@ -2039,7 +2023,7 @@ class TestExpenseForecastMethods:
                                                    account_to=None,
                                                    transaction_priority=3)
                                  ])
-        MS = MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], [])
+        MS = MilestoneSet.MilestoneSet( [], [], [])
         MS.addAccountMilestone('test account milestone', 'Checking', 0, 100)
         MS.addMemoMilestone('test memo milestone', 'specific regex')
         MS.addAccountMilestone('test account milestone', 'Checking', 0, 200)
@@ -2510,7 +2494,7 @@ class TestExpenseForecastMethods:
                                                        account_to=None,
                                                        transaction_priority=1)
                                      ])
-        MS = MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], [])
+        MS = MilestoneSet.MilestoneSet( [], [], [])
 
         E = ExpenseForecast.ExpenseForecast(A, B, M, sd, ed, MS)
 
@@ -2532,7 +2516,7 @@ class TestExpenseForecastMethods:
                                                        account_to=None,
                                                        transaction_priority=1)
                                      ])
-        MS = MilestoneSet.MilestoneSet(AccountSet.AccountSet([]), BudgetSet.BudgetSet([]), [], [], [])
+        MS = MilestoneSet.MilestoneSet( [], [], [])
 
         E = ExpenseForecast.ExpenseForecast(A, B, M, sd, ed, MS)
     #
@@ -2684,8 +2668,6 @@ class TestExpenseForecastMethods:
                     '20000101',
                     '20000103',
                     MilestoneSet.MilestoneSet(
-                    AccountSet.AccountSet(checking_acct_list(10) + credit_acct_list(0, 0, 0.05)),
-                    BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'test txn')]),
                     [AccountMilestone.AccountMilestone('test account milestone','Checking',0,0)], [], []),
                     ['test account milestone'],
                     ['20000102']
@@ -2717,8 +2699,6 @@ class TestExpenseForecastMethods:
                     '20000101',
                     '20000103',
                     MilestoneSet.MilestoneSet(
-                    AccountSet.AccountSet(checking_acct_list(10) + credit_acct_list(0, 0, 0.05)),
-                    BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'memo milestone')]),
                     [], [MemoMilestone.MemoMilestone('test memo milestone','memo milestone')], []),
                     ['test memo milestone'],
                     ['20000102']
@@ -2751,9 +2731,6 @@ class TestExpenseForecastMethods:
                     '20000101',
                     '20000103',
                     MilestoneSet.MilestoneSet(
-                        AccountSet.AccountSet(checking_acct_list(10) + credit_acct_list(0, 0, 0.05)),
-                        BudgetSet.BudgetSet(
-                            [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'memo milestone')]),
                         [AccountMilestone.AccountMilestone('test account milestone','Checking',0,0)],
                         [MemoMilestone.MemoMilestone('test memo milestone', 'memo milestone')],
                         [CompositeMilestone.CompositeMilestone('test composite milestone',

@@ -7,40 +7,40 @@ import AccountMilestone
 
 class MilestoneSet:
 
-    def __init__(self,account_set,budget_set,account_milestones__list,memo_milestones__list,composite_milestones__list):
+    def __init__(self,account_milestones__list,memo_milestones__list,composite_milestones__list):
 
-        for account_milestone in account_milestones__list:
-            all_account_names = set([ a.split(':')[0] for a in account_set.getAccounts().Name ])
-            if not account_milestone.account_name in all_account_names:
-                raise ValueError("Account Name for Milestone not found in accounts: "+str(account_milestone.account_name))
+        # for account_milestone in account_milestones__list:
+        #     all_account_names = set([ a.split(':')[0] for a in account_set.getAccounts().Name ])
+        #     if not account_milestone.account_name in all_account_names:
+        #         raise ValueError("Account Name for Milestone not found in accounts: "+str(account_milestone.account_name))
 
         self.account_milestones = account_milestones__list
 
-        for memo_milestone in memo_milestones__list:
-            match_found = False
-            for index2, row2 in budget_set.getBudgetItems().iterrows():
-                if re.search(memo_milestone.memo_regex,row2.Memo) is not None:
-                    match_found = True
-
-            if not match_found:
-                raise ValueError("Memo Milestone had no matches in budgetset, so no match during forecast calculation is possible.")
+        # for memo_milestone in memo_milestones__list:
+        #     match_found = False
+        #     for index2, row2 in budget_set.getBudgetItems().iterrows():
+        #         if re.search(memo_milestone.memo_regex,row2.Memo) is not None:
+        #             match_found = True
+        #
+        #     if not match_found:
+        #         raise ValueError("Memo Milestone had no matches in budgetset, so no match during forecast calculation is possible.")
 
         self.memo_milestones = memo_milestones__list
 
-        for cm in composite_milestones__list:
-            for account_milestone in cm.account_milestones:
-                all_account_names = set([ a.split(':')[0] for a in account_set.getAccounts().Name ])
-                if not account_milestone.account_name in all_account_names:
-                    raise ValueError("Account Name for Milestone in Composite Milestone not found in accounts: "+str(account_milestone.account_name))
-
-            for memo_milestone in memo_milestones__list:
-                match_found = False
-                for index2, row2 in budget_set.getBudgetItems().iterrows():
-                    if re.search(memo_milestone.memo_regex,row2.Memo) is not None:
-                        match_found = True
-
-                if not match_found:
-                    raise ValueError("Memo Milestone in Composite Milestone had no matches in budgetset, so no match during forecast calculation is possible.")
+        # for cm in composite_milestones__list:
+        #     for account_milestone in cm.account_milestones:
+        #         all_account_names = set([ a.split(':')[0] for a in account_set.getAccounts().Name ])
+        #         if not account_milestone.account_name in all_account_names:
+        #             raise ValueError("Account Name for Milestone in Composite Milestone not found in accounts: "+str(account_milestone.account_name))
+        #
+        #     for memo_milestone in memo_milestones__list:
+        #         match_found = False
+        #         for index2, row2 in budget_set.getBudgetItems().iterrows():
+        #             if re.search(memo_milestone.memo_regex,row2.Memo) is not None:
+        #                 match_found = True
+        #
+        #         if not match_found:
+        #             raise ValueError("Memo Milestone in Composite Milestone had no matches in budgetset, so no match during forecast calculation is possible.")
 
         self.composite_milestones = composite_milestones__list
 

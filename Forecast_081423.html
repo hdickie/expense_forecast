@@ -1,0 +1,8977 @@
+
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Expense Forecast Report #081423</title>
+        <style>
+        /* Style the tab */
+        .tab {
+          overflow: hidden;
+          border: 1px solid #ccc;
+          background-color: #f1f1f1;
+        }
+
+        /* Style the buttons that are used to open the tab content */
+        .tab button {
+          background-color: inherit;
+          float: left;
+          border: none;
+          outline: none;
+          cursor: pointer;
+          padding: 14px 16px;
+          transition: 0.3s;
+        }
+
+        /* Change background color of buttons on hover */
+        .tab button:hover {
+          background-color: #ddd;
+        }
+
+        /* Create an active/current tablink class */
+        .tab button.active {
+          background-color: #ccc;
+        }
+
+        /* Style the tab content */
+        .tabcontent {
+          display: none;
+          padding: 6px 12px;
+          border: 1px solid #ccc;
+          border-top: none;
+        }
+        </style>
+
+
+        </head>
+        <body>
+        <h1>Expense Forecast Report #081423</h1>
+        <p>2024-01-01 to 2026-01-01 </p>
+
+        <!-- Tab links -->
+        <div class="tab">
+          <button class="tablinks active" onclick="openTab(event, 'ForecastParameters')">Forecast Parameters</button>
+          <button class="tablinks" onclick="openTab(event, 'NetWorth')">Net Worth</button>
+          <button class="tablinks" onclick="openTab(event, 'NetGainLoss')">Net Gain & Loss</button>
+          <button class="tablinks" onclick="openTab(event, 'AccountType')">Account Type</button>
+          <button class="tablinks" onclick="openTab(event, 'Interest')">Interest</button>
+          <button class="tablinks" onclick="openTab(event, 'Milestones')">Milestones</button>
+          <button class="tablinks" onclick="openTab(event, 'All')">All</button>
+          <button class="tablinks" onclick="openTab(event, 'TransactionSchedule')">Transaction Schedule</button>
+          <button class="tablinks" onclick="openTab(event, 'Forecast Results')">Forecast Results</button>
+        </div>
+
+        <!-- Tab content -->
+        <div id="ForecastParameters" class="tabcontent">
+          <h3>Forecast Parameters</h3>
+          <p>
+        This forecast started at 2024-01-21 06:51:27, took 0:06:55 to complete, and finished at 2024-01-21 06:58:22.
+        </p>
+          <h3>Accounts</h3>
+          <p>
+        The initial conditions and account boundaries are defined as:<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Name</th>
+      <th>Balance</th>
+      <th>Min_Balance</th>
+      <th>Max_Balance</th>
+      <th>Account_Type</th>
+      <th>Billing_Start_Dt</th>
+      <th>Interest_Type</th>
+      <th>APR</th>
+      <th>Interest_Cadence</th>
+      <th>Minimum_Payment</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Checking</td>
+      <td>4000.00</td>
+      <td>0.0</td>
+      <td>99999.0</td>
+      <td>checking</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Credit: Curr Stmt Bal</td>
+      <td>0.00</td>
+      <td>0.0</td>
+      <td>25000.0</td>
+      <td>curr stmt bal</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Credit: Prev Stmt Bal</td>
+      <td>23751.93</td>
+      <td>0.0</td>
+      <td>25000.0</td>
+      <td>prev stmt bal</td>
+      <td>20240107</td>
+      <td>compound</td>
+      <td>0.24</td>
+      <td>monthly</td>
+      <td>40.0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Loan A: Principal Balance</td>
+      <td>15000.00</td>
+      <td>0.0</td>
+      <td>25000.0</td>
+      <td>principal balance</td>
+      <td>20240601</td>
+      <td>simple</td>
+      <td>0.06</td>
+      <td>daily</td>
+      <td>113.0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Loan A: Interest</td>
+      <td>100.00</td>
+      <td>0.0</td>
+      <td>25000.0</td>
+      <td>interest</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+  </tbody>
+</table>
+        </p>
+          <h3>Budget Items</h3>
+          <p>
+        These transactions are considered for analysis:<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Start_Date</th>
+      <th>End_Date</th>
+      <th>Priority</th>
+      <th>Cadence</th>
+      <th>Amount</th>
+      <th>Memo</th>
+      <th>Deferrable</th>
+      <th>Partial_Payment_Allowed</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>20240101</td>
+      <td>20260101</td>
+      <td>1</td>
+      <td>daily</td>
+      <td>10.00</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>20260101</td>
+      <td>20260101</td>
+      <td>1</td>
+      <td>daily</td>
+      <td>20.00</td>
+      <td>nice food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>20240118</td>
+      <td>20260101</td>
+      <td>1</td>
+      <td>monthly</td>
+      <td>89.00</td>
+      <td>car insurance</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>20240401</td>
+      <td>20260101</td>
+      <td>1</td>
+      <td>monthly</td>
+      <td>1200.00</td>
+      <td>rent</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>20240214</td>
+      <td>20260101</td>
+      <td>1</td>
+      <td>semiweekly</td>
+      <td>80.00</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>20240301</td>
+      <td>20250101</td>
+      <td>1</td>
+      <td>semiweekly</td>
+      <td>1200.00</td>
+      <td>emt income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>20250101</td>
+      <td>20260101</td>
+      <td>1</td>
+      <td>semiweekly</td>
+      <td>1700.00</td>
+      <td>er tech income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>20240601</td>
+      <td>20260101</td>
+      <td>1</td>
+      <td>semiweekly</td>
+      <td>50.00</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>20240602</td>
+      <td>20240602</td>
+      <td>1</td>
+      <td>once</td>
+      <td>1245.97</td>
+      <td>tax debt</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>20250101</td>
+      <td>20260101</td>
+      <td>1</td>
+      <td>monthly</td>
+      <td>800.00</td>
+      <td>additional cc payment</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+  </tbody>
+</table>
+        </p>
+          <h3>Memo Rules</h3>
+          <p>
+        These decision rules are used:<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Memo_Regex</th>
+      <th>Account_From</th>
+      <th>Account_To</th>
+      <th>Transaction_Priority</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>car insurance</td>
+      <td>Checking</td>
+      <td>None</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>gas</td>
+      <td>Checking</td>
+      <td>None</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>food</td>
+      <td>Checking</td>
+      <td>None</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>rent</td>
+      <td>Checking</td>
+      <td>None</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>gym</td>
+      <td>Checking</td>
+      <td>None</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>tax debt</td>
+      <td>Checking</td>
+      <td>None</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>additional cc payment</td>
+      <td>Checking</td>
+      <td>Credit</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>.*income.*</td>
+      <td>None</td>
+      <td>Checking</td>
+      <td>1.0</td>
+    </tr>
+  </tbody>
+</table>
+        </p>
+          <h3>Account Milestones</h3>
+          <p>
+        These account milestones are defined:<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Milestone_Name</th>
+      <th>Account_Name</th>
+      <th>Min_Balance</th>
+      <th>Max_Balance</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+        </p>
+          <h3>Memo Milestones</h3>
+          <p>
+        These memo milestones are defined:<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Milestone_Name</th>
+      <th>Memo_Regex</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+        </p>
+          <h3>Composite Milestones</h3>
+          <p>
+        These composite milestones are defined:<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Composite_Milestone_Name</th>
+      <th>Milestone_Type</th>
+      <th>Milestone_Name</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+        </p>
+        </div>
+
+        <div id="NetWorth" class="tabcontent">
+          <h3>Net Worth</h3>
+          <p>
+        Net Worth began at $-34,851.93 and rose to $-34,851.93 over 1 days, averaging $0.0 per day.
+        </p>
+          <img src="081423_networth_line_plot.png">
+        </div>
+
+        <div id="NetGainLoss" class="tabcontent">
+          <h3>Net Gain & Loss</h3>
+          <p>Total gain was $0.0 over 1 days, averaging $0.0 per day.<br><br>Total loss was -$0.0 over 1 days, averaging -$0.0 per day.</p>
+          <img src="081423_net_gain_loss_line_plot.png">
+        </div>
+
+        <div id="AccountType" class="tabcontent">
+          <h3>Account Type</h3>
+          <p>
+        Loan debt began at $15,100.0 and rose to $15,100.0 over 1 days, averaging $0.0 per day.
+        <br><br>
+        Credit card debt began at $23,751.93 and rose to $23,751.93 over 1 days, averaging $0.0 per day.
+        <br><br>
+        Liquid cash began at $4,000.0 and rose to $4,000.0 over 1 days, averaging $0.0 per day.
+        </p>
+          <img src="081423_accounttype_line_plot.png">
+        </div>
+
+        <div id="Interest" class="tabcontent">
+          <h3>Interest</h3>
+          <p>Total interest accrued was $0.0 over 1 days, averaging $0.0 per day.<br>This plot shows the new interest by day, not the total interest at a given time.</p>
+          <img src="081423_marginal_interest_line_plot.png">
+        </div>
+        
+        <div id="Milestones" class="tabcontent">
+          <h3>Milestones</h3>
+          <p>0 milestones were defined, and 0 were achieved before the end of the forecast.<br>Note that unachieved milestones are displayed on the last day of the forecast.</p>
+          
+          <img src="081423_milestone_scatter_plot.png">
+          
+          <h4>Account Milestones</h4>
+          <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Milestone_Name</th>
+      <th>Date</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table> <br>
+          <h4>Memo Milestones</h4>
+          <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Milestone_Name</th>
+      <th>Date</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table> <br>
+          <h4>Composite Milestones</h4>
+          <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Milestone_Name</th>
+      <th>Date</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table> <br>
+          
+        </div>
+
+        <div id="All" class="tabcontent">
+          <h3>All</h3>
+          <p></p>
+          <img src="081423_all_line_plot.png">
+        </div>
+        
+        <div id="TransactionSchedule" class="tabcontent">
+          <h3>Transaction Schedule</h3>
+          <p>Transactions are displayed below. Note that loan and credit card minimum payments are not shown.</p>
+          <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Date</th>
+      <th>Priority</th>
+      <th>Amount</th>
+      <th>Memo</th>
+      <th>Deferrable</th>
+      <th>Partial_Payment_Allowed</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>20240101</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>20240102</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>20240103</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>20240104</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>20240105</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>20240106</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>20240107</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>20240108</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>20240109</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>20240110</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>20240111</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>20240112</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>20240113</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>20240114</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>20240115</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>20240116</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>16</th>
+      <td>20240117</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>20240118</td>
+      <td>1</td>
+      <td>89.0</td>
+      <td>car insurance</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>18</th>
+      <td>20240118</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>19</th>
+      <td>20240119</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>20240120</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>21</th>
+      <td>20240121</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>22</th>
+      <td>20240122</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>23</th>
+      <td>20240123</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>24</th>
+      <td>20240124</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>25</th>
+      <td>20240125</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>26</th>
+      <td>20240126</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>27</th>
+      <td>20240127</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>28</th>
+      <td>20240128</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>29</th>
+      <td>20240129</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>30</th>
+      <td>20240130</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>31</th>
+      <td>20240131</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>32</th>
+      <td>20240201</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>33</th>
+      <td>20240202</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>34</th>
+      <td>20240203</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>35</th>
+      <td>20240204</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>36</th>
+      <td>20240205</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>37</th>
+      <td>20240206</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>38</th>
+      <td>20240207</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>39</th>
+      <td>20240208</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>40</th>
+      <td>20240209</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>41</th>
+      <td>20240210</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>42</th>
+      <td>20240211</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>43</th>
+      <td>20240212</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>44</th>
+      <td>20240213</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>45</th>
+      <td>20240214</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>46</th>
+      <td>20240215</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>47</th>
+      <td>20240216</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>48</th>
+      <td>20240216</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>49</th>
+      <td>20240217</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>50</th>
+      <td>20240218</td>
+      <td>1</td>
+      <td>89.0</td>
+      <td>car insurance</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>51</th>
+      <td>20240218</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>52</th>
+      <td>20240219</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>53</th>
+      <td>20240220</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>54</th>
+      <td>20240221</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>55</th>
+      <td>20240222</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>56</th>
+      <td>20240223</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>57</th>
+      <td>20240224</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>58</th>
+      <td>20240225</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>59</th>
+      <td>20240226</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>60</th>
+      <td>20240227</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>61</th>
+      <td>20240228</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>62</th>
+      <td>20240229</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>63</th>
+      <td>20240301</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>64</th>
+      <td>20240301</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>65</th>
+      <td>20240302</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>emt income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>66</th>
+      <td>20240302</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>67</th>
+      <td>20240303</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>68</th>
+      <td>20240304</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>69</th>
+      <td>20240305</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>70</th>
+      <td>20240306</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>71</th>
+      <td>20240307</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>72</th>
+      <td>20240308</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>73</th>
+      <td>20240309</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>74</th>
+      <td>20240310</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>75</th>
+      <td>20240311</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>76</th>
+      <td>20240312</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>77</th>
+      <td>20240313</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>78</th>
+      <td>20240314</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>79</th>
+      <td>20240315</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>80</th>
+      <td>20240315</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>81</th>
+      <td>20240316</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>emt income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>82</th>
+      <td>20240316</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>83</th>
+      <td>20240317</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>84</th>
+      <td>20240318</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>85</th>
+      <td>20240318</td>
+      <td>1</td>
+      <td>89.0</td>
+      <td>car insurance</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>86</th>
+      <td>20240319</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>87</th>
+      <td>20240320</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>88</th>
+      <td>20240321</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>89</th>
+      <td>20240322</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>90</th>
+      <td>20240323</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>91</th>
+      <td>20240324</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>92</th>
+      <td>20240325</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>93</th>
+      <td>20240326</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>94</th>
+      <td>20240327</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>95</th>
+      <td>20240328</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>96</th>
+      <td>20240329</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>97</th>
+      <td>20240329</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>98</th>
+      <td>20240330</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>99</th>
+      <td>20240330</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>emt income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>100</th>
+      <td>20240331</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>101</th>
+      <td>20240401</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>rent</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>102</th>
+      <td>20240401</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>103</th>
+      <td>20240402</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>104</th>
+      <td>20240403</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>105</th>
+      <td>20240404</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>106</th>
+      <td>20240405</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>107</th>
+      <td>20240406</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>108</th>
+      <td>20240407</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>109</th>
+      <td>20240408</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>110</th>
+      <td>20240409</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>111</th>
+      <td>20240410</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>112</th>
+      <td>20240411</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>113</th>
+      <td>20240412</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>114</th>
+      <td>20240412</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>115</th>
+      <td>20240413</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>emt income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>116</th>
+      <td>20240413</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>117</th>
+      <td>20240414</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>118</th>
+      <td>20240415</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>119</th>
+      <td>20240416</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>120</th>
+      <td>20240417</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>121</th>
+      <td>20240418</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>122</th>
+      <td>20240418</td>
+      <td>1</td>
+      <td>89.0</td>
+      <td>car insurance</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>123</th>
+      <td>20240419</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>124</th>
+      <td>20240420</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>125</th>
+      <td>20240421</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>126</th>
+      <td>20240422</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>127</th>
+      <td>20240423</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>128</th>
+      <td>20240424</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>129</th>
+      <td>20240425</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>130</th>
+      <td>20240426</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>131</th>
+      <td>20240426</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>132</th>
+      <td>20240427</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>133</th>
+      <td>20240427</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>emt income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>134</th>
+      <td>20240428</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>135</th>
+      <td>20240429</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>136</th>
+      <td>20240430</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>137</th>
+      <td>20240501</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>138</th>
+      <td>20240501</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>rent</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>139</th>
+      <td>20240502</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>140</th>
+      <td>20240503</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>141</th>
+      <td>20240504</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>142</th>
+      <td>20240505</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>143</th>
+      <td>20240506</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>144</th>
+      <td>20240507</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>145</th>
+      <td>20240508</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>146</th>
+      <td>20240509</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>147</th>
+      <td>20240510</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>148</th>
+      <td>20240510</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>149</th>
+      <td>20240511</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>emt income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>150</th>
+      <td>20240511</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>151</th>
+      <td>20240512</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>152</th>
+      <td>20240513</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>153</th>
+      <td>20240514</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>154</th>
+      <td>20240515</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>155</th>
+      <td>20240516</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>156</th>
+      <td>20240517</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>157</th>
+      <td>20240518</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>158</th>
+      <td>20240518</td>
+      <td>1</td>
+      <td>89.0</td>
+      <td>car insurance</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>159</th>
+      <td>20240519</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>160</th>
+      <td>20240520</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>161</th>
+      <td>20240521</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>162</th>
+      <td>20240522</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>163</th>
+      <td>20240523</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>164</th>
+      <td>20240524</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>165</th>
+      <td>20240524</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>166</th>
+      <td>20240525</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>emt income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>167</th>
+      <td>20240525</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>168</th>
+      <td>20240526</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>169</th>
+      <td>20240527</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>170</th>
+      <td>20240528</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>171</th>
+      <td>20240529</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>172</th>
+      <td>20240530</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>173</th>
+      <td>20240531</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>174</th>
+      <td>20240601</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>175</th>
+      <td>20240601</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>rent</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>176</th>
+      <td>20240601</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>177</th>
+      <td>20240602</td>
+      <td>1</td>
+      <td>1245.97</td>
+      <td>tax debt</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>178</th>
+      <td>20240602</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>179</th>
+      <td>20240603</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>180</th>
+      <td>20240604</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>181</th>
+      <td>20240605</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>182</th>
+      <td>20240606</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>183</th>
+      <td>20240607</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>184</th>
+      <td>20240607</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>185</th>
+      <td>20240608</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>emt income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>186</th>
+      <td>20240608</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>187</th>
+      <td>20240609</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>188</th>
+      <td>20240610</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>189</th>
+      <td>20240611</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>190</th>
+      <td>20240612</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>191</th>
+      <td>20240613</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>192</th>
+      <td>20240614</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>193</th>
+      <td>20240615</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>194</th>
+      <td>20240615</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>195</th>
+      <td>20240616</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>196</th>
+      <td>20240617</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>197</th>
+      <td>20240618</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>198</th>
+      <td>20240618</td>
+      <td>1</td>
+      <td>89.0</td>
+      <td>car insurance</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>199</th>
+      <td>20240619</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>200</th>
+      <td>20240620</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>201</th>
+      <td>20240621</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>202</th>
+      <td>20240621</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>203</th>
+      <td>20240622</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>204</th>
+      <td>20240622</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>emt income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>205</th>
+      <td>20240623</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>206</th>
+      <td>20240624</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>207</th>
+      <td>20240625</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>208</th>
+      <td>20240626</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>209</th>
+      <td>20240627</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>210</th>
+      <td>20240628</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>211</th>
+      <td>20240629</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>212</th>
+      <td>20240629</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>213</th>
+      <td>20240630</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>214</th>
+      <td>20240701</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>215</th>
+      <td>20240701</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>rent</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>216</th>
+      <td>20240702</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>217</th>
+      <td>20240703</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>218</th>
+      <td>20240704</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>219</th>
+      <td>20240705</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>220</th>
+      <td>20240705</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>221</th>
+      <td>20240706</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>222</th>
+      <td>20240706</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>emt income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>223</th>
+      <td>20240707</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>224</th>
+      <td>20240708</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>225</th>
+      <td>20240709</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>226</th>
+      <td>20240710</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>227</th>
+      <td>20240711</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>228</th>
+      <td>20240712</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>229</th>
+      <td>20240713</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>230</th>
+      <td>20240713</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>231</th>
+      <td>20240714</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>232</th>
+      <td>20240715</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>233</th>
+      <td>20240716</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>234</th>
+      <td>20240717</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>235</th>
+      <td>20240718</td>
+      <td>1</td>
+      <td>89.0</td>
+      <td>car insurance</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>236</th>
+      <td>20240718</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>237</th>
+      <td>20240719</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>238</th>
+      <td>20240719</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>239</th>
+      <td>20240720</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>emt income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>240</th>
+      <td>20240720</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>241</th>
+      <td>20240721</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>242</th>
+      <td>20240722</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>243</th>
+      <td>20240723</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>244</th>
+      <td>20240724</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>245</th>
+      <td>20240725</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>246</th>
+      <td>20240726</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>247</th>
+      <td>20240727</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>248</th>
+      <td>20240727</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>249</th>
+      <td>20240728</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>250</th>
+      <td>20240729</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>251</th>
+      <td>20240730</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>252</th>
+      <td>20240731</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>253</th>
+      <td>20240801</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>254</th>
+      <td>20240801</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>rent</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>255</th>
+      <td>20240802</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>256</th>
+      <td>20240802</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>257</th>
+      <td>20240803</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>258</th>
+      <td>20240803</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>emt income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>259</th>
+      <td>20240804</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>260</th>
+      <td>20240805</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>261</th>
+      <td>20240806</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>262</th>
+      <td>20240807</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>263</th>
+      <td>20240808</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>264</th>
+      <td>20240809</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>265</th>
+      <td>20240810</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>266</th>
+      <td>20240810</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>267</th>
+      <td>20240811</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>268</th>
+      <td>20240812</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>269</th>
+      <td>20240813</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>270</th>
+      <td>20240814</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>271</th>
+      <td>20240815</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>272</th>
+      <td>20240816</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>273</th>
+      <td>20240816</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>274</th>
+      <td>20240817</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>emt income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>275</th>
+      <td>20240817</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>276</th>
+      <td>20240818</td>
+      <td>1</td>
+      <td>89.0</td>
+      <td>car insurance</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>277</th>
+      <td>20240818</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>278</th>
+      <td>20240819</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>279</th>
+      <td>20240820</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>280</th>
+      <td>20240821</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>281</th>
+      <td>20240822</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>282</th>
+      <td>20240823</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>283</th>
+      <td>20240824</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>284</th>
+      <td>20240824</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>285</th>
+      <td>20240825</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>286</th>
+      <td>20240826</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>287</th>
+      <td>20240827</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>288</th>
+      <td>20240828</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>289</th>
+      <td>20240829</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>290</th>
+      <td>20240830</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>291</th>
+      <td>20240830</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>292</th>
+      <td>20240831</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>293</th>
+      <td>20240831</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>emt income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>294</th>
+      <td>20240901</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>295</th>
+      <td>20240901</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>rent</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>296</th>
+      <td>20240902</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>297</th>
+      <td>20240903</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>298</th>
+      <td>20240904</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>299</th>
+      <td>20240905</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>300</th>
+      <td>20240906</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>301</th>
+      <td>20240907</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>302</th>
+      <td>20240907</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>303</th>
+      <td>20240908</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>304</th>
+      <td>20240909</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>305</th>
+      <td>20240910</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>306</th>
+      <td>20240911</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>307</th>
+      <td>20240912</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>308</th>
+      <td>20240913</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>309</th>
+      <td>20240913</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>310</th>
+      <td>20240914</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>311</th>
+      <td>20240914</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>emt income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>312</th>
+      <td>20240915</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>313</th>
+      <td>20240916</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>314</th>
+      <td>20240917</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>315</th>
+      <td>20240918</td>
+      <td>1</td>
+      <td>89.0</td>
+      <td>car insurance</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>316</th>
+      <td>20240918</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>317</th>
+      <td>20240919</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>318</th>
+      <td>20240920</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>319</th>
+      <td>20240921</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>320</th>
+      <td>20240921</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>321</th>
+      <td>20240922</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>322</th>
+      <td>20240923</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>323</th>
+      <td>20240924</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>324</th>
+      <td>20240925</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>325</th>
+      <td>20240926</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>326</th>
+      <td>20240927</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>327</th>
+      <td>20240927</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>328</th>
+      <td>20240928</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>emt income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>329</th>
+      <td>20240928</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>330</th>
+      <td>20240929</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>331</th>
+      <td>20240930</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>332</th>
+      <td>20241001</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>333</th>
+      <td>20241001</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>rent</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>334</th>
+      <td>20241002</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>335</th>
+      <td>20241003</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>336</th>
+      <td>20241004</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>337</th>
+      <td>20241005</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>338</th>
+      <td>20241005</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>339</th>
+      <td>20241006</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>340</th>
+      <td>20241007</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>341</th>
+      <td>20241008</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>342</th>
+      <td>20241009</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>343</th>
+      <td>20241010</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>344</th>
+      <td>20241011</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>345</th>
+      <td>20241011</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>346</th>
+      <td>20241012</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>347</th>
+      <td>20241012</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>emt income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>348</th>
+      <td>20241013</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>349</th>
+      <td>20241014</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>350</th>
+      <td>20241015</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>351</th>
+      <td>20241016</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>352</th>
+      <td>20241017</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>353</th>
+      <td>20241018</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>354</th>
+      <td>20241018</td>
+      <td>1</td>
+      <td>89.0</td>
+      <td>car insurance</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>355</th>
+      <td>20241019</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>356</th>
+      <td>20241019</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>357</th>
+      <td>20241020</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>358</th>
+      <td>20241021</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>359</th>
+      <td>20241022</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>360</th>
+      <td>20241023</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>361</th>
+      <td>20241024</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>362</th>
+      <td>20241025</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>363</th>
+      <td>20241025</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>364</th>
+      <td>20241026</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>emt income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>365</th>
+      <td>20241026</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>366</th>
+      <td>20241027</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>367</th>
+      <td>20241028</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>368</th>
+      <td>20241029</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>369</th>
+      <td>20241030</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>370</th>
+      <td>20241031</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>371</th>
+      <td>20241101</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>372</th>
+      <td>20241101</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>rent</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>373</th>
+      <td>20241102</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>374</th>
+      <td>20241102</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>375</th>
+      <td>20241103</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>376</th>
+      <td>20241104</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>377</th>
+      <td>20241105</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>378</th>
+      <td>20241106</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>379</th>
+      <td>20241107</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>380</th>
+      <td>20241108</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>381</th>
+      <td>20241108</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>382</th>
+      <td>20241109</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>383</th>
+      <td>20241109</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>emt income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>384</th>
+      <td>20241110</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>385</th>
+      <td>20241111</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>386</th>
+      <td>20241112</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>387</th>
+      <td>20241113</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>388</th>
+      <td>20241114</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>389</th>
+      <td>20241115</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>390</th>
+      <td>20241116</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>391</th>
+      <td>20241116</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>392</th>
+      <td>20241117</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>393</th>
+      <td>20241118</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>394</th>
+      <td>20241118</td>
+      <td>1</td>
+      <td>89.0</td>
+      <td>car insurance</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>395</th>
+      <td>20241119</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>396</th>
+      <td>20241120</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>397</th>
+      <td>20241121</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>398</th>
+      <td>20241122</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>399</th>
+      <td>20241122</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>400</th>
+      <td>20241123</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>401</th>
+      <td>20241123</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>emt income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>402</th>
+      <td>20241124</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>403</th>
+      <td>20241125</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>404</th>
+      <td>20241126</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>405</th>
+      <td>20241127</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>406</th>
+      <td>20241128</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>407</th>
+      <td>20241129</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>408</th>
+      <td>20241130</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>409</th>
+      <td>20241130</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>410</th>
+      <td>20241201</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>rent</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>411</th>
+      <td>20241201</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>412</th>
+      <td>20241202</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>413</th>
+      <td>20241203</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>414</th>
+      <td>20241204</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>415</th>
+      <td>20241205</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>416</th>
+      <td>20241206</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>417</th>
+      <td>20241206</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>418</th>
+      <td>20241207</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>emt income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>419</th>
+      <td>20241207</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>420</th>
+      <td>20241208</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>421</th>
+      <td>20241209</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>422</th>
+      <td>20241210</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>423</th>
+      <td>20241211</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>424</th>
+      <td>20241212</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>425</th>
+      <td>20241213</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>426</th>
+      <td>20241214</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>427</th>
+      <td>20241214</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>428</th>
+      <td>20241215</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>429</th>
+      <td>20241216</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>430</th>
+      <td>20241217</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>431</th>
+      <td>20241218</td>
+      <td>1</td>
+      <td>89.0</td>
+      <td>car insurance</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>432</th>
+      <td>20241218</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>433</th>
+      <td>20241219</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>434</th>
+      <td>20241220</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>435</th>
+      <td>20241220</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>436</th>
+      <td>20241221</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>437</th>
+      <td>20241221</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>emt income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>438</th>
+      <td>20241222</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>439</th>
+      <td>20241223</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>440</th>
+      <td>20241224</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>441</th>
+      <td>20241225</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>442</th>
+      <td>20241226</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>443</th>
+      <td>20241227</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>444</th>
+      <td>20241228</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>445</th>
+      <td>20241228</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>446</th>
+      <td>20241229</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>447</th>
+      <td>20241230</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>448</th>
+      <td>20241231</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>449</th>
+      <td>20250101</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>rent</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>450</th>
+      <td>20250101</td>
+      <td>1</td>
+      <td>800.0</td>
+      <td>additional cc payment</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>451</th>
+      <td>20250101</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>452</th>
+      <td>20250102</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>453</th>
+      <td>20250103</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>454</th>
+      <td>20250103</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>455</th>
+      <td>20250104</td>
+      <td>1</td>
+      <td>1700.0</td>
+      <td>er tech income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>456</th>
+      <td>20250104</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>457</th>
+      <td>20250105</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>458</th>
+      <td>20250106</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>459</th>
+      <td>20250107</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>460</th>
+      <td>20250108</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>461</th>
+      <td>20250109</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>462</th>
+      <td>20250110</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>463</th>
+      <td>20250111</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>464</th>
+      <td>20250111</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>465</th>
+      <td>20250112</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>466</th>
+      <td>20250113</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>467</th>
+      <td>20250114</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>468</th>
+      <td>20250115</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>469</th>
+      <td>20250116</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>470</th>
+      <td>20250117</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>471</th>
+      <td>20250117</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>472</th>
+      <td>20250118</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>473</th>
+      <td>20250118</td>
+      <td>1</td>
+      <td>89.0</td>
+      <td>car insurance</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>474</th>
+      <td>20250118</td>
+      <td>1</td>
+      <td>1700.0</td>
+      <td>er tech income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>475</th>
+      <td>20250119</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>476</th>
+      <td>20250120</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>477</th>
+      <td>20250121</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>478</th>
+      <td>20250122</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>479</th>
+      <td>20250123</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>480</th>
+      <td>20250124</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>481</th>
+      <td>20250125</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>482</th>
+      <td>20250125</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>483</th>
+      <td>20250126</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>484</th>
+      <td>20250127</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>485</th>
+      <td>20250128</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>486</th>
+      <td>20250129</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>487</th>
+      <td>20250130</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>488</th>
+      <td>20250131</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>489</th>
+      <td>20250131</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>490</th>
+      <td>20250201</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>491</th>
+      <td>20250201</td>
+      <td>1</td>
+      <td>800.0</td>
+      <td>additional cc payment</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>492</th>
+      <td>20250201</td>
+      <td>1</td>
+      <td>1700.0</td>
+      <td>er tech income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>493</th>
+      <td>20250201</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>rent</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>494</th>
+      <td>20250202</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>495</th>
+      <td>20250203</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>496</th>
+      <td>20250204</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>497</th>
+      <td>20250205</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>498</th>
+      <td>20250206</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>499</th>
+      <td>20250207</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>500</th>
+      <td>20250208</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>501</th>
+      <td>20250208</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>502</th>
+      <td>20250209</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>503</th>
+      <td>20250210</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>504</th>
+      <td>20250211</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>505</th>
+      <td>20250212</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>506</th>
+      <td>20250213</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>507</th>
+      <td>20250214</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>508</th>
+      <td>20250214</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>509</th>
+      <td>20250215</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>510</th>
+      <td>20250215</td>
+      <td>1</td>
+      <td>1700.0</td>
+      <td>er tech income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>511</th>
+      <td>20250216</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>512</th>
+      <td>20250217</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>513</th>
+      <td>20250218</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>514</th>
+      <td>20250218</td>
+      <td>1</td>
+      <td>89.0</td>
+      <td>car insurance</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>515</th>
+      <td>20250219</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>516</th>
+      <td>20250220</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>517</th>
+      <td>20250221</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>518</th>
+      <td>20250222</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>519</th>
+      <td>20250222</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>520</th>
+      <td>20250223</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>521</th>
+      <td>20250224</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>522</th>
+      <td>20250225</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>523</th>
+      <td>20250226</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>524</th>
+      <td>20250227</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>525</th>
+      <td>20250228</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>526</th>
+      <td>20250228</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>527</th>
+      <td>20250301</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>rent</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>528</th>
+      <td>20250301</td>
+      <td>1</td>
+      <td>800.0</td>
+      <td>additional cc payment</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>529</th>
+      <td>20250301</td>
+      <td>1</td>
+      <td>1700.0</td>
+      <td>er tech income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>530</th>
+      <td>20250301</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>531</th>
+      <td>20250302</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>532</th>
+      <td>20250303</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>533</th>
+      <td>20250304</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>534</th>
+      <td>20250305</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>535</th>
+      <td>20250306</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>536</th>
+      <td>20250307</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>537</th>
+      <td>20250308</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>538</th>
+      <td>20250308</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>539</th>
+      <td>20250309</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>540</th>
+      <td>20250310</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>541</th>
+      <td>20250311</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>542</th>
+      <td>20250312</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>543</th>
+      <td>20250313</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>544</th>
+      <td>20250314</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>545</th>
+      <td>20250314</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>546</th>
+      <td>20250315</td>
+      <td>1</td>
+      <td>1700.0</td>
+      <td>er tech income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>547</th>
+      <td>20250315</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>548</th>
+      <td>20250316</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>549</th>
+      <td>20250317</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>550</th>
+      <td>20250318</td>
+      <td>1</td>
+      <td>89.0</td>
+      <td>car insurance</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>551</th>
+      <td>20250318</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>552</th>
+      <td>20250319</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>553</th>
+      <td>20250320</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>554</th>
+      <td>20250321</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>555</th>
+      <td>20250322</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>556</th>
+      <td>20250322</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>557</th>
+      <td>20250323</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>558</th>
+      <td>20250324</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>559</th>
+      <td>20250325</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>560</th>
+      <td>20250326</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>561</th>
+      <td>20250327</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>562</th>
+      <td>20250328</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>563</th>
+      <td>20250328</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>564</th>
+      <td>20250329</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>565</th>
+      <td>20250329</td>
+      <td>1</td>
+      <td>1700.0</td>
+      <td>er tech income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>566</th>
+      <td>20250330</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>567</th>
+      <td>20250331</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>568</th>
+      <td>20250401</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>569</th>
+      <td>20250401</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>rent</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>570</th>
+      <td>20250401</td>
+      <td>1</td>
+      <td>800.0</td>
+      <td>additional cc payment</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>571</th>
+      <td>20250402</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>572</th>
+      <td>20250403</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>573</th>
+      <td>20250404</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>574</th>
+      <td>20250405</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>575</th>
+      <td>20250405</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>576</th>
+      <td>20250406</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>577</th>
+      <td>20250407</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>578</th>
+      <td>20250408</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>579</th>
+      <td>20250409</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>580</th>
+      <td>20250410</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>581</th>
+      <td>20250411</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>582</th>
+      <td>20250411</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>583</th>
+      <td>20250412</td>
+      <td>1</td>
+      <td>1700.0</td>
+      <td>er tech income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>584</th>
+      <td>20250412</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>585</th>
+      <td>20250413</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>586</th>
+      <td>20250414</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>587</th>
+      <td>20250415</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>588</th>
+      <td>20250416</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>589</th>
+      <td>20250417</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>590</th>
+      <td>20250418</td>
+      <td>1</td>
+      <td>89.0</td>
+      <td>car insurance</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>591</th>
+      <td>20250418</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>592</th>
+      <td>20250419</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>593</th>
+      <td>20250419</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>594</th>
+      <td>20250420</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>595</th>
+      <td>20250421</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>596</th>
+      <td>20250422</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>597</th>
+      <td>20250423</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>598</th>
+      <td>20250424</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>599</th>
+      <td>20250425</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>600</th>
+      <td>20250425</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>601</th>
+      <td>20250426</td>
+      <td>1</td>
+      <td>1700.0</td>
+      <td>er tech income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>602</th>
+      <td>20250426</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>603</th>
+      <td>20250427</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>604</th>
+      <td>20250428</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>605</th>
+      <td>20250429</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>606</th>
+      <td>20250430</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>607</th>
+      <td>20250501</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>608</th>
+      <td>20250501</td>
+      <td>1</td>
+      <td>800.0</td>
+      <td>additional cc payment</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>609</th>
+      <td>20250501</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>rent</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>610</th>
+      <td>20250502</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>611</th>
+      <td>20250503</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>612</th>
+      <td>20250503</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>613</th>
+      <td>20250504</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>614</th>
+      <td>20250505</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>615</th>
+      <td>20250506</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>616</th>
+      <td>20250507</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>617</th>
+      <td>20250508</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>618</th>
+      <td>20250509</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>619</th>
+      <td>20250509</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>620</th>
+      <td>20250510</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>621</th>
+      <td>20250510</td>
+      <td>1</td>
+      <td>1700.0</td>
+      <td>er tech income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>622</th>
+      <td>20250511</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>623</th>
+      <td>20250512</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>624</th>
+      <td>20250513</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>625</th>
+      <td>20250514</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>626</th>
+      <td>20250515</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>627</th>
+      <td>20250516</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>628</th>
+      <td>20250517</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>629</th>
+      <td>20250517</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>630</th>
+      <td>20250518</td>
+      <td>1</td>
+      <td>89.0</td>
+      <td>car insurance</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>631</th>
+      <td>20250518</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>632</th>
+      <td>20250519</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>633</th>
+      <td>20250520</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>634</th>
+      <td>20250521</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>635</th>
+      <td>20250522</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>636</th>
+      <td>20250523</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>637</th>
+      <td>20250523</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>638</th>
+      <td>20250524</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>639</th>
+      <td>20250524</td>
+      <td>1</td>
+      <td>1700.0</td>
+      <td>er tech income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>640</th>
+      <td>20250525</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>641</th>
+      <td>20250526</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>642</th>
+      <td>20250527</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>643</th>
+      <td>20250528</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>644</th>
+      <td>20250529</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>645</th>
+      <td>20250530</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>646</th>
+      <td>20250531</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>647</th>
+      <td>20250531</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>648</th>
+      <td>20250601</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>rent</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>649</th>
+      <td>20250601</td>
+      <td>1</td>
+      <td>800.0</td>
+      <td>additional cc payment</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>650</th>
+      <td>20250601</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>651</th>
+      <td>20250602</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>652</th>
+      <td>20250603</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>653</th>
+      <td>20250604</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>654</th>
+      <td>20250605</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>655</th>
+      <td>20250606</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>656</th>
+      <td>20250606</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>657</th>
+      <td>20250607</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>658</th>
+      <td>20250607</td>
+      <td>1</td>
+      <td>1700.0</td>
+      <td>er tech income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>659</th>
+      <td>20250608</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>660</th>
+      <td>20250609</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>661</th>
+      <td>20250610</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>662</th>
+      <td>20250611</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>663</th>
+      <td>20250612</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>664</th>
+      <td>20250613</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>665</th>
+      <td>20250614</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>666</th>
+      <td>20250614</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>667</th>
+      <td>20250615</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>668</th>
+      <td>20250616</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>669</th>
+      <td>20250617</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>670</th>
+      <td>20250618</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>671</th>
+      <td>20250618</td>
+      <td>1</td>
+      <td>89.0</td>
+      <td>car insurance</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>672</th>
+      <td>20250619</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>673</th>
+      <td>20250620</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>674</th>
+      <td>20250620</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>675</th>
+      <td>20250621</td>
+      <td>1</td>
+      <td>1700.0</td>
+      <td>er tech income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>676</th>
+      <td>20250621</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>677</th>
+      <td>20250622</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>678</th>
+      <td>20250623</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>679</th>
+      <td>20250624</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>680</th>
+      <td>20250625</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>681</th>
+      <td>20250626</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>682</th>
+      <td>20250627</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>683</th>
+      <td>20250628</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>684</th>
+      <td>20250628</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>685</th>
+      <td>20250629</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>686</th>
+      <td>20250630</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>687</th>
+      <td>20250701</td>
+      <td>1</td>
+      <td>800.0</td>
+      <td>additional cc payment</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>688</th>
+      <td>20250701</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>rent</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>689</th>
+      <td>20250701</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>690</th>
+      <td>20250702</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>691</th>
+      <td>20250703</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>692</th>
+      <td>20250704</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>693</th>
+      <td>20250704</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>694</th>
+      <td>20250705</td>
+      <td>1</td>
+      <td>1700.0</td>
+      <td>er tech income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>695</th>
+      <td>20250705</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>696</th>
+      <td>20250706</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>697</th>
+      <td>20250707</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>698</th>
+      <td>20250708</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>699</th>
+      <td>20250709</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>700</th>
+      <td>20250710</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>701</th>
+      <td>20250711</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>702</th>
+      <td>20250712</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>703</th>
+      <td>20250712</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>704</th>
+      <td>20250713</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>705</th>
+      <td>20250714</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>706</th>
+      <td>20250715</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>707</th>
+      <td>20250716</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>708</th>
+      <td>20250717</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>709</th>
+      <td>20250718</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>710</th>
+      <td>20250718</td>
+      <td>1</td>
+      <td>89.0</td>
+      <td>car insurance</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>711</th>
+      <td>20250718</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>712</th>
+      <td>20250719</td>
+      <td>1</td>
+      <td>1700.0</td>
+      <td>er tech income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>713</th>
+      <td>20250719</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>714</th>
+      <td>20250720</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>715</th>
+      <td>20250721</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>716</th>
+      <td>20250722</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>717</th>
+      <td>20250723</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>718</th>
+      <td>20250724</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>719</th>
+      <td>20250725</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>720</th>
+      <td>20250726</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>721</th>
+      <td>20250726</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>722</th>
+      <td>20250727</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>723</th>
+      <td>20250728</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>724</th>
+      <td>20250729</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>725</th>
+      <td>20250730</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>726</th>
+      <td>20250731</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>727</th>
+      <td>20250801</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>728</th>
+      <td>20250801</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>729</th>
+      <td>20250801</td>
+      <td>1</td>
+      <td>800.0</td>
+      <td>additional cc payment</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>730</th>
+      <td>20250801</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>rent</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>731</th>
+      <td>20250802</td>
+      <td>1</td>
+      <td>1700.0</td>
+      <td>er tech income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>732</th>
+      <td>20250802</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>733</th>
+      <td>20250803</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>734</th>
+      <td>20250804</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>735</th>
+      <td>20250805</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>736</th>
+      <td>20250806</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>737</th>
+      <td>20250807</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>738</th>
+      <td>20250808</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>739</th>
+      <td>20250809</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>740</th>
+      <td>20250809</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>741</th>
+      <td>20250810</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>742</th>
+      <td>20250811</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>743</th>
+      <td>20250812</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>744</th>
+      <td>20250813</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>745</th>
+      <td>20250814</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>746</th>
+      <td>20250815</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>747</th>
+      <td>20250815</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>748</th>
+      <td>20250816</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>749</th>
+      <td>20250816</td>
+      <td>1</td>
+      <td>1700.0</td>
+      <td>er tech income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>750</th>
+      <td>20250817</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>751</th>
+      <td>20250818</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>752</th>
+      <td>20250818</td>
+      <td>1</td>
+      <td>89.0</td>
+      <td>car insurance</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>753</th>
+      <td>20250819</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>754</th>
+      <td>20250820</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>755</th>
+      <td>20250821</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>756</th>
+      <td>20250822</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>757</th>
+      <td>20250823</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>758</th>
+      <td>20250823</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>759</th>
+      <td>20250824</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>760</th>
+      <td>20250825</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>761</th>
+      <td>20250826</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>762</th>
+      <td>20250827</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>763</th>
+      <td>20250828</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>764</th>
+      <td>20250829</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>765</th>
+      <td>20250829</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>766</th>
+      <td>20250830</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>767</th>
+      <td>20250830</td>
+      <td>1</td>
+      <td>1700.0</td>
+      <td>er tech income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>768</th>
+      <td>20250831</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>769</th>
+      <td>20250901</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>rent</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>770</th>
+      <td>20250901</td>
+      <td>1</td>
+      <td>800.0</td>
+      <td>additional cc payment</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>771</th>
+      <td>20250901</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>772</th>
+      <td>20250902</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>773</th>
+      <td>20250903</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>774</th>
+      <td>20250904</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>775</th>
+      <td>20250905</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>776</th>
+      <td>20250906</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>777</th>
+      <td>20250906</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>778</th>
+      <td>20250907</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>779</th>
+      <td>20250908</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>780</th>
+      <td>20250909</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>781</th>
+      <td>20250910</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>782</th>
+      <td>20250911</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>783</th>
+      <td>20250912</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>784</th>
+      <td>20250912</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>785</th>
+      <td>20250913</td>
+      <td>1</td>
+      <td>1700.0</td>
+      <td>er tech income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>786</th>
+      <td>20250913</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>787</th>
+      <td>20250914</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>788</th>
+      <td>20250915</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>789</th>
+      <td>20250916</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>790</th>
+      <td>20250917</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>791</th>
+      <td>20250918</td>
+      <td>1</td>
+      <td>89.0</td>
+      <td>car insurance</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>792</th>
+      <td>20250918</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>793</th>
+      <td>20250919</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>794</th>
+      <td>20250920</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>795</th>
+      <td>20250920</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>796</th>
+      <td>20250921</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>797</th>
+      <td>20250922</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>798</th>
+      <td>20250923</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>799</th>
+      <td>20250924</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>800</th>
+      <td>20250925</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>801</th>
+      <td>20250926</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>802</th>
+      <td>20250926</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>803</th>
+      <td>20250927</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>804</th>
+      <td>20250927</td>
+      <td>1</td>
+      <td>1700.0</td>
+      <td>er tech income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>805</th>
+      <td>20250928</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>806</th>
+      <td>20250929</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>807</th>
+      <td>20250930</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>808</th>
+      <td>20251001</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>809</th>
+      <td>20251001</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>rent</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>810</th>
+      <td>20251001</td>
+      <td>1</td>
+      <td>800.0</td>
+      <td>additional cc payment</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>811</th>
+      <td>20251002</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>812</th>
+      <td>20251003</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>813</th>
+      <td>20251004</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>814</th>
+      <td>20251004</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>815</th>
+      <td>20251005</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>816</th>
+      <td>20251006</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>817</th>
+      <td>20251007</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>818</th>
+      <td>20251008</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>819</th>
+      <td>20251009</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>820</th>
+      <td>20251010</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>821</th>
+      <td>20251010</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>822</th>
+      <td>20251011</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>823</th>
+      <td>20251011</td>
+      <td>1</td>
+      <td>1700.0</td>
+      <td>er tech income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>824</th>
+      <td>20251012</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>825</th>
+      <td>20251013</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>826</th>
+      <td>20251014</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>827</th>
+      <td>20251015</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>828</th>
+      <td>20251016</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>829</th>
+      <td>20251017</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>830</th>
+      <td>20251018</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>831</th>
+      <td>20251018</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>832</th>
+      <td>20251018</td>
+      <td>1</td>
+      <td>89.0</td>
+      <td>car insurance</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>833</th>
+      <td>20251019</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>834</th>
+      <td>20251020</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>835</th>
+      <td>20251021</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>836</th>
+      <td>20251022</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>837</th>
+      <td>20251023</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>838</th>
+      <td>20251024</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>839</th>
+      <td>20251024</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>840</th>
+      <td>20251025</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>841</th>
+      <td>20251025</td>
+      <td>1</td>
+      <td>1700.0</td>
+      <td>er tech income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>842</th>
+      <td>20251026</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>843</th>
+      <td>20251027</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>844</th>
+      <td>20251028</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>845</th>
+      <td>20251029</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>846</th>
+      <td>20251030</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>847</th>
+      <td>20251031</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>848</th>
+      <td>20251101</td>
+      <td>1</td>
+      <td>800.0</td>
+      <td>additional cc payment</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>849</th>
+      <td>20251101</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>850</th>
+      <td>20251101</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>851</th>
+      <td>20251101</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>rent</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>852</th>
+      <td>20251102</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>853</th>
+      <td>20251103</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>854</th>
+      <td>20251104</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>855</th>
+      <td>20251105</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>856</th>
+      <td>20251106</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>857</th>
+      <td>20251107</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>858</th>
+      <td>20251107</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>859</th>
+      <td>20251108</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>860</th>
+      <td>20251108</td>
+      <td>1</td>
+      <td>1700.0</td>
+      <td>er tech income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>861</th>
+      <td>20251109</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>862</th>
+      <td>20251110</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>863</th>
+      <td>20251111</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>864</th>
+      <td>20251112</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>865</th>
+      <td>20251113</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>866</th>
+      <td>20251114</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>867</th>
+      <td>20251115</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>868</th>
+      <td>20251115</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>869</th>
+      <td>20251116</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>870</th>
+      <td>20251117</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>871</th>
+      <td>20251118</td>
+      <td>1</td>
+      <td>89.0</td>
+      <td>car insurance</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>872</th>
+      <td>20251118</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>873</th>
+      <td>20251119</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>874</th>
+      <td>20251120</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>875</th>
+      <td>20251121</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>876</th>
+      <td>20251121</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>877</th>
+      <td>20251122</td>
+      <td>1</td>
+      <td>1700.0</td>
+      <td>er tech income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>878</th>
+      <td>20251122</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>879</th>
+      <td>20251123</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>880</th>
+      <td>20251124</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>881</th>
+      <td>20251125</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>882</th>
+      <td>20251126</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>883</th>
+      <td>20251127</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>884</th>
+      <td>20251128</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>885</th>
+      <td>20251129</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>886</th>
+      <td>20251129</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>887</th>
+      <td>20251130</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>888</th>
+      <td>20251201</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>889</th>
+      <td>20251201</td>
+      <td>1</td>
+      <td>800.0</td>
+      <td>additional cc payment</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>890</th>
+      <td>20251201</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>rent</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>891</th>
+      <td>20251202</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>892</th>
+      <td>20251203</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>893</th>
+      <td>20251204</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>894</th>
+      <td>20251205</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>895</th>
+      <td>20251205</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>896</th>
+      <td>20251206</td>
+      <td>1</td>
+      <td>1700.0</td>
+      <td>er tech income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>897</th>
+      <td>20251206</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>898</th>
+      <td>20251207</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>899</th>
+      <td>20251208</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>900</th>
+      <td>20251209</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>901</th>
+      <td>20251210</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>902</th>
+      <td>20251211</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>903</th>
+      <td>20251212</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>904</th>
+      <td>20251213</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>905</th>
+      <td>20251213</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>906</th>
+      <td>20251214</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>907</th>
+      <td>20251215</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>908</th>
+      <td>20251216</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>909</th>
+      <td>20251217</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>910</th>
+      <td>20251218</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>911</th>
+      <td>20251218</td>
+      <td>1</td>
+      <td>89.0</td>
+      <td>car insurance</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>912</th>
+      <td>20251219</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>913</th>
+      <td>20251219</td>
+      <td>1</td>
+      <td>80.0</td>
+      <td>gas</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>914</th>
+      <td>20251220</td>
+      <td>1</td>
+      <td>1700.0</td>
+      <td>er tech income</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>915</th>
+      <td>20251220</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>916</th>
+      <td>20251221</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>917</th>
+      <td>20251222</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>918</th>
+      <td>20251223</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>919</th>
+      <td>20251224</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>920</th>
+      <td>20251225</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>921</th>
+      <td>20251226</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>922</th>
+      <td>20251227</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>923</th>
+      <td>20251227</td>
+      <td>1</td>
+      <td>50.0</td>
+      <td>gym</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>924</th>
+      <td>20251228</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>925</th>
+      <td>20251229</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>926</th>
+      <td>20251230</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>927</th>
+      <td>20251231</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>928</th>
+      <td>20260101</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>cheap food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>929</th>
+      <td>20260101</td>
+      <td>1</td>
+      <td>1200.0</td>
+      <td>rent</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>930</th>
+      <td>20260101</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>nice food</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>931</th>
+      <td>20260101</td>
+      <td>1</td>
+      <td>800.0</td>
+      <td>additional cc payment</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+  </tbody>
+</table>
+        </div>
+
+        <div id="Forecast Results" class="tabcontent">
+          <h3>Forecast Results</h3>
+          <p>
+        This forecast started at 2024-01-21 06:51:27, took 0:06:55 to complete, and finished at 2024-01-21 06:58:22.
+        </p>
+          <p>The visualized data are below:</p>
+          <h4>Forecast #081423:</h4>
+          <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Date</th>
+      <th>Checking</th>
+      <th>Credit: Curr Stmt Bal</th>
+      <th>Credit: Prev Stmt Bal</th>
+      <th>Loan A: Principal Balance</th>
+      <th>Loan A: Interest</th>
+      <th>Marginal Interest</th>
+      <th>Net Gain</th>
+      <th>Net Loss</th>
+      <th>Net Worth</th>
+      <th>Loan Total</th>
+      <th>CC Debt Total</th>
+      <th>Liquid Total</th>
+      <th>Memo</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>20240101</td>
+      <td>4000.0</td>
+      <td>0.0</td>
+      <td>23751.93</td>
+      <td>15000.0</td>
+      <td>100.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>-34851.93</td>
+      <td>15100.0</td>
+      <td>23751.93</td>
+      <td>4000.0</td>
+      <td></td>
+    </tr>
+  </tbody>
+</table>
+        </div>
+
+        <br>
+
+        <script>
+        function openTab(evt, tabName) {
+          // Declare all variables
+          var i, tabcontent, tablinks;
+
+          // Get all elements with class="tabcontent" and hide them
+          tabcontent = document.getElementsByClassName("tabcontent");
+          for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+          }
+
+          // Get all elements with class="tablinks" and remove the class "active"
+          tablinks = document.getElementsByClassName("tablinks");
+          for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(" active", "");
+          }
+
+          // Show the current tab, and add an "active" class to the button that opened the tab
+          document.getElementById(tabName).style.display = "block";
+          evt.currentTarget.className += " active";
+        }
+        
+        //having this here leaves the ForecastParameters tab open when the page first loads
+        document.getElementById("ForecastParameters").style.display = "block";
+        </script>
+
+        </body>
+        </html>
+
+        

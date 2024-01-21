@@ -1,12 +1,12 @@
 import pytest
-
+import AccountSet
 import AccountMilestone
 import CompositeMilestone
 import ExpenseForecast
 import ForecastHandler, AccountSet, BudgetSet, MemoRuleSet
 import pandas as pd, numpy as np
 import datetime, logging
-
+import ForecastSet
 import MemoMilestone
 import MilestoneSet
 
@@ -23,87 +23,58 @@ class TestForecastHandlerMethods:
     def test_ForecastHandler_Constructor(self):
         F = ForecastHandler.ForecastHandler()
 
-    # def test_calculateMultipleChooseOne(self):
-    #     raise NotImplementedError
-    #
-    # def test_generateCompareTwoForecastsHTMLReport(self):
-    #     raise NotImplementedError
-    #
-    # def test_generateHTMLReport(self):
-    #
-    #     start_date_YYYYMMDD = '20240101'
-    #     end_date_YYYYMMDD = '20240201'
-    #
-    #     A = AccountSet.AccountSet([])
-    #     A.createAccount('Checking',2000,0,999999,'checking')
-    #     A.createAccount('Credit', 2000, 0, 999999, 'credit','20240107','compound',0.24,'monthly',60,2000)
-    #     A.createAccount('Loan A', 2000, 0, 999999, 'loan','20240103','simple',0.05,'daily',20,None,1000,1000)
-    #
-    #
-    #     B = BudgetSet.BudgetSet([])
-    #     B.addBudgetItem(start_date_YYYYMMDD,end_date_YYYYMMDD,1,'daily',30,'SPEND food',False,False)
-    #     B.addBudgetItem('20240114', '20240114', 2, 'once', 2000, 'big purchase 1', False, False)
-    #     B.addBudgetItem('20240114', '20240114', 3, 'once', 2000, 'big purchase 2', False, False)
-    #
-    #     M = MemoRuleSet.MemoRuleSet([])
-    #     M.addMemoRule('.*income.*', None, 'Checking', 1)
-    #     M.addMemoRule('SPEND.*','Checking',None,1)
-    #     M.addMemoRule('.*', 'Checking', None, 2)
-    #     M.addMemoRule('.*', 'Checking', None, 3)
-    #
-    #     A1 = AccountMilestone.AccountMilestone('Checking 1000','Checking',1000,1000)
-    #     A2 = AccountMilestone.AccountMilestone('Credit 1000', 'Credit', 1000, 1000)
-    #     A3 = AccountMilestone.AccountMilestone('Loan A', 'Credit', 1000, 1000)
-    #
-    #     M1 = MemoMilestone.MemoMilestone('big purchase 1','.*big purchase 1.*')
-    #     M2 = MemoMilestone.MemoMilestone('big purchase 2', '.*big purchase 2.*')
-    #
-    #     CM1 = CompositeMilestone.CompositeMilestone('All 1k',[A1,A2,A3],[])
-    #     CM2 = CompositeMilestone.CompositeMilestone('both purchases', [], [M1,M2])
-    #     CM3 = CompositeMilestone.CompositeMilestone('All 1k and both purchases', [A1, A2, A3], [M1, M2])
-    #
-    #     MS = MilestoneSet.MilestoneSet(A,B,[A1,A2,A3],[M1,M2],[CM1,CM2,CM3])
-    #
-    #     E = ExpenseForecast.ExpenseForecast(A,
-    #                                         B,
-    #                                         M,
-    #                                         start_date_YYYYMMDD,
-    #                                         end_date_YYYYMMDD,
-    #                                         MS)
-    #     E.runForecast()
-    #
-    #     F = ForecastHandler.ForecastHandler()
-    #
-    #     F.generateHTMLReport(E)
-    #
-    # def tests_calculateMultipleChooseOne(self):
-    #     raise NotImplementedError
-    #
-    # def test_plotAccountTypeComparison(self):
-    #     raise NotImplementedError
-    #
-    # def test_plotNetWorthComparison(self):
-    #     raise NotImplementedError
-    #
-    # def test_plotAllComparison(self):
-    #     raise NotImplementedError
-    #
-    # def test_plotAccountTypeTotals(self):
-    #     raise NotImplementedError
-    #
-    # def test_plotNetWorth(self):
-    #     raise NotImplementedError
-    #
-    # def test_plotAll(self):
-    #     raise NotImplementedError
-    #
-    # def test_plotMarginalInterest(self):
-    #     raise NotImplementedError
+    def test_run_forecast_set(self):
+
+        start_date_YYYYMMDD = '20240101'
+        end_date_YYYYMMDD = '20240105'
+
+        A = AccountSet.AccountSet([])
+        A.createAccount('Checking',10_000,0,99999,'checking')
+
+        core_budget_set = BudgetSet.BudgetSet([])
+        option_budget_set = BudgetSet.BudgetSet([])
+
+        core_budget_set.addBudgetItem(start_date_YYYYMMDD,end_date_YYYYMMDD,1,'daily',11,'food',False,False)
+        option_budget_set.addBudgetItem(start_date_YYYYMMDD,end_date_YYYYMMDD,1,'daily',10,'txn 1A',False,False)
+        option_budget_set.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 20, 'txn 1B', False, False)
+        option_budget_set.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 50, 'txn 1C', False, False)
+        option_budget_set.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 100, 'txn 2A', False, False)
+        option_budget_set.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 200, 'txn 2B', False, False)
+        option_budget_set.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 500, 'txn 2C', False, False)
+
+        M = MemoRuleSet.MemoRuleSet([])
+        M.addMemoRule('.*','Checking',None,1)
 
 
-# FORECAST HANDLER
-#plot networth
-#plot account type totals
-#plot all
-#plot marginal interest
+        MS = MilestoneSet.MilestoneSet([AccountMilestone.AccountMilestone('Checking below 9500','Checking',0,9500),
+                                        AccountMilestone.AccountMilestone('Checking below 8000', 'Checking', 0, 8000)
+                                        ],[],[])
+
+        S = ForecastSet.ForecastSet(core_budget_set, option_budget_set)
+
+        scenario_A = ['.*A.*']
+        scenario_B = ['.*B.*']
+        scenario_C = ['.*C.*']
+        scenario_D = ['.*D.*']
+        S.addChoiceToAllScenarios(['A', 'B'], [scenario_A, scenario_B])
+        S.addChoiceToAllScenarios(['C', 'D'], [scenario_C, scenario_D])
+
+        F = ForecastHandler.ForecastHandler()
+
+        #EF() :: account_set, budget_set, memo_rule_set, start_date_YYYYMMDD, end_date_YYYYMMDD,milestone_set,
+
+        E__dict = F.initialize_forecasts_with_scenario_set(A, S, M, start_date_YYYYMMDD,end_date_YYYYMMDD, MS)
+
+
+        for key, value in E__dict.items():
+            value.runForecast()
+            value.appendSummaryLines()
+            value.writeToJSONFile('./')
+            F.generateHTMLReport(value)
+
+
+        F.generateScenarioSetHTMLReport(E__dict)
+
+        raise NotImplementedError
+
 

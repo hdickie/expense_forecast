@@ -4,8 +4,7 @@ import copy
 import BudgetItem
 import BudgetSet
 import json
-class ScenarioSet:
-
+class ForecastSet:
 
     def __init__(self, core_budget_set, option_budget_set):
 
