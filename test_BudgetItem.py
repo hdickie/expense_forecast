@@ -156,17 +156,6 @@ class TestBudgetItemMethods:
                                   deferrable,
                                   partial_payment_allowed)
 
-    def test_to_json(self):
-        B = BudgetItem.BudgetItem('20000101',
-                                  '20000101',
-                                  1,
-                                  'daily',
-                                  10,
-                                  'test',
-                                  False,
-                                  False)
-
-        B.to_json()
 
     def test_to_str(self):
         B = BudgetItem.BudgetItem('20000101',

@@ -137,23 +137,3 @@ class TestAccount:
                                        account_type='checking')
         str(test_account)
 
-    # def test_to_json(self):
-    #     test_account = Account.Account(name="test checking",
-    #                                    balance=0,
-    #                                    min_balance=0,
-    #                                    max_balance=0,
-    #                                    account_type='checking')
-    #
-    #     test_expectation = """{"Name":{"0":"test checking"},"""
-    #     test_expectation += """"Balance":{"0":0.0},"""
-    #     test_expectation += """"Min Balance":{"0":0.0},"""
-    #     test_expectation += """"Max Balance":{"0":0.0},"""
-    #     test_expectation += """"Account Type":{"0":"checking"},"""
-    #     test_expectation += """"Billing Start Date":{"0":null},"""
-    #     test_expectation += """"Interest Type":{"0":null},"""
-    #     test_expectation += """"APR":{"0":null},"""
-    #     test_expectation += """"Interest Cadence":{"0":null},"""
-    #     test_expectation += """"Minimum Payment":{"0":null}}"""
-    #
-    #     assert test_account.to_json() == test_expectation
-

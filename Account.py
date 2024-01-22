@@ -1,5 +1,7 @@
 
-import datetime, pandas as pd
+import datetime
+import pandas as pd
+import jsonpickle
 
 class Account:
 
@@ -297,26 +299,40 @@ class Account:
         :rtype: string
         """
 
-        bsd = self.billing_start_date_YYYYMMDD
-        if self.billing_start_date_YYYYMMDD is not None:
-            try:
-                bsd = self.billing_start_date_YYYYMMDD.strftime('%Y-%m-%d')
-            except: #if datetime, then format, else its a string so do nothing
-                pass
+        # self_dict = {}
+        # self_dict['Name'] = str(self.name)
+        # self_dict['Balance'] = str(self.balance)
+        # self_dict['Min_Balance'] = str(self.min_balance)
+        # self_dict['Max_Balance'] = str(self.max_balance)
+        # self_dict['Account_Type'] = str(self.account_type)
+        # self_dict['Billing_Start_Date'] = str(self.billing_start_date_YYYYMMDD)
+        # self_dict['Interest_Type'] = str(self.interest_type)
+        # self_dict['APR'] = str(self.apr)
+        # self_dict['Interest_Cadence'] = str(self.interest_cadence)
+        # self_dict['Minimum_Payment'] = str(self.minimum_payment)
 
-        JSON_string = "{\n"
-        JSON_string += "\"Name\":" + "\"" + str(self.name) + "\",\n"
-        JSON_string += "\"Balance\":" + "\"" + str(self.balance) + "\",\n"
-        JSON_string += "\"Min_Balance\":" + "\"" + str(self.min_balance) + "\",\n"
-        JSON_string += "\"Max_Balance\":" + "\"" + str(self.max_balance) + "\",\n"
-        JSON_string += "\"Account_Type\":" + "\"" + str(self.account_type) + "\",\n"
-        JSON_string += "\"Billing_Start_Date\":" + "\"" + str(bsd) + "\",\n"
-        JSON_string += "\"Interest_Type\":" + "\"" + str(self.interest_type) + "\",\n"
-        JSON_string += "\"APR\":" + "\"" + str(self.apr) + "\",\n"
-        JSON_string += "\"Interest_Cadence\":" + "\"" + str(self.interest_cadence) + "\",\n"
-        JSON_string += "\"Minimum_Payment\":" + "\"" + str(self.minimum_payment) + "\"\n"
-        JSON_string += "}"
-        return JSON_string
+        return jsonpickle.encode(self, indent=4)
+
+        # bsd = self.billing_start_date_YYYYMMDD
+        # if self.billing_start_date_YYYYMMDD is not None:
+        #     try:
+        #         bsd = self.billing_start_date_YYYYMMDD.strftime('%Y-%m-%d')
+        #     except: #if datetime, then format, else its a string so do nothing
+        #         pass
+        #
+        # JSON_string = "{\n"
+        # JSON_string += "\"Name\":" + "\"" + str(self.name) + "\",\n"
+        # JSON_string += "\"Balance\":" + "\"" + str(self.balance) + "\",\n"
+        # JSON_string += "\"Min_Balance\":" + "\"" + str(self.min_balance) + "\",\n"
+        # JSON_string += "\"Max_Balance\":" + "\"" + str(self.max_balance) + "\",\n"
+        # JSON_string += "\"Account_Type\":" + "\"" + str(self.account_type) + "\",\n"
+        # JSON_string += "\"Billing_Start_Date\":" + "\"" + str(bsd) + "\",\n"
+        # JSON_string += "\"Interest_Type\":" + "\"" + str(self.interest_type) + "\",\n"
+        # JSON_string += "\"APR\":" + "\"" + str(self.apr) + "\",\n"
+        # JSON_string += "\"Interest_Cadence\":" + "\"" + str(self.interest_cadence) + "\",\n"
+        # JSON_string += "\"Minimum_Payment\":" + "\"" + str(self.minimum_payment) + "\"\n"
+        # JSON_string += "}"
+        # return JSON_string
 
         # cast_dtypes_to_string_df = pd.DataFrame({
         #     'Name': [self.name],

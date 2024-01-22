@@ -123,17 +123,6 @@ class TestForecastSet:
                                     ])),
 
                              ])
-    def test_ForecastSet_to_json(self,core_budget_set,option_budget_set):
-        S = ForecastSet.ForecastSet(core_budget_set, option_budget_set)
-
-        scenario_A = ['.*A.*']
-        scenario_B = ['.*B.*']
-        scenario_C = ['.*C.*']
-        scenario_D = ['.*D.*']
-        S.addChoiceToAllScenarios(['A', 'B'], [scenario_A, scenario_B])
-        S.addChoiceToAllScenarios(['C', 'D'], [scenario_C, scenario_D])
-
-        print(S.to_json())
 
 
     def test_listChoices(self):

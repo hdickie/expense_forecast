@@ -1,4 +1,7 @@
 import pandas as pd, datetime
+
+import jsonpickle
+
 class BudgetItem:
 
     def __init__(self,
@@ -180,16 +183,17 @@ class BudgetItem:
         Get a <string> representing the <BudgetItem> object.
 
         """
-        return pd.DataFrame({
-            'Start_Date': [self.start_date_YYYYMMDD],
-            'End_Date': [self.end_date_YYYYMMDD],
-            'Priority': [self.priority],
-            'Cadence': [self.cadence],
-            'Amount': [self.amount],
-            'Memo': [self.memo],
-            'Deferrable': [self.deferrable],
-            'Partial_Payment_Allowed': [self.partial_payment_allowed]
-        }).to_json(orient="records")
+        return jsonpickle.encode(self, indent=4)
+        # return pd.DataFrame({
+        #     'Start_Date': [self.start_date_YYYYMMDD],
+        #     'End_Date': [self.end_date_YYYYMMDD],
+        #     'Priority': [self.priority],
+        #     'Cadence': [self.cadence],
+        #     'Amount': [self.amount],
+        #     'Memo': [self.memo],
+        #     'Deferrable': [self.deferrable],
+        #     'Partial_Payment_Allowed': [self.partial_payment_allowed]
+        # }).to_json(orient="records")
 
     # def fromJSON(self,JSON_string):
     #     pass

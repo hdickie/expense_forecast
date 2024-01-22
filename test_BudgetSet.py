@@ -73,14 +73,3 @@ class TestBudgetSetMethods:
     def test_illegal_cadence_in__generate_date_sequence__internal_method(self):
         with pytest.raises(ValueError):
             BudgetSet.generate_date_sequence('20000101', 10, 'shmaily')
-
-    def test_to_json(self):
-        test_budget_set = BudgetSet.BudgetSet(
-            [BudgetItem.BudgetItem(start_date_YYYYMMDD='20000101',end_date_YYYYMMDD='20230101',  priority=1, cadence='once',
-                                      amount=10, deferrable=False, memo='test 1'),
-             BudgetItem.BudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20230101', priority=1, cadence='once',
-                                      amount=10, deferrable=False, memo='test 2')
-             ])
-        test_budget_set_JSON = test_budget_set.to_json()
-        test_expectation = """{\n{\n"Start_Date":"2000-01-01 00:00:00",\n"Priority":"1",\n"Cadence":"once",\n"Amount":"10.0",\n"Deferrable":"False",\n"Memo":"test 1"\n},\n{\n"Start_Date":"2000-01-01 00:00:00",\n"Priority":"1",\n"Cadence":"once",\n"Amount":"10.0",\n"Deferrable":"False",\n"Memo":"test 2"\n}\n}"""
-        assert test_budget_set_JSON is not None

@@ -3,7 +3,7 @@ import MemoRule, pandas as pd
 import re
 from log_methods import log_in_color
 import logging
-
+import jsonpickle
 from log_methods import setup_logger
 logger = setup_logger('MemoRuleSet', './log/MemoRuleSet.log', level=logging.WARNING)
 
@@ -153,16 +153,17 @@ class MemoRuleSet:
         """
         Get a JSON <string> representing the <MemoRuleSet> object.\
         """
-        JSON_string = "[\n"
-        for i in range(0, len(self.memo_rules)):
-            memo_rule = self.memo_rules[i]
-            JSON_string += memo_rule.to_json()
-            if i+1 != len(self.memo_rules):
-                JSON_string += ","
-            JSON_string += '\n'
-        JSON_string += ']'
+        return jsonpickle.encode(self, indent=4)
+        # JSON_string = "[\n"
+        # for i in range(0, len(self.memo_rules)):
+        #     memo_rule = self.memo_rules[i]
+        #     JSON_string += memo_rule.to_json()
+        #     if i+1 != len(self.memo_rules):
+        #         JSON_string += ","
+        #     JSON_string += '\n'
+        # JSON_string += ']'
 
-        return JSON_string
+        # return JSON_string
 
     # def fromJSON(self,JSON_string):
     #     pass

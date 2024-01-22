@@ -4,7 +4,7 @@ import re
 import MemoMilestone
 import CompositeMilestone
 import AccountMilestone
-
+import jsonpickle
 class MilestoneSet:
 
     def __init__(self,account_milestones__list,memo_milestones__list,composite_milestones__list):
@@ -77,49 +77,49 @@ class MilestoneSet:
         self.composite_milestones += [ CompositeMilestone.CompositeMilestone(milestone_name,account_milestones__list, memo_milestones__list) ]
 
     def to_json(self):
-
-        json_string = "{"
-
-        account_milestone_index = 0
-        account_milestones_json_string = "["
-        for a in self.account_milestones:
-            account_milestones_json_string += a.to_json()
-
-            if account_milestone_index != len(self.account_milestones) - 1:
-                account_milestones_json_string += ","
-
-            account_milestone_index += 1
-        account_milestones_json_string += "]"
-
-        memo_milestone_index = 0
-        memo_milestones_json_string = "["
-        for m in self.memo_milestones:
-            memo_milestones_json_string += m.to_json()
-
-            if memo_milestone_index != len(self.memo_milestones) - 1:
-                memo_milestones_json_string += ","
-
-            memo_milestone_index += 1
-        memo_milestones_json_string += "]"
-
-        composite_milestone_index = 0
-        composite_milestones_json_string = "["
-        for c in self.composite_milestones:
-            composite_milestones_json_string += c.to_json()
-
-            if composite_milestone_index != len(self.composite_milestones) - 1:
-                composite_milestones_json_string += ","
-
-            composite_milestone_index += 1
-        composite_milestones_json_string += "]"
-
-        json_string += '"' + "account_milestones" + '":' + account_milestones_json_string + ","
-        json_string += '"' + "memo_milestones" + '":' + memo_milestones_json_string + ","
-        json_string += '"' + "composite_milestones" + '":' + composite_milestones_json_string
-
-        json_string += "}"
-
-        return json_string
+        return jsonpickle.encode(self, indent=4)
+        # json_string = "{"
+        #
+        # account_milestone_index = 0
+        # account_milestones_json_string = "["
+        # for a in self.account_milestones:
+        #     account_milestones_json_string += a.to_json()
+        #
+        #     if account_milestone_index != len(self.account_milestones) - 1:
+        #         account_milestones_json_string += ","
+        #
+        #     account_milestone_index += 1
+        # account_milestones_json_string += "]"
+        #
+        # memo_milestone_index = 0
+        # memo_milestones_json_string = "["
+        # for m in self.memo_milestones:
+        #     memo_milestones_json_string += m.to_json()
+        #
+        #     if memo_milestone_index != len(self.memo_milestones) - 1:
+        #         memo_milestones_json_string += ","
+        #
+        #     memo_milestone_index += 1
+        # memo_milestones_json_string += "]"
+        #
+        # composite_milestone_index = 0
+        # composite_milestones_json_string = "["
+        # for c in self.composite_milestones:
+        #     composite_milestones_json_string += c.to_json()
+        #
+        #     if composite_milestone_index != len(self.composite_milestones) - 1:
+        #         composite_milestones_json_string += ","
+        #
+        #     composite_milestone_index += 1
+        # composite_milestones_json_string += "]"
+        #
+        # json_string += '"' + "account_milestones" + '":' + account_milestones_json_string + ","
+        # json_string += '"' + "memo_milestones" + '":' + memo_milestones_json_string + ","
+        # json_string += '"' + "composite_milestones" + '":' + composite_milestones_json_string
+        #
+        # json_string += "}"
+        #
+        # return json_string
 
     def getAccountMilestonesDF(self):
 

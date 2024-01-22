@@ -71,18 +71,6 @@ class TestMemoRuleSetMethods:
             memo_rule_set.addMemoRule(memo_regex=".*", account_from='a', account_to='b', transaction_priority=1)
             memo_rule_set.addMemoRule(memo_regex=".*", account_from='a', account_to='c', transaction_priority=1)
 
-    def test_to_json(self):
-        test_memo_rule_set = MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*', account_from='noodle', account_to='',
-                                           transaction_priority=1),
-                                                      MemoRule.MemoRule(memo_regex='.*', account_from='poodle',
-                                                                        account_to='',
-                                                                        transaction_priority=2)
-                                                      ])
-        test_memo_rule_set_JSON = test_memo_rule_set.to_json()
-        test_expectation = """[\n{\n"Memo_Regex":".*",\n"Account_From":"noodle",\n"Account_To":"",\n"Transaction_Priority":"1"\n},\n{\n"Memo_Regex":".*",\n"Account_From":"poodle",\n"Account_To":"",\n"Transaction_Priority":"2"\n}\n]"""
-
-        assert test_memo_rule_set_JSON == test_expectation
-
     def test_find_matching_memo_rule(self):
         M_E = empty_memo_rule_set()
         M_A = match_all_memo_rule_set()

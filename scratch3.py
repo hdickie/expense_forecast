@@ -10,6 +10,8 @@ import MemoRule
 import AccountMilestone
 import BudgetItem
 import ForecastSet
+import json
+import Account
 
 pd.options.mode.chained_assignment = None #apparently this warning can throw false positives???
 
@@ -55,30 +57,46 @@ if __name__ == '__main__':
         A.createAccount('Credit', 0, 0, 25000, 'credit','20240107','compound',0.24,'monthly',40,23751.93)
 
         A.createAccount('Loan A', loan_A_pbal + loan_A_interest, 0, 25000, 'loan', end_of_recaptialization_date, 'simple', loan_A_APR, 'daily', loan_A_min_payment, None, loan_A_pbal, loan_A_interest)
-        # A.createAccount('Loan A', loan_B_pbal + loan_B_interest, 0, 25000, 'loan', '20240103', 'simple', loan_B_APR, 'daily', loan_B_min_payment, None, loan_B_pbal, loan_B_interest)
-        # A.createAccount('Loan A', loan_C_pbal + loan_C_interest, 0, 25000, 'loan', '20240103', 'simple', loan_C_APR, 'daily', loan_C_min_payment, None, loan_C_pbal, loan_C_interest)
-        # A.createAccount('Loan A', loan_D_pbal + loan_D_interest, 0, 25000, 'loan', '20240103', 'simple', loan_D_APR, 'daily', loan_D_min_payment, None, loan_D_pbal, loan_D_interest)
-        # A.createAccount('Loan A', loan_E_pbal + loan_E_interest, 0, 25000, 'loan', '20240103', 'simple', loan_E_APR, 'daily', loan_E_min_payment, None, loan_E_pbal, loan_E_interest)
-
-        core_budget_set = BudgetSet.BudgetSet([])
-        option_budget_set = BudgetSet.BudgetSet([])
-
-        core_budget_set.addBudgetItem(start_date_YYYYMMDD, nice_food_day, 1, 'daily', daily_cheap_food_amount, 'cheap food',False, False)
-
-        core_budget_set.addBudgetItem(nice_food_day, end_date_YYYYMMDD, 1, 'daily', daily_nice_food_amount, 'nice food', False, False)
-        core_budget_set.addBudgetItem('20240118', end_date_YYYYMMDD, 1, 'monthly', car_insurance_amount, 'car insurance', False, False)
-        core_budget_set.addBudgetItem(first_rent_date, end_date_YYYYMMDD, 1, 'monthly', rent_amount, 'rent', False, False)
-        core_budget_set.addBudgetItem(start_driving_for_work_date, end_date_YYYYMMDD, 1, 'semiweekly', monthly_gas_amount, 'gas',False, False)
-        core_budget_set.addBudgetItem(first_emt_paycheck_date, last_emt_paycheck_date, 1, 'semiweekly', semiweekly_emt_income_amount, 'emt income',False, False)
-        core_budget_set.addBudgetItem(first_er_tech_paycheck_date, end_date_YYYYMMDD, 1, 'semiweekly',semiweekly_er_tech_income_amount, 'er tech income', False, False)
-        core_budget_set.addBudgetItem(first_gym_date, end_date_YYYYMMDD, 1, 'semiweekly', gym_monthly_amount, 'gym', False, False)
-        core_budget_set.addBudgetItem('20240602', '20240602', 1, 'once', 1245.97, 'tax debt', False, False)
-        core_budget_set.addBudgetItem(additional_loan_payment_date, end_date_YYYYMMDD, 2, 'monthly', 800, 'additional cc payment', False, True)
+        # # A.createAccount('Loan A', loan_B_pbal + loan_B_interest, 0, 25000, 'loan', '20240103', 'simple', loan_B_APR, 'daily', loan_B_min_payment, None, loan_B_pbal, loan_B_interest)
+        # # A.createAccount('Loan A', loan_C_pbal + loan_C_interest, 0, 25000, 'loan', '20240103', 'simple', loan_C_APR, 'daily', loan_C_min_payment, None, loan_C_pbal, loan_C_interest)
+        # # A.createAccount('Loan A', loan_D_pbal + loan_D_interest, 0, 25000, 'loan', '20240103', 'simple', loan_D_APR, 'daily', loan_D_min_payment, None, loan_D_pbal, loan_D_interest)
+        # # A.createAccount('Loan A', loan_E_pbal + loan_E_interest, 0, 25000, 'loan', '20240103', 'simple', loan_E_APR, 'daily', loan_E_min_payment, None, loan_E_pbal, loan_E_interest)
+        #
+        # core_budget_set = BudgetSet.BudgetSet([])
+        # option_budget_set = BudgetSet.BudgetSet([])
+        #
+        # core_budget_set.addBudgetItem(start_date_YYYYMMDD, nice_food_day, 1, 'daily', daily_cheap_food_amount, 'cheap food',False, False)
+        #
+        # core_budget_set.addBudgetItem(nice_food_day, end_date_YYYYMMDD, 1, 'daily', daily_nice_food_amount, 'nice food', False, False)
+        # core_budget_set.addBudgetItem('20240118', end_date_YYYYMMDD, 1, 'monthly', car_insurance_amount, 'car insurance', False, False)
+        # core_budget_set.addBudgetItem(first_rent_date, end_date_YYYYMMDD, 1, 'monthly', rent_amount, 'rent', False, False)
+        # core_budget_set.addBudgetItem(start_driving_for_work_date, end_date_YYYYMMDD, 1, 'semiweekly', monthly_gas_amount, 'gas',False, False)
+        # core_budget_set.addBudgetItem(first_emt_paycheck_date, last_emt_paycheck_date, 1, 'semiweekly', semiweekly_emt_income_amount, 'emt income',False, False)
+        # core_budget_set.addBudgetItem(first_er_tech_paycheck_date, end_date_YYYYMMDD, 1, 'semiweekly',semiweekly_er_tech_income_amount, 'er tech income', False, False)
+        # core_budget_set.addBudgetItem(first_gym_date, end_date_YYYYMMDD, 1, 'semiweekly', gym_monthly_amount, 'gym', False, False)
+        # core_budget_set.addBudgetItem('20240602', '20240602', 1, 'once', 1245.97, 'tax debt', False, False)
+        # core_budget_set.addBudgetItem(additional_loan_payment_date, end_date_YYYYMMDD, 2, 'monthly', 800, 'additional cc payment', False, True)
 
         #2,346.21 left in sf mra
 
 
         #option_budget_set.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 10, 'txn 1A', False, False)
+
+        # name,  # no default because it is a required field
+        # balance,
+        # min_balance,
+        # max_balance,
+        # account_type,  # checking, savings, credit, principal balance, interest
+        # billing_start_date_YYYYMMDD = None,
+        # interest_type = None,
+        # apr = None,
+        # interest_cadence = None,
+        # minimum_payment = None,
+        # print_debug_messages = True,  # this is here because doctest can test expected output OR exceptions, but not both
+        # raise_exceptions = True
+
+        print(A)
+        print(A.to_json())
 
         M = MemoRuleSet.MemoRuleSet([])
         M.addMemoRule('car insurance', 'Checking', None, 1)
@@ -103,12 +121,12 @@ if __name__ == '__main__':
         # S.addChoiceToAllScenarios(['A', 'B'], [scenario_A, scenario_B])
         # S.addChoiceToAllScenarios(['C', 'D'], [scenario_C, scenario_D])
 
-        F = ForecastHandler.ForecastHandler()
+        #F = ForecastHandler.ForecastHandler()
 
-        E = ExpenseForecast.ExpenseForecast(A,core_budget_set,M,start_date_YYYYMMDD,end_date_YYYYMMDD,MS)
-        E.runForecast()
-        E.appendSummaryLines()
-        F.generateHTMLReport(E)
+        #E = ExpenseForecast.ExpenseForecast(A,core_budget_set,M,start_date_YYYYMMDD,end_date_YYYYMMDD,MS)
+        #E.runForecast()
+        #E.appendSummaryLines()
+        #F.generateHTMLReport(E)
 
         # EF() :: account_set, budget_set, memo_rule_set, start_date_YYYYMMDD, end_date_YYYYMMDD,milestone_set,
 

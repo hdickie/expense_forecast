@@ -1,6 +1,7 @@
 
-import pandas as pd, re
-
+import pandas as pd
+import re
+import jsonpickle
 class MemoRule:
 
     def __init__(self,memo_regex,account_from,account_to,transaction_priority,
@@ -139,16 +140,16 @@ class MemoRule:
         """
         Get a JSON <string> representing the <MemoRule> object.
         """
-
+        return jsonpickle.encode(self, indent=4)
         #todo in other places I used pd.DataFrame().to_json(orient="records")
 
-        JSON_string = "{\n"
-        JSON_string += "\"Memo_Regex\":" + "\"" + str(self.memo_regex) + "\",\n"
-        JSON_string += "\"Account_From\":" + "\"" + str(self.account_from) + "\",\n"
-        JSON_string += "\"Account_To\":" + "\"" + str(self.account_to) + "\",\n"
-        JSON_string += "\"Transaction_Priority\":" + "\"" + str(self.transaction_priority) + "\"\n"
-        JSON_string += "}"
-        return JSON_string
+        # JSON_string = "{\n"
+        # JSON_string += "\"Memo_Regex\":" + "\"" + str(self.memo_regex) + "\",\n"
+        # JSON_string += "\"Account_From\":" + "\"" + str(self.account_from) + "\",\n"
+        # JSON_string += "\"Account_To\":" + "\"" + str(self.account_to) + "\",\n"
+        # JSON_string += "\"Transaction_Priority\":" + "\"" + str(self.transaction_priority) + "\"\n"
+        # JSON_string += "}"
+        # return JSON_string
 
     # def fromJSON(self,JSON_string):
     #     pass

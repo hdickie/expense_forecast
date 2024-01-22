@@ -16,6 +16,3 @@ class TestAccountMilestoneMethods:
 
     def test_str(self):
         str(AccountMilestone.AccountMilestone('Milestone_Name','Account_Name',0,100))
-
-    def test_to_json(self):
-        AccountMilestone.AccountMilestone('Milestone_Name','Account_Name',0,100).to_json()

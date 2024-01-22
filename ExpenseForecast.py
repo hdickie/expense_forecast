@@ -17,6 +17,7 @@ from generate_date_sequence import generate_date_sequence
 import numpy as np
 import xlsxwriter
 import CompositeMilestone
+import jsonpickle
 
 pd.options.mode.chained_assignment = None #apparently this warning can throw false positives???
 
@@ -4988,102 +4989,104 @@ class ExpenseForecast:
         :return:
         """
 
-        JSON_string = '{'
+        return jsonpickle.encode(self, indent=4)
 
-        unique_id_string = "\"unique_id\":\""+self.unique_id+"\",\n"
-
-        if hasattr(self,'start_ts'):
-            start_ts_string = "\"start_ts\":\""+self.start_ts+"\",\n"
-            end_ts_string = "\"end_ts\":\""+self.end_ts+"\",\n"
-
-        start_date_string = "\"start_date\":"+self.start_date_YYYYMMDD+",\n"
-        end_date_string = "\"end_date\":"+self.end_date_YYYYMMDD+",\n"
-
-        memo_rule_set_string = "\"initial_memo_rule_set\":"+self.initial_memo_rule_set.to_json()+","
-        initial_account_set_string = "\"initial_account_set\":"+self.initial_account_set.to_json()+","
-        initial_budget_set_string = "\"initial_budget_set\":"+self.initial_budget_set.to_json()+","
-
-        if hasattr(self, 'start_ts'):
-            tmp__forecast_df = self.forecast_df.copy()
-            tmp__skipped_df = self.skipped_df.copy()
-            tmp__confirmed_df = self.confirmed_df.copy()
-            tmp__deferred_df = self.deferred_df.copy()
-
-
-            tmp__forecast_df['Date'] = tmp__forecast_df['Date'].astype(str)
-            if tmp__skipped_df.shape[0] > 0:
-                tmp__skipped_df['Date'] = tmp__skipped_df['Date'].astype(str)
-            tmp__confirmed_df['Date'] = tmp__confirmed_df['Date'].astype(str)
-            if tmp__deferred_df.shape[0] > 0:
-                tmp__deferred_df['Date'] = tmp__deferred_df['Date'].astype(str)
-
-
-            normalized_forecast_df_JSON_string = tmp__forecast_df.to_json(orient='records',date_format='iso')
-            normalized_skipped_df_JSON_string = tmp__skipped_df.to_json(orient='records',date_format='iso')
-            normalized_confirmed_df_JSON_string = tmp__confirmed_df.to_json(orient='records',date_format='iso')
-            normalized_deferred_df_JSON_string = tmp__deferred_df.to_json(orient='records',date_format='iso')
-
-            forecast_df_string = "\"forecast_df\":"+normalized_forecast_df_JSON_string+",\n"
-            skipped_df_string = "\"skipped_df\":"+normalized_skipped_df_JSON_string+",\n"
-            confirmed_df_string = "\"confirmed_df\":"+normalized_confirmed_df_JSON_string+",\n"
-            deferred_df_string = "\"deferred_df\":"+normalized_deferred_df_JSON_string+",\n"
-
-        JSON_string += unique_id_string
-
-        if hasattr(self, 'start_ts'):
-            JSON_string += start_ts_string
-            JSON_string += end_ts_string
-
-        JSON_string += start_date_string
-        JSON_string += end_date_string
-        JSON_string += memo_rule_set_string
-        JSON_string += initial_account_set_string
-        JSON_string += initial_budget_set_string
-
-        if hasattr(self, 'start_ts'):
-            JSON_string += forecast_df_string
-            JSON_string += skipped_df_string
-            JSON_string += confirmed_df_string
-            JSON_string += deferred_df_string
-
-            account_milestone_string = "{"
-            i = 0
-            for key, value in self.account_milestone_results.items():
-                account_milestone_string += '"' + str(key) + '":"' + str(value) + '"'
-                if i != (len(self.account_milestone_results) - 1):
-                    account_milestone_string += ","
-                i += 1
-            account_milestone_string += "}"
-
-            memo_milestone_string = "{"
-            i = 0
-            for key, value in self.memo_milestone_results.items():
-                memo_milestone_string += '"' + str(key) + '":"' + str(value) + '"'
-                if i != (len(self.memo_milestone_results) - 1):
-                    memo_milestone_string += ","
-                i += 1
-            memo_milestone_string += "}"
-
-            composite_milestone_string = "{"
-            i = 0
-            for key, value in self.composite_milestone_results.items():
-                composite_milestone_string += '"' + str(key) + '":"' + str(value) + '"'
-                if i != (len(self.composite_milestone_results) - 1):
-                    composite_milestone_string += ","
-                i += 1
-            composite_milestone_string += "}"
-
-        JSON_string += "\"milestone_set\":"+self.milestone_set.to_json()
-
-        if hasattr(self, 'start_ts'):
-            JSON_string += ",\n"
-            JSON_string += "\"account_milestone_results\":"+account_milestone_string+",\n"
-            JSON_string += "\"memo_milestone_results\":"+memo_milestone_string+",\n"
-            JSON_string += "\"composite_milestone_results\":"+composite_milestone_string
-
-        JSON_string += '}'
-
-        return JSON_string
+        # JSON_string = '{'
+        #
+        # unique_id_string = "\"unique_id\":\""+self.unique_id+"\",\n"
+        #
+        # if hasattr(self,'start_ts'):
+        #     start_ts_string = "\"start_ts\":\""+self.start_ts+"\",\n"
+        #     end_ts_string = "\"end_ts\":\""+self.end_ts+"\",\n"
+        #
+        # start_date_string = "\"start_date\":"+self.start_date_YYYYMMDD+",\n"
+        # end_date_string = "\"end_date\":"+self.end_date_YYYYMMDD+",\n"
+        #
+        # memo_rule_set_string = "\"initial_memo_rule_set\":"+self.initial_memo_rule_set.to_json()+","
+        # initial_account_set_string = "\"initial_account_set\":"+self.initial_account_set.to_json()+","
+        # initial_budget_set_string = "\"initial_budget_set\":"+self.initial_budget_set.to_json()+","
+        #
+        # if hasattr(self, 'start_ts'):
+        #     tmp__forecast_df = self.forecast_df.copy()
+        #     tmp__skipped_df = self.skipped_df.copy()
+        #     tmp__confirmed_df = self.confirmed_df.copy()
+        #     tmp__deferred_df = self.deferred_df.copy()
+        #
+        #
+        #     tmp__forecast_df['Date'] = tmp__forecast_df['Date'].astype(str)
+        #     if tmp__skipped_df.shape[0] > 0:
+        #         tmp__skipped_df['Date'] = tmp__skipped_df['Date'].astype(str)
+        #     tmp__confirmed_df['Date'] = tmp__confirmed_df['Date'].astype(str)
+        #     if tmp__deferred_df.shape[0] > 0:
+        #         tmp__deferred_df['Date'] = tmp__deferred_df['Date'].astype(str)
+        #
+        #
+        #     normalized_forecast_df_JSON_string = tmp__forecast_df.to_json(orient='records',date_format='iso')
+        #     normalized_skipped_df_JSON_string = tmp__skipped_df.to_json(orient='records',date_format='iso')
+        #     normalized_confirmed_df_JSON_string = tmp__confirmed_df.to_json(orient='records',date_format='iso')
+        #     normalized_deferred_df_JSON_string = tmp__deferred_df.to_json(orient='records',date_format='iso')
+        #
+        #     forecast_df_string = "\"forecast_df\":"+normalized_forecast_df_JSON_string+",\n"
+        #     skipped_df_string = "\"skipped_df\":"+normalized_skipped_df_JSON_string+",\n"
+        #     confirmed_df_string = "\"confirmed_df\":"+normalized_confirmed_df_JSON_string+",\n"
+        #     deferred_df_string = "\"deferred_df\":"+normalized_deferred_df_JSON_string+",\n"
+        #
+        # JSON_string += unique_id_string
+        #
+        # if hasattr(self, 'start_ts'):
+        #     JSON_string += start_ts_string
+        #     JSON_string += end_ts_string
+        #
+        # JSON_string += start_date_string
+        # JSON_string += end_date_string
+        # JSON_string += memo_rule_set_string
+        # JSON_string += initial_account_set_string
+        # JSON_string += initial_budget_set_string
+        #
+        # if hasattr(self, 'start_ts'):
+        #     JSON_string += forecast_df_string
+        #     JSON_string += skipped_df_string
+        #     JSON_string += confirmed_df_string
+        #     JSON_string += deferred_df_string
+        #
+        #     account_milestone_string = "{"
+        #     i = 0
+        #     for key, value in self.account_milestone_results.items():
+        #         account_milestone_string += '"' + str(key) + '":"' + str(value) + '"'
+        #         if i != (len(self.account_milestone_results) - 1):
+        #             account_milestone_string += ","
+        #         i += 1
+        #     account_milestone_string += "}"
+        #
+        #     memo_milestone_string = "{"
+        #     i = 0
+        #     for key, value in self.memo_milestone_results.items():
+        #         memo_milestone_string += '"' + str(key) + '":"' + str(value) + '"'
+        #         if i != (len(self.memo_milestone_results) - 1):
+        #             memo_milestone_string += ","
+        #         i += 1
+        #     memo_milestone_string += "}"
+        #
+        #     composite_milestone_string = "{"
+        #     i = 0
+        #     for key, value in self.composite_milestone_results.items():
+        #         composite_milestone_string += '"' + str(key) + '":"' + str(value) + '"'
+        #         if i != (len(self.composite_milestone_results) - 1):
+        #             composite_milestone_string += ","
+        #         i += 1
+        #     composite_milestone_string += "}"
+        #
+        # JSON_string += "\"milestone_set\":"+self.milestone_set.to_json()
+        #
+        # if hasattr(self, 'start_ts'):
+        #     JSON_string += ",\n"
+        #     JSON_string += "\"account_milestone_results\":"+account_milestone_string+",\n"
+        #     JSON_string += "\"memo_milestone_results\":"+memo_milestone_string+",\n"
+        #     JSON_string += "\"composite_milestone_results\":"+composite_milestone_string
+        #
+        # JSON_string += '}'
+        #
+        # return JSON_string
 
     def to_html(self):
         #todo consider adding commas to long numbers

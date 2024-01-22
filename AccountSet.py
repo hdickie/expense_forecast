@@ -4,7 +4,7 @@ from log_methods import log_in_color
 import logging
 import numpy as np
 import BudgetSet #this could be refactored out, and should be in terms of independent dependencies and clear organization, but it works
-
+import jsonpickle
 from log_methods import setup_logger
 
 logger = setup_logger('AccountSet','./log/AccountSet.log',logging.INFO)
@@ -1082,15 +1082,15 @@ class AccountSet:
         Get a JSON <string> representation of the <AccountSet> object.
 
         """
-        JSON_string = "[\n"
-        for i in range(0, len(self.accounts)):
-            JSON_string += self.accounts[i].to_json()
-            if i + 1 != len(self.accounts):
-                JSON_string += ","
-            JSON_string += '\n'
-        JSON_string += ']'
-
-        return JSON_string
+        return jsonpickle.encode(self,indent=4)
+        # JSON_string = "[\n"
+        # for i in range(0, len(self.accounts)):
+        #     JSON_string += self.accounts[i].to_json()
+        #     if i + 1 != len(self.accounts):
+        #         JSON_string += ","
+        #     JSON_string += '\n'
+        # JSON_string += ']'
+        # return JSON_string
 
     # def fromJSON(self,JSON_string):
     #     pass

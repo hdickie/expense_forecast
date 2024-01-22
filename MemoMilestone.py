@@ -1,5 +1,6 @@
 
 import re, pandas as pd
+import jsonpickle
 class MemoMilestone:
 
     def __init__(self,Milestone_Name,Memo_Regex):
@@ -18,12 +19,12 @@ class MemoMilestone:
         }).to_string()
 
     def to_json(self):
-
-        return_string = "{"
-
-        return_string += '"' + "Milestone_Name" + '":"' + self.milestone_name + '"' + ",\n"
-        return_string += '"' + "Memo_Regex" + '":"' + self.memo_regex + '"' + "\n"
-
-        return_string += "}"
-
-        return return_string
+        return jsonpickle.encode(self, indent=4)
+        # return_string = "{"
+        #
+        # return_string += '"' + "Milestone_Name" + '":"' + self.milestone_name + '"' + ",\n"
+        # return_string += '"' + "Memo_Regex" + '":"' + self.memo_regex + '"' + "\n"
+        #
+        # return_string += "}"
+        #
+        # return return_string
