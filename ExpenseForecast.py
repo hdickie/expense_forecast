@@ -1057,7 +1057,7 @@ class ExpenseForecast:
         return forecast_df
 
     def attemptTransaction(self, forecast_df, account_set, memo_set, confirmed_df, proposed_row_df):
-        log_in_color(logger,'green','debug','ENTER attemptTransaction( C:'+str(confirmed_df.shape[0])+' P:'+str(proposed_row_df.Memo)+')',self.log_stack_depth)
+        log_in_color(logger,'green','info','ENTER attemptTransaction( C:'+str(confirmed_df.shape[0])+' P:'+str(proposed_row_df.Memo)+')',self.log_stack_depth)
         #log_in_color(logger, 'green', 'debug', forecast_df.to_string() )
         self.log_stack_depth += 1
         try:
@@ -1092,21 +1092,24 @@ class ExpenseForecast:
                                                 self.sync_account_set_w_forecast_day(account_set, forecast_df,previous_date)),
                                             memo_rule_set=memo_set)[0]
 
+
+
             date_array = [ datetime.datetime.strptime(d,'%Y%m%d') for d in forecast_df.Date ]
             row_sel_vec = [ d < datetime.datetime.strptime(txn_date,'%Y%m%d') for d in date_array ]
             past_confirmed_forecast_rows_df = forecast_df[ row_sel_vec ]
 
             hypothetical_future_state_of_forecast = pd.concat([past_confirmed_forecast_rows_df,hypothetical_future_state_of_forecast_future_rows_only])
+            log_in_color(logger, 'green', 'info', hypothetical_future_state_of_forecast.to_string(), self.log_stack_depth)
 
             self.log_stack_depth -= 1
-            log_in_color(logger, 'green', 'debug', 'EXIT attemptTransaction('+str(proposed_row_df.Memo)+')'+' (SUCCESS)',self.log_stack_depth)
+            log_in_color(logger, 'green', 'info', 'EXIT attemptTransaction('+str(proposed_row_df.Memo)+')'+' (SUCCESS)',self.log_stack_depth)
             #log_in_color(logger, 'green', 'debug',hypothetical_future_state_of_forecast.to_string())
             return hypothetical_future_state_of_forecast #transaction is permitted
         except ValueError as e:
             self.log_stack_depth -= 5  # several decrements were skipped over by the exception
             log_in_color(logger, 'red', 'debug',str(e), self.log_stack_depth)
             log_in_color(logger, 'red', 'debug', account_set.getAccounts().to_string(), self.log_stack_depth)
-            log_in_color(logger, 'red', 'debug',
+            log_in_color(logger, 'red', 'info',
                          'EXIT attemptTransaction(' + str(proposed_row_df.Memo) + ')' + ' (FAIL)', self.log_stack_depth)
             if re.search('.*Account boundaries were violated.*',str(e.args)) is None:  # this is the only exception where we don't want to stop immediately
                 raise e
@@ -3339,7 +3342,11 @@ class ExpenseForecast:
                         memo_line_items = f_row.Memo.iat[0].split(';')
                         memo_line_items_to_keep = []
                         memo_line_items_relevant_to_minimum_payment = []
+                        cc_interest_line_item = ''
                         for memo_line_item in memo_line_items:
+                            if 'cc interest' in memo_line_item:
+                                cc_interest_line_item = memo_line_item
+                                continue
                             if account_base_name in memo_line_item:
                                 if 'cc min payment' in memo_line_item:
                                     memo_line_items_relevant_to_minimum_payment.append(memo_line_item)
@@ -3347,6 +3354,7 @@ class ExpenseForecast:
                                 # we dont need this if we use string.replace
                                 memo_line_items_to_keep.append(memo_line_item)
 
+                        #todo I think the case when min payment applies to curr balance has not been handled here
                         if len(memo_line_items_relevant_to_minimum_payment) == 1:
                             # e.g. cc min payment (Credit: Prev Stmt Bal -$149.24);
 
@@ -3368,14 +3376,23 @@ class ExpenseForecast:
                             future_rows_only_df.iloc[row_sel_vec,col_sel_vec] += og_amount
 
                             memo_to_replace = memo_line_items_relevant_to_minimum_payment[0]+';'
-                            #log_in_color(logger, 'magenta', 'debug', 'memo_to_replace:')
-                            #log_in_color(logger, 'magenta', 'debug', memo_to_replace)
+                            # log_in_color(logger, 'white', 'info', 'memo_to_replace:')
+                            # log_in_color(logger, 'white', 'info', memo_to_replace)
+                            # log_in_color(logger, 'white', 'info', 'cc_interest_line_item:')
+                            # log_in_color(logger, 'white', 'info', cc_interest_line_item)
+                            # log_in_color(logger, 'white', 'info', 'og_memo:')
+                            # log_in_color(logger, 'white', 'info', future_rows_only_df.iloc[row_sel_vec, :].Memo.iat[0])
+
                             new_memo = future_rows_only_df.iloc[row_sel_vec, :].Memo.iat[0].replace(memo_to_replace, '')
+                            new_memo = new_memo.replace(cc_interest_line_item,'')
                             f_row.Memo = new_memo
 
                             account_set = self.sync_account_set_w_forecast_day(
                                 copy.deepcopy(account_set_before_p2_plus_txn), future_rows_only_df, f_row.Date.iat[0])
                             updated_forecast_df_row = self.executeCreditCardMinimumPayments(account_set, f_row)
+
+                            # log_in_color(logger, 'white', 'info', 'updated_forecast_df_row:')
+                            # log_in_color(logger, 'white', 'info', updated_forecast_df_row.to_string())
 
                             #p2+ curr balance funds may have moved from curr to prev.
                             #this was accounted for in the above payment that just happened, but needs to be propogated
@@ -4241,7 +4258,7 @@ class ExpenseForecast:
                     log_string += '     ' + str(iteration_time_elapsed)
                     log_in_color(logger, 'white', 'debug', log_string )
 
-                log_in_color(logger, 'magenta', 'debug', 'p' + str(priority_index) + ' ' + str(date_string_YYYYMMDD),self.log_stack_depth)
+                log_in_color(logger, 'magenta', 'info', 'p' + str(priority_index) + ' ' + str(date_string_YYYYMMDD),self.log_stack_depth)
 
                 remaining_unproposed_transactions_df = self.updateProposedTransactionsBasedOnOtherSets(confirmed_df, proposed_df, deferred_df, skipped_df)
 
@@ -4334,9 +4351,9 @@ class ExpenseForecast:
                     log_in_color(logger, 'white', 'debug', 'p Date           iteration time elapsed')
                     last_iteration = datetime.datetime.now()
                 continue  # first day is considered final
+            log_in_color(logger, 'magenta', 'info', 'p1 '+str(d))
 
             try:
-
                 if not raise_satisfice_failed_exception:
                     last_iteration_time_elapsed = datetime.datetime.now() - last_iteration
                     last_iteration = datetime.datetime.now()
@@ -4387,6 +4404,8 @@ class ExpenseForecast:
                     return False
                 else:
                     raise e
+
+        log_in_color(logger, 'white', 'info', forecast_df.to_string(), self.log_stack_depth)
 
         self.log_stack_depth -= 1
         log_in_color(logger, 'cyan', 'debug', 'EXIT satisfice()',self.log_stack_depth)
@@ -5464,6 +5483,7 @@ if __name__ == "__main__":
 # i want like hashtags appended to url when i click on tabs so it stays there when i refresh
 # I want to see each monthly cc interest accrual on the interest tab
 # input validation :: check budget items have memo match needs to include priority as well
+# think abt colors across plots
 
 ### Project Wrap-up requirements
 # review todos
