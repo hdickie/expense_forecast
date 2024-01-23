@@ -78,48 +78,6 @@ class MilestoneSet:
 
     def to_json(self):
         return jsonpickle.encode(self, indent=4)
-        # json_string = "{"
-        #
-        # account_milestone_index = 0
-        # account_milestones_json_string = "["
-        # for a in self.account_milestones:
-        #     account_milestones_json_string += a.to_json()
-        #
-        #     if account_milestone_index != len(self.account_milestones) - 1:
-        #         account_milestones_json_string += ","
-        #
-        #     account_milestone_index += 1
-        # account_milestones_json_string += "]"
-        #
-        # memo_milestone_index = 0
-        # memo_milestones_json_string = "["
-        # for m in self.memo_milestones:
-        #     memo_milestones_json_string += m.to_json()
-        #
-        #     if memo_milestone_index != len(self.memo_milestones) - 1:
-        #         memo_milestones_json_string += ","
-        #
-        #     memo_milestone_index += 1
-        # memo_milestones_json_string += "]"
-        #
-        # composite_milestone_index = 0
-        # composite_milestones_json_string = "["
-        # for c in self.composite_milestones:
-        #     composite_milestones_json_string += c.to_json()
-        #
-        #     if composite_milestone_index != len(self.composite_milestones) - 1:
-        #         composite_milestones_json_string += ","
-        #
-        #     composite_milestone_index += 1
-        # composite_milestones_json_string += "]"
-        #
-        # json_string += '"' + "account_milestones" + '":' + account_milestones_json_string + ","
-        # json_string += '"' + "memo_milestones" + '":' + memo_milestones_json_string + ","
-        # json_string += '"' + "composite_milestones" + '":' + composite_milestones_json_string
-        #
-        # json_string += "}"
-        #
-        # return json_string
 
     def getAccountMilestonesDF(self):
 
@@ -172,36 +130,3 @@ class MilestoneSet:
                                            })])
         composite_milestone_df.reset_index(drop=True, inplace=True)
         return composite_milestone_df
-    #
-    # def getCompositeMilestones_lists(self):
-    #     composite_milestones__account_df = pd.DataFrame({'Composite_Milestone_Name': [],
-    #                                             'Account_Name': [],
-    #                                             'Min_Balance': [],
-    #                                             'Max_Balance': []
-    #                                             })
-    #
-    #     composite_milestones__memo_df = pd.DataFrame({'Composite_Milestone_Name': [],
-    #                                                      'Milestone_Name': [],
-    #                                                      'Memo_Regex': []
-    #                                                      })
-    #
-    #     for cm in self.composite_milestones:
-    #         for a in cm.account_milestones:
-    #             composite_milestones__account_df = pd.concat([composite_milestones__account_df,
-    #                                                           pd.DataFrame({'Composite_Milestone_Name': [cm.milestone_name],
-    #                                                                         'Account_Name': [a.account_name],
-    #                                                                         'Min_Balance': [a.min_balance],
-    #                                                                         'Max_Balance': [a.max_balance]
-    #                                                                         })
-    #                                                           ])
-    #
-    #         for m in cm.memo_milestones:
-    #             composite_milestones__memo_df = pd.concat([composite_milestones__memo_df,
-    #                                                        pd.DataFrame({'Composite_Milestone_Name': [
-    #                                                            cm.milestone_name],
-    #                                                                      'Account_Name': [m.milestone_name],
-    #                                                                      'Min_Balance': [m.memo_regex]
-    #                                                                      })
-    #                                                        ])
-    #
-    #     return [composite_milestones__account_df, composite_milestones__memo_df]

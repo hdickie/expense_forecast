@@ -20,11 +20,3 @@ class MemoMilestone:
 
     def to_json(self):
         return jsonpickle.encode(self, indent=4)
-        # return_string = "{"
-        #
-        # return_string += '"' + "Milestone_Name" + '":"' + self.milestone_name + '"' + ",\n"
-        # return_string += '"' + "Memo_Regex" + '":"' + self.memo_regex + '"' + "\n"
-        #
-        # return_string += "}"
-        #
-        # return return_string

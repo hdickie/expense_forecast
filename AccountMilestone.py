@@ -1,4 +1,5 @@
 import pandas as pd
+import jsonpickle
 
 class AccountMilestone:
 
@@ -26,13 +27,4 @@ class AccountMilestone:
 
     def to_json(self):
 
-        return_string = "{"
-
-        return_string += '"' + "Milestone_Name" + '":"' + self.milestone_name + '"' + ",\n"
-        return_string += '"' + "Account_Name" + '":"' + self.account_name + '"' + ",\n"
-        return_string += '"' + "Min_Balance" + '":"' + str(self.min_balance) + '"' + ",\n"
-        return_string += '"' + "Max_Balance" + '":"' + str(self.max_balance) + '"' + "\n"
-
-        return_string += "}"
-
-        return return_string
+        return jsonpickle.encode(self, indent=4)

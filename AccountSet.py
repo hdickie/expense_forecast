@@ -640,128 +640,128 @@ class AccountSet:
             raise ValueError("Funds not accounted for in AccountSet::executeTransaction()") # Funds not accounted for
 
 
-    def from_excel(self,path):
-        self.accounts = []
-        A_df = pd.read_excel(path)
+    # def from_excel(self,path):
+    #     self.accounts = []
+    #     A_df = pd.read_excel(path)
+    #
+    #     # "Name": "test",
+    #     # "Balance": "0.0",
+    #     # "Min_Balance": "0.0",
+    #     # "Max_Balance": "0.0",
+    #     # "Account_Type": "checking",
+    #     # "Billing_Start_Date": "None",
+    #     # "Interest_Type": "None",
+    #     # "APR": "None",
+    #     # "Interest_Cadence": "None",
+    #     # "Minimum_Payment": "None"
+    #
+    #     #info for paired accounts needs to be in one row, so we have to iterate over once
+    #     expect_secondary_acct = False
+    #     name = None
+    #     balance = None
+    #     min_balance = None
+    #     max_balance = None
+    #     billing_start_date_YYYYMMDD = None
+    #     interest_type = None
+    #     apr = None
+    #     interest_cadence = None
+    #     minimum_payment = None
+    #     for index, row in A_df.iterrows():
+    #         if expect_secondary_acct:
+    #             assert min_balance == row.Min_Balance
+    #             assert max_balance == row.Max_Balance
+    #             assert name.split(':')[0] == row.Name.split(':')[0] #these are the only checks createAccount cant catch
+    #         else:
+    #             name = row.Name
+    #             balance = row.Balance
+    #             min_balance = row.Min_Balance
+    #             max_balance = row.Max_Balance
+    #
+    #             billing_start_date_YYYYMMDD = row.Billing_Start_Dt
+    #             interest_type = row.Interest_Type
+    #             apr = row.APR
+    #             interest_cadence = row.Interest_Cadence
+    #             minimum_payment = row.Minimum_Payment
+    #
+    #         if row.Account_Type == 'checking':
+    #             self.createAccount(name,
+    #                   balance,
+    #                   min_balance,
+    #                   max_balance,
+    #                   'checking')
+    #         elif (row.Account_Type == 'curr stmt bal' or row.Account_Type == 'interest'
+    #               or row.Account_Type == 'prev stmt bal' or row.Account_Type == 'principal balance') and not expect_secondary_acct: #we cant count on row order here
+    #             expect_secondary_acct = True
+    #             continue
+    #         elif row.Account_Type == 'prev stmt bal' and expect_secondary_acct:
+    #             expect_secondary_acct = False
+    #             self.createAccount(name.split(':')[0],
+    #                             balance,
+    #                             min_balance,
+    #                             max_balance,
+    #                             'credit',
+    #                             billing_start_date_YYYYMMDD=int(row.Billing_Start_Dt),
+    #                             interest_type=row.Interest_Type,
+    #                             apr=row.APR,
+    #                             interest_cadence=row.Interest_Cadence,
+    #                             minimum_payment=row.Minimum_Payment,
+    #                             previous_statement_balance=row.Balance,
+    #                             principal_balance=None,
+    #                             accrued_interest=None)
+    #         elif row.Account_Type == 'curr stmt bal' and expect_secondary_acct:
+    #             expect_secondary_acct = False
+    #             self.createAccount(name.split(':')[0],
+    #                             row.Balance,
+    #                             min_balance,
+    #                             max_balance,
+    #                             'loan',
+    #                            billing_start_date_YYYYMMDD=int(billing_start_date_YYYYMMDD),
+    #                            interest_type=interest_type,
+    #                            apr=apr,
+    #                            interest_cadence=interest_cadence,
+    #                            minimum_payment=minimum_payment,
+    #                            previous_statement_balance=balance,
+    #                            principal_balance=None,
+    #                            accrued_interest=None)
+    #         elif row.Account_Type == 'principal balance' and expect_secondary_acct:
+    #             expect_secondary_acct = False
+    #             self.createAccount(name.split(':')[0],
+    #                             balance + row.Balance,
+    #                             min_balance,
+    #                             max_balance,
+    #                             'loan',
+    #                             billing_start_date_YYYYMMDD=int(row.Billing_Start_Dt),
+    #                             interest_type=row.Interest_Type,
+    #                             apr=row.APR,
+    #                             interest_cadence=row.Interest_Cadence,
+    #                             minimum_payment=row.Minimum_Payment,
+    #                             previous_statement_balance=None,
+    #                             principal_balance=balance,
+    #                             accrued_interest=row.Balance)
+    #         elif row.Account_Type == 'interest' and expect_secondary_acct:
+    #             expect_secondary_acct = False
+    #             self.createAccount(name.split(':')[0],
+    #                             balance + row.Balance,
+    #                             min_balance,
+    #                             max_balance,
+    #                             'loan',
+    #                             billing_start_date_YYYYMMDD=int(billing_start_date_YYYYMMDD),
+    #                             interest_type=interest_type,
+    #                             apr=apr,
+    #                             interest_cadence=interest_cadence,
+    #                             minimum_payment=minimum_payment,
+    #                             previous_statement_balance=None,
+    #                             principal_balance=balance,
+    #                             accrued_interest=row.Balance)
+    #         else: raise NotImplementedError #an unexpected account type was found, or expect_secondary_acct was set inappropriately
+    #
 
-        # "Name": "test",
-        # "Balance": "0.0",
-        # "Min_Balance": "0.0",
-        # "Max_Balance": "0.0",
-        # "Account_Type": "checking",
-        # "Billing_Start_Date": "None",
-        # "Interest_Type": "None",
-        # "APR": "None",
-        # "Interest_Cadence": "None",
-        # "Minimum_Payment": "None"
-
-        #info for paired accounts needs to be in one row, so we have to iterate over once
-        expect_secondary_acct = False
-        name = None
-        balance = None
-        min_balance = None
-        max_balance = None
-        billing_start_date_YYYYMMDD = None
-        interest_type = None
-        apr = None
-        interest_cadence = None
-        minimum_payment = None
-        for index, row in A_df.iterrows():
-            if expect_secondary_acct:
-                assert min_balance == row.Min_Balance
-                assert max_balance == row.Max_Balance
-                assert name.split(':')[0] == row.Name.split(':')[0] #these are the only checks createAccount cant catch
-            else:
-                name = row.Name
-                balance = row.Balance
-                min_balance = row.Min_Balance
-                max_balance = row.Max_Balance
-
-                billing_start_date_YYYYMMDD = row.Billing_Start_Dt
-                interest_type = row.Interest_Type
-                apr = row.APR
-                interest_cadence = row.Interest_Cadence
-                minimum_payment = row.Minimum_Payment
-
-            if row.Account_Type == 'checking':
-                self.createAccount(name,
-                      balance,
-                      min_balance,
-                      max_balance,
-                      'checking')
-            elif (row.Account_Type == 'curr stmt bal' or row.Account_Type == 'interest'
-                  or row.Account_Type == 'prev stmt bal' or row.Account_Type == 'principal balance') and not expect_secondary_acct: #we cant count on row order here
-                expect_secondary_acct = True
-                continue
-            elif row.Account_Type == 'prev stmt bal' and expect_secondary_acct:
-                expect_secondary_acct = False
-                self.createAccount(name.split(':')[0],
-                                balance,
-                                min_balance,
-                                max_balance,
-                                'credit',
-                                billing_start_date_YYYYMMDD=int(row.Billing_Start_Dt),
-                                interest_type=row.Interest_Type,
-                                apr=row.APR,
-                                interest_cadence=row.Interest_Cadence,
-                                minimum_payment=row.Minimum_Payment,
-                                previous_statement_balance=row.Balance,
-                                principal_balance=None,
-                                accrued_interest=None)
-            elif row.Account_Type == 'curr stmt bal' and expect_secondary_acct:
-                expect_secondary_acct = False
-                self.createAccount(name.split(':')[0],
-                                row.Balance,
-                                min_balance,
-                                max_balance,
-                                'loan',
-                               billing_start_date_YYYYMMDD=int(billing_start_date_YYYYMMDD),
-                               interest_type=interest_type,
-                               apr=apr,
-                               interest_cadence=interest_cadence,
-                               minimum_payment=minimum_payment,
-                               previous_statement_balance=balance,
-                               principal_balance=None,
-                               accrued_interest=None)
-            elif row.Account_Type == 'principal balance' and expect_secondary_acct:
-                expect_secondary_acct = False
-                self.createAccount(name.split(':')[0],
-                                balance + row.Balance,
-                                min_balance,
-                                max_balance,
-                                'loan',
-                                billing_start_date_YYYYMMDD=int(row.Billing_Start_Dt),
-                                interest_type=row.Interest_Type,
-                                apr=row.APR,
-                                interest_cadence=row.Interest_Cadence,
-                                minimum_payment=row.Minimum_Payment,
-                                previous_statement_balance=None,
-                                principal_balance=balance,
-                                accrued_interest=row.Balance)
-            elif row.Account_Type == 'interest' and expect_secondary_acct:
-                expect_secondary_acct = False
-                self.createAccount(name.split(':')[0],
-                                balance + row.Balance,
-                                min_balance,
-                                max_balance,
-                                'loan',
-                                billing_start_date_YYYYMMDD=int(billing_start_date_YYYYMMDD),
-                                interest_type=interest_type,
-                                apr=apr,
-                                interest_cadence=interest_cadence,
-                                minimum_payment=minimum_payment,
-                                previous_statement_balance=None,
-                                principal_balance=balance,
-                                accrued_interest=row.Balance)
-            else: raise NotImplementedError #an unexpected account type was found, or expect_secondary_acct was set inappropriately
-
-
-
-    def to_excel(self,path):
-        A = self.getAccounts()
-        #A['Billing_Start_Dt'] = pd.to_datetime(A['Billing_Start_Dt'])
-        #print(A.dtypes)
-        A.to_excel(path)
+    #
+    # def to_excel(self,path):
+    #     A = self.getAccounts()
+    #     #A['Billing_Start_Dt'] = pd.to_datetime(A['Billing_Start_Dt'])
+    #     #print(A.dtypes)
+    #     A.to_excel(path)
 
 
     #this algorithm does not work because satisfice can be affected by optimizations
@@ -1083,17 +1083,6 @@ class AccountSet:
 
         """
         return jsonpickle.encode(self,indent=4)
-        # JSON_string = "[\n"
-        # for i in range(0, len(self.accounts)):
-        #     JSON_string += self.accounts[i].to_json()
-        #     if i + 1 != len(self.accounts):
-        #         JSON_string += ","
-        #     JSON_string += '\n'
-        # JSON_string += ']'
-        # return JSON_string
-
-    # def fromJSON(self,JSON_string):
-    #     pass
 
 
 # written in one line so that test coverage can reach 100%

@@ -42,24 +42,4 @@ class CompositeMilestone:
 
     def to_json(self):
 
-        # return_string = "{\"Milestone_Name\":\""+self.milestone_name+"\",\"account_milestones\":"
-        #
-        # return_string += "["
-        # for i in range(0,len(self.account_milestones)):
-        #     a = self.account_milestones[i]
-        #     return_string += a.to_json()+'\n'
-        #     if i < (len(self.account_milestones)-1):
-        #         return_string += ','
-        #
-        # return_string += "],\"memo_milestones\":["
-        #
-        # for i in range(0, len(self.memo_milestones)):
-        #     m = self.memo_milestones[i]
-        #     return_string += m.to_json() + '\n'
-        #     if i < (len(self.memo_milestones) - 1):
-        #         return_string += ','
-        #
-        # return_string += "]\n}"
-        #
-        # return return_string
         return jsonpickle.encode(self, indent=4)

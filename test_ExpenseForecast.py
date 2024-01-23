@@ -70,32 +70,6 @@ def non_trivial_loan(name,pbal,interest,apr):
 
 class TestExpenseForecastMethods:
 
-    # def account_boundaries_are_violated(self,accounts_df,forecast_df):
-    #
-    #     for col_name in forecast_df.columns.tolist():
-    #         if col_name == 'Date' or col_name == 'Memo':
-    #             continue
-    #
-    #         acct_boundary__min = accounts_df.loc[accounts_df.Name == col_name,'Min_Balance']
-    #         acct_boundary__max = accounts_df.loc[accounts_df.Name == col_name, 'Max_Balance']
-    #
-    #         min_in_forecast_for_acct = min(forecast_df[col_name])
-    #         max_in_forecast_for_acct = max(forecast_df[col_name])
-    #
-    #         try:
-    #             # print('min_in_forecast_for_acct:'+str(min_in_forecast_for_acct))
-    #             # print('max_in_forecast_for_acct:' + str(max_in_forecast_for_acct))
-    #             # print('acct_boundary__min:' + str(acct_boundary__min))
-    #             # print('acct_boundary__max:' + str(acct_boundary__max))
-    #
-    #             assert float(min_in_forecast_for_acct) >= float(acct_boundary__min)
-    #             assert float(max_in_forecast_for_acct) <= float(acct_boundary__max)
-    #         except Exception as e:
-    #             print('Account Boundary Violation for '+str(col_name)+' in ExpenseForecast.account_boundaries_are_violated()')
-    #             return True
-    #     return False
-
-
     @pytest.mark.parametrize('account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set',
 
                              [(AccountSet.AccountSet(checking_acct_list(10)),
@@ -1292,10 +1266,6 @@ class TestExpenseForecastMethods:
     #   print(account_set.getAvailableBalances()) #pass by manual inspection
 
 
-    def test_dont_recompute_past_days_for_p2plus_transactions(self):
-        #will have to analyze logs for this
-        raise NotImplementedError
-
     def test_str(self):
         start_date_YYYYMMDD = '20000101'
         end_date_YYYYMMDD = '20000103'
@@ -1352,66 +1322,6 @@ class TestExpenseForecastMethods:
         E.runForecast()
 
         str(E)
-
-    def test_dont_output_logs_during_execution(self,caplog):
-
-        start_date_YYYYMMDD = '20000101'
-        end_date_YYYYMMDD = '20000103'
-
-        account_set = AccountSet.AccountSet([])
-        budget_set = BudgetSet.BudgetSet([])
-        memo_rule_set = MemoRuleSet.MemoRuleSet([])
-
-        account_set.createAccount(name='Checking',
-                                  balance=1000,
-                                  min_balance=0,
-                                  max_balance=float('Inf'),
-                                  account_type="checking")
-
-        account_set.createAccount(name='Credit',
-                                  balance=0,
-                                  min_balance=0,
-                                  max_balance=20000,
-                                  account_type="credit",
-                                  billing_start_date_YYYYMMDD='20000102',
-                                  interest_type='Compound',
-                                  apr=0.05,
-                                  interest_cadence='Monthly',
-                                  minimum_payment=40,
-                                  previous_statement_balance=0,
-                                  principal_balance=None,
-                                  accrued_interest=None
-                                  )
-
-        budget_set.addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
-                                 cadence='daily', amount=0, memo='dummy memo',
-                                 deferrable=False,
-                                 partial_payment_allowed=False)
-
-        memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1)
-
-        expected_result_df = pd.DataFrame({
-            'Date': ['20000101', '20000102', '20000103'],
-            'Checking': [1000, 0, 0],
-            'Credit: Curr Stmt Bal': [0, 0, 0],
-            'Credit: Prev Stmt Bal': [0, 0, 0],
-            'Memo': ['', '', '']
-        })
-        expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d') for x in
-                                   expected_result_df.Date]
-
-        milestone_set = MilestoneSet.MilestoneSet(account_set,budget_set,[],[],[])
-
-        E = ExpenseForecast.ExpenseForecast(account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set)
-
-        #todo im not sure if caplog is working here
-        caplog.set_level(logging.DEBUG)
-
-        E.runForecast()
-
-        print(caplog)
-        for record in caplog.records:
-            print(record)
 
     def test_initialize_from_excel_not_yet_run(self):
         start_date_YYYYMMDD = '20000101'

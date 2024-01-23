@@ -74,26 +74,7 @@ class ForecastSet:
 
     def to_json(self):
         return jsonpickle.encode(self, indent=4)
-        # return_string = "{"
-        #
-        # return_string += '"Core BudgetSet":'+ self.core_budget_set.getBudgetItems().to_json(orient='records', date_format='iso') + ","
-        # return_string += '"Option BudgetSet":'+self.option_budget_set.getBudgetItems().to_json(orient='records', date_format='iso') + ","
-        #
-        # scenario_dict = '"Scenarios":' + "{\n"
-        # index = 0
-        # for s_key, s_value in self.scenarios.items():
-        #     scenario_dict += '"'+s_key+'":'+s_value.getBudgetItems().to_json(orient='records', date_format='iso')
-        #     if index != (len(self.scenarios) - 1):
-        #         scenario_dict += ","
-        #     index += 1
-        # scenario_dict += "}"
-        # return_string += scenario_dict
-        # return_string += "}"
-        #
-        # json_object = json.loads(return_string)
-        # return_string = json.dumps(json_object, indent=2)
-        #
-        # return return_string
+
 
     def addCustomLabelToScenario(self, old_label, new_label):
         try:

@@ -141,18 +141,6 @@ class MemoRule:
         Get a JSON <string> representing the <MemoRule> object.
         """
         return jsonpickle.encode(self, indent=4)
-        #todo in other places I used pd.DataFrame().to_json(orient="records")
-
-        # JSON_string = "{\n"
-        # JSON_string += "\"Memo_Regex\":" + "\"" + str(self.memo_regex) + "\",\n"
-        # JSON_string += "\"Account_From\":" + "\"" + str(self.account_from) + "\",\n"
-        # JSON_string += "\"Account_To\":" + "\"" + str(self.account_to) + "\",\n"
-        # JSON_string += "\"Transaction_Priority\":" + "\"" + str(self.transaction_priority) + "\"\n"
-        # JSON_string += "}"
-        # return JSON_string
-
-    # def fromJSON(self,JSON_string):
-    #     pass
 
 #written in one line so that test coverage can reach 100%
 if __name__ == "__main__": import doctest ; doctest.testmod()

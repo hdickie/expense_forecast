@@ -103,30 +103,6 @@ class TestForecastSet:
     def test_str(self):
         raise NotImplementedError
 
-    @pytest.mark.parametrize('core_budget_set,option_budget_set',
-
-                             [(BudgetSet.BudgetSet(
-                                 [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'core 1'),
-                                  BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'core 2'),
-                                  BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'core 3')
-
-                                  ]),
-                               BudgetSet.BudgetSet(
-                                   [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 1A'),
-                                    BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 1B'),
-                                    BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 1C'),
-                                    BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 1D'),
-                                    BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 2A'),
-                                    BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 2B'),
-                                    BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 2C'),
-                                    BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 2D')
-                                    ])),
-
-                             ])
-
-
-    def test_listChoices(self):
-        raise NotImplementedError
 
     def test_addCustomLabelToScenario(self):
         raise NotImplementedError

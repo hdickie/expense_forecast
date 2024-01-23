@@ -236,11 +236,14 @@ def initialize_from_json_file(path_to_json):
     with open(path_to_json) as json_data:
         data = json.load(json_data)
 
+    print('data:')
+    print(data)
+
     initial_account_set = data['initial_account_set']
     initial_budget_set = data['initial_budget_set']
     initial_memo_rule_set = data['initial_memo_rule_set']
-    start_date_YYYYMMDD = data['start_date']
-    end_date_YYYYMMDD = data['end_date']
+    start_date_YYYYMMDD = data['start_date_YYYYMMDD']
+    end_date_YYYYMMDD = data['end_date_YYYYMMDD']
     milestone_set = data['milestone_set']
 
     A = AccountSet.AccountSet([])
@@ -259,61 +262,60 @@ def initialize_from_json_file(path_to_json):
     loan_interest_cadence = None
     loan_min_payment = None
 
-    for Account__dict in initial_account_set:
-        #print('Account__dict:')
-        #print(Account__dict)
+    for Account__dict in initial_account_set['accounts']:
+
         #Account__dict = Account__dict[0] #the dict came in a list
-        if Account__dict['Account_Type'].lower() == 'checking':
-            A.createAccount(Account__dict['Name'],
-                            Account__dict['Balance'],
-                            Account__dict['Min_Balance'],
-                            Account__dict['Max_Balance'],
-                            Account__dict['Account_Type'],
-                            Account__dict['Billing_Start_Date'],
-                            Account__dict['Interest_Type'],
-                            Account__dict['APR'],
-                            Account__dict['Interest_Cadence'],
-                            Account__dict['Minimum_Payment']
+        if Account__dict['account_type'].lower() == 'checking':
+            A.createAccount(Account__dict['name'],
+                            Account__dict['balance'],
+                            Account__dict['min_balance'],
+                            Account__dict['max_balance'],
+                            Account__dict['account_type'],
+                            Account__dict['billing_start_date_YYYYMMDD'],
+                            Account__dict['interest_type'],
+                            Account__dict['apr'],
+                            Account__dict['interest_cadence'],
+                            Account__dict['minimum_payment']
                             )
 
-        elif Account__dict['Account_Type'].lower() == 'curr stmt bal':
-            credit_acct_name = Account__dict['Name'].split(':')[0]
-            credit_curr_bal = Account__dict['Balance']
+        elif Account__dict['account_type'].lower() == 'curr stmt bal':
+            credit_acct_name = Account__dict['name'].split(':')[0]
+            credit_curr_bal = Account__dict['balance']
 
-        elif Account__dict['Account_Type'].lower() == 'prev stmt bal':
+        elif Account__dict['account_type'].lower() == 'prev stmt bal':
 
             #first curr then prev
             A.createAccount(name=credit_acct_name,
                             balance=credit_curr_bal,
-                            min_balance=Account__dict['Min_Balance'],
-                            max_balance=Account__dict['Max_Balance'],
+                            min_balance=Account__dict['min_balance'],
+                            max_balance=Account__dict['max_balance'],
                             account_type="credit",
-                            billing_start_date_YYYYMMDD=Account__dict['Billing_Start_Date'],
-                            interest_type=Account__dict['Interest_Type'],
-                            apr=Account__dict['APR'],
-                            interest_cadence=Account__dict['Interest_Cadence'],
-                            minimum_payment=Account__dict['Minimum_Payment'],
-                            previous_statement_balance=Account__dict['Balance']
+                            billing_start_date_YYYYMMDD=Account__dict['billing_start_date_YYYYMMDD'],
+                            interest_type=Account__dict['interest_type'],
+                            apr=Account__dict['apr'],
+                            interest_cadence=Account__dict['interest_cadence'],
+                            minimum_payment=Account__dict['minimum_payment'],
+                            previous_statement_balance=Account__dict['balance']
                             )
 
-        elif Account__dict['Account_Type'].lower() == 'principal balance':
+        elif Account__dict['account_type'].lower() == 'principal balance':
 
-            loan_acct_name = Account__dict['Name'].split(':')[0]
-            loan_balance = Account__dict['Balance']
-            loan_apr = Account__dict['APR']
-            loan_billing_start_date = Account__dict['Billing_Start_Date']
-            loan_min_payment = Account__dict['Minimum_Payment']
-            loan_interest_cadence = Account__dict['Interest_Cadence']
-            loan_interest_type = Account__dict['Interest_Type']
+            loan_acct_name = Account__dict['name'].split(':')[0]
+            loan_balance = Account__dict['balance']
+            loan_apr = Account__dict['apr']
+            loan_billing_start_date = Account__dict['billing_start_date_YYYYMMDD']
+            loan_min_payment = Account__dict['minimum_payment']
+            loan_interest_cadence = Account__dict['interest_cadence']
+            loan_interest_type = Account__dict['interest_type']
 
-        elif Account__dict['Account_Type'].lower() == 'interest':
+        elif Account__dict['account_type'].lower() == 'interest':
 
             #principal balance then interest
 
             A.createAccount(name=loan_acct_name,
-                            balance=float(loan_balance) + float(Account__dict['Balance']),
-                            min_balance=Account__dict['Min_Balance'],
-                            max_balance=Account__dict['Max_Balance'],
+                            balance=float(loan_balance) + float(Account__dict['balance']),
+                            min_balance=Account__dict['min_balance'],
+                            max_balance=Account__dict['max_balance'],
                             account_type="loan",
                             billing_start_date_YYYYMMDD=loan_billing_start_date,
                             interest_type=loan_interest_type,
@@ -321,51 +323,51 @@ def initialize_from_json_file(path_to_json):
                             interest_cadence=loan_interest_cadence,
                             minimum_payment=loan_min_payment,
                             principal_balance=loan_balance,
-                            accrued_interest=Account__dict['Balance']
+                            accrued_interest=Account__dict['balance']
                             )
 
         else:
-            raise ValueError('unrecognized account type in ExpenseForecast::initialize_from_json_file: '+str(Account__dict['Account_Type']))
+            raise ValueError('unrecognized account type in ExpenseForecast::initialize_from_json_file: '+str(Account__dict['account_type']))
 
 
-    for BudgetItem__dict in initial_budget_set:
-        BudgetItem__dict = BudgetItem__dict[0]
-        sd_YYYYMMDD = BudgetItem__dict['Start_Date']
-        ed_YYYYMMDD = BudgetItem__dict['End_Date']
+    for BudgetItem__dict in initial_budget_set['budget_items']:
+        #BudgetItem__dict = BudgetItem__dict[0]
+        sd_YYYYMMDD = BudgetItem__dict['start_date_YYYYMMDD']
+        ed_YYYYMMDD = BudgetItem__dict['end_date_YYYYMMDD']
 
         B.addBudgetItem(start_date_YYYYMMDD=sd_YYYYMMDD,
                  end_date_YYYYMMDD=ed_YYYYMMDD,
-                 priority=BudgetItem__dict['Priority'],
-                 cadence=BudgetItem__dict['Cadence'],
-                 amount=BudgetItem__dict['Amount'],
-                 memo=BudgetItem__dict['Memo'],
-                 deferrable=BudgetItem__dict['Deferrable'],
-                 partial_payment_allowed=BudgetItem__dict['Partial_Payment_Allowed'])
+                 priority=BudgetItem__dict['priority'],
+                 cadence=BudgetItem__dict['cadence'],
+                 amount=BudgetItem__dict['amount'],
+                 memo=BudgetItem__dict['memo'],
+                 deferrable=BudgetItem__dict['deferrable'],
+                 partial_payment_allowed=BudgetItem__dict['partial_payment_allowed'])
 
-    for MemoRule__dict in initial_memo_rule_set:
+    for MemoRule__dict in initial_memo_rule_set['memo_rules']:
         #MemoRule__dict = MemoRule__dict[0]
-        M.addMemoRule(memo_regex=MemoRule__dict['Memo_Regex'],
-                      account_from=MemoRule__dict['Account_From'],
-                      account_to=MemoRule__dict['Account_To'],
-                      transaction_priority=MemoRule__dict['Transaction_Priority'])
+        M.addMemoRule(memo_regex=MemoRule__dict['memo_regex'],
+                      account_from=MemoRule__dict['account_from'],
+                      account_to=MemoRule__dict['account_to'],
+                      transaction_priority=MemoRule__dict['transaction_priority'])
 
     for am in milestone_set["account_milestones"]:
-        MS.addAccountMilestone(am['Milestone_Name'],am['Account_Name'],am['Min_Balance'],am['Max_Balance'])
+        MS.addAccountMilestone(am['milestone_name'],am['account_name'],am['min_balance'],am['max_balance'])
 
     for mm in milestone_set["memo_milestones"]:
-        MS.addMemoMilestone(mm['Milestone_Name'],mm['Memo_Regex'])
+        MS.addMemoMilestone(mm['milestone_name'],mm['memo_regex'])
 
     #milestone_name,account_milestones__list, memo_milestones__list
     for cm in milestone_set["composite_milestones"]:
         account_milestones__list = []
         for acc_mil in cm['account_milestones']:
-            account_milestones__list.append(AccountMilestone.AccountMilestone(acc_mil['Milestone_Name'],acc_mil['Account_Name'],acc_mil['Min_Balance'],acc_mil['Max_Balance']))
+            account_milestones__list.append(AccountMilestone.AccountMilestone(acc_mil['milestone_name'],acc_mil['account_name'],acc_mil['min_balance'],acc_mil['max_balance']))
 
         memo_milestones__list = []
         for memo_mil in cm['memo_milestones']:
-            memo_milestones__list.append(MemoMilestone.MemoMilestone(memo_mil['Milestone_Name'],memo_mil['Memo_Regex']))
+            memo_milestones__list.append(MemoMilestone.MemoMilestone(memo_mil['milestone_name'],memo_mil['memo_regex']))
 
-        MS.addCompositeMilestone(cm['Milestone_Name'],account_milestones__list,memo_milestones__list)
+        MS.addCompositeMilestone(cm['milestone_name'],account_milestones__list,memo_milestones__list)
 
     E = ExpenseForecast(A, B, M,start_date_YYYYMMDD, end_date_YYYYMMDD, MS, print_debug_messages=True)
 
@@ -403,6 +405,7 @@ def initialize_from_json_file(path_to_json):
         E.confirmed_df = pd.read_json('./out/confirmed_df_' + str(E.unique_id) + '.json')
         E.deferred_df = pd.read_json('./out/deferred_df_' + str(E.unique_id) + '.json')
 
+        #todo here
         E.forecast_df.Date = [str(d) for d in E.forecast_df.Date]
         if E.skipped_df.shape[0] > 0:
             E.skipped_df.Date = [str(d) for d in E.skipped_df.Date]
@@ -4989,104 +4992,110 @@ class ExpenseForecast:
         :return:
         """
 
-        return jsonpickle.encode(self, indent=4)
+        #return jsonpickle.encode(self, indent=4)
 
-        # JSON_string = '{'
-        #
-        # unique_id_string = "\"unique_id\":\""+self.unique_id+"\",\n"
-        #
-        # if hasattr(self,'start_ts'):
-        #     start_ts_string = "\"start_ts\":\""+self.start_ts+"\",\n"
-        #     end_ts_string = "\"end_ts\":\""+self.end_ts+"\",\n"
-        #
-        # start_date_string = "\"start_date\":"+self.start_date_YYYYMMDD+",\n"
-        # end_date_string = "\"end_date\":"+self.end_date_YYYYMMDD+",\n"
-        #
-        # memo_rule_set_string = "\"initial_memo_rule_set\":"+self.initial_memo_rule_set.to_json()+","
-        # initial_account_set_string = "\"initial_account_set\":"+self.initial_account_set.to_json()+","
-        # initial_budget_set_string = "\"initial_budget_set\":"+self.initial_budget_set.to_json()+","
-        #
-        # if hasattr(self, 'start_ts'):
-        #     tmp__forecast_df = self.forecast_df.copy()
-        #     tmp__skipped_df = self.skipped_df.copy()
-        #     tmp__confirmed_df = self.confirmed_df.copy()
-        #     tmp__deferred_df = self.deferred_df.copy()
-        #
-        #
-        #     tmp__forecast_df['Date'] = tmp__forecast_df['Date'].astype(str)
-        #     if tmp__skipped_df.shape[0] > 0:
-        #         tmp__skipped_df['Date'] = tmp__skipped_df['Date'].astype(str)
-        #     tmp__confirmed_df['Date'] = tmp__confirmed_df['Date'].astype(str)
-        #     if tmp__deferred_df.shape[0] > 0:
-        #         tmp__deferred_df['Date'] = tmp__deferred_df['Date'].astype(str)
-        #
-        #
-        #     normalized_forecast_df_JSON_string = tmp__forecast_df.to_json(orient='records',date_format='iso')
-        #     normalized_skipped_df_JSON_string = tmp__skipped_df.to_json(orient='records',date_format='iso')
-        #     normalized_confirmed_df_JSON_string = tmp__confirmed_df.to_json(orient='records',date_format='iso')
-        #     normalized_deferred_df_JSON_string = tmp__deferred_df.to_json(orient='records',date_format='iso')
-        #
-        #     forecast_df_string = "\"forecast_df\":"+normalized_forecast_df_JSON_string+",\n"
-        #     skipped_df_string = "\"skipped_df\":"+normalized_skipped_df_JSON_string+",\n"
-        #     confirmed_df_string = "\"confirmed_df\":"+normalized_confirmed_df_JSON_string+",\n"
-        #     deferred_df_string = "\"deferred_df\":"+normalized_deferred_df_JSON_string+",\n"
-        #
-        # JSON_string += unique_id_string
-        #
-        # if hasattr(self, 'start_ts'):
-        #     JSON_string += start_ts_string
-        #     JSON_string += end_ts_string
-        #
-        # JSON_string += start_date_string
-        # JSON_string += end_date_string
-        # JSON_string += memo_rule_set_string
-        # JSON_string += initial_account_set_string
-        # JSON_string += initial_budget_set_string
-        #
-        # if hasattr(self, 'start_ts'):
-        #     JSON_string += forecast_df_string
-        #     JSON_string += skipped_df_string
-        #     JSON_string += confirmed_df_string
-        #     JSON_string += deferred_df_string
-        #
-        #     account_milestone_string = "{"
-        #     i = 0
-        #     for key, value in self.account_milestone_results.items():
-        #         account_milestone_string += '"' + str(key) + '":"' + str(value) + '"'
-        #         if i != (len(self.account_milestone_results) - 1):
-        #             account_milestone_string += ","
-        #         i += 1
-        #     account_milestone_string += "}"
-        #
-        #     memo_milestone_string = "{"
-        #     i = 0
-        #     for key, value in self.memo_milestone_results.items():
-        #         memo_milestone_string += '"' + str(key) + '":"' + str(value) + '"'
-        #         if i != (len(self.memo_milestone_results) - 1):
-        #             memo_milestone_string += ","
-        #         i += 1
-        #     memo_milestone_string += "}"
-        #
-        #     composite_milestone_string = "{"
-        #     i = 0
-        #     for key, value in self.composite_milestone_results.items():
-        #         composite_milestone_string += '"' + str(key) + '":"' + str(value) + '"'
-        #         if i != (len(self.composite_milestone_results) - 1):
-        #             composite_milestone_string += ","
-        #         i += 1
-        #     composite_milestone_string += "}"
-        #
-        # JSON_string += "\"milestone_set\":"+self.milestone_set.to_json()
-        #
-        # if hasattr(self, 'start_ts'):
-        #     JSON_string += ",\n"
-        #     JSON_string += "\"account_milestone_results\":"+account_milestone_string+",\n"
-        #     JSON_string += "\"memo_milestone_results\":"+memo_milestone_string+",\n"
-        #     JSON_string += "\"composite_milestone_results\":"+composite_milestone_string
-        #
-        # JSON_string += '}'
-        #
-        # return JSON_string
+        JSON_string = '{'
+
+        unique_id_string = "\"unique_id\":\""+self.unique_id+"\",\n"
+
+        if hasattr(self,'start_ts'):
+            start_ts_string = "\"start_ts\":\""+self.start_ts+"\",\n"
+            end_ts_string = "\"end_ts\":\""+self.end_ts+"\",\n"
+
+        start_date_string = "\"start_date_YYYYMMDD\":"+self.start_date_YYYYMMDD+",\n"
+        end_date_string = "\"end_date_YYYYMMDD\":"+self.end_date_YYYYMMDD+",\n"
+
+        memo_rule_set_string = "\"initial_memo_rule_set\":"+self.initial_memo_rule_set.to_json()+","
+        initial_account_set_string = "\"initial_account_set\":"+self.initial_account_set.to_json()+","
+        initial_budget_set_string = "\"initial_budget_set\":"+self.initial_budget_set.to_json()+","
+
+        if hasattr(self, 'start_ts'):
+            tmp__forecast_df = self.forecast_df.copy()
+            tmp__skipped_df = self.skipped_df.copy()
+            tmp__confirmed_df = self.confirmed_df.copy()
+            tmp__deferred_df = self.deferred_df.copy()
+
+
+            tmp__forecast_df['Date'] = tmp__forecast_df['Date'].astype(str)
+            if tmp__skipped_df.shape[0] > 0:
+                tmp__skipped_df['Date'] = tmp__skipped_df['Date'].astype(str)
+            tmp__confirmed_df['Date'] = tmp__confirmed_df['Date'].astype(str)
+            if tmp__deferred_df.shape[0] > 0:
+                tmp__deferred_df['Date'] = tmp__deferred_df['Date'].astype(str)
+
+
+            normalized_forecast_df_JSON_string = tmp__forecast_df.to_json(orient='records',date_format='iso')
+            normalized_skipped_df_JSON_string = tmp__skipped_df.to_json(orient='records',date_format='iso')
+            normalized_confirmed_df_JSON_string = tmp__confirmed_df.to_json(orient='records',date_format='iso')
+            normalized_deferred_df_JSON_string = tmp__deferred_df.to_json(orient='records',date_format='iso')
+
+            forecast_df_string = "\"forecast_df\":"+normalized_forecast_df_JSON_string+",\n"
+            skipped_df_string = "\"skipped_df\":"+normalized_skipped_df_JSON_string+",\n"
+            confirmed_df_string = "\"confirmed_df\":"+normalized_confirmed_df_JSON_string+",\n"
+            deferred_df_string = "\"deferred_df\":"+normalized_deferred_df_JSON_string+",\n"
+
+        JSON_string += unique_id_string
+
+        if hasattr(self, 'start_ts'):
+            JSON_string += start_ts_string
+            JSON_string += end_ts_string
+
+        JSON_string += start_date_string
+        JSON_string += end_date_string
+        JSON_string += memo_rule_set_string
+        JSON_string += initial_account_set_string
+        JSON_string += initial_budget_set_string
+
+        if hasattr(self, 'start_ts'):
+            JSON_string += forecast_df_string
+            JSON_string += skipped_df_string
+            JSON_string += confirmed_df_string
+            JSON_string += deferred_df_string
+
+            # account_milestone_string = "{"
+            # i = 0
+            # for key, value in self.account_milestone_results.items():
+            #     account_milestone_string += '"' + str(key) + '":"' + str(value) + '"'
+            #     if i != (len(self.account_milestone_results) - 1):
+            #         account_milestone_string += ","
+            #     i += 1
+            # account_milestone_string += "}"
+            #account_milestone_string = self.account_milestone_results.to_json()
+            account_milestone_string = jsonpickle.encode(self.account_milestone_results,indent=4)
+
+            # memo_milestone_string = "{"
+            # i = 0
+            # for key, value in self.memo_milestone_results.items():
+            #     memo_milestone_string += '"' + str(key) + '":"' + str(value) + '"'
+            #     if i != (len(self.memo_milestone_results) - 1):
+            #         memo_milestone_string += ","
+            #     i += 1
+            # memo_milestone_string += "}"
+            #memo_milestone_string = self.memo_milestone_results.to_json()
+            memo_milestone_string = jsonpickle.encode(self.memo_milestone_results, indent=4)
+
+            # composite_milestone_string = "{"
+            # i = 0
+            # for key, value in self.composite_milestone_results.items():
+            #     composite_milestone_string += '"' + str(key) + '":"' + str(value) + '"'
+            #     if i != (len(self.composite_milestone_results) - 1):
+            #         composite_milestone_string += ","
+            #     i += 1
+            # composite_milestone_string += "}"
+            # composite_milestone_string = self.composite_milestone_results.to_json()
+            composite_milestone_string = jsonpickle.encode(self.composite_milestone_results, indent=4)
+
+        JSON_string += "\"milestone_set\":"+self.milestone_set.to_json()
+
+        if hasattr(self, 'start_ts'):
+            JSON_string += ",\n"
+            JSON_string += "\"account_milestone_results\":"+account_milestone_string+",\n"
+            JSON_string += "\"memo_milestone_results\":"+memo_milestone_string+",\n"
+            JSON_string += "\"composite_milestone_results\":"+composite_milestone_string
+
+        JSON_string += '}'
+
+        return JSON_string
 
     def to_html(self):
         #todo consider adding commas to long numbers
