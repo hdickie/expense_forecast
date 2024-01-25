@@ -162,6 +162,7 @@ def initialize_from_excel_file(path_to_excel_file):
         if row.Composite_Milestone_Name not in composite_milestones.keys():
             composite_milestones[row.Composite_Milestone_Name] = {'Account':[],'Memo':[]}
 
+        #todo i think there is an error here
         if row.Milestone_Type == 'Account':
             composite_milestones[row.Composite_Milestone_Name]['Account'].append(am__dict[row.Milestone_Name])
         elif row.Milestone_Type == 'Memo':
@@ -181,7 +182,7 @@ def initialize_from_excel_file(path_to_excel_file):
         cm__list.append(CompositeMilestone.CompositeMilestone(key, composite_milestones[key]['Account'], composite_milestones[key]['Memo']))
 
     #(self,account_set,budget_set,account_milestones__list,memo_milestones__list,composite_milestones__list)
-    MS = MilestoneSet.MilestoneSet(A,B,am__list,mm__list,cm__list)
+    MS = MilestoneSet.MilestoneSet(am__list,mm__list,cm__list)
 
     start_date_YYYYMMDD = summary_df.start_date_YYYYMMDD.iat[0]
     end_date_YYYYMMDD = summary_df.end_date_YYYYMMDD.iat[0]
@@ -235,9 +236,6 @@ def initialize_from_excel_file(path_to_excel_file):
 def initialize_from_json_file(path_to_json):
     with open(path_to_json) as json_data:
         data = json.load(json_data)
-
-    print('data:')
-    print(data)
 
     initial_account_set = data['initial_account_set']
     initial_budget_set = data['initial_budget_set']
@@ -371,6 +369,10 @@ def initialize_from_json_file(path_to_json):
 
     E = ExpenseForecast(A, B, M,start_date_YYYYMMDD, end_date_YYYYMMDD, MS, print_debug_messages=True)
 
+    # this gets recalculated by Constructor
+    # E.unique_id = data['unique_id']
+    E.scenario_name = data['scenario_name']
+
     # print('data:')
     # for key, value in data.items():
     #     print('key:'+str(key))
@@ -413,8 +415,6 @@ def initialize_from_json_file(path_to_json):
             E.confirmed_df.Date = [str(d) for d in E.confirmed_df.Date]
         if E.deferred_df.shape[0] > 0:
             E.deferred_df.Date = [str(d) for d in E.deferred_df.Date]
-
-    E.unique_id = data['unique_id']
 
     return [ E ]
 
@@ -618,7 +618,7 @@ class ExpenseForecast:
 
         self.log_stack_depth = 0
 
-        proposed_df = budget_set.getBudgetSchedule(start_date_YYYYMMDD, end_date_YYYYMMDD)
+        proposed_df = budget_set.getBudgetSchedule()
 
         lb_sel_vec = [ datetime.datetime.strptime(self.start_date_YYYYMMDD, '%Y%m%d') <= datetime.datetime.strptime(d, '%Y%m%d') for d in proposed_df.Date ]
         rb_sel_vec = [ datetime.datetime.strptime(d, '%Y%m%d') <= datetime.datetime.strptime(self.end_date_YYYYMMDD, '%Y%m%d') for d in proposed_df.Date ]
@@ -4403,9 +4403,12 @@ class ExpenseForecast:
                 if (re.search('.*Account boundaries were violated.*', str(e.args)) is not None) and not raise_satisfice_failed_exception:
                     self.end_date = datetime.datetime.strptime(d, '%Y%m%d') - datetime.timedelta(days=1)
 
+                    log_in_color(logger, 'cyan', 'error', 'State at failure:', self.log_stack_depth)
+                    log_in_color(logger, 'cyan', 'error', forecast_df.to_string(), self.log_stack_depth)
+
                     self.log_stack_depth -= 1
                     log_in_color(logger, 'cyan', 'debug', 'EXIT satisfice()', self.log_stack_depth)
-                    return False
+                    return forecast_df
                 else:
                     raise e
 
@@ -4454,17 +4457,21 @@ class ExpenseForecast:
         #if return value would have been False, but raise_satisfice_failed_exception = True, then an exception will be raised
         #print('before satisfice')
         #todo I do want to see up until the fail so please change this
-        satisfice_success = self.satisfice(all_days, confirmed_df, account_set, memo_rule_set, forecast_df, raise_satisfice_failed_exception )
+        satisfice_df = self.satisfice(all_days, confirmed_df, account_set, memo_rule_set, forecast_df, raise_satisfice_failed_exception )
         #print('after satisfice')
 
-        if isinstance(satisfice_success, pd.DataFrame):
+        satisfice_success = True
+        if satisfice_df.tail(1).Date.iat[0] != self.end_date_YYYYMMDD:
+            satisfice_success = False
+
+        forecast_df = satisfice_df
+
+        if satisfice_success:
 
             # raise_satisfice_failed_exception is only False at the top level, so this will not print during recursion
             if not raise_satisfice_failed_exception:
                 log_in_color(logger, 'white', 'info','Satisfice succeeded.')
-                log_in_color(logger, 'white', 'debug', satisfice_success.to_string())
-
-            forecast_df = satisfice_success
+                log_in_color(logger, 'white', 'debug', satisfice_df.to_string())
 
             #Here, note that confirmed_df, proposed_df, deferred_df, skipped_df are all in the same state as theey entered this method
             #but are modified when they come back
@@ -4544,7 +4551,7 @@ class ExpenseForecast:
     #     all_days = pd.date_range(datetime.datetime.strptime(start_date_YYYYMMDD, '%Y%m%d'), datetime.datetime.strptime(end_date_YYYYMMDD, '%Y%m%d'))
     #     all_days = [ d.strftime('%Y%m%d') for d in all_days ]
     #     forecast_df = self.getInitialForecastRow()
-    #     #budget_schedule_df = budget_set.getBudgetSchedule(start_date_YYYYMMDD, end_date_YYYYMMDD)
+    #     #budget_schedule_df = budget_set.getBudgetSchedule()
     #
     #     for d in all_days:
     #         if d == self.start_date_YYYYMMDD:
@@ -4901,6 +4908,25 @@ class ExpenseForecast:
                     success_date = 'None'
                     log_in_color(logger, 'yellow', 'debug', 'success_date:None',self.log_stack_depth)
 
+        # Summary lines
+        elif account_name in ('Marginal Interest','Net Gain','Net Loss','Net Worth','Loan Total','CC Debt Total','Liquid Total'):
+            col_sel_vec = self.forecast_df.columns == account_name
+            col_sel_vec[0] = True
+            relevant_time_series_df = self.forecast_df.iloc[:, col_sel_vec]
+
+            # a valid success date stays valid until the end
+            found_a_valid_success_date = False
+            success_date = 'None'
+            for index, row in relevant_time_series_df.iterrows():
+                current_value = relevant_time_series_df.iloc[index, 1]
+                if ((min_balance <= current_value) & (current_value <= max_balance)) and not found_a_valid_success_date:
+                    found_a_valid_success_date = True
+                    success_date = row.Date
+                    log_in_color(logger, 'yellow', 'debug', 'success_date:' + str(success_date), self.log_stack_depth)
+                elif ((min_balance > current_value) | (current_value > max_balance)):
+                    found_a_valid_success_date = False
+                    success_date = 'None'
+                    log_in_color(logger, 'yellow', 'debug', 'success_date:None', self.log_stack_depth)
         else:
             raise ValueError("undefined edge case in ExpenseForecast::evaulateAccountMilestone""")
 
@@ -4998,6 +5024,11 @@ class ExpenseForecast:
 
         unique_id_string = "\"unique_id\":\""+self.unique_id+"\",\n"
 
+        if hasattr(self, 'scenario_name'):
+            scenaro_name_string = "\"scenario_name\":\""+self.scenario_name+"\",\n"
+        else:
+            scenaro_name_string = ""
+
         if hasattr(self,'start_ts'):
             start_ts_string = "\"start_ts\":\""+self.start_ts+"\",\n"
             end_ts_string = "\"end_ts\":\""+self.end_ts+"\",\n"
@@ -5035,7 +5066,7 @@ class ExpenseForecast:
             deferred_df_string = "\"deferred_df\":"+normalized_deferred_df_JSON_string+",\n"
 
         JSON_string += unique_id_string
-
+        JSON_string += scenaro_name_string
         if hasattr(self, 'start_ts'):
             JSON_string += start_ts_string
             JSON_string += end_ts_string
@@ -5413,14 +5444,28 @@ if __name__ == "__main__":
 # Failed Tests
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_execute_defer_after_receiving_income_2_days_later-account_set15-budget_set15-memo_rule_set15-20000101-20000104-milestone_set15-expected_result_df15]
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_execute_at_reduced_amount_bc_later_higher_priority_txn-account_set16-budget_set16-memo_rule_set16-20000101-20000105-milestone_set16-expected_result_df16]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_transactions_executed_at_p1_and_p2-account_set17-budget_set17-memo_rule_set17-20000101-20000106-milestone_set17-expected_result_df17]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_transactions_executed_at_p1_and_p2_and_p3-account_set18-budget_set18-memo_rule_set18-20000101-20000106-milestone_set18-expected_result_df18]
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_560-account_set21-budget_set21-memo_rule_set21-20000101-20000103-milestone_set21-expected_result_df21]
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_610-account_set22-budget_set22-memo_rule_set22-20000101-20000103-milestone_set22-expected_result_df22]
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_1900-account_set23-budget_set23-memo_rule_set23-20000101-20000103-milestone_set23-expected_result_df23]
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_overpay-account_set24-budget_set24-memo_rule_set24-20000101-20000103-milestone_set24-expected_result_df24]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_dont_recompute_past_days_for_p2plus_transactions - NotImplementedError
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_multiple_matching_memo_rule_regex - TypeError: __init__() takes 4 positional argument...
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_initialize_from_excel_not_yet_run - assert '{\n    "py/o...  }\n    ]\n}' == '{\n    ...
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_initialize_from_excel_already_run__no_append - assert '{\n    "py/o...  }\n    ]\n}' ...
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_initialize_from_excel_already_run__yes_append - assert '{\n    "py/o...  }\n    ]\n}'...
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_run_from_json_at_path - KeyError: 'milestone_name'
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_run_from_excel_at_path - KeyError: 'test account milestone 2'
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_interest_types_and_cadences_at_most_monthly - NotImplementedError
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_quarter_and_year_long_interest_cadences - NotImplementedError
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_multiple_additional_loan_payments__expect_eliminate_future_min_payments - AssertionEr...
+# FAILED test_ForecastHandler.py::TestForecastHandlerMethods::test_run_forecast_set - NotImplementedError
+# FAILED test_ForecastSet.py::TestForecastSet::test_addScenario[core_budget_set0-option_budget_set0] - TypeError: addScenario() missing 1 required posit...
+# FAILED test_ForecastSet.py::TestForecastSet::test_listScenarios - NotImplementedError
+# FAILED test_ForecastSet.py::TestForecastSet::test_str - NotImplementedError
+# FAILED test_ForecastSet.py::TestForecastSet::test_addCustomLabelToScenario - NotImplementedError
+# FAILED test_MilestoneSet.py::TestMilestoneSetMethods::test_MilestoneSet_constructor__invalid_inputs - Failed: DID NOT RAISE <class 'ValueError'>
+
 
 
 
@@ -5429,13 +5474,15 @@ if __name__ == "__main__":
 
 # Speed Optimizations
 #     multithreading for ChooseOneSet
-# dynamic programming for recursive calls (note: probs best to write temporary files indexed by hash so program doesnt hog ram)
 # set default deferral cadence to lookahead to next income
 
 # Implement ChooseOneSet
 # EXPLAIN log of call stack BEFORE running so we can can use this for runtime estimate
 #    once we have this, computing some examples makes predicting runtime easy, but confidence bands will be large
 # EXPLAIN in plain english
+
+# Command line Utility
+# it would be nice to have a loading bar lol
 
 # Known Semantic Errors / Weak points
 # account name 'Credit' is hardcoded in additional cc payment memo computation
@@ -5464,24 +5511,17 @@ if __name__ == "__main__":
 # initialize from json with accounts in atypical order
 
 # Open Questions
-# Does MilestoneSet need to take AccountSet and BudgetSet as arguments?
 # modify createAccount into createLoanAccount and createCreditCardAccount?
 # have unfulfilled milestones just not plotted instead of to the right?
 
-# Standard Forecasts for tests
-# Pay off loan early...:
-# Pay off cc debt early:
-# failed satisfice.....:
-# choose one A_X.......:
-# choose one A_Y.......:
-# choose one A_Z.......:
-# choose one B_X.......:
-# choose one B_Y.......:
-# choose one B_Z.......:
 
 
 ### Bite-sized tasks:
-# use json module consistently
+# add scenario name to file I/O
+# ExpenseForecast did not catch that there was no matching memo rule when memo rule was p2 and item was p1
+#    it is also weird to me that it errored right at the end thoguh there were no p2 transcations? did I see that? #068993
+#    ALSO I think I saw a crash where it got to a txn that it did not have a rule for. rule was 'tax debt' memo was 'tax debt 2'
+#
 # there is sometimes extra whitespace on cc and maybe also loan payment memos
 # milestone comparison plot
 # Define standard colors for plots
@@ -5490,12 +5530,14 @@ if __name__ == "__main__":
 # check that start and end date the same produce at least 1 budget item on that day for any cadence
 # if no milestones, draw a plot with text that says that instead
 # in comparison report, if report 2 contains 0 items report 1 doesnt have, output a sentence instead of a 0-row table
-# Hyphenated date format in plots
 # Comparing forecasts of different date
 # i want like hashtags appended to url when i click on tabs so it stays there when i refresh
 # I want to see each monthly cc interest accrual on the interest tab
 # input validation :: check budget items have memo match needs to include priority as well
 # think abt colors across plots
+# sankey diagram!
+# I could for sure write a version of runForecast that yields forecast_df every time it is updated, and be able to
+#     view partially completed results
 
 ### Project Wrap-up requirements
 # review todos

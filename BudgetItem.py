@@ -18,24 +18,6 @@ class BudgetItem:
         """
         Creates a BudgetItem object. Input validation is performed.
 
-        The BudgetItem constructor does not check types, but numerical parameters will raise a ValueError if they cannot be
-        cast to float.
-
-        | Test Cases
-        | Expected Successes
-        | [x] S1 Valid values for all parameters
-        |
-        | Expected Fails
-        | Parameters that are provided are incorrect
-        | [x] F1 provide no parameters
-        |
-        | Incorrect Types provided for necessary parameters
-        | [x] F2 Provide incorrect types for all necessary parameters
-        |
-        | Illegal values provided
-        | [x] F3 Priority less than 1 and cadence is some random string
-        | [ ] F4 All income should be priority 1. Therefore, income with a different priority should raise an exception
-
         :param str start_date_YYYYMMDD: A string that indicates the start date with format %Y%m%d.
         :param str start_date_YYYYMMDD: A string that indicates the end date with format %Y%m%d.
         :param int priority: An integer >= 1 that indicates priority. See below for priority level meanings.
@@ -59,10 +41,6 @@ class BudgetItem:
         8. savings
         9. investments
 
-        Comment on Amount:
-        This implementation will subtract abs(Amount) from Account_From, and add abs(amount) to Account_To. Therefore,
-        negative values for Amount are reflected in the memo values but don't change the directional change of account balances.
-
         """
 
         self.start_date_YYYYMMDD = str(start_date_YYYYMMDD)
@@ -82,7 +60,6 @@ class BudgetItem:
 
 
         try:
-            # todo input validation for date string format
             datetime.datetime.strptime(str(start_date_YYYYMMDD).replace('-', ''), '%Y%m%d')
         except Exception as e:
             exception_type_error_message_string += str(e)
@@ -91,7 +68,6 @@ class BudgetItem:
             exception_type_error_ind = True
 
         try:
-            # todo input validation for date string format
             datetime.datetime.strptime(str(end_date_YYYYMMDD).replace('-', ''), '%Y%m%d')
         except Exception as e:
             exception_type_error_message_string += str(e)
@@ -152,6 +128,10 @@ class BudgetItem:
 
         if self.priority == 1 and self.partial_payment_allowed:
             exception_value_error_message_string += 'If priority = 1, the Partial_Payment_Allowed must be False.\n'
+            exception_value_error_ind = True
+
+        if cadence.lower() == 'once' and ( self.start_date_YYYYMMDD != self.end_date_YYYYMMDD ):
+            exception_value_error_message_string += 'If cadence = once, then start_date_YYYYMMDD must equal end_date_YYYYMMDD.\n'
             exception_value_error_ind = True
 
         if print_debug_messages:

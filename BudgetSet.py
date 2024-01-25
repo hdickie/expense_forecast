@@ -17,45 +17,27 @@ class BudgetSet:
 
         :param budget_items__list:
         """
+
+        required_attributes = ['start_date_YYYYMMDD', 'end_date_YYYYMMDD',
+                               'priority', 'cadence', 'amount',
+                               'deferrable',
+                               'partial_payment_allowed']
+
         self.budget_items = []
         for budget_item in budget_items__list:
-
-            current_budget_items_df = self.getBudgetItems()
-            p_sel_vec = (current_budget_items_df.Priority == budget_item.priority)
-            m_sel_vec = (current_budget_items_df.Memo == budget_item.memo)
-
-            sd_sel_vec = (current_budget_items_df.Start_Date == budget_item.start_date_YYYYMMDD)
-            ed_sel_vec = (current_budget_items_df.End_Date == budget_item.end_date_YYYYMMDD)
-            d_sel_vec = ( sd_sel_vec & ed_sel_vec )
-
-            # print('current_budget_items_df:')
-            # print(current_budget_items_df.to_string())
-            # print('p_sel_vec:')
-            # print(p_sel_vec)
-            # print('m_sel_vec:')
-            # print(m_sel_vec)
-
-            if not current_budget_items_df[ p_sel_vec & m_sel_vec & d_sel_vec ].empty:
-                raise ValueError("A duplicate budget item was detected")
-
-
-            self.budget_items.append(budget_item)
-
-        #todo do the budgetitem version of this
-        #
-        # if len(self.accounts) > 0:
-        #     required_attributes = ['name', 'balance', 'min_balance', 'max_balance', 'account_type',
-        #                            'billing_start_date_YYYYMMDD',
-        #                            'interest_type', 'apr', 'interest_cadence', 'minimum_payment']
-        #
-        #     for obj in self.accounts:
-        #         # An object in the input list did not have all the attributes an Account is expected to have.
-        #         if set(required_attributes) & set(dir(obj)) != set(required_attributes): raise ValueError("An object in the input list did not have all the attributes an Account is expected to have.")
-
+            if set(required_attributes) & set(dir(budget_item)) != set(required_attributes): raise ValueError("An object in the input list did not have all the attributes a BudgetItem is expected to have.")
+            self.addBudgetItem(start_date_YYYYMMDD=budget_item.start_date_YYYYMMDD,
+                               end_date_YYYYMMDD=budget_item.end_date_YYYYMMDD,
+                               priority=budget_item.priority,
+                               cadence=budget_item.cadence,
+                               amount=budget_item.amount,
+                               memo=budget_item.memo,
+                               deferrable=budget_item.deferrable,
+                               partial_payment_allowed=budget_item.partial_payment_allowed
+                               )
 
     def __str__(self):
         return self.getBudgetItems().to_string()
-
 
     def getBudgetItems(self):
         """
@@ -96,12 +78,9 @@ class BudgetSet:
         return all_budget_items_df
 
 
-    #todo interesting that start date paramter did not get used here
-    def getBudgetSchedule(self,start_date_YYYYMMDD,end_date_YYYYMMDD):
+    def getBudgetSchedule(self):
         """
         Generate a dataframe of proposed transactions
-
-        #todo write doctests for BudgetSet.getBudgetSchedule()
 
         :param start_date_YYYYMMDD:
         :param num_days:
@@ -117,7 +96,6 @@ class BudgetSet:
         # log_in_color(logger,'green', 'debug', self.budget_items)
 
         current_budget_schedule = pd.DataFrame({'Date':[],'Priority':[],'Amount':[],'Memo':[],'Deferrable':[],'Partial_Payment_Allowed':[]})
-        end_date = datetime.datetime.strptime(str(end_date_YYYYMMDD),'%Y%m%d')
         for budget_item in self.budget_items:
             relative_num_days = (datetime.datetime.strptime(budget_item.end_date_YYYYMMDD,'%Y%m%d') - datetime.datetime.strptime(budget_item.start_date_YYYYMMDD,'%Y%m%d')).days
             relevant_date_sequence = generate_date_sequence(budget_item.start_date_YYYYMMDD, relative_num_days, budget_item.cadence)
@@ -134,7 +112,6 @@ class BudgetSet:
             current_budget_schedule = pd.concat([current_budget_schedule,new_budget_schedule_rows_df],axis=0)
 
             #print(current_budget_schedule.head(1))
-
 
         current_budget_schedule.sort_values(inplace=True,axis=0,by="Date")
         current_budget_schedule.reset_index(inplace=True,drop=True)
@@ -157,16 +134,8 @@ class BudgetSet:
                  raise_exceptions = True):
         """ Add a BudgetItem to list BudgetItem.budget_items.
 
-        | Test Cases
-        | Expected Successes
-        | S1: Provide no parameters
-        | S2: provide valid parameters #todo refactor BudgetSet.addBudgetItem() doctest S2 to use _S2 label
-        |
-        | Expected Fails
-        | F1 Provide incorrect types for all parameters #todo refactor BudgetSet.BudgetSet() doctest F1 to use _F1 label
-        | F2 add a BudgetItem where there are 2 BudgetItems with the same memo
-
         """
+        log_in_color(logger, 'green', 'debug','addBudgetItem(priority=' + str(priority) + ',cadence=' + str(cadence) + ',memo=' + str(memo) + ',start_date_YYYYMMDD=' + str(start_date_YYYYMMDD) + ',end_date_YYYYMMDD=' + str(end_date_YYYYMMDD) + ')')
         budget_item = BudgetItem.BudgetItem(start_date_YYYYMMDD,
                                             end_date_YYYYMMDD,
                  priority,
@@ -180,16 +149,13 @@ class BudgetSet:
         all_current_budget_items = self.getBudgetItems()
         memos_w_matching_priority = list(all_current_budget_items.loc[all_current_budget_items.Priority == priority,:].Memo)
 
-        if cadence.lower() == 'once':
-            assert start_date_YYYYMMDD == end_date_YYYYMMDD
-
-        log_in_color(logger,'green', 'info', 'addBudgetItem(priority='+str(priority)+',cadence='+str(cadence)+',memo='+str(memo)+',start_date_YYYYMMDD='+str(start_date_YYYYMMDD)+',end_date_YYYYMMDD='+str(end_date_YYYYMMDD)+')')
-
         if memo in memos_w_matching_priority:
-            raise ValueError #A budget item with this priority and memo already exists
+            log_in_color(logger, 'red', 'error','Offending Memo:')
+            log_in_color(logger, 'red', 'error', memo)
+            log_in_color(logger, 'red', 'error', 'Relevant already existing memo:')
+            log_in_color(logger, 'red', 'error', memos_w_matching_priority)
+            raise ValueError("A budget item with this priority and memo already exists")
 
-        #todo error when duplicate budget item. (user should make memo different its not that hard.)
-        #that is, if amount and date are the same, different memos are required. its fine otherwise
         self.budget_items.append(budget_item)
 
 

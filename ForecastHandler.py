@@ -21,6 +21,7 @@ import matplotlib.dates
 import matplotlib.patches as mpatches
 import logging
 import numpy as np
+import matplotlib.cm as cm
 
 from log_methods import setup_logger
 logger = setup_logger('ForecastHandler', './log/ForecastHandler.log', level=logging.DEBUG)
@@ -520,13 +521,14 @@ class ForecastHandler:
         data_x = [ datetime.datetime.strptime(x,'%Y%m%d') for x in data_x ]
 
         no_of_account_milestones = len(am_keys)
-        am_sel_range = slice(0,(no_of_account_milestones-1))
+        am_sel_range = slice(0,(no_of_account_milestones+1))
 
         no_of_memo_milestones = len(mm_keys)
-        mm_sel_range = slice((no_of_account_milestones-1),(no_of_account_milestones+no_of_memo_milestones-1))
+        mm_sel_range = slice((no_of_account_milestones),(no_of_account_milestones+no_of_memo_milestones+1))
+
 
         no_of_composite_milestones = len(cm_keys)
-        cm_sel_range = slice((no_of_account_milestones+no_of_memo_milestones-1),(no_of_account_milestones+no_of_memo_milestones+no_of_composite_milestones-1))
+        cm_sel_range = slice((no_of_account_milestones+no_of_memo_milestones),(no_of_account_milestones+no_of_memo_milestones+no_of_composite_milestones+1))
 
         if no_of_account_milestones > 0:
             plt.scatter(data_x[am_sel_range], data_y[am_sel_range],color="red")
@@ -593,6 +595,11 @@ class ForecastHandler:
         report_2_end_ts__datetime = datetime.datetime.strptime(E2.end_ts, '%Y_%m_%d__%H_%M_%S')
         report_1_simulation_time_elapsed = report_1_end_ts__datetime - report_1_start_ts__datetime
         report_2_simulation_time_elapsed = report_2_end_ts__datetime - report_2_start_ts__datetime
+
+        if parent_report_path is not None:
+            parent_report_text = """This report was generated alongside some others. See <a href=\"""" + parent_report_path + """\">this page</a> for information about related forecasts."""
+        else:
+            parent_report_text = ""
 
         # todo add a comment about whether the simulation was able to make it to the end or not.
         summary_text = """
@@ -1032,7 +1039,7 @@ class ForecastHandler:
                 </head>
                 <body>
                 <h1>Expense Forecast Report #""" + str(report_1_id) + """ vs. #"""+str(report_2_id)+"""</h1>
-                <p>""" + datetime.datetime.strptime(E1.start_date_YYYYMMDD,'%Y%m%d').strftime('%Y-%m-%d') + """ to """ + datetime.datetime.strptime(E1.end_date_YYYYMMDD,'%Y%m%d').strftime('%Y-%m-%d') + """</p>
+                <p>""" + datetime.datetime.strptime(E1.start_date_YYYYMMDD,'%Y%m%d').strftime('%Y-%m-%d') + """ to """ + datetime.datetime.strptime(E1.end_date_YYYYMMDD,'%Y%m%d').strftime('%Y-%m-%d') + " " + parent_report_text + """</p>
 
                 <!-- Tab links -->
                 <div class="tab">
@@ -1182,6 +1189,8 @@ class ForecastHandler:
 
         start_date = datetime.datetime.strptime(E.start_date_YYYYMMDD,'%Y%m%d').strftime('%Y-%m-%d')
         end_date = datetime.datetime.strptime(E.end_date_YYYYMMDD,'%Y%m%d').strftime('%Y-%m-%d')
+
+        forecast_failed = (E.forecast_df.tail(1).Date.iat[0] != E.end_date_YYYYMMDD)
 
         report_id = E.unique_id
 
@@ -1333,6 +1342,14 @@ class ForecastHandler:
 
         #print(E.forecast_df.to_string())
 
+        left_fail_style_tag = ""
+        right_fail_style_tag = ""
+        fail_message = ""
+        if forecast_failed:
+            left_fail_style_tag = "<font color =\"red\">"
+            right_fail_style_tag = "</font>"
+            fail_message = "This forecast failed to reach the end. The results may not reflect the effect of non-essential transactions accurately."
+
         html_body = """
         <!DOCTYPE html>
         <html>
@@ -1380,8 +1397,8 @@ class ForecastHandler:
 
         </head>
         <body>
-        <h1>Expense Forecast Report #""" + str(report_id) + """</h1>
-        <p>"""+start_date+""" to """+end_date+ " " + parent_report_text + """</p>
+        <h1>""" + left_fail_style_tag + """Expense Forecast Report #""" + str(report_id) + right_fail_style_tag + """</h1>
+        <p>"""+start_date+""" to """+end_date + " " + left_fail_style_tag + fail_message + right_fail_style_tag + " " + parent_report_text + """</p>
 
         <!-- Tab links -->
         <div class="tab">
@@ -1545,7 +1562,53 @@ class ForecastHandler:
         #return fict of ExpenseForecasts that have not been run
         return forecast_dict
 
+    def initialize_forecasts_from_file(self, source_path, list_of_file_names):
+
+        E_list = []
+        for fname in list_of_file_names:
+            E_list.append(ExpenseForecast.initialize_from_json_file(source_path+fname)[0])
+
+        E__dict = {}
+        for E in E_list:
+            E__dict[E.scenario_name] = E
+
+        return E__dict
+
     def run_forecast_set(self, E__dict):
+
+        program_start = datetime.datetime.now()
+        scenario_index = 0
+        for scenario_name, E in E__dict.items():
+            log_in_color(logger, 'white', 'info','Starting simulation scenario '+str(scenario_index)+' / '+str(len(E__dict))+': '+str(scenario_name))
+
+            loop_start = datetime.datetime.now()
+
+            try:
+                E.runForecast()
+                E.appendSummaryLines()
+                E.scenario_name = scenario_name
+                E.writeToJSONFile('./')
+                self.generateHTMLReport(E)
+            except Exception as e:
+                log_in_color(logger,'red','error','simulation scenario '+str(scenario_index)+' / '+str(len(E__dict))+': '+str(scenario_name)+' FAILED')
+                log_in_color(logger, 'red', 'error', e.args)
+
+            loop_finish = datetime.datetime.now()
+
+            loop_delta = loop_finish - loop_start
+            time_since_started = loop_finish - program_start
+
+            average_time_per_loop = time_since_started.seconds / (scenario_index + 1)
+            loops_remaining = len(E__dict) - (scenario_index + 1)
+            ETC = loop_finish + datetime.timedelta(seconds=average_time_per_loop*loops_remaining)
+            progress_string = 'Finished in '+str(loop_delta.seconds)+' seconds. ETC: '+str(ETC.strftime('%Y-%m-%d %H:%M:%S'))
+
+            log_in_color(logger, 'white', 'info',progress_string)
+
+            scenario_index += 1
+        return E__dict
+
+    def run_forecast_set_parallel(self,E__dict):
 
         program_start = datetime.datetime.now()
         scenario_index = 0
@@ -1556,7 +1619,11 @@ class ForecastHandler:
 
             try:
                 E__dict[scenario_name] = scenario_E.runForecast()
-            except:
+
+                E__dict[scenario_name].appendSummaryLines()
+                E__dict[scenario_name].writeToJSONFile('./')
+                self.generateHTMLReport(E__dict[scenario_name])
+            except Exception as e:
                 log_in_color(logger,'red','error','simulation scenario '+str(scenario_index)+' / '+str(len(E__dict))+': '+str(scenario_name)+' FAILED')
 
             loop_finish = datetime.datetime.now()
@@ -1572,6 +1639,7 @@ class ForecastHandler:
             log_in_color(logger, 'white', 'info',progress_string)
 
             scenario_index += 1
+        return E__dict
 
     def plotAccountTypeComparison(self,E1,E2,output_path, line_color_cycle_list=['blue','orange','green'], lw_cycle=['1','3']):
         """
@@ -2133,11 +2201,59 @@ class ForecastHandler:
 
         list_of_forecast_links_html = ""
         for E_key, E_value in expense_forecast__dict.items():
-            self.generateHTMLReport(E_value,output_dir,output_report_path)
+            # self.generateHTMLReport(E_value,output_dir,output_report_path) #todo undo this
             list_of_forecast_links_html += "<a href=\"Forecast_"+str(E_value.unique_id)+".html\">Forecast "+str(E_value.unique_id)+" "+str(E_key)+"</a><br>"
 
         milestone_difference_table_df = self.calculateMilestoneDifferenceTable(expense_forecast__dict)
         milestone_difference_table_html = milestone_difference_table_df.to_html()
+
+        forecast_comparison_matrix_df = pd.DataFrame({})
+
+        # forecast comparison matrix
+        comparison_report_file_names = []
+        single_report_scenario_names = []
+        index_1 = 0
+        for E_key_1, E_value_1 in expense_forecast__dict.items():
+            index_2 = 0
+            single_report_scenario_names.append(E_value_1.scenario_name)
+            for E_key_2, E_value_2 in expense_forecast__dict.items():
+                if E_key_1 == E_key_2:
+                    report_href = "<a href=\"./" + 'Forecast_' + str(E_value_2.unique_id)+'.html' + "\">" + 'Forecast_' + str(E_value_2.unique_id)+'.html' + "</a>"
+                    forecast_comparison_matrix_df.loc[index_1, index_2] = report_href
+                    index_2 += 1
+                    continue
+
+                report_file_name = 'compare_' + str(E_value_1.unique_id) + '_' + str(E_value_2.unique_id)+'.html'
+                comparison_report_file_names.append(report_file_name)
+                # self.generateCompareTwoForecastsHTMLReport(E_value_1,E_value_2,output_dir,output_report_path) #todo undo this
+
+                report_href = "<a href=\"./" + report_file_name + "\">" + report_file_name + "</a>"
+                forecast_comparison_matrix_df.loc[index_1, index_2] = report_href
+
+                index_2 += 1
+            index_1 += 1
+
+        forecast_comparison_matrix_df.index = forecast_comparison_matrix_df.index.map(str)
+        forecast_comparison_matrix_df.columns = forecast_comparison_matrix_df.columns.map(str)
+        for row_index in range(0,len(single_report_scenario_names)):
+            forecast_comparison_matrix_df = forecast_comparison_matrix_df.rename(index={str(row_index): single_report_scenario_names[row_index]})
+            forecast_comparison_matrix_df = forecast_comparison_matrix_df.rename(columns={str(row_index): single_report_scenario_names[row_index]})
+        forecast_comparison_matrix_html = forecast_comparison_matrix_df.to_html()
+
+        #to_html sanitizes brackets, which we don't want
+        forecast_comparison_matrix_html = forecast_comparison_matrix_html.replace('&lt;','<')
+        forecast_comparison_matrix_html = forecast_comparison_matrix_html.replace('&gt;', '>')
+
+        list_of_forecast_comparison_links_html = ""
+
+        for comparison_report_file_name in comparison_report_file_names:
+            list_of_forecast_comparison_links_html += "<a href=\"" + comparison_report_file_name + "\">"+comparison_report_file_name+"</a><br>"
+
+        final_balance_plot_path = output_dir+'FinalBalancePlot.png'
+        self.plotFinalBalancesOfForecastSet(expense_forecast__dict,final_balance_plot_path)
+
+        milestone_plot_path = output_dir + 'ForecastSetMilestoneDates.png'
+        self.plotMilestoneDatesForecastSet(expense_forecast__dict, milestone_plot_path)
 
         html_body = """
                 <!DOCTYPE html>
@@ -2197,7 +2313,11 @@ class ForecastHandler:
                 <div id="Summary" class="tabcontent">
                   <h3>Summary</h3>
                   """ + list_of_forecast_links_html + """ <br>
-                  """ + milestone_difference_table_html + """
+                  """ + list_of_forecast_comparison_links_html + """ <br>
+                  """ + milestone_difference_table_html + """ <br>
+                  """ + forecast_comparison_matrix_html + """ <br>
+                  <img src=\"""" + final_balance_plot_path + """\"> <br>
+                  <img src=\"""" + milestone_plot_path + """\"> <br>
                 </div>
 
                 <script>
@@ -2238,49 +2358,54 @@ class ForecastHandler:
     def calculateMilestoneDifferenceTable(self, expense_forecast__dict):
 
         milestone_result_tables = []
-        all_table_df = pd.DataFrame({'Forecast_Id': [], 'Scenario_Id': [], 'Milestone_Type': [], 'Milestone_Name': [], 'Milestone_Date': []})
+        #all_table_df = pd.DataFrame({'Forecast_Id': [], 'Scenario_Id': [], 'Milestone_Type': [], 'Milestone_Name': [], 'Milestone_Date': []})
         for forecast_key, forecast_value in expense_forecast__dict.items():
             milestone_result_table_df = pd.DataFrame({'Forecast_Id': [], 'Scenario_Id': [], 'Milestone_Type': [], 'Milestone_Name': [], 'Milestone_Date': []})
             for milestone_name, milestone_value in forecast_value.account_milestone_results.items():
                 new_row_df = pd.DataFrame({'Forecast_Id': [str(forecast_value.unique_id)], 'Scenario_Id': [forecast_key], 'Milestone_Type':['Account'],'Milestone_Name':[milestone_name],'Milestone_Date':[milestone_value]})
                 milestone_result_table_df = pd.concat([milestone_result_table_df,new_row_df])
-                all_table_df = pd.concat([all_table_df,new_row_df])
+                #all_table_df = pd.concat([all_table_df,new_row_df])
 
             for milestone_name, milestone_value in forecast_value.memo_milestone_results.items():
                 new_row_df = pd.DataFrame({'Forecast_Id': [str(forecast_value.unique_id)], 'Scenario_Id': [forecast_key], 'Milestone_Type':['Memo'],'Milestone_Name':[milestone_name],'Milestone_Date':[milestone_value]})
                 milestone_result_table_df = pd.concat([milestone_result_table_df,new_row_df])
-                all_table_df = pd.concat([all_table_df, new_row_df])
+                #all_table_df = pd.concat([all_table_df, new_row_df])
 
             for milestone_name, milestone_value in forecast_value.composite_milestone_results.items():
                 new_row_df = pd.DataFrame({'Forecast_Id': [str(forecast_value.unique_id)], 'Scenario_Id': [forecast_key], 'Milestone_Type':['Composite'],'Milestone_Name':[milestone_name],'Milestone_Date':[milestone_value]})
                 milestone_result_table_df = pd.concat([milestone_result_table_df,new_row_df])
-                all_table_df = pd.concat([all_table_df, new_row_df])
+                #all_table_df = pd.concat([all_table_df, new_row_df])
 
             milestone_result_tables.append(milestone_result_table_df)
 
-        milestone_result_tables_df = pd.DataFrame()
-        for m in milestone_result_tables:
-            milestone_result_tables_df['Milestone Name'] = m.Milestone_Name
-            for index, row in m.iterrows():
-                milestone_result_tables_df[m.Forecast_Id] = row.Milestone_Date
+        all_table_df = pd.concat(milestone_result_tables)
+        all_table_df.reset_index(drop=True,inplace=True)
 
-        # for m in milestone_result_tables:
-        #     if milestone_result_tables_df is None:
-        #         milestone_result_tables_df = pd.DataFrame({'Milestone_Name':[]})
-        #         milestone_result_tables_df = m
-        #         continue
-        #
-        #     for index, row in m.iterrows():
-        #         milestone_result_tables_df[row.Forecast_Id] = row.Milestone_Date
-        #
-        #     milestone_result_tables_df = pd.concat([milestone_result_tables_df,m])
-        #Milestone Name, Forecast_1, Forecast_2, Forecast_3
+        milestone_names = all_table_df.Milestone_Name.drop_duplicates()
+        final_table_df = pd.DataFrame({})
+        for milestone_name in milestone_names:
+            row_sel_vec = (all_table_df.Milestone_Name == milestone_name)
+            col_sel_vec = ( all_table_df.columns == 'Forecast_Id' ) | ( all_table_df.columns ==  'Milestone_Date' )
+            relevant_results_df = all_table_df.loc[row_sel_vec, col_sel_vec]
+            relevant_results_df.reset_index(drop=True, inplace=True)
+            relevant_results_df = relevant_results_df.T
 
-        milestone_result_tables_df.reset_index(drop=True, inplace=True)
+            for i in range(0,len(relevant_results_df.columns)):
+                relevant_results_df.rename(columns={i:relevant_results_df.iloc[0,i]},inplace=True)
 
-        # all_table_df.reset_index(drop=True,inplace=True)
-        # all_table_df.sort_values(by=['Milestone_Name','Milestone_Date'],inplace=True)
-        return milestone_result_tables_df
+            relevant_results_df = relevant_results_df.tail(1)
+            relevant_results_df.reset_index(drop=True, inplace=True)
+            relevant_results_df.index = relevant_results_df.index.map(str)
+            relevant_results_df = relevant_results_df.rename(index={'0':milestone_name})
+
+            if final_table_df.shape[0] == 0:
+                final_table_df = relevant_results_df
+            else:
+                final_table_df = pd.concat([final_table_df,relevant_results_df])
+
+
+        all_table_df.reset_index(drop=True,inplace=True)
+        return final_table_df
 
     def plotScenarioSetMilestoneDifferences(self,expense_forecast__dict, line_color_cycle_list=['blue','red','purple']):
         #assert hasattr(expense_forecast, 'forecast_df')
@@ -2382,42 +2507,6 @@ class ForecastHandler:
         #transpose nested lists
         x_values_list = np.array(x_values_list).T.tolist()
 
-
-            # data_x = [datetime.datetime.strptime(x, '%Y%m%d') for x in data_x]
-
-            # no_of_account_milestones = len(am_keys)
-            # am_sel_range = slice(0, (no_of_account_milestones - 1))
-            #
-            # no_of_memo_milestones = len(mm_keys)
-            # mm_sel_range = slice((no_of_account_milestones - 1), (no_of_account_milestones + no_of_memo_milestones - 1))
-            #
-            # no_of_composite_milestones = len(cm_keys)
-            # cm_sel_range = slice((no_of_account_milestones + no_of_memo_milestones - 1),
-            #                      (no_of_account_milestones + no_of_memo_milestones + no_of_composite_milestones - 1))
-            #
-            # if no_of_account_milestones > 0:
-            #     plt.scatter(data_x[am_sel_range], data_y[am_sel_range], color="red")
-            #
-            # if no_of_memo_milestones > 0:
-            #     plt.scatter(data_x[mm_sel_range], data_y[mm_sel_range], color="blue")
-            #
-            # if no_of_composite_milestones > 0:
-            #     plt.scatter(data_x[cm_sel_range], data_y[cm_sel_range], color="purple")
-            #
-            # left_int_ts = matplotlib.dates.date2num(
-            #     datetime.datetime.strptime(E_value.start_date_YYYYMMDD, '%Y%m%d'))
-            # right_int_ts = matplotlib.dates.date2num(
-            #     datetime.datetime.strptime(E_value.end_date_YYYYMMDD, '%Y%m%d'))
-            #
-            # all_keys = am_keys + mm_keys + cm_keys
-            # for i, txt in enumerate(all_keys):
-            #     ax.annotate(txt, (data_x[i], data_y[i]))
-
-        # left = left_int_ts
-        # right = right_int_ts
-        #
-        # plt.xlim(left, right)
-
         bottom, top = plt.ylim()
         if 0 < bottom:
             plt.ylim(0, top)
@@ -2449,4 +2538,205 @@ class ForecastHandler:
 
         plt.xticks(rotation=90)
         plt.savefig('ScenarioSetMilestoneDifferences.png')
+        matplotlib.pyplot.close()
+
+    def plotFinalBalancesOfForecastSet(self, dict_of_forecasts, output_path):
+
+        figure()
+
+        fig, ax = plt.subplots(figsize=(14, 6), dpi=80)
+
+
+        #plt.gca().set_prop_cycle(plt.cycler(color=lin_colors))
+
+        index = 0
+        E_ids = []
+        for E_key, E_value in dict_of_forecasts.items():
+            assert hasattr(E_value, 'forecast_df')
+            E_ids.append(E_value.unique_id)
+            # df = pd.DataFrame(dict(graph=['Item one', 'Item two', 'Item three'],
+            #                            n=[3, 5, 2], m=[6, 1, 3]))
+
+            relevant_sel = E_value.forecast_df.columns != 'Net Gain'
+            relevant_sel = relevant_sel & (E_value.forecast_df.columns != 'Net Loss')
+            relevant_sel = relevant_sel & (E_value.forecast_df.columns != 'Marginal Interest')
+            relevant_sel = relevant_sel & (E_value.forecast_df.columns !=  'Memo')
+
+            relevant_df = E_value.forecast_df.loc[:,relevant_sel]
+
+            #now group the related columns
+            account_base_names = list(set([ n.split(':')[0] for n in relevant_df.columns ]))
+            aggregated_df = pd.DataFrame(relevant_df['Date'])
+            actual_account_base_names = []
+            account_base_names.sort()
+            for a in account_base_names:
+                if a == 'Date' or a == 'Memo':
+                    continue
+                actual_account_base_names.append(a)
+                # print('a:'+str(a))
+                sel_vec = [ a in cname for cname in relevant_df.columns ]
+
+                account_related_df = pd.DataFrame(relevant_df.loc[:, sel_vec])
+                # print('account_related_df:')
+                # print(account_related_df.to_string())
+
+                if account_related_df.shape[1] == 1:
+                    aggregated_df.insert(len(aggregated_df.columns), a, account_related_df.iloc[:,0], False)
+                elif account_related_df.shape[1] == 2:
+                    aggregated_df.insert(len(aggregated_df.columns), a, account_related_df.iloc[:,0] + account_related_df.iloc[:,1], False)
+
+
+
+            # print('aggregated_df:')
+            # print(aggregated_df.to_string())
+
+            ind = np.arange(len(aggregated_df.columns)-1)
+            width = 1 / (len(aggregated_df.columns)-2) #the denom here is 2 larger than number of bar groups
+
+            #this working properly required all E have same columns, which is assumed but not enforced at this point
+            lin_colors = cm.rainbow(np.linspace(0, 1, len(dict_of_forecasts)))
+
+            color = lin_colors[index]
+            for i in range(1,(len(aggregated_df.columns))):
+                col_name = aggregated_df.columns[i]
+                x_value = ind[(i-1)] + width * index
+                plot_value = aggregated_df.iloc[:,i].tail(1).iat[0]
+                ax.bar(x_value, plot_value, width, color = color) #color = , lebel =
+
+            index += 1
+
+
+            # #Marginal Interest	Net Gain	Net Loss	Net Worth	Loan Total	CC Debt Total	Liquid Tota
+            # ax.barh(ind, E_value['Marginal Interest'], width, color='red', label='N')
+            # ax.barh(ind, E_value['Net Gain'], width, color='red', label='N')
+            # ax.barh(ind, E_value['Net Loss'], width, color='red', label='N')
+            # ax.barh(ind, E_value['Loan Total'], width, color='red', label='N')
+            # ax.barh(ind, E_value['CC Debt Total'], width, color='red', label='N')
+            # ax.barh(ind, E_value['Liquid Total'], width, color='red', label='N')
+            # ax.barh(ind + width, df.m, width, color='green', label='M')
+
+        lin_colors = cm.rainbow(np.linspace(0, 1, len(dict_of_forecasts)))
+        color_patches = []
+        index = 0
+        for c in lin_colors:
+            color_patches.append( mpatches.Patch(color=c, label=E_ids[index]) )
+            index += 1
+        plt.legend(handles=color_patches, bbox_to_anchor=(1.15, 1), loc='best', prop={'size': 17})
+        #ax.legend(fancybox=True, shadow=True)
+
+        date_as_datetime_type = [datetime.datetime.strptime(d, '%Y%m%d') for d in E_value.forecast_df.Date]
+        min_date = min(date_as_datetime_type).strftime('%Y-%m-%d')
+        max_date = max(date_as_datetime_type).strftime('%Y-%m-%d')
+
+        plt.title('Final Balances : ' + str(min_date) + ' -> ' + str(max_date))
+        ax.set_xticks(ind, actual_account_base_names)
+        plt.xticks(rotation=15)
+        plt.savefig(output_path)
+        matplotlib.pyplot.close()
+
+    def plotMilestoneDatesForecastSet(self, dict_of_forecasts, output_path):
+
+        figure() #todo idk if i need this
+        fig, ax = plt.subplots(figsize=(14, 6), dpi=80)
+
+        forecast_index = 0
+        group_width = 1
+        bar_width = 0.1
+        E_ids = []
+        milestone_names = []
+        for E_key, E_value in dict_of_forecasts.items():
+            assert hasattr(E_value, 'forecast_df')
+            E_ids.append(E_value.unique_id)
+
+            AMR = E_value.account_milestone_results
+            MMR = E_value.memo_milestone_results
+            CMR = E_value.composite_milestone_results
+
+            no_of_milestones = len(AMR) + len(MMR) + len(CMR)
+            lin_colors = cm.rainbow(np.linspace(0, 1, no_of_milestones ))
+            plt.gca().set_prop_cycle(plt.cycler(color=lin_colors))
+            milestone_index = 0
+            if len(AMR) > 0:
+                for key, value in AMR.items():
+                    if value == 'None':
+                        continue
+                    x_value = forecast_index * group_width + milestone_index * bar_width
+                    y_value = matplotlib.dates.date2num(datetime.datetime.strptime(value, '%Y%m%d'))
+                    ax.bar(x_value, y_value, bar_width)
+                    milestone_names.append(key)
+                    milestone_index += 1
+
+            if len(MMR) > 0:
+                for key, value in MMR.items():
+                    if value == 'None':
+                        continue
+                    x_value =  forecast_index * group_width + milestone_index * bar_width
+                    y_value = matplotlib.dates.date2num(datetime.datetime.strptime(value, '%Y%m%d'))
+                    ax.bar(x_value, y_value, bar_width)
+                    milestone_names.append(key)
+                    milestone_index += 1
+
+            if len(CMR) > 0:
+                for key, value in CMR.items():
+                    if value == 'None':
+                        continue
+                    x_value =  forecast_index * group_width + milestone_index * bar_width
+                    y_value = matplotlib.dates.date2num(datetime.datetime.strptime(value, '%Y%m%d'))
+                    ax.bar(x_value, y_value, bar_width)
+                    milestone_names.append(key)
+                    milestone_index += 1
+
+            forecast_index += 1
+            # left_int_ts = matplotlib.dates.date2num(
+            #     datetime.datetime.strptime(expense_forecast.start_date_YYYYMMDD, '%Y%m%d'))
+            # right_int_ts = matplotlib.dates.date2num(
+            #     datetime.datetime.strptime(expense_forecast.end_date_YYYYMMDD, '%Y%m%d'))
+            #
+            # all_keys = am_keys + mm_keys + cm_keys
+            # for i, txt in enumerate(all_keys):
+            #     ax.annotate(txt, (data_x[i], data_y[i]))
+            #
+            # left = left_int_ts
+            # right = right_int_ts
+            #
+            # plt.xlim(left, right)
+
+            bottom, top = plt.ylim()
+            new_bottom = matplotlib.dates.date2num(datetime.datetime.strptime(E_value.start_date_YYYYMMDD, '%Y%m%d'))
+            new_top = matplotlib.dates.date2num(datetime.datetime.strptime(E_value.end_date_YYYYMMDD, '%Y%m%d'))
+            plt.ylim(new_bottom,new_top)
+
+            # if 0 < bottom:
+            #     plt.ylim(0, top)
+            # elif top < 0:
+            #     plt.ylim(bottom, 0)
+
+
+            #
+            # ax = plt.subplot(111)
+            # box = ax.get_position()
+            # ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
+
+
+        lin_colors = cm.rainbow(np.linspace(0, 1, no_of_milestones ))
+        color_patches = []
+        index = 0
+        for c in lin_colors:
+            color_patches.append( mpatches.Patch(color=c, label=milestone_names[index]) )
+            index += 1
+        plt.legend(handles=color_patches,
+                    #bbox_to_anchor=(1.15, 1),
+                   loc='center right', prop={'size': 11})
+        #ax.legend(fancybox=True, shadow=True)
+
+        date_as_datetime_type = [datetime.datetime.strptime(d, '%Y%m%d') for d in E_value.forecast_df.Date]
+        min_date = min(date_as_datetime_type).strftime('%Y-%m-%d')
+        max_date = max(date_as_datetime_type).strftime('%Y-%m-%d')
+
+        x_tick_values = [ x + ( bar_width * len(dict_of_forecasts) / 2 ) for x in np.arange(len(dict_of_forecasts))]
+        E_ids = [ '#'+str(E_id) for E_id in E_ids ] #to make it clear that the x axis labels are not numeric
+        ax.set_xticks(x_tick_values, E_ids)
+        ax.yaxis_date()
+        plt.title('Milestone Dates : ' + str(min_date) + ' -> ' + str(max_date))
+        plt.savefig(output_path)
         matplotlib.pyplot.close()

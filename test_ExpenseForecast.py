@@ -592,11 +592,11 @@ class TestExpenseForecastMethods:
                 BudgetSet.BudgetSet([
                                      BudgetItem.BudgetItem('20000102','20000102',1,'once',100,'SPEND daily p1 txn', False,False), #EOD 400
 
-                                     BudgetItem.BudgetItem('20000103', '20000103', 1, 'once', 100, 'SPEND daily p1 txn',False, False), #EOD 300
+                                     BudgetItem.BudgetItem('20000103', '20000103', 1, 'once', 100, 'SPEND daily p1 txn 2',False, False), #EOD 300
                                      BudgetItem.BudgetItem('20000103', '20000103', 3, 'once', 400,'SPEND p3 txn on 1/3 that is skipped bc later lower priority_index txn', False, False),
 
                                      BudgetItem.BudgetItem('20000104', '20000104', 1, 'once', 200, '200 income on 1/4',False, False), #500
-                                     BudgetItem.BudgetItem('20000104', '20000104', 1, 'once', 100, 'SPEND daily p1 txn',False, False), #400
+                                     BudgetItem.BudgetItem('20000104', '20000104', 1, 'once', 100, 'SPEND daily p1 txn 3',False, False), #400
                                      BudgetItem.BudgetItem('20000102', '20000102', 2, 'once', 400, 'SPEND p2 txn deferred from 1/2 to 1/4', True, False) #EOD 0
 
                                      ]
@@ -667,10 +667,10 @@ class TestExpenseForecastMethods:
                 'test_transactions_executed_at_p1_and_p2',
                 AccountSet.AccountSet(checking_acct_list(2000)),
                 BudgetSet.BudgetSet(
-                    [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'p1 daily txn',False, False),
-                     BudgetItem.BudgetItem('20000103', '20000103', 1, 'once', 100, 'p1 daily txn',False, False),
-                     BudgetItem.BudgetItem('20000104', '20000104', 1, 'once', 100, 'p1 daily txn',False, False),
-                     BudgetItem.BudgetItem('20000105', '20000105', 1, 'once', 100, 'p1 daily txn', False, False),
+                    [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'p1 daily txn 1',False, False),
+                     BudgetItem.BudgetItem('20000103', '20000103', 1, 'once', 100, 'p1 daily txn 2',False, False),
+                     BudgetItem.BudgetItem('20000104', '20000104', 1, 'once', 100, 'p1 daily txn 3',False, False),
+                     BudgetItem.BudgetItem('20000105', '20000105', 1, 'once', 100, 'p1 daily txn 4', False, False),
 
                      BudgetItem.BudgetItem('20000102', '20000102', 2, 'once', 100, 'p2 daily txn 1/2/00', False, False),
                      BudgetItem.BudgetItem('20000103', '20000103', 2, 'once', 100, 'p2 daily txn 1/3/00', False, False),
@@ -695,10 +695,10 @@ class TestExpenseForecastMethods:
                     'Date': ['20000101', '20000102', '20000103', '20000104', '20000105', '20000106'],
                     'Checking': [2000, 1800, 1600, 1400, 1200, 1200],
                     'Memo': ['',
-                             'p1 daily txn (Checking -$100.0); p2 daily txn 1/2/00 (Checking -$100.0);',
-                             'p1 daily txn (Checking -$100.0); p2 daily txn 1/3/00 (Checking -$100.0);',
-                             'p1 daily txn (Checking -$100.0); p2 daily txn 1/4/00 (Checking -$100.0);',
-                             'p1 daily txn (Checking -$100.0); p2 daily txn 1/5/00 (Checking -$100.0);',
+                             'p1 daily txn 1 (Checking -$100.0); p2 daily txn 1/2/00 (Checking -$100.0);',
+                             'p1 daily txn 2 (Checking -$100.0); p2 daily txn 1/3/00 (Checking -$100.0);',
+                             'p1 daily txn 3 (Checking -$100.0); p2 daily txn 1/4/00 (Checking -$100.0);',
+                             'p1 daily txn 4 (Checking -$100.0); p2 daily txn 1/5/00 (Checking -$100.0);',
                              '']
                 })
         ),
@@ -1312,7 +1312,7 @@ class TestExpenseForecastMethods:
         expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d') for x in
                                    expected_result_df.Date]
 
-        milestone_set = MilestoneSet.MilestoneSet(account_set, budget_set, [], [], [])
+        milestone_set = MilestoneSet.MilestoneSet([], [], [])
 
         E = ExpenseForecast.ExpenseForecast(account_set, budget_set, memo_rule_set, start_date_YYYYMMDD,
                                             end_date_YYYYMMDD, milestone_set)
@@ -2018,7 +2018,7 @@ class TestExpenseForecastMethods:
 
         memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=1)
 
-        milestone_set = MilestoneSet.MilestoneSet(account_set,budget_set,[],[],[])
+        milestone_set = MilestoneSet.MilestoneSet([],[],[])
 
         # expected_result_df = pd.DataFrame({
         #     'Date': ['20000101', '20000102', '20000103'],
@@ -2683,7 +2683,7 @@ class TestExpenseForecastMethods:
         M.addMemoRule('.*income.*', None, 'Checking', 1)
         M.addMemoRule('additional loan payment', 'Checking', 'ALL_LOANS', 7)
 
-        MS = MilestoneSet.MilestoneSet(A, B, [], [], [])
+        MS = MilestoneSet.MilestoneSet([], [], [])
 
         E = ExpenseForecast.ExpenseForecast(A,
                                              B,
@@ -2720,7 +2720,7 @@ class TestExpenseForecastMethods:
         M.addMemoRule('.*income.*', None, 'Checking', 1)
         M.addMemoRule('additional loan payment', 'Checking', 'ALL_LOANS', 7)
 
-        MS = MilestoneSet.MilestoneSet(A, B, [], [], [])
+        MS = MilestoneSet.MilestoneSet([], [], [])
 
         E = ExpenseForecast.ExpenseForecast(A,
                                             B,
@@ -2757,7 +2757,7 @@ class TestExpenseForecastMethods:
         M.addMemoRule('.*income.*', None, 'Checking', 1)
         M.addMemoRule('additional loan payment', 'Checking', 'ALL_LOANS', 7)
 
-        MS = MilestoneSet.MilestoneSet(A, B, [], [], [])
+        MS = MilestoneSet.MilestoneSet([], [], [])
 
         E = ExpenseForecast.ExpenseForecast(A,
                                             B,

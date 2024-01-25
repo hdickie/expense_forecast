@@ -40,7 +40,7 @@ class TestBudgetSetMethods:
         test_budget_set.addBudgetItem(start_date_YYYYMMDD='20220101', end_date_YYYYMMDD='20230101', priority=1, cadence='monthly',amount=0,deferrable=False,partial_payment_allowed=False, memo='test 4')
         test_budget_set.addBudgetItem(start_date_YYYYMMDD='20220101', end_date_YYYYMMDD='20230101', priority=1, cadence='quarterly',amount=0,deferrable=False,partial_payment_allowed=False, memo='test 5')
         test_budget_set.addBudgetItem(start_date_YYYYMMDD='20220101', end_date_YYYYMMDD='20230101', priority=1, cadence='yearly',amount=0,deferrable=False,partial_payment_allowed=False, memo='test 6')
-        test_df = test_budget_set.getBudgetSchedule('20220101','20230101')
+        test_df = test_budget_set.getBudgetSchedule()
 
 
     def test_str(self):

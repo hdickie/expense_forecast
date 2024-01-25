@@ -272,10 +272,10 @@ class AccountSet:
         if account_type.lower() == 'loan':
 
             if principal_balance == 'None':
-                raise ValueError
+                raise ValueError("principal_balance was None for type loan, which is illegal")
 
             if accrued_interest == 'None':
-                raise ValueError
+                raise ValueError("accrued_interest was None for type loan, which is illegal")
 
             if float(principal_balance) + float(accrued_interest) != float(balance):
                 raise ValueError(name+": "+str(principal_balance)+" + "+str(accrued_interest)+" != "+str(balance))

@@ -1,0 +1,1615 @@
+
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Expense Forecast Report #036797</title>
+        <style>
+        /* Style the tab */
+        .tab {
+          overflow: hidden;
+          border: 1px solid #ccc;
+          background-color: #f1f1f1;
+        }
+
+        /* Style the buttons that are used to open the tab content */
+        .tab button {
+          background-color: inherit;
+          float: left;
+          border: none;
+          outline: none;
+          cursor: pointer;
+          padding: 14px 16px;
+          transition: 0.3s;
+        }
+
+        /* Change background color of buttons on hover */
+        .tab button:hover {
+          background-color: #ddd;
+        }
+
+        /* Create an active/current tablink class */
+        .tab button.active {
+          background-color: #ccc;
+        }
+
+        /* Style the tab content */
+        .tabcontent {
+          display: none;
+          padding: 6px 12px;
+          border: 1px solid #ccc;
+          border-top: none;
+        }
+        </style>
+
+
+        </head>
+        <body>
+        <h1>Expense Forecast Report #036797</h1>
+        <p>2024-01-23 to 2024-03-01  This report was generated alongside some others. See <a href="./ForecastSummary.html">this page</a> for information about related forecasts.</p>
+
+        <!-- Tab links -->
+        <div class="tab">
+          <button class="tablinks active" onclick="openTab(event, 'ForecastParameters')">Forecast Parameters</button>
+          <button class="tablinks" onclick="openTab(event, 'NetWorth')">Net Worth</button>
+          <button class="tablinks" onclick="openTab(event, 'NetGainLoss')">Net Gain & Loss</button>
+          <button class="tablinks" onclick="openTab(event, 'AccountType')">Account Type</button>
+          <button class="tablinks" onclick="openTab(event, 'Interest')">Interest</button>
+          <button class="tablinks" onclick="openTab(event, 'Milestones')">Milestones</button>
+          <button class="tablinks" onclick="openTab(event, 'All')">All</button>
+          <button class="tablinks" onclick="openTab(event, 'TransactionSchedule')">Transaction Schedule</button>
+          <button class="tablinks" onclick="openTab(event, 'Forecast Results')">Forecast Results</button>
+        </div>
+
+        <!-- Tab content -->
+        <div id="ForecastParameters" class="tabcontent">
+          <h3>Forecast Parameters</h3>
+          <p>
+        This forecast started at 2024-01-24 12:52:06, took 0:00:04 to complete, and finished at 2024-01-24 12:52:10.
+        </p>
+          <h3>Accounts</h3>
+          <p>
+        The initial conditions and account boundaries are defined as:<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Name</th>
+      <th>Balance</th>
+      <th>Min_Balance</th>
+      <th>Max_Balance</th>
+      <th>Account_Type</th>
+      <th>Billing_Start_Dt</th>
+      <th>Interest_Type</th>
+      <th>APR</th>
+      <th>Interest_Cadence</th>
+      <th>Minimum_Payment</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Checking</td>
+      <td>4000.0</td>
+      <td>0.0</td>
+      <td>99999.0</td>
+      <td>checking</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+  </tbody>
+</table>
+        </p>
+          <h3>Budget Items</h3>
+          <p>
+        These transactions are considered for analysis:<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Start_Date</th>
+      <th>End_Date</th>
+      <th>Priority</th>
+      <th>Cadence</th>
+      <th>Amount</th>
+      <th>Memo</th>
+      <th>Deferrable</th>
+      <th>Partial_Payment_Allowed</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>20000101</td>
+      <td>20000101</td>
+      <td>1</td>
+      <td>daily</td>
+      <td>10.0</td>
+      <td>core txn</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>20240123</td>
+      <td>20240301</td>
+      <td>1</td>
+      <td>daily</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>20240123</td>
+      <td>20240301</td>
+      <td>1</td>
+      <td>daily</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+  </tbody>
+</table>
+        </p>
+          <h3>Memo Rules</h3>
+          <p>
+        These decision rules are used:<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Memo_Regex</th>
+      <th>Account_From</th>
+      <th>Account_To</th>
+      <th>Transaction_Priority</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>.*txn.*</td>
+      <td>Checking</td>
+      <td>None</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>.*income.*</td>
+      <td>None</td>
+      <td>Checking</td>
+      <td>1.0</td>
+    </tr>
+  </tbody>
+</table>
+        </p>
+          <h3>Account Milestones</h3>
+          <p>
+        These account milestones are defined:<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Milestone_Name</th>
+      <th>Account_Name</th>
+      <th>Min_Balance</th>
+      <th>Max_Balance</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+        </p>
+          <h3>Memo Milestones</h3>
+          <p>
+        These memo milestones are defined:<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Milestone_Name</th>
+      <th>Memo_Regex</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+        </p>
+          <h3>Composite Milestones</h3>
+          <p>
+        These composite milestones are defined:<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Composite_Milestone_Name</th>
+      <th>Milestone_Type</th>
+      <th>Milestone_Name</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+        </p>
+        </div>
+
+        <div id="NetWorth" class="tabcontent">
+          <h3>Net Worth</h3>
+          <p>
+        Net Worth began at $4,000.0 and fell to $1,720.0 over 39 days, averaging $-58.46 per day.
+        </p>
+          <img src="036797_networth_line_plot.png">
+        </div>
+
+        <div id="NetGainLoss" class="tabcontent">
+          <h3>Net Gain & Loss</h3>
+          <p>Total gain was $0.0 over 39 days, averaging $0.0 per day.<br><br>Total loss was -$2,280.0 over 39 days, averaging -$58.46 per day.</p>
+          <img src="036797_net_gain_loss_line_plot.png">
+        </div>
+
+        <div id="AccountType" class="tabcontent">
+          <h3>Account Type</h3>
+          <p>
+        Loan debt began at $0.0 and rose to $0.0 over 39 days, averaging $0.0 per day.
+        <br><br>
+        Credit card debt began at $0.0 and rose to $0.0 over 39 days, averaging $0.0 per day.
+        <br><br>
+        Liquid cash began at $4,000.0 and fell to $1,720.0 over 39 days, averaging $-58.46 per day.
+        </p>
+          <img src="036797_accounttype_line_plot.png">
+        </div>
+
+        <div id="Interest" class="tabcontent">
+          <h3>Interest</h3>
+          <p>Total interest accrued was $0.0 over 39 days, averaging $0.0 per day.<br>This plot shows the new interest by day, not the total interest at a given time.</p>
+          <img src="036797_marginal_interest_line_plot.png">
+        </div>
+        
+        <div id="Milestones" class="tabcontent">
+          <h3>Milestones</h3>
+          <p>0 milestones were defined, and 0 were achieved before the end of the forecast.<br>Note that unachieved milestones are displayed on the last day of the forecast.</p>
+          
+          <img src="036797_milestone_scatter_plot.png">
+          
+          <h4>Account Milestones</h4>
+          <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Milestone_Name</th>
+      <th>Date</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table> <br>
+          <h4>Memo Milestones</h4>
+          <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Milestone_Name</th>
+      <th>Date</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table> <br>
+          <h4>Composite Milestones</h4>
+          <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Milestone_Name</th>
+      <th>Date</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table> <br>
+          
+        </div>
+
+        <div id="All" class="tabcontent">
+          <h3>All</h3>
+          <p></p>
+          <img src="036797_all_line_plot.png">
+        </div>
+        
+        <div id="TransactionSchedule" class="tabcontent">
+          <h3>Transaction Schedule</h3>
+          <p>Transactions are displayed below. Note that loan and credit card minimum payments are not shown.</p>
+          <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Date</th>
+      <th>Priority</th>
+      <th>Amount</th>
+      <th>Memo</th>
+      <th>Deferrable</th>
+      <th>Partial_Payment_Allowed</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>20000101</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>core txn</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>20240123</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>20240123</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>20240124</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>20240124</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>20240125</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>20240125</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>20240126</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>20240126</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>20240127</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>20240127</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>20240128</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>20240128</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>20240129</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>20240129</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>20240130</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>16</th>
+      <td>20240130</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>20240131</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>18</th>
+      <td>20240131</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>19</th>
+      <td>20240201</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>20240201</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>21</th>
+      <td>20240202</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>22</th>
+      <td>20240202</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>23</th>
+      <td>20240203</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>24</th>
+      <td>20240203</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>25</th>
+      <td>20240204</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>26</th>
+      <td>20240204</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>27</th>
+      <td>20240205</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>28</th>
+      <td>20240205</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>29</th>
+      <td>20240206</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>30</th>
+      <td>20240206</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>31</th>
+      <td>20240207</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>32</th>
+      <td>20240207</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>33</th>
+      <td>20240208</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>34</th>
+      <td>20240208</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>35</th>
+      <td>20240209</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>36</th>
+      <td>20240209</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>37</th>
+      <td>20240210</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>38</th>
+      <td>20240210</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>39</th>
+      <td>20240211</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>40</th>
+      <td>20240211</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>41</th>
+      <td>20240212</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>42</th>
+      <td>20240212</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>43</th>
+      <td>20240213</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>44</th>
+      <td>20240213</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>45</th>
+      <td>20240214</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>46</th>
+      <td>20240214</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>47</th>
+      <td>20240215</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>48</th>
+      <td>20240215</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>49</th>
+      <td>20240216</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>50</th>
+      <td>20240216</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>51</th>
+      <td>20240217</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>52</th>
+      <td>20240217</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>53</th>
+      <td>20240218</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>54</th>
+      <td>20240218</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>55</th>
+      <td>20240219</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>56</th>
+      <td>20240219</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>57</th>
+      <td>20240220</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>58</th>
+      <td>20240220</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>59</th>
+      <td>20240221</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>60</th>
+      <td>20240221</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>61</th>
+      <td>20240222</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>62</th>
+      <td>20240222</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>63</th>
+      <td>20240223</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>64</th>
+      <td>20240223</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>65</th>
+      <td>20240224</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>66</th>
+      <td>20240224</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>67</th>
+      <td>20240225</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>68</th>
+      <td>20240225</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>69</th>
+      <td>20240226</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>70</th>
+      <td>20240226</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>71</th>
+      <td>20240227</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>72</th>
+      <td>20240227</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>73</th>
+      <td>20240228</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>74</th>
+      <td>20240228</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>75</th>
+      <td>20240229</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>76</th>
+      <td>20240229</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>77</th>
+      <td>20240301</td>
+      <td>1</td>
+      <td>20.0</td>
+      <td>txn 1B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>78</th>
+      <td>20240301</td>
+      <td>1</td>
+      <td>40.0</td>
+      <td>txn 2B</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+  </tbody>
+</table>
+        </div>
+
+        <div id="Forecast Results" class="tabcontent">
+          <h3>Forecast Results</h3>
+          <p>
+        This forecast started at 2024-01-24 12:52:06, took 0:00:04 to complete, and finished at 2024-01-24 12:52:10.
+        </p>
+          <p>The visualized data are below:</p>
+          <h4>Forecast #036797:</h4>
+          <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Date</th>
+      <th>Checking</th>
+      <th>Marginal Interest</th>
+      <th>Net Gain</th>
+      <th>Net Loss</th>
+      <th>Net Worth</th>
+      <th>Loan Total</th>
+      <th>CC Debt Total</th>
+      <th>Liquid Total</th>
+      <th>Memo</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>20240123</td>
+      <td>4000.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>4000.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>4000.0</td>
+      <td></td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>20240124</td>
+      <td>3940.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>3940.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>3940.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>20240125</td>
+      <td>3880.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>3880.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>3880.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>20240126</td>
+      <td>3820.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>3820.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>3820.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>20240127</td>
+      <td>3760.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>3760.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>3760.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>20240128</td>
+      <td>3700.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>3700.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>3700.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>20240129</td>
+      <td>3640.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>3640.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>3640.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>20240130</td>
+      <td>3580.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>3580.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>3580.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>20240131</td>
+      <td>3520.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>3520.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>3520.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>20240201</td>
+      <td>3460.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>3460.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>3460.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>20240202</td>
+      <td>3400.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>3400.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>3400.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>20240203</td>
+      <td>3340.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>3340.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>3340.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>20240204</td>
+      <td>3280.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>3280.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>3280.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>20240205</td>
+      <td>3220.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>3220.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>3220.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>20240206</td>
+      <td>3160.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>3160.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>3160.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>20240207</td>
+      <td>3100.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>3100.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>3100.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>16</th>
+      <td>20240208</td>
+      <td>3040.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>3040.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>3040.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>20240209</td>
+      <td>2980.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>2980.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>2980.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>18</th>
+      <td>20240210</td>
+      <td>2920.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>2920.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>2920.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>19</th>
+      <td>20240211</td>
+      <td>2860.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>2860.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>2860.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>20240212</td>
+      <td>2800.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>2800.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>2800.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>21</th>
+      <td>20240213</td>
+      <td>2740.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>2740.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>2740.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>22</th>
+      <td>20240214</td>
+      <td>2680.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>2680.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>2680.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>23</th>
+      <td>20240215</td>
+      <td>2620.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>2620.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>2620.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>24</th>
+      <td>20240216</td>
+      <td>2560.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>2560.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>2560.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>25</th>
+      <td>20240217</td>
+      <td>2500.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>2500.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>2500.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>26</th>
+      <td>20240218</td>
+      <td>2440.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>2440.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>2440.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>27</th>
+      <td>20240219</td>
+      <td>2380.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>2380.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>2380.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>28</th>
+      <td>20240220</td>
+      <td>2320.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>2320.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>2320.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>29</th>
+      <td>20240221</td>
+      <td>2260.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>2260.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>2260.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>30</th>
+      <td>20240222</td>
+      <td>2200.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>2200.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>2200.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>31</th>
+      <td>20240223</td>
+      <td>2140.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>2140.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>2140.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>32</th>
+      <td>20240224</td>
+      <td>2080.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>2080.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>2080.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>33</th>
+      <td>20240225</td>
+      <td>2020.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>2020.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>2020.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>34</th>
+      <td>20240226</td>
+      <td>1960.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>1960.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>1960.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>35</th>
+      <td>20240227</td>
+      <td>1900.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>1900.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>1900.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>36</th>
+      <td>20240228</td>
+      <td>1840.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>1840.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>1840.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>37</th>
+      <td>20240229</td>
+      <td>1780.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>1780.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>1780.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+    <tr>
+      <th>38</th>
+      <td>20240301</td>
+      <td>1720.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>60</td>
+      <td>1720.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>1720.0</td>
+      <td>txn 2B (Checking -$40.0); txn 1B (Checking -$20.0);</td>
+    </tr>
+  </tbody>
+</table>
+        </div>
+
+        <br>
+
+        <script>
+        function openTab(evt, tabName) {
+          // Declare all variables
+          var i, tabcontent, tablinks;
+
+          // Get all elements with class="tabcontent" and hide them
+          tabcontent = document.getElementsByClassName("tabcontent");
+          for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+          }
+
+          // Get all elements with class="tablinks" and remove the class "active"
+          tablinks = document.getElementsByClassName("tablinks");
+          for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(" active", "");
+          }
+
+          // Show the current tab, and add an "active" class to the button that opened the tab
+          document.getElementById(tabName).style.display = "block";
+          evt.currentTarget.className += " active";
+        }
+        
+        //having this here leaves the ForecastParameters tab open when the page first loads
+        document.getElementById("ForecastParameters").style.display = "block";
+        </script>
+
+        </body>
+        </html>
+
+        

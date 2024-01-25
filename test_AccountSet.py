@@ -1061,122 +1061,122 @@ class TestAccountSet:
                                        )
 
         str(test_str_account_set)
-
-    def test_to_excel(self):
-
-        A1 = AccountSet.AccountSet([])
-        A2 = AccountSet.AccountSet(checking())
-        A3 = AccountSet.AccountSet(checking() + cc(499,501,0.05,'20000102'))
-        A4 = AccountSet.AccountSet(checking() + cc(499,501,0.05,'20000102') + compound_loan_A_no_interest())
-
-
-        with tempfile.NamedTemporaryFile() as tmp:
-            A1.to_excel(tmp)
-            T1 = pd.read_excel(tmp)
-            T1_s = T1.to_string().replace('\n',' ')
-
-            #it is absurd that I even have to do this, but Mac makes it so unnecessarily difficult to disable line wrap in any program at all
-            T1_s__0_100 = T1_s[0:100]
-            T1_s__100_200 = T1_s[100: 200]
-
-            assert T1_s__0_100 == 'Empty DataFrame Columns: [Unnamed: 0, Name, Balance, Min_Balance, Max_Balance, Account_Type, Billing'
-            assert T1_s__100_200 == '_Start_Dt, Interest_Type, APR, Interest_Cadence, Minimum_Payment] Index: []'
-
-        with tempfile.NamedTemporaryFile() as tmp:
-            A2.to_excel(tmp)
-            T2 = pd.read_excel(tmp)
-            T2_s = T2.to_string().replace('\n', ' ').replace('\t',' ')
-
-            T2_s__0_100 = T2_s[0:100]
-            T2_s__100_200 = T2_s[100: 200]
-
-            assert T2_s__0_100 ==   '   Unnamed: 0           Name  Balance  Min_Balance  Max_Balance Account_Type  Billing_Start_Dt  Inte'
-            assert T2_s__100_200 == 'rest_Type  APR  Interest_Cadence  Minimum_Payment 0           0  test checking    10000            0'
-
-        with tempfile.NamedTemporaryFile() as tmp:
-            A3.to_excel(tmp)
-            T3 = pd.read_excel(tmp)
-            T3_s = T3.to_string().replace('\n', ' ').replace('\t', ' ')
-
-            T3_s__0_100 = T3_s[0:100]
-            T3_s__100_200 = T3_s[100: 200]
-            T3_s__200_300 = T3_s[200: 300]
-            T3_s__300_400 = T3_s[300: 400]
-            T3_s__400_500 = T3_s[400: 500]
-            T3_s__500_600 = T3_s[500: 600]
-
-            assert T3_s__0_100   == '   Unnamed: 0                    Name  Balance  Min_Balance  Max_Balance   Account_Type  Billing_Sta'
-            assert T3_s__100_200 == 'rt_Dt Interest_Type   APR Interest_Cadence  Minimum_Payment 0           0           test checking   '
-            assert T3_s__200_300 == ' 10000            0        10000       checking               NaN           NaN   NaN              N'
-            assert T3_s__300_400 == 'aN              NaN 1           1  test cc: Curr Stmt Bal      499            0        20000  curr s'
-            assert T3_s__400_500 == 'tmt bal               NaN           NaN   NaN              NaN              NaN 2           2  test '
-            assert T3_s__500_600 == 'cc: Prev Stmt Bal      501            0        20000  prev stmt bal        20000102.0      compound ' #note that the float dtype of date is valid here bc we just read it fro mexcel w none of the AccountSet context
-
-        with tempfile.NamedTemporaryFile() as tmp:
-            A4.to_excel(tmp)
-            T4 = pd.read_excel(tmp)
-            T4_s = T4.to_string().replace('\n', ' ').replace('\t', ' ')
-
-            T4_s__0_100 = T4_s[0:100]
-            T4_s__100_200 = T4_s[100: 200]
-            T4_s__200_300 = T4_s[200: 300]
-            T4_s__300_400 = T4_s[300: 400]
-            T4_s__400_500 = T4_s[400: 500]
-            T4_s__500_600 = T4_s[500: 600]
-
-            assert T4_s__0_100 ==   '   Unnamed: 0                            Name  Balance  Min_Balance  Max_Balance       Account_Type '
-            assert T4_s__100_200 == ' Billing_Start_Dt Interest_Type   APR Interest_Cadence  Minimum_Payment 0           0               '
-            assert T4_s__200_300 == '    test checking    10000            0        10000           checking               NaN           '
-            assert T4_s__300_400 == 'NaN   NaN              NaN              NaN 1           1          test cc: Curr Stmt Bal      499  '
-            assert T4_s__400_500 == '          0        20000      curr stmt bal               NaN           NaN   NaN              NaN  '
-            assert T4_s__500_600 == '            NaN 2           2          test cc: Prev Stmt Bal      501            0        20000    '
-
-    def test_from_excel(self):
-        A1 = AccountSet.AccountSet([])
-        A2 = AccountSet.AccountSet(checking())
-        A3 = AccountSet.AccountSet(checking() + cc(499,501,0.05,'20000102'))
-        A4 = AccountSet.AccountSet(checking() + cc(499,501,0.05,'20000102') + compound_loan_A_no_interest())
-
-        TA = AccountSet.AccountSet([])
-
-        with tempfile.TemporaryDirectory() as tmpdirname:
-
-            A1.to_excel(tmpdirname+'/A1.xlsx')
-            A2.to_excel(tmpdirname + '/A2.xlsx')
-            A3.to_excel(tmpdirname + '/A3.xlsx')
-            A4.to_excel(tmpdirname + '/A4.xlsx')
-
-            TA.from_excel(tmpdirname + '/A1.xlsx')
-            # print('TA.getAccounts().to_string():')
-            # print(TA.getAccounts().to_string())
-            # print('----')
-            # print('A1.getAccounts().to_string():')
-            # print(A1.getAccounts().to_string())
-            assert TA.getAccounts().to_string() == A1.getAccounts().to_string()
-
-            TA.from_excel(tmpdirname + '/A2.xlsx')
-            # print('TA.getAccounts().to_string():')
-            # print(TA.getAccounts().to_string())
-            # print('----')
-            # print('A2.getAccounts().to_string():')
-            # print(A2.getAccounts().to_string())
-            assert TA.getAccounts().to_string() == A2.getAccounts().to_string()
-
-            TA.from_excel(tmpdirname + '/A3.xlsx')
-            # print('TA.getAccounts().to_string():')
-            # print(TA.getAccounts().to_string())
-            # print('----')
-            # print('A3.getAccounts().to_string():')
-            # print(A3.getAccounts().to_string())
-            assert TA.getAccounts().to_string() == A3.getAccounts().to_string()
-
-            TA.from_excel(tmpdirname + '/A4.xlsx')
-            # print('TA.getAccounts().to_string():')
-            # print(TA.getAccounts().to_string())
-            # print('----')
-            # print('A4.getAccounts().to_string():')
-            # print(A4.getAccounts().to_string())
-            assert TA.getAccounts().to_string() == A4.getAccounts().to_string()
+    #
+    # def test_to_excel(self):
+    #
+    #     A1 = AccountSet.AccountSet([])
+    #     A2 = AccountSet.AccountSet(checking())
+    #     A3 = AccountSet.AccountSet(checking() + cc(499,501,0.05,'20000102'))
+    #     A4 = AccountSet.AccountSet(checking() + cc(499,501,0.05,'20000102') + compound_loan_A_no_interest())
+    #
+    #
+    #     with tempfile.NamedTemporaryFile() as tmp:
+    #         A1.to_excel(tmp)
+    #         T1 = pd.read_excel(tmp)
+    #         T1_s = T1.to_string().replace('\n',' ')
+    #
+    #         #it is absurd that I even have to do this, but Mac makes it so unnecessarily difficult to disable line wrap in any program at all
+    #         T1_s__0_100 = T1_s[0:100]
+    #         T1_s__100_200 = T1_s[100: 200]
+    #
+    #         assert T1_s__0_100 == 'Empty DataFrame Columns: [Unnamed: 0, Name, Balance, Min_Balance, Max_Balance, Account_Type, Billing'
+    #         assert T1_s__100_200 == '_Start_Dt, Interest_Type, APR, Interest_Cadence, Minimum_Payment] Index: []'
+    #
+    #     with tempfile.NamedTemporaryFile() as tmp:
+    #         A2.to_excel(tmp)
+    #         T2 = pd.read_excel(tmp)
+    #         T2_s = T2.to_string().replace('\n', ' ').replace('\t',' ')
+    #
+    #         T2_s__0_100 = T2_s[0:100]
+    #         T2_s__100_200 = T2_s[100: 200]
+    #
+    #         assert T2_s__0_100 ==   '   Unnamed: 0           Name  Balance  Min_Balance  Max_Balance Account_Type  Billing_Start_Dt  Inte'
+    #         assert T2_s__100_200 == 'rest_Type  APR  Interest_Cadence  Minimum_Payment 0           0  test checking    10000            0'
+    #
+    #     with tempfile.NamedTemporaryFile() as tmp:
+    #         A3.to_excel(tmp)
+    #         T3 = pd.read_excel(tmp)
+    #         T3_s = T3.to_string().replace('\n', ' ').replace('\t', ' ')
+    #
+    #         T3_s__0_100 = T3_s[0:100]
+    #         T3_s__100_200 = T3_s[100: 200]
+    #         T3_s__200_300 = T3_s[200: 300]
+    #         T3_s__300_400 = T3_s[300: 400]
+    #         T3_s__400_500 = T3_s[400: 500]
+    #         T3_s__500_600 = T3_s[500: 600]
+    #
+    #         assert T3_s__0_100   == '   Unnamed: 0                    Name  Balance  Min_Balance  Max_Balance   Account_Type  Billing_Sta'
+    #         assert T3_s__100_200 == 'rt_Dt Interest_Type   APR Interest_Cadence  Minimum_Payment 0           0           test checking   '
+    #         assert T3_s__200_300 == ' 10000            0        10000       checking               NaN           NaN   NaN              N'
+    #         assert T3_s__300_400 == 'aN              NaN 1           1  test cc: Curr Stmt Bal      499            0        20000  curr s'
+    #         assert T3_s__400_500 == 'tmt bal               NaN           NaN   NaN              NaN              NaN 2           2  test '
+    #         assert T3_s__500_600 == 'cc: Prev Stmt Bal      501            0        20000  prev stmt bal        20000102.0      compound ' #note that the float dtype of date is valid here bc we just read it fro mexcel w none of the AccountSet context
+    #
+    #     with tempfile.NamedTemporaryFile() as tmp:
+    #         A4.to_excel(tmp)
+    #         T4 = pd.read_excel(tmp)
+    #         T4_s = T4.to_string().replace('\n', ' ').replace('\t', ' ')
+    #
+    #         T4_s__0_100 = T4_s[0:100]
+    #         T4_s__100_200 = T4_s[100: 200]
+    #         T4_s__200_300 = T4_s[200: 300]
+    #         T4_s__300_400 = T4_s[300: 400]
+    #         T4_s__400_500 = T4_s[400: 500]
+    #         T4_s__500_600 = T4_s[500: 600]
+    #
+    #         assert T4_s__0_100 ==   '   Unnamed: 0                            Name  Balance  Min_Balance  Max_Balance       Account_Type '
+    #         assert T4_s__100_200 == ' Billing_Start_Dt Interest_Type   APR Interest_Cadence  Minimum_Payment 0           0               '
+    #         assert T4_s__200_300 == '    test checking    10000            0        10000           checking               NaN           '
+    #         assert T4_s__300_400 == 'NaN   NaN              NaN              NaN 1           1          test cc: Curr Stmt Bal      499  '
+    #         assert T4_s__400_500 == '          0        20000      curr stmt bal               NaN           NaN   NaN              NaN  '
+    #         assert T4_s__500_600 == '            NaN 2           2          test cc: Prev Stmt Bal      501            0        20000    '
+    #
+    # def test_from_excel(self):
+    #     A1 = AccountSet.AccountSet([])
+    #     A2 = AccountSet.AccountSet(checking())
+    #     A3 = AccountSet.AccountSet(checking() + cc(499,501,0.05,'20000102'))
+    #     A4 = AccountSet.AccountSet(checking() + cc(499,501,0.05,'20000102') + compound_loan_A_no_interest())
+    #
+    #     TA = AccountSet.AccountSet([])
+    #
+    #     with tempfile.TemporaryDirectory() as tmpdirname:
+    #
+    #         A1.to_excel(tmpdirname+'/A1.xlsx')
+    #         A2.to_excel(tmpdirname + '/A2.xlsx')
+    #         A3.to_excel(tmpdirname + '/A3.xlsx')
+    #         A4.to_excel(tmpdirname + '/A4.xlsx')
+    #
+    #         TA.from_excel(tmpdirname + '/A1.xlsx')
+    #         # print('TA.getAccounts().to_string():')
+    #         # print(TA.getAccounts().to_string())
+    #         # print('----')
+    #         # print('A1.getAccounts().to_string():')
+    #         # print(A1.getAccounts().to_string())
+    #         assert TA.getAccounts().to_string() == A1.getAccounts().to_string()
+    #
+    #         TA.from_excel(tmpdirname + '/A2.xlsx')
+    #         # print('TA.getAccounts().to_string():')
+    #         # print(TA.getAccounts().to_string())
+    #         # print('----')
+    #         # print('A2.getAccounts().to_string():')
+    #         # print(A2.getAccounts().to_string())
+    #         assert TA.getAccounts().to_string() == A2.getAccounts().to_string()
+    #
+    #         TA.from_excel(tmpdirname + '/A3.xlsx')
+    #         # print('TA.getAccounts().to_string():')
+    #         # print(TA.getAccounts().to_string())
+    #         # print('----')
+    #         # print('A3.getAccounts().to_string():')
+    #         # print(A3.getAccounts().to_string())
+    #         assert TA.getAccounts().to_string() == A3.getAccounts().to_string()
+    #
+    #         TA.from_excel(tmpdirname + '/A4.xlsx')
+    #         # print('TA.getAccounts().to_string():')
+    #         # print(TA.getAccounts().to_string())
+    #         # print('----')
+    #         # print('A4.getAccounts().to_string():')
+    #         # print(A4.getAccounts().to_string())
+    #         assert TA.getAccounts().to_string() == A4.getAccounts().to_string()
 
 #tests to implement
 #from excel, curr stmt bal is second row

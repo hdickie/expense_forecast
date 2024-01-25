@@ -4,6 +4,11 @@ import copy
 import BudgetItem
 import BudgetSet
 import jsonpickle
+import logging
+from log_methods import log_in_color
+from log_methods import setup_logger
+logger = setup_logger('ForecastSet', './log/ForecastSet.log', level=logging.DEBUG)
+
 class ForecastSet:
 
     def __init__(self, core_budget_set, option_budget_set):
@@ -33,7 +38,7 @@ class ForecastSet:
         self.scenarios[name_of_scenario] = new_option_budget_set
 
     def addChoiceToAllScenarios(self, list_of_choice_names, list_of_lists_of_memo_regexes):
-
+        log_in_color(logger, 'white', 'debug', 'ENTER addChoiceToAllScenarios')
         if len(self.scenarios) == 0:
             self.scenarios['Core'] = self.core_budget_set
 
@@ -41,21 +46,28 @@ class ForecastSet:
         choice_index = 0
         for list_of_memo_regexes in list_of_lists_of_memo_regexes:
             choice_name = list_of_choice_names[choice_index]
+            log_in_color(logger, 'white', 'debug', 'choice_index ' + str(choice_index))
+            log_in_color(logger, 'white', 'debug', 'choice_name ' + str(choice_name))
             for s_key, s_value in self.scenarios.items():
+                log_in_color(logger, 'white', 'debug', 's_key ' + str(s_key))
                 new_option_budget_set = copy.deepcopy(s_value)
 
+                new_option_budget_set_list = new_option_budget_set.budget_items
                 for bi in self.option_budget_set.budget_items:
+                    log_in_color(logger, 'white', 'debug', 'bi ' + str(bi))
                     for memo_regex in list_of_memo_regexes:
                         match_result = re.search(memo_regex, bi.memo)
                         try:
                             match_result.group(0)
-                            new_option_budget_set = BudgetSet.BudgetSet(new_option_budget_set.budget_items + [bi])
+                            new_option_budget_set_list.append(bi)
                         except:
                             pass
+                new_option_budget_set = BudgetSet.BudgetSet(new_option_budget_set_list)
                 new_list_of_scenarios[s_key+' | '+ choice_name] = new_option_budget_set
             choice_index += 1
 
         self.scenarios = new_list_of_scenarios
+        log_in_color(logger, 'white', 'debug', 'EXIT addChoiceToAllScenarios')
 
     def __str__(self):
         return_string = "------------------------------------------------------------------------------------------------\n"
