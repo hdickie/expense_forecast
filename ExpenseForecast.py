@@ -5472,32 +5472,38 @@ if __name__ == "__main__":
 
 
 
-# Speed Optimizations
-#     multithreading for ChooseOneSet
-# set default deferral cadence to lookahead to next income
-
-# Implement ChooseOneSet
+### Bite-sized tasks:
+# manually add scenario name to the forecasts I ran today (1/24)
+# Comparing forecasts of different date
+# I want to see each monthly cc interest accrual on the interest tab
+# I want to see non-essential txns called out specially as well
+# add loan and interest payments to transaction schedule page
+# unfulfilled milestones just not plotted instead of to the right
+# sankey diagram!
+# multithreading for ForecastSet
+# modify createAccount into createLoanAccount and createCreditCardAccount?
 # EXPLAIN log of call stack BEFORE running so we can can use this for runtime estimate
-#    once we have this, computing some examples makes predicting runtime easy, but confidence bands will be large
-# EXPLAIN in plain english
-
-# Command line Utility
-# it would be nice to have a loading bar lol
+# extremely basic CLI that shows ETC and progress
+# confirm that ScenarioSet works to and from excel and json
+# set default deferral cadence to lookahead to next income
+# turn milestone comparison plot into bar plot
+# if no milestones, draw a plot with text that says that instead
+# make error if ALL_LOANS put in memo rule when it doesnt make sense
+# make daily interest not allowed w credit
+# check that start and end date the same produce at least 1 budget item on that day for any cadence
+# in comparison report, if report 2 contains 0 items report 1 doesnt have, output a sentence instead of a 0-row table
 
 # Known Semantic Errors / Weak points
 # account name 'Credit' is hardcoded in additional cc payment memo computation
 # Atm (1/5/2024), an account 'Checking' is hard coded. This should be replaced by an input parameter
 #    allowing one of potentially multiple checking accounts to be marked as 'primary' and used for these operations
 
-# Potential errors
-# marginal interest calculation in few days after additional loan payments seems wrong (too low)
-# the transposes seem to be handled inconsistently when calculating marginal interest. im worried new tests will break it
-# technically min cc payments can be applied to both accounts,
-#    but prev balanced is moved to curr on same day so it doesnt matter
-#    and I did not fix the code to reflect this because
-#    it would never cause something illogical
-# Is principal balance sometimes negative in the MI calculation before it gets corrected?
-#     I fixed this in the 2 memo line item base, but im not sure if it applies to other cases as well
+# Potential or known errors (fix before alpha)
+# ExpenseForecast did not catch that there was no matching memo rule when memo rule was p2 and item was p1
+#    it is also weird to me that it errored right at the end thoguh there were no p2 transcations? did I see that? #068993
+#    ALSO I think I saw a crash where it got to a txn that it did not have a rule for. rule was 'tax debt' memo was 'tax debt 2'
+#    input validation :: check budget items have memo match needs to include priority as well
+# A forecast failed to satisfice bc cc debt was overpaid #Forecast_038087 is one such example
 
 # Tests to write
 # write test for pay off loan early (make sure the memo field is correct)
@@ -5510,42 +5516,24 @@ if __name__ == "__main__":
 # tests for edge cases involving things close together or at end of forecast
 # initialize from json with accounts in atypical order
 
-# Open Questions
-# modify createAccount into createLoanAccount and createCreditCardAccount?
-# have unfulfilled milestones just not plotted instead of to the right?
-
-
-
-### Bite-sized tasks:
-# add scenario name to file I/O
-# ExpenseForecast did not catch that there was no matching memo rule when memo rule was p2 and item was p1
-#    it is also weird to me that it errored right at the end thoguh there were no p2 transcations? did I see that? #068993
-#    ALSO I think I saw a crash where it got to a txn that it did not have a rule for. rule was 'tax debt' memo was 'tax debt 2'
-#
-# there is sometimes extra whitespace on cc and maybe also loan payment memos
-# milestone comparison plot
-# Define standard colors for plots
-# make error if ALL_LOANS put in memo rule when it doesnt make sense
-# make daily interest not allowed w credit
-# check that start and end date the same produce at least 1 budget item on that day for any cadence
-# if no milestones, draw a plot with text that says that instead
-# in comparison report, if report 2 contains 0 items report 1 doesnt have, output a sentence instead of a 0-row table
-# Comparing forecasts of different date
-# i want like hashtags appended to url when i click on tabs so it stays there when i refresh
-# I want to see each monthly cc interest accrual on the interest tab
-# input validation :: check budget items have memo match needs to include priority as well
-# think abt colors across plots
-# sankey diagram!
-# I could for sure write a version of runForecast that yields forecast_df every time it is updated, and be able to
-#     view partially completed results
-
 ### Project Wrap-up requirements
+# make an excel template document (the kind w locked choices) to make it easier for end-users that are not me
 # review todos
 # docstrings
 # git repo
 # github pages demo page
 
+# Potential errors (fix after alpha)
+# marginal interest calculation in few days after additional loan payments seems wrong (too low)
+# the transposes seem to be handled inconsistently when calculating marginal interest. im worried new tests will break it
+# technically min cc payments can be applied to both accounts,
+#    but prev balanced is moved to curr on same day so it doesnt matter
+#    and I did not fix the code to reflect this because
+#    it would never cause something illogical
+# Is principal balance sometimes negative in the MI calculation before it gets corrected?
+#     I fixed this in the 2 memo line item base, but im not sure if it applies to other cases as well
+# there is sometimes extra whitespace on cc and maybe also loan payment memos
 
-
-# Just thinking out loud.... What remains is to make ScenarioSet work too and from excel and json
-# WOW YAY
+# I could for sure write a version of runForecast that yields forecast_df every time it is updated, and be able to
+#     view partially completed results
+# i want like hashtags appended to url when i click on tabs so it stays there when i refresh
