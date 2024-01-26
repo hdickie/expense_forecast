@@ -11,7 +11,7 @@ import ForecastSet
 
 if __name__ == '__main__':
 
-    rerun = False
+    rerun = True
 
     F = ForecastHandler.ForecastHandler()
 

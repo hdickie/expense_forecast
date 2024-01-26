@@ -21,7 +21,7 @@ from log_methods import log_in_color
 
 if __name__ == '__main__':
 
-    rerun = True
+    rerun = False
 
     # Forecast_068993 5 year plan, work as EMT 40 hrs week, no overtime, no additional cc payments, no nursing school
     # 062398 er tech no additional payments
@@ -220,9 +220,48 @@ if __name__ == '__main__':
     else:
         F = ForecastHandler.ForecastHandler()
 
-        E = ExpenseForecast.initialize_from_json_file('./out/Forecast__044304__2024_01_08__03_28_45.json')
+        E_file_Names = [
+        'Forecast_038822.json',
+        'Forecast_024120.json',
+        'Forecast_030929.json',
+        'Forecast_051493.json',
+        'Forecast_078628.json',
+        'Forecast_058741.json',
+        'Forecast_090914.json',
+        'Forecast_045037.json',
+        'Forecast_038087.json',
+        'Forecast_093365.json',
+        'Forecast_089825.json',
+        'Forecast_040245.json',
+        'Forecast_081523.json',
+        'Forecast_074290.json',
+        'Forecast_043092.json',
+        'Forecast_005317.json',
+        'Forecast_042185.json',
+        'Forecast_031319.json',
+        'Forecast_023708.json',
+        'Forecast_067884.json',
+        'Forecast_041019.json',
+        'Forecast_026799.json',
+        'Forecast_030067.json',
+        'Forecast_028495.json',
+        'Forecast_004947.json',
+        'Forecast_016223.json',
+        'Forecast_046689.json',
+        'Forecast_004538.json'
+            ]
+        E__dict = {}
 
-        E.appendSummaryLines()
-        F = ForecastHandler.ForecastHandler()
-        E.writeToJSONFile('./')
-        F.generateHTMLReport(E, './out/')
+        for fname in E_file_Names:
+            E = ExpenseForecast.initialize_from_json_file(fname)[0]
+            E__dict[E.scenario_name] = E
+            print('fname:' + str(fname)+' '+str(E.scenario_name))
+
+        #fname:Forecast_045037.json Core | start er tech 9/1/24 | pay cc extra 600
+        #fname:Forecast_004538.json Core | start er tech 3/1/25 | pay cc extra 800
+        # E1 = ExpenseForecast.initialize_from_json_file('Forecast_045037.json')[0]#E__dict['Core | start er tech 9/1/24 | pay cc extra 600']
+        # E2 = ExpenseForecast.initialize_from_json_file('Forecast_004538.json')[0]#E__dict['Core | start er tech 3/1/25 | pay cc extra 800']
+        #
+        # F.generateCompareTwoForecastsHTMLReport(E1,E2)
+
+        F.generateScenarioSetHTMLReport(E__dict)

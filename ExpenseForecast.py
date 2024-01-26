@@ -665,9 +665,11 @@ class ExpenseForecast:
 
         self.milestone_set = milestone_set
 
-        self.account_milestone_results = []
-        self.memo_milestone_results = []
-        self.composite_milestone_results = []
+        self.account_milestone_results = {}
+        self.memo_milestone_results = {}
+        self.composite_milestone_results = {}
+
+        self.scenario_name = ''
 
     def evaluateMilestones(self):
 
@@ -5473,8 +5475,7 @@ if __name__ == "__main__":
 
 
 ### Bite-sized tasks:
-# manually add scenario name to the forecasts I ran today (1/24)
-# Comparing forecasts of different date
+# A forecast failed to satisfice bc cc debt was overpaid #Forecast_038087 is one such example
 # I want to see each monthly cc interest accrual on the interest tab
 # I want to see non-essential txns called out specially as well
 # add loan and interest payments to transaction schedule page
@@ -5492,6 +5493,7 @@ if __name__ == "__main__":
 # make daily interest not allowed w credit
 # check that start and end date the same produce at least 1 budget item on that day for any cadence
 # in comparison report, if report 2 contains 0 items report 1 doesnt have, output a sentence instead of a 0-row table
+# some kind of month-at-a-time mode for life long forecasts
 
 # Known Semantic Errors / Weak points
 # account name 'Credit' is hardcoded in additional cc payment memo computation
@@ -5503,7 +5505,7 @@ if __name__ == "__main__":
 #    it is also weird to me that it errored right at the end thoguh there were no p2 transcations? did I see that? #068993
 #    ALSO I think I saw a crash where it got to a txn that it did not have a rule for. rule was 'tax debt' memo was 'tax debt 2'
 #    input validation :: check budget items have memo match needs to include priority as well
-# A forecast failed to satisfice bc cc debt was overpaid #Forecast_038087 is one such example
+
 
 # Tests to write
 # write test for pay off loan early (make sure the memo field is correct)

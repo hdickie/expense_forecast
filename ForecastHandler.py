@@ -578,8 +578,22 @@ class ForecastHandler:
 
     def generateCompareTwoForecastsHTMLReport(self,E1, E2, output_dir='./',parent_report_path=None):
 
-        assert E1.start_date_YYYYMMDD == E2.start_date_YYYYMMDD
-        assert E1.end_date_YYYYMMDD == E2.end_date_YYYYMMDD
+        #assert E1.start_date_YYYYMMDD == E2.start_date_YYYYMMDD
+        assert E1.forecast_df.head(1).Date.iat[0] == E2.forecast_df.head(1).Date.iat[0]
+        if E1.forecast_df.tail(1).Date.iat[0] != E2.forecast_df.tail(1).Date.iat[0]:
+
+            E1_ed = datetime.datetime.strptime(E1.forecast_df.tail(1).Date.iat[0],'%Y%m%d')
+            E2_ed = datetime.datetime.strptime(E2.forecast_df.tail(1).Date.iat[0], '%Y%m%d')
+            earliest_end_date = min(E1_ed,E2_ed)
+
+            E1_date_sel_vec = [ datetime.datetime.strptime(d,'%Y%m%d') <= earliest_end_date for d in E1.forecast_df.Date ]
+            E2_date_sel_vec = [ datetime.datetime.strptime(d,'%Y%m%d') <= earliest_end_date for d in E2.forecast_df.Date ]
+            E1.forecast_df = E1.forecast_df.iloc[ E1_date_sel_vec , : ]
+            E2.forecast_df = E2.forecast_df.iloc[ E2_date_sel_vec, : ]
+
+            E1.end_date_YYYYMMDD = earliest_end_date.strftime('%Y%m%d')
+            E2.end_date_YYYYMMDD = earliest_end_date.strftime('%Y%m%d')
+
 
         # start_date = E1.start_date_YYYYMMDD.strftime('%Y-%m-%d')
         # end_date = E1.end_date_YYYYMMDD.strftime('%Y-%m-%d')
@@ -710,7 +724,14 @@ class ForecastHandler:
                 These composite milestones are defined:""" + E1.milestone_set.getCompositeMilestonesDF().to_html() + """
                 """
 
-        assert E1.forecast_df.shape[0] == E2.forecast_df.shape[0]
+        try:
+            assert E1.forecast_df.shape[0] == E2.forecast_df.shape[0]
+        except Exception as e:
+            log_in_color(logger, 'red', 'error', 'E1.forecast_df.shape[0]:')
+            log_in_color(logger, 'red', 'error', E1.forecast_df.shape[0])
+            log_in_color(logger, 'red', 'error', 'E2.forecast_df.shape[0]:')
+            log_in_color(logger, 'red', 'error', E2.forecast_df.shape[0])
+            raise e
         num_days = E1.forecast_df.shape[0]
 
         report_1_initial_networth = E1.forecast_df.head(1)['Net Worth'].iat[0]
@@ -2201,7 +2222,9 @@ class ForecastHandler:
 
         list_of_forecast_links_html = ""
         for E_key, E_value in expense_forecast__dict.items():
-            # self.generateHTMLReport(E_value,output_dir,output_report_path) #todo undo this
+            E_value.appendSummaryLines()
+            E_value.writeToJSONFile('./')
+            self.generateHTMLReport(E_value,output_dir,output_report_path) #todo undo this
             list_of_forecast_links_html += "<a href=\"Forecast_"+str(E_value.unique_id)+".html\">Forecast "+str(E_value.unique_id)+" "+str(E_key)+"</a><br>"
 
         milestone_difference_table_df = self.calculateMilestoneDifferenceTable(expense_forecast__dict)
@@ -2225,7 +2248,7 @@ class ForecastHandler:
 
                 report_file_name = 'compare_' + str(E_value_1.unique_id) + '_' + str(E_value_2.unique_id)+'.html'
                 comparison_report_file_names.append(report_file_name)
-                # self.generateCompareTwoForecastsHTMLReport(E_value_1,E_value_2,output_dir,output_report_path) #todo undo this
+                self.generateCompareTwoForecastsHTMLReport(E_value_1,E_value_2,output_dir,output_report_path) #todo undo this
 
                 report_href = "<a href=\"./" + report_file_name + "\">" + report_file_name + "</a>"
                 forecast_comparison_matrix_df.loc[index_1, index_2] = report_href
