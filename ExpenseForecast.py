@@ -18,10 +18,13 @@ import numpy as np
 import xlsxwriter
 import CompositeMilestone
 import jsonpickle
+import tqdm
+import math
 
 pd.options.mode.chained_assignment = None #apparently this warning can throw false positives???
 
-logger = setup_logger('ExpenseForecast', './log/ExpenseForecast.log', level=logging.INFO)
+
+logger = setup_logger('ExpenseForecast', './log/ExpenseForecast.log', level=logging.WARNING)
 
 #whether or not the expense forecast has been run will be determined at runtime
 #this can return a list of initialized ExpenseForecast objects from ChooseOneSet
@@ -910,6 +913,36 @@ class ExpenseForecast:
         self.start_ts = datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S')
         log_in_color(logger, 'white', 'info', 'Starting Forecast '+str(self.unique_id))
 
+        # this is the place to estimate runtime to appropriately update progress bar
+        # It could be for each day each priority, but then priority > 1 would have thr bar stop every time it looks ahead
+        # I think the way to do it is have the bar be relative to the worst case
+        # deferrable are really fucky. we will assume a deferral cadence of 2 weeks though this can be accounted for
+        # if a deferral cadence is implemented #todo
+        # I'm not sold that it would be that useful though. A look-ahead on income seems reasonable
+        # therefore, each p2+ txn may fail, and each partial_payment may fail twice, and each deferrable may fail n times (where n is accounting for every 2 weeks
+        #
+        sd = datetime.datetime.strptime(self.start_date_YYYYMMDD, '%Y%m%d')
+        ed = datetime.datetime.strptime(self.end_date_YYYYMMDD, '%Y%m%d')
+        predicted_satisfice_runtime_in_simulated_days = (ed - sd).days
+        # p2plus_txns_max_runtime_in_simulated_days = 0
+        # for index, row in self.initial_proposed_df.iterrows():
+        #     num_of_lookahead_days = ( ed - datetime.datetime.strptime(row.date.iat[0],'%Y%m%d') ).days
+        #     if row.Deferrable:
+        #         max_number_of_retries = math.floor(num_of_lookahead_days / 14)
+        #         #each retry would be 2 weeks shorter. I'm thinking of it making a triangle shape
+        #         #therefore, we add time * n / 2
+        #         p2plus_txns_max_runtime_in_simulated_days += max_number_of_retries * num_of_lookahead_days / 2
+        #     elif row.Partial_Payment_Allowed:
+        #         p2plus_txns_max_runtime_in_simulated_days += 2 * num_of_lookahead_days
+        #     else:
+        #         p2plus_txns_max_runtime_in_simulated_days += num_of_lookahead_days
+        # total_predicted_max_runtime_in_simulated_days = predicted_satisfice_runtime_in_simulated_days + p2plus_txns_max_runtime_in_simulated_days
+        #
+        # On second thought, I would rather deal wit ha stilted progress bar than figuring out how to track progress in recursion
+        no_of_p2plus_priority_levels = len(set(self.initial_proposed_df.Priority))
+        total_predicted_max_runtime_in_simulated_days = predicted_satisfice_runtime_in_simulated_days + predicted_satisfice_runtime_in_simulated_days * no_of_p2plus_priority_levels
+        progress_bar = tqdm.tqdm(range(total_predicted_max_runtime_in_simulated_days),total=total_predicted_max_runtime_in_simulated_days)
+
         forecast_df, skipped_df, confirmed_df, deferred_df = self.computeOptimalForecast(
             start_date_YYYYMMDD=self.start_date_YYYYMMDD,
             end_date_YYYYMMDD=self.end_date_YYYYMMDD,
@@ -919,7 +952,7 @@ class ExpenseForecast:
             skipped_df=pd.DataFrame(self.initial_skipped_df, copy=True),
             account_set=copy.deepcopy(self.initial_account_set),
             memo_rule_set=copy.deepcopy(self.initial_memo_rule_set),
-            raise_satisfice_failed_exception=False)
+            raise_satisfice_failed_exception=False,progress_bar=progress_bar)
 
         self.forecast_df = forecast_df
         self.skipped_df = skipped_df
@@ -942,8 +975,12 @@ class ExpenseForecast:
         #self.forecast_df.to_csv('./Forecast__' + run_ts + '.json')
 
         #self.forecast_df.index = self.forecast_df['Date']
+        if hasattr(self,'forecast_df'):
+            file_name = '/ForecastResult_' + self.unique_id + '.json'
+        else:
+            file_name = '/Forecast_' + self.unique_id + '.json'
 
-        f = open(str(output_dir)+'/Forecast_' + self.unique_id + '.json','w')
+        f = open(str(output_dir)+file_name,'w')
         f.write(self.to_json())
         f.close()
 
@@ -4211,7 +4248,7 @@ class ExpenseForecast:
         log_in_color(logger, 'cyan', 'debug', 'EXIT overwriteOGSatisficeInterestWhenAdditionalLoanPayment()'+bal_string,self.log_stack_depth)
         return forecast_df
 
-    def assessPotentialOptimizations(self, forecast_df, account_set, memo_rule_set, confirmed_df, proposed_df, deferred_df, skipped_df, raise_satisfice_failed_exception):
+    def assessPotentialOptimizations(self, forecast_df, account_set, memo_rule_set, confirmed_df, proposed_df, deferred_df, skipped_df, raise_satisfice_failed_exception, progress_bar=None):
         F = 'F:'+str(forecast_df.shape[0])
         C = 'C:'+str(confirmed_df.shape[0])
         P = 'P:'+str(proposed_df.shape[0])
@@ -4258,6 +4295,9 @@ class ExpenseForecast:
                     continue  # first day is considered final
 
                 if not raise_satisfice_failed_exception:
+                    progress_bar.update(1)
+                    progress_bar.refresh()
+
                     iteration_time_elapsed = datetime.datetime.now() - last_iteration_ts
                     last_iteration_ts = datetime.datetime.now()
                     log_string = str(priority_index) + ' ' + datetime.datetime.strptime(date_string_YYYYMMDD,'%Y%m%d').strftime('%Y-%m-%d')
@@ -4344,12 +4384,16 @@ class ExpenseForecast:
 
         return confirmed_df, deferred_df, skipped_df
 
-    def satisfice(self, list_of_date_strings, confirmed_df, account_set, memo_rule_set, forecast_df, raise_satisfice_failed_exception ):
+    def satisfice(self, list_of_date_strings, confirmed_df, account_set, memo_rule_set, forecast_df, raise_satisfice_failed_exception, progress_bar=None ):
         log_in_color(logger,'cyan','debug','ENTER satisfice()',self.log_stack_depth)
         self.log_stack_depth += 1
         all_days = list_of_date_strings #just rename it so it's more clear for the context
 
         for d in all_days:
+            if progress_bar is not None:
+                progress_bar.update(1)
+                progress_bar.refresh()
+
             if d == self.start_date_YYYYMMDD:
                 if not raise_satisfice_failed_exception:
                     log_in_color(logger, 'white', 'debug', 'Starting Satisfice.')
@@ -4421,7 +4465,7 @@ class ExpenseForecast:
         return forecast_df #this is the satisfice_success = true
 
     #todo deferral cadence parameter
-    def computeOptimalForecast(self, start_date_YYYYMMDD, end_date_YYYYMMDD, confirmed_df, proposed_df, deferred_df, skipped_df, account_set, memo_rule_set, raise_satisfice_failed_exception=True):
+    def computeOptimalForecast(self, start_date_YYYYMMDD, end_date_YYYYMMDD, confirmed_df, proposed_df, deferred_df, skipped_df, account_set, memo_rule_set, raise_satisfice_failed_exception=True, progress_bar=None):
         log_in_color(logger,'cyan', 'debug','ENTER computeOptimalForecast()',self.log_stack_depth)
         log_in_color(logger, 'cyan', 'debug', 'start_date_YYYYMMDD:'+str(start_date_YYYYMMDD), self.log_stack_depth)
         log_in_color(logger, 'cyan', 'debug', 'end_date_YYYYMMDD:' + str(end_date_YYYYMMDD), self.log_stack_depth)
@@ -4458,8 +4502,7 @@ class ExpenseForecast:
         #the return value will be forecast_df if successful, and False if not successful and raise_satisfice_failed_exception = False
         #if return value would have been False, but raise_satisfice_failed_exception = True, then an exception will be raised
         #print('before satisfice')
-        #todo I do want to see up until the fail so please change this
-        satisfice_df = self.satisfice(all_days, confirmed_df, account_set, memo_rule_set, forecast_df, raise_satisfice_failed_exception )
+        satisfice_df = self.satisfice(all_days, confirmed_df, account_set, memo_rule_set, forecast_df, raise_satisfice_failed_exception, progress_bar )
         #print('after satisfice')
 
         satisfice_success = True
@@ -4475,9 +4518,9 @@ class ExpenseForecast:
                 log_in_color(logger, 'white', 'info','Satisfice succeeded.')
                 log_in_color(logger, 'white', 'debug', satisfice_df.to_string())
 
-            #Here, note that confirmed_df, proposed_df, deferred_df, skipped_df are all in the same state as theey entered this method
+            #Here, note that confirmed_df, proposed_df, deferred_df, skipped_df are all in the same state as they entered this method
             #but are modified when they come back
-            forecast_df, skipped_df, confirmed_df, deferred_df = self.assessPotentialOptimizations(forecast_df, account_set, memo_rule_set, confirmed_df, proposed_df, deferred_df, skipped_df,raise_satisfice_failed_exception)
+            forecast_df, skipped_df, confirmed_df, deferred_df = self.assessPotentialOptimizations(forecast_df, account_set, memo_rule_set, confirmed_df, proposed_df, deferred_df, skipped_df,raise_satisfice_failed_exception, progress_bar)
         else:
             if not raise_satisfice_failed_exception:
                 log_in_color(logger, 'white', 'debug','Satisfice failed.')
