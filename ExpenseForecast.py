@@ -487,13 +487,6 @@ class ExpenseForecast:
         """
         ExpenseForecast one-line description
 
-        # todo ExpenseForecast doctests
-        | Test Cases
-        | Expected Successes
-        | S1: ... #todo refactor ExpenseForecast.ExpenseForecast() doctest S1 to use _S1 label
-        |
-        | Expected Fails
-        | F1 ... #todo refactor ExpenseForecast.ExpenseForecast() doctest F1 to use _F1 label
 
         :param account_set:
         :param budget_set:
@@ -941,7 +934,7 @@ class ExpenseForecast:
         # On second thought, I would rather deal wit ha stilted progress bar than figuring out how to track progress in recursion
         no_of_p2plus_priority_levels = len(set(self.initial_proposed_df.Priority))
         total_predicted_max_runtime_in_simulated_days = predicted_satisfice_runtime_in_simulated_days + predicted_satisfice_runtime_in_simulated_days * no_of_p2plus_priority_levels
-        progress_bar = tqdm.tqdm(range(total_predicted_max_runtime_in_simulated_days),total=total_predicted_max_runtime_in_simulated_days)
+        progress_bar = tqdm.tqdm(range(total_predicted_max_runtime_in_simulated_days),total=total_predicted_max_runtime_in_simulated_days, desc=self.unique_id)
 
         forecast_df, skipped_df, confirmed_df, deferred_df = self.computeOptimalForecast(
             start_date_YYYYMMDD=self.start_date_YYYYMMDD,
@@ -5518,12 +5511,9 @@ if __name__ == "__main__":
 
 
 ### Bite-sized tasks:
-# A forecast failed to satisfice bc cc debt was overpaid #Forecast_038087 is one such example
-# I want to see each monthly cc interest accrual on the interest tab
 # I want to see non-essential txns called out specially as well
 # add loan and interest payments to transaction schedule page
 # unfulfilled milestones just not plotted instead of to the right
-# sankey diagram!
 # multithreading for ForecastSet
 # modify createAccount into createLoanAccount and createCreditCardAccount?
 # EXPLAIN log of call stack BEFORE running so we can can use this for runtime estimate

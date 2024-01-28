@@ -14,6 +14,8 @@ import BudgetItem
 import ForecastSet
 import json
 import Account
+import plotly.graph_objects as go
+import re
 
 pd.options.mode.chained_assignment = None #apparently this warning can throw false positives???
 
@@ -220,48 +222,212 @@ if __name__ == '__main__':
     else:
         F = ForecastHandler.ForecastHandler()
 
-        E_file_Names = [
-        'Forecast_038822.json',
-        'Forecast_024120.json',
-        'Forecast_030929.json',
-        'Forecast_051493.json',
-        'Forecast_078628.json',
-        'Forecast_058741.json',
-        'Forecast_090914.json',
-        'Forecast_045037.json',
-        'Forecast_038087.json',
-        'Forecast_093365.json',
-        'Forecast_089825.json',
-        'Forecast_040245.json',
-        'Forecast_081523.json',
-        'Forecast_074290.json',
-        'Forecast_043092.json',
-        'Forecast_005317.json',
-        'Forecast_042185.json',
-        'Forecast_031319.json',
-        'Forecast_023708.json',
-        'Forecast_067884.json',
-        'Forecast_041019.json',
-        'Forecast_026799.json',
-        'Forecast_030067.json',
-        'Forecast_028495.json',
-        'Forecast_004947.json',
-        'Forecast_016223.json',
-        'Forecast_046689.json',
-        'Forecast_004538.json'
-            ]
-        E__dict = {}
-
-        for fname in E_file_Names:
-            E = ExpenseForecast.initialize_from_json_file(fname)[0]
-            E__dict[E.scenario_name] = E
-            print('fname:' + str(fname)+' '+str(E.scenario_name))
+        # E_file_Names = [
+        # 'Forecast_038822.json',
+        # 'Forecast_024120.json',
+        # 'Forecast_030929.json',
+        # 'Forecast_051493.json',
+        # 'Forecast_078628.json',
+        # 'Forecast_058741.json',
+        # 'Forecast_090914.json',
+        # 'Forecast_045037.json',
+        # 'Forecast_038087.json',
+        # 'Forecast_093365.json',
+        # 'Forecast_089825.json',
+        # 'Forecast_040245.json',
+        # 'Forecast_081523.json',
+        # 'Forecast_074290.json',
+        # 'Forecast_043092.json',
+        # 'Forecast_005317.json',
+        # 'Forecast_042185.json',
+        # 'Forecast_031319.json',
+        # 'Forecast_023708.json',
+        # 'Forecast_067884.json',
+        # 'Forecast_041019.json',
+        # 'Forecast_026799.json',
+        # 'Forecast_030067.json',
+        # 'Forecast_028495.json',
+        # 'Forecast_004947.json',
+        # 'Forecast_016223.json',
+        # 'Forecast_046689.json',
+        # 'Forecast_004538.json'
+        #     ]
+        # E__dict = {}
+        #
+        # for fname in E_file_Names:
+        #     E = ExpenseForecast.initialize_from_json_file(fname)[0]
+        #     E__dict[E.scenario_name] = E
+        #     print('fname:' + str(fname)+' '+str(E.scenario_name))
 
         #fname:Forecast_045037.json Core | start er tech 9/1/24 | pay cc extra 600
         #fname:Forecast_004538.json Core | start er tech 3/1/25 | pay cc extra 800
-        # E1 = ExpenseForecast.initialize_from_json_file('Forecast_045037.json')[0]#E__dict['Core | start er tech 9/1/24 | pay cc extra 600']
+        E1 = ExpenseForecast.initialize_from_json_file('Forecast_045037.json')[0]#E__dict['Core | start er tech 9/1/24 | pay cc extra 600']
         # E2 = ExpenseForecast.initialize_from_json_file('Forecast_004538.json')[0]#E__dict['Core | start er tech 3/1/25 | pay cc extra 800']
+
+        #print(E1.initial_budget_set.getBudgetItems().to_string())
+        #E1.runForecast()
+        #E1.appendSummaryLines()
+
+        F.generateHTMLReport(E1)
+
+        # F.plotSankeyDiagram(E1)
+
+        # income_memos = []
+        # expense_memos = []
+        # for index, row in E1.initial_budget_set.getBudgetItems().iterrows():
+        #     relevant_memo_rule = E1.initial_memo_rule_set.findMatchingMemoRule(row.Memo,row.Priority).memo_rules[0]
+        #     if relevant_memo_rule.account_from == 'Checking' and relevant_memo_rule.account_to == 'None':
+        #         expense_memos.append(row.Memo)
+        #     elif relevant_memo_rule.account_from == 'Credit' and relevant_memo_rule.account_to == 'None':
+        #         expense_memos.append(row.Memo)
+        #     elif relevant_memo_rule.account_from == 'None' and relevant_memo_rule.account_to == 'Checking':
+        #         income_memos.append(row.Memo)
+        #
+        # total_income = 0
+        # total_expense = 0
+        # total_interest = 0
+        # income_node_dict = {}
+        # expense_node_dict = {}
+        # for index, row in E1.forecast_df.iterrows():
+        #     memo_line_items = row.Memo.split(';')
+        #     for memo_line_item in memo_line_items:
+        #         memo_line_item = memo_line_item.strip()
+        #         if memo_line_item == '':
+        #             continue
+        #         # account_name_match = re.search('\((.*)-\$(.*)\)', memo_line_item)
+        #         # account_name = account_name_match.group(1)
+        #         payment_amount_match = re.search('\(.*-?\$(.*)\)', memo_line_item)
+        #         amount = float(payment_amount_match.group(1))
+        #         for income_memo in income_memos:
+        #             if income_memo in memo_line_item:
+        #                 total_income += amount
+        #
+        #                 if income_memo not in income_node_dict.keys():
+        #                     income_node_dict[income_memo] = amount
+        #                 else:
+        #                     income_node_dict[income_memo] += amount
+        #
+        #         for expense_memo in expense_memos:
+        #             if expense_memo in memo_line_item:
+        #                 total_expense += amount
+        #
+        #                 if expense_memo not in expense_node_dict.keys():
+        #                     expense_node_dict[expense_memo] = amount
+        #                 else:
+        #                     expense_node_dict[expense_memo] += amount
+        #
+        #         if 'cc interest' in memo_line_item:
+        #             total_interest += amount
+        #
+        # total_expense += total_interest
+        # total_remaining = total_income - total_expense
+        #
+        # index = 0
+        # print('total income:'+str(total_income))
+        # for key, value in income_node_dict.items():
+        #     print((key,value))
+        #     index += 1
+        #
+        # total_income_index = index
+        # index += 1
+        #
+        # total_expense_index = index
+        # index += 1
+        #
+        # print('total expense:' + str(total_expense))
+        # for key, value in expense_node_dict.items():
+        #     print((key,value))
+        #     index += 1
+        #
+        # interest_index = index
+        # index += 1
+        #
+        # remaining_index = index
+        # index += 1  # dont need this bc no more nodes but whatever
+        #
+        # income_color = '#42f542'
+        # expense_color = '#ecf542'
+        #
+        # source = []
+        # target = []
+        # values = []
+        # labels = []
+        # colors = []
+        # index = 0
+        # for key, value in income_node_dict.items():
+        #     labels.append(key)
+        #     source.append(index)
+        #     target.append(total_income_index)
+        #     values.append(value)
+        #     colors.append(income_color)
+        #     index += 1
+        #
+        # source.append(total_income_index)
+        # target.append(total_expense_index)
+        # values.append(total_expense)
+        # labels.append('Total Income')
+        # colors.append(expense_color)
+        # index += 1
+        #
+        # source.append(total_income_index)
+        # target.append(remaining_index)
+        # values.append(total_remaining)
+        # labels.append('Total Expense')
+        # colors.append(income_color)
+        # index += 1
+        #
+        # for key, value in expense_node_dict.items():
+        #     labels.append(key)
+        #     source.append(total_expense_index)
+        #     target.append(index)
+        #     values.append(value)
+        #     colors.append(expense_color)
+        #     index += 1
+        #
+        # source.append(total_expense_index)
+        # target.append(interest_index)
+        # values.append(total_interest)
+        # labels.append('Total Interest')
+        # colors.append(expense_color)
+        # index += 1
+        #
+        #
+        # print('source:'+str(source))
+        # print('target:' + str(target))
+        # print('values:' + str(values))
+        # print('labels:' + str(labels))
+        #
+        # #print(sankey_node_dict)
+        # #source = [ 0, 1, 2, 3, 3,  4, 4, 4, 4, 4, 4,  4 ]
+        # #target = [ 3, 3, 3, 4, 11, 5, 6, 7, 8, 9, 10, 11 ]
+        #
+        #
+        # ###before
+        # # source: [0, 1, 2, 3, 3, 4, 4, 4, 4, 4, 4]
+        # # target: [3, 3, 3, 4, 11, 5, 6, 7, 8, 9, 10]
+        #
+        # ###after
+        # # source: [0, 1, 2, 3, 3,  4, 4, 4, 4, 4, 4,  4]
+        # # target: [3, 3, 3, 4, 11, 5, 6, 7, 8, 9, 10, 11]
+        #
+        # fig = go.Figure(data=[go.Sankey(
+        #     node=dict(
+        #         pad=15,
+        #         thickness=20,
+        #         line=dict(color="black", width=0.5),
+        #         label=labels,
+        #         color='grey'
+        #     ),
+        #     link=dict(
+        #         source=source,  # indices correspond to labels, eg A1, A2, A1, B1, ...
+        #         target=target,
+        #         value=values,
+        #         color = colors
+        #     ))])
+        #
+        # fig.update_layout(title_text=E1.scenario_name, font_size=10)
+        # fig.show()
         #
         # F.generateCompareTwoForecastsHTMLReport(E1,E2)
 
-        F.generateScenarioSetHTMLReport(E__dict)
+        # F.generateScenarioSetHTMLReport(E__dict)

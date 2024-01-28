@@ -22,6 +22,7 @@ import matplotlib.patches as mpatches
 import logging
 import numpy as np
 import matplotlib.cm as cm
+import plotly.graph_objects as go
 
 from log_methods import setup_logger
 logger = setup_logger('ForecastHandler', './log/ForecastHandler.log', level=logging.DEBUG)
@@ -1323,6 +1324,26 @@ class ForecastHandler:
         interest_text += "This plot shows the new interest by day, not the total interest at a given time."
 
 
+        cc_interest_sel_vec = [ 'cc interest' in m for m in E.forecast_df.Memo ]
+        interest_rows_df = E.forecast_df.loc[cc_interest_sel_vec]
+        interest_table_to_display_df = pd.DataFrame(interest_rows_df['Date'])
+        interest_table_to_display_df['Total CC Interest'] = 0
+        for index, row in interest_rows_df.iterrows():
+            memo_line = row.Memo
+            memo_line_items = memo_line.split(';')
+            for memo_line_item in memo_line_items:
+                memo_line_item = memo_line_item.strip()
+                if 'cc interest' not in memo_line_item:
+                    continue
+
+                value_match = re.search('\(([A-Za-z0-9_ :]*) ([-+]?\$.*)\)$', memo_line_item)
+                line_item_value_string = value_match.group(2)
+                line_item_value_string = line_item_value_string.replace('(', '').replace(')', '').replace('$', '')
+                line_item_value = float(line_item_value_string)
+
+                interest_table_to_display_df.loc[index,'Total CC Interest'] += line_item_value
+        interest_table_html = interest_table_to_display_df.to_html()
+
 
         am_result_df = E.getAccountMilestoneResultsDF()
         mm_result_df = E.getMemoMilestoneResultsDF()
@@ -1341,6 +1362,8 @@ class ForecastHandler:
 
         all_plot_page_text = ""
 
+        sankey_text = ""
+
         #these plots will be output in the same directory as the final document, so output_dir path prefix is not needed
         networth_line_plot_path =  report_id + '_networth_line_plot.png'
         net_gain_loss_line_plot_path =  report_id + '_net_gain_loss_line_plot.png'
@@ -1348,6 +1371,7 @@ class ForecastHandler:
         marginal_interest_line_plot_path =  report_id + '_marginal_interest_line_plot.png'
         milestone_scatter_plot_path =  report_id + '_milestone_scatter_plot.png'
         all_line_plot_path =  report_id + '_all_line_plot.png'
+        sankey_path = report_id +'_sankey.jpg'
 
 
         #E.plotAll(all_line_plot_path)
@@ -1360,6 +1384,7 @@ class ForecastHandler:
         self.plotMarginalInterest(E, output_dir + marginal_interest_line_plot_path)
         self.plotNetGainLoss(E, output_dir + net_gain_loss_line_plot_path)
         self.plotMilestoneDates(E,output_dir + milestone_scatter_plot_path)
+        self.plotSankeyDiagram(E, output_dir + sankey_path)
 
         #print(E.forecast_df.to_string())
 
@@ -1431,6 +1456,7 @@ class ForecastHandler:
           <button class="tablinks" onclick="openTab(event, 'Milestones')">Milestones</button>
           <button class="tablinks" onclick="openTab(event, 'All')">All</button>
           <button class="tablinks" onclick="openTab(event, 'TransactionSchedule')">Transaction Schedule</button>
+          <button class="tablinks" onclick="openTab(event, 'Sankey')">Sankey</button>
           <button class="tablinks" onclick="openTab(event, 'Forecast Results')">Forecast Results</button>
         </div>
 
@@ -1474,6 +1500,7 @@ class ForecastHandler:
           <h3>Interest</h3>
           <p>""" + interest_text + """</p>
           <img src=\""""+marginal_interest_line_plot_path+"""\">
+          """ + interest_table_html + """
         </div>
         
         <div id="Milestones" class="tabcontent">
@@ -1501,6 +1528,12 @@ class ForecastHandler:
           <h3>Transaction Schedule</h3>
           <p>""" + transaction_schedule_text + """</p>
           """ + E.confirmed_df.to_html() + """
+        </div>
+        
+        <div id="Sankey" class="tabcontent">
+          <h3>Sankey</h3>
+          <p>""" + sankey_text + """</p>
+          <img src=\""""+sankey_path+"""\">
         </div>
 
         <div id="Forecast Results" class="tabcontent">
@@ -2763,3 +2796,144 @@ class ForecastHandler:
         plt.title('Milestone Dates : ' + str(min_date) + ' -> ' + str(max_date))
         plt.savefig(output_path)
         matplotlib.pyplot.close()
+
+    def plotSankeyDiagram(self, expense_forecast, output_dir='./'):
+        income_memos = []
+        expense_memos = []
+        for index, row in expense_forecast.initial_budget_set.getBudgetItems().iterrows():
+            relevant_memo_rule = expense_forecast.initial_memo_rule_set.findMatchingMemoRule(row.Memo, row.Priority).memo_rules[0]
+            if relevant_memo_rule.account_from == 'Checking' and relevant_memo_rule.account_to == 'None':
+                expense_memos.append(row.Memo)
+            elif relevant_memo_rule.account_from == 'Credit' and relevant_memo_rule.account_to == 'None':
+                expense_memos.append(row.Memo)
+            elif relevant_memo_rule.account_from == 'None' and relevant_memo_rule.account_to == 'Checking':
+                income_memos.append(row.Memo)
+
+        total_income = 0
+        total_expense = 0
+        total_interest = 0
+        income_node_dict = {}
+        expense_node_dict = {}
+        for index, row in expense_forecast.forecast_df.iterrows():
+            memo_line_items = row.Memo.split(';')
+            for memo_line_item in memo_line_items:
+                memo_line_item = memo_line_item.strip()
+                if memo_line_item == '':
+                    continue
+                # account_name_match = re.search('\((.*)-\$(.*)\)', memo_line_item)
+                # account_name = account_name_match.group(1)
+                payment_amount_match = re.search('\(.*-?\$(.*)\)', memo_line_item)
+                amount = float(payment_amount_match.group(1))
+                for income_memo in income_memos:
+                    if income_memo in memo_line_item:
+                        total_income += amount
+
+                        if income_memo not in income_node_dict.keys():
+                            income_node_dict[income_memo] = amount
+                        else:
+                            income_node_dict[income_memo] += amount
+
+                for expense_memo in expense_memos:
+                    if expense_memo in memo_line_item:
+                        total_expense += amount
+
+                        if expense_memo not in expense_node_dict.keys():
+                            expense_node_dict[expense_memo] = amount
+                        else:
+                            expense_node_dict[expense_memo] += amount
+
+                if 'cc interest' in memo_line_item:
+                    total_interest += amount
+
+        total_expense += total_interest
+        total_remaining = total_income - total_expense
+
+        index = 0
+        #print('total income:' + str(total_income))
+        for key, value in income_node_dict.items():
+            # print((key, value))
+            index += 1
+
+        total_income_index = index
+        index += 1
+
+        total_expense_index = index
+        index += 1
+
+        #print('total expense:' + str(total_expense))
+        for key, value in expense_node_dict.items():
+            # print((key, value))
+            index += 1
+
+        interest_index = index
+        index += 1
+
+        remaining_index = index
+        index += 1  # dont need this bc no more nodes but whatever
+
+        income_color = '#42f542'
+        expense_color = '#ecf542'
+
+        source = []
+        target = []
+        values = []
+        labels = []
+        colors = []
+        index = 0
+        for key, value in income_node_dict.items():
+            labels.append(key)
+            source.append(index)
+            target.append(total_income_index)
+            values.append(value)
+            colors.append(income_color)
+            index += 1
+
+        source.append(total_income_index)
+        target.append(total_expense_index)
+        values.append(total_expense)
+        labels.append('Total Income')
+        colors.append(expense_color)
+        index += 1
+
+        source.append(total_income_index)
+        target.append(remaining_index)
+        values.append(total_remaining)
+        labels.append('Total Expense')
+        colors.append(income_color)
+        index += 1
+
+        for key, value in expense_node_dict.items():
+            labels.append(key)
+            source.append(total_expense_index)
+            target.append(index)
+            values.append(value)
+            colors.append(expense_color)
+            index += 1
+
+        source.append(total_expense_index)
+        target.append(interest_index)
+        values.append(total_interest)
+        labels.append('Total Interest')
+        colors.append(expense_color)
+        index += 1
+
+        fig = go.Figure(data=[go.Sankey(
+            node=dict(
+                pad=15,
+                thickness=20,
+                line=dict(color="black", width=0.5),
+                label=labels,
+                color='grey'
+            ),
+            link=dict(
+                source=source,  # indices correspond to labels, eg A1, A2, A1, B1, ...
+                target=target,
+                value=values,
+                color=colors
+            ))])
+
+        fig.update_layout(title_text=expense_forecast.scenario_name, font_size=10)
+
+        output_path = output_dir + expense_forecast.unique_id +'_sankey.jpg'
+
+        fig.write_image(output_path)

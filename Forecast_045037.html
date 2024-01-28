@@ -46,7 +46,7 @@
         </head>
         <body>
         <h1><font color ="red">Expense Forecast Report #045037</font></h1>
-        <p>2024-01-23 to 2029-01-01 <font color ="red">This forecast failed to reach the end. The results may not reflect the effect of non-essential transactions accurately.</font> This report was generated alongside some others. See <a href="./ForecastSummary.html">this page</a> for information about related forecasts.</p>
+        <p>2024-01-23 to 2029-01-01 <font color ="red">This forecast failed to reach the end. The results may not reflect the effect of non-essential transactions accurately.</font> </p>
 
         <!-- Tab links -->
         <div class="tab">
@@ -58,6 +58,7 @@
           <button class="tablinks" onclick="openTab(event, 'Milestones')">Milestones</button>
           <button class="tablinks" onclick="openTab(event, 'All')">All</button>
           <button class="tablinks" onclick="openTab(event, 'TransactionSchedule')">Transaction Schedule</button>
+          <button class="tablinks" onclick="openTab(event, 'Sankey')">Sankey</button>
           <button class="tablinks" onclick="openTab(event, 'Forecast Results')">Forecast Results</button>
         </div>
 
@@ -483,6 +484,312 @@
           <h3>Interest</h3>
           <p>Total interest accrued was $23,579.86 over 1796 days, averaging $13.13 per day.<br>This plot shows the new interest by day, not the total interest at a given time.</p>
           <img src="045037_marginal_interest_line_plot.png">
+          <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Date</th>
+      <th>Total CC Interest</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>15</th>
+      <td>20240207</td>
+      <td>-475.04</td>
+    </tr>
+    <tr>
+      <th>44</th>
+      <td>20240307</td>
+      <td>-470.29</td>
+    </tr>
+    <tr>
+      <th>75</th>
+      <td>20240407</td>
+      <td>-465.59</td>
+    </tr>
+    <tr>
+      <th>105</th>
+      <td>20240507</td>
+      <td>-460.93</td>
+    </tr>
+    <tr>
+      <th>136</th>
+      <td>20240607</td>
+      <td>-456.32</td>
+    </tr>
+    <tr>
+      <th>166</th>
+      <td>20240707</td>
+      <td>-451.76</td>
+    </tr>
+    <tr>
+      <th>197</th>
+      <td>20240807</td>
+      <td>-447.24</td>
+    </tr>
+    <tr>
+      <th>228</th>
+      <td>20240907</td>
+      <td>-442.77</td>
+    </tr>
+    <tr>
+      <th>258</th>
+      <td>20241007</td>
+      <td>-438.34</td>
+    </tr>
+    <tr>
+      <th>289</th>
+      <td>20241107</td>
+      <td>-433.96</td>
+    </tr>
+    <tr>
+      <th>319</th>
+      <td>20241207</td>
+      <td>-429.62</td>
+    </tr>
+    <tr>
+      <th>350</th>
+      <td>20250107</td>
+      <td>-425.32</td>
+    </tr>
+    <tr>
+      <th>381</th>
+      <td>20250207</td>
+      <td>-421.07</td>
+    </tr>
+    <tr>
+      <th>409</th>
+      <td>20250307</td>
+      <td>-416.86</td>
+    </tr>
+    <tr>
+      <th>440</th>
+      <td>20250407</td>
+      <td>-412.69</td>
+    </tr>
+    <tr>
+      <th>470</th>
+      <td>20250507</td>
+      <td>-408.56</td>
+    </tr>
+    <tr>
+      <th>501</th>
+      <td>20250607</td>
+      <td>-404.48</td>
+    </tr>
+    <tr>
+      <th>531</th>
+      <td>20250707</td>
+      <td>-400.43</td>
+    </tr>
+    <tr>
+      <th>562</th>
+      <td>20250807</td>
+      <td>-396.43</td>
+    </tr>
+    <tr>
+      <th>593</th>
+      <td>20250907</td>
+      <td>-392.46</td>
+    </tr>
+    <tr>
+      <th>623</th>
+      <td>20251007</td>
+      <td>-388.54</td>
+    </tr>
+    <tr>
+      <th>654</th>
+      <td>20251107</td>
+      <td>-384.65</td>
+    </tr>
+    <tr>
+      <th>684</th>
+      <td>20251207</td>
+      <td>-380.81</td>
+    </tr>
+    <tr>
+      <th>715</th>
+      <td>20260107</td>
+      <td>-377.00</td>
+    </tr>
+    <tr>
+      <th>746</th>
+      <td>20260207</td>
+      <td>-373.23</td>
+    </tr>
+    <tr>
+      <th>774</th>
+      <td>20260307</td>
+      <td>-369.50</td>
+    </tr>
+    <tr>
+      <th>805</th>
+      <td>20260407</td>
+      <td>-365.80</td>
+    </tr>
+    <tr>
+      <th>835</th>
+      <td>20260507</td>
+      <td>-362.14</td>
+    </tr>
+    <tr>
+      <th>866</th>
+      <td>20260607</td>
+      <td>-358.52</td>
+    </tr>
+    <tr>
+      <th>896</th>
+      <td>20260707</td>
+      <td>-354.94</td>
+    </tr>
+    <tr>
+      <th>927</th>
+      <td>20260807</td>
+      <td>-351.39</td>
+    </tr>
+    <tr>
+      <th>958</th>
+      <td>20260907</td>
+      <td>-347.87</td>
+    </tr>
+    <tr>
+      <th>988</th>
+      <td>20261007</td>
+      <td>-344.39</td>
+    </tr>
+    <tr>
+      <th>1019</th>
+      <td>20261107</td>
+      <td>-340.95</td>
+    </tr>
+    <tr>
+      <th>1049</th>
+      <td>20261207</td>
+      <td>-337.54</td>
+    </tr>
+    <tr>
+      <th>1080</th>
+      <td>20270107</td>
+      <td>-334.16</td>
+    </tr>
+    <tr>
+      <th>1111</th>
+      <td>20270207</td>
+      <td>-330.82</td>
+    </tr>
+    <tr>
+      <th>1139</th>
+      <td>20270307</td>
+      <td>-327.52</td>
+    </tr>
+    <tr>
+      <th>1170</th>
+      <td>20270407</td>
+      <td>-324.24</td>
+    </tr>
+    <tr>
+      <th>1200</th>
+      <td>20270507</td>
+      <td>-321.00</td>
+    </tr>
+    <tr>
+      <th>1231</th>
+      <td>20270607</td>
+      <td>-317.79</td>
+    </tr>
+    <tr>
+      <th>1261</th>
+      <td>20270707</td>
+      <td>-314.61</td>
+    </tr>
+    <tr>
+      <th>1292</th>
+      <td>20270807</td>
+      <td>-311.46</td>
+    </tr>
+    <tr>
+      <th>1323</th>
+      <td>20270907</td>
+      <td>-308.35</td>
+    </tr>
+    <tr>
+      <th>1353</th>
+      <td>20271007</td>
+      <td>-305.27</td>
+    </tr>
+    <tr>
+      <th>1384</th>
+      <td>20271107</td>
+      <td>-302.21</td>
+    </tr>
+    <tr>
+      <th>1414</th>
+      <td>20271207</td>
+      <td>-299.19</td>
+    </tr>
+    <tr>
+      <th>1445</th>
+      <td>20280107</td>
+      <td>-296.20</td>
+    </tr>
+    <tr>
+      <th>1476</th>
+      <td>20280207</td>
+      <td>-281.24</td>
+    </tr>
+    <tr>
+      <th>1505</th>
+      <td>20280307</td>
+      <td>-254.42</td>
+    </tr>
+    <tr>
+      <th>1536</th>
+      <td>20280407</td>
+      <td>-227.88</td>
+    </tr>
+    <tr>
+      <th>1566</th>
+      <td>20280507</td>
+      <td>-201.60</td>
+    </tr>
+    <tr>
+      <th>1597</th>
+      <td>20280607</td>
+      <td>-175.59</td>
+    </tr>
+    <tr>
+      <th>1627</th>
+      <td>20280707</td>
+      <td>-149.83</td>
+    </tr>
+    <tr>
+      <th>1658</th>
+      <td>20280807</td>
+      <td>-112.33</td>
+    </tr>
+    <tr>
+      <th>1689</th>
+      <td>20280907</td>
+      <td>-87.21</td>
+    </tr>
+    <tr>
+      <th>1719</th>
+      <td>20281007</td>
+      <td>-62.34</td>
+    </tr>
+    <tr>
+      <th>1750</th>
+      <td>20281107</td>
+      <td>-37.71</td>
+    </tr>
+    <tr>
+      <th>1780</th>
+      <td>20281207</td>
+      <td>-13.34</td>
+    </tr>
+  </tbody>
+</table>
         </div>
         
         <div id="Milestones" class="tabcontent">
@@ -21472,6 +21779,12 @@
     </tr>
   </tbody>
 </table>
+        </div>
+        
+        <div id="Sankey" class="tabcontent">
+          <h3>Sankey</h3>
+          <p></p>
+          <img src="045037_sankey.jpg">
         </div>
 
         <div id="Forecast Results" class="tabcontent">
