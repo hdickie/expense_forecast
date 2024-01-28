@@ -901,6 +901,244 @@ class ExpenseForecast:
         self.forecast_df = self.forecast_df.drop(columns=['Memo'])
         self.forecast_df['Memo'] = memo_column
 
+    def approximateSatisfice(self, list_of_date_strings, confirmed_df, account_set, memo_rule_set, forecast_df, raise_satisfice_failed_exception, progress_bar=None ):
+        log_in_color(logger, 'cyan', 'debug', 'ENTER approximateSatisfice()', self.log_stack_depth)
+        self.log_stack_depth += 1
+        all_days = list_of_date_strings  # just rename it so it's more clear for the context
+
+        for d in all_days:
+            if progress_bar is not None:
+                progress_bar.update(1)
+                progress_bar.refresh()
+
+            if d == self.start_date_YYYYMMDD:
+                if not raise_satisfice_failed_exception:
+                    log_in_color(logger, 'white', 'debug', 'Starting Approximate Satisfice.')
+                    log_in_color(logger, 'white', 'debug', self.start_date_YYYYMMDD + ' -> ' + self.end_date_YYYYMMDD)
+                    log_in_color(logger, 'white', 'debug', 'p Date           iteration time elapsed')
+                    last_iteration = datetime.datetime.now()
+                continue  # first day is considered final
+            log_in_color(logger, 'magenta', 'info', 'p1 ' + str(d))
+
+            try:
+                if not raise_satisfice_failed_exception:
+                    last_iteration_time_elapsed = datetime.datetime.now() - last_iteration
+                    last_iteration = datetime.datetime.now()
+                    log_string = str(1) + ' ' + datetime.datetime.strptime(d, '%Y%m%d').strftime('%Y-%m-%d')
+                    log_string += '     ' + str(last_iteration_time_elapsed)
+                    log_in_color(logger, 'white', 'debug', log_string)
+
+                # print('forecast before eTFD:')
+                # print(forecast_df.to_string())
+                forecast_df, confirmed_df, deferred_df, skipped_df = \
+                    self.executeTransactionsForDay(account_set=account_set,
+                                                   forecast_df=forecast_df,
+                                                   date_YYYYMMDD=d,
+                                                   memo_set=memo_rule_set,
+                                                   confirmed_df=confirmed_df,
+                                                   proposed_df=confirmed_df.head(0),  # no proposed txns in satisfice
+                                                   deferred_df=confirmed_df.head(0),  # no deferred txns in satisfice
+                                                   skipped_df=confirmed_df.head(0),  # no skipped txns in satisfice
+                                                   priority_level=1)
+                # print('forecast after eTFD:')
+                # print(forecast_df.to_string())
+
+                # pre_sync = pd.DataFrame(account_set.getAccounts(),copy=True)
+                account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, d)
+                # assert pre_sync.to_string() == account_set.getAccounts().to_string() #the program is not reaching a minimum payments day so this check isnt working yet
+
+                forecast_df[forecast_df.Date == d] = self.calculateLoanInterestAccrualsForDay(account_set, forecast_df[
+                    forecast_df.Date == d])
+                account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, d)
+                forecast_df[forecast_df.Date == d] = self.executeLoanMinimumPayments(account_set,
+                                                                                     forecast_df[forecast_df.Date == d])
+                account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, d)
+                forecast_df[forecast_df.Date == d] = self.executeCreditCardMinimumPayments(account_set, forecast_df[
+                    forecast_df.Date == d])
+                account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, d)
+
+                # post_min_payments_row = self.executeMinimumPayments(account_set, forecast_df[forecast_df.Date == d])
+                # forecast_df[forecast_df.Date == d] = post_min_payments_row
+                # account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, d)
+                # forecast_df[forecast_df.Date == d] = self.calculateInterestAccrualsForDay(account_set, forecast_df[forecast_df.Date == d])  # returns only a forecast row
+                #
+
+                # print('about to go to next loop iteration')
+            except ValueError as e:
+                if (re.search('.*Account boundaries were violated.*',
+                              str(e.args)) is not None) and not raise_satisfice_failed_exception:
+                    self.end_date = datetime.datetime.strptime(d, '%Y%m%d') - datetime.timedelta(days=1)
+
+                    log_in_color(logger, 'cyan', 'error', 'State at failure:', self.log_stack_depth)
+                    log_in_color(logger, 'cyan', 'error', forecast_df.to_string(), self.log_stack_depth)
+
+                    self.log_stack_depth -= 1
+                    log_in_color(logger, 'cyan', 'debug', 'EXIT satisfice()', self.log_stack_depth)
+                    return forecast_df
+                else:
+                    raise e
+
+        log_in_color(logger, 'white', 'info', forecast_df.to_string(), self.log_stack_depth)
+
+        self.log_stack_depth -= 1
+        log_in_color(logger, 'cyan', 'debug', 'EXIT approximateSatisfice()', self.log_stack_depth)
+        return forecast_df  # this is the satisfice_success = true
+
+    def computeApproximateOptimalForecast(self, start_date_YYYYMMDD, end_date_YYYYMMDD, confirmed_df, proposed_df, deferred_df, skipped_df, account_set, memo_rule_set, raise_satisfice_failed_exception=True, progress_bar=None):
+        log_in_color(logger, 'cyan', 'debug', 'ENTER computeApproximateOptimalForecast()', self.log_stack_depth)
+        log_in_color(logger, 'cyan', 'debug', 'start_date_YYYYMMDD:' + str(start_date_YYYYMMDD), self.log_stack_depth)
+        log_in_color(logger, 'cyan', 'debug', 'end_date_YYYYMMDD:' + str(end_date_YYYYMMDD), self.log_stack_depth)
+        self.log_stack_depth += 1
+
+        confirmed_df.reset_index(drop=True, inplace=True)
+        proposed_df.reset_index(drop=True, inplace=True)
+        deferred_df.reset_index(drop=True, inplace=True)
+        skipped_df.reset_index(drop=True, inplace=True)
+
+        log_in_color(logger, 'cyan', 'debug', 'confirmed_df:', self.log_stack_depth)
+        log_in_color(logger, 'cyan', 'debug', confirmed_df.to_string(), self.log_stack_depth)
+
+        log_in_color(logger, 'cyan', 'debug', 'proposed_df:', self.log_stack_depth)
+        log_in_color(logger, 'cyan', 'debug', proposed_df.to_string(), self.log_stack_depth)
+
+        log_in_color(logger, 'cyan', 'debug', 'deferred_df:', self.log_stack_depth)
+        log_in_color(logger, 'cyan', 'debug', deferred_df.to_string(), self.log_stack_depth)
+
+        log_in_color(logger, 'cyan', 'debug', 'skipped_df:', self.log_stack_depth)
+        log_in_color(logger, 'cyan', 'debug', skipped_df.to_string(), self.log_stack_depth)
+
+        # only one day per month
+        no_days = (datetime.datetime.strptime(end_date_YYYYMMDD, '%Y%m%d') - datetime.datetime.strptime(
+            start_date_YYYYMMDD, '%Y%m%d')).days
+        all_days = generate_date_sequence(start_date_YYYYMMDD,
+                                 no_days, 'monthly')
+
+        # Schema is: Date, <a column for each account>, Memo
+        forecast_df = self.getInitialForecastRow(start_date_YYYYMMDD)
+
+        # the top of mind thing about this method call is the raise_satisfice_failed_exception parameter.
+        # This parameter is used to prevent exceptions from stopping the program when testing if a transaction is permitted.
+        # The cOF method is only called with this parameter False by the top level of execution.
+        # the return value will be forecast_df if successful, and False if not successful and raise_satisfice_failed_exception = False
+        # if return value would have been False, but raise_satisfice_failed_exception = True, then an exception will be raised
+        # print('before satisfice')
+        satisfice_df = self.approximateSatisfice(all_days, confirmed_df, account_set, memo_rule_set, forecast_df,
+                                      raise_satisfice_failed_exception, progress_bar)
+        # print('after satisfice')
+
+        satisfice_success = True
+        if satisfice_df.tail(1).Date.iat[0] != self.end_date_YYYYMMDD:
+            satisfice_success = False
+
+        forecast_df = satisfice_df
+
+        if satisfice_success:
+
+            # raise_satisfice_failed_exception is only False at the top level, so this will not print during recursion
+            if not raise_satisfice_failed_exception:
+                log_in_color(logger, 'white', 'info', 'Satisfice succeeded.')
+                log_in_color(logger, 'white', 'debug', satisfice_df.to_string())
+
+            # Here, note that confirmed_df, proposed_df, deferred_df, skipped_df are all in the same state as they entered this method
+            # but are modified when they come back
+            forecast_df, skipped_df, confirmed_df, deferred_df = self.assessPotentialAprroximateOptimizations(forecast_df,
+                                                                                                   account_set,
+                                                                                                   memo_rule_set,
+                                                                                                   confirmed_df,
+                                                                                                   proposed_df,
+                                                                                                   deferred_df,
+                                                                                                   skipped_df,
+                                                                                                   raise_satisfice_failed_exception,
+                                                                                                   progress_bar)
+        else:
+            if not raise_satisfice_failed_exception:
+                log_in_color(logger, 'white', 'debug', 'Satisfice failed.')
+
+            confirmed_df, deferred_df, skipped_df = self.cleanUpAfterFailedSatisfice(confirmed_df, proposed_df,
+                                                                                     deferred_df, skipped_df)
+
+        self.log_stack_depth -= 1
+        # log_in_color(logger, 'cyan', 'debug', 'EXIT computeOptimalForecast() C:'+str(confirmed_df.shape[0])+' D:'+str(deferred_df.shape[0])+' S:'+str(skipped_df.shape[0]), self.log_stack_depth)
+        return [forecast_df, skipped_df, confirmed_df, deferred_df]
+
+    def groupTxnsIntoBatchesForApproxForecasts(self, budget_schedule_df, start_date_YYYYMMDD, end_date_YYYYMMDD):
+
+        # print('BEFORE')
+        # print('budget_schedule_df:')
+        # print(budget_schedule_df.to_string())
+
+        no_days = ( datetime.datetime.strptime(end_date_YYYYMMDD, '%Y%m%d') - datetime.datetime.strptime(start_date_YYYYMMDD, '%Y%m%d') ).days
+        all_days = generate_date_sequence(start_date_YYYYMMDD,
+                                          no_days, 'monthly')
+        all_days = all_days[1:len(all_days)]
+        #
+        # print('all_days:')
+        # print(all_days)
+        #price is right rules
+        for index, row in budget_schedule_df.iterrows():
+
+            d_sel_vec = [ datetime.datetime.strptime(row.Date,'%Y%m%d') <= datetime.datetime.strptime(d,'%Y%m%d') for d in all_days ]
+            # print('d_sel_vec: '+str(row.Date)+' '+str(d_sel_vec))
+            for i in range(0,len(d_sel_vec)):
+                if d_sel_vec[i]:
+                    break
+            next_batch_date = all_days[i ]
+            # print(budget_schedule_df.loc[index ,'Date'] + ' -> '+next_batch_date)
+            budget_schedule_df.loc[index ,'Date'] = next_batch_date
+
+        # print('AFTER')
+        # print('budget_schedule_df:')
+        # print(budget_schedule_df.to_string())
+
+        # todo mutliple p1 txns could be grouped into a single memo. might be faster and would certainly clutter the mmeo field less
+        # for index, row in budget_schedule_df.iterrows():
+        #     pass
+        #
+
+        return budget_schedule_df
+
+    #put all transactions on one day each month, and then only calculate using one day per month
+    def runApproximateForecast(self):
+        self.start_ts = datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S')
+        log_in_color(logger, 'white', 'info', 'Starting Approximate Forecast ' + str(self.unique_id))
+
+        sd = datetime.datetime.strptime(self.start_date_YYYYMMDD, '%Y%m%d')
+        ed = datetime.datetime.strptime(self.end_date_YYYYMMDD, '%Y%m%d')
+        no_days = (datetime.datetime.strptime(self.end_date_YYYYMMDD, '%Y%m%d') - datetime.datetime.strptime(
+            self.start_date_YYYYMMDD, '%Y%m%d')).days
+        all_days = generate_date_sequence(self.start_date_YYYYMMDD,
+                                          no_days, 'monthly')
+        predicted_satisfice_runtime_in_simulated_days = len(all_days)
+
+        no_of_p2plus_priority_levels = len(set(self.initial_proposed_df.Priority))
+        total_predicted_max_runtime_in_simulated_days = predicted_satisfice_runtime_in_simulated_days + predicted_satisfice_runtime_in_simulated_days * no_of_p2plus_priority_levels
+        progress_bar = tqdm.tqdm(range(total_predicted_max_runtime_in_simulated_days),
+                                 total=total_predicted_max_runtime_in_simulated_days, desc=self.unique_id)
+
+        confirmed_df = self.groupTxnsIntoBatchesForApproxForecasts( pd.DataFrame( self.initial_confirmed_df, copy=True), sd.strftime('%Y%m%d'), ed.strftime('%Y%m%d') )
+        proposed_df = self.groupTxnsIntoBatchesForApproxForecasts( pd.DataFrame( self.initial_proposed_df, copy=True), sd.strftime('%Y%m%d'), ed.strftime('%Y%m%d') )
+
+        forecast_df, skipped_df, confirmed_df, deferred_df = self.computeApproximateOptimalForecast(
+            start_date_YYYYMMDD=self.start_date_YYYYMMDD,
+            end_date_YYYYMMDD=self.end_date_YYYYMMDD,
+            confirmed_df=confirmed_df,
+            proposed_df=proposed_df,
+            deferred_df=pd.DataFrame(self.initial_deferred_df, copy=True),
+            skipped_df=pd.DataFrame(self.initial_skipped_df, copy=True),
+            account_set=copy.deepcopy(self.initial_account_set),
+            memo_rule_set=copy.deepcopy(self.initial_memo_rule_set),
+            raise_satisfice_failed_exception=False, progress_bar=progress_bar)
+
+        self.forecast_df = forecast_df
+        self.skipped_df = skipped_df
+        self.confirmed_df = confirmed_df
+        self.deferred_df = deferred_df
+
+        self.end_ts = datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S')
+
+        self.evaluateMilestones()
+
+        log_in_color(logger, 'white', 'info', 'Finished Approximate Forecast ' + str(self.unique_id))
 
     def runForecast(self):
         self.start_ts = datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S')
@@ -1023,10 +1261,11 @@ class ExpenseForecast:
         return initial_forecast_row_df
 
     def addANewDayToTheForecast(self, forecast_df, date_YYYYMMDD):
-        dates_as_datetime_dtype = [datetime.datetime.strptime(d, '%Y%m%d') for d in forecast_df.Date]
-        prev_date_as_datetime_dtype = (datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d') - datetime.timedelta(days=1))
-        sel_vec = [d == prev_date_as_datetime_dtype for d in dates_as_datetime_dtype]
-        new_row_df = copy.deepcopy(forecast_df.loc[sel_vec])
+        #dates_as_datetime_dtype = [datetime.datetime.strptime(d, '%Y%m%d') for d in forecast_df.Date]
+        #prev_date_as_datetime_dtype = (datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d') - datetime.timedelta(days=1))
+        #sel_vec = [d == prev_date_as_datetime_dtype for d in dates_as_datetime_dtype]
+        #new_row_df = copy.deepcopy(forecast_df.loc[sel_vec])
+        new_row_df = copy.deepcopy(forecast_df.tail(1))
         new_row_df.Date = date_YYYYMMDD
         new_row_df.Memo = ''
         forecast_df = pd.concat([forecast_df, new_row_df])
@@ -1533,6 +1772,9 @@ class ExpenseForecast:
 
         if priority_level > 1:
             account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, date_YYYYMMDD)
+
+        # print('forecast_df:')
+        # print(forecast_df.to_string())
 
         log_in_color(logger,'green','debug','eTFD :: before processConfirmed',self.log_stack_depth)
         forecast_df = self.processConfirmedTransactions(forecast_df, relevant_confirmed_df,memo_set,account_set,date_YYYYMMDD)
@@ -5516,8 +5758,6 @@ if __name__ == "__main__":
 # unfulfilled milestones just not plotted instead of to the right
 # multithreading for ForecastSet
 # modify createAccount into createLoanAccount and createCreditCardAccount?
-# EXPLAIN log of call stack BEFORE running so we can can use this for runtime estimate
-# extremely basic CLI that shows ETC and progress
 # confirm that ScenarioSet works to and from excel and json
 # set default deferral cadence to lookahead to next income
 # turn milestone comparison plot into bar plot
@@ -5526,7 +5766,6 @@ if __name__ == "__main__":
 # make daily interest not allowed w credit
 # check that start and end date the same produce at least 1 budget item on that day for any cadence
 # in comparison report, if report 2 contains 0 items report 1 doesnt have, output a sentence instead of a 0-row table
-# some kind of month-at-a-time mode for life long forecasts
 
 # Known Semantic Errors / Weak points
 # account name 'Credit' is hardcoded in additional cc payment memo computation

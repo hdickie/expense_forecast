@@ -265,8 +265,8 @@ if __name__ == '__main__':
         # E2 = ExpenseForecast.initialize_from_json_file('Forecast_004538.json')[0]#E__dict['Core | start er tech 3/1/25 | pay cc extra 800']
 
         #print(E1.initial_budget_set.getBudgetItems().to_string())
-        #E1.runForecast()
-        #E1.appendSummaryLines()
+        E1.runApproximateForecast()
+        E1.appendSummaryLines()
 
         F.generateHTMLReport(E1)
 
