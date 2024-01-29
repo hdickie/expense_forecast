@@ -46,7 +46,7 @@
         </head>
         <body>
         <h1>Expense Forecast Report #083278</h1>
-        <p>2024-01-01 to 2024-01-05 This report was generated alongside some others. See <a href="./ForecastSummary.html">this page</a> for information about related forecasts.</p>
+        <p>2024-01-01 to 2024-01-05  This report was generated alongside some others. See <a href="./ForecastSummary.html">this page</a> for information about related forecasts.</p>
 
         <!-- Tab links -->
         <div class="tab">
@@ -58,6 +58,7 @@
           <button class="tablinks" onclick="openTab(event, 'Milestones')">Milestones</button>
           <button class="tablinks" onclick="openTab(event, 'All')">All</button>
           <button class="tablinks" onclick="openTab(event, 'TransactionSchedule')">Transaction Schedule</button>
+          <button class="tablinks" onclick="openTab(event, 'Sankey')">Sankey</button>
           <button class="tablinks" onclick="openTab(event, 'Forecast Results')">Forecast Results</button>
         </div>
 
@@ -65,7 +66,7 @@
         <div id="ForecastParameters" class="tabcontent">
           <h3>Forecast Parameters</h3>
           <p>
-        This forecast started at 2024-01-22 16:58:14, took 0:00:00 to complete, and finished at 2024-01-22 16:58:14.
+        This forecast started at 2024-01-28 19:26:49, took 0:00:01 to complete, and finished at 2024-01-28 19:26:50.
         </p>
           <h3>Accounts</h3>
           <p>
@@ -269,6 +270,17 @@
           <h3>Interest</h3>
           <p>Total interest accrued was $0.0 over 5 days, averaging $0.0 per day.<br>This plot shows the new interest by day, not the total interest at a given time.</p>
           <img src="083278_marginal_interest_line_plot.png">
+          <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Date</th>
+      <th>Total CC Interest</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
         </div>
         
         <div id="Milestones" class="tabcontent">
@@ -334,7 +346,48 @@
         
         <div id="TransactionSchedule" class="tabcontent">
           <h3>Transaction Schedule</h3>
-          <p>Transactions are displayed below. Note that loan and credit card minimum payments are not shown.</p>
+          <p>Transactions are displayed below.</p><br>
+          Non-essential transactions: <br>
+          <p><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Date</th>
+      <th>Priority</th>
+      <th>Amount</th>
+      <th>Memo</th>
+      <th>Deferrable</th>
+      <th>Partial_Payment_Allowed</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table></p><br><br>
+          Credit Card Payments: <br>
+          <p><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Date</th>
+      <th>Memo</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table></p><br><br>
+          Loan Payments: <br>
+          <p><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Date</th>
+      <th>Memo</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table></p><br><br>
+          All Transactions: <br>
           <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -486,11 +539,17 @@
   </tbody>
 </table>
         </div>
+        
+        <div id="Sankey" class="tabcontent">
+          <h3>Sankey</h3>
+          <p></p>
+          <img src="083278_sankey.jpg">
+        </div>
 
         <div id="Forecast Results" class="tabcontent">
           <h3>Forecast Results</h3>
           <p>
-        This forecast started at 2024-01-22 16:58:14, took 0:00:00 to complete, and finished at 2024-01-22 16:58:14.
+        This forecast started at 2024-01-28 19:26:49, took 0:00:01 to complete, and finished at 2024-01-28 19:26:50.
         </p>
           <p>The visualized data are below:</p>
           <h4>Forecast #083278:</h4>

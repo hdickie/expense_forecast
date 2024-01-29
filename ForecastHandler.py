@@ -383,7 +383,7 @@ class ForecastHandler:
 
         figure(figsize=(14, 6), dpi=80)
         fig, ax = plt.subplots()
-
+        fig.subplots_adjust(left=0.25)
 
         for i in range(0,len(data_x1)):
             x = data_x1[i]
@@ -400,41 +400,54 @@ class ForecastHandler:
                 data_x2[i] = datetime.datetime.strptime(x, '%Y%m%d')
 
         no_of_account_milestones = len(am_keys_1)
-        am_sel_range = slice(0, (no_of_account_milestones - 1))
+        am_sel_range = slice(0, (no_of_account_milestones + 1))
 
         no_of_memo_milestones = len(mm_keys_1)
-        mm_sel_range = slice((no_of_account_milestones - 1), (no_of_account_milestones + no_of_memo_milestones - 1))
+        mm_sel_range = slice((no_of_account_milestones), (no_of_account_milestones + no_of_memo_milestones + 1))
 
         no_of_composite_milestones = len(cm_keys_1)
-        cm_sel_range = slice((no_of_account_milestones + no_of_memo_milestones - 1),
-                             (no_of_account_milestones + no_of_memo_milestones + no_of_composite_milestones - 1))
+        cm_sel_range = slice((no_of_account_milestones + no_of_memo_milestones),
+                             (no_of_account_milestones + no_of_memo_milestones + no_of_composite_milestones + 1))
 
         no_of_milestones = no_of_account_milestones + no_of_memo_milestones + no_of_composite_milestones
 
-        #todo plot points sometimes dont show but annotations do?
 
         if no_of_account_milestones > 0:
-            plt.scatter(data_x1[am_sel_range], data_y[am_sel_range], color="red", marker="o")
-            plt.scatter(data_x2[am_sel_range], data_y[am_sel_range], color="red", marker="*")
+            #plt.scatter(data_x1[am_sel_range], data_y[am_sel_range], color="red", marker="o")
+            #plt.scatter(data_x2[am_sel_range], data_y[am_sel_range], color="red", marker="*")
+            for y in data_y[am_sel_range]:
+                ax.barh(y+0.2,data_x1[am_sel_range],height=0.4, color="pink")
+                ax.barh(y+0.6, data_x2[am_sel_range],height=0.4,color="red")
 
         if no_of_memo_milestones > 0:
-            plt.scatter(data_x1[mm_sel_range], data_y[mm_sel_range], color="blue", marker="o")
-            plt.scatter(data_x2[mm_sel_range], data_y[mm_sel_range], color="blue", marker="*")
+            pass
+            for y in data_y[mm_sel_range]:
+                ax.barh(y+0.2,data_x1[mm_sel_range],height=0.4,color="#0abdc7")
+                ax.barh(y+0.6, data_x2[mm_sel_range],height=0.4,color="#1800a3")
+            #plt.scatter(data_x1[mm_sel_range], data_y[mm_sel_range], color="blue", marker="o")
+            #plt.scatter(data_x2[mm_sel_range], data_y[mm_sel_range], color="blue", marker="*")
 
         if no_of_composite_milestones > 0:
-            plt.scatter(data_x1[cm_sel_range], data_y[cm_sel_range], color="purple", marker="o")
-            plt.scatter(data_x2[cm_sel_range], data_y[cm_sel_range], color="purple", marker="*")
-
-
+            pass
+            for y in data_y[cm_sel_range]:
+                ax.barh(y+0.2,data_x1[cm_sel_range],height=0.4,color="#8021d9")
+                ax.barh(y+0.6, data_x2[cm_sel_range],height=0.4,color="#5502a3")
+            #plt.scatter(data_x1[cm_sel_range], data_y[cm_sel_range], color="purple", marker="o")
+            #plt.scatter(data_x2[cm_sel_range], data_y[cm_sel_range], color="purple", marker="*")
 
         all_keys_1 = am_keys_1 + mm_keys_1 + cm_keys_1
+        ax.set_yticks([ y + 0.5 for y in data_y])
+        ax.set_yticklabels(all_keys_1, minor=False)
+        #plt.yticks(rotation=75)
+
+
         all_keys_2 = am_keys_2 + mm_keys_2 + cm_keys_2
 
-        for i, txt in enumerate(all_keys_1):
-            ax.annotate(txt, (data_x1[i], data_y[i]))
-
-        for i, txt in enumerate(all_keys_2):
-            ax.annotate(txt, (data_x2[i], data_y[i]))
+        # for i, txt in enumerate(all_keys_1):
+        #     ax.annotate(txt, (data_x1[i], data_y[i]))
+        #
+        # for i, txt in enumerate(all_keys_2):
+        #     ax.annotate(txt, (data_x2[i], data_y[i]))
 
         left_int_ts = matplotlib.dates.date2num(datetime.datetime.strptime(E1.start_date_YYYYMMDD, '%Y%m%d'))
         right_int_ts = matplotlib.dates.date2num(datetime.datetime.strptime(E1.end_date_YYYYMMDD, '%Y%m%d'))
@@ -444,33 +457,36 @@ class ForecastHandler:
 
         plt.xlim(left, right)
 
-        plt.ylim(-0.5,no_of_milestones - 0.5)
+        plt.ylim(-0.25,no_of_milestones)
 
-        ax = plt.subplot(111)
         box = ax.get_position()
         ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
 
-        red_patch = mpatches.Patch(color='red', label='account')
-        blue_patch = mpatches.Patch(color='blue', label='memo')
-        purple_patch = mpatches.Patch(color='purple', label='composite')
-
-        #todo add a second legend for the shape of the point
-        # also, i dont like that labels get chopped off
-        # todo labels are highly likely to overlap on this plot so think about that
-        plt.legend(handles=[red_patch, blue_patch, purple_patch], bbox_to_anchor=(1.15, 1), loc='upper right')
+        #
+        # red_patch = mpatches.Patch(color='red', label='account')
+        # blue_patch = mpatches.Patch(color='blue', label='memo')
+        # purple_patch = mpatches.Patch(color='purple', label='composite')
+        #
+        # #todo add a second legend for the shape of the point
+        # # also, i dont like that labels get chopped off
+        # # todo labels are highly likely to overlap on this plot so think about that
+        # plt.legend(handles=[red_patch, blue_patch, purple_patch], bbox_to_anchor=(1.15, 1), loc='upper right')
 
         # TODO plotOverall():: a large number of accounts will require some adjustment here so that the legend is entirely visible
         date_as_datetime_type = [datetime.datetime.strptime(d, '%Y%m%d') for d in E1.forecast_df.Date]
 
         min_date = min(date_as_datetime_type).strftime('%Y-%m-%d')
         max_date = max(date_as_datetime_type).strftime('%Y-%m-%d')
-        plt.title('Forecast 1 #' + E1.unique_id + ' vs. Forecast 2 #' + E2.unique_id + ': ' + str(min_date) + ' -> ' + str(max_date))
+        plt.suptitle('Forecast 1 #' + E1.unique_id + ' vs. Forecast 2 #' + E2.unique_id, horizontalalignment='center',x=0.58)
+        plt.title(str(min_date) + ' -> ' + str(max_date), horizontalalignment='center')
         plt.xticks(rotation=90)
         plt.savefig(output_path)
         matplotlib.pyplot.close()
 
-    def plotMilestoneDates(self,expense_forecast,output_path):
+    def plotMilestoneDates(self,expense_forecast,output_path,plot_colors=['red','blue','purple']):
         assert hasattr(expense_forecast, 'forecast_df')
+
+        assert len(plot_colors) >= 3
 
         AM = expense_forecast.account_milestone_results
         MM = expense_forecast.memo_milestone_results
@@ -484,11 +500,11 @@ class ForecastHandler:
         for am_key, am_value in AM.items():
             #impute none as max
             if am_value is None:
-                am_value = expense_forecast.end_date_YYYYMMDD
+                continue
             if am_value == 'None':
-                am_value = expense_forecast.end_date_YYYYMMDD
+                continue
             am_keys.append(am_key)
-            data_x.append(am_value)
+            data_x.append(datetime.datetime.strptime(am_value,'%Y%m%d'))
             data_y.append(date_counter)
             date_counter += 1
 
@@ -496,11 +512,11 @@ class ForecastHandler:
         for mm_key, mm_value in MM.items():
             #impute none as max
             if mm_value is None:
-                mm_value = expense_forecast.end_date_YYYYMMDD
+                continue
             if mm_value == 'None':
-                mm_value = expense_forecast.end_date_YYYYMMDD
+                continue
             mm_keys.append(mm_key)
-            data_x.append(mm_value)
+            data_x.append(datetime.datetime.strptime(mm_value,'%Y%m%d'))
             data_y.append(date_counter)
             date_counter += 1
 
@@ -508,72 +524,79 @@ class ForecastHandler:
         for cm_key, cm_value in CM.items():
             #impute none as max
             if cm_value is None:
-                cm_value = expense_forecast.end_date_YYYYMMDD
+                continue
             if cm_value == 'None':
-                cm_value = expense_forecast.end_date_YYYYMMDD
+                continue
             cm_keys.append(cm_key)
-            data_x.append(cm_value)
+            data_x.append(datetime.datetime.strptime(cm_value,'%Y%m%d'))
             data_y.append(date_counter)
             date_counter += 1
 
         figure(figsize=(14, 6), dpi=80)
+
         fig, ax = plt.subplots()
+        fig.subplots_adjust(left=0.25)
+        if len(data_x) > 0:
 
-        data_x = [ datetime.datetime.strptime(x,'%Y%m%d') for x in data_x ]
+            no_of_account_milestones = len(am_keys)
+            am_sel_range = slice(0,(no_of_account_milestones+1))
 
-        no_of_account_milestones = len(am_keys)
-        am_sel_range = slice(0,(no_of_account_milestones+1))
+            no_of_memo_milestones = len(mm_keys)
+            mm_sel_range = slice((no_of_account_milestones),(no_of_account_milestones+no_of_memo_milestones+1))
 
-        no_of_memo_milestones = len(mm_keys)
-        mm_sel_range = slice((no_of_account_milestones),(no_of_account_milestones+no_of_memo_milestones+1))
+            no_of_composite_milestones = len(cm_keys)
+            cm_sel_range = slice((no_of_account_milestones+no_of_memo_milestones),(no_of_account_milestones+no_of_memo_milestones+no_of_composite_milestones+1))
+
+            no_of_milestones = no_of_account_milestones + no_of_memo_milestones + no_of_composite_milestones
+
+            if no_of_account_milestones > 0:
+                #plt.scatter(data_x[am_sel_range], data_y[am_sel_range],color="red")
+                for i in range(0,len(data_x[am_sel_range])):
+                    ax.barh(data_y[am_sel_range][i],data_x[am_sel_range][i],color=plot_colors[0])
+
+            if no_of_memo_milestones > 0:
+                #plt.scatter(data_x[mm_sel_range], data_y[mm_sel_range],color="blue")
+                for i in range(0, len(data_x[mm_sel_range])):
+                    ax.barh(data_y[mm_sel_range][i], data_x[mm_sel_range][i], color=plot_colors[1])
+
+            if no_of_composite_milestones > 0:
+                #plt.scatter(data_x[cm_sel_range], data_y[cm_sel_range],color="purple")
+                for i in range(0, len(data_x[cm_sel_range])):
+                    ax.barh(data_y[cm_sel_range][i], data_x[cm_sel_range][i], color=plot_colors[2])
+
+            all_keys = am_keys + mm_keys + cm_keys
+            ax.set_yticks(data_y)
+            ax.set_yticklabels(all_keys, minor=False)
+
+            # left_int_ts = matplotlib.dates.date2num(datetime.datetime.strptime(expense_forecast.start_date_YYYYMMDD, '%Y%m%d'))
+            # right_int_ts = matplotlib.dates.date2num(datetime.datetime.strptime(expense_forecast.end_date_YYYYMMDD, '%Y%m%d'))
+            #
+            # left = left_int_ts
+            # right = right_int_ts
+            #
+            # plt.xlim(left, right)
+            plt.xlim(datetime.datetime.strptime(expense_forecast.start_date_YYYYMMDD, '%Y%m%d'),datetime.datetime.strptime(expense_forecast.end_date_YYYYMMDD, '%Y%m%d'))
+
+            plt.ylim(-0.5, no_of_milestones - 0.5)
+
+            red_patch = mpatches.Patch(color='red', label='account')
+            blue_patch = mpatches.Patch(color='blue', label='memo')
+            purple_patch = mpatches.Patch(color='purple', label='composite')
+            plt.legend(handles=[red_patch,blue_patch,purple_patch],bbox_to_anchor=(1.15, 1), loc='upper right')
+
+            # TODO plotOverall():: a large number of accounts will require some adjustment here so that the legend is entirely visible
+            date_as_datetime_type = [datetime.datetime.strptime(d, '%Y%m%d') for d in expense_forecast.forecast_df.Date]
+
+            min_date = min(date_as_datetime_type).strftime('%Y-%m-%d')
+            max_date = max(date_as_datetime_type).strftime('%Y-%m-%d')
+            plt.xticks(rotation=90)
+            plt.title('Forecast #' + expense_forecast.unique_id + ': ' + str(min_date) + ' -> ' + str(max_date))
+        else:
+            plt.axis('off')
+            plt.text(0.5,0.5,s='There are no milestones to show.',horizontalalignment='center')
 
 
-        no_of_composite_milestones = len(cm_keys)
-        cm_sel_range = slice((no_of_account_milestones+no_of_memo_milestones),(no_of_account_milestones+no_of_memo_milestones+no_of_composite_milestones+1))
 
-        if no_of_account_milestones > 0:
-            plt.scatter(data_x[am_sel_range], data_y[am_sel_range],color="red")
-
-        if no_of_memo_milestones > 0:
-            plt.scatter(data_x[mm_sel_range], data_y[mm_sel_range],color="blue")
-
-        if no_of_composite_milestones > 0:
-            plt.scatter(data_x[cm_sel_range], data_y[cm_sel_range],color="purple")
-
-        left_int_ts = matplotlib.dates.date2num(datetime.datetime.strptime(expense_forecast.start_date_YYYYMMDD,'%Y%m%d'))
-        right_int_ts = matplotlib.dates.date2num(datetime.datetime.strptime(expense_forecast.end_date_YYYYMMDD,'%Y%m%d'))
-
-        all_keys = am_keys + mm_keys + cm_keys
-        for i, txt in enumerate(all_keys):
-            ax.annotate(txt, (data_x[i], data_y[i]))
-
-        left = left_int_ts
-        right = right_int_ts
-
-        plt.xlim(left,right)
-
-        bottom, top = plt.ylim()
-        if 0 < bottom:
-            plt.ylim(0, top)
-        elif top < 0:
-            plt.ylim(bottom, 0)
-
-        ax = plt.subplot(111)
-        box = ax.get_position()
-        ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
-
-        red_patch = mpatches.Patch(color='red', label='account')
-        blue_patch = mpatches.Patch(color='blue', label='memo')
-        purple_patch = mpatches.Patch(color='purple', label='composite')
-        plt.legend(handles=[red_patch,blue_patch,purple_patch],bbox_to_anchor=(1.15, 1), loc='upper right')
-
-        # TODO plotOverall():: a large number of accounts will require some adjustment here so that the legend is entirely visible
-        date_as_datetime_type = [datetime.datetime.strptime(d, '%Y%m%d') for d in expense_forecast.forecast_df.Date]
-
-        min_date = min(date_as_datetime_type).strftime('%Y-%m-%d')
-        max_date = max(date_as_datetime_type).strftime('%Y-%m-%d')
-        plt.title('Forecast #' + expense_forecast.unique_id + ': ' + str(min_date) + ' -> ' + str(max_date))
-        plt.xticks(rotation=90)
         plt.savefig(output_path)
         matplotlib.pyplot.close()
 
@@ -973,7 +996,7 @@ class ForecastHandler:
         report_1_netgain_loss_plot_path = report_1_id + '_net_gain_loss_line_plot.png'
         report_1_accounttype_line_plot_path = report_1_id + '_accounttype_line_plot_plot.png'
         report_1_marginal_interest_plot_path = report_1_id + '_marginal_interest_line_plot.png'
-        report_1_milestone_plot_path = report_1_id + '_milestone_line_plot.png'
+        report_1_milestone_plot_path = report_1_id + '_milestone_bar_plot.png'
         report_1_all_line_plot_path = report_1_id + '_all_line_plot.png'
 
 
@@ -981,7 +1004,7 @@ class ForecastHandler:
         report_2_netgain_loss_plot_path = report_2_id + '_net_gain_loss_line_plot.png'
         report_2_accounttype_line_plot_path = report_2_id + '_accounttype_line_plot_plot.png'
         report_2_marginal_interest_plot_path = report_2_id + '_marginal_interest_line_plot.png'
-        report_2_milestone_plot_path = report_2_id + '_milestone_line_plot.png'
+        report_2_milestone_plot_path = report_2_id + '_milestone_bar_plot.png'
         report_2_all_line_plot_path = report_2_id + '_all_line_plot.png'
 
 
@@ -1003,7 +1026,7 @@ class ForecastHandler:
         self.plotNetGainLoss(E2, output_dir + report_2_netgain_loss_plot_path, line_color_cycle_list=['green', 'red'],linestyle='dashed')
         self.plotAccountTypeTotals(E2, output_dir + report_2_accounttype_line_plot_path,linestyle='dashed')
         self.plotMarginalInterest(E2,output_dir + report_2_marginal_interest_plot_path,linestyle='dashed')
-        self.plotMilestoneDates(E2, output_dir + report_2_milestone_plot_path)
+        self.plotMilestoneDates(E2, output_dir + report_2_milestone_plot_path,plot_colors=["pink","#0abdc7","#8021d9"])
         self.plotAll(E2, output_dir + report_2_all_line_plot_path)
 
         self.plotNetWorthComparison(E1, E2, output_dir + networth_comparison_plot_path, line_color_cycle_list=['blue'])

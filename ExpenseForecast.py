@@ -1015,6 +1015,10 @@ class ExpenseForecast:
         all_days = generate_date_sequence(start_date_YYYYMMDD,
                                  no_days, 'monthly')
 
+        if datetime.datetime.strptime(all_days[len(all_days) - 1], '%Y%m%d') > datetime.datetime.strptime(
+                end_date_YYYYMMDD, '%Y%m%d'):
+            all_days = all_days[0:(len(all_days) - 1)]
+
         # Schema is: Date, <a column for each account>, Memo
         forecast_df = self.getInitialForecastRow(start_date_YYYYMMDD)
 
@@ -1073,7 +1077,9 @@ class ExpenseForecast:
         all_days = generate_date_sequence(start_date_YYYYMMDD,
                                           no_days, 'monthly')
         all_days = all_days[1:len(all_days)]
-        #
+        if datetime.datetime.strptime(all_days[len(all_days)-1], '%Y%m%d') > datetime.datetime.strptime(end_date_YYYYMMDD, '%Y%m%d'):
+            all_days = all_days[0:(len(all_days) - 1)]
+
         # print('all_days:')
         # print(all_days)
         #price is right rules
@@ -1088,16 +1094,59 @@ class ExpenseForecast:
             # print(budget_schedule_df.loc[index ,'Date'] + ' -> '+next_batch_date)
             budget_schedule_df.loc[index ,'Date'] = next_batch_date
 
+        txn_dict = {}
+        for index, row in budget_schedule_df.iterrows():
+            key = (row.Date,row.Priority,row.Amount,row.Memo,row.Deferrable,row.Partial_Payment_Allowed)
+            if key in txn_dict.keys():
+                txn_dict[key] += 1
+            else:
+                txn_dict[key] = 1
+
+        agg_budget_schedule_df = budget_schedule_df.head(0)
+        for key, value in txn_dict.items():
+
+            if value == 1:
+                new_row_df = pd.DataFrame({'Date':[key[0]],'Priority':[key[1]],'Amount':[key[2]],'Memo':[key[3]],'Deferrable':[key[4]],'Partial_Payment_Allowed':[key[5]]})
+            else:
+                new_row_df = pd.DataFrame({'Date': [key[0]],
+                                           'Priority': [key[1]],
+                                           'Amount': [key[2]*value],
+                                           'Memo': [key[3] +' x'+str(value) ],
+                                           'Deferrable': [key[4]],
+                                           'Partial_Payment_Allowed': [key[5]]})
+
+            agg_budget_schedule_df = pd.concat([agg_budget_schedule_df,new_row_df])
+
         # print('AFTER')
-        # print('budget_schedule_df:')
-        # print(budget_schedule_df.to_string())
+        # print('agg_budget_schedule_df:')
+        # print(agg_budget_schedule_df.to_string())
 
-        # todo mutliple p1 txns could be grouped into a single memo. might be faster and would certainly clutter the mmeo field less
-        # for index, row in budget_schedule_df.iterrows():
-        #     pass
-        #
+        return agg_budget_schedule_df
 
-        return budget_schedule_df
+    def adjustBillingDatesForApproxForecasts(self, account_set, start_date_YYYYMMDD, end_date_YYYYMMDD):
+        no_days = (datetime.datetime.strptime(end_date_YYYYMMDD, '%Y%m%d') - datetime.datetime.strptime(start_date_YYYYMMDD, '%Y%m%d')).days
+        all_days = generate_date_sequence(start_date_YYYYMMDD,no_days, 'monthly')
+        all_days = all_days[1:len(all_days)]
+
+
+        for account in account_set.accounts:
+            if account.billing_start_date_YYYYMMDD is None:
+                continue
+            if account.billing_start_date_YYYYMMDD == 'None':
+                continue
+            d_sel_vec = [datetime.datetime.strptime(account.billing_start_date_YYYYMMDD, '%Y%m%d') <= datetime.datetime.strptime(d, '%Y%m%d') for d in
+                         all_days]
+            # print('d_sel_vec: '+str(row.Date)+' '+str(d_sel_vec))
+            for i in range(0, len(d_sel_vec)):
+                if d_sel_vec[i]:
+                    break
+            next_batch_date = all_days[i]
+            # print(budget_schedule_df.loc[index ,'Date'] + ' -> '+next_batch_date)
+            account.billing_start_date_YYYYMMDD = next_batch_date
+
+        return account_set
+
+
 
     #put all transactions on one day each month, and then only calculate using one day per month
     def runApproximateForecast(self):
@@ -1108,8 +1157,7 @@ class ExpenseForecast:
         ed = datetime.datetime.strptime(self.end_date_YYYYMMDD, '%Y%m%d')
         no_days = (datetime.datetime.strptime(self.end_date_YYYYMMDD, '%Y%m%d') - datetime.datetime.strptime(
             self.start_date_YYYYMMDD, '%Y%m%d')).days
-        all_days = generate_date_sequence(self.start_date_YYYYMMDD,
-                                          no_days, 'monthly')
+        all_days = generate_date_sequence(self.start_date_YYYYMMDD, no_days, 'monthly')
         predicted_satisfice_runtime_in_simulated_days = len(all_days)
 
         no_of_p2plus_priority_levels = len(set(self.initial_proposed_df.Priority))
@@ -1119,6 +1167,7 @@ class ExpenseForecast:
 
         confirmed_df = self.groupTxnsIntoBatchesForApproxForecasts( pd.DataFrame( self.initial_confirmed_df, copy=True), sd.strftime('%Y%m%d'), ed.strftime('%Y%m%d') )
         proposed_df = self.groupTxnsIntoBatchesForApproxForecasts( pd.DataFrame( self.initial_proposed_df, copy=True), sd.strftime('%Y%m%d'), ed.strftime('%Y%m%d') )
+        account_set = self.adjustBillingDatesForApproxForecasts( self.initial_account_set, sd.strftime('%Y%m%d'), ed.strftime('%Y%m%d')  )
 
         forecast_df, skipped_df, confirmed_df, deferred_df = self.computeApproximateOptimalForecast(
             start_date_YYYYMMDD=self.start_date_YYYYMMDD,
@@ -1127,7 +1176,7 @@ class ExpenseForecast:
             proposed_df=proposed_df,
             deferred_df=pd.DataFrame(self.initial_deferred_df, copy=True),
             skipped_df=pd.DataFrame(self.initial_skipped_df, copy=True),
-            account_set=copy.deepcopy(self.initial_account_set),
+            account_set=account_set,
             memo_rule_set=copy.deepcopy(self.initial_memo_rule_set),
             raise_satisfice_failed_exception=False, progress_bar=progress_bar)
 
@@ -1380,6 +1429,7 @@ class ExpenseForecast:
                 break
 
             col_sel_vec = (forecast_df.columns == account_row.Name)
+
 
             current_balance = forecast_df.loc[row_sel_vec, col_sel_vec].iloc[0].iloc[0]
             relevant_balance = account_set.getAccounts().iloc[account_index, 1]
@@ -3025,7 +3075,7 @@ class ExpenseForecast:
                                                        Account_To=None,
                                                        # Note that the execute transaction method will split the amount paid between the 2 accounts
                                                        Amount=interest_to_be_charged_immediately)
-                        current_forecast_row_df.Memo += ' cc interest (Checking -$' + str(interest_to_be_charged_immediately) + ');'
+                        current_forecast_row_df.Memo += ' cc interest (Checking -$' + str(round(interest_to_be_charged_immediately,2)) + ');'
 
 
                     # if interest_to_be_charged_immediately > 0 then this is also true
@@ -3038,10 +3088,10 @@ class ExpenseForecast:
 
                         if payment_toward_prev > 0:
                             current_forecast_row_df.Memo += ' cc min payment (' + account_row.Name.split(':')[
-                                0] + ': Prev Stmt Bal -$' + str(payment_toward_prev) + ');'
+                                0] + ': Prev Stmt Bal -$' + str(round(payment_toward_prev,2)) + ');'
                         if payment_toward_curr > 0:
                             current_forecast_row_df.Memo += ' cc min payment (' + account_row.Name.split(':')[
-                                0] + ': Curr Stmt Bal -$' + str(payment_toward_curr) + ');'
+                                0] + ': Curr Stmt Bal -$' + str(round(payment_toward_curr,2)) + ');'
 
 
 
@@ -3168,10 +3218,10 @@ class ExpenseForecast:
                                                        Amount=loan_payment_amount)
 
                         if payment_toward_interest > 0:
-                            current_forecast_row_df.Memo += ' loan min payment (' + account_row.Name.split(':')[0] + ': Interest -$' + str(payment_toward_interest) + '); '
+                            current_forecast_row_df.Memo += ' loan min payment (' + account_row.Name.split(':')[0] + ': Interest -$' + str(round(payment_toward_interest,2)) + '); '
 
                         if payment_toward_principal > 0:
-                            current_forecast_row_df.Memo += ' loan min payment ('+account_row.Name.split(':')[0] +': Principal Balance -$' + str(payment_toward_principal) + '); '
+                            current_forecast_row_df.Memo += ' loan min payment ('+account_row.Name.split(':')[0] +': Principal Balance -$' + str(round(payment_toward_principal,2)) + '); '
 
                         #current_forecast_row_df.Memo += account_row.Name.split(':')[0] + ' loan min payment ($' + str(minimum_payment_amount) + '); '
 
@@ -5820,16 +5870,14 @@ if __name__ == "__main__":
 
 
 ### Bite-sized tasks:
-
-# if no milestones, draw a plot with text that says that instead
-# in comparison report, if report 2 contains 0 items report 1 doesnt have, output a sentence instead of a 0-row table
-# turn milestone comparison plot into bar plot
-# unfulfilled milestones just not plotted instead of to the right
+# milestone comparison plot needs to account for plotting failed satisfice unachieved milestones
+# I don't think that initialize_from_json_file needs to return a list after all
+# report should indicate if approximate
+# approx forecast needs another way to check if failed
 
 # confirm that ScenarioSet works to and from excel and json
 
 # multithreading for ForecastSet approximate case
-# account billing dates for approximate case
 # modify createAccount into createLoanAccount and createCreditCardAccount?
 # set default deferral cadence to lookahead to next income
 
@@ -5878,3 +5926,6 @@ if __name__ == "__main__":
 # I could for sure write a version of runForecast that yields forecast_df every time it is updated, and be able to
 #     view partially completed results
 # i want like hashtags appended to url when i click on tabs so it stays there when i refresh
+
+# aesthetic Qs for after alpha
+# in comparison report, if report 2 contains 0 items report 1 doesnt have, output a sentence instead of a 0-row table
