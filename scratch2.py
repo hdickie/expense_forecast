@@ -63,7 +63,8 @@ if __name__ == '__main__':
         S.addChoiceToAllScenarios(['C', 'D'], [scenario_C, scenario_D])
 
         E__dict = F.initialize_forecasts_with_scenario_set(A, S, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
-        E__dict = F.run_forecast_set(E__dict)
+        #E__dict = F.run_forecast_set(E__dict)
+        E__dict = F.run_forecast_set_parallel(E__dict)
     else:
         list_of_file_names = ['Forecast_012619.json','Forecast_059579.json','Forecast_089140.json','Forecast_082983.json']
         E__dict = F.initialize_forecasts_from_file('./',list_of_file_names)

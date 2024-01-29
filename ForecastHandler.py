@@ -6,7 +6,7 @@ from log_methods import log_in_color
 import BudgetSet
 import json
 import pandas as pd
-from multiprocessing import Pool
+import multiprocessing as mp
 import AccountSet
 import BudgetSet
 import MemoRuleSet
@@ -1664,35 +1664,48 @@ class ForecastHandler:
 
     def run_forecast_set_parallel(self,E__dict):
 
-        program_start = datetime.datetime.now()
-        scenario_index = 0
+        manager = mp.Manager()
+        return_dict = manager.dict()
+
+        process_list = []
         for scenario_name, scenario_E in E__dict.items():
-            log_in_color(logger, 'white', 'info','Starting simulation scenario '+str(scenario_index)+' / '+str(len(E__dict))+': '+str(scenario_name))
+            P = mp.Process(target = scenario_E.runSingleParallelForecast, args=(return_dict,) )
+            P.start()
+            process_list.append(P)
 
-            loop_start = datetime.datetime.now()
+        for P in process_list:
+            P.join()
 
-            try:
-                E__dict[scenario_name] = scenario_E.runForecast()
+        return return_dict
 
-                E__dict[scenario_name].appendSummaryLines()
-                E__dict[scenario_name].writeToJSONFile('./')
-                self.generateHTMLReport(E__dict[scenario_name])
-            except Exception as e:
-                log_in_color(logger,'red','error','simulation scenario '+str(scenario_index)+' / '+str(len(E__dict))+': '+str(scenario_name)+' FAILED')
-
-            loop_finish = datetime.datetime.now()
-
-            loop_delta = loop_finish - loop_start
-            time_since_started = loop_finish - program_start
-
-            average_time_per_loop = time_since_started.seconds / (scenario_index + 1)
-            loops_remaining = len(E__dict) - (scenario_index + 1)
-            ETC = loop_finish + datetime.timedelta(seconds=average_time_per_loop*loops_remaining)
-            progress_string = 'Finished in '+str(loop_delta.seconds)+' seconds. ETC: '+str(ETC.strftime('%Y-%m-%d %H:%M:%S'))
-
-            log_in_color(logger, 'white', 'info',progress_string)
-
-            scenario_index += 1
+        # scenario_index = 0
+        # for scenario_name, scenario_E in E__dict.items():
+        #     log_in_color(logger, 'white', 'info','Starting simulation scenario '+str(scenario_index)+' / '+str(len(E__dict))+': '+str(scenario_name))
+        #
+        #     loop_start = datetime.datetime.now()
+        #
+        #     try:
+        #         E__dict[scenario_name] = scenario_E.runForecast()
+        #
+        #         E__dict[scenario_name].appendSummaryLines()
+        #         E__dict[scenario_name].writeToJSONFile('./')
+        #         self.generateHTMLReport(E__dict[scenario_name])
+        #     except Exception as e:
+        #         log_in_color(logger,'red','error','simulation scenario '+str(scenario_index)+' / '+str(len(E__dict))+': '+str(scenario_name)+' FAILED')
+        #
+        #     loop_finish = datetime.datetime.now()
+        #
+        #     loop_delta = loop_finish - loop_start
+        #     time_since_started = loop_finish - program_start
+        #
+        #     average_time_per_loop = time_since_started.seconds / (scenario_index + 1)
+        #     loops_remaining = len(E__dict) - (scenario_index + 1)
+        #     ETC = loop_finish + datetime.timedelta(seconds=average_time_per_loop*loops_remaining)
+        #     progress_string = 'Finished in '+str(loop_delta.seconds)+' seconds. ETC: '+str(ETC.strftime('%Y-%m-%d %H:%M:%S'))
+        #
+        #     log_in_color(logger, 'white', 'info',progress_string)
+        #
+        #     scenario_index += 1
         return E__dict
 
     def plotAccountTypeComparison(self,E1,E2,output_path, line_color_cycle_list=['blue','orange','green'], lw_cycle=['1','3']):
@@ -2255,7 +2268,6 @@ class ForecastHandler:
 
         list_of_forecast_links_html = ""
         for E_key, E_value in expense_forecast__dict.items():
-            E_value.appendSummaryLines()
             E_value.writeToJSONFile('./')
             self.generateHTMLReport(E_value,output_dir,output_report_path) #todo undo this
             list_of_forecast_links_html += "<a href=\"Forecast_"+str(E_value.unique_id)+".html\">Forecast "+str(E_value.unique_id)+" "+str(E_key)+"</a><br>"

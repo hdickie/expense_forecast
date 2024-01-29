@@ -1135,10 +1135,74 @@ class ExpenseForecast:
         self.deferred_df = deferred_df
 
         self.end_ts = datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S')
-
+        self.appendSummaryLines()
         self.evaluateMilestones()
 
         log_in_color(logger, 'white', 'info', 'Finished Approximate Forecast ' + str(self.unique_id))
+
+
+    def runSingleParallelForecast(self, return_dict):
+        self.start_ts = datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S')
+        log_in_color(logger, 'white', 'info', 'Starting Forecast '+str(self.unique_id))
+
+        # this is the place to estimate runtime to appropriately update progress bar
+        # It could be for each day each priority, but then priority > 1 would have thr bar stop every time it looks ahead
+        # I think the way to do it is have the bar be relative to the worst case
+        # deferrable are really fucky. we will assume a deferral cadence of 2 weeks though this can be accounted for
+        # if a deferral cadence is implemented #todo
+        # I'm not sold that it would be that useful though. A look-ahead on income seems reasonable
+        # therefore, each p2+ txn may fail, and each partial_payment may fail twice, and each deferrable may fail n times (where n is accounting for every 2 weeks
+        #
+        sd = datetime.datetime.strptime(self.start_date_YYYYMMDD, '%Y%m%d')
+        ed = datetime.datetime.strptime(self.end_date_YYYYMMDD, '%Y%m%d')
+        predicted_satisfice_runtime_in_simulated_days = (ed - sd).days
+        # p2plus_txns_max_runtime_in_simulated_days = 0
+        # for index, row in self.initial_proposed_df.iterrows():
+        #     num_of_lookahead_days = ( ed - datetime.datetime.strptime(row.date.iat[0],'%Y%m%d') ).days
+        #     if row.Deferrable:
+        #         max_number_of_retries = math.floor(num_of_lookahead_days / 14)
+        #         #each retry would be 2 weeks shorter. I'm thinking of it making a triangle shape
+        #         #therefore, we add time * n / 2
+        #         p2plus_txns_max_runtime_in_simulated_days += max_number_of_retries * num_of_lookahead_days / 2
+        #     elif row.Partial_Payment_Allowed:
+        #         p2plus_txns_max_runtime_in_simulated_days += 2 * num_of_lookahead_days
+        #     else:
+        #         p2plus_txns_max_runtime_in_simulated_days += num_of_lookahead_days
+        # total_predicted_max_runtime_in_simulated_days = predicted_satisfice_runtime_in_simulated_days + p2plus_txns_max_runtime_in_simulated_days
+        #
+        # On second thought, I would rather deal wit ha stilted progress bar than figuring out how to track progress in recursion
+        no_of_p2plus_priority_levels = len(set(self.initial_proposed_df.Priority))
+        total_predicted_max_runtime_in_simulated_days = predicted_satisfice_runtime_in_simulated_days + predicted_satisfice_runtime_in_simulated_days * no_of_p2plus_priority_levels
+        #progress_bar = tqdm.tqdm(range(total_predicted_max_runtime_in_simulated_days),total=total_predicted_max_runtime_in_simulated_days, desc=self.unique_id)
+        progress_bar = None
+
+        forecast_df, skipped_df, confirmed_df, deferred_df = self.computeOptimalForecast(
+            start_date_YYYYMMDD=self.start_date_YYYYMMDD,
+            end_date_YYYYMMDD=self.end_date_YYYYMMDD,
+            confirmed_df=pd.DataFrame(self.initial_confirmed_df, copy=True),
+            proposed_df=pd.DataFrame(self.initial_proposed_df, copy=True),
+            deferred_df=pd.DataFrame(self.initial_deferred_df, copy=True),
+            skipped_df=pd.DataFrame(self.initial_skipped_df, copy=True),
+            account_set=copy.deepcopy(self.initial_account_set),
+            memo_rule_set=copy.deepcopy(self.initial_memo_rule_set),
+            raise_satisfice_failed_exception=False,progress_bar=progress_bar)
+
+        self.forecast_df = forecast_df
+        self.skipped_df = skipped_df
+        self.confirmed_df = confirmed_df
+        self.deferred_df = deferred_df
+
+        self.end_ts = datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S')
+        self.appendSummaryLines()
+        self.evaluateMilestones()
+
+        log_in_color(logger, 'white', 'info','Finished Forecast '+str(self.unique_id))
+
+        return_dict[self.unique_id] = self
+
+        #self.forecast_df.to_csv('./out//Forecast_' + self.unique_id + '.csv') #this is only the forecast not the whole ExpenseForecast object
+        #self.writeToJSONFile() #this is the whole ExpenseForecast object #todo this should accept a path parameter
+
 
     def runForecast(self):
         self.start_ts = datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S')
@@ -1191,7 +1255,7 @@ class ExpenseForecast:
         self.deferred_df = deferred_df
 
         self.end_ts = datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S')
-
+        self.appendSummaryLines()
         self.evaluateMilestones()
 
         log_in_color(logger, 'white', 'info','Finished Forecast '+str(self.unique_id))
@@ -1202,14 +1266,14 @@ class ExpenseForecast:
     def writeToJSONFile(self, output_dir):
 
         # self.forecast_df.to_csv('./Forecast__'+run_ts+'.csv')
-        log_in_color(logger,'green', 'debug', 'Writing to '+str(output_dir)+'/Forecast_' + self.unique_id + '.json')
+        log_in_color(logger,'green', 'debug', 'Writing to '+str(output_dir)+'Forecast_' + self.unique_id + '.json')
         #self.forecast_df.to_csv('./Forecast__' + run_ts + '.json')
 
         #self.forecast_df.index = self.forecast_df['Date']
         if hasattr(self,'forecast_df'):
-            file_name = '/ForecastResult_' + self.unique_id + '.json'
+            file_name = 'ForecastResult_' + self.unique_id + '.json'
         else:
-            file_name = '/Forecast_' + self.unique_id + '.json'
+            file_name = 'Forecast_' + self.unique_id + '.json'
 
         f = open(str(output_dir)+file_name,'w')
         f.write(self.to_json())
@@ -5128,8 +5192,8 @@ class ExpenseForecast:
         row_sel_vec = [ a == account_name for a in account_base_names]
 
         relevant_account_info_rows_df = account_info[row_sel_vec]
-        #log_in_color(logger, 'yellow', 'debug', 'relevant_account_info_rows_df:')
-        #log_in_color(logger, 'yellow', 'debug',relevant_account_info_rows_df.to_string())
+        log_in_color(logger, 'yellow', 'debug', 'relevant_account_info_rows_df:')
+        log_in_color(logger, 'yellow', 'debug',relevant_account_info_rows_df.to_string())
 
         #this df should be either 1 or 2 rows, but have same account type either way
         try:

@@ -58,6 +58,7 @@
           <button class="tablinks" onclick="openTab(event, 'Milestones')">Milestones</button>
           <button class="tablinks" onclick="openTab(event, 'All')">All</button>
           <button class="tablinks" onclick="openTab(event, 'TransactionSchedule')">Transaction Schedule</button>
+          <button class="tablinks" onclick="openTab(event, 'Sankey')">Sankey</button>
           <button class="tablinks" onclick="openTab(event, 'Forecast Results')">Forecast Results</button>
         </div>
 
@@ -65,7 +66,7 @@
         <div id="ForecastParameters" class="tabcontent">
           <h3>Forecast Parameters</h3>
           <p>
-        This forecast started at 2024-01-25 13:27:49, took 0:00:20 to complete, and finished at 2024-01-25 13:28:09.
+        This forecast started at 2024-01-28 16:14:28, took 0:00:22 to complete, and finished at 2024-01-28 16:14:50.
         </p>
           <h3>Accounts</h3>
           <p>
@@ -324,11 +325,22 @@
           <h3>Interest</h3>
           <p>Total interest accrued was $23.1 over 39 days, averaging $0.59 per day.<br>This plot shows the new interest by day, not the total interest at a given time.</p>
           <img src="012619_marginal_interest_line_plot.png">
+          <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Date</th>
+      <th>Total CC Interest</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
         </div>
         
         <div id="Milestones" class="tabcontent">
           <h3>Milestones</h3>
-          <p>0 milestones were defined, and 0 were achieved before the end of the forecast.<br>Note that unachieved milestones are displayed on the last day of the forecast.</p>
+          <p>2 milestones were defined, and 1 were achieved before the end of the forecast.<br>Note that unachieved milestones are displayed on the last day of the forecast.</p>
           
           <img src="012619_milestone_scatter_plot.png">
           
@@ -342,6 +354,16 @@
     </tr>
   </thead>
   <tbody>
+    <tr>
+      <th>0</th>
+      <td>NetWorth &gt; 0</td>
+      <td>2024-02-27 00:00:00</td>
+    </tr>
+    <tr>
+      <th>0</th>
+      <td>NetWorth &lt; 0</td>
+      <td>None</td>
+    </tr>
   </tbody>
 </table> <br>
           <h4>Memo Milestones</h4>
@@ -1125,11 +1147,17 @@
   </tbody>
 </table>
         </div>
+        
+        <div id="Sankey" class="tabcontent">
+          <h3>Sankey</h3>
+          <p></p>
+          <img src="012619_sankey.jpg">
+        </div>
 
         <div id="Forecast Results" class="tabcontent">
           <h3>Forecast Results</h3>
           <p>
-        This forecast started at 2024-01-25 13:27:49, took 0:00:20 to complete, and finished at 2024-01-25 13:28:09.
+        This forecast started at 2024-01-28 16:14:28, took 0:00:22 to complete, and finished at 2024-01-28 16:14:50.
         </p>
           <p>The visualized data are below:</p>
           <h4>Forecast #012619:</h4>
