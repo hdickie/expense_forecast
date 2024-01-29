@@ -7,7 +7,7 @@ import jsonpickle
 import logging
 from log_methods import log_in_color
 from log_methods import setup_logger
-logger = setup_logger('ForecastSet', './log/ForecastSet.log', level=logging.DEBUG)
+logger = setup_logger('ForecastSet', './log/ForecastSet.log', level=logging.WARNING)
 
 class ForecastSet:
 

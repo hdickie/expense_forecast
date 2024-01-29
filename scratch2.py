@@ -41,11 +41,12 @@ if __name__ == '__main__':
 
         option_budget_set.addBudgetItem('20240201', '20240201', 1, 'once', 1000, 'txn 1C', False, False)  # 2/1 2k
         option_budget_set.addBudgetItem('20240222', '20240222', 1, 'once', 1000, 'txn 1D', False, False)  # 2/22 2k
-        option_budget_set.addBudgetItem('20240201', '20240201', 1, 'once', 500, 'txn 2C', False, False)  # 2/1 1k
-        option_budget_set.addBudgetItem('20240222', '20240222', 1, 'once', 500, 'txn 2D', False, False)  # 2/22 1;
+        option_budget_set.addBudgetItem('20240201', '20240201', 2, 'once', 500, 'txn 2C', False, False)  # 2/1 1k
+        option_budget_set.addBudgetItem('20240222', '20240222', 2, 'once', 500, 'txn 2D', False, False)  # 2/22 1;
 
         M = MemoRuleSet.MemoRuleSet([])
         M.addMemoRule('.*txn.*', 'Checking', None, 1)
+        M.addMemoRule('.*txn.*', 'Checking', None, 2)
         M.addMemoRule('.*income.*', None, 'Checking', 1)
 
         MS = MilestoneSet.MilestoneSet([AccountMilestone.AccountMilestone('NetWorth > 0','Net Worth',-999999,0),

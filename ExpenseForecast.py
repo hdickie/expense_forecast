@@ -564,37 +564,39 @@ class ExpenseForecast:
             error_text += str(A) + '\n'
             error_ind = True
 
-        if budget_df.shape[0] > 0:
-            # for each budget item memo x priority combo, there is at least 1 memo_regex x priority that matches
-            distinct_memo_priority_combinations__from_budget = budget_df[['Priority', 'Memo']].drop_duplicates()
-            distinct_memo_priority_combinations__from_memo = memo_df[['Transaction_Priority', 'Memo_Regex']]  # should be no duplicates
-
-            #make sure no non matches
-            any_matches_found_at_all = False
-            budget_items_with_matches = [] #each budget item should get appended once
-            for budget_index, budget_row in distinct_memo_priority_combinations__from_budget.iterrows():
-                match_found = False
-                for memo_index, memo_row in distinct_memo_priority_combinations__from_memo.iterrows():
-                    if budget_row.Priority == memo_row.Transaction_Priority:
-                        m = re.search(memo_row.Memo_Regex, budget_row.Memo)
-                        if m is not None:
-                            match_found = True
-                            budget_items_with_matches.append((budget_row.Memo,budget_row.Priority))
-                            any_matches_found_at_all = True
-                            continue
-
-                if match_found == False:
-                    error_text += "No regex match found for memo:\'" + str(budget_row.Memo) + "\'\n"
-
-            if any_matches_found_at_all == False:
-                error_ind = True
-
-            if len(budget_items_with_matches) != len(set(budget_items_with_matches)):
-                error_text += "At least one budget item had multiple matches:\n"
-                for i in range(0,len(budget_items_with_matches)-1):
-                    if budget_items_with_matches[i] == budget_items_with_matches[i+1]:
-                        error_text += str(budget_items_with_matches[i])+"\n"
-                error_ind = True
+        for index, row in budget_df.iterrows():
+            memo_rule_set.findMatchingMemoRule(row.Memo,row.Priority) #this will throw errors as needed
+        # if budget_df.shape[0] > 0:
+        #     # for each budget item memo x priority combo, there is at least 1 memo_regex x priority that matches
+        #     distinct_memo_priority_combinations__from_budget = budget_df[['Priority', 'Memo']].drop_duplicates()
+        #     distinct_memo_priority_combinations__from_memo = memo_df[['Transaction_Priority', 'Memo_Regex']]  # should be no duplicates
+        #
+        #     #make sure no non matches
+        #     any_matches_found_at_all = False
+        #     budget_items_with_matches = [] #each budget item should get appended once
+        #     for budget_index, budget_row in distinct_memo_priority_combinations__from_budget.iterrows():
+        #         match_found = False
+        #         for memo_index, memo_row in distinct_memo_priority_combinations__from_memo.iterrows():
+        #             if budget_row.Priority == memo_row.Transaction_Priority:
+        #                 m = re.search(memo_row.Memo_Regex, budget_row.Memo)
+        #                 if m is not None:
+        #                     match_found = True
+        #                     budget_items_with_matches.append((budget_row.Memo,budget_row.Priority))
+        #                     any_matches_found_at_all = True
+        #                     continue
+        #
+        #         if match_found == False:
+        #             error_text += "No regex match found for memo:\'" + str(budget_row.Memo) + "\'\n"
+        #
+        #     if any_matches_found_at_all == False:
+        #         error_ind = True
+        #
+        #     if len(budget_items_with_matches) != len(set(budget_items_with_matches)):
+        #         error_text += "At least one budget item had multiple matches:\n"
+        #         for i in range(0,len(budget_items_with_matches)-1):
+        #             if budget_items_with_matches[i] == budget_items_with_matches[i+1]:
+        #                 error_text += str(budget_items_with_matches[i])+"\n"
+        #         error_ind = True
 
         #smpl_sel_vec = accounts_df.Interest_Type.apply(lambda x: x.lower() if x is not None else None) == 'simple'
         #cmpnd_sel_vec = accounts_df.Interest_Type.apply(lambda x: x.lower() if x is not None else None) == 'compound'
@@ -4594,8 +4596,9 @@ class ExpenseForecast:
                     continue  # first day is considered final
 
                 if not raise_satisfice_failed_exception:
-                    progress_bar.update(1)
-                    progress_bar.refresh()
+                    if progress_bar is not None:
+                        progress_bar.update(1)
+                        progress_bar.refresh()
 
                     iteration_time_elapsed = datetime.datetime.now() - last_iteration_ts
                     last_iteration_ts = datetime.datetime.now()
@@ -5817,30 +5820,30 @@ if __name__ == "__main__":
 
 
 ### Bite-sized tasks:
-# I want to see non-essential txns called out specially as well
-# add loan and interest payments to transaction schedule page
-# unfulfilled milestones just not plotted instead of to the right
-# multithreading for ForecastSet
-# modify createAccount into createLoanAccount and createCreditCardAccount?
-# confirm that ScenarioSet works to and from excel and json
-# set default deferral cadence to lookahead to next income
-# turn milestone comparison plot into bar plot
+
 # if no milestones, draw a plot with text that says that instead
+# in comparison report, if report 2 contains 0 items report 1 doesnt have, output a sentence instead of a 0-row table
+# turn milestone comparison plot into bar plot
+# unfulfilled milestones just not plotted instead of to the right
+
+# confirm that ScenarioSet works to and from excel and json
+
+# multithreading for ForecastSet approximate case
+# account billing dates for approximate case
+# modify createAccount into createLoanAccount and createCreditCardAccount?
+# set default deferral cadence to lookahead to next income
+
 # make error if ALL_LOANS put in memo rule when it doesnt make sense
 # make daily interest not allowed w credit
 # check that start and end date the same produce at least 1 budget item on that day for any cadence
-# in comparison report, if report 2 contains 0 items report 1 doesnt have, output a sentence instead of a 0-row table
+
+
 
 # Known Semantic Errors / Weak points
 # account name 'Credit' is hardcoded in additional cc payment memo computation
 # Atm (1/5/2024), an account 'Checking' is hard coded. This should be replaced by an input parameter
 #    allowing one of potentially multiple checking accounts to be marked as 'primary' and used for these operations
 
-# Potential or known errors (fix before alpha)
-# ExpenseForecast did not catch that there was no matching memo rule when memo rule was p2 and item was p1
-#    it is also weird to me that it errored right at the end thoguh there were no p2 transcations? did I see that? #068993
-#    ALSO I think I saw a crash where it got to a txn that it did not have a rule for. rule was 'tax debt' memo was 'tax debt 2'
-#    input validation :: check budget items have memo match needs to include priority as well
 
 
 # Tests to write

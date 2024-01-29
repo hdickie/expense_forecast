@@ -1358,7 +1358,22 @@ class ForecastHandler:
         milestone_text = str(total_milestone_count)+" milestones were defined, and "+str(achieved_milestone_count)+" were achieved before the end of the forecast.<br>"
         milestone_text += "Note that unachieved milestones are displayed on the last day of the forecast."
 
-        transaction_schedule_text = "Transactions are displayed below. Note that loan and credit card minimum payments are not shown."
+        transaction_schedule_text = "Transactions are displayed below."
+
+        p2_plus_txns_html_table = E.confirmed_df[ E.confirmed_df.Priority >= 2 ].to_html()
+
+        cc_payments_df = pd.DataFrame({'Date':[],'Memo':[]})
+        loan_payments_df = pd.DataFrame({'Date': [], 'Memo': []})
+        for index, row in E.forecast_df.iterrows():
+            memo_line_items = row.Memo.split(';')
+            for memo_line_item in memo_line_items:
+                if 'loan min payment' in memo_line_item or 'additional loan payment' in memo_line_item:
+                    loan_payments_df = pd.concat([loan_payments_df,pd.DataFrame({'Date':[row.Date],'Memo':[memo_line_item]})])
+                elif 'cc min payment' in memo_line_item or 'additional cc payment' in memo_line_item:
+                    cc_payments_df = pd.concat([cc_payments_df,pd.DataFrame({'Date':[row.Date],'Memo':[memo_line_item]})])
+
+        cc_payments_html_table = cc_payments_df.to_html()
+        loan_payment_html_table = loan_payments_df.to_html()
 
         all_plot_page_text = ""
 
@@ -1526,7 +1541,14 @@ class ForecastHandler:
         
         <div id="TransactionSchedule" class="tabcontent">
           <h3>Transaction Schedule</h3>
-          <p>""" + transaction_schedule_text + """</p>
+          <p>""" + transaction_schedule_text + """</p><br>
+          Non-essential transactions: <br>
+          <p>""" + p2_plus_txns_html_table + """</p><br><br>
+          Credit Card Payments: <br>
+          <p>""" + cc_payments_html_table + """</p><br><br>
+          Loan Payments: <br>
+          <p>""" + loan_payment_html_table + """</p><br><br>
+          All Transactions: <br>
           """ + E.confirmed_df.to_html() + """
         </div>
         
@@ -2425,6 +2447,8 @@ class ForecastHandler:
 
     def calculateMilestoneDifferenceTable(self, expense_forecast__dict):
 
+        final_table_df = pd.DataFrame() #todo this is for the case where there are no milestones. i did not think this through basically at all
+
         milestone_result_tables = []
         #all_table_df = pd.DataFrame({'Forecast_Id': [], 'Scenario_Id': [], 'Milestone_Type': [], 'Milestone_Name': [], 'Milestone_Date': []})
         for forecast_key, forecast_value in expense_forecast__dict.items():
@@ -2446,33 +2470,34 @@ class ForecastHandler:
 
             milestone_result_tables.append(milestone_result_table_df)
 
-        all_table_df = pd.concat(milestone_result_tables)
-        all_table_df.reset_index(drop=True,inplace=True)
+        if len(milestone_result_tables) > 0:
+            all_table_df = pd.concat(milestone_result_tables)
+            all_table_df.reset_index(drop=True,inplace=True)
 
-        milestone_names = all_table_df.Milestone_Name.drop_duplicates()
-        final_table_df = pd.DataFrame({})
-        for milestone_name in milestone_names:
-            row_sel_vec = (all_table_df.Milestone_Name == milestone_name)
-            col_sel_vec = ( all_table_df.columns == 'Forecast_Id' ) | ( all_table_df.columns ==  'Milestone_Date' )
-            relevant_results_df = all_table_df.loc[row_sel_vec, col_sel_vec]
-            relevant_results_df.reset_index(drop=True, inplace=True)
-            relevant_results_df = relevant_results_df.T
+            milestone_names = all_table_df.Milestone_Name.drop_duplicates()
+            final_table_df = pd.DataFrame({})
+            for milestone_name in milestone_names:
+                row_sel_vec = (all_table_df.Milestone_Name == milestone_name)
+                col_sel_vec = ( all_table_df.columns == 'Forecast_Id' ) | ( all_table_df.columns ==  'Milestone_Date' )
+                relevant_results_df = all_table_df.loc[row_sel_vec, col_sel_vec]
+                relevant_results_df.reset_index(drop=True, inplace=True)
+                relevant_results_df = relevant_results_df.T
 
-            for i in range(0,len(relevant_results_df.columns)):
-                relevant_results_df.rename(columns={i:relevant_results_df.iloc[0,i]},inplace=True)
+                for i in range(0,len(relevant_results_df.columns)):
+                    relevant_results_df.rename(columns={i:relevant_results_df.iloc[0,i]},inplace=True)
 
-            relevant_results_df = relevant_results_df.tail(1)
-            relevant_results_df.reset_index(drop=True, inplace=True)
-            relevant_results_df.index = relevant_results_df.index.map(str)
-            relevant_results_df = relevant_results_df.rename(index={'0':milestone_name})
+                relevant_results_df = relevant_results_df.tail(1)
+                relevant_results_df.reset_index(drop=True, inplace=True)
+                relevant_results_df.index = relevant_results_df.index.map(str)
+                relevant_results_df = relevant_results_df.rename(index={'0':milestone_name})
 
-            if final_table_df.shape[0] == 0:
-                final_table_df = relevant_results_df
-            else:
-                final_table_df = pd.concat([final_table_df,relevant_results_df])
+                if final_table_df.shape[0] == 0:
+                    final_table_df = relevant_results_df
+                else:
+                    final_table_df = pd.concat([final_table_df,relevant_results_df])
 
 
-        all_table_df.reset_index(drop=True,inplace=True)
+            all_table_df.reset_index(drop=True,inplace=True)
         return final_table_df
 
     def plotScenarioSetMilestoneDifferences(self,expense_forecast__dict, line_color_cycle_list=['blue','red','purple']):
@@ -2809,7 +2834,7 @@ class ForecastHandler:
         plt.savefig(output_path)
         matplotlib.pyplot.close()
 
-    def plotSankeyDiagram(self, expense_forecast, output_dir='./'):
+    def plotSankeyDiagram(self, expense_forecast, output_path):
         income_memos = []
         expense_memos = []
         for index, row in expense_forecast.initial_budget_set.getBudgetItems().iterrows():
@@ -2945,7 +2970,5 @@ class ForecastHandler:
             ))])
 
         fig.update_layout(title_text=expense_forecast.scenario_name, font_size=10)
-
-        output_path = output_dir + expense_forecast.unique_id +'_sankey.jpg'
 
         fig.write_image(output_path)
