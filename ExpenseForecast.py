@@ -26,7 +26,7 @@ import notification_sounds
 pd.options.mode.chained_assignment = None #apparently this warning can throw false positives???
 
 
-logger = setup_logger('ExpenseForecast', './log/ExpenseForecast.log', level=logging.DEBUG)
+logger = setup_logger('ExpenseForecast', './log/ExpenseForecast.log', level=logging.WARNING)
 
 #whether or not the expense forecast has been run will be determined at runtime
 #this can return a list of initialized ExpenseForecast objects from ChooseOneSet
@@ -86,9 +86,11 @@ def initialize_from_excel_file(path_to_excel_file):
     current_statement_balance = None
     principal_balance = None
     interest_balance = None
+
     for index, row in account_set_df.iterrows():
         if row.Account_Type.lower() == 'checking':
-            A.createAccount(row.Name,row.Balance,row.Min_Balance,row.Max_Balance,'checking',None,None,None,None,None,None,None,None)
+            A.createCheckingAccount(row.Name,row.Balance,row.Min_Balance,row.Max_Balance,row.Primary_Checking_Ind)
+            #A.createAccount(row.Name,row.Balance,row.Min_Balance,row.Max_Balance,'checking',None,None,None,None,None,None,None,None)
 
         if row.Account_Type.lower() == 'curr stmt bal' and not expect_curr_bal_acct:
             current_statement_balance = row.Balance
@@ -123,19 +125,70 @@ def initialize_from_excel_file(path_to_excel_file):
 
         #todo i was tired when I wrote these likely worth a second look
         if row.Account_Type.lower() == 'curr stmt bal' and expect_curr_bal_acct:
-            A.createAccount(row.Name.split(':')[0],row.Balance,row.Min_Balance,row.Max_Balance,'credit',billing_start_date,interest_type,apr,interest_cadence,minimum_payment,previous_statement_balance,None,None)
+            A.createAccount(name=row.Name.split(':')[0],
+                            balance=previous_statement_balance + previous_statement_balance,
+                            min_balance=row.Min_Balance,
+                            max_balance=row.Max_Balance,
+                            account_type='credit',
+                            billing_start_date_YYYYMMDD=billing_start_date,
+                            interest_type=interest_type,
+                            apr=apr,
+                            interest_cadence=interest_cadence,
+                            minimum_payment=minimum_payment,
+                            previous_statement_balance=previous_statement_balance,
+                            current_statement_balance=current_statement_balance
+                            )
             expect_curr_bal_acct = False
 
         if row.Account_Type.lower() == 'prev stmt bal' and expect_prev_bal_acct:
-            A.createAccount(row.Name.split(':')[0],current_statement_balance,row.Min_Balance,row.Max_Balance,'credit',str(int(row.Billing_Start_Date)),row.Interest_Type,row.APR,row.Interest_Cadence,row.Minimum_Payment,row.Balance,None,None,None)
+            A.createAccount(name=row.Name.split(':')[0],
+                            balance=current_statement_balance + row.Balance,
+                            min_balance=row.Min_Balance,
+                            max_balance=row.Max_Balance,
+                            account_type='credit',
+                            billing_start_date_YYYYMMDD=str(int(row.Billing_Start_Date)),
+                            interest_type=row.Interest_Type,
+                            apr=row.APR,
+                            interest_cadence=row.Interest_Cadence,
+                            minimum_payment=row.Minimum_Payment,
+                            previous_statement_balance=row.Balance,
+                            current_statement_balance=current_statement_balance
+                            )
             expect_prev_bal_acct = False
 
         if row.Account_Type.lower() == 'interest' and expect_interest_acct:
-            A.createAccount(row.Name.split(':')[0],row.Balance + principal_balance,row.Min_Balance,row.Max_Balance,'loan',billing_start_date,interest_type,apr,interest_cadence,minimum_payment,None,principal_balance,row.Balance)
+
+            A.createAccount(name=row.Name.split(':')[0],
+                            balance=row.Balance + principal_balance,
+                            min_balance=row.Min_Balance,
+                            max_balance=row.Max_Balance,
+                            account_type='loan',
+                            billing_start_date_YYYYMMDD=billing_start_date,
+                            interest_type=interest_type,
+                            apr=apr,
+                            interest_cadence=interest_cadence,
+                            minimum_payment=minimum_payment,
+                            previous_statement_balance=None,
+                            current_statement_balance=None,
+                            principal_balance=principal_balance,
+                            interest_balance=row.Balance)
             expect_interest_acct = False
 
         if row.Account_Type.lower() == 'principal balance' and expect_principal_bal_acct:
-            A.createAccount(row.Name.split(':')[0],row.Balance + interest_balance,row.Min_Balance,row.Max_Balance,'loan',str(int(row.Billing_Start_Date)),row.Interest_Type,row.APR,row.Interest_Cadence,row.Minimum_Payment,None,row.Balance,interest_balance)
+            A.createAccount(name=row.Name.split(':')[0],
+                            balance=row.Balance + interest_balance,
+                            min_balance=row.Min_Balance,
+                            max_balance=row.Max_Balance,
+                            account_type='loan',
+                            billing_start_date_YYYYMMDD=str(int(row.Billing_Start_Date)),
+                            interest_type=row.Interest_Type,
+                            apr=row.APR,
+                            interest_cadence=row.Interest_Cadence,
+                            minimum_payment=row.Minimum_Payment,
+                            previous_statement_balance=None,
+                            current_statement_balance=None,
+                            principal_balance=row.Balance,
+                            interest_balance=interest_balance)
             expect_principal_bal_acct = False
 
     B = BudgetSet.BudgetSet([])
@@ -165,13 +218,19 @@ def initialize_from_excel_file(path_to_excel_file):
     composite_milestones = {}
     for index, row in composite_milestones_df.iterrows():
         if row.Composite_Milestone_Name not in composite_milestones.keys():
-            composite_milestones[row.Composite_Milestone_Name] = {'Account':[],'Memo':[]}
+            composite_milestones[row.Composite_Milestone_Name] = {'account_milestones':[],'memo_milestones':[]}
 
         #todo i think there is an error here
         if row.Milestone_Type == 'Account':
-            composite_milestones[row.Composite_Milestone_Name]['Account'].append(am__dict[row.Milestone_Name])
+            component_account_milestone = am__dict[row.Milestone_Name]
+            print('component_account_milestone:')
+            print(component_account_milestone.to_json())
+            composite_milestones[row.Composite_Milestone_Name]['account_milestones'].append(component_account_milestone)
         elif row.Milestone_Type == 'Memo':
-            composite_milestones[row.Composite_Milestone_Name]['Memo'].append(mm__dict[row.Milestone_Name])
+            component_memo_milestone = mm__dict[row.Milestone_Name]
+            print('component_memo_milestone:')
+            print(component_memo_milestone.to_json())
+            composite_milestones[row.Composite_Milestone_Name]['memo_milestones'].append(component_memo_milestone)
 
 
     for key, value in composite_milestones.items():
@@ -184,7 +243,15 @@ def initialize_from_excel_file(path_to_excel_file):
         # for mm_name in value['Memo']:
         #     component_memo_milestones.append( mm__dict[mm_name] )
 
-        cm__list.append(CompositeMilestone.CompositeMilestone(key, composite_milestones[key]['Account'], composite_milestones[key]['Memo']))
+        print('composite_milestones[key][account_milestones]:')
+        print(composite_milestones[key]['account_milestones'])
+        print('composite_milestones[key][memo_milestones]:')
+        print(composite_milestones[key]['memo_milestones'])
+
+        cm__list.append(CompositeMilestone.CompositeMilestone(key, composite_milestones[key]['account_milestones'], composite_milestones[key]['memo_milestones']))
+        # print('cm__list:')
+        # for cm in cm__list:
+        #     print(cm.to_json())
 
     #(self,account_set,budget_set,account_milestones__list,memo_milestones__list,composite_milestones__list)
     MS = MilestoneSet.MilestoneSet(am__list,mm__list,cm__list)
@@ -231,9 +298,6 @@ def initialize_from_excel_file(path_to_excel_file):
             else:
                 raise ValueError("Unknown Milestone result type encountered while reading excel file.")
 
-
-
-
     return [ E ]
 
 #whether or not the expense forecast has been run will be determined at runtime
@@ -269,37 +333,52 @@ def initialize_from_json_file(path_to_json):
 
         #Account__dict = Account__dict[0] #the dict came in a list
         if Account__dict['account_type'].lower() == 'checking':
-            A.createAccount(Account__dict['name'],
-                            Account__dict['balance'],
-                            Account__dict['min_balance'],
-                            Account__dict['max_balance'],
-                            Account__dict['account_type'],
-                            Account__dict['billing_start_date_YYYYMMDD'],
-                            Account__dict['interest_type'],
-                            Account__dict['apr'],
-                            Account__dict['interest_cadence'],
-                            Account__dict['minimum_payment']
-                            )
+            A.createCheckingAccount(
+                Account__dict['name'],
+                                Account__dict['balance'],
+                                Account__dict['min_balance'],
+                                Account__dict['max_balance'],
+                                Account__dict['primary_checking_ind'])
+            # A.createAccount(Account__dict['name'],
+            #                 Account__dict['balance'],
+            #                 Account__dict['min_balance'],
+            #                 Account__dict['max_balance'],
+            #                 Account__dict['account_type'],
+            #                 Account__dict['billing_start_date_YYYYMMDD'],
+            #                 Account__dict['interest_type'],
+            #                 Account__dict['apr'],
+            #                 Account__dict['interest_cadence'],
+            #                 Account__dict['minimum_payment']
+            #                 )
 
         elif Account__dict['account_type'].lower() == 'curr stmt bal':
             credit_acct_name = Account__dict['name'].split(':')[0]
             credit_curr_bal = Account__dict['balance']
 
         elif Account__dict['account_type'].lower() == 'prev stmt bal':
-
+            #(self,name,current_stmt_bal,prev_stmt_bal,min_balance,max_balance,billing_start_date_YYYYMMDD,apr,minimum_payment):
+            A.createCreditCardAccount(credit_acct_name,
+                                      credit_curr_bal,
+                                      Account__dict['balance'],
+                                      Account__dict['min_balance'],
+                                      Account__dict['max_balance'],
+                                      Account__dict['billing_start_date_YYYYMMDD'],
+                                      Account__dict['apr'],
+                                      Account__dict['minimum_payment']
+                                      )
             #first curr then prev
-            A.createAccount(name=credit_acct_name,
-                            balance=credit_curr_bal,
-                            min_balance=Account__dict['min_balance'],
-                            max_balance=Account__dict['max_balance'],
-                            account_type="credit",
-                            billing_start_date_YYYYMMDD=Account__dict['billing_start_date_YYYYMMDD'],
-                            interest_type=Account__dict['interest_type'],
-                            apr=Account__dict['apr'],
-                            interest_cadence=Account__dict['interest_cadence'],
-                            minimum_payment=Account__dict['minimum_payment'],
-                            previous_statement_balance=Account__dict['balance']
-                            )
+            # A.createAccount(name=credit_acct_name,
+            #                 balance=credit_curr_bal,
+            #                 min_balance=Account__dict['min_balance'],
+            #                 max_balance=Account__dict['max_balance'],
+            #                 account_type="credit",
+            #                 billing_start_date_YYYYMMDD=Account__dict['billing_start_date_YYYYMMDD'],
+            #                 interest_type=Account__dict['interest_type'],
+            #                 apr=Account__dict['apr'],
+            #                 interest_cadence=Account__dict['interest_cadence'],
+            #                 minimum_payment=Account__dict['minimum_payment'],
+            #                 previous_statement_balance=Account__dict['balance']
+            #                 )
 
         elif Account__dict['account_type'].lower() == 'principal balance':
 
@@ -314,20 +393,29 @@ def initialize_from_json_file(path_to_json):
         elif Account__dict['account_type'].lower() == 'interest':
 
             #principal balance then interest
-
-            A.createAccount(name=loan_acct_name,
-                            balance=float(loan_balance) + float(Account__dict['balance']),
-                            min_balance=Account__dict['min_balance'],
-                            max_balance=Account__dict['max_balance'],
-                            account_type="loan",
-                            billing_start_date_YYYYMMDD=loan_billing_start_date,
-                            interest_type=loan_interest_type,
-                            apr=loan_apr,
-                            interest_cadence=loan_interest_cadence,
-                            minimum_payment=loan_min_payment,
-                            principal_balance=loan_balance,
-                            interest_balance=Account__dict['balance']
+            #(self,name,principal_balance,interest_balance,min_balance,max_balance,billing_start_date_YYYYMMDD,apr,minimum_payment):
+            A.createLoanAccount(loan_acct_name,
+                            float(loan_balance),
+                            float(Account__dict['balance']),
+                            Account__dict['min_balance'],
+                            Account__dict['max_balance'],
+                            loan_billing_start_date,
+                            loan_apr,
+                            loan_min_payment
                             )
+            # A.createAccount(name=loan_acct_name,
+            #                 balance=float(loan_balance) + float(Account__dict['balance']),
+            #                 min_balance=Account__dict['min_balance'],
+            #                 max_balance=Account__dict['max_balance'],
+            #                 account_type="loan",
+            #                 billing_start_date_YYYYMMDD=loan_billing_start_date,
+            #                 interest_type=loan_interest_type,
+            #                 apr=loan_apr,
+            #                 interest_cadence=loan_interest_cadence,
+            #                 minimum_payment=loan_min_payment,
+            #                 principal_balance=loan_balance,
+            #                 interest_balance=Account__dict['balance']
+            #                 )
 
         else:
             raise ValueError('unrecognized account type in ExpenseForecast::initialize_from_json_file: '+str(Account__dict['account_type']))
@@ -5599,23 +5687,15 @@ if __name__ == "__main__":
 
 # TODO
 # Failed Tests
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_560-account_set21-budget_set21-memo_rule_set21-20000101-20000103-milestone_set21-expected_result_df21]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_610-account_set22-budget_set22-memo_rule_set22-20000101-20000103-milestone_set22-expected_result_df22]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_1900-account_set23-budget_set23-memo_rule_set23-20000101-20000103-milestone_set23-expected_result_df23]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_overpay-account_set24-budget_set24-memo_rule_set24-20000101-20000103-milestone_set24-expected_result_df24]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_initialize_from_excel_not_yet_run - AttributeError: 'Series' object has no attribute ...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_initialize_from_excel_already_run__no_append - AttributeError: 'Series' object has no...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_initialize_from_excel_already_run__yes_append - AttributeError: 'Series' object has n...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_initialize_from_json_not_yet_run - ValueError: Current_Statement_Balance cannot be No...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_initialize_from_json_already_run__no_append - ValueError: Current_Statement_Balance c...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_initialize_from_json_already_run__yes_append - ValueError: Current_Statement_Balance ...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_run_from_json_at_path - ValueError: Current_Statement_Balance cannot be None for acco...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_run_from_excel_at_path - AttributeError: 'Series' object has no attribute 'Billing_St...
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_initialize_forecast_from_excel_not_yet_run - AttributeError: 'Series' object has no attribute ...
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_initialize_forecast_from_excel_already_run - AttributeError: 'Series' object has n...
+
+
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_run_forecast_from_json_at_path - ValueError: Current_Statement_Balance cannot be None for acco...
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_run_forecast_from_excel_at_path - AttributeError: 'Series' object has no attribute 'Billing_St...
+
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_interest_types_and_cadences_at_most_monthly - NotImplementedError
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_quarter_and_year_long_interest_cadences - NotImplementedError
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_multiple_additional_loan_payments__expect_eliminate_future_min_payments - ValueError:...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_multiple_additional_loan_payments_on_consecutive_days - ValueError: interest_balance ...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_additional_loan_payments_overpayment - ValueError: interest_balance was None for type...
 # FAILED test_ForecastHandler.py::TestForecastHandlerMethods::test_run_forecast_set - IndexError: index 0 is out of bounds for axis 0 with size 0
 # FAILED test_ForecastSet.py::TestForecastSet::test_addScenario[core_budget_set0-option_budget_set0] - TypeError: addScenario() missing 1 required posit...
 # FAILED test_ForecastSet.py::TestForecastSet::test_listScenarios - NotImplementedError
@@ -5631,8 +5711,9 @@ if __name__ == "__main__":
 # approx forecast needs another way to check if failed
 # confirm that ScenarioSet works to and from excel and json
 # multithreading for ForecastSet approximate case
-
-# "say complete" needs to check for OS and be able to be turned off
+# make notification sound a parameter
+# implement investment account in the rest of the code
+#if output_dir doesn't have a trailing slash, then add one (for to_json and to_excel methods)
 
 # Tests to write
 # write test for pay off loan early (make sure the memo field is correct)

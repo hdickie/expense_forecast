@@ -1056,13 +1056,13 @@ class TestExpenseForecastMethods:
              'Loan B: Interest': [100, 43.52, 43.66],
              'Loan C: Principal Balance': [1000, 1000, 1000],
              'Loan C: Interest': [ 100, 50.03, 50.06 ],
-             'Marginal Interest': [0, 0, 0],
+             'Marginal Interest': [0, 0.44, 0.31],
              'Net Gain': [0, 0, 0],
              'Net Loss': [0, 0, 0],
-             'Net Worth': [0, 0, 0],
-             'Loan Total': [0, 0, 0],
+             'Net Worth': [1700, 1699.56, 1699.25],
+             'Loan Total': [3300, 2590.44, 2590.75],
              'CC Debt Total': [0, 0, 0],
-             'Liquid Total': [0, 0, 0],
+             'Liquid Total': [5000, 5000 - 150 - 560, 5000 - 150 - 560],
              'Memo': ['', 'loan min payment (Loan A: Interest -$50.0);  loan min payment (Loan B: Interest -$50.0);  loan min payment (Loan C: Interest -$50.0);  additional loan payment (Loan A: Principal Balance -$503.11);  additional loan payment (Loan A: Interest -$50.27);  additional loan payment (Loan B: Interest -$6.62);', '']
          })
          ), #todo double check this math
@@ -1091,13 +1091,13 @@ class TestExpenseForecastMethods:
              'Loan B: Interest': [100, 9.52, 9.66],
              'Loan C: Principal Balance': [1000, 1000, 1000],
              'Loan C: Interest': [100, 50.03,50.06],
-             'Marginal Interest': [0, 0, 0],
+             'Marginal Interest': [0, 0.44, 0.3],
              'Net Gain': [0, 0, 0],
              'Net Loss': [0, 0, 0],
-             'Net Worth': [0, 0, 0],
-             'Loan Total': [0, 0, 0],
+             'Net Worth': [1700, 1699.56, 1699.26],
+             'Loan Total': [3300, 2540.44, 2540.74],
              'CC Debt Total': [0, 0, 0],
-             'Liquid Total': [0, 0, 0],
+             'Liquid Total': [5000, 5000 - 150 - 610, 5000 - 150 - 610],
              'Memo': ['', 'loan min payment (Loan A: Interest -$50.0);  loan min payment (Loan B: Interest -$50.0);  loan min payment (Loan C: Interest -$50.0);  additional loan payment (Loan A: Principal Balance -$519.11);  additional loan payment (Loan A: Interest -$50.27);  additional loan payment (Loan B: Interest -$40.62);', '']
          })
          ),  # todo check this math
@@ -1127,13 +1127,13 @@ class TestExpenseForecastMethods:
              'Loan B: Interest': [100, 0, 0.03],
              'Loan C: Principal Balance': [1000, 972.57, 972.57],
              'Loan C: Interest': [100, 0, 0.03],
-             'Marginal Interest': [0, 0, 0],
+             'Marginal Interest': [0, 0.44, 0.09],
              'Net Gain': [0, 0, 0],
              'Net Loss': [0, 0, 0],
-             'Net Worth': [0, 0, 0],
-             'Loan Total': [0, 0, 0],
+             'Net Worth': [1700, 1699.56, 1699.47],
+             'Loan Total': [3300, 1250.44, 1250.53],
              'CC Debt Total': [0, 0, 0],
-             'Liquid Total': [0, 0, 0],
+             'Liquid Total': [5000, 5000 - 150 - 1900, 5000 - 150 - 1900],
              'Memo': ['', 'loan min payment (Loan A: Interest -$50.0);  loan min payment (Loan B: Interest -$50.0);  loan min payment (Loan C: Interest -$50.0);  additional loan payment (Loan A: Principal Balance -$907.38);  additional loan payment (Loan A: Interest -$50.27);  additional loan payment (Loan B: Principal Balance -$814.75);  additional loan payment (Loan B: Interest -$50.14);  additional loan payment (Loan C: Principal Balance -$27.43);  additional loan payment (Loan C: Interest -$50.03);', '']
          })
          ),
@@ -1162,11 +1162,11 @@ class TestExpenseForecastMethods:
              'Loan B: Interest': [100, 0, 0],
              'Loan C: Principal Balance': [1000, 0, 0],
              'Loan C: Interest': [100, 0, 0],
-             'Marginal Interest': [0, 0.24, 0],
+             'Marginal Interest': [0, 0.44, 0],
              'Net Gain': [0, 0, 0],
-             'Net Loss': [0, 0.24, 0],
-             'Net Worth': [1699.56, 1699.56, 1699.56],
-             'Loan Total': [3000, 0, 0],
+             'Net Loss': [0, 0, 0],
+             'Net Worth': [1700, 1699.56, 1699.56],
+             'Loan Total': [3300, 0, 0],
              'CC Debt Total': [0, 0, 0],
              'Liquid Total': [5000, 1699.56, 1699.56],
              'Memo': ['', 'loan min payment (Loan A: Interest -$50.0);  loan min payment (Loan B: Interest -$50.0);  loan min payment (Loan C: Interest -$50.0);  additional loan payment (Loan A: Principal Balance -$1000.0);  additional loan payment (Loan A: Interest -$50.27);  additional loan payment (Loan B: Principal Balance -$1000.0);  additional loan payment (Loan B: Interest -$50.14);  additional loan payment (Loan C: Principal Balance -$1000.0);  additional loan payment (Loan C: Interest -$50.03);', '']
@@ -1561,7 +1561,7 @@ class TestExpenseForecastMethods:
 
         str(E)
 
-    def test_initialize_from_excel_not_yet_run(self):
+    def test_initialize_forecast_from_excel_not_yet_run(self):
         start_date_YYYYMMDD = '20000101'
         end_date_YYYYMMDD = '20000105'
 
@@ -1609,10 +1609,16 @@ class TestExpenseForecastMethods:
 
         # E1.runForecast()  # Forecast_028363.html
         # E1.appendSummaryLines()
-        E1.to_excel('./out')  # ./out/Forecast_059039.xlsx
+        E1.to_excel('./out/')  # ./out/Forecast_059039.xlsx
 
-        E2_list = ExpenseForecast.initialize_from_excel_file('./out/Forecast_059039.xlsx')
+        E2_list = ExpenseForecast.initialize_from_excel_file('./out/Forecast_'+str(E1.unique_id)+'.xlsx')
         E2 = E2_list[0]
+
+        print('############################################')
+        print(E1.milestone_set.to_json())
+        print('############################################')
+        print(E2.milestone_set.to_json())
+        print('############################################')
 
         # before runForecast
         assert E1.unique_id == E2.unique_id
@@ -1624,8 +1630,100 @@ class TestExpenseForecastMethods:
         assert E1.initial_budget_set.getBudgetItems().to_string() == E2.initial_budget_set.getBudgetItems().to_string()
         assert E1.initial_memo_rule_set.getMemoRules().to_string() == E2.initial_memo_rule_set.getMemoRules().to_string()
         assert E1.milestone_set.to_json() == E2.milestone_set.to_json()
+    #
+    # def test_initialize_from_excel_already_run__no_append(self):
+    #     start_date_YYYYMMDD = '20000101'
+    #     end_date_YYYYMMDD = '20000105'
+    #
+    #     A = AccountSet.AccountSet(
+    #         checking_acct_list(2000) + credit_acct_list(100, 100, 0.01) + non_trivial_loan('test loan', 100, 0, 0.01))
+    #
+    #     B = BudgetSet.BudgetSet(
+    #         [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'p1 daily txn 1/2/00', False, False),
+    #          BudgetItem.BudgetItem('20000103', '20000103', 2, 'once', 100, 'p2 daily txn 1/3/00', False, False),
+    #          BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', False, False),
+    #          BudgetItem.BudgetItem('20010101', '20010101', 3, 'once', 100, 'specific regex 2', False, False)
+    #          ]
+    #     )
+    #     M = MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*',
+    #                                                    account_from='Checking',
+    #                                                    account_to=None,
+    #                                                    transaction_priority=1),
+    #                                  MemoRule.MemoRule(memo_regex='.*',
+    #                                                    account_from='Checking',
+    #                                                    account_to=None,
+    #                                                    transaction_priority=2),
+    #                                  MemoRule.MemoRule(memo_regex='.*',
+    #                                                    account_from='Checking',
+    #                                                    account_to=None,
+    #                                                    transaction_priority=3)
+    #                                  ])
+    #
+    #     MS = MilestoneSet.MilestoneSet( [], [], [])
+    #     MS.addAccountMilestone('test account milestone 1', 'Credit', 160, 160)  # doesnt happen
+    #     MS.addAccountMilestone('test account milestone 2', 'Checking', 0, 100)  # does happen
+    #
+    #     MS.addMemoMilestone('test memo milestone 1', 'p2 daily txn 1/3/00')  # does happen
+    #     MS.addMemoMilestone('test memo milestone 2', 'specific regex 2')  # doesnt happen
+    #
+    #     AM1 = AccountMilestone.AccountMilestone('test account milestone 1', 'Credit', 160, 160)  # does happen
+    #     AM2 = AccountMilestone.AccountMilestone('test account milestone 2', 'Checking', 0, 100)  # doesnt happen
+    #
+    #     MM1 = MemoMilestone.MemoMilestone('test memo milestone 1', 'p2 daily txn 1/3/00')  # does happen
+    #     MM2 = MemoMilestone.MemoMilestone('test memo milestone 2', 'specific regex 2')  # doesnt happen
+    #
+    #     MS.addCompositeMilestone('test composite milestone 1', [AM1], [MM1])  # does happen
+    #     MS.addCompositeMilestone('test composite milestone 2', [AM2], [MM2])  # doesnt happen
+    #
+    #     E1 = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
+    #
+    #     E1.runForecast()  # Forecast_028363.html
+    #     E1.to_excel('./out')  # ./out/Forecast_028363.xlsx
+    #
+    #     E2_list = ExpenseForecast.initialize_from_excel_file('./out/Forecast_059039.xlsx')
+    #     E2 = E2_list[0]
+    #
+    #     # before runForecast
+    #     assert E1.unique_id == E2.unique_id
+    #     assert E1.start_ts == E2.start_ts
+    #     assert E1.end_ts == E2.end_ts
+    #     assert E1.start_date_YYYYMMDD == E2.start_date_YYYYMMDD
+    #     assert E1.end_date_YYYYMMDD == E2.end_date_YYYYMMDD
+    #     assert E1.initial_account_set.getAccounts().to_string() == E2.initial_account_set.getAccounts().to_string()
+    #     assert E1.initial_budget_set.getBudgetItems().to_string() == E2.initial_budget_set.getBudgetItems().to_string()
+    #     assert E1.initial_memo_rule_set.getMemoRules().to_string() == E2.initial_memo_rule_set.getMemoRules().to_string()
+    #     assert E1.milestone_set.to_json() == E2.milestone_set.to_json()
+    #
+    #     # after runForecast
+    #     assert str(E1.account_milestone_results) == str(E2.account_milestone_results)
+    #     assert str(E1.memo_milestone_results) == str(E2.memo_milestone_results)
+    #     assert str(E1.composite_milestone_results) == str(E2.composite_milestone_results)
+    #
+    #     for index, row in E1.skipped_df.iterrows():
+    #         for c_index in range(0, E1.skipped_df.shape[1]):
+    #             assert E1.skipped_df.iloc[index, c_index] == E2.skipped_df.iloc[index, c_index]
+    #
+    #     for index, row in E1.deferred_df.iterrows():
+    #         for c_index in range(0, E1.deferred_df.shape[1]):
+    #             assert E1.deferred_df.iloc[index, c_index] == E2.deferred_df.iloc[index, c_index]
+    #
+    #     for index, row in E1.confirmed_df.iterrows():
+    #         for c_index in range(0, E1.confirmed_df.shape[1]):
+    #             assert E1.confirmed_df.iloc[index, c_index] == E2.confirmed_df.iloc[index, c_index]
+    #
+    #     for index, row in E1.forecast_df.iterrows():
+    #         for c_index in range(0, E1.forecast_df.shape[1]):
+    #             if c_index != 0 and c_index != E1.forecast_df.columns.tolist().index('Memo'):
+    #                 assert round(E1.forecast_df.iloc[index, c_index], 2) == round(E2.forecast_df.iloc[index, c_index],2)
+    #             else:
+    #                 try:
+    #                     assert E1.forecast_df.iloc[index, c_index] == E2.forecast_df.iloc[index, c_index]
+    #                 except Exception as e:
+    #                     print(index,c_index)
+    #                     print(e.args)
+    #                     raise e
 
-    def test_initialize_from_excel_already_run__no_append(self):
+    def test_initialize_forecast_from_excel_already_run(self):
         start_date_YYYYMMDD = '20000101'
         end_date_YYYYMMDD = '20000105'
 
@@ -1672,99 +1770,6 @@ class TestExpenseForecastMethods:
         E1 = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
 
         E1.runForecast()  # Forecast_028363.html
-        E1.to_excel('./out')  # ./out/Forecast_028363.xlsx
-
-        E2_list = ExpenseForecast.initialize_from_excel_file('./out/Forecast_059039.xlsx')
-        E2 = E2_list[0]
-
-        # before runForecast
-        assert E1.unique_id == E2.unique_id
-        assert E1.start_ts == E2.start_ts
-        assert E1.end_ts == E2.end_ts
-        assert E1.start_date_YYYYMMDD == E2.start_date_YYYYMMDD
-        assert E1.end_date_YYYYMMDD == E2.end_date_YYYYMMDD
-        assert E1.initial_account_set.getAccounts().to_string() == E2.initial_account_set.getAccounts().to_string()
-        assert E1.initial_budget_set.getBudgetItems().to_string() == E2.initial_budget_set.getBudgetItems().to_string()
-        assert E1.initial_memo_rule_set.getMemoRules().to_string() == E2.initial_memo_rule_set.getMemoRules().to_string()
-        assert E1.milestone_set.to_json() == E2.milestone_set.to_json()
-
-        # after runForecast
-        assert str(E1.account_milestone_results) == str(E2.account_milestone_results)
-        assert str(E1.memo_milestone_results) == str(E2.memo_milestone_results)
-        assert str(E1.composite_milestone_results) == str(E2.composite_milestone_results)
-
-        for index, row in E1.skipped_df.iterrows():
-            for c_index in range(0, E1.skipped_df.shape[1]):
-                assert E1.skipped_df.iloc[index, c_index] == E2.skipped_df.iloc[index, c_index]
-
-        for index, row in E1.deferred_df.iterrows():
-            for c_index in range(0, E1.deferred_df.shape[1]):
-                assert E1.deferred_df.iloc[index, c_index] == E2.deferred_df.iloc[index, c_index]
-
-        for index, row in E1.confirmed_df.iterrows():
-            for c_index in range(0, E1.confirmed_df.shape[1]):
-                assert E1.confirmed_df.iloc[index, c_index] == E2.confirmed_df.iloc[index, c_index]
-
-        for index, row in E1.forecast_df.iterrows():
-            for c_index in range(0, E1.forecast_df.shape[1]):
-                if c_index != 0 and c_index != E1.forecast_df.columns.tolist().index('Memo'):
-                    assert round(E1.forecast_df.iloc[index, c_index], 2) == round(E2.forecast_df.iloc[index, c_index],2)
-                else:
-                    try:
-                        assert E1.forecast_df.iloc[index, c_index] == E2.forecast_df.iloc[index, c_index]
-                    except Exception as e:
-                        print(index,c_index)
-                        print(e.args)
-                        raise e
-
-    def test_initialize_from_excel_already_run__yes_append(self):
-        start_date_YYYYMMDD = '20000101'
-        end_date_YYYYMMDD = '20000105'
-
-        A = AccountSet.AccountSet(
-            checking_acct_list(2000) + credit_acct_list(100, 100, 0.01) + non_trivial_loan('test loan', 100, 0, 0.01))
-
-        B = BudgetSet.BudgetSet(
-            [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'p1 daily txn 1/2/00', False, False),
-             BudgetItem.BudgetItem('20000103', '20000103', 2, 'once', 100, 'p2 daily txn 1/3/00', False, False),
-             BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', False, False),
-             BudgetItem.BudgetItem('20010101', '20010101', 3, 'once', 100, 'specific regex 2', False, False)
-             ]
-        )
-        M = MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*',
-                                                       account_from='Checking',
-                                                       account_to=None,
-                                                       transaction_priority=1),
-                                     MemoRule.MemoRule(memo_regex='.*',
-                                                       account_from='Checking',
-                                                       account_to=None,
-                                                       transaction_priority=2),
-                                     MemoRule.MemoRule(memo_regex='.*',
-                                                       account_from='Checking',
-                                                       account_to=None,
-                                                       transaction_priority=3)
-                                     ])
-
-        MS = MilestoneSet.MilestoneSet( [], [], [])
-        MS.addAccountMilestone('test account milestone 1', 'Credit', 160, 160)  # doesnt happen
-        MS.addAccountMilestone('test account milestone 2', 'Checking', 0, 100)  # does happen
-
-        MS.addMemoMilestone('test memo milestone 1', 'p2 daily txn 1/3/00')  # does happen
-        MS.addMemoMilestone('test memo milestone 2', 'specific regex 2')  # doesnt happen
-
-        AM1 = AccountMilestone.AccountMilestone('test account milestone 1', 'Credit', 160, 160)  # does happen
-        AM2 = AccountMilestone.AccountMilestone('test account milestone 2', 'Checking', 0, 100)  # doesnt happen
-
-        MM1 = MemoMilestone.MemoMilestone('test memo milestone 1', 'p2 daily txn 1/3/00')  # does happen
-        MM2 = MemoMilestone.MemoMilestone('test memo milestone 2', 'specific regex 2')  # doesnt happen
-
-        MS.addCompositeMilestone('test composite milestone 1', [AM1], [MM1])  # does happen
-        MS.addCompositeMilestone('test composite milestone 2', [AM2], [MM2])  # doesnt happen
-
-        E1 = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
-
-        E1.runForecast()  # Forecast_028363.html
-        E1.appendSummaryLines()
         E1.to_excel('./out')  # ./out/Forecast_028363.xlsx
 
         E2_list = ExpenseForecast.initialize_from_excel_file('./out/Forecast_059039.xlsx')
@@ -1808,7 +1813,7 @@ class TestExpenseForecastMethods:
                 else:
                     assert E1.forecast_df.iloc[index, c_index] == E2.forecast_df.iloc[index, c_index]
 
-    def test_initialize_from_json_not_yet_run(self):
+    def test_initialize_forecast_from_json_not_yet_run(self):
         start_date_YYYYMMDD = '20000101'
         end_date_YYYYMMDD = '20000105'
 
@@ -1854,10 +1859,9 @@ class TestExpenseForecastMethods:
         E1 = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
 
         #E1.runForecast()  # Forecast_028363.html
-        #E1.appendSummaryLines()
-        E1.writeToJSONFile('./out')  # ./out/Forecast_028363.json
+        E1.writeToJSONFile('./out/')  # ./out/Forecast_028363.json
 
-        E2_list = ExpenseForecast.initialize_from_json_file('./out/Forecast_028363.json')
+        E2_list = ExpenseForecast.initialize_from_json_file('./out/Forecast_'+str(E1.unique_id)+'.json')
         E2 = E2_list[0]
 
         # before runForecast
@@ -1897,8 +1901,95 @@ class TestExpenseForecastMethods:
         #                                                                           2)
         #         else:
         #             assert E1.forecast_df.iloc[index, c_index] == E2.forecast_df.iloc[index, c_index]
+    #
+    # def test_initialize_from_json_already_run__no_append(self):
+    #     start_date_YYYYMMDD = '20000101'
+    #     end_date_YYYYMMDD = '20000105'
+    #
+    #     A = AccountSet.AccountSet(
+    #         checking_acct_list(2000) + credit_acct_list(100, 100, 0.01) + non_trivial_loan('test loan', 100, 0, 0.01))
+    #
+    #     B = BudgetSet.BudgetSet(
+    #         [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'p1 daily txn 1/2/00', False, False),
+    #          BudgetItem.BudgetItem('20000103', '20000103', 2, 'once', 100, 'p2 daily txn 1/3/00', False, False),
+    #          BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', False, False)
+    #          ]
+    #     )
+    #     M = MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*',
+    #                                                    account_from='Checking',
+    #                                                    account_to=None,
+    #                                                    transaction_priority=1),
+    #                                  MemoRule.MemoRule(memo_regex='.*',
+    #                                                    account_from='Checking',
+    #                                                    account_to=None,
+    #                                                    transaction_priority=2),
+    #                                  MemoRule.MemoRule(memo_regex='.*',
+    #                                                    account_from='Checking',
+    #                                                    account_to=None,
+    #                                                    transaction_priority=3)
+    #                                  ])
+    #
+    #     MS = MilestoneSet.MilestoneSet( [], [], [])
+    #     MS.addAccountMilestone('test account milestone 1', 'Credit', 160, 160)  # doesnt happen
+    #     MS.addAccountMilestone('test account milestone 2', 'Checking', 0, 100)  # does happen
+    #
+    #     MS.addMemoMilestone('test memo milestone 1', 'p2 daily txn 1/3/00')  # does happen
+    #     MS.addMemoMilestone('test memo milestone 2', 'specific regex 2')  # doesnt happen
+    #
+    #     AM1 = AccountMilestone.AccountMilestone('test account milestone 1', 'Credit', 160, 160)  # does happen
+    #     AM2 = AccountMilestone.AccountMilestone('test account milestone 2', 'Checking', 0, 100)  # doesnt happen
+    #
+    #     MM1 = MemoMilestone.MemoMilestone('test memo milestone 1', 'p2 daily txn 1/3/00')  # does happen
+    #     MM2 = MemoMilestone.MemoMilestone('test memo milestone 2', 'specific regex 2')  # doesnt happen
+    #
+    #     MS.addCompositeMilestone('test composite milestone 1', [AM1], [MM1])  # does happen
+    #     MS.addCompositeMilestone('test composite milestone 2', [AM2], [MM2])  # doesnt happen
+    #
+    #     E1 = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
+    #
+    #     E1.runForecast()  # Forecast_028363.html
+    #     E1.writeToJSONFile('./out') # ./out/Forecast_028363.json
+    #
+    #     E2_list = ExpenseForecast.initialize_from_json_file('./out/Forecast_028363.json')
+    #     E2 = E2_list[0]
+    #
+    #     #before runForecast
+    #     assert E1.unique_id == E2.unique_id
+    #     assert E1.start_ts == E2.start_ts
+    #     assert E1.end_ts == E2.end_ts
+    #     assert E1.start_date_YYYYMMDD == E2.start_date_YYYYMMDD
+    #     assert E1.end_date_YYYYMMDD == E2.end_date_YYYYMMDD
+    #     assert E1.initial_account_set.getAccounts().to_string() == E2.initial_account_set.getAccounts().to_string()
+    #     assert E1.initial_budget_set.getBudgetItems().to_string() == E2.initial_budget_set.getBudgetItems().to_string()
+    #     assert E1.initial_memo_rule_set.getMemoRules().to_string() == E2.initial_memo_rule_set.getMemoRules().to_string()
+    #     assert E1.milestone_set.to_json() == E2.milestone_set.to_json()
+    #
+    #     #after runForecast
+    #     assert str(E1.account_milestone_results) == str(E2.account_milestone_results)
+    #     assert str(E1.memo_milestone_results) == str(E2.memo_milestone_results)
+    #     assert str(E1.composite_milestone_results) == str(E2.composite_milestone_results)
+    #
+    #     for index, row in E1.skipped_df.iterrows():
+    #         for c_index in range(0,E1.skipped_df.shape[1]):
+    #             assert E1.skipped_df.iloc[index,c_index] == E2.skipped_df.iloc[index,c_index]
+    #
+    #     for index, row in E1.deferred_df.iterrows():
+    #         for c_index in range(0, E1.deferred_df.shape[1]):
+    #             assert E1.deferred_df.iloc[index,c_index] == E2.deferred_df.iloc[index,c_index]
+    #
+    #     for index, row in E1.confirmed_df.iterrows():
+    #         for c_index in range(0, E1.confirmed_df.shape[1]):
+    #             assert E1.confirmed_df.iloc[index,c_index] == E2.confirmed_df.iloc[index,c_index]
+    #
+    #     for index, row in E1.forecast_df.iterrows():
+    #         for c_index in range(0, E1.forecast_df.shape[1]):
+    #             if c_index != 0 and c_index != (E1.forecast_df.shape[1] - 1):
+    #                 assert round(E1.forecast_df.iloc[index,c_index],2) == round(E2.forecast_df.iloc[index,c_index],2)
+    #             else:
+    #                 assert E1.forecast_df.iloc[index, c_index] == E2.forecast_df.iloc[index, c_index]
+    #
 
-    def test_initialize_from_json_already_run__no_append(self):
+    def test_initialize_forecast_from_json_already_run(self):
         start_date_YYYYMMDD = '20000101'
         end_date_YYYYMMDD = '20000105'
 
@@ -1944,97 +2035,9 @@ class TestExpenseForecastMethods:
         E1 = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
 
         E1.runForecast()  # Forecast_028363.html
-        E1.writeToJSONFile('./out') # ./out/Forecast_028363.json
+        E1.writeToJSONFile('./out/')  # ./out/Forecast_028363.json
 
-        E2_list = ExpenseForecast.initialize_from_json_file('./out/Forecast_028363.json')
-        E2 = E2_list[0]
-
-        #before runForecast
-        assert E1.unique_id == E2.unique_id
-        assert E1.start_ts == E2.start_ts
-        assert E1.end_ts == E2.end_ts
-        assert E1.start_date_YYYYMMDD == E2.start_date_YYYYMMDD
-        assert E1.end_date_YYYYMMDD == E2.end_date_YYYYMMDD
-        assert E1.initial_account_set.getAccounts().to_string() == E2.initial_account_set.getAccounts().to_string()
-        assert E1.initial_budget_set.getBudgetItems().to_string() == E2.initial_budget_set.getBudgetItems().to_string()
-        assert E1.initial_memo_rule_set.getMemoRules().to_string() == E2.initial_memo_rule_set.getMemoRules().to_string()
-        assert E1.milestone_set.to_json() == E2.milestone_set.to_json()
-
-        #after runForecast
-        assert str(E1.account_milestone_results) == str(E2.account_milestone_results)
-        assert str(E1.memo_milestone_results) == str(E2.memo_milestone_results)
-        assert str(E1.composite_milestone_results) == str(E2.composite_milestone_results)
-
-        for index, row in E1.skipped_df.iterrows():
-            for c_index in range(0,E1.skipped_df.shape[1]):
-                assert E1.skipped_df.iloc[index,c_index] == E2.skipped_df.iloc[index,c_index]
-
-        for index, row in E1.deferred_df.iterrows():
-            for c_index in range(0, E1.deferred_df.shape[1]):
-                assert E1.deferred_df.iloc[index,c_index] == E2.deferred_df.iloc[index,c_index]
-
-        for index, row in E1.confirmed_df.iterrows():
-            for c_index in range(0, E1.confirmed_df.shape[1]):
-                assert E1.confirmed_df.iloc[index,c_index] == E2.confirmed_df.iloc[index,c_index]
-
-        for index, row in E1.forecast_df.iterrows():
-            for c_index in range(0, E1.forecast_df.shape[1]):
-                if c_index != 0 and c_index != (E1.forecast_df.shape[1] - 1):
-                    assert round(E1.forecast_df.iloc[index,c_index],2) == round(E2.forecast_df.iloc[index,c_index],2)
-                else:
-                    assert E1.forecast_df.iloc[index, c_index] == E2.forecast_df.iloc[index, c_index]
-
-
-    def test_initialize_from_json_already_run__yes_append(self):
-        start_date_YYYYMMDD = '20000101'
-        end_date_YYYYMMDD = '20000105'
-
-        A = AccountSet.AccountSet(
-            checking_acct_list(2000) + credit_acct_list(100, 100, 0.01) + non_trivial_loan('test loan', 100, 0, 0.01))
-
-        B = BudgetSet.BudgetSet(
-            [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'p1 daily txn 1/2/00', False, False),
-             BudgetItem.BudgetItem('20000103', '20000103', 2, 'once', 100, 'p2 daily txn 1/3/00', False, False),
-             BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', False, False)
-             ]
-        )
-        M = MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*',
-                                                       account_from='Checking',
-                                                       account_to=None,
-                                                       transaction_priority=1),
-                                     MemoRule.MemoRule(memo_regex='.*',
-                                                       account_from='Checking',
-                                                       account_to=None,
-                                                       transaction_priority=2),
-                                     MemoRule.MemoRule(memo_regex='.*',
-                                                       account_from='Checking',
-                                                       account_to=None,
-                                                       transaction_priority=3)
-                                     ])
-
-        MS = MilestoneSet.MilestoneSet( [], [], [])
-        MS.addAccountMilestone('test account milestone 1', 'Credit', 160, 160)  # doesnt happen
-        MS.addAccountMilestone('test account milestone 2', 'Checking', 0, 100)  # does happen
-
-        MS.addMemoMilestone('test memo milestone 1', 'p2 daily txn 1/3/00')  # does happen
-        MS.addMemoMilestone('test memo milestone 2', 'specific regex 2')  # doesnt happen
-
-        AM1 = AccountMilestone.AccountMilestone('test account milestone 1', 'Credit', 160, 160)  # does happen
-        AM2 = AccountMilestone.AccountMilestone('test account milestone 2', 'Checking', 0, 100)  # doesnt happen
-
-        MM1 = MemoMilestone.MemoMilestone('test memo milestone 1', 'p2 daily txn 1/3/00')  # does happen
-        MM2 = MemoMilestone.MemoMilestone('test memo milestone 2', 'specific regex 2')  # doesnt happen
-
-        MS.addCompositeMilestone('test composite milestone 1', [AM1], [MM1])  # does happen
-        MS.addCompositeMilestone('test composite milestone 2', [AM2], [MM2])  # doesnt happen
-
-        E1 = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
-
-        E1.runForecast()  # Forecast_028363.html
-        E1.appendSummaryLines()
-        E1.writeToJSONFile('./out')  # ./out/Forecast_028363.json
-
-        E2_list = ExpenseForecast.initialize_from_json_file('./out/Forecast_028363.json')
+        E2_list = ExpenseForecast.initialize_from_json_file('./out/ForecastResult_'+str(E1.unique_id)+'.json')
         E2 = E2_list[0]
 
         # before runForecast
@@ -2076,7 +2079,7 @@ class TestExpenseForecastMethods:
 
 
 
-    def test_run_from_json_at_path(self):
+    def test_run_forecast_from_json_at_path(self):
 
         sd = '20000101'
         ed = '20000103'
@@ -2146,7 +2149,7 @@ class TestExpenseForecastMethods:
 
         assert comparable_E1_str_lines == comparable_E2_str_lines
 
-    def test_run_from_excel_at_path(self):
+    def test_run_forecast_from_excel_at_path(self):
 
         sd = '20000101'
         ed = '20000103'
@@ -2187,7 +2190,7 @@ class TestExpenseForecastMethods:
 
         out_path = './out/'
         E1.to_excel(out_path)
-        E2 = ExpenseForecast.initialize_from_excel_file(out_path+'Forecast_017138.xlsx')
+        E2 = ExpenseForecast.initialize_from_excel_file(out_path+'Forecast_'+str(E1.unique_id)+'.xlsx')
 
         E1.runForecast()
         E2.runForecast()
@@ -2910,8 +2913,8 @@ class TestExpenseForecastMethods:
         end_date_YYYYMMDD = '20240205'
 
         A = AccountSet.AccountSet([])
-        A.createAccount('Checking', 5000, 0, 999999, 'checking')
-        A.createAccount('Loan A', 3600, 0, 999999, 'loan', '20230103', 'simple', 0.4, 'daily', 50, None, 3500, 100)
+        A.createCheckingAccount('Checking',5000,0,999999)
+        A.createLoanAccount('Loan A',3500,100,0,99999,'20230103',0.4,50)
 
         B = BudgetSet.BudgetSet([])
         B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'semiweekly', 1500, 'income', False, False)
@@ -2930,7 +2933,6 @@ class TestExpenseForecastMethods:
                                              end_date_YYYYMMDD,
                                              MS)
         E.runForecast()
-        E.appendSummaryLines()
 
         # this is just for me to review
         F = ForecastHandler.ForecastHandler()
@@ -2944,8 +2946,8 @@ class TestExpenseForecastMethods:
         end_date_YYYYMMDD = '20240205'
 
         A = AccountSet.AccountSet([])
-        A.createAccount('Checking', 5000, 0, 999999, 'checking')
-        A.createAccount('Loan A', 3600, 0, 999999, 'loan', '20230103', 'simple', 0.4, 'daily', 50, None, 3500, 100)
+        A.createCheckingAccount('Checking',5000,0,999999)
+        A.createLoanAccount('Loan A', 3500, 100, 0, 99999, '20230103', 0.4, 50)
 
         B = BudgetSet.BudgetSet([])
         B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'semiweekly', 1500, 'income', False, False)
@@ -2967,7 +2969,6 @@ class TestExpenseForecastMethods:
                                             end_date_YYYYMMDD,
                                             MS)
         E.runForecast()
-        E.appendSummaryLines()
 
         # this is just for me to review
         F = ForecastHandler.ForecastHandler()
@@ -2984,8 +2985,8 @@ class TestExpenseForecastMethods:
         end_date_YYYYMMDD = '20240205'
 
         A = AccountSet.AccountSet([])
-        A.createAccount('Checking', 5000, 0, 999999, 'checking')
-        A.createAccount('Loan A', 3600, 0, 999999, 'loan', '20230103', 'simple', 0.4, 'daily', 50, None, 3500, 100)
+        A.createCheckingAccount('Checking', 5000, 0, 999999)
+        A.createLoanAccount('Loan A', 3500, 100, 0, 99999, '20230103', 0.4, 50)
 
         B = BudgetSet.BudgetSet([])
         B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'semiweekly', 1500, 'income', False, False)
@@ -3004,7 +3005,6 @@ class TestExpenseForecastMethods:
                                             end_date_YYYYMMDD,
                                             MS)
         E.runForecast()
-        E.appendSummaryLines()
 
         # this is just for me to review
         F = ForecastHandler.ForecastHandler()
