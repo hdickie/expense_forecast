@@ -68,7 +68,7 @@ class ForecastHandler:
     #                         minimum_payment=account_row.Minimum_Payment,
     #                         previous_statement_balance=account_row.Previous_Statement_Balance,
     #                         principal_balance=account_row.Principal_Balance,
-    #                         accrued_interest=account_row.Accrued_Interest)
+    #                         interest_balance=account_row.interest_balance)
     #
     #     for memorule_index, memorule_row in MemoRuleSet_df.iterrows():
     #         M.addMemoRule(memorule_row.Memo_Regex,memorule_row.Account_From,memorule_row.Account_To,memorule_row.Transaction_Priority)

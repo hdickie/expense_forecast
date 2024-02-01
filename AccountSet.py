@@ -209,7 +209,10 @@ class AccountSet:
 
     def __str__(self): return self.getAccounts().to_string()
 
-    #acknowledging that the parameters are confusing
+    def getPrimaryCheckingAccountName(self):
+        return self.getAccounts()[self.getAccounts().Primary_Checking_Ind].iloc[0,0]
+
+
     def createAccount(self,
                       name,
                       balance,
@@ -222,8 +225,9 @@ class AccountSet:
                       interest_cadence=None,
                       minimum_payment=None,
                       previous_statement_balance=None,
+                      current_statement_balance=None,
                       principal_balance=None,
-                      accrued_interest=None,
+                      interest_balance=None,
                       primary_checking_ind=False,
                       print_debug_messages=True,
                       raise_exceptions=True
@@ -242,7 +246,7 @@ class AccountSet:
         elif account_type == 'credit':
             log_string+=',billing_start_date_YYYYMMDD='+str(billing_start_date_YYYYMMDD)+',apr='+str(apr)+',previous_statement_balance='+str(previous_statement_balance)
         elif account_type == 'loan':
-            log_string+=',billing_start_date_YYYYMMDD='+str(billing_start_date_YYYYMMDD)+',apr='+str(apr)+',principal_balance='+str(principal_balance)+',accrued_interest='+str(accrued_interest)
+            log_string+=',billing_start_date_YYYYMMDD='+str(billing_start_date_YYYYMMDD)+',apr='+str(apr)+',principal_balance='+str(principal_balance)+',interest_balance='+str(interest_balance)
 
         log_string+=')'
         log_in_color(logger,'green', 'debug',log_string, 0)
@@ -264,23 +268,29 @@ class AccountSet:
 
         if previous_statement_balance is None:
             previous_statement_balance = "None"
+            
+        if current_statement_balance is None:
+            current_statement_balance = "None"
 
         if principal_balance is None:
             principal_balance = "None"
 
-        if accrued_interest is None:
-            accrued_interest = "None"
+        if interest_balance is None:
+            interest_balance = "None"
+
+        if account_type.lower() != 'checking' and primary_checking_ind:
+            raise ValueError("Primary_Checking_Ind was True when account_type was not checking")
 
         if account_type.lower() == 'loan':
 
             if principal_balance == 'None':
                 raise ValueError("principal_balance was None for type loan, which is illegal")
 
-            if accrued_interest == 'None':
-                raise ValueError("accrued_interest was None for type loan, which is illegal")
+            if interest_balance == 'None':
+                raise ValueError("interest_balance was None for type loan, which is illegal")
 
-            if float(principal_balance) + float(accrued_interest) != float(balance):
-                raise ValueError(name+": "+str(principal_balance)+" + "+str(accrued_interest)+" != "+str(balance))
+            if float(principal_balance) + float(interest_balance) != float(balance):
+                raise ValueError(name+": "+str(principal_balance)+" + "+str(interest_balance)+" != "+str(balance))
 
             account = Account.Account(name=name + ': Principal Balance',
                                       balance=principal_balance,
@@ -297,7 +307,7 @@ class AccountSet:
             self.accounts.append(account)
 
             account = Account.Account(name=name + ': Interest',
-                                      balance=accrued_interest,
+                                      balance=interest_balance,
                                       min_balance=min_balance,
                                       max_balance=max_balance,
                                       account_type='interest',
@@ -313,10 +323,15 @@ class AccountSet:
         elif account_type.lower() == 'credit':
 
             if previous_statement_balance == 'None':
-                raise ValueError #Previous_Statement_Balance cannot be None for account_type=credit
+                raise ValueError("Previous_Statement_Balance cannot be None for account_type=credit")
+
+            if current_statement_balance == 'None':
+                raise ValueError("Current_Statement_Balance cannot be None for account_type=credit")
+
+            assert balance == ( current_statement_balance + previous_statement_balance )
 
             account = Account.Account(name=name + ': Curr Stmt Bal',
-                                      balance=balance,
+                                      balance=current_statement_balance,
                                       min_balance=min_balance,
                                       max_balance=max_balance,
                                       account_type='curr stmt bal',
@@ -370,7 +385,9 @@ class AccountSet:
             self.accounts.append(account)
         else: raise NotImplementedError("Account type not recognized: "+str(account_type))
 
-    def createCheckingAccount(self,name,balance,min_balance,max_balance,primary_checking_account_ind):
+
+
+    def createCheckingAccount(self,name,balance,min_balance,max_balance,primary_checking_account_ind=True):
         self.createAccount(name=name,
                       balance=balance,
                       min_balance=min_balance,
@@ -390,20 +407,21 @@ class AccountSet:
                       interest_cadence='daily',
                       minimum_payment=minimum_payment,
                       principal_balance=principal_balance,
-                      accrued_interest=interest_balance)
+                      interest_balance=interest_balance)
 
     def createCreditCardAccount(self,name,current_stmt_bal,prev_stmt_bal,min_balance,max_balance,billing_start_date_YYYYMMDD,apr,minimum_payment):
         self.createAccount(name=name,
-                          balance=current_stmt_bal,
+                          balance=current_stmt_bal+prev_stmt_bal,
                           min_balance=min_balance,
                           max_balance=max_balance,
                           account_type='credit',
                           billing_start_date_YYYYMMDD=billing_start_date_YYYYMMDD,
-                          interest_type='compound',
+                          interest_type=None,
                           apr=apr,
                           interest_cadence='monthly',
                           minimum_payment=minimum_payment,
-                           previous_statement_balance=prev_stmt_bal)
+                           previous_statement_balance=prev_stmt_bal,
+                           current_statement_balance=current_stmt_bal)
 
     def createInvestmentAccount(self, name, balance, min_balance, max_balance, apr):
         self.createAccount(name=name,
@@ -765,7 +783,7 @@ class AccountSet:
     #                             minimum_payment=row.Minimum_Payment,
     #                             previous_statement_balance=row.Balance,
     #                             principal_balance=None,
-    #                             accrued_interest=None)
+    #                             interest_balance=None)
     #         elif row.Account_Type == 'curr stmt bal' and expect_secondary_acct:
     #             expect_secondary_acct = False
     #             self.createAccount(name.split(':')[0],
@@ -780,7 +798,7 @@ class AccountSet:
     #                            minimum_payment=minimum_payment,
     #                            previous_statement_balance=balance,
     #                            principal_balance=None,
-    #                            accrued_interest=None)
+    #                            interest_balance=None)
     #         elif row.Account_Type == 'principal balance' and expect_secondary_acct:
     #             expect_secondary_acct = False
     #             self.createAccount(name.split(':')[0],
@@ -795,7 +813,7 @@ class AccountSet:
     #                             minimum_payment=row.Minimum_Payment,
     #                             previous_statement_balance=None,
     #                             principal_balance=balance,
-    #                             accrued_interest=row.Balance)
+    #                             interest_balance=row.Balance)
     #         elif row.Account_Type == 'interest' and expect_secondary_acct:
     #             expect_secondary_acct = False
     #             self.createAccount(name.split(':')[0],
@@ -810,7 +828,7 @@ class AccountSet:
     #                             minimum_payment=minimum_payment,
     #                             previous_statement_balance=None,
     #                             principal_balance=balance,
-    #                             accrued_interest=row.Balance)
+    #                             interest_balance=row.Balance)
     #         else: raise NotImplementedError #an unexpected account type was found, or expect_secondary_acct was set inappropriately
     #
 
@@ -1076,7 +1094,7 @@ class AccountSet:
         This test is failing even though this is indeed the result I get when I try this in the console.
         # >>> x=AccountSet().getAccounts()
         # Empty DataFrame
-        # Columns: [Name, Balance, Previous_Statement_Balance, Min_Balance, Max_Balance, APR, Interest_Cadence, Interest_Type, Billing_Start_Dt, Account_Type, Principal_Balance, Accrued_Interest, Minimum_Payment]
+        # Columns: [Name, Balance, Previous_Statement_Balance, Min_Balance, Max_Balance, APR, Interest_Cadence, Interest_Type, Billing_Start_Dt, Account_Type, Principal_Balance, interest_balance, Minimum_Payment]
         # Index: []
 
         >>> print(AccountSet([Account.Account(name='test',balance=0,min_balance=0,max_balance=0,account_type="checking")]).toJSON())

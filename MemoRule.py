@@ -10,22 +10,6 @@ class MemoRule:
         """
         Creates a <MemoRule> object. Input validation is performed.
 
-        | Test Cases
-        | Expected Successes
-        | S1 Valid values for all parameters #todo refactor MemoRule.MemoRule() doctest S1 to use _S1 label
-        |
-        | Expected Fails
-        | Parameters that are provided are incorrect
-        | F1 provide no parameters #todo refactor MemoRule.MemoRule() doctest F1 to use _F1 label
-        |
-        | Incorrect Types provided for necessary parameters
-        | F2 Provide incorrect types for all necessary parameters #todo refactor MemoRule.MemoRule() doctest F2 to use _F2 label
-        |
-        | Illegal values provided
-        | F3 memo_regex explodes when interpreted as regex #todo refactor Account.Account() doctest F3 to use _F3 label
-        | F4 transaction priority is less than 1 #todo refactor Account.Account() doctest F4 to use _F4 label
-        | F5 transaction priority is not an integer #todo refactor Account.Account() doctest F5 to use _F5 label
-
         :param memo_regex: A regex to determine if this memo rule should be used for a budget item.
         :param account_from: Name of the account which funds will be drawn from
         :param account_to: Name of the account which funds will be depoisted
@@ -83,6 +67,9 @@ class MemoRule:
         # except:
         #    exception_type_error_message_string += 'failed cast MemoRule.account_from to str\n'
         #    exception_type_error_ind = True
+        if self.account_from == 'ALL_LOANS':
+            exception_value_error_message_string += "ALL_LOANS cannot be Account_From\n"
+            exception_value_error_ind = True
 
         self.account_to = str(self.account_to)
         # try:

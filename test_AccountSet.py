@@ -8,7 +8,7 @@ def compound_loan_A():
     A.createAccount("test loan A",balance=1100,min_balance=0,max_balance=1100,account_type="loan",
                     billing_start_date_YYYYMMDD="20240101",interest_type="compound",apr=0.1,interest_cadence="monthly",
                     minimum_payment=50,
-                    principal_balance=1000,accrued_interest=100)
+                    principal_balance=1000,interest_balance=100)
     return A.accounts
 
 def compound_loan_A_no_interest():
@@ -16,7 +16,7 @@ def compound_loan_A_no_interest():
     A.createAccount("test loan A",balance=1000,min_balance=0,max_balance=1100,account_type="loan",
                     billing_start_date_YYYYMMDD="20240101",interest_type="compound",apr=0.1,interest_cadence="monthly",
                     minimum_payment=50,
-                    principal_balance=1000,accrued_interest=0)
+                    principal_balance=1000,interest_balance=0)
     return A.accounts
 
 def compound_loan_B():
@@ -25,7 +25,7 @@ def compound_loan_B():
                     billing_start_date_YYYYMMDD="20240101", interest_type="compound", apr=0.01,
                     interest_cadence="monthly",
                     minimum_payment=50,
-                    principal_balance=1500, accrued_interest=100)
+                    principal_balance=1500, interest_balance=100)
     return A.accounts
 
 def compound_loan_B_no_interest():
@@ -34,7 +34,7 @@ def compound_loan_B_no_interest():
                     billing_start_date_YYYYMMDD="20240101", interest_type="compound", apr=0.01,
                     interest_cadence="monthly",
                     minimum_payment=50,
-                    principal_balance=1500, accrued_interest=0)
+                    principal_balance=1500, interest_balance=0)
     return A.accounts
 
 def compound_loan_C():
@@ -43,7 +43,7 @@ def compound_loan_C():
                     billing_start_date_YYYYMMDD="20240101", interest_type="compound", apr=0.05,
                     interest_cadence="monthly",
                     minimum_payment=50,
-                    principal_balance=2500, accrued_interest=100)
+                    principal_balance=2500, interest_balance=100)
     return A.accounts
 
 def compound_loan_C_no_interest():
@@ -52,7 +52,7 @@ def compound_loan_C_no_interest():
                     billing_start_date_YYYYMMDD="20240101", interest_type="compound", apr=0.05,
                     interest_cadence="monthly",
                     minimum_payment=50,
-                    principal_balance=2500, accrued_interest=0)
+                    principal_balance=2500, interest_balance=0)
     return A.accounts
 
 def checking():
@@ -131,7 +131,7 @@ class TestAccountSet:
                 max_balance=100,
                 account_type='prev stmt bal',
                 billing_start_date_YYYYMMDD='20000101',
-                interest_type='compound',
+                interest_type=None,
                 apr=0.01,
                 interest_cadence='monthly',
                 minimum_payment=50
@@ -158,7 +158,7 @@ class TestAccountSet:
                 max_balance=100,
                 account_type='prev stmt bal',
                 billing_start_date_YYYYMMDD='20000101',
-                interest_type='compound',
+                interest_type=None,
                 apr=0.01,
                 interest_cadence='monthly',
                 minimum_payment=50
@@ -239,7 +239,7 @@ class TestAccountSet:
                 max_balance=1000,
                 account_type='prev stmt bal',
                 billing_start_date_YYYYMMDD='20000101',
-                interest_type='compound',
+                interest_type=None,
                 apr=0.01,
                 interest_cadence='monthly',
                 minimum_payment=50
@@ -293,7 +293,7 @@ class TestAccountSet:
                 max_balance=100,
                 account_type='prev stmt bal',
                 billing_start_date_YYYYMMDD='20000101',
-                interest_type='compound',
+                interest_type=None,
                 apr=0.01,
                 interest_cadence='monthly',
                 minimum_payment=50
@@ -320,7 +320,7 @@ class TestAccountSet:
                 max_balance=110,
                 account_type='prev stmt bal',
                 billing_start_date_YYYYMMDD='20000101',
-                interest_type='compound',
+                interest_type=None,
                 apr=0.01,
                 interest_cadence='monthly',
                 minimum_payment=50
@@ -391,7 +391,7 @@ class TestAccountSet:
                 max_balance=1000,
                 account_type='prev stmt bal',
                 billing_start_date_YYYYMMDD='20000101',
-                interest_type='compound',
+                interest_type=None,
                 apr=0.01,
                 interest_cadence='monthly',
                 minimum_payment=50
@@ -678,7 +678,7 @@ class TestAccountSet:
     #                                        minimum_payment=1,
     #                                        previous_statement_balance=None,
     #                                        principal_balance=900,
-    #                                        accrued_interest=100,
+    #                                        interest_balance=100,
     #                                        print_debug_messages=False)
     #
     #     # create a non-loan and non-credit type account
@@ -702,7 +702,7 @@ class TestAccountSet:
     #                                    minimum_payment=0,
     #                                    previous_statement_balance=0,
     #                                    principal_balance=None,
-    #                                    accrued_interest=None, print_debug_messages=True
+    #                                    interest_balance=None, print_debug_messages=True
     #                                    )
     #     self.assertEqual('<class \'AccountSet.AccountSet\'>', str(type(test_account_set)))
     #
@@ -719,7 +719,7 @@ class TestAccountSet:
     #                                    minimum_payment=1,
     #                                    previous_statement_balance=None,
     #                                    principal_balance=900,
-    #                                    accrued_interest=100
+    #                                    interest_balance=100
     #                                    )
     #     self.assertEqual('<class \'AccountSet.AccountSet\'>', str(type(test_account_set)))
     #
@@ -736,7 +736,7 @@ class TestAccountSet:
     #                                        minimum_payment=1,
     #                                        previous_statement_balance=None,
     #                                        principal_balance=None,
-    #                                        accrued_interest=100
+    #                                        interest_balance=100
     #                                        )
     #
     #     with self.assertRaises(ValueError):
@@ -752,7 +752,7 @@ class TestAccountSet:
     #                                        minimum_payment=1,
     #                                        previous_statement_balance=None,
     #                                        principal_balance=900,
-    #                                        accrued_interest=None
+    #                                        interest_balance=None
     #                                        )
     #
     #     with self.assertRaises(ValueError):
@@ -768,7 +768,7 @@ class TestAccountSet:
     #                                        minimum_payment=0,
     #                                        previous_statement_balance=None,
     #                                        principal_balance=None,
-    #                                        accrued_interest=None
+    #                                        interest_balance=None
     #                                        )
 
     # def test_allocate_additional_loan_payments__invalid_inputs(self,account_set,amount,expected_exception):
@@ -803,22 +803,23 @@ class TestAccountSet:
                                        minimum_payment=None,
                                        previous_statement_balance=None,
                                        principal_balance=None,
-                                       accrued_interest=None,
+                                       interest_balance=None,
                                        print_debug_messages=False)
 
         test_account_set.createAccount(name="test credit",
-                                       balance=1000.0,
+                                       balance=1500.0,
                                        min_balance=0.0,
                                        max_balance=20000.0,
                                        account_type='credit',
                                        billing_start_date_YYYYMMDD='20000107',
-                                       interest_type='compound',
+                                       interest_type=None,
                                        apr=0.2479,
                                        interest_cadence='monthly',
                                        minimum_payment=20.0,
                                        previous_statement_balance=500.0,
+                                       current_statement_balance=1000.0,
                                        principal_balance=None,
-                                       accrued_interest=None,
+                                       interest_balance=None,
                                        print_debug_messages=False)
 
         test_account_set.createAccount(name="test loan",
@@ -833,7 +834,7 @@ class TestAccountSet:
                                        minimum_payment='223.19',
                                        previous_statement_balance=None,
                                        principal_balance=900.0,
-                                       accrued_interest=100.0,
+                                       interest_balance=100.0,
                                        print_debug_messages=False)
 
         test_account_set.executeTransaction(Account_From=Account_From, Account_To=Account_To, Amount=Amount, income_flag=income_flag)
@@ -859,7 +860,7 @@ class TestAccountSet:
     #                                    minimum_payment=None,
     #                                    previous_statement_balance=None,
     #                                    principal_balance=None,
-    #                                    accrued_interest=None,
+    #                                    interest_balance=None,
     #                                    print_debug_messages=False)
     #
     #     test_account_set.createAccount(name="test credit",
@@ -874,7 +875,7 @@ class TestAccountSet:
     #                                    minimum_payment=20.0,
     #                                    previous_statement_balance=500.0,
     #                                    principal_balance=None,
-    #                                    accrued_interest=None,
+    #                                    interest_balance=None,
     #                                    print_debug_messages=False)
     #
     #     test_account_set.createAccount(name="test loan",
@@ -889,7 +890,7 @@ class TestAccountSet:
     #                                    minimum_payment='223.19',
     #                                    previous_statement_balance=None,
     #                                    principal_balance=900.0,
-    #                                    accrued_interest=100.0,
+    #                                    interest_balance=100.0,
     #                                    print_debug_messages=False)
     #
     #     with pytest.raises(expected_exception):
@@ -898,7 +899,7 @@ class TestAccountSet:
 
 
     @pytest.mark.parametrize(
-        "name,balance,min_balance,max_balance,account_type,billing_start_date_YYYYMMDD,interest_type,apr,interest_cadence,minimum_payment,previous_statement_balance,principal_balance,accrued_interest,expected_exception",
+        "name,balance,min_balance,max_balance,account_type,billing_start_date_YYYYMMDD,interest_type,apr,interest_cadence,minimum_payment,previous_statement_balance,principal_balance,interest_balance,expected_exception",
         [('test loan',
           100,
           0,
@@ -971,7 +972,7 @@ class TestAccountSet:
          #  minimum_payment,
          #  previous_statement_balance,
          #  principal_balance,
-         #  accrued_interest
+         #  interest_balance
          #  , ValueError),  # missing interest for type loan
 
          ])
@@ -987,7 +988,7 @@ class TestAccountSet:
           minimum_payment,
           previous_statement_balance,
           principal_balance,
-          accrued_interest,expected_exception):
+          interest_balance,expected_exception):
 
         with pytest.raises(expected_exception):
             A = AccountSet.AccountSet([])
@@ -1003,7 +1004,7 @@ class TestAccountSet:
               minimum_payment,
               previous_statement_balance,
               principal_balance,
-              accrued_interest)
+              interest_balance)
 
 
 
@@ -1035,13 +1036,14 @@ class TestAccountSet:
                                        max_balance=0,
                                        account_type='credit',
                                        billing_start_date_YYYYMMDD='20220101',
-                                       interest_type='compound',
+                                       interest_type=None,
                                        apr=0.05,
                                        interest_cadence='monthly',
                                        minimum_payment=0,
                                        previous_statement_balance=0,
+                                       current_statement_balance=0,
                                        principal_balance=None,
-                                       accrued_interest=None
+                                       interest_balance=None
                                        )
 
         # create a loan type account
@@ -1057,7 +1059,7 @@ class TestAccountSet:
                                        minimum_payment=1,
                                        previous_statement_balance=None,
                                        principal_balance=900,
-                                       accrued_interest=100
+                                       interest_balance=100
                                        )
 
         str(test_str_account_set)

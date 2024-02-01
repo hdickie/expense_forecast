@@ -9,13 +9,18 @@ def generate_date_sequence(start_date_YYYYMMDD, num_days, cadence):
     start_date = datetime.datetime.strptime(start_date_YYYYMMDD, '%Y%m%d')
     end_date = start_date + datetime.timedelta(days=num_days)
 
+    if num_days == 0:
+        return [start_date_YYYYMMDD]
+
     if cadence.lower() == "once":
         return pd.Series(start_date_YYYYMMDD)
     elif cadence.lower() == "daily":
         return_series = pd.date_range(start_date, end_date, freq='D')
     elif cadence.lower() == "weekly":
+        #todo returns empty when first and last are same
         return_series = pd.date_range(start_date, end_date, freq='W')
     elif cadence.lower() == "semiweekly":
+        # todo returns empty when first and last are same
         #return_series = pd.date_range(start_date, end_date, freq='2W')
         day_delta = int(start_date.strftime('%d')) - 2 #not sure why this is 2 when others needed 1 but testing says so
         start_date = start_date - datetime.timedelta(days=day_delta)

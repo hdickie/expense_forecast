@@ -66,17 +66,17 @@ class Account:
         >>> Account()
         not correct response
         """
-        # self.name=name
-        # self.balance=balance
-        # self.min_balance=min_balance
-        # self.max_balance=max_balance
-        # self.account_type=account_type
-        # self.billing_start_date_YYYYMMDD=billing_start_date_YYYYMMDD
-        # self.interest_type=interest_type
-        # self.apr=apr
-        # self.interest_cadence=interest_cadence
-        # self.minimum_payment=minimum_payment
-        # self.primary_checking_ind=primary_checking_ind
+        self.name=name
+        self.balance=balance
+        self.min_balance=min_balance
+        self.max_balance=max_balance
+        self.account_type=account_type
+        self.billing_start_date_YYYYMMDD=billing_start_date_YYYYMMDD
+        self.interest_type=interest_type
+        self.apr=apr
+        self.interest_cadence=interest_cadence
+        self.minimum_payment=minimum_payment
+        self.primary_checking_ind=primary_checking_ind
 
         exception_type_error_ind=False
         exception_type_error_message_string=""
@@ -184,22 +184,37 @@ class Account:
 
         self.interest_cadence=interest_cadence
 
-        if account_type.lower() in ['prev stmt bal','principal balance','savings']:
+        if account_type.lower() in ['prev stmt bal']:
             if interest_cadence is not None:
                 self.interest_cadence=str(interest_cadence)
             else:
-                exception_value_error_message_string += "For account_type = prev stmt bal, principal balance, or savings, Account.interest_cadence should be one of: daily, monthly, quarterly, or yearly.\n"
+                exception_value_error_message_string += "For account_type = prev stmt bal, Account.interest_cadence should be monthly.\n"
+                exception_value_error_message_string += "Name:"+name+"\n"
+                exception_value_error_message_string += "Value was:" + str(interest_cadence)+"\n"
+                exception_value_error_ind = True
+        #
+        # else:
+        #     if interest_cadence is not None and interest_cadence != 'None':
+        #         exception_value_error_message_string += "For account_type other than prev stmt bal, principal balance, or savings, Account.interest_cadence should be None.\n"
+        #         exception_value_error_message_string += 'Value was:' + str(interest_cadence)+"\n"
+        #         exception_value_error_ind=True
+
+        if account_type.lower() in ['principal balance','savings']:
+            if interest_cadence is not None:
+                self.interest_cadence=str(interest_cadence)
+            else:
+                exception_value_error_message_string += "For account_type = principal balance, or savings, Account.interest_cadence should be one of: daily, monthly, quarterly, or yearly.\n"
                 exception_value_error_message_string += "Name:"+name+"\n"
                 exception_value_error_message_string += "Value was:" + str(interest_cadence)+"\n"
                 exception_value_error_ind = True
 
-        else:
+        if account_type.lower() not in ['prev stmt bal', 'principal balance', 'savings']:
             if interest_cadence is not None and interest_cadence != 'None':
-                exception_value_error_message_string += "For account_type other than prev stmt bal, principal balance, or savings, Account.interest_cadence should be None.\n"
+                exception_value_error_message_string += "For account_type other than principal balance, or savings, Account.interest_cadence should be None.\n"
                 exception_value_error_message_string += 'Value was:' + str(interest_cadence)+"\n"
                 exception_value_error_ind=True
 
-        if account_type.lower() in ['prev stmt bal','principal balance','savings']:
+        if account_type.lower() in ['principal balance','investment']:
             self.interest_type=str(interest_type)
 
             if self.interest_type.lower() not in ['simple','compound']:
@@ -207,10 +222,11 @@ class Account:
                 exception_value_error_message_string += 'Value was:' + str(interest_type) + "\n"
                 exception_value_error_ind = True
 
-        else:
+        if account_type.lower() not in ['principal balance', 'savings']:
             if interest_type is not None and interest_type != 'None':
-                exception_value_error_message_string += "For types other than prev stmt bal, principal balance, or savings, Account.interest_type should be None.\n"
-                exception_value_error_message_string += 'Value was:' + str(interest_type)+"\n"
+                exception_value_error_message_string += "For types other than prev stmt bal, principal balance, or investment, Account.interest_type should be None.\n"
+                exception_value_error_message_string += 'Account_Type was:' + str(account_type) + "\n"
+                exception_value_error_message_string += 'Interest_Type was:' + str(interest_type)+"\n"
                 exception_value_error_ind=True
 
         if account_type.lower() in ['prev stmt bal','principal balance','savings']:

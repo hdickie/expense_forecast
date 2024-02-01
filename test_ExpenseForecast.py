@@ -24,14 +24,24 @@ logger = setup_logger('test_ExpenseForecast', './log/test_ExpenseForecast.log', 
 from log_methods import display_test_result
 
 def checking_acct_list(balance):
-    return [Account.Account('Checking',balance,0,100000,'checking',None,None,None,None,None)]
+    return [Account.Account('Checking',balance,0,100000,'checking',primary_checking_ind=True)]
 
 def credit_acct_list(curr_balance,prev_balance,apr):
     A = AccountSet.AccountSet([])
-    A.createAccount('Credit', curr_balance, 0, 20000, 'credit', '20000102', 'compound', apr, 'monthly', 40,
-                      prev_balance,
+    A.createAccount(name='Credit',
+                    balance=curr_balance+prev_balance,
+                    min_balance=0,
+                    max_balance=20000,
+                    account_type='credit',
+                    billing_start_date_YYYYMMDD='20000102',
+                    interest_type=None,
+                    apr=apr,
+                    interest_cadence='monthly',
+                    minimum_payment=40,
+                      previous_statement_balance=prev_balance,
+                    current_statement_balance=curr_balance,
                       principal_balance=None,
-                      accrued_interest=None,
+                      interest_balance=None,
                       print_debug_messages=True,
                       raise_exceptions=True)
     return A.accounts
@@ -39,10 +49,20 @@ def credit_acct_list(curr_balance,prev_balance,apr):
 
 def credit_bsd12_acct_list(prev_balance,curr_balance,apr):
     A = AccountSet.AccountSet([])
-    A.createAccount('Credit', curr_balance, 0, 20000, 'credit', '20000112', 'compound', apr, 'monthly', 40,
-                    prev_balance,
+    A.createAccount(name='Credit',
+                    balance=curr_balance + prev_balance,
+                    min_balance=0,
+                    max_balance=20000,
+                    account_type='credit',
+                    billing_start_date_YYYYMMDD='20000112',
+                    interest_type=None,
+                    apr=apr,
+                    interest_cadence='monthly',
+                    minimum_payment=40,
+                    previous_statement_balance=prev_balance,
+                    current_statement_balance=curr_balance,
                     principal_balance=None,
-                    accrued_interest=None,
+                    interest_balance=None,
                     print_debug_messages=True,
                     raise_exceptions=True)
     return A.accounts
@@ -64,7 +84,20 @@ def income_rule_list():
 
 def non_trivial_loan(name,pbal,interest,apr):
     A = AccountSet.AccountSet([])
-    A.createAccount(name,pbal + interest,0,9999,'loan','20000102','simple',apr,'daily',50,None,pbal,interest)
+    A.createAccount(name=name,
+                    balance=pbal + interest,
+                    min_balance=0,
+                    max_balance=9999,
+                    account_type='loan',
+                    billing_start_date_YYYYMMDD='20000102',
+                    interest_type='simple',
+                    apr=apr,
+                    interest_cadence='daily',
+                    minimum_payment=50,
+                    previous_statement_balance=None,
+                    current_statement_balance=None,
+                    principal_balance=pbal,
+                    interest_balance=interest)
 
     return A.accounts
 
@@ -241,6 +274,11 @@ class TestExpenseForecastMethods:
         print(f.T.to_string())
 
         try:
+            log_in_color(logger, 'white', 'debug', '###################################')
+            log_in_color(logger, 'white', 'debug', f.to_string())
+            log_in_color(logger, 'white', 'debug','###################################')
+            log_in_color(logger,'white','debug',f.T.to_string())
+            log_in_color(logger, 'white', 'debug', '###################################')
             display_test_result(logger,test_description, d)
         except Exception as e:
             raise e
@@ -290,6 +328,13 @@ class TestExpenseForecastMethods:
                                   'Checking': [0, 0, 0],
                                   'Credit: Curr Stmt Bal': [0, 0, 0],
                                   'Credit: Prev Stmt Bal': [0, 0, 0],
+                                  'Marginal Interest': [0, 0, 0],
+                                  'Net Gain': [0, 0, 0],
+                                  'Net Loss': [0, 0, 0],
+                                  'Net Worth': [0, 0, 0],
+                                  'Loan Total': [0, 0, 0],
+                                  'CC Debt Total': [0, 0, 0],
+                                  'Liquid Total': [0, 0, 0],
                                   'Memo': ['', '', '']
                               })
                               ),
@@ -307,6 +352,13 @@ class TestExpenseForecastMethods:
                                 'Checking': [0, 0, 0],
                                 'Credit: Curr Stmt Bal': [0, 0, 0],
                                 'Credit: Prev Stmt Bal': [0, 0, 0],
+                                    'Marginal Interest': [0, 0, 0],
+                                    'Net Gain': [0, 0, 0],
+                                    'Net Loss': [0, 0, 0],
+                                    'Net Worth': [0, 0, 0],
+                                    'Loan Total': [0, 0, 0],
+                                    'CC Debt Total': [0, 0, 0],
+                                    'Liquid Total': [0, 0, 0],
                                 'Memo': ['', 'income (Checking +$100.0); test txn (Checking -$100.0);', '']
                                 })
                                 ),
@@ -324,6 +376,13 @@ class TestExpenseForecastMethods:
                                     'Checking': [2000, 1975, 1975],
                                     'Credit: Curr Stmt Bal': [25, 0, 0],
                                     'Credit: Prev Stmt Bal': [0, 0, 0],
+                                    'Marginal Interest': [0, 0, 0],
+                                    'Net Gain': [0, 0, 0],
+                                    'Net Loss': [0, 0, 0],
+                                    'Net Worth': [1975, 1975, 1975],
+                                    'Loan Total': [0, 0, 0],
+                                    'CC Debt Total': [25, 0, 0],
+                                    'Liquid Total': [2000, 1975, 1975],
                                     'Memo': ['', 'cc min payment (Credit: Curr Stmt Bal -$25.0);', '']
                                 })
                                 ),
@@ -342,6 +401,13 @@ class TestExpenseForecastMethods:
                                     'Checking': [2000, 1960, 1960],
                                     'Credit: Curr Stmt Bal': [0, 0, 0],
                                     'Credit: Prev Stmt Bal': [1000, 964.17, 964.17],
+                                    'Marginal Interest': [0, 4.17, 0],
+                                    'Net Gain': [0, 0, 0],
+                                    'Net Loss': [0, 4.17, 0],
+                                    'Net Worth': [1000, 995.83, 995.83],
+                                    'Loan Total': [0, 0, 0],
+                                    'CC Debt Total': [1000, 964.17, 964.17],
+                                    'Liquid Total': [2000, 1960, 1960],
                                     'Memo': ['', 'cc interest (Checking -$4.17); cc min payment (Credit: Prev Stmt Bal -$35.83);', '']
                                 })
                                 ),
@@ -359,6 +425,13 @@ class TestExpenseForecastMethods:
                                     'Checking': [2000, 1940, 1940],
                                     'Credit: Curr Stmt Bal': [0, 0, 0],
                                     'Credit: Prev Stmt Bal': [3000, 2970, 2970],
+                                    'Marginal Interest': [0, 30, 0],
+                                    'Net Gain': [0, 0, 0],
+                                    'Net Loss': [0, 30, 0],
+                                    'Net Worth': [-1000, -1030, -1030],
+                                    'Loan Total': [0, 0, 0],
+                                    'CC Debt Total': [3000, 2970, 2970],
+                                    'Liquid Total': [2000, 1940, 1940],
                                     'Memo': ['', 'cc interest (Checking -$30.0); cc min payment (Credit: Prev Stmt Bal -$30.0);', '']
                                 })
                                 ),
@@ -377,6 +450,13 @@ class TestExpenseForecastMethods:
                             'Checking': [0, 0, 0],
                             'Credit: Curr Stmt Bal': [0, 0, 0],
                             'Credit: Prev Stmt Bal': [0, 0, 0],
+                                'Marginal Interest': [0, 0, 0],
+                                'Net Gain': [0, 0, 0],
+                                'Net Loss': [0, 0, 0],
+                                'Net Worth': [0, 0, 0],
+                                'Loan Total': [0, 0, 0],
+                                'CC Debt Total': [0, 0, 0],
+                                'Liquid Total': [0, 0, 0],
                             'Memo': ['', '', '']
                             })
                             ),
@@ -399,6 +479,13 @@ class TestExpenseForecastMethods:
                     'Checking': [0, 0, 0],
                     'Credit: Curr Stmt Bal': [0, 0, 0],
                     'Credit: Prev Stmt Bal': [0, 0, 0],
+                    'Marginal Interest': [0, 0, 0],
+                    'Net Gain': [0, 0, 0],
+                    'Net Loss': [0, 0, 0],
+                    'Net Worth': [0, 0, 0],
+                    'Loan Total': [0, 0, 0],
+                    'CC Debt Total': [0, 0, 0],
+                    'Liquid Total': [0, 0, 0],
                     'Memo': ['', '', '']
                 })
         ),
@@ -420,6 +507,13 @@ class TestExpenseForecastMethods:
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103'],
                     'Checking': [100, 0, 0],
+                    'Marginal Interest': [0, 0, 0],
+                    'Net Gain': [0, 0, 0],
+                    'Net Loss': [0, 100, 0],
+                    'Net Worth': [100, 0, 0],
+                    'Loan Total': [0, 0, 0],
+                    'CC Debt Total': [0, 0, 0],
+                    'Liquid Total': [100, 0, 0],
                     'Memo': ['', 'this should be executed (Checking -$100.0);', '']
                 })
         ),
@@ -444,6 +538,13 @@ class TestExpenseForecastMethods:
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103'],
                     'Checking': [100, 0, 0],
+                    'Marginal Interest': [0, 0, 0],
+                    'Net Gain': [0, 0, 0],
+                    'Net Loss': [0, 100, 0],
+                    'Net Worth': [100, 0, 0],
+                    'Loan Total': [0, 0, 0],
+                    'CC Debt Total': [0, 0, 0],
+                    'Liquid Total': [100, 0, 0],
                     'Memo': ['', 'this should be executed (Checking -$100.0);', '']
                 })
         ),
@@ -466,6 +567,13 @@ class TestExpenseForecastMethods:
                     'Checking': [0, 0, 0],
                     'Credit: Curr Stmt Bal': [0, 0, 0],
                     'Credit: Prev Stmt Bal': [0, 0, 0],
+                    'Marginal Interest': [0, 0, 0],
+                    'Net Gain': [0, 0, 0],
+                    'Net Loss': [0, 0, 0],
+                    'Net Worth': [0, 0, 0],
+                    'Loan Total': [0, 0, 0],
+                    'CC Debt Total': [0, 0, 0],
+                    'Liquid Total': [0, 0, 0],
                     'Memo': ['', '', '']
                 })
         ),
@@ -488,6 +596,13 @@ class TestExpenseForecastMethods:
                     'Checking': [2000, 2000, 2000],
                     'Credit: Curr Stmt Bal': [0, 0, 0],
                     'Credit: Prev Stmt Bal': [0, 0, 0],
+                    'Marginal Interest': [0, 0, 0],
+                    'Net Gain': [0, 0, 0],
+                    'Net Loss': [0, 0, 0],
+                    'Net Worth': [2000, 2000, 2000],
+                    'Loan Total': [0, 0, 0],
+                    'CC Debt Total': [0, 0, 0],
+                    'Liquid Total': [2000, 2000, 2000],
                     'Memo': ['', '', '']
                 })
         ),
@@ -511,6 +626,13 @@ class TestExpenseForecastMethods:
                     'Checking': [2000, 1200, 1200],
                     'Credit: Curr Stmt Bal': [500, 200, 200],
                     'Credit: Prev Stmt Bal': [500, 0, 0],
+                    'Marginal Interest': [0, 0, 0],
+                    'Net Gain': [0, 0, 0],
+                    'Net Loss': [0, 800, 0],
+                    'Net Worth': [1000, 1000, 1000],
+                    'Loan Total': [0, 0, 0],
+                    'CC Debt Total': [1000, 200, 200],
+                    'Liquid Total': [2000, 1200, 1200],
                     'Memo': ['', 'test pay all prev part of curr (Checking -$800.0);  additional cc payment (Credit: Curr Stmt Bal $300.0);  additional cc payment (Credit: Prev Stmt Bal $500.0);', '']
                 })
         ),
@@ -534,6 +656,13 @@ class TestExpenseForecastMethods:
                     'Checking': [200, 0, 0],
                     'Credit: Curr Stmt Bal': [500, 500, 500],
                     'Credit: Prev Stmt Bal': [500, 300, 300],
+                    'Marginal Interest': [0, 0, 0],
+                    'Net Gain': [0, 0, 0],
+                    'Net Loss': [0, 0, 0],
+                    'Net Worth': [-800, -800, -800],
+                    'Loan Total': [0, 0, 0],
+                    'CC Debt Total': [1000, 800, 800],
+                    'Liquid Total': [200, 0, 0],
                     'Memo': ['', 'additional cc payment test (Checking -$200.0);  additional cc payment (Credit: Prev Stmt Bal $200.0);', '']
                 })
         ),
@@ -558,6 +687,13 @@ class TestExpenseForecastMethods:
                     'Checking': [40, 0, 0],
                     'Credit: Curr Stmt Bal': [500, 0, 0],
                     'Credit: Prev Stmt Bal': [500, 962.08, 962.08],
+                    'Marginal Interest': [0, 2.08, 0],
+                    'Net Gain': [0, 0, 0],
+                    'Net Loss': [0, 2.08, 0],
+                    'Net Worth': [-960, -962.08, -962.08],
+                    'Loan Total': [0, 0, 0],
+                    'CC Debt Total': [1000, 962.08, 962.08],
+                    'Liquid Total': [40, 0, 0],
                     'Memo': ['', 'cc interest (Checking -$2.08); cc min payment (Credit: Prev Stmt Bal -$37.92);', '']
                 })
         ),
@@ -582,6 +718,13 @@ class TestExpenseForecastMethods:
                     'Checking': [1000, 0, 0],
                     'Credit: Curr Stmt Bal': [1500, 1000, 1000],
                     'Credit: Prev Stmt Bal': [500, 0, 0],
+                    'Marginal Interest': [0, 0, 0],
+                    'Net Gain': [0, 0, 0],
+                    'Net Loss': [0, 1000, 0],
+                    'Net Worth': [-1000, -1000, -1000],
+                    'Loan Total': [0, 0, 0],
+                    'CC Debt Total': [2000, 1000, 1000],
+                    'Liquid Total': [1000, 0, 0],
                     'Memo': ['', 'partial cc payment (Checking -$1000.0);  additional cc payment (Credit: Curr Stmt Bal $500.0);  additional cc payment (Credit: Prev Stmt Bal $500.0);', '']
                 })
         ), # 12/21 4AM this is coded correctly and the test fail is bc of algo
@@ -624,9 +767,16 @@ class TestExpenseForecastMethods:
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103', '20000104'],
                     'Checking': [500, 400, 300, 0],
+                    'Marginal Interest': [0, 0, 0, 0],
+                    'Net Gain': [0, 0, 0, 0],
+                    'Net Loss': [0, 100, 100, 300],
+                    'Net Worth': [500, 400, 300, 0],
+                    'Loan Total': [0, 0, 0, 0],
+                    'CC Debt Total': [0, 0, 0, 0],
+                    'Liquid Total': [500, 400, 300, 0],
                     'Memo': ['', 'SPEND daily p1 txn (Checking -$100.0);',
-                             'SPEND daily p1 txn (Checking -$100.0);',
-                             '200 income on 1/4 (Checking +$200.0); SPEND daily p1 txn (Checking -$100.0); SPEND p2 txn deferred from 1/2 to 1/4 (Checking -$400.0);']
+                             'SPEND daily p1 txn 2 (Checking -$100.0);',
+                             '200 income on 1/4 (Checking +$200.0); SPEND daily p1 txn 3 (Checking -$100.0); SPEND p2 txn deferred from 1/2 to 1/4 (Checking -$400.0);']
                 })
         ),
 
@@ -659,6 +809,13 @@ class TestExpenseForecastMethods:
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103', '20000104', '20000105'],
                     'Checking': [400, 400, 200, 0, 0],
+                    'Marginal Interest': [0, 0, 0, 0, 0],
+                    'Net Gain': [0, 0, 0, 0, 0],
+                    'Net Loss': [0, 0, 200, 200, 0],
+                    'Net Worth': [400, 400, 200, 0, 0],
+                    'Loan Total': [0, 0, 0, 0, 0],
+                    'CC Debt Total': [0, 0, 0, 0, 0],
+                    'Liquid Total': [400, 400, 200, 0, 0],
                     'Memo': ['', '', 'pay reduced amount (Checking -$200.0);', 'pay 200 after reduced amt txn (Checking -$200.0);', '']
                 })
         ),  #this test cas coded correctly. the fail is bc of algo. 12/12 5:21AM
@@ -694,6 +851,13 @@ class TestExpenseForecastMethods:
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103', '20000104', '20000105', '20000106'],
                     'Checking': [2000, 1800, 1600, 1400, 1200, 1200],
+                    'Marginal Interest': [0, 0, 0, 0, 0, 0],
+                    'Net Gain': [0, 0, 0, 0, 0, 0],
+                    'Net Loss': [0, 200, 200, 200, 200, 0],
+                    'Net Worth': [2000, 1800, 1600, 1400, 1200, 1200],
+                    'Loan Total': [0, 0, 0, 0, 0, 0],
+                    'CC Debt Total': [0, 0, 0, 0, 0, 0],
+                    'Liquid Total': [2000, 1800, 1600, 1400, 1200, 1200],
                     'Memo': ['',
                              'p1 daily txn 1 (Checking -$100.0); p2 daily txn 1/2/00 (Checking -$100.0);',
                              'p1 daily txn 2 (Checking -$100.0); p2 daily txn 1/3/00 (Checking -$100.0);',
@@ -743,6 +907,13 @@ class TestExpenseForecastMethods:
             pd.DataFrame({
                 'Date': ['20000101', '20000102', '20000103', '20000104', '20000105', '20000106'],
                 'Checking': [2000, 1700, 1400, 1100, 800, 800],
+                'Marginal Interest': [0, 0, 0, 0, 0, 0],
+                    'Net Gain': [0, 0, 0, 0, 0, 0],
+                    'Net Loss': [0, 300, 300, 300, 300, 0],
+                    'Net Worth': [2000, 1700, 1400, 1100, 800, 800],
+                    'Loan Total': [0, 0, 0, 0, 0, 0],
+                    'CC Debt Total': [0, 0, 0, 0, 0, 0],
+                    'Liquid Total': [2000, 1700, 1400, 1100, 800, 800],
                 'Memo': ['',
                          'p1 daily txn 1/2/00 (Checking -$100.0); p2 daily txn 1/2/00 (Checking -$100.0); p3 daily txn 1/2/00 (Checking -$100.0);',
                          'p1 daily txn 1/3/00 (Checking -$100.0); p2 daily txn 1/3/00 (Checking -$100.0); p3 daily txn 1/3/00 (Checking -$100.0);',
@@ -816,6 +987,13 @@ class TestExpenseForecastMethods:
                     'Loan B: Interest': [100, 50.14, 50.28],
                     'Loan C: Principal Balance': [1000, 1000, 1000],
                     'Loan C: Interest': [100, 50.03, 50.06],
+                    'Marginal Interest': [0, 0.44, 0.44],
+                    'Net Gain': [0, 0, 0],
+                    'Net Loss': [0, 0, 0],
+                    'Net Worth': [1700, 1699.56, 1699.12],
+                    'Loan Total': [3300, 3140.44, 3140.88],
+                    'CC Debt Total': [0, 0, 0],
+                    'Liquid Total': [5000, 4840, 4840],
                     'Memo': ['', 'loan min payment (Loan A: Interest -$50.0);  loan min payment (Loan B: Interest -$50.0);  loan min payment (Loan C: Interest -$50.0);  additional loan payment (Loan A: Interest -$10.0);', '']
                 })
         ),
@@ -838,11 +1016,18 @@ class TestExpenseForecastMethods:
              'Date': ['20000101', '20000102', '20000103'],
              'Checking': [5000, 4740, 4740],
              'Loan A: Principal Balance': [1000, 940.27, 940.27],
-             'Loan A: Interest': [100, 0.0, 0.27],
+             'Loan A: Interest': [100, 0.0, 0.26],
              'Loan B: Principal Balance': [1000, 1000, 1000],
              'Loan B: Interest': [100, 50.14, 50.28],
              'Loan C: Principal Balance': [1000, 1000, 1000],
              'Loan C: Interest': [100, 50.03, 50.06],
+             'Marginal Interest': [0, 0.44, 0.43],
+             'Net Gain': [0, 0, 0],
+             'Net Loss': [0, 0, 0],
+             'Net Worth': [1700, 1699.56, 1699.13],
+             'Loan Total': [3300, 3040.44, 3040.87],
+             'CC Debt Total': [0, 0, 0],
+             'Liquid Total': [5000, 4740, 4740],
              'Memo': ['', 'loan min payment (Loan A: Interest -$50.0);  loan min payment (Loan B: Interest -$50.0);  loan min payment (Loan C: Interest -$50.0);  additional loan payment (Loan A: Principal Balance -$59.73);  additional loan payment (Loan A: Interest -$50.27);', '']
          })
          ),
@@ -871,6 +1056,13 @@ class TestExpenseForecastMethods:
              'Loan B: Interest': [100, 43.52, 43.66],
              'Loan C: Principal Balance': [1000, 1000, 1000],
              'Loan C: Interest': [ 100, 50.03, 50.06 ],
+             'Marginal Interest': [0, 0, 0],
+             'Net Gain': [0, 0, 0],
+             'Net Loss': [0, 0, 0],
+             'Net Worth': [0, 0, 0],
+             'Loan Total': [0, 0, 0],
+             'CC Debt Total': [0, 0, 0],
+             'Liquid Total': [0, 0, 0],
              'Memo': ['', 'loan min payment (Loan A: Interest -$50.0);  loan min payment (Loan B: Interest -$50.0);  loan min payment (Loan C: Interest -$50.0);  additional loan payment (Loan A: Principal Balance -$503.11);  additional loan payment (Loan A: Interest -$50.27);  additional loan payment (Loan B: Interest -$6.62);', '']
          })
          ), #todo double check this math
@@ -899,6 +1091,13 @@ class TestExpenseForecastMethods:
              'Loan B: Interest': [100, 9.52, 9.66],
              'Loan C: Principal Balance': [1000, 1000, 1000],
              'Loan C: Interest': [100, 50.03,50.06],
+             'Marginal Interest': [0, 0, 0],
+             'Net Gain': [0, 0, 0],
+             'Net Loss': [0, 0, 0],
+             'Net Worth': [0, 0, 0],
+             'Loan Total': [0, 0, 0],
+             'CC Debt Total': [0, 0, 0],
+             'Liquid Total': [0, 0, 0],
              'Memo': ['', 'loan min payment (Loan A: Interest -$50.0);  loan min payment (Loan B: Interest -$50.0);  loan min payment (Loan C: Interest -$50.0);  additional loan payment (Loan A: Principal Balance -$519.11);  additional loan payment (Loan A: Interest -$50.27);  additional loan payment (Loan B: Interest -$40.62);', '']
          })
          ),  # todo check this math
@@ -928,6 +1127,13 @@ class TestExpenseForecastMethods:
              'Loan B: Interest': [100, 0, 0.03],
              'Loan C: Principal Balance': [1000, 972.57, 972.57],
              'Loan C: Interest': [100, 0, 0.03],
+             'Marginal Interest': [0, 0, 0],
+             'Net Gain': [0, 0, 0],
+             'Net Loss': [0, 0, 0],
+             'Net Worth': [0, 0, 0],
+             'Loan Total': [0, 0, 0],
+             'CC Debt Total': [0, 0, 0],
+             'Liquid Total': [0, 0, 0],
              'Memo': ['', 'loan min payment (Loan A: Interest -$50.0);  loan min payment (Loan B: Interest -$50.0);  loan min payment (Loan C: Interest -$50.0);  additional loan payment (Loan A: Principal Balance -$907.38);  additional loan payment (Loan A: Interest -$50.27);  additional loan payment (Loan B: Principal Balance -$814.75);  additional loan payment (Loan B: Interest -$50.14);  additional loan payment (Loan C: Principal Balance -$27.43);  additional loan payment (Loan C: Interest -$50.03);', '']
          })
          ),
@@ -956,6 +1162,13 @@ class TestExpenseForecastMethods:
              'Loan B: Interest': [100, 0, 0],
              'Loan C: Principal Balance': [1000, 0, 0],
              'Loan C: Interest': [100, 0, 0],
+             'Marginal Interest': [0, 0.24, 0],
+             'Net Gain': [0, 0, 0],
+             'Net Loss': [0, 0.24, 0],
+             'Net Worth': [1699.56, 1699.56, 1699.56],
+             'Loan Total': [3000, 0, 0],
+             'CC Debt Total': [0, 0, 0],
+             'Liquid Total': [5000, 1699.56, 1699.56],
              'Memo': ['', 'loan min payment (Loan A: Interest -$50.0);  loan min payment (Loan B: Interest -$50.0);  loan min payment (Loan C: Interest -$50.0);  additional loan payment (Loan A: Principal Balance -$1000.0);  additional loan payment (Loan A: Interest -$50.27);  additional loan payment (Loan B: Principal Balance -$1000.0);  additional loan payment (Loan B: Interest -$50.14);  additional loan payment (Loan C: Principal Balance -$1000.0);  additional loan payment (Loan C: Interest -$50.03);', '']
          })
          ),
@@ -1009,6 +1222,13 @@ class TestExpenseForecastMethods:
             pd.DataFrame({
                 'Date': ['20000101', '20000102', '20000103'],
                 'Checking': [1000, 900, 900],
+                'Marginal Interest': [0, 0, 0],
+                'Net Gain': [0, 0, 0],
+                'Net Loss': [0, 100, 0],
+                'Net Worth': [1000, 900, 900],
+                'Loan Total': [0, 0, 0],
+                'CC Debt Total': [0, 0, 0],
+                'Liquid Total': [1000, 900, 900],
                 'Memo': ['', 'p5 txn 1/2/00 (Checking -$100.0);', '']
             }),
             'p6 deferrable txn 1/2/00',
@@ -1034,6 +1254,13 @@ class TestExpenseForecastMethods:
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103'],
                     'Checking': [1000, 900, 0],
+                    'Marginal Interest': [0, 0, 0],
+                    'Net Gain': [0, 0, 0],
+                    'Net Loss': [0, 100, 900],
+                    'Net Worth': [1000, 900, 0],
+                    'Loan Total': [0, 0, 0],
+                    'CC Debt Total': [0, 0, 0],
+                    'Liquid Total': [1000, 900, 0],
                     'Memo': ['', 'p5 txn 1/2/00 (Checking -$100.0); ', 'income 1/3/00 (Checking +$100.0); p6 deferrable txn 1/2/00 (Checking -$1000.0);']
                 }),
                 'p6 deferrable txn 1/2/00 (Checking -$1000.0)',
@@ -1056,6 +1283,13 @@ class TestExpenseForecastMethods:
                 pd.DataFrame({
                     'Date': ['20000101', '20000102', '20000103'],
                     'Checking': [1000, 1000, 1000],
+                    'Marginal Interest': [0,0,0],
+                    'Net Gain': [0,0,0],
+                    'Net Loss': [0,0,0],
+                    'Net Worth': [1000,1000,1000],
+                    'Loan Total': [0,0,0],
+                    'CC Debt Total': [0,0,0],
+                    'Liquid Total': [1000,1000,1000],
                     'Memo': ['', '', '']
                 }),
                 'deferred past end',
@@ -1103,7 +1337,8 @@ class TestExpenseForecastMethods:
                                   balance=1000,
                                   min_balance=0,
                                   max_balance=float('Inf'),
-                                  account_type="checking")
+                                  account_type="checking",
+                                  primary_checking_ind=True)
 
         account_set.createAccount(name='Credit',
                                   balance=0,
@@ -1111,13 +1346,14 @@ class TestExpenseForecastMethods:
                                   max_balance=20000,
                                   account_type="credit",
                                   billing_start_date_YYYYMMDD='20000102',
-                                  interest_type='Compound',
+                                  interest_type=None,
                                   apr=0.05,
                                   interest_cadence='Monthly',
                                   minimum_payment=40,
                                   previous_statement_balance=0,
+                                  current_statement_balance=0,
                                   principal_balance=None,
-                                  accrued_interest=None
+                                  interest_balance=None
                                   )
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000102', end_date_YYYYMMDD='20000102', priority=2,
@@ -1129,7 +1365,7 @@ class TestExpenseForecastMethods:
         memo_rule_set.addMemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=2)
         memo_rule_set.addMemoRule(memo_regex='test memo', account_from='Credit', account_to=None, transaction_priority=2)
 
-        milestone_set = MilestoneSet.MilestoneSet(account_set, budget_set, [], [], [])
+        milestone_set = MilestoneSet.MilestoneSet([], [], [])
 
         with pytest.raises(ValueError):
             ExpenseForecast.ExpenseForecast(account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set)
@@ -1186,7 +1422,7 @@ class TestExpenseForecastMethods:
     #                               minimum_payment=40,
     #                               previous_statement_balance=current_credit_previous_statement_balance,
     #                               principal_balance=None,
-    #                               accrued_interest=None
+    #                               interest_balance=None
     #                               )
     #
     #     account_set.createAccount(name='Loan A',
@@ -1201,7 +1437,7 @@ class TestExpenseForecastMethods:
     #                               minimum_payment=50,
     #                               previous_statement_balance=None,
     #                               principal_balance=4746.18,
-    #                               accrued_interest=0
+    #                               interest_balance=0
     #                               )
     #
     #     account_set.createAccount(name='Loan B',
@@ -1216,7 +1452,7 @@ class TestExpenseForecastMethods:
     #                               minimum_payment=50,
     #                               previous_statement_balance=None,
     #                               principal_balance=1919.55,
-    #                               accrued_interest=0
+    #                               interest_balance=0
     #                               )
     #
     #     account_set.createAccount(name='Loan C',
@@ -1231,7 +1467,7 @@ class TestExpenseForecastMethods:
     #                               minimum_payment=50,
     #                               previous_statement_balance=None,
     #                               principal_balance=4726.68,
-    #                               accrued_interest=0
+    #                               interest_balance=0
     #                               )
     #
     #     account_set.createAccount(name='Loan D',
@@ -1246,7 +1482,7 @@ class TestExpenseForecastMethods:
     #                               minimum_payment=50,
     #                               previous_statement_balance=None,
     #                               principal_balance=1823.31,
-    #                               accrued_interest=0
+    #                               interest_balance=0
     #                               )
     #
     #     account_set.createAccount(name='Loan E',
@@ -1261,7 +1497,7 @@ class TestExpenseForecastMethods:
     #                               minimum_payment=50,
     #                               previous_statement_balance=None,
     #                               principal_balance=3359.17,
-    #                               accrued_interest=0
+    #                               interest_balance=0
     #                               )
     #   print(account_set.getAvailableBalances()) #pass by manual inspection
 
@@ -1278,7 +1514,8 @@ class TestExpenseForecastMethods:
                                   balance=1000,
                                   min_balance=0,
                                   max_balance=float('Inf'),
-                                  account_type="checking")
+                                  account_type="checking",
+                                  primary_checking_ind=True)
 
         account_set.createAccount(name='Credit',
                                   balance=0,
@@ -1286,13 +1523,14 @@ class TestExpenseForecastMethods:
                                   max_balance=20000,
                                   account_type="credit",
                                   billing_start_date_YYYYMMDD='20000102',
-                                  interest_type='Compound',
+                                  interest_type=None,
                                   apr=0.05,
                                   interest_cadence='Monthly',
                                   minimum_payment=40,
                                   previous_statement_balance=0,
+                                  current_statement_balance=0,
                                   principal_balance=None,
-                                  accrued_interest=None
+                                  interest_balance=None
                                   )
 
         budget_set.addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
@@ -2087,7 +2325,7 @@ class TestExpenseForecastMethods:
     #                               minimum_payment=50,
     #                               previous_statement_balance=None,
     #                               principal_balance=5000,
-    #                               accrued_interest=0
+    #                               interest_balance=0
     #                               )
     #
     #     account_set.createAccount(name='Loan B',
@@ -2102,7 +2340,7 @@ class TestExpenseForecastMethods:
     #                               minimum_payment=50,
     #                               previous_statement_balance=None,
     #                               principal_balance=5000,
-    #                               accrued_interest=25
+    #                               interest_balance=25
     #                               )
     #
     #     account_set.createAccount(name='Loan C',
@@ -2117,7 +2355,7 @@ class TestExpenseForecastMethods:
     #                               minimum_payment=50,
     #                               previous_statement_balance=None,
     #                               principal_balance=5000,
-    #                               accrued_interest=75
+    #                               interest_balance=75
     #                               )
     #
     #     account_set.createAccount(name='Loan D',
@@ -2132,7 +2370,7 @@ class TestExpenseForecastMethods:
     #                               minimum_payment=50,
     #                               previous_statement_balance=None,
     #                               principal_balance=50,
-    #                               accrued_interest=0
+    #                               interest_balance=0
     #                               )
     #
     #     account_set.createAccount(name='Loan E',
@@ -2147,7 +2385,7 @@ class TestExpenseForecastMethods:
     #                               minimum_payment=50,
     #                               previous_statement_balance=None,
     #                               principal_balance=25,
-    #                               accrued_interest=0
+    #                               interest_balance=0
     #                               )
     #
     #
@@ -2265,7 +2503,7 @@ class TestExpenseForecastMethods:
     #                                minimum_payment=0,
     #                                previous_statement_balance=None,
     #                                principal_balance=1000,
-    #                                accrued_interest=0
+    #                                interest_balance=0
     #                                )
     #
     #     budget_sets[0].addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
@@ -2306,7 +2544,7 @@ class TestExpenseForecastMethods:
     #                                minimum_payment=0,
     #                                previous_statement_balance=0,
     #                                principal_balance=None,
-    #                                accrued_interest=None
+    #                                interest_balance=None
     #                                )
     #
     #     budget_sets[1].addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
@@ -2461,7 +2699,7 @@ class TestExpenseForecastMethods:
     #                               minimum_payment=50,
     #                               previous_statement_balance=None,
     #                               principal_balance=5000,
-    #                               accrued_interest=0
+    #                               interest_balance=0
     #                               )
     #
     #     account_set.createAccount(name='Loan B',
@@ -2476,7 +2714,7 @@ class TestExpenseForecastMethods:
     #                               minimum_payment=50,
     #                               previous_statement_balance=None,
     #                               principal_balance=5000,
-    #                               accrued_interest=25
+    #                               interest_balance=25
     #                               )
     #
     #     account_set.createAccount(name='Loan C',
@@ -2491,7 +2729,7 @@ class TestExpenseForecastMethods:
     #                               minimum_payment=50,
     #                               previous_statement_balance=None,
     #                               principal_balance=5000,
-    #                               accrued_interest=75
+    #                               interest_balance=75
     #                               )
     #
     #     memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=1)
@@ -2860,7 +3098,7 @@ class TestExpenseForecastMethods:
     #     A.createAccount('Credit', 5000, 0, 999999, 'credit','20240103','compound',0.24,'monthly',40,5000)
     #
     #     # name, balance, min_balance, max_balance, account_type, billing_start_date_YYYYMMDD, interest_type, apr,
-    #     # interest_cadence, minimum_payment, previous_statement_balance, principal_balance, accrued_interest = None,
+    #     # interest_cadence, minimum_payment, previous_statement_balance, principal_balance, interest_balance = None,
     #
     #     B = BudgetSet.BudgetSet([])
     #     B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 30, 'SPEND food', False, False)
@@ -2899,28 +3137,4 @@ class TestExpenseForecastMethods:
     #     #todo assert E attributes for test
     #     raise NotImplementedError
 
-###tests to implement
-#initialize from json  prev tmt bal acct first in list and interest acct first in list (this does not happen programmatically) (this functionality is not yet supported)
-#loan payments when insufficient funds?
-#double check: i am not convinced that from_json is handling evaluated milestones correctly
-
-# I need test cases for what happens to skipped, deferred, confirmed, proposed in the event of a failed satisfice
-
-
-#SPEED OPTIMIZATION
-
-#compound yearly interest
-#simple yearly interest
-#compound quarterly interest
-#simple quarterly interest
-#other interest cadences and types
-
-### all latest
-# 5 fails
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_dont_recompute_past_days_for_p2plus_transactions - NotImplementedError
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_forecast_longer_than_satisfice - AttributeError: 'bool' object has no attribute 'shape'
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_interest_types_and_cadences_at_most_monthly - NotImplementedError
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_quarter_and_year_long_interest_cadences - NotImplementedError
-
-#todo I want to get a conceptual handle of when/where rounding happens
 

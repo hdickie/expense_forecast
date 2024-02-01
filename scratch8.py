@@ -22,7 +22,7 @@ import datetime
 
 if __name__ == '__main__':
     start_date_YYYYMMDD = '20240123'
-    end_date_YYYYMMDD = '20250101'
+    end_date_YYYYMMDD = '20240201'
 
     # start_date_YYYYMMDD = '20240101'
     # end_date_YYYYMMDD = '20240201'
@@ -60,7 +60,7 @@ if __name__ == '__main__':
     additional_cc_payment__RN___last_date = end_date_YYYYMMDD
     additional_cc_payment__RN___amount = 0
 
-    end_of_recaptialization_date = '20240601'
+    end_of_recaptialization_date = start_date_YYYYMMDD
     car_insurance_amount = 89.0
     daily_cheap_food_amount = 10
     daily_nice_food_amount = 20
@@ -77,11 +77,14 @@ if __name__ == '__main__':
     loan_A_min_payment = 113
 
     A = AccountSet.AccountSet([])
-    A.createAccount('Checking', 4000, 0, 99999, 'checking')
-    A.createAccount('Credit', 0, 0, 25000, 'credit', '20240107', 'compound', 0.24, 'monthly', 40, 23751.93)
-
-    A.createAccount('Loan A', loan_A_pbal + loan_A_interest, 0, 25000, 'loan', end_of_recaptialization_date, 'simple',
-                    loan_A_APR, 'daily', loan_A_min_payment, None, loan_A_pbal, loan_A_interest)
+    A.createCheckingAccount('Checking',4000,0,99999,primary_checking_account_ind=True)
+    A.createCreditCardAccount('Credit',0,23751.93, 0, 25000,'20240107',0.24,40)
+    A.createLoanAccount('Loan A',loan_A_pbal,loan_A_interest,0,25000,end_of_recaptialization_date,loan_A_APR,loan_A_min_payment)
+    # A.createAccount('Checking', 4000, 0, 99999, 'checking')
+    # A.createAccount('Credit', 0, 0, 25000, 'credit', '20240107', 'compound', 0.24, 'monthly', 40, 23751.93)
+    #
+    # A.createAccount('Loan A', loan_A_pbal + loan_A_interest, 0, 25000, 'loan', end_of_recaptialization_date, 'simple',
+    #                 loan_A_APR, 'daily', loan_A_min_payment, None, loan_A_pbal, loan_A_interest)
     # # A.createAccount('Loan A', loan_B_pbal + loan_B_interest, 0, 25000, 'loan', '20240103', 'simple', loan_B_APR, 'daily', loan_B_min_payment, None, loan_B_pbal, loan_B_interest)
     # # A.createAccount('Loan A', loan_C_pbal + loan_C_interest, 0, 25000, 'loan', '20240103', 'simple', loan_C_APR, 'daily', loan_C_min_payment, None, loan_C_pbal, loan_C_interest)
     # # A.createAccount('Loan A', loan_D_pbal + loan_D_interest, 0, 25000, 'loan', '20240103', 'simple', loan_D_APR, 'daily', loan_D_min_payment, None, loan_D_pbal, loan_D_interest)
@@ -146,7 +149,8 @@ if __name__ == '__main__':
 
 
     E = ExpenseForecast.ExpenseForecast(A,core_budget_set,M,start_date_YYYYMMDD,end_date_YYYYMMDD, MS)
-    E.runApproximateForecast()
+    #E.runApproximateForecast()
+    E.runForecast()
 
     F = ForecastHandler.ForecastHandler()
     F.generateHTMLReport(E)
