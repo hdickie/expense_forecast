@@ -10,12 +10,13 @@ class Account:
                  balance,
                  min_balance,
                  max_balance,
-                 account_type, #checking, savings, credit, principal balance, interest
+                 account_type, #checking, credit, principal balance, interest, investmen
                  billing_start_date_YYYYMMDD=None,
                  interest_type=None,
                  apr=None,
                  interest_cadence=None,
                  minimum_payment=None,
+                 primary_checking_ind = False,
                  print_debug_messages=True, #this is here because doctest can test expected output OR exceptions, but not both
                  raise_exceptions=True
                  ):
@@ -65,16 +66,17 @@ class Account:
         >>> Account()
         not correct response
         """
-        self.name=name
-        self.balance=balance
-        self.min_balance=min_balance
-        self.max_balance=max_balance
-        self.account_type=account_type
-        self.billing_start_date_YYYYMMDD=billing_start_date_YYYYMMDD
-        self.interest_type=interest_type
-        self.apr=apr
-        self.interest_cadence=interest_cadence
-        self.minimum_payment=minimum_payment
+        # self.name=name
+        # self.balance=balance
+        # self.min_balance=min_balance
+        # self.max_balance=max_balance
+        # self.account_type=account_type
+        # self.billing_start_date_YYYYMMDD=billing_start_date_YYYYMMDD
+        # self.interest_type=interest_type
+        # self.apr=apr
+        # self.interest_cadence=interest_cadence
+        # self.minimum_payment=minimum_payment
+        # self.primary_checking_ind=primary_checking_ind
 
         exception_type_error_ind=False
         exception_type_error_message_string=""
@@ -282,6 +284,14 @@ class Account:
                     exception_value_error_message_string += 'Value was:' + str(minimum_payment)+"\n"
                     exception_value_error_ind=True
 
+        if isinstance(primary_checking_ind, (int)): #bool is a subclass of int
+            if int(primary_checking_ind) != 0 and int(primary_checking_ind) != 1:
+                exception_value_error_message_string += "primary_checking_ind did not cast to 0 or 1\n"
+                exception_value_error_message_string += 'Value was:' + str(primary_checking_ind) + "\n"
+                exception_value_error_ind = True
+
+            self.primary_checking_ind = ( int(primary_checking_ind) == 1 )
+
         if print_debug_messages:
             if exception_type_error_ind: print("TypeErrors:\n"+exception_type_error_message_string)
 
@@ -304,14 +314,15 @@ class Account:
         return pd.DataFrame({
             'Name': [self.name],
             'Balance': [self.balance],
-            'Min Balance': [self.min_balance],
-            'Max Balance': [self.max_balance],
-            'Account Type': [self.account_type],
-            'Billing Start Date': [self.billing_start_date_YYYYMMDD],
-            'Interest Type': [self.interest_type],
+            'Min_Balance': [self.min_balance],
+            'Max_Balance': [self.max_balance],
+            'Account_Type': [self.account_type],
+            'Billing_Start_Date': [self.billing_start_date_YYYYMMDD],
+            'Interest_Type': [self.interest_type],
             'APR': [self.apr],
-            'Interest Cadence': [self.interest_cadence],
-            'Minimum Payment': [self.minimum_payment]
+            'Interest_Cadence': [self.interest_cadence],
+            'Minimum_Payment': [self.minimum_payment],
+            'Primary_Checking_Ind': [self.primary_checking_ind]
         }).to_string()
 
 

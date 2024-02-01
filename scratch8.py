@@ -77,7 +77,7 @@ if __name__ == '__main__':
     loan_A_min_payment = 113
 
     A = AccountSet.AccountSet([])
-    A.createAccount('Checking', 14000, 0, 99999, 'checking')
+    A.createAccount('Checking', 4000, 0, 99999, 'checking')
     A.createAccount('Credit', 0, 0, 25000, 'credit', '20240107', 'compound', 0.24, 'monthly', 40, 23751.93)
 
     A.createAccount('Loan A', loan_A_pbal + loan_A_interest, 0, 25000, 'loan', end_of_recaptialization_date, 'simple',
@@ -104,6 +104,12 @@ if __name__ == '__main__':
     core_budget_set.addBudgetItem(first_nice_food_day, last_nice_food_day, 1, 'daily', daily_nice_food_amount,
                                   'nice food', False, False)
 
+    core_budget_set.addBudgetItem('20240323', '20240323', 2, 'once', 5000,
+                                  '5k expense', True, False)
+
+    core_budget_set.addBudgetItem('20241023', '20241023', 1, 'once', 5000,
+                                  '5k income', False, False)
+
     last_emt_paycheck_date = '20250101'
     er_tech_first_paycheck_date = '20250201'
 
@@ -128,6 +134,7 @@ if __name__ == '__main__':
     M.addMemoRule('rent', 'Checking', None, 1)
     M.addMemoRule('gym', 'Checking', None, 1)
     M.addMemoRule('tax debt', 'Checking', None, 1)
+    M.addMemoRule('.*', 'Checking', None, 2)
     M.addMemoRule('.*additional cc payment.*', 'Checking', 'Credit', 1)
     M.addMemoRule('.*income.*', None, 'Checking', 1)
 

@@ -209,6 +209,7 @@ class AccountSet:
 
     def __str__(self): return self.getAccounts().to_string()
 
+    #acknowledging that the parameters are confusing
     def createAccount(self,
                       name,
                       balance,
@@ -223,6 +224,7 @@ class AccountSet:
                       previous_statement_balance=None,
                       principal_balance=None,
                       accrued_interest=None,
+                      primary_checking_ind=False,
                       print_debug_messages=True,
                       raise_exceptions=True
                       ):
@@ -299,11 +301,11 @@ class AccountSet:
                                       min_balance=min_balance,
                                       max_balance=max_balance,
                                       account_type='interest',
-                                      billing_start_date_YYYYMMDD=None,
-                                      interest_type=None,
-                                      apr=None,
-                                      interest_cadence=None,
-                                      minimum_payment=None,
+                                      # billing_start_date_YYYYMMDD=None,
+                                      # interest_type=None,
+                                      # apr=None,
+                                      # interest_cadence=None,
+                                      # minimum_payment=None,
                                       print_debug_messages=print_debug_messages,
                                       raise_exceptions=raise_exceptions)
             self.accounts.append(account)
@@ -318,11 +320,11 @@ class AccountSet:
                                       min_balance=min_balance,
                                       max_balance=max_balance,
                                       account_type='curr stmt bal',
-                                      billing_start_date_YYYYMMDD=None,
-                                      interest_type=None,
-                                      apr=None,
-                                      interest_cadence=None,
-                                      minimum_payment=None,
+                                      # billing_start_date_YYYYMMDD=None,
+                                      # interest_type=None,
+                                      # apr=None,
+                                      # interest_cadence=None,
+                                      # minimum_payment=None,
                                       print_debug_messages=print_debug_messages,
                                       raise_exceptions=raise_exceptions)
             self.accounts.append(account)
@@ -346,15 +348,72 @@ class AccountSet:
                                       min_balance=min_balance,
                                       max_balance=max_balance,
                                       account_type=account_type,
-                                      billing_start_date_YYYYMMDD=None,
-                                      interest_type=None,
-                                      apr=None,
-                                      interest_cadence=None,
-                                      minimum_payment=None,
+                                      # billing_start_date_YYYYMMDD=None,
+                                      # interest_type=None,
+                                      # apr=None,
+                                      # interest_cadence=None,
+                                      # minimum_payment=None,
+                                      primary_checking_ind=primary_checking_ind,
                                       print_debug_messages=print_debug_messages,
                                       raise_exceptions=raise_exceptions)
             self.accounts.append(account)
-        else: raise NotImplementedError
+        elif account_type.lower() == 'investment':
+            account = Account.Account(name=name,
+                                      balance=balance,
+                                      min_balance=min_balance,
+                                      max_balance=max_balance,
+                                      account_type=account_type,
+                                      apr=apr,
+                                      print_debug_messages=print_debug_messages,
+                                      raise_exceptions=raise_exceptions)
+
+            self.accounts.append(account)
+        else: raise NotImplementedError("Account type not recognized: "+str(account_type))
+
+    def createCheckingAccount(self,name,balance,min_balance,max_balance,primary_checking_account_ind):
+        self.createAccount(name=name,
+                      balance=balance,
+                      min_balance=min_balance,
+                      max_balance=max_balance,
+                      account_type='checking',
+                      primary_checking_ind=primary_checking_account_ind)
+
+    def createLoanAccount(self,name,principal_balance,interest_balance,min_balance,max_balance,billing_start_date_YYYYMMDD,apr,minimum_payment):
+        self.createAccount(name=name,
+                      balance=principal_balance + interest_balance,
+                      min_balance=min_balance,
+                      max_balance=max_balance,
+                      account_type='loan',
+                      billing_start_date_YYYYMMDD=billing_start_date_YYYYMMDD,
+                      interest_type='simple',
+                      apr=apr,
+                      interest_cadence='daily',
+                      minimum_payment=minimum_payment,
+                      principal_balance=principal_balance,
+                      accrued_interest=interest_balance)
+
+    def createCreditCardAccount(self,name,current_stmt_bal,prev_stmt_bal,min_balance,max_balance,billing_start_date_YYYYMMDD,apr,minimum_payment):
+        self.createAccount(name=name,
+                          balance=current_stmt_bal,
+                          min_balance=min_balance,
+                          max_balance=max_balance,
+                          account_type='credit',
+                          billing_start_date_YYYYMMDD=billing_start_date_YYYYMMDD,
+                          interest_type='compound',
+                          apr=apr,
+                          interest_cadence='monthly',
+                          minimum_payment=minimum_payment,
+                           previous_statement_balance=prev_stmt_bal)
+
+    def createInvestmentAccount(self, name, balance, min_balance, max_balance, apr):
+        self.createAccount(name=name,
+                           balance=balance,
+                           min_balance=min_balance,
+                           max_balance=max_balance,
+                           account_type='investment',
+                           interest_type='compound',
+                           apr=apr,
+                           interest_cadence='monthly')
 
     def getBalances(self):
         #log_in_color(logger,'magenta','debug','ENTER getBalances()')
@@ -638,7 +697,6 @@ class AccountSet:
             equivalent_exchange_error_text += explanation_of_mismatch_string + '\n'
             log_in_color(logger,'red', 'error', equivalent_exchange_error_text, 0)
             raise ValueError("Funds not accounted for in AccountSet::executeTransaction()") # Funds not accounted for
-
 
     # def from_excel(self,path):
     #     self.accounts = []
@@ -1042,11 +1100,12 @@ class AccountSet:
                                         'Min_Balance': [],
                                         'Max_Balance': [],
                                         'Account_Type': [],
-                                        'Billing_Start_Dt': [],
+                                        'Billing_Start_Date': [],
                                         'Interest_Type': [],
                                         'APR': [],
                                         'Interest_Cadence': [],
-                                        'Minimum_Payment': []
+                                        'Minimum_Payment': [],
+                                        'Primary_Checking_Ind': []
                                         })
 
         for account in self.accounts:
@@ -1055,11 +1114,12 @@ class AccountSet:
                                                'Min_Balance': [account.min_balance],
                                                'Max_Balance': [account.max_balance],
                                                'Account_Type': [account.account_type],
-                                               'Billing_Start_Dt': [account.billing_start_date_YYYYMMDD],
+                                               'Billing_Start_Date': [account.billing_start_date_YYYYMMDD],
                                                'Interest_Type': [account.interest_type],
                                                'APR': [account.apr],
                                                'Interest_Cadence': [account.interest_cadence],
-                                               'Minimum_Payment': [account.minimum_payment]
+                                               'Minimum_Payment': [account.minimum_payment],
+                                               'Primary_Checking_Ind': [account.primary_checking_ind]
                                                })
 
             #old line
