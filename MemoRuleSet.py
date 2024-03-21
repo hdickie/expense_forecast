@@ -7,6 +7,19 @@ import jsonpickle
 from log_methods import setup_logger
 logger = setup_logger('MemoRuleSet', './log/MemoRuleSet.log', level=logging.WARNING)
 
+def initialize_from_dataframe(memo_set_df):
+    #print('ENTER MemoRuleSet initialize_from_dataframe')
+    M = MemoRuleSet([])
+    try:
+        for index, row in memo_set_df.iterrows():
+            M.addMemoRule(row.memo_regex,row.account_from,row.account_to,row.priority)
+    except Exception as e:
+        print(e.args)
+        raise e
+    #print(M.getMemoRules().to_string())
+
+    #print('EXIT MemoRuleSet initialize_from_dataframe')
+    return M
 
 class MemoRuleSet:
 

@@ -22,7 +22,17 @@ class ForecastSet:
 
         self.scenarios = {}
 
+    def initialize_forecast_set_from_json(self,path):
+        raise NotImplementedError
 
+    def initialize_forecast_set_from_excel(self,path):
+        raise NotImplementedError
+
+    def to_json(self, path):
+        raise NotImplementedError
+
+    def to_excel(self, path):
+        raise NotImplementedError
 
     def addScenario(self,name_of_scenario,lists_of_memo_regexes):
         new_option_budget_set = copy.deepcopy(self.core_budget_set)
@@ -86,7 +96,6 @@ class ForecastSet:
 
     def to_json(self):
         return jsonpickle.encode(self, indent=4)
-
 
     def addCustomLabelToScenario(self, old_label, new_label):
         try:

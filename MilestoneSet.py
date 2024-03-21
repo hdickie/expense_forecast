@@ -5,6 +5,10 @@ import MemoMilestone
 import CompositeMilestone
 import AccountMilestone
 import jsonpickle
+
+def initialize_from_dataframe(account_milestones_df, memo_milestones_df, composite_milestones_df):
+    return MilestoneSet([],[],[])
+
 class MilestoneSet:
 
     def __init__(self,account_milestones__list,memo_milestones__list,composite_milestones__list):
@@ -77,7 +81,7 @@ class MilestoneSet:
         self.composite_milestones += [ CompositeMilestone.CompositeMilestone(milestone_name,account_milestones__list, memo_milestones__list) ]
 
     def to_json(self):
-        return jsonpickle.encode(self, indent=4)
+        return jsonpickle.encode(self, indent=4, unpicklable=False)
 
     def getAccountMilestonesDF(self):
 

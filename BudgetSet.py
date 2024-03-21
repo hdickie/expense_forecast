@@ -5,9 +5,31 @@ from generate_date_sequence import generate_date_sequence
 import logging
 
 from log_methods import setup_logger
-logger = setup_logger('BudgetSet', './log/BudgetSet.log', level=logging.WARNING)
+logger = setup_logger('BudgetSet', './log/BudgetSet.log', level=logging.INFO)
 
 import jsonpickle
+
+def initialize_from_dataframe(budget_set_df):
+    #print('ENTER BudgetSet initialize_from_dataframe')
+    B = BudgetSet([])
+    try:
+        for index, row in budget_set_df.iterrows():
+            sd = str(row.start_date).replace('-','')
+            ed = str(row.end_date).replace('-','')
+            B.addBudgetItem(sd,
+                            ed,
+                            row.priority,
+                            row.cadence.replace('-','').lower(),
+                            row.amount,
+                            row.memo,
+                            row.deferrable_,
+                            row.partial_payment_allowed)
+    except Exception as e:
+        print(e.args)
+        raise e
+    #print(B.getBudgetItems().to_string())
+    #print('EXIT BudgetSet initialize_from_dataframe')
+    return B
 
 class BudgetSet:
 
@@ -86,11 +108,11 @@ class BudgetSet:
         :param num_days:
         :return:
         """
-        # log_in_color(logger,'green', 'debug','ENTER getBudgetSchedule(start_date_YYYYMMDD='+str(start_date_YYYYMMDD)+',end_date_YYYYMMDD='+str(end_date_YYYYMMDD)+')', 0)
+        #log_in_color(logger,'green', 'debug','ENTER getBudgetSchedule(start_date_YYYYMMDD='+str(start_date_YYYYMMDD)+',end_date_YYYYMMDD='+str(end_date_YYYYMMDD)+')', 0)
         # log_in_color(logger,'green', 'debug','self.budget_items:', 0)
         # for b in self.budget_items:
         #    log_in_color(logger,'green', 'debug', '\n'+str(b), 0)
-
+        #
         # log_in_color(logger,'green', 'debug', 'getBudgetSchedule():')
         # log_in_color(logger,'green', 'debug', 'self.budget_items:')
         # log_in_color(logger,'green', 'debug', self.budget_items)
@@ -116,8 +138,8 @@ class BudgetSet:
         current_budget_schedule.sort_values(inplace=True,axis=0,by="Date")
         current_budget_schedule.reset_index(inplace=True,drop=True)
 
-        # log_in_color(logger,'green', 'debug', 'current_budget_schedule:')
-        # log_in_color(logger,'green', 'debug', current_budget_schedule.to_string())
+        log_in_color(logger,'green', 'debug', 'current_budget_schedule:')
+        log_in_color(logger,'green', 'debug', current_budget_schedule.to_string())
         # log_in_color(logger,'green', 'debug', 'EXIT getBudgetSchedule(start_date_YYYYMMDD=' + str(start_date_YYYYMMDD) + ',end_date_YYYYMMDD=' + str(end_date_YYYYMMDD) + ')', 0)
         return current_budget_schedule
 

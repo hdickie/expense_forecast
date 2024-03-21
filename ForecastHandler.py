@@ -23,6 +23,7 @@ import logging
 import numpy as np
 import matplotlib.cm as cm
 import plotly.graph_objects as go
+import psycopg2
 
 from log_methods import setup_logger
 logger = setup_logger('ForecastHandler', './log/ForecastHandler.log', level=logging.DEBUG)
@@ -532,7 +533,7 @@ class ForecastHandler:
             data_y.append(date_counter)
             date_counter += 1
 
-        figure(figsize=(14, 6), dpi=80)
+        figure(figsize=(10, 6), dpi=80)
 
         fig, ax = plt.subplots()
         fig.subplots_adjust(left=0.25)
@@ -655,15 +656,15 @@ class ForecastHandler:
             E1_acct_df = E1.initial_account_set.getAccounts()
             E2_acct_df = E2.initial_account_set.getAccounts()
 
-            common_accounts_df = pd.merge(E1_acct_df,E2_acct_df,on=["Balance","Min_Balance","Max_Balance","Account_Type","Billing_Start_Dt","Interest_Type","APR","Interest_Cadence","Minimum_Payment"])
+            common_accounts_df = pd.merge(E1_acct_df,E2_acct_df,on=["Balance","Min_Balance","Max_Balance","Account_Type","Billing_Start_Date","Interest_Type","APR","Interest_Cadence","Minimum_Payment"])
 
-            E1_LJ_E2_df = pd.merge(E1_acct_df,E2_acct_df,on=["Balance","Min_Balance","Max_Balance","Account_Type","Billing_Start_Dt","Interest_Type","APR","Interest_Cadence","Minimum_Payment"],how="left",indicator=True)
+            E1_LJ_E2_df = pd.merge(E1_acct_df,E2_acct_df,on=["Balance","Min_Balance","Max_Balance","Account_Type","Billing_Start_Date","Interest_Type","APR","Interest_Cadence","Minimum_Payment"],how="left",indicator=True)
             E2_LJ_E1_df = pd.merge(E2_acct_df, E1_acct_df,
-                                   on=["Balance", "Min_Balance", "Max_Balance", "Account_Type", "Billing_Start_Dt", "Interest_Type", "APR", "Interest_Cadence", "Minimum_Payment"], how="left",
+                                   on=["Balance", "Min_Balance", "Max_Balance", "Account_Type", "Billing_Start_Date", "Interest_Type", "APR", "Interest_Cadence", "Minimum_Payment"], how="left",
                                    indicator=True)
 
-            accounts_forecast_1_only_df = E1_LJ_E2_df.loc[E1_LJ_E2_df._merge == 'left_only',["Balance", "Min_Balance", "Max_Balance", "Account_Type", "Billing_Start_Dt", "Interest_Type", "APR", "Interest_Cadence", "Minimum_Payment"]]
-            accounts_forecast_2_only_df = E2_LJ_E1_df.loc[E2_LJ_E1_df._merge == 'left_only',["Balance", "Min_Balance", "Max_Balance", "Account_Type", "Billing_Start_Dt", "Interest_Type", "APR", "Interest_Cadence", "Minimum_Payment"]]
+            accounts_forecast_1_only_df = E1_LJ_E2_df.loc[E1_LJ_E2_df._merge == 'left_only',["Balance", "Min_Balance", "Max_Balance", "Account_Type", "Billing_Start_Date", "Interest_Type", "APR", "Interest_Cadence", "Minimum_Payment"]]
+            accounts_forecast_2_only_df = E2_LJ_E1_df.loc[E2_LJ_E1_df._merge == 'left_only',["Balance", "Min_Balance", "Max_Balance", "Account_Type", "Billing_Start_Date", "Interest_Type", "APR", "Interest_Cadence", "Minimum_Payment"]]
 
             account_text = """
             The initial conditions and account boundaries were different, and are:
@@ -945,7 +946,12 @@ class ForecastHandler:
 
         #relevant_df = pd.merge(E1_aggregated_df, E2_aggregated_df, on=["Date"], suffixes=('_1', '_2'))
 
-        interest_text = ""
+        #For forecast 1 #053036, Net Worth began at $-37,655.27 and rose to $-11,566.0 over 731 days, averaging $35.69 per day.
+        E1_total_interest_paid = sum(E1.forecast_df['Marginal Interest'])
+        E2_total_interest_paid = sum(E2.forecast_df['Marginal Interest'])
+
+        interest_text = "Total interest paid for Forecast 1 #"+str(E1.unique_id)+" is $"+str(E1_total_interest_paid)+'<br>'
+        interest_text += "Total interest paid for Forecast 2 #"+str(E2.unique_id)+" is $"+str(E2_total_interest_paid)
 
         milestone_text = ""
 
@@ -1392,7 +1398,7 @@ class ForecastHandler:
             for memo_line_item in memo_line_items:
                 if 'loan min payment' in memo_line_item or 'additional loan payment' in memo_line_item:
                     loan_payments_df = pd.concat([loan_payments_df,pd.DataFrame({'Date':[row.Date],'Memo':[memo_line_item]})])
-                elif 'cc min payment' in memo_line_item or 'additional cc payment' in memo_line_item:
+                elif 'cc min payment' in memo_line_item or 'additional cc payment' in memo_line_item or 'cc interest' in memo_line_item:
                     cc_payments_df = pd.concat([cc_payments_df,pd.DataFrame({'Date':[row.Date],'Memo':[memo_line_item]})])
 
         cc_payments_html_table = cc_payments_df.to_html()
@@ -2073,7 +2079,7 @@ class ForecastHandler:
 
         assert hasattr(expense_forecast,'forecast_df')
 
-        figure(figsize=(14, 6), dpi=80)
+        figure(figsize=(10, 6), dpi=80)
         plt.gca().set_prop_cycle(plt.cycler(color=line_color_cycle_list))
 
         relevant_columns_sel_vec = (expense_forecast.forecast_df.columns == 'Date') | (expense_forecast.forecast_df.columns == 'Loan Total') | (expense_forecast.forecast_df.columns == 'CC Debt Total') | (expense_forecast.forecast_df.columns == 'Liquid Total')
@@ -2116,7 +2122,7 @@ class ForecastHandler:
     def plotNetGainLoss(self, expense_forecast, output_path, line_color_cycle_list=['green','red'],linestyle='solid'):
         assert hasattr(expense_forecast, 'forecast_df')
 
-        figure(figsize=(14, 6), dpi=80)
+        figure(figsize=(10, 6), dpi=80)
         plt.gca().set_prop_cycle(plt.cycler(color=line_color_cycle_list))
 
         x_values = [datetime.datetime.strptime(d, '%Y%m%d') for d in expense_forecast.forecast_df['Date']]
@@ -2166,7 +2172,7 @@ class ForecastHandler:
 
         assert hasattr(expense_forecast,'forecast_df')
 
-        figure(figsize=(14, 6), dpi=80)
+        figure(figsize=(10, 6), dpi=80)
         plt.gca().set_prop_cycle(plt.cycler(color=line_color_cycle_list))
 
         column_index = expense_forecast.forecast_df.columns.tolist().index('Net Worth')
@@ -2213,7 +2219,7 @@ class ForecastHandler:
 
         assert hasattr(expense_forecast,'forecast_df')
 
-        figure(figsize=(14, 6), dpi=80)
+        figure(figsize=(10, 6), dpi=80)
         plt.gca().set_prop_cycle(plt.cycler(color=line_color_cycle_list))
 
         #lets combine curr and prev, principal and interest, and exclude summary lines
@@ -2275,7 +2281,7 @@ class ForecastHandler:
         """
 
         assert hasattr(expense_forecast,'forecast_df')
-        figure(figsize=(14, 6), dpi=80)
+        figure(figsize=(10, 6), dpi=80)
         plt.gca().set_prop_cycle(plt.cycler(color=['blue']))
 
         column_index = expense_forecast.forecast_df.columns.tolist().index('Marginal Interest')
@@ -2990,8 +2996,94 @@ class ForecastHandler:
                 target=target,
                 value=values,
                 color=colors
-            ))])
+            ))],
+            layout=go.Layout(height=480, width=800)
+        )
 
         fig.update_layout(title_text=expense_forecast.scenario_name, font_size=10)
 
         fig.write_image(output_path)
+
+    def submitFinalizedForecastToDatabase(self, E, forecastname, username):
+
+        conn = psycopg2.connect(database="postgres",
+                                host="localhost",
+                                user="hume",
+                                password="triplethickroofofnaturalcedarshingles",
+                                port="5432")
+
+        cursor = conn.cursor()
+
+        forecast_id = '\'' + E.unique_id + '\''
+        report_link = '\'' + '<a href=\"../media/Forecast_' + E.unique_id+'.html\">\"../media/Forecast_' + E.unique_id+'.html\"</a>' + '\''
+        forecast_name = '\'' + forecastname + '\''
+        username = '\'' + username + '\''
+
+        s = datetime.datetime.strptime(E.start_ts,'%Y_%m_%d__%H_%M_%S').strftime('%Y-%m-%d %H:%M:%S')
+        submit_ts = '\'' + s + '\''
+        e = datetime.datetime.strptime(E.end_ts, '%Y_%m_%d__%H_%M_%S').strftime('%Y-%m-%d %H:%M:%S')
+        complete_ts = '\'' + e + '\''
+
+
+        error_flag = "False"
+        satisfice_failed_flag = "False"
+        insert_ts = '\'' + datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '\''
+        update_ts = 'NULL'
+
+        cursor.execute("DELETE FROM all_forecasts where forecast_id = "+forecast_id)
+        conn.commit()
+
+        cursor.execute("DELETE FROM ef_account_set where forecast_id = " + forecast_id)
+        conn.commit()
+
+        cursor.execute("DELETE FROM ef_budget_items where forecast_id = " + forecast_id)
+        conn.commit()
+
+        cursor.execute("DELETE FROM ef_memo_rules where forecast_id = " + forecast_id)
+        conn.commit()
+
+
+        q = """
+        INSERT INTO all_forecasts (report_link, forecast_id, forecast_name, username, submit_ts, complete_ts, error_flag, satisfice_failed_flag, insert_ts, update_ts) VALUES ({report_link}, {forecast_id},{forecast_name},{username},{submit_ts},{complete_ts},{error_flag},{satisfice_failed_flag},{insert_ts},{update_ts});
+        """.format(report_link=report_link,
+                   forecast_id=forecast_id,
+                   forecast_name=forecast_name,
+                   username=username,
+                   submit_ts=submit_ts,
+                   complete_ts=complete_ts,
+                   error_flag=error_flag,
+                   satisfice_failed_flag=satisfice_failed_flag,
+                   insert_ts=insert_ts,
+                   update_ts=update_ts)
+
+        cursor.execute(q)
+        conn.commit()
+
+        q = """INSERT INTO ef_account_set SELECT """ + str(forecast_id) + """ as forecast_id, * from ef_account_set__temporary """
+        cursor.execute(q)
+        conn.commit()
+
+        # q = """TRUNCATE ef_account_set__temporary """
+        # cursor.execute(q)
+        # conn.commit()
+
+        q = """INSERT INTO ef_memo_rules SELECT """ + str(
+            forecast_id) + """ as forecast_id, * from ef_memo_rules__temporary """
+        cursor.execute(q)
+        conn.commit()
+
+        # q = """TRUNCATE ef_memo_rules__temporary """
+        # cursor.execute(q)
+        # conn.commit()
+
+        q = """INSERT INTO ef_budget_items SELECT """ + str(
+            forecast_id) + """ as forecast_id, * from ef_budget_items__temporary """
+        cursor.execute(q)
+        conn.commit()
+
+        # q = """TRUNCATE ef_budget_items__temporary """
+        # cursor.execute(q)
+        # conn.commit()
+
+
+        #todo 1. move temp tables to hist tables with forecast_id

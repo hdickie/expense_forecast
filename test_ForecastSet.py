@@ -103,6 +103,5 @@ class TestForecastSet:
     def test_str(self):
         raise NotImplementedError
 
-
     def test_addCustomLabelToScenario(self):
         raise NotImplementedError

@@ -3,6 +3,7 @@
 
 # import modules used here -- sys is a very standard one
 import sys, argparse, logging
+sys.path.append('/Users/hume/Github/expense_forecast')
 import ExpenseForecast
 
 # Gather our code in a main() function
@@ -14,15 +15,29 @@ def main(args, loglevel):
     else:
         output_dir = args.output_directory
 
-
-    E = ExpenseForecast.initialize_from_json_file(args.input_path)[0]
-    E.runForecast()
-    E.appendSummaryLines()
-    E.writeToJSONFile(output_dir)
-
-    logging.info("Input: %s" % args.input_path)
-    logging.info("Output directory: %s" % args.output_directory)
-
+    if args.source.lower() == 'database' or args.source.lower() == 'db':
+        logging.info('Running based on data from database')
+        E = ExpenseForecast.initialize_from_database(args.begin,
+                             args.end,
+                             account_set_table_name='ef_account_set_'+args.username,
+                             budget_set_table_name='ef_budget_item_set_'+args.username,
+                             memo_rule_set_table_name='ef_memo_rule_set_'+args.username,
+                             account_milestone_table_name='ef_account_milestones_'+args.username,
+                             memo_milestone_table_name='ef_memo_milestones_'+args.username,
+                             composite_milestone_table_name='ef_composite_milestones_'+args.username)
+        E.runForecast()
+        E.appendSummaryLines()
+        E.writeToJSONFile(output_dir)
+    elif args.source.lower() == 'file':
+        logging.info('Running based on data from file')
+        logging.info("Input: %s" % args.input_path)
+        logging.info("Output directory: %s" % args.output_directory)
+        E = ExpenseForecast.initialize_from_json_file(args.input_path)[0]
+        E.runForecast()
+        E.appendSummaryLines()
+        E.writeToJSONFile(output_dir)
+    else:
+        logging.error('--source did not match DATABASE or FILE')
 
 # Standard boilerplate to call the main() function to begin
 # the program.
@@ -46,6 +61,26 @@ if __name__ == '__main__':
         "--verbose",
         help="increase output verbosity",
         action="store_true")
+    parser.add_argument(
+        "-u",
+        "--username",
+        help="username for filter on temp tables for running based on db data",
+        action="store")
+    parser.add_argument(
+        "-s",
+        "--source",
+        help="run based on input from file or from database. value FILE or DATABASE",
+        action="store")
+    parser.add_argument(
+        "-b",
+        "--begin",
+        help="start_date_YYYYMMDD",
+        action="store")
+    parser.add_argument(
+        "-e",
+        "--end",
+        help="end_date_YYYYMMDD",
+        action="store")
     args = parser.parse_args()
 
     # Setup logging

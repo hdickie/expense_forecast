@@ -10,6 +10,45 @@ from log_methods import setup_logger
 logger = setup_logger('AccountSet','./log/AccountSet.log',logging.INFO)
 
 
+def initialize_from_dataframe(accounts_df):
+    #print('ENTER AccountSet initialize_from_dataframe')
+    A = AccountSet([])
+    try:
+        for index, row in accounts_df.iterrows():
+            row = pd.DataFrame(row).T
+
+            accountname = row.account_name.iat[0]
+            balance = row.balance.iat[0]
+            min_balance = row.min_balance.iat[0]
+            max_balance = row.max_balance.iat[0]
+            primary_checking_ind = row.primary_checking_ind.iat[0]
+
+            account_type = row.account_type.iat[0]
+
+            current_statement_balance = row.current_statement_balance.iat[0]
+            previous_statement_balance = row.previous_statement_balance.iat[0]
+            billing_start_date_yyyymmdd = row.billing_start_date_yyyymmdd.iat[0]
+            apr = row.apr.iat[0]
+            minimum_payment = row.minimum_payment.iat[0]
+
+            interest_balance = row.interest_balance.iat[0]
+            principal_balance = row.principal_balance.iat[0]
+
+            if account_type == 'Checking':
+                A.createCheckingAccount(accountname,balance,min_balance,max_balance,primary_checking_ind)
+            elif account_type == 'Credit':
+                A.createCreditCardAccount(accountname,current_statement_balance,previous_statement_balance,min_balance,max_balance,billing_start_date_yyyymmdd,apr,minimum_payment)
+            elif account_type == 'Loan':
+                A.createLoanAccount(accountname,principal_balance,interest_balance,min_balance,max_balance,billing_start_date_yyyymmdd,apr,minimum_payment)
+            elif account_type == 'Investment':
+                A.createInvestmentAccount(accountname, row.balance, row.min_balance, row.max_balance, row.apr)
+    except Exception as e:
+        print(e.args)
+        raise e
+    #print(A.getAccounts().to_string())
+    #print('EXIT AccountSet initialize_from_dataframe')
+    return A
+
 class AccountSet:
 
     def __init__(self, accounts__list, print_debug_messages=True, raise_exceptions=True):
@@ -211,7 +250,6 @@ class AccountSet:
 
     def getPrimaryCheckingAccountName(self):
         return self.getAccounts()[self.getAccounts().Primary_Checking_Ind].iloc[0,0]
-
 
     def createAccount(self,
                       name,

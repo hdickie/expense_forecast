@@ -1772,7 +1772,7 @@ class TestExpenseForecastMethods:
         E1.runForecast()  # Forecast_028363.html
         E1.to_excel('./out')  # ./out/Forecast_028363.xlsx
 
-        E2_list = ExpenseForecast.initialize_from_excel_file('./out/Forecast_059039.xlsx')
+        E2_list = ExpenseForecast.initialize_from_excel_file('./out/Forecast_'+str(E1.unique_id)+'.xlsx')
         E2 = E2_list[0]
 
         # before runForecast
@@ -2177,8 +2177,8 @@ class TestExpenseForecastMethods:
         MS = MilestoneSet.MilestoneSet( [], [], [])
         MS.addAccountMilestone('test account milestone', 'Checking', 0, 100)
         MS.addMemoMilestone('test memo milestone', 'specific regex')
-        MS.addAccountMilestone('test account milestone', 'Checking', 0, 200)
-        MS.addMemoMilestone('test memo milestone', 'specific regex 2')
+        MS.addAccountMilestone('test account milestone 2', 'Checking', 0, 200)
+        MS.addMemoMilestone('test memo milestone 2', 'specific regex 2')
 
         AM = AccountMilestone.AccountMilestone('test account milestone 2', 'Checking', 0, 100)
         MM = MemoMilestone.MemoMilestone('test memo milestone 2', 'other specific regex')
@@ -2188,9 +2188,9 @@ class TestExpenseForecastMethods:
 
         E1 = ExpenseForecast.ExpenseForecast(A,B,M,sd,ed,MS)
 
-        out_path = './out/'
-        E1.to_excel(out_path)
-        E2 = ExpenseForecast.initialize_from_excel_file(out_path+'Forecast_'+str(E1.unique_id)+'.xlsx')
+        out_dir = './out/'
+        E1.to_excel(out_dir)
+        E2 = ExpenseForecast.initialize_from_excel_file(out_dir+'Forecast_'+str(E1.unique_id)+'.xlsx')[0]
 
         E1.runForecast()
         E2.runForecast()
@@ -2209,31 +2209,31 @@ class TestExpenseForecastMethods:
                 comparable_E2_str_lines.append(l)
 
         assert comparable_E1_str_lines == comparable_E2_str_lines
-
-        #initialize w account rows in reverse order for coverage
-        account_set_df = pd.read_excel(fname, sheet_name='AccountSet')
-        account_set_df = account_set_df.iloc[::-1] #reverse order of rows
-        budget_set_df = pd.read_excel(fname, sheet_name='BudgetSet')
-        memo_rule_set_df = pd.read_excel(fname, sheet_name='MemoRuleSet')
-        choose_one_set_df = pd.read_excel(fname, sheet_name='ChooseOneSet')
-        account_milestones_df = pd.read_excel(fname, sheet_name='AccountMilestones')
-        memo_milestones_df = pd.read_excel(fname, sheet_name='MemoMilestones')
-        composite_account_milestones_df = pd.read_excel(fname, sheet_name='CompositeAccountMilestones')
-        composite_memo_milestones_df = pd.read_excel(fname, sheet_name='CompositeMemoMilestones')
-        config_df = pd.read_excel(fname, sheet_name='config')
-
-        with pd.ExcelWriter(fname, engine='openpyxl') as writer:
-            account_set_df.to_excel(writer, sheet_name='AccountSet',index=False)
-            budget_set_df.to_excel(writer, sheet_name='BudgetSet',index=False)
-            memo_rule_set_df.to_excel(writer, sheet_name='MemoRuleSet',index=False)
-            choose_one_set_df.to_excel(writer, sheet_name='ChooseOneSet',index=False)
-            account_milestones_df.to_excel(writer, sheet_name='AccountMilestones',index=False)
-            memo_milestones_df.to_excel(writer, sheet_name='MemoMilestones',index=False)
-            composite_account_milestones_df.to_excel(writer, sheet_name='CompositeAccountMilestones',index=False)
-            composite_memo_milestones_df.to_excel(writer, sheet_name='CompositeMemoMilestones', index=False)
-            config_df.to_excel(writer, sheet_name='config',index=False)
-
-        #E1_reverse = ExpenseForecast.initialize_from_excel_file(fname)
+        #
+        # #initialize w account rows in reverse order for coverage
+        # account_set_df = pd.read_excel(fname, sheet_name='AccountSet')
+        # account_set_df = account_set_df.iloc[::-1] #reverse order of rows
+        # budget_set_df = pd.read_excel(fname, sheet_name='BudgetSet')
+        # memo_rule_set_df = pd.read_excel(fname, sheet_name='MemoRuleSet')
+        # choose_one_set_df = pd.read_excel(fname, sheet_name='ChooseOneSet')
+        # account_milestones_df = pd.read_excel(fname, sheet_name='AccountMilestones')
+        # memo_milestones_df = pd.read_excel(fname, sheet_name='MemoMilestones')
+        # composite_account_milestones_df = pd.read_excel(fname, sheet_name='CompositeAccountMilestones')
+        # composite_memo_milestones_df = pd.read_excel(fname, sheet_name='CompositeMemoMilestones')
+        # config_df = pd.read_excel(fname, sheet_name='config')
+        #
+        # with pd.ExcelWriter(fname, engine='openpyxl') as writer:
+        #     account_set_df.to_excel(writer, sheet_name='AccountSet',index=False)
+        #     budget_set_df.to_excel(writer, sheet_name='BudgetSet',index=False)
+        #     memo_rule_set_df.to_excel(writer, sheet_name='MemoRuleSet',index=False)
+        #     choose_one_set_df.to_excel(writer, sheet_name='ChooseOneSet',index=False)
+        #     account_milestones_df.to_excel(writer, sheet_name='AccountMilestones',index=False)
+        #     memo_milestones_df.to_excel(writer, sheet_name='MemoMilestones',index=False)
+        #     composite_account_milestones_df.to_excel(writer, sheet_name='CompositeAccountMilestones',index=False)
+        #     composite_memo_milestones_df.to_excel(writer, sheet_name='CompositeMemoMilestones', index=False)
+        #     config_df.to_excel(writer, sheet_name='config',index=False)
+        #
+        # #E1_reverse = ExpenseForecast.initialize_from_excel_file(fname)
 
     def test_forecast_longer_than_satisfice(self):
         #if satisfice fails on the second day of the forecast, there is weirdness

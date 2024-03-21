@@ -19,7 +19,7 @@ import AccountMilestone
 import datetime
 
 if __name__ == '__main__':
-    start_date_YYYYMMDD = '20240123'
+    start_date_YYYYMMDD = '20240201'
     end_date_YYYYMMDD = '20290101'
 
     # start_date_YYYYMMDD = '20240101'

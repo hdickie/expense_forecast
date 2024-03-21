@@ -22,10 +22,9 @@ def generate_date_sequence(start_date_YYYYMMDD, num_days, cadence):
     elif cadence.lower() == "semiweekly":
         # todo returns empty when first and last are same
         #return_series = pd.date_range(start_date, end_date, freq='2W')
-        day_delta = int(start_date.strftime('%d')) - 2 #not sure why this is 2 when others needed 1 but testing says so
-        start_date = start_date - datetime.timedelta(days=day_delta)
-        relevant_semiweekly_schedule = pd.date_range(start_date, end_date, freq='2W')
-        return_series = relevant_semiweekly_schedule + datetime.timedelta(days=day_delta)
+        day_delta = (start_date.weekday() + 1) % 7 #monday is 0, sunday is 6
+        relevant_semiweekly_schedule = pd.date_range(start_date, end_date, freq='2W-SUN') #2W means 2W-SUNDAY
+        return_series = relevant_semiweekly_schedule + datetime.timedelta(days=-1*(day_delta+1))
     elif cadence.lower() == "monthly":
         day_delta = int(start_date.strftime('%d')) - 1
         start_date = start_date - datetime.timedelta(days=day_delta)
