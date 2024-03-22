@@ -22,7 +22,7 @@ def initialize_from_dataframe(budget_set_df):
                             row.cadence.replace('-','').lower(),
                             row.amount,
                             row.memo,
-                            row.deferrable_,
+                            row.deferrable,
                             row.partial_payment_allowed)
     except Exception as e:
         print(e.args)

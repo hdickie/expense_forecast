@@ -14,33 +14,61 @@ def initialize_from_dataframe(accounts_df):
     #print('ENTER AccountSet initialize_from_dataframe')
     A = AccountSet([])
     try:
+        expect_curr_stmt_bal = False
+        expect_prev_stmt_bal = False
+        expect_principal_bal = False
+        expect_interest_bal = False
         for index, row in accounts_df.iterrows():
             row = pd.DataFrame(row).T
 
-            accountname = row.account_name.iat[0]
+            accountname = row.account_name.iat[0].split(':')[0]
             balance = row.balance.iat[0]
             min_balance = row.min_balance.iat[0]
             max_balance = row.max_balance.iat[0]
             primary_checking_ind = row.primary_checking_ind.iat[0]
 
             account_type = row.account_type.iat[0]
+            if account_type == 'curr stmt bal' and not expect_prev_stmt_bal:
+                current_statement_balance = row.balance.iat[0]
+                expect_prev_stmt_bal = True
+            elif account_type == 'prev stmt bal' and not expect_curr_stmt_bal:
+                previous_statement_balance = row.balance.iat[0]
+                billing_start_date_yyyymmdd = row.billing_start_date_yyyymmdd.iat[0]
+                apr = row.apr.iat[0]
+                minimum_payment = row.minimum_payment.iat[0]
+                expect_curr_stmt_bal = True
+            elif account_type == 'principal balance' and not expect_interest_bal:
+                billing_start_date_yyyymmdd = row.billing_start_date_yyyymmdd.iat[0]
+                apr = row.apr.iat[0]
+                minimum_payment = row.minimum_payment.iat[0]
+                principal_balance = row.balance.iat[0]
+                expect_interest_bal = True
+            elif account_type == 'interest' and not expect_principal_bal:
+                interest_balance = row.balance.iat[0]
+                expect_principal_bal = True
 
-            current_statement_balance = row.current_statement_balance.iat[0]
-            previous_statement_balance = row.previous_statement_balance.iat[0]
-            billing_start_date_yyyymmdd = row.billing_start_date_yyyymmdd.iat[0]
-            apr = row.apr.iat[0]
-            minimum_payment = row.minimum_payment.iat[0]
+            if account_type == 'curr stmt bal' and expect_curr_stmt_bal:
+                current_statement_balance = row.balance.iat[0]
+                A.createCreditCardAccount(accountname, current_statement_balance, previous_statement_balance,
+                                          min_balance, max_balance, billing_start_date_yyyymmdd, apr, minimum_payment)
+                expect_prev_stmt_bal = False
+            elif account_type == 'prev stmt bal' and expect_prev_stmt_bal:
+                A.createCreditCardAccount(accountname, current_statement_balance, previous_statement_balance,
+                                          min_balance, max_balance, billing_start_date_yyyymmdd, apr, minimum_payment)
+                expect_curr_stmt_bal = False
+            elif account_type == 'principal balance' and expect_principal_bal:
+                principal_balance = row.balance.iat[0]
+                A.createLoanAccount(accountname, principal_balance, interest_balance, min_balance, max_balance,
+                                    billing_start_date_yyyymmdd, apr, minimum_payment)
+                expect_interest_bal = False
+            elif account_type == 'interest' and expect_interest_bal:
+                A.createLoanAccount(accountname, principal_balance, interest_balance, min_balance, max_balance,
+                                    billing_start_date_yyyymmdd, apr, minimum_payment)
+                expect_principal_bal = False
 
-            interest_balance = row.interest_balance.iat[0]
-            principal_balance = row.principal_balance.iat[0]
-
-            if account_type == 'Checking':
+            if account_type.lower() == 'checking':
                 A.createCheckingAccount(accountname,balance,min_balance,max_balance,primary_checking_ind)
-            elif account_type == 'Credit':
-                A.createCreditCardAccount(accountname,current_statement_balance,previous_statement_balance,min_balance,max_balance,billing_start_date_yyyymmdd,apr,minimum_payment)
-            elif account_type == 'Loan':
-                A.createLoanAccount(accountname,principal_balance,interest_balance,min_balance,max_balance,billing_start_date_yyyymmdd,apr,minimum_payment)
-            elif account_type == 'Investment':
+            elif account_type.lower() == 'investment':
                 A.createInvestmentAccount(accountname, row.balance, row.min_balance, row.max_balance, row.apr)
     except Exception as e:
         print(e.args)

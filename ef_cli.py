@@ -5,6 +5,7 @@
 import sys, argparse, logging
 sys.path.append('/Users/hume/Github/expense_forecast')
 import ExpenseForecast
+import ForecastHandler
 
 # Gather our code in a main() function
 def main(args, loglevel):
@@ -14,6 +15,8 @@ def main(args, loglevel):
         output_dir = './'
     else:
         output_dir = args.output_directory
+
+    F = ForecastHandler.ForecastHandler()
 
     if args.source.lower() == 'database' or args.source.lower() == 'db':
         logging.info('Running based on data from database')
@@ -28,6 +31,9 @@ def main(args, loglevel):
         E.runForecast()
         E.appendSummaryLines()
         E.writeToJSONFile(output_dir)
+        E.write_to_database(args.username,args.force)
+        E.forecast_df.to_csv(output_dir+'/Forecast_'+str(E.unique_id)+'.csv',index=False)
+        F.generateHTMLReport(E, output_dir)
     elif args.source.lower() == 'file':
         logging.info('Running based on data from file')
         logging.info("Input: %s" % args.input_path)
@@ -36,6 +42,7 @@ def main(args, loglevel):
         E.runForecast()
         E.appendSummaryLines()
         E.writeToJSONFile(output_dir)
+        E.forecast_df.to_csv(output_dir + '/Forecast_' + str(E.unique_id) + '.csv',index=False)
     else:
         logging.error('--source did not match DATABASE or FILE')
 
@@ -81,6 +88,11 @@ if __name__ == '__main__':
         "--end",
         help="end_date_YYYYMMDD",
         action="store")
+    parser.add_argument(
+        "-f",
+        "--force",
+        help="Overwrite output data if present.",
+        action="store_true")
     args = parser.parse_args()
 
     # Setup logging

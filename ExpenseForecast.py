@@ -31,10 +31,6 @@ pd.options.mode.chained_assignment = None #apparently this warning can throw fal
 
 logger = setup_logger('ExpenseForecast', './log/ExpenseForecast.log', level=logging.WARNING)
 
-
-
-
-
 def initialize_from_database(start_date_YYYYMMDD,
                              end_date_YYYYMMDD,
                              account_set_table_name='ef_account_set__temporary',
@@ -548,6 +544,73 @@ def initialize_from_json_file(path_to_json):
     return E
 
 class ExpenseForecast:
+
+    def write_to_database(self, username, overwrite=False):
+        #engine = create_engine('postgresql://bsdegjmy_humedick@localhost:5432/bsdegjmy_sandbox')
+        connection = psycopg2.connect(host='localhost', database='bsdegjmy_sandbox', user='bsdegjmy_humedick')
+        connection.autocommit = True
+        cursor = connection.cursor()
+
+        if hasattr(self,'forecast_df'):
+            tablename = username+"_Forecast_"+str(self.unique_id)
+
+            if overwrite:
+                cursor.execute('drop table if exists '+tablename)
+
+            DDL = "CREATE TABLE "+tablename+" (\n"
+            #Date	Checking	Credit: Curr Stmt Bal	Credit: Prev Stmt Bal	test loan: Principal Balance	test loan: Interest	Marginal Interest	Net Gain	Net Loss	Net Worth	Loan Total	CC Debt Total	Liquid Total	Memo
+            for i in range(0,len(self.forecast_df.columns)):
+                column_name = self.forecast_df.columns[i]
+                if column_name == "Date":
+                    DDL += "\"Date\" date,"
+                elif column_name == "Memo":
+                    DDL += "Memo text"
+                else:
+                    DDL += column_name.replace(' ','_').replace(':','')+" float,"
+                DDL+="\n"
+            DDL += ")"
+            print(DDL)
+            cursor.execute(DDL)
+
+            grant_q = "grant all privileges on "+tablename+" to public"
+            print(grant_q)
+            cursor.execute(grant_q)
+
+            for index, row in self.forecast_df.iterrows():
+                insert_q = "INSERT INTO "+tablename+" ("
+                for i in range(0, len(self.forecast_df.columns)):
+                    column_name = self.forecast_df.columns[i]
+                    if column_name == "Date":
+                        insert_q += "\"Date\", "
+                    elif column_name == "Memo":
+                        insert_q += "Memo"
+                        insert_q += " ) VALUES ("
+                    else:
+                        insert_q += column_name.replace(' ','_').replace(':','') + ", "
+
+                for i in range(0, len(self.forecast_df.columns)):
+                    column_name = self.forecast_df.columns[i]
+                    if column_name == "Date":
+                        insert_q += "\'"+str(row.Date)+"\'"+", "
+                    elif column_name == "Memo":
+                        insert_q += "\'"+str(row.Memo)+"\'"
+                        insert_q += " )"
+                    else:
+                        insert_q += str(row[column_name]) + ", "
+                print(insert_q)
+                cursor.execute(insert_q)
+
+                #todo accounts
+                #todo budget items
+                #todo memo rules
+                #todo account milestones
+                #todo memo milestones
+                #todo composite milestones
+
+
+        else:
+            logger.error('This forecast has not been run, and so cannot be recorded in the database')
+            raise AssertionError
 
     def __str__(self):
 
