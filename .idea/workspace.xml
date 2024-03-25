@@ -995,8 +995,6 @@
     </configuration>
     <list>
       <item itemvalue="Python.AccountSet" />
-      <item itemvalue="Python.scratch2" />
-      <item itemvalue="Python.multithread_test" />
       <item itemvalue="Python.Account" />
       <item itemvalue="Python.BudgetItem" />
       <item itemvalue="Python.BudgetSet" />
@@ -1004,17 +1002,19 @@
       <item itemvalue="Python.MemoRule" />
       <item itemvalue="Python.doctest_Account" />
       <item itemvalue="Python.download_and_process_emails" />
+      <item itemvalue="Python.get_sun_data" />
       <item itemvalue="Python.main" />
+      <item itemvalue="Python.multithread_test" />
       <item itemvalue="Python.parse wifi data" />
       <item itemvalue="Python.project_utilities" />
+      <item itemvalue="Python.sankey_test" />
+      <item itemvalue="Python.scratch2" />
+      <item itemvalue="Python.scratch4" />
       <item itemvalue="Python.scratch5" />
       <item itemvalue="Python.scratch8" />
-      <item itemvalue="Python.get_sun_data" />
       <item itemvalue="Python.scratch9" />
-      <item itemvalue="Python.tqdm_test" />
-      <item itemvalue="Python.sankey_test" />
-      <item itemvalue="Python.scratch4" />
       <item itemvalue="Python.test_AccountSet" />
+      <item itemvalue="Python.tqdm_test" />
     </list>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />

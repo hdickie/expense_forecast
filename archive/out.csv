@@ -1,6 +1,0 @@
-Date,Date,Checking,Loan A: Principal Balance,Loan A: Interest,Loan B: Principal Balance,Loan B: Interest,Loan C: Principal Balance,Loan C: Interest,Loan D: Principal Balance,Loan D: Interest,Loan E: Principal Balance,Loan E: Interest,Memo
-2023-09-01,2023-09-01 00:00:00,1000.0,4746.18,0.0,1919.55,0.0,4726.68,0.0,1823.31,0.0,3359.17,0.0,
-2023-09-02,2023-09-02 00:00:00,1000.0,4746.18,0.0,1919.55,0.0,4726.68,0.0,1823.31,0.0,3359.17,0.0,
-2023-09-03,2023-09-03 00:00:00,0.009999999999990905,3174.83,0.0,1869.55,0.22,3449.1900000000005,0.0,1773.31,0.18,3260.19,0.0,income ($2000.0) ; Loan A loan min payment ($50.0); Loan B loan min payment ($50.0); Loan C loan min payment ($50.0); Loan D loan min payment ($50.0); Loan E loan min payment ($50.0); Checking payment ($2749.99) ; Loan A: Principal Balance payment ($1521.3500000000004) ; Loan A: Interest payment ($0.6) ; Loan C: Principal Balance payment ($1227.4899999999998) ; Loan C: Interest payment ($0.55) ; 
-2023-09-04,2023-09-04 00:00:00,0.010000000000218279,3174.83,0.6,1869.55,0.44,3449.1900000000005,0.55,1773.31,0.36,3260.19,0.34,
-2023-09-05,2023-09-05 00:00:00,0.010000000000218279,3174.83,1.1999999999999997,1869.55,0.66,3449.1900000000005,1.1,1773.31,0.54,3260.19,0.68,
