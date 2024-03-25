@@ -5,28 +5,459 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="94004e15-030d-4b7e-a7c4-801fddc59fac" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/Forecast_000358.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_025222.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_026946.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_035780.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_036804.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_040139.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_043772.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_049084.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_051139.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_067937.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_071468.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_076861.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_078657.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_080434.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Forecast_086869.csv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.coverage" beforeDir="false" afterPath="$PROJECT_DIR$/.coverage" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore.swp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/expense_forecast.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/expense_forecast.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/BudgetSet.py" beforeDir="false" afterPath="$PROJECT_DIR$/BudgetSet.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ExpenseForecast.py" beforeDir="false" afterPath="$PROJECT_DIR$/ExpenseForecast.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Forecast_088582.csv" beforeDir="false" afterPath="$PROJECT_DIR$/Forecast_088582.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MemoRuleSet.py" beforeDir="false" afterPath="$PROJECT_DIR$/MemoRuleSet.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_ExpenseForecast.py" beforeDir="false" afterPath="$PROJECT_DIR$/test_ExpenseForecast.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/000468_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/000468_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/000468_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/000468_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/000468_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/000468_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/001124_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/001124_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/001124_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/001124_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/001124_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/001124_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/001819_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/001819_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/001819_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/001819_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/001819_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/001819_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/001868_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/001868_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/001868_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/001868_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/001868_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/001868_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/002894_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/002894_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/002894_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/002894_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/002894_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/002894_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/004350_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/004350_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/004350_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/004350_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/004350_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/004350_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/004474_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/004474_accounttype_line_plot_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/004474_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/004474_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/004474_interest_line_plot_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/004474_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/004572_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/004572_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/004572_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/004572_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/004572_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/004572_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/004899_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/004899_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/004899_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/004899_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/004899_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/004899_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/008308_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/008308_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/008308_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/008308_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/008308_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/008308_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/008797_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/008797_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/008797_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/008797_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/008797_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/008797_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/008870_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/008870_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/008870_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/008870_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/008870_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/008870_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/009399_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/009399_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/009399_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/009399_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/009399_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/009399_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/011385_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/011385_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/011385_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/011385_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/011385_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/011385_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/013442_accounttype_line_plot_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/013442_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/013442_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/017028_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/017028_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/017028_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/017028_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/017028_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/017028_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/018158_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/018158_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/018158_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/018158_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/018158_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/018158_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/025888_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/025888_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/025888_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/025888_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/025888_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/025888_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/032016_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/032016_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/032016_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/032016_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/032016_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/032016_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/041968_accounttype_line_plot_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/041968_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/041968_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/042307_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/042307_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/042307_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/042307_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/042307_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/042307_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/043732_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/043732_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/043732_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/043732_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/043732_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/043732_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/048102_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/048102_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/048102_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/048102_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/048102_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/048102_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/051110_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/051110_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/051110_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/051110_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/051110_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/051110_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/053927_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/053927_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/053927_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/053927_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/053927_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/053927_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/054127_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/054127_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/054127_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/054127_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/054127_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/054127_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/054460_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/054460_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/054460_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/054460_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/054460_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/054460_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/054466_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/054466_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/054466_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/054466_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/054466_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/054466_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/055024_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/055024_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/055024_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/055024_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/055024_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/055024_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/061883_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/061883_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/061883_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/061883_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/061883_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/061883_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/064118_accounttype_line_plot_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/064118_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/064118_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/064647_accounttype_line_plot_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/064647_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/064647_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/065745_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/065745_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/065745_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/065745_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/065745_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/065745_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/070144_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/070144_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/070144_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/070144_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/070144_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/070144_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/078494_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/078494_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/078494_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/078494_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/078494_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/078494_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/078781_accounttype_line_plot_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/078781_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/078781_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/079948_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/079948_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/079948_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/079948_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/079948_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/079948_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/081423_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/081423_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/081423_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/081423_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/081423_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/081423_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/081700_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/081700_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/081700_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/081700_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/081700_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/081700_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/082352_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/082352_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/082352_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/082352_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/082352_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/082352_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/083139_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/083139_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/083139_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/083139_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/083139_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/083139_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/083302_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/083302_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/083302_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/083302_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/083302_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/083302_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/085474_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/085474_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/085474_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/085474_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/085474_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/085474_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/085984_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/085984_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/085984_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/085984_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/085984_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/085984_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/086066_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/086066_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/086066_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/086066_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/086066_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/086066_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/086478_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/086478_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/086478_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/086478_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/086478_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/086478_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/089048_accounttype_line_plot_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/089048_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/089048_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/090592_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/090592_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/090592_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/090592_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/090592_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/090592_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/092682_accounttype_line_plot_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/092682_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/092682_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/093258_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/093258_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/093258_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/093258_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/093258_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/093258_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/099991_accounttype_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/099991_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/099991_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/099991_milestone_scatter_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/099991_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/099991_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/BudgetSet" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ExpenseForecast" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecasSummary.html.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html021294_accounttype_line_plot_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html021294_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html021294_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html021294_milestone_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html021294_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html021294_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html021294_vs_044698_account_type_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html021294_vs_044698_all_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html021294_vs_044698_marginal_interest_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html021294_vs_044698_milestone_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html021294_vs_044698_net_gain_loss_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html021294_vs_044698_networth_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html021294_vs_050855_account_type_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html021294_vs_050855_all_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html021294_vs_050855_marginal_interest_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html021294_vs_050855_milestone_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html021294_vs_050855_net_gain_loss_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html021294_vs_050855_networth_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html021294_vs_074334_account_type_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html021294_vs_074334_all_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html021294_vs_074334_marginal_interest_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html021294_vs_074334_milestone_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html021294_vs_074334_net_gain_loss_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html021294_vs_074334_networth_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html044698_accounttype_line_plot_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html044698_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html044698_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html044698_milestone_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html044698_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html044698_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html044698_vs_021294_account_type_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html044698_vs_021294_all_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html044698_vs_021294_marginal_interest_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html044698_vs_021294_milestone_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html044698_vs_021294_net_gain_loss_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html044698_vs_021294_networth_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html044698_vs_050855_account_type_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html044698_vs_050855_all_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html044698_vs_050855_marginal_interest_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html044698_vs_050855_milestone_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html044698_vs_050855_net_gain_loss_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html044698_vs_050855_networth_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html044698_vs_074334_account_type_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html044698_vs_074334_all_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html044698_vs_074334_marginal_interest_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html044698_vs_074334_milestone_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html044698_vs_074334_net_gain_loss_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html044698_vs_074334_networth_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html050855_accounttype_line_plot_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html050855_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html050855_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html050855_milestone_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html050855_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html050855_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html050855_vs_021294_account_type_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html050855_vs_021294_all_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html050855_vs_021294_marginal_interest_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html050855_vs_021294_milestone_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html050855_vs_021294_net_gain_loss_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html050855_vs_021294_networth_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html050855_vs_044698_account_type_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html050855_vs_044698_all_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html050855_vs_044698_marginal_interest_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html050855_vs_044698_milestone_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html050855_vs_044698_net_gain_loss_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html050855_vs_044698_networth_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html050855_vs_074334_account_type_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html050855_vs_074334_all_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html050855_vs_074334_marginal_interest_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html050855_vs_074334_milestone_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html050855_vs_074334_net_gain_loss_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html050855_vs_074334_networth_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html074334_accounttype_line_plot_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html074334_all_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html074334_marginal_interest_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html074334_milestone_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html074334_net_gain_loss_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html074334_networth_line_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html074334_vs_021294_account_type_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html074334_vs_021294_all_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html074334_vs_021294_marginal_interest_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html074334_vs_021294_milestone_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html074334_vs_021294_net_gain_loss_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html074334_vs_021294_networth_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html074334_vs_044698_account_type_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html074334_vs_044698_all_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html074334_vs_044698_marginal_interest_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html074334_vs_044698_milestone_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html074334_vs_044698_net_gain_loss_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html074334_vs_044698_networth_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html074334_vs_050855_account_type_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html074334_vs_050855_all_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html074334_vs_050855_marginal_interest_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html074334_vs_050855_milestone_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html074334_vs_050855_net_gain_loss_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.html074334_vs_050855_networth_comparison_plot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.htmlcompare_021294_044698.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.htmlcompare_021294_050855.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.htmlcompare_021294_074334.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.htmlcompare_044698_021294.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.htmlcompare_044698_050855.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.htmlcompare_044698_074334.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.htmlcompare_050855_021294.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.htmlcompare_050855_044698.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.htmlcompare_050855_074334.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.htmlcompare_074334_021294.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.htmlcompare_074334_044698.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ForecastSummary.htmlcompare_074334_050855.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_000468.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_001124.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_001819.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_001868.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_002894.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_004350.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_004572.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_004899.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_008308.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_008797.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_008870.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_009399.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_011385.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_017028.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_018158.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_025888.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_032016.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_042307.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_043732.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_048102.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_051110.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_053927.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_054127.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_054460.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_054466.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_055024.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_061883.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_065745.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_070144.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_078494.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_079948.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_081423.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_081700.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_082352.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_083139.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_083302.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_085474.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_085984.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_086066.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_086478.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_090592.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_093258.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Forecast_099991.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ScenarioSetMilestoneDifferences.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/account_type_totals.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/example_multiple_forecast_report.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/example_single_forecast_report.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out.png" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -50,6 +481,13 @@
       <filtered-out-file-type name="TAG" />
       <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
     </file-type-list>
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/BudgetSet.py" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/ExpenseForecast.py" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/ForecastHandler.py" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/generate_date_sequence.py" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/scratch9.py" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="LogFilters">
     <option name="FILTER_ERRORS" value="false" />
@@ -80,7 +518,7 @@
     &quot;git-widget-placeholder&quot;: &quot;main&quot;,
     &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
     &quot;last_opened_file_path&quot;: &quot;C:/Users/Hume/PycharmProjects/expense_forecast&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;
   },
   &quot;keyToStringList&quot;: {
     &quot;com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File&quot;: [
@@ -101,7 +539,7 @@
       <recent name="C:\Users\HumeD\OneDrive\Desktop\network-observations" />
     </key>
   </component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Python.scratch9">
     <configuration name="Account" type="PythonConfigurationType" factoryName="Python">
       <module name="expense_forecast" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -277,6 +715,27 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="get_sun_data" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+      <module name="expense_forecast" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="$USER_HOME$/opt/anaconda3/bin/python" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/get_sun_data.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="main" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="expense_forecast" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -290,6 +749,27 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="multithread_test" type="PythonConfigurationType" factoryName="Python">
+      <module name="expense_forecast" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="$USER_HOME$/opt/anaconda3/bin/python" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/multithread_test.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -341,19 +821,40 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="scratch3" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+    <configuration name="sankey_test" type="PythonConfigurationType" factoryName="Python">
       <module name="expense_forecast" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
-      <option name="SDK_HOME" value="C:\Users\HumeD\PycharmProjects\expense_forecast\activate\Scripts\python.exe" />
+      <option name="SDK_HOME" value="$USER_HOME$/opt/anaconda3/bin/python" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
       <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scratch3.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/sankey_test.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="scratch2" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+      <module name="expense_forecast" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scratch2.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -386,6 +887,69 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="scratch5" type="PythonConfigurationType" factoryName="Python">
+      <module name="expense_forecast" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="/usr/local/bin/python3.8" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scratch5.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="scratch8" type="PythonConfigurationType" factoryName="Python">
+      <module name="expense_forecast" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="$USER_HOME$/opt/anaconda3/bin/python" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scratch8.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="scratch9" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+      <module name="expense_forecast" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="$USER_HOME$/opt/anaconda3/bin/python" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scratch9.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="test_AccountSet" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="expense_forecast" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -408,8 +972,31 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="tqdm_test" type="PythonConfigurationType" factoryName="Python">
+      <module name="expense_forecast" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="$USER_HOME$/opt/anaconda3/bin/python" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tqdm_test.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <list>
       <item itemvalue="Python.AccountSet" />
+      <item itemvalue="Python.scratch2" />
+      <item itemvalue="Python.multithread_test" />
       <item itemvalue="Python.Account" />
       <item itemvalue="Python.BudgetItem" />
       <item itemvalue="Python.BudgetSet" />
@@ -420,7 +1007,12 @@
       <item itemvalue="Python.main" />
       <item itemvalue="Python.parse wifi data" />
       <item itemvalue="Python.project_utilities" />
-      <item itemvalue="Python.scratch3" />
+      <item itemvalue="Python.scratch5" />
+      <item itemvalue="Python.scratch8" />
+      <item itemvalue="Python.get_sun_data" />
+      <item itemvalue="Python.scratch9" />
+      <item itemvalue="Python.tqdm_test" />
+      <item itemvalue="Python.sankey_test" />
       <item itemvalue="Python.scratch4" />
       <item itemvalue="Python.test_AccountSet" />
     </list>
