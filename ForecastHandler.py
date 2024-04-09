@@ -28,6 +28,8 @@ import psycopg2
 from log_methods import setup_logger
 logger = setup_logger('ForecastHandler', './log/ForecastHandler.log', level=logging.DEBUG)
 
+#os.environ['MPLCONFIGDIR'] = '/var/www/'
+
 # e.g. custom_cycler = (cycler(color=['c', 'm', 'y', 'k']) + cycler(lw=[1, 2, 3, 4]))
 # here, lw results in different types of dotted lines
 default_color_cycle_list = ['blue','orange','green']
@@ -37,7 +39,6 @@ class ForecastHandler:
 
     def __init__(self):
         pass
-
     # def initialize_from_excel_file(self,path_to_excel_file):
     #     AccountSet_df = pd.read_excel(path_to_excel_file, sheet_name='AccountSet')
     #     BudgetSet_df = pd.read_excel(path_to_excel_file, sheet_name='BudgetSet')

@@ -15,36 +15,40 @@ from log_methods import setup_logger
 import logging
 from generate_date_sequence import generate_date_sequence
 import numpy as np
-import xlsxwriter
 import CompositeMilestone
 import jsonpickle
 import tqdm
-import math
-import sys
-import os
-import notification_sounds
+# import notification_sounds
 from sqlalchemy import create_engine
 import psycopg2
 
 pd.options.mode.chained_assignment = None #apparently this warning can throw false positives???
 
 
-logger = setup_logger('ExpenseForecast', './log/ExpenseForecast.log', level=logging.WARNING)
+logger = setup_logger('ExpenseForecast', './log/ExpenseForecast.log', level=logging.INFO)
 
 def initialize_from_database(start_date_YYYYMMDD,
                              end_date_YYYYMMDD,
-                             account_set_table_name='ef_account_set__temporary',
-                             budget_set_table_name='ef_budget_item_set__temporary',
-                             memo_rule_set_table_name='ef_memo_rule_set__temporary',
-                             account_milestone_table_name='ef_account_milestones__temporary',
-                             memo_milestone_table_name='ef_memo_milestones__temporary',
-                             composite_milestone_table_name='ef_composite_milestones__temporary'):
+                             account_set_table_name='ef_account_set_temporary',
+                             budget_set_table_name='ef_budget_item_set_temporary',
+                             memo_rule_set_table_name='ef_memo_rule_set_temporary',
+                             account_milestone_table_name='ef_account_milestones_temporary',
+                             memo_milestone_table_name='ef_memo_milestones_temporary',
+                             composite_milestone_table_name='ef_composite_milestones_temporary',
+                             database_hostname='localhost',
+                             database_name='postres',
+                             database_username='postres',
+                             database_password='postres',
+                             database_port='5432'
+                             ):
     #print('ENTER initialize_from_database()')
 
     start_date_YYYYMMDD = start_date_YYYYMMDD.replace('-','')
     end_date_YYYYMMDD = end_date_YYYYMMDD.replace('-','').replace('-', '')
 
-    engine = create_engine('postgresql://bsdegjmy_humedick@localhost:5432/bsdegjmy_sandbox')
+    connect_string = 'postgresql://'+database_username+':'+database_password+'@'+database_hostname+':'+database_port+'/'+database_name
+    engine = create_engine(connect_string)
+    #engine = create_engine('postgresql://bsdegjmy_humedick@localhost:5432/bsdegjmy_sandbox')
     accounts_df = pd.read_sql_query('select * from ' + account_set_table_name, con=engine)
     budget_items_df = pd.read_sql_query('select * from ' + budget_set_table_name, con=engine)
     memo_rules_df = pd.read_sql_query('select * from ' + memo_rule_set_table_name, con=engine)
@@ -545,19 +549,26 @@ def initialize_from_json_file(path_to_json):
 
 class ExpenseForecast:
 
-    def write_to_database(self, username, overwrite=False):
+    def write_to_database(self, username,
+                          database_hostname,  #localhost
+                          database_name,  #bsdegjmy_sandbox
+                          database_username,  #bsdegjmy_humedick
+                          database_password,  #
+                          database_port,  #5432
+                          overwrite=False):
         #engine = create_engine('postgresql://bsdegjmy_humedick@localhost:5432/bsdegjmy_sandbox')
-        connection = psycopg2.connect(host='localhost', database='bsdegjmy_sandbox', user='bsdegjmy_humedick')
+        connection = psycopg2.connect(host=database_hostname, database=database_name, user=database_username, password=database_password, port=database_port)
         connection.autocommit = True
         cursor = connection.cursor()
+
+        #todo implement force
 
         if hasattr(self,'forecast_df'):
             tablename = username+"_Forecast_"+str(self.unique_id)
 
             if overwrite:
-                cursor.execute('drop table if exists '+tablename)
-
-            DDL = "CREATE TABLE "+tablename+" (\n"
+                cursor.execute('drop table if exists prod.'+tablename)
+            DDL = "CREATE TABLE prod."+tablename+" (\n"
             #Date	Checking	Credit: Curr Stmt Bal	Credit: Prev Stmt Bal	test loan: Principal Balance	test loan: Interest	Marginal Interest	Net Gain	Net Loss	Net Worth	Loan Total	CC Debt Total	Liquid Total	Memo
             for i in range(0,len(self.forecast_df.columns)):
                 column_name = self.forecast_df.columns[i]
@@ -569,15 +580,15 @@ class ExpenseForecast:
                     DDL += column_name.replace(' ','_').replace(':','')+" float,"
                 DDL+="\n"
             DDL += ")"
-            print(DDL)
+            log_in_color(logger,'white','info',DDL)
             cursor.execute(DDL)
 
-            grant_q = "grant all privileges on "+tablename+" to public"
-            print(grant_q)
+            grant_q = "grant all privileges on prod."+tablename+" to "+username
+            log_in_color(logger,'white','info',grant_q)
             cursor.execute(grant_q)
 
             for index, row in self.forecast_df.iterrows():
-                insert_q = "INSERT INTO "+tablename+" ("
+                insert_q = "INSERT INTO prod."+tablename+" ("
                 for i in range(0, len(self.forecast_df.columns)):
                     column_name = self.forecast_df.columns[i]
                     if column_name == "Date":
@@ -597,15 +608,60 @@ class ExpenseForecast:
                         insert_q += " )"
                     else:
                         insert_q += str(row[column_name]) + ", "
-                print(insert_q)
+                log_in_color(logger,'white','info',insert_q)
                 cursor.execute(insert_q)
 
-                #todo accounts
-                #todo budget items
-                #todo memo rules
-                #todo account milestones
-                #todo memo milestones
-                #todo composite milestones
+
+            cursor.execute("INSERT INTO prod.ef_account_set_"+username+" Select '"+self.unique_id+"', account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_cadence, minimum_payment, primary_checking_ind from prod.ef_account_set_"+username+"_temporary")
+            cursor.execute("INSERT INTO prod.ef_budget_item_set_"+username+" Select '" + self.unique_id + "', memo, priority, start_date, end_date,  cadence, amount, \"deferrable\", partial_payment_allowed from prod.ef_budget_item_set_"+username+"_temporary")
+            cursor.execute("INSERT INTO prod.ef_memo_rule_set_"+username+" Select '" + self.unique_id + "', memo_regex, account_from, account_to, priority from prod.ef_memo_rule_set_"+username+"_temporary")
+
+            if overwrite:
+                cursor.execute('drop table if exists prod.'+username+'_milestone_results_'+self.unique_id)
+            cursor.execute("""CREATE TABLE prod."""+username+"""_milestone_results_"""+self.unique_id+""" (
+            forecast_id text,
+            milestone_name text,
+            milestone_type text,
+            result_date date
+            ) """)
+            cursor.execute("grant all privileges on prod."+username+"_milestone_results_"+self.unique_id+" to "+username)
+
+            log_in_color(logger, 'white', 'info', 'self.account_milestone_results')
+            log_in_color(logger, 'white', 'info', self.account_milestone_results)
+            for k, v in self.account_milestone_results.items():
+                insert_q = """INSERT INTO prod."""+username+"""_milestone_results_"""+self.unique_id+""" 
+                SELECT \'"""+self.unique_id+"""\',\'"""+k+"""\',\'Account\',\'"""+v+"""\'
+                """
+                log_in_color(logger, 'white', 'info', insert_q)
+                cursor.execute(insert_q)
+
+            log_in_color(logger, 'white', 'info', 'self.memo_milestone_results')
+            log_in_color(logger, 'white', 'info', self.memo_milestone_results)
+            for k, v in self.memo_milestone_results.items():
+                insert_q = """INSERT INTO prod.""" + username + """_milestone_results_""" + self.unique_id + """ 
+                                SELECT \'""" + self.unique_id + """\',\'""" + k + """\',\'Memo\',\'""" + v + """\'
+                                """
+                log_in_color(logger, 'white', 'info', insert_q)
+                cursor.execute(insert_q)
+
+            log_in_color(logger, 'white', 'info', 'self.composite_milestone_results')
+            log_in_color(logger, 'white', 'info', self.composite_milestone_results)
+            for k, v in self.composite_milestone_results.items():
+                insert_q = """INSERT INTO prod.""" + username + """_milestone_results_""" + self.unique_id + """ 
+                                SELECT \'""" + self.unique_id + """\',\'""" + k + """\',\'Composite\',\'""" + v + """\'
+                                """
+                log_in_color(logger, 'white', 'info', insert_q)
+                cursor.execute(insert_q)
+
+            metadata_q = "INSERT INTO prod.forecast_run_metadata Select \'"+str(self.unique_id)+"\',"
+            metadata_q += "'PLACEHOLDER',"
+            metadata_q += "'"+str(username)+"',"
+            metadata_q += "'" + datetime.datetime.strptime(self.start_ts,'%Y_%m_%d__%H_%M_%S').strftime('%Y-%m-%d %H:%M:%S') + "',"
+            metadata_q += "'" + datetime.datetime.strptime(self.end_ts,'%Y_%m_%d__%H_%M_%S').strftime('%Y-%m-%d %H:%M:%S') + "',"
+            metadata_q += "'" + str(0) + "'," #todo implement error flag
+            metadata_q += "'" + str(0) + "'," #todo implement satisfice failed flag
+            metadata_q += "'" + datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + "'"
+            cursor.execute(metadata_q)
 
 
         else:
@@ -726,7 +782,7 @@ class ExpenseForecast:
 
         # should be no duplicates and credit and loan acct splitting is already handled
 
-        distinct_base_account_names__from_acct = pd.DataFrame(pd.DataFrame(accounts_df[['Name']]).apply(lambda x: x[0].split(':')[0], axis=1).drop_duplicates()).rename(columns={0: 'Name'})
+        distinct_base_account_names__from_acct = pd.DataFrame(pd.DataFrame(accounts_df.Name).apply(lambda x: x[0].split(':')[0], axis=1).drop_duplicates()).rename(columns={0: 'Name'})
         account_names__from_memo = pd.concat(
             [pd.DataFrame(memo_df[['Account_From']]).rename(columns={'Account_From': 'Name'}), pd.DataFrame(memo_df[['Account_To']]).rename(columns={'Account_To': 'Name'})])
 

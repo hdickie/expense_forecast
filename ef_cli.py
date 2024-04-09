@@ -3,18 +3,25 @@
 
 # import modules used here -- sys is a very standard one
 import sys, argparse, logging
+from log_methods import log_in_color
+from log_methods import setup_logger
+logger = setup_logger('ef_cli', './log/ef_cli.log', level=logging.DEBUG)
+
 sys.path.append('/Users/hume/Github/expense_forecast')
 import ExpenseForecast
 import ForecastHandler
+
+import os
 
 # Gather our code in a main() function
 def main(args, loglevel):
     logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
 
     if args.output_directory is None:
-        output_dir = './'
+        output_dir = '.'
     else:
         output_dir = args.output_directory
+    #os.environ['MPLCONFIGDIR'] = args.output_directory
 
     F = ForecastHandler.ForecastHandler()
 
@@ -22,17 +29,24 @@ def main(args, loglevel):
         logging.info('Running based on data from database')
         E = ExpenseForecast.initialize_from_database(args.begin,
                              args.end,
-                             account_set_table_name='ef_account_set_'+args.username,
-                             budget_set_table_name='ef_budget_item_set_'+args.username,
-                             memo_rule_set_table_name='ef_memo_rule_set_'+args.username,
-                             account_milestone_table_name='ef_account_milestones_'+args.username,
-                             memo_milestone_table_name='ef_memo_milestones_'+args.username,
-                             composite_milestone_table_name='ef_composite_milestones_'+args.username)
+                             account_set_table_name='prod.ef_account_set_'+args.username+'_temporary',
+                             budget_set_table_name='prod.ef_budget_item_set_'+args.username+'_temporary',
+                             memo_rule_set_table_name='prod.ef_memo_rule_set_'+args.username+'_temporary',
+                             account_milestone_table_name='prod.ef_account_milestones_'+args.username+'_temporary',
+                             memo_milestone_table_name='prod.ef_memo_milestones_'+args.username+'_temporary',
+                             composite_milestone_table_name='prod.ef_composite_milestones_'+args.username+'_temporary',
+                             database_hostname=args.database_hostname,
+                             database_name=args.database_name,
+                             database_username=args.database_username,
+                             database_password=args.database_password,
+                             database_port=args.database_port
+                             )
         E.runForecast()
         E.appendSummaryLines()
         E.writeToJSONFile(output_dir)
-        E.write_to_database(args.username,args.force)
+        E.write_to_database(args.username,args.database_hostname, args.database_name, args.database_username, args.database_password, args.database_port, args.force)
         E.forecast_df.to_csv(output_dir+'/Forecast_'+str(E.unique_id)+'.csv',index=False)
+        log_in_color(logger, 'green', 'info','Finished writing forecast data to ' + output_dir+'/Forecast_'+str(E.unique_id)+'.csv')
         F.generateHTMLReport(E, output_dir)
     elif args.source.lower() == 'file':
         logging.info('Running based on data from file')
@@ -93,6 +107,44 @@ if __name__ == '__main__':
         "--force",
         help="Overwrite output data if present.",
         action="store_true")
+
+
+
+
+
+    parser.add_argument(
+        #"-",
+        "--database_hostname",
+        help="database hostname",
+        action="store")
+    parser.add_argument(
+        #"-e",
+        "--database_name",
+        help="database name",
+        action="store")
+    parser.add_argument(
+        #"-e",
+        "--database_username",
+        help="database username",
+        action="store")
+    parser.add_argument(
+        #"-e",
+        "--database_password",
+        help="database password",
+        action="store")
+    parser.add_argument(
+        #"-e",
+        "--database_port",
+        help="database port",
+        action="store")
+
+    # database_hostname=args.database_hostname,
+    #                              database_name=args.database_name,
+    #                              database_username=args.database_username,
+    #                              database_password=args.database_password,
+    #                              database_port=args.database_port
+
+
     args = parser.parse_args()
 
     # Setup logging
