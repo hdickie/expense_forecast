@@ -76,10 +76,11 @@ if __name__ == '__main__':
 
     A = AccountSet.AccountSet([])
     A.createAccount('Checking', 4000, 0, 99999, 'checking')
-    A.createAccount('Credit', 0, 0, 25000, 'credit', '20240107', 'compound', 0.24, 'monthly', 40, 23751.93)
-
-    A.createAccount('Loan A', loan_A_pbal + loan_A_interest, 0, 25000, 'loan', end_of_recaptialization_date, 'simple',
-                    loan_A_APR, 'daily', loan_A_min_payment, None, loan_A_pbal, loan_A_interest)
+    A.createCreditCardAccount('Credit',0,0,0,25000,'20240107',0.24,40)
+    #A.createAccount('Credit', 0, 0, 25000, 'credit', '20240107', 'compound', 0.24, 'monthly', 40, 23751.93)
+    A.createLoanAccount('Loan A',loan_A_pbal,loan_A_interest,0,25000,end_of_recaptialization_date,loan_A_APR,loan_A_min_payment)
+    # A.createAccount('Loan A', loan_A_pbal + loan_A_interest, 0, 25000, 'loan', end_of_recaptialization_date, 'simple',
+    #                 loan_A_APR, 'daily', loan_A_min_payment, None, loan_A_pbal, loan_A_interest)
     # # A.createAccount('Loan A', loan_B_pbal + loan_B_interest, 0, 25000, 'loan', '20240103', 'simple', loan_B_APR, 'daily', loan_B_min_payment, None, loan_B_pbal, loan_B_interest)
     # # A.createAccount('Loan A', loan_C_pbal + loan_C_interest, 0, 25000, 'loan', '20240103', 'simple', loan_C_APR, 'daily', loan_C_min_payment, None, loan_C_pbal, loan_C_interest)
     # # A.createAccount('Loan A', loan_D_pbal + loan_D_interest, 0, 25000, 'loan', '20240103', 'simple', loan_D_APR, 'daily', loan_D_min_payment, None, loan_D_pbal, loan_D_interest)

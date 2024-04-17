@@ -7,8 +7,8 @@ import BudgetSet #this could be refactored out, and should be in terms of indepe
 import jsonpickle
 from log_methods import setup_logger
 
-logger = setup_logger('AccountSet','./log/AccountSet.log',logging.INFO)
-
+#logger = setup_logger('AccountSet','./log/AccountSet.log',logging.INFO)
+logger = logging.getLogger(__name__)
 
 def initialize_from_dataframe(accounts_df):
     #print('ENTER AccountSet initialize_from_dataframe')

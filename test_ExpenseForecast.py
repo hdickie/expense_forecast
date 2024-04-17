@@ -1856,13 +1856,15 @@ class TestExpenseForecastMethods:
         MS.addCompositeMilestone('test composite milestone 1', [AM1], [MM1])  # does happen
         MS.addCompositeMilestone('test composite milestone 2', [AM2], [MM2])  # doesnt happen
 
-        E1 = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
+        E1 = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS,
+                                             forecast_set_name='Forecast Set Name',
+                                             forecast_name='Forecast Name'
+                                             )
 
         #E1.runForecast()  # Forecast_028363.html
         E1.writeToJSONFile('./out/')  # ./out/Forecast_028363.json
 
-        E2_list = ExpenseForecast.initialize_from_json_file('./out/Forecast_'+str(E1.unique_id)+'.json')
-        E2 = E2_list[0]
+        E2  = ExpenseForecast.initialize_from_json_file('./out/ForecastResult_'+str(E1.unique_id)+'.json')
 
         # before runForecast
         assert E1.unique_id == E2.unique_id
@@ -2037,8 +2039,8 @@ class TestExpenseForecastMethods:
         E1.runForecast()  # Forecast_028363.html
         E1.writeToJSONFile('./out/')  # ./out/Forecast_028363.json
 
-        E2_list = ExpenseForecast.initialize_from_json_file('./out/ForecastResult_'+str(E1.unique_id)+'.json')
-        E2 = E2_list[0]
+        E2 = ExpenseForecast.initialize_from_json_file('./out/ForecastResult_'+str(E1.unique_id)+'.json')
+
 
         # before runForecast
         assert E1.unique_id == E2.unique_id
@@ -2123,7 +2125,7 @@ class TestExpenseForecastMethods:
             print(J)
             f.write(J)
 
-        E2 = ExpenseForecast.initialize_from_json_file('./out/tmp_json_abc123_zzzzz.json')[0]
+        E2 = ExpenseForecast.initialize_from_json_file('./out/tmp_json_abc123_zzzzz.json')
         E2.runForecast()
 
         E1_str_lines = str(E1).split('\n')

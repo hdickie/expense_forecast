@@ -7,7 +7,36 @@ import AccountMilestone
 import jsonpickle
 
 def initialize_from_dataframe(account_milestones_df, memo_milestones_df, composite_milestones_df):
-    return MilestoneSet([],[],[])
+
+    am__list = []
+    mm__list = []
+    cm__list = []
+
+    am__dict = {}
+    mm__dict = {}
+
+    for index, row in account_milestones_df.iterrows():
+        new_AM = AccountMilestone.AccountMilestone(row.milestone_name,row.account_name,row.min_balance,row.max_balance)
+        am__list += [ new_AM ]
+        am__dict[row.milestone_name] = new_AM
+
+    for index, row in memo_milestones_df.iterrows():
+        new_MM = MemoMilestone.MemoMilestone(row.milestone_name,row.memo_regex)
+        mm__list += [ new_MM ]
+        mm__dict[row.milestone_name] = new_MM
+
+    for index, row in composite_milestones_df.iterrows():
+        AM_names = row.account_milestone_name_list.split(';')
+        MM_names = row.memo_milestone_name_list.split(';')
+        related_AM = []
+        related_MM = []
+        for AM_name in AM_names:
+            related_AM.append(am__dict[AM_name])
+        for MM_name in MM_names:
+            related_MM.append(mm__dict[MM_name])
+        cm__list += [ CompositeMilestone.CompositeMilestone(row.composite_milestone_name,related_AM,related_MM) ]
+
+    return MilestoneSet(am__list,mm__list,cm__list)
 
 class MilestoneSet:
 
@@ -52,7 +81,7 @@ class MilestoneSet:
 
         return_string = ""
 
-        count_of_milestones = str(len(self.memo_milestones)) + str(len(self.account_milestones)) + str(len(self.composite_milestones))
+        count_of_milestones = int(len(self.memo_milestones)) + int(len(self.account_milestones)) + int(len(self.composite_milestones))
         return_string += "Total # of Milestones: "+str(count_of_milestones)+"\n"
 
         return_string += "Memo Milestones:\n"

@@ -5,7 +5,8 @@ from generate_date_sequence import generate_date_sequence
 import logging
 
 from log_methods import setup_logger
-logger = setup_logger('BudgetSet', './log/BudgetSet.log', level=logging.INFO)
+#logger = setup_logger('BudgetSet', './log/BudgetSet.log', level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 import jsonpickle
 
@@ -30,6 +31,9 @@ def initialize_from_dataframe(budget_set_df):
     #print(B.getBudgetItems().to_string())
     #print('EXIT BudgetSet initialize_from_dataframe')
     return B
+
+def initialize_from_json_string(json_string):
+    raise NotImplementedError
 
 class BudgetSet:
 

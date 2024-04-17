@@ -1,3 +1,6 @@
+import warnings
+warnings.simplefilter(action='ignore')
+from time import sleep
 import pandas as pd
 import datetime
 import re
@@ -18,14 +21,25 @@ import numpy as np
 import CompositeMilestone
 import jsonpickle
 import tqdm
+import os
+
+
 # import notification_sounds
 from sqlalchemy import create_engine
 import psycopg2
 
 pd.options.mode.chained_assignment = None #apparently this warning can throw false positives???
 
+import os
 
-logger = setup_logger('ExpenseForecast', './log/ExpenseForecast.log', level=logging.INFO)
+#logger = setup_logger('ExpenseForecast', './log/ExpenseForecast.log', level=logging.INFO)
+import random
+import math
+thread_id = str(math.floor(random.random() * 1000))
+try:
+    logger = setup_logger(__name__, os.environ['EF_LOG_DIR'] + __name__ + '_'+ thread_id+'.log', level=logging.WARNING)
+except KeyError:
+    logger = setup_logger(__name__, __name__ + '_'+ thread_id+'.log', level=logging.WARNING)
 
 def initialize_from_database(start_date_YYYYMMDD,
                              end_date_YYYYMMDD,
@@ -39,7 +53,10 @@ def initialize_from_database(start_date_YYYYMMDD,
                              database_name='postres',
                              database_username='postres',
                              database_password='postres',
-                             database_port='5432'
+                             database_port='5432',
+                             log_directory='.',
+                             forecast_set_name='',
+                             forecast_name=''
                              ):
     #print('ENTER initialize_from_database()')
 
@@ -56,11 +73,27 @@ def initialize_from_database(start_date_YYYYMMDD,
     memo_milestones_df = pd.read_sql_query('select * from ' + memo_milestone_table_name, con=engine)
     composite_milestones_df = pd.read_sql_query('select * from ' + composite_milestone_table_name, con=engine)
 
+    # log_in_color(logger, 'white', 'info', 'Account Milestones')
+    # log_in_color(logger, 'white', 'info', account_milestones_df.to_string())
+    # log_in_color(logger, 'white', 'info', 'Memo Milestones')
+    # log_in_color(logger, 'white', 'info', memo_milestones_df.to_string())
+    # log_in_color(logger, 'white', 'info', 'Composite Milestones')
+    # log_in_color(logger, 'white', 'info', composite_milestones_df.to_string())
+
     account_set = AccountSet.initialize_from_dataframe(accounts_df)
     budget_set = BudgetSet.initialize_from_dataframe(budget_items_df)
     memo_rule_set = MemoRuleSet.initialize_from_dataframe(memo_rules_df)
     milestone_set = MilestoneSet.initialize_from_dataframe(account_milestones_df,memo_milestones_df,composite_milestones_df)
-    return ExpenseForecast(account_set, budget_set, memo_rule_set, start_date_YYYYMMDD, end_date_YYYYMMDD, milestone_set)
+
+    # log_in_color(logger, 'white', 'info', 'milestone_set')
+    # log_in_color(logger, 'white', 'info', milestone_set)
+
+    return ExpenseForecast(account_set, budget_set, memo_rule_set,
+                           start_date_YYYYMMDD, end_date_YYYYMMDD,
+                           milestone_set,
+                           log_directory,
+                           forecast_set_name,forecast_name
+                           )
 
 
 #whether or not the expense forecast has been run will be determined at runtime
@@ -497,10 +530,8 @@ def initialize_from_json_file(path_to_json):
         MS.addCompositeMilestone(cm['milestone_name'],account_milestones__list,memo_milestones__list)
 
     E = ExpenseForecast(A, B, M,start_date_YYYYMMDD, end_date_YYYYMMDD, MS, print_debug_messages=True)
-
-    # this gets recalculated by Constructor
-    # E.unique_id = data['unique_id']
-    E.scenario_name = data['scenario_name']
+    E.forecast_set_name = data['forecast_set_name']
+    E.forecast_name = data['forecast_name']
 
     # print('data:')
     # for key, value in data.items():
@@ -549,6 +580,18 @@ def initialize_from_json_file(path_to_json):
 
 class ExpenseForecast:
 
+    def update_date_range(self,start_date_YYYYMMDD,end_date_YYYYMMDD):
+        account_hash = hashlib.sha1(self.initial_account_set.getAccounts().to_string().encode("utf-8")).hexdigest()
+        budget_hash = hashlib.sha1(self.initial_budget_set.getBudgetItems().to_string().encode("utf-8")).hexdigest()
+        memo_hash = hashlib.sha1(self.initial_memo_rule_set.getMemoRules().to_string().encode("utf-8")).hexdigest()
+        start_date_hash = int(start_date_YYYYMMDD)
+        end_date_hash = int(end_date_YYYYMMDD)
+
+        self.start_date_YYYYMMDD = start_date_YYYYMMDD
+        self.end_date_YYYYMMDD = end_date_YYYYMMDD
+        self.unique_id = str(hash(int(account_hash, 16) + int(budget_hash, 16) + int(memo_hash,16) + start_date_hash + end_date_hash) % 100000).rjust(6, '0')
+
+
     def write_to_database(self, username,
                           database_hostname,  #localhost
                           database_name,  #bsdegjmy_sandbox
@@ -568,6 +611,7 @@ class ExpenseForecast:
 
             if overwrite:
                 cursor.execute('drop table if exists prod.'+tablename)
+                #log_in_color(logger, 'white', 'info', 'drop table if exists prod.'+tablename)
             DDL = "CREATE TABLE prod."+tablename+" (\n"
             #Date	Checking	Credit: Curr Stmt Bal	Credit: Prev Stmt Bal	test loan: Principal Balance	test loan: Interest	Marginal Interest	Net Gain	Net Loss	Net Worth	Loan Total	CC Debt Total	Liquid Total	Memo
             for i in range(0,len(self.forecast_df.columns)):
@@ -580,11 +624,11 @@ class ExpenseForecast:
                     DDL += column_name.replace(' ','_').replace(':','')+" float,"
                 DDL+="\n"
             DDL += ")"
-            log_in_color(logger,'white','info',DDL)
+            #log_in_color(logger,'white','info',DDL)
             cursor.execute(DDL)
 
             grant_q = "grant all privileges on prod."+tablename+" to "+username
-            log_in_color(logger,'white','info',grant_q)
+            #log_in_color(logger,'white','info',grant_q)
             cursor.execute(grant_q)
 
             for index, row in self.forecast_df.iterrows():
@@ -608,16 +652,20 @@ class ExpenseForecast:
                         insert_q += " )"
                     else:
                         insert_q += str(row[column_name]) + ", "
-                log_in_color(logger,'white','info',insert_q)
+                #log_in_color(logger,'white','info',insert_q)
                 cursor.execute(insert_q)
 
-
+            cursor.execute("TRUNCATE prod.ef_account_set_"+username)
+            cursor.execute("TRUNCATE prod.ef_budget_item_set_" + username)
+            cursor.execute("TRUNCATE prod.ef_memo_rule_set_" + username)
             cursor.execute("INSERT INTO prod.ef_account_set_"+username+" Select '"+self.unique_id+"', account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_cadence, minimum_payment, primary_checking_ind from prod.ef_account_set_"+username+"_temporary")
             cursor.execute("INSERT INTO prod.ef_budget_item_set_"+username+" Select '" + self.unique_id + "', memo, priority, start_date, end_date,  cadence, amount, \"deferrable\", partial_payment_allowed from prod.ef_budget_item_set_"+username+"_temporary")
             cursor.execute("INSERT INTO prod.ef_memo_rule_set_"+username+" Select '" + self.unique_id + "', memo_regex, account_from, account_to, priority from prod.ef_memo_rule_set_"+username+"_temporary")
 
             if overwrite:
                 cursor.execute('drop table if exists prod.'+username+'_milestone_results_'+self.unique_id)
+                #log_in_color(logger, 'white', 'info', 'drop table if exists prod.'+username+'_milestone_results_'+self.unique_id)
+
             cursor.execute("""CREATE TABLE prod."""+username+"""_milestone_results_"""+self.unique_id+""" (
             forecast_id text,
             milestone_name text,
@@ -626,35 +674,53 @@ class ExpenseForecast:
             ) """)
             cursor.execute("grant all privileges on prod."+username+"_milestone_results_"+self.unique_id+" to "+username)
 
-            log_in_color(logger, 'white', 'info', 'self.account_milestone_results')
-            log_in_color(logger, 'white', 'info', self.account_milestone_results)
+            #log_in_color(logger, 'white', 'info', 'self.account_milestone_results')
+            #log_in_color(logger, 'white', 'info', self.account_milestone_results)
             for k, v in self.account_milestone_results.items():
+
+                if v == 'None':
+                    v = 'null'
+                else:
+                    v = "'"+v+"'"
+
                 insert_q = """INSERT INTO prod."""+username+"""_milestone_results_"""+self.unique_id+""" 
-                SELECT \'"""+self.unique_id+"""\',\'"""+k+"""\',\'Account\',\'"""+v+"""\'
+                SELECT \'"""+self.unique_id+"""\',\'"""+k+"""\',\'Account\',"""+v+"""
                 """
-                log_in_color(logger, 'white', 'info', insert_q)
+                #log_in_color(logger, 'white', 'info', insert_q)
                 cursor.execute(insert_q)
 
-            log_in_color(logger, 'white', 'info', 'self.memo_milestone_results')
-            log_in_color(logger, 'white', 'info', self.memo_milestone_results)
+            #log_in_color(logger, 'white', 'info', 'self.memo_milestone_results')
+            #log_in_color(logger, 'white', 'info', self.memo_milestone_results)
             for k, v in self.memo_milestone_results.items():
+
+                if v == 'None':
+                    v = 'null'
+                else:
+                    v = "'"+v+"'"
+
                 insert_q = """INSERT INTO prod.""" + username + """_milestone_results_""" + self.unique_id + """ 
-                                SELECT \'""" + self.unique_id + """\',\'""" + k + """\',\'Memo\',\'""" + v + """\'
+                                SELECT \'""" + self.unique_id + """\',\'""" + k + """\',\'Memo\',"""+v+"""
                                 """
-                log_in_color(logger, 'white', 'info', insert_q)
+                #log_in_color(logger, 'white', 'info', insert_q)
                 cursor.execute(insert_q)
 
-            log_in_color(logger, 'white', 'info', 'self.composite_milestone_results')
-            log_in_color(logger, 'white', 'info', self.composite_milestone_results)
+            #log_in_color(logger, 'white', 'info', 'self.composite_milestone_results')
+            #log_in_color(logger, 'white', 'info', self.composite_milestone_results)
             for k, v in self.composite_milestone_results.items():
-                insert_q = """INSERT INTO prod.""" + username + """_milestone_results_""" + self.unique_id + """ 
-                                SELECT \'""" + self.unique_id + """\',\'""" + k + """\',\'Composite\',\'""" + v + """\'
-                                """
-                log_in_color(logger, 'white', 'info', insert_q)
-                cursor.execute(insert_q)
 
-            metadata_q = "INSERT INTO prod.forecast_run_metadata Select \'"+str(self.unique_id)+"\',"
-            metadata_q += "'PLACEHOLDER',"
+                if v == 'None':
+                    v = 'null'
+                else:
+                    v = "'"+v+"'"
+
+                insert_q = """INSERT INTO prod.""" + username + """_milestone_results_""" + self.unique_id + """ 
+                                SELECT \'""" + self.unique_id + """\',\'""" + k + """\',\'Composite\',"""+v+"""
+                                """
+                #log_in_color(logger, 'white', 'info', insert_q)
+                cursor.execute(insert_q)
+            metadata_q = "INSERT INTO prod.forecast_run_metadata Select '', \'"+str(self.unique_id)+"\'," #implement forecast_set_id
+            metadata_q += "\'"+self.forecast_set_name+"\',"
+            metadata_q += "\'"+self.forecast_name+"\',"
             metadata_q += "'"+str(username)+"',"
             metadata_q += "'" + datetime.datetime.strptime(self.start_ts,'%Y_%m_%d__%H_%M_%S').strftime('%Y-%m-%d %H:%M:%S') + "',"
             metadata_q += "'" + datetime.datetime.strptime(self.end_ts,'%Y_%m_%d__%H_%M_%S').strftime('%Y-%m-%d %H:%M:%S') + "',"
@@ -674,6 +740,8 @@ class ExpenseForecast:
 
         return_string = ""
         return_string += "ExpenseForecast object.\n"
+        # return_string += self.forecast_title+"\n"
+        # return_string +=  self.forecast_title+"\n"
 
         if self.forecast_df is None:
             return_string += """ This forecast has not yet been run. Use runForecast() to compute this forecast. """
@@ -728,6 +796,9 @@ class ExpenseForecast:
 
     def __init__(self, account_set, budget_set, memo_rule_set, start_date_YYYYMMDD, end_date_YYYYMMDD,
                  milestone_set,
+                 log_directory = '.',
+                 forecast_set_name='',
+                 forecast_name='',
                  print_debug_messages=True, raise_exceptions=True):
         """
         ExpenseForecast one-line description
@@ -737,8 +808,18 @@ class ExpenseForecast:
         :param budget_set:
         :param memo_rule_set:
         """
+        #full_forecast_label = (forecast_title+'__'+forecast_subtitle).replace(' ','_').replace('-','_').replace(':','_')
+        #logger = setup_logger('ExpenseForecast', log_directory + 'ExpenseForecast_'++'.log', level=logging.INFO)
+        thread_id = str(math.floor(random.random() * 1000))
+        try:
+            logger = setup_logger(__name__, os.environ['EF_LOG_DIR'] + __name__ + '_' + thread_id + '.log',
+                                  level=logging.WARNING)
+        except KeyError:
+            logger = setup_logger(__name__, __name__ + '_' + thread_id + '.log', level=logging.WARNING)
         log_in_color(logger,'green','debug','ExpenseForecast(start_date_YYYYMMDD='+str(start_date_YYYYMMDD)+', end_date_YYYYMMDD='+str(end_date_YYYYMMDD)+')')
 
+        self.forecast_set_name = str(forecast_set_name)
+        self.forecast_name = str(forecast_name)
 
         self.forecast_df = None
         self.skipped_df = None
@@ -903,8 +984,14 @@ class ExpenseForecast:
         # print('start_date hash:'+str(start_date_hash))
         # print('end_date hash:'+str(end_date_hash))
 
+        self.unique_id = str(hash(int(account_hash, 16) + int(budget_hash, 16) + int(memo_hash,16) + start_date_hash + end_date_hash) % 100000).rjust(6, '0')
+        single_forecast_run_log_file_name = 'Forecast_'+str(self.unique_id)+'.log'
+        log_in_color(logger, 'green', 'debug','Attempting switch log file to: '+single_forecast_run_log_file_name)
 
-        self.unique_id = str(hash( int(account_hash,16) + int(budget_hash,16) + int(memo_hash,16) + start_date_hash + end_date_hash ) % 100000).rjust(6,'0')
+        try:
+            logger = setup_logger(__name__, os.environ['EF_LOG_DIR'] + __name__ + '_' + self.unique_id + '.log', level=logging.WARNING)
+        except KeyError:
+            logger = setup_logger(__name__, __name__ + '_' + self.unique_id + '.log', level=logging.WARNING)
 
         # print("unique_id:"+str(self.unique_id))
         # print("")
@@ -919,8 +1006,6 @@ class ExpenseForecast:
         self.account_milestone_results = {}
         self.memo_milestone_results = {}
         self.composite_milestone_results = {}
-
-        self.scenario_name = ''
 
     def evaluateMilestones(self):
 
@@ -1400,7 +1485,6 @@ class ExpenseForecast:
 
         return account_set
 
-
     #put all transactions on one day each month, and then only calculate using one day per month
     def runForecastApproximate(self):
         self.start_ts = datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S')
@@ -1416,7 +1500,7 @@ class ExpenseForecast:
         no_of_p2plus_priority_levels = len(set(self.initial_proposed_df.Priority))
         total_predicted_max_runtime_in_simulated_days = predicted_satisfice_runtime_in_simulated_days + predicted_satisfice_runtime_in_simulated_days * no_of_p2plus_priority_levels
         progress_bar = tqdm.tqdm(range(total_predicted_max_runtime_in_simulated_days),
-                                 total=total_predicted_max_runtime_in_simulated_days, desc=self.unique_id)
+                                 total=total_predicted_max_runtime_in_simulated_days, desc=self.unique_id, disable=True) #disabled tqdm
 
         confirmed_df = self.groupTxnsIntoBatchesForApproxForecasts( pd.DataFrame( self.initial_confirmed_df, copy=True), sd.strftime('%Y%m%d'), ed.strftime('%Y%m%d') )
         proposed_df = self.groupTxnsIntoBatchesForApproxForecasts( pd.DataFrame( self.initial_proposed_df, copy=True), sd.strftime('%Y%m%d'), ed.strftime('%Y%m%d') )
@@ -1443,7 +1527,6 @@ class ExpenseForecast:
         self.evaluateMilestones()
 
         log_in_color(logger, 'white', 'info', 'Finished Approximate Forecast ' + str(self.unique_id))
-
 
     def runSingleParallelForecast(self, return_dict):
         self.start_ts = datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S')
@@ -1507,6 +1590,11 @@ class ExpenseForecast:
         #self.forecast_df.to_csv('./out//Forecast_' + self.unique_id + '.csv') #this is only the forecast not the whole ExpenseForecast object
         #self.writeToJSONFile() #this is the whole ExpenseForecast object #todo this should accept a path parameter
 
+    def fake_runForecast(self):
+        self.runForecast()
+        #print('starting sleep')
+        sleep(30)
+        #print('finished sleep')
 
     def runForecast(self, play_notification_sound=False):
         self.start_ts = datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S')
@@ -1540,7 +1628,7 @@ class ExpenseForecast:
         # On second thought, I would rather deal wit ha stilted progress bar than figuring out how to track progress in recursion
         no_of_p2plus_priority_levels = len(set(self.initial_proposed_df.Priority))
         total_predicted_max_runtime_in_simulated_days = predicted_satisfice_runtime_in_simulated_days + predicted_satisfice_runtime_in_simulated_days * no_of_p2plus_priority_levels
-        progress_bar = tqdm.tqdm(range(total_predicted_max_runtime_in_simulated_days),total=total_predicted_max_runtime_in_simulated_days, desc=self.unique_id)
+        progress_bar = tqdm.tqdm(range(total_predicted_max_runtime_in_simulated_days),total=total_predicted_max_runtime_in_simulated_days, desc=self.unique_id, disable=True) #disabled tqdm
 
         forecast_df, skipped_df, confirmed_df, deferred_df = self.computeOptimalForecast(
             start_date_YYYYMMDD=self.start_date_YYYYMMDD,
@@ -1563,8 +1651,8 @@ class ExpenseForecast:
         self.evaluateMilestones()
 
         log_in_color(logger, 'white', 'info','Finished Forecast '+str(self.unique_id))
-        if play_notification_sound:
-            notification_sounds.play_notification_sound()
+        # if play_notification_sound:
+        #     notification_sounds.play_notification_sound()
 
         #self.forecast_df.to_csv('./out//Forecast_' + self.unique_id + '.csv') #this is only the forecast not the whole ExpenseForecast object
         #self.writeToJSONFile() #this is the whole ExpenseForecast object #todo this should accept a path parameter
@@ -1705,7 +1793,6 @@ class ExpenseForecast:
         log_in_color(logger, 'green', 'debug', 'EXIT updateBalancesAndMemo()', self.log_stack_depth)
         return forecast_df
 
-
     def attemptTransactionApproximate(self, forecast_df, account_set, memo_set, confirmed_df, proposed_row_df):
         log_in_color(logger,'green','info','ENTER attemptTransactionApproximate( C:'+str(confirmed_df.shape[0])+' P:'+str(proposed_row_df.Memo)+')',self.log_stack_depth)
         log_in_color(logger, 'magenta', 'debug', 'forecast_df BEFORE:')
@@ -1795,7 +1882,6 @@ class ExpenseForecast:
                          'EXIT attemptTransaction(' + str(proposed_row_df.Memo) + ')' + ' (FAIL)', self.log_stack_depth)
             if re.search('.*Account boundaries were violated.*',str(e.args)) is None:  # this is the only exception where we don't want to stop immediately
                 raise e
-
 
     def attemptTransaction(self, forecast_df, account_set, memo_set, confirmed_df, proposed_row_df):
         log_in_color(logger,'green','info','ENTER attemptTransaction( C:'+str(confirmed_df.shape[0])+' P:'+str(proposed_row_df.Memo)+')',self.log_stack_depth)
@@ -1887,13 +1973,6 @@ class ExpenseForecast:
             if re.search('.*Account boundaries were violated.*',str(e.args)) is None:  # this is the only exception where we don't want to stop immediately
                 raise e
 
-
-
-    # todo i think i need a parallel version
-    # def attemptTransaction(self):
-    #     pass
-    #     raise NotImplementedError
-
     def processConfirmedTransactions(self, forecast_df, relevant_confirmed_df, memo_set, account_set, date_YYYYMMDD):
         log_in_color(logger, 'green', 'debug', 'ENTER processConfirmedTransactions( C:'+str(relevant_confirmed_df.shape[0])+' ) '+str(date_YYYYMMDD), self.log_stack_depth)
         self.log_stack_depth += 1
@@ -1915,7 +1994,6 @@ class ExpenseForecast:
         self.log_stack_depth -= 1
         log_in_color(logger, 'green', 'debug', 'EXIT processConfirmedTransactions()', self.log_stack_depth)
         return forecast_df
-
 
     def processProposedTransactionsApproximate(self, account_set, forecast_df, date_YYYYMMDD, memo_set, confirmed_df, relevant_proposed_df, priority_level):
         #log_in_color(logger, 'green', 'debug', 'ENTER processProposedTransactions( P:'+str(relevant_proposed_df.shape[0])+' )', self.log_stack_depth)
@@ -2156,7 +2234,6 @@ class ExpenseForecast:
         #log_in_color(logger, 'green', 'debug', 'EXIT processProposedTransactions() C:'+str(new_confirmed_df.shape[0])+' D:'+str(new_deferred_df.shape[0])+' S:'+str(new_skipped_df.shape[0]), self.log_stack_depth)
         return forecast_df, new_confirmed_df, new_deferred_df, new_skipped_df
 
-
     def processProposedTransactions(self, account_set, forecast_df, date_YYYYMMDD, memo_set, confirmed_df, relevant_proposed_df, priority_level):
         #log_in_color(logger, 'green', 'debug', 'ENTER processProposedTransactions( P:'+str(relevant_proposed_df.shape[0])+' )', self.log_stack_depth)
         self.log_stack_depth += 1
@@ -2396,10 +2473,6 @@ class ExpenseForecast:
         #log_in_color(logger, 'green', 'debug', 'EXIT processProposedTransactions() C:'+str(new_confirmed_df.shape[0])+' D:'+str(new_deferred_df.shape[0])+' S:'+str(new_skipped_df.shape[0]), self.log_stack_depth)
         return forecast_df, new_confirmed_df, new_deferred_df, new_skipped_df
 
-    # eTDF
-    #account_set, forecast_df, date_YYYYMMDD, memo_set, confirmed_df, proposed_df, deferred_df, skipped_df, priority_level, allow_partial_payments, allow_skip_and_defer
-
-
     #account_set, forecast_df, date_YYYYMMDD, memo_set,              ,    relevant_deferred_df,             priority_level, allow_partial_payments, allow_skip_and_defer
     def processDeferredTransactionsApproximate(self,account_set, forecast_df, date_YYYYMMDD, memo_set, relevant_deferred_df, priority_level, confirmed_df):
         log_in_color(logger, 'green', 'debug','ENTER processDeferredTransactionsApproximate( D:'+str(relevant_deferred_df.shape[0])+' )', self.log_stack_depth)
@@ -2525,7 +2598,6 @@ class ExpenseForecast:
         log_in_color(logger, 'green', 'debug', 'EXIT processDeferredTransactionsApproximate()', self.log_stack_depth)
         return forecast_df, new_confirmed_df, new_deferred_df
 
-
     #account_set, forecast_df, date_YYYYMMDD, memo_set,              ,    relevant_deferred_df,             priority_level, allow_partial_payments, allow_skip_and_defer
     def processDeferredTransactions(self,account_set, forecast_df, date_YYYYMMDD, memo_set, relevant_deferred_df, priority_level, confirmed_df):
         log_in_color(logger, 'green', 'debug','ENTER processDeferredTransactions( D:'+str(relevant_deferred_df.shape[0])+' )', self.log_stack_depth)
@@ -2650,7 +2722,6 @@ class ExpenseForecast:
         self.log_stack_depth -= 1
         log_in_color(logger, 'green', 'debug', 'EXIT processDeferredTransactions()', self.log_stack_depth)
         return forecast_df, new_confirmed_df, new_deferred_df
-
 
     def executeTransactionsForDayApproximate(self, account_set, forecast_df, date_YYYYMMDD, memo_set, confirmed_df, proposed_df, deferred_df, skipped_df, priority_level):
         """
@@ -2787,7 +2858,6 @@ class ExpenseForecast:
         self.log_stack_depth -= 1
         log_in_color(logger, 'cyan', 'debug','EXIT executeTransactionsForDay(priority_level=' + str(priority_level) + ',date=' + str(date_YYYYMMDD) + ') ' + str(row_count_string) + str(bal_string), self.log_stack_depth)
         return [forecast_df, confirmed_df, deferred_df, skipped_df]
-
 
     def executeTransactionsForDay(self, account_set, forecast_df, date_YYYYMMDD, memo_set, confirmed_df, proposed_df, deferred_df, skipped_df, priority_level):
         """
@@ -5563,7 +5633,6 @@ class ExpenseForecast:
     #     log_in_color(logger, 'cyan', 'debug', 'EXIT overwriteOGSatisficeInterestWhenAdditionalLoanPayment()'+bal_string,self.log_stack_depth)
     #     return forecast_df
 
-
     def assessPotentialOptimizationsApproximate(self, forecast_df, account_set, memo_rule_set, confirmed_df, proposed_df, deferred_df, skipped_df, raise_satisfice_failed_exception, progress_bar=None):
         F = 'F:'+str(forecast_df.shape[0])
         C = 'C:'+str(confirmed_df.shape[0])
@@ -5678,7 +5747,6 @@ class ExpenseForecast:
         self.log_stack_depth -= 1
         log_in_color(logger, 'magenta', 'debug', 'EXIT assessPotentialOptimizations() C:'+str(confirmed_df.shape[0])+' D:'+str(deferred_df.shape[0])+' S:'+str(skipped_df.shape[0]),self.log_stack_depth)
         return forecast_df, skipped_df, confirmed_df, deferred_df
-
 
     def assessPotentialOptimizations(self, forecast_df, account_set, memo_rule_set, confirmed_df, proposed_df, deferred_df, skipped_df, raise_satisfice_failed_exception, progress_bar=None):
         F = 'F:'+str(forecast_df.shape[0])
@@ -6147,12 +6215,8 @@ class ExpenseForecast:
 
         unique_id_string = "\"unique_id\":\""+self.unique_id+"\",\n"
 
-        if hasattr(self, 'scenario_name'):
-            scenaro_name_string = "\"scenario_name\":\""+self.scenario_name+"\",\n"
-        else:
-            scenaro_name_string = ""
-
-        if hasattr(self,'start_ts'):
+        if self.start_ts is not None:
+        #if hasattr(self,'start_ts'):
             start_ts_string = "\"start_ts\":\""+self.start_ts+"\",\n"
             end_ts_string = "\"end_ts\":\""+self.end_ts+"\",\n"
 
@@ -6163,7 +6227,8 @@ class ExpenseForecast:
         initial_account_set_string = "\"initial_account_set\":"+self.initial_account_set.to_json()+","
         initial_budget_set_string = "\"initial_budget_set\":"+self.initial_budget_set.to_json()+","
 
-        if hasattr(self, 'start_ts'):
+        if self.start_ts is not None:
+        #if hasattr(self, 'start_ts'):
             tmp__forecast_df = self.forecast_df.copy()
             tmp__skipped_df = self.skipped_df.copy()
             tmp__confirmed_df = self.confirmed_df.copy()
@@ -6189,8 +6254,11 @@ class ExpenseForecast:
             deferred_df_string = "\"deferred_df\":"+normalized_deferred_df_JSON_string+",\n"
 
         JSON_string += unique_id_string
-        JSON_string += scenaro_name_string
-        if hasattr(self, 'start_ts'):
+        JSON_string += "\"forecast_set_name\":\"" + self.forecast_set_name + "\",\n"
+        JSON_string += "\"forecast_name\":\"" + self.forecast_name + "\",\n"
+
+        if self.start_ts is not None:
+        #if hasattr(self, 'start_ts'):
             JSON_string += start_ts_string
             JSON_string += end_ts_string
 
@@ -6200,7 +6268,8 @@ class ExpenseForecast:
         JSON_string += initial_account_set_string
         JSON_string += initial_budget_set_string
 
-        if hasattr(self, 'start_ts'):
+        if self.start_ts is not None:
+        #if hasattr(self, 'start_ts'):
             JSON_string += forecast_df_string
             JSON_string += skipped_df_string
             JSON_string += confirmed_df_string
@@ -6241,7 +6310,8 @@ class ExpenseForecast:
 
         JSON_string += "\"milestone_set\":"+self.milestone_set.to_json()
 
-        if hasattr(self, 'start_ts'):
+        if self.start_ts is not None:
+        #if hasattr(self, 'start_ts'):
             JSON_string += ",\n"
             JSON_string += "\"account_milestone_results\":"+account_milestone_string+",\n"
             JSON_string += "\"memo_milestone_results\":"+memo_milestone_string+",\n"
@@ -6533,7 +6603,6 @@ class ExpenseForecast:
                     col_idx = milestone_results_df.columns.get_loc(column)
                     writer.sheets['Milestone Results'].set_column(col_idx, col_idx, column_length)
 
-
     def getSummaryPageForExcelLandingPageDF(self):
 
         if hasattr(self, 'forecast_df'):
@@ -6556,11 +6625,6 @@ class ExpenseForecast:
         return_df.reset_index(inplace=True)
         return_df = return_df.rename(columns={'index':'Field',0:'Value'})
         return return_df
-
-
-
-
-
 
 # if __name__ == "__main__": import doctest ; doctest.testmod()
 if __name__ == "__main__":

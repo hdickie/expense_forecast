@@ -5,8 +5,8 @@ from log_methods import log_in_color
 import logging
 import jsonpickle
 from log_methods import setup_logger
-logger = setup_logger('MemoRuleSet', './log/MemoRuleSet.log', level=logging.WARNING)
-
+#logger = setup_logger('MemoRuleSet', './log/MemoRuleSet.log', level=logging.WARNING)
+logger = logging.getLogger(__name__)
 def initialize_from_dataframe(memo_set_df):
     #print('ENTER MemoRuleSet initialize_from_dataframe')
     M = MemoRuleSet([])

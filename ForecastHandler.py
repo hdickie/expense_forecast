@@ -12,6 +12,8 @@ import BudgetSet
 import MemoRuleSet
 import re
 import hashlib
+import os
+os.environ['MPLCONFIGDIR'] = os.getcwd() + "/configs/"
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
 import AccountMilestone
@@ -26,8 +28,15 @@ import plotly.graph_objects as go
 import psycopg2
 
 from log_methods import setup_logger
-logger = setup_logger('ForecastHandler', './log/ForecastHandler.log', level=logging.DEBUG)
-
+#logger = setup_logger('ForecastHandler', './log/ForecastHandler.log', level=logging.DEBUG)
+#logger = logging.getLogger(__name__)
+import random
+import math
+thread_id = str(math.floor(random.random() * 1000))
+try:
+    logger = setup_logger(__name__, os.environ['EF_LOG_DIR'] + __name__ + '_'+ thread_id+'.log', level=logging.INFO)
+except KeyError:
+    logger = setup_logger(__name__, __name__ + '_'+ thread_id+'.log', level=logging.INFO)
 #os.environ['MPLCONFIGDIR'] = '/var/www/'
 
 # e.g. custom_cycler = (cycler(color=['c', 'm', 'y', 'k']) + cycler(lw=[1, 2, 3, 4]))
@@ -1692,7 +1701,6 @@ class ForecastHandler:
             try:
                 E.runForecast()
                 E.appendSummaryLines()
-                E.scenario_name = scenario_name
                 E.writeToJSONFile('./')
                 self.generateHTMLReport(E)
             except Exception as e:
@@ -3001,7 +3009,7 @@ class ForecastHandler:
             layout=go.Layout(height=480, width=800)
         )
 
-        fig.update_layout(title_text=expense_forecast.scenario_name, font_size=10)
+        fig.update_layout(title_text=expense_forecast.forecast_name, font_size=10)
 
         fig.write_image(output_path)
 
