@@ -53,7 +53,7 @@ if __name__ == '__main__':
     json_string = S.to_json()
     S2 = ForecastSet.from_json_string(json_string)
 
-    print(S2)
+    #print(S2)
 
     # E2 = ExpenseForecast.ExpenseForecast(A, B2, M, start_date, end_date, MS)
     # E3 = ExpenseForecast.ExpenseForecast(A, B3, M, start_date, end_date, MS)

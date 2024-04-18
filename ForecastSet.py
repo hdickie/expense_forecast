@@ -14,40 +14,111 @@ import os
 # logger = logging.getLogger(__name__)
 import random
 import math
+
+import hashlib
+
+
 thread_id = str(math.floor(random.random() * 1000))
 try:
     logger = setup_logger(__name__, os.environ['EF_LOG_DIR'] + __name__ + '_'+ thread_id+'.log', level=logging.INFO)
 except KeyError:
     logger = setup_logger(__name__, __name__ + '_'+ thread_id+'.log', level=logging.INFO)
 
-def from_json_string(json_string):
+
+def initialize_from_json_string(json_string):
     data = json.loads(json_string)
-    #print(data.keys())
+
+    return initialize_from_dict(data)
+
+def initialize_from_dict(data):
 
     #print(data['py/object']) #ForecastSet.ForecastSet
+    #print('--------------------')
+    base_forecast = ExpenseForecast.initialize_from_dict(data['base_forecast'])
+
+    #print('--------------------')
+    #print(data['core_budget_set'])
+
+    core_budget_set = BudgetSet.BudgetSet([])
+    for BudgetItem__dict in data['core_budget_set']['budget_items']:
+        #BudgetItem__dict = BudgetItem__dict[0]
+        sd_YYYYMMDD = BudgetItem__dict['start_date_YYYYMMDD']
+        ed_YYYYMMDD = BudgetItem__dict['end_date_YYYYMMDD']
+
+        core_budget_set.addBudgetItem(start_date_YYYYMMDD=sd_YYYYMMDD,
+                 end_date_YYYYMMDD=ed_YYYYMMDD,
+                 priority=BudgetItem__dict['priority'],
+                 cadence=BudgetItem__dict['cadence'],
+                 amount=BudgetItem__dict['amount'],
+                 memo=BudgetItem__dict['memo'],
+                 deferrable=BudgetItem__dict['deferrable'],
+                 partial_payment_allowed=BudgetItem__dict['partial_payment_allowed'])
+
+
+    #print('--------------------')
+    #print(data['option_budget_set'])
+    option_budget_set = BudgetSet.BudgetSet([])
+    for BudgetItem__dict in data['option_budget_set']['budget_items']:
+        # BudgetItem__dict = BudgetItem__dict[0]
+        sd_YYYYMMDD = BudgetItem__dict['start_date_YYYYMMDD']
+        ed_YYYYMMDD = BudgetItem__dict['end_date_YYYYMMDD']
+
+        option_budget_set.addBudgetItem(start_date_YYYYMMDD=sd_YYYYMMDD,
+                                      end_date_YYYYMMDD=ed_YYYYMMDD,
+                                      priority=BudgetItem__dict['priority'],
+                                      cadence=BudgetItem__dict['cadence'],
+                                      amount=BudgetItem__dict['amount'],
+                                      memo=BudgetItem__dict['memo'],
+                                      deferrable=BudgetItem__dict['deferrable'],
+                                      partial_payment_allowed=BudgetItem__dict['partial_payment_allowed'])
+    #print('--------------------')
+    #print(data['forecast_set_name']) #Test Forecast Name
+    forecast_set_name = data['forecast_set_name']
+    #print('--------------------')
+    #print(data['forecast_name_to_budget_item_set__dict'])
+    forecast_name_to_budget_item_set__dict = {}
+    for forecast_name, budget_item_set_dict in data['forecast_name_to_budget_item_set__dict'].items():
+
+        #print(forecast_name)
+        B = BudgetSet.BudgetSet([])
+        for BudgetItem__dict in budget_item_set_dict['budget_items']:
+            # BudgetItem__dict = BudgetItem__dict[0]
+            sd_YYYYMMDD = BudgetItem__dict['start_date_YYYYMMDD']
+            ed_YYYYMMDD = BudgetItem__dict['end_date_YYYYMMDD']
+
+            B.addBudgetItem(start_date_YYYYMMDD=sd_YYYYMMDD,
+                                          end_date_YYYYMMDD=ed_YYYYMMDD,
+                                          priority=BudgetItem__dict['priority'],
+                                          cadence=BudgetItem__dict['cadence'],
+                                          amount=BudgetItem__dict['amount'],
+                                          memo=BudgetItem__dict['memo'],
+                                          deferrable=BudgetItem__dict['deferrable'],
+                                          partial_payment_allowed=BudgetItem__dict['partial_payment_allowed'])
+        forecast_name_to_budget_item_set__dict[forecast_name] = B
+
+    #print('--------------------')
+    #print(data['initialized_forecasts'])
+    initialized_forecasts = {}
+    for k, v in data['initialized_forecasts'].items():
+        #print(v)
+        initialized_forecasts[k] = ExpenseForecast.initialize_from_dict(v)
+
+    id_to_name = data['id_to_name']
     # print('--------------------')
-    print(data['base_forecast']) #todo this needs to be decoded
-    print('--------------------')
-    print(data['core_budget_set']) #todo decode
-    print('--------------------')
-    print(data['option_budget_set']) #todo decode
-    print('--------------------')
-    print(data['forecast_set_name']) #Test Forecast Name
-    print('--------------------')
-    print(data['forecast_name_to_budget_item_set__dict']) #todo decode values
-    print('--------------------')
-    print(data['initialized_forecasts']) #todo decode values
-    print('--------------------')
-    print(data['id_to_name']) #good as is
+    # print(data['id_to_name']) #good as is
 
+    S = ForecastSet(base_forecast,option_budget_set,forecast_set_name)
+    S.forecast_name_to_budget_item_set__dict = forecast_name_to_budget_item_set__dict
+    S.initialized_forecasts = initialized_forecasts
+    S.id_to_name = id_to_name
 
-def from_json(path_to_json):
+    return S
+
+def initialize_from_json_file(path_to_json):
     with open(path_to_json) as json_data:
         data = json.load(json_data)
 
-    print(data)
-    raise NotImplementedError
-    #return S
+    return initialize_from_dict(data)
 
 class ForecastSet:
 
@@ -68,8 +139,10 @@ class ForecastSet:
         self.forecast_name_to_budget_item_set__dict = {}
         self.initialized_forecasts = {}
         self.id_to_name = {}
-        self.id_to_name['Core'] = base_forecast.unique_id
+        self.id_to_name[base_forecast.unique_id] = 'Core'
         self.initialized_forecasts[base_forecast.unique_id] = base_forecast
+
+        self.unique_id = 'S'+base_forecast.unique_id
 
     def initialize_forecast_set_from_database(self):
         raise NotImplementedError
@@ -117,6 +190,8 @@ class ForecastSet:
             self.id_to_name[new_E.unique_id] = forecast_name
             self.initialized_forecasts[new_E.unique_id] = new_E
 
+        self.unique_id = 'S' + str(int(hashlib.sha1(str(self.initialized_forecasts.keys()).encode("utf-8")).hexdigest(),16) % 100000).rjust(6, '0')
+
     def get_id_to_forecast_name_map(self):
         return self.id_to_name
 
@@ -149,7 +224,7 @@ class ForecastSet:
                 for bi in self.option_budget_set.budget_items:
                     log_in_color(logger, 'white', 'debug', 'bi ' + str(bi))
                     for memo_regex in list_of_memo_regexes:
-                        print((memo_regex, bi.memo))
+                        #print((memo_regex, bi.memo))
                         match_result = re.search(memo_regex, bi.memo)
                         try:
                             match_result.group(0)
@@ -185,4 +260,30 @@ class ForecastSet:
         except KeyError as e:
             raise ValueError("Forecast Name not found")
 
+    def update_date_range(self,start_date_YYYYMMDD,end_date_YYYYMMDD):
+        #print('ENTER ForecastSet::update_date_range')
+        new_initialized_forecasts = self.initialized_forecasts.copy()
+        #print(new_initialized_forecasts.keys())
+        for E_key, E in self.initialized_forecasts.items():
+            del new_initialized_forecasts[E_key]
+            E.update_date_range(start_date_YYYYMMDD,end_date_YYYYMMDD)
+            new_initialized_forecasts[E.unique_id] = E
+        self.initialized_forecasts = new_initialized_forecasts
+        self.unique_id = 'S' + str(int(hashlib.sha1(str(self.initialized_forecasts.keys()).encode("utf-8")).hexdigest(),16) % 100000).rjust(6, '0')
+        # print(new_initialized_forecasts.keys())
+        # print('EXIT ForecastSet::update_date_range')
+
+    def writeToJSONFile(self, output_dir):
+
+        # self.forecast_df.to_csv('./Forecast__'+run_ts+'.csv')
+        if len(self.forecast_name_to_budget_item_set__dict) != self.initialized_forecasts:
+            self.initialize_forecasts()
+            self.unique_id = 'S' + str(int(hashlib.sha1(str(self.initialized_forecasts.keys()).encode("utf-8")).hexdigest(),16) % 100000).rjust(6, '0')
+
+        log_in_color(logger,'green', 'debug', 'Writing to '+str(output_dir)+'/ForecastSet_' + self.unique_id + '.json')
+        #self.forecast_df.to_csv('./Forecast__' + run_ts + '.json')
+
+        f = open(str(output_dir)+'/ForecastSet_' + self.unique_id + '.json','w')
+        f.write(self.to_json())
+        f.close()
 

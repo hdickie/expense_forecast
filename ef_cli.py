@@ -161,8 +161,30 @@ def main(args, loglevel):
             E.update_date_range(args.start_date,args.end_date)
             if args.label:
                 E.forecast_name = args.label
-            print(E)
+            # print(E)
             E.writeToJSONFile('./out/')
+
+        if args.action[0] == 'parameterize' and args.action[1] == 'forecastset':
+            #print('Initializing')
+            S = ForecastSet.initialize_from_json_file(args.filename) #let this throw an exception if needed
+            #print('Updating')
+
+            # for E_id, E in S.initialized_forecasts.items():
+            #     print(E_id)
+
+            S.update_date_range(args.start_date,args.end_date)
+            #print('-----------')
+
+            # for E_id, E in S.initialized_forecasts.items():
+            #     print(E_id)
+
+            #print('Naming')
+            if args.label:
+                S.forecast_set_name = args.label
+            # print(S)
+            #print('Writing')
+            S.writeToJSONFile('./out/')
+            #print('Done')
 
     # if args.action == 'run' and args.source == 'database' and args.target_type == 'stage':
     #     connect_string = 'postgresql://' + args.database_username + ':' + args.database_password + '@' + args.database_hostname + ':' + args.database_port + '/' + args.database_name

@@ -6,6 +6,7 @@ import AccountSet
 import MemoRuleSet
 import MilestoneSet
 import datetime
+import ForecastSet
 
 #import ef_cli #these tests should be carried out with subprocess
 
@@ -103,7 +104,7 @@ class TestEFCLIMethods:
     def test_help(self, cmd_string):
         cmd = "python -m ef_cli "+cmd_string
         cmd_arg_list = cmd.split(" ")
-        completed_process = subprocess.run(cmd_arg_list, capture_output=True)
+        completed_process = subprocess.run(cmd_arg_list, capture_output=True, check=True)
         for l in completed_process.stderr.splitlines():
             print(l)
 
@@ -127,7 +128,7 @@ class TestEFCLIMethods:
     def test_parameterize_file_forecast_with_label(self, cmd_string):
         cmd = "python -m ef_cli " + cmd_string
         cmd_arg_list = cmd.split(" ")
-        completed_process = subprocess.run(cmd_arg_list, capture_output=True)
+        completed_process = subprocess.run(cmd_arg_list, capture_output=True, check=True)
 
         # the change in date range will change the id to ForecastResult_032472.json, which should load successfully
         E = ExpenseForecast.initialize_from_json_file('./out/ForecastResult_032472.json')
@@ -138,16 +139,32 @@ class TestEFCLIMethods:
 
 
     @pytest.mark.parametrize('cmd_string',
-                             [('cmd_string'),
+                             [('parameterize forecastset --filename S.json --start_date 20000301 --end_date 20001231 --username hume'),
                               ])
     def test_parameterize_file_forecastset_no_label(self, cmd_string):
         cmd = "python -m ef_cli " + cmd_string
         cmd_arg_list = cmd.split(" ")
-        completed_process = subprocess.run(cmd_arg_list, capture_output=True)
+        completed_process = subprocess.run(cmd_arg_list, capture_output=True, check=True)
 
-        # the change in date range will change the id to ForecastResult_032472.json, which should load successfully
-        E = ExpenseForecast.initialize_from_json_file('./out/ForecastResult_032472.json')
-        print(E)
-        assert E.start_date_YYYYMMDD == '20240101'
-        assert E.end_date_YYYYMMDD == '20241231'
-        assert E.forecast_name == 'FORECAST_LABEL'
+        S = ForecastSet.initialize_from_json_file('./out/ForecastSet_S087228.json')
+
+        for unique_id, E in S.initialized_forecasts.items():
+            assert E.start_date_YYYYMMDD == '20000301'
+            assert E.end_date_YYYYMMDD == '20001231'
+
+    @pytest.mark.parametrize('cmd_string',
+                             [(
+                              'parameterize forecastset --filename S.json --start_date 20000301 --end_date 20001231 --username hume --label FORECAST_SET_NAME'),
+                              ])
+    def test_parameterize_file_forecastset_no_label(self, cmd_string):
+        cmd = "python -m ef_cli " + cmd_string
+        cmd_arg_list = cmd.split(" ")
+        completed_process = subprocess.run(cmd_arg_list, capture_output=True, check=True)
+
+        S = ForecastSet.initialize_from_json_file('./out/ForecastSet_S087228.json')
+
+        for unique_id, E in S.initialized_forecasts.items():
+            assert E.start_date_YYYYMMDD == '20000301'
+            assert E.end_date_YYYYMMDD == '20001231'
+
+        assert S.forecast_set_name == 'NEW_FORECAST_SET_NAME'

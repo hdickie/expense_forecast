@@ -371,10 +371,18 @@ def initialize_from_excel_file(path_to_excel_file):
 
 #whether or not the expense forecast has been run will be determined at runtime
 #returns a list of ExpenseForecast objects
+
+
 def initialize_from_json_file(path_to_json):
     with open(path_to_json) as json_data:
         data = json.load(json_data)
+        return initialize_from_dict(data)
 
+def initialize_from_json_string(json_string):
+    data = json.loads(json_string)
+    return initialize_from_dict(data)
+
+def initialize_from_dict(data):
     initial_account_set = data['initial_account_set']
     initial_budget_set = data['initial_budget_set']
     initial_memo_rule_set = data['initial_memo_rule_set']
@@ -538,7 +546,7 @@ def initialize_from_json_file(path_to_json):
     #     print('key:'+str(key))
     #     print('value:' + str(value))
 
-    if 'start_ts' in data.keys():
+    if not data['start_ts'] is None:
         E.account_milestone_results = data['account_milestone_results']
         E.memo_milestone_results = data['memo_milestone_results']
         E.composite_milestone_results = data['composite_milestone_results']
@@ -562,19 +570,21 @@ def initialize_from_json_file(path_to_json):
         f.write(json.dumps(data['deferred_df'], indent=4))
         f.close()
 
-        E.forecast_df = pd.read_json('./out/forecast_df_' + str(E.unique_id) + '.json')
-        E.skipped_df = pd.read_json('./out/skipped_df_' + str(E.unique_id) + '.json')
-        E.confirmed_df = pd.read_json('./out/confirmed_df_' + str(E.unique_id) + '.json')
-        E.deferred_df = pd.read_json('./out/deferred_df_' + str(E.unique_id) + '.json')
+        try:
+            E.forecast_df = pd.read_json('./out/forecast_df_' + str(E.unique_id) + '.json')
+            E.skipped_df = pd.read_json('./out/skipped_df_' + str(E.unique_id) + '.json')
+            E.confirmed_df = pd.read_json('./out/confirmed_df_' + str(E.unique_id) + '.json')
+            E.deferred_df = pd.read_json('./out/deferred_df_' + str(E.unique_id) + '.json')
 
-        #todo here
-        E.forecast_df.Date = [str(d) for d in E.forecast_df.Date]
-        if E.skipped_df.shape[0] > 0:
-            E.skipped_df.Date = [str(d) for d in E.skipped_df.Date]
-        if E.confirmed_df.shape[0] > 0:
-            E.confirmed_df.Date = [str(d) for d in E.confirmed_df.Date]
-        if E.deferred_df.shape[0] > 0:
-            E.deferred_df.Date = [str(d) for d in E.deferred_df.Date]
+            E.forecast_df.Date = [str(d) for d in E.forecast_df.Date]
+            if E.skipped_df.shape[0] > 0:
+                E.skipped_df.Date = [str(d) for d in E.skipped_df.Date]
+            if E.confirmed_df.shape[0] > 0:
+                E.confirmed_df.Date = [str(d) for d in E.confirmed_df.Date]
+            if E.deferred_df.shape[0] > 0:
+                E.deferred_df.Date = [str(d) for d in E.deferred_df.Date]
+        except:
+            pass #todo this logic needs to be rethought out
 
     return E
 
@@ -1006,6 +1016,7 @@ class ExpenseForecast:
         self.account_milestone_results = {}
         self.memo_milestone_results = {}
         self.composite_milestone_results = {}
+
 
     def evaluateMilestones(self):
 
@@ -6215,10 +6226,14 @@ class ExpenseForecast:
 
         unique_id_string = "\"unique_id\":\""+self.unique_id+"\",\n"
 
-        if self.start_ts is not None:
+        #if self.start_ts is not None:
         #if hasattr(self,'start_ts'):
+        if self.start_ts is not None:
             start_ts_string = "\"start_ts\":\""+self.start_ts+"\",\n"
             end_ts_string = "\"end_ts\":\""+self.end_ts+"\",\n"
+        else:
+            start_ts_string = "\"start_ts\":\"None\",\n"
+            end_ts_string = "\"end_ts\":\"None\",\n"
 
         start_date_string = "\"start_date_YYYYMMDD\":"+self.start_date_YYYYMMDD+",\n"
         end_date_string = "\"end_date_YYYYMMDD\":"+self.end_date_YYYYMMDD+",\n"
@@ -6227,7 +6242,12 @@ class ExpenseForecast:
         initial_account_set_string = "\"initial_account_set\":"+self.initial_account_set.to_json()+","
         initial_budget_set_string = "\"initial_budget_set\":"+self.initial_budget_set.to_json()+","
 
-        if self.start_ts is not None:
+        if self.start_ts is None:
+            forecast_df_string = "\"forecast_df\":\"None\",\n"
+            skipped_df_string = "\"skipped_df\":\"None\",\n"
+            confirmed_df_string = "\"confirmed_df\":\"None\",\n"
+            deferred_df_string = "\"deferred_df\":\"None\",\n"
+        else:
         #if hasattr(self, 'start_ts'):
             tmp__forecast_df = self.forecast_df.copy()
             tmp__skipped_df = self.skipped_df.copy()
@@ -6257,10 +6277,8 @@ class ExpenseForecast:
         JSON_string += "\"forecast_set_name\":\"" + self.forecast_set_name + "\",\n"
         JSON_string += "\"forecast_name\":\"" + self.forecast_name + "\",\n"
 
-        if self.start_ts is not None:
-        #if hasattr(self, 'start_ts'):
-            JSON_string += start_ts_string
-            JSON_string += end_ts_string
+        JSON_string += start_ts_string
+        JSON_string += end_ts_string
 
         JSON_string += start_date_string
         JSON_string += end_date_string
@@ -6268,54 +6286,50 @@ class ExpenseForecast:
         JSON_string += initial_account_set_string
         JSON_string += initial_budget_set_string
 
-        if self.start_ts is not None:
-        #if hasattr(self, 'start_ts'):
-            JSON_string += forecast_df_string
-            JSON_string += skipped_df_string
-            JSON_string += confirmed_df_string
-            JSON_string += deferred_df_string
+        JSON_string += forecast_df_string
+        JSON_string += skipped_df_string
+        JSON_string += confirmed_df_string
+        JSON_string += deferred_df_string
 
-            # account_milestone_string = "{"
-            # i = 0
-            # for key, value in self.account_milestone_results.items():
-            #     account_milestone_string += '"' + str(key) + '":"' + str(value) + '"'
-            #     if i != (len(self.account_milestone_results) - 1):
-            #         account_milestone_string += ","
-            #     i += 1
-            # account_milestone_string += "}"
-            #account_milestone_string = self.account_milestone_results.to_json()
-            account_milestone_string = jsonpickle.encode(self.account_milestone_results,indent=4, unpicklable=False)
+        # account_milestone_string = "{"
+        # i = 0
+        # for key, value in self.account_milestone_results.items():
+        #     account_milestone_string += '"' + str(key) + '":"' + str(value) + '"'
+        #     if i != (len(self.account_milestone_results) - 1):
+        #         account_milestone_string += ","
+        #     i += 1
+        # account_milestone_string += "}"
+        #account_milestone_string = self.account_milestone_results.to_json()
+        account_milestone_string = jsonpickle.encode(self.account_milestone_results,indent=4, unpicklable=False)
 
-            # memo_milestone_string = "{"
-            # i = 0
-            # for key, value in self.memo_milestone_results.items():
-            #     memo_milestone_string += '"' + str(key) + '":"' + str(value) + '"'
-            #     if i != (len(self.memo_milestone_results) - 1):
-            #         memo_milestone_string += ","
-            #     i += 1
-            # memo_milestone_string += "}"
-            #memo_milestone_string = self.memo_milestone_results.to_json()
-            memo_milestone_string = jsonpickle.encode(self.memo_milestone_results, indent=4, unpicklable=False)
+        # memo_milestone_string = "{"
+        # i = 0
+        # for key, value in self.memo_milestone_results.items():
+        #     memo_milestone_string += '"' + str(key) + '":"' + str(value) + '"'
+        #     if i != (len(self.memo_milestone_results) - 1):
+        #         memo_milestone_string += ","
+        #     i += 1
+        # memo_milestone_string += "}"
+        #memo_milestone_string = self.memo_milestone_results.to_json()
+        memo_milestone_string = jsonpickle.encode(self.memo_milestone_results, indent=4, unpicklable=False)
 
-            # composite_milestone_string = "{"
-            # i = 0
-            # for key, value in self.composite_milestone_results.items():
-            #     composite_milestone_string += '"' + str(key) + '":"' + str(value) + '"'
-            #     if i != (len(self.composite_milestone_results) - 1):
-            #         composite_milestone_string += ","
-            #     i += 1
-            # composite_milestone_string += "}"
-            # composite_milestone_string = self.composite_milestone_results.to_json()
-            composite_milestone_string = jsonpickle.encode(self.composite_milestone_results, indent=4, unpicklable=False)
+        # composite_milestone_string = "{"
+        # i = 0
+        # for key, value in self.composite_milestone_results.items():
+        #     composite_milestone_string += '"' + str(key) + '":"' + str(value) + '"'
+        #     if i != (len(self.composite_milestone_results) - 1):
+        #         composite_milestone_string += ","
+        #     i += 1
+        # composite_milestone_string += "}"
+        # composite_milestone_string = self.composite_milestone_results.to_json()
+        composite_milestone_string = jsonpickle.encode(self.composite_milestone_results, indent=4, unpicklable=False)
 
         JSON_string += "\"milestone_set\":"+self.milestone_set.to_json()
 
-        if self.start_ts is not None:
-        #if hasattr(self, 'start_ts'):
-            JSON_string += ",\n"
-            JSON_string += "\"account_milestone_results\":"+account_milestone_string+",\n"
-            JSON_string += "\"memo_milestone_results\":"+memo_milestone_string+",\n"
-            JSON_string += "\"composite_milestone_results\":"+composite_milestone_string
+        JSON_string += ",\n"
+        JSON_string += "\"account_milestone_results\":"+account_milestone_string+",\n"
+        JSON_string += "\"memo_milestone_results\":"+memo_milestone_string+",\n"
+        JSON_string += "\"composite_milestone_results\":"+composite_milestone_string
 
         JSON_string += '}'
 

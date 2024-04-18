@@ -1862,13 +1862,14 @@ class TestExpenseForecastMethods:
                                              )
 
         #E1.runForecast()  # Forecast_028363.html
-        E1.writeToJSONFile('./out/')  # ./out/Forecast_028363.json
+        E1.writeToJSONFile('./out/')  # ./out/ForecastResult_010783.json
+        # print(E1.to_json())
 
         E2  = ExpenseForecast.initialize_from_json_file('./out/ForecastResult_'+str(E1.unique_id)+'.json')
 
         # before runForecast
         assert E1.unique_id == E2.unique_id
-        # assert E1.start_ts == E2.start_ts
+        # assert E1.start_ts == E2.start_tsx
         # assert E1.end_ts == E2.end_ts
         assert E1.start_date_YYYYMMDD == E2.start_date_YYYYMMDD
         assert E1.end_date_YYYYMMDD == E2.end_date_YYYYMMDD
