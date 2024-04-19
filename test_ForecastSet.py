@@ -108,16 +108,12 @@ class TestForecastSet:
     # def test_renameForecast(self):
     #     raise NotImplementedError
 
-    def test_ForecastSet_to_json(self):
+    def test_update_date_range(self):
         start_date = datetime.datetime.now().strftime('%Y%m%d')
         end_date = '20240430'
 
         A = AccountSet.AccountSet([])
         B1 = BudgetSet.BudgetSet([])
-        # B2 = BudgetSet.BudgetSet([])
-        # B3 = BudgetSet.BudgetSet([])
-        # B4 = BudgetSet.BudgetSet([])
-        # B5 = BudgetSet.BudgetSet([])
         M = MemoRuleSet.MemoRuleSet([])
 
         B_optional = BudgetSet.BudgetSet([])
@@ -128,10 +124,52 @@ class TestForecastSet:
 
         A.createCheckingAccount('Checking', 5000, 0, 99999)
         B1.addBudgetItem(start_date, end_date, 1, 'daily', 10, 'food 1', False, False)
-        # B2.addBudgetItem(start_date, end_date, 1, 'daily', 10, 'food 2', False, False)
-        # B3.addBudgetItem(start_date, end_date, 1, 'daily', 10, 'food 3', False, False)
-        # B4.addBudgetItem(start_date, end_date, 1, 'daily', 10, 'food 4', False, False)
-        # B5.addBudgetItem(start_date, end_date, 1, 'daily', 10, 'food 5', False, False)
+        M.addMemoRule('.*', 'Checking', 'None', 1)
+
+        MS = MilestoneSet.MilestoneSet([], [], [])
+        E1 = ExpenseForecast.ExpenseForecast(A, B1, M, start_date, end_date, MS)
+
+        option_budget_set = BudgetSet.BudgetSet(
+            [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 1A'),
+             BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 1B'),
+             BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 1C'),
+             BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 1D'),
+             BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 2A'),
+             BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 2B'),
+             BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 2C'),
+             BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 2D')
+             ])
+
+        S = ForecastSet.ForecastSet(E1, option_budget_set)
+        S.addChoiceToAllForecasts(['A', 'B'], [['.*A.*'], ['.*B.*']])
+        S.addChoiceToAllForecasts(['C', 'D'], [['.*C.*'], ['.*D.*']])
+        S.initialize_forecasts()
+
+        for k, v in S.initialized_forecasts.items():
+            print(k,v.unique_id)
+        S.update_date_range('20240101','20250101')
+        print('---------')
+        for k, v in S.initialized_forecasts.items():
+            print(k,v.unique_id)
+
+        assert False
+
+    def test_ForecastSet_to_json(self):
+        start_date = datetime.datetime.now().strftime('%Y%m%d')
+        end_date = '20240430'
+
+        A = AccountSet.AccountSet([])
+        B1 = BudgetSet.BudgetSet([])
+        M = MemoRuleSet.MemoRuleSet([])
+
+        B_optional = BudgetSet.BudgetSet([])
+        B_optional.addBudgetItem(start_date, end_date, 1, 'daily', 10, 'Choice 1 Option A', False, False)
+        B_optional.addBudgetItem(start_date, end_date, 1, 'daily', 10, 'Choice 1 Option B', False, False)
+        B_optional.addBudgetItem(start_date, end_date, 1, 'daily', 10, 'Choice 2 Option C', False, False)
+        B_optional.addBudgetItem(start_date, end_date, 1, 'daily', 10, 'Choice 2 Option D', False, False)
+
+        A.createCheckingAccount('Checking', 5000, 0, 99999)
+        B1.addBudgetItem(start_date, end_date, 1, 'daily', 10, 'food 1', False, False)
         M.addMemoRule('.*', 'Checking', 'None', 1)
 
         MS = MilestoneSet.MilestoneSet([], [], [])

@@ -177,6 +177,8 @@ class ForecastSet:
     #     self.scenarios[name_of_scenario] = new_option_budget_set
 
     def initialize_forecasts(self):
+        new_id_to_name = {}
+        new_initialized_forecasts = {}
         for forecast_name, budget_set in self.forecast_name_to_budget_item_set__dict.items():
             new_E = ExpenseForecast.ExpenseForecast(account_set=self.base_forecast.initial_account_set,
                                                     budget_set=budget_set,
@@ -187,9 +189,12 @@ class ForecastSet:
                                                     forecast_set_name=self.forecast_set_name,
                                                     forecast_name=forecast_name
                                                     )
-            self.id_to_name[new_E.unique_id] = forecast_name
-            self.initialized_forecasts[new_E.unique_id] = new_E
-
+            new_id_to_name[new_E.unique_id] = forecast_name
+            new_initialized_forecasts[new_E.unique_id] = new_E
+        new_id_to_name = {}
+        new_initialized_forecasts = {}
+        self.id_to_name = new_id_to_name
+        self.initialized_forecasts = new_initialized_forecasts
         self.unique_id = 'S' + str(int(hashlib.sha1(str(self.initialized_forecasts.keys()).encode("utf-8")).hexdigest(),16) % 100000).rjust(6, '0')
 
     def get_id_to_forecast_name_map(self):
@@ -236,6 +241,8 @@ class ForecastSet:
             choice_index += 1
 
         self.forecast_name_to_budget_item_set__dict = new_dict_of_scenarios
+
+        self.initialize_forecasts()
         log_in_color(logger, 'white', 'debug', 'EXIT addChoiceToAllScenarios')
 
     def __str__(self):
@@ -264,10 +271,14 @@ class ForecastSet:
         #print('ENTER ForecastSet::update_date_range')
         new_initialized_forecasts = self.initialized_forecasts.copy()
         #print(new_initialized_forecasts.keys())
-        for E_key, E in self.initialized_forecasts.items():
+        print('length: '+str(len(new_initialized_forecasts)))
+        for E_key, E in self.initialized_forecasts.copy().items():
             del new_initialized_forecasts[E_key]
+            old_id = E.unique_id
             E.update_date_range(start_date_YYYYMMDD,end_date_YYYYMMDD)
-            new_initialized_forecasts[E.unique_id] = E
+            new_id = E.unique_id
+            new_initialized_forecasts[new_id] = E
+            print(old_id,' -> ',new_id)
         self.initialized_forecasts = new_initialized_forecasts
         self.unique_id = 'S' + str(int(hashlib.sha1(str(self.initialized_forecasts.keys()).encode("utf-8")).hexdigest(),16) % 100000).rjust(6, '0')
         # print(new_initialized_forecasts.keys())
@@ -276,10 +287,8 @@ class ForecastSet:
     def writeToJSONFile(self, output_dir):
 
         # self.forecast_df.to_csv('./Forecast__'+run_ts+'.csv')
-        if len(self.forecast_name_to_budget_item_set__dict) != self.initialized_forecasts:
-            self.initialize_forecasts()
-            self.unique_id = 'S' + str(int(hashlib.sha1(str(self.initialized_forecasts.keys()).encode("utf-8")).hexdigest(),16) % 100000).rjust(6, '0')
 
+        print('Writing to '+str(output_dir)+'/ForecastSet_' + self.unique_id + '.json')
         log_in_color(logger,'green', 'debug', 'Writing to '+str(output_dir)+'/ForecastSet_' + self.unique_id + '.json')
         #self.forecast_df.to_csv('./Forecast__' + run_ts + '.json')
 
