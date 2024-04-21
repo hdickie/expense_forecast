@@ -37,9 +37,9 @@ import random
 import math
 thread_id = str(math.floor(random.random() * 1000))
 try:
-    logger = setup_logger(__name__, os.environ['EF_LOG_DIR'] + __name__ + '_'+ thread_id+'.log', level=logging.WARNING)
+    logger = setup_logger(__name__, os.environ['EF_LOG_DIR'] + __name__ + '_'+ thread_id+'.log', level=logging.INFO)
 except KeyError:
-    logger = setup_logger(__name__, __name__ + '_'+ thread_id+'.log', level=logging.WARNING)
+    logger = setup_logger(__name__, __name__ + '_'+ thread_id+'.log', level=logging.INFO)
 
 def initialize_from_database(start_date_YYYYMMDD,
                              end_date_YYYYMMDD,
@@ -590,16 +590,37 @@ def initialize_from_dict(data):
 
 class ExpenseForecast:
 
-    def update_date_range(self,start_date_YYYYMMDD,end_date_YYYYMMDD):
-        account_hash = hashlib.sha1(self.initial_account_set.getAccounts().to_string().encode("utf-8")).hexdigest()
-        budget_hash = hashlib.sha1(self.initial_budget_set.getBudgetItems().to_string().encode("utf-8")).hexdigest()
-        memo_hash = hashlib.sha1(self.initial_memo_rule_set.getMemoRules().to_string().encode("utf-8")).hexdigest()
-        start_date_hash = int(start_date_YYYYMMDD)
-        end_date_hash = int(end_date_YYYYMMDD)
+    # Pickle will use these
+    # def __getstate__(self):
+    #     pass
+    #
+    # def __setstate__(self, state):
+    #     pass
 
-        self.start_date_YYYYMMDD = start_date_YYYYMMDD
-        self.end_date_YYYYMMDD = end_date_YYYYMMDD
-        self.unique_id = str(hash(int(account_hash, 16) + int(budget_hash, 16) + int(memo_hash,16) + start_date_hash + end_date_hash) % 100000).rjust(6, '0')
+    def update_date_range(self,start_date_YYYYMMDD,end_date_YYYYMMDD):
+        if self.start_date_YYYYMMDD != start_date_YYYYMMDD or self.end_date_YYYYMMDD != end_date_YYYYMMDD:
+            self.start_ts = None
+            self.end_ts = None
+            self.skipped_df = None
+            self.confirmed_df = None
+            self.deferred_df = None
+            self.forecast_df = None
+            self.account_milestone_results = None
+            self.memo_milestone_results = None
+            self.composite_milestone_results = None
+
+            account_hash = hashlib.sha1(self.initial_account_set.getAccounts().to_string().encode("utf-8")).hexdigest()
+            budget_hash = hashlib.sha1(self.initial_budget_set.getBudgetItems().to_string().encode("utf-8")).hexdigest()
+            memo_hash = hashlib.sha1(self.initial_memo_rule_set.getMemoRules().to_string().encode("utf-8")).hexdigest()
+            start_date_hash = int(start_date_YYYYMMDD)
+            end_date_hash = int(end_date_YYYYMMDD)
+
+            self.start_date_YYYYMMDD = start_date_YYYYMMDD
+            self.end_date_YYYYMMDD = end_date_YYYYMMDD
+            self.unique_id = str(hash(int(account_hash, 16) + int(budget_hash, 16) + int(memo_hash,16) + start_date_hash + end_date_hash) % 100000).rjust(6, '0')
+
+        else:
+            return
 
 
     def write_to_database(self, username,
@@ -1607,8 +1628,24 @@ class ExpenseForecast:
         sleep(30)
         #print('finished sleep')
 
-    def runForecast(self, play_notification_sound=False):
+    def runForecast(self, log_level='WARNING', play_notification_sound=False):
+        #print('Starting Forecast #'+str(self.unique_id))
         self.start_ts = datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S')
+
+        if log_level == 'DEBUG':
+            loglevel = logging.DEBUG
+        elif log_level == 'INFO':
+            loglevel = logging.INFO
+        elif log_level == 'WARNING':
+            loglevel = logging.WARNING
+        elif log_level == 'ERROR':
+            loglevel = logging.ERROR
+        elif log_level == 'CRITICAL':
+            loglevel = logging.CRITICAL
+        else:
+            loglevel = logging.WARNING
+        logger.setLevel(loglevel)
+
         log_in_color(logger, 'white', 'info', 'Starting Forecast '+str(self.unique_id))
 
         # this is the place to estimate runtime to appropriately update progress bar
@@ -1668,10 +1705,11 @@ class ExpenseForecast:
         #self.forecast_df.to_csv('./out//Forecast_' + self.unique_id + '.csv') #this is only the forecast not the whole ExpenseForecast object
         #self.writeToJSONFile() #this is the whole ExpenseForecast object #todo this should accept a path parameter
 
-    def writeToJSONFile(self, output_dir):
+    def writeToJSONFile(self, output_dir='./'):
 
         # self.forecast_df.to_csv('./Forecast__'+run_ts+'.csv')
-        log_in_color(logger,'green', 'debug', 'Writing to '+str(output_dir)+'/Forecast_' + self.unique_id + '.json')
+        log_in_color(logger,'green', 'info', 'Writing to '+str(output_dir)+'/Forecast_' + self.unique_id + '.json')
+        #print('Writing to '+str(output_dir)+'/Forecast_' + self.unique_id + '.json')
         #self.forecast_df.to_csv('./Forecast__' + run_ts + '.json')
 
         #self.forecast_df.index = self.forecast_df['Date']

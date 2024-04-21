@@ -7,6 +7,7 @@ import jsonpickle
 import logging
 import json
 import ExpenseForecast
+import ForecastRunner
 from log_methods import log_in_color
 from log_methods import setup_logger
 import os
@@ -157,8 +158,6 @@ class ForecastSet:
         raise NotImplementedError
 
     def to_json(self):
-        if len(self.forecast_name_to_budget_item_set__dict) != self.initialized_forecasts:
-            self.initialize_forecasts()
         return jsonpickle.encode(self, indent=4, unpicklable=False)
 
 
@@ -180,6 +179,7 @@ class ForecastSet:
         new_id_to_name = {}
         new_initialized_forecasts = {}
         for forecast_name, budget_set in self.forecast_name_to_budget_item_set__dict.items():
+            #print('Initializing '+forecast_name)
             new_E = ExpenseForecast.ExpenseForecast(account_set=self.base_forecast.initial_account_set,
                                                     budget_set=budget_set,
                                                     memo_rule_set=self.base_forecast.initial_memo_rule_set,
@@ -191,8 +191,6 @@ class ForecastSet:
                                                     )
             new_id_to_name[new_E.unique_id] = forecast_name
             new_initialized_forecasts[new_E.unique_id] = new_E
-        new_id_to_name = {}
-        new_initialized_forecasts = {}
         self.id_to_name = new_id_to_name
         self.initialized_forecasts = new_initialized_forecasts
         self.unique_id = 'S' + str(int(hashlib.sha1(str(self.initialized_forecasts.keys()).encode("utf-8")).hexdigest(),16) % 100000).rjust(6, '0')
@@ -247,7 +245,7 @@ class ForecastSet:
 
     def __str__(self):
         return_string = "------------------------------------------------------------------------------------------------\n"
-        return_string += "Core Set:\n"
+        return_string += "Core Set " + self.base_forecast.unique_id + ":\n"
         return_string += self.core_budget_set.getBudgetItems().to_string() + "\n"
         return_string += "------------------------------------------------------------------------------------------------\n"
         return_string += "Optional Set:\n"
@@ -256,6 +254,13 @@ class ForecastSet:
             return_string += "------------------------------------------------------------------------------------------------\n"
             return_string += str(key) + " \n"
             return_string += value.getBudgetItems().to_string() + "\n"
+        return_string += "------------------------------------------------------------------------------------------------\n"
+        return_string += "Initialized Forecasts:\n"
+        return_string += "id     sd       ed       Complete:\n"
+        for k, v in self.initialized_forecasts.items():
+            completed_flag = v.forecast_df is not None
+            return_string += str(k) + " " + v.start_date_YYYYMMDD + " " + v.end_date_YYYYMMDD + " " + str(completed_flag) + " \n"
+        return_string += "------------------------------------------------------------------------------------------------\n"
 
 
         return return_string
@@ -268,31 +273,37 @@ class ForecastSet:
             raise ValueError("Forecast Name not found")
 
     def update_date_range(self,start_date_YYYYMMDD,end_date_YYYYMMDD):
-        #print('ENTER ForecastSet::update_date_range')
+
+        #this updates the unique_id of the base_forecast
+        self.base_forecast.update_date_range(start_date_YYYYMMDD, end_date_YYYYMMDD)
+
+        #can't call update date range unless the ExpenseForecast already exists
+        self.initialize_forecasts()
         new_initialized_forecasts = self.initialized_forecasts.copy()
-        #print(new_initialized_forecasts.keys())
-        print('length: '+str(len(new_initialized_forecasts)))
         for E_key, E in self.initialized_forecasts.copy().items():
             del new_initialized_forecasts[E_key]
             old_id = E.unique_id
             E.update_date_range(start_date_YYYYMMDD,end_date_YYYYMMDD)
             new_id = E.unique_id
             new_initialized_forecasts[new_id] = E
-            print(old_id,' -> ',new_id)
         self.initialized_forecasts = new_initialized_forecasts
         self.unique_id = 'S' + str(int(hashlib.sha1(str(self.initialized_forecasts.keys()).encode("utf-8")).hexdigest(),16) % 100000).rjust(6, '0')
-        # print(new_initialized_forecasts.keys())
-        # print('EXIT ForecastSet::update_date_range')
 
-    def writeToJSONFile(self, output_dir):
+    def writeToJSONFile(self, output_dir='./'):
+        log_in_color(logger,'green', 'info', 'Writing to '+str(output_dir)+'ForecastSet_' + self.unique_id + '.json')
+        with open(str(output_dir)+'ForecastSet_' + self.unique_id + '.json','w') as f:
+            f.write(self.to_json())
 
-        # self.forecast_df.to_csv('./Forecast__'+run_ts+'.csv')
+    def runAllForecasts(self,log_level='WARNING'):
+        # print('runAllForecasts')
+        R = ForecastRunner.ForecastRunner(lock_directory='./lock/')
+        for unique_id, E in self.initialized_forecasts.items():
+            R.start_forecast(E,log_level)
+        R.waitAll()
+        self.initialized_forecasts = R.forecasts
 
-        print('Writing to '+str(output_dir)+'/ForecastSet_' + self.unique_id + '.json')
-        log_in_color(logger,'green', 'debug', 'Writing to '+str(output_dir)+'/ForecastSet_' + self.unique_id + '.json')
-        #self.forecast_df.to_csv('./Forecast__' + run_ts + '.json')
-
-        f = open(str(output_dir)+'/ForecastSet_' + self.unique_id + '.json','w')
-        f.write(self.to_json())
-        f.close()
-
+    def runAllForecastsApproximate(self):
+        R = ForecastRunner.ForecastRunner(lock_directory='.')
+        for unique_id, E in self.initialized_forecasts.items():
+            R.start_forecast_approximate(E)
+        R.waitAll()

@@ -51,21 +51,21 @@ import ForecastSet
 # 6. parameterize_db_forecast_with_label                O
 # 7. parameterize_db_forecastset_no_label               O
 # 8. parameterize_db_forecastset_with_label             O
-# 9. run_forecast_no_label                              O
-# 10. run_forecastset_no_label                          O
-# 11. run_approximate_forecast_no_label                 O
-# 12. run_approximate_forecastset_no_label              O
-# 13. run_forecast_overwrite_no_label                   O
-# 14. run_forecastset_overwrite_no_label                O
-# 15. run_overwrite_approximate_forecast_no_label       0
-# 16. run_overwrite_approximate_forecastset_no_label    0
-# 17. report_forecast                                   O
-# 18. report_forecastset                                O
+# 9. run_forecast                                       X
+# 10. run_forecastset                                   X
+# 11. run_approximate_forecast                          O
+# 12. run_approximate_forecastset                       O
+# 13. run_forecast_overwrite                            O
+# 14. run_forecastset_overwrite                         O
+# 15. run_overwrite_approximate_forecast                0
+# 16. run_overwrite_approximate_forecastset             0
+# 17. report_forecast                                   X
+# 18. report_forecastset                                X
 # 19. export_forecast                                   O
 # 20. export_forecastset                                O
 # 21. import_forecast                                   O
 # 22. import_forecastset                                O
-# 23. list                                              O
+# 23. list                                              X
 # 24. ps                                                O
 # 24. kill forecast                                     O
 # 24. kill forecastset                                  O
@@ -137,20 +137,29 @@ class TestEFCLIMethods:
         assert E.end_date_YYYYMMDD == '20241231'
         assert E.forecast_name == 'FORECAST_LABEL'
 
-
     @pytest.mark.parametrize('cmd_string',
-                             [('parameterize forecastset --filename S.json --start_date 20000601 --end_date 20001231 --username hume'),
+                             [('parameterize forecastset --filename S.json --username hume --output_directory ./out/ --start_date 20240120 --end_date 20240601'),
+                              ('parameterize forecastset --filename S.json --username hume --output_directory ./out/ --start_date 20000120 --end_date 20000601'),
+                              ('parameterize forecastset --filename S.json --username hume --output_directory ./out/ --start_date 20240420 --end_date 20240601')
                               ])
     def test_parameterize_file_forecastset_no_label(self, cmd_string):
         cmd = "python -m ef_cli " + cmd_string
         cmd_arg_list = cmd.split(" ")
+        sd = cmd_arg_list[12]
+        ed = cmd_arg_list[14]
         completed_process = subprocess.run(cmd_arg_list, capture_output=True, check=True)
+        for l in completed_process.stdout.splitlines():
+            if 'Writing to ' in str(l):
+                output_file_path = str(l)[13:44] #not robust at all
 
-        S = ForecastSet.initialize_from_json_file('./out/ForecastSet_S074621.json')
-
+        S = ForecastSet.initialize_from_json_file(output_file_path)
+        # print(output_file_path)
+        # print(S)
+        assert S.base_forecast.start_date_YYYYMMDD == sd
+        assert S.base_forecast.end_date_YYYYMMDD == ed
         for unique_id, E in S.initialized_forecasts.items():
-            assert E.start_date_YYYYMMDD == '20000601'
-            assert E.end_date_YYYYMMDD == '20001231'
+            assert E.start_date_YYYYMMDD == sd
+            assert E.end_date_YYYYMMDD == ed
 
     @pytest.mark.parametrize('cmd_string',
                              [(
@@ -168,3 +177,49 @@ class TestEFCLIMethods:
             assert E.end_date_YYYYMMDD == '20001231'
 
         assert S.forecast_set_name == 'NEW_FORECAST_SET_NAME'
+
+    @pytest.mark.parametrize('cmd_string',
+                             [('run forecast --filename ./out/test.json --username hume --output_directory ./out/'),
+                              ('run forecast --filename ./out/test.json --username hume --output_directory ./out/ --approximate'),
+                              ('run forecast --filename ./out/test.json --username hume --output_directory ./out/ --overwrite'),
+                              ('run forecast --filename ./out/test.json --username hume --output_directory ./out/ --approximate --overwrite'),
+                             ])
+    def test_run_forecast(self, cmd_string):
+        cmd = "python -m ef_cli " + cmd_string
+        cmd_arg_list = cmd.split(" ")
+        completed_process = subprocess.run(cmd_arg_list, capture_output=True, check=True)
+
+        E = ExpenseForecast.initialize_from_json_file('./out/ForecastResult_094984.json')
+        E.runForecast()
+        E.appendSummaryLines()
+        E.writeToJSONFile('./out/')
+
+    @pytest.mark.parametrize('cmd_string',
+                             [('run forecastset --filename S.json --username hume --output_directory ./out/'),
+                              ('run forecastset --filename S.json --username hume --output_directory ./out/ --approximate'),
+                              ('run forecastset --filename S.json --username hume --output_directory ./out/ --overwrite'),
+                              ('run forecastset --filename S.json --username hume --output_directory ./out/ --approximate --overwrite'),
+                             ])
+    def test_run_forecastset(self, cmd_string):
+        cmd = "python -m ef_cli " + cmd_string
+        cmd_arg_list = cmd.split(" ")
+        completed_process = subprocess.run(cmd_arg_list, capture_output=True, check=True)
+
+        S = ForecastSet.initialize_from_json_file('S.json')
+        for unique_id, E in S.initialized_forecasts.items():
+            assert E.forecast_df is None
+        S.runAllForecasts()
+        for unique_id, E in S.initialized_forecasts.items():
+            assert not E.forecast_df is None
+
+    @pytest.mark.parametrize('cmd_string',
+                             [('list'),
+                              ])
+    def test_list(self, cmd_string):
+        cmd = "python -m ef_cli " + cmd_string
+        cmd_arg_list = cmd.split(" ")
+        completed_process = subprocess.run(cmd_arg_list, capture_output=True, check=True)
+
+        for l in completed_process.stdout.splitlines():
+            print(l)
+
