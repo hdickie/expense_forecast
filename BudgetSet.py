@@ -37,12 +37,15 @@ def initialize_from_json_string(json_string):
 
 class BudgetSet:
 
-    def __init__(self,budget_items__list):
+    def __init__(self,budget_items__list=None):
         """
         Add a budget_item to self.budget_items. Input validation is performed.
 
         :param budget_items__list:
         """
+
+        if budget_items__list is None:
+            budget_items__list = []
 
         required_attributes = ['start_date_YYYYMMDD', 'end_date_YYYYMMDD',
                                'priority', 'cadence', 'amount',

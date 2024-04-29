@@ -237,3 +237,405 @@ class TestForecastSet:
             assert S.id_to_name[k] == S2.id_to_name[k]
 
         assert S.to_json() == S2.to_json()
+
+    def test_ForecastSet_writeToDatabase_empty_notRun(self):
+
+        database_hostname = 'host.docker.internal'
+        database_name = 'postgres'
+        database_username = 'virtuoso_user'
+        database_password = 'virtuoso_password'
+        database_port = 5433
+        username = 'virtuoso_user'
+
+        start_date_YYYYMMDD = '20000101'
+        end_date_YYYYMMDD = '20000201'
+
+        A = AccountSet.AccountSet()
+        A.createCheckingAccount('Checking',100,0,100000)
+
+        B = BudgetSet.BudgetSet()
+        M = MemoRuleSet.MemoRuleSet()
+        MS = MilestoneSet.MilestoneSet()
+
+        E = ExpenseForecast.ExpenseForecast(A,B,M,start_date_YYYYMMDD,end_date_YYYYMMDD,MS)
+        S = ForecastSet.ForecastSet(base_forecast=E, option_budget_set=B)
+        S.writeToDatabase(database_hostname, database_name, database_username, database_password, database_port,username)
+
+        S2 = ForecastSet.initialize_forecast_set_from_database(set_id=S.unique_id,
+                                                               username=username,
+                                                               database_hostname=database_hostname,
+                                                               database_name=database_name,
+                                                               database_username=database_username,
+                                                               database_password=database_password,
+                                                               database_port=database_port)
+
+        #this is gonna fail bc memory addresses
+        #assert S.to_json() == S2.to_json()
+        assert S.forecast_set_name == S2.forecast_set_name
+        assert S.base_forecast.to_json() == S2.base_forecast.to_json()
+        assert S.initialized_forecasts.keys() == S2.initialized_forecasts.keys()
+
+
+
+        assert S.option_budget_set.getBudgetItems().to_string() == S2.option_budget_set.getBudgetItems().to_string()
+
+        for unique_id, E in S.initialized_forecasts.items():
+            assert E.forecast_df.to_json() == S.initialized_forecasts[unique_id].forecast_df.to_json()
+
+        assert S.to_json() == S2.to_json()
+
+        # Shouldn't this at least have core? Not sure.... Let's move on for now...
+        # S_keys_list = list(S.forecast_name_to_budget_item_set__dict.keys())
+        # assert len(S_keys_list) > 0
+        #
+        # S2_keys_list = list(S2.forecast_name_to_budget_item_set__dict.keys())
+        # assert S_keys_list == S2_keys_list
+
+    #while not really a valid business case, it is a technical edge case
+    def test_ForecastSet_writeToDatabase_empty_Run(self):
+        database_hostname = 'host.docker.internal'
+        database_name = 'postgres'
+        database_username = 'virtuoso_user'
+        database_password = 'virtuoso_password'
+        database_port = 5433
+        username = 'virtuoso_user'
+
+        start_date_YYYYMMDD = '20000101'
+        end_date_YYYYMMDD = '20000201'
+
+        A = AccountSet.AccountSet()
+        A.createCheckingAccount('Checking', 100, 0, 100000)
+
+        B = BudgetSet.BudgetSet()
+        M = MemoRuleSet.MemoRuleSet()
+        MS = MilestoneSet.MilestoneSet()
+
+        E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
+        S = ForecastSet.ForecastSet(base_forecast=E, option_budget_set=B)
+        S.runAllForecasts()
+        S.writeToDatabase(database_hostname, database_name, database_username, database_password, database_port,
+                          username)
+
+        S2 = ForecastSet.initialize_forecast_set_from_database(set_id=S.unique_id,
+                                                               username=username,
+                                                               database_hostname=database_hostname,
+                                                               database_name=database_name,
+                                                               database_username=database_username,
+                                                               database_password=database_password,
+                                                               database_port=database_port)
+
+        assert S.to_json() == S2.to_json()
+
+    def test_ForecastSet_writeToDatabase_zeroChoices_NotRun(self):
+        database_hostname = 'host.docker.internal'
+        database_name = 'postgres'
+        database_username = 'virtuoso_user'
+        database_password = 'virtuoso_password'
+        database_port = 5433
+        username = 'virtuoso_user'
+
+        start_date_YYYYMMDD = '20000101'
+        end_date_YYYYMMDD = '20000201'
+
+        A = AccountSet.AccountSet()
+        A.createCheckingAccount('Checking', 100, 0, 100000)
+
+        B = BudgetSet.BudgetSet()
+        B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 10, 'test txn', False,False)
+
+        B_option = BudgetSet.BudgetSet()
+        B_option.addBudgetItem(start_date_YYYYMMDD,end_date_YYYYMMDD,1,'daily',10,'test optional txn',False,False)
+
+        M = MemoRuleSet.MemoRuleSet()
+        M.addMemoRule('.*','Checking','None',1)
+
+        MS = MilestoneSet.MilestoneSet()
+
+        E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
+        S = ForecastSet.ForecastSet(base_forecast=E, option_budget_set=B_option)
+        S.writeToDatabase(database_hostname, database_name, database_username, database_password, database_port,
+                          username)
+
+        S2 = ForecastSet.initialize_forecast_set_from_database(set_id=S.unique_id,
+                                                               username=username,
+                                                               database_hostname=database_hostname,
+                                                               database_name=database_name,
+                                                               database_username=database_username,
+                                                               database_password=database_password,
+                                                               database_port=database_port)
+
+        # this is gonna fail bc memory addresses
+        # assert S.to_json() == S2.to_json()
+        assert S.forecast_set_name == S2.forecast_set_name
+        assert S.base_forecast.to_json() == S2.base_forecast.to_json()
+        assert S.initialized_forecasts.keys() == S2.initialized_forecasts.keys()
+
+        assert S.option_budget_set.getBudgetItems().to_string() == S2.option_budget_set.getBudgetItems().to_string()
+
+        assert S.to_json() == S2.to_json()
+
+        #these would be None bc not run yet
+        # for unique_id, E in S.initialized_forecasts.items():
+        #     check_1 = E.forecast_df.to_json()
+        #     check_2 = S.initialized_forecasts[unique_id].forecast_df.to_json()
+        #     assert check_1 is not None
+        #     assert check_2 is not None
+        #     assert check_1 == check_2
+
+    def test_ForecastSet_writeToDatabase_zeroChoices_Run(self):
+        database_hostname = 'host.docker.internal'
+        database_name = 'postgres'
+        database_username = 'virtuoso_user'
+        database_password = 'virtuoso_password'
+        database_port = 5433
+        username = 'virtuoso_user'
+
+        start_date_YYYYMMDD = '20000101'
+        end_date_YYYYMMDD = '20000201'
+
+        A = AccountSet.AccountSet()
+        A.createCheckingAccount('Checking', 1000, 0, 100000)
+
+        B = BudgetSet.BudgetSet()
+        B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 10, 'test txn', False,False)
+
+        B_option = BudgetSet.BudgetSet()
+        B_option.addBudgetItem(start_date_YYYYMMDD,end_date_YYYYMMDD,1,'daily',10,'test optional txn',False,False)
+
+        M = MemoRuleSet.MemoRuleSet()
+        M.addMemoRule('.*','Checking','None',1)
+
+        MS = MilestoneSet.MilestoneSet()
+
+        E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
+        S = ForecastSet.ForecastSet(base_forecast=E, option_budget_set=B_option)
+        S.runAllForecasts()
+        S.writeToDatabase(database_hostname, database_name, database_username, database_password, database_port,
+                          username)
+
+        S2 = ForecastSet.initialize_forecast_set_from_database(set_id=S.unique_id,
+                                                               username=username,
+                                                               database_hostname=database_hostname,
+                                                               database_name=database_name,
+                                                               database_username=database_username,
+                                                               database_password=database_password,
+                                                               database_port=database_port)
+
+        # this is gonna fail bc memory addresses
+        # assert S.to_json() == S2.to_json()
+        assert S.forecast_set_name == S2.forecast_set_name
+        assert S.base_forecast.to_json() == S2.base_forecast.to_json()
+        assert S.initialized_forecasts.keys() == S2.initialized_forecasts.keys()
+
+        assert S.option_budget_set.getBudgetItems().to_string() == S2.option_budget_set.getBudgetItems().to_string()
+
+        #these would be None bc not run yet
+        # print('S.initialized_forecasts.keys():')
+        # print(S.initialized_forecasts.keys())
+        for unique_id, E in S.initialized_forecasts.items():
+            print('Checking '+unique_id)
+            check_1 = E.forecast_df.to_json()
+            check_2 = S.initialized_forecasts[unique_id].forecast_df.to_json()
+            assert check_1 is not None
+            assert check_2 is not None
+            assert check_1 == check_2
+            # print(check_1)
+
+        assert S.base_forecast.forecast_name == 'Core'
+
+        assert S.to_json() == S2.to_json()
+
+    def test_ForecastSet_writeToDatabase_oneChoice_Run(self):
+        database_hostname = 'host.docker.internal'
+        database_name = 'postgres'
+        database_username = 'virtuoso_user'
+        database_password = 'virtuoso_password'
+        database_port = 5433
+        username = 'virtuoso_user'
+
+        start_date_YYYYMMDD = '20000101'
+        end_date_YYYYMMDD = '20000201'
+
+        A = AccountSet.AccountSet()
+        A.createCheckingAccount('Checking', 1000, 0, 100000)
+
+        B = BudgetSet.BudgetSet()
+        B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 10, 'test txn', False, False)
+
+        B_option = BudgetSet.BudgetSet()
+        B_option.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 2, 'option A', False, False)
+        B_option.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 4, 'option B', False, False)
+
+        M = MemoRuleSet.MemoRuleSet()
+        M.addMemoRule('.*', 'Checking', 'None', 1)
+
+        MS = MilestoneSet.MilestoneSet()
+
+        E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
+        #print('Base Forecast id: '.ljust(40)+E.unique_id)
+        S = ForecastSet.ForecastSet(base_forecast=E, option_budget_set=B_option)
+        assert len(S.id_to_name) > 0 #1
+        #print('S initial id: '.ljust(40) + S.unique_id)
+        #print('S base forecast id: '.ljust(40) + S.base_forecast.unique_id)
+        S.addChoiceToAllForecasts(['option A','option B'],[['.*option A.*'],['.*option B.*']])
+        assert len(S.id_to_name) > 0 #2
+        #print('S base forecast id (after add choice): '.ljust(40) + S.base_forecast.unique_id)
+        #print('S id after add choice: '.ljust(40) + S.unique_id)
+        S.runAllForecasts()
+        assert len(S.id_to_name) > 0 #3
+        #print('S base forecast id (after run): '.ljust(40) + S.base_forecast.unique_id)
+        #print('S id after run: '.ljust(40) + S.unique_id)
+        S.writeToDatabase(database_hostname, database_name, database_username, database_password, database_port,
+                          username)
+        #print('S base forecast id (after write): '.ljust(40) + S.base_forecast.unique_id)
+        #print('S id after write: '.ljust(40) + S.unique_id)
+
+        S2 = ForecastSet.initialize_forecast_set_from_database(set_id=S.unique_id,
+                                                               username=username,
+                                                               database_hostname=database_hostname,
+                                                               database_name=database_name,
+                                                               database_username=database_username,
+                                                               database_password=database_password,
+                                                               database_port=database_port)
+        #print('S2 id (after load): '.ljust(40) + S2.unique_id)
+        #print('S2 base forecast id (after load): '.ljust(40) + S2.base_forecast.unique_id)
+        # this is gonna fail bc memory addresses
+        # assert S.to_json() == S2.to_json()
+        assert S.forecast_set_name == S2.forecast_set_name
+
+        # print('################################################')
+        # print(S.base_forecast.to_json())
+        # print('################################################')
+        # print(S2.base_forecast.to_json())
+        # print('################################################')
+
+        assert S.base_forecast.to_json() == S2.base_forecast.to_json()
+        # print(' S.base_forecast.unique_id:'+S.base_forecast.unique_id)
+        # print('S2.base_forecast.unique_id:'+S2.base_forecast.unique_id)
+        #
+        # print('S.initialized_forecasts.keys():')
+        # print(S.initialized_forecasts.keys())
+        #
+        # print('S2.initialized_forecasts.keys():')
+        # print(S2.initialized_forecasts.keys())
+        assert S.initialized_forecasts.keys() == S2.initialized_forecasts.keys()
+
+        assert S.option_budget_set.getBudgetItems().to_string() == S2.option_budget_set.getBudgetItems().to_string()
+
+        # these would be None bc not run yet
+        # print('S.initialized_forecasts.keys():')
+        # print(S.initialized_forecasts.keys())
+        for unique_id, E in S.initialized_forecasts.items():
+            #print('Checking ' + unique_id)
+            check_1 = E.forecast_df.to_json()
+            check_2 = S.initialized_forecasts[unique_id].forecast_df.to_json()
+            assert check_1 is not None
+            assert check_2 is not None
+            assert check_1 == check_2
+
+        # print('####################################')
+        # print(S.to_json())
+        # print('####################################')
+        # print(S2.to_json())
+        # print('####################################')
+        assert S.to_json() == S2.to_json()
+
+
+
+    def test_ForecastSet_writeToDatabase_twoChoices_NotRun(self):
+        database_hostname = 'host.docker.internal'
+        database_name = 'postgres'
+        database_username = 'virtuoso_user'
+        database_password = 'virtuoso_password'
+        database_port = 5433
+        username = 'virtuoso_user'
+
+        start_date_YYYYMMDD = '20000101'
+        end_date_YYYYMMDD = '20000201'
+
+        A = AccountSet.AccountSet()
+        A.createCheckingAccount('Checking', 1000, 0, 100000)
+
+        B = BudgetSet.BudgetSet()
+        B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 10, 'test txn', False, False)
+
+        B_option = BudgetSet.BudgetSet()
+        B_option.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 2, 'option A', False, False)
+        B_option.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 4, 'option B', False, False)
+        B_option.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 3, 'option C', False, False)
+        B_option.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 6, 'option D', False, False)
+
+        M = MemoRuleSet.MemoRuleSet()
+        M.addMemoRule('.*', 'Checking', 'None', 1)
+
+        MS = MilestoneSet.MilestoneSet()
+
+        E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
+        # print('Base Forecast id: '.ljust(40)+E.unique_id)
+        S = ForecastSet.ForecastSet(base_forecast=E, option_budget_set=B_option)
+
+        S.addChoiceToAllForecasts(['option A', 'option B'], [['.*option A.*'], ['.*option B.*']])
+        S.addChoiceToAllForecasts(['option C', 'option D'], [['.*option C.*'], ['.*option D.*']])
+
+        S.writeToDatabase(database_hostname, database_name, database_username, database_password, database_port,
+                          username)
+
+        S2 = ForecastSet.initialize_forecast_set_from_database(set_id=S.unique_id,
+                                                               username=username,
+                                                               database_hostname=database_hostname,
+                                                               database_name=database_name,
+                                                               database_username=database_username,
+                                                               database_password=database_password,
+                                                               database_port=database_port)
+
+        assert S.to_json() == S2.to_json()
+
+    def test_ForecastSet_writeToDatabase_twoChoices_Run(self):
+        database_hostname = 'host.docker.internal'
+        database_name = 'postgres'
+        database_username = 'virtuoso_user'
+        database_password = 'virtuoso_password'
+        database_port = 5433
+        username = 'virtuoso_user'
+
+        start_date_YYYYMMDD = '20000101'
+        end_date_YYYYMMDD = '20000201'
+
+        A = AccountSet.AccountSet()
+        A.createCheckingAccount('Checking', 1000, 0, 100000)
+
+        B = BudgetSet.BudgetSet()
+        B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 10, 'test txn', False, False)
+
+        B_option = BudgetSet.BudgetSet()
+        B_option.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 2, 'option A', False, False)
+        B_option.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 4, 'option B', False, False)
+        B_option.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 3, 'option C', False, False)
+        B_option.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 6, 'option D', False, False)
+
+        M = MemoRuleSet.MemoRuleSet()
+        M.addMemoRule('.*', 'Checking', 'None', 1)
+
+        MS = MilestoneSet.MilestoneSet()
+
+        E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
+        S = ForecastSet.ForecastSet(base_forecast=E, option_budget_set=B_option)
+
+        S.addChoiceToAllForecasts(['option A', 'option B'], [['.*option A.*'], ['.*option B.*']])
+        S.addChoiceToAllForecasts(['option C', 'option D'], [['.*option C.*'], ['.*option D.*']])
+        S.runAllForecasts()
+        S.writeToDatabase(database_hostname, database_name, database_username, database_password, database_port,
+                          username)
+
+        S2 = ForecastSet.initialize_forecast_set_from_database(set_id=S.unique_id,
+                                                               username=username,
+                                                               database_hostname=database_hostname,
+                                                               database_name=database_name,
+                                                               database_username=database_username,
+                                                               database_password=database_password,
+                                                               database_port=database_port)
+
+        assert S.to_json() == S2.to_json()
+
+    # def test_ForecastSet_writeToDatabase_expectError(self):
+    #     raise NotImplementedError

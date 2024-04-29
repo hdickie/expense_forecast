@@ -8,7 +8,7 @@ import ExpenseForecast
 import ForecastSet
 from log_methods import log_in_color
 import pandas as pd
-
+import psycopg2
 import AccountSet
 import BudgetSet
 import MemoRuleSet
@@ -20,7 +20,7 @@ fileHandler = logging.FileHandler(__name__+".log", mode='w')
 fileHandler.setFormatter(formatter)
 streamHandler = logging.StreamHandler()
 streamHandler.setFormatter(formatter)
-logger.setLevel(logging.WARNING)
+# logger.setLevel(logging.INFO) #this gets overwritten
 logger.handlers.clear()
 logger.addHandler(fileHandler)
 logger.addHandler(streamHandler)
@@ -32,13 +32,13 @@ import hashlib
 from time import sleep
 
 def scrape_dir_for_forecast_details(target_directory):
-    return_df = pd.DataFrame([],columns=['type','id', 'num_4casts', 'start_date', 'end_date','load_err','start_ts','run_err','end_ts','done','filename'])
+    return_df = pd.DataFrame([],columns=['source','type','id', 'num_4casts', 'start_date', 'end_date','load_err','start_ts','run_err','end_ts','done','resource_name'])
     for file_name in os.listdir(target_directory):
         if file_name.startswith('ForecastSet') and file_name.endswith('.json'):
             id_from_fname = file_name.split('_')[1].split('.')[0]
             try:
-                S = ForecastSet.initialize_from_json_file(file_name)
-                new_row_df = pd.DataFrame(['S', S.base_forecast.unique_id,len(S.forecast_name_to_budget_item_set__dict),
+                S = ForecastSet.initialize_from_json_file(target_directory+file_name)
+                new_row_df = pd.DataFrame(['file','Set', S.base_forecast.unique_id,len(S.forecast_name_to_budget_item_set__dict),
                                            datetime.datetime.strptime(S.base_forecast.start_date_YYYYMMDD,'%Y%m%d').strftime('%Y-%m-%d'),
                                            datetime.datetime.strptime(S.base_forecast.end_date_YYYYMMDD,'%Y%m%d').strftime('%Y-%m-%d'),
                                                      0, S.base_forecast.start_ts,
@@ -49,27 +49,31 @@ def scrape_dir_for_forecast_details(target_directory):
                 new_row_df.columns = return_df.columns
                 return_df = pd.concat([return_df, new_row_df])
             except Exception as e:
-                new_row_df = pd.DataFrame(['S', id_from_fname,'?',None, None, 1, None, 0, None, None,file_name]).T
+                new_row_df = pd.DataFrame(['file','Set', id_from_fname,'?',None, None, 1, None, 0, None, None,file_name]).T
                 new_row_df.columns = return_df.columns
                 return_df = pd.concat([return_df, new_row_df])
                 raise e
         elif file_name.startswith('Forecast') and file_name.endswith('.json'):
             id_from_fname = file_name.split('_')[1].split('.')[0]
             try:
-                E = ExpenseForecast.initialize_from_json_file(file_name)
-                new_row_df = pd.DataFrame(['F', E.unique_id, 1,
+                E = ExpenseForecast.initialize_from_json_file(target_directory+file_name)
+
+                satisfice_failed_ind = not E.forecast_df.tail(1).Date.iat[0] == E.end_date_YYYYMMDD #todo not sure if this is correct
+                forecast_is_done_ind = not E.forecast_df is None
+
+                new_row_df = pd.DataFrame(['file','F', E.unique_id, 1,
                               datetime.datetime.strptime(E.start_date_YYYYMMDD,'%Y%m%d').strftime('%Y-%m-%d'),
                               datetime.datetime.strptime(E.end_date_YYYYMMDD,'%Y%m%d').strftime('%Y-%m-%d'),
                               0, E.start_ts,
-                              0,
+                              satisfice_failed_ind,# todo satisfice failed flag
                               E.end_ts,
-                              0  # todo satisfice failed flag
-                              ,file_name]).T
+                              forecast_is_done_ind,
+                              file_name]).T
                 new_row_df.columns = return_df.columns
                 return_df = pd.concat([return_df,
                                        new_row_df ])
             except Exception as e:
-                new_row_df = pd.DataFrame(['F', id_from_fname, 1, None, None, 1, None, 0, None, None,file_name ]).T
+                new_row_df = pd.DataFrame(['file','F', id_from_fname, 1, None, None, 1, None, 0, None, None,file_name ]).T
                 new_row_df.columns = return_df.columns
                 return_df = pd.concat([return_df, new_row_df])
                 raise e
@@ -94,8 +98,7 @@ def main(args, loglevel):
                 log_in_color(logger, 'green', 'debug',"SET " + l_split[0]+"="+l_split[1])
                 config_args[l_split[0]] = l_split[1]
     except:
-        log_in_color(logger, 'red', 'warning', "Could not read config file "+str(args.config))
-        log_in_color(logger, 'red', 'warning', "os.getcwd():  " + str(os.getcwd()))
+        log_in_color(logger, 'red', 'warning', "Could not read config file "+str(os.getcwd())+"/"+str(args.config))
 
     sys.path.append('/Users/hume/Github/expense_forecast')
     import ExpenseForecast
@@ -146,7 +149,7 @@ def main(args, loglevel):
 
     # if any db params are defined, and filename is not passed explicitly, then file.
     # At this point though, let's set a garbage value for debugging
-    inferred_data_source_type = "undefined"
+    # this is technically deprecated but may have some debugging use so let's leep for now
 
     assert len(args.action) <= 2
     assert args.action[0] in ['parameterize','run','list','ps','kill','report','export','import','inspect']
@@ -154,6 +157,7 @@ def main(args, loglevel):
         assert len(args.action) == 2
         assert args.action[1] in ['forecast','forecastset']
 
+    #this is before config is loaded
     if args.action[0] in ['kill', 'ps']:
         assert args.database_hostname is None
         assert args.database_name is None
@@ -181,9 +185,10 @@ def main(args, loglevel):
     #     assert args.action[0] in ['parameterize','run','report','export']
 
     #parameterize and reparameterize require start and end date
-    if args.action[0] in ['parameterize', 'reparameterize']:
+    if args.action[0] in ['parameterize']:
         assert args.start_date is not None
         assert args.end_date is not None
+        assert args.id is not None # the string literal 'None' is a valid option for database
 
     # the label arg is only valid when used with parameterize and reparameterize
     if args.label is not None:
@@ -192,9 +197,6 @@ def main(args, loglevel):
     assert os.path.isdir(args.log_directory) #check log_directory exists
     assert os.access(args.log_directory,os.W_OK) #check log_directory is writable
 
-    if args.id is not None:
-        assert args.action[0] != 'parameterize'
-
     if args.approximate:
         assert args.action[0] == 'run'
 
@@ -202,30 +204,7 @@ def main(args, loglevel):
         assert args.action[0] == 'run'
 
     if args.id is not None:
-        assert args.action[0] in ['run','kill','report','export','import']
-
-    if args.filename is not None:
-        assert os.access(args.filename, os.R_OK)  # check input file is readable
-        inferred_data_source_type = "file"
-
-    #if any database args are defined, they must all be defined
-    if args.database_hostname is not None or args.database_name is not None or args.database_username is not None or args.database_port is not None or args.database_password is not None:
-        assert args.database_hostname is not None
-        assert args.database_name is not None
-        assert args.database_username is not None
-        assert args.database_port is not None
-        assert args.database_password is not None
-
-        # db details and filename are both defined, so input source is ambiguous. Delete some params to fix this error.
-        assert args.filename is None
-        inferred_data_source_type = "database"
-
-        # try to connect
-        connect_string = 'postgresql://' + args.database_username + ':' + args.database_password + '@' + args.database_hostname + ':' + args.database_port + '/' + args.database_name
-        engine = create_engine(connect_string)
-        connection_test = pd.read_sql_query("select 'connection successful'", con=engine)
-
-        assert args.action[0] in ['parameterize','export','import','run','report']
+        assert args.action[0] in ['run','kill','report','export','import','parameterize']
 
     if args.start_date is not None:
         args.start_date = args.start_date.replace('-','')
@@ -238,28 +217,156 @@ def main(args, loglevel):
     #this would happen if neither filename nor database was passed explicitly
     #in that case, we check loaded config for db details
     #if there are no db details, then error, because there is no input to process
-    if inferred_data_source_type == "undefined":
+    if args.database_hostname is None:
         try:
             args.database_hostname = config_args["database_hostname"]
-            args.database_name = config_args["database_name"]
-            args.database_username = config_args["database_username"]
-            args.database_port = config_args["database_port"]
-            args.database_password = config_args["database_password"]
-            inferred_data_source_type = "database"
         except Exception as e:
-            raise ValueError("Input not sufficiently specificed. No filename or db details as params or from config on file.")
+            raise ValueError("db hostname not specified on cmd line or in config")
 
-    if inferred_data_source_type == "undefined":
-        raise ValueError("Input not sufficiently specificed. No filename or db details as params or from config on file.")
+    if args.database_name is None:
+        try:
+            args.database_name = config_args["database_name"]
+        except Exception as e:
+            raise ValueError("db name not specified on cmd line or in config")
+
+    if args.database_username is None:
+        try:
+            args.database_username = config_args["database_username"]
+        except Exception as e:
+            raise ValueError("db username not specified on cmd line or in config")
+
+    if args.database_port is None:
+        try:
+            args.database_port = config_args["database_port"]
+        except Exception as e:
+            raise ValueError("db port not specified on cmd line or in config")
+
+    if args.database_password is None:
+        try:
+            args.database_password = config_args["database_password"]
+        except Exception as e:
+            raise ValueError("db password not specified on cmd line or in config")
+
+    if args.source == 'database' or args.source == 'both':
+        # try to connect
+        connect_string = 'postgresql://' + args.database_username + ':' + args.database_password + '@' + args.database_hostname + ':' + args.database_port + '/' + args.database_name
+        engine = create_engine(connect_string)
+        connection_test = pd.read_sql_query("select 'connection successful'", con=engine)
+
+        assert args.action[0] in ['parameterize','export','import','run','report','list']
+
+    # if inferred_data_source_type == "undefined":
+    #     raise ValueError("Input not sufficiently specificed. No filename or db details as params or from config on file.")
 
     #print('Passed all validation tests')
     if len(args.action) == 1:
-        if args.action[0] == 'list':
-            deets = scrape_dir_for_forecast_details('.')
-            if deets.shape[0] == 0:
+        if args.action[0] == 'list' and args.source == 'file':
+            forecast_file_details = scrape_dir_for_forecast_details(args.working_directory)
+            if forecast_file_details.shape[0] == 0:
                 print("No data to show.")
             else:
-                print(deets.to_string())
+                print(forecast_file_details.to_string())
+        elif args.action[0] == 'list' and args.source == 'database':
+            # ['type','id', 'num_4casts', 'start_date', 'end_date','load_err','start_ts','run_err','end_ts','done','filename'])
+
+            assert args.username is not None #temp for debug
+
+            connect_string = 'postgresql://' + args.database_username + ':' + args.database_password + '@' + args.database_hostname + ':' + args.database_port + '/' + args.database_name
+            engine = create_engine(connect_string)
+            forecast_database_details = pd.read_sql_query("""
+select distinct 'db' as source,
+'Set' as "type", 
+deets.forecast_set_id as "id", 
+count(distinct meta.forecast_id) as num_4casts,
+start_date, 
+end_date,
+0 as load_err,
+submit_ts as start_ts,
+0 as run_err,
+complete_ts as end_ts,
+0 as done,
+'' as resource_name
+from prod.virtuoso_user_staged_forecast_details deets
+LEFT JOIN prod."""+args.username+"""_forecast_run_metadata meta
+ON deets.forecast_set_id = meta.forecast_set_id
+where deets.forecast_set_id is not null and deets.forecast_set_id <> ''
+group by 1,2,3,5,6,7,8,9,10,11
+UNION
+Select distinct 'db' as source,
+'F' as "type", 
+deets.forecast_id as "id", 
+1 as num_4casts,
+start_date, 
+end_date,
+0 as load_err,
+meta.submit_ts as start_ts,
+0 as run_err,
+meta.complete_ts as end_ts,
+0 as done,
+CONCAT('prod.""" + args.username + """_forecast_',deets.forecast_id) as resource_name
+from prod.virtuoso_user_staged_forecast_details deets
+LEFT JOIN prod."""+args.username+"""_forecast_run_metadata meta
+ON deets.forecast_set_id = meta.forecast_set_id
+            """, con=engine)
+
+            for index, row in forecast_database_details.iterrows():
+                pass
+                if row.type == 'F':
+                    try:
+                        table_existence_q = """ SELECT count(*)
+                        FROM pg_catalog.pg_tables
+                        where schemaname = 'prod'
+                        and tableowner = '""" + args.username + """'
+                        and tablename = '""" + args.username + """_forecast_"""+str(row.id) + "'"
+                        table_existence_ind = pd.read_sql_query(table_existence_q, con=engine).iat[0,0]
+                        forecast_database_details.iloc[index, 10] = table_existence_ind
+                    except Exception as e:
+                        forecast_database_details.iloc[index, 10] = 0
+                        row.done = False
+
+            if forecast_database_details.shape[0] == 0:
+                print("No data to show.")
+            else:
+                print(forecast_database_details.to_string())
+        elif args.action[0] == 'list' and args.source == 'both':
+            forecast_file_details = scrape_dir_for_forecast_details(args.working_directory)
+            connect_string = 'postgresql://' + args.database_username + ':' + args.database_password + '@' + args.database_hostname + ':' + args.database_port + '/' + args.database_name
+            engine = create_engine(connect_string)
+            # ['source','type','id', 'num_4casts', 'start_date', 'end_date','load_err','start_ts','run_err','end_ts','done','file_name']
+            forecast_database_details = pd.read_sql_query("""
+            Select distinct 'db' as source,
+'F' as "type", 
+deets.forecast_id as "id", 
+1 as num_4casts,
+start_date, 
+end_date,
+0 as load_err,
+meta.submit_ts as start_ts,
+0 as run_err,
+meta.complete_ts as end_ts,
+0 as done,
+CONCAT('prod.""" + args.username + """_forecast_',deets.forecast_id) as resource_name
+from (
+select forecast_id
+from prod.""" + args.username + """_staged_forecast_details
+UNION
+select forecast_id
+from prod.""" + args.username + """_forecast_run_metadata
+) all_forecasts_all_states
+LEFT JOIN prod.""" + args.username + """_staged_forecast_details deets
+ON all_forecasts_all_states.forecast_id = deets.forecast_id
+LEFT JOIN prod.""" + args.username + """_forecast_run_metadata meta
+ON all_forecasts_all_states.forecast_id = meta.forecast_id
+                        """, con=engine)
+
+            #todo modify forecast_database_details based on forecast table existence
+
+            both_forecast_details = pd.concat([forecast_file_details,forecast_database_details])
+            both_forecast_details.reset_index(inplace=True,drop=True)
+            if both_forecast_details.shape[0] == 0:
+                print("No data to show.")
+            else:
+                print(both_forecast_details.to_string())
 
         if args.action[0] == 'inspect':
             #todo args.filename could be a path
@@ -279,14 +386,15 @@ def main(args, loglevel):
                 print('filename does not match an expected pattern')
 
     if len(args.action) == 2:
-        if args.action[0] == 'parameterize' and args.action[1] == 'forecast' and inferred_data_source_type == "file":
+        if args.action[0] == 'parameterize' and args.action[1] == 'forecast' and args.source == "file":
+
             E = ExpenseForecast.initialize_from_json_file(args.filename) #let this throw an exception if needed
             E.update_date_range(args.start_date,args.end_date)
             if args.label:
                 E.forecast_name = args.label
             E.writeToJSONFile(args.working_directory)
             os.remove(args.filename)
-        elif args.action[0] == 'parameterize' and args.action[1] == 'forecastset' and inferred_data_source_type == "file":
+        elif args.action[0] == 'parameterize' and args.action[1] == 'forecastset' and args.source == "file":
             S = ForecastSet.initialize_from_json_file(args.filename) #let this throw an exception if needed
             # print('BEFORE')
             # print(S)
@@ -297,38 +405,57 @@ def main(args, loglevel):
                 S.forecast_set_name = args.label
             S.writeToJSONFile(args.working_directory)
             os.remove(args.filename)
-        elif args.action[0] == 'run' and args.action[1] == 'forecast' and inferred_data_source_type == "file":
-            E = ExpenseForecast.initialize_from_json_file(args.filename) #let this throw an exception if needed
-            if args.label:
-                E.forecast_name = args.label
-            if args.approximate:
-                E.runForecastApproximate()
-            else:
-                E.runForecast()
-            E.appendSummaryLines()
-            E.writeToJSONFile(args.working_directory)
-            F = ForecastHandler.ForecastHandler()
-            F.generateHTMLReport(E)
-        elif args.action[0] == 'run' and args.action[1] == 'forecastset' and inferred_data_source_type == "file":
-            S = ForecastSet.initialize_from_json_file(args.filename) #let this throw an exception if needed
-            S.initialize_forecasts()
-            if args.approximate:
-                S.runAllForecastsApproximate()
-            else:
-                S.runAllForecasts()
+        elif args.action[0] == 'run' and args.action[1] == 'forecast' and args.source == "file":
 
-            S.writeToJSONFile(args.working_directory)
-            F = ForecastHandler.ForecastHandler()
-            for unique_id, E in S.initialized_forecasts.items():
-                E.writeToJSONFile(args.working_directory)
-                F.generateHTMLReport(E)
-        elif args.action[0] == 'run' and args.action[1] == 'forecast' and inferred_data_source_type == "database":
+            forecast_found = False
+            for f in os.listdir(args.working_directory):
+                if f.startswith('Forecast') and not f.startswith('ForecastSet') and f.endswith('.json') and str(args.id) in f:
+                    forecast_found = True
+                    print('Starting forecast '+str(args.id))
+                    E = ExpenseForecast.initialize_from_json_file(os.path.join(args.working_directory, f)) #let this throw an exception if needed
+                    if args.label:
+                        E.forecast_name = args.label
+                    if args.approximate:
+                        E.runForecastApproximate()
+                    else:
+                        E.runForecast()
+                    E.appendSummaryLines()
+                    E.writeToJSONFile(args.working_directory)
+                    F = ForecastHandler.ForecastHandler()
+                    F.generateHTMLReport(E)
+                    break #bc only running a single forecast
+            if not forecast_found:
+                print('Forecast '+str(args.id)+' not found')
+        elif args.action[0] == 'run' and args.action[1] == 'forecastset' and args.source == "file":
+            forecast_set_found = False
+            for f in os.listdir(args.working_directory):
+                if f.startswith('ForecastSet') and f.endswith('.json') and str(args.id) in f:
+                    forecast_set_found = True
+                    S = ForecastSet.initialize_from_json_file(os.path.join(args.working_directory, f)) #let this throw an exception if needed
+                    #S.initialize_forecasts()
+                    if args.approximate:
+                        S.runAllForecastsApproximate()
+                    else:
+                        S.runAllForecasts()
+
+                    # for id, E in S.initialized_forecasts.items():
+                    #     print(E.forecast_df.shape)
+
+                    S.writeToJSONFile(args.working_directory) #todo this is not writing forecast_df and indeed some of the other data frames as intended
+                    F = ForecastHandler.ForecastHandler()
+                    for unique_id, E in S.initialized_forecasts.items():
+                        E.writeToJSONFile(args.working_directory)
+                        F.generateHTMLReport(E)
+                    break  # bc only running a single forecast set
+            if not forecast_set_found:
+                print('Forecast Set ' + str(args.id) + ' not found')
+        elif args.action[0] == 'run' and args.action[1] == 'forecast' and args.source == "database":
 
             connect_string = 'postgresql://' + args.database_username + ':' + args.database_password + '@' + args.database_hostname + ':' + args.database_port + '/' + args.database_name
             engine = create_engine(connect_string)
             # engine = create_engine('postgresql://bsdegjmy_humedick@localhost:5432/bsdegjmy_sandbox')
 
-            forecast_stage_table_name = 'prod.' + args.username + '_staged_forecast_details'
+            forecast_stage_table_name = 'prod.' + args.username + '_forecast_run_metadata'
             forecast_stage_df = pd.read_sql_query('select * from ' + forecast_stage_table_name, con=engine)
 
             account_set_table_name = 'prod.ef_account_set_' + args.username
@@ -340,8 +467,8 @@ def main(args, loglevel):
 
             for index, row in forecast_stage_df.iterrows():
                 forecast_id = row.forecast_id
-                start_date = row.start_date
-                end_date = row.end_date
+                start_date = str(row.start_date).replace('-','')
+                end_date = str(row.end_date).replace('-','')
                 forecast_set_name = row.forecast_set_name
                 forecast_name = row.forecast_name
                 A_q = 'select * from ' + account_set_table_name + ' where forecast_id = \''+forecast_id+'\''
@@ -363,266 +490,277 @@ def main(args, loglevel):
                     E.runForecastApproximate()
                 else:
                     E.runForecast()
+                print(E.unique_id) #it is very important that this is the only print statement
+
+                #todo delete row from forecast stage
 
                 E.appendSummaryLines()
-                E.writeToJSONFile(args.output_directory)
-                E.write_to_database(args.username,args.database_hostname, args.database_name, args.database_username, args.database_password, args.database_port, overwrite=args.force)
-                E.forecast_df.to_csv(args.output_directory+'/Forecast_'+str(E.unique_id)+'.csv',index=False)
-                log_in_color(logger, 'green', 'info','Finished writing forecast data to ' + args.output_directory+'/Forecast_'+str(E.unique_id)+'.csv')
-                F.generateHTMLReport(E, args.output_directory)
+                E.writeToJSONFile(args.working_directory)
+                log_in_color(logger, 'green', 'info', 'Finished writing json data to file')
+                E.write_to_database(args.username,args.database_hostname, args.database_name, args.database_username, args.database_password, args.database_port, overwrite=args.overwrite)
+                log_in_color(logger, 'green', 'info','Finished writing forecast data to database')
+                E.forecast_df.to_csv(args.working_directory+'/Forecast_'+str(E.unique_id)+'.csv',index=False)
+                log_in_color(logger, 'green', 'info','Finished writing forecast data to ' + args.working_directory+'/Forecast_'+str(E.unique_id)+'.csv')
+                F.generateHTMLReport(E, args.working_directory)
+                log_in_color(logger, 'green', 'info', 'Finished writing forecast report to ' + args.working_directory)
+        elif args.action[0] == 'run' and args.action[1] == 'forecastset' and args.source == "database":
+            forecast_set_found = False
 
-        elif args.action[0] == 'parameterize' and args.action[1] == 'forecast' and inferred_data_source_type == "database":
+            # connect_string = 'postgresql://' + args.database_username + ':' + args.database_password + '@' + args.database_hostname + ':' + args.database_port + '/' + args.database_name
+            # engine = create_engine(connect_string)
+
+            # single_set_stage_details_q = "select distinct forecast_set_id, forecast_id from prod.virtuoso_user_staged_forecast_details where forecast_set_id = '"+str(args.id)+"'"
+            # single_set_stage_details_df = pd.read_sql_query(single_set_stage_details_q, con=engine)
+
+            # heads up there may be forecasts that belong to a forecast set that were deleted from stage
+            try:
+                S = ForecastSet.initialize_forecast_set_from_database(set_id=args.id,
+                                                                      username=args.username,
+                                                                      database_hostname=args.database_hostname,
+                                                                      database_name=args.database_name,
+                                                                      database_username=args.database_username,
+                                                                      database_password=args.database_password,
+                                                                      database_port=args.database_port)
+                forecast_set_found = True
+            except:
+                pass
+            #S.initialize_forecasts()
+            print('len(S.initialized_forecasts):'+str(len(S.initialized_forecasts)))
+            if args.approximate:
+                S.runAllForecastsApproximate()
+            else:
+                S.runAllForecasts()
+            S.writeToDatabase(database_hostname=args.database_hostname,
+                                          database_name=args.database_name,
+                                          database_username=args.database_username,
+                                          database_password=args.database_password,
+                                          database_port=args.database_port,
+                              username=args.username)
+
+            S.writeToJSONFile(args.working_directory) #todo this is not writing forecast_df and indeed some of the other data frames as intended
+            F = ForecastHandler.ForecastHandler()
+            #todo also write Set JSON and report. i think 'write child reports' could be a parameter
+            for unique_id, E in S.initialized_forecasts.items():
+                E.writeToJSONFile(args.working_directory)
+                F.generateHTMLReport(E)
+            if not forecast_set_found:
+                print('Forecast Set ' + str(args.id) + ' not found')
+        elif args.action[0] == 'parameterize' and args.action[1] == 'forecast' and args.source == "database":
+            connection = psycopg2.connect(host=args.database_hostname,
+                                          database=args.database_name,
+                                          user=args.database_username,
+                                          password=args.database_password,
+                                          port=args.database_port)
+            connection.autocommit = True
+            cursor = connection.cursor()
+
+            account_set_table_name = 'prod.ef_account_set_' + args.username
+            budget_set_table_name = 'prod.ef_budget_item_set_' + args.username
+            memo_rule_set_table_name = 'prod.ef_memo_rule_set_' + args.username
+            date_range_table_name = 'prod.'+args.username+'_forecast_date_ranges'
+
+            temporary_account_set_table_name = 'prod.ef_account_set_' + args.username + '_temporary'
+            temporary_budget_set_table_name = 'prod.ef_budget_item_set_' + args.username + '_temporary'
+            temporary_memo_rule_set_table_name = 'prod.ef_memo_rule_set_' + args.username + '_temporary'
+            temporary_account_milestone_table_name = 'prod.ef_account_milestones_' + args.username + '_temporary'
+            temporary_memo_milestone_table_name = 'prod.ef_memo_milestones_' + args.username + '_temporary'
+            temporary_composite_milestone_table_name = 'prod.ef_composite_milestones_' + args.username + '_temporary'
+
+            forecast_set_def_name = 'prod.' + args.username + '_forecast_set_definitions'
+
+            account_set_select_q = "select * from " + temporary_account_set_table_name
+            budget_set_select_q =  "select * from " + temporary_budget_set_table_name
+            memo_rule_set_select_q = "select * from " + temporary_memo_rule_set_table_name
+            account_milestone_select_q = "select * from " + temporary_account_milestone_table_name
+            memo_milestone_select_q = "select * from " + temporary_memo_milestone_table_name
+            composite_milestone_select_q = "select * from " + temporary_composite_milestone_table_name
+
+            E = ExpenseForecast.initialize_from_database_with_select(args.start_date,
+                                                              args.end_date,
+                                                              account_set_select_q=account_set_select_q,
+                                                              budget_set_select_q=budget_set_select_q,
+                                                              memo_rule_set_select_q=memo_rule_set_select_q,
+                                                              account_milestone_select_q=account_milestone_select_q,
+                                                              memo_milestone_select_q=memo_milestone_select_q,
+                                                              composite_milestone_select_q=composite_milestone_select_q,
+                                                              database_hostname=args.database_hostname,
+                                                              database_name=args.database_name,
+                                                              database_username=args.database_username,
+                                                              database_password=args.database_password,
+                                                              database_port=args.database_port,
+                                                              log_directory=args.log_directory,
+                                                              forecast_set_name='',
+                                                              forecast_name=args.label
+                                                              )
+
+            #log_in_color(logger, 'white', 'info', E)
+            A_insert_q = "INSERT INTO " + account_set_table_name + " Select '" + E.unique_id + "', account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_cadence, minimum_payment, primary_checking_ind from "+temporary_account_set_table_name
+            cursor.execute(A_insert_q)
+            B_insert_q = "INSERT INTO " + budget_set_table_name + " Select '" + E.unique_id + "', memo, priority, start_date, end_date,  cadence, amount, \"deferrable\", partial_payment_allowed from "+temporary_budget_set_table_name
+            cursor.execute(B_insert_q)
+            M_insert_q = "INSERT INTO " + memo_rule_set_table_name + " Select '" + E.unique_id + "', memo_regex, account_from, account_to, priority from " + temporary_memo_rule_set_table_name
+            cursor.execute(M_insert_q)
+
+            forecast_set_delete_q = "DELETE FROM "+forecast_set_def_name+" where forecast_id = '"+E.unique_id+"'"
+
+            # forecast_set_id text,
+            # 	forecast_set_name text,
+            # 	forecast_id text,
+            # 	forecast_name text,
+            # 	start_date date,
+            # 	end_date date,
+            # 	insert_ts timestamp
+            forecast_set_insert_q = "INSERT INTO "+forecast_set_def_name+" select '' as forecast_set_id, '' as forecast_set_name, "
+            forecast_set_insert_q += "'"+E.unique_id+"' as forecast_id, '"+E.forecast_name+"' as forecast_name, '"+E.start_date_YYYYMMDD+"', '"
+            forecast_set_insert_q += E.end_date_YYYYMMDD+"','"+datetime.datetime.now().strftime('%Y%m%d')+"'"
+            cursor.execute(forecast_set_delete_q)
+            cursor.execute(forecast_set_insert_q)
+            # date_range_q = "DELETE FROM " + date_range_table_name + " WHERE forecast_id = '" + E.unique_id + "'"
+            # cursor.execute(date_range_q)
+            # date_range_q = "INSERT INTO " + date_range_table_name + " Select '" + E.unique_id + "','" + args.start_date + "','" + args.end_date + "','" + datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + "'"
+            # cursor.execute(date_range_q)
+            #
+            # stage_row_q = "INSERT INTO prod." + str(args.username) + "_staged_forecast_details Select '', '"+str(E.unique_id)+"','','"+str(args.label)+"','"+str(args.start_date)+"','"+str(args.end_date)+"'"
+            # cursor.execute(stage_row_q)
+
+            # todo milestone tables
+
+        elif args.action[0] == 'parameterize' and args.action[1] == 'forecastset' and args.source == "database":
+
+            temporary_account_set_table_name = 'prod.ef_account_set_' + args.username + '_temporary'
+            temporary_budget_set_table_name = 'prod.ef_budget_item_set_' + args.username + '_temporary'
+            temporary_memo_rule_set_table_name = 'prod.ef_memo_rule_set_' + args.username + '_temporary'
+            temporary_account_milestone_table_name = 'prod.ef_account_milestones_' + args.username + '_temporary'
+            temporary_memo_milestone_table_name = 'prod.ef_memo_milestones_' + args.username + '_temporary'
+            temporary_composite_milestone_table_name = 'prod.ef_composite_milestones_' + args.username + '_temporary'
+
+            account_set_table_name = 'prod.ef_account_set_' + args.username
+            budget_set_table_name = 'prod.ef_budget_item_set_' + args.username
+            memo_rule_set_table_name = 'prod.ef_memo_rule_set_' + args.username
+            account_milestone_table_name = 'prod.ef_account_milestones_' + args.username
+            memo_milestone_table_name = 'prod.ef_memo_milestones_' + args.username
+            composite_milestone_table_name = 'prod.ef_composite_milestones_' + args.username
+
+            forecast_set_def_name = 'prod.' + args.username + '_forecast_set_definitions'
+
+            account_set_select_q = "select * from " + temporary_account_set_table_name
+            budget_set_select_q = "select * from " + temporary_budget_set_table_name
+            memo_rule_set_select_q = "select * from " + temporary_memo_rule_set_table_name
+            account_milestone_select_q = "select * from " + temporary_account_milestone_table_name
+            memo_milestone_select_q = "select * from " + temporary_memo_milestone_table_name
+            composite_milestone_select_q = "select * from " + temporary_composite_milestone_table_name
+
+            base_E = ExpenseForecast.initialize_from_database_with_select(args.start_date,
+                                                              args.end_date,
+                                                              account_set_select_q=account_set_select_q,
+                                                              budget_set_select_q=budget_set_select_q,
+                                                              memo_rule_set_select_q=memo_rule_set_select_q,
+                                                              account_milestone_select_q=account_milestone_select_q,
+                                                              memo_milestone_select_q=memo_milestone_select_q,
+                                                              composite_milestone_select_q=composite_milestone_select_q,
+                                                         database_hostname=args.database_hostname,
+                                                         database_name=args.database_name,
+                                                         database_username=args.database_username,
+                                                         database_password=args.database_password,
+                                                         database_port=args.database_port,
+                                                         log_directory=args.log_directory,
+                                                         forecast_set_name=args.label,
+                                                         forecast_name='Core'
+                                                         )
+
+            A = base_E.initial_account_set
+            M = base_E.initial_memo_rule_set
+            start_date_YYYYMMDD = base_E.start_date_YYYYMMDD
+            end_date_YYYYMMDD = base_E.end_date_YYYYMMDD
+            MS = base_E.milestone_set
+
+            core_budget_set = base_E.initial_budget_set
+
+            connection = psycopg2.connect(host=args.database_hostname,
+                                          database=args.database_name,
+                                          user=args.database_username,
+                                          password=args.database_password,
+                                          port=args.database_port)
+            connection.autocommit = True
+            cursor = connection.cursor()
 
             connect_string = 'postgresql://' + args.database_username + ':' + args.database_password + '@' + args.database_hostname + ':' + args.database_port + '/' + args.database_name
             engine = create_engine(connect_string)
             # engine = create_engine('postgresql://bsdegjmy_humedick@localhost:5432/bsdegjmy_sandbox')
+            option_budget_set_table_name = 'prod.ef_budget_item_set_optional_'+args.username+'_temporary'
+            option_budget_set = BudgetSet.initialize_from_dataframe(pd.read_sql_query('select * from '+option_budget_set_table_name, con=engine))
 
-            # forecast_stage_table_name = 'prod.' + args.username + '_staged_forecast_details'
-            # forecast_stage_df = pd.read_sql_query('select * from ' + forecast_stage_table_name, con=engine)
+            S = ForecastSet.ForecastSet(base_E, option_budget_set, forecast_set_name=args.label)
+            choice_table_name = 'prod.ef_choices_' + args.username + '_temporary'
+            choices_df = pd.read_sql_query('select * from ' + choice_table_name, con=engine)
 
-            account_set_table_name = 'prod.ef_account_set_' + args.username + '_temporary'
-            budget_set_table_name = 'prod.ef_budget_item_set_' + args.username + '_temporary'
-            memo_rule_set_table_name = 'prod.ef_memo_rule_set_' + args.username + '_temporary'
-            account_milestone_table_name = 'prod.ef_account_milestones_' + args.username + '_temporary'
-            memo_milestone_table_name = 'prod.ef_memo_milestones_' + args.username + '_temporary'
-            composite_milestone_table_name = 'prod.ef_composite_milestones_' + args.username + '_temporary'
+            choice_option_map = {}
+            option_name_to_memo_regex_list_map = {}
+            for index, row in choices_df.iterrows():
+                if row.choice_name not in choice_option_map:
+                    choice_option_map[row.choice_name] = []
+                if row.option_name not in choice_option_map[row.choice_name]:
+                    choice_option_map[row.choice_name].append(row.option_name)
 
+                    # this is semicolon separated instead of a list
+                    option_name_to_memo_regex_list_map[row.choice_name+' | '+row.option_name] = row.memo_regexes
 
-            start_date = args.start_date
-            end_date = args.end_date
-            forecast_set_name = args.forecast_set_name
-            forecast_name = args.forecast_name
-            A_q = 'select * from ' + account_set_table_name
-            B_q = 'select * from ' + budget_set_table_name
-            M_q = 'select * from ' + memo_rule_set_table_name
-            AM_q = 'select * from ' + account_milestone_table_name
-            MM_q = 'select * from ' + memo_milestone_table_name
-            CM_q = 'select * from ' + composite_milestone_table_name
-            A = AccountSet.initialize_from_dataframe(pd.read_sql_query(A_q, con=engine))
-            B = BudgetSet.initialize_from_dataframe(pd.read_sql_query(B_q, con=engine))
-            M = MemoRuleSet.initialize_from_dataframe(pd.read_sql_query(M_q, con=engine))
-            AM_df = pd.read_sql_query(AM_q, con=engine)
-            MM_df = pd.read_sql_query(MM_q, con=engine)
-            CM_df = pd.read_sql_query(CM_q, con=engine)
-            MS = MilestoneSet.initialize_from_dataframe(AM_df, MM_df, CM_df)
+            for choice_name, option_name_list in choice_option_map.items():
+                list_of_lists_of_memo_regexes = []
+                for option_name in option_name_list:
+                    list_of_lists_of_memo_regexes.append(option_name_to_memo_regex_list_map[choice_name + ' | ' + option_name].split(';'))
+                S.addChoiceToAllForecasts(option_name_list, list_of_lists_of_memo_regexes)
+            S.writeToDatabase(args.database_hostname,
+                                          args.database_name,
+                                          args.database_username,
+                                          args.database_password,
+                                          args.database_port,
+                              args.username)
+            # # print(S)
+            # cursor.execute("DELETE FROM prod.forecast_set_definitions WHERE forecast_set_id = \'" + str(S.unique_id) + "\'")
+            # for unique_id, E in S.initialized_forecasts.items():
+            #     cursor.execute("DELETE FROM " + account_set_table_name + " WHERE forecast_id = \'" + str(E.unique_id) + "\'")
+            #     for index, row in E.initial_account_set.getAccounts().iterrows():
+            #         if row.Billing_Start_Date is None:
+            #             bsd = "Null"
+            #         else:
+            #             bsd = "'" + str(row.Billing_Start_Date) + "'"
+            #         if row.APR is None:
+            #             apr = "Null"
+            #         else:
+            #             apr = "'" + str(row.APR) + "'"
+            #         if row.Minimum_Payment is None:
+            #             min_payment = "Null"
+            #         else:
+            #             min_payment = str(row.Minimum_Payment)
+            #
+            #         insert_account_row_q = "INSERT INTO " + account_set_table_name + " (forecast_id, account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_cadence, minimum_payment, primary_checking_ind) VALUES "
+            #         insert_account_row_q += "('"+str(E.unique_id)+"', '"+str(row.Name)+"', "+str(row.Balance)+", "+str(row.Min_Balance)+", "+str(row.Max_Balance)+", '"+str(row.Account_Type)+"', "+str(bsd)+", "+apr+", '"+str(row.Interest_Cadence)+"', "+min_payment+", '"+str(row.Primary_Checking_Ind)+"')"
+            #         cursor.execute(insert_account_row_q)
+            #
+            #     cursor.execute("DELETE FROM " + budget_set_table_name + " WHERE forecast_id = \'" + str(E.unique_id) + "\'")
+            #     for index, row in E.initial_budget_set.getBudgetItems().iterrows():
+            #         insert_budget_item_row_q = "INSERT INTO " + budget_set_table_name + " (forecast_id, memo, priority, start_date, end_date, cadence, amount, \"deferrable\", partial_payment_allowed) VALUES "
+            #         insert_budget_item_row_q += "('"+str(E.unique_id)+"','"+str(row.Memo)+"',"+str(row.Priority)+",'"+str(row.Start_Date)+"','"+str(row.End_Date)+"','"+str(row.Cadence)+"',"+str(row.Amount)+",'"+str(row.Deferrable)+"','"+str(row.Partial_Payment_Allowed)+"')"
+            #         cursor.execute(insert_budget_item_row_q)
+            #
+            #     cursor.execute("DELETE FROM " + memo_rule_set_table_name + " WHERE forecast_id = \'" + str(E.unique_id) + "\'")
+            #     for index, row in E.initial_memo_rule_set.getMemoRules().iterrows():
+            #         insert_memo_rule_row_q = "INSERT INTO " + memo_rule_set_table_name + " (forecast_id, memo_regex, account_from, account_to, priority ) VALUES "
+            #         insert_memo_rule_row_q += "('"+str(E.unique_id)+"','"+str(row.Memo_Regex)+"','"+str(row.Account_From)+"','"+str(row.Account_To)+"',"+str(row.Transaction_Priority)+")"
+            #         cursor.execute(insert_memo_rule_row_q)
+            #
+            #     # todo account milestone set
+            #     # todo memo milestone set
+            #     # todo composite milestone set
+            #
+            #     #todo insert into a forecastset table
+            #     cursor.execute("INSERT INTO prod.forecast_set_definitions SELECT '"+args.username+"', '"+S.unique_id+"','"+E.unique_id+"','"+datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')+"'")
+            #
+            #     forecast_name = S.id_to_name[E.unique_id]
+            #     insert_stage_q = "INSERT INTO prod." + str(args.username) + "_staged_forecast_details Select '"+str(S.unique_id)+"','"+str(E.unique_id)+"','"+str(args.label)+"','"+str(forecast_name)+"','"+str(args.start_date)+"','"+str(args.end_date)+"'"
+            #     cursor.execute(insert_stage_q)
 
-            #we don't reall need this object, but we do this to catch any errors now instead of later
-            E = ExpenseForecast.ExpenseForecast(A, B, M, start_date, end_date, MS, args.log_directory,
-                                                forecast_set_name, forecast_name)
-            log_in_color(logger, 'white', 'info', E)
-
-
-            # todo create forecast specific tables
-            for index, row in E.initial_account_set.getAccounts().iterrows():
-                A_insert_q = "INSERT INTO prod.ef_account_set_"+args.username+" "
-
-            for index, row in E.initial_budget_set.getBudgetItems().iterrows():
-                B_insert_q = "INSERT INTO prod.ef_budget_item_set_"+args.username+" "
-
-            for index, row in E.initial_memo_rule_set.getMemoRules().iterrows():
-                M_insert_q = "INSERT INTO prod.ef_memo_rule_set_"+args.username+" "
-
-            for index, row in E.milestone_set.getAccountMilestonesDF().iterrows():
-                AM_insert_q = "INSERT INTO prod.ef_account_milestone_set_"+args.username+" "
-
-            for index, row in E.milestone_set.getMemoMilestonesDF().iterrows():
-                MM_insert_q = "INSERT INTO prod.ef_memo_milestone_set_"+args.username+" "
-
-            for index, row in E.milestone_set.getCompositeMilestonesDF().iterrows():
-                CM_insert_q = "INSERT INTO prod.ef_composite_milestone_set_"+args.username+" "
-
-
-            #todo load to stage
-
-
-        elif args.action[0] == 'parameterize' and args.action[1] == 'forecastset' and inferred_data_source_type == "database":
-            pass
-
-
-
-    # if args.action == 'run' and args.source == 'database' and args.target_type == 'stage':
-    #     connect_string = 'postgresql://' + args.database_username + ':' + args.database_password + '@' + args.database_hostname + ':' + args.database_port + '/' + args.database_name
-    #     engine = create_engine(connect_string)
-    #     # engine = create_engine('postgresql://bsdegjmy_humedick@localhost:5432/bsdegjmy_sandbox')
-    #
-    #     forecast_stage_table_name = 'prod.' + args.username + '_staged_forecast_details'
-    #     forecast_stage_df = pd.read_sql_query('select * from ' + forecast_stage_table_name, con=engine)
-    #
-    #     account_set_table_name = 'prod.ef_account_set_' + args.username
-    #     budget_set_table_name='prod.ef_budget_item_set_'+args.username
-    #     memo_rule_set_table_name = 'prod.ef_memo_rule_set_' + args.username
-    #     account_milestone_table_name = 'prod.ef_account_milestones_' + args.username
-    #     memo_milestone_table_name = 'prod.ef_memo_milestones_' + args.username
-    #     composite_milestone_table_name = 'prod.ef_composite_milestones_' + args.username
-    #
-    #     for index, row in forecast_stage_df.iterrows():
-    #         forecast_id = row.forecast_id
-    #         start_date = row.start_date
-    #         end_date = row.end_date
-    #         forecast_set_name = row.forecast_set_name
-    #         forecast_name = row.forecast_name
-    #         A_q = 'select * from ' + account_set_table_name + ' where forecast_id = \''+forecast_id+'\''
-    #         B_q = 'select * from ' + budget_set_table_name + ' where forecast_id = \''+forecast_id+'\''
-    #         M_q = 'select * from ' + memo_rule_set_table_name + ' where forecast_id = \''+forecast_id+'\''
-    #         AM_q = 'select * from ' + account_milestone_table_name + ' where forecast_id = \''+forecast_id+'\''
-    #         MM_q = 'select * from ' + memo_milestone_table_name + ' where forecast_id = \''+forecast_id+'\''
-    #         CM_q = 'select * from ' + composite_milestone_table_name + ' where forecast_id = \''+forecast_id+'\''
-    #         A = AccountSet.initialize_from_dataframe(pd.read_sql_query(A_q, con=engine))
-    #         B = BudgetSet.initialize_from_dataframe(pd.read_sql_query(B_q, con=engine))
-    #         M = MemoRuleSet.initialize_from_dataframe(pd.read_sql_query(M_q, con=engine))
-    #         AM_df = pd.read_sql_query(AM_q, con=engine)
-    #         MM_df = pd.read_sql_query(MM_q, con=engine)
-    #         CM_df = pd.read_sql_query(CM_q, con=engine)
-    #         MS = MilestoneSet.initialize_from_dataframe(AM_df, MM_df, CM_df)
-    #         E = ExpenseForecast.ExpenseForecast(A, B, M, start_date, end_date, MS, args.log_directory, forecast_set_name, forecast_name)
-    #         log_in_color(logger, 'white', 'info', E)
-    #         if args.approximate:
-    #             E.runForecastApproximate()
-    #         else:
-    #             E.runForecast()
-    #
-    #         E.appendSummaryLines()
-    #         E.writeToJSONFile(args.output_directory)
-    #         E.write_to_database(args.username,args.database_hostname, args.database_name, args.database_username, args.database_password, args.database_port, overwrite=args.force)
-    #         E.forecast_df.to_csv(args.output_directory+'/Forecast_'+str(E.unique_id)+'.csv',index=False)
-    #         log_in_color(logger, 'green', 'info','Finished writing forecast data to ' + args.output_directory+'/Forecast_'+str(E.unique_id)+'.csv')
-    #         F.generateHTMLReport(E, args.output_directory)
-    # elif args.action == 'list' and args.source == 'database' and args.target_type == 'stage':
-    #     pass
-
-
-
-
-
-
-
-    # if (args.source.lower() == 'DATABASE') and args.run_scenarios:
-    #     logging.info('Running SCENARIOS based on data from database')
-    #     base_E = ExpenseForecast.initialize_from_database(args.start_date,
-    #                                                  args.end_date,
-    #                                                  account_set_table_name='prod.ef_account_set_' + args.username + '_temporary',
-    #                                                  budget_set_table_name='prod.ef_budget_item_set_' + args.username + '_temporary',
-    #                                                  memo_rule_set_table_name='prod.ef_memo_rule_set_' + args.username + '_temporary',
-    #                                                  account_milestone_table_name='prod.ef_account_milestones_' + args.username + '_temporary',
-    #                                                  memo_milestone_table_name='prod.ef_memo_milestones_' + args.username + '_temporary',
-    #                                                  composite_milestone_table_name='prod.ef_composite_milestones_' + args.username + '_temporary',
-    #                                                  database_hostname=args.database_hostname,
-    #                                                  database_name=args.database_name,
-    #                                                  database_username=args.database_username,
-    #                                                  database_password=args.database_password,
-    #                                                  database_port=args.database_port,
-    #                                                  log_directory=args.log_directory,
-    #                                                  forecast_set_name=args.setname,
-    #                                                  forecast_name=args.name
-    #                                                  )
-    #     A = base_E.initial_account_set
-    #     M = base_E.initial_memo_rule_set
-    #     start_date_YYYYMMDD = base_E.start_date_YYYYMMDD
-    #     end_date_YYYYMMDD = base_E.end_date_YYYYMMDD
-    #     MS = base_E.milestone_set
-    #
-    #     core_budget_set = base_E.initial_budget_set
-    #
-    #     connect_string = 'postgresql://' + args.database_username + ':' + args.database_password + '@' + args.database_hostname + ':' + args.database_port + '/' + args.database_name
-    #     engine = create_engine(connect_string)
-    #     # engine = create_engine('postgresql://bsdegjmy_humedick@localhost:5432/bsdegjmy_sandbox')
-    #     option_budget_set_table_name = 'prod.ef_budget_item_set_optional_'+args.username+'_temporary'
-    #     option_budget_set = BudgetSet.initialize_from_dataframe(pd.read_sql_query('select * from '+option_budget_set_table_name, con=engine))
-    #
-    #     S = ForecastSet.ForecastSet(core_budget_set, option_budget_set)
-    #
-    #     scenario_table_name = 'prod.scenario_' + args.username + '_temporary'
-    #     scenarios_df = pd.read_sql_query('select * from ' + scenario_table_name, con=engine)
-    #
-    #     choice_option_map = {}
-    #     option_name_to_memo_regex_list_map = {}
-    #     for index, row in scenarios_df.iterrows():
-    #         if row.choice_name not in choice_option_map:
-    #             choice_option_map[row.choice_name] = []
-    #         if row.option_name not in choice_option_map[row.choice_name]:
-    #             choice_option_map[row.choice_name].append(row.option_name)
-    #
-    #             # this is semicolon separated instead of a list
-    #             option_name_to_memo_regex_list_map[row.choice_name+' | '+row.option_name] = row.memo_regexes
-    #
-    #     for choice_name, option_name_list in choice_option_map.items():
-    #         list_of_lists_of_memo_regexes = []
-    #         for option_name in option_name_list:
-    #             list_of_lists_of_memo_regexes.append(option_name_to_memo_regex_list_map[choice_name + ' | ' + option_name].split(';'))
-    #         S.addChoiceToAllScenarios(option_name_list, list_of_lists_of_memo_regexes)
-    #
-    #     print(S)
-    #     E__dict = F.initialize_forecasts_with_scenario_set(A, S, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
-    #     for key, value in E__dict.items():
-    #         print('-------------------------------------------------------')
-    #         print(value.unique_id)
-    #
-    #     result_dict = F.run_forecast_set_parallel(E__dict)
-    #     print('-------------------------------------------------------')
-    #     print('-------------------------------------------------------')
-    #     for key, value in result_dict.items():
-    #         print(value)
-    #         print('-------------------------------------------------------')
-    #         print('-------------------------------------------------------')
-    #
-    #
-    #     for forecast_id, E in result_dict.items():
-    #         E.appendSummaryLines()
-    #         E.writeToJSONFile(args.output_directory)
-    #         E.write_to_database(args.username, args.database_hostname, args.database_name, args.database_username,
-    #                             args.database_password, args.database_port, args.force)
-    #         E.forecast_df.to_csv(args.output_directory + '/Forecast_' + str(E.unique_id) + '.csv', index=False)
-    #         log_in_color(logger, 'green', 'info',
-    #                      'Finished writing forecast data to ' + args.output_directory + '/Forecast_' + str(E.unique_id) + '.csv')
-    #         F.generateHTMLReport(E, args.output_directory)
-    #
-    # elif (args.source.lower() == 'database' or args.source.lower() == 'db') and not args.run_scenarios:
-    #     logging.info('Running based on data from database')
-    #     E = ExpenseForecast.initialize_from_database(args.start_date,
-    #                          args.end_date,
-    #                          account_set_table_name='prod.ef_account_set_'+args.username+'_temporary',
-    #                          budget_set_table_name='prod.ef_budget_item_set_'+args.username+'_temporary',
-    #                          memo_rule_set_table_name='prod.ef_memo_rule_set_'+args.username+'_temporary',
-    #                          account_milestone_table_name='prod.ef_account_milestones_'+args.username+'_temporary',
-    #                          memo_milestone_table_name='prod.ef_memo_milestones_'+args.username+'_temporary',
-    #                          composite_milestone_table_name='prod.ef_composite_milestones_'+args.username+'_temporary',
-    #                          database_hostname=args.database_hostname,
-    #                          database_name=args.database_name,
-    #                          database_username=args.database_username,
-    #                          database_password=args.database_password,
-    #                          database_port=args.database_port,
-    #                          log_directory=args.log_directory,
-    #                                                  forecast_set_name=args.forecast_set_name,
-    #                                                  forecast_name=args.forecast_name
-    #                          )
-    #     log_in_color(logger, 'white', 'info', E)
-    #     if args.approximate:
-    #         E.runForecastApproximate()
-    #     else:
-    #         E.runForecast()
-    #
-    #     E.appendSummaryLines()
-    #     E.writeToJSONFile(args.output_directory)
-    #     E.write_to_database(args.username,args.database_hostname, args.database_name, args.database_username, args.database_password, args.database_port, overwrite=args.force)
-    #     E.forecast_df.to_csv(args.output_directory+'/Forecast_'+str(E.unique_id)+'.csv',index=False)
-    #     log_in_color(logger, 'green', 'info','Finished writing forecast data to ' + args.output_directory+'/Forecast_'+str(E.unique_id)+'.csv')
-    #     F.generateHTMLReport(E, args.output_directory)
-    # elif args.source.lower() == 'file' and not args.run_scenarios:
-    #     logging.info('Running based on data from file')
-    #     logging.info("Input: %s" % args.input_path)
-    #     logging.info("Output directory: %s" % args.output_directory)
-    #     E = ExpenseForecast.initialize_from_json_file(args.input_path)[0]
-    #     if args.approximate:
-    #         E.runForecastApproximate()
-    #     else:
-    #         E.runForecast()
-    #     E.appendSummaryLines()
-    #     E.writeToJSONFile(args.output_directory)
-    #     E.forecast_df.to_csv(args.output_directory + '/Forecast_' + str(E.unique_id) + '.csv',index=False)
-    # elif args.source.lower() == 'file' and args.run_scenarios:
-    #     logging.error('--run_scenarios not implemented for file yet')
-    # else:
-    #     logging.error('--source did not match DATABASE or FILE')
 
 # ef_cli parameterize forecast
 # ef_cli reparameterize forecast
@@ -657,11 +795,6 @@ if __name__ == '__main__':
                                  'forecastset',
                                  'inspect'
                                  ])
-    parser.add_argument(
-        "--filename",
-        required=False,
-        help="Path of Forecast or ForecastSet excel, JSON file or table to process.",
-        action="store")
     parser.add_argument(
         "--working_directory",
         default='./',
@@ -747,8 +880,14 @@ if __name__ == '__main__':
     parser.add_argument(
         "--log_level",
         required=False,
-        default="WARNING",
+        default="INFO",
         help="Log level. Default is WARNING",
+        action="store")
+    parser.add_argument(
+        "--source",
+        required=False,
+        default="both",
+        help="both, file or database.",
         action="store")
 
     args = parser.parse_args()

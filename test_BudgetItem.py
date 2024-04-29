@@ -55,7 +55,7 @@ class TestBudgetItemMethods:
          'test memo',
          False,
          False,
-         TypeError),  #malformed start date string
+         ValueError),  #malformed start date string
 
          ('20000101',
           'X',
@@ -65,7 +65,7 @@ class TestBudgetItemMethods:
           'test memo',
           False,
           False,
-          TypeError),  # malformed end date string
+          ValueError),  # malformed end date string
 
          ('20000101',
           '20000101',

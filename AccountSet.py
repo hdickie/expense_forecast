@@ -79,7 +79,7 @@ def initialize_from_dataframe(accounts_df):
 
 class AccountSet:
 
-    def __init__(self, accounts__list, print_debug_messages=True, raise_exceptions=True):
+    def __init__(self, accounts__list=None, print_debug_messages=True, raise_exceptions=True):
         """
         Creates an AccountSet object. Possible Account Types are: Checking, Credit, Loan, Savings. Consistency is checked.
 
@@ -126,6 +126,9 @@ class AccountSet:
 
 
         """
+
+        if accounts__list is None:
+            accounts__list = []
 
         value_error_text = ""
         value_error_ind = False

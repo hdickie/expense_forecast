@@ -23,7 +23,7 @@ def initialize_from_dataframe(memo_set_df):
 
 class MemoRuleSet:
 
-    def __init__(self,memo_rules__list):
+    def __init__(self,memo_rules__list=None):
         """
         Create a <MemoRuleSet> from a <list> of <MemoRule> objects.
 
@@ -39,6 +39,10 @@ class MemoRuleSet:
 
         :param memo_rules__list:
         """
+
+        if memo_rules__list is None:
+            memo_rules__list = []
+
         self.memo_rules = []
         for memo_rule in memo_rules__list:
             self.memo_rules.append(memo_rule)

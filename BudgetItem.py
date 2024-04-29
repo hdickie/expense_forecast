@@ -75,6 +75,14 @@ class BudgetItem:
             exception_type_error_message_string += 'value was:'+str(end_date_YYYYMMDD)+'\n'
             exception_type_error_ind = True
 
+        #astonished I got this far in development without adding this one
+        try:
+            assert datetime.datetime.strptime(str(start_date_YYYYMMDD).replace('-', ''), '%Y%m%d') <= datetime.datetime.strptime(str(end_date_YYYYMMDD).replace('-', ''), '%Y%m%d')
+        except AssertionError:
+            error_msg = "End date of budget item must be greater than or equal to start date\n"
+            error_msg += "start_date: " + str(start_date_YYYYMMDD) + " end date: " + str(end_date_YYYYMMDD)
+            raise ValueError(error_msg)
+
         try:
            self.priority = int(self.priority)
         except:

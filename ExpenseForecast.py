@@ -41,60 +41,128 @@ try:
 except KeyError:
     logger = setup_logger(__name__, __name__ + '_'+ thread_id+'.log', level=logging.INFO)
 
-def initialize_from_database(start_date_YYYYMMDD,
-                             end_date_YYYYMMDD,
-                             account_set_table_name='ef_account_set_temporary',
-                             budget_set_table_name='ef_budget_item_set_temporary',
-                             memo_rule_set_table_name='ef_memo_rule_set_temporary',
-                             account_milestone_table_name='ef_account_milestones_temporary',
-                             memo_milestone_table_name='ef_memo_milestones_temporary',
-                             composite_milestone_table_name='ef_composite_milestones_temporary',
-                             database_hostname='localhost',
-                             database_name='postres',
-                             database_username='postres',
-                             database_password='postres',
-                             database_port='5432',
-                             log_directory='.',
-                             forecast_set_name='',
-                             forecast_name=''
-                             ):
-    #print('ENTER initialize_from_database()')
+# def initialize_from_database(start_date_YYYYMMDD,
+#                              end_date_YYYYMMDD,
+#                              account_set_table_name='ef_account_set_temporary',
+#                              budget_set_table_name='ef_budget_item_set_temporary',
+#                              memo_rule_set_table_name='ef_memo_rule_set_temporary',
+#                              account_milestone_table_name='ef_account_milestones_temporary',
+#                              memo_milestone_table_name='ef_memo_milestones_temporary',
+#                              composite_milestone_table_name='ef_composite_milestones_temporary',
+#                              database_hostname='localhost',
+#                              database_name='postres',
+#                              database_username='postres',
+#                              database_password='postres',
+#                              database_port='5432',
+#                              log_directory='.',
+#                              forecast_set_name='',
+#                              forecast_name=''
+#                              ):
+#     return initialize_from_database_with_select()
 
-    start_date_YYYYMMDD = start_date_YYYYMMDD.replace('-','')
-    end_date_YYYYMMDD = end_date_YYYYMMDD.replace('-','').replace('-', '')
 
-    connect_string = 'postgresql://'+database_username+':'+database_password+'@'+database_hostname+':'+database_port+'/'+database_name
+def initialize_from_database_with_select(start_date_YYYYMMDD,
+                                         end_date_YYYYMMDD,
+                                         account_set_select_q,
+                                         budget_set_select_q,
+                                         memo_rule_set_select_q,
+                                         account_milestone_select_q,
+                                         memo_milestone_select_q,
+                                         composite_milestone_select_q,
+                                         database_hostname,
+                                         database_name,
+                                         database_username,
+                                         database_password,
+                                         database_port,
+                                         log_directory,
+                                         forecast_set_name,
+                                         forecast_name
+                                         ):
+    #print('ENTER ExpenseForecast::initialize_from_database_with_select')
+    start_date_YYYYMMDD = start_date_YYYYMMDD.replace('-', '')
+    end_date_YYYYMMDD = end_date_YYYYMMDD.replace('-', '').replace('-', '')
+
+    connect_string = 'postgresql://' + database_username + ':' + database_password + '@' + database_hostname + ':' + str(database_port) + '/' + database_name
     engine = create_engine(connect_string)
-    #engine = create_engine('postgresql://bsdegjmy_humedick@localhost:5432/bsdegjmy_sandbox')
-    accounts_df = pd.read_sql_query('select * from ' + account_set_table_name, con=engine)
-    budget_items_df = pd.read_sql_query('select * from ' + budget_set_table_name, con=engine)
-    memo_rules_df = pd.read_sql_query('select * from ' + memo_rule_set_table_name, con=engine)
-    account_milestones_df = pd.read_sql_query('select * from ' + account_milestone_table_name, con=engine)
-    memo_milestones_df = pd.read_sql_query('select * from ' + memo_milestone_table_name, con=engine)
-    composite_milestones_df = pd.read_sql_query('select * from ' + composite_milestone_table_name, con=engine)
 
-    # log_in_color(logger, 'white', 'info', 'Account Milestones')
-    # log_in_color(logger, 'white', 'info', account_milestones_df.to_string())
-    # log_in_color(logger, 'white', 'info', 'Memo Milestones')
-    # log_in_color(logger, 'white', 'info', memo_milestones_df.to_string())
-    # log_in_color(logger, 'white', 'info', 'Composite Milestones')
-    # log_in_color(logger, 'white', 'info', composite_milestones_df.to_string())
+    accounts_df = pd.read_sql_query(account_set_select_q, con=engine)
+    #assert accounts_df.shape[0] > 0
+    budget_items_df = pd.read_sql_query(budget_set_select_q, con=engine)
+    #print(budget_set_select_q)
+    #assert budget_items_df.shape[0] > 0 #not generically true but true in testing. remove this for prod
+    memo_rules_df = pd.read_sql_query(memo_rule_set_select_q, con=engine)
+    #assert memo_rules_df.shape[0] > 0 #not generically true but true in testing. remove this for prod
+    account_milestones_df = pd.read_sql_query(account_milestone_select_q, con=engine)
+    memo_milestones_df = pd.read_sql_query(memo_milestone_select_q, con=engine)
+    composite_milestones_df = pd.read_sql_query(composite_milestone_select_q, con=engine)
 
     account_set = AccountSet.initialize_from_dataframe(accounts_df)
     budget_set = BudgetSet.initialize_from_dataframe(budget_items_df)
     memo_rule_set = MemoRuleSet.initialize_from_dataframe(memo_rules_df)
-    milestone_set = MilestoneSet.initialize_from_dataframe(account_milestones_df,memo_milestones_df,composite_milestones_df)
+    milestone_set = MilestoneSet.initialize_from_dataframe(account_milestones_df, memo_milestones_df,
+                                                           composite_milestones_df)
 
-    # log_in_color(logger, 'white', 'info', 'milestone_set')
-    # log_in_color(logger, 'white', 'info', milestone_set)
-
-    return ExpenseForecast(account_set, budget_set, memo_rule_set,
-                           start_date_YYYYMMDD, end_date_YYYYMMDD,
-                           milestone_set,
-                           log_directory,
-                           forecast_set_name,forecast_name
+    return ExpenseForecast(account_set=account_set,
+                           budget_set=budget_set,
+                           memo_rule_set=memo_rule_set,
+                           start_date_YYYYMMDD=start_date_YYYYMMDD,
+                           end_date_YYYYMMDD=end_date_YYYYMMDD,
+                           milestone_set=milestone_set,
+                           log_directory=log_directory,
+                           forecast_set_name=forecast_set_name,
+                           forecast_name=forecast_name
                            )
 
+
+def initialize_from_database_with_id(username,
+                                    forecast_set_id,
+                                     forecast_id,
+                             database_hostname='localhost',
+                             database_name='postgres',
+                             database_username='postgres',
+                             database_password='postgres',
+                             database_port='5432'
+                             ): #todo may need a few more parameters
+    #print('ENTER ExpenseForecast::initialize_from_database_with_id forecast_id='+str(forecast_id))
+    connect_string = 'postgresql://' + database_username + ':' + database_password + '@' + database_hostname + ':' + str(database_port) + '/' + database_name
+    engine = create_engine(connect_string)
+    # engine = create_engine('postgresql://bsdegjmy_humedick@localhost:5432/bsdegjmy_sandbox')
+
+    get_date_ranges_q = "select start_date, end_date from prod."+username+"_forecast_set_definitions where forecast_id = '"+str(forecast_id)+"' and forecast_set_id = '" + str(forecast_set_id) + "'"
+    #print(get_date_ranges_q)
+    date_range_df = pd.read_sql_query(get_date_ranges_q, con=engine)
+    assert date_range_df.shape[0] == 1
+
+    start_date_YYYYMMDD = date_range_df.iloc[0, 0].strftime('%Y%m%d')
+    end_date_YYYYMMDD = date_range_df.iloc[0, 1].strftime('%Y%m%d')
+
+
+    account_set_select_q = "select * from prod.ef_account_set_"+username+" where forecast_id = '"+forecast_id+"'"
+    budget_set_select_q = "select * from prod.ef_budget_item_set_"+username+" where forecast_id = '"+forecast_id+"'"
+    memo_rule_set_select_q = "select * from prod.ef_memo_rule_set_"+username+" where forecast_id = '"+forecast_id+"'"
+    account_milestone_select_q = "select * from prod.ef_account_milestones_"+username+" where forecast_id = '"+forecast_id+"'"
+    memo_milestone_select_q = "select * from prod.ef_memo_milestones_"+username+" where forecast_id = '"+forecast_id+"'"
+    composite_milestone_select_q = "select * from prod.ef_composite_milestones_"+username+" where forecast_id = '"+forecast_id+"'"
+
+    E = initialize_from_database_with_select(start_date_YYYYMMDD=start_date_YYYYMMDD,
+                             end_date_YYYYMMDD=end_date_YYYYMMDD,
+                            account_set_select_q=account_set_select_q,
+                            budget_set_select_q=budget_set_select_q,
+                            memo_rule_set_select_q=memo_rule_set_select_q,
+                            account_milestone_select_q=account_milestone_select_q,
+                            memo_milestone_select_q=memo_milestone_select_q,
+                            composite_milestone_select_q=composite_milestone_select_q,
+                             database_hostname=database_hostname,
+                             database_name=database_name,
+                             database_username=database_username,
+                             database_password=database_password,
+                             database_port=database_port,
+                             log_directory='.',
+                             forecast_set_name='',
+                             forecast_name=''
+                             )
+
+    return E
 
 #whether or not the expense forecast has been run will be determined at runtime
 #this can return a list of initialized ExpenseForecast objects from ChooseOneSet
@@ -617,7 +685,15 @@ class ExpenseForecast:
 
             self.start_date_YYYYMMDD = start_date_YYYYMMDD
             self.end_date_YYYYMMDD = end_date_YYYYMMDD
-            self.unique_id = str(hash(int(account_hash, 16) + int(budget_hash, 16) + int(memo_hash,16) + start_date_hash + end_date_hash) % 100000).rjust(6, '0')
+
+            # e.g. 240424_90_1_####_1_A.json
+            #      YYMMDD_days_numDistinctPriority_hash_approxFlag
+            num_days = (datetime.datetime.strptime(end_date_YYYYMMDD,'%Y%m%d') - datetime.datetime.strptime(start_date_YYYYMMDD,'%Y%m%d')).days
+            num_distinct_priority = len(set(self.initial_budget_set.getBudgetItems().Priority))
+            self.unique_id = start_date_YYYYMMDD[2:] + '_' + str(num_days) + '_' + str(num_distinct_priority) + '_'
+            self.unique_id += str(hash(int(account_hash, 16) + int(budget_hash, 16) + int(memo_hash,16) + start_date_hash + end_date_hash) % 1000).rjust(4, '0')
+            if self.approximate_flag:
+                self.unique_id += 'A'
 
         else:
             return
@@ -686,12 +762,12 @@ class ExpenseForecast:
                 #log_in_color(logger,'white','info',insert_q)
                 cursor.execute(insert_q)
 
-            cursor.execute("TRUNCATE prod.ef_account_set_"+username)
-            cursor.execute("TRUNCATE prod.ef_budget_item_set_" + username)
-            cursor.execute("TRUNCATE prod.ef_memo_rule_set_" + username)
-            cursor.execute("INSERT INTO prod.ef_account_set_"+username+" Select '"+self.unique_id+"', account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_cadence, minimum_payment, primary_checking_ind from prod.ef_account_set_"+username+"_temporary")
-            cursor.execute("INSERT INTO prod.ef_budget_item_set_"+username+" Select '" + self.unique_id + "', memo, priority, start_date, end_date,  cadence, amount, \"deferrable\", partial_payment_allowed from prod.ef_budget_item_set_"+username+"_temporary")
-            cursor.execute("INSERT INTO prod.ef_memo_rule_set_"+username+" Select '" + self.unique_id + "', memo_regex, account_from, account_to, priority from prod.ef_memo_rule_set_"+username+"_temporary")
+            # cursor.execute("TRUNCATE prod.ef_account_set_"+username+"_temporary")
+            # cursor.execute("TRUNCATE prod.ef_budget_item_set_" + username+"_temporary")
+            # cursor.execute("TRUNCATE prod.ef_memo_rule_set_" + username+"_temporary")
+            # cursor.execute("INSERT INTO prod.ef_account_set_"+username+" Select '"+self.unique_id+"', account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_cadence, minimum_payment, primary_checking_ind from prod.ef_account_set_"+username+"_temporary")
+            # cursor.execute("INSERT INTO prod.ef_budget_item_set_"+username+" Select '" + self.unique_id + "', memo, priority, start_date, end_date,  cadence, amount, \"deferrable\", partial_payment_allowed from prod.ef_budget_item_set_"+username+"_temporary")
+            # cursor.execute("INSERT INTO prod.ef_memo_rule_set_"+username+" Select '" + self.unique_id + "', memo_regex, account_from, account_to, priority from prod.ef_memo_rule_set_"+username+"_temporary")
 
             if overwrite:
                 cursor.execute('drop table if exists prod.'+username+'_milestone_results_'+self.unique_id)
@@ -714,7 +790,7 @@ class ExpenseForecast:
                 else:
                     v = "'"+v+"'"
 
-                insert_q = """INSERT INTO prod."""+username+"""_milestone_results_"""+self.unique_id+""" 
+                insert_q = """INSERT INTO prod."""+username+"""_milestone_results_"""+self.unique_id+"""
                 SELECT \'"""+self.unique_id+"""\',\'"""+k+"""\',\'Account\',"""+v+"""
                 """
                 #log_in_color(logger, 'white', 'info', insert_q)
@@ -729,7 +805,7 @@ class ExpenseForecast:
                 else:
                     v = "'"+v+"'"
 
-                insert_q = """INSERT INTO prod.""" + username + """_milestone_results_""" + self.unique_id + """ 
+                insert_q = """INSERT INTO prod.""" + username + """_milestone_results_""" + self.unique_id + """
                                 SELECT \'""" + self.unique_id + """\',\'""" + k + """\',\'Memo\',"""+v+"""
                                 """
                 #log_in_color(logger, 'white', 'info', insert_q)
@@ -744,12 +820,12 @@ class ExpenseForecast:
                 else:
                     v = "'"+v+"'"
 
-                insert_q = """INSERT INTO prod.""" + username + """_milestone_results_""" + self.unique_id + """ 
+                insert_q = """INSERT INTO prod.""" + username + """_milestone_results_""" + self.unique_id + """
                                 SELECT \'""" + self.unique_id + """\',\'""" + k + """\',\'Composite\',"""+v+"""
                                 """
                 #log_in_color(logger, 'white', 'info', insert_q)
                 cursor.execute(insert_q)
-            metadata_q = "INSERT INTO prod.forecast_run_metadata Select '', \'"+str(self.unique_id)+"\'," #implement forecast_set_id
+            metadata_q = "INSERT INTO prod."+username+"_forecast_run_metadata Select '', \'"+str(self.unique_id)+"\'," #implement forecast_set_id
             metadata_q += "\'"+self.forecast_set_name+"\',"
             metadata_q += "\'"+self.forecast_name+"\',"
             metadata_q += "'"+str(username)+"',"
@@ -827,6 +903,7 @@ class ExpenseForecast:
 
     def __init__(self, account_set, budget_set, memo_rule_set, start_date_YYYYMMDD, end_date_YYYYMMDD,
                  milestone_set,
+                 approximate_flag=False,
                  log_directory = '.',
                  forecast_set_name='',
                  forecast_name='',
@@ -839,6 +916,7 @@ class ExpenseForecast:
         :param budget_set:
         :param memo_rule_set:
         """
+        #print('ENTER ExpenseForecast.__init__ approximate_flag = '+str(approximate_flag))
         #full_forecast_label = (forecast_title+'__'+forecast_subtitle).replace(' ','_').replace('-','_').replace(':','_')
         #logger = setup_logger('ExpenseForecast', log_directory + 'ExpenseForecast_'++'.log', level=logging.INFO)
         thread_id = str(math.floor(random.random() * 1000))
@@ -851,7 +929,7 @@ class ExpenseForecast:
 
         self.forecast_set_name = str(forecast_set_name)
         self.forecast_name = str(forecast_name)
-
+        self.approximate_flag = approximate_flag
         self.forecast_df = None
         self.skipped_df = None
         self.confirmed_df = None
@@ -1015,7 +1093,15 @@ class ExpenseForecast:
         # print('start_date hash:'+str(start_date_hash))
         # print('end_date hash:'+str(end_date_hash))
 
-        self.unique_id = str(hash(int(account_hash, 16) + int(budget_hash, 16) + int(memo_hash,16) + start_date_hash + end_date_hash) % 100000).rjust(6, '0')
+        #self.unique_id = str(hash(int(account_hash, 16) + int(budget_hash, 16) + int(memo_hash,16) + start_date_hash + end_date_hash) % 100000).rjust(6, '0')
+
+        num_days = (datetime.datetime.strptime(end_date_YYYYMMDD, '%Y%m%d') - datetime.datetime.strptime(start_date_YYYYMMDD, '%Y%m%d')).days
+        num_distinct_priority = len(set(self.initial_budget_set.getBudgetItems().Priority))
+        self.unique_id = start_date_YYYYMMDD[2:] + '_' + str(num_days) + '_' + str(num_distinct_priority) + '_'
+        self.unique_id += str(hash(int(account_hash, 16) + int(budget_hash, 16) + int(memo_hash, 16) + start_date_hash + end_date_hash) % 1000).rjust(4, '0')
+        if self.approximate_flag:
+            self.unique_id += 'A'
+
         single_forecast_run_log_file_name = 'Forecast_'+str(self.unique_id)+'.log'
         log_in_color(logger, 'green', 'debug','Attempting switch log file to: '+single_forecast_run_log_file_name)
 
@@ -1037,6 +1123,8 @@ class ExpenseForecast:
         self.account_milestone_results = {}
         self.memo_milestone_results = {}
         self.composite_milestone_results = {}
+
+        #print('EXIT ExpenseForecast.__init__ unique_id = '+str(self.unique_id))
 
 
     def evaluateMilestones(self):

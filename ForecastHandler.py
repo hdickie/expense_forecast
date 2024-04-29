@@ -34,9 +34,9 @@ import random
 import math
 thread_id = str(math.floor(random.random() * 1000))
 try:
-    logger = setup_logger(__name__, os.environ['EF_LOG_DIR'] + __name__ + '_'+ thread_id+'.log', level=logging.INFO)
+    logger = setup_logger(__name__, os.environ['EF_LOG_DIR'] + __name__ + '_'+ thread_id+'.log', level=logging.WARNING)
 except KeyError:
-    logger = setup_logger(__name__, __name__ + '_'+ thread_id+'.log', level=logging.INFO)
+    logger = setup_logger(__name__, __name__ + '_'+ thread_id+'.log', level=logging.WARNING)
 #os.environ['MPLCONFIGDIR'] = '/var/www/'
 
 # e.g. custom_cycler = (cycler(color=['c', 'm', 'y', 'k']) + cycler(lw=[1, 2, 3, 4]))

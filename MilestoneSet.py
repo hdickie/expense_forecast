@@ -40,12 +40,21 @@ def initialize_from_dataframe(account_milestones_df, memo_milestones_df, composi
 
 class MilestoneSet:
 
-    def __init__(self,account_milestones__list,memo_milestones__list,composite_milestones__list):
+    def __init__(self,account_milestones__list=None,memo_milestones__list=None,composite_milestones__list=None):
 
         # for account_milestone in account_milestones__list:
         #     all_account_names = set([ a.split(':')[0] for a in account_set.getAccounts().Name ])
         #     if not account_milestone.account_name in all_account_names:
         #         raise ValueError("Account Name for Milestone not found in accounts: "+str(account_milestone.account_name))
+
+        if account_milestones__list is None:
+            account_milestones__list = []
+
+        if memo_milestones__list is None:
+            memo_milestones__list = []
+
+        if composite_milestones__list is None:
+            composite_milestones__list = []
 
         self.account_milestones = account_milestones__list
 

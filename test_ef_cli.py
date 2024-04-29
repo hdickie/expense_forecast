@@ -109,7 +109,7 @@ class TestEFCLIMethods:
             print(l)
 
     @pytest.mark.parametrize('cmd_string',
-                             [('parameterize forecast --filename ./out/ForecastResult_031987.json --start_date 20240101 --end_date 20241231 --username hume --log_directory ./out/'),
+                             [('parameterize forecast --id 031987 --source file --start_date 20240101 --end_date 20241231 --username hume --log_directory ./out/'),
                               ])
     def test_parameterize_file_forecast_no_label(self, cmd_string):
         cmd = "python -m ef_cli " + cmd_string
@@ -123,7 +123,7 @@ class TestEFCLIMethods:
 
     @pytest.mark.parametrize('cmd_string',
                              [(
-                              'parameterize forecast --filename ./out/ForecastResult_031987.json --start_date 20240101 --end_date 20241231 --username hume --log_directory ./out/ --label FORECAST_LABEL'),
+                              'parameterize forecast --id 031987 --source file --start_date 20240101 --end_date 20241231 --username hume --log_directory ./out/ --label FORECAST_LABEL'),
                               ])
     def test_parameterize_file_forecast_with_label(self, cmd_string):
         cmd = "python -m ef_cli " + cmd_string
@@ -138,9 +138,9 @@ class TestEFCLIMethods:
         assert E.forecast_name == 'FORECAST_LABEL'
 
     @pytest.mark.parametrize('cmd_string',
-                             [('parameterize forecastset --filename S.json --username hume --output_directory ./out/ --start_date 20240120 --end_date 20240601'),
-                              ('parameterize forecastset --filename S.json --username hume --output_directory ./out/ --start_date 20000120 --end_date 20000601'),
-                              ('parameterize forecastset --filename S.json --username hume --output_directory ./out/ --start_date 20240420 --end_date 20240601')
+                             [('parameterize forecastset --source file --id S --username hume --output_directory ./out/ --start_date 20240120 --end_date 20240601'),
+                              ('parameterize forecastset --source file --id S --username hume --output_directory ./out/ --start_date 20000120 --end_date 20000601'),
+                              ('parameterize forecastset --source file --id S --username hume --output_directory ./out/ --start_date 20240420 --end_date 20240601')
                               ])
     def test_parameterize_file_forecastset_no_label(self, cmd_string):
         cmd = "python -m ef_cli " + cmd_string
@@ -179,10 +179,10 @@ class TestEFCLIMethods:
         assert S.forecast_set_name == 'NEW_FORECAST_SET_NAME'
 
     @pytest.mark.parametrize('cmd_string',
-                             [('run forecast --filename ./out/test.json --username hume --output_directory ./out/'),
-                              ('run forecast --filename ./out/test.json --username hume --output_directory ./out/ --approximate'),
-                              ('run forecast --filename ./out/test.json --username hume --output_directory ./out/ --overwrite'),
-                              ('run forecast --filename ./out/test.json --username hume --output_directory ./out/ --approximate --overwrite'),
+                             [('run forecast --id 062822 --source file --username hume --working_directory ./out/'),
+                              ('run forecast --id 062822 --source file --username hume --working_directory ./out/ --approximate'),
+                              ('run forecast --id 062822 --source file --username hume --working_directory ./out/ --overwrite'),
+                              ('run forecast --id 062822 --source file --username hume --working_directory ./out/ --approximate --overwrite'),
                              ])
     def test_run_forecast(self, cmd_string):
         cmd = "python -m ef_cli " + cmd_string
@@ -195,10 +195,10 @@ class TestEFCLIMethods:
         E.writeToJSONFile('./out/')
 
     @pytest.mark.parametrize('cmd_string',
-                             [('run forecastset --filename S.json --username hume --output_directory ./out/'),
-                              ('run forecastset --filename S.json --username hume --output_directory ./out/ --approximate'),
-                              ('run forecastset --filename S.json --username hume --output_directory ./out/ --overwrite'),
-                              ('run forecastset --filename S.json --username hume --output_directory ./out/ --approximate --overwrite'),
+                             [('run forecastset --source file --id S033683 --username hume --working_directory ./out/'),
+                              ('run forecastset --source file --id S033683 --username hume --working_directory ./out/ --approximate'),
+                              ('run forecastset --source file --id S033683 --username hume --working_directory ./out/ --overwrite'),
+                              ('run forecastset --source file --id S033683 --username hume --working_directory ./out/ --approximate --overwrite'),
                              ])
     def test_run_forecastset(self, cmd_string):
         cmd = "python -m ef_cli " + cmd_string
