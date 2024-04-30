@@ -1,4 +1,5 @@
 import pandas as pd
+
 import re
 import copy
 import BudgetItem
@@ -33,7 +34,6 @@ def initialize_from_json_string(json_string):
     return initialize_from_dict(data)
 
 def initialize_from_dict(data):
-
     #print(data['py/object']) #ForecastSet.ForecastSet
     #print('--------------------')
     base_forecast = ExpenseForecast.initialize_from_dict(data['base_forecast'])
@@ -101,8 +101,10 @@ def initialize_from_dict(data):
     #print('--------------------')
     #print(data['initialized_forecasts'])
     initialized_forecasts = {}
+    print('Loading initialized_forecasts')
     for k, v in data['initialized_forecasts'].items():
-        #print(v)
+        print(k)
+        print(v)
         initialized_forecasts[k] = ExpenseForecast.initialize_from_dict(v)
 
     id_to_name = data['id_to_name']
@@ -147,7 +149,7 @@ def initialize_forecast_set_from_database(set_id, username, database_hostname, d
     forecast_set_definition_df = pd.read_sql_query("select * from prod."+username+"_forecast_set_definitions where forecast_set_id = '"+set_id+"'", con=engine)
     assert forecast_set_definition_df.shape[0] > 0  # else set has no definition (stage it to fix this error)
 
-    forecast_set_name = forecast_set_definition_df.iloc[0,1]
+    forecast_set_name = forecast_set_definition_df['forecast_set_name'].iat[0]
 
     #option_budget_set (there may be 0 rows)
     option_budget_set_df = pd.read_sql_query("select * from prod.ef_budget_item_set_"+username+" where forecast_id = 'O" + set_id + "'", con=engine)
@@ -157,6 +159,8 @@ def initialize_forecast_set_from_database(set_id, username, database_hostname, d
     initialized_forecasts = {}
     id_to_name = {}
     base_forecast = None
+    # print('forecast_set_definition_df:')
+    # print(forecast_set_definition_df.to_string())
     for index, row in forecast_set_definition_df.iterrows():
         #print('ForecastSet::initialize_forecast_set_from_database calling initialize_from_database_with_id on '+row.forecast_id)
         E = ExpenseForecast.initialize_from_database_with_id(username=username,
@@ -173,16 +177,13 @@ def initialize_forecast_set_from_database(set_id, username, database_hostname, d
 
         id_to_name[E.unique_id] = row.forecast_name
         if row.forecast_name.strip() == 'Core':
-            #print('Set as b_e: Forecast Id:' + str(E.unique_id) + '  Forecast Name:' + row.forecast_name)
             base_forecast = E
         else:
-            #print('Add to i_f: Forecast Id:' + str(E.unique_id) + '  Forecast Name:' + row.forecast_name)
             initialized_forecasts[E.unique_id] = E
-
-    #todo read id-to-name from database to assign base_forecast and correctly set forecast names
 
     assert base_forecast is not None
     S = ForecastSet(base_forecast, option_budget_set, initialized_forecasts, forecast_set_name)
+    S.id_to_name = id_to_name
     #print('ForecastSet::initialize_forecast_set_from_database unique_id = ' + S.unique_id)
     return S
 
@@ -234,7 +235,7 @@ class ForecastSet:
         id_set_hash = str(int(hashlib.sha1(str(keys_list).encode("utf-8")).hexdigest(), 16) % 1000).rjust(4, '0')
         self.unique_id = 'S' + str(id_sd) + '_' + str(id_num_days) + '_' + str(id_distinct_p) + '_' + str(id_set_hash)
 
-    def writeToDatabase(self,database_hostname,database_name,database_username,database_password,database_port,username):
+    def writeToDatabase(self,database_hostname,database_name,database_username,database_password,database_port,username,overwrite=True):
         connection = psycopg2.connect(host=database_hostname,
                                       database=database_name,
                                       user=database_username,
@@ -243,22 +244,13 @@ class ForecastSet:
         connection.autocommit = True
         cursor = connection.cursor()
 
-        account_set_table_name = 'prod.ef_account_set_' + username
-        budget_set_table_name = 'prod.ef_budget_item_set_' + username
-        memo_rule_set_table_name = 'prod.ef_memo_rule_set_' + username
-        account_milestone_table_name = 'prod.ef_account_milestones_' + username
-        memo_milestone_table_name = 'prod.ef_memo_milestones_' + username
-        composite_milestone_table_name = 'prod.ef_composite_milestones_' + username
+        #todo check for overwrites up front to prevent duplicated work
 
-        log_in_color(logger, 'green', 'info',
-                     'Writing base forecast ' + str(self.base_forecast.unique_id) + ' to database for forecast set '+str(self.unique_id))
+        log_in_color(logger, 'green', 'info', 'Writing base forecast ' + str(self.base_forecast.unique_id) + ' to database for forecast set '+str(self.unique_id))
+        cursor.execute("DELETE FROM prod." + username + "_forecast_set_definitions WHERE forecast_set_id = \'" + str( self.unique_id) + "\'")
 
-        cursor.execute("DELETE FROM prod." + username + "_forecast_set_definitions WHERE forecast_set_id = \'" + str(
-            self.unique_id) + "\'")
-
-        # insert set definition row for base forecast
+        # # insert set definition row for base forecast
         assert self.base_forecast.forecast_name == 'Core'
-
         core_set_def_q = "INSERT INTO prod." + username + "_forecast_set_definitions SELECT '" + self.unique_id + "' as forecast_set_id, "
         core_set_def_q += "'" + self.forecast_set_name + "' as forecast_set_name, '" + str(
             self.base_forecast.unique_id) + "' as forecast_id, '"
@@ -269,45 +261,50 @@ class ForecastSet:
         #print(core_set_def_q)
         cursor.execute(core_set_def_q)
 
-        cursor.execute(
-            "DELETE FROM " + account_set_table_name + " WHERE forecast_id = \'" + str(self.base_forecast.unique_id) + "\'")
-        for index, row in self.base_forecast.initial_account_set.getAccounts().iterrows():
-            if row.Billing_Start_Date is None:
-                bsd = "Null"
-            else:
-                bsd = "'" + str(row.Billing_Start_Date) + "'"
-            if row.APR is None:
-                apr = "Null"
-            else:
-                apr = "'" + str(row.APR) + "'"
-            if row.Minimum_Payment is None:
-                min_payment = "Null"
-            else:
-                min_payment = str(row.Minimum_Payment)
+        #todo _forecast_run_metadata start_ts and end_ts
 
-            insert_account_row_q = "INSERT INTO " + account_set_table_name + " (forecast_id, account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_cadence, minimum_payment, primary_checking_ind) VALUES "
-            insert_account_row_q += "('" + str(self.base_forecast.unique_id) + "', '" + str(row.Name) + "', " + str(
-                row.Balance) + ", " + str(row.Min_Balance) + ", " + str(row.Max_Balance) + ", '" + str(
-                row.Account_Type) + "', " + str(bsd) + ", " + apr + ", '" + str(
-                row.Interest_Cadence) + "', " + min_payment + ", '" + str(row.Primary_Checking_Ind) + "')"
-            cursor.execute(insert_account_row_q)
 
-        cursor.execute("DELETE FROM " + budget_set_table_name + " WHERE forecast_id = \'" + str(self.base_forecast.unique_id) + "\'")
-        for index, row in self.base_forecast.initial_budget_set.getBudgetItems().iterrows():
-            insert_budget_item_row_q = "INSERT INTO " + budget_set_table_name + " (forecast_id, memo, priority, start_date, end_date, cadence, amount, \"deferrable\", partial_payment_allowed) VALUES "
-            insert_budget_item_row_q += "('" + str(self.base_forecast.unique_id) + "','" + str(row.Memo) + "'," + str(
-                row.Priority) + ",'" + str(row.Start_Date) + "','" + str(row.End_Date) + "','" + str(
-                row.Cadence) + "'," + str(row.Amount) + ",'" + str(row.Deferrable) + "','" + str(
-                row.Partial_Payment_Allowed) + "')"
-            cursor.execute(insert_budget_item_row_q)
 
-        cursor.execute(
-            "DELETE FROM " + memo_rule_set_table_name + " WHERE forecast_id = \'" + str(self.base_forecast.unique_id) + "\'")
-        for index, row in self.base_forecast.initial_memo_rule_set.getMemoRules().iterrows():
-            insert_memo_rule_row_q = "INSERT INTO " + memo_rule_set_table_name + " (forecast_id, memo_regex, account_from, account_to, priority ) VALUES "
-            insert_memo_rule_row_q += "('" + str(self.base_forecast.unique_id) + "','" + str(row.Memo_Regex) + "','" + str(
-                row.Account_From) + "','" + str(row.Account_To) + "'," + str(row.Transaction_Priority) + ")"
-            cursor.execute(insert_memo_rule_row_q)
+        ### This is base_forecast
+        # cursor.execute(
+        #     "DELETE FROM " + account_set_table_name + " WHERE forecast_id = \'" + str(self.base_forecast.unique_id) + "\'")
+        # for index, row in self.base_forecast.initial_account_set.getAccounts().iterrows():
+        #     if row.Billing_Start_Date is None:
+        #         bsd = "Null"
+        #     else:
+        #         bsd = "'" + str(row.Billing_Start_Date) + "'"
+        #     if row.APR is None:
+        #         apr = "Null"
+        #     else:
+        #         apr = "'" + str(row.APR) + "'"
+        #     if row.Minimum_Payment is None:
+        #         min_payment = "Null"
+        #     else:
+        #         min_payment = str(row.Minimum_Payment)
+        #
+        #     insert_account_row_q = "INSERT INTO " + account_set_table_name + " (forecast_id, account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_cadence, minimum_payment, primary_checking_ind) VALUES "
+        #     insert_account_row_q += "('" + str(self.base_forecast.unique_id) + "', '" + str(row.Name) + "', " + str(
+        #         row.Balance) + ", " + str(row.Min_Balance) + ", " + str(row.Max_Balance) + ", '" + str(
+        #         row.Account_Type) + "', " + str(bsd) + ", " + apr + ", '" + str(
+        #         row.Interest_Cadence) + "', " + min_payment + ", '" + str(row.Primary_Checking_Ind) + "')"
+        #     cursor.execute(insert_account_row_q)
+        #
+        # cursor.execute("DELETE FROM " + budget_set_table_name + " WHERE forecast_id = \'" + str(self.base_forecast.unique_id) + "\'")
+        # for index, row in self.base_forecast.initial_budget_set.getBudgetItems().iterrows():
+        #     insert_budget_item_row_q = "INSERT INTO " + budget_set_table_name + " (forecast_id, memo, priority, start_date, end_date, cadence, amount, \"deferrable\", partial_payment_allowed) VALUES "
+        #     insert_budget_item_row_q += "('" + str(self.base_forecast.unique_id) + "','" + str(row.Memo) + "'," + str(
+        #         row.Priority) + ",'" + str(row.Start_Date) + "','" + str(row.End_Date) + "','" + str(
+        #         row.Cadence) + "'," + str(row.Amount) + ",'" + str(row.Deferrable) + "','" + str(
+        #         row.Partial_Payment_Allowed) + "')"
+        #     cursor.execute(insert_budget_item_row_q)
+        #
+        # cursor.execute(
+        #     "DELETE FROM " + memo_rule_set_table_name + " WHERE forecast_id = \'" + str(self.base_forecast.unique_id) + "\'")
+        # for index, row in self.base_forecast.initial_memo_rule_set.getMemoRules().iterrows():
+        #     insert_memo_rule_row_q = "INSERT INTO " + memo_rule_set_table_name + " (forecast_id, memo_regex, account_from, account_to, priority ) VALUES "
+        #     insert_memo_rule_row_q += "('" + str(self.base_forecast.unique_id) + "','" + str(row.Memo_Regex) + "','" + str(
+        #         row.Account_From) + "','" + str(row.Account_To) + "'," + str(row.Transaction_Priority) + ")"
+        #     cursor.execute(insert_memo_rule_row_q)
 
         #note that if there are no rows for this, then nothing is written, which is indistinguishable from an error
         #print('Writing Budget Set to database:')
@@ -319,53 +316,17 @@ class ForecastSet:
             q += row.Cadence + "'," + str(row.Amount) + "," + str(row.Deferrable) + "," + str(row.Partial_Payment_Allowed)
             cursor.execute(q)
 
-        #log_in_color(logger, 'green', 'info', 'len(self.initialized_forecasts):'+str(self.initialized_forecasts))
+        #Base forecast should be a part of this
         for unique_id, E in self.initialized_forecasts.items():
             log_in_color(logger, 'green', 'info','Writing '+str(unique_id)+' to database')
-            cursor.execute(
-                "DELETE FROM " + account_set_table_name + " WHERE forecast_id = \'" + str(E.unique_id) + "\'")
-            for index, row in E.initial_account_set.getAccounts().iterrows():
-                if row.Billing_Start_Date is None:
-                    bsd = "Null"
-                else:
-                    bsd = "'" + str(row.Billing_Start_Date) + "'"
-                if row.APR is None:
-                    apr = "Null"
-                else:
-                    apr = "'" + str(row.APR) + "'"
-                if row.Minimum_Payment is None:
-                    min_payment = "Null"
-                else:
-                    min_payment = str(row.Minimum_Payment)
 
-                insert_account_row_q = "INSERT INTO " + account_set_table_name + " (forecast_id, account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_cadence, minimum_payment, primary_checking_ind) VALUES "
-                insert_account_row_q += "('" + str(E.unique_id) + "', '" + str(row.Name) + "', " + str(
-                    row.Balance) + ", " + str(row.Min_Balance) + ", " + str(row.Max_Balance) + ", '" + str(
-                    row.Account_Type) + "', " + str(bsd) + ", " + apr + ", '" + str(
-                    row.Interest_Cadence) + "', " + min_payment + ", '" + str(row.Primary_Checking_Ind) + "')"
-                cursor.execute(insert_account_row_q)
-
-            # forecast_name_to_budget_item_set__dict
-            cursor.execute("DELETE FROM " + budget_set_table_name + " WHERE forecast_id = \'" + str(E.unique_id) + "\'")
-            for index, row in E.initial_budget_set.getBudgetItems().iterrows():
-                insert_budget_item_row_q = "INSERT INTO " + budget_set_table_name + " (forecast_id, memo, priority, start_date, end_date, cadence, amount, \"deferrable\", partial_payment_allowed) VALUES "
-                insert_budget_item_row_q += "('" + str(E.unique_id) + "','" + str(row.Memo) + "'," + str(
-                    row.Priority) + ",'" + str(row.Start_Date) + "','" + str(row.End_Date) + "','" + str(
-                    row.Cadence) + "'," + str(row.Amount) + ",'" + str(row.Deferrable) + "','" + str(
-                    row.Partial_Payment_Allowed) + "')"
-                cursor.execute(insert_budget_item_row_q)
-
-            cursor.execute(
-                "DELETE FROM " + memo_rule_set_table_name + " WHERE forecast_id = \'" + str(E.unique_id) + "\'")
-            for index, row in E.initial_memo_rule_set.getMemoRules().iterrows():
-                insert_memo_rule_row_q = "INSERT INTO " + memo_rule_set_table_name + " (forecast_id, memo_regex, account_from, account_to, priority ) VALUES "
-                insert_memo_rule_row_q += "('" + str(E.unique_id) + "','" + str(row.Memo_Regex) + "','" + str(
-                    row.Account_From) + "','" + str(row.Account_To) + "'," + str(row.Transaction_Priority) + ")"
-                cursor.execute(insert_memo_rule_row_q)
-
-            # todo account milestone set
-            # todo memo milestone set
-            # todo composite milestone set
+            E.write_to_database(database_hostname=database_hostname,
+                                database_name=database_name,
+                                database_username=database_username,
+                                database_password=database_password,
+                                database_port=database_port,
+                                username=username,
+                                overwrite=overwrite)
 
             # forecast_set_id, forecast_set_name, forecast_id, forecast_name, start_date, end_date, insert_ts
             insert_def_q = "INSERT INTO prod."+str(username)+"_forecast_set_definitions SELECT '" + self.unique_id + "' as forecast_set_id, '"
@@ -376,11 +337,11 @@ class ForecastSet:
             #print(insert_def_q)
             cursor.execute(insert_def_q)
 
-            forecast_name = self.id_to_name[E.unique_id]
-            insert_stage_q = "INSERT INTO prod." + str(username) + "_staged_forecast_details Select '" + str(
-                self.unique_id) + "','" + str(E.unique_id) + "','" + str(self.forecast_set_name) + "','" + str(
-                forecast_name) + "','" + str(E.start_date_YYYYMMDD) + "','" + str(E.end_date_YYYYMMDD) + "'"
-            cursor.execute(insert_stage_q)
+            # forecast_name = self.id_to_name[E.unique_id]
+            # insert_stage_q = "INSERT INTO prod." + str(username) + "_staged_forecast_details Select '" + str(
+            #     self.unique_id) + "','" + str(E.unique_id) + "','" + str(self.forecast_set_name) + "','" + str(
+            #     forecast_name) + "','" + str(E.start_date_YYYYMMDD) + "','" + str(E.end_date_YYYYMMDD) + "'"
+            # cursor.execute(insert_stage_q)
 
     def initialize_forecast_set_from_json(self,path):
         raise NotImplementedError
@@ -392,7 +353,30 @@ class ForecastSet:
         raise NotImplementedError
 
     def to_json(self):
-        return jsonpickle.encode(self, indent=4, unpicklable=False)
+
+        json_string = "{\n"
+        json_string += "\"forecast_set_name\":\"" + self.forecast_set_name + "\",\n"
+        json_string += "\"unique_id\":\"" + self.unique_id + "\",\n"
+        json_string += "\"id_to_name\":" + json.dumps(self.id_to_name, indent=4) + ",\n"
+        json_string += "\"base_forecast\":" + self.base_forecast.to_json() + ",\n"
+        json_string += "\"core_budget_set\": " + self.core_budget_set.to_json() + ",\n"
+        json_string += "\"option_budget_set\": " + self.option_budget_set.to_json() + ",\n"
+        json_string += "\"initialized_forecasts\": {"
+
+        not_last_forecast = True
+        index = 0
+        for unique_id, E in self.initialized_forecasts.items():
+            json_string += "\""+unique_id+"\":\n"+E.to_json()
+            if index == (len(self.initialized_forecasts)-1):
+                not_last_forecast = False
+            if not_last_forecast:
+                json_string += ",\n"
+            index = index + 1
+        json_string += "\n}" #closes i_f
+        json_string += "\n}"  # closes entire string
+        #print(json_string)
+        json_string = json.dumps(json.loads(json_string), indent=4)
+        return json_string
 
 
     # def initialize_forecasts(self):
@@ -436,28 +420,32 @@ class ForecastSet:
 
 
     def addChoiceToAllForecasts(self, list_of_choice_names, list_of_lists_of_memo_regexes):
-        log_in_color(logger, 'white', 'debug', 'ENTER addChoiceToAllScenarios')
+        #log_in_color(logger, 'white', 'info', 'ENTER addChoiceToAllScenarios')
 
         # if len(self.forecast_name_to_budget_item_set__dict) == 0:
         #     self.forecast_name_to_budget_item_set__dict['Core'] = self.core_budget_set
+
+        if len(self.initialized_forecasts) == 0:
+            # log_in_color(logger, 'white', 'info', 'i_f empty, setting i_f[core] = b_f')
+            self.initialized_forecasts['Core'] = self.base_forecast
 
         new_dict_of_scenarios = {}
         choice_index = 0
         for list_of_memo_regexes in list_of_lists_of_memo_regexes:
             choice_name = list_of_choice_names[choice_index]
-            log_in_color(logger, 'white', 'debug', 'choice_index ' + str(choice_index))
-            log_in_color(logger, 'white', 'debug', 'choice_name ' + str(choice_name))
+            #log_in_color(logger, 'white', 'info', 'choice_index ' + str(choice_index))
+            #log_in_color(logger, 'white', 'info', 'choice_name ' + str(choice_name))
 
             for E_id, E in self.initialized_forecasts.items():
                 s_key = E.forecast_name
                 s_value = E.initial_budget_set
             #for s_key, s_value in self.forecast_name_to_budget_item_set__dict.items():
-                log_in_color(logger, 'white', 'debug', 's_key ' + str(s_key))
+                #log_in_color(logger, 'white', 'info', 's_key ' + str(s_key))
                 new_option_budget_set = copy.deepcopy(s_value)
 
                 new_option_budget_set_list = new_option_budget_set.budget_items
                 for bi in self.option_budget_set.budget_items:
-                    log_in_color(logger, 'white', 'debug', 'bi ' + str(bi))
+                    #log_in_color(logger, 'white', 'info', 'bi ' + str(bi))
                     for memo_regex in list_of_memo_regexes:
                         #print((memo_regex, bi.memo))
                         match_result = re.search(memo_regex, bi.memo)
@@ -468,16 +456,19 @@ class ForecastSet:
                             pass
                 new_option_budget_set = BudgetSet.BudgetSet(new_option_budget_set_list)
                 new_dict_of_scenarios[s_key+' | '+ choice_name] = new_option_budget_set
+
             choice_index += 1
 
-        #self.forecast_name_to_budget_item_set__dict = new_dict_of_scenarios
+        # log_in_color(logger, 'white', 'info', 'self.initialized_forecasts:' + str(self.initialized_forecasts.keys()))
+        # for k, v in new_dict_of_scenarios.items():
+        #     log_in_color(logger, 'white', 'info', 'k:' + str(k))
+        #     log_in_color(logger, 'white', 'info', 'v:' + str(v.getBudgetItems().to_string()))
 
         new_id_to_name = {}
         new_id_to_name[self.base_forecast.unique_id] = 'Core'
         new_initialized_forecasts = {}
-        for E_id, E in self.initialized_forecasts.items():
-            forecast_name = E.forecast_name
-            budget_set = E.initial_budget_set
+        #for E_id, E in self.initialized_forecasts.items():
+        for forecast_name, budget_set in new_dict_of_scenarios.items():
             # for s_key, s_value in self.forecast_name_to_budget_item_set__dict.items():
             # print('Initializing '+forecast_name)
             new_E = ExpenseForecast.ExpenseForecast(account_set=self.base_forecast.initial_account_set,
@@ -502,7 +493,7 @@ class ForecastSet:
         id_set_hash = str(int(hashlib.sha1(str(keys_list).encode("utf-8")).hexdigest(), 16) % 1000).rjust(4, '0')
         self.unique_id = 'S' + str(id_sd) + '_' + str(id_num_days) + '_' + str(id_distinct_p) + '_' + str(id_set_hash)
 
-        log_in_color(logger, 'white', 'debug', 'EXIT addChoiceToAllScenarios')
+        #log_in_color(logger, 'white', 'info', 'EXIT addChoiceToAllScenarios')
 
     def __str__(self):
         return_string = "------------------------------------------------------------------------------------------------\n"
@@ -515,10 +506,12 @@ class ForecastSet:
         return_string += self.option_budget_set.getBudgetItems().to_string() + "\n"
         return_string += "------------------------------------------------------------------------------------------------\n"
         return_string += "Initialized Forecasts:\n"
-        return_string += "id     sd       ed       Complete:\n"
+        return_string += "id              sd       ed       Complete  Forecast Name\n"
         for k, v in self.initialized_forecasts.items():
             completed_flag = v.forecast_df is not None
-            return_string += str(k) + " " + v.start_date_YYYYMMDD + " " + v.end_date_YYYYMMDD + " " + str(completed_flag) + " \n"
+            return_string += str(k) + " " + v.start_date_YYYYMMDD + " " + v.end_date_YYYYMMDD + " " + str(completed_flag) + "    "
+            return_string += str(v.forecast_name)
+            return_string += " \n"
         return_string += "------------------------------------------------------------------------------------------------\n"
 
 
@@ -536,8 +529,6 @@ class ForecastSet:
         #this updates the unique_id of the base_forecast
         self.base_forecast.update_date_range(start_date_YYYYMMDD, end_date_YYYYMMDD)
 
-        #can't call update date range unless the ExpenseForecast already exists
-        self.initialize_forecasts()
         new_initialized_forecasts = self.initialized_forecasts.copy()
         for E_key, E in self.initialized_forecasts.copy().items():
             del new_initialized_forecasts[E_key]

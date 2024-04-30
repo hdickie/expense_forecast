@@ -71,7 +71,7 @@ import ForecastSet
 # 24. kill forecastset                                  O
 
 start_date = datetime.datetime.now().strftime('%Y%m%d')
-end_date = '20240430'
+end_date = '20240530'
 
 A = AccountSet.AccountSet([])
 B1 = BudgetSet.BudgetSet([])

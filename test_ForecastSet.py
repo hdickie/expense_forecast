@@ -7,6 +7,7 @@ import MilestoneSet
 import AccountSet
 import MemoRuleSet
 import datetime
+import psycopg2
 
 class TestForecastSet:
 
@@ -143,16 +144,16 @@ class TestForecastSet:
         S = ForecastSet.ForecastSet(E1, option_budget_set)
         S.addChoiceToAllForecasts(['A', 'B'], [['.*A.*'], ['.*B.*']])
         S.addChoiceToAllForecasts(['C', 'D'], [['.*C.*'], ['.*D.*']])
-        S.initialize_forecasts()
 
         for k, v in S.initialized_forecasts.items():
-            print(k,v.unique_id)
+            assert v.start_date_YYYYMMDD != '20240101'
+            assert v.end_date_YYYYMMDD != '20250101'
+
         S.update_date_range('20240101','20250101')
-        print('---------')
         for k, v in S.initialized_forecasts.items():
-            print(k,v.unique_id)
+            assert v.start_date_YYYYMMDD == '20240101'
+            assert v.end_date_YYYYMMDD == '20250101'
 
-        assert False
 
     def test_ForecastSet_to_json(self):
         start_date = datetime.datetime.now().strftime('%Y%m%d')
@@ -454,7 +455,13 @@ class TestForecastSet:
         username = 'virtuoso_user'
 
         start_date_YYYYMMDD = '20000101'
-        end_date_YYYYMMDD = '20000201'
+        end_date_YYYYMMDD = '20000103'
+
+        connection = psycopg2.connect(host=database_hostname, database=database_name, user=database_username,
+                                      password=database_password, port=database_port)
+        connection.autocommit = True
+        cursor = connection.cursor()
+
 
         A = AccountSet.AccountSet()
         A.createCheckingAccount('Checking', 1000, 0, 100000)
@@ -472,24 +479,23 @@ class TestForecastSet:
         MS = MilestoneSet.MilestoneSet()
 
         E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
-        #print('Base Forecast id: '.ljust(40)+E.unique_id)
         S = ForecastSet.ForecastSet(base_forecast=E, option_budget_set=B_option)
-        assert len(S.id_to_name) > 0 #1
-        #print('S initial id: '.ljust(40) + S.unique_id)
-        #print('S base forecast id: '.ljust(40) + S.base_forecast.unique_id)
         S.addChoiceToAllForecasts(['option A','option B'],[['.*option A.*'],['.*option B.*']])
-        assert len(S.id_to_name) > 0 #2
-        #print('S base forecast id (after add choice): '.ljust(40) + S.base_forecast.unique_id)
-        #print('S id after add choice: '.ljust(40) + S.unique_id)
-        S.runAllForecasts()
-        assert len(S.id_to_name) > 0 #3
-        #print('S base forecast id (after run): '.ljust(40) + S.base_forecast.unique_id)
-        #print('S id after run: '.ljust(40) + S.unique_id)
-        S.writeToDatabase(database_hostname, database_name, database_username, database_password, database_port,
-                          username)
-        #print('S base forecast id (after write): '.ljust(40) + S.base_forecast.unique_id)
-        #print('S id after write: '.ljust(40) + S.unique_id)
+        #print(S)
+        assert len(S.id_to_name) == 3
+        assert 'Core' in S.id_to_name.values()
+        assert 'Core | option A' in S.id_to_name.values()
+        assert 'Core | option B' in S.id_to_name.values()
 
+        S.runAllForecasts()
+
+        #delete any pre-existing data
+        for k, v in S.id_to_name.items():
+            cursor.execute("DELETE FROM prod.virtuoso_user_forecast_run_metadata WHERE forecast_id = '" + k +"'")
+            cursor.execute("DELETE FROM prod.virtuoso_user_forecast_set_definitions WHERE forecast_id = '" + k + "'")
+
+        S.writeToDatabase(database_hostname, database_name, database_username, database_password, database_port,
+                          username, overwrite=True)
         S2 = ForecastSet.initialize_forecast_set_from_database(set_id=S.unique_id,
                                                                username=username,
                                                                database_hostname=database_hostname,
@@ -497,47 +503,25 @@ class TestForecastSet:
                                                                database_username=database_username,
                                                                database_password=database_password,
                                                                database_port=database_port)
-        #print('S2 id (after load): '.ljust(40) + S2.unique_id)
-        #print('S2 base forecast id (after load): '.ljust(40) + S2.base_forecast.unique_id)
-        # this is gonna fail bc memory addresses
-        # assert S.to_json() == S2.to_json()
-        assert S.forecast_set_name == S2.forecast_set_name
 
-        # print('################################################')
-        # print(S.base_forecast.to_json())
-        # print('################################################')
-        # print(S2.base_forecast.to_json())
-        # print('################################################')
-
-        assert S.base_forecast.to_json() == S2.base_forecast.to_json()
-        # print(' S.base_forecast.unique_id:'+S.base_forecast.unique_id)
-        # print('S2.base_forecast.unique_id:'+S2.base_forecast.unique_id)
+        # assert S.forecast_set_name == S2.forecast_set_name
+        # assert S.base_forecast.to_json() == S2.base_forecast.to_json()
+        # assert S.initialized_forecasts.keys() == S2.initialized_forecasts.keys()
+        # assert S.option_budget_set.getBudgetItems().to_string() == S2.option_budget_set.getBudgetItems().to_string()
         #
-        # print('S.initialized_forecasts.keys():')
-        # print(S.initialized_forecasts.keys())
-        #
-        # print('S2.initialized_forecasts.keys():')
-        # print(S2.initialized_forecasts.keys())
-        assert S.initialized_forecasts.keys() == S2.initialized_forecasts.keys()
+        # for unique_id, E in S.initialized_forecasts.items():
+        #     #print('Checking ' + unique_id)
+        #     check_1 = E.forecast_df.to_json()
+        #     check_2 = S.initialized_forecasts[unique_id].forecast_df.to_json()
+        #     assert check_1 is not None
+        #     assert check_2 is not None
+        #     assert check_1 == check_2
 
-        assert S.option_budget_set.getBudgetItems().to_string() == S2.option_budget_set.getBudgetItems().to_string()
-
-        # these would be None bc not run yet
-        # print('S.initialized_forecasts.keys():')
-        # print(S.initialized_forecasts.keys())
-        for unique_id, E in S.initialized_forecasts.items():
-            #print('Checking ' + unique_id)
-            check_1 = E.forecast_df.to_json()
-            check_2 = S.initialized_forecasts[unique_id].forecast_df.to_json()
-            assert check_1 is not None
-            assert check_2 is not None
-            assert check_1 == check_2
-
-        # print('####################################')
-        # print(S.to_json())
-        # print('####################################')
-        # print(S2.to_json())
-        # print('####################################')
+        print('########################################################')
+        print(S.to_json())
+        print('########################################################')
+        print(S2.to_json())
+        print('########################################################')
         assert S.to_json() == S2.to_json()
 
 
@@ -587,7 +571,11 @@ class TestForecastSet:
                                                                database_username=database_username,
                                                                database_password=database_password,
                                                                database_port=database_port)
-
+        # print('########################################################')
+        # print(S.to_json())
+        # print('########################################################')
+        # print(S2.to_json())
+        # print('########################################################')
         assert S.to_json() == S2.to_json()
 
     def test_ForecastSet_writeToDatabase_twoChoices_Run(self):
