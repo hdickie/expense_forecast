@@ -147,6 +147,8 @@ def initialize_forecast_set_from_database(set_id, username, database_hostname, d
 
     # username, forecast_set_id, forecast_id, insert_ts
     forecast_set_definition_df = pd.read_sql_query("select * from prod."+username+"_forecast_set_definitions where forecast_set_id = '"+set_id+"'", con=engine)
+    print('forecast_set_definition_df:')
+    print(forecast_set_definition_df.to_string())
     assert forecast_set_definition_df.shape[0] > 0  # else set has no definition (stage it to fix this error)
 
     forecast_set_name = forecast_set_definition_df['forecast_set_name'].iat[0]
@@ -162,7 +164,9 @@ def initialize_forecast_set_from_database(set_id, username, database_hostname, d
     # print('forecast_set_definition_df:')
     # print(forecast_set_definition_df.to_string())
     for index, row in forecast_set_definition_df.iterrows():
-        #print('ForecastSet::initialize_forecast_set_from_database calling initialize_from_database_with_id on '+row.forecast_id)
+        print('ForecastSet::initialize_forecast_set_from_database calling initialize_from_database_with_id')
+        print('row.forecast_set_id:'+row.forecast_set_id)
+        print('row.forecast_id:' + row.forecast_id)
         E = ExpenseForecast.initialize_from_database_with_id(username=username,
                                                              forecast_set_id=row.forecast_set_id,
                                                              forecast_id=row.forecast_id,
@@ -236,6 +240,8 @@ class ForecastSet:
         self.unique_id = 'S' + str(id_sd) + '_' + str(id_num_days) + '_' + str(id_distinct_p) + '_' + str(id_set_hash)
 
     def writeToDatabase(self,database_hostname,database_name,database_username,database_password,database_port,username,overwrite=True):
+        print('writeToDatabase')
+        print("\n")
         connection = psycopg2.connect(host=database_hostname,
                                       database=database_name,
                                       user=database_username,
@@ -263,7 +269,13 @@ class ForecastSet:
 
         #todo _forecast_run_metadata start_ts and end_ts
 
-
+        self.base_forecast.write_to_database(database_hostname=database_hostname,
+                          database_name=database_name,
+                          database_username=database_username,
+                          database_password=database_password,
+                          database_port=database_port,
+                          username=username,
+                          overwrite=overwrite)
 
         ### This is base_forecast
         # cursor.execute(
@@ -318,6 +330,7 @@ class ForecastSet:
 
         #Base forecast should be a part of this
         for unique_id, E in self.initialized_forecasts.items():
+            print('Writing '+str(unique_id)+' to database')
             log_in_color(logger, 'green', 'info','Writing '+str(unique_id)+' to database')
 
             E.write_to_database(database_hostname=database_hostname,
@@ -334,7 +347,8 @@ class ForecastSet:
             insert_def_q += E.forecast_name + "' as forecast_name, '"+E.start_date_YYYYMMDD+"' as start_date, '"
             insert_def_q += E.end_date_YYYYMMDD+"' as end_date, "
             insert_def_q += "'" + datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + "' as insert_ts"
-            #print(insert_def_q)
+            print(insert_def_q)
+            print("\n")
             cursor.execute(insert_def_q)
 
             # forecast_name = self.id_to_name[E.unique_id]
