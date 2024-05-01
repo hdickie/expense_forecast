@@ -1257,8 +1257,8 @@ class ForecastHandler:
 
         output_file_name = 'Forecast_'+str(report_id)
 
-        start_ts__datetime = datetime.datetime.strptime(E.start_ts,'%Y_%m_%d__%H_%M_%S')
-        end_ts__datetime = datetime.datetime.strptime(E.end_ts, '%Y_%m_%d__%H_%M_%S')
+        start_ts__datetime = datetime.datetime.strptime(E.start_ts,'%Y-%m-%d %H:%M:%S')
+        end_ts__datetime = datetime.datetime.strptime(E.end_ts, '%Y-%m-%d %H:%M:%S')
         simulation_time_elapsed = end_ts__datetime - start_ts__datetime
 
         if parent_report_path is not None:

@@ -197,7 +197,7 @@ def initialize_from_database_with_id(username,
                              database_password='postgres',
                              database_port='5432'
                              ): #todo may need a few more parameters
-    print('ENTER ExpenseForecast::initialize_from_database_with_id forecast_id='+str(forecast_id))
+    #print('ENTER ExpenseForecast::initialize_from_database_with_id forecast_id='+str(forecast_id))
     connect_string = 'postgresql://' + database_username + ':' + database_password + '@' + database_hostname + ':' + str(database_port) + '/' + database_name
     engine = create_engine(connect_string)
     # engine = create_engine('postgresql://bsdegjmy_humedick@localhost:5432/bsdegjmy_sandbox')
@@ -213,10 +213,10 @@ def initialize_from_database_with_id(username,
 
 
     account_set_select_q = "select * from prod.ef_account_set_"+username+" where forecast_id = '"+forecast_id+"'"
-    print('forecast_set_id:'+forecast_set_id)
-    print('forecast_id:'+forecast_id)
-    print('account_set_select_q:')
-    print(account_set_select_q)
+    # print('forecast_set_id:'+forecast_set_id)
+    # print('forecast_id:'+forecast_id)
+    # print('account_set_select_q:')
+    # print(account_set_select_q)
 
     budget_set_select_q = "select * from prod.ef_budget_item_set_"+username+" where forecast_id = '"+forecast_id+"'"
     memo_rule_set_select_q = "select * from prod.ef_memo_rule_set_"+username+" where forecast_id = '"+forecast_id+"'"
@@ -1994,7 +1994,7 @@ class ExpenseForecast:
 
         # self.forecast_df.to_csv('./Forecast__'+run_ts+'.csv')
         log_in_color(logger,'green', 'info', 'Writing to '+str(output_dir)+'/Forecast_' + self.unique_id + '.json')
-        #print('Writing to '+str(output_dir)+'/Forecast_' + self.unique_id + '.json')
+        print('Writing to '+str(output_dir)+'/Forecast_' + self.unique_id + '.json')
         #self.forecast_df.to_csv('./Forecast__' + run_ts + '.json')
 
         #self.forecast_df.index = self.forecast_df['Date']

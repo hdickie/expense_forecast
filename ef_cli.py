@@ -525,7 +525,7 @@ ON all_forecasts_all_states.forecast_id = meta.forecast_id
             except:
                 pass
             #S.initialize_forecasts()
-            print('len(S.initialized_forecasts):'+str(len(S.initialized_forecasts)))
+            #print('len(S.initialized_forecasts):'+str(len(S.initialized_forecasts)))
             if args.approximate:
                 S.runAllForecastsApproximate()
             else:
@@ -537,11 +537,12 @@ ON all_forecasts_all_states.forecast_id = meta.forecast_id
                                           database_port=args.database_port,
                               username=args.username)
 
-            S.writeToJSONFile(args.working_directory) #todo this is not writing forecast_df and indeed some of the other data frames as intended
+            S.writeToJSONFile(args.working_directory)
             F = ForecastHandler.ForecastHandler()
             #todo also write Set JSON and report. i think 'write child reports' could be a parameter
             for unique_id, E in S.initialized_forecasts.items():
                 E.writeToJSONFile(args.working_directory)
+                E.forecast_df.to_csv(args.working_directory+'Forecast_'+E.unique_id+'.csv')
                 F.generateHTMLReport(E)
             if not forecast_set_found:
                 print('Forecast Set ' + str(args.id) + ' not found')
@@ -626,6 +627,9 @@ ON all_forecasts_all_states.forecast_id = meta.forecast_id
             # todo milestone tables
 
         elif args.action[0] == 'parameterize' and args.action[1] == 'forecastset' and args.source == "database":
+            #todo the logic in this block assumes the forecast is run, bc even if it did we don't plan on using it
+            #while this would most often produce expected results, it may not be strictly true (there may be cached data)
+            #if there is cached data there COULD be unexpected results. I haven't thought it all the way through
 
             temporary_account_set_table_name = 'prod.ef_account_set_' + args.username + '_temporary'
             temporary_budget_set_table_name = 'prod.ef_budget_item_set_' + args.username + '_temporary'
@@ -650,23 +654,53 @@ ON all_forecasts_all_states.forecast_id = meta.forecast_id
             memo_milestone_select_q = "select * from " + temporary_memo_milestone_table_name
             composite_milestone_select_q = "select * from " + temporary_composite_milestone_table_name
 
+            # this is just the source of forecase_name so a row of blanks is fine
+            # forecast_set_id, forecast_set_name, forecast_id, forecast_name, start_date, end_date, insert_ts
+            set_def_q = """
+               select '' as forecast_set_id, '' as forecast_set_name, '' as forecast_id, '' as forecast_name, 
+               '' as start_date, '' as end_date, '' as insert_ts
+               """
+
+            # it has to be forecast_set bc if forecast hasnt been run yet we still need that info
+            # a 0-row response is valid
+            metadata_q = """
+               select forecast_set_id, forecast_id, forecast_title, forecast_subtitle,
+               submit_ts, complete_ts, error_flag, satisfice_failed_flag
+               from (
+               select *, row_number() over(partition by forecast_id order by insert_ts desc) as rn
+               from prod.""" + args.username + """_forecast_run_metadata
+               where forecast_id = 'FORECAST NOT YET RUN'
+               order by forecast_id
+               ) where rn = 1 and forecast_id = 'FORECAST NOT YET RUN'
+               """
+
+            #Forecast not yet run so an empty row response is valid
+            budget_item_post_run_category_select_q = "select * from prod." + args.username + "_budget_item_post_run_category where forecast_id = 'FORECAST_NOT_YET_RUN'"
+
+            # If no forecast, this query will fail downstream
+            forecast_select_q = "Nonsense query bc forecast does not exist on db yet"
+
             base_E = ExpenseForecast.initialize_from_database_with_select(args.start_date,
-                                                              args.end_date,
-                                                              account_set_select_q=account_set_select_q,
-                                                              budget_set_select_q=budget_set_select_q,
-                                                              memo_rule_set_select_q=memo_rule_set_select_q,
-                                                              account_milestone_select_q=account_milestone_select_q,
-                                                              memo_milestone_select_q=memo_milestone_select_q,
-                                                              composite_milestone_select_q=composite_milestone_select_q,
-                                                         database_hostname=args.database_hostname,
-                                                         database_name=args.database_name,
-                                                         database_username=args.database_username,
-                                                         database_password=args.database_password,
-                                                         database_port=args.database_port,
-                                                         log_directory=args.log_directory,
-                                                         forecast_set_name=args.label,
-                                                         forecast_name='Core'
-                                                         )
+                    args.end_date,
+                    account_set_select_q=account_set_select_q,
+                    budget_set_select_q=budget_set_select_q,
+                    memo_rule_set_select_q=memo_rule_set_select_q,
+                    account_milestone_select_q=account_milestone_select_q,
+                    memo_milestone_select_q=memo_milestone_select_q,
+                    composite_milestone_select_q=composite_milestone_select_q,
+                    set_def_q=set_def_q,
+                    metadata_q=metadata_q,
+                    budget_item_post_run_category_select_q=budget_item_post_run_category_select_q,
+                    forecast_select_q=forecast_select_q,
+                    database_hostname=args.database_hostname,
+                    database_name=args.database_name,
+                    database_username=args.database_username,
+                    database_password=args.database_password,
+                    database_port=args.database_port,
+                    log_directory=args.log_directory,
+                    forecast_set_name=args.label,
+                    forecast_name='Core'
+                    )
 
             A = base_E.initial_account_set
             M = base_E.initial_memo_rule_set
