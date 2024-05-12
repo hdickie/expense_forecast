@@ -21,7 +21,7 @@ def generate_date_sequence(start_date_YYYYMMDD, num_days, cadence):
         start_date = start_date - datetime.timedelta(days=day_delta)
         end_date = end_date - datetime.timedelta(days=day_delta)
         relevant_semiweekly_schedule = pd.date_range(start_date, end_date, freq='W-MON')
-        result_sequence = relevant_semiweekly_schedule + datetime.timedelta(days=day_delta)
+        return_series = relevant_semiweekly_schedule + datetime.timedelta(days=day_delta)
     elif cadence.lower() == "semiweekly":
         day_delta = start_date.weekday()
         start_date = start_date - datetime.timedelta(days=day_delta)

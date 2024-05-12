@@ -126,7 +126,8 @@ if __name__ == '__main__':
 
 
     B = BudgetSet.BudgetSet([])
-    # B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 25, 'food', False, False)
+    B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 25, 'food', False, False)
+    B.addBudgetItem('20240103', '20240303', 2, 'monthly', 2000, 'pay down cc', False, True)
     # B.addBudgetItem('20240518', end_date_YYYYMMDD, 1, 'monthly', 25, 'storage unit', False, False)
     # B.addBudgetItem('20240518', '20240628', 1, 'semiweekly', 600, 'repay mom', False, False)
     # B.addBudgetItem('20240701', '20270401', 1, 'monthly', 800, 'repay dad', False, False)
@@ -145,10 +146,10 @@ if __name__ == '__main__':
     M = MemoRuleSet.MemoRuleSet([])
     # M.addMemoRule('repay.*', 'Checking', 'None', 1)
     # M.addMemoRule('car insurance', 'Credit', 'None', 1)
-    # M.addMemoRule('food', 'Credit', 'None', 1)
+    M.addMemoRule('food', 'Credit', 'None', 1)
     # M.addMemoRule('storage unit', 'Credit', 'None', 1)
     # M.addMemoRule('.*income.*','None','Checking',1)
-    # M.addMemoRule('pay down cc', 'Checking', 'Credit', 1)
+    M.addMemoRule('pay down cc', 'Checking', 'Credit', 2)
     # M.addMemoRule('more cc payment', 'Checking', 'Credit', 2)
 
 

@@ -1,0 +1,4 @@
+,Date,Checking,Credit: Curr Stmt Bal,Credit: Prev Stmt Bal,Marginal Interest,Net Gain,Net Loss,Net Worth,Loan Total,CC Debt Total,Liquid Total,Memo Directives,Memo
+0,20000101,1000.0,1500.0,500.0,0,0,0,-1000.0,0.0,2000.0,1000.0,,
+1,20000102,0.0,1000.0,0.0,0,0,1000,-1000.0,0.0,1000.0,0.0,partial cc payment (Checking -$1000.0);  ADDTL CC PAYMENT (Credit: Curr Stmt Bal $500.0);  ADDTL CC PAYMENT (Credit: Prev Stmt Bal $500.0); ,partial cc payment (Checking -$1000.0); partial cc payment (Credit: Curr Stmt Bal $500.0); partial cc payment (Credit: Prev Stmt Bal $500.0); 
+2,20000103,0.0,1000.0,0.0,0,0,0,-1000.0,0.0,1000.0,0.0,,
