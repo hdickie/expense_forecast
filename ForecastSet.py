@@ -146,9 +146,15 @@ def initialize_forecast_set_from_database(set_id, username, database_hostname, d
     # Implementation of set identified would have to change but I have talked myself into this alternate implementation
 
     # username, forecast_set_id, forecast_id, insert_ts
-    forecast_set_definition_df = pd.read_sql_query("select * from prod."+username+"_forecast_set_definitions where forecast_set_id = '"+set_id+"'", con=engine)
-    #print('forecast_set_definition_df:')
-    #print(forecast_set_definition_df.to_string())
+    forecast_set_def_q = "select * from prod."+username+"_forecast_set_definitions where forecast_set_id = '"+set_id+"'"
+    # print('username:')
+    # print(username)
+    # print('set_id:'+str(set_id))
+    # print('forecast_set_def_q:')
+    # print(forecast_set_def_q)
+    forecast_set_definition_df = pd.read_sql_query(forecast_set_def_q, con=engine)
+    # print('forecast_set_definition_df:')
+    # print(forecast_set_definition_df.to_string())
     assert forecast_set_definition_df.shape[0] > 0  # else set has no definition (stage it to fix this error)
 
     forecast_set_name = forecast_set_definition_df['forecast_set_name'].iat[0]
@@ -164,9 +170,9 @@ def initialize_forecast_set_from_database(set_id, username, database_hostname, d
     # print('forecast_set_definition_df:')
     # print(forecast_set_definition_df.to_string())
     for index, row in forecast_set_definition_df.iterrows():
-        #print('ForecastSet::initialize_forecast_set_from_database calling initialize_from_database_with_id')
-        #print('row.forecast_set_id:'+row.forecast_set_id)
-        #print('row.forecast_id:' + row.forecast_id)
+        # print('ForecastSet::initialize_forecast_set_from_database calling initialize_from_database_with_id')
+        # print('row.forecast_set_id:'+row.forecast_set_id)
+        # print('row.forecast_id:' + row.forecast_id)
         E = ExpenseForecast.initialize_from_database_with_id(username=username,
                                                              forecast_set_id=row.forecast_set_id,
                                                              forecast_id=row.forecast_id,
@@ -563,8 +569,11 @@ class ForecastSet:
         self.unique_id = 'S' + str(id_sd) + '_' + str(id_num_days) + '_' + str(id_distinct_p) + '_' + str(id_set_hash)
 
     def writeToJSONFile(self, output_dir='./'):
+        print('ENTER writeToJSONFile')
         log_in_color(logger,'green', 'info', 'Writing to '+str(output_dir)+'ForecastSet_' + self.unique_id + '.json')
+        print('Writing to '+str(output_dir)+'ForecastSet_' + self.unique_id + '.json')
         with open(str(output_dir)+'ForecastSet_' + self.unique_id + '.json','w') as f:
+            print('about to write forecast set')
             f.write(self.to_json())
 
     def runAllForecasts(self,log_level='WARNING'):
@@ -579,5 +588,7 @@ class ForecastSet:
     def runAllForecastsApproximate(self):
         R = ForecastRunner.ForecastRunner(lock_directory='.')
         for unique_id, E in self.initialized_forecasts.items():
+            log_in_color(logger, 'green', 'info', 'ForecastSet::runAllForecastsApproximate - start ' + unique_id)
             R.start_forecast_approximate(E)
         R.waitAll()
+        self.initialized_forecasts = R.forecasts

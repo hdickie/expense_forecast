@@ -29,6 +29,11 @@ def runAndReturn(E, log_level='WARNING'):
     os.remove(lock_file_name) #want to always remove lock if possible
     return E
 
+def runAndReturnApproximate(E):
+    #print('START runAndReturn '+str(E.unique_id))
+    E.runForecastApproximate()
+    #print('END runAndReturn ' + str(E.unique_id))
+    return E
 
 class ForecastRunner:
 
@@ -47,11 +52,7 @@ class ForecastRunner:
 
 
 
-    def runAndReturnApproximate(self, E):
-        #print('START runAndReturn '+str(E.unique_id))
-        E.runForecastApproximate()
-        #print('END runAndReturn ' + str(E.unique_id))
-        return E
+
 
     def start_forecast(self, E, log_level='WARNING'):
 
@@ -74,7 +75,7 @@ class ForecastRunner:
         #we also check the lock directory in case there are multiple instance of ForecastRunner at the same time
         #future = self.executor.submit(E.fake_runForecast)
         #print('BEFORE schedule ' + str(E.unique_id))
-        future = self.executor.schedule(self.runAndReturnApproximate, args=[E])
+        future = self.executor.schedule(runAndReturnApproximate, args=[E])
         #print('AFTER schedule ' + str(E.unique_id))
         self.id_to_futures_dict[E.unique_id] = future
         self.futures_to_id_dict[future] = E.unique_id

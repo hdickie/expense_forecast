@@ -165,6 +165,7 @@ class BudgetSet:
 
         """
         log_in_color(logger, 'green', 'debug','addBudgetItem(priority=' + str(priority) + ',cadence=' + str(cadence) + ',memo=' + str(memo) + ',start_date_YYYYMMDD=' + str(start_date_YYYYMMDD) + ',end_date_YYYYMMDD=' + str(end_date_YYYYMMDD) + ')')
+
         budget_item = BudgetItem.BudgetItem(start_date_YYYYMMDD,
                                             end_date_YYYYMMDD,
                  priority,

@@ -22,7 +22,70 @@ def task(n_seconds):
     sleep(n_seconds)
     return 'Done!'
 
+from generate_date_sequence import generate_date_sequence
+
 if __name__ == '__main__':
+
+    # sw1_sd = '20240501'
+    # sw2_sd = '20240502'
+    # sw3_sd = '20240503'
+    # sw4_sd = '20240504'
+    # sw5_sd = '20240505'
+    # sw6_sd = '20240506'
+    # sw7_sd = '20240507'
+    # sw8_sd = '20240508'
+    # sw9_sd = '20240509'
+    # sw10_sd = '20240510'
+    # sw11_sd = '20240511'
+    # sw12_sd = '20240512'
+    # sw13_sd = '20240513'
+    # sw14_sd = '20240514'
+    #
+    # sw1 = generate_date_sequence(sw1_sd,15,'semiweekly')
+    # sw2 = generate_date_sequence(sw2_sd,15,'semiweekly')
+    # sw3 = generate_date_sequence(sw3_sd,15,'semiweekly')
+    # sw4 = generate_date_sequence(sw4_sd,15,'semiweekly')
+    # sw5 = generate_date_sequence(sw5_sd,15,'semiweekly')
+    # sw6 = generate_date_sequence(sw6_sd,15,'semiweekly')
+    # sw7 = generate_date_sequence(sw7_sd,15,'semiweekly')
+    # sw8 = generate_date_sequence(sw8_sd,15,'semiweekly')
+    # sw9 = generate_date_sequence(sw9_sd,15,'semiweekly')
+    # sw10 = generate_date_sequence(sw10_sd,15,'semiweekly')
+    # sw11 = generate_date_sequence(sw11_sd,15,'semiweekly')
+    # sw12 = generate_date_sequence(sw12_sd,15,'semiweekly')
+    # sw13 = generate_date_sequence(sw13_sd,15,'semiweekly')
+    # sw14 = generate_date_sequence(sw14_sd,15,'semiweekly')
+    #
+    # print('sw1:'+sw1_sd+' '+str(sw1))
+    # print('sw2:'+sw2_sd+' '+str(sw2))
+    # print('sw3:'+sw3_sd+' '+str(sw3))
+    # print('sw4:'+sw4_sd+' '+str(sw4))
+    # print('sw5:'+sw5_sd+' '+str(sw5))
+    # print('sw6:'+sw6_sd+' '+str(sw6))
+    # print('sw7:'+sw7_sd+' '+str(sw7))
+    # print('sw8:'+sw8_sd+' '+str(sw8))
+    # print('sw9:'+sw9_sd+' '+str(sw9))
+    # print('sw10:'+sw10_sd+' '+str(sw10))
+    # print('sw11:'+sw11_sd+' '+str(sw11))
+    # print('sw12:'+sw12_sd+' '+str(sw12))
+    # print('sw13:'+sw13_sd+' '+str(sw13))
+    # print('sw14:'+sw14_sd+' '+str(sw14))
+    #
+    # assert sw1 == ['20240501','20240515']
+    # assert sw2 == ['20240502','20240516']
+    # assert sw3 == ['20240503','20240517']
+    # assert sw4 == ['20240504','20240518']
+    # assert sw5 == ['20240505','20240519']
+    # assert sw6 == ['20240506','20240520']
+    # assert sw7 == ['20240507','20240521']
+    # assert sw8 == ['20240508','20240522']
+    # assert sw9 == ['20240509','20240523']
+    # assert sw10 == ['20240510','20240524']
+    # assert sw11 == ['20240511','20240525']
+    # assert sw12 == ['20240512','20240526']
+    # assert sw13 == ['20240513','20240527']
+    # assert sw14 == ['20240514','20240528']
+
     # S = ForecastSet.initialize_from_json_file('ForecastSet_S084000.json')  # let this throw an exception if needed
     # S.initialize_forecasts()
     #
@@ -38,58 +101,77 @@ if __name__ == '__main__':
     #     print(unique_id)
     #     F.generateHTMLReport(E)
 
-    income_start_date = '20240419'
-    begin_repay_cc_date = '20240601'
-    end_repay_cc_date = '20250601'
+    # income_start_date = '20240503'
+    # begin_repay_cc_date = '20240601'
+    # end_repay_cc_date = '20250601'
 
-    start_date_YYYYMMDD = datetime.datetime.now().strftime('%Y%m%d')
-    end_date_YYYYMMDD = '20250101'
+    start_date_YYYYMMDD = '20240101'
+    #end_date_YYYYMMDD = '20240606' #07 does not have "more cc payment", but 06 does
+    end_date_YYYYMMDD = '20240205'  # 07 does not have "more cc payment", but 06 does
+    #maybe should have been 2200 failed -> 921 success
 
     A = AccountSet.AccountSet([])
-    A.createCheckingAccount('Checking',500,0,9999999,True)
-    A.createCreditCardAccount('Credit',0,9000,0,25000,'20240507',0.2899,40)
-    A.createLoanAccount('Approximate Loan',15858.49,0,0,25000,'20241203',0.0476,250)
+    A.createCheckingAccount('Checking', 1000, 0, 9999999, True)
+    A.createCreditCardAccount('Credit',500,1000,0,25000,'20240104',0.1,40)
+    #A.createLoanAccount('Approximate Loan',15858.49,0,0,25000,'20241203',0.0476,250)
+
+
+    # print(A.getAccounts().to_string())
+    #                                   Name   Balance  Min_Balance  Max_Balance       Account_Type Billing_Start_Date Interest_Type     APR Interest_Cadence Minimum_Payment  Primary_Checking_Ind
+    # 0                             Checking    500.00          0.0    9999999.0           checking               None          None    None             None            None                  True
+    # 1                Credit: Curr Stmt Bal      0.00          0.0      25000.0      curr stmt bal               None          None    None             None            None                 False
+    # 2                Credit: Prev Stmt Bal   9000.00          0.0      25000.0      prev stmt bal           20240507          None  0.2899          monthly            40.0                 False
+    # 3  Approximate Loan: Principal Balance  15858.49          0.0      25000.0  principal balance           20241203        simple  0.0476            daily           250.0                 False
+    # 4           Approximate Loan: Interest      0.00          0.0      25000.0           interest               None          None    None             None            None                 False
+
 
     B = BudgetSet.BudgetSet([])
-    B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 15, 'food', False, False)
-    B.addBudgetItem(income_start_date, end_date_YYYYMMDD, 1, 'semiweekly', 1600, 'EMT income', False, False)
-    B.addBudgetItem('20240503', '20240628', 1, 'semiweekly', 600, 'repay mom', False, False)
-    B.addBudgetItem('20240701', '20270401', 1, 'semiweekly', 800, 'repay dad', False, False)
-    #B.addBudgetItem('20240601', '20240601', 1, 'once', 1500, 'summer tuition', False, False)
-    B.addBudgetItem('20240420', end_date_YYYYMMDD, 1, 'monthly', 90, 'car insurance', False, False)
+    # B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 25, 'food', False, False)
+    # B.addBudgetItem('20240518', end_date_YYYYMMDD, 1, 'monthly', 25, 'storage unit', False, False)
+    # B.addBudgetItem('20240518', '20240628', 1, 'semiweekly', 600, 'repay mom', False, False)
+    # B.addBudgetItem('20240701', '20270401', 1, 'monthly', 800, 'repay dad', False, False)
+    # B.addBudgetItem('20240420', end_date_YYYYMMDD, 1, 'monthly', 90, 'car insurance', False, False)
+    # B.addBudgetItem(income_start_date, end_date_YYYYMMDD, 1, 'semiweekly', 1600, 'EMT income', False, False)
+    # B.addBudgetItem('20240531', end_date_YYYYMMDD, 1, 'monthly', 900, 'pay down cc', False, False)
+    # B.addBudgetItem('20240531', end_date_YYYYMMDD, 2, 'monthly', 2200, 'more cc payment', False, True)
+
 
     optional_B = BudgetSet.BudgetSet([])
-    optional_B.addBudgetItem(begin_repay_cc_date, end_repay_cc_date, 1, 'monthly', 0, 'repay cc 0', False, False)
-    optional_B.addBudgetItem(begin_repay_cc_date, end_repay_cc_date, 1, 'monthly', 500, 'repay cc 500', False, False)
-    optional_B.addBudgetItem(begin_repay_cc_date, end_repay_cc_date, 1, 'monthly', 500, 'repay cc 750', False, False)
-    optional_B.addBudgetItem(begin_repay_cc_date, end_repay_cc_date, 1, 'monthly', 500, 'repay cc 150', False, False)
+    # optional_B.addBudgetItem(begin_repay_cc_date, end_repay_cc_date, 1, 'monthly', 0, 'repay cc 0', False, False)
+    # optional_B.addBudgetItem(begin_repay_cc_date, end_repay_cc_date, 1, 'monthly', 500, 'repay cc 500', False, False)
+    # optional_B.addBudgetItem(begin_repay_cc_date, end_repay_cc_date, 1, 'monthly', 500, 'repay cc 750', False, False)
+    # optional_B.addBudgetItem(begin_repay_cc_date, end_repay_cc_date, 1, 'monthly', 500, 'repay cc 150', False, False)
 
     M = MemoRuleSet.MemoRuleSet([])
-    M.addMemoRule('income','None','Checking',1)
-    M.addMemoRule('food', 'Checking', 'None', 1)
-    M.addMemoRule('.*repay.*', 'Checking', 'None', 1)
-    M.addMemoRule('car insurance', 'Checking', 'None', 1)
-    M.addMemoRule('.*tuition.*', 'Checking', 'None', 1)
+    # M.addMemoRule('repay.*', 'Checking', 'None', 1)
+    # M.addMemoRule('car insurance', 'Credit', 'None', 1)
+    # M.addMemoRule('food', 'Credit', 'None', 1)
+    # M.addMemoRule('storage unit', 'Credit', 'None', 1)
+    # M.addMemoRule('.*income.*','None','Checking',1)
+    # M.addMemoRule('pay down cc', 'Checking', 'Credit', 1)
+    # M.addMemoRule('more cc payment', 'Checking', 'Credit', 2)
+
 
     MS = MilestoneSet.MilestoneSet([],[],[])
     E = ExpenseForecast.ExpenseForecast(A,B,M,start_date_YYYYMMDD,end_date_YYYYMMDD,MS)
-    # E.runForecast()
+    E.runForecast()
+    print(E.forecast_df.to_string())
     # E.writeToJSONFile()
 
-    F = ForecastHandler.ForecastHandler()
-    # F.generateHTMLReport(E)
-
-    S = ForecastSet.ForecastSet(E,option_budget_set=optional_B)
-    S.addChoiceToAllForecasts(['repay cc 0','repay cc 500','repay cc 750','repay cc 100'],
-                              [['repay cc 0'],
-                               ['repay cc 500'],
-                               ['repay cc 750'],
-                               ['repay cc 1000']
-                               ])
-    S.runAllForecasts()
-    S.writeToJSONFile()
-    for unique_id, E in S.initialized_forecasts.items():
-        F.generateHTMLReport(E)
+    # F = ForecastHandler.ForecastHandler()
+    # # F.generateHTMLReport(E)
+    #
+    # S = ForecastSet.ForecastSet(E,option_budget_set=optional_B)
+    # S.addChoiceToAllForecasts(['repay cc 0','repay cc 500','repay cc 750','repay cc 100'],
+    #                           [['repay cc 0'],
+    #                            ['repay cc 500'],
+    #                            ['repay cc 750'],
+    #                            ['repay cc 1000']
+    #                            ])
+    # S.runAllForecasts()
+    # S.writeToJSONFile()
+    # for unique_id, E in S.initialized_forecasts.items():
+    #     F.generateHTMLReport(E)
 
     # cmd = "python -m ef_cli parameterize forecastset --filename S.json --start_date 20000601 --end_date 20001231 --username hume"
     # cmd_arg_list = cmd.split(" ")
@@ -288,3 +370,38 @@ if __name__ == '__main__':
     #print(future.result())
     #executor.shutdown()
 
+### 2024-05-03 08:37
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_initialize_forecast_from_excel_not_yet_run - AttributeError: 'NoneType' object has ...
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_initialize_forecast_from_excel_already_run - TypeError: 'ExpenseForecast' object is...
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_initialize_forecast_from_json_not_yet_run - TypeError: strptime() argument 1 must b...
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_initialize_forecast_from_json_already_run - TypeError: strptime() argument 1 must b...
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_run_forecast_from_json_at_path - TypeError: strptime() argument 1 must be str, not int
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_run_forecast_from_excel_at_path - AttributeError: 'NoneType' object has no attribut...
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_interest_types_and_cadences_at_most_monthly - NotImplementedError
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_quarter_and_year_long_interest_cadences - NotImplementedError
+# FAILED test_ForecastHandler.py::TestForecastHandlerMethods::test_run_forecast_set - AttributeError: 'BudgetSet' object has no attribute 'initial_bud...
+# FAILED test_ForecastRunner.py::TestForecastRunnerMethods::test_start_forecast[param1-param2] - ValueError: End date of budget item must be greater t...
+# FAILED test_ForecastSet.py::TestForecastSet::test_ForecastSet_writeToDatabase_empty_notRun - psycopg2.OperationalError: could not translate host nam...
+# FAILED test_ForecastSet.py::TestForecastSet::test_ForecastSet_writeToDatabase_empty_Run - psycopg2.OperationalError: could not translate host name "...
+# FAILED test_ForecastSet.py::TestForecastSet::test_ForecastSet_writeToDatabase_zeroChoices_NotRun - psycopg2.OperationalError: could not translate ho...
+# FAILED test_ForecastSet.py::TestForecastSet::test_ForecastSet_writeToDatabase_zeroChoices_Run - psycopg2.OperationalError: could not translate host ...
+# FAILED test_ForecastSet.py::TestForecastSet::test_ForecastSet_writeToDatabase_oneChoice_Run - psycopg2.OperationalError: could not translate host na...
+# FAILED test_ForecastSet.py::TestForecastSet::test_ForecastSet_writeToDatabase_oneChoice_NotRun - psycopg2.OperationalError: could not translate host...
+# FAILED test_ForecastSet.py::TestForecastSet::test_ForecastSet_writeToDatabase_twoChoices_NotRun - psycopg2.OperationalError: could not translate hos...
+# FAILED test_ForecastSet.py::TestForecastSet::test_ForecastSet_writeToDatabase_twoChoices_Run - psycopg2.OperationalError: could not translate host n...
+# FAILED test_ef_cli.py::TestEFCLIMethods::test_help[cmd_string] - subprocess.CalledProcessError: Command '['python', '-m', 'ef_cli', 'cmd_string']' r...
+# FAILED test_ef_cli.py::TestEFCLIMethods::test_parameterize_file_forecast_no_label[parameterize forecast --id 031987 --source file --start_date 20240101 --end_date 20241231 --username hume --log_directory ./out/]
+# FAILED test_ef_cli.py::TestEFCLIMethods::test_parameterize_file_forecast_with_label[parameterize forecast --id 031987 --source file --start_date 20240101 --end_date 20241231 --username hume --log_directory ./out/ --label FORECAST_LABEL]
+# FAILED test_ef_cli.py::TestEFCLIMethods::test_parameterize_file_forecastset_no_label[parameterize forecastset --source file --id S --username hume --output_directory ./out/ --start_date 20240120 --end_date 20240601]
+# FAILED test_ef_cli.py::TestEFCLIMethods::test_parameterize_file_forecastset_no_label[parameterize forecastset --source file --id S --username hume --output_directory ./out/ --start_date 20000120 --end_date 20000601]
+# FAILED test_ef_cli.py::TestEFCLIMethods::test_parameterize_file_forecastset_no_label[parameterize forecastset --source file --id S --username hume --output_directory ./out/ --start_date 20240420 --end_date 20240601]
+# FAILED test_ef_cli.py::TestEFCLIMethods::test_parameterize_file_forecastset_with_label[parameterize forecastset --filename S.json --start_date 20000601 --end_date 20001231 --username hume --label NEW_FORECAST_SET_NAME]
+# FAILED test_ef_cli.py::TestEFCLIMethods::test_run_forecast[run forecast --id 062822 --source file --username hume --working_directory ./out/] - subp...
+# FAILED test_ef_cli.py::TestEFCLIMethods::test_run_forecast[run forecast --id 062822 --source file --username hume --working_directory ./out/ --approximate]
+# FAILED test_ef_cli.py::TestEFCLIMethods::test_run_forecast[run forecast --id 062822 --source file --username hume --working_directory ./out/ --overwrite]
+# FAILED test_ef_cli.py::TestEFCLIMethods::test_run_forecast[run forecast --id 062822 --source file --username hume --working_directory ./out/ --approximate --overwrite]
+# FAILED test_ef_cli.py::TestEFCLIMethods::test_run_forecastset[run forecastset --source file --id S033683 --username hume --working_directory ./out/]
+# FAILED test_ef_cli.py::TestEFCLIMethods::test_run_forecastset[run forecastset --source file --id S033683 --username hume --working_directory ./out/ --approximate]
+# FAILED test_ef_cli.py::TestEFCLIMethods::test_run_forecastset[run forecastset --source file --id S033683 --username hume --working_directory ./out/ --overwrite]
+# FAILED test_ef_cli.py::TestEFCLIMethods::test_run_forecastset[run forecastset --source file --id S033683 --username hume --working_directory ./out/ --approximate --overwrite]
+# FAILED test_ef_cli.py::TestEFCLIMethods::test_list[list] - subprocess.CalledProcessError: Command '['python', '-m', 'ef_cli', 'list']' returned non-...

@@ -124,8 +124,8 @@ def initialize_from_database_with_select(start_date_YYYYMMDD,
     forecast_name = set_def_df['forecast_name'].iat[0]
 
     if metadata_df.shape[0] > 0:
-        start_ts = metadata_df['submit_ts'].iat[0]
-        end_ts = metadata_df['complete_ts'].iat[0]
+        start_ts = metadata_df['submit_ts'].iat[0].strftime('%Y-%m-%d %H:%M:%S')
+        end_ts = metadata_df['complete_ts'].iat[0].strftime('%Y-%m-%d %H:%M:%S')
 
     budget_item_post_run_category_df = pd.read_sql_query(budget_item_post_run_category_select_q, con=engine)
     budget_item_post_run_category_df.rename(columns={"category":"Category",
@@ -202,8 +202,9 @@ def initialize_from_database_with_id(username,
     engine = create_engine(connect_string)
     # engine = create_engine('postgresql://bsdegjmy_humedick@localhost:5432/bsdegjmy_sandbox')
 
-    get_date_ranges_q = "select start_date, end_date from prod."+username+"_forecast_set_definitions where forecast_id = '"+str(forecast_id)+"' and forecast_set_id = '" + str(forecast_set_id) + "'"
-    #print(get_date_ranges_q)
+    get_date_ranges_q = "select distinct start_date, end_date from prod."+username+"_forecast_set_definitions where forecast_id = '"+str(forecast_id)+"' and forecast_set_id = '" + str(forecast_set_id) + "'"
+    # print('get_date_ranges_q:')
+    # print(get_date_ranges_q)
     date_range_df = pd.read_sql_query(get_date_ranges_q, con=engine)
     assert date_range_df.shape[0] == 1
 
@@ -225,7 +226,7 @@ def initialize_from_database_with_id(username,
     composite_milestone_select_q = "select * from prod.ef_composite_milestones_"+username+" where forecast_id = '"+forecast_id+"'"
     set_def_q = """
     select *
-    from prod.virtuoso_user_forecast_set_definitions
+    from prod.""" + username + """_forecast_set_definitions
     where forecast_set_id = '"""+forecast_set_id+"""' and forecast_id = '"""+forecast_id+"""'
     """
     #it has to be forecast_set bc if forecast hasnt been run yet we still need that info
@@ -234,7 +235,7 @@ def initialize_from_database_with_id(username,
     submit_ts, complete_ts, error_flag, satisfice_failed_flag
     from ( 
     select *, row_number() over(partition by forecast_id order by insert_ts desc) as rn
-    from prod.virtuoso_user_forecast_run_metadata
+    from prod.""" + username + """_forecast_run_metadata
     where forecast_id = '""" + forecast_id + """'
     order by forecast_id
     ) where rn = 1 and forecast_id = '""" + forecast_id + """'
@@ -847,7 +848,7 @@ class ExpenseForecast:
                 row.Balance) + ", " + str(row.Min_Balance) + ", " + str(row.Max_Balance) + ", '" + str(
                 row.Account_Type) + "', " + str(bsd) + ", " + apr + ", '" + str(
                 row.Interest_Cadence) + "', " + min_payment + ", '" + str(row.Primary_Checking_Ind) + "')"
-            print(insert_account_row_q)
+            #print(insert_account_row_q)
             cursor.execute(insert_account_row_q)
 
 
@@ -1025,13 +1026,17 @@ class ExpenseForecast:
                                 """
                 #log_in_color(logger, 'white', 'info', insert_q)
                 cursor.execute(insert_q)
+
+            # print('self.start_ts:')
+            # print(self.start_ts)
+
             # forecast_set_id, forecast_id, forecast_title, forecast_subtitle, submit_ts, complete_ts, error_flag, satisfice_failed_flag, insert_ts
             metadata_q = "INSERT INTO prod."+username+"_forecast_run_metadata "
             metadata_q += "Select '"+forecast_set_id+"' as forecast_set_id, '"+str(self.unique_id)+"' as forecast_id, "
             metadata_q += "'"+self.forecast_set_name+"' as forecast_title, "
             metadata_q += "'"+self.forecast_name+"' as forecast_subtitle, "
-            metadata_q += "'" + self.start_ts + "' as submit_ts, "
-            metadata_q += "'" + self.end_ts + "' as complete_ts, "
+            metadata_q += "'" + str(self.start_ts) + "' as submit_ts, "
+            metadata_q += "'" + str(self.end_ts) + "' as complete_ts, "
             metadata_q += "'" + str(0) + "' as error_flag, " #todo implement error flag
             metadata_q += "'" + str(0) + "' as satisfice_failed_flag, " #todo implement satisfice failed flag
             metadata_q += "'" + datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + "' as insert_ts "
@@ -1119,10 +1124,10 @@ class ExpenseForecast:
         thread_id = str(math.floor(random.random() * 1000))
         try:
             logger = setup_logger(__name__, os.environ['EF_LOG_DIR'] + __name__ + '_' + thread_id + '.log',
-                                  level=logging.WARNING)
+                                  level=logging.INFO)
         except KeyError:
-            logger = setup_logger(__name__, __name__ + '_' + thread_id + '.log', level=logging.WARNING)
-        log_in_color(logger,'green','debug','ExpenseForecast(start_date_YYYYMMDD='+str(start_date_YYYYMMDD)+', end_date_YYYYMMDD='+str(end_date_YYYYMMDD)+')')
+            logger = setup_logger(__name__, __name__ + '_' + thread_id + '.log', level=logging.INFO)
+        #log_in_color(logger,'green','info','ExpenseForecast(start_date_YYYYMMDD='+str(start_date_YYYYMMDD)+', end_date_YYYYMMDD='+str(end_date_YYYYMMDD)+')')
 
         self.forecast_set_name = str(forecast_set_name)
         self.forecast_name = str(forecast_name)
@@ -1303,9 +1308,9 @@ class ExpenseForecast:
         log_in_color(logger, 'green', 'debug','Attempting switch log file to: '+single_forecast_run_log_file_name)
 
         try:
-            logger = setup_logger(__name__, os.environ['EF_LOG_DIR'] + __name__ + '_' + self.unique_id + '.log', level=logging.WARNING)
+            logger = setup_logger(__name__, os.environ['EF_LOG_DIR'] + __name__ + '_' + self.unique_id + '.log', level=logging.INFO)
         except KeyError:
-            logger = setup_logger(__name__, __name__ + '_' + self.unique_id + '.log', level=logging.WARNING)
+            logger = setup_logger(__name__, __name__ + '_' + self.unique_id + '.log', level=logging.INFO)
 
         # print("unique_id:"+str(self.unique_id))
         # print("")
@@ -1555,7 +1560,9 @@ class ExpenseForecast:
         self.forecast_df['Liquid Total'] = LiquidTotal
 
         memo_column = copy.deepcopy(self.forecast_df['Memo'])
-        self.forecast_df = self.forecast_df.drop(columns=['Memo'])
+        memo_directives_column = copy.deepcopy(self.forecast_df['Memo Directives'])
+        self.forecast_df = self.forecast_df.drop(columns=['Memo','Memo Directives'])
+        self.forecast_df['Memo Directives'] = memo_directives_column
         self.forecast_df['Memo'] = memo_column
 
     def satisficeApproximate(self, list_of_date_strings, confirmed_df, account_set, memo_rule_set, forecast_df, raise_satisfice_failed_exception, progress_bar=None ):
@@ -1610,7 +1617,7 @@ class ExpenseForecast:
                 forecast_df[forecast_df.Date == d] = self.executeLoanMinimumPayments(account_set,
                                                                                      forecast_df[forecast_df.Date == d])
                 account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, d)
-                forecast_df[forecast_df.Date == d] = self.executeCreditCardMinimumPayments(account_set, forecast_df[
+                forecast_df[forecast_df.Date == d] = self.executeCreditCardMinimumPayments(forecast_df, account_set, forecast_df[
                     forecast_df.Date == d])
                 account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, d)
 
@@ -1929,6 +1936,7 @@ class ExpenseForecast:
             loglevel = logging.CRITICAL
         else:
             loglevel = logging.WARNING
+        loglevel = logging.WARNING
         logger.setLevel(loglevel)
 
         log_in_color(logger, 'white', 'info', 'Starting Forecast '+str(self.unique_id))
@@ -2030,9 +2038,10 @@ class ExpenseForecast:
         accounts_only_df.reset_index(drop=True, inplace=True)
         accounts_only_df.columns = [0, 1]
 
+        memo_directive_only_df = pd.DataFrame(['Memo Directives', '']).T
         memo_only_df = pd.DataFrame(['Memo', '']).T
 
-        initial_forecast_row_df = pd.concat([date_only_df, accounts_only_df, memo_only_df])
+        initial_forecast_row_df = pd.concat([date_only_df, accounts_only_df, memo_directive_only_df, memo_only_df])
 
         initial_forecast_row_df = initial_forecast_row_df.T
         initial_forecast_row_df.columns = initial_forecast_row_df.iloc[0, :]
@@ -2059,6 +2068,7 @@ class ExpenseForecast:
         #new_row_df = copy.deepcopy(forecast_df.loc[sel_vec])
         new_row_df = copy.deepcopy(forecast_df.tail(1))
         new_row_df.Date = date_YYYYMMDD
+        new_row_df['Memo Directives'] = ''
         new_row_df.Memo = ''
         forecast_df = pd.concat([forecast_df, new_row_df])
         forecast_df.reset_index(drop=True, inplace=True)
@@ -2086,7 +2096,12 @@ class ExpenseForecast:
         return income_flag
 
     def updateBalancesAndMemo(self, forecast_df, account_set, confirmed_row, memo_rule_row, date_YYYYMMDD):
-        log_in_color(logger, 'green', 'debug', 'ENTER updateBalancesAndMemo() '+str(date_YYYYMMDD),self.log_stack_depth)
+        # log_in_color(logger, 'green', 'info', 'ENTER updateBalancesAndMemo() '+str(date_YYYYMMDD),self.log_stack_depth)
+        # log_in_color(logger, 'green', 'info', 'confirmed_row:',self.log_stack_depth)
+        # log_in_color(logger, 'green', 'info', confirmed_row.to_string() ,self.log_stack_depth)
+        # print('ENTER updateBalancesAndMemo() ' + str(date_YYYYMMDD))
+        # print('memo_rule_row:')
+        # print(pd.DataFrame(memo_rule_row).T.to_string())
 
         row_sel_vec = (forecast_df.Date == date_YYYYMMDD)
         if memo_rule_row.Account_To != 'ALL_LOANS':
@@ -2108,18 +2123,32 @@ class ExpenseForecast:
             col_sel_vec = (forecast_df.columns == account_row.Name)
 
 
+            # print('forecast_df.loc[row_sel_vec, col_sel_vec]:')
+            # print(forecast_df.loc[row_sel_vec, col_sel_vec])
+            # print('account_set.getAccounts().iloc[account_index, 1]:')
+            # print(account_set.getAccounts().iloc[account_index, 1])
             current_balance = forecast_df.loc[row_sel_vec, col_sel_vec].iloc[0].iloc[0]
+
+            #todo rewrite this to use column names instead of index
             relevant_balance = account_set.getAccounts().iloc[account_index, 1]
 
             if current_balance != relevant_balance:
                 forecast_df.loc[row_sel_vec, col_sel_vec] = relevant_balance
-                if memo_rule_row.Account_To == 'ALL_LOANS' and account_row.Name != memo_rule_row.Account_From:
-                    forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'] +=  ' additional loan payment ('+str(account_row.Name)+' -$' + str(round(current_balance - relevant_balance,2)) + '); '
+                if memo_rule_row.Account_To == 'ALL_LOANS' and account_row.Name.Name.split(':')[0] != memo_rule_row.Account_From:
+                    forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'] += confirmed_row.Memo + ' ('+str(account_row.Name)+' -$' + str(round(current_balance - relevant_balance,2)) + '); '
+                    forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo Directives'] += ' ADDTL LOAN PAYMENT (' + str(
+                        account_row.Name) + ' -$' + str(round(current_balance - relevant_balance, 2)) + '); '
                     log_in_color(logger, 'green', 'debug',str(account_row.Name) + ' additional loan payment ($' + str(current_balance - relevant_balance) + ') ; ', self.log_stack_depth)
 
 
-                if account_row.Account_Type.lower() in ['curr stmt bal','prev stmt bal'] and account_row.Name != memo_rule_row.Account_From:
-                    forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'] += ' additional cc payment (' + str(account_row.Name) + ' $' + str(round(current_balance - relevant_balance, 2)) + '); '
+                if account_row.Account_Type.lower() in ['curr stmt bal','prev stmt bal'] and account_row.Name.split(':')[0] != memo_rule_row.Account_From:
+                    # print('account_row:')
+                    # print(pd.DataFrame(account_row).T.to_string())
+                    # print('memo_rule_row:')
+                    # print(pd.DataFrame(memo_rule_row).T.to_string())
+                    forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'] += confirmed_row.Memo + ' (' + str(account_row.Name) + ' $' + str(round(current_balance - relevant_balance, 2)) + '); '
+                    forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo Directives'] += ' ADDTL CC PAYMENT (' + str(
+                        account_row.Name) + ' $' + str(round(current_balance - relevant_balance, 2)) + '); '
 
                 # if memo_rule_row.Account_To == 'Credit' and account_row.Name != memo_rule_row.Account_From:
                 #     forecast_df.loc[row_sel_vec, forecast_df.columns == 'Memo'] += ' additional cc payment (' + str(account_row.Name) + ' $' + str(round(current_balance - relevant_balance, 2)) + '); '
@@ -2224,6 +2253,8 @@ class ExpenseForecast:
         self.log_stack_depth += 1
         try:
             single_proposed_transaction_df = pd.DataFrame(copy.deepcopy(proposed_row_df)).T
+            # print('single_proposed_transaction_df:')
+            # print(single_proposed_transaction_df.to_string())
             not_yet_validated_confirmed_df = copy.deepcopy(pd.concat([confirmed_df, single_proposed_transaction_df]))
             empty_df = pd.DataFrame({'Date':[],'Priority':[],'Amount':[],'Memo':[],'Deferrable':[],'Partial_Payment_Allowed':[]})
 
@@ -2304,6 +2335,7 @@ class ExpenseForecast:
             log_in_color(logger, 'red', 'debug', account_set.getAccounts().to_string(), self.log_stack_depth)
             log_in_color(logger, 'red', 'info',
                          'EXIT attemptTransaction(' + str(proposed_row_df.Memo) + ')' + ' (FAIL)', self.log_stack_depth)
+            print(e.args)
             if re.search('.*Account boundaries were violated.*',str(e.args)) is None:  # this is the only exception where we don't want to stop immediately
                 raise e
 
@@ -2360,8 +2392,8 @@ class ExpenseForecast:
             relevant_memo_rule_set = memo_set.findMatchingMemoRule(proposed_row_df.Memo, proposed_row_df.Priority)
             memo_rule_row = relevant_memo_rule_set.getMemoRules().loc[0, :]
             #
-            # print('proposed_row_df:')
-            # print(proposed_row_df.to_string())
+            print('proposed_row_df:')
+            print(proposed_row_df.to_string())
 
             # False if not permitted, updated forecast if it is permitted
             result_of_attempt = self.attemptTransactionApproximate(forecast_df, copy.deepcopy(account_set), memo_set, confirmed_df,
@@ -2635,6 +2667,7 @@ class ExpenseForecast:
 
                     at_max = sum(relevant_account_rows_df.Balance)
                     reduced_amt = min(af_max,at_max) #todo add account minimum to thiss
+                    #print('reduced amount:'+str(reduced_amt))
                     #log_in_color(logger, 'cyan', 'debug', 'account_base_name:' + str(reduced_amt),self.log_stack_depth)
                 else:
                     reduced_amt = af_max
@@ -2656,18 +2689,23 @@ class ExpenseForecast:
                     result_of_attempt = self.attemptTransaction(forecast_df, copy.deepcopy(account_set), memo_set,
                                                                 confirmed_df,
                                                                 proposed_row_df)
+                    # print('result_of_attempt:')
+                    # print(result_of_attempt)
 
                     transaction_is_permitted = isinstance(result_of_attempt, pd.DataFrame)
                     log_in_color(logger, 'white', 'debug', 'result_of_attempt 2:', self.log_stack_depth)
+                    # print('result_of_attempt 2:')
                     if transaction_is_permitted:
                         hypothetical_future_state_of_forecast = result_of_attempt
                         log_in_color(logger, 'white', 'debug', result_of_attempt.to_string(), self.log_stack_depth)
                         account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, date_YYYYMMDD)
                         log_in_color(logger, 'green', 'debug', 'Partial Payment success', self.log_stack_depth)
+                        # print('Partial Payment success')
                     else:
                         log_in_color(logger, 'white', 'debug', str(result_of_attempt), self.log_stack_depth)
                         hypothetical_future_state_of_forecast = None
                         log_in_color(logger, 'red', 'debug', 'Partial Payment fail', self.log_stack_depth)
+                        # print('Partial Payment fail')
 
                     # not_yet_validated_confirmed_df = pd.concat([confirmed_df,pd.DataFrame(proposed_row_df).T])
                     #
@@ -2873,8 +2911,8 @@ class ExpenseForecast:
                 next_income_date = forecast_df[ future_date_sel_vec & income_date_sel_vec ].head(1)['Date']
 
                 deferred_row_df.Date = next_income_date
-                print('new deferred row')
-                print(deferred_row_df.to_string())
+                # print('new deferred row')
+                # print(deferred_row_df.to_string())
 
                 #todo what is no future income date
 
@@ -2998,8 +3036,8 @@ class ExpenseForecast:
                 next_income_date = forecast_df[ future_date_sel_vec & income_date_sel_vec ].head(1)['Date']
 
                 deferred_row_df.Date = next_income_date
-                print('new deferred row')
-                print(deferred_row_df.to_string())
+                # print('new deferred row')
+                # print(deferred_row_df.to_string())
 
                 #todo what is no future income date
 
@@ -3307,8 +3345,8 @@ class ExpenseForecast:
                 #this is the inverse of how we selected the relevant rows
                 p_sel_vec = (deferred_df.Priority > priority_level)
                 #d_sel_vec = (deferred_df.Date != date_YYYYMMDD)
-                print('deferred_df:')
-                print(deferred_df.to_string())
+                # print('deferred_df:')
+                # print(deferred_df.to_string())
                 d_sel_vec = [d != date_YYYYMMDD for d in deferred_df.Date]
                 sel_vec = p_sel_vec | d_sel_vec
                 not_relevant_deferred_df = pd.DataFrame(deferred_df[sel_vec],copy=True)
@@ -4365,7 +4403,17 @@ class ExpenseForecast:
         #logger.debug('self.log_stack_depth -= 1')
         return current_forecast_row_df  # this runs when there are no interest bearing accounts in the simulation at all
 
-    def executeCreditCardMinimumPayments(self, account_set, current_forecast_row_df):
+    #a design flaw this has is that if a cc min payment is made in advance, but that payment is past the end of the forecast,
+    #the payment will show up as extra instead of advance
+    #in order to fix this, the executeTransaction function would need to be able to look forward, which is a design weakness
+    #i hate more than this "extra instead of advance for last payment in forecast" problem
+    #Note that this is not really a problem because the only difference is what the payment is called, not the amount or date
+    # .... on second thought ... we may be able to add an explicit check for this
+    # BIG WOOPS - this method is only called on P1, before any additional payments.
+    # I think this needs to be its own method :(
+    # Just Kidding... leaving these comments in case I get stuck in this thought loop again: this code is recursive, all
+    # txns are tested in sub forecasts as p1 before they are approved, therefore this logic is fine
+    def executeCreditCardMinimumPayments(self,forecast_df, account_set, current_forecast_row_df):
         bal_string = ''
         for account_index2, account_row2 in account_set.getAccounts().iterrows():
             bal_string += '$' + str(account_row2.Balance) + ' '
@@ -4376,7 +4424,6 @@ class ExpenseForecast:
 
         # the branch logic here assumes the sort order of accounts in account list
         for account_index, account_row in account_set.getAccounts().iterrows():
-
             if account_row.Account_Type == 'principal balance':
                 continue
 
@@ -4388,43 +4435,189 @@ class ExpenseForecast:
                 continue
 
             num_days = (datetime.datetime.strptime(current_forecast_row_df.Date.iloc[0],
-                                                   '%Y%m%d') - datetime.datetime.strptime(account_row.Billing_Start_Date,
-                                                                                          '%Y%m%d')).days
+                                                   '%Y%m%d') - datetime.datetime.strptime(account_row.Billing_Start_Date,'%Y%m%d')).days
 
-            billing_days = set(generate_date_sequence(account_row.Billing_Start_Date, num_days, 'monthly'))
+            #the billing_days = line works without this clause, but I think this makes it more clear
+            if num_days >= 0:
+                billing_days = set(generate_date_sequence(account_row.Billing_Start_Date, num_days, 'monthly'))
+            else:
+                billing_days = set()
+
             # log_in_color(logger, 'cyan', 'debug', 'executeCreditCardMinimumPayments()', self.log_stack_depth)
             # log_in_color(logger, 'cyan', 'debug', 'billing_days', self.log_stack_depth)
             # log_in_color(logger, 'cyan', 'debug', billing_days, self.log_stack_depth)
 
             if current_forecast_row_df.Date.iloc[0] == account_row.Billing_Start_Date:
-                billing_days = set(current_forecast_row_df.Date).union(
-                    billing_days)  # if the input date matches the start date, add it to the set (bc range where start = end == null set)
+                billing_days = set(current_forecast_row_df.Date).union(billing_days)  # if the input date matches the start date, add it to the set (bc range where start = end == null set)
 
-            if current_forecast_row_df.Date.iloc[0] in billing_days:
+            # memo directive is 'ADDTL CC PAYMENT'
+            # Without looking at my bank statements, this is how I think it works:
+            # The amount of interest billed at the end of each month is set in stone for a full 30 days
+            # If you end the month with a previous statement balance, of. say, $5k
+            # And then before the end of the next month you pay if off fully.
+            # Do you not pay interest bc you paid it off before the end of the month?
+            # What is progammed here: NO
+            # This is because the amount of interest you pay is set in stone for a full 30 days before it is due
+            # just like your minimum payment
 
-                # print(row)
-                if account_row.Account_Type == 'prev stmt bal':  # cc min payment
+            # Since that is the case, the logic here actually needs to be modified bc it is incorrect as-is
 
-                    log_in_color(logger, 'cyan', 'debug', 'executeCreditCardMinimumPayments() ' + bal_string, self.log_stack_depth)
+            # print(row)
+            if account_row.Account_Type == 'prev stmt bal':  # cc min payment
+                log_in_color(logger, 'cyan', 'debug', 'executeCreditCardMinimumPayments() ' + bal_string, self.log_stack_depth)
 
-                    current_current_statement_balance = account_set.getAccounts().loc[account_index - 1, :].Balance
-                    current_previous_statement_balance = account_row.Balance
+                #OLD LOGIC
+                # current_current_statement_balance = account_set.getAccounts().loc[account_index - 1, :].Balance
+                # current_previous_statement_balance = account_row.Balance
+                if current_forecast_row_df.Date.iloc[0] in billing_days:
+
+                    # # todo look back in past 1 month to see if a payment was made in advance
+                    billing_cycle_rb = current_forecast_row_df.Date.iloc[0]
+                    right_check_bound = datetime.datetime.strptime(billing_cycle_rb, '%Y%m%d')
+
+                    # in order to avoid any (month ago from march 31) nonsense we look for the memo directive
+                    # look back 35 days and find MIN CC PAYMENT directive
+                    left_check_bound = right_check_bound - datetime.timedelta(days=35)
+                    check_region_sel_vec = [
+                        left_check_bound < datetime.datetime.strptime(d, '%Y%m%d') and datetime.datetime.strptime(d,
+                                                                                                                  '%Y%m%d') <= right_check_bound
+                        for d in forecast_df.Date]
+                    check_region = forecast_df.iloc[check_region_sel_vec, :]
+                    previous_min_payment_date_sel_vec = ['CC MIN PAYMENT' in m for m in check_region['Memo Directives']]
+
+                    # if this is the first payment in the forecast
+                    if sum(previous_min_payment_date_sel_vec) == 0:
+                        # then use the first day of the forecast as the left bound
+                        prev_min_date_string = forecast_df.head(1).Date.iat[0]
+                    else:
+                        prev_min_date_string = check_region[previous_min_payment_date_sel_vec].Date.iat[0]
+
+                    # print('prev_min_date_string:')
+                    # print(prev_min_date_string)
+                    previous_min_payment_date = datetime.datetime.strptime(prev_min_date_string, '%Y%m%d')
+
+                    relevant_payment_region_sel_vec = [previous_min_payment_date < datetime.datetime.strptime(d,
+                                                                                                              '%Y%m%d') and datetime.datetime.strptime(
+                        d, '%Y%m%d') <= right_check_bound for d in forecast_df.Date]
+                    addtl_cc_payment_sel_vec = ['ADDTL CC PAYMENT' in m for m in forecast_df['Memo Directives']]
+                    relevant_cc_payments_sel_vec = [x & y for (x, y) in
+                                                    zip(relevant_payment_region_sel_vec, addtl_cc_payment_sel_vec)]
+
+                    # we sum the line items
+                    advance_payment_amount = 0
+                    for mdir in forecast_df.iloc[relevant_cc_payments_sel_vec, :]['Memo Directives']:
+                        # e.g. ADDTL CC PAYMENT (Credit: Prev Stmt Bal $500.0);
+                        # since this is Memo Directives column, we have a guarantee on exact text
+                        m = re.search('ADDTL CC PAYMENT \((.*)\$([0-9]*\.[0-9]{0,2})\);',mdir)
+                        mdir_aname = m.group(1)
+                        mdir_amount = m.group(2)
+
+                        #only add if name in memo directive matches the account we are currently iterating over
+                        if mdir_aname.strip() == account_row.Name.strip():
+                            advance_payment_amount += float(mdir_amount)
+
+
+                    # print('current_forecast_row_df.Date.iloc[0] in billing days:')
+                    # print('billing_days:')
+                    # print(billing_days)
+                    # print('account_row.Billing_Start_Date, num_days, monthly):')
+                    # print('account_row.Billing_Start_Date:' + str(account_row.Billing_Start_Date))
+                    # print('num_days:' + str(num_days))
+                    # print(current_forecast_row_df.Date.iloc[0])
+                    if current_forecast_row_df.Date.iloc[0] == min(billing_days):
+                        # print('INFERRING prev bal')
+                        # prev balance needs to be inferred bc last billing day was before the first day
+                        # OR the billing start day defined in accounts was after the start of the forecast
+
+                        # should be balance of account on first day
+                        current_previous_statement_balance = forecast_df.iloc[0, account_index + 1]
+                        previous_previous_statement_balance = current_previous_statement_balance
+                        #same as old logic
+                        current_current_statement_balance = account_set.getAccounts().loc[account_index - 1, :].Balance
+                    else:
+                        # print('CHECKING prev bal')
+                        billing_cycle_rb = current_forecast_row_df.Date.iloc[0]
+                        right_check_bound = datetime.datetime.strptime(billing_cycle_rb,'%Y%m%d')
+
+                        # in order to avoid any (month ago from march 31) nonsense we look for the memo directive
+                        # look back 35 days and find MIN CC PAYMENT directive
+                        left_check_bound = right_check_bound - datetime.timedelta(days=35)
+                        check_region_sel_vec = [ left_check_bound < datetime.datetime.strptime(d,'%Y%m%d') and datetime.datetime.strptime(d,'%Y%m%d') <= right_check_bound for d in forecast_df.Date ]
+                        check_region = forecast_df.iloc[check_region_sel_vec,:]
+                        # print('check_region[Memo Directives]:')
+                        # print(check_region['Memo Directives'])
+                        previous_min_payment_date_sel_vec = [ 'CC MIN PAYMENT' in m for m in check_region['Memo Directives'] ]
+                        # print('previous_min_payment_date_sel_vec:')
+                        # print(previous_min_payment_date_sel_vec)
+                        previous_min_payment_date = forecast_df[previous_min_payment_date_sel_vec].Date
+
+
+                        #same as old logic
+                        current_current_statement_balance = account_set.getAccounts().loc[account_index - 1, :].Balance
+                        current_previous_statement_balance = account_row.Balance
+
+                        previous_previous_statement_balance = forecast_df.iloc[previous_min_payment_date_sel_vec, account_index + 1].iat[0]
+                    # print('current_current_statement_balance:'+str(current_current_statement_balance))
+                    # print('current_previous_statement_balance:' + str(current_previous_statement_balance))
+                    # print('previous_previous_statement_balance:' + str(previous_previous_statement_balance))
+
+
 
                     # it turns out that the way this really works is that Chase uses 1% PLUS the interest accrued to be charged immediately, not added to the principal
-                    # todo the above has been encoded, todo is check against statements to confirm
-                    interest_to_be_charged_immediately = round(current_previous_statement_balance * ( account_row.APR / 12 ),2)
-                    amount_charged_toward_balance = current_previous_statement_balance * 0.01
+                    # todo the above has been encoded (below), todo is check against statements to confirm
 
-                    if account_row.Minimum_Payment < ( interest_to_be_charged_immediately + amount_charged_toward_balance):
+                    # todo if advance payment is not zero, let's modify the previous memo to show where that payment has gone
+                    # todo Note: this will require an explicit check for the last payment in a forecast
 
-                        payment_toward_prev = amount_charged_toward_balance
-                        payment_toward_curr = min(amount_charged_toward_balance - payment_toward_prev,current_current_statement_balance)
+                    interest_to_be_charged_immediately = round(previous_previous_statement_balance * (account_row.APR / 12), 2)
+                    amount_charged_toward_principal = previous_previous_statement_balance * 0.01
+                    og_interest_to_be_charged_immediately = interest_to_be_charged_immediately
+                    og_amount_charged_toward_principal = amount_charged_toward_principal
+                    advance_payment_toward_interest = 0
+                    advance_payment_toward_principal = 0
 
-                    elif account_row.Minimum_Payment >= ( interest_to_be_charged_immediately + amount_charged_toward_balance):
+                    print('interest_to_be_charged_immediately:'+str(interest_to_be_charged_immediately))
+                    print('amount_charged_toward_principal:' + str(amount_charged_toward_principal))
 
-                        # if account_row.Minimum_Payment > amount_charged_toward_balance, THEN
+                    print('advance_payment_amount:'+str(advance_payment_amount))
+                    if advance_payment_amount > 0:
+                        if advance_payment_amount >= interest_to_be_charged_immediately:
+                            print('advance_payment_amount >= interest_to_be_charged_immediately: '+str(advance_payment_amount)+' >= '+str(interest_to_be_charged_immediately))
+                            advance_payment_toward_interest = interest_to_be_charged_immediately
+                            remaining_advance_payment = advance_payment_amount - interest_to_be_charged_immediately
+                            interest_to_be_charged_immediately = 0
+
+                            if remaining_advance_payment >= amount_charged_toward_principal:
+                                print('remaining_advance_payment >= amount_charged_toward_principal: '+str(remaining_advance_payment)+' >= '+str(amount_charged_toward_principal))
+                                advance_payment_toward_principal = amount_charged_toward_principal
+                                amount_charged_toward_principal = 0
+                            else:
+                                print('remaining_advance_payment < amount_charged_toward_principal: '+str(remaining_advance_payment)+' >= '+str(amount_charged_toward_principal))
+                                amount_charged_toward_principal -= remaining_advance_payment #todo potential for flop error
+                                advance_payment_toward_principal = remaining_advance_payment
+
+                            #if there is any additional advance payment, it was already applied to principal
+                        else:
+                            print('advance_payment_amount < interest_to_be_charged_immediately: '+str(advance_payment_amount)+' < '+str(interest_to_be_charged_immediately))
+                            advance_payment_toward_interest = advance_payment_amount
+
+                    print('advance_payment_toward_interest:' + str(advance_payment_toward_interest))
+                    print('advance_payment_toward_principal:' + str(advance_payment_toward_principal))
+                    print('interest_to_be_charged_immediately:'+str(interest_to_be_charged_immediately))
+                    print('amount_charged_toward_principal:'+str(amount_charged_toward_principal))
+
+                    #todo subtract advance payment from these
+                    #if ( interest_to_be_charged_immediately + amount_charged_toward_principal ) > 0:
+                    if account_row.Minimum_Payment < ( interest_to_be_charged_immediately + amount_charged_toward_principal):
+                        print('account_row.Minimum_Payment < ( interest_to_be_charged_immediately + amount_charged_toward_principal): '+str(account_row.Minimum_Payment)+' < '+str( interest_to_be_charged_immediately + amount_charged_toward_principal))
+                        payment_toward_prev = amount_charged_toward_principal
+                        payment_toward_curr = min(amount_charged_toward_principal - payment_toward_prev,current_current_statement_balance)
+
+                    elif account_row.Minimum_Payment >= ( interest_to_be_charged_immediately + amount_charged_toward_principal):
+                        print('account_row.Minimum_Payment >= ( interest_to_be_charged_immediately + amount_charged_toward_principal): '+str(account_row.Minimum_Payment)+' >= '+str( interest_to_be_charged_immediately + amount_charged_toward_principal))
+                        # if account_row.Minimum_Payment > amount_charged_toward_principal, THEN
                         # account_row.Minimum_Payment > current_previous_statement_balance BECAUSE
-                        # amount_charged_toward_balance = current_previous_statement_balance * 0.1
+                        # amount_charged_toward_principal = current_previous_statement_balance * 0.1
 
                         if account_row.Minimum_Payment > current_previous_statement_balance:
                             payment_toward_prev = current_previous_statement_balance
@@ -4435,14 +4628,31 @@ class ExpenseForecast:
                             payment_toward_prev = account_row.Minimum_Payment - interest_to_be_charged_immediately
                             payment_toward_curr = 0
 
+                    #by not having this on as og_interest... it is able to be suppressed by early payments
+                    # this is the 'pay' half of the pay-charge duo of interest accrual
                     if interest_to_be_charged_immediately > 0:
 
-                        # interest change
+                        # interest charge
                         account_set.executeTransaction(Account_From=primary_checking_account_name,
                                                        Account_To=None,
                                                        # Note that the execute transaction method will split the amount paid between the 2 accounts
                                                        Amount=interest_to_be_charged_immediately)
-                        current_forecast_row_df.Memo += ' cc interest (Checking -$' + str(round(interest_to_be_charged_immediately,2)) + ');'
+
+                        #todo haven't tested getPrimaryCheckingAccountName in this context
+                        current_forecast_row_df.Memo += ' cc interest ('+account_set.getPrimaryCheckingAccountName() + ' -$' + str(round(interest_to_be_charged_immediately,2)) + ');'
+                        current_forecast_row_df['Memo Directives'] += ' CC MIN PAYMENT interest ('+account_set.getPrimaryCheckingAccountName() + ' -$' + str(
+                            round(interest_to_be_charged_immediately, 2)) + ');'
+                    # else:
+                    #     payment_toward_prev = 0
+                    #     payment_toward_curr = 0
+
+                    #this is the 'charge' half of the pay-charge duo of interest accrual
+                    #this might not be correct, but is net-zero... the interest was considered to have been paid in advance
+                    #but wasn't a "real" charge until the payment day. Therefore, we add it to prev balance?
+                    #However, AccountSet.executeTransaction does not to/from prev accounts, so we have to do a hack...
+                    if og_interest_to_be_charged_immediately > 0:
+                        account_set.accounts[account_index].balance += og_interest_to_be_charged_immediately
+                        current_forecast_row_df.Memo += ' cc interest ('+account_row.Name+' +$' + str(round(og_interest_to_be_charged_immediately, 2)) + ');'
 
 
                     # if interest_to_be_charged_immediately > 0 then this is also true
@@ -4456,13 +4666,17 @@ class ExpenseForecast:
                         if payment_toward_prev > 0:
                             current_forecast_row_df.Memo += ' cc min payment (' + account_row.Name.split(':')[
                                 0] + ': Prev Stmt Bal -$' + str(round(payment_toward_prev,2)) + ');'
+                            current_forecast_row_df['Memo Directives'] += ' CC MIN PAYMENT (' + account_row.Name.split(':')[
+                                0] + ': Prev Stmt Bal -$' + str(round(payment_toward_prev, 2)) + ');'
                         if payment_toward_curr > 0:
                             current_forecast_row_df.Memo += ' cc min payment (' + account_row.Name.split(':')[
                                 0] + ': Curr Stmt Bal -$' + str(round(payment_toward_curr,2)) + ');'
+                            current_forecast_row_df['Memo Directives'] += ' CC MIN PAYMENT (' + account_row.Name.split(':')[
+                                0] + ': Curr Stmt Bal -$' + str(round(payment_toward_curr, 2)) + ');'
 
 
 
-        #todo I notice this entire project goes back and forth on this source of truth for balances
+        #todo I notice that this entire project goes back and forth on this source of truth for balances
         for account_index, account_row in account_set.getAccounts().iterrows():
             relevant_balance = account_set.getAccounts().iloc[account_index, 1]
             col_sel_vec = (current_forecast_row_df.columns == account_row.Name)
@@ -4708,6 +4922,7 @@ class ExpenseForecast:
 
 
     def propagateOptimizationTransactionsIntoTheFuture(self, account_set_before_p2_plus_txn, forecast_df, date_string_YYYYMMDD):
+        #print('ENTER propagateOptimizationTransactionsIntoTheFuture')
         bal_string = ' '
         for index, row in account_set_before_p2_plus_txn.getAccounts().iterrows():
             bal_string += '$' + str(row.Balance) + ' '
@@ -4736,9 +4951,9 @@ class ExpenseForecast:
                 log_in_color(logger,'red','error',str(e.args))
                 raise e
         account_deltas = pd.DataFrame(account_deltas).T
-        #log_in_color(logger, 'magenta', 'debug', account_deltas.to_string())
+        log_in_color(logger, 'magenta', 'debug', account_deltas.to_string())
         del i
-
+        #print('A')
         #log_in_color(logger, 'magenta', 'debug', 'account_deltas:')
         #log_in_color(logger, 'magenta', 'debug', account_deltas)
 
@@ -4801,7 +5016,7 @@ class ExpenseForecast:
                 # log_in_color(logger, 'white', 'debug', '+= ' + str(account_deltas.iloc[0, account_index]))
                 future_rows_only_df.iloc[:, col_sel_vec] += account_deltas.iloc[0, account_index]
 
-
+        #print('B')
         # recalculate interest and reapply min payments and update min payment memo
         # min payments must be reapplied before interest calc can be corrected, and may as well update memo at same time
         # log_in_color(logger, 'white', 'debug', 'future_rows_only_df:')
@@ -4809,9 +5024,8 @@ class ExpenseForecast:
         for f_i, f_row in future_rows_only_df.iterrows():
             f_row = pd.DataFrame(f_row).T
             f_row.reset_index(drop=True,inplace=True)
-
+            #print('f_row.Date:'+str(f_row.Date.iat[0]))
             for a_i in range(1,forecast_df.shape[1]-1): #left bound is 1 bc skip Date
-
                 if account_deltas.iloc[0, a_i - 1] == 0:
                     continue  # if no optimization was made, then satisfice does not need to be edited
 
@@ -4819,6 +5033,8 @@ class ExpenseForecast:
                     continue  # last day of forecast so we can stop
 
                 account_row = A_df.iloc[a_i - 1,:]
+                #print(pd.DataFrame(account_row).T.to_string())
+                # print(f_row.Date.iat[0]+' '+account_row.Name)
 
                 #log_in_color(logger, 'magenta', 'debug', 'f_row.Date.iat[0]:'+str(f_row.Date.iat[0]))
                 # log_in_color(logger, 'magenta', 'debug', 'account_row.Account_Type:' + str(account_row.Account_Type))
@@ -5097,8 +5313,11 @@ class ExpenseForecast:
                         else:
                             pass  # loan was already paid off
 
+
                 elif account_row.Account_Type == 'prev stmt bal':
+                    # print('hey hi im processing prev stmt bal')
                     if 'cc min payment' in f_row.Memo.iat[0]:
+                        ##print('hi me against its also a min payment')
 
                         account_base_name = account_row.Name.split(':')[0]
                         memo_line_items = f_row.Memo.iat[0].split(';')
@@ -5135,7 +5354,10 @@ class ExpenseForecast:
                             row_sel_vec = [d >= datetime.datetime.strptime(f_row.Date.iat[0], '%Y%m%d') for d in future_rows_only_df__date]
 
                             #reverse the min payment
+                            # print('future_rows_only_df before reversal of min payment')
+                            # print(future_rows_only_df.to_string())
                             future_rows_only_df.iloc[row_sel_vec,col_sel_vec] += og_amount
+
 
                             memo_to_replace = memo_line_items_relevant_to_minimum_payment[0]+';'
                             # log_in_color(logger, 'white', 'info', 'memo_to_replace:')
@@ -5151,7 +5373,10 @@ class ExpenseForecast:
 
                             account_set = self.sync_account_set_w_forecast_day(
                                 copy.deepcopy(account_set_before_p2_plus_txn), future_rows_only_df, f_row.Date.iat[0])
-                            updated_forecast_df_row = self.executeCreditCardMinimumPayments(account_set, f_row)
+                            updated_forecast_df_row = self.executeCreditCardMinimumPayments(forecast_df, account_set, f_row)
+
+                            # print('future_rows_only_df after reversal of min payment')
+                            # print(future_rows_only_df.to_string())
 
                             # log_in_color(logger, 'white', 'info', 'updated_forecast_df_row:')
                             # log_in_color(logger, 'white', 'info', updated_forecast_df_row.to_string())
@@ -5176,6 +5401,9 @@ class ExpenseForecast:
 
                                 # log_in_color(logger, 'white', 'debug', 'AFTER (case 3):')
                                 # log_in_color(logger, 'white', 'debug', future_rows_only_df.to_string())
+
+                                # print( 'AFTER (case 3):')
+                                # print(future_rows_only_df.to_string())
 
 
 
@@ -5304,7 +5532,7 @@ class ExpenseForecast:
                     # else:
                     #     pass  # loan was already paid off
 
-
+                #print('still processing prev stmt bal we are entering interest accrual revision logic')
                 # all billing dates are interest accrual dates, but not all interest accrual dates are billing dates
                 pbal_interest_accrual_dates = interest_accrual_dates__list_of_lists[a_i - 2]
                 if f_row.Date.iat[0] in pbal_interest_accrual_dates and account_row.Account_Type == 'interest':
@@ -5350,8 +5578,9 @@ class ExpenseForecast:
 
                         future_rows_only_df.iloc[row_sel_vec,a_i] -= curr_stmt_bal_value
                         future_rows_only_df.iloc[row_sel_vec, a_i + 1] += curr_stmt_bal_value
-
-
+        #print('C')
+        print('future_rows_only_df:')
+        print(future_rows_only_df.to_string())
 
 
 
@@ -5385,6 +5614,7 @@ class ExpenseForecast:
                 error_msg += "account_row.Min_Balance <= min_future_acct_bal was not True\n"
                 error_msg += str(account_row.Min_Balance) + " <= " + str(min_future_acct_bal) + '\n'
                 error_msg += future_rows_only_df.to_string()
+                print(error_msg)
                 raise ValueError(error_msg)
 
             try:
@@ -5395,9 +5625,10 @@ class ExpenseForecast:
                 error_msg += "account_row.Max_Balance >= max_future_acct_bal was not True\n"
                 error_msg += str(account_row.Max_Balance) + " <= " + str(max_future_acct_bal) + '\n'
                 error_msg += future_rows_only_df.to_string()
+                print(error_msg)
                 raise ValueError(error_msg)
 
-
+        #print('D')
         forecast_df.iloc[future_rows_only_row_sel_vec, :] = future_rows_only_df
         # log_in_color(logger, 'magenta', 'debug', 'AFTER')
         # log_in_color(logger, 'magenta', 'debug', forecast_df.to_string())
@@ -6008,10 +6239,12 @@ class ExpenseForecast:
             last_iteration_ts = datetime.datetime.now()
 
         for priority_index in unique_priority_indices:
+
             if priority_index == 1:
                 continue #because this was handled by satisfice
 
             for date_string_YYYYMMDD in all_days:
+                #print('date_string_YYYYMMDD:'+str(date_string_YYYYMMDD))
                 if date_string_YYYYMMDD == forecast_df.head(1).Date.iat[0]:
                 #if date_string_YYYYMMDD == self.start_date_YYYYMMDD:
                     continue  # first day is considered final
@@ -6042,8 +6275,8 @@ class ExpenseForecast:
                 account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, date_string_YYYYMMDD)
 
 
-                #log_in_color(logger, 'yellow', 'debug','proposed_df before eTFD:')
-                #log_in_color(logger, 'yellow', 'debug', proposed_df.to_string())
+                log_in_color(logger, 'yellow', 'debug','proposed_df before eTFD:')
+                log_in_color(logger, 'yellow', 'debug', proposed_df.to_string())
 
                 forecast_df, confirmed_df, deferred_df, skipped_df = self.executeTransactionsForDayApproximate(account_set=account_set,
                                                                                                     forecast_df=forecast_df,
@@ -6076,7 +6309,9 @@ class ExpenseForecast:
                     # I only recently got the full detail of what happens into the Memo field, but I think that that is the answer
                     # There will be information encoded in the Memo column that will not appear anywhere else
                     #
+                    #print(forecast_df.to_string())
                     forecast_df = self.propagateOptimizationTransactionsIntoTheFuture(account_set_before_p2_plus_txn, forecast_df, date_string_YYYYMMDD)
+                    #print(forecast_df.to_string())
 
         self.log_stack_depth -= 1
         log_in_color(logger, 'magenta', 'debug', 'EXIT assessPotentialOptimizations() C:'+str(confirmed_df.shape[0])+' D:'+str(deferred_df.shape[0])+' S:'+str(skipped_df.shape[0]),self.log_stack_depth)
@@ -6090,7 +6325,7 @@ class ExpenseForecast:
         S = 'S:'+str(skipped_df.shape[0])
         log_in_color(logger,'magenta','debug','ENTER assessPotentialOptimizations( '+F+' '+C+' '+P+' '+D+' '+S+' )',self.log_stack_depth)
         self.log_stack_depth += 1
-        all_days = forecast_df.Date #todo havent tested this, but forecast_df has been satisficed so it has all the dates
+        all_days = forecast_df.Date
 
         log_in_color(logger, 'magenta', 'debug', 'confirmed_df:', self.log_stack_depth)
         log_in_color(logger, 'magenta', 'debug', confirmed_df.to_string(), self.log_stack_depth)
@@ -6115,11 +6350,13 @@ class ExpenseForecast:
         last_iteration_ts = None #this is here to remove a warning
 
         if not raise_satisfice_failed_exception:
-            log_in_color(logger, 'white', 'debug','Beginning Optimization.')
+            #print('Beginning Optimization.')
+            log_in_color(logger, 'white', 'info','Beginning Optimization.')
             log_in_color(logger, 'white', 'debug', self.start_date_YYYYMMDD + ' -> ' + self.end_date_YYYYMMDD)
             log_in_color(logger, 'white', 'debug', 'Priority Indices: ' + str(unique_priority_indices))
             last_iteration_ts = datetime.datetime.now()
 
+        # print('Beginning unique_priority_indices:'+str(unique_priority_indices))
         for priority_index in unique_priority_indices:
             if priority_index == 1:
                 continue #because this was handled by satisfice
@@ -6157,6 +6394,8 @@ class ExpenseForecast:
 
                 #log_in_color(logger, 'yellow', 'debug','proposed_df before eTFD:')
                 #log_in_color(logger, 'yellow', 'debug', proposed_df.to_string())
+                # print('proposed_df')
+                # print(proposed_df.to_string())
 
                 forecast_df, confirmed_df, deferred_df, skipped_df = self.executeTransactionsForDay(account_set=account_set,
                                                                                                     forecast_df=forecast_df,
@@ -6189,7 +6428,13 @@ class ExpenseForecast:
                     # I only recently got the full detail of what happens into the Memo field, but I think that that is the answer
                     # There will be information encoded in the Memo column that will not appear anywhere else
                     #
-                    forecast_df = self.propagateOptimizationTransactionsIntoTheFuture(account_set_before_p2_plus_txn, forecast_df, date_string_YYYYMMDD)
+                    # print('about to propagateOptimizationTransactionsIntoTheFuture')
+                    # print('BEFORE')
+                    # print(forecast_df.to_string())
+                    forecast_df = self.propagateOptimizationTransactionsIntoTheFuture(account_set_before_p2_plus_txn,forecast_df, date_string_YYYYMMDD)
+                    # print('AFTER')
+                    # print(forecast_df.to_string())
+
 
         self.log_stack_depth -= 1
         log_in_color(logger, 'magenta', 'debug', 'EXIT assessPotentialOptimizations() C:'+str(confirmed_df.shape[0])+' D:'+str(deferred_df.shape[0])+' S:'+str(skipped_df.shape[0]),self.log_stack_depth)
@@ -6221,7 +6466,12 @@ class ExpenseForecast:
         self.log_stack_depth += 1
         all_days = list_of_date_strings #just rename it so it's more clear for the context
 
+        # print('ENTER satisfice')
+        # print('confirmed_df.tail(1):')
+        # print(confirmed_df.tail(1).to_string())
+
         for d in all_days:
+            #print('d:'+str(d))
             if progress_bar is not None:
                 progress_bar.update(1)
                 progress_bar.refresh()
@@ -6243,7 +6493,7 @@ class ExpenseForecast:
                     #log_string += '     ' + str(last_iteration_time_elapsed)
                     log_in_color(logger, 'white', 'debug', log_string )
 
-                # print('forecast before eTFD:')
+                #print('forecast before eTFD')
                 # print(forecast_df.to_string())
                 forecast_df, confirmed_df, deferred_df, skipped_df = \
                     self.executeTransactionsForDay(account_set=account_set,
@@ -6262,11 +6512,16 @@ class ExpenseForecast:
                 account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, d)
                 #assert pre_sync.to_string() == account_set.getAccounts().to_string() #the program is not reaching a minimum payments day so this check isnt working yet
 
+                #print('before loan interest')
                 forecast_df[forecast_df.Date == d] = self.calculateLoanInterestAccrualsForDay(account_set, forecast_df[forecast_df.Date == d])
                 account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, d)
+
+                #print('before loan min payments')
                 forecast_df[forecast_df.Date == d] = self.executeLoanMinimumPayments(account_set, forecast_df[forecast_df.Date == d])
+
                 account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, d)
-                forecast_df[forecast_df.Date == d] = self.executeCreditCardMinimumPayments(account_set,forecast_df[forecast_df.Date == d])
+                #print('before cc min payments')
+                forecast_df[forecast_df.Date == d] = self.executeCreditCardMinimumPayments(forecast_df, account_set,forecast_df[forecast_df.Date == d])
                 account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, d)
 
                 # post_min_payments_row = self.executeMinimumPayments(account_set, forecast_df[forecast_df.Date == d])
@@ -6281,6 +6536,8 @@ class ExpenseForecast:
                 if (re.search('.*Account boundaries were violated.*', str(e.args)) is not None) and not raise_satisfice_failed_exception:
                     self.end_date = datetime.datetime.strptime(d, '%Y%m%d') - datetime.timedelta(days=1)
 
+                    log_in_color(logger, 'cyan', 'error', 'Account Boundaries were violated', self.log_stack_depth)
+                    log_in_color(logger, 'cyan', 'error', str(e.args), self.log_stack_depth)
                     log_in_color(logger, 'cyan', 'error', 'State at failure:', self.log_stack_depth)
                     log_in_color(logger, 'cyan', 'error', forecast_df.to_string(), self.log_stack_depth)
 
@@ -6293,13 +6550,14 @@ class ExpenseForecast:
         log_in_color(logger, 'white', 'info', forecast_df.to_string(), self.log_stack_depth)
 
         self.log_stack_depth -= 1
+        # print('exit satisfice')
         log_in_color(logger, 'cyan', 'debug', 'EXIT satisfice()',self.log_stack_depth)
         return forecast_df #this is the satisfice_success = true
 
     def computeOptimalForecast(self, start_date_YYYYMMDD, end_date_YYYYMMDD, confirmed_df, proposed_df, deferred_df, skipped_df, account_set, memo_rule_set, raise_satisfice_failed_exception=True, progress_bar=None):
-        log_in_color(logger,'cyan', 'debug','ENTER computeOptimalForecast()',self.log_stack_depth)
-        log_in_color(logger, 'cyan', 'debug', 'start_date_YYYYMMDD:'+str(start_date_YYYYMMDD), self.log_stack_depth)
-        log_in_color(logger, 'cyan', 'debug', 'end_date_YYYYMMDD:' + str(end_date_YYYYMMDD), self.log_stack_depth)
+        log_in_color(logger,'cyan', 'info','ENTER computeOptimalForecast()',self.log_stack_depth)
+        log_in_color(logger, 'cyan', 'info', 'start_date_YYYYMMDD:'+str(start_date_YYYYMMDD), self.log_stack_depth)
+        log_in_color(logger, 'cyan', 'info', 'end_date_YYYYMMDD:' + str(end_date_YYYYMMDD), self.log_stack_depth)
         self.log_stack_depth += 1
 
         confirmed_df.reset_index(drop=True,inplace=True)
@@ -6312,9 +6570,13 @@ class ExpenseForecast:
 
         log_in_color(logger, 'cyan', 'debug', 'confirmed_df:', self.log_stack_depth)
         log_in_color(logger, 'cyan', 'debug', confirmed_df.to_string(), self.log_stack_depth)
+        # print('computeOptimalForecast')
+        # print('confirmed_df.tail(1):')
+        # print(confirmed_df.tail(1).to_string())
 
         log_in_color(logger, 'cyan', 'debug', 'proposed_df:', self.log_stack_depth)
         log_in_color(logger, 'cyan', 'debug', proposed_df.to_string(), self.log_stack_depth)
+
 
         log_in_color(logger, 'cyan', 'debug', 'deferred_df:', self.log_stack_depth)
         log_in_color(logger, 'cyan', 'debug', deferred_df.to_string(), self.log_stack_depth)
@@ -6338,6 +6600,8 @@ class ExpenseForecast:
         #print('before satisfice')
         satisfice_df = self.satisfice(all_days, confirmed_df, account_set, memo_rule_set, forecast_df, raise_satisfice_failed_exception, progress_bar )
         #print('after satisfice')
+        # print('satisfice_df')
+        # print(satisfice_df.to_string())
 
         satisfice_success = True
         if satisfice_df.tail(1).Date.iat[0] != self.end_date_YYYYMMDD:
@@ -7039,3 +7303,6 @@ if __name__ == "__main__":
 
 # aesthetic Qs for after alpha
 # in comparison report, if report 2 contains 0 items report 1 doesnt have, output a sentence instead of a 0-row table
+
+
+# KNOWN BUG - if an additional cc payment brings checking balance below minimum payment, the additional payment will be rejected
