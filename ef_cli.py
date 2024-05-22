@@ -410,7 +410,7 @@ ON all_forecasts_all_states.forecast_id = meta.forecast_id
             for f in os.listdir(args.working_directory):
                 if f.startswith('Forecast') and not f.startswith('ForecastSet') and f.endswith('.json') and str(args.id) in f:
                     forecast_found = True
-                    print('Starting forecast '+str(args.id))
+                    #print('Starting forecast '+str(args.id))
                     E = ExpenseForecast.initialize_from_json_file(os.path.join(args.working_directory, f)) #let this throw an exception if needed
                     if args.label:
                         E.forecast_name = args.label
@@ -468,30 +468,38 @@ ON all_forecasts_all_states.forecast_id = meta.forecast_id
                 #
                 # print(E.initial_account_set.getAccounts().to_string())
                 # print(E.initial_memo_rule_set.getMemoRules().to_string())
+                # log_in_color(logger, 'magenta', 'info', E)
+                # assert False
 
                 if args.approximate:
                     E.runForecastApproximate()
                 else:
-                    E.runForecast()
+                    E.runForecast(log_level='WARNING')
                 forecast_found = True
             except Exception as e:
                 raise e
 
+            # log_in_color(logger, 'magenta', 'info', E)
+            # log_in_color(logger, 'magenta', 'info', 'AccountSet df')
+            # log_in_color(logger, 'magenta', 'info', E.initial_account_set.getAccounts().to_string())
+            # log_in_color(logger, 'magenta', 'info', 'Results before writing to db')
+            # log_in_color(logger, 'magenta', 'info', E.forecast_df.to_string())
+
             E.writeToJSONFile(args.working_directory)
-            log_in_color(logger, 'green', 'info', 'Finished writing json data to file')
+            # log_in_color(logger, 'green', 'info', 'Finished writing json data to file')
             E.write_to_database(username=args.username,
                                 database_hostname=args.database_hostname,
                                 database_name=args.database_name,
                                 database_username=args.database_username,
                                 database_password=args.database_password,
                                 database_port=args.database_port, overwrite=args.overwrite)
-            log_in_color(logger, 'green', 'info', 'Finished writing forecast data to database')
+            # log_in_color(logger, 'green', 'info', 'Finished writing forecast data to database')
             E.forecast_df.to_csv(args.working_directory + '/Forecast_' + str(E.unique_id) + '.csv', index=False)
-            log_in_color(logger, 'green', 'info',
-                         'Finished writing forecast data to ' + args.working_directory + '/Forecast_' + str(
-                             E.unique_id) + '.csv')
+            # log_in_color(logger, 'green', 'info',
+            #              'Finished writing forecast data to ' + args.working_directory + '/Forecast_' + str(
+            #                  E.unique_id) + '.csv')
             F.generateHTMLReport(E, args.working_directory)
-            log_in_color(logger, 'green', 'info', 'Finished writing forecast report to ' + args.working_directory)
+            # log_in_color(logger, 'green', 'info', 'Finished writing forecast report to ' + args.working_directory)
 
             # engine = create_engine('postgresql://bsdegjmy_humedick@localhost:5432/bsdegjmy_sandbox')
 
@@ -577,7 +585,7 @@ ON all_forecasts_all_states.forecast_id = meta.forecast_id
                                           database_port=args.database_port,
                               username=args.username)
 
-            print('Writing ForecastSet json to file HELLO')
+            # print('Writing ForecastSet json to file HELLO')
             S.writeToJSONFile(args.working_directory)
             F = ForecastHandler.ForecastHandler()
             #todo also write Set JSON and report. i think 'write child reports' could be a parameter
@@ -1007,7 +1015,10 @@ if __name__ == '__main__':
         loglevel = logging.CRITICAL
     else:
         loglevel = logging.WARNING
-    loglevel = logging.INFO
+    #loglevel = logging.INFO
     logger.setLevel(loglevel)
+
+    # print('args:')
+    # print(args)
 
     main(args, loglevel)

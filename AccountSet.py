@@ -1231,6 +1231,8 @@ class AccountSet:
         """
         return jsonpickle.encode(self,indent=4)
 
-
 # written in one line so that test coverage can reach 100%
 if __name__ == "__main__": import doctest; doctest.testmod()
+
+
+# todo known bug- i was able to create multiple loan accounts with the same name
