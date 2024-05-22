@@ -5518,9 +5518,9 @@ class ExpenseForecast:
                     # log_in_color(logger, 'magenta', 'debug', 'checking_delta: '+str(checking_delta), self.log_stack_depth)
                     # log_in_color(logger, 'magenta', 'debug', 'curr_stmt_delta: ' + str(curr_stmt_delta), self.log_stack_depth)
                     # log_in_color(logger, 'magenta', 'debug', 'previous_stmt_delta: ' + str(previous_stmt_delta), self.log_stack_depth)
-                    future_rows_only_df.iloc[f_i, :][relevant_checking_account_name] += checking_delta
-                    future_rows_only_df.iloc[f_i, :][relevant_curr_stmt_bal_account_name] += curr_stmt_delta
-                    future_rows_only_df.iloc[f_i, :][relevant_prev_stmt_bal_account_name] += previous_stmt_delta
+                    future_rows_only_df.iloc[f_i, future_rows_only_df.columns == relevant_checking_account_name] += checking_delta
+                    future_rows_only_df.iloc[f_i, future_rows_only_df.columns == relevant_curr_stmt_bal_account_name] += curr_stmt_delta
+                    future_rows_only_df.iloc[f_i, future_rows_only_df.columns == relevant_prev_stmt_bal_account_name] += previous_stmt_delta
                     # log_in_color(logger, 'magenta', 'debug', 'AFTER', self.log_stack_depth)
                     # log_in_color(logger, 'magenta', 'debug',pd.DataFrame(future_rows_only_df.iloc[f_i, :]).T.to_string(),self.log_stack_depth)
             elif 'checking' in relevant_account_type_list and 'principal balance' in relevant_account_type_list and 'interest' in relevant_account_type_list and len(relevant_account_type_list) == 3:
@@ -5660,22 +5660,19 @@ class ExpenseForecast:
                         interest_delta += og_interest_charge_amount_surplus
                         checking_delta += (og_pbal_charge_amount_surplus + og_interest_charge_amount_surplus)
 
-                    future_rows_only_df.iloc[f_i, :]['Memo Directives'] = ';'.join(md_to_keep)
-                    future_rows_only_df.iloc[f_i, :][relevant_checking_account_name] += checking_delta
-                    future_rows_only_df.iloc[f_i, :][relevant_pbal_account_name] += pbal_delta
+                    future_rows_only_df.iloc[f_i, future_rows_only_df.columns == 'Memo Directives'] = ';'.join(md_to_keep)
+                    future_rows_only_df.iloc[f_i, future_rows_only_df.columns == relevant_checking_account_name] += checking_delta
+                    future_rows_only_df.iloc[f_i, future_rows_only_df.columns == relevant_pbal_account_name] += pbal_delta
 
                     # daily interest accrual is implied here
                     if f_row.Date.iat[0] >= first_billing_date:
                         # set interest equal to previous day
                         if f_i == 0:
-                            future_rows_only_df.iloc[f_i, :][relevant_interest_account_name] = \
-                            post_txn_row_df.iloc[0, :][relevant_interest_account_name]
+                            future_rows_only_df.iloc[f_i, future_rows_only_df.columns == relevant_interest_account_name] = post_txn_row_df.iloc[0, post_txn_row_df.columns == relevant_interest_account_name]
                         else:
-                            future_rows_only_df.iloc[f_i, :][relevant_interest_account_name] = \
-                            future_rows_only_df.iloc[f_i - 1, :][relevant_interest_account_name]
-                        interest_accrued_on_this_day = future_rows_only_df.iloc[f_i, :][relevant_pbal_account_name] * \
-                                                       pbal_row_df.APR.iat[0] / 365.25
-                        future_rows_only_df.iloc[f_i, :][relevant_interest_account_name] += interest_accrued_on_this_day
+                            future_rows_only_df.iloc[f_i, future_rows_only_df.columns == relevant_interest_account_name] = future_rows_only_df.iloc[f_i - 1, future_rows_only_df.columns == relevant_interest_account_name]
+                        interest_accrued_on_this_day = future_rows_only_df.iloc[f_i, future_rows_only_df.columns == relevant_pbal_account_name] * pbal_row_df.APR.iat[0] / 365.25
+                        future_rows_only_df.iloc[f_i, future_rows_only_df.columns == relevant_interest_account_name] += interest_accrued_on_this_day
                         interest_delta = 0
                     # future_rows_only_df.iloc[f_i, :][relevant_interest_account_name] += interest_delta
             elif 'checking' in relevant_account_type_list and 'principal balance' in relevant_account_type_list and len(relevant_account_type_list) == 2:
@@ -5824,12 +5821,12 @@ class ExpenseForecast:
 
 
 
-                    future_rows_only_df.iloc[f_i, :]['Memo Directives'] = ';'.join(md_to_keep)
-                    future_rows_only_df.iloc[f_i, :][relevant_checking_account_name] += checking_delta
+                    future_rows_only_df.iloc[f_i, future_rows_only_df.columns == 'Memo Directives'] = ';'.join(md_to_keep)
+                    future_rows_only_df.iloc[f_i, future_rows_only_df.columns == relevant_checking_account_name] += checking_delta
 
                     # log_in_color(logger, 'magenta', 'debug', 'applying pbal_delta:' + str(pbal_delta), self.log_stack_depth)
                     # log_in_color(logger, 'magenta', 'debug', 'before:' + str(future_rows_only_df.iloc[f_i, :][relevant_pbal_account_name]), self.log_stack_depth)
-                    future_rows_only_df.iloc[f_i, :][relevant_pbal_account_name] += pbal_delta
+                    future_rows_only_df.iloc[f_i, future_rows_only_df.columns == relevant_pbal_account_name] += pbal_delta
                     # log_in_color(logger, 'magenta', 'debug', 'after:' + str(future_rows_only_df.iloc[f_i, :][relevant_pbal_account_name]), self.log_stack_depth)
                     # future_rows_only_df.iloc[f_i, :][relevant_interest_account_name] += interest_delta #this would be for a payment
 
@@ -5837,15 +5834,11 @@ class ExpenseForecast:
                     if f_row.Date.iat[0] >= first_billing_date:
                         # set interest equal to previous day
                         if f_i == 0:
-                            future_rows_only_df.iloc[f_i, :][relevant_interest_account_name] = \
-                            post_txn_row_df.iloc[0, :][
-                                relevant_interest_account_name]
+                            future_rows_only_df.iloc[f_i, future_rows_only_df.columns == relevant_interest_account_name] = post_txn_row_df.iloc[0, post_txn_row_df.columns == relevant_interest_account_name]
                         else:
-                            future_rows_only_df.iloc[f_i, :][relevant_interest_account_name] = \
-                                future_rows_only_df.iloc[f_i - 1, :][relevant_interest_account_name]
-                        interest_accrued_on_this_day = future_rows_only_df.iloc[f_i, :][relevant_pbal_account_name] * \
-                                                       pbal_row_df.APR.iat[0] / 365.25
-                        future_rows_only_df.iloc[f_i, :][relevant_interest_account_name] += interest_accrued_on_this_day
+                            future_rows_only_df.iloc[f_i, future_rows_only_df.columns == relevant_interest_account_name] = future_rows_only_df.iloc[f_i - 1, future_rows_only_df.columns == relevant_interest_account_name]
+                        interest_accrued_on_this_day = future_rows_only_df.iloc[f_i, future_rows_only_df.columns == relevant_pbal_account_name] *  pbal_row_df.APR.iat[0] / 365.25
+                        future_rows_only_df.iloc[f_i, future_rows_only_df.columns == relevant_interest_account_name] += interest_accrued_on_this_day
             elif 'checking' in relevant_account_type_list and 'interest' in relevant_account_type_list and len(relevant_account_type_list) == 2:
                 # log_in_color(logger, 'magenta', 'debug', 'PROP PAY LOAN INTEREST ONLY '+str(date_string_YYYYMMDD), self.log_stack_depth)
                 relevant_checking_account_name = relevant_account_info_df[
@@ -5998,16 +5991,15 @@ class ExpenseForecast:
                     if f_row.Date.iat[0] >= first_billing_date:
                         # set interest equal to previous day
                         if f_i == 0:
-                            future_rows_only_df.iloc[f_i, :][relevant_interest_account_name] = post_txn_row_df.iloc[0, :][
-                                relevant_interest_account_name]
+                            future_rows_only_df.iloc[f_i, future_rows_only_df.columns == relevant_interest_account_name] = post_txn_row_df.iloc[0, future_rows_only_df.columns == relevant_interest_account_name]
                         else:
-                            future_rows_only_df.iloc[f_i, :][relevant_interest_account_name] = future_rows_only_df.iloc[f_i - 1, :][relevant_interest_account_name]
-                        interest_accrued_on_this_day = future_rows_only_df.iloc[f_i, :][relevant_pbal_account_name] * pbal_row_df.APR.iat[0] / 365.25
-                        future_rows_only_df.iloc[f_i, :][relevant_interest_account_name] += interest_accrued_on_this_day
+                            future_rows_only_df.iloc[f_i, future_rows_only_df.columns == relevant_interest_account_name] = future_rows_only_df.iloc[f_i - 1, future_rows_only_df.columns == relevant_interest_account_name]
+                        interest_accrued_on_this_day = future_rows_only_df.iloc[f_i, future_rows_only_df.columns == relevant_pbal_account_name] * pbal_row_df.APR.iat[0] / 365.25
+                        future_rows_only_df.iloc[f_i, future_rows_only_df.columns == relevant_interest_account_name] += interest_accrued_on_this_day
                         interest_delta = 0 #because otherwise it would get re-applied every day
 
-                    future_rows_only_df.iloc[f_i, :]['Memo Directives'] = ';'.join(md_to_keep)
-                    future_rows_only_df.iloc[f_i, :][relevant_checking_account_name] += checking_delta
+                    future_rows_only_df.iloc[f_i, future_rows_only_df.columns == 'Memo Directives'] = ';'.join(md_to_keep)
+                    future_rows_only_df.iloc[f_i, future_rows_only_df.columns == relevant_checking_account_name] += checking_delta
                     # future_rows_only_df.iloc[f_i, :][relevant_pbal_account_name] += pbal_delta
                     # future_rows_only_df.iloc[f_i, :][relevant_interest_account_name] += interest_delta #this happens at interest accrual
             elif 'checking' in relevant_account_type_list and 'prev stmt bal' in relevant_account_type_list and len(relevant_account_type_list) == 2:
@@ -6057,8 +6049,8 @@ class ExpenseForecast:
                     og_check = future_rows_only_df.iloc[f_i, :][relevant_checking_account_name]
                     og_prev = future_rows_only_df.iloc[f_i, :][relevant_prev_stmt_bal_account_name]
 
-                    future_rows_only_df.iloc[f_i, :][relevant_checking_account_name] = (og_check + checking_delta)
-                    future_rows_only_df.iloc[f_i, :][relevant_prev_stmt_bal_account_name] = (og_prev + previous_stmt_delta)
+                    # future_rows_only_df.iloc[f_i, :][relevant_checking_account_name] = (og_check + checking_delta)
+                    # future_rows_only_df.iloc[f_i, :][relevant_prev_stmt_bal_account_name] = (og_prev + previous_stmt_delta)
 
                     future_rows_only_df.iloc[f_i, future_rows_only_df.columns == relevant_checking_account_name] = (og_check + checking_delta)
                     future_rows_only_df.iloc[f_i, future_rows_only_df.columns == relevant_prev_stmt_bal_account_name] = (og_prev + previous_stmt_delta)
@@ -6073,8 +6065,8 @@ class ExpenseForecast:
                     # future_rows_only_df.iloc[f_i, relevant_curr_stmt_bal_account_name] = previous_curr_stmt_bal
                     #future_rows_only_df.iloc[f_i, :][relevant_prev_stmt_bal_account_name] += previous_stmt_delta
 
-                    new_check = future_rows_only_df.iloc[f_i, :][relevant_checking_account_name]
-                    new_prev = future_rows_only_df.iloc[f_i, :][relevant_prev_stmt_bal_account_name]
+                    # new_check = future_rows_only_df.iloc[f_i, :][relevant_checking_account_name]
+                    # new_prev = future_rows_only_df.iloc[f_i, :][relevant_prev_stmt_bal_account_name]
 
                     # print('future_rows_only_df.iloc[f_i, :][relevant_checking_account_name]:')
                     # print(future_rows_only_df.iloc[f_i, :][relevant_checking_account_name])
@@ -6135,8 +6127,8 @@ class ExpenseForecast:
                         previous_stmt_delta += curr_stmt_delta
                         curr_stmt_delta = 0
 
-                    future_rows_only_df.iloc[f_i, :][relevant_checking_account_name] += checking_delta
-                    future_rows_only_df.iloc[f_i, :][relevant_curr_stmt_bal_account_name] += curr_stmt_delta
+                    future_rows_only_df.iloc[f_i, future_rows_only_df == relevant_checking_account_name] += checking_delta
+                    future_rows_only_df.iloc[f_i, future_rows_only_df == relevant_curr_stmt_bal_account_name] += curr_stmt_delta
                     #future_rows_only_df.iloc[f_i, :][relevant_prev_stmt_bal_account_name] += previous_stmt_delta
             elif 'checking' in relevant_account_type_list and len(relevant_account_type_list) == 1:
                 # log_in_color(logger, 'magenta', 'debug', 'PROP CHECKING ONLY '+str(date_string_YYYYMMDD), self.log_stack_depth)
