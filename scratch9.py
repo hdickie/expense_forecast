@@ -25,19 +25,23 @@ pd.options.mode.chained_assignment = None #apparently this warning can throw fal
 # from generate_date_sequence import generate_date_sequence
 
 if __name__ == '__main__':
-    start_date_YYYYMMDD = '20240519'
-    end_date_YYYYMMDD = '20240901' #we want 9/1
+    start_date_YYYYMMDD = '20240522'
+    end_date_YYYYMMDD = '20250101' #we want 9/1
 
     A = AccountSet.AccountSet([])
     A.createCheckingAccount('Checking', 1000, 0, 999999999, True)
     A.createCreditCardAccount('Credit', 0, 7500, 0, 25000, '20240107', 0.2899, 40)
 
     B = BudgetSet.BudgetSet([])
-    B.addBudgetItem(start_date_YYYYMMDD, '22001231', 1, 'daily', 20, 'food', deferrable=False,
+    B.addBudgetItem(start_date_YYYYMMDD, '22001231', 1, 'daily', 40, 'food', deferrable=False,
                     partial_payment_allowed=False)
     B.addBudgetItem('20240505', '22001231', 2, 'monthly', 7000, 'pay cc', deferrable=False,
                     partial_payment_allowed=True)
     B.addBudgetItem('20240105', '22001231', 1, 'semiweekly', 1600, 'EMT income', deferrable=False,
+                    partial_payment_allowed=False)
+    B.addBudgetItem('20240531', '20240628', 1, 'semiweekly', 600, 'repay mom', deferrable=False,
+                    partial_payment_allowed=False)
+    B.addBudgetItem('20240701', '20260401', 1, 'monthly', 800, 'repay dad', deferrable=False,
                     partial_payment_allowed=False)
     # B.addBudgetItem('20240103', '20240303', 2, 'monthly', 460, 'pay cc', False, False)
 
@@ -45,6 +49,7 @@ if __name__ == '__main__':
     M.addMemoRule('food', 'Credit', 'None', 1)
     M.addMemoRule('pay cc', 'Checking', 'Credit', 2)
     M.addMemoRule('.*income.*', 'None', 'Checking', 1)
+    M.addMemoRule('.*repay.*', 'Checking', 'None', 1)
 
     MS = MilestoneSet.MilestoneSet([], [], [])
 
@@ -52,7 +57,7 @@ if __name__ == '__main__':
 
 
 
-    E.runForecast(log_level='DEBUG')
+    E.runForecastApproximate(log_level='DEBUG')
     E.forecast_df.to_csv('test_IRL_case_2.csv')
     # print(E.initial_account_set.getAccounts().to_string())
     # print('-----------------')

@@ -465,14 +465,14 @@ ON all_forecasts_all_states.forecast_id = meta.forecast_id
                                          database_password=args.database_password,
                                          database_port=args.database_port
                                                                       )
-                #
+                # print(':: ef_cli')
                 # print(E.initial_account_set.getAccounts().to_string())
                 # print(E.initial_memo_rule_set.getMemoRules().to_string())
                 # log_in_color(logger, 'magenta', 'info', E)
                 # assert False
 
                 if args.approximate:
-                    E.runForecastApproximate()
+                    E.runForecastApproximate(log_level='WARNING')
                 else:
                     E.runForecast(log_level='WARNING')
                 forecast_found = True
@@ -487,12 +487,15 @@ ON all_forecasts_all_states.forecast_id = meta.forecast_id
 
             E.writeToJSONFile(args.working_directory)
             # log_in_color(logger, 'green', 'info', 'Finished writing json data to file')
+
+            # todo this would ovwrwrite our initial state!
             E.write_to_database(username=args.username,
                                 database_hostname=args.database_hostname,
                                 database_name=args.database_name,
                                 database_username=args.database_username,
                                 database_password=args.database_password,
                                 database_port=args.database_port, overwrite=args.overwrite)
+
             # log_in_color(logger, 'green', 'info', 'Finished writing forecast data to database')
             E.forecast_df.to_csv(args.working_directory + '/Forecast_' + str(E.unique_id) + '.csv', index=False)
             # log_in_color(logger, 'green', 'info',
@@ -674,10 +677,16 @@ ON all_forecasts_all_states.forecast_id = meta.forecast_id
                                                               )
 
             #log_in_color(logger, 'white', 'info', E)
+            A_delete_q = "DELETE FROM " + account_set_table_name + " WHERE forecast_id = '" + E.unique_id + "'"
+            cursor.execute(A_delete_q)
             A_insert_q = "INSERT INTO " + account_set_table_name + " Select '" + E.unique_id + "', account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_cadence, minimum_payment, primary_checking_ind from "+temporary_account_set_table_name
             cursor.execute(A_insert_q)
+            B_delete_q = "DELETE FROM " + budget_set_table_name + " WHERE forecast_id = '" + E.unique_id + "'"
+            cursor.execute(B_delete_q)
             B_insert_q = "INSERT INTO " + budget_set_table_name + " Select '" + E.unique_id + "', memo, priority, start_date, end_date,  cadence, amount, \"deferrable\", partial_payment_allowed from "+temporary_budget_set_table_name
             cursor.execute(B_insert_q)
+            M_delete_q = "DELETE FROM " + memo_rule_set_table_name + " WHERE forecast_id = '" + E.unique_id + "'"
+            cursor.execute(M_delete_q)
             M_insert_q = "INSERT INTO " + memo_rule_set_table_name + " Select '" + E.unique_id + "', memo_regex, account_from, account_to, priority from " + temporary_memo_rule_set_table_name
             cursor.execute(M_insert_q)
 

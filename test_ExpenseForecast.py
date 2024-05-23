@@ -351,7 +351,6 @@ class TestExpenseForecastMethods:
                                   'Memo': ['', '', '']
                               })
                               ),
-
                                 (
                                 'test_p1_only__income_and_payment_on_same_day',
                                 AccountSet.AccountSet(checking_acct_list(0) + credit_acct_list(0, 0, 0.05)),
@@ -376,7 +375,6 @@ class TestExpenseForecastMethods:
                                 'Memo': ['', 'income (Checking +$100.0); test txn (Checking -$100.0);', '']
                                 })
                                 ),
-
                                 (
                                 'test_cc_payment__satisfice__curr_bal_25__expect_0',
                                 AccountSet.AccountSet(checking_acct_list(2000) + credit_acct_list(25, 0, 0.05)),
@@ -401,7 +399,6 @@ class TestExpenseForecastMethods:
                                     'Memo': ['', '', '']
                                 })
                                 ),
-
                                 (
                                 'test_cc_payment__satisfice__prev_bal_1000__expect_40',
                                 AccountSet.AccountSet(checking_acct_list(2000) + credit_acct_list(0, 1000, 0.05)),
@@ -427,7 +424,6 @@ class TestExpenseForecastMethods:
                                     'Memo': ['', '', '']
                                 })
                                 ),
-
                                 (
                                 'test_cc_payment__satisfice__prev_bal_3000__expect_60',
                                 AccountSet.AccountSet(checking_acct_list(2000) + credit_acct_list(0, 3000, 0.12)),
@@ -452,7 +448,6 @@ class TestExpenseForecastMethods:
                                     'Memo': ['', '', '']
                                 })
                                 ),
-
                             (
                             'test_p2_and_3__expect_skip',
                             AccountSet.AccountSet(checking_acct_list(0) + credit_acct_list(0, 0, 0.05)),
@@ -478,7 +473,6 @@ class TestExpenseForecastMethods:
                             'Memo': ['', '', '']
                             })
                             ),
-
         (
                 'test_p2_and_3__expect_defer',
                 AccountSet.AccountSet(checking_acct_list(0) + credit_acct_list(0, 0, 0.05)),
@@ -508,7 +502,6 @@ class TestExpenseForecastMethods:
                     'Memo': ['', '', '']
                 })
         ),
-
         (
                 'test_p2_and_3__p3_item_skipped_bc_p2',
                 AccountSet.AccountSet(checking_acct_list(100)),
@@ -537,7 +530,6 @@ class TestExpenseForecastMethods:
                     'Memo': ['', 'this should be executed (Checking -$100.0);', '']
                 })
         ),
-
         (
                 'test_p2_and_3__p3_item_deferred_bc_p2',
                 AccountSet.AccountSet(checking_acct_list(100)),
@@ -569,7 +561,6 @@ class TestExpenseForecastMethods:
                     'Memo': ['', 'this should be executed (Checking -$100.0);', '']
                 })
         ),
-
         (
                 'test_p4__cc_payment__no_prev_balance__pay_100__no_funds__expect_skip',
                 AccountSet.AccountSet(checking_acct_list(0) + credit_acct_list(0,0,0.05)),
@@ -599,7 +590,6 @@ class TestExpenseForecastMethods:
                     'Memo': ['', '', '']
                 })
         ),
-
         (
                 'test_p4__cc_payment__no_prev_balance__pay_100__expect_skip',
                 AccountSet.AccountSet(checking_acct_list(2000) + credit_acct_list(0, 0, 0.05)),
@@ -629,7 +619,6 @@ class TestExpenseForecastMethods:
                     'Memo': ['', '', '']
                 })
         ),
-
         (
                 'test_p4__cc_payment__pay_all_of_prev_part_of_curr__expect_800',
                 AccountSet.AccountSet(checking_acct_list(2000) + credit_bsd12_acct_list(500, 500, 0.05)),
@@ -660,7 +649,6 @@ class TestExpenseForecastMethods:
                     'Memo': ['', '', '']
                 })
         ),
-
         (
                 'test_p4__cc_payment__pay_part_of_prev_balance__expect_200',
                 AccountSet.AccountSet(checking_acct_list(200) + credit_bsd12_acct_list(500, 500, 0.05)),
@@ -691,7 +679,6 @@ class TestExpenseForecastMethods:
                     'Memo': ['', '', '']
                 })
         ),
-
         (
                 'test_p4__cc_payment__non_0_prev_balance_but_no_funds__expect_0',
                 AccountSet.AccountSet(checking_acct_list(40) + credit_acct_list(500, 500, 0.05)),
@@ -723,7 +710,6 @@ class TestExpenseForecastMethods:
                     'Memo': ['', '', '']
                 })
         ),
-
         (
                 'test_p4__cc_payment__partial_of_indicated_amount',
                 AccountSet.AccountSet(checking_acct_list(1000) + credit_bsd12_acct_list(500, 1500, 0.05)),
@@ -755,7 +741,6 @@ class TestExpenseForecastMethods:
                     'Memo': ['', '', '']
                 })
         ), # 12/21 4AM this is coded correctly and the test fail is bc of algo
-
         (
                 'test_execute_defer_after_receiving_income_2_days_later',
                 AccountSet.AccountSet(checking_acct_list(500)),
@@ -807,7 +792,6 @@ class TestExpenseForecastMethods:
                              '200 income on 1/4 (Checking +$200.0); SPEND daily p1 txn 3 (Checking -$100.0); SPEND p2 txn deferred from 1/2 to 1/4 (Checking -$400.0);']
                 })
         ),
-
         (
                 'test_execute_at_reduced_amount_bc_later_higher_priority_txn',
                 AccountSet.AccountSet(checking_acct_list(400)),
@@ -848,7 +832,6 @@ class TestExpenseForecastMethods:
                     'Memo': ['', '', 'pay reduced amount (Checking -$200.0);', 'pay 200 after reduced amt txn (Checking -$200.0);', '']
                 })
         ),  #this test cas coded correctly. the fail is bc of algo. 12/12 5:21AM
-
         (
                 'test_transactions_executed_at_p1_and_p2',
                 AccountSet.AccountSet(checking_acct_list(2000)),
@@ -896,7 +879,6 @@ class TestExpenseForecastMethods:
                              '']
                 })
         ),
-
             (
             'test_transactions_executed_at_p1_and_p2_and_p3',
             AccountSet.AccountSet(checking_acct_list(2000)),
@@ -953,7 +935,6 @@ class TestExpenseForecastMethods:
                          '']
             })
         ),
-
         # (
         #         'test_transactions_executed_at_p1_and_p2_and_p3',
         #         AccountSet.AccountSet(checking_acct_list(2000)),
@@ -997,8 +978,6 @@ class TestExpenseForecastMethods:
         #             'Memo': ['', '', '', '', '', '']
         #         })
         # ),
-
-
         ( 'test_p7__additional_loan_payment__amt_10',
                 AccountSet.AccountSet(checking_acct_list(5000) + non_trivial_loan('Loan A',1000,100,0.1) + non_trivial_loan('Loan B',1000,100,0.05) + non_trivial_loan('Loan C',1000,100,0.01)),
                 BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000102','20000102',7,'once',10,'additional_loan_payment')]),
@@ -1029,7 +1008,6 @@ class TestExpenseForecastMethods:
                     'Memo': ['', '', '']
                 })
         ),
-
         ('test_p7__additional_loan_payment__amt_110',
          AccountSet.AccountSet(
              checking_acct_list(5000) + non_trivial_loan('Loan A', 1000, 100, 0.1) + non_trivial_loan('Loan B', 1000,
@@ -1064,7 +1042,6 @@ class TestExpenseForecastMethods:
              'Memo': ['', '', '']
          })
          ),
-
         ('test_p7__additional_loan_payment__amt_560',
          AccountSet.AccountSet(
              checking_acct_list(5000) + non_trivial_loan('Loan A', 1000, 100, 0.1) + non_trivial_loan('Loan B', 1000,
@@ -1100,7 +1077,6 @@ class TestExpenseForecastMethods:
              'Memo': ['', '', '']
          })
          ), #todo double check this math
-
         ('test_p7__additional_loan_payment__amt_610',
          AccountSet.AccountSet(
              checking_acct_list(5000) + non_trivial_loan('Loan A', 1000, 100, 0.1) + non_trivial_loan('Loan B', 1000,
@@ -1136,8 +1112,6 @@ class TestExpenseForecastMethods:
              'Memo': ['', '', '']
          })
          ),  # todo check this math
-
-
         ('test_p7__additional_loan_payment__amt_1900',
          AccountSet.AccountSet(
              checking_acct_list(5000) + non_trivial_loan('Loan A', 1000, 100, 0.1) + non_trivial_loan('Loan B', 1000,
@@ -1173,7 +1147,6 @@ class TestExpenseForecastMethods:
              'Memo': ['', '', '']
          })
          ),
-
         ('test_p7__additional_loan_payment__amt_overpay',
          AccountSet.AccountSet(
              checking_acct_list(5000) + non_trivial_loan('Loan A', 1000, 100, 0.1) + non_trivial_loan('Loan B', 1000,
@@ -2547,57 +2520,6 @@ class TestExpenseForecastMethods:
     #     for i in range(0, len(test_descriptions)):
     #         self.assertTrue(differences[i].shape[0] == 0)
 
-    def test_interest_types_and_cadences_at_most_monthly(self):
-        raise NotImplementedError #i would waste a lot of time every time I ran tests if i implemented it before optimization
-        sd = '20000101'
-        ed = '20000103'
-
-        A = AccountSet.AccountSet([])
-
-        # compound semiweekly interest
-        # compound weekly
-        # compound daily
-
-        # simple monthly
-        # simple semiweekly
-        # simple weekly
-        A.createAccount('')
-
-
-        B = BudgetSet.BudgetSet(
-            [
-            ])
-        M = MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*',
-                                                       account_from='Checking',
-                                                       account_to=None,
-                                                       transaction_priority=1)
-                                     ])
-        MS = MilestoneSet.MilestoneSet( [], [], [])
-
-        E = ExpenseForecast.ExpenseForecast(A, B, M, sd, ed, MS)
-
-    #this test will compute a forecast a year long, so it will take a long time
-    #this should be implemented after optimization
-    def test_quarter_and_year_long_interest_cadences(self):
-        raise NotImplementedError
-        sd = '20000101'
-        ed = '20000103'
-
-        A = AccountSet.AccountSet(
-            checking_acct_list(2000) )
-        B = BudgetSet.BudgetSet(
-            [
-             ]
-        )
-        M = MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*',
-                                                       account_from='Checking',
-                                                       account_to=None,
-                                                       transaction_priority=1)
-                                     ])
-        MS = MilestoneSet.MilestoneSet( [], [], [])
-
-        E = ExpenseForecast.ExpenseForecast(A, B, M, sd, ed, MS)
-
     # def test_summary_lines(self):
     #
     #     test_description = 'test_summary_lines'
@@ -2867,6 +2789,8 @@ class TestExpenseForecastMethods:
 
         final_state_df = E.forecast_df.tail(1)
         assert final_state_df.iloc[0,:].Memo.strip() == ''  # loan should already have been paid off. If fail, there will be an additional payment here
+        print(E.forecast_df.to_string())
+        assert False #this test case should be more detailed
 
     def test_multiple_additional_loan_payments_on_consecutive_days(self):
         start_date_YYYYMMDD = '20240101'
@@ -2905,6 +2829,7 @@ class TestExpenseForecastMethods:
 
         #I'm not sure what the check should be here but this looks correct
         #assert final_state_df.iloc[0,:].Memo.strip() == ''  #./Forecast_091547.html
+        assert False #add more detail to this test case
 
     #I;m not sure this test case is unique and clear
     def test_additional_loan_payments_overpayment(self):
@@ -2940,7 +2865,6 @@ class TestExpenseForecastMethods:
         final_state_df = E.forecast_df.tail(1)
         assert final_state_df.iloc[0,2] == 0 #pbal
         assert final_state_df.iloc[0, 2] == 0 #interest
-
 
     # passed by observation
     # def test_additional_cc_payments_overpayment(self):
