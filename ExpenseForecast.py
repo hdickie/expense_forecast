@@ -1716,6 +1716,7 @@ class ExpenseForecast:
                 forecast_df[forecast_df.Date == d] = self.executeLoanMinimumPayments(account_set,
                                                                                      forecast_df[forecast_df.Date == d])
                 account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, d)
+                #todo NOTE THAT ADDITIONAL CC PAYMENTS ARE NOT CREDITED BEFORE INTEREST ACCURAL
                 forecast_df[forecast_df.Date == d] = self.executeCreditCardMinimumPayments(forecast_df, account_set, forecast_df[
                     forecast_df.Date == d])
                 account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, d)
@@ -1736,7 +1737,7 @@ class ExpenseForecast:
                     log_in_color(logger, 'cyan', 'error', forecast_df.to_string(), self.log_stack_depth)
 
                     self.log_stack_depth -= 1
-                    log_in_color(logger, 'cyan', 'debug', 'EXIT satisfice()', self.log_stack_depth)
+                    # log_in_color(logger, 'cyan', 'debug', 'EXIT satisfice()', self.log_stack_depth)
                     return forecast_df
                 else:
                     raise e
@@ -2764,6 +2765,9 @@ class ExpenseForecast:
 
     #includes multiple payments per day, and on day it was called
     def getTotalPrepaidInCreditCardBillingCycle(self, account_name, account_set, forecast_df, date_YYYYMMDD):
+        # print('ENTER getTotalPrepaidInCreditCardBillingCycle('+str(date_YYYYMMDD)+')')
+        # print('forecast_df:')
+        # print(forecast_df.to_string())
         account_name = account_name.split(':')[0]
         account_name_s = [ a.split(':')[0] for a in account_set.getAccounts().Name ]
         account_name_sel_vec = [ a == account_name for a in account_name_s ]
@@ -2874,6 +2878,7 @@ class ExpenseForecast:
                     pass
         #             print('no matches')
         # print('advance_payment_amount:'+str(advance_payment_amount))
+        # print('EXIT getTotalPrepaidInCreditCardBillingCycle(' + str(date_YYYYMMDD) + ') '+str(advance_payment_amount))
         return advance_payment_amount
 
     def getFutureMinPaymentAmount(self, account_name, account_set, forecast_df, date_YYYYMMDD):
@@ -2985,7 +2990,7 @@ class ExpenseForecast:
             #log_in_color(logger, 'green', 'debug', 'EXIT processProposedTransactions()', self.log_stack_depth)
             return forecast_df, new_confirmed_df, new_deferred_df, new_skipped_df
         # log_in_color(logger, 'white', 'debug', 'ENTER processProposedTransactions()',self.log_stack_depth)
-
+        # log_in_color(logger, 'green', 'debug', 'ENTER processProposedTransactions()', self.log_stack_depth)
 
         for proposed_item_index, proposed_row_df in relevant_proposed_df.iterrows():
             # log_in_color(logger, 'cyan', 'debug', 'Processing proposed txn '+proposed_row_df.Memo+' '+str(proposed_row_df.Amount), self.log_stack_depth)
@@ -3016,7 +3021,7 @@ class ExpenseForecast:
             if not transaction_is_permitted and proposed_row_df.Partial_Payment_Allowed:
 
                 #try:
-                # print('re-attempting txn at reduced balance')
+                # print('re-attempting txn at reduced balance ')
                 # print(account_set.getAccounts().to_string())
                 # log_in_color(logger, 'cyan', 'debug', 're-attempting txn at reduced balance', self.log_stack_depth)
                 min_fut_avl_bals = self.getMinimumFutureAvailableBalances(account_set, forecast_df, date_YYYYMMDD)
@@ -3100,6 +3105,7 @@ class ExpenseForecast:
 
 
                     # False if not permitted, updated forecast if it is permitted
+                    # print('re-attempting at: ' + str(reduced_amt))
                     # log_in_color(logger, 'cyan', 'debug','re-attempting at: ' + str(reduced_amt), self.log_stack_depth)
                     # log_in_color(logger, 'cyan', 'debug', 'account_set:', self.log_stack_depth)
                     # log_in_color(logger, 'cyan', 'debug', account_set.getAccounts().to_string(), self.log_stack_depth)
@@ -3222,6 +3228,8 @@ class ExpenseForecast:
 
                 # forecast_df, skipped_df, confirmed_df, deferred_df
                 forecast_with_accurately_updated_future_rows = hypothetical_future_state_of_forecast
+                # log_in_color(logger, 'green', 'debug', 'TXN PERMITTED:', self.log_stack_depth)
+                # log_in_color(logger, 'green', 'debug', forecast_with_accurately_updated_future_rows.to_string(), self.log_stack_depth)
 
                 forecast_rows_to_keep_df = forecast_df[
                     [datetime.datetime.strptime(d, '%Y%m%d') < datetime.datetime.strptime(date_YYYYMMDD, '%Y%m%d') for d
@@ -3261,7 +3269,7 @@ class ExpenseForecast:
                         """)
 
         self.log_stack_depth -= 1
-        # log_in_color(logger, 'green', 'debug', 'EXIT processProposedTransactions() C:'+str(new_confirmed_df.shape[0])+' D:'+str(new_deferred_df.shape[0])+' S:'+str(new_skipped_df.shape[0]), self.log_stack_depth)
+        # log_in_color(logger, 'green', 'debug', 'EXIT processProposedTransactions()', self.log_stack_depth)
         return forecast_df, new_confirmed_df, new_deferred_df, new_skipped_df
 
     def processProposedTransactionsApproximate(self, account_set, forecast_df, date_YYYYMMDD, memo_set, confirmed_df, relevant_proposed_df, priority_level):
@@ -3276,6 +3284,7 @@ class ExpenseForecast:
             return forecast_df, new_confirmed_df, new_deferred_df, new_skipped_df
 
         for proposed_item_index, proposed_row_df in relevant_proposed_df.iterrows():
+            print('proposed txn:'+str(proposed_row_df.Date+' '+str(proposed_row_df.Amount)))
             relevant_memo_rule_set = memo_set.findMatchingMemoRule(proposed_row_df.Memo, proposed_row_df.Priority)
             memo_rule_row = relevant_memo_rule_set.getMemoRules().loc[0, :]
 
@@ -3339,6 +3348,7 @@ class ExpenseForecast:
                     pass
                 elif reduced_amt > 0:
                     proposed_row_df.Amount = reduced_amt
+                    print(proposed_row_df.Date+' re-attempt at reduced amt: '+str(reduced_amt))
                     result_of_attempt = self.attemptTransactionApproximate(forecast_df, copy.deepcopy(account_set), memo_set, confirmed_df, proposed_row_df)
                     transaction_is_permitted = isinstance(result_of_attempt, pd.DataFrame)
 
@@ -5072,9 +5082,10 @@ class ExpenseForecast:
                 # current_current_statement_balance = account_set.getAccounts().loc[account_index - 1, :].Balance
                 # current_previous_statement_balance = account_row.Balance
                 if current_forecast_row_df.Date.iloc[0] in billing_days:
+                    # log_in_color(logger, 'cyan', 'debug', 'ENTER executeCreditCardMinimumPayments '+str(current_forecast_row_df.Date.iat[0]), self.log_stack_depth)
                     # print('EXECUTE MINIMUM CREDIT CARD PAYMENTS')
                     # print('Date:' + current_forecast_row_df.Date.iat[0])
-                    # print(forecast_df.to_string())
+                    # log_in_color(logger, 'cyan', 'debug', forecast_df.to_string(), self.log_stack_depth)
 
                     advance_payment_amount = self.getTotalPrepaidInCreditCardBillingCycle(account_row.Name, account_set, forecast_df, current_forecast_row_df.Date.iloc[0])
 
@@ -5109,7 +5120,7 @@ class ExpenseForecast:
                         #same as old logic
                         current_current_statement_balance = account_set.getAccounts().loc[account_index - 1, :].Balance
                         # print('current_previous_statement_balance:'+str(current_previous_statement_balance))
-                        # print('previous_previous_statement_balance:' + str(previous_previous_statement_balance))
+                        # print('(case 1): previous_previous_statement_balance:' + str(previous_previous_statement_balance))
                     else:
                         # print('CHECKING prev bal')
                         billing_cycle_rb = current_forecast_row_df.Date.iloc[0]
@@ -5140,6 +5151,9 @@ class ExpenseForecast:
                             previous_previous_statement_balance = 0 #if there was no min payment, it is implied there was no balance to pay
                         else:
                             previous_previous_statement_balance = check_region.iloc[previous_min_payment_date_sel_vec, account_index + 1].iat[0]
+                        #     print('forecast_df:')
+                        #     print(forecast_df.to_string())
+                        # print('(case 2): previous_previous_statement_balance:' + str(previous_previous_statement_balance))
 
                     # print('previous_previous_statement_balance:'+str(previous_previous_statement_balance))
 
@@ -5328,11 +5342,12 @@ class ExpenseForecast:
                     #     account_set.accounts[account_index].balance += og_interest_to_be_charged_immediately
                     #     current_forecast_row_df.Memo += ' cc interest ('+account_row.Name+' +$' + str(round(og_interest_to_be_charged_immediately, 2)) + ');'
 
+                    # print('current_forecast_row_df.Date: ' + str(current_forecast_row_df.Date.iat[0]))
                     # print('min_payment:'+str(min_payment))
+                    # print('advance_payment_amount:' + str(advance_payment_amount))
                     # print('payment_toward_prev:'+str(payment_toward_prev))
                     # print('payment_toward_curr:' + str(payment_toward_curr))
                     # if interest_to_be_charged_immediately > 0 then this is also true
-                    # print('current_forecast_row_df.Date: ' + str(current_forecast_row_df.Date.iat[0]))
                     if (payment_toward_prev + payment_toward_curr) > 0:
 
                         # log_in_color(logger, 'cyan', 'debug', 'just before executeCreditCardMinimumPayments :: executeTransaction', self.log_stack_depth)
@@ -5350,7 +5365,7 @@ class ExpenseForecast:
 
                         if payment_toward_prev > 0:
                             current_forecast_row_df['Memo Directives'] += ' CC MIN PAYMENT (' + account_row.Name.split(':')[
-                                0] + ': Prev Stmt Bal -$' + str(round(payment_toward_prev, 2)) + ');'
+                                0] + ': Prev Stmt Bal -$' + str(round(payment_toward_prev, 2)) + '); '
                             # log_in_color(logger, 'cyan', 'debug', 'after append memo directive (prev stmt pay)',
                             #              self.log_stack_depth)
                             # log_in_color(logger, 'cyan', 'debug', current_forecast_row_df['Memo Directives'].iat[0],
@@ -5358,7 +5373,7 @@ class ExpenseForecast:
 
                         if payment_toward_curr > 0:
                             current_forecast_row_df['Memo Directives'] += ' CC MIN PAYMENT (' + account_row.Name.split(':')[
-                                0] + ': Curr Stmt Bal -$' + str(round(payment_toward_curr, 2)) + ');'
+                                0] + ': Curr Stmt Bal -$' + str(round(payment_toward_curr, 2)) + '); '
                             # log_in_color(logger, 'cyan', 'debug', 'after append memo directive (curr stmt pay)',
                             #              self.log_stack_depth)
                             # log_in_color(logger, 'cyan', 'debug', current_forecast_row_df['Memo Directives'].iat[0],
@@ -5367,15 +5382,16 @@ class ExpenseForecast:
                     if payment_toward_curr > 0 or payment_toward_prev > 0:
                         # log_in_color(logger, 'cyan', 'debug',' CC MIN PAYMENT (' + primary_checking_account_name+' -$' + str(round(payment_toward_curr + payment_toward_prev, 2)) + ');', self.log_stack_depth)
                         # print(' CC MIN PAYMENT (' + primary_checking_account_name+' -$' + str(round(payment_toward_curr + payment_toward_prev, 2)) + ');')
-                        current_forecast_row_df['Memo Directives'] += ' CC MIN PAYMENT (' + primary_checking_account_name+' -$' + str(round(payment_toward_curr + payment_toward_prev, 2)) + ');'
+                        current_forecast_row_df['Memo Directives'] += ' CC MIN PAYMENT (' + primary_checking_account_name+' -$' + str(round(payment_toward_curr + payment_toward_prev, 2)) + '); '
                         # log_in_color(logger, 'cyan', 'debug', 'after append memo directive (total chk deduction)',
                         #              self.log_stack_depth)
                         # log_in_color(logger, 'cyan', 'debug', current_forecast_row_df['Memo Directives'].iat[0],
                         #              self.log_stack_depth)
 
+                    ### I am not sure if this works anymore
                     #we still need an entry in memo directive
                     if payment_toward_curr == 0 and payment_toward_prev == 0 and min_payment > 0:
-                        current_forecast_row_df['Memo Directives'] += ' CC MIN PAYMENT ALREADY MADE (' + account_row.Name.split(':')[0] + ': Prev Stmt Bal -$0.00);'
+                        current_forecast_row_df['Memo Directives'] += ' CC MIN PAYMENT ALREADY MADE (' + account_row.Name.split(':')[0] + ': Prev Stmt Bal -$0.00); '
                         # log_in_color(logger, 'cyan', 'debug', 'after append memo directive (pmt already made)',
                         #              self.log_stack_depth)
                         # log_in_color(logger, 'cyan', 'debug', current_forecast_row_df['Memo Directives'].iat[0],
@@ -5397,6 +5413,7 @@ class ExpenseForecast:
                                 continue
                             mds_to_keep.append(md)
                         current_forecast_row_df['Memo Directives'] = ';'.join(mds_to_keep)
+                    # print('EXIT executeCreditCardMinimumPayments()')
                         # log_in_color(logger, 'cyan', 'debug', 'chk_md:'+str(chk_md), self.log_stack_depth)
                         # print(current_forecast_row_df['Memo Directives'].iat[0])
                         # print('chk_md:'+str(chk_md))
@@ -5414,7 +5431,7 @@ class ExpenseForecast:
                         #                                income_flag=True)
                         # log_in_color(logger, 'cyan', 'debug', account_set.getAccounts().to_string(), self.log_stack_depth)
                         # log_in_color(logger, 'cyan', 'debug', 'just after executeCreditCardMinimumPayments :: executeTransaction checking undo', self.log_stack_depth)
-
+                    # log_in_color(logger, 'cyan', 'debug', 'EXIT executeCreditCardMinimumPayments '+str(current_forecast_row_df.Date.iat[0]), self.log_stack_depth)
 
 
 
@@ -5438,7 +5455,7 @@ class ExpenseForecast:
         self.log_stack_depth -= 1
         # log_in_color(logger, 'cyan', 'debug', 'eCCP return row:', self.log_stack_depth)
         # log_in_color(logger, 'cyan', 'debug', current_forecast_row_df.to_string(), self.log_stack_depth)
-        # log_in_color(logger, 'cyan', 'debug', 'EXIT executeCreditCardMinimumPayments()', self.log_stack_depth)
+        # print('EXIT executeCreditCardMinimumPayments()')
         return current_forecast_row_df
 
     def executeLoanMinimumPayments(self, account_set, current_forecast_row_df):
@@ -5703,7 +5720,7 @@ class ExpenseForecast:
 
         if sum(account_deltas.T.Balance) == 0:
             return forecast_df
-
+        log_in_color(logger, 'magenta', 'debug', 'ENTER propagateOptimizationTransactionsIntoTheFuture(' + str(date_string_YYYYMMDD) + ')', self.log_stack_depth)
         # print('ENTER propagateOptimizationTransactionsIntoTheFuture(' + str(date_string_YYYYMMDD) + ')')
 
         post_txn_row_df = pd.DataFrame(forecast_df[forecast_df.Date == date_string_YYYYMMDD])
@@ -5800,11 +5817,13 @@ class ExpenseForecast:
 
             if 'checking' in relevant_account_type_list and 'prev stmt bal' in relevant_account_type_list and 'curr stmt bal' in relevant_account_type_list and len(relevant_account_type_list) == 3:
                 # log_in_color(logger, 'magenta', 'debug', 'PROP CC PAYMENT PREV & CURR '+str(date_string_YYYYMMDD), self.log_stack_depth)
-                # cc payment
-
-                relevant_checking_account_name = relevant_account_info_df[relevant_account_info_df.Account_Type == 'checking'].Name.iat[0]
-                relevant_curr_stmt_bal_account_name = relevant_account_info_df[relevant_account_info_df.Account_Type == 'curr stmt bal'].Name.iat[0]
-                relevant_prev_stmt_bal_account_name = relevant_account_info_df[relevant_account_info_df.Account_Type == 'prev stmt bal'].Name.iat[0]
+                # print('PROP CC PAYMENT PREV ONLY ' + str(date_string_YYYYMMDD))
+                relevant_checking_account_name = relevant_account_info_df[
+                    relevant_account_info_df.Account_Type == 'checking'].Name.iat[0]
+                relevant_curr_stmt_bal_account_name = relevant_account_info_df[
+                    relevant_account_info_df.Account_Type == 'curr stmt bal'].Name.iat[0]
+                relevant_prev_stmt_bal_account_name = relevant_account_info_df[
+                    relevant_account_info_df.Account_Type == 'prev stmt bal'].Name.iat[0]
 
                 cc_billing_dates = billing_dates__dict[relevant_prev_stmt_bal_account_name]
                 next_billing_date = str(min([int(d) for d in cc_billing_dates if int(d) > int(date_string_YYYYMMDD)]))
@@ -5813,48 +5832,196 @@ class ExpenseForecast:
                 prev_stmt_bal_account_index = list(forecast_df.columns).index(relevant_prev_stmt_bal_account_name)
                 curr_stmt_bal_account_index = list(forecast_df.columns).index(relevant_curr_stmt_bal_account_name)
 
-                #checking_delta = account_deltas_list[checking_account_index - 1]
                 previous_stmt_delta = account_deltas_list[prev_stmt_bal_account_index - 1]
                 curr_stmt_delta = account_deltas_list[curr_stmt_bal_account_index - 1]
-                checking_delta = previous_stmt_delta + curr_stmt_delta
-                for f_i, f_row in future_rows_only_df.iterrows():
-                    # log_in_color(logger, 'info', 'debug', 'f_i:'+str(f_i), self.log_stack_depth)
-                    # if f_i == 0:
-                    #     log_in_color(logger, 'green', 'debug', 'future_rows_only_df', self.log_stack_depth)
-                    #     log_in_color(logger, 'green', 'debug', future_rows_only_df.to_string(), self.log_stack_depth)
+                checking_delta = ( previous_stmt_delta + curr_stmt_delta )
 
+                # note that this var in not used in the first upcoming cc payment, so this declaration is not strictly necessary
+                previous_previous_stmt_bal = 0
+                for f_i, f_row in future_rows_only_df.iterrows():
                     f_row = pd.DataFrame(f_row).T
                     f_row.reset_index(drop=True, inplace=True)
 
+                    md_to_keep = []
                     if f_row.Date.iat[0] == next_billing_date:
+                        # log_in_color(logger, 'magenta', 'debug', 'Date:'+str(f_row.Date.iat[0]), self.log_stack_depth)
+                        # log_in_color(logger, 'magenta', 'debug', 'f_row.Date.iat[0] == next_billing_date', self.log_stack_depth)
+
+                        og_curr_memo = ''
+                        og_check_memo = ''
+                        og_prev_memo = ''
+                        og_prev_amount = 0
+                        og_curr_amount = 0
+                        og_check_amount = 0
                         for md in f_row['Memo Directives'].iat[0].split(';'):
                             if md.strip() == '':
                                 continue
-                            if 'CC MIN PAYMENT (' + relevant_prev_stmt_bal_account_name in md:
-                                match_obj = re.search('\((.*)-\$(.*)\)', md)
-                                amount = float(match_obj.group(2))
-                                previous_stmt_delta += amount
-                                checking_delta += amount
-                            elif 'CC MIN PAYMENT (' + relevant_curr_stmt_bal_account_name in md:
-                                match_obj = re.search('\((.*)-\$(.*)\)', md)
-                                amount = float(match_obj.group(2))
-                                curr_stmt_delta += amount
-                                checking_delta += amount
 
-                        #curr will get set to 0 as it moves to prev, so we need to move the deltas as well
+                            if 'CC MIN PAYMENT (' + relevant_prev_stmt_bal_account_name in md:
+                                og_prev_memo = md
+                                match_obj = re.search('\((.*)-\$(.*)\)', og_prev_memo)
+                                og_prev_amount = float(match_obj.group(2))
+                            elif 'CC MIN PAYMENT (' + relevant_curr_stmt_bal_account_name in md:
+                                og_curr_memo = md
+                                match_obj = re.search('\((.*)-\$(.*)\)', og_curr_memo)
+                                og_curr_amount = float(match_obj.group(2))
+                            elif 'CC MIN PAYMENT (' + relevant_checking_account_name in md:
+                                og_check_memo = md
+                                match_obj = re.search('\((.*)-\$(.*)\)', og_check_memo)
+                                og_check_amount = float(match_obj.group(2))
+                            elif 'CC INTEREST (' + relevant_prev_stmt_bal_account_name in md:
+                                og_interest_memo = md
+                                match_obj = re.search('\((.*)+\$(.*)\)', og_interest_memo)
+                                og_interest_amount = float(match_obj.group(2))
+                            else:
+                                md_to_keep.append(md)
+
+                        advance_payment_amount = self.getTotalPrepaidInCreditCardBillingCycle(
+                            relevant_prev_stmt_bal_account_name,
+                            account_set_before_p2_plus_txn,
+                            forecast_df,
+                            f_row.Date.iloc[0])
+                        # log_in_color(logger, 'magenta', 'debug', 'advance_payment_amount:' + str(advance_payment_amount), self.log_stack_depth)
+
+                        match_obj = re.search('\((.*)-\$(.*)\)', og_check_memo)
+                        min_payment_amount = float(match_obj.group(2))
+                        # log_in_color(logger, 'magenta', 'debug', 'min_payment_amount:' + str(min_payment_amount), self.log_stack_depth)
+
+                        curr_stmt_delta += og_curr_amount
+                        previous_stmt_delta += og_prev_amount
+                        checking_delta += ( og_prev_amount + og_curr_amount )
+
+
+
+                        #todo
+                        # advance payment is applied to prev first
+                        if advance_payment_amount >= min_payment_amount:
+                            #new_check_memo = og_check_memo.replace(str(og_check_amount), '0.00')
+                            #new_prev_memo = og_prev_memo.replace(str(og_prev_amount), '0.00')
+                            #new_curr_memo = og_curr_memo.replace(str(og_curr_amount), '0.00')
+                            new_check_memo = ' CC MIN PAYMENT ALREADY MADE (' + relevant_checking_account_name + ' -$0.00) '
+                            if og_prev_amount > 0:
+                                new_prev_memo = ' CC MIN PAYMENT ALREADY MADE (' + relevant_prev_stmt_bal_account_name + ' -$0.00) '
+                            else:
+                                new_prev_memo = ''
+
+                            if og_curr_amount > 0:
+                                new_curr_memo = ' CC MIN PAYMENT ALREADY MADE (' + relevant_curr_stmt_bal_account_name + ' -$0.00) '
+                            else:
+                                new_curr_memo = ''
+
+
+                            # current_forecast_row_df['Memo Directives'] += ' CC MIN PAYMENT ALREADY MADE (' + account_row.Name.split(':')[0] + ': Prev Stmt Bal -$0.00); '
+                        elif advance_payment_amount < min_payment_amount:
+                            if advance_payment_amount >= og_prev_amount:
+                                new_prev_memo = og_prev_memo.replace(str(og_prev_amount), '0.00')
+                                new_curr_memo = og_curr_memo.replace(str(og_curr_amount), str(og_curr_amount - (advance_payment_amount - og_prev_amount)))
+                            else:
+                                new_prev_memo = og_prev_memo.replace(str(og_prev_amount), str(og_prev_amount - advance_payment_amount ))
+                                new_curr_memo = og_curr_memo
+                            new_check_memo = og_check_memo.replace(str(og_check_amount), str(og_check_amount - advance_payment_amount))
+                        # else:
+                        #     new_check_memo = og_check_memo.replace(str(og_check_amount), '')
+                        #     new_prev_memo = og_prev_memo.replace(str(og_prev_amount), '')
+                        #     new_curr_memo = og_prev_memo.replace(str(og_curr_amount), '')
+
                         previous_stmt_delta += curr_stmt_delta
                         curr_stmt_delta = 0
 
-                    # log_in_color(logger, 'magenta', 'debug','BEFORE',self.log_stack_depth)
-                    # log_in_color(logger, 'magenta', 'debug',pd.DataFrame(future_rows_only_df.iloc[f_i, :]).T.to_string(),self.log_stack_depth)
-                    # log_in_color(logger, 'magenta', 'debug', 'checking_delta: '+str(checking_delta), self.log_stack_depth)
-                    # log_in_color(logger, 'magenta', 'debug', 'curr_stmt_delta: ' + str(curr_stmt_delta), self.log_stack_depth)
-                    # log_in_color(logger, 'magenta', 'debug', 'previous_stmt_delta: ' + str(previous_stmt_delta), self.log_stack_depth)
-                    future_rows_only_df.iloc[f_i, future_rows_only_df.columns == relevant_checking_account_name] += checking_delta
-                    future_rows_only_df.iloc[f_i, future_rows_only_df.columns == relevant_curr_stmt_bal_account_name] += curr_stmt_delta
-                    future_rows_only_df.iloc[f_i, future_rows_only_df.columns == relevant_prev_stmt_bal_account_name] += previous_stmt_delta
-                    # log_in_color(logger, 'magenta', 'debug', 'AFTER', self.log_stack_depth)
-                    # log_in_color(logger, 'magenta', 'debug',pd.DataFrame(future_rows_only_df.iloc[f_i, :]).T.to_string(),self.log_stack_depth)
+                        md_to_keep.append(new_check_memo)
+                        md_to_keep.append(new_curr_memo)
+                        md_to_keep.append(new_prev_memo)
+
+                        #this is AFTER interest is applied #todo change to before?
+                        previous_previous_stmt_bal = round(future_rows_only_df.iloc[f_i, :][relevant_prev_stmt_bal_account_name] + previous_stmt_delta,2)
+
+                    # todo
+                    elif f_row.Date.iat[0] in cc_billing_dates and previous_previous_stmt_bal != 0:
+                        log_in_color(logger, 'magenta', 'debug', 'Date:' + str(f_row.Date.iat[0]), self.log_stack_depth)
+                        log_in_color(logger, 'magenta', 'debug', 'Date in cc_billing_dates and previous_previous_stmt_bal != 0',
+                                     self.log_stack_depth)
+                        og_min_payment_amount = 0
+                        for md in f_row['Memo Directives'].iat[0].split(';'):
+                            if md.strip() == '':
+                                continue
+
+                            if 'CC MIN PAYMENT (' + relevant_prev_stmt_bal_account_name in md:
+                                og_prev_memo = md
+                                match_obj = re.search('\((.*)-\$(.*)\)', og_prev_memo)
+                                og_prev_amount = float(match_obj.group(2))
+                                og_min_payment_amount += og_prev_amount
+                            elif 'CC MIN PAYMENT (' + relevant_curr_stmt_bal_account_name in md:
+                                og_curr_memo = md
+                                match_obj = re.search('\((.*)-\$(.*)\)', og_curr_memo)
+                                og_curr_amount = float(match_obj.group(2))
+                                og_min_payment_amount += og_curr_amount
+                            elif 'CC MIN PAYMENT (' + relevant_checking_account_name in md:
+                                og_check_memo = md
+                                match_obj = re.search('\((.*)-\$(.*)\)', og_check_memo)
+                                og_check_amount = float(match_obj.group(2))
+                            elif 'CC INTEREST (' + relevant_prev_stmt_bal_account_name in md:
+                                og_interest_memo = md
+                                match_obj = re.search('\((.*)+\$(.*)\)', og_interest_memo)
+                                og_interest_amount = float(match_obj.group(2))
+                            else:
+                                md_to_keep.append(md)
+
+
+                        account_row = account_set_before_p2_plus_txn.getAccounts().loc[
+                                      account_set_before_p2_plus_txn.getAccounts().Name == relevant_prev_stmt_bal_account_name,
+                                      :]
+
+                        interest_to_be_charged_immediately = round(previous_previous_stmt_bal * (account_row.APR.iat[0] / 12), 2)
+                        principal_to_be_charged_immediately = previous_previous_stmt_bal * 0.01
+                        current_due = principal_to_be_charged_immediately + interest_to_be_charged_immediately
+
+                        curr_prev_stmt_bal = f_row[relevant_prev_stmt_bal_account_name].iat[0]
+                        new_min_payment_amount = round( max( min(40, float(current_due)), float(curr_prev_stmt_bal) ), 2)
+
+                        # log_in_color(logger, 'magenta', 'debug', 'previous_previous_stmt_bal:' + str(previous_previous_stmt_bal),
+                        #              self.log_stack_depth)
+                        # log_in_color(logger, 'magenta', 'debug', 'curr_prev_stmt_bal:' + str(curr_prev_stmt_bal),
+                        #              self.log_stack_depth)
+                        # log_in_color(logger, 'magenta', 'debug', 'current_due:' + str(current_due), self.log_stack_depth)
+                        # log_in_color(logger, 'magenta', 'debug',
+                        #              'interest_to_be_charged_immediately:' + str(interest_to_be_charged_immediately),
+                        #              self.log_stack_depth)
+                        # log_in_color(logger, 'magenta', 'debug', 'new_min_payment_amount:' + str(new_min_payment_amount),
+                        #              self.log_stack_depth)
+                        # log_in_color(logger, 'magenta', 'debug',
+                        #              'og_interest_amount:' + str(og_interest_amount),
+                        #              self.log_stack_depth)
+
+
+                        # previous_stmt_delta += new_min_payment_amount
+                        # checking_delta += new_min_payment_amount
+                        previous_stmt_delta += ( og_min_payment_amount - new_min_payment_amount )
+                        checking_delta += ( og_min_payment_amount - new_min_payment_amount )
+                        previous_stmt_delta += ( interest_to_be_charged_immediately - og_interest_amount) #applies a neg number
+
+                        #we dont need to move curr in this case
+
+                        # todo
+                        # new_check_memo = og_check_memo.replace(str(og_check_amount),'')
+                        # new_curr_memo = og_curr_memo.replace(str(og_curr_amount),'')
+                        # new_prev_memo = og_prev_memo.replace(str(og_prev_amount),'')
+
+                        #todo new memos
+                        md_to_keep.append(new_check_memo)
+                        md_to_keep.append(new_curr_memo)
+                        md_to_keep.append(new_prev_memo)
+
+                        previous_previous_stmt_bal = future_rows_only_df.iloc[f_i, :][relevant_prev_stmt_bal_account_name] + previous_stmt_delta
+
+                    og_check = future_rows_only_df.iloc[f_i, :][relevant_checking_account_name]
+                    og_prev = future_rows_only_df.iloc[f_i, :][relevant_prev_stmt_bal_account_name]
+
+                    future_rows_only_df.iloc[f_i, future_rows_only_df.columns == relevant_checking_account_name] = (og_check + checking_delta)
+                    future_rows_only_df.iloc[f_i, future_rows_only_df.columns == relevant_prev_stmt_bal_account_name] = (og_prev + previous_stmt_delta)
+
+                    md_to_keep = [md for md in md_to_keep if md != '']
+                    # log_in_color(logger, 'magenta', 'debug', 'md_to_keep:' + str(md_to_keep), self.log_stack_depth)
+                    future_rows_only_df.iloc[f_i, future_rows_only_df.columns == 'Memo Directives'] = ';'.join(md_to_keep)
             elif 'checking' in relevant_account_type_list and 'principal balance' in relevant_account_type_list and 'interest' in relevant_account_type_list and len(relevant_account_type_list) == 3:
                 # log_in_color(logger, 'magenta', 'debug', 'PROP PAY LOAN PBAL & INTEREST '+str(date_string_YYYYMMDD), self.log_stack_depth)
                 # loan payment
@@ -6335,8 +6502,8 @@ class ExpenseForecast:
                     # future_rows_only_df.iloc[f_i, :][relevant_pbal_account_name] += pbal_delta
                     # future_rows_only_df.iloc[f_i, :][relevant_interest_account_name] += interest_delta #this happens at interest accrual
             elif 'checking' in relevant_account_type_list and 'prev stmt bal' in relevant_account_type_list and len(relevant_account_type_list) == 2:
-                # log_in_color(logger, 'magenta', 'debug', 'PROP CC PAYMENT PREV ONLY '+str(date_string_YYYYMMDD), self.log_stack_depth)
-
+                log_in_color(logger, 'magenta', 'debug', 'PROP CC PAYMENT PREV ONLY '+str(date_string_YYYYMMDD), self.log_stack_depth)
+                # print('PROP CC PAYMENT PREV ONLY ' + str(date_string_YYYYMMDD))
                 relevant_checking_account_name = relevant_account_info_df[
                     relevant_account_info_df.Account_Type == 'checking'].Name.iat[0]
                 # relevant_curr_stmt_bal_account_name = relevant_account_info_df[
@@ -6349,46 +6516,63 @@ class ExpenseForecast:
 
                 checking_account_index = list(forecast_df.columns).index(relevant_checking_account_name)
                 prev_stmt_bal_account_index = list(forecast_df.columns).index(relevant_prev_stmt_bal_account_name)
-                # curr_stmt_bal_account_index = forecast_df.columns.index(relevant_curr_stmt_bal_account_name)
 
-                # checking_delta = account_deltas_list[checking_account_index - 1]
                 previous_stmt_delta = account_deltas_list[prev_stmt_bal_account_index - 1]
                 checking_delta = previous_stmt_delta
-                # log_in_color(logger, 'magenta', 'debug', 'checking_delta:'+str(checking_delta), self.log_stack_depth)
-                # log_in_color(logger, 'magenta', 'debug', 'previous_stmt_delta:'+str(previous_stmt_delta), self.log_stack_depth)
-                # print('BEFORE: ')
-                # print(future_rows_only_df.to_string())
-                # print('checking_delta: '+str(checking_delta))
-                # print('previous_stmt_delta: ' + str(previous_stmt_delta))
                 previous_previous_stmt_bal = 0
                 for f_i, f_row in future_rows_only_df.iterrows():
                     f_row = pd.DataFrame(f_row).T
                     f_row.reset_index(drop=True, inplace=True)
 
-                    #the first payment does not need interest to be recalculated bc it was based off previous statement
+                    md_to_keep = []
                     if f_row.Date.iat[0] == next_billing_date:
+                        # log_in_color(logger, 'magenta', 'debug', 'Date:'+str(f_row.Date.iat[0]), self.log_stack_depth)
                         # log_in_color(logger, 'magenta', 'debug', 'f_row.Date.iat[0] == next_billing_date', self.log_stack_depth)
-                        for md in f_row['Memo Directives'].iat[0].split(';'):
-                            if md.strip() == '':
-                                continue
-                            if 'CC MIN PAYMENT (' + relevant_prev_stmt_bal_account_name in md:
-                                # log_in_color(logger, 'magenta', 'debug', 'f_row:' + str(f_row.Date.iat[0]), self.log_stack_depth)
-                                # log_in_color(logger, 'magenta', 'debug', 'Attempting to reduce prop deltas',self.log_stack_depth)
-                                match_obj = re.search('\((.*)-\$(.*)\)',md)
-                                min_payment_amount = float(match_obj.group(2))
-                                previous_stmt_delta += min_payment_amount
-                                checking_delta += min_payment_amount
 
-                                previous_previous_stmt_bal = future_rows_only_df.iloc[f_i, :][relevant_prev_stmt_bal_account_name] + previous_stmt_delta
-
-                    #todo interest needs to be recalculated and memos modified
-                    elif f_row.Date.iat[0] in cc_billing_dates and previous_stmt_delta != 0:
+                        og_check_memo = ''
+                        og_prev_memo = ''
                         for md in f_row['Memo Directives'].iat[0].split(';'):
                             if md.strip() == '':
                                 continue
 
                             if 'CC MIN PAYMENT (' + relevant_prev_stmt_bal_account_name in md:
+                                og_prev_memo = md
+                            elif 'CC MIN PAYMENT (' + relevant_checking_account_name in md:
+                                og_check_memo = md
+                            else:
+                                md_to_keep.append(md)
 
+                        advance_payment_amount = self.getTotalPrepaidInCreditCardBillingCycle(
+                            relevant_prev_stmt_bal_account_name,
+                            account_set_before_p2_plus_txn,
+                            forecast_df,
+                            f_row.Date.iloc[0])
+                        # log_in_color(logger, 'magenta', 'debug', 'advance_payment_amount:' + str(advance_payment_amount), self.log_stack_depth)
+
+                        match_obj = re.search('\((.*)-\$(.*)\)', og_check_memo)
+                        min_payment_amount = float(match_obj.group(2))
+                        # log_in_color(logger, 'magenta', 'debug', 'min_payment_amount:' + str(min_payment_amount), self.log_stack_depth)
+
+                        previous_stmt_delta += min(min_payment_amount,advance_payment_amount)
+                        checking_delta += min(min_payment_amount,advance_payment_amount)
+
+                        previous_previous_stmt_bal = future_rows_only_df.iloc[f_i, :][relevant_prev_stmt_bal_account_name] + previous_stmt_delta
+
+                        if advance_payment_amount >= min_payment_amount:
+                            new_check_memo = og_check_memo.replace(str(min_payment_amount),'0.00')
+                            new_prev_memo = og_prev_memo.replace(str(min_payment_amount),'0.00')
+                        else:
+                            new_check_memo = og_check_memo.replace(str(min_payment_amount), str(min_payment_amount - advance_payment_amount))
+                            new_prev_memo = og_prev_memo.replace(str(min_payment_amount), str(min_payment_amount - advance_payment_amount))
+
+                        md_to_keep.append(new_check_memo)
+                        md_to_keep.append(new_prev_memo)
+
+                    elif f_row.Date.iat[0] in cc_billing_dates and previous_previous_stmt_bal != 0:
+                        for md in f_row['Memo Directives'].iat[0].split(';'):
+                            if md.strip() == '':
+                                continue
+                            if 'CC MIN PAYMENT (' + relevant_prev_stmt_bal_account_name in md:
                                 match_obj = re.search('\((.*)-\$(.*)\)', md)
                                 og_min_payment_amount = float(match_obj.group(2))
 
@@ -6398,14 +6582,15 @@ class ExpenseForecast:
                                 principal_to_be_charged_immediately = previous_previous_stmt_bal * 0.01
                                 current_due = principal_to_be_charged_immediately + interest_to_be_charged_immediately
 
-                                new_min_payment_amount = current_due
+                                new_min_payment_amount = round(current_due,2)
 
                                 previous_stmt_delta += new_min_payment_amount
                                 checking_delta += new_min_payment_amount
 
-                                #todo edit memo
+                                new_md = md.replace(str(og_min_payment_amount),str(new_min_payment_amount))
 
-                            elif 'CC INTEREST (' + relevant_checking_account_name in md:
+                                md_to_keep.append(new_md)
+                            elif 'CC INTEREST (' + relevant_prev_stmt_bal_account_name in md:
                                 account_row = account_set_before_p2_plus_txn.getAccounts().loc[account_set_before_p2_plus_txn.getAccounts().Name == relevant_prev_stmt_bal_account_name, :]
                                 interest_to_be_charged_immediately = round( previous_previous_stmt_bal * (account_row.APR.iat[0] / 12), 2)
 
@@ -6414,44 +6599,35 @@ class ExpenseForecast:
 
                                 previous_stmt_delta += interest_to_be_charged_immediately
 
-                                # todo edit memo
+                                new_md = md.replace(str(og_interest_amount), str(interest_to_be_charged_immediately))
+                                md_to_keep.append(new_md)
+                            elif 'CC MIN PAYMENT (' + relevant_checking_account_name in md:
+                                match_obj = re.search('\((.*)-\$(.*)\)', md)
+                                og_min_payment_amount = float(match_obj.group(2))
 
+                                account_row = account_set_before_p2_plus_txn.getAccounts().loc[
+                                              account_set_before_p2_plus_txn.getAccounts().Name == relevant_prev_stmt_bal_account_name,
+                                              :]
+
+                                interest_to_be_charged_immediately = round(
+                                    previous_previous_stmt_bal * (account_row.APR.iat[0] / 12), 2)
+                                principal_to_be_charged_immediately = previous_previous_stmt_bal * 0.01
+                                current_due = principal_to_be_charged_immediately + interest_to_be_charged_immediately
+
+                                new_min_payment_amount = round(current_due, 2)
+
+                                new_md = md.replace(str(og_min_payment_amount), str(new_min_payment_amount))
+                                md_to_keep.append(new_md)
+                            else:
+                                md_to_keep.append(md)
+                        previous_previous_stmt_bal = future_rows_only_df.iloc[f_i, :][relevant_prev_stmt_bal_account_name] + previous_stmt_delta
 
                     og_check = future_rows_only_df.iloc[f_i, :][relevant_checking_account_name]
                     og_prev = future_rows_only_df.iloc[f_i, :][relevant_prev_stmt_bal_account_name]
 
-                    # future_rows_only_df.iloc[f_i, :][relevant_checking_account_name] = (og_check + checking_delta)
-                    # future_rows_only_df.iloc[f_i, :][relevant_prev_stmt_bal_account_name] = (og_prev + previous_stmt_delta)
-
                     future_rows_only_df.iloc[f_i, future_rows_only_df.columns == relevant_checking_account_name] = (og_check + checking_delta)
                     future_rows_only_df.iloc[f_i, future_rows_only_df.columns == relevant_prev_stmt_bal_account_name] = (og_prev + previous_stmt_delta)
-
-                    # todo It is so weird that this works in pycharm and fails when called from script
-                    # something something chained assignment something something
-                    # this was awful to debug and I'm glad it's over
-                    # assert future_rows_only_df.iloc[f_i, :][relevant_checking_account_name] == (og_check + checking_delta)
-                    # assert future_rows_only_df.iloc[f_i, :][relevant_prev_stmt_bal_account_name] == (og_prev + previous_stmt_delta)
-
-                    #future_rows_only_df.iloc[f_i, :][relevant_checking_account_name] += checking_delta
-                    # future_rows_only_df.iloc[f_i, relevant_curr_stmt_bal_account_name] = previous_curr_stmt_bal
-                    #future_rows_only_df.iloc[f_i, :][relevant_prev_stmt_bal_account_name] += previous_stmt_delta
-
-                    # new_check = future_rows_only_df.iloc[f_i, :][relevant_checking_account_name]
-                    # new_prev = future_rows_only_df.iloc[f_i, :][relevant_prev_stmt_bal_account_name]
-
-                    # print('future_rows_only_df.iloc[f_i, :][relevant_checking_account_name]:')
-                    # print(future_rows_only_df.iloc[f_i, :][relevant_checking_account_name])
-                    # print('future_rows_only_df.iloc[f_i, :][relevant_prev_stmt_bal_account_name]:')
-                    # print(future_rows_only_df.iloc[f_i, :][relevant_prev_stmt_bal_account_name])
-                    # print('og + checking_delta:'+str(og_check + checking_delta))
-                    # print('og + previous_stmt_delta:'+str(og_prev + previous_stmt_delta))
-
-                #     print('f_i:'+str(f_i)+'('+str(og_check)+', '+str(og_prev)+') -> ('+str(new_check)+', '+str(new_prev)+')')
-                #
-                # print('checking_delta: ' + str(checking_delta))
-                # print('previous_stmt_delta: ' + str(previous_stmt_delta))
-                # print('AFTER: ')
-                # print(future_rows_only_df.to_string())
+                    future_rows_only_df.iloc[f_i, future_rows_only_df.columns == 'Memo Directives'] = ';'.join(md_to_keep)
             elif 'checking' in relevant_account_type_list and 'curr stmt bal' in relevant_account_type_list and len(relevant_account_type_list) == 2:
                 # log_in_color(logger, 'magenta', 'debug', 'PROP CC PAYMENT CURR ONLY '+str(date_string_YYYYMMDD), self.log_stack_depth)
 
@@ -6459,8 +6635,7 @@ class ExpenseForecast:
                     relevant_account_info_df.Account_Type == 'checking'].Name.iat[0]
                 relevant_curr_stmt_bal_account_name = relevant_account_info_df[
                     relevant_account_info_df.Account_Type == 'curr stmt bal'].Name.iat[0]
-                relevant_prev_stmt_bal_account_name = relevant_account_info_df[
-                    relevant_account_info_df.Account_Type == 'prev stmt bal'].Name.iat[0]
+                relevant_prev_stmt_bal_account_name = relevant_curr_stmt_bal_account_name.replace('Curr Stmt Bal','Prev Stmt Bal')
 
                 cc_billing_dates = billing_dates__dict[relevant_prev_stmt_bal_account_name]
                 next_billing_date = str(min([int(d) for d in cc_billing_dates if int(d) > int(date_string_YYYYMMDD)]))
@@ -6473,6 +6648,7 @@ class ExpenseForecast:
                 #previous_stmt_delta = account_deltas_list[prev_stmt_bal_account_index - 1]
                 curr_stmt_delta = account_deltas_list[curr_stmt_bal_account_index - 1]
                 checking_delta = curr_stmt_delta
+                previous_stmt_delta = 0
                 for f_i, f_row in future_rows_only_df.iterrows():
                     f_row = pd.DataFrame(f_row).T
                     f_row.reset_index(drop=True, inplace=True)
@@ -6498,9 +6674,9 @@ class ExpenseForecast:
                         previous_stmt_delta += curr_stmt_delta
                         curr_stmt_delta = 0
 
-                    future_rows_only_df.iloc[f_i, future_rows_only_df == relevant_checking_account_name] += checking_delta
-                    future_rows_only_df.iloc[f_i, future_rows_only_df == relevant_curr_stmt_bal_account_name] += curr_stmt_delta
-                    #future_rows_only_df.iloc[f_i, :][relevant_prev_stmt_bal_account_name] += previous_stmt_delta
+                    future_rows_only_df.iloc[f_i, future_rows_only_df.columns == relevant_checking_account_name] += checking_delta
+                    future_rows_only_df.iloc[f_i, future_rows_only_df.columns == relevant_curr_stmt_bal_account_name] += curr_stmt_delta
+                    future_rows_only_df.iloc[f_i, :][relevant_prev_stmt_bal_account_name] += previous_stmt_delta
             elif 'checking' in relevant_account_type_list and len(relevant_account_type_list) == 1:
                 # log_in_color(logger, 'magenta', 'debug', 'PROP CHECKING ONLY '+str(date_string_YYYYMMDD), self.log_stack_depth)
                 relevant_checking_account_name = relevant_account_info_df[relevant_account_info_df.Account_Type == 'checking'].Name.iat[0]
@@ -7018,6 +7194,7 @@ class ExpenseForecast:
                 error_msg += future_rows_only_df.to_string()
                 #print(error_msg)
                 # print('EXIT propagateOptimizationTransactionsIntoTheFuture(' + str(date_string_YYYYMMDD) + ')')
+                log_in_color(logger, 'magenta', 'debug', 'EXIT propagateOptimizationTransactionsIntoTheFuture()', self.log_stack_depth)
                 raise ValueError(error_msg)
 
             try:
@@ -7030,11 +7207,13 @@ class ExpenseForecast:
                 error_msg += future_rows_only_df.to_string()
                 # print(error_msg)
                 # print('EXIT propagateOptimizationTransactionsIntoTheFuture(' + str(date_string_YYYYMMDD) + ')')
+                log_in_color(logger, 'magenta', 'debug', 'EXIT propagateOptimizationTransactionsIntoTheFuture()', self.log_stack_depth)
                 raise ValueError(error_msg)
 
         forecast_df.iloc[future_rows_only_row_sel_vec, :] = future_rows_only_df
 
         # print('EXIT propagateOptimizationTransactionsIntoTheFuture(' + str(date_string_YYYYMMDD) + ')')
+        log_in_color(logger, 'magenta', 'debug', 'EXIT propagateOptimizationTransactionsIntoTheFuture()', self.log_stack_depth)
         return forecast_df
 
     # #propagate into the future and raise exception if account boundaries are violated
@@ -7794,8 +7973,8 @@ class ExpenseForecast:
                 account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, date_string_YYYYMMDD)
 
 
-                # print('forecast_df before eTFD:')
-                # print(forecast_df.to_string())
+                # log_in_color(logger, 'green', 'info','forecast_df before eTFD ('+str(date_string_YYYYMMDD)+'):',self.log_stack_depth)
+                # log_in_color(logger, 'green', 'info',forecast_df.to_string(),self.log_stack_depth)
                 # print('proposed_df')
                 # print(proposed_df.to_string())
 
@@ -7809,8 +7988,8 @@ class ExpenseForecast:
                                                                                                     skipped_df=skipped_df,
                                                                                                     priority_level=priority_index)
 
-                # print('forecast_df after eTFD:')
-                # print(forecast_df.to_string())
+                # log_in_color(logger, 'green', 'info', 'forecast_df after eTFD ('+str(date_string_YYYYMMDD)+'):', self.log_stack_depth)
+                # log_in_color(logger, 'green', 'info', forecast_df.to_string(), self.log_stack_depth)
 
                 # print('assess optimizations case 3 sync')
                 account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, date_string_YYYYMMDD)
@@ -7866,9 +8045,11 @@ class ExpenseForecast:
         return confirmed_df, deferred_df, skipped_df
 
     def satisfice(self, list_of_date_strings, confirmed_df, account_set, memo_rule_set, forecast_df, raise_satisfice_failed_exception, progress_bar=None ):
-        # log_in_color(logger,'cyan','debug','ENTER satisfice()',self.log_stack_depth)
+        # log_in_color(logger,'cyan','debug','ENTER satisfice('+str(list_of_date_strings[0])+')',self.log_stack_depth)
         # print('ENTER satisfice('+list_of_date_strings[0]+')')
         self.log_stack_depth += 1
+        # log_in_color(logger, 'cyan', 'debug', 'confirmed_df:', self.log_stack_depth)
+        # log_in_color(logger, 'cyan', 'debug', confirmed_df.to_string(), self.log_stack_depth)
         all_days = list_of_date_strings #just rename it so it's more clear for the context
 
         # print('ENTER satisfice')
@@ -7876,7 +8057,7 @@ class ExpenseForecast:
         # print(confirmed_df.tail(1).to_string())
 
         for d in all_days:
-            #print('d:'+str(d))
+            # log_in_color(logger, 'cyan', 'debug','d:'+str(d), self.log_stack_depth)
             if progress_bar is not None:
                 progress_bar.update(1)
                 progress_bar.refresh()
@@ -7956,7 +8137,7 @@ class ExpenseForecast:
                     log_in_color(logger, 'cyan', 'error', forecast_df.to_string(), self.log_stack_depth)
 
                     self.log_stack_depth -= 1
-                    log_in_color(logger, 'cyan', 'debug', 'EXIT satisfice()', self.log_stack_depth)
+                    # log_in_color(logger, 'cyan', 'debug', 'EXIT satisfice()', self.log_stack_depth)
                     return forecast_df
                 else:
                     raise e

@@ -58,7 +58,7 @@ if __name__ == '__main__':
 
 
     E.runForecastApproximate(log_level='DEBUG')
-    E.forecast_df.to_csv('test_IRL_case_2.csv')
+    E.forecast_df.to_csv('test_IRL_case_2__short.csv')
     # print(E.initial_account_set.getAccounts().to_string())
     # print('-----------------')
     print(E)
