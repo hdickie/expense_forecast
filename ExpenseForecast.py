@@ -5931,12 +5931,20 @@ class ExpenseForecast:
                         md_to_keep.append(new_check_memo)
                         md_to_keep.append(new_curr_memo)
                         md_to_keep.append(new_prev_memo)
+                        md_to_keep.append(og_interest_memo) #not modified for first payment
 
-                        #this is AFTER interest is applied #todo change to before?
-                        previous_previous_stmt_bal = round(future_rows_only_df.iloc[f_i, :][relevant_prev_stmt_bal_account_name] + previous_stmt_delta,2)
+                        #this is BEFORE interest is applied
+                        log_in_color(logger, 'magenta', 'debug', 'before subtract:' + str(round(future_rows_only_df.iloc[f_i, :][relevant_prev_stmt_bal_account_name] + previous_stmt_delta,2)),
+                                     self.log_stack_depth)
+                        log_in_color(logger, 'magenta', 'debug', 'og_interest_amount:' + str(og_interest_amount), self.log_stack_depth)
 
-                    # todo
-                    elif f_row.Date.iat[0] in cc_billing_dates and previous_previous_stmt_bal != 0:
+                        #todo if we account for interest here, we have to do it in satisfy as well
+                        previous_previous_stmt_bal = round(future_rows_only_df.iloc[f_i, :][relevant_prev_stmt_bal_account_name] + previous_stmt_delta,2) # - og_interest_amount
+
+                    # elif f_row.Date.iat[0] in cc_billing_dates and previous_previous_stmt_bal == 0:
+                    #     pass
+
+                    elif f_row.Date.iat[0] in cc_billing_dates: # and previous_previous_stmt_bal != 0:
                         log_in_color(logger, 'magenta', 'debug', 'Date:' + str(f_row.Date.iat[0]), self.log_stack_depth)
                         log_in_color(logger, 'magenta', 'debug', 'Date in cc_billing_dates and previous_previous_stmt_bal != 0',
                                      self.log_stack_depth)
@@ -5971,45 +5979,47 @@ class ExpenseForecast:
                                       account_set_before_p2_plus_txn.getAccounts().Name == relevant_prev_stmt_bal_account_name,
                                       :]
 
+                        log_in_color(logger, 'magenta', 'debug', 'previous_previous_stmt_bal:' + str(previous_previous_stmt_bal), self.log_stack_depth)
                         interest_to_be_charged_immediately = round(previous_previous_stmt_bal * (account_row.APR.iat[0] / 12), 2)
                         principal_to_be_charged_immediately = previous_previous_stmt_bal * 0.01
                         current_due = principal_to_be_charged_immediately + interest_to_be_charged_immediately
+                        log_in_color(logger, 'magenta', 'debug', 'interest_to_be_charged_immediately:' + str(interest_to_be_charged_immediately),
+                                     self.log_stack_depth)
+                        log_in_color(logger, 'magenta', 'debug', 'current_due:' + str(current_due), self.log_stack_depth)
 
-                        curr_prev_stmt_bal = f_row[relevant_prev_stmt_bal_account_name].iat[0]
-                        new_min_payment_amount = round( max( min(40, float(current_due)), float(curr_prev_stmt_bal) ), 2)
-
-                        # log_in_color(logger, 'magenta', 'debug', 'previous_previous_stmt_bal:' + str(previous_previous_stmt_bal),
-                        #              self.log_stack_depth)
-                        # log_in_color(logger, 'magenta', 'debug', 'curr_prev_stmt_bal:' + str(curr_prev_stmt_bal),
-                        #              self.log_stack_depth)
-                        # log_in_color(logger, 'magenta', 'debug', 'current_due:' + str(current_due), self.log_stack_depth)
-                        # log_in_color(logger, 'magenta', 'debug',
-                        #              'interest_to_be_charged_immediately:' + str(interest_to_be_charged_immediately),
-                        #              self.log_stack_depth)
-                        # log_in_color(logger, 'magenta', 'debug', 'new_min_payment_amount:' + str(new_min_payment_amount),
-                        #              self.log_stack_depth)
-                        # log_in_color(logger, 'magenta', 'debug',
-                        #              'og_interest_amount:' + str(og_interest_amount),
-                        #              self.log_stack_depth)
+                        #this still has the old interest as part of the balance, so we subtract it
+                        #todo if we apply this here, we have to apply it in satisfy also
+                        curr_prev_stmt_bal = f_row[relevant_prev_stmt_bal_account_name].iat[0] # - og_interest_amount
 
 
-                        # previous_stmt_delta += new_min_payment_amount
-                        # checking_delta += new_min_payment_amount
-                        previous_stmt_delta += ( og_min_payment_amount - new_min_payment_amount )
-                        checking_delta += ( og_min_payment_amount - new_min_payment_amount )
-                        previous_stmt_delta += ( interest_to_be_charged_immediately - og_interest_amount) #applies a neg number
+
+                        new_min_payment_amount =  max( min(40, float(current_due)), float(curr_prev_stmt_bal) )
+                        log_in_color(logger, 'magenta', 'debug', 'new_min_payment_amount:' + str(new_min_payment_amount), self.log_stack_depth)
+
+                        adjusted_payment_amount = round( og_min_payment_amount - new_min_payment_amount, 2 )
+                        log_in_color(logger, 'magenta', 'debug', 'adjusted_payment_amount:' + str(adjusted_payment_amount), self.log_stack_depth)
+
+                        previous_stmt_delta += adjusted_payment_amount
+                        checking_delta += adjusted_payment_amount
+                        previous_stmt_delta += round( interest_to_be_charged_immediately - og_interest_amount, 2) #applies a neg number
 
                         #we dont need to move curr in this case
 
-                        # todo
-                        # new_check_memo = og_check_memo.replace(str(og_check_amount),'')
-                        # new_curr_memo = og_curr_memo.replace(str(og_curr_amount),'')
-                        # new_prev_memo = og_prev_memo.replace(str(og_prev_amount),'')
+                        new_check_memo = og_check_memo.replace(str(og_check_amount),str(og_check_amount - adjusted_payment_amount))
 
-                        #todo new memos
+                        if adjusted_payment_amount >= curr_prev_stmt_bal:
+                            new_curr_memo = og_curr_memo.replace(str(og_curr_amount),str(adjusted_payment_amount-curr_prev_stmt_bal))
+                            new_prev_memo = og_prev_memo.replace(str(og_prev_amount), str(curr_prev_stmt_bal))
+                        else:
+                            new_curr_memo = og_curr_memo.replace(str(og_curr_amount),'0.00')
+                            new_prev_memo = og_prev_memo.replace(str(og_prev_amount), str(adjusted_payment_amount))
+
+                        new_interest_memo = og_interest_memo.replace(str(og_interest_amount),str(interest_to_be_charged_immediately))
+
                         md_to_keep.append(new_check_memo)
                         md_to_keep.append(new_curr_memo)
                         md_to_keep.append(new_prev_memo)
+                        md_to_keep.append(new_interest_memo)
 
                         previous_previous_stmt_bal = future_rows_only_df.iloc[f_i, :][relevant_prev_stmt_bal_account_name] + previous_stmt_delta
 
