@@ -70,7 +70,7 @@ import ForecastSet
 # 24. kill forecast                                     O
 # 24. kill forecastset                                  O
 
-start_date = datetime.datetime.now().strftime('%Y%m%d')
+start_date = '20240501'
 end_date = '20240530'
 
 A = AccountSet.AccountSet([])

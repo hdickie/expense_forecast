@@ -87,7 +87,7 @@ class MemoRuleSet:
             assert sum(match_vec) != 0  # if error, no matches found
         except Exception as e:
             log_in_color(logger,'yellow', 'error', 'ERROR')
-            log_in_color(logger,'yellow', 'error', 'No matches found for memo:'+str(txn_memo))
+            log_in_color(logger,'yellow', 'error', 'No matches found for p'+str(transaction_priority)+' memo:'+str(txn_memo))
             log_in_color(logger,'yellow', 'error', 'Memo Set:')
             log_in_color(logger,'yellow', 'error',self)
             raise ValueError
