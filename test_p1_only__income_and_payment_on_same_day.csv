@@ -1,4 +1,4 @@
 ,Date,Checking,Credit: Curr Stmt Bal,Credit: Prev Stmt Bal,Marginal Interest,Net Gain,Net Loss,Net Worth,Loan Total,CC Debt Total,Liquid Total,Memo Directives,Memo
 0,20000101,0.0,0.0,0.0,0,0,0,0.0,0.0,0.0,0.0,,
-1,20000102,0.0,0,0.0,0,0,0,0.0,0.0,0.0,0.0,,income (Checking +$100.0); test txn (Checking -$100.0); 
+1,20000102,0.0,0,0.0,0,0,0,0.0,0.0,0.0,0.0,,income (Checking +$100.00); test txn (Checking -$100.00)
 2,20000103,0.0,0.0,0.0,0,0,0,0.0,0.0,0.0,0.0,,

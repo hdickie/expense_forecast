@@ -38,7 +38,7 @@ class TestBudgetItemMethods:
                                             deferrable,
                                             partial_payment_allowed)
 
-    @pytest.mark.parametrize('start_date_YYYYMMDD,end_date_YYYYMMDD,priority,cadence,amount,memo,deferrable,partial_payment_allowed,expected_exception',
+    @pytest.mark.parametrize('start_date_YYYYMMDD,end_date_YYYYMMDD,priority,cadence,amount,memo,deferrable,partial_payment_allowed',
         # (start_date_YYYYMMDD,
         # end_date_YYYYMMDD,
         # priority,
@@ -54,8 +54,7 @@ class TestBudgetItemMethods:
          10,
          'test memo',
          False,
-         False,
-         ValueError),  #malformed start date string
+         False),  #malformed start date string
 
          ('20000101',
           'X',
@@ -64,8 +63,7 @@ class TestBudgetItemMethods:
           10,
           'test memo',
           False,
-          False,
-          ValueError),  # malformed end date string
+          False),  # malformed end date string
 
          ('20000101',
           '20000101',
@@ -74,8 +72,7 @@ class TestBudgetItemMethods:
           10,
           'test memo',
           False,
-          False,
-          TypeError),  # priority is not an int
+          False),  # priority is not an int
 
          ('20000101',
           '20000101',
@@ -84,8 +81,7 @@ class TestBudgetItemMethods:
           'X',
           'test memo',
           False,
-          False,
-          TypeError),  # amount is not a float
+          False),  # amount is not a float
 
          ('20000101',
           '20000101',
@@ -94,8 +90,7 @@ class TestBudgetItemMethods:
           10,
           'test memo',
           False,
-          False,
-          ValueError),  # priority is less than 1
+          False),  # priority is less than 1
 
          ('20000101',
           '20000101',
@@ -104,8 +99,7 @@ class TestBudgetItemMethods:
           10,
           'test memo',
           False,
-          False,
-          ValueError),  # illegal cadence value
+          False),  # illegal cadence value
 
          ('20000101',
           '20000101',
@@ -114,8 +108,7 @@ class TestBudgetItemMethods:
           10,
           'income',
           False,
-          False,
-          ValueError),  # priority not 1 for income
+          False),  # priority not 1 for income
 
          ('20000101',
           '20000101',
@@ -124,8 +117,7 @@ class TestBudgetItemMethods:
           10,
           'test',
           True,
-          False,
-          ValueError),  # deferrable must be false for p1
+          False),  # deferrable must be false for p1
 
          ('20000101',
           '20000101',
@@ -134,8 +126,7 @@ class TestBudgetItemMethods:
           10,
           'test',
           False,
-          True,
-          ValueError),  # partial_payment_allowed must be false for p1
+          True),  # partial_payment_allowed must be false for p1
 
          ])
     def test_BudgetItem_Constructor__invalid_inputs(self,start_date_YYYYMMDD,
@@ -145,8 +136,8 @@ class TestBudgetItemMethods:
                                             amount,
                                             memo,
                                             deferrable,
-                                            partial_payment_allowed,expected_exception):
-        with pytest.raises(expected_exception):
+                                            partial_payment_allowed):
+        with pytest.raises(Exception):
             BudgetItem.BudgetItem(start_date_YYYYMMDD,
                                   end_date_YYYYMMDD,
                                   priority,

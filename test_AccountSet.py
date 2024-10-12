@@ -129,7 +129,7 @@ class TestAccountSet:
                 balance=60,
                 min_balance=0,
                 max_balance=100,
-                account_type='prev stmt bal',
+                account_type='credit prev stmt bal',
                 billing_start_date_YYYYMMDD='20000101',
                 interest_type=None,
                 apr=0.01,
@@ -141,7 +141,7 @@ class TestAccountSet:
                      balance=60,
                      min_balance=0,
                      max_balance=100,
-                     account_type='curr stmt bal',
+                     account_type='credit curr stmt bal',
                      billing_start_date_YYYYMMDD=None,
                      interest_type=None,
                      apr=None,
@@ -156,7 +156,7 @@ class TestAccountSet:
                 balance=-100,
                 min_balance=-100,
                 max_balance=100,
-                account_type='prev stmt bal',
+                account_type='credit prev stmt bal',
                 billing_start_date_YYYYMMDD='20000101',
                 interest_type=None,
                 apr=0.01,
@@ -168,7 +168,7 @@ class TestAccountSet:
                      balance=-100,
                      min_balance=-100,
                      max_balance=100,
-                     account_type='curr stmt bal',
+                     account_type='credit curr stmt bal',
                      billing_start_date_YYYYMMDD=None,
                      interest_type=None,
                      apr=None,
@@ -237,7 +237,7 @@ class TestAccountSet:
                 balance=0,
                 min_balance=0,
                 max_balance=1000,
-                account_type='prev stmt bal',
+                account_type='credit prev stmt bal',
                 billing_start_date_YYYYMMDD='20000101',
                 interest_type=None,
                 apr=0.01,
@@ -249,7 +249,7 @@ class TestAccountSet:
                      balance=60,
                      min_balance=60,
                      max_balance=1000,
-                     account_type='curr stmt bal',
+                     account_type='credit curr stmt bal',
                      billing_start_date_YYYYMMDD=None,
                      interest_type=None,
                      apr=None,
@@ -291,7 +291,7 @@ class TestAccountSet:
                 balance=10,
                 min_balance=10,
                 max_balance=100,
-                account_type='prev stmt bal',
+                account_type='credit prev stmt bal',
                 billing_start_date_YYYYMMDD='20000101',
                 interest_type=None,
                 apr=0.01,
@@ -303,7 +303,7 @@ class TestAccountSet:
                      balance=60,
                      min_balance=0,
                      max_balance=100,
-                     account_type='curr stmt bal',
+                     account_type='credit curr stmt bal',
                      billing_start_date_YYYYMMDD=None,
                      interest_type=None,
                      apr=None,
@@ -318,7 +318,7 @@ class TestAccountSet:
                 balance=0,
                 min_balance=0,
                 max_balance=110,
-                account_type='prev stmt bal',
+                account_type='credit prev stmt bal',
                 billing_start_date_YYYYMMDD='20000101',
                 interest_type=None,
                 apr=0.01,
@@ -330,7 +330,7 @@ class TestAccountSet:
                      balance=0,
                      min_balance=0,
                      max_balance=100,
-                     account_type='curr stmt bal',
+                     account_type='credit curr stmt bal',
                      billing_start_date_YYYYMMDD=None,
                      interest_type=None,
                      apr=None,
@@ -375,7 +375,7 @@ class TestAccountSet:
                      balance=60,
                      min_balance=0,
                      max_balance=1000,
-                     account_type='curr stmt bal',
+                     account_type='credit curr stmt bal',
                      billing_start_date_YYYYMMDD=None,
                      interest_type=None,
                      apr=None,
@@ -389,7 +389,7 @@ class TestAccountSet:
                 balance=0,
                 min_balance=0,
                 max_balance=1000,
-                account_type='prev stmt bal',
+                account_type='credit prev stmt bal',
                 billing_start_date_YYYYMMDD='20000101',
                 interest_type=None,
                 apr=0.01,
@@ -488,7 +488,7 @@ class TestAccountSet:
         # balance = 0,
         # min_balance = 0,
         # max_balance = 0,
-        # account_type = 'prev stmt bal',
+        # account_type = 'credit prev stmt bal',
         # billing_start_date_YYYYMMDD = '20000101',
         # interest_type = 'compound',
         # apr = 0.05,
@@ -499,7 +499,7 @@ class TestAccountSet:
         #                                balance=0,
         #                                min_balance=0,
         #                                max_balance=0,
-        #                                account_type='curr stmt bal',
+        #                                account_type='credit curr stmt bal',
         #                                billing_start_date_YYYYMMDD=None,
         #                                interest_type=None,
         #                                apr=None,
@@ -552,7 +552,7 @@ class TestAccountSet:
         #                                balance=75,
         #                                min_balance=0,
         #                                max_balance=100,
-        #                                account_type='curr stmt bal',
+        #                                account_type='credit curr stmt bal',
         #                                billing_start_date_YYYYMMDD=None,
         #                                interest_type=None,
         #                                apr=None,
@@ -563,7 +563,7 @@ class TestAccountSet:
         #                                balance=75,
         #                                min_balance=0,
         #                                max_balance=100,
-        #                                account_type='prev stmt bal',
+        #                                account_type='credit prev stmt bal',
         #                                billing_start_date_YYYYMMDD='20000101',
         #                                interest_type='compound',
         #                                apr=0.05,
@@ -578,7 +578,7 @@ class TestAccountSet:
         #                                   balance=-75,
         #                                   min_balance=-100,
         #                                   max_balance=100,
-        #                                   account_type='curr stmt bal',
+        #                                   account_type='credit curr stmt bal',
         #                                   billing_start_date_YYYYMMDD=None,
         #                                   interest_type=None,
         #                                   apr=None,
@@ -589,7 +589,7 @@ class TestAccountSet:
         #                                   balance=-75,
         #                                   min_balance=-100,
         #                                   max_balance=100,
-        #                                   account_type='prev stmt bal',
+        #                                   account_type='credit prev stmt bal',
         #                                   billing_start_date_YYYYMMDD='20000101',
         #                                   interest_type='compound',
         #                                   apr=0.05,
@@ -781,8 +781,8 @@ class TestAccountSet:
          (None,"test checking",100.0,True,[1100.0, 1000.0, 500.0, 900.0, 100.0]),  #deposit to checking account
 
          ("test credit", None, 100.0, False, [1000.0, 1100.0, 500.0, 900.0, 100.0]),  #pay using credit
-         ("test checking", "test credit", 50.0, False, [950.0, 1000.0, 450.0, 900.0, 100.0]),  #credit payment, less than prev stmt bal and curr stmt bal > 0
-         ("test checking", "test credit", 501.0, False, [499.0, 999.0, 0.0, 900.0, 100.0]),  #credit payment, less than total balance, more than prev stmt balance, curr stmt bal != 0
+         ("test checking", "test credit", 50.0, False, [950.0, 1000.0, 450.0, 900.0, 100.0]),  #credit payment, less than credit prev stmt bal and credit curr stmt bal > 0
+         ("test checking", "test credit", 501.0, False, [499.0, 999.0, 0.0, 900.0, 100.0]),  #credit payment, less than total balance, more than credit prev stmt balance, credit curr stmt bal != 0
 
          ("test checking", "test loan", 50.0, False, [950.0, 1000.0, 500.0, 900.0, 50.0]),  #loan payment, less than interest
          ("test checking", "test loan", 150.0, False, [850.0, 1000.0, 500.0, 850.0, 0.0]),  #loan payment, more than interest
@@ -943,7 +943,7 @@ class TestAccountSet:
           None,
           None,
           None
-          , ValueError),  # missing prev stmt bal for type credit
+          , ValueError),  # missing credit prev stmt bal for type credit
 
          ('test loan',
           100,
@@ -1112,7 +1112,7 @@ class TestAccountSet:
     #         assert T3_s__200_300 == ' 10000            0        10000       checking               NaN           NaN   NaN              N'
     #         assert T3_s__300_400 == 'aN              NaN 1           1  test cc: Curr Stmt Bal      499            0        20000  curr s'
     #         assert T3_s__400_500 == 'tmt bal               NaN           NaN   NaN              NaN              NaN 2           2  test '
-    #         assert T3_s__500_600 == 'cc: Prev Stmt Bal      501            0        20000  prev stmt bal        20000102.0      compound ' #note that the float dtype of date is valid here bc we just read it fro mexcel w none of the AccountSet context
+    #         assert T3_s__500_600 == 'cc: Prev Stmt Bal      501            0        20000  credit prev stmt bal        20000102.0      compound ' #note that the float dtype of date is valid here bc we just read it fro mexcel w none of the AccountSet context
     #
     #     with tempfile.NamedTemporaryFile() as tmp:
     #         A4.to_excel(tmp)
@@ -1130,7 +1130,7 @@ class TestAccountSet:
     #         assert T4_s__100_200 == ' Billing_Start_Dt Interest_Type   APR Interest_Cadence  Minimum_Payment 0           0               '
     #         assert T4_s__200_300 == '    test checking    10000            0        10000           checking               NaN           '
     #         assert T4_s__300_400 == 'NaN   NaN              NaN              NaN 1           1          test cc: Curr Stmt Bal      499  '
-    #         assert T4_s__400_500 == '          0        20000      curr stmt bal               NaN           NaN   NaN              NaN  '
+    #         assert T4_s__400_500 == '          0        20000      credit curr stmt bal               NaN           NaN   NaN              NaN  '
     #         assert T4_s__500_600 == '            NaN 2           2          test cc: Prev Stmt Bal      501            0        20000    '
     #
     # def test_from_excel(self):
@@ -1181,7 +1181,7 @@ class TestAccountSet:
     #         assert TA.getAccounts().to_string() == A4.getAccounts().to_string()
 
 #tests to implement
-#from excel, curr stmt bal is second row
+#from excel, credit curr stmt bal is second row
 #from excel, principal balance is second row
 #pay loan, amount was greater than available balance (and less than loan cost)
 

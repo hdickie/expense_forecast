@@ -151,43 +151,77 @@ class BudgetSet:
         return current_budget_schedule
 
     def addBudgetItem(self,
-                 start_date_YYYYMMDD,
-                 end_date_YYYYMMDD,
-                 priority,
-                 cadence,
-                 amount,
-                 memo,
-                 deferrable,
-                 partial_payment_allowed,
-                 print_debug_messages = True,
-                 raise_exceptions = True):
-        """ Add a BudgetItem to list BudgetItem.budget_items.
-
+                      start_date_YYYYMMDD,
+                      end_date_YYYYMMDD,
+                      priority,
+                      cadence,
+                      amount,
+                      memo,
+                      deferrable=False,
+                      partial_payment_allowed=False,
+                      print_debug_messages=True,
+                      raise_exceptions=True):
         """
-        log_in_color(logger, 'green', 'debug','addBudgetItem(priority=' + str(priority) + ',cadence=' + str(cadence) + ',memo=' + str(memo) + ',start_date_YYYYMMDD=' + str(start_date_YYYYMMDD) + ',end_date_YYYYMMDD=' + str(end_date_YYYYMMDD) + ')')
+        Add a BudgetItem to the list of budget items.
 
-        budget_item = BudgetItem.BudgetItem(start_date_YYYYMMDD,
-                                            end_date_YYYYMMDD,
-                 priority,
-                 cadence,
-                 amount,
-                 memo,
-                 deferrable,
-                 partial_payment_allowed,
-                 print_debug_messages,raise_exceptions)
+        :param str start_date_YYYYMMDD: Start date in YYYYMMDD format.
+        :param str end_date_YYYYMMDD: End date in YYYYMMDD format.
+        :param int priority: Priority level of the budget item.
+        :param str cadence: Frequency of the budget item.
+        :param float amount: Amount of the budget item.
+        :param str memo: Memo for the budget item.
+        :param bool deferrable: Indicates if the budget item is deferrable.
+        :param bool partial_payment_allowed: Indicates if partial payments are allowed.
+        :param bool print_debug_messages: If True, prints debug messages.
+        :param bool raise_exceptions: If True, raises exceptions on errors.
+        :raises ValueError: If a budget item with the same priority and memo already exists.
+        """
+        # Log the addition attempt
+        log_message = (f"addBudgetItem(priority={priority}, cadence='{cadence}', memo='{memo}', "
+                       f"start_date='{start_date_YYYYMMDD}', end_date='{end_date_YYYYMMDD}')")
+        log_in_color(logger, 'green', 'debug', log_message)
 
-        all_current_budget_items = self.getBudgetItems()
-        memos_w_matching_priority = list(all_current_budget_items.loc[all_current_budget_items.Priority == priority,:].Memo)
+        # Create the BudgetItem
+        try:
+            budget_item = BudgetItem.BudgetItem(start_date_YYYYMMDD,
+                                     end_date_YYYYMMDD,
+                                     priority,
+                                     cadence,
+                                     amount,
+                                     memo,
+                                     deferrable,
+                                     partial_payment_allowed,
+                                     print_debug_messages,
+                                     raise_exceptions)
+        except Exception as e:
+            if print_debug_messages:
+                log_in_color(logger, 'red', 'error', f"Failed to create BudgetItem: {e}")
+            if raise_exceptions:
+                raise
+            else:
+                return
 
-        if memo in memos_w_matching_priority:
-            log_in_color(logger, 'red', 'error','Offending Memo:')
-            log_in_color(logger, 'red', 'error', memo)
-            log_in_color(logger, 'red', 'error', 'Relevant already existing memo:')
-            log_in_color(logger, 'red', 'error', memos_w_matching_priority)
-            raise ValueError("A budget item with this priority and memo already exists")
+        # Check for duplicates
+        all_budget_items = self.getBudgetItems()
+        if not all_budget_items.empty:
+            duplicates = all_budget_items[
+                (all_budget_items['Priority'] == priority) & (all_budget_items['Memo'] == memo)
+                ]
+            if not duplicates.empty:
+                error_message = f"A budget item with priority {priority} and memo '{memo}' already exists."
+                if print_debug_messages:
+                    log_in_color(logger, 'red', 'error', error_message)
+                    log_in_color(logger, 'red', 'error', 'Existing budget items:')
+                    log_in_color(logger, 'red', 'error', duplicates.to_string())
+                if raise_exceptions:
+                    raise ValueError(error_message)
+                else:
+                    return
 
+        # Append the budget item
         self.budget_items.append(budget_item)
-
+        if print_debug_messages:
+            log_in_color(logger, 'green', 'info', f"Budget item '{memo}' added successfully.")
 
     def to_json(self):
         """
@@ -196,5 +230,7 @@ class BudgetSet:
         """
         return jsonpickle.encode(self, indent=4)
 
-#written in one line so that test coverage can reach 100%
 if __name__ == "__main__": import doctest ; doctest.testmod()
+
+# before gpt  7 passed, 226 deselected in 15.81s
+# after gpt 7 passed, 226 deselected in 15.28s
