@@ -10,7 +10,8 @@ import pandas as pd
 # import concurrent.futures
 # from time import sleep
 # import ForecastRunner
-# import datetime
+import datetime
+import math
 
 pd.options.mode.chained_assignment = None #apparently this warning can throw false positives???
 
@@ -25,31 +26,92 @@ pd.options.mode.chained_assignment = None #apparently this warning can throw fal
 # from generate_date_sequence import generate_date_sequence
 
 if __name__ == '__main__':
-    start_date_YYYYMMDD = '20240522'
-    end_date_YYYYMMDD = '20250101' #we want 9/1
+    start_date_YYYYMMDD = '20241012'
+    end_date_YYYYMMDD = '20251012' #we want 9/1
+
+    #a rough estimate
+    approx_final_loan_cost = 16000
+    loan_payment = 250
+    no_loan_payments = math.ceil(approx_final_loan_cost / loan_payment)
+    next_loan_payment_YYYYMMDD = '20241203'
+
+    #fml lol
+    loan_payment_end_date = '20300603' # a rough guess
+    #loan_payment_end_date = (datetime.datetime.strptime(next_loan_payment_YYYYMMDD,'%%m%d') + datetime.timedelta(months=no_loan_payments)).strftime('%Y%m%d')
+
+    dad_loan_remaining_amt = (15000 + 1400) - 500*1
+    dad_repay_amt = 500
+    dad_loan_no_payments = math.ceil(dad_loan_remaining_amt / dad_repay_amt)
+    next_dad_loan_payment_YYYYMMDD = '20241101'
+
+    #fml lol
+    dad_loan_payment_end_date = '20270701'
+    #dad_loan_payment_end_date = (datetime.datetime.strptime(next_dad_loan_payment_YYYYMMDD,'%%m%d') + datetime.timedelta(months=dad_loan_no_payments)).strftime('%Y%m%d')
+
 
     A = AccountSet.AccountSet([])
-    A.createCheckingAccount('Checking', 1000, 0, 999999999, True)
-    A.createCreditCardAccount('Credit', 0, 7500, 0, 25000, '20240107', 0.2899, 40)
+    A.createCheckingAccount('Checking', 2391 + 88.42, 0, 999999999, True)
+    A.createCreditCardAccount('Credit', 0, 12609.79, 0, 25000, '20240107', 0.2899, 40)
 
     B = BudgetSet.BudgetSet([])
-    B.addBudgetItem(start_date_YYYYMMDD, '22001231', 1, 'daily', 40, 'food', deferrable=False,
-                    partial_payment_allowed=False)
-    B.addBudgetItem('20240505', '22001231', 2, 'monthly', 7000, 'pay cc', deferrable=False,
-                    partial_payment_allowed=True)
-    B.addBudgetItem('20240105', '22001231', 1, 'semiweekly', 1600, 'EMT income', deferrable=False,
-                    partial_payment_allowed=False)
-    B.addBudgetItem('20240531', '20240628', 1, 'semiweekly', 600, 'repay mom', deferrable=False,
-                    partial_payment_allowed=False)
-    B.addBudgetItem('20240701', '20260401', 1, 'monthly', 800, 'repay dad', deferrable=False,
-                    partial_payment_allowed=False)
+    B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 20, 'food', deferrable=False,partial_payment_allowed=False)
+    #B.addBudgetItem('20240505', end_date_YYYYMMDD, 2, 'monthly', 7000, 'pay cc', deferrable=False,partial_payment_allowed=True)
+    B.addBudgetItem('20240105', end_date_YYYYMMDD, 1, 'semiweekly', 1600, 'EMT income', deferrable=False,partial_payment_allowed=False)
+    B.addBudgetItem('20240701', dad_loan_payment_end_date, 1, 'monthly', 500, 'repay dad', deferrable=False,partial_payment_allowed=False)
+    B.addBudgetItem('20241203', loan_payment_end_date, 1, 'monthly', 250, 'fake loan payment', deferrable=False,partial_payment_allowed=False)
+
+    B.addBudgetItem('20240702', end_date_YYYYMMDD, 1, 'monthly', 20, 'hulu')
+    B.addBudgetItem('20240702', end_date_YYYYMMDD, 1, 'monthly', 20, 'ai daddy')
+    B.addBudgetItem('20240702', end_date_YYYYMMDD, 1, 'monthly', 100, 'car insurance')
+    B.addBudgetItem('20240702', end_date_YYYYMMDD, 1, 'monthly', 250, 'phone')
+    B.addBudgetItem('20240702', end_date_YYYYMMDD, 1, 'monthly', 50, 'parking')
+    B.addBudgetItem('20240702', end_date_YYYYMMDD, 1, 'semiweekly', 80, 'gas')
+    B.addBudgetItem('20240702', end_date_YYYYMMDD, 1, 'semiweekly', 100, 'storage unit')
     # B.addBudgetItem('20240103', '20240303', 2, 'monthly', 460, 'pay cc', False, False)
+
+    # this caused unexpected behavior
+    # B.addBudgetItem('20241106', '20241106', 2, 'once', 0, 'pay cc 11/06/24')
+    # B.addBudgetItem('20241206', '20241206', 2, 'once', 0, 'pay cc 12/06/24')
+    # B.addBudgetItem('20250106', '20250106', 2, 'once', 0, 'pay cc 1/06/25')
+    # B.addBudgetItem('20250206', '20250206', 2, 'once', 0, 'pay cc 2/06/25')
+    # B.addBudgetItem('20250306', '20250306', 2, 'once', 0, 'pay cc 3/06/25')
+    # B.addBudgetItem('20250406', '20250406', 2, 'once', 0, 'pay cc 4/06/25')
+    # B.addBudgetItem('20250506', '20250506', 2, 'once', 0, 'pay cc 5/06/25')
+    # B.addBudgetItem('20250606', '20250606', 2, 'once', 0, 'pay cc 6/06/25')
+    # B.addBudgetItem('20250706', '20250706', 2, 'once', 0, 'pay cc 7/06/25')
+    # B.addBudgetItem('20250806', '20250806', 2, 'once', 0, 'pay cc 8/06/25')
+    # B.addBudgetItem('20250906', '20250906', 2, 'once', 0, 'pay cc 9/06/25')
+    # B.addBudgetItem('20251006', '20251006', 2, 'once', 0, 'pay cc 10/06/25')
+
+    B.addBudgetItem('20241106', '20241106', 1, 'once', 4400, 'pay cc 11/06/24')
+    B.addBudgetItem('20241206', '20241206', 1, 'once', 2300, 'pay cc 12/06/24')
+    B.addBudgetItem('20250106', '20250106', 1, 'once', 2000, 'pay cc 1/06/25')
+    B.addBudgetItem('20250206', '20250206', 1, 'once', 3000, 'pay cc 2/06/25')
+    B.addBudgetItem('20250306', '20250306', 1, 'once', 3000, 'pay cc 3/06/25')
+    B.addBudgetItem('20250406', '20250406', 1, 'once', 3000, 'pay cc 4/06/25')
+    B.addBudgetItem('20250506', '20250506', 1, 'once', 3000, 'pay cc 5/06/25')
+    B.addBudgetItem('20250606', '20250606', 1, 'once', 1000, 'pay cc 6/06/25')
+    B.addBudgetItem('20250706', '20250706', 1, 'once', 2000, 'pay cc 7/06/25')
+    B.addBudgetItem('20250806', '20250806', 1, 'once', 2000, 'pay cc 8/06/25')
+    B.addBudgetItem('20250906', '20250906', 1, 'once', 2000, 'pay cc 9/06/25')
+    B.addBudgetItem('20251006', '20251006', 1, 'once', 2000, 'pay cc 10/06/25')
+
+    #todo get tuition from old commits
 
     M = MemoRuleSet.MemoRuleSet([])
     M.addMemoRule('food', 'Credit', 'None', 1)
+    M.addMemoRule('parking', 'Credit', 'None', 1)
+    M.addMemoRule('hulu', 'Credit', 'None', 1)
+    M.addMemoRule('ai daddy', 'Credit', 'None', 1)
+    M.addMemoRule('car insurance', 'Credit', 'None', 1)
+    M.addMemoRule('storage unit', 'Credit', 'None', 1)
+    M.addMemoRule('phone', 'Credit', 'None', 1)
+    M.addMemoRule('gas', 'Credit', 'None', 1)
     M.addMemoRule('pay cc', 'Checking', 'Credit', 2)
+    M.addMemoRule('.*pay cc.*', 'Checking', 'Credit', 1)
     M.addMemoRule('.*income.*', 'None', 'Checking', 1)
     M.addMemoRule('.*repay.*', 'Checking', 'None', 1)
+    M.addMemoRule('.*fake loan payment.*', 'Checking', 'None', 1)
 
     MS = MilestoneSet.MilestoneSet([], [], [])
 
@@ -58,10 +120,27 @@ if __name__ == '__main__':
 
 
     E.runForecastApproximate(log_level='DEBUG')
-    E.forecast_df.to_csv('test_IRL_case_2__short.csv')
+    E.forecast_df.to_csv('f_20241012_not_exactly_right.csv')
     # print(E.initial_account_set.getAccounts().to_string())
     # print('-----------------')
     print(E)
+    print(E.forecast_df.to_string())
+
+# 0       Date Checking Credit: Curr Stmt Bal Credit: Prev Stmt Bal  Marginal Interest  Net Gain  Net Loss Net Worth Loan Total CC Debt Total Liquid Total                                                                                                                                                                                                                 Memo Directives                                                                                                                                                                                                                                              Memo
+# 0   20241012  2479.42                   0.0              12609.79               0.00      0.00       0.0 -10130.37        0.0      12609.79      2479.42
+# 1   20241112  4748.69                     0              13513.69             304.63   1365.37       0.0   -8765.0        0.0      13513.69      4748.69                                                                                               CC INTEREST (Credit: Prev Stmt Bal +$304.63); CC MIN PAYMENT (Credit: Prev Stmt Bal -$430.73); CC MIN PAYMENT (Checking -$430.73)                                         EMT income x2 (Checking +$3200.00); food x32 (Credit -$640.00); repay dad (Checking -$500.00); phone (Credit -$250.00); car insurance (Credit -$100.00); hulu (Credit -$20.00); ai daddy (Credit -$20.00)
+# 2   20241212      0.0                     0               7631.47             326.47   1133.53       0.0  -7631.47        0.0       7631.47          0.0    CC INTEREST (Credit: Prev Stmt Bal +$326.47); CC MIN PAYMENT (Credit: Prev Stmt Bal -$461.61); CC MIN PAYMENT (Checking -$461.61); ADDTL CC PAYMENT (Checking -$6737.08); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$6737.08)  EMT income x2 (Checking +$3200.00); food x30 (Credit -$600.00); repay dad (Checking -$500.00); phone (Credit -$250.00); fake loan payment (Checking -$250.00); car insurance (Credit -$100.00); ai daddy (Credit -$20.00); hulu (Credit -$20.00)
+# 3   20250112  1959.19                     0               8497.78             347.12   1092.88       0.0  -6538.59        0.0       8497.78      1959.19                                                                                               CC INTEREST (Credit: Prev Stmt Bal +$347.12); CC MIN PAYMENT (Checking -$490.81); CC MIN PAYMENT (Credit: Prev Stmt Bal -$490.81)  EMT income x2 (Checking +$3200.00); food x31 (Credit -$620.00); repay dad (Checking -$500.00); phone (Credit -$250.00); fake loan payment (Checking -$250.00); car insurance (Credit -$100.00); ai daddy (Credit -$20.00); hulu (Credit -$20.00)
+# 4   20250212      0.0                     0               5671.93             205.29   1234.71       0.0  -5671.93        0.0       5671.93          0.0  CC INTEREST (Credit: Prev Stmt Bal +$205.29); CC MIN PAYMENT (Credit: Prev Stmt Bal -$290.270); CC MIN PAYMENT (Checking -$290.270); ADDTL CC PAYMENT (Checking -$4179.06); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$4179.06)  EMT income x2 (Checking +$3200.00); food x31 (Credit -$620.00); repay dad (Checking -$500.00); phone (Credit -$250.00); fake loan payment (Checking -$250.00); car insurance (Credit -$100.00); hulu (Credit -$20.00); ai daddy (Credit -$20.00)
+# 5   20250312  2236.79                     0               7035.47             237.98   1262.02       0.0  -4798.68        0.0       7035.47      2236.79                                                                                             CC INTEREST (Credit: Prev Stmt Bal +$237.98); CC MIN PAYMENT (Checking -$336.490); CC MIN PAYMENT (Credit: Prev Stmt Bal -$336.490)  EMT income x2 (Checking +$3200.00); food x28 (Credit -$560.00); repay dad (Checking -$500.00); phone (Credit -$250.00); fake loan payment (Checking -$250.00); car insurance (Credit -$100.00); hulu (Credit -$20.00); ai daddy (Credit -$20.00)
+# 6   20250412      0.0                     0                2607.4             169.97   2870.03       0.0   -2607.4        0.0        2607.4          0.0    CC INTEREST (Credit: Prev Stmt Bal +$169.97); CC MIN PAYMENT (Credit: Prev Stmt Bal -$240.32); CC MIN PAYMENT (Checking -$240.32); ADDTL CC PAYMENT (Checking -$6333.53); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$6333.53)  EMT income x3 (Checking +$4800.00); food x31 (Credit -$620.00); repay dad (Checking -$500.00); phone (Credit -$250.00); fake loan payment (Checking -$250.00); car insurance (Credit -$100.00); hulu (Credit -$20.00); ai daddy (Credit -$20.00)
+# 7   20250512      0.0                     0                2098.6             216.00   1244.00       0.0   -2098.6        0.0        2098.6          0.0     CC INTEREST (Credit: Prev Stmt Bal +$216.0); CC MIN PAYMENT (Checking -$305.41); CC MIN PAYMENT (Credit: Prev Stmt Bal -$305.41); ADDTL CC PAYMENT (Checking -$2584.18); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$2584.18)  EMT income x2 (Checking +$3200.00); food x30 (Credit -$600.00); repay dad (Checking -$500.00); phone (Credit -$250.00); fake loan payment (Checking -$250.00); car insurance (Credit -$100.00); ai daddy (Credit -$20.00); hulu (Credit -$20.00)
+# 8   20250612      0.0                     0               1830.25             113.13   1326.87       0.0  -1830.25        0.0       1830.25          0.0    CC INTEREST (Credit: Prev Stmt Bal +$113.13); CC MIN PAYMENT (Checking -$159.96); CC MIN PAYMENT (Credit: Prev Stmt Bal -$159.96); ADDTL CC PAYMENT (Checking -$2840.34); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$2840.34)  EMT income x2 (Checking +$3200.00); food x31 (Credit -$620.00); repay dad (Checking -$500.00); phone (Credit -$250.00); fake loan payment (Checking -$250.00); car insurance (Credit -$100.00); hulu (Credit -$20.00); ai daddy (Credit -$20.00)
+# 9   20250712      0.0                     0               1832.32             112.83   1347.17       0.0  -1832.32        0.0       1832.32          0.0    CC INTEREST (Credit: Prev Stmt Bal +$112.83); CC MIN PAYMENT (Checking -$159.54); CC MIN PAYMENT (Credit: Prev Stmt Bal -$159.54); ADDTL CC PAYMENT (Checking -$3194.66); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$3194.66)  EMT income x2 (Checking +$3200.00); food x30 (Credit -$600.00); repay dad (Checking -$500.00); phone (Credit -$250.00); fake loan payment (Checking -$250.00); car insurance (Credit -$100.00); ai daddy (Credit -$20.00); hulu (Credit -$20.00)
+# 10  20250812      0.0                     0               2245.05             121.44   1318.56       0.0  -2245.05        0.0       2245.05          0.0    CC INTEREST (Credit: Prev Stmt Bal +$121.44); CC MIN PAYMENT (Checking -$171.71); CC MIN PAYMENT (Credit: Prev Stmt Bal -$171.71); ADDTL CC PAYMENT (Checking -$3692.60); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$3692.60)  EMT income x2 (Checking +$3200.00); food x31 (Credit -$620.00); repay dad (Checking -$500.00); phone (Credit -$250.00); fake loan payment (Checking -$250.00); car insurance (Credit -$100.00); ai daddy (Credit -$20.00); hulu (Credit -$20.00)
+# 11  20250912      0.0                     0                1604.1             143.44   2896.56       0.0   -1604.1        0.0        1604.1          0.0    CC INTEREST (Credit: Prev Stmt Bal +$143.44); CC MIN PAYMENT (Checking -$202.82); CC MIN PAYMENT (Credit: Prev Stmt Bal -$202.82); ADDTL CC PAYMENT (Checking -$6009.85); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$6009.85)  EMT income x3 (Checking +$4800.00); food x31 (Credit -$620.00); repay dad (Checking -$500.00); phone (Credit -$250.00); fake loan payment (Checking -$250.00); car insurance (Credit -$100.00); hulu (Credit -$20.00); ai daddy (Credit -$20.00)
+# 12  20251012      0.0                     0                3317.7             183.94   1276.06       0.0   -3317.7        0.0        3317.7          0.0    CC INTEREST (Credit: Prev Stmt Bal +$183.94); CC MIN PAYMENT (Checking -$260.08); CC MIN PAYMENT (Credit: Prev Stmt Bal -$260.08); ADDTL CC PAYMENT (Checking -$5450.35); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$5450.35)  EMT income x2 (Checking +$3200.00); food x30 (Credit -$600.00); repay dad (Checking -$500.00); phone (Credit -$250.00); fake loan payment (Checking -$250.00); car insurance (Credit -$100.00); ai daddy (Credit -$20.00); hulu (Credit -$20.00)
+
 
 #
 #     # sw1_sd = '20240501'

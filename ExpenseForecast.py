@@ -3281,7 +3281,7 @@ class ExpenseForecast:
             return forecast_df, new_confirmed_df, new_deferred_df, new_skipped_df
 
         for proposed_item_index, proposed_row_df in relevant_proposed_df.iterrows():
-            print('proposed txn:'+str(proposed_row_df.Date+' '+str(proposed_row_df.Amount)))
+            #print('proposed txn:'+str(proposed_row_df.Date+' '+str(proposed_row_df.Amount)))
             relevant_memo_rule_set = memo_set.findMatchingMemoRule(proposed_row_df.Memo, proposed_row_df.Priority)
             memo_rule_row = relevant_memo_rule_set.getMemoRules().loc[0, :]
 
@@ -3345,7 +3345,7 @@ class ExpenseForecast:
                     pass
                 elif reduced_amt > 0:
                     proposed_row_df.Amount = reduced_amt
-                    print(proposed_row_df.Date+' re-attempt at reduced amt: '+str(reduced_amt))
+                    #print(proposed_row_df.Date+' re-attempt at reduced amt: '+str(reduced_amt))
                     result_of_attempt = self.attemptTransactionApproximate(forecast_df, copy.deepcopy(account_set), memo_set, confirmed_df, proposed_row_df)
                     transaction_is_permitted = isinstance(result_of_attempt, pd.DataFrame)
 
@@ -4970,7 +4970,7 @@ class ExpenseForecast:
         Returns:
         - Updated current_forecast_row_df after executing credit card minimum payments.
         """
-        log_in_color(logger, 'cyan', 'debug', 'ENTER executeMinimumPayments() ', self.log_stack_depth)
+        #log_in_color(logger, 'cyan', 'debug', 'ENTER executeMinimumPayments() ', self.log_stack_depth)
         self.log_stack_depth += 1
         primary_checking_account_name = account_set.getPrimaryCheckingAccountName()
 
@@ -5071,7 +5071,7 @@ class ExpenseForecast:
             # Update account balances and memo directives
             if interest_charged > 0:
                 account_set.accounts[account_index].balance += interest_charged
-                interest_md_text = f' CC INTEREST ({account_row.Name} +${interest_charged:.2f}); '
+                interest_md_text = f'; CC INTEREST ({account_row.Name} +${interest_charged:.2f}); '
                 if interest_md_text not in current_forecast_row_df['Memo Directives'].iat[0]:
                     current_forecast_row_df['Memo Directives'] += interest_md_text
 
@@ -5391,13 +5391,13 @@ class ExpenseForecast:
         if account_deltas.sum() == 0:
             return forecast_df
 
-        log_in_color(
-            logger,
-            'magenta',
-            'debug',
-            f'ENTER propagateOptimizationTransactionsIntoTheFuture({date_string_YYYYMMDD})',
-            self.log_stack_depth
-        )
+        # log_in_color(
+        #     logger,
+        #     'magenta',
+        #     'debug',
+        #     f'ENTER propagateOptimizationTransactionsIntoTheFuture({date_string_YYYYMMDD})',
+        #     self.log_stack_depth
+        # )
 
         # Ensure 'Date' column is datetime
         future_rows_only_row_sel_vec = [ datetime.datetime.strptime(d, '%Y%m%d') > datetime.datetime.strptime(date_string_YYYYMMDD, '%Y%m%d') for d in forecast_df.Date] # not sure if still need this
@@ -5462,7 +5462,7 @@ class ExpenseForecast:
         affected_account_base_names_sans_checking = affected_account_base_names - checking_names_set
 
         if checking_in_txn and len(affected_account_base_names) == 1:
-            log_in_color(logger, 'magenta', 'debug', 'PROP CHECKING ONLY ' + str(date_string_YYYYMMDD), self.log_stack_depth)
+            #log_in_color(logger, 'magenta', 'debug', 'PROP CHECKING ONLY ' + str(date_string_YYYYMMDD), self.log_stack_depth)
             relevant_checking_account_name = account_set_before_p2_plus_txn.getAccounts()[non_zero_account_deltas_sel_vec].Name.iat[0]
             checking_account_index = list(forecast_df.columns).index(relevant_checking_account_name)
             checking_delta = account_deltas_list[checking_account_index - 1]
@@ -5488,11 +5488,11 @@ class ExpenseForecast:
             relevant_account_sel_vec = [x & y for (x, y) in zip(non_zero_account_deltas_sel_vec, aname_sel_vec)]
             relevant_account_info_df = account_set_before_p2_plus_txn.getAccounts().iloc[relevant_account_sel_vec, :]
 
-            print('relevant_account_type_list:'+str(relevant_account_type_list))
-            print(relevant_account_info_df.to_string())
-
-            log_in_color(logger, 'white', 'debug','relevant_account_type_list:', self.log_stack_depth)
-            log_in_color(logger, 'white', 'debug', relevant_account_type_list, self.log_stack_depth)
+            # print('relevant_account_type_list:'+str(relevant_account_type_list))
+            # print(relevant_account_info_df.to_string())
+            #
+            # log_in_color(logger, 'white', 'debug','relevant_account_type_list:', self.log_stack_depth)
+            # log_in_color(logger, 'white', 'debug', relevant_account_type_list, self.log_stack_depth)
 
             if len(relevant_account_type_list) > 3:
                 raise NotImplementedError #this would happen w complex loan payments
@@ -6200,7 +6200,7 @@ class ExpenseForecast:
                     # future_rows_only_df.iloc[f_i, :][relevant_pbal_account_name] += pbal_delta
                     # future_rows_only_df.iloc[f_i, :][relevant_interest_account_name] += interest_delta #this happens at interest accrual
             elif 'checking' in relevant_account_type_list and 'credit prev stmt bal' in relevant_account_type_list and len(relevant_account_type_list) == 2:
-                log_in_color(logger, 'magenta', 'debug', 'PROP CC PAYMENT PREV ONLY '+str(date_string_YYYYMMDD), self.log_stack_depth)
+                #log_in_color(logger, 'magenta', 'debug', 'PROP CC PAYMENT PREV ONLY '+str(date_string_YYYYMMDD), self.log_stack_depth)
                 # print('PROP CC PAYMENT PREV ONLY ' + str(date_string_YYYYMMDD))
                 relevant_checking_account_name = relevant_account_info_df[
                     relevant_account_info_df.Account_Type == 'checking'].Name.iat[0]
@@ -6210,7 +6210,11 @@ class ExpenseForecast:
                     relevant_account_info_df.Account_Type == 'credit prev stmt bal'].Name.iat[0]
 
                 cc_billing_dates = billing_dates__dict[ relevant_prev_stmt_bal_account_name]
-                next_billing_date = str(min([ int(d) for d in cc_billing_dates if int(d) > int(date_string_YYYYMMDD) ]))
+                relevant_billing_dates = [ int(d) for d in cc_billing_dates if int(d) > int(date_string_YYYYMMDD) ]
+                if len(relevant_billing_dates) > 0:
+                    next_billing_date = str(min(relevant_billing_dates))
+                else:
+                    next_billing_date = None
 
                 checking_account_index = list(forecast_df.columns).index(relevant_checking_account_name)
                 prev_stmt_bal_account_index = list(forecast_df.columns).index(relevant_prev_stmt_bal_account_name)
@@ -6292,7 +6296,8 @@ class ExpenseForecast:
                                 account_row = account_set_before_p2_plus_txn.getAccounts().loc[account_set_before_p2_plus_txn.getAccounts().Name == relevant_prev_stmt_bal_account_name, :]
                                 interest_to_be_charged_immediately = round( previous_previous_stmt_bal * (account_row.APR.iat[0] / 12), 2)
 
-                                match_obj = re.search(r'\((.*)-\$(.*)\)', md)
+                                # print('md:'+str(md))
+                                match_obj = re.search('\((.*)+\$(.*)\)', md)
                                 og_interest_amount = float(match_obj.group(2))
 
                                 previous_stmt_delta += interest_to_be_charged_immediately
@@ -6382,8 +6387,8 @@ class ExpenseForecast:
                 curr_stmt_delta = account_deltas_list[curr_stmt_bal_account_index - 1]
                 future_rows_only_df[relevant_curr_stmt_bal_account_name] += curr_stmt_delta
             else:
-                print('relevant_account_type_list:'+str(relevant_account_type_list))
-                print('affected_account_base_names:' + str(affected_account_base_names))
+                # print('relevant_account_type_list:'+str(relevant_account_type_list))
+                # print('affected_account_base_names:' + str(affected_account_base_names))
                 raise ValueError("undefined case in propagateOptimizationTransactions")
 
 
@@ -6393,8 +6398,7 @@ class ExpenseForecast:
 
         # If there are no future rows, exit early
         if future_rows_only_df.empty:
-            log_in_color(logger, 'magenta', 'debug', 'EXIT propagateOptimizationTransactionsIntoTheFuture()',
-                         self.log_stack_depth)
+            #log_in_color(logger, 'magenta', 'debug', 'EXIT propagateOptimizationTransactionsIntoTheFuture()',self.log_stack_depth)
             return forecast_df
 
         # Identify accounts where the balance has changed
@@ -6433,8 +6437,7 @@ class ExpenseForecast:
                             f"{account_name}: Min_Balance {account_row.Min_Balance} > min_future_acct_bal {min_future_balances[account_name]}\n"
                             + future_rows_only_df.to_string()
                     )
-                    log_in_color(logger, 'magenta', 'debug', 'EXIT propagateOptimizationTransactionsIntoTheFuture()',
-                                 self.log_stack_depth)
+                    #log_in_color(logger, 'magenta', 'debug', 'EXIT propagateOptimizationTransactionsIntoTheFuture()', self.log_stack_depth)
                     raise ValueError(error_msg)
                 if max_violation:
                     error_msg = (
@@ -6443,12 +6446,11 @@ class ExpenseForecast:
                             f"{account_name}: Max_Balance {account_row.Max_Balance} < max_future_acct_bal {max_future_balances[account_name]}\n"
                             + future_rows_only_df.to_string()
                     )
-                    log_in_color(logger, 'magenta', 'debug', 'EXIT propagateOptimizationTransactionsIntoTheFuture()',
-                                 self.log_stack_depth)
+                    #log_in_color(logger, 'magenta', 'debug', 'EXIT propagateOptimizationTransactionsIntoTheFuture()', self.log_stack_depth)
                     raise ValueError(error_msg)
 
-        log_in_color(logger, 'cyan', 'debug', 'BEFORE UPDATE', self.log_stack_depth)
-        log_in_color(logger, 'cyan', 'debug', forecast_df.to_string(), self.log_stack_depth)
+        # log_in_color(logger, 'cyan', 'debug', 'BEFORE UPDATE', self.log_stack_depth)
+        # log_in_color(logger, 'cyan', 'debug', forecast_df.to_string(), self.log_stack_depth)
 
         # Update the forecast DataFrame with future balances
         # very slow to reindex like this. it is possible to refactor this entire method to not reindex
@@ -6456,11 +6458,10 @@ class ExpenseForecast:
         future_rows_only_df.index = future_rows_only_df.index + index_of_first_future_day #todo may be off by 1
         forecast_df.update(future_rows_only_df)
 
-        log_in_color(logger, 'cyan', 'debug', 'AFTER UPDATE', self.log_stack_depth)
-        log_in_color(logger, 'cyan', 'debug', forecast_df.to_string(), self.log_stack_depth)
+        # log_in_color(logger, 'cyan', 'debug', 'AFTER UPDATE', self.log_stack_depth)
+        # log_in_color(logger, 'cyan', 'debug', forecast_df.to_string(), self.log_stack_depth)
 
-        log_in_color(logger, 'magenta', 'debug', 'EXIT propagateOptimizationTransactionsIntoTheFuture()',
-                     self.log_stack_depth)
+        #log_in_color(logger, 'magenta', 'debug', 'EXIT propagateOptimizationTransactionsIntoTheFuture()', self.log_stack_depth)
 
         return forecast_df
 
@@ -8276,3 +8277,5 @@ if __name__ == "__main__":
 # FAILED test_ef_cli.py::TestEFCLIMethods::test_run_forecastset[run forecastset --source file --id S033683 --username hume --working_directory ./out/ --approximate --overwrite]
 # FAILED test_ef_cli.py::TestEFCLIMethods::test_list[list] - subprocess.CalledProcessError: Command '['python', '-m', 'ef_cli', 'list']' returned non-ze...
 # ====================================================== 69 failed, 164 passed in 1268.59s (0:21:08)
+
+#todo not sure when (.*)+\$(.*) or (.*)-\$(.*)
