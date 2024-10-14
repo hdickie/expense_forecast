@@ -26,8 +26,8 @@ pd.options.mode.chained_assignment = None #apparently this warning can throw fal
 # from generate_date_sequence import generate_date_sequence
 
 if __name__ == '__main__':
-    start_date_YYYYMMDD = '20241012'
-    end_date_YYYYMMDD = '20251012' #we want 9/1
+    start_date_YYYYMMDD = '20241013'
+    end_date_YYYYMMDD = '20241113'
 
     #a rough estimate
     approx_final_loan_cost = 16000
@@ -39,10 +39,6 @@ if __name__ == '__main__':
     loan_payment_end_date = '20300603' # a rough guess
     #loan_payment_end_date = (datetime.datetime.strptime(next_loan_payment_YYYYMMDD,'%%m%d') + datetime.timedelta(months=no_loan_payments)).strftime('%Y%m%d')
 
-    dad_loan_remaining_amt = (15000 + 1400) - 500*1
-    dad_repay_amt = 500
-    dad_loan_no_payments = math.ceil(dad_loan_remaining_amt / dad_repay_amt)
-    next_dad_loan_payment_YYYYMMDD = '20241101'
 
     #fml lol
     dad_loan_payment_end_date = '20270701'
@@ -52,6 +48,8 @@ if __name__ == '__main__':
     A = AccountSet.AccountSet([])
     A.createCheckingAccount('Checking', 2391 + 88.42, 0, 999999999, True)
     A.createCreditCardAccount('Credit', 0, 12609.79, 0, 25000, '20240107', 0.2899, 40)
+    A.createLoanAccount('Dad',(15000 + 1400) - 500*1,0,0,20000,'20240101',0,500)
+    A.createLoanAccount('Student Loans', 15000, 100, 0, 16000, '20241003', 0.06, 223.19)
 
     B = BudgetSet.BudgetSet([])
     B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 20, 'food', deferrable=False,partial_payment_allowed=False)
@@ -62,12 +60,33 @@ if __name__ == '__main__':
 
     B.addBudgetItem('20240702', end_date_YYYYMMDD, 1, 'monthly', 20, 'hulu')
     B.addBudgetItem('20240702', end_date_YYYYMMDD, 1, 'monthly', 20, 'ai daddy')
-    B.addBudgetItem('20240702', end_date_YYYYMMDD, 1, 'monthly', 100, 'car insurance')
-    B.addBudgetItem('20240702', end_date_YYYYMMDD, 1, 'monthly', 250, 'phone')
     B.addBudgetItem('20240702', end_date_YYYYMMDD, 1, 'monthly', 50, 'parking')
     B.addBudgetItem('20240702', end_date_YYYYMMDD, 1, 'semiweekly', 80, 'gas')
-    B.addBudgetItem('20240702', end_date_YYYYMMDD, 1, 'semiweekly', 100, 'storage unit')
+    B.addBudgetItem('20240420', end_date_YYYYMMDD, 1, 'monthly', 95, 'car insurance')
+    B.addBudgetItem('20240401', end_date_YYYYMMDD, 1, 'monthly', 100, 'storage unit rent')
+    B.addBudgetItem('20240818', end_date_YYYYMMDD, 1, 'monthly', 250, 'phone')
+    if int(end_date_YYYYMMDD) > 20251203:
+        B.addBudgetItem('20251203', end_date_YYYYMMDD, 1, 'monthly', 250, 'fake loan payment')
     # B.addBudgetItem('20240103', '20240303', 2, 'monthly', 460, 'pay cc', False, False)
+
+    cycle_amount = 1500
+    asymptote_surplus_amount = 500
+    B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'monthly', cycle_amount + asymptote_surplus_amount, 'pay cc cycle + extra')
+
+    B.addBudgetItem('20240903', '20240903', 1, 'once', 500, 'sjcc fall tuition')
+    B.addBudgetItem('20250203', '20250203', 1, 'once', 400, 'sjcc spring 2025 tuition')
+    B.addBudgetItem('20250603', '20250603', 1, 'once', 400, 'sjcc summer 2025 tuition')
+    B.addBudgetItem('20250803', '20250803', 1, 'once', 400, 'sjcc fall 2025 tuition')
+
+    # lets put evergreen at 5k for 2 years. wow :)))))))
+    # 4 semesters of 9 units. I think that this will include a summer semester
+    # this assumes that if I apply at the end of 2025, I dont start til fall 2026
+    # ah i realize this is a quarter system I've never done that
+    B.addBudgetItem('20260929', '20260929', 1, 'once', 1250, 'evergreen tuition fall 2026')
+    B.addBudgetItem('20270112', '20270112', 1, 'once', 1250, 'evergreen tuition winter 2026')
+    B.addBudgetItem('20270405', '20270405', 1, 'once', 1250, 'evergreen tuition spring 2027')
+    B.addBudgetItem('20270628', '20270628', 1, 'once', 1250, 'evergreen tuition summer 2027')
+    # Summer 2023: June 30
 
     # this caused unexpected behavior
     # B.addBudgetItem('20241106', '20241106', 2, 'once', 0, 'pay cc 11/06/24')
@@ -83,18 +102,18 @@ if __name__ == '__main__':
     # B.addBudgetItem('20250906', '20250906', 2, 'once', 0, 'pay cc 9/06/25')
     # B.addBudgetItem('20251006', '20251006', 2, 'once', 0, 'pay cc 10/06/25')
 
-    B.addBudgetItem('20241106', '20241106', 1, 'once', 4400, 'pay cc 11/06/24')
-    B.addBudgetItem('20241206', '20241206', 1, 'once', 2300, 'pay cc 12/06/24')
-    B.addBudgetItem('20250106', '20250106', 1, 'once', 2000, 'pay cc 1/06/25')
-    B.addBudgetItem('20250206', '20250206', 1, 'once', 3000, 'pay cc 2/06/25')
-    B.addBudgetItem('20250306', '20250306', 1, 'once', 3000, 'pay cc 3/06/25')
-    B.addBudgetItem('20250406', '20250406', 1, 'once', 3000, 'pay cc 4/06/25')
-    B.addBudgetItem('20250506', '20250506', 1, 'once', 3000, 'pay cc 5/06/25')
-    B.addBudgetItem('20250606', '20250606', 1, 'once', 1000, 'pay cc 6/06/25')
-    B.addBudgetItem('20250706', '20250706', 1, 'once', 2000, 'pay cc 7/06/25')
-    B.addBudgetItem('20250806', '20250806', 1, 'once', 2000, 'pay cc 8/06/25')
-    B.addBudgetItem('20250906', '20250906', 1, 'once', 2000, 'pay cc 9/06/25')
-    B.addBudgetItem('20251006', '20251006', 1, 'once', 2000, 'pay cc 10/06/25')
+    # B.addBudgetItem('20241106', '20241106', 1, 'once', 4400, 'pay cc 11/06/24')
+    # B.addBudgetItem('20241206', '20241206', 1, 'once', 2300, 'pay cc 12/06/24')
+    # B.addBudgetItem('20250106', '20250106', 1, 'once', 2000, 'pay cc 1/06/25')
+    # B.addBudgetItem('20250206', '20250206', 1, 'once', 3000, 'pay cc 2/06/25')
+    # B.addBudgetItem('20250306', '20250306', 1, 'once', 3000, 'pay cc 3/06/25')
+    # B.addBudgetItem('20250406', '20250406', 1, 'once', 3000, 'pay cc 4/06/25')
+    # B.addBudgetItem('20250506', '20250506', 1, 'once', 3000, 'pay cc 5/06/25')
+    # B.addBudgetItem('20250606', '20250606', 1, 'once', 1000, 'pay cc 6/06/25')
+    # B.addBudgetItem('20250706', '20250706', 1, 'once', 2000, 'pay cc 7/06/25')
+    # B.addBudgetItem('20250806', '20250806', 1, 'once', 2000, 'pay cc 8/06/25')
+    # B.addBudgetItem('20250906', '20250906', 1, 'once', 2000, 'pay cc 9/06/25')
+    # B.addBudgetItem('20251006', '20251006', 1, 'once', 2000, 'pay cc 10/06/25')
 
     #todo get tuition from old commits
 
@@ -111,6 +130,7 @@ if __name__ == '__main__':
     M.addMemoRule('.*pay cc.*', 'Checking', 'Credit', 1)
     M.addMemoRule('.*income.*', 'None', 'Checking', 1)
     M.addMemoRule('.*repay.*', 'Checking', 'None', 1)
+    M.addMemoRule('.*tuition.*', 'Checking', 'None', 1)
     M.addMemoRule('.*fake loan payment.*', 'Checking', 'None', 1)
 
     MS = MilestoneSet.MilestoneSet([], [], [])
@@ -119,8 +139,8 @@ if __name__ == '__main__':
 
 
 
-    E.runForecastApproximate(log_level='DEBUG')
-    E.forecast_df.to_csv('f_20241012_not_exactly_right.csv')
+    E.runForecast(log_level='DEBUG')
+    E.forecast_df.to_csv('f_20241013_not_exactly_right.csv')
     # print(E.initial_account_set.getAccounts().to_string())
     # print('-----------------')
     print(E)

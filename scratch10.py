@@ -18,6 +18,25 @@ import Account, BudgetSet, MemoRuleSet
 import copy
 
 
+def non_trivial_loan(name,pbal,interest,apr):
+    A = AccountSet.AccountSet([])
+    A.createAccount(name=name,
+                    balance=pbal + interest,
+                    min_balance=0,
+                    max_balance=9999,
+                    account_type='loan',
+                    billing_start_date_YYYYMMDD='20000102',
+                    interest_type='simple',
+                    apr=apr,
+                    interest_cadence='daily',
+                    minimum_payment=50,
+                    previous_statement_balance=None,
+                    current_statement_balance=None,
+                    principal_balance=pbal,
+                    interest_balance=interest)
+
+    return A.accounts
+
 def credit_acct_list(curr_balance,prev_balance,apr):
     A = AccountSet.AccountSet([])
     A.createAccount(name='Credit',
@@ -69,30 +88,36 @@ def txn_budget_item_once_list(amount,priority,memo,deferrable,partial_payment_al
 
 
 if __name__ == '__main__':
-    test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df = (
-                                'test_cc_payment__satisfice__curr_bal_25__expect_0',
-                                AccountSet.AccountSet(checking_acct_list(2000) + credit_acct_list(25, 0, 0.05)),
-                                BudgetSet.BudgetSet([]),
-                                MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*', account_from='Credit', account_to=None, transaction_priority=1)]),
-                                '20000101',
-                                '20000103',
-                                MilestoneSet.MilestoneSet( [], [], []),
-                                pd.DataFrame({
-                                    'Date': ['20000101', '20000102', '20000103'],
-                                    'Checking': [2000, 2000, 2000],
-                                    'Credit: Curr Stmt Bal': [25, 0, 0],
-                                    'Credit: Prev Stmt Bal': [0, 25, 25],
-                                    'Marginal Interest': [0, 0, 0],
-                                    'Net Gain': [0, 0, 0],
-                                    'Net Loss': [0, 0, 0],
-                                    'Net Worth': [1975, 1975, 1975],
-                                    'Loan Total': [0, 0, 0],
-                                    'CC Debt Total': [25, 25, 25],
-                                    'Liquid Total': [2000, 2000, 2000],
-                                  'Memo Directives': ['', '', ''],
-                                    'Memo': ['', '', '']
-                                })
-                                )
+    test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df = ( 'test_p7__additional_loan_payment__amt_10',
+                AccountSet.AccountSet(checking_acct_list(5000) + non_trivial_loan('Loan A',1000,100,0.1) + non_trivial_loan('Loan B',1000,100,0.05) + non_trivial_loan('Loan C',1000,100,0.01)),
+                BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000102','20000102',7,'once',10,'additional_loan_payment')]),
+                MemoRuleSet.MemoRuleSet([
+                    MemoRule.MemoRule('.*','Checking',None,1),
+                    MemoRule.MemoRule('additional_loan_payment','Checking','ALL_LOANS',7)
+                ]),
+                '20000101',
+                '20000103',
+                MilestoneSet.MilestoneSet( [], [], []),
+                pd.DataFrame({
+                    'Date': ['20000101', '20000102', '20000103'],
+                    'Checking': [5000, 4840, 4840],
+                    'Loan A: Principal Balance': [1000, 1000, 1000],
+                    'Loan A: Interest': [100, 40.27, 40.54],
+                    'Loan B: Principal Balance': [1000, 1000, 1000],
+                    'Loan B: Interest': [100, 50.14, 50.28],
+                    'Loan C: Principal Balance': [1000, 1000, 1000],
+                    'Loan C: Interest': [100, 50.03, 50.06],
+                    'Marginal Interest': [0, 0.44, 0.44],
+                    'Net Gain': [0, 0, 0],
+                    'Net Loss': [0, 0, 0],
+                    'Net Worth': [1700, 1699.56, 1699.12],
+                    'Loan Total': [3300, 3140.44, 3140.88],
+                    'CC Debt Total': [0, 0, 0],
+                    'Liquid Total': [5000, 4840, 4840],
+                                  'Memo Directives': ['', 'LOAN MIN PAYMENT (Loan A: Interest -$50.00); LOAN MIN PAYMENT (Checking -$50.00); LOAN MIN PAYMENT (Loan B: Interest -$50.00); LOAN MIN PAYMENT (Checking -$50.00); LOAN MIN PAYMENT (Loan C: Interest -$50.00); LOAN MIN PAYMENT (Checking -$50.00); ADDTL LOAN PAYMENT (Checking -$10.00); ADDTL LOAN PAYMENT (Loan A: Interest -$10.00)', ''],
+                    'Memo': ['', '', '']
+                })
+        )
 
     E = ExpenseForecast.ExpenseForecast(account_set, budget_set,
                                         memo_rule_set,
