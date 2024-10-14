@@ -7040,6 +7040,8 @@ class ExpenseForecast:
         Returns:
         - Updated future_rows_only_df DataFrame.
         """
+        log_in_color(logger, 'cyan', 'debug', 'ENTER _propagate_loan_payment_pbal_only', self.log_stack_depth)
+        self.log_stack_depth += 1
 
         # Extract relevant account names
         checking_account_name = relevant_account_info_df[
@@ -7169,6 +7171,8 @@ class ExpenseForecast:
             md_to_keep = [md for md in md_to_keep if md]
             future_rows_only_df.at[f_i, 'Memo Directives'] = ';'.join(md_to_keep)
 
+        self.log_stack_depth -= 1
+        log_in_color(logger, 'cyan', 'debug', 'EXIT _propagate_loan_payment_pbal_only', self.log_stack_depth)
         return future_rows_only_df
 
     def _propagate_loan_payment_pbal_interest(self, relevant_account_info_df,
@@ -7195,6 +7199,8 @@ class ExpenseForecast:
         Returns:
         - Updated future_rows_only_df DataFrame.
         """
+        log_in_color(logger, 'cyan', 'debug', 'ENTER _propagate_loan_payment_pbal_interest', self.log_stack_depth)
+        self.log_stack_depth += 1
 
         # Extract relevant account names
         checking_account_name = relevant_account_info_df[
@@ -7332,7 +7338,8 @@ class ExpenseForecast:
             if date_iat >= min(loan_billing_dates):
                 if f_i == 0:
                     # Set interest to the value after the transaction
-                    future_rows_only_df.at[f_i, interest_account_name] = post_txn_row_df.at[0, interest_account_name]
+                    #future_rows_only_df.at[f_i, interest_account_name] = post_txn_row_df.at[0, interest_account_name]
+                    future_rows_only_df.at[f_i, interest_account_name] = post_txn_row_df.head(1)[interest_account_name].iat[0]
                 else:
                     # Set interest equal to the previous day's interest
                     future_rows_only_df.at[f_i, interest_account_name] = future_rows_only_df.at[
@@ -7348,6 +7355,8 @@ class ExpenseForecast:
             md_to_keep = [md for md in md_to_keep if md]
             future_rows_only_df.at[f_i, 'Memo Directives'] = ';'.join(md_to_keep)
 
+        self.log_stack_depth -= 1
+        log_in_color(logger, 'cyan', 'debug', 'EXIT _propagate_loan_payment_pbal_interest', self.log_stack_depth)
         return future_rows_only_df
 
     def _propagate_credit_payment_prev_curr(self, relevant_account_info_df,
@@ -7374,6 +7383,8 @@ class ExpenseForecast:
         Returns:
         - Updated future_rows_only_df DataFrame.
         """
+        log_in_color(logger, 'cyan', 'debug', 'ENTER _propagate_credit_payment_prev_curr', self.log_stack_depth)
+        self.log_stack_depth += 1
 
         # Extract relevant account names
         checking_account_name = relevant_account_info_df[
@@ -7587,6 +7598,8 @@ class ExpenseForecast:
             md_to_keep = [md for md in md_to_keep if md]
             future_rows_only_df.at[f_i, 'Memo Directives'] = ';'.join(md_to_keep)
 
+        self.log_stack_depth -= 1
+        log_in_color(logger, 'cyan', 'debug', 'EXIT _propagate_credit_payment_prev_curr', self.log_stack_depth)
         return future_rows_only_df
 
     def _parse_memo_amount(self, memo_line):
@@ -7737,9 +7750,35 @@ class ExpenseForecast:
             # Only checking accounts are involved in the transaction
             # Update future balances for the checking accounts
             for idx, row in accounts_with_deltas[accounts_with_deltas['Account_Type'] == 'checking'].iterrows():
+                min_balance = row['Min_Balance']
+                max_balance = row['Max_Balance']
                 relevant_checking_account_name = row['Name']
                 checking_delta = row['Delta']
                 future_rows_only_df[relevant_checking_account_name] += checking_delta
+
+            if not future_rows_only_df.empty:
+                min_future_acct_bal = min(future_rows_only_df[relevant_checking_account_name])
+                max_future_acct_bal = max(future_rows_only_df[relevant_checking_account_name])
+
+                try:
+                    assert min_balance <= min_future_acct_bal
+                except AssertionError:
+                    error_msg = "Failure in propagateOptimizationTransactionsIntoTheFuture\n"
+                    error_msg += "Account boundaries were violated\n"
+                    error_msg += "min_balance <= min_future_acct_bal was not True\n"
+                    error_msg += str(min_balance) + " <= " + str(min_future_acct_bal) + '\n'
+                    error_msg += future_rows_only_df.to_string()
+                    raise ValueError(error_msg)
+
+                try:
+                    assert max_balance >= max_future_acct_bal
+                except AssertionError:
+                    error_msg = "Failure in propagateOptimizationTransactionsIntoTheFuture\n"
+                    error_msg += "Account boundaries were violated\n"
+                    error_msg += "max_balance >= max_future_acct_bal was not True\n"
+                    error_msg += str(max_balance) + " <= " + str(max_future_acct_bal) + '\n'
+                    error_msg += future_rows_only_df.to_string()
+                    raise ValueError(error_msg)
         else:
             # Process each affected base account name excluding checking accounts
             for account_base_name in affected_account_base_names_sans_checking:
@@ -7791,14 +7830,18 @@ class ExpenseForecast:
                     self.log_stack_depth -= 1
                     raise ValueError("Undefined case in process_transactions")
 
-        #todo very slow to do this
-        index_of_first_future_day = list(forecast_df.Date).index(future_rows_only_df.head(1).Date.iat[0])
-        future_rows_only_df.index = future_rows_only_df.index + index_of_first_future_day
-        forecast_df.update(future_rows_only_df)
-        log_in_color(logger, 'cyan', 'debug', 'future_rows_only_df', self.log_stack_depth)
-        log_in_color(logger, 'cyan', 'debug', future_rows_only_df.to_string(), self.log_stack_depth)
-        log_in_color(logger, 'cyan', 'debug', 'forecast_df', self.log_stack_depth)
-        log_in_color(logger, 'cyan', 'debug', forecast_df.to_string(), self.log_stack_depth)
+        if not future_rows_only_df.empty:
+            # if not boundary violation
+            #todo very slow to do this
+            index_of_first_future_day = list(forecast_df.Date).index(future_rows_only_df.head(1).Date.iat[0])
+            future_rows_only_df.index = future_rows_only_df.index + index_of_first_future_day
+            forecast_df.update(future_rows_only_df)
+
+
+            log_in_color(logger, 'cyan', 'debug', 'future_rows_only_df', self.log_stack_depth)
+            log_in_color(logger, 'cyan', 'debug', future_rows_only_df.to_string(), self.log_stack_depth)
+            log_in_color(logger, 'cyan', 'debug', 'forecast_df', self.log_stack_depth)
+            log_in_color(logger, 'cyan', 'debug', forecast_df.to_string(), self.log_stack_depth)
 
         self.log_stack_depth -= 1
         log_in_color(logger, 'cyan', 'debug', 'EXIT propagateOptimizationTransactionsIntoTheFuture', self.log_stack_depth)
@@ -9614,24 +9657,9 @@ if __name__ == "__main__":
 
 
 ### w new prop method
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p4__cc_payment__pay_all_of_prev_part_of_curr__expect_800-account_set11-budget_set11-memo_rule_set11-20000101-20000103-milestone_set11-expected_result_df11]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p4__cc_payment__pay_part_of_prev_balance__expect_200-account_set12-budget_set12-memo_rule_set12-20000101-20000103-milestone_set12-expected_result_df12]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p4__cc_payment__partial_of_indicated_amount-account_set14-budget_set14-memo_rule_set14-20000101-20000103-milestone_set14-expected_result_df14]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_execute_defer_after_receiving_income_2_days_later-account_set15-budget_set15-memo_rule_set15-20000101-20000104-milestone_set15-expected_result_df15]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_execute_at_reduced_amount_bc_later_higher_priority_txn-account_set16-budget_set16-memo_rule_set16-20000101-20000105-milestone_set16-expected_result_df16]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_10-account_set19-budget_set19-memo_rule_set19-20000101-20000103-milestone_set19-expected_result_df19]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_110-account_set20-budget_set20-memo_rule_set20-20000101-20000103-milestone_set20-expected_result_df20]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_560-account_set21-budget_set21-memo_rule_set21-20000101-20000103-milestone_set21-expected_result_df21]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_610-account_set22-budget_set22-memo_rule_set22-20000101-20000103-milestone_set22-expected_result_df22]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_1900-account_set23-budget_set23-memo_rule_set23-20000101-20000103-milestone_set23-expected_result_df23]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_overpay-account_set24-budget_set24-memo_rule_set24-20000101-20000103-milestone_set24-expected_result_df24]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_initialize_forecast_from_excel_not_yet_run - AttributeError: 'NoneType' object has no...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_initialize_forecast_from_excel_already_run - AttributeError: 'int' object has no attr...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_initialize_forecast_from_json_not_yet_run - TypeError: strptime() argument 1 must be ...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_initialize_forecast_from_json_already_run - TypeError: strptime() argument 1 must be ...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_multiple_additional_loan_payments__expect_eliminate_future_min_payments - AttributeEr...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_multiple_additional_loan_payments_on_consecutive_days - AttributeError: Can only use ...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_additional_loan_payments_overpayment - AttributeError: Can only use .dt accessor with...
+
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_multiple_additional_loan_payments__expect_eliminate_future_min_payments - assert False
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_multiple_additional_loan_payments_on_consecutive_days - assert False
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_1_payment_pay_over_minimum - AssertionError: assert 'AD...
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_1_payment_pay_exact_minimum - AssertionError: assert 'A...
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_1_payment_pay_under_minimum - AssertionError: assert 'A...
@@ -9641,19 +9669,14 @@ if __name__ == "__main__":
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_3_payments_pay_over_minimum - assert False
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_3_payments_pay_exact_minimum - assert False
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_3_payments_pay_under_minimum - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_partial_payment_allowed_on_cc_bill_case_1 - AttributeError: Can only use .dt accessor...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_partial_payment_allowed_on_cc_bill_case_2 - AttributeError: Can only use .dt accessor...
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_partial_payment_allowed_on_cc_bill_case_1 - assert False
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_partial_payment_allowed_on_cc_bill_case_2 - assert False
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_IRL_case_1 - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_IRL_case_2 - AttributeError: Can only use .dt accessor with datetimelike values
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_propagate_curr_only - AttributeError: Can only use .dt accessor with datetimelike values
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_propagate_curr_and_prev - AttributeError: Can only use .dt accessor with datetimelike...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_propagate_prev_only - AttributeError: Can only use .dt accessor with datetimelike values
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_IRL_case_2 - assert False
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_propagate_curr_only - assert False
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_propagate_curr_and_prev - assert False
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_propagate_prev_only - assert False
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_propagate_principal_only - NotImplementedError
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_propagate_interest_only - NotImplementedError
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_propagate_principal_and_interest - NotImplementedError
-# FAILED test_MilestoneSet.py::TestMilestoneSetMethods::test_MilestoneSet_constructor__valid_inputs - ValueError: Cannot add more than one checking acco...
-# FAILED test_MilestoneSet.py::TestMilestoneSetMethods::test_str - ValueError: Cannot add more than one checking account.
-# FAILED test_MilestoneSet.py::TestMilestoneSetMethods::test_addAccountMilestone - ValueError: Cannot add more than one checking account.
-# FAILED test_MilestoneSet.py::TestMilestoneSetMethods::test_addMemoMilestone - ValueError: Cannot add more than one checking account.
-# FAILED test_MilestoneSet.py::TestMilestoneSetMethods::test_addCompositeMilestone - ValueError: Cannot add more than one checking account.
-# ====================================================== 42 failed, 161 passed in 1091.45s (0:18:11)
+# ================================================ 21 failed, 173 passed, 3 warnings in 2294.81s (0:38:14)

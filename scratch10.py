@@ -88,34 +88,55 @@ def txn_budget_item_once_list(amount,priority,memo,deferrable,partial_payment_al
 
 
 if __name__ == '__main__':
-    test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df = ( 'test_p7__additional_loan_payment__amt_10',
-                AccountSet.AccountSet(checking_acct_list(5000) + non_trivial_loan('Loan A',1000,100,0.1) + non_trivial_loan('Loan B',1000,100,0.05) + non_trivial_loan('Loan C',1000,100,0.01)),
-                BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000102','20000102',7,'once',10,'additional_loan_payment')]),
-                MemoRuleSet.MemoRuleSet([
-                    MemoRule.MemoRule('.*','Checking',None,1),
-                    MemoRule.MemoRule('additional_loan_payment','Checking','ALL_LOANS',7)
-                ]),
+    test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df = (
+                'test_execute_defer_after_receiving_income_2_days_later',
+                AccountSet.AccountSet(checking_acct_list(500)),
+                BudgetSet.BudgetSet([
+                                     BudgetItem.BudgetItem('20000102','20000102',1,'once',100,'SPEND daily p1 txn', False,False), #EOD 400
+
+                                     BudgetItem.BudgetItem('20000103', '20000103', 1, 'once', 100, 'SPEND daily p1 txn 2',False, False), #EOD 300
+                                     BudgetItem.BudgetItem('20000103', '20000103', 3, 'once', 400,'SPEND p3 txn on 1/3 that is skipped bc later lower priority_index txn', False, False),
+
+                                     BudgetItem.BudgetItem('20000104', '20000104', 1, 'once', 200, '200 income on 1/4',False, False), #500
+                                     BudgetItem.BudgetItem('20000104', '20000104', 1, 'once', 100, 'SPEND daily p1 txn 3',False, False), #400
+                                     BudgetItem.BudgetItem('20000102', '20000102', 2, 'once', 400, 'SPEND p2 txn deferred from 1/2 to 1/4', True, False) #EOD 0
+
+                                     ]
+                                    ),
+                MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='SPEND.*',
+                                                           account_from='Checking',
+                                                           account_to=None,
+                                                           transaction_priority=1),
+                                         MemoRule.MemoRule(memo_regex='.*income.*',
+                                                           account_from=None,
+                                                           account_to='Checking',
+                                                           transaction_priority=1),
+                                         MemoRule.MemoRule(memo_regex='SPEND.*',
+                                                           account_from='Checking',
+                                                           account_to=None,
+                                                           transaction_priority=2),
+                                         MemoRule.MemoRule(memo_regex='SPEND.*',
+                                                           account_from='Checking',
+                                                           account_to=None,
+                                                           transaction_priority=3)
+                                         ]),
                 '20000101',
-                '20000103',
+                '20000104', #note that this is later than the test defined above
                 MilestoneSet.MilestoneSet( [], [], []),
                 pd.DataFrame({
-                    'Date': ['20000101', '20000102', '20000103'],
-                    'Checking': [5000, 4840, 4840],
-                    'Loan A: Principal Balance': [1000, 1000, 1000],
-                    'Loan A: Interest': [100, 40.27, 40.54],
-                    'Loan B: Principal Balance': [1000, 1000, 1000],
-                    'Loan B: Interest': [100, 50.14, 50.28],
-                    'Loan C: Principal Balance': [1000, 1000, 1000],
-                    'Loan C: Interest': [100, 50.03, 50.06],
-                    'Marginal Interest': [0, 0.44, 0.44],
-                    'Net Gain': [0, 0, 0],
-                    'Net Loss': [0, 0, 0],
-                    'Net Worth': [1700, 1699.56, 1699.12],
-                    'Loan Total': [3300, 3140.44, 3140.88],
-                    'CC Debt Total': [0, 0, 0],
-                    'Liquid Total': [5000, 4840, 4840],
-                                  'Memo Directives': ['', 'LOAN MIN PAYMENT (Loan A: Interest -$50.00); LOAN MIN PAYMENT (Checking -$50.00); LOAN MIN PAYMENT (Loan B: Interest -$50.00); LOAN MIN PAYMENT (Checking -$50.00); LOAN MIN PAYMENT (Loan C: Interest -$50.00); LOAN MIN PAYMENT (Checking -$50.00); ADDTL LOAN PAYMENT (Checking -$10.00); ADDTL LOAN PAYMENT (Loan A: Interest -$10.00)', ''],
-                    'Memo': ['', '', '']
+                    'Date': ['20000101', '20000102', '20000103', '20000104'],
+                    'Checking': [500, 400, 300, 0],
+                    'Marginal Interest': [0, 0, 0, 0],
+                    'Net Gain': [0, 0, 0, 0],
+                    'Net Loss': [0, 100, 100, 300],
+                    'Net Worth': [500, 400, 300, 0],
+                    'Loan Total': [0, 0, 0, 0],
+                    'CC Debt Total': [0, 0, 0, 0],
+                    'Liquid Total': [500, 400, 300, 0],
+                                  'Memo Directives': ['', '', '',''],
+                    'Memo': ['', 'SPEND daily p1 txn (Checking -$100.00)',
+                             'SPEND daily p1 txn 2 (Checking -$100.00)',
+                             '200 income on 1/4 (Checking +$200.00); SPEND daily p1 txn 3 (Checking -$100.00); SPEND p2 txn deferred from 1/2 to 1/4 (Checking -$400.00)']
                 })
         )
 
