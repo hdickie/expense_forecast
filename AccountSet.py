@@ -126,6 +126,9 @@ class AccountSet:
 
         """
 
+        # runForecast can set this so we don't waste compute figuring it out every time
+        self.primary_checking_account_name = None
+
         if accounts_list is None:
             accounts_list = []
 
@@ -200,7 +203,10 @@ class AccountSet:
     def __str__(self): return self.getAccounts().to_string()
 
     def getPrimaryCheckingAccountName(self):
-        return self.getAccounts()[self.getAccounts().Primary_Checking_Ind].iloc[0,0]
+        if self.primary_checking_account_name is None:
+            self.primary_checking_account_name = self.getAccounts()[self.getAccounts().Primary_Checking_Ind].iloc[0,0]
+        else:
+            return self.primary_checking_account_name
 
     def createAccount(self,
                       name,

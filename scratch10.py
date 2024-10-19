@@ -65,7 +65,7 @@ def credit_bsd12_acct_list(prev_balance,curr_balance,apr):
                     min_balance=0,
                     max_balance=20000,
                     account_type='credit',
-                    billing_start_date_YYYYMMDD='20000112',
+                    billing_start_date_YYYYMMDD='19990112',
                     interest_type=None,
                     apr=apr,
                     interest_cadence='monthly',
@@ -88,57 +88,33 @@ def txn_budget_item_once_list(amount,priority,memo,deferrable,partial_payment_al
 
 
 if __name__ == '__main__':
-    test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df = (
-                'test_execute_defer_after_receiving_income_2_days_later',
-                AccountSet.AccountSet(checking_acct_list(500)),
-                BudgetSet.BudgetSet([
-                                     BudgetItem.BudgetItem('20000102','20000102',1,'once',100,'SPEND daily p1 txn', False,False), #EOD 400
-
-                                     BudgetItem.BudgetItem('20000103', '20000103', 1, 'once', 100, 'SPEND daily p1 txn 2',False, False), #EOD 300
-                                     BudgetItem.BudgetItem('20000103', '20000103', 3, 'once', 400,'SPEND p3 txn on 1/3 that is skipped bc later lower priority_index txn', False, False),
-
-                                     BudgetItem.BudgetItem('20000104', '20000104', 1, 'once', 200, '200 income on 1/4',False, False), #500
-                                     BudgetItem.BudgetItem('20000104', '20000104', 1, 'once', 100, 'SPEND daily p1 txn 3',False, False), #400
-                                     BudgetItem.BudgetItem('20000102', '20000102', 2, 'once', 400, 'SPEND p2 txn deferred from 1/2 to 1/4', True, False) #EOD 0
-
-                                     ]
-                                    ),
-                MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='SPEND.*',
-                                                           account_from='Checking',
-                                                           account_to=None,
-                                                           transaction_priority=1),
-                                         MemoRule.MemoRule(memo_regex='.*income.*',
-                                                           account_from=None,
-                                                           account_to='Checking',
-                                                           transaction_priority=1),
-                                         MemoRule.MemoRule(memo_regex='SPEND.*',
-                                                           account_from='Checking',
-                                                           account_to=None,
-                                                           transaction_priority=2),
-                                         MemoRule.MemoRule(memo_regex='SPEND.*',
-                                                           account_from='Checking',
-                                                           account_to=None,
-                                                           transaction_priority=3)
-                                         ]),
-                '20000101',
-                '20000104', #note that this is later than the test defined above
-                MilestoneSet.MilestoneSet( [], [], []),
-                pd.DataFrame({
-                    'Date': ['20000101', '20000102', '20000103', '20000104'],
-                    'Checking': [500, 400, 300, 0],
-                    'Marginal Interest': [0, 0, 0, 0],
-                    'Net Gain': [0, 0, 0, 0],
-                    'Net Loss': [0, 100, 100, 300],
-                    'Net Worth': [500, 400, 300, 0],
-                    'Loan Total': [0, 0, 0, 0],
-                    'CC Debt Total': [0, 0, 0, 0],
-                    'Liquid Total': [500, 400, 300, 0],
-                                  'Memo Directives': ['', '', '',''],
-                    'Memo': ['', 'SPEND daily p1 txn (Checking -$100.00)',
-                             'SPEND daily p1 txn 2 (Checking -$100.00)',
-                             '200 income on 1/4 (Checking +$200.00); SPEND daily p1 txn 3 (Checking -$100.00); SPEND p2 txn deferred from 1/2 to 1/4 (Checking -$400.00)']
-                })
-        )
+    test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df = ('test_cc_advance_minimum_payment_in_1_payment_pay_under_minimum',
+         AccountSet.AccountSet(checking_acct_list(5000) + credit_bsd12_acct_list(1000, 1000, 0.05)),
+         BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000111', '20000111', 2, 'once', 20, 'additional_cc_payment')]),
+         MemoRuleSet.MemoRuleSet([
+             MemoRule.MemoRule('.*', 'Checking', None, 1),
+             MemoRule.MemoRule('additional_cc_payment', 'Checking', 'Credit', 2)
+         ]),
+         '20000110',
+         '20000112',
+         MilestoneSet.MilestoneSet([], [], []),
+         pd.DataFrame({
+             'Date': ['20000110', '20000111', '20000112'],
+             'Checking': [5000, 4500, 4500],
+             'Credit: Curr Stmt Bal': [1000, 1000, 0],
+             'Credit: Prev Stmt Bal': [1000, 500, 1504.17],
+             'Marginal Interest': [0, 0, 4.17],
+             'Net Gain': [0, 0, 0],
+             'Net Loss': [0, 0, 4.17],
+             'Net Worth': [3000, 3000, 2995.83],
+             'Loan Total': [0, 0, 0],
+             'CC Debt Total': [2000, 1500, 1504.17],
+             'Liquid Total': [5000, 4500, 4500],
+             'Memo Directives': ['',
+                                 'ADDTL CC PAYMENT (Checking -20.00); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -20.00)',
+                                 'CC INTEREST (Credit: Prev Stmt Bal +$4.17); CC MIN PAYMENT (Checking -$20.00);CC MIN PAYMENT (Credit: Prev Stmt Bal -$20.00)'],
+             'Memo': ['', '', '']
+         }))
 
     E = ExpenseForecast.ExpenseForecast(account_set, budget_set,
                                         memo_rule_set,
@@ -148,4 +124,4 @@ if __name__ == '__main__':
                                         raise_exceptions=False)
 
     E.runForecast(log_level='DEBUG')
-    print(E.forecast_df.to_string())
+    #print(E.forecast_df.to_string())

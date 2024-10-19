@@ -26,8 +26,12 @@ pd.options.mode.chained_assignment = None #apparently this warning can throw fal
 # from generate_date_sequence import generate_date_sequence
 
 if __name__ == '__main__':
-    start_date_YYYYMMDD = '20241013'
-    end_date_YYYYMMDD = '20241113'
+    #start_date_YYYYMMDD = datetime.datetime.now().strftime('%Y%m%d')
+    start_date_YYYYMMDD = '20241102'
+    #end_date_YYYYMMDD = '20241110'
+    #end_date_YYYYMMDD = '20250901'
+    end_date_YYYYMMDD = '20241215'
+    #end_date_YYYYMMDD = (datetime.datetime.strptime(start_date_YYYYMMDD,'%Y%m%d') + datetime.timedelta(days=365)).strftime('%Y%m%d')
 
     #a rough estimate
     approx_final_loan_cost = 16000
@@ -47,17 +51,14 @@ if __name__ == '__main__':
 
     A = AccountSet.AccountSet([])
     A.createCheckingAccount('Checking', 2391 + 88.42, 0, 999999999, True)
-    A.createCreditCardAccount('Credit', 0, 12609.79, 0, 25000, '20240107', 0.2899, 40)
+    #A.createCreditCardAccount('Credit', 0, 12609.79, 0, 25000, '20240107', 0.2899, 40)
+    A.createCreditCardAccount('Credit', 0, 609.79, 0, 25000, '20240107', 0.2899, 40)
     A.createLoanAccount('Dad',(15000 + 1400) - 500*1,0,0,20000,'20240101',0,500)
     A.createLoanAccount('Student Loans', 15000, 100, 0, 16000, '20241003', 0.06, 223.19)
 
     B = BudgetSet.BudgetSet([])
-    B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 20, 'food', deferrable=False,partial_payment_allowed=False)
-    #B.addBudgetItem('20240505', end_date_YYYYMMDD, 2, 'monthly', 7000, 'pay cc', deferrable=False,partial_payment_allowed=True)
-    B.addBudgetItem('20240105', end_date_YYYYMMDD, 1, 'semiweekly', 1600, 'EMT income', deferrable=False,partial_payment_allowed=False)
-    B.addBudgetItem('20240701', dad_loan_payment_end_date, 1, 'monthly', 500, 'repay dad', deferrable=False,partial_payment_allowed=False)
-    B.addBudgetItem('20241203', loan_payment_end_date, 1, 'monthly', 250, 'fake loan payment', deferrable=False,partial_payment_allowed=False)
-
+    B.addBudgetItem('20240105', end_date_YYYYMMDD, 1, 'semiweekly', 1600, 'EMT income')
+    B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 20, 'food')
     B.addBudgetItem('20240702', end_date_YYYYMMDD, 1, 'monthly', 20, 'hulu')
     B.addBudgetItem('20240702', end_date_YYYYMMDD, 1, 'monthly', 20, 'ai daddy')
     B.addBudgetItem('20240702', end_date_YYYYMMDD, 1, 'monthly', 50, 'parking')
@@ -65,27 +66,52 @@ if __name__ == '__main__':
     B.addBudgetItem('20240420', end_date_YYYYMMDD, 1, 'monthly', 95, 'car insurance')
     B.addBudgetItem('20240401', end_date_YYYYMMDD, 1, 'monthly', 100, 'storage unit rent')
     B.addBudgetItem('20240818', end_date_YYYYMMDD, 1, 'monthly', 250, 'phone')
-    if int(end_date_YYYYMMDD) > 20251203:
-        B.addBudgetItem('20251203', end_date_YYYYMMDD, 1, 'monthly', 250, 'fake loan payment')
-    # B.addBudgetItem('20240103', '20240303', 2, 'monthly', 460, 'pay cc', False, False)
-
-    cycle_amount = 1500
-    asymptote_surplus_amount = 500
-    B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'monthly', cycle_amount + asymptote_surplus_amount, 'pay cc cycle + extra')
-
     B.addBudgetItem('20240903', '20240903', 1, 'once', 500, 'sjcc fall tuition')
     B.addBudgetItem('20250203', '20250203', 1, 'once', 400, 'sjcc spring 2025 tuition')
     B.addBudgetItem('20250603', '20250603', 1, 'once', 400, 'sjcc summer 2025 tuition')
     B.addBudgetItem('20250803', '20250803', 1, 'once', 400, 'sjcc fall 2025 tuition')
+    B.addBudgetItem('20260929', '20260929', 1, 'once', 1250, 'evergreen tuition fall 2026')
+    B.addBudgetItem('20270112', '20270112', 1, 'once', 1250, 'evergreen tuition winter 2026')
+    B.addBudgetItem('20270405', '20270405', 1, 'once', 1250, 'evergreen tuition spring 2027')
+    B.addBudgetItem('20270628', '20270628', 1, 'once', 1250, 'evergreen tuition summer 2027')
+
+    B2 = BudgetSet.BudgetSet(B.budget_items)
+
+    # start date 10/18
+    B2.addBudgetItem('20240505', end_date_YYYYMMDD, 2, 'monthly', 7000, 'pay cc', deferrable=False,partial_payment_allowed=True)
+    # B2.addBudgetItem('20241105', '20241105', 2, 'once', 2925.50, 'pay cc 11/5')
+    # B2.addBudgetItem('20241205', '20241205', 2, 'once', 2907.54, 'pay cc 12/5')
+    # B2.addBudgetItem('20250105', '20250105', 2, 'once', 4076.81, 'pay cc 1/5/25')
+    # B2.addBudgetItem('20250205', '20250205', 2, 'once', 2076.81, 'pay cc 2/5/25')
+
+    # B.addBudgetItem('20241105', '20241105', 1, 'once', 2925.50, 'pay cc 11/5')
+    # B.addBudgetItem('20241205', '20241205', 1, 'once', 2907.54, 'pay cc 12/5')
+    # B.addBudgetItem('20250105', '20250105', 1, 'once', 4076.81, 'pay cc 1/5/25')
+    # B.addBudgetItem('20250205', '20250205', 1, 'once', 2076.81, 'pay cc 2/5/25')
+
+    #These should produce the same output!
+
+
+
+
+
+
+
+    # if int(end_date_YYYYMMDD) > 20251203:
+    #     B.addBudgetItem('20251203', end_date_YYYYMMDD, 1, 'monthly', 250, 'fake loan payment')
+    # B.addBudgetItem('20240103', '20240303', 2, 'monthly', 460, 'pay cc', False, False)
+
+    # cycle_amount = 1500
+    # asymptote_surplus_amount = 500
+    # B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'monthly', cycle_amount + asymptote_surplus_amount, 'pay cc cycle + extra')
+
+
 
     # lets put evergreen at 5k for 2 years. wow :)))))))
     # 4 semesters of 9 units. I think that this will include a summer semester
     # this assumes that if I apply at the end of 2025, I dont start til fall 2026
     # ah i realize this is a quarter system I've never done that
-    B.addBudgetItem('20260929', '20260929', 1, 'once', 1250, 'evergreen tuition fall 2026')
-    B.addBudgetItem('20270112', '20270112', 1, 'once', 1250, 'evergreen tuition winter 2026')
-    B.addBudgetItem('20270405', '20270405', 1, 'once', 1250, 'evergreen tuition spring 2027')
-    B.addBudgetItem('20270628', '20270628', 1, 'once', 1250, 'evergreen tuition summer 2027')
+
     # Summer 2023: June 30
 
     # this caused unexpected behavior
@@ -135,16 +161,27 @@ if __name__ == '__main__':
 
     MS = MilestoneSet.MilestoneSet([], [], [])
 
-    E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
+    # E_p1 = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
+    E_p2 = ExpenseForecast.ExpenseForecast(A, B2, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
+    #
+    # E_p1.runForecast(log_level='DEBUG')
+    # E_p1.forecast_df.to_csv('E_p1.csv')
 
+    E_p2.runForecast(log_level='DEBUG')
+    E_p2.forecast_df.to_csv('E_p2.csv')
 
-
-    E.runForecast(log_level='DEBUG')
-    E.forecast_df.to_csv('f_20241013_not_exactly_right.csv')
-    # print(E.initial_account_set.getAccounts().to_string())
-    # print('-----------------')
-    print(E)
-    print(E.forecast_df.to_string())
+    # for index, row in E_p1.forecast_df.iterrows():
+    #     try:
+    #         assert E_p1.forecast_df.loc[index,'Checking'] == E_p2.forecast_df.loc[index,'Checking']
+    #         assert E_p1.forecast_df.loc[index, 'Credit: Curr Stmt Bal'] == E_p2.forecast_df.loc[index, 'Credit: Curr Stmt Bal']
+    #         assert E_p1.forecast_df.loc[index, 'Credit: Prev Stmt Bal'] == E_p2.forecast_df.loc[index, 'Credit: Prev Stmt Bal']
+    #     except Exception as e:
+    #         print(e.args)
+    #         print('Mismatch at index = '+str(index))
+    #         print(E_p1.forecast_df.loc[index])
+    #         print(E_p2.forecast_df.loc[index])
+    #         raise e
+    # print('Forecasts Matched :)')
 
 # 0       Date Checking Credit: Curr Stmt Bal Credit: Prev Stmt Bal  Marginal Interest  Net Gain  Net Loss Net Worth Loan Total CC Debt Total Liquid Total                                                                                                                                                                                                                 Memo Directives                                                                                                                                                                                                                                              Memo
 # 0   20241012  2479.42                   0.0              12609.79               0.00      0.00       0.0 -10130.37        0.0      12609.79      2479.42
