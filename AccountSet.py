@@ -205,8 +205,8 @@ class AccountSet:
     def getPrimaryCheckingAccountName(self):
         if self.primary_checking_account_name is None:
             self.primary_checking_account_name = self.getAccounts()[self.getAccounts().Primary_Checking_Ind].iloc[0,0]
-        else:
-            return self.primary_checking_account_name
+
+        return self.primary_checking_account_name
 
     def createAccount(self,
                       name,

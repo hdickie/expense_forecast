@@ -26,33 +26,18 @@ pd.options.mode.chained_assignment = None #apparently this warning can throw fal
 # from generate_date_sequence import generate_date_sequence
 
 if __name__ == '__main__':
-    #start_date_YYYYMMDD = datetime.datetime.now().strftime('%Y%m%d')
-    start_date_YYYYMMDD = '20241102'
-    #end_date_YYYYMMDD = '20241110'
-    #end_date_YYYYMMDD = '20250901'
-    end_date_YYYYMMDD = '20241215'
+    start_date_YYYYMMDD = datetime.datetime.now().strftime('%Y%m%d')
+
+    #end_date_YYYYMMDD = '20241107'
+    #end_date_YYYYMMDD = '20250110'
+    end_date_YYYYMMDD = '20250901'
     #end_date_YYYYMMDD = (datetime.datetime.strptime(start_date_YYYYMMDD,'%Y%m%d') + datetime.timedelta(days=365)).strftime('%Y%m%d')
-
-    #a rough estimate
-    approx_final_loan_cost = 16000
-    loan_payment = 250
-    no_loan_payments = math.ceil(approx_final_loan_cost / loan_payment)
-    next_loan_payment_YYYYMMDD = '20241203'
-
-    #fml lol
-    loan_payment_end_date = '20300603' # a rough guess
-    #loan_payment_end_date = (datetime.datetime.strptime(next_loan_payment_YYYYMMDD,'%%m%d') + datetime.timedelta(months=no_loan_payments)).strftime('%Y%m%d')
-
-
-    #fml lol
-    dad_loan_payment_end_date = '20270701'
-    #dad_loan_payment_end_date = (datetime.datetime.strptime(next_dad_loan_payment_YYYYMMDD,'%%m%d') + datetime.timedelta(months=dad_loan_no_payments)).strftime('%Y%m%d')
 
 
     A = AccountSet.AccountSet([])
-    A.createCheckingAccount('Checking', 2391 + 88.42, 0, 999999999, True)
-    #A.createCreditCardAccount('Credit', 0, 12609.79, 0, 25000, '20240107', 0.2899, 40)
-    A.createCreditCardAccount('Credit', 0, 609.79, 0, 25000, '20240107', 0.2899, 40)
+    A.createCheckingAccount('Checking', 4020 + 80, 0, 999999999, True)
+    A.createCreditCardAccount('Credit', 0, 12609.79, 0, 25000, '20240107', 0.2899, 40)
+    #A.createCreditCardAccount('Credit', 0, 7609.79, 0, 25000, '20240107', 0.2899, 40)
     A.createLoanAccount('Dad',(15000 + 1400) - 500*1,0,0,20000,'20240101',0,500)
     A.createLoanAccount('Student Loans', 15000, 100, 0, 16000, '20241003', 0.06, 223.19)
 
@@ -169,6 +154,7 @@ if __name__ == '__main__':
 
     E_p2.runForecast(log_level='DEBUG')
     E_p2.forecast_df.to_csv('E_p2.csv')
+    print(E_p2)
 
     # for index, row in E_p1.forecast_df.iterrows():
     #     try:
