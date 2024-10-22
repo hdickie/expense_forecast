@@ -28,7 +28,7 @@ class Account:
         :param float balance: A dollar value for the balance of the account.
         :param float min_balance: The minimum legal value for account balance. May be float('-Inf').
         :param float max_balance: The maximum legal value for account balance. May be float('Inf').
-        :param str account_type: One of: prev stmt bal, curr stmt bal, principal balance, interest, checking. Not case sensitive.
+        :param str account_type: One of: prev stmt bal, curr stmt bal, principal balance, interest, checking, billing cycle payment balance. Not case sensitive.
         :param str billing_start_date_YYYYMMDD: A string that indicates the billing start date with format %Y%m%d.
         :param str interest_type: One of: 'simple', 'compound'. Not case sensitive.
         :param float apr: A float value that indicates the percent increase per YEAR.
@@ -44,7 +44,7 @@ class Account:
         | If you are initializing Accounts directly, you should know the following:
 
         | There are 5 required parameters in the method signature.
-        | These are all parameters needed for Checking, Curr Stmt Bal and Interest account types.
+        | These are all parameters needed for Billing Cycle Payment Balance, Checking, Curr Stmt Bal and Interest account types.
         | Prev Stmt Bal and Principal Balance account types also require all the other parameters.
         | The Account constructor does not check types, but numerical parameters will raise a ValueError if they cannot be cast to float.
 
@@ -61,13 +61,8 @@ class Account:
 
         | Comments on negative amounts:
         | The absolute value of the amount is subtracted from the "From" account and added to the "To" account.
-        | Therefore, the only effect the sign of the amount has is on the value inserted to the Memo line.
 
-        | Example of the Account constructor:
-        >>> Account()
-        not correct response
         """
-        import datetime
 
         self.name = str(name)
         self.account_type = str(account_type).lower()
@@ -99,14 +94,14 @@ class Account:
             raise ValueError(
                 f'Account.max_balance ({self.max_balance}) cannot be less than min_balance ({self.min_balance}).')
 
-        valid_account_types = ['checking', 'credit prev stmt bal', 'credit curr stmt bal', 'savings', 'principal balance', 'interest']
+        valid_account_types = ['checking', 'credit prev stmt bal', 'credit curr stmt bal', 'savings', 'principal balance', 'interest', 'credit billing cycle payment bal', 'loan billing cycle payment bal']
         if self.account_type not in valid_account_types:
             raise ValueError(f"Invalid account_type: {account_type}. Must be one of {', '.join(valid_account_types)}.")
 
-        if self.account_type in ['credit prev stmt bal', 'principal balance']:
+        if self.account_type in ['credit curr stmt bal','credit prev stmt bal', 'principal balance', 'credit billing cycle payment bal', 'loan billing cycle payment bal']:
             if ':' not in self.name:
                 raise ValueError(
-                    'Accounts of type credit prev stmt bal or principal balance require colon char in the account name.')
+                    'Accounts of type credit curr stmt bal, credit prev stmt bal, credit billing cycle payment bal, loan billing cycle payment bal or principal balance require colon char in the account name.')
 
         # Handle apr
         if self.account_type in ['credit prev stmt bal', 'principal balance', 'savings']:
@@ -148,7 +143,7 @@ class Account:
             self.interest_type = None
 
         # Handle billing_start_date_YYYYMMDD
-        if self.account_type in ['credit prev stmt bal', 'principal balance', 'savings']:
+        if self.account_type in ['credit billing cycle payment bal','loan billing cycle payment bal', 'credit prev stmt bal', 'principal balance', 'savings']:
             if billing_start_date_YYYYMMDD is None:
                 raise ValueError(
                     f"Account.billing_start_date_YYYYMMDD is required for account_type '{self.account_type}'.")

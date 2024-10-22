@@ -42,6 +42,7 @@ def credit_acct_list(curr_balance,prev_balance,apr):
                     current_statement_balance=curr_balance,
                       principal_balance=None,
                       interest_balance=None,
+                    billing_cycle_payment_balance=0,
                       print_debug_messages=True,
                       raise_exceptions=True)
     return A.accounts
@@ -63,6 +64,7 @@ def credit_bsd12_acct_list(prev_balance,curr_balance,apr):
                     current_statement_balance=curr_balance,
                     principal_balance=None,
                     interest_balance=None,
+                    billing_cycle_payment_balance=0,
                     print_debug_messages=True,
                     raise_exceptions=True)
     return A.accounts
@@ -97,7 +99,8 @@ def non_trivial_loan(name,pbal,interest,apr):
                     previous_statement_balance=None,
                     current_statement_balance=None,
                     principal_balance=pbal,
-                    interest_balance=interest)
+                    interest_balance=interest,
+                    billing_cycle_payment_balance=0)
 
     return A.accounts
 

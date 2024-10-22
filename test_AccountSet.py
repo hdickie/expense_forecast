@@ -7,7 +7,7 @@ def compound_loan_A():
     A = AccountSet.AccountSet([])
     A.createAccount("test loan A",balance=1100,min_balance=0,max_balance=1100,account_type="loan",
                     billing_start_date_YYYYMMDD="20240101",interest_type="compound",apr=0.1,interest_cadence="monthly",
-                    minimum_payment=50,
+                    minimum_payment=50,billing_cycle_payment_balance=0,
                     principal_balance=1000,interest_balance=100)
     return A.accounts
 
@@ -15,7 +15,7 @@ def compound_loan_A_no_interest():
     A = AccountSet.AccountSet([])
     A.createAccount("test loan A",balance=1000,min_balance=0,max_balance=1100,account_type="loan",
                     billing_start_date_YYYYMMDD="20240101",interest_type="compound",apr=0.1,interest_cadence="monthly",
-                    minimum_payment=50,
+                    minimum_payment=50,billing_cycle_payment_balance=0,
                     principal_balance=1000,interest_balance=0)
     return A.accounts
 
@@ -24,7 +24,7 @@ def compound_loan_B():
     A.createAccount("test loan B", balance=1600, min_balance=0, max_balance=1600, account_type="loan",
                     billing_start_date_YYYYMMDD="20240101", interest_type="compound", apr=0.01,
                     interest_cadence="monthly",
-                    minimum_payment=50,
+                    minimum_payment=50,billing_cycle_payment_balance=0,
                     principal_balance=1500, interest_balance=100)
     return A.accounts
 
@@ -33,7 +33,7 @@ def compound_loan_B_no_interest():
     A.createAccount("test loan B", balance=1500, min_balance=0, max_balance=1600, account_type="loan",
                     billing_start_date_YYYYMMDD="20240101", interest_type="compound", apr=0.01,
                     interest_cadence="monthly",
-                    minimum_payment=50,
+                    minimum_payment=50,billing_cycle_payment_balance=0,
                     principal_balance=1500, interest_balance=0)
     return A.accounts
 
@@ -42,7 +42,7 @@ def compound_loan_C():
     A.createAccount("test loan C", balance=2600, min_balance=0, max_balance=2600, account_type="loan",
                     billing_start_date_YYYYMMDD="20240101", interest_type="compound", apr=0.05,
                     interest_cadence="monthly",
-                    minimum_payment=50,
+                    minimum_payment=50,billing_cycle_payment_balance=0,
                     principal_balance=2500, interest_balance=100)
     return A.accounts
 
@@ -51,7 +51,7 @@ def compound_loan_C_no_interest():
     A.createAccount("test loan C", balance=2500, min_balance=0, max_balance=2600, account_type="loan",
                     billing_start_date_YYYYMMDD="20240101", interest_type="compound", apr=0.05,
                     interest_cadence="monthly",
-                    minimum_payment=50,
+                    minimum_payment=50,billing_cycle_payment_balance=0,
                     principal_balance=2500, interest_balance=0)
     return A.accounts
 
@@ -120,6 +120,18 @@ class TestAccountSet:
                  apr=None,
                  interest_cadence=None,
                  minimum_payment=None
+             ),
+             Account.Account(
+                 name='test combined total violates maximum : Credit Billing Cycle Payment Bal',
+                 balance=0,
+                 min_balance=0,
+                 max_balance=100,
+                 account_type='credit billing cycle payment bal',
+                 billing_start_date_YYYYMMDD='20000101',
+                 interest_type=None,
+                 apr=None,
+                 interest_cadence=None,
+                 minimum_payment=None
              )
              ]
             ,ValueError), #combined balance violates max (loan)
@@ -147,7 +159,19 @@ class TestAccountSet:
                      apr=None,
                      interest_cadence=None,
                      minimum_payment=None
-                 )
+                 ),
+             Account.Account(
+                 name='test cc : Credit Billing Cycle Payment Bal',
+                 balance=0,
+                 min_balance=0,
+                 max_balance=100,
+                 account_type='credit billing cycle payment bal',
+                 billing_start_date_YYYYMMDD='20000101',
+                 interest_type=None,
+                 apr=None,
+                 interest_cadence=None,
+                 minimum_payment=None
+             )
              ]
             , ValueError),  # combined balance violates max (cc)
 
@@ -174,7 +198,19 @@ class TestAccountSet:
                      apr=None,
                      interest_cadence=None,
                      minimum_payment=None
-                 )
+                 ),
+             Account.Account(
+                 name='test cc : Credit Billing Cycle Payment Bal',
+                 balance=0,
+                 min_balance=-100,
+                 max_balance=100,
+                 account_type='credit billing cycle payment bal',
+                 billing_start_date_YYYYMMDD='20000101',
+                 interest_type=None,
+                 apr=None,
+                 interest_cadence=None,
+                 minimum_payment=None
+             )
              ]
             , ValueError),  # combined balance violates min (cc)
 
@@ -201,7 +237,19 @@ class TestAccountSet:
                      apr=None,
                      interest_cadence=None,
                      minimum_payment=None
-                 )
+                 ),
+             Account.Account(
+                 name='test : Credit Billing Cycle Payment Bal',
+                 balance=0,
+                 min_balance=0,
+                 max_balance=100,
+                 account_type='credit billing cycle payment bal',
+                 billing_start_date_YYYYMMDD='20000101',
+                 interest_type=None,
+                 apr=None,
+                 interest_cadence=None,
+                 minimum_payment=None
+             )
              ]
             , ValueError),  # combined balance violates min (loan)
 
@@ -228,7 +276,19 @@ class TestAccountSet:
                      apr=None,
                      interest_cadence=None,
                      minimum_payment=None
-                 )
+                 ),
+             Account.Account(
+                 name='test combined total violates maximum : Credit Billing Cycle Payment Bal',
+                 balance=0,
+                 min_balance=0,
+                 max_balance=1000,
+                 account_type='credit billing cycle payment bal',
+                 billing_start_date_YYYYMMDD='20000101',
+                 interest_type=None,
+                 apr=None,
+                 interest_cadence=None,
+                 minimum_payment=None
+             )
              ]
             , ValueError),  # non-matching max_balance (loan)
 
@@ -255,7 +315,19 @@ class TestAccountSet:
                      apr=None,
                      interest_cadence=None,
                      minimum_payment=None
-                 )
+                 ),
+             Account.Account(
+                 name='test combined total violates maximum : Credit Billing Cycle Payment Bal',
+                 balance=60,
+                 min_balance=60,
+                 max_balance=100,
+                 account_type='credit billing cycle payment bal',
+                 billing_start_date_YYYYMMDD='20000101',
+                 interest_type=None,
+                 apr=None,
+                 interest_cadence=None,
+                 minimum_payment=None
+             )
              ]
             , ValueError),  # non-matching min_balance (cc)
 
@@ -282,7 +354,19 @@ class TestAccountSet:
                      apr=None,
                      interest_cadence=None,
                      minimum_payment=None
-                 )
+                 ),
+             Account.Account(
+                 name='test : Credit Billing Cycle Payment Bal',
+                 balance=0,
+                 min_balance=0,
+                 max_balance=100,
+                 account_type='credit billing cycle payment bal',
+                 billing_start_date_YYYYMMDD='20000101',
+                 interest_type=None,
+                 apr=None,
+                 interest_cadence=None,
+                 minimum_payment=None
+             )
              ]
             , ValueError),  # non-matching min_balance (loan)
 
@@ -309,7 +393,19 @@ class TestAccountSet:
                      apr=None,
                      interest_cadence=None,
                      minimum_payment=None
-                 )
+                 ),
+             Account.Account(
+                 name='test : Credit Billing Cycle Payment Bal',
+                 balance=0,
+                 min_balance=0,
+                 max_balance=100,
+                 account_type='credit billing cycle payment bal',
+                 billing_start_date_YYYYMMDD='20000101',
+                 interest_type=None,
+                 apr=None,
+                 interest_cadence=None,
+                 minimum_payment=None
+             )
              ]
             , ValueError),  # non-matching min_balance (cc)
 
@@ -336,12 +432,24 @@ class TestAccountSet:
                      apr=None,
                      interest_cadence=None,
                      minimum_payment=None
-                 )
+                 ),
+             Account.Account(
+                 name='test : Credit Billing Cycle Payment Bal',
+                 balance=0,
+                 min_balance=0,
+                 max_balance=100,
+                 account_type='credit billing cycle payment bal',
+                 billing_start_date_YYYYMMDD='20000101',
+                 interest_type=None,
+                 apr=None,
+                 interest_cadence=None,
+                 minimum_payment=None
+             )
              ]
             , ValueError),  # non-matching max_balance (cc)
 
             ([Account.Account(
-                name='tloan : Principal Balance',
+                name='loan : Principal Balance',
                 balance=0,
                 min_balance=0,
                 max_balance=100,
@@ -366,7 +474,19 @@ class TestAccountSet:
                      apr=None,
                      interest_cadence=None,
                      minimum_payment=None
-                 )
+                 ),
+             Account.Account(
+                 name='loan : Loan Billing Cycle Payment Bal',
+                 balance=0,
+                 min_balance=0,
+                 max_balance=1000,
+                 account_type='loan billing cycle payment bal',
+                 billing_start_date_YYYYMMDD='20000101',
+                 interest_type=None,
+                 apr=None,
+                 interest_cadence=None,
+                 minimum_payment=None
+             )
              ]
             , ValueError),  #interest no pbal
 
@@ -776,18 +896,18 @@ class TestAccountSet:
 
     @pytest.mark.parametrize(
         "Account_From, Account_To, Amount,income_flag,expected_result_vector",
-        [("test checking",None,0.0,False,[1000.0, 1000.0, 500.0, 900.0, 100.0]),  #txn for 0
-         ("test checking",None,100.0,False,[900.0, 1000.0, 500.0, 900.0, 100.0]),  #withdraw from checking account
-         (None,"test checking",100.0,True,[1100.0, 1000.0, 500.0, 900.0, 100.0]),  #deposit to checking account
+        [("test checking",None,0.0,False,[1000.0, 1000.0, 500.0, 0, 900.0, 100.0, 0]),  #txn for 0
+         ("test checking",None,100.0,False,[900.0, 1000.0, 500.0, 0, 900.0, 100.0, 0]),  #withdraw from checking account
+         (None,"test checking",100.0,True,[1100.0, 1000.0, 500.0, 0, 900.0, 100.0, 0]),  #deposit to checking account
 
-         ("test credit", None, 100.0, False, [1000.0, 1100.0, 500.0, 900.0, 100.0]),  #pay using credit
-         ("test checking", "test credit", 50.0, False, [950.0, 1000.0, 450.0, 900.0, 100.0]),  #credit payment, less than credit prev stmt bal and credit curr stmt bal > 0
-         ("test checking", "test credit", 501.0, False, [499.0, 999.0, 0.0, 900.0, 100.0]),  #credit payment, less than total balance, more than credit prev stmt balance, credit curr stmt bal != 0
+         ("test credit", None, 100.0, False, [1000.0, 1100.0, 500.0, 0, 900.0, 100.0, 0]),  #pay using credit
+         ("test checking", "test credit", 50.0, False, [950.0, 1000.0, 450.0, 0, 900.0, 100.0, 0]),  #credit payment, less than credit prev stmt bal and credit curr stmt bal > 0
+         ("test checking", "test credit", 501.0, False, [499.0, 999.0, 0.0, 0, 900.0, 100.0, 0]),  #credit payment, less than total balance, more than credit prev stmt balance, credit curr stmt bal != 0
 
-         ("test checking", "test loan", 50.0, False, [950.0, 1000.0, 500.0, 900.0, 50.0]),  #loan payment, less than interest
-         ("test checking", "test loan", 150.0, False, [850.0, 1000.0, 500.0, 850.0, 0.0]),  #loan payment, more than interest
+         ("test checking", "test loan", 50.0, False, [950.0, 1000.0, 500.0, 0, 900.0, 50.0, 0]),  #loan payment, less than interest
+         ("test checking", "test loan", 150.0, False, [850.0, 1000.0, 500.0, 0, 850.0, 0.0, 0]),  #loan payment, more than interest
 
-         ("test checking", "ALL_LOANS", 150.0, False, [850.0, 1000.0, 500.0, 850.0, 0.0]),  #loan payment, more than interest
+         ("test checking", "ALL_LOANS", 150.0, False, [850.0, 1000.0, 500.0, 0, 850.0, 0.0, 0]),  #loan payment, more than interest
          ])
     def test_execute_transaction_valid_inputs(self,Account_From, Account_To, Amount,income_flag,expected_result_vector):
         test_account_set = AccountSet.AccountSet([])
@@ -804,6 +924,7 @@ class TestAccountSet:
                                        previous_statement_balance=None,
                                        principal_balance=None,
                                        interest_balance=None,
+                                       billing_cycle_payment_balance=0,
                                        print_debug_messages=False)
 
         test_account_set.createAccount(name="test credit",
@@ -820,6 +941,7 @@ class TestAccountSet:
                                        current_statement_balance=1000.0,
                                        principal_balance=None,
                                        interest_balance=None,
+                                       billing_cycle_payment_balance=0,
                                        print_debug_messages=False)
 
         test_account_set.createAccount(name="test loan",
@@ -835,6 +957,7 @@ class TestAccountSet:
                                        previous_statement_balance=None,
                                        principal_balance=900.0,
                                        interest_balance=100.0,
+                                       billing_cycle_payment_balance=0,
                                        print_debug_messages=False)
 
         test_account_set.executeTransaction(Account_From=Account_From, Account_To=Account_To, Amount=Amount, income_flag=income_flag)
@@ -1043,7 +1166,8 @@ class TestAccountSet:
                                        previous_statement_balance=0,
                                        current_statement_balance=0,
                                        principal_balance=None,
-                                       interest_balance=None
+                                       interest_balance=None,
+                                           billing_cycle_payment_balance=0
                                        )
 
         # create a loan type account
@@ -1059,7 +1183,8 @@ class TestAccountSet:
                                        minimum_payment=1,
                                        previous_statement_balance=None,
                                        principal_balance=900,
-                                       interest_balance=100
+                                       interest_balance=100,
+                                           billing_cycle_payment_balance=0
                                        )
 
         str(test_str_account_set)
