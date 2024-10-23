@@ -2707,10 +2707,18 @@ class ExpenseForecast:
             income_flag = self.checkIfTxnIsIncome(confirmed_row)
 
             try:
+                log_string = str(date_YYYYMMDD) + ' executing txn \''+str(relevant_confirmed_df.Memo.iat[0])
+                log_string += '\' '+str(memo_rule_row.Account_From)+ ' -> '+str(memo_rule_row.Account_To)
+                log_string += ' for $' + str(relevant_confirmed_df.Amount.iat[0])
+                log_in_color(logger, 'white', 'debug', log_string, self.log_stack_depth)
+                log_in_color(logger, 'white', 'debug', str(date_YYYYMMDD) + ' before txn: ', self.log_stack_depth)
+                log_in_color(logger, 'white', 'debug', account_set.getAccounts().to_string(), self.log_stack_depth)
                 account_set.executeTransaction(Account_From=memo_rule_row.Account_From,
                                                Account_To=memo_rule_row.Account_To,
                                                Amount=confirmed_row.Amount,
                                                income_flag=income_flag)
+                log_in_color(logger, 'white', 'debug', str(date_YYYYMMDD) + ' after txn: ', self.log_stack_depth)
+                log_in_color(logger, 'white', 'debug', account_set.getAccounts().to_string(), self.log_stack_depth)
             except Exception as e:
                 self.log_stack_depth -= 1
                 log_in_color(logger, 'white', 'debug', str(date_YYYYMMDD) + ' EXIT processConfirmedTransactions', self.log_stack_depth)
@@ -3707,6 +3715,7 @@ class ExpenseForecast:
 
         # Iterate over each proposed transaction
         for proposed_index, proposed_row in relevant_proposed_df.iterrows():
+            log_in_color(logger, 'white', 'debug', str(date_YYYYMMDD) + ' Considering: '+str(proposed_row.Memo)+' '+str(proposed_row.Amount), self.log_stack_depth)
             # Find the matching memo rule for the proposed transaction
             memo_rule_set = memo_set.findMatchingMemoRule(proposed_row['Memo'], proposed_row['Priority'])
             memo_rule_row = memo_rule_set.getMemoRules().iloc[0]

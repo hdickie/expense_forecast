@@ -1321,15 +1321,101 @@ class TestExpenseForecastMethods:
              'Memo': ['', '', '']
          })),
 
+        ('test_cc_single_additional_payment_on_due_date',
+         AccountSet.AccountSet(checking_acct_list(5000) + credit_bsd12_acct_list(500, 500, 0.05)),
+         BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 600,
+                                                    'single additional payment on due date', False, False)]),
+         MemoRuleSet.MemoRuleSet([
+             MemoRule.MemoRule('.*', 'Checking', None, 1),
+             MemoRule.MemoRule('.*', 'Checking', 'Credit', 2)
+         ]),
+         '20000111',
+         '20000113',
+         MilestoneSet.MilestoneSet([], [], []),
+         pd.DataFrame({
+             'Date': ['20000111', '20000112', '20000113'],
+             'Checking': [5000, 4360, 4360],
+             'Credit: Curr Stmt Bal': [500, 0, 0],
+             'Credit: Prev Stmt Bal': [500, 362.08, 362.08],
+             'Credit: Credit Billing Cycle Payment Bal': [0, 600, 600],
+             'Marginal Interest': [0, 2.08, 0],
+             'Net Gain': [0, 0, 0],
+             'Net Loss': [0, 2.08, 0],
+             'Net Worth': [4000, 3997.92, 3997.92],
+             'Loan Total': [0, 0, 0],
+             'CC Debt Total': [1000, 362.08, 362.08],
+             'Liquid Total': [5000, 4360.0, 4360.0],
+             'Memo Directives': ['',
+                                 'CC INTEREST (Credit: Prev Stmt Bal +$2.08); CC MIN PAYMENT (Credit: Prev Stmt Bal -$40.00); CC MIN PAYMENT (Checking -$40.00); ADDTL CC PAYMENT (Checking -$600.00); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$600.00)',
+                                 ''],
+             'Memo': ['', 'single additional payment on due date (Checking -$600.00)', '']
+         })
+         ),
+
+        ('test_cc_single_additional_payment_day_before',
+         AccountSet.AccountSet(checking_acct_list(5000) + credit_bsd12_acct_list(500, 500, 0.05)),
+         BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000111', '20000111', 2, 'once', 600,
+                                                    'single additional payment day before due date', False, False)]),
+         MemoRuleSet.MemoRuleSet([
+             MemoRule.MemoRule('.*', 'Checking', None, 1),
+             MemoRule.MemoRule('.*', 'Checking', 'Credit', 2)
+         ]),
+         '20000110',
+         '20000112',
+         MilestoneSet.MilestoneSet([], [], []),
+         pd.DataFrame({
+             'Date': ['20000110', '20000111', '20000112'],
+             'Checking': [5000, 5000, 4400],
+             'Credit: Curr Stmt Bal': [500, 400, 0],
+             'Credit: Prev Stmt Bal': [500, 0, 402.08],
+             'Credit: Credit Billing Cycle Payment Bal': [0, 600, 0],
+             'Marginal Interest': [0, 0, 2.08],
+             'Net Gain': [0, 0, 0],
+             'Net Loss': [0, 0, 2.08],
+             'Net Worth': [4000, 4000, 3997.92],
+             'Loan Total': [0, 0, 0],
+             'CC Debt Total': [1000, 400, 402.08],
+             'Liquid Total': [5000, 4400.0, 4400.0],
+             'Memo Directives': ['',
+                                 'ADDTL CC PAYMENT (Checking -$100.00); ADDTL CC PAYMENT (Credit: Curr Stmt Bal -$100.00); ADDTL CC PAYMENT (Checking -$500.00); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$500.00)',
+                                 'CC MIN PAYMENT ALREADY MADE (Checking -$0.00); CC MIN PAYMENT ALREADY MADE (Credit: Prev Stmt Bal -$0.00); CC INTEREST (Credit: Prev Stmt Bal +$2.08)'],
+             'Memo': ['', 'single additional payment day before due date (Checking -$600.00)', '']
+         })
+         ),
+
+        # additional test cases based on look back period
+
+        # yikes I just had another thought....
+        # if we are adding columns to remove look backs,
+        # then there should be one for previous end of cycle balance for the interest calculation....
+
         # todo implement these test cases
-        # test_cc_billing_cycle_earlier_and_later_additional_payments
+        # test_cc_single_additional_payment_day_before
+        # test_cc_two_additional_payments_on_due_date
+        # test_cc_two_additional_payments_day_before
+        # test_cc_earliest_prepayment_possible
+        # test_cc_multiple_earliest_prepayment_possible
 
-        # test_cc_billing_cycle_2_consecutive_min_payments
-        # test_cc_billing_cycle_earlier_additional_payment
-        # test_cc_billing_cycle_later_additional_payment
-        # test_additional_loan_payments_overpayment
+        # test_cc_single_additional_payment_on_due_date_OVERPAY
+        # test_cc_single_additional_payment_day_before_OVERPAY
+        # test_cc_two_additional_payments_on_due_date_OVERPAY
+        # test_cc_two_additional_payments_day_before_OVERPAY
+        # test_cc_earliest_prepayment_possible_OVERPAY
+        # test_cc_multiple_earliest_prepayment_possible_OVERPAY
 
+        # test_loan_single_additional_payment_on_due_date
+        # test_loan_single_additional_payment_day_before
+        # test_loan_two_additional_payments_on_due_date
+        # test_loan_two_additional_payments_day_before
+        # test_loan_earliest_prepayment_possible
+        # test_loan_multiple_earliest_prepayment_possible
 
+        # test_loan_single_additional_payment_on_due_date_OVERPAY
+        # test_loan_single_additional_payment_day_before_OVERPAY
+        # test_loan_two_additional_payments_on_due_date_OVERPAY
+        # test_loan_two_additional_payments_day_before_OVERPAY
+        # test_loan_earliest_prepayment_possible_OVERPAY
+        # test_loan_multiple_earliest_prepayment_possible_OVERPAY
 
                              ])
     def test_business_case(self,test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df):

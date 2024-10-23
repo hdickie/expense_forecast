@@ -91,46 +91,36 @@ def txn_budget_item_once_list(amount,priority,memo,deferrable,partial_payment_al
 
 
 if __name__ == '__main__':
-    test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df = (
-                'test_execute_at_reduced_amount_bc_later_higher_priority_txn',
-                AccountSet.AccountSet(checking_acct_list(400)),
-                BudgetSet.BudgetSet(
-                    [BudgetItem.BudgetItem('20000104', '20000104', 2, 'once', 200, 'pay 200 after reduced amt txn', False, False),
-                     BudgetItem.BudgetItem('20000103', '20000103', 3, 'once', 400, 'pay reduced amount', False, True)]
-                    #+
-                    #txn_budget_item_once_list(200, 2, 'pay 200 after reduced amt txn', False, False) +
-                    #txn_budget_item_once_list(400, 3,'pay reduced amount',False, True)
-                    ),
-                MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*',
-                                                           account_from='Checking',
-                                                           account_to=None,
-                                                           transaction_priority=1),
-                                         MemoRule.MemoRule(memo_regex='.*',
-                                                           account_from='Checking',
-                                                           account_to=None,
-                                                           transaction_priority=2),
-                                         MemoRule.MemoRule(memo_regex='.*',
-                                                           account_from='Checking',
-                                                           account_to=None,
-                                                           transaction_priority=3)
-                                         ]),
-                '20000101',
-                '20000105',  # note that this is later than the test defined above
-                MilestoneSet.MilestoneSet( [], [], []),
-                pd.DataFrame({
-                    'Date': ['20000101', '20000102', '20000103', '20000104', '20000105'],
-                    'Checking': [400, 400, 200, 0, 0],
-                    'Marginal Interest': [0, 0, 0, 0, 0],
-                    'Net Gain': [0, 0, 0, 0, 0],
-                    'Net Loss': [0, 0, 200, 200, 0],
-                    'Net Worth': [400, 400, 200, 0, 0],
-                    'Loan Total': [0, 0, 0, 0, 0],
-                    'CC Debt Total': [0, 0, 0, 0, 0],
-                    'Liquid Total': [400, 400, 200, 0, 0],
-                                  'Memo Directives': ['', '', '','',''],
-                    'Memo': ['', '', 'pay reduced amount (Checking -$200.00)', 'pay 200 after reduced amt txn (Checking -$200.00)', '']
-                })
-        )
+    test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df = ('test_cc_single_additional_payment_day_before',
+         AccountSet.AccountSet(checking_acct_list(5000) + credit_bsd12_acct_list(500, 500, 0.05)),
+         BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000111', '20000111', 2, 'once', 600,
+                                                    'single additional payment day before due date', False, False)]),
+         MemoRuleSet.MemoRuleSet([
+             MemoRule.MemoRule('.*', 'Checking', None, 1),
+             MemoRule.MemoRule('.*', 'Checking', 'Credit', 2)
+         ]),
+         '20000110',
+         '20000112',
+         MilestoneSet.MilestoneSet([], [], []),
+         pd.DataFrame({
+             'Date': ['20000110', '20000111', '20000112'],
+             'Checking': [5000, 5000, 4400],
+             'Credit: Curr Stmt Bal': [500, 0, 0],
+             'Credit: Prev Stmt Bal': [500, 400, 402.08],
+             'Credit: Credit Billing Cycle Payment Bal': [0, 600, 0],
+             'Marginal Interest': [0, 0, 2.08],
+             'Net Gain': [0, 0, 0],
+             'Net Loss': [0, 0, 2.08],
+             'Net Worth': [4000, 4000, 3997.92],
+             'Loan Total': [0, 0, 0],
+             'CC Debt Total': [1000, 400, 402.08],
+             'Liquid Total': [5000, 4400.0, 4400.0],
+             'Memo Directives': ['',
+                                 'ADDTL CC PAYMENT (Checking -$600.00); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$600.00)',
+                                 'CC MIN PAYMENT ALREADY MADE (Checking -$0.00); CC MIN PAYMENT ALREADY MADE (Credit: Prev Stmt Bal -$0.00); CC INTEREST (Credit: Prev Stmt Bal +$2.08)'],
+             'Memo': ['', 'single additional payment day before due date (Checking -$600.00)', '']
+         })
+         )
 
     E = ExpenseForecast.ExpenseForecast(account_set, budget_set,
                                         memo_rule_set,
