@@ -1,4 +1,4 @@
-,Date,Checking,Credit: Curr Stmt Bal,Credit: Prev Stmt Bal,Credit: Credit Billing Cycle Payment Bal,Marginal Interest,Net Gain,Net Loss,Net Worth,Loan Total,CC Debt Total,Liquid Total,Memo Directives,Memo
-0,20000101,2000.0,25.0,0.0,0.0,0,0,0,1975.0,0.0,25.0,2000.0,,
-1,20000102,2000.0,0,25.0,0.0,0,0,0,1975.0,0.0,25.0,2000.0,,
-2,20000103,2000.0,0.0,25.0,0.0,0,0,0,1975.0,0.0,25.0,2000.0,,
+,Date,Checking,Credit: Curr Stmt Bal,Credit: Prev Stmt Bal,Credit: Credit Billing Cycle Payment Bal,Credit: Credit End of Prev Cycle Bal,Marginal Interest,Net Gain,Net Loss,Net Worth,Loan Total,CC Debt Total,Liquid Total,Memo Directives,Memo
+0,20000101,2000.0,25.0,0.0,0.0,0.0,0,0,0,1975.0,0.0,25.0,2000.0,,
+1,20000102,2000.0,0,25.0,0.0,0.0,0,0,0,1975.0,0.0,25.0,2000.0,,
+2,20000103,2000.0,0.0,25.0,0.0,0.0,0,0,0,1975.0,0.0,25.0,2000.0,,

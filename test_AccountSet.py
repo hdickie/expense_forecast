@@ -896,18 +896,18 @@ class TestAccountSet:
 
     @pytest.mark.parametrize(
         "Account_From, Account_To, Amount,income_flag,expected_result_vector",
-        [("test checking",None,0.0,False,[1000.0, 1000.0, 500.0, 0, 900.0, 100.0, 0]),  #txn for 0
-         ("test checking",None,100.0,False,[900.0, 1000.0, 500.0, 0, 900.0, 100.0, 0]),  #withdraw from checking account
-         (None,"test checking",100.0,True,[1100.0, 1000.0, 500.0, 0, 900.0, 100.0, 0]),  #deposit to checking account
+        [("test checking",None,0.0,False,[1000.0, 1000.0, 500.0, 0, 500, 900.0, 100.0, 0, 900.0]),  #txn for 0
+         ("test checking",None,100.0,False,[900.0, 1000.0, 500.0, 0, 500, 900.0, 100.0, 0, 900.0]),  #withdraw from checking account
+         (None,"test checking",100.0,True,[1100.0, 1000.0, 500.0, 0, 500, 900.0, 100.0, 0, 900.0]),  #deposit to checking account
 
-         ("test credit", None, 100.0, False, [1000.0, 1100.0, 500.0, 0, 900.0, 100.0, 0]),  #pay using credit
-         ("test checking", "test credit", 50.0, False, [950.0, 1000.0, 450.0, 0, 900.0, 100.0, 0]),  #credit payment, less than credit prev stmt bal and credit curr stmt bal > 0
-         ("test checking", "test credit", 501.0, False, [499.0, 999.0, 0.0, 0, 900.0, 100.0, 0]),  #credit payment, less than total balance, more than credit prev stmt balance, credit curr stmt bal != 0
+         ("test credit", None, 100.0, False, [1000.0, 1100.0, 500.0, 0, 500, 900.0, 100.0, 0, 900.0]),  #pay using credit
+         ("test checking", "test credit", 50.0, False, [950.0, 1000.0, 450.0, 0, 500, 900.0, 100.0, 0, 900.0]),  #credit payment, less than credit prev stmt bal and credit curr stmt bal > 0
+         ("test checking", "test credit", 501.0, False, [499.0, 999.0, 0.0, 0, 500, 900.0, 100.0, 0, 900.0]),  #credit payment, less than total balance, more than credit prev stmt balance, credit curr stmt bal != 0
 
-         ("test checking", "test loan", 50.0, False, [950.0, 1000.0, 500.0, 0, 900.0, 50.0, 0]),  #loan payment, less than interest
-         ("test checking", "test loan", 150.0, False, [850.0, 1000.0, 500.0, 0, 850.0, 0.0, 0]),  #loan payment, more than interest
+         ("test checking", "test loan", 50.0, False, [950.0, 1000.0, 500.0, 0, 500, 900.0, 50.0, 0, 900.0]),  #loan payment, less than interest
+         ("test checking", "test loan", 150.0, False, [850.0, 1000.0, 500.0, 0, 500, 850.0, 0.0, 0, 900.0]),  #loan payment, more than interest
 
-         ("test checking", "ALL_LOANS", 150.0, False, [850.0, 1000.0, 500.0, 0, 850.0, 0.0, 0]),  #loan payment, more than interest
+         ("test checking", "ALL_LOANS", 150.0, False, [850.0, 1000.0, 500.0, 0, 500, 850.0, 0.0, 0, 900.0]),  #loan payment, more than interest
          ])
     def test_execute_transaction_valid_inputs(self,Account_From, Account_To, Amount,income_flag,expected_result_vector):
         test_account_set = AccountSet.AccountSet([])
@@ -942,6 +942,7 @@ class TestAccountSet:
                                        principal_balance=None,
                                        interest_balance=None,
                                        billing_cycle_payment_balance=0,
+                                       end_of_previous_cycle_balance=500.0,
                                        print_debug_messages=False)
 
         test_account_set.createAccount(name="test loan",
@@ -958,6 +959,7 @@ class TestAccountSet:
                                        principal_balance=900.0,
                                        interest_balance=100.0,
                                        billing_cycle_payment_balance=0,
+                                       end_of_previous_cycle_balance=900,
                                        print_debug_messages=False)
 
         test_account_set.executeTransaction(Account_From=Account_From, Account_To=Account_To, Amount=Amount, income_flag=income_flag)
@@ -1167,7 +1169,8 @@ class TestAccountSet:
                                        current_statement_balance=0,
                                        principal_balance=None,
                                        interest_balance=None,
-                                           billing_cycle_payment_balance=0
+                                           billing_cycle_payment_balance=0,
+                                           end_of_previous_cycle_balance=0
                                        )
 
         # create a loan type account
@@ -1184,7 +1187,8 @@ class TestAccountSet:
                                        previous_statement_balance=None,
                                        principal_balance=900,
                                        interest_balance=100,
-                                           billing_cycle_payment_balance=0
+                                           billing_cycle_payment_balance=0,
+                                           end_of_previous_cycle_balance=0
                                        )
 
         str(test_str_account_set)

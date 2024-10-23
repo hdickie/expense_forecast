@@ -102,27 +102,6 @@ class AccountSet:
 
         | If you want to pass a list of Accounts explicitly you can do that as well.
 
-        >>> print(AccountSet([Account(name="test checking",
-        ... balance=0,
-        ... min_balance=0,
-        ... max_balance=0,
-        ... account_type='checking'
-        ... )]).toJSON())
-        {
-        {
-        "Name":"test checking",
-        "Balance":"0.0",
-        "Min_Balance":"0.0",
-        "Max_Balance":"0.0",
-        "Account_Type":"checking",
-        "Billing_Start_Date":"None",
-        "Interest_Type":"None",
-        "APR":"None",
-        "Interest_Cadence":"None",
-        "Minimum_Payment":"None"
-        }
-        }
-
 
         """
 
@@ -147,8 +126,8 @@ class AccountSet:
 
         accounts_df = self.getAccounts()
 
-        loan_accounts = accounts_df[accounts_df.Account_Type.isin(['principal balance', 'interest', 'loan billing cycle payment bal'])]
-        credit_accounts = accounts_df[accounts_df.Account_Type.isin(['credit prev stmt bal', 'credit curr stmt bal', 'credit billing cycle payment bal'])]
+        loan_accounts = accounts_df[accounts_df.Account_Type.isin(['principal balance', 'interest', 'loan billing cycle payment bal', 'loan end of prev cycle bal'])]
+        credit_accounts = accounts_df[accounts_df.Account_Type.isin(['credit prev stmt bal', 'credit curr stmt bal', 'credit billing cycle payment bal', 'credit end of prev cycle bal'])]
 
         loan_account_names = loan_accounts.Name.apply(lambda x: x.split(':')[0].strip()).unique()
         credit_account_names = credit_accounts.Name.apply(lambda x: x.split(':')[0].strip()).unique()
@@ -159,6 +138,7 @@ class AccountSet:
             pb_account = loan_accounts[loan_accounts.Name.str.contains(f"{acct_name}: Principal Balance", regex=False)]
             interest_account = loan_accounts[loan_accounts.Name.str.contains(f"{acct_name}: Interest", regex=False)]
             bcp_account = loan_accounts[loan_accounts.Name.str.contains(f"{acct_name}: Loan Billing Cycle Payment Bal", regex=False)]
+            peoc_account = loan_accounts[ loan_accounts.Name.str.contains(f"{acct_name}: Loan End of Prev Cycle Bal", regex=False)]
 
             if pb_account.empty:
                 raise ValueError(
@@ -172,6 +152,10 @@ class AccountSet:
                 raise ValueError(
                     f"Loan accounts must have Billing Cycle Payment account for '{acct_name}'.")
 
+            if peoc_account.empty:
+                raise ValueError(
+                    f"Loan accounts must have End of Prev Cycle Bal account for '{acct_name}'.")
+
             if pb_account.Min_Balance.values[0] != interest_account.Min_Balance.values[0]:
                 raise ValueError(
                     f"Min_Balance mismatch between Principal Balance and Interest accounts for '{acct_name}'.")
@@ -179,6 +163,8 @@ class AccountSet:
             if pb_account.Max_Balance.values[0] != interest_account.Max_Balance.values[0]:
                 raise ValueError(
                     f"Max_Balance mismatch between Principal Balance and Interest accounts for '{acct_name}'.")
+
+            #todo add validation for Loan Billing Cycle Payment Bal and Loan Prev End of Cycle Bal
 
             combined_balance = pb_account.Balance.values[0] + interest_account.Balance.values[0]
             if combined_balance < pb_account.Min_Balance.values[0]:
@@ -194,6 +180,8 @@ class AccountSet:
                 credit_accounts.Name.str.contains(f"{acct_name}: Curr Stmt Bal", regex=False)]
             bcp_account = credit_accounts[
                 credit_accounts.Name.str.contains(f"{acct_name}: Credit Billing Cycle Payment Bal", regex=False)]
+            peoc_account = credit_accounts[
+                credit_accounts.Name.str.contains(f"{acct_name}: Credit End of Prev Cycle Bal", regex=False)]
 
             if prev_account.empty:
                 raise ValueError(
@@ -206,6 +194,12 @@ class AccountSet:
             if bcp_account.empty:
                 raise ValueError(
                     f"Credit accounts must have Billing Cycle Payment Bal account for '{acct_name}'.")
+
+            if peoc_account.empty:
+                raise ValueError(
+                    f"Credit accounts must have End of Prev Cycle Bal account for '{acct_name}'.")
+
+            # todo add validation for Credit Billing Cycle Payment Bal and Loan Prev End of Cycle Bal
 
             if prev_account.Max_Balance.values[0] != curr_account.Max_Balance.values[0]:
                 raise ValueError(
@@ -241,6 +235,7 @@ class AccountSet:
                       principal_balance=None,
                       interest_balance=None,
                       billing_cycle_payment_balance=None,
+                      end_of_previous_cycle_balance=None,
                       primary_checking_ind=False,
                       print_debug_messages=True,
                       raise_exceptions=True
@@ -306,6 +301,17 @@ class AccountSet:
                                                raise_exceptions=raise_exceptions)
             self.accounts.append(billing_cycle_payment)
 
+            eopc = Account.Account(name=f"{name}: Loan End of Prev Cycle Bal",
+                                                    balance=end_of_previous_cycle_balance, #todo I'm actually not sure if this makes sense
+                                                    min_balance=min_balance,
+                                                    max_balance=max_balance,
+                                                    account_type='loan end of prev cycle bal',
+                                                    billing_start_date_YYYYMMDD=billing_start_date_YYYYMMDD,
+                                                    print_debug_messages=print_debug_messages,
+                                                    raise_exceptions=raise_exceptions)
+            self.accounts.append(eopc)
+
+
         elif account_type.lower() == 'credit':
             if previous_statement_balance is None:
                 raise ValueError("previous_statement_balance is required for account_type 'credit'")
@@ -347,6 +353,16 @@ class AccountSet:
                                                     raise_exceptions=raise_exceptions)
             self.accounts.append(billing_cycle_payment)
 
+            eopc = Account.Account(name=f"{name}: Credit End of Prev Cycle Bal",
+                                   balance=end_of_previous_cycle_balance,
+                                   min_balance=min_balance,
+                                   max_balance=max_balance,
+                                   account_type='credit end of prev cycle bal',
+                                   billing_start_date_YYYYMMDD=billing_start_date_YYYYMMDD,
+                                   print_debug_messages=print_debug_messages,
+                                   raise_exceptions=raise_exceptions)
+            self.accounts.append(eopc)
+
         elif account_type.lower() == 'checking':
             account = Account.Account(name=name,
                               balance=balance,
@@ -380,7 +396,7 @@ class AccountSet:
                       account_type='checking',
                       primary_checking_ind=primary_checking_account_ind)
 
-    def createLoanAccount(self,name,principal_balance,interest_balance,min_balance,max_balance,billing_start_date_YYYYMMDD,apr,minimum_payment, billing_cycle_payment_balance):
+    def createLoanAccount(self,name,principal_balance,interest_balance,min_balance,max_balance,billing_start_date_YYYYMMDD,apr,minimum_payment, billing_cycle_payment_balance, end_of_previous_cycle_balance):
         self.createAccount(name=name,
                       balance=principal_balance + interest_balance,
                       min_balance=min_balance,
@@ -393,7 +409,8 @@ class AccountSet:
                       minimum_payment=minimum_payment,
                       principal_balance=principal_balance,
                       interest_balance=interest_balance,
-                           billing_cycle_payment_balance=billing_cycle_payment_balance)
+                       billing_cycle_payment_balance=billing_cycle_payment_balance,
+                       end_of_previous_cycle_balance=end_of_previous_cycle_balance)
 
     def createCreditCardAccount(self,name,current_stmt_bal,prev_stmt_bal,min_balance,max_balance,billing_start_date_YYYYMMDD,apr,minimum_payment,billing_cycle_payment_balance):
         self.createAccount(name=name,
@@ -408,7 +425,8 @@ class AccountSet:
                           minimum_payment=minimum_payment,
                            previous_statement_balance=prev_stmt_bal,
                            current_statement_balance=current_stmt_bal,
-                           billing_cycle_payment_balance=billing_cycle_payment_balance)
+                           billing_cycle_payment_balance=billing_cycle_payment_balance,
+                           end_of_previous_cycle_balance=end_of_previous_cycle_balance)
 
     def createInvestmentAccount(self, name, balance, min_balance, max_balance, apr):
         self.createAccount(name=name,
@@ -445,6 +463,10 @@ class AccountSet:
             elif a.account_type == 'credit billing cycle payment bal':
                 pass #ignore
             elif a.account_type == 'loan billing cycle payment bal':
+                pass #ignore
+            elif a.account_type == 'credit end of prev cycle bal':
+                pass #ignore
+            elif a.account_type == 'loan end of prev cycle bal':
                 pass #ignore
             else: raise ValueError('Account Type not recognized: ' +str(a.account_type) )
 
@@ -510,7 +532,7 @@ class AccountSet:
         if Account_From != '' and Account_From != 'None':
             AF_base_name_match_count = account_base_names.count(Account_From)
             account_from_index = account_base_names.index(Account_From)  # first match found. for credit, first will be current stmt bal, second will be prev
-            if AF_base_name_match_count == 3:
+            if AF_base_name_match_count == 4:
                 if self.accounts[account_from_index].account_type == 'credit curr stmt bal':
                     AF_Account_Type = 'credit'
                 # elif self.accounts[account_from_index].account_type == 'principal balance':
@@ -527,7 +549,7 @@ class AccountSet:
             if Account_To != '' and Account_To != 'None':
                 AT_base_name_match_count = account_base_names.count(Account_To)
                 account_to_index = account_base_names.index(Account_To)  # first match found. for credit, first will be current stmt bal, second will be prev
-                if AT_base_name_match_count == 3:
+                if AT_base_name_match_count == 4:
                     if self.accounts[account_to_index].account_type == 'credit curr stmt bal':
                         AT_Account_Type = 'credit'
                     elif self.accounts[account_to_index].account_type == 'principal balance':
@@ -626,7 +648,7 @@ class AccountSet:
                 # print(self.getAccounts().Name)
                 # print('AT_basename: '+str(AT_basename))
                 # print('row_sel_vec:'+str(row_sel_vec))
-                assert relevant_rows_df.shape[0] == 3
+                assert relevant_rows_df.shape[0] == 4
 
                 balance_after_proposed_transaction = sum(relevant_rows_df) - abs(Amount)
 

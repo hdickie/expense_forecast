@@ -94,14 +94,14 @@ class Account:
             raise ValueError(
                 f'Account.max_balance ({self.max_balance}) cannot be less than min_balance ({self.min_balance}).')
 
-        valid_account_types = ['checking', 'credit prev stmt bal', 'credit curr stmt bal', 'savings', 'principal balance', 'interest', 'credit billing cycle payment bal', 'loan billing cycle payment bal']
+        valid_account_types = ['checking', 'credit prev stmt bal', 'credit curr stmt bal', 'savings', 'principal balance', 'interest', 'credit billing cycle payment bal', 'loan billing cycle payment bal', 'loan end of prev cycle bal', 'credit end of prev cycle bal']
         if self.account_type not in valid_account_types:
             raise ValueError(f"Invalid account_type: {account_type}. Must be one of {', '.join(valid_account_types)}.")
 
-        if self.account_type in ['credit curr stmt bal','credit prev stmt bal', 'principal balance', 'credit billing cycle payment bal', 'loan billing cycle payment bal']:
+        if self.account_type in ['credit curr stmt bal','credit prev stmt bal', 'principal balance', 'credit billing cycle payment bal', 'loan billing cycle payment bal', 'loan prev end of cycle balance', 'credit prev end of cycle balance']:
             if ':' not in self.name:
                 raise ValueError(
-                    'Accounts of type credit curr stmt bal, credit prev stmt bal, credit billing cycle payment bal, loan billing cycle payment bal or principal balance require colon char in the account name.')
+                    'Accounts of type credit curr stmt bal, credit prev stmt bal, credit billing cycle payment bal, loan billing cycle payment bal, principal balance, loan prev end of cycle balance, credit prev end of cycle balance require colon char in the account name.')
 
         # Handle apr
         if self.account_type in ['credit prev stmt bal', 'principal balance', 'savings']:
@@ -143,7 +143,7 @@ class Account:
             self.interest_type = None
 
         # Handle billing_start_date_YYYYMMDD
-        if self.account_type in ['credit billing cycle payment bal','loan billing cycle payment bal', 'credit prev stmt bal', 'principal balance', 'savings']:
+        if self.account_type in ['credit billing cycle payment bal','loan billing cycle payment bal', 'credit prev stmt bal', 'principal balance', 'savings', 'loan end of prev cycle bal', 'credit end of prev cycle bal']:
             if billing_start_date_YYYYMMDD is None:
                 raise ValueError(
                     f"Account.billing_start_date_YYYYMMDD is required for account_type '{self.account_type}'.")
