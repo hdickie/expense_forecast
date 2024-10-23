@@ -617,9 +617,15 @@ class AccountSet:
                 #balance_after_proposed_transaction = self.getBalances()[AT_ANAME] - abs(Amount)
 
                 AT_basename = self.accounts[account_to_index].name.split(':')[0]
-                row_sel_vec = [ AT_basename in aname for aname in self.getAccounts().Name ]
+                all_base_names = [ aname.split(':')[0] for aname in self.getAccounts().Name ] #
+                row_sel_vec = [ AT_basename in aname for aname in all_base_names ]
+
                 relevant_rows_df = self.getAccounts().iloc[row_sel_vec,1] #col 1 is balance
 
+                # print('self.getAccounts().Name:')
+                # print(self.getAccounts().Name)
+                # print('AT_basename: '+str(AT_basename))
+                # print('row_sel_vec:'+str(row_sel_vec))
                 assert relevant_rows_df.shape[0] == 3
 
                 balance_after_proposed_transaction = sum(relevant_rows_df) - abs(Amount)

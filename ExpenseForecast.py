@@ -25,6 +25,11 @@ import jsonpickle
 import tqdm
 import os
 
+## didnt work
+# import warnings
+# # Suppress only DeprecationWarning
+# warnings.filterwarnings("ignore", category=DeprecationWarning)
+
 
 # import notification_sounds
 from sqlalchemy import create_engine
@@ -1664,6 +1669,10 @@ class ExpenseForecast:
         loan_acct_sel_vec = pd.Series([False]).append(loan_acct_sel_vec).append(pd.Series([False] * 5))
         cc_acct_sel_vec = pd.Series([False]).append(cc_acct_sel_vec).append(pd.Series([False] * 5))
         checking_sel_vec = pd.Series([False]).append(checking_sel_vec).append(pd.Series([False] * 5))
+        # loan_acct_sel_vec = pd.concat([False],loan_acct_sel_vec,[False] * 5)
+        # cc_acct_sel_vec = pd.concat([False], cc_acct_sel_vec, [False] * 5)
+        # checking_sel_vec = pd.concat([False], checking_sel_vec, [False] * 5)
+
         loan_acct_sel_vec = loan_acct_sel_vec.reset_index(drop=True)
         cc_acct_sel_vec = cc_acct_sel_vec.reset_index(drop=True)
         checking_sel_vec = checking_sel_vec.reset_index(drop=True)
@@ -1674,7 +1683,7 @@ class ExpenseForecast:
 
         log_in_color(logger, 'magenta', 'debug', 'Forecast Pre-Validation', self.log_stack_depth)
         log_in_color(logger, 'magenta', 'debug', self.forecast_df.to_string(), self.log_stack_depth)
-        log_in_color(logger, 'magenta', 'debug', 'Validation Values', self.log_stack_depth)
+        log_in_color(logger, 'magenta', 'debug', 'Validation Delta Values', self.log_stack_depth)
         fail_flag = False
         for f_i, row in self.forecast_df.iterrows():
             loan_acct_sel_vec.index = row.index
@@ -1683,8 +1692,13 @@ class ExpenseForecast:
 
             if sum(loan_acct_sel_vec) > 0:
                 loan_row_total = sum(row[loan_acct_sel_vec])
+            else:
+                loan_row_total = 0
+
             if sum(cc_acct_sel_vec) > 0:
                 cc_row_total = sum(row[cc_acct_sel_vec])
+            else:
+                cc_row_total = 0
 
             check_row_total = sum(row[checking_sel_vec])
 
@@ -3105,20 +3119,18 @@ class ExpenseForecast:
         # print('billing_start_date_str:' + str(billing_start_date_str))
         # print('billing_start_date:'+str(billing_start_date))
         # print('current_date:' + str(current_date))
-        num_days = (current_date - billing_start_date).days
-        # print('num_days:'+str(num_days))
+        num_days_since_first_billing_date = (current_date - billing_start_date).days
+        # print('billing_start_date_str:' + str(billing_start_date_str))
+        # print('num_days_since_first_billing_date:'+str(num_days_since_first_billing_date))
 
-        if num_days < 0:
+        if num_days_since_first_billing_date < 0:
           raise AssertionError #This method shouldn't have been called if the billing cycle hasn't started yet
-        elif num_days > 30:
-            billing_dates = generate_date_sequence(billing_start_date_str, num_days, 'monthly')
-        else:
+        elif num_days_since_first_billing_date > 30:
+            billing_dates = generate_date_sequence(billing_start_date_str, num_days_since_first_billing_date, 'monthly')
+        else: #between 0 and 29
             billing_start_date_str = (billing_start_date - datetime.timedelta(days=30)).strftime('%Y%m%d')
-            billing_dates = generate_date_sequence(billing_start_date_str, num_days, 'monthly')
+            billing_dates = generate_date_sequence(billing_start_date_str, num_days_since_first_billing_date + 30, 'monthly')
         # print('billing_dates:'+str(billing_dates))
-
-        # if the first billing date was in the last month there will be an error
-        # so just don't do that lol. #todo address this
 
         lookback_period_start = billing_dates[-2]
 
@@ -3860,12 +3872,16 @@ class ExpenseForecast:
         else:
             dest_account_type = 'none'
 
-        future_min_payment = self.getFutureMinPaymentAmount(
-            account_name=memo_rule_row['Account_To'],
-            account_set=account_set,
-            forecast_df=forecast_df,
-            date_YYYYMMDD=date_YYYYMMDD
-        )
+        if dest_account_type in ['loan','credit']:
+
+            future_min_payment = self.getFutureMinPaymentAmount(
+                account_name=memo_rule_row['Account_To'],
+                account_set=account_set,
+                forecast_df=forecast_df,
+                date_YYYYMMDD=date_YYYYMMDD
+            )
+        else:
+            future_min_payment = 0
 
         if source_account_type == 'credit':
             raise NotImplementedError
@@ -3887,8 +3903,10 @@ class ExpenseForecast:
             raise NotImplementedError
         elif dest_account_type == 'loan':
             raise NotImplementedError
+        elif dest_account_type == 'none':
+            dest_bound = float('inf')
         else:
-            raise ValueError('Invalid account type in calculate_reduced_amount')
+            raise ValueError('Invalid account type in calculate_reduced_amount: '+str(dest_account_type))
 
         # log_in_color(logger, 'magenta', 'debug', 'forecast_df: ' + str(forecast_df.to_string()), self.log_stack_depth)
 
@@ -7425,6 +7443,8 @@ class ExpenseForecast:
         Returns:
         - Updated future_rows_only_df DataFrame.
         """
+        log_in_color(logger, 'white', 'debug', 'ENTER _propagate_credit_curr_only()', self.log_stack_depth)
+        self.log_stack_depth += 1
 
         # Extract relevant account names
         checking_account_name = relevant_account_info_df[
@@ -7493,7 +7513,8 @@ class ExpenseForecast:
 
                 if og_check_memo:
                     # Adjust the checking memo amount
-                    new_check_memo = self._update_memo_amount(og_check_memo, og_check_amount - og_curr_amount)
+                    replacement_memo = f'{(og_check_amount - og_curr_amount):.2f}'
+                    new_check_memo = self._update_memo_amount(og_check_memo, replacement_memo)
                     md_to_keep.append(new_check_memo)
 
             else:
@@ -7517,6 +7538,8 @@ class ExpenseForecast:
             curr_stmt_delta = 0.0
             previous_stmt_delta = 0.0
 
+        self.log_stack_depth -= 1
+        log_in_color(logger, 'white', 'debug', 'ENTER _propagate_credit_curr_only()', self.log_stack_depth)
         return future_rows_only_df
 
     #@profile
@@ -8604,7 +8627,7 @@ class ExpenseForecast:
         #  r'(\-$' + f'{new_amount:.2f}' + ')'
         matches = re.search('(.*) \((.*)[-+]{1}\$(.*)\)',memo_line)
         og_amount = matches.group(3)
-        new_memo_line = re.sub(str(og_amount), str(new_amount), str(memo_line))
+        new_memo_line = re.sub(str(og_amount), str(f'{new_amount:.2f}'), str(memo_line))
 
         log_in_color(logger, 'cyan', 'debug', 'new_memo_line: ' + str(new_memo_line), self.log_stack_depth)
 

@@ -1,6 +1,6 @@
-,Date,Checking,Date_dt,Marginal Interest,Net Gain,Net Loss,Net Worth,Loan Total,CC Debt Total,Liquid Total,Memo Directives,Memo
-0,20000101,400.0,2000-01-01,0,0,0,400.0,0.0,0.0,400.0,,
-1,20000102,400.0,2000-01-02,0,0,0,400.0,0.0,0.0,400.0,,
-2,20000103,200.0,,0,0,200,200.0,0.0,0.0,200.0,,pay reduced amount (Checking -$200.00)
-3,20000104,0.0,,0,0,200,0.0,0.0,0.0,0.0,,pay 200 after reduced amt txn (Checking -$200.00)
-4,20000105,0.0,,0,0,0,0.0,0.0,0.0,0.0,,
+,Date,Checking,Marginal Interest,Net Gain,Net Loss,Net Worth,Loan Total,CC Debt Total,Liquid Total,Memo Directives,Memo
+0,20000101,400.0,0,0,0,400.0,0.0,0.0,400.0,,
+1,20000102,400.0,0,0,0,400.0,0.0,0.0,400.0,,
+2,20000103,200.0,0,0,200,200.0,0.0,0.0,200.0,,pay reduced amount (Checking -$200.00)
+3,20000104,0.0,0,0,200,0.0,0.0,0.0,0.0,,pay 200 after reduced amt txn (Checking -$200.00)
+4,20000105,0.0,0,0,0,0.0,0.0,0.0,0.0,,

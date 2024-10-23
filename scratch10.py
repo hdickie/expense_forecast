@@ -33,7 +33,8 @@ def non_trivial_loan(name,pbal,interest,apr):
                     previous_statement_balance=None,
                     current_statement_balance=None,
                     principal_balance=pbal,
-                    interest_balance=interest)
+                    interest_balance=interest,
+                    billing_cycle_payment_balance=0)
 
     return A.accounts
 
@@ -53,6 +54,7 @@ def credit_acct_list(curr_balance,prev_balance,apr):
                     current_statement_balance=curr_balance,
                       principal_balance=None,
                       interest_balance=None,
+                    billing_cycle_payment_balance=0,
                       print_debug_messages=True,
                       raise_exceptions=True)
     return A.accounts
@@ -74,6 +76,7 @@ def credit_bsd12_acct_list(prev_balance,curr_balance,apr):
                     current_statement_balance=curr_balance,
                     principal_balance=None,
                     interest_balance=None,
+                    billing_cycle_payment_balance=0,
                     print_debug_messages=True,
                     raise_exceptions=True)
     return A.accounts
@@ -88,33 +91,46 @@ def txn_budget_item_once_list(amount,priority,memo,deferrable,partial_payment_al
 
 
 if __name__ == '__main__':
-    test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df = ('test_cc_advance_minimum_payment_in_1_payment_pay_under_minimum',
-         AccountSet.AccountSet(checking_acct_list(5000) + credit_bsd12_acct_list(1000, 1000, 0.05)),
-         BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000111', '20000111', 2, 'once', 20, 'additional_cc_payment')]),
-         MemoRuleSet.MemoRuleSet([
-             MemoRule.MemoRule('.*', 'Checking', None, 1),
-             MemoRule.MemoRule('additional_cc_payment', 'Checking', 'Credit', 2)
-         ]),
-         '20000110',
-         '20000112',
-         MilestoneSet.MilestoneSet([], [], []),
-         pd.DataFrame({
-             'Date': ['20000110', '20000111', '20000112'],
-             'Checking': [5000, 4500, 4500],
-             'Credit: Curr Stmt Bal': [1000, 1000, 0],
-             'Credit: Prev Stmt Bal': [1000, 500, 1504.17],
-             'Marginal Interest': [0, 0, 4.17],
-             'Net Gain': [0, 0, 0],
-             'Net Loss': [0, 0, 4.17],
-             'Net Worth': [3000, 3000, 2995.83],
-             'Loan Total': [0, 0, 0],
-             'CC Debt Total': [2000, 1500, 1504.17],
-             'Liquid Total': [5000, 4500, 4500],
-             'Memo Directives': ['',
-                                 'ADDTL CC PAYMENT (Checking -20.00); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -20.00)',
-                                 'CC INTEREST (Credit: Prev Stmt Bal +$4.17); CC MIN PAYMENT (Checking -$20.00);CC MIN PAYMENT (Credit: Prev Stmt Bal -$20.00)'],
-             'Memo': ['', '', '']
-         }))
+    test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df = (
+                'test_execute_at_reduced_amount_bc_later_higher_priority_txn',
+                AccountSet.AccountSet(checking_acct_list(400)),
+                BudgetSet.BudgetSet(
+                    [BudgetItem.BudgetItem('20000104', '20000104', 2, 'once', 200, 'pay 200 after reduced amt txn', False, False),
+                     BudgetItem.BudgetItem('20000103', '20000103', 3, 'once', 400, 'pay reduced amount', False, True)]
+                    #+
+                    #txn_budget_item_once_list(200, 2, 'pay 200 after reduced amt txn', False, False) +
+                    #txn_budget_item_once_list(400, 3,'pay reduced amount',False, True)
+                    ),
+                MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*',
+                                                           account_from='Checking',
+                                                           account_to=None,
+                                                           transaction_priority=1),
+                                         MemoRule.MemoRule(memo_regex='.*',
+                                                           account_from='Checking',
+                                                           account_to=None,
+                                                           transaction_priority=2),
+                                         MemoRule.MemoRule(memo_regex='.*',
+                                                           account_from='Checking',
+                                                           account_to=None,
+                                                           transaction_priority=3)
+                                         ]),
+                '20000101',
+                '20000105',  # note that this is later than the test defined above
+                MilestoneSet.MilestoneSet( [], [], []),
+                pd.DataFrame({
+                    'Date': ['20000101', '20000102', '20000103', '20000104', '20000105'],
+                    'Checking': [400, 400, 200, 0, 0],
+                    'Marginal Interest': [0, 0, 0, 0, 0],
+                    'Net Gain': [0, 0, 0, 0, 0],
+                    'Net Loss': [0, 0, 200, 200, 0],
+                    'Net Worth': [400, 400, 200, 0, 0],
+                    'Loan Total': [0, 0, 0, 0, 0],
+                    'CC Debt Total': [0, 0, 0, 0, 0],
+                    'Liquid Total': [400, 400, 200, 0, 0],
+                                  'Memo Directives': ['', '', '','',''],
+                    'Memo': ['', '', 'pay reduced amount (Checking -$200.00)', 'pay 200 after reduced amt txn (Checking -$200.00)', '']
+                })
+        )
 
     E = ExpenseForecast.ExpenseForecast(account_set, budget_set,
                                         memo_rule_set,
