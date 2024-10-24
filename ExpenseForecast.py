@@ -5935,6 +5935,9 @@ class ExpenseForecast:
             if current_date_str not in billing_days:
                 continue
 
+            # this will be the correct replacement once bcp is tracked properly
+            #advance_payment_amount = current_forecast_row_df[account_row.Name.split(':')[0]+': Credit Billing Cycle Payment Bal']
+
             # Calculate advance payments made during the billing cycle
             advance_payment_amount = self.getTotalPrepaidInCreditCardBillingCycle(
                 account_row.Name, account_set, forecast_df, current_date_str
