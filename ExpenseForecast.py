@@ -6016,7 +6016,8 @@ class ExpenseForecast:
                 account_set.executeTransaction(
                     Account_From=primary_checking_account_name,
                     Account_To=account_row.Name.split(':')[0],
-                    Amount=total_payment
+                    Amount=total_payment,
+                    minimum_payment_flag=True
                 )
 
                 memo_parts = []
@@ -6062,6 +6063,9 @@ class ExpenseForecast:
                     account_set.accounts[account_index - 1].balance = 0
                     current_forecast_row_df[account_row.Name] = account_set.accounts[account_index].balance
                     current_forecast_row_df[account_set.accounts[account_index - 1].name] = 0
+
+                    cycle_payment_bal_aname = account_row.Name.split(':')[0]+': Credit Billing Cycle Payment Bal'
+                    current_forecast_row_df[cycle_payment_bal_aname] = 0
 
         self.log_stack_depth -= 1
         log_in_color(logger, 'cyan', 'debug', str(current_forecast_row_df.Date.iat[0]) + ' EXIT executeCreditCardMinimumPayments ', self.log_stack_depth)
@@ -7463,6 +7467,9 @@ class ExpenseForecast:
             relevant_account_info_df.Account_Type == 'checking'].Name.iat[0]
         curr_stmt_bal_account_name = relevant_account_info_df[
             relevant_account_info_df.Account_Type == 'credit curr stmt bal'].Name.iat[0]
+        current_cycle_payment_account_name = relevant_account_info_df[
+            relevant_account_info_df.Account_Type == 'credit billing cycle payment bal'].Name.iat[0]
+
         # Construct the previous statement balance account name
         prev_stmt_bal_account_name = curr_stmt_bal_account_name.replace('Curr Stmt Bal', 'Prev Stmt Bal')
 
@@ -7478,11 +7485,12 @@ class ExpenseForecast:
         checking_account_index = forecast_df.columns.get_loc(checking_account_name)
         # prev_stmt_bal_account_index = forecast_df.columns.get_loc(prev_stmt_bal_account_name)
         curr_stmt_bal_account_index = forecast_df.columns.get_loc(curr_stmt_bal_account_name)
+        billing_cycle_payment_account_index = forecast_df.columns.get_loc(current_cycle_payment_account_name)
 
         # Get account deltas
         curr_stmt_delta = account_deltas_list[curr_stmt_bal_account_index - 1]
         checking_delta = curr_stmt_delta
-        # previous_stmt_delta = 0.0
+        billing_cycle_payment_delta = account_deltas_list[billing_cycle_payment_account_index - 1]
 
         # Iterate over future forecast rows
         for f_i, f_row in future_rows_only_df.iterrows():
@@ -7536,10 +7544,11 @@ class ExpenseForecast:
             # Update balances
             future_rows_only_df.at[f_i, checking_account_name] += checking_delta
             future_rows_only_df.at[f_i, curr_stmt_bal_account_name] += curr_stmt_delta
+            future_rows_only_df.at[f_i, current_cycle_payment_account_name] += billing_cycle_payment_delta
 
             future_rows_only_df.at[f_i, checking_account_name] = round(future_rows_only_df.at[f_i, checking_account_name],2)
             future_rows_only_df.at[f_i, curr_stmt_bal_account_name] = round(future_rows_only_df.at[f_i, curr_stmt_bal_account_name],2)
-            # future_rows_only_df.at[f_i, prev_stmt_bal_account_name] += previous_stmt_delta
+            future_rows_only_df.at[f_i, current_cycle_payment_account_name] = round(future_rows_only_df.at[f_i, current_cycle_payment_account_name],2)
 
             # Clean and update memo directives
             md_to_keep = [md for md in md_to_keep if md]
@@ -7587,6 +7596,8 @@ class ExpenseForecast:
             relevant_account_info_df.Account_Type == 'checking'].Name.iat[0]
         prev_stmt_bal_account_name = relevant_account_info_df[
             relevant_account_info_df.Account_Type == 'credit prev stmt bal'].Name.iat[0]
+        bcp_account_name = relevant_account_info_df[
+            relevant_account_info_df.Account_Type == 'credit billing cycle payment bal'].Name.iat[0]
 
         # Get billing dates and next billing date
         cc_billing_dates = billing_dates_dict[prev_stmt_bal_account_name]
@@ -7599,10 +7610,12 @@ class ExpenseForecast:
         # Get account indices in forecast_df
         checking_account_index = forecast_df.columns.get_loc(checking_account_name)
         prev_stmt_bal_account_index = forecast_df.columns.get_loc(prev_stmt_bal_account_name)
+        bcp_account_index = forecast_df.columns.get_loc(bcp_account_name)
 
         # Get account deltas
         previous_stmt_delta = account_deltas_list[prev_stmt_bal_account_index - 1]
         checking_delta = previous_stmt_delta
+        billing_cycle_payment_delta = account_deltas_list[bcp_account_index - 1]
 
         # Initialize previous previous statement balance
         previous_prev_stmt_bal = 0.0
@@ -7657,6 +7670,7 @@ class ExpenseForecast:
                 payment_to_apply = min(og_min_payment_amount, advance_payment_amount)
                 previous_stmt_delta += payment_to_apply
                 checking_delta += payment_to_apply
+                billing_cycle_payment_delta = 0
 
                 # # Update previous_prev_stmt_bal
                 # previous_prev_stmt_bal = round(future_rows_only_df.at[f_i, prev_stmt_bal_account_name] + previous_stmt_delta,2)
@@ -7786,9 +7800,11 @@ class ExpenseForecast:
             # Update balances
             future_rows_only_df.at[f_i, checking_account_name] += checking_delta
             future_rows_only_df.at[f_i, prev_stmt_bal_account_name] += previous_stmt_delta
+            future_rows_only_df.at[f_i, bcp_account_name] += billing_cycle_payment_delta
 
             future_rows_only_df.at[f_i, checking_account_name] = round(future_rows_only_df.at[f_i, checking_account_name],2)
             future_rows_only_df.at[f_i, prev_stmt_bal_account_name] = round(future_rows_only_df.at[f_i, prev_stmt_bal_account_name],2)
+            future_rows_only_df.at[f_i, bcp_account_name] = round(future_rows_only_df.at[f_i, bcp_account_name],2)
 
             log_in_color(logger, 'white', 'debug', str(date_iat) + ' ' + checking_account_name + ' = ' + str(future_rows_only_df.at[f_i, checking_account_name]), self.log_stack_depth)
             log_in_color(logger, 'white', 'debug', str(date_iat) + ' ' + prev_stmt_bal_account_name + ' = ' + str(future_rows_only_df.at[f_i, prev_stmt_bal_account_name]), self.log_stack_depth)
@@ -8355,6 +8371,8 @@ class ExpenseForecast:
             relevant_account_info_df.Account_Type == 'credit curr stmt bal'].Name.iat[0]
         prev_stmt_bal_account_name = relevant_account_info_df[
             relevant_account_info_df.Account_Type == 'credit prev stmt bal'].Name.iat[0]
+        billing_cycle_payment_account_name = relevant_account_info_df[
+            relevant_account_info_df.Account_Type == 'credit billing cycle payment bal'].Name.iat[0]
 
         # Get billing dates and next billing date
         cc_billing_dates = billing_dates_dict[prev_stmt_bal_account_name]
@@ -8368,11 +8386,13 @@ class ExpenseForecast:
         checking_account_index = forecast_df.columns.get_loc(checking_account_name)
         prev_stmt_bal_account_index = forecast_df.columns.get_loc(prev_stmt_bal_account_name)
         curr_stmt_bal_account_index = forecast_df.columns.get_loc(curr_stmt_bal_account_name)
+        billing_cycle_payment_account_index = forecast_df.columns.get_loc(billing_cycle_payment_account_name)
 
         # Get account deltas
         previous_stmt_delta = account_deltas_list[prev_stmt_bal_account_index - 1]
         curr_stmt_delta = account_deltas_list[curr_stmt_bal_account_index - 1]
         checking_delta = previous_stmt_delta + curr_stmt_delta
+        billing_cycle_payment_delta = account_deltas_list[billing_cycle_payment_account_index - 1]
 
         # Initialize previous previous statement balance (used in future billing dates)
         previous_prev_stmt_bal = 0
@@ -8396,12 +8416,10 @@ class ExpenseForecast:
                 og_prev_amount = 0.0
                 og_curr_amount = 0.0
                 og_check_amount = 0.0
-                og_interest_amount = 0.0
 
                 new_prev_memo = ''
                 new_curr_memo = ''
                 new_check_memo = ''
-                new_interest_memo = ''
 
                 # Parse memo directives
                 log_in_color(logger, 'cyan', 'debug','Memo Directives: '+str(f_row['Memo Directives']), self.log_stack_depth)
@@ -8439,6 +8457,7 @@ class ExpenseForecast:
                 curr_stmt_delta += og_curr_amount
                 previous_stmt_delta += og_prev_amount
                 checking_delta += og_prev_amount + og_curr_amount
+                billing_cycle_payment_delta = 0
 
                 # Apply advance payments
                 if advance_payment_amount >= min_payment_amount:
@@ -8474,8 +8493,6 @@ class ExpenseForecast:
                 previous_prev_stmt_bal = round(
                     future_rows_only_df.at[f_i, prev_stmt_bal_account_name] + previous_stmt_delta, 2
                 )
-
-
 
             elif date_iat in cc_billing_dates:
                 # Handle other billing dates
@@ -8553,6 +8570,7 @@ class ExpenseForecast:
                 checking_delta += adjusted_payment_amount
                 interest_delta = interest_to_be_charged - og_interest_amount
                 previous_stmt_delta += round(interest_delta, 2)
+                billing_cycle_payment_delta = 0 #redundant but cant hurt
 
                 # Adjust memos
                 new_check_memo = self._update_memo_amount(og_check_memo, og_check_amount - adjusted_payment_amount)
@@ -8587,10 +8605,12 @@ class ExpenseForecast:
             future_rows_only_df.at[f_i, checking_account_name] += checking_delta
             future_rows_only_df.at[f_i, prev_stmt_bal_account_name] += previous_stmt_delta
             future_rows_only_df.at[f_i, curr_stmt_bal_account_name] += curr_stmt_delta
+            future_rows_only_df.at[f_i, billing_cycle_payment_account_name] += billing_cycle_payment_delta
 
             future_rows_only_df.at[f_i, checking_account_name] = round(future_rows_only_df.at[f_i, checking_account_name],2)
             future_rows_only_df.at[f_i, prev_stmt_bal_account_name] = round(future_rows_only_df.at[f_i, prev_stmt_bal_account_name],2)
             future_rows_only_df.at[f_i, curr_stmt_bal_account_name] = round(future_rows_only_df.at[f_i, curr_stmt_bal_account_name],2)
+            future_rows_only_df.at[f_i, billing_cycle_payment_account_name] = round(future_rows_only_df.at[f_i, billing_cycle_payment_account_name],2)
 
             # log_in_color(logger, 'white', 'debug', str(date_iat) + ' ' + str(curr_stmt_bal_account_name) + ' += ' + str(curr_stmt_delta), self.log_stack_depth)
             # log_in_color(logger, 'white', 'debug', str(date_iat) + ' ' + str(prev_stmt_bal_account_name) + ' += ' + str(previous_stmt_delta), self.log_stack_depth)
@@ -8738,12 +8758,12 @@ class ExpenseForecast:
         # Mapping of account type combinations to processing functions
         account_type_combinations = {
             frozenset(
-                ['checking', 'credit prev stmt bal', 'credit curr stmt bal']): self._propagate_credit_payment_prev_curr,
-            frozenset(['checking', 'principal balance', 'interest']): self._propagate_loan_payment_pbal_interest,
-            frozenset(['checking', 'principal balance']): self._propagate_loan_payment_pbal_only,
-            frozenset(['checking', 'interest']): self._propagate_loan_payment_interest_only,
-            frozenset(['checking', 'credit prev stmt bal']): self._propagate_credit_payment_prev_only,
-            frozenset(['checking', 'credit curr stmt bal']): self._propagate_credit_curr_only,
+                ['checking', 'credit prev stmt bal', 'credit curr stmt bal', 'credit billing cycle payment bal']): self._propagate_credit_payment_prev_curr,
+            frozenset(['checking', 'principal balance', 'interest', 'loan billing cycle payment bal']): self._propagate_loan_payment_pbal_interest,
+            frozenset(['checking', 'principal balance', 'loan billing cycle payment bal']): self._propagate_loan_payment_pbal_only,
+            frozenset(['checking', 'interest', 'loan billing cycle payment bal']): self._propagate_loan_payment_interest_only,
+            frozenset(['checking', 'credit prev stmt bal', 'credit billing cycle payment bal']): self._propagate_credit_payment_prev_only,
+            frozenset(['checking', 'credit curr stmt bal', 'credit billing cycle payment bal']): self._propagate_credit_curr_only,
             frozenset(['credit curr stmt bal']): self._propagate_credit_curr_stmt_balance,
         }
 
@@ -8811,6 +8831,9 @@ class ExpenseForecast:
                 # Identify the appropriate processing function
                 account_types_set = frozenset(relevant_account_type_list)
                 processing_function = account_type_combinations.get(account_types_set)
+
+                print('account_types_set:')
+                print(account_types_set)
 
                 if processing_function:
 
@@ -9171,6 +9194,54 @@ class ExpenseForecast:
 
         return confirmed_df, deferred_df, skipped_df
 
+    def updateEndOfPrevCycleBal(self,forecast_df,account_set,current_forecast_row_df):
+        # Naively:
+        # if it is the day after a credit card minimum payment,
+        # set : Credit End of Prev Cycle Bal = Prev Stmt Bal for the previous day
+        # The Nuance:
+        # Since additional payments day-of do not count towards minimum payments
+        #   they cannot count towards reducing the value this method aims to update either
+        #   therefore, the new logic should be:
+        #
+        # end of prev cycle balance = sum of prev and curr TWO days ago
+        # minus minimum payment from memo 1 day ago
+        # plus interest from one day ago
+
+        for account_index, account_row in account_set.getAccounts().iterrows():
+            if account_row.Account_Type != 'credit prev stmt bal':
+                continue
+
+            billing_start_date = account_row.Billing_Start_Date
+
+            current_date_str = current_forecast_row_df.Date.iloc[0]
+            current_date = datetime.datetime.strptime(current_date_str, '%Y%m%d')
+
+            billing_start_datetime = datetime.datetime.strptime(billing_start_date, '%Y%m%d')
+            billing_start_datetime_plus_1_day = billing_start_datetime + datetime.timedelta(days=1)
+            billing_start_datetime_plus_1_day_str = billing_start_datetime_plus_1_day.strftime('%Y%m%d')
+            num_days = (current_date - billing_start_datetime_plus_1_day).days
+
+            # Generate billing days
+            if num_days >= 0:
+                update_days = set(generate_date_sequence(billing_start_datetime_plus_1_day_str, num_days, 'monthly'))
+            else:
+                update_days = set()
+
+            if current_date_str == billing_start_datetime_plus_1_day:
+                update_days.add(billing_start_datetime_plus_1_day.strftime('%Y%m%d'))
+
+            if current_date_str not in update_days:
+                continue
+
+            prev_date_YYYYMMDD = (current_date - datetime.timedelta(days = 1)).strftime('%Y%m%d')
+            previous_row_df = forecast_df[forecast_df.Date == prev_date_YYYYMMDD]
+            aname = account_row.Name.split(':')[0]+': Prev Stmt Bal' #: Credit End of Prev Cycle Bal
+            relevant_day_old_prev_stmt_bal = previous_row_df[aname].iat[0]
+
+            current_forecast_row_df[account_row.Name.split(':')[0]+': Credit End of Prev Cycle Bal'] = relevant_day_old_prev_stmt_bal
+
+        return current_forecast_row_df
+
     #@profile
     def satisfice(self, list_of_date_strings, confirmed_df, account_set, memo_rule_set, forecast_df,
                   raise_satisfice_failed_exception, progress_bar=None):
@@ -9229,6 +9300,11 @@ class ExpenseForecast:
 
                 # Execute credit card minimum payments
                 forecast_df.loc[forecast_df.Date == date_str] = self.executeCreditCardMinimumPayments(forecast_df,
+                                                                                                      account_set,
+                                                                                                      forecast_df[
+                                                                                                          forecast_df.Date == date_str])
+
+                forecast_df.loc[forecast_df.Date == date_str] = self.updateEndOfPrevCycleBal(forecast_df,
                                                                                                       account_set,
                                                                                                       forecast_df[
                                                                                                           forecast_df.Date == date_str])

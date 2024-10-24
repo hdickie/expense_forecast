@@ -474,7 +474,7 @@ class AccountSet:
         # log_in_color(logger,'magenta', 'debug', 'EXIT getBalances()')
         return balances_dict
 
-    def executeTransaction(self, Account_From, Account_To, Amount, income_flag=False):
+    def executeTransaction(self, Account_From, Account_To, Amount, income_flag=False, minimum_payment_flag=False):
         log_in_color(logger,'white', 'debug','ENTER executeTransaction('+str(Account_From)+','+str(Account_To)+','+str(Amount)+')')
         Amount = round(Amount,2)
 
@@ -623,7 +623,7 @@ class AccountSet:
                 log_in_color(logger,'magenta', 'debug', 'Paid ' + str(Amount) + ' from ' + Account_From, 0)
 
 
-
+        #print('Processing payment')
         if Account_To != '' and Account_To != 'None' and (not boundary_error_ind):
             if AT_Account_Type == 'checking':
 
@@ -631,6 +631,7 @@ class AccountSet:
                 #self.accounts[account_to_index].balance = self.accounts[account_to_index].balance
                 log_in_color(logger,'magenta', 'debug', 'Paid ' + str(Amount) + ' to ' + Account_To, 0)
             elif AT_Account_Type == 'credit' or AT_Account_Type == 'loan':
+                #print('Processing payment to credit or loan')
 
                 debt_payment_ind = (AT_Account_Type.lower() == 'loan')
 
@@ -639,16 +640,17 @@ class AccountSet:
                 #balance_after_proposed_transaction = self.getBalances()[AT_ANAME] - abs(Amount)
 
                 AT_basename = self.accounts[account_to_index].name.split(':')[0]
-                all_base_names = [ aname.split(':')[0] for aname in self.getAccounts().Name ] #
-                row_sel_vec = [ AT_basename in aname for aname in all_base_names ]
+                #all_base_names = [ aname.split(':')[0] for aname in self.getAccounts().Name ] #
+                row_sel_vec = [ ((AT_basename in aname.split(':')[0]) and ('Billing Cycle Payment Bal' not in aname) and ('End of Prev Cycle Bal' not in aname)) for aname in self.getAccounts().Name ]
 
                 relevant_rows_df = self.getAccounts().iloc[row_sel_vec,1] #col 1 is balance
+
 
                 # print('self.getAccounts().Name:')
                 # print(self.getAccounts().Name)
                 # print('AT_basename: '+str(AT_basename))
                 # print('row_sel_vec:'+str(row_sel_vec))
-                assert relevant_rows_df.shape[0] == 4
+                assert relevant_rows_df.shape[0] == 2
 
                 balance_after_proposed_transaction = sum(relevant_rows_df) - abs(Amount)
 
@@ -673,15 +675,26 @@ class AccountSet:
                 # log_in_color(logger,'magenta', 'debug', 'account max:' + str(self.accounts[account_to_index].max_balance), 3)
                 # log_in_color(logger,'magenta', 'debug', 'balance_after_proposed_transaction:' + str(balance_after_proposed_transaction), 3)
 
-                #if the amount we are playing on credit card is more than the previous statement balance
-                #OR amt payed on interest is more than the total
+
                 if abs(Amount) >= self.accounts[account_to_index+1].balance:
                     remaining_to_pay = abs(Amount) - self.accounts[account_to_index + 1].balance
+                    if not minimum_payment_flag:
+                        #print('NOT Minimum payment so adding to bcp bal: '+str(self.accounts[account_to_index + 1].balance))
+                        self.accounts[account_to_index + 2].balance += self.accounts[account_to_index + 1].balance
+                    else:
+                        pass
+                        #print('Minimum payment so not adding to billing cycle payment balance (1/3)')
                     log_in_color(logger,'magenta', 'debug','Paid ' + str(self.accounts[account_to_index + 1].balance) + ' to ' + str(self.accounts[account_to_index + 1].name), 0)
                     self.accounts[account_to_index + 1].balance = 0
 
                     #this has the potential to overpay, but we consider that upstreams problem
                     self.accounts[account_to_index].balance -= remaining_to_pay
+                    if not minimum_payment_flag:
+                        #print('NOT Minimum payment so adding to bcp bal: ' + str(remaining_to_pay))
+                        self.accounts[account_to_index + 2].balance += remaining_to_pay
+                    else:
+                        pass
+                        #print('Minimum payment so not adding to billing cycle payment balance (2/3)')
 
                     if abs(self.accounts[account_to_index].balance) < 0.01:
                         self.accounts[account_to_index].balance = 0
@@ -693,6 +706,13 @@ class AccountSet:
                     self.accounts[account_to_index + 1].balance -= Amount
                     if abs(self.accounts[account_to_index + 1].balance) < 0.01:
                         self.accounts[account_to_index + 1].balance = 0
+
+                    if not minimum_payment_flag:
+                        #print('NOT Minimum payment so adding to bcp bal: ' + str(Amount))
+                        self.accounts[account_to_index + 2].balance += Amount
+                    else:
+                        pass
+                        #print('Minimum payment so not adding to billing cycle payment balance (3/3)')
             else: raise NotImplementedError("account type was: "+str(AF_Account_Type)) #from types other than checking or credit not yet implemented
 
 

@@ -901,13 +901,13 @@ class TestAccountSet:
          (None,"test checking",100.0,True,[1100.0, 1000.0, 500.0, 0, 500, 900.0, 100.0, 0, 900.0]),  #deposit to checking account
 
          ("test credit", None, 100.0, False, [1000.0, 1100.0, 500.0, 0, 500, 900.0, 100.0, 0, 900.0]),  #pay using credit
-         ("test checking", "test credit", 50.0, False, [950.0, 1000.0, 450.0, 0, 500, 900.0, 100.0, 0, 900.0]),  #credit payment, less than credit prev stmt bal and credit curr stmt bal > 0
-         ("test checking", "test credit", 501.0, False, [499.0, 999.0, 0.0, 0, 500, 900.0, 100.0, 0, 900.0]),  #credit payment, less than total balance, more than credit prev stmt balance, credit curr stmt bal != 0
+         ("test checking", "test credit", 50.0, False, [950.0, 1000.0, 450.0, 50, 500, 900.0, 100.0, 0, 900.0]),  #credit payment, less than credit prev stmt bal and credit curr stmt bal > 0
+         ("test checking", "test credit", 501.0, False, [499.0, 999.0, 0.0, 501, 500, 900.0, 100.0, 0, 900.0]),  #credit payment, less than total balance, more than credit prev stmt balance, credit curr stmt bal != 0
 
-         ("test checking", "test loan", 50.0, False, [950.0, 1000.0, 500.0, 0, 500, 900.0, 50.0, 0, 900.0]),  #loan payment, less than interest
-         ("test checking", "test loan", 150.0, False, [850.0, 1000.0, 500.0, 0, 500, 850.0, 0.0, 0, 900.0]),  #loan payment, more than interest
+         ("test checking", "test loan", 50.0, False, [950.0, 1000.0, 500.0, 0, 500, 900.0, 50.0, 50, 900.0]),  #loan payment, less than interest
+         ("test checking", "test loan", 150.0, False, [850.0, 1000.0, 500.0, 0, 500, 850.0, 0.0, 150, 900.0]),  #loan payment, more than interest
 
-         ("test checking", "ALL_LOANS", 150.0, False, [850.0, 1000.0, 500.0, 0, 500, 850.0, 0.0, 0, 900.0]),  #loan payment, more than interest
+         ("test checking", "ALL_LOANS", 150.0, False, [850.0, 1000.0, 500.0, 0, 500, 850.0, 0.0, 150, 900.0]),  #loan payment, more than interest
          ])
     def test_execute_transaction_valid_inputs(self,Account_From, Account_To, Amount,income_flag,expected_result_vector):
         test_account_set = AccountSet.AccountSet([])
