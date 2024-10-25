@@ -94,46 +94,34 @@ def txn_budget_item_once_list(amount,priority,memo,deferrable,partial_payment_al
 
 
 if __name__ == '__main__':
-    test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df = ('test_p7__additional_loan_payment__amt_110',
-         AccountSet.AccountSet(
-             checking_acct_list(5000) + non_trivial_loan('Loan A', 1000, 100, 0.1) + non_trivial_loan('Loan B', 1000,
-                                                                                                      100,
-                                                                                                      0.05) + non_trivial_loan(
-                 'Loan C', 1000, 100, 0.01)),
-         BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000102', '20000102', 7, 'once', 110, 'additional_loan_payment')]),
-         MemoRuleSet.MemoRuleSet([
-             MemoRule.MemoRule('.*', 'Checking', None, 1),
-             MemoRule.MemoRule('additional_loan_payment', 'Checking', 'ALL_LOANS', 7)
-         ]),
-         '20000101',
-         '20000103',
-         MilestoneSet.MilestoneSet( [], [], []),
-         pd.DataFrame({
-             'Date': ['20000101', '20000102', '20000103'],
-             'Checking': [5000, 4740, 4740],
-             'Loan A: Principal Balance': [1000, 940.27, 940.27],
-             'Loan A: Interest': [100, 0.0, 0.26],
-             'Loan A: Loan Billing Cycle Payment Bal': [0, 59.73 + 50.27, 59.73 + 50.27],
-             'Loan A: Loan End of Prev Cycle Bal': [1000, 1000, 940.27],
-             'Loan B: Principal Balance': [1000, 1000, 1000],
-             'Loan B: Interest': [100, 50.14, 50.28],
-             'Loan B: Loan Billing Cycle Payment Bal': [0, 50.27, 50.27],
-             'Loan B: Loan End of Prev Cycle Bal': [1000, 1000, 1000],
-             'Loan C: Principal Balance': [1000, 1000, 1000],
-             'Loan C: Interest': [100, 50.03, 50.06],
-             'Loan C: Loan Billing Cycle Payment Bal': [0, 0, 0],
-             'Loan C: Loan End of Prev Cycle Bal': [1000, 1000, 1000],
-             'Marginal Interest': [0, 0.44, 0.43],
-             'Net Gain': [0, 0, 0],
-             'Net Loss': [0, 0.44, 0.43],
-             'Net Worth': [1700, 1699.56, 1699.13],
-             'Loan Total': [3300, 3040.44, 3040.87],
-             'CC Debt Total': [0, 0, 0],
-             'Liquid Total': [5000, 4740, 4740],
-                                  'Memo Directives': ['', 'LOAN MIN PAYMENT (Loan A: Interest -$50.00); LOAN MIN PAYMENT (Checking -$50.00); LOAN MIN PAYMENT (Loan B: Interest -$50.00); LOAN MIN PAYMENT (Checking -$50.00); LOAN MIN PAYMENT (Loan C: Interest -$50.00); LOAN MIN PAYMENT (Checking -$50.00); ADDTL LOAN PAYMENT (Checking -$59.73); ADDTL LOAN PAYMENT (Loan A: Principal Balance -$59.73); ADDTL LOAN PAYMENT (Checking -$50.27); ADDTL LOAN PAYMENT (Loan A: Interest -$50.27)', ''],
-             'Memo': ['', '', '']
-         })
-         )
+    test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df = (
+                'test_p2_and_3__p3_item_skipped_bc_p2',
+                AccountSet.AccountSet(checking_acct_list(100)),
+                BudgetSet.BudgetSet(txn_budget_item_once_list(100, 2, 'this should be executed', False, False) + txn_budget_item_once_list(100, 3, 'this should be skipped', False, False)),
+                MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*', account_from='Checking', account_to=None,
+                                                           transaction_priority=1),
+                                         MemoRule.MemoRule(memo_regex='.*', account_from='Checking', account_to=None,
+                                                           transaction_priority=2),
+                                         MemoRule.MemoRule(memo_regex='.*', account_from='Checking', account_to=None,
+                                                           transaction_priority=3)
+                                         ]),
+                '20000101',
+                '20000103',
+                MilestoneSet.MilestoneSet( [], [], []),
+                pd.DataFrame({
+                    'Date': ['20000101', '20000102', '20000103'],
+                    'Checking': [100, 0, 0],
+                    'Marginal Interest': [0, 0, 0],
+                    'Net Gain': [0, 0, 0],
+                    'Net Loss': [0, 100, 0],
+                    'Net Worth': [100, 0, 0],
+                    'Loan Total': [0, 0, 0],
+                    'CC Debt Total': [0, 0, 0],
+                    'Liquid Total': [100, 0, 0],
+                                  'Memo Directives': ['', '', ''],
+                    'Memo': ['', 'this should be executed (Checking -$100.00)', '']
+                })
+        )
 
     E = ExpenseForecast.ExpenseForecast(account_set, budget_set,
                                         memo_rule_set,
