@@ -6309,13 +6309,20 @@ class ExpenseForecast:
         #todo correctly count
         print('Accounts_df.shape:'+str(Accounts_df.shape))
 
-        for account_index in range(1,(1+Accounts_df.shape[0])):
-        #for account_index, account_row in Accounts_df.iterrows():
-            account_index = int(account_index)
-            relevant_balance = round(relevant_forecast_day.iat[0, account_index + 1],2)
-            account_set.accounts[account_index].balance = relevant_balance
+        # for account_index in range(1,(1+Accounts_df.shape[0])):
+        # #for account_index, account_row in Accounts_df.iterrows():
+        #     account_index = int(account_index)
+        #     relevant_balance = round(relevant_forecast_day.iat[0, account_index + 1],2)
+        #     account_set.accounts[account_index].balance = relevant_balance
+        #
+        #     log_in_color(logger, 'white', 'debug', 'SET '+str(account_set.accounts[account_index].name+' = '+str(relevant_balance)), self.log_stack_depth)
 
-            log_in_color(logger, 'white', 'debug', 'SET '+str(account_set.accounts[account_index].name+' = '+str(relevant_balance)), self.log_stack_depth)
+        for account_index in range(1, (1 + Accounts_df.shape[0])):
+            account_index = int(account_index)
+            # print('account_index: ' + str(account_index))
+            relevant_balance = relevant_forecast_day.iat[0, account_index]
+            # print('relevant_balance: ' + str(relevant_balance))
+            account_set.accounts[account_index - 1].balance = round(relevant_balance, 2)
 
         log_in_color(logger, 'cyan', 'debug', 'updated account set:', self.log_stack_depth)
         log_in_color(logger, 'cyan', 'debug', account_set.getAccounts().to_string(), self.log_stack_depth)

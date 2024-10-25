@@ -3994,13 +3994,7 @@ class TestExpenseForecastMethods:
     #     raise NotImplementedError
 
 
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p2_and_3__p3_item_skipped_bc_p2-account_set7-budget_set7-memo_rule_set7-20000101-20000103-milestone_set7-expected_result_df7]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p2_and_3__p3_item_deferred_bc_p2-account_set8-budget_set8-memo_rule_set8-20000101-20000103-milestone_set8-expected_result_df8]
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p4__cc_payment__partial_of_indicated_amount-account_set14-budget_set14-memo_rule_set14-20000101-20000103-milestone_set14-expected_result_df14]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_execute_defer_after_receiving_income_2_days_later-account_set15-budget_set15-memo_rule_set15-20000101-20000104-milestone_set15-expected_result_df15]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_execute_at_reduced_amount_bc_later_higher_priority_txn-account_set16-budget_set16-memo_rule_set16-20000101-20000105-milestone_set16-expected_result_df16]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_transactions_executed_at_p1_and_p2-account_set17-budget_set17-memo_rule_set17-20000101-20000106-milestone_set17-expected_result_df17]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_transactions_executed_at_p1_and_p2_and_p3-account_set18-budget_set18-memo_rule_set18-20000101-20000106-milestone_set18-expected_result_df18]
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_10-account_set19-budget_set19-memo_rule_set19-20000101-20000103-milestone_set19-expected_result_df19]
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_110-account_set20-budget_set20-memo_rule_set20-20000101-20000103-milestone_set20-expected_result_df20]
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_560-account_set21-budget_set21-memo_rule_set21-20000101-20000103-milestone_set21-expected_result_df21]
@@ -4012,6 +4006,4 @@ class TestExpenseForecastMethods:
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_advance_minimum_payment_in_1_payment_pay_exact_minimum-account_set27-budget_set27-memo_rule_set27-20000110-20000112-milestone_set27-expected_result_df27]
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_on_due_date-account_set28-budget_set28-memo_rule_set28-20000111-20000113-milestone_set28-expected_result_df28]
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before-account_set29-budget_set29-memo_rule_set29-20000110-20000112-milestone_set29-expected_result_df29]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_deferrals[test_p5_and_6__expect_defer-account_set0-budget_set0-memo_rule_set0-20000101-20000103-milestone_set0-expected_result_df0-p6 deferrable txn 1/2/00-None]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_deferrals[test_p5_and_6__expect_defer__daily-account_set1-budget_set1-memo_rule_set1-20000101-20000103-milestone_set1-expected_result_df1-p6 deferrable txn 1/2/00 (Checking -$1000.00)-20000103]
-# =============================================== 20 failed, 151 passed, 105 warnings in 199.14s (0:03:19) ======
+# =============================================== 12 failed, 159 passed, 105 warnings in 197.06s (0:03:17) =========

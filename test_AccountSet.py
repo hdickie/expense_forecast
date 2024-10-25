@@ -1,7 +1,11 @@
+import logging
+
 import pytest
 import pandas as pd
 import tempfile
 import Account, AccountSet, doctest, copy
+
+from log_methods import log_in_color
 
 def compound_loan_A():
     A = AccountSet.AccountSet([])
@@ -965,6 +969,226 @@ class TestAccountSet:
         test_account_set.executeTransaction(Account_From=Account_From, Account_To=Account_To, Amount=Amount, income_flag=income_flag)
         result_vector = list(test_account_set.getAccounts().iloc[:,1])
         assert result_vector == expected_result_vector
+
+
+
+    # def test_sync_account_set_w_forecast_day(self):
+    #
+    #
+    #     def sync_account_set_w_forecast_day(account_set, forecast_df, date_YYYYMMDD):
+    #
+    #         Accounts_df = account_set.getAccounts()
+    #
+    #         relevant_forecast_day = forecast_df[forecast_df.Date == date_YYYYMMDD]
+    #         print('relevant_forecast_day:')
+    #         print(relevant_forecast_day)
+    #
+    #         row_sel_vec = (forecast_df.Date == date_YYYYMMDD)
+    #         try:
+    #             assert sum(row_sel_vec) > 0
+    #         except Exception as e:
+    #             error_msg = "error in sync_account_set_w_forecast_day\n"
+    #             error_msg += "date_YYYYMMDD: " + date_YYYYMMDD + "\n"
+    #             error_msg += "min date of forecast:" + min(forecast_df.Date) + "\n"
+    #             error_msg += "max date of forecast:" + max(forecast_df.Date) + "\n"
+    #             raise AssertionError(error_msg)
+    #
+    #         # todo correctly count
+    #         print('Accounts_df.shape:' + str(Accounts_df.shape))
+    #
+    #         for account_index in range(1, (1 + Accounts_df.shape[0])):
+    #             # for account_index, account_row in Accounts_df.iterrows():
+    #             account_index = int(account_index)
+    #             relevant_balance = relevant_forecast_day.iat[0, account_index + 1]
+    #             print('relevant_balance: '+str(relevant_balance))
+    #             account_set.accounts[account_index].balance = round(relevant_balance,2)
+    #
+    #         return account_set
+    #
+    #     forecast_w_check_only_A = pd.DataFrame({'Date':['20000101','20000102'], 'test checking': [0,0], 'Memo': ['',''], 'Memo Directives': ['','']})
+    #     forecast_w_check_and_credit_B = pd.DataFrame({'Date':['20000101','20000102'], 'test checking': [0,0], 'Memo': ['',''], 'Memo Directives': ['','']})
+    #     forecast_w_check_and_loan_C = pd.DataFrame({'Date':['20000101','20000102'], 'test checking': [0,0], 'Memo': ['',''], 'Memo Directives': ['','']})
+    #
+    #     A1 = AccountSet.AccountSet([])
+    #     A2 = AccountSet.AccountSet([])
+    #     B1 = AccountSet.AccountSet([])
+    #     B2 = AccountSet.AccountSet([])
+    #     C1 = AccountSet.AccountSet([])
+    #     C2 = AccountSet.AccountSet([])
+    #
+    #     A1.createAccount(name="test checking",
+    #                    balance=1000.0,
+    #                    min_balance=0.0,
+    #                    max_balance=float('inf'),
+    #                    account_type='checking',
+    #                    billing_start_date_YYYYMMDD=None,
+    #                    interest_type=None,
+    #                    apr=None,
+    #                    interest_cadence=None,
+    #                    minimum_payment=None,
+    #                    previous_statement_balance=None,
+    #                    principal_balance=None,
+    #                    interest_balance=None,
+    #                    billing_cycle_payment_balance=0,
+    #                    print_debug_messages=False)
+    #
+    #     A2.createAccount(name="test checking",
+    #                      balance=999.0,
+    #                      min_balance=0.0,
+    #                      max_balance=float('inf'),
+    #                      account_type='checking',
+    #                      billing_start_date_YYYYMMDD=None,
+    #                      interest_type=None,
+    #                      apr=None,
+    #                      interest_cadence=None,
+    #                      minimum_payment=None,
+    #                      previous_statement_balance=None,
+    #                      principal_balance=None,
+    #                      interest_balance=None,
+    #                      billing_cycle_payment_balance=0,
+    #                      print_debug_messages=False)
+    #
+    #     B1.createAccount(name="test checking",
+    #                    balance=1000.0,
+    #                    min_balance=0.0,
+    #                    max_balance=float('inf'),
+    #                    account_type='checking',
+    #                    billing_start_date_YYYYMMDD=None,
+    #                    interest_type=None,
+    #                    apr=None,
+    #                    interest_cadence=None,
+    #                    minimum_payment=None,
+    #                    previous_statement_balance=None,
+    #                    principal_balance=None,
+    #                    interest_balance=None,
+    #                    billing_cycle_payment_balance=0,
+    #                    print_debug_messages=False)
+    #
+    #     B2.createAccount(name="test checking",
+    #                    balance=999.0,
+    #                    min_balance=0.0,
+    #                    max_balance=float('inf'),
+    #                    account_type='checking',
+    #                    billing_start_date_YYYYMMDD=None,
+    #                    interest_type=None,
+    #                    apr=None,
+    #                    interest_cadence=None,
+    #                    minimum_payment=None,
+    #                    previous_statement_balance=None,
+    #                    principal_balance=None,
+    #                    interest_balance=None,
+    #                    billing_cycle_payment_balance=0,
+    #                    print_debug_messages=False)
+    #
+    #     B1.createAccount(name="test credit",
+    #                                    balance=1500.0,
+    #                                    min_balance=0.0,
+    #                                    max_balance=20000.0,
+    #                                    account_type='credit',
+    #                                    billing_start_date_YYYYMMDD='20000107',
+    #                                    interest_type=None,
+    #                                    apr=0.2479,
+    #                                    interest_cadence='monthly',
+    #                                    minimum_payment=20.0,
+    #                                    previous_statement_balance=500.0,
+    #                                    current_statement_balance=1000.0,
+    #                                    principal_balance=None,
+    #                                    interest_balance=None,
+    #                                    billing_cycle_payment_balance=0,
+    #                                    end_of_previous_cycle_balance=500.0,
+    #                                    print_debug_messages=False)
+    #
+    #     B2.createAccount(name="test credit",
+    #                                    balance=1000.0,
+    #                                    min_balance=0.0,
+    #                                    max_balance=20000.0,
+    #                                    account_type='credit',
+    #                                    billing_start_date_YYYYMMDD='20000107',
+    #                                    interest_type=None,
+    #                                    apr=0.2479,
+    #                                    interest_cadence='monthly',
+    #                                    minimum_payment=20.0,
+    #                                    previous_statement_balance=250.0,
+    #                                    current_statement_balance=750.0,
+    #                                    principal_balance=None,
+    #                                    interest_balance=None,
+    #                                    billing_cycle_payment_balance=0,
+    #                                    end_of_previous_cycle_balance=500.0,
+    #                                    print_debug_messages=False)
+    #
+    #     C1.createAccount(name="test checking",
+    #                      balance=1000.0,
+    #                      min_balance=0.0,
+    #                      max_balance=float('inf'),
+    #                      account_type='checking',
+    #                      billing_start_date_YYYYMMDD=None,
+    #                      interest_type=None,
+    #                      apr=None,
+    #                      interest_cadence=None,
+    #                      minimum_payment=None,
+    #                      previous_statement_balance=None,
+    #                      principal_balance=None,
+    #                      interest_balance=None,
+    #                      billing_cycle_payment_balance=0,
+    #                      print_debug_messages=False)
+    #
+    #     C2.createAccount(name="test checking",
+    #                      balance=999.0,
+    #                      min_balance=0.0,
+    #                      max_balance=float('inf'),
+    #                      account_type='checking',
+    #                      billing_start_date_YYYYMMDD=None,
+    #                      interest_type=None,
+    #                      apr=None,
+    #                      interest_cadence=None,
+    #                      minimum_payment=None,
+    #                      previous_statement_balance=None,
+    #                      principal_balance=None,
+    #                      interest_balance=None,
+    #                      billing_cycle_payment_balance=0,
+    #                      print_debug_messages=False)
+    #
+    #
+    #     C1.createAccount(name="test loan",
+    #                                    balance=1500.0,
+    #                                    min_balance=0,
+    #                                    max_balance=26000.0,
+    #                                    account_type='loan',
+    #                                    billing_start_date_YYYYMMDD='20230303',
+    #                                    interest_type='simple',
+    #                                    apr=0.067,
+    #                                    interest_cadence='daily',
+    #                                    minimum_payment='223.19',
+    #                                    previous_statement_balance=None,
+    #                                    principal_balance=1100.0,
+    #                                    interest_balance=400.0,
+    #                                    billing_cycle_payment_balance=0,
+    #                                    end_of_previous_cycle_balance=900,
+    #                                    print_debug_messages=False)
+    #
+    #     C2.createAccount(name="test loan",
+    #                      balance=1000.0,
+    #                      min_balance=0,
+    #                      max_balance=26000.0,
+    #                      account_type='loan',
+    #                      billing_start_date_YYYYMMDD='20230303',
+    #                      interest_type='simple',
+    #                      apr=0.067,
+    #                      interest_cadence='daily',
+    #                      minimum_payment='223.19',
+    #                      previous_statement_balance=None,
+    #                      principal_balance=850.0,
+    #                      interest_balance=150.0,
+    #                      billing_cycle_payment_balance=0,
+    #                      end_of_previous_cycle_balance=900,
+    #                      print_debug_messages=False)
+    #
+    #     # sync_account_set_w_forecast_day(account_set, forecast_df, date_YYYYMMDD)
+    #     result_A_1 = sync_account_set_w_forecast_day(A1, forecast_w_check_only_A, '20000101')
+    #     print('result_A_1:')
+    #     print(result_A_1.getAccounts().to_string())
+    #
+    #     raise NotImplementedError
 
     # @pytest.mark.parametrize(
     #     "Account_From, Account_To, Amount,income_flag,expected_exception",
