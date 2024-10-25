@@ -475,7 +475,8 @@ class AccountSet:
         return balances_dict
 
     def executeTransaction(self, Account_From, Account_To, Amount, income_flag=False, minimum_payment_flag=False):
-        log_in_color(logger,'white', 'debug','ENTER executeTransaction('+str(Account_From)+','+str(Account_To)+','+str(Amount)+',minimum_payment_flag='+str(minimum_payment_flag)+')')
+        log_in_color(logger,'white', 'debug','ENTER executeTransaction('+str(Account_From)+','+str(Account_To)+','+str(Amount)+', minimum_payment_flag='+str(minimum_payment_flag)+')')
+        # print('ENTER executeTransaction('+str(Account_From)+','+str(Account_To)+','+str(Amount)+',minimum_payment_flag='+str(minimum_payment_flag)+')')
         Amount = round(Amount,2)
 
         if Amount == 0:
@@ -484,8 +485,8 @@ class AccountSet:
 
         if Account_To == 'ALL_LOANS':
             loan_payment__list = self.allocate_additional_loan_payments(Amount)
-            #print('loan_payment__list:')
-            #print(loan_payment__list)
+            # print('loan_payment__list:')
+            # print(loan_payment__list)
             for i in range(0,len(loan_payment__list)):
                 single_account_loan_payment = loan_payment__list[i]
                 self.executeTransaction(single_account_loan_payment[0], #From
@@ -684,6 +685,7 @@ class AccountSet:
                     else:
                         pass
                         #print('Minimum payment so not adding to billing cycle payment balance (1/3)')
+                    # print('Paid ' + str(self.accounts[account_to_index + 1].balance) + ' to ' + str(self.accounts[account_to_index + 1].name))
                     log_in_color(logger,'magenta', 'debug','Paid ' + str(self.accounts[account_to_index + 1].balance) + ' to ' + str(self.accounts[account_to_index + 1].name), 0)
                     self.accounts[account_to_index + 1].balance = 0
 
@@ -700,9 +702,11 @@ class AccountSet:
                         self.accounts[account_to_index].balance = 0
 
                     #self.accounts[account_to_index].balance = self.accounts[account_to_index].balance
+                    # print('Paid ' + str(remaining_to_pay) + ' to ' + self.accounts[account_to_index].name)
                     log_in_color(logger,'magenta', 'debug', 'Paid ' + str(remaining_to_pay) + ' to ' + self.accounts[account_to_index].name, 0)
                 else: #pay down the previous statement balance
                     log_in_color(logger,'magenta', 'debug', 'Paid ' + str(Amount) + ' to ' + str(self.accounts[account_to_index + 1].name), 0)
+                    # print('Paid ' + str(Amount) + ' to ' + str(self.accounts[account_to_index + 1].name))
                     self.accounts[account_to_index + 1].balance -= Amount
                     if abs(self.accounts[account_to_index + 1].balance) < 0.01:
                         self.accounts[account_to_index + 1].balance = 0
@@ -759,6 +763,8 @@ class AccountSet:
             equivalent_exchange_error_text += explanation_of_mismatch_string + '\n'
             log_in_color(logger,'red', 'error', equivalent_exchange_error_text, 0)
             raise ValueError("Funds not accounted for in AccountSet::executeTransaction()") # Funds not accounted for
+
+        # print('EXIT executeTransaction(' + str(Account_From) + ',' + str(Account_To) + ',' + str(Amount) + ', minimum_payment_flag=' + str(minimum_payment_flag) + ')')
 
     # def from_excel(self,path):
     #     self.accounts = []
@@ -895,6 +901,7 @@ class AccountSet:
     #...
     #definitely troublesome
     def allocate_additional_loan_payments(self, amount):
+        # print('ENTER allocate_additional_loan_payments: '+str(amount))
         #bal_string = ''
         #for account_index, account_row in self.getAccounts().iterrows():
         #    bal_string += '$' + str(account_row.Balance) + ' '
@@ -1129,6 +1136,8 @@ class AccountSet:
         #log_in_color(logger,'green', 'debug', 'final_txns:')
         #log_in_color(logger,'green', 'debug', final_txns)
         #log_in_color(logger,'blue', 'debug', 'EXIT allocate_additional_loan_payments(amount='+str(amount)+')')
+        # print(final_txns)
+        # print('EXIT allocate_additional_loan_payments')
         return final_txns
 
     def getAccounts(self):

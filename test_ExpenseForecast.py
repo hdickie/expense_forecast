@@ -1026,15 +1026,15 @@ class TestExpenseForecastMethods:
                     'Loan A: Principal Balance': [1000, 1000, 1000],
                     'Loan A: Interest': [100, 40.27, 40.54],
                     'Loan A: Loan Billing Cycle Payment Bal': [0, 10, 10],
-                    'Loan A: Loan End of Cycle Bal': [1000, 1000, 1000],
+                    'Loan A: Loan End of Prev Cycle Bal': [1000, 1000, 1000],
                     'Loan B: Principal Balance': [1000, 1000, 1000],
                     'Loan B: Interest': [100, 50.14, 50.28],
                     'Loan B: Loan Billing Cycle Payment Bal': [0, 0, 0],
-                    'Loan B: Loan End of Cycle Bal': [1000, 1000, 1000],
+                    'Loan B: Loan End of Prev Cycle Bal': [1000, 1000, 1000],
                     'Loan C: Principal Balance': [1000, 1000, 1000],
                     'Loan C: Interest': [100, 50.03, 50.06],
                     'Loan C: Loan Billing Cycle Payment Bal': [0, 0, 0],
-                    'Loan C: Loan End of Cycle Bal': [1000, 1000, 1000],
+                    'Loan C: Loan End of Prev Cycle Bal': [1000, 1000, 1000],
                     'Marginal Interest': [0, 0.44, 0.44],
                     'Net Gain': [0, 0, 0],
                     'Net Loss': [0, 0.44, 0.44],
@@ -1182,17 +1182,17 @@ class TestExpenseForecastMethods:
          ]),
          '20000101',
          '20000103',
-         MilestoneSet.MilestoneSet( [], [], []),
+         MilestoneSet.MilestoneSet([], [], []),
          pd.DataFrame({
              'Date': ['20000101', '20000102', '20000103'],
              'Checking': [5000, 5000 - 150 - 1900, 5000 - 150 - 1900],
              'Loan A: Principal Balance': [1000, 92.62, 92.62],
              'Loan A: Interest': [100, 0, 0.03],
-             'Loan A: Loan Billing Cycle Payment Bal': [0, 907.38 + 50.27, 0],
+             'Loan A: Loan Billing Cycle Payment Bal': [0, 907.38 + 50.27, 907.38 + 50.27],
              'Loan A: Loan End of Prev Cycle Bal': [1000, 1000, 92.62],
              'Loan B: Principal Balance': [1000, 185.25, 185.25],
              'Loan B: Interest': [100, 0, 0.03],
-             'Loan B: Loan Billing Cycle Payment Bal': [0, 814.75 + 50.14, 0],
+             'Loan B: Loan Billing Cycle Payment Bal': [0, 814.75 + 50.14, 814.75 + 50.14],
              'Loan B: Loan End of Prev Cycle Bal': [1000, 1000, 185.25],
              'Loan C: Principal Balance': [1000, 972.57, 972.57],
              'Loan C: Interest': [100, 0, 0.03],
@@ -1205,7 +1205,9 @@ class TestExpenseForecastMethods:
              'Loan Total': [3300, 1250.44, 1250.53],
              'CC Debt Total': [0, 0, 0],
              'Liquid Total': [5000, 5000 - 150 - 1900, 5000 - 150 - 1900],
-                                  'Memo Directives': ['', 'LOAN MIN PAYMENT (Loan A: Interest -$50.00); LOAN MIN PAYMENT (Checking -$50.00); LOAN MIN PAYMENT (Loan B: Interest -$50.00); LOAN MIN PAYMENT (Checking -$50.00); LOAN MIN PAYMENT (Loan C: Interest -$50.00); LOAN MIN PAYMENT (Checking -$50.00); ADDTL LOAN PAYMENT (Checking -$907.38); ADDTL LOAN PAYMENT (Loan A: Principal Balance -$907.38); ADDTL LOAN PAYMENT (Checking -$50.27); ADDTL LOAN PAYMENT (Loan A: Interest -$50.27); ADDTL LOAN PAYMENT (Checking -$814.75); ADDTL LOAN PAYMENT (Loan B: Principal Balance -$814.75); ADDTL LOAN PAYMENT (Checking -$50.14); ADDTL LOAN PAYMENT (Loan B: Interest -$50.14); ADDTL LOAN PAYMENT (Checking -$27.43); ADDTL LOAN PAYMENT (Loan C: Principal Balance -$27.43); ADDTL LOAN PAYMENT (Checking -$50.03); ADDTL LOAN PAYMENT (Loan C: Interest -$50.03)', ''],
+             'Memo Directives': ['',
+                                 'LOAN MIN PAYMENT (Loan A: Interest -$50.00); LOAN MIN PAYMENT (Checking -$50.00); LOAN MIN PAYMENT (Loan B: Interest -$50.00); LOAN MIN PAYMENT (Checking -$50.00); LOAN MIN PAYMENT (Loan C: Interest -$50.00); LOAN MIN PAYMENT (Checking -$50.00); ADDTL LOAN PAYMENT (Checking -$907.38); ADDTL LOAN PAYMENT (Loan A: Principal Balance -$907.38); ADDTL LOAN PAYMENT (Checking -$50.27); ADDTL LOAN PAYMENT (Loan A: Interest -$50.27); ADDTL LOAN PAYMENT (Checking -$814.75); ADDTL LOAN PAYMENT (Loan B: Principal Balance -$814.75); ADDTL LOAN PAYMENT (Checking -$50.14); ADDTL LOAN PAYMENT (Loan B: Interest -$50.14); ADDTL LOAN PAYMENT (Checking -$27.43); ADDTL LOAN PAYMENT (Loan C: Principal Balance -$27.43); ADDTL LOAN PAYMENT (Checking -$50.03); ADDTL LOAN PAYMENT (Loan C: Interest -$50.03)',
+                                 ''],
              'Memo': ['', '', '']
          })
          ),
@@ -3993,8 +3995,10 @@ class TestExpenseForecastMethods:
     # def test_propagate_principal_and_interest(self):
     #     raise NotImplementedError
 
-
+# these fail bc end of prev cycle logic hasnt been updated
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p4__cc_payment__partial_of_indicated_amount-account_set14-budget_set14-memo_rule_set14-20000101-20000103-milestone_set14-expected_result_df14]
+
+
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_10-account_set19-budget_set19-memo_rule_set19-20000101-20000103-milestone_set19-expected_result_df19]
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_110-account_set20-budget_set20-memo_rule_set20-20000101-20000103-milestone_set20-expected_result_df20]
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_560-account_set21-budget_set21-memo_rule_set21-20000101-20000103-milestone_set21-expected_result_df21]
