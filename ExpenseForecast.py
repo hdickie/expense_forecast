@@ -1517,8 +1517,16 @@ class ExpenseForecast:
             today_curr_stmt_bal = pd.DataFrame(row).T.iloc[:, cc_curr_stmt_acct_info.index + 1].T
             prev_prev_stmt_bal = pd.DataFrame(previous_row).T.iloc[:, cc_prev_stmt_acct_info.index + 1].T
             today_prev_stmt_bal = pd.DataFrame(row).T.iloc[:, cc_prev_stmt_acct_info.index + 1].T
+
+
             prev_interest = pd.DataFrame(previous_row).T.iloc[:, loan_interest_acct_info.index + 1].T
+            print('prev_interest:')
+            print(prev_interest)
+
+
             today_interest = pd.DataFrame(row).T.iloc[:,loan_interest_acct_info.index + 1].T
+            print('today_interest:')
+            print(today_interest)
 
             delta = 0
 
@@ -1552,7 +1560,7 @@ class ExpenseForecast:
                 delta = 0
                 for i in range(0,prev_interest.shape[0]):
                     new_delta = round((float(today_interest.iloc[i,0]) - float(prev_interest.iloc[i,0])),2)
-                    #print(row.Date + ' ' + str(delta) + ' += balance delta (' + str(new_delta) + ') yields: ' + str(round(delta + new_delta,2)))
+                    print(row.Date + ' ' + str(delta) + ' += balance delta (' + str(new_delta) + ') yields: ' + str(round(delta + new_delta,2)))
                     delta = round(delta + new_delta,2)
 
 
@@ -1571,7 +1579,7 @@ class ExpenseForecast:
                             line_item_value_string = line_item_value_string.replace('(', '').replace(')', '').replace('$', '')
                             line_item_value = float(line_item_value_string)
                             new_delta = round(abs(line_item_value),2) #this was already subtracted above, so we are putting it back
-                            #print(row.Date + ' ' + str(delta) + ' += memo delta ' + str(new_delta) + ' yields: ' + str(round(delta + new_delta,2)))
+                            print(row.Date + ' ' + str(delta) + ' += memo delta ' + str(new_delta) + ' yields: ' + str(round(delta + new_delta,2)))
                             delta = round(delta + new_delta,2)
 
                 self.forecast_df.loc[index,'Marginal Interest'] += delta
@@ -1684,6 +1692,9 @@ class ExpenseForecast:
         log_in_color(logger, 'magenta', 'debug', 'Forecast Pre-Validation', self.log_stack_depth)
         log_in_color(logger, 'magenta', 'debug', self.forecast_df.to_string(), self.log_stack_depth)
         log_in_color(logger, 'magenta', 'debug', 'Validation Delta Values', self.log_stack_depth)
+        log_data_header_string = 'Date'.rjust(10) + ' ' + 'Check'.rjust(10) + ' ' + 'CC'.rjust(10) + ' ' + 'Loan'.rjust(10) + ' ' + 'Net +'.rjust(10) + ' ' + 'Net -'.rjust(10)
+        log_in_color(logger, 'magenta', 'debug', log_data_header_string, self.log_stack_depth)
+
         fail_flag = False
         for f_i, row in self.forecast_df.iterrows():
             loan_acct_sel_vec.index = row.index
@@ -1692,15 +1703,21 @@ class ExpenseForecast:
 
             if sum(loan_acct_sel_vec) > 0:
                 loan_row_total = sum(row[loan_acct_sel_vec])
+                # print('loan_row_total:')
+                # print(loan_row_total)
             else:
                 loan_row_total = 0
 
             if sum(cc_acct_sel_vec) > 0:
                 cc_row_total = sum(row[cc_acct_sel_vec])
+                # print('cc_row_total:')
+                # print(cc_row_total)
             else:
                 cc_row_total = 0
 
             check_row_total = sum(row[checking_sel_vec])
+            # print('check_row_total:')
+            # print(check_row_total)
 
             if f_i == 0:
                 previous_check_row_total = check_row_total
@@ -1724,20 +1741,17 @@ class ExpenseForecast:
             memo = row_df['Memo'].iat[0]
             md = row_df['Memo Directives'].iat[0]
 
-            log_in_color(logger, 'magenta', 'debug', str(row['Date'].rjust(6) +' '+ str(check_row_delta).rjust(6) +' '+ str(cc_row_delta).rjust(6) +' '+ str(loan_row_delta).rjust(6) +' '+ str(net_gain).rjust(6) +' '+ str(net_loss).rjust(6)), self.log_stack_depth)
+
+            log_string = str(row['Date'].rjust(10) +' '+ str(check_row_delta).rjust(10) +' '+ str(cc_row_delta).rjust(10) +' '+ str(loan_row_delta).rjust(10) +' '+ str(net_gain).rjust(10) +' '+ str(net_loss).rjust(10))
+            log_in_color(logger, 'magenta', 'debug', log_string, self.log_stack_depth)
             if round(check_row_delta - (cc_row_delta + loan_row_delta),2) < 0:
                 try:
                     assert -1*round(net_loss,2) == round((check_row_delta - (cc_row_delta + loan_row_delta)),2)
                 except Exception as e:
-                    log_in_color(logger, 'magenta', 'debug', 'Validation FAIL', self.log_stack_depth)
+                    log_in_color(logger, 'red', 'debug', 'Validation FAIL -1*round(net_loss,2) == round((check_row_delta - (cc_row_delta + loan_row_delta)),2) was not TRUE', self.log_stack_depth)
                     log_in_color(logger, 'magenta', 'debug', 'Memo...........: '+str(memo), self.log_stack_depth)
                     log_in_color(logger, 'magenta', 'debug', 'Md.............: '+str(md), self.log_stack_depth)
                     log_in_color(logger, 'magenta', 'debug', str(-1*net_loss)+' != '+str( round((check_row_delta - (cc_row_delta + loan_row_delta)),2) ) , self.log_stack_depth)
-                    log_in_color(logger, 'magenta', 'debug', 'check_row_delta: '+str(check_row_delta), self.log_stack_depth)
-                    log_in_color(logger, 'magenta', 'debug', 'cc_row_delta...: ' + str(cc_row_delta), self.log_stack_depth)
-                    log_in_color(logger, 'magenta', 'debug', 'loan_row_delta.: ' + str(loan_row_delta), self.log_stack_depth)
-                    log_in_color(logger, 'magenta', 'debug', 'net_gain.......: ' + str(net_gain), self.log_stack_depth)
-                    log_in_color(logger, 'magenta', 'debug', 'net_loss.......: ' + str(net_loss), self.log_stack_depth)
                     log_in_color(logger, 'magenta', 'debug', '', self.log_stack_depth)
 
                     fail_flag = True
@@ -1746,15 +1760,10 @@ class ExpenseForecast:
                 try:
                     assert round(net_gain,2) == round((check_row_delta - (cc_row_delta + loan_row_delta)),2)
                 except Exception as e:
-                    log_in_color(logger, 'magenta', 'debug', 'Validation FAIL', self.log_stack_depth)
+                    log_in_color(logger, 'red', 'debug', 'Validation FAIL round(net_gain,2) == round((check_row_delta - (cc_row_delta + loan_row_delta)),2) was not TRUE', self.log_stack_depth)
                     log_in_color(logger, 'magenta', 'debug', 'Memo...........: ' + str(memo), self.log_stack_depth)
                     log_in_color(logger, 'magenta', 'debug', 'Md.............: ' + str(md), self.log_stack_depth)
                     log_in_color(logger, 'magenta', 'debug', str(net_gain)+' != '+str( round((check_row_delta - (cc_row_delta + loan_row_delta)),2) ) , self.log_stack_depth)
-                    log_in_color(logger, 'magenta', 'debug', 'check_row_delta: ' + str(check_row_delta), self.log_stack_depth)
-                    log_in_color(logger, 'magenta', 'debug', 'cc_row_delta...: ' + str(cc_row_delta), self.log_stack_depth)
-                    log_in_color(logger, 'magenta', 'debug', 'loan_row_delta.: ' + str(loan_row_delta), self.log_stack_depth)
-                    log_in_color(logger, 'magenta', 'debug', 'net_gain.......: ' + str(net_gain), self.log_stack_depth)
-                    log_in_color(logger, 'magenta', 'debug', 'net_loss.......: ' + str(net_loss), self.log_stack_depth)
 
                     fail_flag = True
 
@@ -2363,6 +2372,8 @@ class ExpenseForecast:
                 if memo_rule_row.Account_To == 'ALL_LOANS' and account_row.Name.split(':')[
                     0] != memo_rule_row.Account_From:
                     delta = round(current_balance - relevant_balance, 2)
+                    if 'Billing Cycle Payment Bal' in account_row.Name:  # this could be more specific
+                        continue
                     forecast_df.loc[
                         row_sel_vec, 'Memo Directives'] += f"; ADDTL LOAN PAYMENT ({memo_rule_row.Account_From} -${delta:.2f}) "
                     forecast_df.loc[
@@ -2374,6 +2385,9 @@ class ExpenseForecast:
                     # print('Updating MD w/ addtl cc payment')
                     # print(confirmed_row.to_string())
                     delta = round(current_balance - relevant_balance, 2)
+
+                    if 'Billing Cycle Payment Bal' in account_row.Name:  # this could be more specific
+                        continue
                     forecast_df.loc[
                         row_sel_vec, 'Memo Directives'] += f"; ADDTL CC PAYMENT ({memo_rule_row.Account_From} -${delta:.2f}) "
                     forecast_df.loc[
@@ -2707,18 +2721,18 @@ class ExpenseForecast:
             income_flag = self.checkIfTxnIsIncome(confirmed_row)
 
             try:
-                log_string = str(date_YYYYMMDD) + ' executing txn \''+str(relevant_confirmed_df.Memo.iat[0])
-                log_string += '\' '+str(memo_rule_row.Account_From)+ ' -> '+str(memo_rule_row.Account_To)
-                log_string += ' for $' + str(relevant_confirmed_df.Amount.iat[0])
-                log_in_color(logger, 'white', 'debug', log_string, self.log_stack_depth)
-                log_in_color(logger, 'white', 'debug', str(date_YYYYMMDD) + ' before txn: ', self.log_stack_depth)
-                log_in_color(logger, 'white', 'debug', account_set.getAccounts().to_string(), self.log_stack_depth)
+                # log_string = str(date_YYYYMMDD) + ' executing txn \''+str(relevant_confirmed_df.Memo.iat[0])
+                # log_string += '\' '+str(memo_rule_row.Account_From)+ ' -> '+str(memo_rule_row.Account_To)
+                # log_string += ' for $' + str(relevant_confirmed_df.Amount.iat[0])
+                # log_in_color(logger, 'white', 'debug', log_string, self.log_stack_depth)
+                # log_in_color(logger, 'white', 'debug', str(date_YYYYMMDD) + ' before txn: ', self.log_stack_depth)
+                # log_in_color(logger, 'white', 'debug', account_set.getAccounts().to_string(), self.log_stack_depth)
                 account_set.executeTransaction(Account_From=memo_rule_row.Account_From,
                                                Account_To=memo_rule_row.Account_To,
                                                Amount=confirmed_row.Amount,
                                                income_flag=income_flag)
-                log_in_color(logger, 'white', 'debug', str(date_YYYYMMDD) + ' after txn: ', self.log_stack_depth)
-                log_in_color(logger, 'white', 'debug', account_set.getAccounts().to_string(), self.log_stack_depth)
+                # log_in_color(logger, 'white', 'debug', str(date_YYYYMMDD) + ' after txn: ', self.log_stack_depth)
+                # log_in_color(logger, 'white', 'debug', account_set.getAccounts().to_string(), self.log_stack_depth)
             except Exception as e:
                 self.log_stack_depth -= 1
                 log_in_color(logger, 'white', 'debug', str(date_YYYYMMDD) + ' EXIT processConfirmedTransactions', self.log_stack_depth)
@@ -5900,7 +5914,7 @@ class ExpenseForecast:
         Returns:
         - Updated current_forecast_row_df after executing credit card minimum payments.
         """
-        log_in_color(logger, 'cyan', 'debug', str(current_forecast_row_df.Date.iat[0])+' ENTER executeCreditCardMinimumPayments ', self.log_stack_depth)
+        log_in_color(logger, 'white', 'debug', str(current_forecast_row_df.Date.iat[0])+' ENTER executeCreditCardMinimumPayments ', self.log_stack_depth)
         self.log_stack_depth += 1
         primary_checking_account_name = account_set.getPrimaryCheckingAccountName()
 
@@ -6068,12 +6082,12 @@ class ExpenseForecast:
                     current_forecast_row_df[cycle_payment_bal_aname] = 0
 
         self.log_stack_depth -= 1
-        log_in_color(logger, 'cyan', 'debug', str(current_forecast_row_df.Date.iat[0]) + ' EXIT executeCreditCardMinimumPayments ', self.log_stack_depth)
+        log_in_color(logger, 'white', 'debug', str(current_forecast_row_df.Date.iat[0]) + ' EXIT executeCreditCardMinimumPayments ', self.log_stack_depth)
         return current_forecast_row_df
 
     #@profile
     def executeLoanMinimumPayments(self, account_set, current_forecast_row_df):
-        log_in_color(logger, 'cyan', 'debug', str(current_forecast_row_df.Date.iat[0]) + ' ENTER executeLoanMinimumPayments', self.log_stack_depth)
+        log_in_color(logger, 'white', 'debug', str(current_forecast_row_df.Date.iat[0]) + ' ENTER executeLoanMinimumPayments', self.log_stack_depth)
         self.log_stack_depth += 1
 
         primary_checking_account_name = account_set.getPrimaryCheckingAccountName()
@@ -6118,10 +6132,11 @@ class ExpenseForecast:
                     loan_payment_amount = min(current_debt_balance,minimum_payment_amount)
 
                     if loan_payment_amount > 0:
-                        log_in_color(logger, 'cyan', 'debug','loan_payment_amount:'+str(loan_payment_amount), self.log_stack_depth)
+                        log_in_color(logger, 'white', 'debug','loan_payment_amount:'+str(loan_payment_amount), self.log_stack_depth)
                         account_set.executeTransaction(Account_From=primary_checking_account_name, Account_To=account_row.Name.split(':')[0],
                                                        # Note that the execute transaction method will split the amount paid between the 2 accounts
-                                                       Amount=loan_payment_amount)
+                                                       Amount=loan_payment_amount,
+                                                       minimum_payment_flag=True)
 
                         if payment_toward_interest > 0:
                             current_forecast_row_df['Memo Directives'] += ' LOAN MIN PAYMENT (' + account_row.Name.split(':')[0] + ': Interest -$' + str(f'{payment_toward_interest:.2f}') + '); '
@@ -6142,7 +6157,7 @@ class ExpenseForecast:
 
         self.log_stack_depth -= 1
 
-        log_in_color(logger, 'cyan', 'debug', str(current_forecast_row_df.Date.iat[0]) + ' EXIT executeLoanMinimumPayments', self.log_stack_depth)
+        log_in_color(logger, 'white', 'debug', str(current_forecast_row_df.Date.iat[0]) + ' EXIT executeLoanMinimumPayments', self.log_stack_depth)
         return current_forecast_row_df
 
     #@profile
@@ -6257,7 +6272,7 @@ class ExpenseForecast:
 
         return account_set
 
-    ## THIS WORKS
+    ## old logic
     def propagateOptimizationTransactionsIntoTheFuture(self, account_set_before_p2_plus_txn, forecast_df, date_string_YYYYMMDD):
         """
         Propagates optimization transactions into the future forecast.
@@ -8178,6 +8193,9 @@ class ExpenseForecast:
         log_in_color(logger, 'cyan', 'debug', 'ENTER _propagate_loan_payment_pbal_interest', self.log_stack_depth)
         self.log_stack_depth += 1
 
+        log_in_color(logger, 'white', 'debug', 'BEFORE forecast_df:', self.log_stack_depth)
+        log_in_color(logger, 'white', 'debug', forecast_df.to_string(), self.log_stack_depth)
+
         # Extract relevant account names
         checking_account_name = relevant_account_info_df[
             relevant_account_info_df.Account_Type == 'checking'].Name.iat[0]
@@ -8185,6 +8203,8 @@ class ExpenseForecast:
             relevant_account_info_df.Account_Type == 'principal balance'].Name.iat[0]
         interest_account_name = relevant_account_info_df[
             relevant_account_info_df.Account_Type == 'interest'].Name.iat[0]
+        billing_cycle_payment_balance_account_name = relevant_account_info_df[
+            relevant_account_info_df.Account_Type == 'loan billing cycle payment bal'].Name.iat[0]
 
         # Get the APR for the principal balance account
         pbal_sel = account_set_before_p2_plus_txn.getAccounts()['Name'] == pbal_account_name
@@ -8203,11 +8223,18 @@ class ExpenseForecast:
         checking_account_index = forecast_df.columns.get_loc(checking_account_name)
         pbal_account_index = forecast_df.columns.get_loc(pbal_account_name)
         interest_account_index = forecast_df.columns.get_loc(interest_account_name)
+        billing_cycle_payment_index = forecast_df.columns.get_loc(billing_cycle_payment_balance_account_name)
 
         # Get account deltas
-        pbal_delta = account_deltas_list[pbal_account_index - 1]
-        interest_delta = account_deltas_list[interest_account_index - 1]
-        checking_delta = pbal_delta + interest_delta
+        pbal_delta = round(account_deltas_list[pbal_account_index - 1],2)
+        interest_delta = round(account_deltas_list[interest_account_index - 1],2)
+        checking_delta = round(pbal_delta + interest_delta,2)
+        billing_cycle_payment_delta = round(account_deltas_list[billing_cycle_payment_index - 1],2)
+
+        print('pbal_delta:' + str(pbal_delta))
+        print('billing_cycle_payment_delta:'+str(billing_cycle_payment_delta))
+        # print('forecast_df:')
+        # print(forecast_df.to_string())
 
         # Iterate over future forecast rows
         for f_i, f_row in future_rows_only_df.iterrows():
@@ -8237,6 +8264,8 @@ class ExpenseForecast:
                         checking_delta += interest_amount
                     else:
                         md_to_keep.append(md)
+
+                billing_cycle_payment_delta = 0
 
                 # Remove the checking memo directive
                 total_payment = pbal_amount + interest_amount
@@ -8271,6 +8300,8 @@ class ExpenseForecast:
                 pbal_balance = future_rows_only_df.at[f_i, pbal_account_name]
                 interest_balance = future_rows_only_df.at[f_i, interest_account_name]
 
+
+
                 # Adjust interest memo
                 if interest_balance <= interest_paid_amount:
                     new_interest_amount = interest_balance
@@ -8301,6 +8332,7 @@ class ExpenseForecast:
                 checking_delta += (og_pbal_surplus + og_interest_surplus)
                 pbal_delta += og_pbal_surplus
                 interest_delta += og_interest_surplus
+                billing_cycle_payment_delta = 0  # redundant but cant hurt
 
             else:
                 # No adjustments needed for other dates
@@ -8309,6 +8341,7 @@ class ExpenseForecast:
             # Update balances
             future_rows_only_df.at[f_i, checking_account_name] += checking_delta
             future_rows_only_df.at[f_i, pbal_account_name] += pbal_delta
+            future_rows_only_df.at[f_i, billing_cycle_payment_balance_account_name] += billing_cycle_payment_delta
 
             # Apply daily interest accrual
             if date_iat >= min(loan_billing_dates):
@@ -8332,6 +8365,8 @@ class ExpenseForecast:
             md_to_keep = [md for md in md_to_keep if md]
             future_rows_only_df.at[f_i, 'Memo Directives'] = ';'.join(md_to_keep)
 
+        log_in_color(logger, 'white', 'debug', 'AFTER forecast_df:', self.log_stack_depth)
+        log_in_color(logger, 'white', 'debug', forecast_df.to_string(), self.log_stack_depth)
         self.log_stack_depth -= 1
         log_in_color(logger, 'cyan', 'debug', 'EXIT _propagate_loan_payment_pbal_interest', self.log_stack_depth)
         return future_rows_only_df
@@ -8708,6 +8743,7 @@ class ExpenseForecast:
 
         if account_deltas.sum() == 0:
             self.log_stack_depth -= 1
+            log_in_color(logger, 'white', 'debug', str(date_string_YYYYMMDD) + ' no changes to propagate', self.log_stack_depth)
             log_in_color(logger, 'cyan', 'debug', str(date_string_YYYYMMDD)+' EXIT propagateOptimizationTransactionsIntoTheFuture', self.log_stack_depth)
             return forecast_df
 
@@ -8832,8 +8868,10 @@ class ExpenseForecast:
                 account_types_set = frozenset(relevant_account_type_list)
                 processing_function = account_type_combinations.get(account_types_set)
 
-                print('account_types_set:')
-                print(account_types_set)
+                log_in_color(logger, 'cyan', 'debug', str(date_string_YYYYMMDD) + ' processing_function '+str(processing_function), self.log_stack_depth)
+
+                # print('account_types_set:')
+                # print(account_types_set)
 
                 if processing_function:
 
@@ -9290,13 +9328,20 @@ class ExpenseForecast:
                 # Sync again after interest accruals
                 account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, date_str)
 
+                log_in_color(logger, 'green', 'info', 'BEFORE loan min payment', self.log_stack_depth)
+                log_in_color(logger, 'green', 'info', forecast_df.to_string(), self.log_stack_depth)
+
                 # Execute minimum loan payments
                 forecast_df.loc[forecast_df.Date == date_str] = self.executeLoanMinimumPayments(account_set,
                                                                                                 forecast_df[
                                                                                                     forecast_df.Date == date_str])
 
+                log_in_color(logger, 'green', 'info', 'AFTER loan min payment', self.log_stack_depth)
+                log_in_color(logger, 'green', 'info', forecast_df.to_string(), self.log_stack_depth)
+
                 # Sync after loan payments
                 account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, date_str)
+
 
                 # Execute credit card minimum payments
                 forecast_df.loc[forecast_df.Date == date_str] = self.executeCreditCardMinimumPayments(forecast_df,
@@ -9330,6 +9375,7 @@ class ExpenseForecast:
                 else:
                     raise e
 
+        log_in_color(logger, 'green', 'info', forecast_df.to_string(), self.log_stack_depth)
         self.log_stack_depth -= 1
         log_in_color(logger, 'white', 'info', 'EXIT satisfice', self.log_stack_depth)
         return forecast_df  # satisfice_success = True

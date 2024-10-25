@@ -475,7 +475,7 @@ class AccountSet:
         return balances_dict
 
     def executeTransaction(self, Account_From, Account_To, Amount, income_flag=False, minimum_payment_flag=False):
-        log_in_color(logger,'white', 'debug','ENTER executeTransaction('+str(Account_From)+','+str(Account_To)+','+str(Amount)+')')
+        log_in_color(logger,'white', 'debug','ENTER executeTransaction('+str(Account_From)+','+str(Account_To)+','+str(Amount)+',minimum_payment_flag='+str(minimum_payment_flag)+')')
         Amount = round(Amount,2)
 
         if Amount == 0:

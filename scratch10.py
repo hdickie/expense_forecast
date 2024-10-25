@@ -35,7 +35,7 @@ def non_trivial_loan(name,pbal,interest,apr):
                     principal_balance=pbal,
                     interest_balance=interest,
                     billing_cycle_payment_balance=0,
-                    end_of_previous_cycle_balance=prev_balance)
+                    end_of_previous_cycle_balance=pbal)
 
     return A.accounts
 
@@ -94,35 +94,46 @@ def txn_budget_item_once_list(amount,priority,memo,deferrable,partial_payment_al
 
 
 if __name__ == '__main__':
-    test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df = ('test_cc_advance_minimum_payment_in_1_payment_pay_over_minimum',
-         AccountSet.AccountSet(checking_acct_list(5000) + credit_bsd12_acct_list(1000, 1000, 0.05)),
-         BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000111', '20000111', 2, 'once', 500, 'additional_cc_payment')]),
+    test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df = ('test_p7__additional_loan_payment__amt_110',
+         AccountSet.AccountSet(
+             checking_acct_list(5000) + non_trivial_loan('Loan A', 1000, 100, 0.1) + non_trivial_loan('Loan B', 1000,
+                                                                                                      100,
+                                                                                                      0.05) + non_trivial_loan(
+                 'Loan C', 1000, 100, 0.01)),
+         BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000102', '20000102', 7, 'once', 110, 'additional_loan_payment')]),
          MemoRuleSet.MemoRuleSet([
              MemoRule.MemoRule('.*', 'Checking', None, 1),
-             MemoRule.MemoRule('additional_cc_payment', 'Checking', 'Credit', 2)
+             MemoRule.MemoRule('additional_loan_payment', 'Checking', 'ALL_LOANS', 7)
          ]),
-         '20000111',
-         '20000113',
-         MilestoneSet.MilestoneSet([], [], []),
+         '20000101',
+         '20000103',
+         MilestoneSet.MilestoneSet( [], [], []),
          pd.DataFrame({
-             'Date': ['20000111', '20000112', '20000113'],
-             'Checking': [5000, 4500, 4500],
-             'Credit: Curr Stmt Bal': [1000, 1000, 0],
-             'Credit: Prev Stmt Bal': [1000, 500, 1504.17],
-             'Credit: Credit Billing Cycle Payment Bal': [0, 0, 0],
-             'Credit: Credit End of Prev Cycle Bal': [1000, 1000, 1000],
-             'Marginal Interest': [0, 0, 4.17],
+             'Date': ['20000101', '20000102', '20000103'],
+             'Checking': [5000, 4740, 4740],
+             'Loan A: Principal Balance': [1000, 940.27, 940.27],
+             'Loan A: Interest': [100, 0.0, 0.26],
+             'Loan A: Loan Billing Cycle Payment Bal': [0, 59.73 + 50.27, 59.73 + 50.27],
+             'Loan A: Loan End of Prev Cycle Bal': [1000, 1000, 940.27],
+             'Loan B: Principal Balance': [1000, 1000, 1000],
+             'Loan B: Interest': [100, 50.14, 50.28],
+             'Loan B: Loan Billing Cycle Payment Bal': [0, 50.27, 50.27],
+             'Loan B: Loan End of Prev Cycle Bal': [1000, 1000, 1000],
+             'Loan C: Principal Balance': [1000, 1000, 1000],
+             'Loan C: Interest': [100, 50.03, 50.06],
+             'Loan C: Loan Billing Cycle Payment Bal': [0, 0, 0],
+             'Loan C: Loan End of Prev Cycle Bal': [1000, 1000, 1000],
+             'Marginal Interest': [0, 0.44, 0.43],
              'Net Gain': [0, 0, 0],
-             'Net Loss': [0, 0, 4.17],
-             'Net Worth': [3000, 3000, 2995.83],
-             'Loan Total': [0, 0, 0],
-             'CC Debt Total': [2000, 1500, 1504.17],
-             'Liquid Total': [5000, 4500, 4500],
-             'Memo Directives': ['',
-                                 'ADDTL CC PAYMENT (Checking -$500.00); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$500.00)',
-                                 'CC INTEREST (Credit: Prev Stmt Bal +$4.17); CC MIN PAYMENT ALREADY MADE (Checking -$0.00); CC MIN PAYMENT ALREADY MADE (Credit: Prev Stmt Bal -$0.00)'],
+             'Net Loss': [0, 0.44, 0.43],
+             'Net Worth': [1700, 1699.56, 1699.13],
+             'Loan Total': [3300, 3040.44, 3040.87],
+             'CC Debt Total': [0, 0, 0],
+             'Liquid Total': [5000, 4740, 4740],
+                                  'Memo Directives': ['', 'LOAN MIN PAYMENT (Loan A: Interest -$50.00); LOAN MIN PAYMENT (Checking -$50.00); LOAN MIN PAYMENT (Loan B: Interest -$50.00); LOAN MIN PAYMENT (Checking -$50.00); LOAN MIN PAYMENT (Loan C: Interest -$50.00); LOAN MIN PAYMENT (Checking -$50.00); ADDTL LOAN PAYMENT (Checking -$59.73); ADDTL LOAN PAYMENT (Loan A: Principal Balance -$59.73); ADDTL LOAN PAYMENT (Checking -$50.27); ADDTL LOAN PAYMENT (Loan A: Interest -$50.27)', ''],
              'Memo': ['', '', '']
-         }))
+         })
+         )
 
     E = ExpenseForecast.ExpenseForecast(account_set, budget_set,
                                         memo_rule_set,
