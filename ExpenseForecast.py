@@ -3900,7 +3900,7 @@ class ExpenseForecast:
                 log_in_color(logger, 'green', 'info', 'Forecast Post-Update: ', self.log_stack_depth)
                 log_in_color(logger, 'green', 'info', forecast_df.to_string(), self.log_stack_depth)
                 log_in_color(logger, 'green', 'info', 'New Confirmed Txns: ', self.log_stack_depth)
-                log_in_color(logger, 'green', 'info', result.to_string(), self.log_stack_depth)
+                log_in_color(logger, 'green', 'info', confirmed_df.to_string(), self.log_stack_depth)
             else:
                 # This case should not occur; raise an error
                 raise ValueError(
@@ -7618,51 +7618,7 @@ class ExpenseForecast:
         return forecast_df
 
     #@profile
-    def _propagate_credit_curr_stmt_balance(self, relevant_account_info_df,
-                                            account_deltas_list,
-                                            future_rows_only_df,
-                                            forecast_df):
-        """
-        Propagates changes to the credit card current statement balance into the future forecast.
-
-        Parameters:
-        - relevant_account_info_df: DataFrame containing account information.
-        - account_deltas_list: List of deltas for each account (excluding 'Date' column).
-        - future_rows_only_df: DataFrame containing future forecast rows.
-        - forecast_df: The original forecast DataFrame.
-
-        Returns:
-        - Updated future_rows_only_df DataFrame.
-        """
-        # Extract the account name for the current statement balance
-        curr_stmt_bal_account_series = relevant_account_info_df[
-            relevant_account_info_df['Account_Type'] == 'credit curr stmt bal']['Name']
-        if curr_stmt_bal_account_series.empty:
-            # Handle the case where the account type is not found
-            raise ValueError("Account type 'credit curr stmt bal' not found in relevant_account_info_df")
-        curr_stmt_bal_account_name = curr_stmt_bal_account_series.iat[0]
-
-        # Create a Series mapping account names to deltas
-        account_names = forecast_df.columns[1:]  # Exclude 'Date' column
-        account_deltas_series = pd.Series(account_deltas_list, index=account_names)
-
-        # Get the delta for the current statement balance account
-        try:
-            curr_stmt_delta = account_deltas_series[curr_stmt_bal_account_name]
-        except KeyError:
-            raise KeyError(f"Account '{curr_stmt_bal_account_name}' not found in account_deltas_list")
-
-        # Update the future forecast DataFrame
-        if curr_stmt_bal_account_name in future_rows_only_df.columns:
-            future_rows_only_df[curr_stmt_bal_account_name] += curr_stmt_delta
-        else:
-            raise KeyError(f"Account '{curr_stmt_bal_account_name}' not found in future_rows_only_df columns")
-
-        return future_rows_only_df
-
-    #affects checking as well
-    #@profile
-    def _propagate_credit_curr_only(self, relevant_account_info_df,
+    def _propagate_credit_txn_curr_only(self, relevant_account_info_df,
                                             account_deltas_list,
                                             future_rows_only_df,
                                             forecast_df,
@@ -7686,7 +7642,323 @@ class ExpenseForecast:
         Returns:
         - Updated future_rows_only_df DataFrame.
         """
-        log_in_color(logger, 'white', 'debug', 'ENTER _propagate_credit_curr_only()', self.log_stack_depth)
+        log_in_color(logger, 'white', 'debug', 'ENTER _propagate_credit_txn_curr_only', self.log_stack_depth)
+        self.log_stack_depth += 1
+
+        # Extract relevant account names
+        checking_account_name = account_set_before_p2_plus_txn.getPrimaryCheckingAccountName()
+        curr_stmt_bal_account_name = relevant_account_info_df[
+            relevant_account_info_df.Account_Type == 'credit curr stmt bal'].Name.iat[0]
+        credit_basename = curr_stmt_bal_account_name.split(':')[0]
+        prev_stmt_bal_account_name = credit_basename+': Prev Stmt Bal'
+        eopc_account_name = credit_basename+': Credit End of Prev Cycle Bal'
+        # billing_cycle_payment_account_name = relevant_account_info_df[
+        #     relevant_account_info_df.Account_Type == 'credit billing cycle payment bal'].Name.iat[0]
+
+        # Get billing dates and next billing date
+        cc_billing_dates = billing_dates_dict[prev_stmt_bal_account_name]
+        future_billing_dates = [int(d) for d in cc_billing_dates if int(d) > int(date_string_YYYYMMDD)]
+        if future_billing_dates:
+            next_billing_date = str(min(future_billing_dates))
+            date_after_next_billing_date_YYYYMMDD = (datetime.datetime.strptime(next_billing_date,'%Y%m%d')+datetime.timedelta(days=1)).strftime('%Y%m%d')
+        else:
+            next_billing_date = None
+            date_after_next_billing_date_YYYYMMDD = 'never match'
+
+        # Get account indices in forecast_df
+        checking_account_index = forecast_df.columns.get_loc(checking_account_name)
+        curr_stmt_bal_account_index = forecast_df.columns.get_loc(curr_stmt_bal_account_name)
+        prev_stmt_bal_account_index = curr_stmt_bal_account_index + 1
+        eopc_account_index = curr_stmt_bal_account_index + 2
+
+        # Get account deltas
+        previous_stmt_delta = 0
+        curr_stmt_delta = account_deltas_list[curr_stmt_bal_account_index - 1]
+        checking_delta = 0
+        eopc_delta = 0
+
+        og_curr_stmt_delta = curr_stmt_delta
+
+
+        # # Initialize previous previous statement balance (used in future billing dates)
+        # previous_prev_stmt_bal = 0
+
+        # Iterate over future forecast rows
+        for f_i, f_row in future_rows_only_df.iterrows():
+            row_df = pd.DataFrame(f_row).T
+            date_iat = f_row['Date']
+            md_to_keep = []
+            if date_iat == next_billing_date:
+                # Handle next billing date
+
+                ### First min payment is not affected
+                # # Initialize memo variables
+                # og_prev_memo = ''
+                # og_curr_memo = ''
+                # og_check_memo = ''
+                # og_interest_memo = ''
+                # og_prev_amount = 0.0
+                # og_curr_amount = 0.0
+                # og_check_amount = 0.0
+                #
+                # new_prev_memo = ''
+                # new_curr_memo = ''
+                # new_check_memo = ''
+                #
+                # # Parse memo directives
+                # log_in_color(logger, 'cyan', 'debug', 'Memo Directives: ' + str(f_row['Memo Directives']), self.log_stack_depth)
+                # for md in f_row['Memo Directives'].split(';'):
+                #     md = md.strip()
+                #     if not md:
+                #         continue
+                #
+                #     if f'CC MIN PAYMENT ({prev_stmt_bal_account_name}' in md:
+                #         og_prev_memo = md
+                #         og_prev_amount = self._parse_memo_amount(md)
+                #     elif f'CC MIN PAYMENT ({curr_stmt_bal_account_name}' in md:
+                #         og_curr_memo = md
+                #         og_curr_amount = self._parse_memo_amount(md)
+                #     elif f'CC MIN PAYMENT ({checking_account_name}' in md:
+                #         og_check_memo = md
+                #         og_check_amount = self._parse_memo_amount(md)
+                #     elif f'CC INTEREST ({prev_stmt_bal_account_name}' in md:
+                #         og_interest_memo = md
+                #         og_interest_amount = self._parse_memo_amount(md)
+                #     else:
+                #         md_to_keep.append(md)
+                #
+                # # Get advance payment amount
+                # advance_payment_amount = self.getTotalPrepaidInCreditCardBillingCycle(
+                #     prev_stmt_bal_account_name,
+                #     account_set_before_p2_plus_txn,
+                #     forecast_df,
+                #     date_iat
+                # )
+                #
+                # min_payment_amount = og_check_amount
+                #
+                # # Adjust deltas
+                # curr_stmt_delta += og_curr_amount
+                # previous_stmt_delta += og_prev_amount
+                # checking_delta += og_prev_amount + og_curr_amount
+                #
+                # if date_string_YYYYMMDD == next_billing_date:
+                #     pass  # payments day of count toward the next cycle
+                # else:
+                #     billing_cycle_payment_delta = 0
+                #
+                # # Apply advance payments
+                # if advance_payment_amount >= min_payment_amount:
+                #     # All payments already made
+                #     new_check_memo = f'CC MIN PAYMENT ALREADY MADE ({checking_account_name} -$0.00)'
+                #     new_prev_memo = (f'CC MIN PAYMENT ALREADY MADE ({prev_stmt_bal_account_name} -$0.00)'
+                #                      if og_prev_amount > 0 else '')
+                #     new_curr_memo = (f'CC MIN PAYMENT ALREADY MADE ({curr_stmt_bal_account_name} -$0.00)'
+                #                      if og_curr_amount > 0 else '')
+                # else:
+                #     remaining_payment = min_payment_amount - advance_payment_amount
+                #     if advance_payment_amount >= og_prev_amount:
+                #         # Advance payments cover previous statement balance and some of curr
+                #         new_prev_memo = self._update_memo_amount(og_prev_memo,
+                #                                                  0.00)  # todo this is where the error occurred
+                #         curr_amount_remaining = og_curr_amount - (advance_payment_amount - og_prev_amount)
+                #         if og_curr_amount > 0:
+                #             new_curr_memo = self._update_memo_amount(og_curr_memo, curr_amount_remaining)
+                #     else:
+                #         # Advance payments partially cover previous statement balance and none of curr (which there might not be any)
+                #         prev_amount_remaining = og_prev_amount - advance_payment_amount
+                #         new_prev_memo = self._update_memo_amount(og_prev_memo, prev_amount_remaining)
+                #         new_curr_memo = og_curr_memo
+                #     new_check_memo = self._update_memo_amount(og_check_memo, og_check_amount - advance_payment_amount)
+
+                # Move current statement delta to previous
+                previous_stmt_delta += curr_stmt_delta
+                curr_stmt_delta = 0
+
+                # Update memo directives
+                #md_to_keep.extend(filter(None, [new_check_memo, new_curr_memo, new_prev_memo, og_interest_memo]))
+
+                #
+            elif date_iat == date_after_next_billing_date_YYYYMMDD: #day after ext billing date
+                eopc_delta = og_curr_stmt_delta
+
+            elif date_iat in cc_billing_dates: #todo update this branch
+                # Handle other billing dates
+
+                # Ensure we have a valid previous_prev_stmt_bal
+                if previous_prev_stmt_bal == 0:
+                    continue  # Skip if we don't have previous balance
+
+                # Initialize memo variables
+                og_prev_memo = ''
+                og_curr_memo = ''
+                og_check_memo = ''
+                og_interest_memo = ''
+                og_prev_amount = 0.0
+                og_curr_amount = 0.0
+                og_check_amount = 0.0
+                og_interest_amount = 0.0
+                og_min_payment_amount = 0.0
+
+                # Parse memo directives
+                for md in f_row['Memo Directives'].split(';'):
+                    md = md.strip()
+                    if not md:
+                        continue
+
+                    if f'CC MIN PAYMENT ({prev_stmt_bal_account_name}' in md:
+                        og_prev_memo = md
+                        og_prev_amount = self._parse_memo_amount(md)
+                        og_min_payment_amount += og_prev_amount
+                    elif f'CC MIN PAYMENT ({curr_stmt_bal_account_name}' in md:
+                        og_curr_memo = md
+                        og_curr_amount = self._parse_memo_amount(md)
+                        og_min_payment_amount += og_curr_amount
+                    elif f'CC MIN PAYMENT ({checking_account_name}' in md:
+                        og_check_memo = md
+                        og_check_amount = self._parse_memo_amount(md)
+                    elif f'CC INTEREST ({prev_stmt_bal_account_name}' in md:
+                        og_interest_memo = md
+                        og_interest_amount = self._parse_memo_amount(md)
+                    else:
+                        md_to_keep.append(md)
+
+                # Get account row for APR
+                account_row = account_set_before_p2_plus_txn.getAccounts().loc[
+                    account_set_before_p2_plus_txn.getAccounts().Name == prev_stmt_bal_account_name
+                    ]
+
+                # Compute interest and current due
+                apr = account_row.APR.iat[0]
+                interest_to_be_charged = round(previous_prev_stmt_bal * (apr / 12), 2)
+                principal_due = previous_prev_stmt_bal * 0.01
+                current_due = principal_due + interest_to_be_charged
+
+                # Adjusted payment amounts
+                curr_prev_stmt_bal = f_row[prev_stmt_bal_account_name]  # Should we adjust for interest?
+
+                new_min_payment_amount = max(min(40, current_due), curr_prev_stmt_bal)
+
+                current_prev_stmt_balance = row_df[prev_stmt_bal_account_name].iat[0]
+                current_curr_stmt_balance = row_df[curr_stmt_bal_account_name].iat[0]
+
+                # blindly copied from gpt
+                new_min_payment_amount = (
+                    current_due if current_due > 0 and current_due > account_row.Minimum_Payment.iat[0] else
+                    (
+                        account_row.Minimum_Payment.iat[0] if (
+                                                                      current_prev_stmt_balance + current_curr_stmt_balance) >
+                                                              account_row.Minimum_Payment.iat[0] else (
+                                current_prev_stmt_balance + current_curr_stmt_balance)) if current_due > 0 else 0
+                )
+
+                adjusted_payment_amount = round(og_min_payment_amount - new_min_payment_amount, 2)
+                log_in_color(logger, 'cyan', 'debug',
+                             str(date_iat) + ' adjusted_payment_amount: ' + str(adjusted_payment_amount),
+                             self.log_stack_depth)
+
+                previous_stmt_delta += adjusted_payment_amount
+                checking_delta += adjusted_payment_amount
+                interest_delta = interest_to_be_charged - og_interest_amount
+                previous_stmt_delta += round(interest_delta, 2)
+                billing_cycle_payment_delta = 0  # redundant but cant hurt
+
+                # Adjust memos
+                new_check_memo = self._update_memo_amount(og_check_memo, og_check_amount - adjusted_payment_amount)
+                if adjusted_payment_amount >= curr_prev_stmt_bal:
+                    # Adjust curr and prev memos
+                    if og_curr_amount > 0:
+                        new_curr_memo = self._update_memo_amount(og_curr_memo,
+                                                                 adjusted_payment_amount - curr_prev_stmt_bal)
+                    if og_prev_amount > 0:
+                        new_prev_memo = self._update_memo_amount(og_prev_memo, curr_prev_stmt_bal)
+                else:
+                    if og_curr_amount > 0:
+                        new_curr_memo = self._update_memo_amount(og_curr_memo, 0.00)
+                    if og_prev_amount > 0:
+                        new_prev_memo = self._update_memo_amount(og_prev_memo, adjusted_payment_amount)
+                new_interest_memo = self._update_memo_amount(og_interest_memo, interest_to_be_charged)
+
+                log_in_color(logger, 'cyan', 'debug',
+                             str(date_iat) + ' updated check memo: ' + str(og_check_memo) + ' -> ' + str(
+                                 new_check_memo), self.log_stack_depth)
+                log_in_color(logger, 'cyan', 'debug',
+                             str(date_iat) + ' updated curr memo: ' + str(og_curr_memo) + ' -> ' + str(new_curr_memo),
+                             self.log_stack_depth)
+                log_in_color(logger, 'cyan', 'debug',
+                             str(date_iat) + ' updated prev memo: ' + str(og_prev_memo) + ' -> ' + str(new_prev_memo),
+                             self.log_stack_depth)
+
+                # Update memo directives
+                md_to_keep.extend([new_check_memo, new_curr_memo, new_prev_memo, new_interest_memo])
+
+                # Update previous_prev_stmt_bal
+                previous_prev_stmt_bal = future_rows_only_df.at[f_i, prev_stmt_bal_account_name] + previous_stmt_delta
+
+            elif False: #day after non-next billing date
+                pass #todo update eopc_delta
+            else:
+                # No adjustments needed
+                pass
+
+            # Update balances
+            future_rows_only_df.at[f_i, checking_account_name] += checking_delta
+            future_rows_only_df.at[f_i, prev_stmt_bal_account_name] += previous_stmt_delta
+            future_rows_only_df.at[f_i, curr_stmt_bal_account_name] += curr_stmt_delta
+            future_rows_only_df.at[f_i, eopc_account_name] += eopc_delta
+            # future_rows_only_df.at[f_i, billing_cycle_payment_account_name] += billing_cycle_payment_delta
+
+            future_rows_only_df.at[f_i, checking_account_name] = round(
+                future_rows_only_df.at[f_i, checking_account_name], 2)
+            future_rows_only_df.at[f_i, prev_stmt_bal_account_name] = round(
+                future_rows_only_df.at[f_i, prev_stmt_bal_account_name], 2)
+            future_rows_only_df.at[f_i, curr_stmt_bal_account_name] = round(
+                future_rows_only_df.at[f_i, curr_stmt_bal_account_name], 2)
+            future_rows_only_df.at[f_i, eopc_account_name] = round(
+                future_rows_only_df.at[f_i, eopc_account_name], 2)
+            # future_rows_only_df.at[f_i, billing_cycle_payment_account_name] = round(
+            #     future_rows_only_df.at[f_i, billing_cycle_payment_account_name], 2)
+
+            # log_in_color(logger, 'white', 'debug', str(date_iat) + ' ' + str(curr_stmt_bal_account_name) + ' += ' + str(curr_stmt_delta), self.log_stack_depth)
+            # log_in_color(logger, 'white', 'debug', str(date_iat) + ' ' + str(prev_stmt_bal_account_name) + ' += ' + str(previous_stmt_delta), self.log_stack_depth)
+
+            # Clean and update memo directives
+            if md_to_keep != []:
+                # Clean and update memo directives
+                md_to_keep = [' ' + md for md in md_to_keep if md]
+                future_rows_only_df.at[f_i, 'Memo Directives'] = ';'.join(md_to_keep).strip()
+
+        self.log_stack_depth -= 1
+        log_in_color(logger, 'white', 'debug', 'EXIT _propagate_credit_txn_curr_only', self.log_stack_depth)
+        return future_rows_only_df
+
+    #affects checking as well
+    #@profile
+    def _propagate_credit_payment_curr_only(self, relevant_account_info_df,
+                                            account_deltas_list,
+                                            future_rows_only_df,
+                                            forecast_df,
+                                            account_set_before_p2_plus_txn,
+                                            billing_dates_dict,
+                                            date_string_YYYYMMDD,
+                                            post_txn_row_df):
+        """
+        Propagates credit card payments involving only the current statement balance into the future forecast.
+
+        Parameters:
+        - relevant_account_info_df: DataFrame with account info for relevant accounts.
+        - account_deltas_list: List of account balance changes (deltas).
+        - future_rows_only_df: DataFrame with future forecast rows.
+        - forecast_df: The original forecast DataFrame.
+        - account_set_before_p2_plus_txn: Account set before processing the transaction.
+        - billing_dates_dict: Dictionary mapping account names to billing dates.
+        - date_string_YYYYMMDD: Current date as a string in 'YYYYMMDD' format.
+        - post_txn_row_df: DataFrame with the forecast row after transactions.
+
+        Returns:
+        - Updated future_rows_only_df DataFrame.
+        """
+        log_in_color(logger, 'white', 'debug', 'ENTER _propagate_credit_payment_curr_only', self.log_stack_depth)
         self.log_stack_depth += 1
 
         # Extract relevant account names
@@ -7792,7 +8064,7 @@ class ExpenseForecast:
             previous_stmt_delta = 0.0
 
         self.log_stack_depth -= 1
-        log_in_color(logger, 'white', 'debug', 'EXIT _propagate_credit_curr_only', self.log_stack_depth)
+        log_in_color(logger, 'white', 'debug', 'EXIT _propagate_credit_payment_curr_only', self.log_stack_depth)
         return future_rows_only_df
 
     #@profile
@@ -8920,8 +9192,10 @@ class ExpenseForecast:
             future_rows_only_df.at[f_i, curr_stmt_bal_account_name] = round(future_rows_only_df.at[f_i, curr_stmt_bal_account_name],2)
             future_rows_only_df.at[f_i, billing_cycle_payment_account_name] = round(future_rows_only_df.at[f_i, billing_cycle_payment_account_name],2)
 
-            # log_in_color(logger, 'white', 'debug', str(date_iat) + ' ' + str(curr_stmt_bal_account_name) + ' += ' + str(curr_stmt_delta), self.log_stack_depth)
-            # log_in_color(logger, 'white', 'debug', str(date_iat) + ' ' + str(prev_stmt_bal_account_name) + ' += ' + str(previous_stmt_delta), self.log_stack_depth)
+            log_in_color(logger, 'white', 'debug', str(date_iat) + ' ' + str(checking_account_name) + ' += ' + str(checking_delta), self.log_stack_depth)
+            log_in_color(logger, 'white', 'debug', str(date_iat) + ' ' + str(curr_stmt_bal_account_name) + ' += ' + str(curr_stmt_delta), self.log_stack_depth)
+            log_in_color(logger, 'white', 'debug', str(date_iat) + ' ' + str(prev_stmt_bal_account_name) + ' += ' + str(previous_stmt_delta), self.log_stack_depth)
+            log_in_color(logger, 'white', 'debug', str(date_iat) + ' ' + str(billing_cycle_payment_account_name) + ' += ' + str(billing_cycle_payment_delta), self.log_stack_depth)
 
             # Clean and update memo directives
             if md_to_keep != []:
@@ -9080,8 +9354,8 @@ class ExpenseForecast:
             frozenset(['checking', 'principal balance', 'loan billing cycle payment bal']): self._propagate_loan_payment_pbal_only,
             frozenset(['checking', 'interest', 'loan billing cycle payment bal']): self._propagate_loan_payment_interest_only,
             frozenset(['checking', 'credit prev stmt bal', 'credit billing cycle payment bal']): self._propagate_credit_payment_prev_only,
-            frozenset(['checking', 'credit curr stmt bal', 'credit billing cycle payment bal']): self._propagate_credit_curr_only,
-            frozenset(['credit curr stmt bal']): self._propagate_credit_curr_stmt_balance,
+            frozenset(['checking', 'credit curr stmt bal', 'credit billing cycle payment bal']): self._propagate_credit_payment_curr_only,
+            frozenset(['credit curr stmt bal']): self._propagate_credit_txn_curr_only,
         }
 
         # Assume accounts_df is a DataFrame containing account information
