@@ -106,43 +106,44 @@ def credit_bsd12_w_eopc_acct_list(prev_balance,curr_balance,apr,end_of_prev_cycl
                     minimum_payment=40,
                     previous_statement_balance=prev_balance,
                     current_statement_balance=curr_balance,
-                    billing_cycle_payment_balance=500,
+                    billing_cycle_payment_balance=end_of_prev_cycle_balance - prev_balance,
                     end_of_previous_cycle_balance=end_of_prev_cycle_balance,
                     print_debug_messages=True,
                     raise_exceptions=True)
     return A.accounts
 
 if __name__ == '__main__':
-    test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df = ('test_cc_advance_minimum_payment_in_1_payment_pay_under_minimum',
-         AccountSet.AccountSet(checking_acct_list(5000) + credit_bsd12_acct_list(1000, 1000, 0.05)),
-         BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000111', '20000111', 2, 'once', 20, 'additional_cc_payment')]),
+    test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df = ('test_cc_single_additional_payment_on_due_date_OVERPAY',
+         AccountSet.AccountSet(checking_acct_list(5000) + credit_bsd12_w_eopc_acct_list(500, 400, 0.05, 500)),
+         BudgetSet.BudgetSet(
+             [BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 1000, 'test credit payment 1', False, True)]),
          MemoRuleSet.MemoRuleSet([
              MemoRule.MemoRule('.*', 'Checking', None, 1),
-             MemoRule.MemoRule('additional_cc_payment', 'Checking', 'Credit', 2)
+             MemoRule.MemoRule('.*', 'Checking', 'Credit', 2)
          ]),
-         '20000110',
+         '20000111',
          '20000113',
          MilestoneSet.MilestoneSet([], [], []),
          pd.DataFrame({
-             'Date': ['20000110', '20000111', '20000112', '20000113'],
-             'Checking': [5000, 4980, 4960, 4960],
-             'Credit: Curr Stmt Bal': [1000, 1000, 0, 0],
-             'Credit: Prev Stmt Bal': [1000, 980, 1964.17, 1964.17],
-             'Credit: Credit Billing Cycle Payment Bal': [0, 20, 0, 0],
-             'Credit: Credit End of Prev Cycle Bal': [1000, 1000, 1000,  1964.17],
-             'Marginal Interest': [0, 0, 4.17, 0],
-             'Net Gain': [0, 0, 0, 0],
-             'Net Loss': [0, 0, 4.17, 0],
-             'Net Worth': [3000, 3000, 3000 - 4.17, 0],
-             'Loan Total': [0, 0, 0, 0],
-             'CC Debt Total': [2000, 1980, 1964.17, 1964.17],
-             'Liquid Total': [5000, 4980, 4960, 4960],
+             'Date': ['20000111', '20000112', '20000113'],
+             'Checking': [5000, 4097.92,  4097.92],
+             'Credit: Curr Stmt Bal': [400, 0, 0],
+             'Credit: Prev Stmt Bal': [500, 0, 0],
+             'Credit: Credit Billing Cycle Payment Bal': [0, 862.0, 862.0],
+             'Credit: Credit End of Prev Cycle Bal': [500, 500, 862.0],
+             'Marginal Interest': [0, 2.08, 0],
+             'Net Gain': [0, 0, 0],
+             'Net Loss': [0, 2.08, 0],
+             'Net Worth': [4100, 4097.92, 4097.92],
+             'Loan Total': [0, 0, 0],
+             'CC Debt Total': [900, 0, 0],
+             'Liquid Total': [5000, 4097.92, 4097.92],
              'Memo Directives': ['',
-                                 'ADDTL CC PAYMENT (Checking -$20.00); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$20.00)',
-                                 'CC INTEREST (Credit: Prev Stmt Bal +$4.17); CC MIN PAYMENT (Checking -$20.00); CC MIN PAYMENT (Credit: Prev Stmt Bal -$20.00)',
+                                 'CC INTEREST (Credit: Prev Stmt Bal +$2.08); CC MIN PAYMENT (Credit: Prev Stmt Bal -$40.00); CC MIN PAYMENT (Checking -$40.00); ADDTL CC PAYMENT (Checking -$862.08); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$862.08)',
                                  ''],
-             'Memo': ['', '', '', '']
-         }))
+             'Memo': ['', '', '']
+         })
+         )
 
     E = ExpenseForecast.ExpenseForecast(account_set, budget_set,
                                         memo_rule_set,

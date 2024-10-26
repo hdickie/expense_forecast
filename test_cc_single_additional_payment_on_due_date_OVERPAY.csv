@@ -1,0 +1,4 @@
+,Date,Checking,Credit: Curr Stmt Bal,Credit: Prev Stmt Bal,Credit: Credit Billing Cycle Payment Bal,Credit: Credit End of Prev Cycle Bal,Marginal Interest,Net Gain,Net Loss,Net Worth,Loan Total,CC Debt Total,Liquid Total,Memo Directives,Memo
+0,20000111,5000.0,400.0,500.0,0.0,500.0,0.0,0,0.0,4100.0,0.0,900.0,5000.0,,
+1,20000112,4097.92,0.0,0.0,862.08,500.0,2.08,0,2.08,4097.92,0.0,0.0,4097.92,CC INTEREST (Credit: Prev Stmt Bal +$2.08); CC MIN PAYMENT (Credit: Prev Stmt Bal -$40.00); CC MIN PAYMENT (Checking -$40.00); ADDTL CC PAYMENT (Checking -$862.08); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$862.08),
+2,20000113,4097.92,0.0,0.0,862.08,862.08,0.0,0,0.0,4097.92,0.0,0.0,4097.92,,

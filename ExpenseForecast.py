@@ -2726,8 +2726,8 @@ class ExpenseForecast:
     def processConfirmedTransactions(self, forecast_df, relevant_confirmed_df, memo_set, account_set, date_YYYYMMDD):
         log_in_color(logger, 'white', 'debug', str(date_YYYYMMDD) + ' ENTER processConfirmedTransactions', self.log_stack_depth)
         self.log_stack_depth += 1
-        # log_in_color(logger, 'white', 'debug', 'relevant_confirmed_df:', self.log_stack_depth)
-        # log_in_color(logger, 'white', 'debug', relevant_confirmed_df.to_string(), self.log_stack_depth)
+        log_in_color(logger, 'cyan', 'debug', 'relevant_confirmed_df:', self.log_stack_depth)
+        log_in_color(logger, 'cyan', 'debug', relevant_confirmed_df.to_string(), self.log_stack_depth)
 
         for confirmed_index, confirmed_row in relevant_confirmed_df.iterrows():
             # print('    '+str(confirmed_row.Memo)+' '+str(confirmed_row.Amount))
@@ -3375,6 +3375,7 @@ class ExpenseForecast:
 
         if sum(future_min_payment_date_sel_vec) == 0:
             self.log_stack_depth -= 1
+            log_in_color(logger, 'white', 'debug', str(date_YYYYMMDD) + ' future min_payment_amount = 0', self.log_stack_depth)
             log_in_color(logger, 'white', 'debug', str(date_YYYYMMDD) + ' EXIT getFutureMinPaymentAmount', self.log_stack_depth)
             return 0.0
 
@@ -3751,9 +3752,12 @@ class ExpenseForecast:
         - new_deferred_df: DataFrame of newly deferred transactions.
         - new_skipped_df: DataFrame of newly skipped transactions.
         """
-        log_in_color(logger, 'white', 'debug', str(date_YYYYMMDD) + ' ENTER processProposedTransactions', self.log_stack_depth)
+        log_in_color(logger, 'white', 'debug', str(date_YYYYMMDD) + ' ENTER processProposedTransactions p == '+str(priority_level), self.log_stack_depth)
         # Increment the log stack depth
         self.log_stack_depth += 1
+
+        log_in_color(logger, 'white', 'debug', 'relevant_proposed_df:', self.log_stack_depth)
+        log_in_color(logger, 'white', 'debug',relevant_proposed_df.to_string(), self.log_stack_depth)
 
         # Initialize DataFrames to hold new deferred, skipped, and confirmed transactions
         new_deferred_df = relevant_proposed_df.iloc[0:0].copy()  # Empty DataFrame with the same schema
@@ -3763,7 +3767,7 @@ class ExpenseForecast:
         # If there are no proposed transactions, return early
         if relevant_proposed_df.empty:
             self.log_stack_depth -= 1
-            log_in_color(logger, 'white', 'debug', str(date_YYYYMMDD)+' EXIT processProposedTransactions', self.log_stack_depth)
+            log_in_color(logger, 'white', 'debug', str(date_YYYYMMDD)+' EXIT processProposedTransactions p == '+str(priority_level), self.log_stack_depth)
             return forecast_df, new_confirmed_df, new_deferred_df, new_skipped_df
 
         # log_in_color(logger, 'white', 'debug', 'relevant_proposed_df:', self.log_stack_depth)
@@ -3771,7 +3775,13 @@ class ExpenseForecast:
 
         # Iterate over each proposed transaction
         for proposed_index, proposed_row in relevant_proposed_df.iterrows():
-            log_in_color(logger, 'white', 'debug', str(date_YYYYMMDD) + ' Considering: '+str(proposed_row.Memo)+' '+str(proposed_row.Amount), self.log_stack_depth)
+            log_in_color(logger, 'cyan', 'info', str(date_YYYYMMDD) + ' Considering: '+str(proposed_row.Memo)+' '+str(proposed_row.Amount), self.log_stack_depth)
+
+            log_in_color(logger, 'cyan', 'info','Current State:', self.log_stack_depth)
+            log_in_color(logger, 'cyan', 'info', forecast_df.to_string(), self.log_stack_depth)
+            log_in_color(logger, 'cyan', 'info', account_set.getAccounts().to_string(), self.log_stack_depth)
+
+
             # Find the matching memo rule for the proposed transaction
             memo_rule_set = memo_set.findMatchingMemoRule(proposed_row['Memo'], proposed_row['Priority'])
             memo_rule_row = memo_rule_set.getMemoRules().iloc[0]
@@ -3790,10 +3800,15 @@ class ExpenseForecast:
             transaction_permitted = isinstance(result, pd.DataFrame)
 
             if transaction_permitted:
+                log_in_color(logger, 'green', 'info', str(date_YYYYMMDD) + ' attemptTransaction SUCCESS ' + str(proposed_row.Memo) + ' ' + str(proposed_row.Amount), self.log_stack_depth)
+                log_in_color(logger, 'green', 'info','New Future: ', self.log_stack_depth)
+                log_in_color(logger, 'green', 'info', result.to_string(), self.log_stack_depth)
+
                 # Transaction is permitted; update the hypothetical future forecast and account set
                 hypothetical_forecast = result
                 account_set = self.sync_account_set_w_forecast_day(account_set, forecast_df, date_YYYYMMDD)
             else:
+                log_in_color(logger, 'red', 'info', str(date_YYYYMMDD) + ' attemptTransaction FAIL ' + str(proposed_row.Memo) + ' ' + str( proposed_row.Amount), self.log_stack_depth)
                 hypothetical_forecast = None
 
             # Handle partial payments if transaction is not permitted and partial payments are allowed
@@ -3814,7 +3829,7 @@ class ExpenseForecast:
                     date_YYYYMMDD=date_YYYYMMDD
                 )
 
-                log_in_color(logger, 'white', 'debug', str(date_YYYYMMDD) + ' re-attempt at reduced amount: '+str(reduced_amount), self.log_stack_depth)
+                log_in_color(logger, 'cyan', 'info', str(date_YYYYMMDD) + ' re-attempt at reduced amount: '+str(reduced_amount), self.log_stack_depth)
 
                 # Attempt the transaction with the reduced amount if it's greater than zero
                 if reduced_amount > 0:
@@ -3864,7 +3879,7 @@ class ExpenseForecast:
                 )
 
                 # Add the transaction to the confirmed DataFrame
-                new_confirmed_df = pd.concat([new_confirmed_df, proposed_row.to_frame().T], ignore_index=True)
+                confirmed_df = pd.concat([confirmed_df, proposed_row.to_frame().T], ignore_index=True)
 
                 # Update the forecast DataFrame with the hypothetical future forecast
                 forecast_df = self.update_forecast_with_hypothetical(
@@ -3874,11 +3889,18 @@ class ExpenseForecast:
                 )
 
                 # Update the account balances in the forecast DataFrame for the current date
+                # this seems redundant here, but chat gpt did this and i dont suspect it for now
+                # good method actually, would like to use it in a refactor #todo
                 self.update_forecast_balances(
                     forecast_df=forecast_df,
                     account_set=account_set,
                     date_YYYYMMDD=date_YYYYMMDD
                 )
+
+                log_in_color(logger, 'green', 'info', 'Forecast Post-Update: ', self.log_stack_depth)
+                log_in_color(logger, 'green', 'info', forecast_df.to_string(), self.log_stack_depth)
+                log_in_color(logger, 'green', 'info', 'New Confirmed Txns: ', self.log_stack_depth)
+                log_in_color(logger, 'green', 'info', result.to_string(), self.log_stack_depth)
             else:
                 # This case should not occur; raise an error
                 raise ValueError(
@@ -3890,8 +3912,8 @@ class ExpenseForecast:
 
         # Decrement the log stack depth
         self.log_stack_depth -= 1
-        log_in_color(logger, 'white', 'debug', str(date_YYYYMMDD) + ' EXIT processProposedTransactions', self.log_stack_depth)
-        return forecast_df, new_confirmed_df, new_deferred_df, new_skipped_df
+        log_in_color(logger, 'white', 'debug', str(date_YYYYMMDD) + ' EXIT processProposedTransactions p == '+str(priority_level), self.log_stack_depth)
+        return forecast_df, confirmed_df, new_deferred_df, new_skipped_df
 
     #@profile
     def calculate_reduced_amount(self, account_set, memo_rule_row, max_available_funds, forecast_df, date_YYYYMMDD):
@@ -3913,11 +3935,26 @@ class ExpenseForecast:
 
         # Get the account types for the destination account
         account_base_names = account_set.getAccounts()['Name'].apply(lambda x: x.split(':')[0])
-        source_accounts = account_set.getAccounts()[account_base_names == memo_rule_row['Account_From']]
-        destination_accounts = account_set.getAccounts()[account_base_names == memo_rule_row['Account_To']]
+
+        not_eopc_or_bcpb_sel_vec = [ (('Billing Cycle Payment Bal' not in aname) and ('End of Prev Cycle Bal' not in aname)) for aname in account_set.getAccounts()['Name'] ]
+
+        from_basename_sel_vec = (account_base_names == memo_rule_row['Account_From'])
+        to_basename_sel_vec = (account_base_names == memo_rule_row['Account_To'])
+
+        from_basename_sel_vec = [a & b for a, b in zip(from_basename_sel_vec, not_eopc_or_bcpb_sel_vec)]
+        to_basename_sel_vec = [a & b for a, b in zip(to_basename_sel_vec, not_eopc_or_bcpb_sel_vec)]
+
+        source_accounts = account_set.getAccounts()[from_basename_sel_vec]
+        destination_accounts = account_set.getAccounts()[to_basename_sel_vec]
+
+        # log_in_color(logger, 'white', 'debug', 'source_accounts:', self.log_stack_depth)
+        # log_in_color(logger, 'white', 'debug', source_accounts.to_string(), self.log_stack_depth)
+        # log_in_color(logger, 'white', 'debug', 'destination_accounts:', self.log_stack_depth)
+        # log_in_color(logger, 'white', 'debug', destination_accounts.to_string(), self.log_stack_depth)
 
         source_account_types = source_accounts['Account_Type'].tolist()
         dest_account_types = destination_accounts['Account_Type'].tolist()
+
 
         if 'credit curr stmt bal' in source_account_types and 'credit prev stmt bal' in source_account_types:
             source_account_type = 'credit'
@@ -3959,8 +3996,8 @@ class ExpenseForecast:
         else:
             raise ValueError('Invalid account type in calculate_reduced_amount')
 
-        # log_in_color(logger, 'magenta', 'debug', 'destination_accounts: ' , self.log_stack_depth)
-        # log_in_color(logger, 'magenta', 'debug', str(destination_accounts.to_string()), self.log_stack_depth)
+        log_in_color(logger, 'magenta', 'debug', 'destination_accounts: ' , self.log_stack_depth)
+        log_in_color(logger, 'magenta', 'debug', str(destination_accounts.to_string()), self.log_stack_depth)
 
         if dest_account_type == 'credit':
             dest_bound = destination_accounts['Balance'].sum()
@@ -3976,9 +4013,9 @@ class ExpenseForecast:
         # log_in_color(logger, 'magenta', 'debug', 'forecast_df: ' + str(forecast_df.to_string()), self.log_stack_depth)
 
         reduced_amount = min(source_bound,dest_bound)
-        # log_in_color(logger, 'white', 'debug', 'source_bound: ' + str(source_bound), self.log_stack_depth)
-        # log_in_color(logger, 'white', 'debug', 'dest_bound: ' + str(dest_bound), self.log_stack_depth)
-        # log_in_color(logger, 'white', 'debug', 'reduced_amount: ' + str(reduced_amount), self.log_stack_depth)
+        log_in_color(logger, 'white', 'debug', 'source_bound..: ' + str(source_bound), self.log_stack_depth)
+        log_in_color(logger, 'white', 'debug', 'dest_bound....: ' + str(dest_bound), self.log_stack_depth)
+        log_in_color(logger, 'white', 'debug', 'reduced_amount: ' + str(reduced_amount), self.log_stack_depth)
 
         self.log_stack_depth -= 1
         log_in_color(logger, 'white', 'debug', str(date_YYYYMMDD) + ' EXIT calculate_reduced_amount', self.log_stack_depth)
@@ -4806,7 +4843,9 @@ class ExpenseForecast:
             )
 
             # Update confirmed, deferred, and skipped DataFrames
-            confirmed_df = pd.concat([confirmed_df, new_confirmed_df]).reset_index(drop=True)
+            #confirmed_df = pd.concat([confirmed_df, new_confirmed_df]).reset_index(drop=True) #this logic was moved into processProposedTransactions
+            #not sure if reindexing is necessary, and its an expensive operation so lets try not doing it
+
             deferred_df = pd.concat([deferred_df, new_deferred_df]).reset_index(drop=True)
             skipped_df = pd.concat([skipped_df, new_skipped_df]).reset_index(drop=True)
 
@@ -7811,6 +7850,13 @@ class ExpenseForecast:
         checking_delta = previous_stmt_delta
         billing_cycle_payment_delta = account_deltas_list[bcp_account_index - 1]
 
+        log_in_color(logger, 'white', 'debug', 'relevant_account_info_df...: ', self.log_stack_depth)
+        log_in_color(logger, 'white', 'debug', relevant_account_info_df.to_string(), self.log_stack_depth)
+        #relevant_account_info_df
+        log_in_color(logger, 'white', 'debug', 'previous_stmt_delta........: '+str(previous_stmt_delta), self.log_stack_depth)
+        log_in_color(logger, 'white', 'debug', 'checking_delta.............: ' + str(checking_delta), self.log_stack_depth)
+        log_in_color(logger, 'white', 'debug', 'billing_cycle_payment_delta: ' + str(billing_cycle_payment_delta), self.log_stack_depth)
+
         # Initialize previous previous statement balance
         previous_prev_stmt_bal = 0.0
 
@@ -7999,7 +8045,7 @@ class ExpenseForecast:
                 # No adjustments needed
                 pass
 
-            # log_in_color(logger, 'white', 'debug', str(date_iat)+' '+str(prev_stmt_bal_account_name)+' += '+str(previous_stmt_delta), self.log_stack_depth)
+            log_in_color(logger, 'white', 'debug', str(date_iat)+' '+str(prev_stmt_bal_account_name)+' += '+str(previous_stmt_delta), self.log_stack_depth)
 
             # Update balances
             future_rows_only_df.at[f_i, checking_account_name] += checking_delta
@@ -8010,8 +8056,8 @@ class ExpenseForecast:
             future_rows_only_df.at[f_i, prev_stmt_bal_account_name] = round(future_rows_only_df.at[f_i, prev_stmt_bal_account_name],2)
             future_rows_only_df.at[f_i, bcp_account_name] = round(future_rows_only_df.at[f_i, bcp_account_name],2)
 
-            # log_in_color(logger, 'white', 'debug', str(date_iat) + ' ' + checking_account_name + ' = ' + str(future_rows_only_df.at[f_i, checking_account_name]), self.log_stack_depth)
-            # log_in_color(logger, 'white', 'debug', str(date_iat) + ' ' + prev_stmt_bal_account_name + ' = ' + str(future_rows_only_df.at[f_i, prev_stmt_bal_account_name]), self.log_stack_depth)
+            log_in_color(logger, 'cyan', 'debug', str(date_iat) + ' ' + checking_account_name + ' = ' + str(future_rows_only_df.at[f_i, checking_account_name]), self.log_stack_depth)
+            log_in_color(logger, 'cyan', 'debug', str(date_iat) + ' ' + prev_stmt_bal_account_name + ' = ' + str(future_rows_only_df.at[f_i, prev_stmt_bal_account_name]), self.log_stack_depth)
 
             # else no change is needed?
             if md_to_keep != []:
@@ -8019,6 +8065,8 @@ class ExpenseForecast:
                 md_to_keep = [' '+md for md in md_to_keep if md]
                 future_rows_only_df.at[f_i, 'Memo Directives'] = ';'.join(md_to_keep).strip()
 
+        log_in_color(logger, 'white', 'debug', 'future_rows_only_df:', self.log_stack_depth)
+        log_in_color(logger, 'white', 'debug', future_rows_only_df.to_string(), self.log_stack_depth)
         self.log_stack_depth -= 1
         log_in_color(logger, 'white', 'debug', str(date_string_YYYYMMDD) + ' EXIT _propagate_credit_payment_prev_only', self.log_stack_depth)
         return future_rows_only_df
@@ -9106,7 +9154,7 @@ class ExpenseForecast:
                 account_types_set = frozenset(relevant_account_type_list)
                 processing_function = account_type_combinations.get(account_types_set)
 
-                log_in_color(logger, 'white', 'debug', str(date_string_YYYYMMDD) + ' processing_function '+str(processing_function), self.log_stack_depth)
+                log_in_color(logger, 'cyan', 'info', str(date_string_YYYYMMDD) + ' processing_function '+str(processing_function), self.log_stack_depth)
 
                 # print('account_types_set:')
                 # print(account_types_set)
@@ -9571,7 +9619,7 @@ class ExpenseForecast:
                 #     pass #no interest was accrued that needs to be accounted for
                 # new_bal -= interest_accrued
 
-                log_in_color(logger, 'cyan', 'debug', 'SET '+str(eopc_aname)+' = '+str(new_bal), self.log_stack_depth)
+                log_in_color(logger, 'white', 'debug', 'SET '+str(eopc_aname)+' = '+str(new_bal), self.log_stack_depth)
                 current_forecast_row_df[eopc_aname] = new_bal
             elif account_row.Account_Type == 'loan end of prev cycle bal':
                 pbal_aname = account_row.Name.split(':')[0] + ': Principal Balance'
