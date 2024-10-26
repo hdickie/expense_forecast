@@ -2190,7 +2190,7 @@ class TestExpenseForecastMethods:
              'Loan Total': [0] * 36,
              'CC Debt Total': [0] * 36,
              'Liquid Total': [0] * 36,
-             'Memo Directives': [''] * 36
+             'Memo Directives': [''] * 36,
              'Memo': [''] * 36
          })
          ),
@@ -2220,7 +2220,7 @@ class TestExpenseForecastMethods:
              'Loan Total': [0] * 36,
              'CC Debt Total': [0] * 36,
              'Liquid Total': [0] * 36,
-             'Memo Directives': [''] * 36
+             'Memo Directives': [''] * 36,
              'Memo': [''] * 36
          })
          ),
@@ -2250,7 +2250,7 @@ class TestExpenseForecastMethods:
              'Loan Total': [0] * 36,
              'CC Debt Total': [0] * 36,
              'Liquid Total': [0] * 36,
-             'Memo Directives': [''] * 36
+             'Memo Directives': [''] * 36,
              'Memo': [''] * 36
          })
          ),
@@ -2280,7 +2280,7 @@ class TestExpenseForecastMethods:
              'Loan Total': [0] * 36,
              'CC Debt Total': [0] * 36,
              'Liquid Total': [0] * 36,
-             'Memo Directives': [''] * 36
+             'Memo Directives': [''] * 36,
              'Memo': [''] * 36
          })
          ),
@@ -2310,7 +2310,7 @@ class TestExpenseForecastMethods:
              'Loan Total': [0] * 36,
              'CC Debt Total': [0] * 36,
              'Liquid Total': [0] * 36,
-             'Memo Directives': [''] * 36
+             'Memo Directives': [''] * 36,
              'Memo': [''] * 36
          })
          ),
@@ -2340,7 +2340,7 @@ class TestExpenseForecastMethods:
              'Loan Total': [0] * 36,
              'CC Debt Total': [0] * 36,
              'Liquid Total': [0] * 36,
-             'Memo Directives': [''] * 36
+             'Memo Directives': [''] * 36,
              'Memo': [''] * 36
          })
          ),
@@ -2370,7 +2370,7 @@ class TestExpenseForecastMethods:
              'Loan Total': [0] * 36,
              'CC Debt Total': [0] * 36,
              'Liquid Total': [0] * 36,
-             'Memo Directives': [''] * 36
+             'Memo Directives': [''] * 36,
              'Memo': [''] * 36
          })
          ),
@@ -2400,7 +2400,7 @@ class TestExpenseForecastMethods:
              'Loan Total': [0] * 36,
              'CC Debt Total': [0] * 36,
              'Liquid Total': [0] * 36,
-             'Memo Directives': [''] * 36
+             'Memo Directives': [''] * 36,
              'Memo': [''] * 36
          })
          ),
@@ -2430,7 +2430,7 @@ class TestExpenseForecastMethods:
              'Loan Total': [0] * 36,
              'CC Debt Total': [0] * 36,
              'Liquid Total': [0] * 36,
-             'Memo Directives': [''] * 36
+             'Memo Directives': [''] * 36,
              'Memo': [''] * 36
          })
          ),
@@ -2460,7 +2460,7 @@ class TestExpenseForecastMethods:
              'Loan Total': [0] * 36,
              'CC Debt Total': [0] * 36,
              'Liquid Total': [0] * 36,
-             'Memo Directives': [''] * 36
+             'Memo Directives': [''] * 36,
              'Memo': [''] * 36
          })
          ),
@@ -2490,7 +2490,7 @@ class TestExpenseForecastMethods:
              'Loan Total': [0] * 36,
              'CC Debt Total': [0] * 36,
              'Liquid Total': [0] * 36,
-             'Memo Directives': [''] * 36
+             'Memo Directives': [''] * 36,
              'Memo': [''] * 36
          })
          ),
@@ -2520,7 +2520,7 @@ class TestExpenseForecastMethods:
              'Loan Total': [0] * 36,
              'CC Debt Total': [0] * 36,
              'Liquid Total': [0] * 36,
-             'Memo Directives': [''] * 36
+             'Memo Directives': [''] * 36,
              'Memo': [''] * 36
          })
          ),
@@ -5088,4 +5088,25 @@ class TestExpenseForecastMethods:
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_advance_minimum_payment_in_1_payment_pay_under_minimum-account_set26-budget_set26-memo_rule_set26-20000110-20000112-milestone_set26-expected_result_df26]
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_on_due_date-account_set28-budget_set28-memo_rule_set28-20000111-20000113-milestone_set28-expected_result_df28]
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before-account_set29-budget_set29-memo_rule_set29-20000110-20000112-milestone_set29-expected_result_df29]
-# =============================================== 10 failed, 162 passed, 114 warnings in 148.00s (0:02:27) ====
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_on_due_date__prev_only-account_set31-budget_set31-memo_rule_set31-20000111-20000113-milestone_set31-expected_result_df31]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_on_due_date_OVERPAY__prev_only-account_set32-budget_set32-memo_rule_set32-20000111-20000113-milestone_set32-expected_result_df32]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_on_due_date_OVERPAY__prev_only-account_set33-budget_set33-memo_rule_set33-20000111-20000113-milestone_set33-expected_result_df33]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_on_due_date__curr_only-account_set34-budget_set34-memo_rule_set34-20000111-20000113-milestone_set34-expected_result_df34]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_on_due_date_OVERPAY__curr_only-account_set35-budget_set35-memo_rule_set35-20000111-20000113-milestone_set35-expected_result_df35]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_on_due_date_OVERPAY__curr_only-account_set36-budget_set36-memo_rule_set36-20000111-20000113-milestone_set36-expected_result_df36]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_on_due_date__curr_prev-account_set37-budget_set37-memo_rule_set37-20000111-20000113-milestone_set37-expected_result_df37]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_on_due_date_OVERPAY__curr_prev-account_set38-budget_set38-memo_rule_set38-20000111-20000113-milestone_set38-expected_result_df38]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_on_due_date_OVERPAY__curr_prev-account_set39-budget_set39-memo_rule_set39-20000111-20000113-milestone_set39-expected_result_df39]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before__prev_only-account_set40-budget_set40-memo_rule_set40-20000110-20000114-milestone_set40-expected_result_df40]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before__prev_only-account_set41-budget_set41-memo_rule_set41-20000110-20000114-milestone_set41-expected_result_df41]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before_OVERPAY__prev_only-account_set42-budget_set42-memo_rule_set42-20000110-20000114-milestone_set42-expected_result_df42]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before_OVERPAY__prev_only-account_set43-budget_set43-memo_rule_set43-20000110-20000114-milestone_set43-expected_result_df43]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before__curr_only-account_set44-budget_set44-memo_rule_set44-20000110-20000114-milestone_set44-expected_result_df44]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before__curr_only-account_set45-budget_set45-memo_rule_set45-20000110-20000114-milestone_set45-expected_result_df45]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before_OVERPAY__curr_only-account_set46-budget_set46-memo_rule_set46-20000110-20000114-milestone_set46-expected_result_df46]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before_OVERPAY__curr_only-account_set47-budget_set47-memo_rule_set47-20000110-20000114-milestone_set47-expected_result_df47]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before__curr_prev-account_set48-budget_set48-memo_rule_set48-20000110-20000114-milestone_set48-expected_result_df48]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before__curr_prev-account_set49-budget_set49-memo_rule_set49-20000110-20000114-milestone_set49-expected_result_df49]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before_OVERPAY__curr_prev-account_set50-budget_set50-memo_rule_set50-20000110-20000114-milestone_set50-expected_result_df50]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before_OVERPAY__curr_prev-account_set51-budget_set51-memo_rule_set51-20000110-20000114-milestone_set51-expected_result_df51]
+# =============================================== 31 failed, 174 passed, 213 warnings in 371.98s (0:06:11) =
