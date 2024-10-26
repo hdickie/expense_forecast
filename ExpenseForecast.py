@@ -8048,7 +8048,7 @@ class ExpenseForecast:
         Returns:
         - Updated future_rows_only_df DataFrame.
         """
-        log_in_color(logger, 'cyan', 'debug', 'ENTER _propagate_loan_payment_interest_only', self.log_stack_depth)
+        log_in_color(logger, 'white', 'debug', 'ENTER _propagate_loan_payment_interest_only', self.log_stack_depth)
         self.log_stack_depth += 1
         # log_in_color(logger, 'cyan', 'debug', 'BEFORE forecast_df', self.log_stack_depth)
         # log_in_color(logger, 'cyan', 'debug', forecast_df.to_string(), self.log_stack_depth)
@@ -8207,7 +8207,7 @@ class ExpenseForecast:
         # log_in_color(logger, 'cyan', 'debug', 'future_rows_only_df', self.log_stack_depth)
         # log_in_color(logger, 'cyan', 'debug', future_rows_only_df.to_string(), self.log_stack_depth)
         self.log_stack_depth -= 1
-        log_in_color(logger, 'cyan', 'debug', 'EXIT _propagate_loan_payment_interest_only', self.log_stack_depth)
+        log_in_color(logger, 'white', 'debug', 'EXIT _propagate_loan_payment_interest_only', self.log_stack_depth)
         return future_rows_only_df
 
     #@profile
@@ -9547,8 +9547,8 @@ class ExpenseForecast:
 
             previous_row_df = forecast_df[forecast_df.Date == prev_date_str]
 
-            log_in_color(logger, 'cyan', 'debug', 'previous_row_df:', self.log_stack_depth)
-            log_in_color(logger, 'cyan', 'debug', previous_row_df.to_string(), self.log_stack_depth)
+            # log_in_color(logger, 'cyan', 'debug', 'previous_row_df:', self.log_stack_depth)
+            # log_in_color(logger, 'cyan', 'debug', previous_row_df.to_string(), self.log_stack_depth)
 
             # print('forecast_df:')
             # print(forecast_df.to_string())

@@ -103,7 +103,7 @@ def non_trivial_loan(name,pbal,interest,apr):
                     principal_balance=pbal,
                     interest_balance=interest,
                     billing_cycle_payment_balance=0,
-                    end_of_previous_cycle_balance=0)
+                    end_of_previous_cycle_balance=pbal)
 
     return A.accounts
 
@@ -1085,7 +1085,7 @@ class TestExpenseForecastMethods:
              'Loan A: Principal Balance': [1000, 940.27, 940.27],
              'Loan A: Interest': [100, 0.0, 0.26],
              'Loan A: Loan Billing Cycle Payment Bal': [0, 59.73 + 50.27, 59.73 + 50.27],
-             'Loan A: Loan End of Prev Cycle Bal': [1000, 1000, 940.27],
+             'Loan A: Loan End of Prev Cycle Bal': [1000, 1000, 1000], #bc payments day of don't count, this is corect
              'Loan B: Principal Balance': [1000, 1000, 1000],
              'Loan B: Interest': [100, 50.14, 50.28],
              'Loan B: Loan Billing Cycle Payment Bal': [0, 0, 0],
@@ -1126,7 +1126,7 @@ class TestExpenseForecastMethods:
              'Loan A: Principal Balance': [1000, 496.89 , 496.89 ],
              'Loan A: Interest': [100, 0, 0.14],
              'Loan A: Loan Billing Cycle Payment Bal': [0, 503.11 + 50.27, 503.11 + 50.27],
-             'Loan A: Loan End of Prev Cycle Bal': [1000, 1000, 496.89],
+             'Loan A: Loan End of Prev Cycle Bal': [1000, 1000, 1000],
              'Loan B: Principal Balance': [1000, 1000, 1000],
              'Loan B: Interest': [100, 43.52, 43.66],
              'Loan B: Loan Billing Cycle Payment Bal': [0, 6.62, 6.62],
@@ -1167,7 +1167,7 @@ class TestExpenseForecastMethods:
              'Loan A: Principal Balance': [1000, 480.89, 480.89],
              'Loan A: Interest': [100, 0, 0.13],
              'Loan A: Loan Billing Cycle Payment Bal': [0, 519.11 + 50.27, 519.11 + 50.27],
-             'Loan A: Loan End of Prev Cycle Bal': [1000, 1000, 480.89],
+             'Loan A: Loan End of Prev Cycle Bal': [1000, 1000, 1000],
              'Loan B: Principal Balance': [1000, 1000, 1000],
              'Loan B: Interest': [100, 9.52, 9.66],
              'Loan B: Loan Billing Cycle Payment Bal': [0, 40.62, 40.62],
@@ -1208,15 +1208,15 @@ class TestExpenseForecastMethods:
              'Loan A: Principal Balance': [1000, 92.62, 92.62],
              'Loan A: Interest': [100, 0, 0.03],
              'Loan A: Loan Billing Cycle Payment Bal': [0, 907.38 + 50.27, 907.38 + 50.27],
-             'Loan A: Loan End of Prev Cycle Bal': [1000, 1000, 92.62],
+             'Loan A: Loan End of Prev Cycle Bal': [1000, 1000, 1000],
              'Loan B: Principal Balance': [1000, 185.25, 185.25],
              'Loan B: Interest': [100, 0, 0.03],
              'Loan B: Loan Billing Cycle Payment Bal': [0, 814.75 + 50.14, 814.75 + 50.14],
-             'Loan B: Loan End of Prev Cycle Bal': [1000, 1000, 185.25],
+             'Loan B: Loan End of Prev Cycle Bal': [1000, 1000, 1000],
              'Loan C: Principal Balance': [1000, 972.57, 972.57],
              'Loan C: Interest': [100, 0, 0.03],
              'Loan C: Loan Billing Cycle Payment Bal': [0, 27.43 + 50.03, 27.43 + 50.03],
-             'Loan C: Loan End of Prev Cycle Bal': [1000, 1000, 972.57],
+             'Loan C: Loan End of Prev Cycle Bal': [1000, 1000, 1000],
              'Marginal Interest': [0, 0.44, 0.09],
              'Net Gain': [0, 0, 0],
              'Net Loss': [0, 0.44, 0.09],
@@ -1251,15 +1251,15 @@ class TestExpenseForecastMethods:
              'Loan A: Principal Balance': [1000, 0, 0],
              'Loan A: Interest': [100, 0, 0],
              'Loan A: Loan Billing Cycle Payment Bal': [0, 1000 + 50.27, 1000 + 50.27],
-             'Loan A: Loan End of Prev Cycle Bal': [1000, 1000, 0],
+             'Loan A: Loan End of Prev Cycle Bal': [1000, 1000, 1000],
              'Loan B: Principal Balance': [1000, 0, 0],
              'Loan B: Interest': [100, 0, 0],
              'Loan B: Loan Billing Cycle Payment Bal': [0, 1000 + 50.14, 1000 + 50.14],
-             'Loan B: Loan End of Prev Cycle Bal': [1000, 1000, 0],
+             'Loan B: Loan End of Prev Cycle Bal': [1000, 1000, 1000],
              'Loan C: Principal Balance': [1000, 0, 0],
              'Loan C: Interest': [100, 0, 0],
              'Loan C: Loan Billing Cycle Payment Bal': [0, 1000 + 50.03, 1000 + 50.03],
-             'Loan C: Loan End of Prev Cycle Bal': [1000, 1000, 0],
+             'Loan C: Loan End of Prev Cycle Bal': [1000, 1000, 1000],
              'Marginal Interest': [0, 0.44, 0],
              'Net Gain': [0, 0, 0],
              'Net Loss': [0, 0.44, 0],
@@ -1289,7 +1289,7 @@ class TestExpenseForecastMethods:
                                 #         })
                                 # ),
 
-        ('test_cc_advance_minimum_payment_in_1_payment_pay_over_minimum',
+        ('test_cc_advance_minimum_payment_in_1_payment_pay_over_minimum', #implemented
          AccountSet.AccountSet(checking_acct_list(5000) + credit_bsd12_acct_list(1000, 1000, 0.05)),
          BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000111', '20000111', 2, 'once', 500, 'additional_cc_payment')]),
          MemoRuleSet.MemoRuleSet([
@@ -1305,7 +1305,7 @@ class TestExpenseForecastMethods:
              'Credit: Curr Stmt Bal': [1000, 1000, 0, 0],
              'Credit: Prev Stmt Bal': [1000, 500, 1504.17, 1504.17],
              'Credit: Credit Billing Cycle Payment Bal': [0, 500, 0, 0],
-             'Credit: Credit End of Prev Cycle Bal': [1000, 1000, 1000, 1504.17],
+             'Credit: Credit End of Prev Cycle Bal': [1000, 1000, 1000, 1504.17], #this is correct
              'Marginal Interest': [0, 0, 4.17, 0],
              'Net Gain': [0, 0, 0, 0],
              'Net Loss': [0, 0, 4.17, 0],
@@ -1320,7 +1320,7 @@ class TestExpenseForecastMethods:
              'Memo': ['', '', '', '']
          })),
 
-        ('test_cc_advance_minimum_payment_in_1_payment_pay_under_minimum',
+        ('test_cc_advance_minimum_payment_in_1_payment_pay_under_minimum', #implemented
          AccountSet.AccountSet(checking_acct_list(5000) + credit_bsd12_acct_list(1000, 1000, 0.05)),
          BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000111', '20000111', 2, 'once', 20, 'additional_cc_payment')]),
          MemoRuleSet.MemoRuleSet([
@@ -1328,30 +1328,30 @@ class TestExpenseForecastMethods:
              MemoRule.MemoRule('additional_cc_payment', 'Checking', 'Credit', 2)
          ]),
          '20000110',
-         '20000112',
+         '20000113',
          MilestoneSet.MilestoneSet([], [], []),
          pd.DataFrame({
-             'Date': ['20000110', '20000111', '20000112'],
-             'Checking': [5000, 4980, 4960],
-             'Credit: Curr Stmt Bal': [1000, 1000, 0],
-             'Credit: Prev Stmt Bal': [1000, 980, 1964.17],
-             'Credit: Credit Billing Cycle Payment Bal': [0, 20, 0],
-             'Credit: Credit End of Prev Cycle Bal': [1000, 1000, 960],
-             'Marginal Interest': [0, 0, 4.17],
-             'Net Gain': [0, 0, 0],
-             'Net Loss': [0, 0, 4.17],
-             'Net Worth': [3000, 3000, 3000 - 4.17],
-             'Loan Total': [0, 0, 0],
-             'CC Debt Total': [2000, 1980, 1964.17],
-             'Liquid Total': [5000, 4980, 4960],
+             'Date': ['20000110', '20000111', '20000112', '20000113'],
+             'Checking': [5000, 4980, 4960, 4960],
+             'Credit: Curr Stmt Bal': [1000, 1000, 0, 0],
+             'Credit: Prev Stmt Bal': [1000, 980, 1964.17, 1964.17],
+             'Credit: Credit Billing Cycle Payment Bal': [0, 20, 0, 0],
+             'Credit: Credit End of Prev Cycle Bal': [1000, 1000, 1000, 1964.17], #min payment causes the correct update
+             'Marginal Interest': [0, 0, 4.17, 0],                                #so a partial pre payment of min payment
+             'Net Gain': [0, 0, 0, 0],                                            #therefore has no effect on End of Prev Cycle Bal
+             'Net Loss': [0, 0, 4.17, 0],
+             'Net Worth': [3000, 3000, 3000 - 4.17, 3000 - 4.17],
+             'Loan Total': [0, 0, 0, 0],
+             'CC Debt Total': [2000, 1980, 1964.17, 1964.17],
+             'Liquid Total': [5000, 4980, 4960, 4960],
              'Memo Directives': ['',
                                  'ADDTL CC PAYMENT (Checking -$20.00); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$20.00)',
-                                 'CC INTEREST (Credit: Prev Stmt Bal +$4.17); CC MIN PAYMENT (Checking -$20.00); CC MIN PAYMENT (Credit: Prev Stmt Bal -$20.00)'],
-             'Memo': ['', '', '']
+                                 'CC INTEREST (Credit: Prev Stmt Bal +$4.17); CC MIN PAYMENT (Checking -$20.00); CC MIN PAYMENT (Credit: Prev Stmt Bal -$20.00)',
+                                 ''],
+             'Memo': ['', '', '', '']
          })),
 
-        # pretty sure this is correct.
-        ('test_cc_advance_minimum_payment_in_1_payment_pay_exact_minimum',
+        ('test_cc_advance_minimum_payment_in_1_payment_pay_exact_minimum', #implemented
          AccountSet.AccountSet(checking_acct_list(5000) + credit_bsd12_acct_list(1000, 1000, 0.05)),
          BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000111', '20000111', 2, 'once', 40, 'additional_cc_payment')]),
          MemoRuleSet.MemoRuleSet([
@@ -1367,7 +1367,7 @@ class TestExpenseForecastMethods:
              'Credit: Curr Stmt Bal': [1000, 1000, 0, 0],
              'Credit: Prev Stmt Bal': [1000, 960, 1964.17, 1964.17],
              'Credit: Credit Billing Cycle Payment Bal': [0, 40, 0, 0],
-             'Credit: Credit End of Prev Cycle Bal': [1000, 1000, 1000, 1964.17],
+             'Credit: Credit End of Prev Cycle Bal': [1000, 1000, 1000, 1964.17], #prop not needed to get this right
              'Marginal Interest': [0, 0, 4.17, 0],
              'Net Gain': [0, 0, 0, 0],
              'Net Loss': [0, 0, 4.17, 0],
@@ -1382,7 +1382,7 @@ class TestExpenseForecastMethods:
              'Memo': ['', '', '', '']
          })),
 
-        ('test_cc_single_additional_payment_on_due_date',
+        ('test_cc_single_additional_payment_on_due_date', #implemented
          AccountSet.AccountSet(checking_acct_list(5000) + credit_bsd12_acct_list(500, 500, 0.05)),
          BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 600,
                                                     'single additional payment on due date', False, False)]),
@@ -2525,15 +2525,18 @@ class TestExpenseForecastMethods:
          })
          ),
 
+
+        # there might be something about allocation and the ALL_LOANS memo rule as well
+        # Note also that the basic loan tests test single payment same day
+
         # todo could there be problems w interest accrual and billing cycle being on different cadences?
-        # test_loan_single_additional_payment_on_due_date #3 day result
+
         # test_loan_single_additional_payment_day_before #4 day result
         # test_loan_two_additional_payments_on_due_date #3 day result
         # test_loan_two_additional_payments_day_before #4 day result
         # test_loan_earliest_prepayment_possible #36 day result
         # test_loan_multiple_earliest_prepayment_possible #36 day result
 
-        # test_loan_single_additional_payment_on_due_date_OVERPAY #3 day result
         # test_loan_single_additional_payment_day_before_OVERPAY #4 day result
         # test_loan_two_additional_payments_on_due_date_OVERPAY #3 day result
         # test_loan_two_additional_payments_day_before_OVERPAY #4 day result
@@ -5077,16 +5080,37 @@ class TestExpenseForecastMethods:
     #     raise NotImplementedError
 
 #
-#
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_10-account_set19-budget_set19-memo_rule_set19-20000101-20000103-milestone_set19-expected_result_df19]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_110-account_set20-budget_set20-memo_rule_set20-20000101-20000103-milestone_set20-expected_result_df20]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_560-account_set21-budget_set21-memo_rule_set21-20000101-20000103-milestone_set21-expected_result_df21]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_610-account_set22-budget_set22-memo_rule_set22-20000101-20000103-milestone_set22-expected_result_df22]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_1900-account_set23-budget_set23-memo_rule_set23-20000101-20000103-milestone_set23-expected_result_df23]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_overpay-account_set24-budget_set24-memo_rule_set24-20000101-20000103-milestone_set24-expected_result_df24]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_advance_minimum_payment_in_1_payment_pay_over_minimum-account_set25-budget_set25-memo_rule_set25-20000110-20000113-milestone_set25-expected_result_df25]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_advance_minimum_payment_in_1_payment_pay_under_minimum-account_set26-budget_set26-memo_rule_set26-20000110-20000112-milestone_set26-expected_result_df26]
+# improving the names of tests would make them even longer...
+# just know that the basic cc tests do not have a billing date in their expected result set
+
+# NOT YET IMPLEMENTED
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_on_due_date-account_set28-budget_set28-memo_rule_set28-20000111-20000113-milestone_set28-expected_result_df28]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before-account_set29-budget_set29-memo_rule_set29-20000110-20000112-milestone_set29-expected_result_df29]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_on_due_date__prev_only-account_set31-budget_set31-memo_rule_set31-20000111-20000113-milestone_set31-expected_result_df31]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_on_due_date_OVERPAY__prev_only-account_set32-budget_set32-memo_rule_set32-20000111-20000113-milestone_set32-expected_result_df32]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_on_due_date_OVERPAY__prev_only-account_set33-budget_set33-memo_rule_set33-20000111-20000113-milestone_set33-expected_result_df33]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_on_due_date__curr_only-account_set34-budget_set34-memo_rule_set34-20000111-20000113-milestone_set34-expected_result_df34]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_on_due_date_OVERPAY__curr_only-account_set35-budget_set35-memo_rule_set35-20000111-20000113-milestone_set35-expected_result_df35]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_on_due_date_OVERPAY__curr_only-account_set36-budget_set36-memo_rule_set36-20000111-20000113-milestone_set36-expected_result_df36]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_on_due_date__curr_prev-account_set37-budget_set37-memo_rule_set37-20000111-20000113-milestone_set37-expected_result_df37]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_on_due_date_OVERPAY__curr_prev-account_set38-budget_set38-memo_rule_set38-20000111-20000113-milestone_set38-expected_result_df38]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_on_due_date_OVERPAY__curr_prev-account_set39-budget_set39-memo_rule_set39-20000111-20000113-milestone_set39-expected_result_df39]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before__prev_only-account_set40-budget_set40-memo_rule_set40-20000110-20000114-milestone_set40-expected_result_df40]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before__prev_only-account_set41-budget_set41-memo_rule_set41-20000110-20000114-milestone_set41-expected_result_df41]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before_OVERPAY__prev_only-account_set42-budget_set42-memo_rule_set42-20000110-20000114-milestone_set42-expected_result_df42]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before_OVERPAY__prev_only-account_set43-budget_set43-memo_rule_set43-20000110-20000114-milestone_set43-expected_result_df43]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before__curr_only-account_set44-budget_set44-memo_rule_set44-20000110-20000114-milestone_set44-expected_result_df44]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before__curr_only-account_set45-budget_set45-memo_rule_set45-20000110-20000114-milestone_set45-expected_result_df45]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before_OVERPAY__curr_only-account_set46-budget_set46-memo_rule_set46-20000110-20000114-milestone_set46-expected_result_df46]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before_OVERPAY__curr_only-account_set47-budget_set47-memo_rule_set47-20000110-20000114-milestone_set47-expected_result_df47]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before__curr_prev-account_set48-budget_set48-memo_rule_set48-20000110-20000114-milestone_set48-expected_result_df48]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before__curr_prev-account_set49-budget_set49-memo_rule_set49-20000110-20000114-milestone_set49-expected_result_df49]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before_OVERPAY__curr_prev-account_set50-budget_set50-memo_rule_set50-20000110-20000114-milestone_set50-expected_result_df50]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before_OVERPAY__curr_prev-account_set51-budget_set51-memo_rule_set51-20000110-20000114-milestone_set51-expected_result_df51]
+
+
+
+# FAIL LIST
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before-account_set29-budget_set29-memo_rule_set29-20000110-20000112-milestone_set29-expected_result_df29]
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_on_due_date__prev_only-account_set31-budget_set31-memo_rule_set31-20000111-20000113-milestone_set31-expected_result_df31]
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_on_due_date_OVERPAY__prev_only-account_set32-budget_set32-memo_rule_set32-20000111-20000113-milestone_set32-expected_result_df32]
