@@ -343,6 +343,14 @@ class AccountSet:
                                    raise_exceptions=raise_exceptions)
             self.accounts.append(account_prev)
 
+            if end_of_previous_cycle_balance != previous_statement_balance:
+                #this implies that a prepayment occurred
+
+                try:
+                    assert  billing_cycle_payment_balance == (end_of_previous_cycle_balance - previous_statement_balance)
+                except Exception as e:
+                    raise ValueError('if end_of_previous_cycle_balance doesnt match prev_stmt_bal, then billing_cycle_payment_balance must equal the difference. Please correct input and try again.')
+
             billing_cycle_payment = Account.Account(name=f"{name}: Credit Billing Cycle Payment Bal",
                                                     balance=billing_cycle_payment_balance,
                                                     min_balance=min_balance,
@@ -412,7 +420,7 @@ class AccountSet:
                        billing_cycle_payment_balance=billing_cycle_payment_balance,
                        end_of_previous_cycle_balance=end_of_previous_cycle_balance)
 
-    def createCreditCardAccount(self,name,current_stmt_bal,prev_stmt_bal,min_balance,max_balance,billing_start_date_YYYYMMDD,apr,minimum_payment,billing_cycle_payment_balance):
+    def createCreditCardAccount(self,name,current_stmt_bal,prev_stmt_bal,min_balance,max_balance,billing_start_date_YYYYMMDD,apr,minimum_payment,billing_cycle_payment_balance,end_of_previous_cycle_balance):
         self.createAccount(name=name,
                           balance=current_stmt_bal+prev_stmt_bal,
                           min_balance=min_balance,
@@ -440,6 +448,7 @@ class AccountSet:
 
     def getBalances(self):
         #log_in_color(logger,'magenta','debug','ENTER getBalances()')
+        # print('ENTER getBalances')
         balances_dict = {}
         for i in range(0,len(self.accounts)):
             a = self.accounts[i]
@@ -450,7 +459,12 @@ class AccountSet:
                 prev_balance = a.balance
                 curr_balance = self.accounts[i-1].balance
 
+                # print('prev_balance: '+str(prev_balance))
+                # print('curr_balance: ' + str(curr_balance))
+                # print('a.max_balance: ' + str(a.max_balance))
+
                 remaining_prev_balance = a.max_balance - ( prev_balance + curr_balance )
+                # print('remaining_prev_balance: ' + str(remaining_prev_balance))
                 balances_dict[a.name.split(':')[0]] = remaining_prev_balance
             elif a.account_type == 'credit curr stmt bal':
                 pass #handled above
@@ -472,6 +486,7 @@ class AccountSet:
 
         # log_in_color(logger,'magenta', 'debug', balances_dict)
         # log_in_color(logger,'magenta', 'debug', 'EXIT getBalances()')
+        # print('EXIT getBalances')
         return balances_dict
 
     def executeTransaction(self, Account_From, Account_To, Amount, income_flag=False, minimum_payment_flag=False):
@@ -655,8 +670,8 @@ class AccountSet:
 
                 balance_after_proposed_transaction = sum(relevant_rows_df) - abs(Amount)
 
-                if abs(balance_after_proposed_transaction) < 0.01:
-                    balance_after_proposed_transaction = 0
+                # if abs(balance_after_proposed_transaction) < 0.01:
+                #     balance_after_proposed_transaction = 0
 
                 try:
                     #print('assert '+str(self.accounts[account_to_index].min_balance)+' <= '+str(balance_after_proposed_transaction)+' <= '+str(self.accounts[account_to_index].max_balance))
@@ -698,8 +713,8 @@ class AccountSet:
                         pass
                         #print('Minimum payment so not adding to billing cycle payment balance (2/3)')
 
-                    if abs(self.accounts[account_to_index].balance) < 0.01:
-                        self.accounts[account_to_index].balance = 0
+                    # if abs(self.accounts[account_to_index].balance) < 0.01:
+                    #     self.accounts[account_to_index].balance = 0
 
                     #self.accounts[account_to_index].balance = self.accounts[account_to_index].balance
                     # print('Paid ' + str(remaining_to_pay) + ' to ' + self.accounts[account_to_index].name)
@@ -708,8 +723,8 @@ class AccountSet:
                     log_in_color(logger,'magenta', 'debug', 'Paid ' + str(Amount) + ' to ' + str(self.accounts[account_to_index + 1].name), 0)
                     # print('Paid ' + str(Amount) + ' to ' + str(self.accounts[account_to_index + 1].name))
                     self.accounts[account_to_index + 1].balance -= Amount
-                    if abs(self.accounts[account_to_index + 1].balance) < 0.01:
-                        self.accounts[account_to_index + 1].balance = 0
+                    # if abs(self.accounts[account_to_index + 1].balance) < 0.01:
+                    #     self.accounts[account_to_index + 1].balance = 0
 
                     if not minimum_payment_flag:
                         #print('NOT Minimum payment so adding to bcp bal: ' + str(Amount))
@@ -727,6 +742,7 @@ class AccountSet:
             after_txn_total_available_funds += available_funds[a]
 
         empirical_delta = round(after_txn_total_available_funds - before_txn_total_available_funds,2)
+
 
         if boundary_error_ind: raise ValueError("Account boundaries were violated\n"+error_msg)
 

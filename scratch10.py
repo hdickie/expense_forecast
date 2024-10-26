@@ -17,6 +17,7 @@ from log_methods import log_in_color
 import Account, BudgetSet, MemoRuleSet
 import copy
 
+from generate_date_sequence import generate_date_sequence
 
 def non_trivial_loan(name,pbal,interest,apr):
     A = AccountSet.AccountSet([])
@@ -92,47 +93,53 @@ def checking_acct_list(balance):
 def txn_budget_item_once_list(amount,priority,memo,deferrable,partial_payment_allowed):
     return [BudgetItem.BudgetItem('20000102','20000102',priority,'once',amount,memo,deferrable,partial_payment_allowed)]
 
+def credit_bsd12_w_eopc_acct_list(prev_balance,curr_balance,apr,end_of_prev_cycle_balance):
+    A = AccountSet.AccountSet([])
+    A.createAccount(name='Credit',
+                    balance=curr_balance + prev_balance,
+                    min_balance=0,
+                    max_balance=20000,
+                    account_type='credit',
+                    billing_start_date_YYYYMMDD='19990112',
+                    apr=apr,
+                    interest_cadence='monthly',
+                    minimum_payment=40,
+                    previous_statement_balance=prev_balance,
+                    current_statement_balance=curr_balance,
+                    billing_cycle_payment_balance=500,
+                    end_of_previous_cycle_balance=end_of_prev_cycle_balance,
+                    print_debug_messages=True,
+                    raise_exceptions=True)
+    return A.accounts
 
 if __name__ == '__main__':
-    test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df = ('test_p7__additional_loan_payment__amt_1900',
-         AccountSet.AccountSet(
-             checking_acct_list(5000) + non_trivial_loan('Loan A', 1000, 100, 0.1) + non_trivial_loan('Loan B', 1000,
-                                                                                                      100,
-                                                                                                      0.05) + non_trivial_loan(
-                 'Loan C', 1000, 100, 0.01)),
-         BudgetSet.BudgetSet(
-             [BudgetItem.BudgetItem('20000102', '20000102', 7, 'once', 1900, 'additional_loan_payment')]),
+    test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df = ('test cc 36 day result template',
+         AccountSet.AccountSet(checking_acct_list(0) + credit_bsd12_w_eopc_acct_list(0, 0, 0.05, 500)),
+         # BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 600, 'single additional payment on due date', False, False)]),
+         BudgetSet.BudgetSet(),
          MemoRuleSet.MemoRuleSet([
              MemoRule.MemoRule('.*', 'Checking', None, 1),
-             MemoRule.MemoRule('additional_loan_payment', 'Checking', 'ALL_LOANS', 7)
+             MemoRule.MemoRule('.*', 'Checking', 'Credit', 2)
          ]),
-         '20000101',
-         '20000103',
-         MilestoneSet.MilestoneSet( [], [], []),
+         '20000110',
+         '20000214',
+         MilestoneSet.MilestoneSet([], [], []),
          pd.DataFrame({
-             'Date': ['20000101', '20000102', '20000103'],
-             'Checking': [5000, 5000 - 150 - 1900, 5000 - 150 - 1900],
-             'Loan A: Principal Balance': [1000, 92.62, 92.62],
-             'Loan A: Interest': [100, 0, 0.03],
-             'Loan A: Loan Billing Cycle Payment Bal': [0, 907.38 + 50.27, 907.38 + 50.27],
-             'Loan A: Loan End of Prev Cycle Bal': [1000, 1000, 92.62],
-             'Loan B: Principal Balance': [1000, 185.25, 185.25],
-             'Loan B: Interest': [100, 0, 0.03],
-             'Loan B: Loan Billing Cycle Payment Bal': [0, 814.75 + 50.14, 814.75 + 50.14],
-             'Loan B: Loan End of Prev Cycle Bal': [1000, 1000, 185.25],
-             'Loan C: Principal Balance': [1000, 972.57, 972.57],
-             'Loan C: Interest': [100, 0, 0.03],
-             'Loan C: Loan Billing Cycle Payment Bal': [0, 27.43 + 50.03, 27.43 + 50.03],
-             'Loan C: Loan End of Prev Cycle Bal': [1000, 1000, 972.57],
-             'Marginal Interest': [0, 0.44, 0.09],
-             'Net Gain': [0, 0, 0],
-             'Net Loss': [0, 0.44, 0.09],
-             'Net Worth': [1700, 1699.56, 1699.47],
-             'Loan Total': [3300, 1250.44, 1250.53],
-             'CC Debt Total': [0, 0, 0],
-             'Liquid Total': [5000, 5000 - 150 - 1900, 5000 - 150 - 1900],
-                                  'Memo Directives': ['', 'LOAN MIN PAYMENT (Loan A: Interest -$50.00); LOAN MIN PAYMENT (Checking -$50.00); LOAN MIN PAYMENT (Loan B: Interest -$50.00); LOAN MIN PAYMENT (Checking -$50.00); LOAN MIN PAYMENT (Loan C: Interest -$50.00); LOAN MIN PAYMENT (Checking -$50.00); ADDTL LOAN PAYMENT (Checking -$907.38); ADDTL LOAN PAYMENT (Loan A: Principal Balance -$907.38); ADDTL LOAN PAYMENT (Checking -$50.27); ADDTL LOAN PAYMENT (Loan A: Interest -$50.27); ADDTL LOAN PAYMENT (Checking -$814.75); ADDTL LOAN PAYMENT (Loan B: Principal Balance -$814.75); ADDTL LOAN PAYMENT (Checking -$50.14); ADDTL LOAN PAYMENT (Loan B: Interest -$50.14); ADDTL LOAN PAYMENT (Checking -$27.43); ADDTL LOAN PAYMENT (Loan C: Principal Balance -$27.43); ADDTL LOAN PAYMENT (Checking -$50.03); ADDTL LOAN PAYMENT (Loan C: Interest -$50.03)', ''],
-             'Memo': ['', '', '']
+             'Date': generate_date_sequence('20000110', 35, 'daily'),
+             'Checking': [0] * 36,
+             'Credit: Curr Stmt Bal': [0] * 36,
+             'Credit: Prev Stmt Bal': [0] * 36,
+             'Credit: Credit Billing Cycle Payment Bal': [0] * 36,
+             'Credit: Credit End of Prev Cycle Bal': [0] * 36,
+             'Marginal Interest': [0] * 36,
+             'Net Gain': [0] * 36,
+             'Net Loss': [0] * 36,
+             'Net Worth': [0] * 36,
+             'Loan Total': [0] * 36,
+             'CC Debt Total': [0] * 36,
+             'Liquid Total': [0] * 36,
+             'Memo Directives': [''] * 36
+             'Memo': [''] * 36
          })
          )
 
