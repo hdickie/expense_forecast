@@ -104,7 +104,7 @@ class MemoRuleSet:
 
         matching_memo_rule_row = memo_rules_of_matching_priority[match_vec]
 
-        relevant_memo = MemoRule.MemoRule(matching_memo_rule_row.Memo_Regex.iat[0],
+        relevant_memo_rule = MemoRule.MemoRule(matching_memo_rule_row.Memo_Regex.iat[0],
                                  matching_memo_rule_row.Account_From.iat[0],
                                  matching_memo_rule_row.Account_To.iat[0],
                                  matching_memo_rule_row.Transaction_Priority.iat[0])
@@ -112,7 +112,7 @@ class MemoRuleSet:
         log_in_color(logger,'yellow', 'debug', 'Found matching memo rule: '+str(matching_memo_rule_row.Account_From.iat[0])+' -> '+str(matching_memo_rule_row.Account_To.iat[0]))
 
         log_in_color(logger,'yellow', 'debug', 'EXIT findMatchingMemoRule')
-        return MemoRuleSet([relevant_memo])
+        return MemoRuleSet([relevant_memo_rule])
 
 
     # def fromExcel(self):
