@@ -2769,9 +2769,9 @@ class ExpenseForecast:
     def processConfirmedTransactions(self, forecast_df, relevant_confirmed_df, memo_set, account_set, date_YYYYMMDD):
         log_in_color(logger, 'white', 'debug', str(date_YYYYMMDD) + ' ENTER processConfirmedTransactions', self.log_stack_depth)
         self.log_stack_depth += 1
-        # if not relevant_confirmed_df.empty:
-        #     log_in_color(logger, 'cyan', 'debug', 'relevant_confirmed_df:', self.log_stack_depth)
-        #     log_in_color(logger, 'cyan', 'debug', relevant_confirmed_df.to_string(), self.log_stack_depth)
+        if not relevant_confirmed_df.empty:
+            log_in_color(logger, 'cyan', 'debug', 'relevant_confirmed_df:', self.log_stack_depth)
+            log_in_color(logger, 'cyan', 'debug', relevant_confirmed_df.to_string(), self.log_stack_depth)
 
         for confirmed_index, confirmed_row in relevant_confirmed_df.iterrows():
             # print('    '+str(confirmed_row.Memo)+' '+str(confirmed_row.Amount))
@@ -3832,6 +3832,7 @@ class ExpenseForecast:
 
             #multiple txns same day same priority p!=1 have not been propagated even if approved
             #editing confirmed_df causes downstream problems, so we have a working copy for the scope of this method
+            #local_scope_og_confirmed_df = confirmed_df
             local_scope_confirmed_df = pd.concat([new_confirmed_df,confirmed_df])
             result = self.attemptTransaction(
                 forecast_df=forecast_df,
@@ -3881,11 +3882,12 @@ class ExpenseForecast:
                 if reduced_amount > 0:
                     proposed_row['Amount'] = reduced_amount
 
+                    #local_scope_confirmed_df = pd.concat([new_confirmed_df, local_scope_og_confirmed_df])
                     result = self.attemptTransaction(
                         forecast_df=forecast_df,
                         account_set=copy.deepcopy(account_set),
                         memo_set=memo_set,
-                        confirmed_df=confirmed_df,
+                        confirmed_df=local_scope_confirmed_df,
                         proposed_row_df=proposed_row
                     )
 
@@ -8039,6 +8041,10 @@ class ExpenseForecast:
         else:
             next_billing_date = None
 
+        day_after_billing_dates = [
+            (datetime.datetime.strptime(str(d), '%Y%m%d') + datetime.timedelta(days=1)).strftime('%Y%m%d') for d in
+            future_billing_dates]
+
         # Get account indices in forecast_df
         checking_account_index = forecast_df.columns.get_loc(checking_account_name)
         prev_stmt_bal_account_index = forecast_df.columns.get_loc(prev_stmt_bal_account_name)
@@ -8053,7 +8059,7 @@ class ExpenseForecast:
         checking_delta = account_deltas_list[checking_account_index - 1]
         billing_cycle_payment_delta = account_deltas_list[billing_cycle_payment_account_index - 1]
         prev_stmt_delta = 0
-        eocp_delta = 0
+        eopc_delta = 0
 
         # Iterate over future forecast rows
         for f_i, f_row in future_rows_only_df.iterrows():
@@ -8063,51 +8069,19 @@ class ExpenseForecast:
             if date_iat == next_billing_date:
                 # At the next billing date, process memo directives
 
-                # # Initialize memo variables
-                # og_curr_memo = ''
-                # og_check_memo = ''
-                # og_curr_amount = 0.0
-                # og_check_amount = 0.0
-
                 if date_string_YYYYMMDD == next_billing_date:
                     pass  # payments day of count toward the next cycle
                 else:
                     billing_cycle_payment_delta = 0
 
-                ### If there was only curr, then there was no minimum payment
-                # # Parse memo directives
-                # for md in f_row['Memo Directives'].split(';'):
-                #     md = md.strip()
-                #     if not md:
-                #         continue
-                #
-                #     if f'CC MIN PAYMENT ({curr_stmt_bal_account_name}' in md:
-                #         og_curr_memo = md
-                #         og_curr_amount = self._parse_memo_amount(md)
-                #         curr_stmt_delta += og_curr_amount
-                #         checking_delta += og_curr_amount
-                #     elif f'CC MIN PAYMENT ({checking_account_name}' in md:
-                #         og_check_memo = md
-                #         og_check_amount = self._parse_memo_amount(md)
-                #     else:
-                #         md_to_keep.append(md)
-                #
-                # # # Move curr_stmt_delta to previous_stmt_delta as the current balance moves to previous
-                # # previous_stmt_delta += curr_stmt_delta
-                # # curr_stmt_delta = 0.0
-                #
-                # # Update memo directives
-                # if og_curr_memo.strip() != '':
-                #     new_curr_memo = self._update_memo_amount(og_curr_memo, 0.00)
-                #     md_to_keep.append(new_curr_memo)
-                # else:
-                #     new_curr_memo = ''
-                #
-                # if og_check_memo:
-                #     # Adjust the checking memo amount
-                #     replacement_memo = f'{(og_check_amount - og_curr_amount):.2f}'
-                #     new_check_memo = self._update_memo_amount(og_check_memo, replacement_memo)
-                #     md_to_keep.append(new_check_memo)
+                    # Move current statement delta to previous
+                    prev_stmt_delta += curr_stmt_delta
+                    curr_stmt_delta = 0
+
+            elif date_iat in day_after_billing_dates:
+                updated_eopc = future_rows_only_df.at[f_i - 1, prev_stmt_bal_account_name]
+                old_eopc = future_rows_only_df.at[f_i, eopc_account_name]
+                eopc_delta += (updated_eopc - old_eopc)
 
             #todo left off here, copy pasted from prev only method
             elif date_iat in cc_billing_dates and previous_prev_stmt_bal != 0:
@@ -8148,7 +8122,7 @@ class ExpenseForecast:
                         #              self.log_stack_depth)
 
                         # Adjust deltas
-                        previous_stmt_delta += og_min_payment_amount - new_min_payment_amount
+                        prev_stmt_delta += og_min_payment_amount - new_min_payment_amount
                         checking_delta += og_min_payment_amount - new_min_payment_amount
 
                         # Update memo directive
@@ -8171,11 +8145,15 @@ class ExpenseForecast:
                         # log_in_color(logger, 'white', 'debug', str(date_iat) + ' og_interest_amount: ' + str(og_interest_amount), self.log_stack_depth)
                         # log_in_color(logger, 'white', 'debug', str(date_iat) + ' NEW interest_to_be_charged: ' + str(interest_to_be_charged), self.log_stack_depth)
 
-                        previous_stmt_delta += interest_to_be_charged - og_interest_amount
+                        prev_stmt_delta += interest_to_be_charged - og_interest_amount
 
                         # Update memo directive
                         new_md = self._update_memo_amount(md, interest_to_be_charged)
                         md_to_keep.append(new_md)
+
+                        # Move current statement delta to previous
+                        prev_stmt_delta += curr_stmt_delta
+                        curr_stmt_delta = 0
 
                         # log_in_color(logger, 'white', 'debug',
                         #              str(date_iat) + ' new md: ' + str(md),
@@ -8214,7 +8192,7 @@ class ExpenseForecast:
             future_rows_only_df.at[f_i, curr_stmt_bal_account_name] += curr_stmt_delta
             future_rows_only_df.at[f_i, current_cycle_payment_account_name] += billing_cycle_payment_delta
             future_rows_only_df.at[f_i, prev_stmt_bal_account_name] += prev_stmt_delta
-            future_rows_only_df.at[f_i, eopc_account_name] += eocp_delta
+            future_rows_only_df.at[f_i, eopc_account_name] += eopc_delta
 
             future_rows_only_df.at[f_i, checking_account_name] = round(future_rows_only_df.at[f_i, checking_account_name],2)
             future_rows_only_df.at[f_i, curr_stmt_bal_account_name] = round(future_rows_only_df.at[f_i, curr_stmt_bal_account_name],2)
@@ -8232,6 +8210,8 @@ class ExpenseForecast:
             # checking_delta = 0.0
             # curr_stmt_delta = 0.0
             # previous_stmt_delta = 0.0
+
+        log_in_color(logger, 'white', 'debug', future_rows_only_df.to_string(), self.log_stack_depth)
 
         self.log_stack_depth -= 1
         log_in_color(logger, 'white', 'debug', 'EXIT _propagate_credit_payment_curr_only', self.log_stack_depth)

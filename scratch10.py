@@ -121,36 +121,40 @@ def credit_bsd12_w_eopc_acct_list(prev_balance,curr_balance,apr,end_of_prev_cycl
     return A.accounts
 
 if __name__ == '__main__':
-    test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df = ('test_cc_advance_minimum_payment_in_1_payment_pay_over_minimum', #implemented
-         AccountSet.AccountSet(checking_acct_list(5000) + credit_bsd12_acct_list(1000, 1000, 0.05)),
-         BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000111', '20000111', 2, 'once', 500, 'additional_cc_payment')]),
+    test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df = ('test_cc_two_additional_payments_on_due_date__curr_only',  # confirmed correct
+         AccountSet.AccountSet(checking_acct_list(5000) + credit_bsd12_w_eopc_acct_list(0, 0, 0.05, 0)),
+         BudgetSet.BudgetSet(
+             [BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 100, 'test credit payment 1', False, False),
+              BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 100, 'test credit payment 2', False, False),
+              BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 400, 'cc txn', False, False)]),
          MemoRuleSet.MemoRuleSet([
              MemoRule.MemoRule('.*', 'Checking', None, 1),
-             MemoRule.MemoRule('additional_cc_payment', 'Checking', 'Credit', 2)
+             MemoRule.MemoRule('cc txn', 'Credit', 'None', 2),
+             MemoRule.MemoRule('test credit payment.*', 'Checking', 'Credit', 2)
          ]),
-         '20000110',
+         '20000111',
          '20000113',
          MilestoneSet.MilestoneSet([], [], []),
          pd.DataFrame({
-             'Date': ['20000110', '20000111', '20000112', '20000113'],
-             'Checking': [5000, 4500, 4500, 4500],
-             'Credit: Curr Stmt Bal': [1000, 1000, 0, 0],
-             'Credit: Prev Stmt Bal': [1000, 500, 1504.17, 1504.17],
-             'Credit: Credit Billing Cycle Payment Bal': [0, 500, 0, 0],
-             'Credit: Credit End of Prev Cycle Bal': [1000, 1000, 1000, 1504.17], #this is correct
-             'Marginal Interest': [0, 0, 4.17, 0],
-             'Net Gain': [0, 0, 0, 0],
-             'Net Loss': [0, 0, 4.17, 0],
-             'Net Worth': [3000, 3000, 2995.83, 2995.83],
-             'Loan Total': [0, 0, 0, 0],
-             'CC Debt Total': [2000, 1500, 1504.17, 1504.17],
-             'Liquid Total': [5000, 4500, 4500, 4500],
+             'Date': ['20000111', '20000112', '20000113'],
+             'Checking': [5000, 5000 - 200, 5000 - 200],
+             'Credit: Curr Stmt Bal': [0, 200, 200],
+             'Credit: Prev Stmt Bal': [0, 0, 0],
+             'Credit: Credit Billing Cycle Payment Bal': [0, 0, 200],
+             'Credit: Credit End of Prev Cycle Bal': [0, 0, 0],
+             'Marginal Interest': [0, 0, 0],
+             'Net Gain': [0, 0, 0],
+             'Net Loss': [0, 400, 0],
+             'Net Worth': [5000, 5000 - 400, 5000 - 400],
+             'Loan Total': [0, 0, 0],
+             'CC Debt Total': [0, 200, 200],
+             'Liquid Total': [5000, 5000 - 200, 5000 - 200],
              'Memo Directives': ['',
-                                 'ADDTL CC PAYMENT (Checking -$500.00); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$500.00)',
-                                 'CC INTEREST (Credit: Prev Stmt Bal +$4.17); CC MIN PAYMENT ALREADY MADE (Checking -$0.00); CC MIN PAYMENT ALREADY MADE (Credit: Prev Stmt Bal -$0.00)',
+                                 '',
                                  ''],
-             'Memo': ['', '', '', '']
-         }))
+             'Memo': ['', 'cc txn (Credit -$400.00)', '']
+         })
+         )
 
     E = ExpenseForecast.ExpenseForecast(account_set, budget_set,
                                         memo_rule_set,

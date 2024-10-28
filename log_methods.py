@@ -157,7 +157,7 @@ def display_test_result(logger,test_name, df1):
     #lines_to_highlight_red = []
     mismatch_column_count = 0
     for cname in df1.columns:
-        if cname in ['Memo', 'Date']:
+        if cname in ['Memo Directives', 'Memo', 'Date']:
             columns_to_include.append(index)
         elif 'Diff' in cname:
             if sum(df1[cname]) != 0:
