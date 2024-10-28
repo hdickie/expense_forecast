@@ -1630,26 +1630,27 @@ class TestExpenseForecastMethods:
              MemoRule.MemoRule('.*', 'Checking', 'Credit', 2)
          ]),
          '20000110',
-         '20000112',
+         '20000113',
          MilestoneSet.MilestoneSet([], [], []),
          pd.DataFrame({
-             'Date': ['20000110', '20000111', '20000112'],
-             'Checking': [5000, 4700, 4700],
-             'Credit: Curr Stmt Bal': [500, 500, 0],
-             'Credit: Prev Stmt Bal': [500, 200, 702.08],
-             'Credit: Credit Billing Cycle Payment Bal': [0, 300, 0],
-             'Credit: Credit End of Prev Cycle Bal': [500, 500, 500],
-             'Marginal Interest': [0, 0, 2.08],
-             'Net Gain': [0, 0, 0],
-             'Net Loss': [0, 0, 2.08],
-             'Net Worth': [4000, 4000, 3997.92],
-             'Loan Total': [0, 0, 0],
-             'CC Debt Total': [1000, 700, 702.08],
-             'Liquid Total': [5000, 4700.0, 4700.0],
+             'Date': ['20000110', '20000111', '20000112', '20000113'],
+             'Checking': [5000, 4700, 4700, 4700],
+             'Credit: Curr Stmt Bal': [500, 500, 0, 0],
+             'Credit: Prev Stmt Bal': [500, 200, 702.08, 702.08],
+             'Credit: Credit Billing Cycle Payment Bal': [0, 300, 0, 0],
+             'Credit: Credit End of Prev Cycle Bal': [500, 500, 500, 702.08],
+             'Marginal Interest': [0, 0, 2.08, 0],
+             'Net Gain': [0, 0, 0, 0],
+             'Net Loss': [0, 0, 2.08, 0],
+             'Net Worth': [4000, 4000, 3997.92, 3997.92],
+             'Loan Total': [0, 0, 0, 0],
+             'CC Debt Total': [1000, 700, 702.08, 702.08],
+             'Liquid Total': [5000, 4700.0, 4700.0, 4700.0],
              'Memo Directives': ['',
                                  'ADDTL CC PAYMENT (Checking -$300.00); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$300.00)',
-                                 'CC INTEREST (Credit: Prev Stmt Bal +$2.08); CC MIN PAYMENT ALREADY MADE (Checking -$0.00); CC MIN PAYMENT ALREADY MADE (Credit: Prev Stmt Bal -$0.00)'],
-             'Memo': ['', '', '']
+                                 'CC INTEREST (Credit: Prev Stmt Bal +$2.08); CC MIN PAYMENT ALREADY MADE (Checking -$0.00); CC MIN PAYMENT ALREADY MADE (Credit: Prev Stmt Bal -$0.00)',
+                                 ''],
+             'Memo': ['', '', '', '']
          })
          ),
 
@@ -1663,127 +1664,128 @@ class TestExpenseForecastMethods:
              MemoRule.MemoRule('.*', 'Checking', 'Credit', 2)
          ]),
          '20000110',
-         '20000112',
-         MilestoneSet.MilestoneSet([], [], []),
-         pd.DataFrame({
-             'Date': ['20000110', '20000111', '20000112'],
-             'Checking': [5000, 4800, 4800],
-             'Credit: Curr Stmt Bal': [500, 500, 0],
-             'Credit: Prev Stmt Bal': [500, 300, 802.08],
-             'Credit: Credit Billing Cycle Payment Bal': [0, 200, 0],
-             'Credit: Credit End of Prev Cycle Bal': [500, 500, 500],
-             'Marginal Interest': [0, 0, 2.08],
-             'Net Gain': [0, 0, 0],
-             'Net Loss': [0, 0, 2.08],
-             'Net Worth': [4000, 4000, 3997.92],
-             'Loan Total': [0, 0, 0],
-             'CC Debt Total': [1000, 800, 802.08],
-             'Liquid Total': [5000, 4800.0, 4800.0],
-             'Memo Directives': ['',
-                                 'ADDTL CC PAYMENT (Checking -$100.00); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$100.00); ADDTL CC PAYMENT (Checking -$100.00); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$100.00)',
-                                 'CC INTEREST (Credit: Prev Stmt Bal +$2.08); CC MIN PAYMENT ALREADY MADE (Checking -$0.00); CC MIN PAYMENT ALREADY MADE (Credit: Prev Stmt Bal -$0.00)'],
-             'Memo': ['', '', '']
-         })
-         ),
-
-        ('test_cc_single_additional_payment_day_before_OVERPAY__prev_only',  # todo implement
-         AccountSet.AccountSet(checking_acct_list(0) + credit_bsd12_acct_list(0, 0, 0.05)),
-         BudgetSet.BudgetSet(
-             [BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 0, 'test credit txn', False, False)]),
-         MemoRuleSet.MemoRuleSet([
-             MemoRule.MemoRule('.*', 'Checking', None, 1),
-             MemoRule.MemoRule('.*', 'Checking', 'Credit', 2)
-         ]),
-         '20000110',
-         '20000114',
+         '20000113',
          MilestoneSet.MilestoneSet([], [], []),
          pd.DataFrame({
              'Date': ['20000110', '20000111', '20000112', '20000113'],
-             'Checking': [0, 0, 0, 0],
-             'Credit: Curr Stmt Bal': [0, 0, 0, 0],
-             'Credit: Prev Stmt Bal': [0, 0, 0, 0],
-             'Credit: Credit Billing Cycle Payment Bal': [0, 0, 0, 0],
-             'Credit: Credit End of Prev Cycle Bal': [0, 0, 0, 0],
-             'Marginal Interest': [0, 0, 0, 0],
+             'Checking': [5000, 4800, 4800, 4800],
+             'Credit: Curr Stmt Bal': [500, 500, 0, 0],
+             'Credit: Prev Stmt Bal': [500, 300, 802.08, 802.08],
+             'Credit: Credit Billing Cycle Payment Bal': [0, 200, 0, 0],
+             'Credit: Credit End of Prev Cycle Bal': [500, 500, 500, 802.08],
+             'Marginal Interest': [0, 0, 2.08, 0],
              'Net Gain': [0, 0, 0, 0],
-             'Net Loss': [0, 0, 0, 0],
-             'Net Worth': [0, 0, 0, 0],
+             'Net Loss': [0, 0, 2.08, 0],
+             'Net Worth': [4000, 4000, 3997.92, 3997.92],
              'Loan Total': [0, 0, 0, 0],
-             'CC Debt Total': [0, 0, 0, 0],
-             'Liquid Total': [0, 0, 0, 0],
-             'Memo Directives': ['TEST NOT IMPLEMENTED',
-                                 '',
-                                 '',
+             'CC Debt Total': [1000, 800, 802.08, 802.08],
+             'Liquid Total': [5000, 4800.0, 4800.0, 4800.0],
+             'Memo Directives': ['',
+                                 'ADDTL CC PAYMENT (Checking -$100.00); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$100.00); ADDTL CC PAYMENT (Checking -$100.00); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$100.00)',
+                                 'CC INTEREST (Credit: Prev Stmt Bal +$2.08); CC MIN PAYMENT ALREADY MADE (Checking -$0.00); CC MIN PAYMENT ALREADY MADE (Credit: Prev Stmt Bal -$0.00)',
                                  ''],
              'Memo': ['', '', '', '']
          })
          ),
 
-        ('test_cc_two_additional_payments_day_before_OVERPAY__prev_only',  # todo implement
-         AccountSet.AccountSet(checking_acct_list(0) + credit_bsd12_acct_list(0, 0, 0.05)),
+        ('test_cc_single_additional_payment_day_before_OVERPAY__prev_only',  #pretty sure its right
+          AccountSet.AccountSet(checking_acct_list(5000) + credit_bsd12_acct_list(500, 500, 0.05)),
+          BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000111', '20000111', 2, 'once', 1100,
+                                                     'single additional payment day before due date', False, True)]),
+          MemoRuleSet.MemoRuleSet([
+              MemoRule.MemoRule('.*', 'Checking', None, 1),
+              MemoRule.MemoRule('.*', 'Checking', 'Credit', 2)
+          ]),
+          '20000110',
+          '20000113',
+          MilestoneSet.MilestoneSet([], [], []),
+          pd.DataFrame({
+              'Date': ['20000110', '20000111', '20000112', '20000113'],
+              'Checking': [5000, 4000, 4000, 4000],
+              'Credit: Curr Stmt Bal': [500, 0, 0, 0],
+              'Credit: Prev Stmt Bal': [500, 0, 2.08, 2.08],
+              'Credit: Credit Billing Cycle Payment Bal': [0, 1000, 0, 0],
+              'Credit: Credit End of Prev Cycle Bal': [500, 500, 500, 2.08],
+              'Marginal Interest': [0, 0, 2.08, 0],
+              'Net Gain': [0, 0, 0, 0],
+              'Net Loss': [0, 0, 2.08, 0],
+              'Net Worth': [4000, 4000, 3997.92, 3997.92],
+              'Loan Total': [0, 0, 0, 0],
+              'CC Debt Total': [1000, 0, 2.08, 2.08],
+              'Liquid Total': [5000, 4000, 4000, 4000],
+              'Memo Directives': ['',
+                                  'ADDTL CC PAYMENT (Checking -$1000.00); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$1000.00)',
+                                  'CC INTEREST (Credit: Prev Stmt Bal +$2.08); CC MIN PAYMENT ALREADY MADE (Checking -$0.00); CC MIN PAYMENT ALREADY MADE (Credit: Prev Stmt Bal -$0.00)',
+                                  ''],
+              'Memo': ['', '', '', '']
+          })
+          ),
+
+        ('test_cc_two_additional_payments_day_before_OVERPAY__prev_only',  # pretty sure its right
+         AccountSet.AccountSet(checking_acct_list(5000) + credit_bsd12_w_eopc_acct_list(500, 400, 0.05, 500)),
          BudgetSet.BudgetSet(
-             [BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 0, 'test credit txn', False, False)]),
+             [BudgetItem.BudgetItem('20000111', '20000111', 2, 'once', 100, 'test credit payment 1', False, False),
+              BudgetItem.BudgetItem('20000111', '20000111', 2, 'once', 1000, 'test credit payment 2', False, True)]),
          MemoRuleSet.MemoRuleSet([
              MemoRule.MemoRule('.*', 'Checking', None, 1),
              MemoRule.MemoRule('.*', 'Checking', 'Credit', 2)
          ]),
          '20000110',
-         '20000114',
+         '20000113',
          MilestoneSet.MilestoneSet([], [], []),
          pd.DataFrame({
              'Date': ['20000110', '20000111', '20000112', '20000113'],
-             'Checking': [0, 0, 0, 0],
-             'Credit: Curr Stmt Bal': [0, 0, 0, 0],
-             'Credit: Prev Stmt Bal': [0, 0, 0, 0],
-             'Credit: Credit Billing Cycle Payment Bal': [0, 0, 0, 0],
-             'Credit: Credit End of Prev Cycle Bal': [0, 0, 0, 0],
-             'Marginal Interest': [0, 0, 0, 0],
+             'Checking': [5000, 4100, 4100, 4100],
+             'Credit: Curr Stmt Bal': [400, 0, 0, 0],
+             'Credit: Prev Stmt Bal': [500, 0, 2.08, 2.08],
+             'Credit: Credit Billing Cycle Payment Bal': [0, 900, 0, 0],
+             'Credit: Credit End of Prev Cycle Bal': [500, 500, 90, 0],
+             'Marginal Interest': [0, 0, 2.08, 0],
              'Net Gain': [0, 0, 0, 0],
-             'Net Loss': [0, 0, 0, 0],
-             'Net Worth': [0, 0, 0, 0],
+             'Net Loss': [0, 0, 2.08, 0],
+             'Net Worth': [4100, 4100, 4100 - 2.08, 4100 - 2.08],
              'Loan Total': [0, 0, 0, 0],
-             'CC Debt Total': [0, 0, 0, 0],
-             'Liquid Total': [0, 0, 0, 0],
-             'Memo Directives': ['TEST NOT IMPLEMENTED',
-                                 '',
-                                 '',
-                                 ''],
+             'CC Debt Total': [900, 0, 2.08, 2.08],
+             'Liquid Total': [5000, 4100, 4100, 4100],
+             'Memo Directives': ['',
+                                 'CC INTEREST (Credit: Prev Stmt Bal +$2.08); CC MIN PAYMENT (Credit: Prev Stmt Bal -$40.00); CC MIN PAYMENT (Checking -$40.00); ADDTL CC PAYMENT (Checking -$100.00); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$100.00); ADDTL CC PAYMENT (Checking -$100.00); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$100.00)',
+                                 '', ''],
              'Memo': ['', '', '', '']
          })
          ),
 
         ('test_cc_single_additional_payment_day_before__curr_only',  # todo implement
-         AccountSet.AccountSet(checking_acct_list(0) + credit_bsd12_acct_list(0, 0, 0.05)),
-         BudgetSet.BudgetSet(
-             [BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 0, 'test credit txn', False, False)]),
-         MemoRuleSet.MemoRuleSet([
-             MemoRule.MemoRule('.*', 'Checking', None, 1),
-             MemoRule.MemoRule('.*', 'Checking', 'Credit', 2)
-         ]),
-         '20000110',
-         '20000114',
-         MilestoneSet.MilestoneSet([], [], []),
-         pd.DataFrame({
-             'Date': ['20000110', '20000111', '20000112', '20000113'],
-             'Checking': [0, 0, 0, 0],
-             'Credit: Curr Stmt Bal': [0, 0, 0, 0],
-             'Credit: Prev Stmt Bal': [0, 0, 0, 0],
-             'Credit: Credit Billing Cycle Payment Bal': [0, 0, 0, 0],
-             'Credit: Credit End of Prev Cycle Bal': [0, 0, 0, 0],
-             'Marginal Interest': [0, 0, 0, 0],
-             'Net Gain': [0, 0, 0, 0],
-             'Net Loss': [0, 0, 0, 0],
-             'Net Worth': [0, 0, 0, 0],
-             'Loan Total': [0, 0, 0, 0],
-             'CC Debt Total': [0, 0, 0, 0],
-             'Liquid Total': [0, 0, 0, 0],
-             'Memo Directives': ['TEST NOT IMPLEMENTED',
-                                 '',
-                                 '',
-                                 ''],
-             'Memo': ['', '', '', '']
-         })
-         ),
+          AccountSet.AccountSet(checking_acct_list(5000) + credit_bsd12_acct_list(0, 500, 0.05)),
+          BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000111', '20000111', 2, 'once', 300,
+                                                     'single additional payment day before due date', False, False)]),
+          MemoRuleSet.MemoRuleSet([
+              MemoRule.MemoRule('.*', 'Checking', None, 1),
+              MemoRule.MemoRule('.*', 'Checking', 'Credit', 2)
+          ]),
+          '20000110',
+          '20000113',
+          MilestoneSet.MilestoneSet([], [], []),
+          pd.DataFrame({
+              'Date': ['20000110', '20000111', '20000112', '20000113'],
+              'Checking': [5000, 4700, 4700, 4700],
+              'Credit: Curr Stmt Bal': [500, 200, 0, 0],
+              'Credit: Prev Stmt Bal': [0, 0, 200, 200],
+              'Credit: Credit Billing Cycle Payment Bal': [0, 300, 0, 0],
+              'Credit: Credit End of Prev Cycle Bal': [0, 0, 0, 200],
+              'Marginal Interest': [0, 0, 0, 0],
+              'Net Gain': [0, 0, 0, 0],
+              'Net Loss': [0, 0, 0, 0],
+              'Net Worth': [4500, 4500, 4500, 4500],
+              'Loan Total': [0, 0, 0, 0],
+              'CC Debt Total': [500, 200, 200, 200],
+              'Liquid Total': [5000, 4700.0, 4700.0, 4700.0],
+              'Memo Directives': ['',
+                                  'ADDTL CC PAYMENT (Checking -$300.00); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$300.00)',
+                                  'CC INTEREST (Credit: Prev Stmt Bal +$2.08); CC MIN PAYMENT ALREADY MADE (Checking -$0.00); CC MIN PAYMENT ALREADY MADE (Credit: Prev Stmt Bal -$0.00)',
+                                  ''],
+              'Memo': ['', '', '', '']
+          })
+          ),
 
         ('test_cc_two_additional_payments_day_before__curr_only',  # todo implement
          AccountSet.AccountSet(checking_acct_list(0) + credit_bsd12_acct_list(0, 0, 0.05)),
@@ -1885,132 +1887,134 @@ class TestExpenseForecastMethods:
          ),
 
         ('test_cc_single_additional_payment_day_before__curr_prev',  # todo implement
-         AccountSet.AccountSet(checking_acct_list(0) + credit_bsd12_acct_list(0, 0, 0.05)),
-         BudgetSet.BudgetSet(
-             [BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 0, 'test credit txn', False, False)]),
-         MemoRuleSet.MemoRuleSet([
-             MemoRule.MemoRule('.*', 'Checking', None, 1),
-             MemoRule.MemoRule('.*', 'Checking', 'Credit', 2)
-         ]),
-         '20000110',
-         '20000114',
-         MilestoneSet.MilestoneSet([], [], []),
-         pd.DataFrame({
-             'Date': ['20000110', '20000111', '20000112', '20000113'],
-             'Checking': [0, 0, 0, 0],
-             'Credit: Curr Stmt Bal': [0, 0, 0, 0],
-             'Credit: Prev Stmt Bal': [0, 0, 0, 0],
-             'Credit: Credit Billing Cycle Payment Bal': [0, 0, 0, 0],
-             'Credit: Credit End of Prev Cycle Bal': [0, 0, 0, 0],
-             'Marginal Interest': [0, 0, 0, 0],
-             'Net Gain': [0, 0, 0, 0],
-             'Net Loss': [0, 0, 0, 0],
-             'Net Worth': [0, 0, 0, 0],
-             'Loan Total': [0, 0, 0, 0],
-             'CC Debt Total': [0, 0, 0, 0],
-             'Liquid Total': [0, 0, 0, 0],
-             'Memo Directives': ['TEST NOT IMPLEMENTED',
-                                 '',
-                                 '',
-                                 ''],
-             'Memo': ['', '', '', '']
-         })
-         ),
+          AccountSet.AccountSet(checking_acct_list(5000) + credit_bsd12_w_eopc_acct_list(500, 400, 0.05, 500)),
+          BudgetSet.BudgetSet(
+              [BudgetItem.BudgetItem('20000111', '20000111', 2, 'once', 900, 'test credit payment 1', False, False)]),
+          MemoRuleSet.MemoRuleSet([
+              MemoRule.MemoRule('.*', 'Checking', None, 1),
+              MemoRule.MemoRule('.*', 'Checking', 'Credit', 2)
+          ]),
+          '20000110',
+          '20000113',
+          MilestoneSet.MilestoneSet([], [], []),
+          pd.DataFrame({
+              'Date': ['20000110', '20000111', '20000112', '20000113'],
+              'Checking': [5000, 4100, 4100, 4100],
+              'Credit: Curr Stmt Bal': [400, 0, 0, 0],
+              'Credit: Prev Stmt Bal': [500, 0, 2.08, 2.08],
+              'Credit: Credit Billing Cycle Payment Bal': [0, 900, 0, 0],
+              'Credit: Credit End of Prev Cycle Bal': [500, 500, 0, 0],
+              'Marginal Interest': [0, 2.08, 0, 0],
+              'Net Gain': [0, 0, 0, 0],
+              'Net Loss': [0, 2.08, 0, 0],
+              'Net Worth': [4100, 4100, 4100 -2.08, 4100 - 2.08],
+              'Loan Total': [0, 0, 0, 0],
+              'CC Debt Total': [900, 0, 2.08, 2.08],
+              'Liquid Total': [5000, 4100, 4100, 4100],
+              'Memo Directives': ['',
+                                  'CC INTEREST (Credit: Prev Stmt Bal +$2.08); CC MIN PAYMENT (Credit: Prev Stmt Bal -$40.00); CC MIN PAYMENT (Checking -$40.00); ADDTL CC PAYMENT (Checking -$862.08); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$862.08)',
+                                  '',
+                                  ''],
+              'Memo': ['', '', '', '']
+          })
+          ),
 
-        ('test_cc_two_additional_payments_day_before__curr_prev',  # todo implement
-         AccountSet.AccountSet(checking_acct_list(0) + credit_bsd12_acct_list(0, 0, 0.05)),
-         BudgetSet.BudgetSet(
-             [BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 0, 'test credit txn', False, False)]),
-         MemoRuleSet.MemoRuleSet([
-             MemoRule.MemoRule('.*', 'Checking', None, 1),
-             MemoRule.MemoRule('.*', 'Checking', 'Credit', 2)
-         ]),
-         '20000110',
-         '20000114',
-         MilestoneSet.MilestoneSet([], [], []),
-         pd.DataFrame({
-             'Date': ['20000110', '20000111', '20000112', '20000113'],
-             'Checking': [0, 0, 0, 0],
-             'Credit: Curr Stmt Bal': [0, 0, 0, 0],
-             'Credit: Prev Stmt Bal': [0, 0, 0, 0],
-             'Credit: Credit Billing Cycle Payment Bal': [0, 0, 0, 0],
-             'Credit: Credit End of Prev Cycle Bal': [0, 0, 0, 0],
-             'Marginal Interest': [0, 0, 0, 0],
-             'Net Gain': [0, 0, 0, 0],
-             'Net Loss': [0, 0, 0, 0],
-             'Net Worth': [0, 0, 0, 0],
-             'Loan Total': [0, 0, 0, 0],
-             'CC Debt Total': [0, 0, 0, 0],
-             'Liquid Total': [0, 0, 0, 0],
-             'Memo Directives': ['TEST NOT IMPLEMENTED',
-                                 '',
-                                 '',
-                                 ''],
-             'Memo': ['', '', '', '']
-         })
-         ),
+        ### Nonsense
+        # ('test_cc_two_additional_payments_day_before__curr_prev',  # todo implement
+        #   AccountSet.AccountSet(checking_acct_list(5000) + credit_bsd12_w_eopc_acct_list(500, 400, 0.05, 500)),
+        #   BudgetSet.BudgetSet(
+        #       [BudgetItem.BudgetItem('20000111', '20000111', 2, 'once', 100, 'test credit payment 1', False, False),
+        #        BudgetItem.BudgetItem('20000111', '20000111', 2, 'once', 1000, 'test credit payment 2', False, True)]),
+        #   MemoRuleSet.MemoRuleSet([
+        #       MemoRule.MemoRule('.*', 'Checking', None, 1),
+        #       MemoRule.MemoRule('.*', 'Checking', 'Credit', 2)
+        #   ]),
+        #   '20000110',
+        #   '20000113',
+        #   MilestoneSet.MilestoneSet([], [], []),
+        #   pd.DataFrame({
+        #       'Date': ['20000110', '20000111', '20000112', '20000113'],
+        #       'Checking': [5000, 4100, 4100, 4100],
+        #       'Credit: Curr Stmt Bal': [400, 0, 0, 0],
+        #       'Credit: Prev Stmt Bal': [500, 0, 2.08, 2.08],
+        #       'Credit: Credit Billing Cycle Payment Bal': [0, 900, 0, 0],
+        #       'Credit: Credit End of Prev Cycle Bal': [500, 500, 90, 0],
+        #       'Marginal Interest': [0, 0, 2.08, 0],
+        #       'Net Gain': [0, 0, 0, 0],
+        #       'Net Loss': [0, 0, 2.08, 0],
+        #       'Net Worth': [4100, 4100, 4100 - 2.08, 4100 - 2.08],
+        #       'Loan Total': [0, 0, 0, 0],
+        #       'CC Debt Total': [900, 0, 2.08, 2.08],
+        #       'Liquid Total': [5000, 4100, 4100, 4100],
+        #       'Memo Directives': ['',
+        #                           'CC INTEREST (Credit: Prev Stmt Bal +$2.08); CC MIN PAYMENT (Credit: Prev Stmt Bal -$40.00); CC MIN PAYMENT (Checking -$40.00); ADDTL CC PAYMENT (Checking -$100.00); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$100.00); ADDTL CC PAYMENT (Checking -$100.00); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$100.00)',
+        #                           '', ''],
+        #       'Memo': ['', '', '', '']
+        #   })
+        #   ),
 
-        ('test_cc_two_additional_payments_day_before_OVERPAY__curr_prev',  # todo implement
-         AccountSet.AccountSet(checking_acct_list(0) + credit_bsd12_acct_list(0, 0, 0.05)),
-         BudgetSet.BudgetSet(
-             [BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 0, 'test credit txn', False, False)]),
-         MemoRuleSet.MemoRuleSet([
-             MemoRule.MemoRule('.*', 'Checking', None, 1),
-             MemoRule.MemoRule('.*', 'Checking', 'Credit', 2)
-         ]),
-         '20000110',
-         '20000114',
-         MilestoneSet.MilestoneSet([], [], []),
-         pd.DataFrame({
-             'Date': ['20000110', '20000111', '20000112', '20000113'],
-             'Checking': [0, 0, 0, 0],
-             'Credit: Curr Stmt Bal': [0, 0, 0, 0],
-             'Credit: Prev Stmt Bal': [0, 0, 0, 0],
-             'Credit: Credit Billing Cycle Payment Bal': [0, 0, 0, 0],
-             'Credit: Credit End of Prev Cycle Bal': [0, 0, 0, 0],
-             'Marginal Interest': [0, 0, 0, 0],
-             'Net Gain': [0, 0, 0, 0],
-             'Net Loss': [0, 0, 0, 0],
-             'Net Worth': [0, 0, 0, 0],
-             'Loan Total': [0, 0, 0, 0],
-             'CC Debt Total': [0, 0, 0, 0],
-             'Liquid Total': [0, 0, 0, 0],
-             'Memo Directives': ['TEST NOT IMPLEMENTED',
-                                 '',
-                                 '',
-                                 ''],
-             'Memo': ['', '', '', '']
-         })
-         ),
+        ### Nonsense
+        # ('test_cc_two_additional_payments_day_before_OVERPAY__curr_prev',  # todo implement
+        #  AccountSet.AccountSet(checking_acct_list(0) + credit_bsd12_acct_list(0, 0, 0.05)),
+        #  BudgetSet.BudgetSet(
+        #      [BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 0, 'test credit txn', False, False)]),
+        #  MemoRuleSet.MemoRuleSet([
+        #      MemoRule.MemoRule('.*', 'Checking', None, 1),
+        #      MemoRule.MemoRule('.*', 'Checking', 'Credit', 2)
+        #  ]),
+        #  '20000110',
+        #  '20000114',
+        #  MilestoneSet.MilestoneSet([], [], []),
+        #  pd.DataFrame({
+        #      'Date': ['20000110', '20000111', '20000112', '20000113'],
+        #      'Checking': [0, 0, 0, 0],
+        #      'Credit: Curr Stmt Bal': [0, 0, 0, 0],
+        #      'Credit: Prev Stmt Bal': [0, 0, 0, 0],
+        #      'Credit: Credit Billing Cycle Payment Bal': [0, 0, 0, 0],
+        #      'Credit: Credit End of Prev Cycle Bal': [0, 0, 0, 0],
+        #      'Marginal Interest': [0, 0, 0, 0],
+        #      'Net Gain': [0, 0, 0, 0],
+        #      'Net Loss': [0, 0, 0, 0],
+        #      'Net Worth': [0, 0, 0, 0],
+        #      'Loan Total': [0, 0, 0, 0],
+        #      'CC Debt Total': [0, 0, 0, 0],
+        #      'Liquid Total': [0, 0, 0, 0],
+        #      'Memo Directives': ['TEST NOT IMPLEMENTED',
+        #                          '',
+        #                          '',
+        #                          ''],
+        #      'Memo': ['', '', '', '']
+        #  })
+        #  ),
 
-        ('test_cc_single_additional_payment_day_before_OVERPAY__curr_prev',  # todo implement
-         AccountSet.AccountSet(checking_acct_list(0) + credit_bsd12_acct_list(0, 0, 0.05)),
+        ('test_cc_single_additional_payment_day_before_OVERPAY__curr_prev',
+         AccountSet.AccountSet(checking_acct_list(5000) + credit_bsd12_w_eopc_acct_list(500, 400, 0.05, 500)),
          BudgetSet.BudgetSet(
-             [BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 0, 'test credit txn', False, False)]),
+             [BudgetItem.BudgetItem('20000111', '20000111', 2, 'once', 1000, 'test credit payment 1', False, True)]),
          MemoRuleSet.MemoRuleSet([
              MemoRule.MemoRule('.*', 'Checking', None, 1),
              MemoRule.MemoRule('.*', 'Checking', 'Credit', 2)
          ]),
          '20000110',
-         '20000114',
+         '20000113',
          MilestoneSet.MilestoneSet([], [], []),
          pd.DataFrame({
              'Date': ['20000110', '20000111', '20000112', '20000113'],
-             'Checking': [0, 0, 0, 0],
-             'Credit: Curr Stmt Bal': [0, 0, 0, 0],
-             'Credit: Prev Stmt Bal': [0, 0, 0, 0],
-             'Credit: Credit Billing Cycle Payment Bal': [0, 0, 0, 0],
-             'Credit: Credit End of Prev Cycle Bal': [0, 0, 0, 0],
-             'Marginal Interest': [0, 0, 0, 0],
+             'Checking': [5000, 4100, 4100, 4100],
+             'Credit: Curr Stmt Bal': [400, 0, 0, 0],
+             'Credit: Prev Stmt Bal': [500, 0, 2.08, 2.08],
+             'Credit: Credit Billing Cycle Payment Bal': [0, 900, 0, 0],
+             'Credit: Credit End of Prev Cycle Bal': [500, 500, 500, 2.08],
+             'Marginal Interest': [0, 0, 2.08, 0],
              'Net Gain': [0, 0, 0, 0],
-             'Net Loss': [0, 0, 0, 0],
-             'Net Worth': [0, 0, 0, 0],
+             'Net Loss': [0, 0, 2.08, 0],
+             'Net Worth': [4100, 4100, 4100 - 2.08, 4100 - 2.08],
              'Loan Total': [0, 0, 0, 0],
-             'CC Debt Total': [0, 0, 0, 0],
-             'Liquid Total': [0, 0, 0, 0],
-             'Memo Directives': ['TEST NOT IMPLEMENTED',
-                                 '',
-                                 '',
+             'CC Debt Total': [900, 0, 2.08, 2.08],
+             'Liquid Total': [5000, 4100, 4100, 4100],
+             'Memo Directives': ['',
+                                 'ADDTL CC PAYMENT (Checking -$400.00); ADDTL CC PAYMENT (Credit: Curr Stmt Bal -$400.00); ADDTL CC PAYMENT (Checking -$500.00); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$500.00)',
+                                 'CC MIN PAYMENT ALREADY MADE (Checking -$0.00); CC MIN PAYMENT ALREADY MADE (Credit: Prev Stmt Bal -$0.00); CC INTEREST (Credit: Prev Stmt Bal +$2.08)',
                                  ''],
              'Memo': ['', '', '', '']
          })
@@ -4938,24 +4942,15 @@ class TestExpenseForecastMethods:
 
 # FAIL LIST
 # ============================================================== short test summary info ================================================================
-#fix eopc
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_advance_minimum_payment_in_1_payment_pay_over_minimum-account_set25-budget_set25-memo_rule_set25-20000110-20000113-milestone_set25-expected_result_df25]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p2_and_3__expect_defer-account_set6-budget_set6-memo_rule_set6-20000101-20000103-milestone_set6-expected_result_df6]
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_on_due_date-account_set28-budget_set28-memo_rule_set28-20000111-20000113-milestone_set28-expected_result_df28]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_on_due_date__curr_only-account_set33-budget_set33-memo_rule_set33-20000111-20000113-milestone_set33-expected_result_df33]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_on_due_date_OVERPAY-account_set34-budget_set34-memo_rule_set34-20000111-20000113-milestone_set34-expected_result_df34]
-
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_on_due_date__curr_prev-account_set35-budget_set35-memo_rule_set35-20000111-20000113-milestone_set35-expected_result_df35]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before__prev_only-account_set36-budget_set36-memo_rule_set36-20000110-20000114-milestone_set36-expected_result_df36]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before__prev_only-account_set37-budget_set37-memo_rule_set37-20000110-20000114-milestone_set37-expected_result_df37]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before_OVERPAY__prev_only-account_set38-budget_set38-memo_rule_set38-20000110-20000114-milestone_set38-expected_result_df38]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before_OVERPAY__prev_only-account_set39-budget_set39-memo_rule_set39-20000110-20000114-milestone_set39-expected_result_df39]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before__curr_only-account_set40-budget_set40-memo_rule_set40-20000110-20000114-milestone_set40-expected_result_df40]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before__curr_only-account_set41-budget_set41-memo_rule_set41-20000110-20000114-milestone_set41-expected_result_df41]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before_OVERPAY__curr_only-account_set42-budget_set42-memo_rule_set42-20000110-20000114-milestone_set42-expected_result_df42]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before_OVERPAY__curr_only-account_set43-budget_set43-memo_rule_set43-20000110-20000114-milestone_set43-expected_result_df43]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before__curr_prev-account_set44-budget_set44-memo_rule_set44-20000110-20000114-milestone_set44-expected_result_df44]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before__curr_prev-account_set45-budget_set45-memo_rule_set45-20000110-20000114-milestone_set45-expected_result_df45]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before_OVERPAY__curr_prev-account_set46-budget_set46-memo_rule_set46-20000110-20000114-milestone_set46-expected_result_df46]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before_OVERPAY__curr_prev-account_set47-budget_set47-memo_rule_set47-20000110-20000114-milestone_set47-expected_result_df47]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before-account_set29-budget_set29-memo_rule_set29-20000110-20000112-milestone_set29-expected_result_df29]
-# =============================================== 19 failed, 182 passed, 201 warnings in 395.42s (0:06:35) ========
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_on_due_date__curr_only-account_set32-budget_set32-memo_rule_set32-20000111-20000113-milestone_set32-expected_result_df32]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_on_due_date_OVERPAY-account_set33-budget_set33-memo_rule_set33-20000111-20000113-milestone_set33-expected_result_df33]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before_OVERPAY__prev_only-account_set36-budget_set36-memo_rule_set36-20000110-20000113-milestone_set36-expected_result_df36]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before_OVERPAY__prev_only-account_set37-budget_set37-memo_rule_set37-20000110-20000113-milestone_set37-expected_result_df37]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before__curr_only-account_set38-budget_set38-memo_rule_set38-20000110-20000113-milestone_set38-expected_result_df38]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before__curr_only-account_set39-budget_set39-memo_rule_set39-20000110-20000114-milestone_set39-expected_result_df39]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before_OVERPAY__curr_only-account_set40-budget_set40-memo_rule_set40-20000110-20000114-milestone_set40-expected_result_df40]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before_OVERPAY__curr_only-account_set41-budget_set41-memo_rule_set41-20000110-20000114-milestone_set41-expected_result_df41]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before__curr_prev-account_set42-budget_set42-memo_rule_set42-20000110-20000113-milestone_set42-expected_result_df42]
+# =============================================== 11 failed, 186 passed, 189 warnings in 408.38s (0:06:48) =====
