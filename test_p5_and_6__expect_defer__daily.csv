@@ -1,4 +1,4 @@
-,Date,Checking,Marginal Interest,Net Gain,Net Loss,Net Worth,Loan Total,CC Debt Total,Liquid Total,Memo Directives,Memo
-0,20000101,1000.0,0,0,0,1000.0,0.0,0.0,1000.0,,
-1,20000102,900.0,0,0,100,900.0,0.0,0.0,900.0,,p5 txn 1/2/00 (Checking -$100.00)
-2,20000103,0.0,0,0,900,0.0,0.0,0.0,0.0,,income 1/3/00 (Checking +$100.00); p6 deferrable txn 1/2/00 (Checking -$1000.00)
+,Date,Checking,Marginal Interest,Net Gain,Net Loss,Net Worth,Loan Total,CC Debt Total,Liquid Total,Next Income Date,Memo Directives,Memo
+0,20000101,1000.0,0,0,0,1000.0,0.0,0.0,1000.0,20000103,,
+1,20000102,900.0,0,0,100,900.0,0.0,0.0,900.0,20000103,,p5 txn 1/2/00 (Checking -$100.00)
+2,20000103,0.0,0,0,900,0.0,0.0,0.0,0.0,,INCOME (Checking +$100.00),income 1/3/00 (Checking +$100.00); p6 deferrable txn 1/2/00 (Checking -$1000.00)

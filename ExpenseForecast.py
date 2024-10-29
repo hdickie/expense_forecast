@@ -1619,9 +1619,11 @@ class ExpenseForecast:
                     error_text = e.args
                     raise ValueError(str(error_text)+'\nMalformed memo value')
 
+                #Moved to memo directive
                 line_item_value = float(line_item_value_string)
                 if 'income' in memo_line_item.lower():
-                    self.forecast_df.loc[index,'Net Gain'] += abs(line_item_value)
+                    #self.forecast_df.loc[index,'Net Gain'] += abs(line_item_value)
+                    pass #todo income needs to not be in memo. this is a known vulnerability bc of this right here
                 else:
                     # print(str(self.forecast_df.loc[index, 'Date'])+' Net Loss before update '+str(self.forecast_df.loc[index, 'Net Loss']) )
                     self.forecast_df.loc[index,'Net Loss'] += abs(line_item_value)
@@ -1634,6 +1636,7 @@ class ExpenseForecast:
             memo_line_items = memo_line.split(';')
             for memo_line_item in memo_line_items:
                 memo_line_item = memo_line_item.strip()
+
                 if memo_line_item == '':
                     continue
 
@@ -1658,8 +1661,12 @@ class ExpenseForecast:
                     raise ValueError(str(error_text) + '\nMalformed memo value')
 
                 line_item_value = float(line_item_value_string)
-                self.forecast_df.loc[index, 'Net Loss'] += abs(line_item_value)
-                # print(str(self.forecast_df.loc[index, 'Date']) + ' Net Loss += ' + str(abs(line_item_value))+' '+str(memo_line_item)+' = '+str(self.forecast_df.loc[index,'Net Loss']))
+                if 'INCOME' in memo_line_item:
+                    self.forecast_df.loc[index, 'Net Gain'] += abs(line_item_value)
+                    print(str(self.forecast_df.loc[index, 'Date']) + ' Net Gain += ' + str( abs(line_item_value)) + ' ' + str(memo_line_item) + ' = ' + str( self.forecast_df.loc[index, 'Net Gain']))
+                else:
+                    self.forecast_df.loc[index, 'Net Loss'] += abs(line_item_value)
+                    print(str(self.forecast_df.loc[index, 'Date']) + ' Net Loss += ' + str(abs(line_item_value))+' '+str(memo_line_item)+' = '+str(self.forecast_df.loc[index,'Net Loss']))
 
             if self.forecast_df.loc[index,'Net Loss'] > 0 and self.forecast_df.loc[index,'Net Gain'] > 0:
                 if self.forecast_df.loc[index,'Net Gain'] > self.forecast_df.loc[index,'Net Loss']:
@@ -1674,9 +1681,9 @@ class ExpenseForecast:
         #Final QC. If we trust the code, we can comment this out
         #checking, credit, loan,
         # loan_acct_sel_vec = loan_acct_sel_vec.append(pd.Series([False])) #this works
-        loan_acct_sel_vec = pd.Series([False]).append(loan_acct_sel_vec).append(pd.Series([False] * 5))
-        cc_acct_sel_vec = pd.Series([False]).append(cc_acct_sel_vec).append(pd.Series([False] * 5))
-        checking_sel_vec = pd.Series([False]).append(checking_sel_vec).append(pd.Series([False] * 5))
+        loan_acct_sel_vec = pd.Series([False]).append(loan_acct_sel_vec).append(pd.Series([False] * 6))
+        cc_acct_sel_vec = pd.Series([False]).append(cc_acct_sel_vec).append(pd.Series([False] * 6))
+        checking_sel_vec = pd.Series([False]).append(checking_sel_vec).append(pd.Series([False] * 6))
         # loan_acct_sel_vec = pd.concat([False],loan_acct_sel_vec,[False] * 5)
         # cc_acct_sel_vec = pd.concat([False], cc_acct_sel_vec, [False] * 5)
         # checking_sel_vec = pd.concat([False], checking_sel_vec, [False] * 5)
@@ -1781,7 +1788,9 @@ class ExpenseForecast:
 
         memo_column = copy.deepcopy(self.forecast_df['Memo'])
         memo_directives_column = copy.deepcopy(self.forecast_df['Memo Directives'])
-        self.forecast_df = self.forecast_df.drop(columns=['Memo','Memo Directives'])
+        next_income_date_column = copy.deepcopy(self.forecast_df['Next Income Date'])
+        self.forecast_df = self.forecast_df.drop(columns=['Memo','Memo Directives', 'Next Income Date'])
+        self.forecast_df['Next Income Date'] = next_income_date_column
         self.forecast_df['Memo Directives'] = memo_directives_column
         self.forecast_df['Memo'] = memo_column
 
@@ -2279,10 +2288,11 @@ class ExpenseForecast:
         accounts_only_df.reset_index(drop=True, inplace=True)
         accounts_only_df.columns = [0, 1]
 
+        next_income_date_only_df = pd.DataFrame(['Next Income Date', '']).T
         memo_directive_only_df = pd.DataFrame(['Memo Directives', '']).T
         memo_only_df = pd.DataFrame(['Memo', '']).T
 
-        initial_forecast_row_df = pd.concat([date_only_df, accounts_only_df, memo_directive_only_df, memo_only_df])
+        initial_forecast_row_df = pd.concat([date_only_df, accounts_only_df, next_income_date_only_df, memo_directive_only_df, memo_only_df])
 
         initial_forecast_row_df = initial_forecast_row_df.T
         initial_forecast_row_df.columns = initial_forecast_row_df.iloc[0, :]
@@ -2421,11 +2431,17 @@ class ExpenseForecast:
             # log_in_color(logger, 'white', 'debug', str(account_row.Name).ljust(45)+': '+str(current_balance).ljust(15)+', '+str(relevant_balance).ljust(11), self.log_stack_depth)
             if current_balance != relevant_balance:
                 forecast_df.loc[row_sel_vec, col_sel_vec] = relevant_balance
+                delta = round(current_balance - relevant_balance, 2)
+
+                #Handle income
+                if account_row['Account_Type'] == 'checking' and delta < 0:
+                    forecast_df.loc[
+                        row_sel_vec, 'Memo Directives'] += f"; INCOME ({memo_rule_row.Account_To} +${-1*delta:.2f}) "
 
                 # Handle additional loan payments
                 if memo_rule_row.Account_To == 'ALL_LOANS' and account_row.Name.split(':')[
                     0] != memo_rule_row.Account_From:
-                    delta = round(current_balance - relevant_balance, 2)
+
                     if 'Billing Cycle Payment Bal' in account_row.Name:  # this could be more specific
                         continue
                     forecast_df.loc[
@@ -2438,7 +2454,6 @@ class ExpenseForecast:
                         account_row.Name.split(':')[0] != memo_rule_row.Account_From:
                     # print('Updating MD w/ addtl cc payment')
                     # print(confirmed_row.to_string())
-                    delta = round(current_balance - relevant_balance, 2)
 
                     if 'Billing Cycle Payment Bal' in account_row.Name:  # this could be more specific
                         continue
@@ -3902,13 +3917,17 @@ class ExpenseForecast:
             # Handle deferrable transactions if not permitted
             if not transaction_permitted and proposed_row['Deferrable']:
                 # Find the next income date
-                next_income_date = self.find_next_income_date(forecast_df, date_YYYYMMDD)
+                #next_income_date = self.find_next_income_date(forecast_df, date_YYYYMMDD)
 
                 # Update the date of the proposed transaction to the next income date
+                next_income_date = forecast_df[forecast_df.Date == date_YYYYMMDD]['Next Income Date'].iat[0]
                 proposed_row['Date'] = next_income_date
 
-                # Add the transaction to the deferred DataFrame
-                new_deferred_df = pd.concat([new_deferred_df, proposed_row.to_frame().T], ignore_index=True)
+                if next_income_date == '':
+                    new_skipped_df = pd.concat([new_skipped_df, proposed_row.to_frame().T], ignore_index=True)
+                else:
+                    # Add the transaction to the deferred DataFrame
+                    new_deferred_df = pd.concat([new_deferred_df, proposed_row.to_frame().T], ignore_index=True)
 
             elif not transaction_permitted and not proposed_row['Deferrable']:
                 # Add the transaction to the skipped DataFrame
@@ -10201,6 +10220,14 @@ class ExpenseForecast:
                 else:
                     raise e
 
+        #now go back and populate next_income_dates
+        next_income_date = ''
+        for f_i, row in forecast_df.iloc[::-1].iterrows():
+            #print(index, row)
+            forecast_df.at[f_i,'Next Income Date'] = next_income_date
+            if 'INCOME' in forecast_df.at[f_i,'Memo Directives']:
+                next_income_date = forecast_df.at[f_i,'Date']
+
         log_in_color(logger, 'white', 'info', forecast_df.to_string(), self.log_stack_depth)
         self.log_stack_depth -= 1
         log_in_color(logger, 'white', 'info', 'EXIT satisfice', self.log_stack_depth)
@@ -10700,7 +10727,7 @@ class ExpenseForecast:
         # print(return_df.columns)
         # print('BEFORE return_df:\n' + return_df.to_string())
 
-        relevant_column_names__set = set(forecast_df.columns) - set(['Date', 'Memo', 'Memo Directives'])
+        relevant_column_names__set = set(forecast_df.columns) - set(['Date', 'Next Income Date', 'Memo', 'Memo Directives'])
         # print('relevant_column_names__set:'+str(relevant_column_names__set))
         assert set(forecast_df.columns) == set(forecast2_df)
         for c in relevant_column_names__set:
@@ -10971,198 +10998,6 @@ if __name__ == "__main__":
 # KNOWN BUG - if an additional cc payment brings checking balance below minimum payment, the additional payment will be rejected
 
 
-
-
-# ================================================================ short test summary info ================================================================
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_10-account_set19-budget_set19-memo_rule_set19-20000101-20000103-milestone_set19-expected_result_df19]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_110-account_set20-budget_set20-memo_rule_set20-20000101-20000103-milestone_set20-expected_result_df20]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_560-account_set21-budget_set21-memo_rule_set21-20000101-20000103-milestone_set21-expected_result_df21]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_610-account_set22-budget_set22-memo_rule_set22-20000101-20000103-milestone_set22-expected_result_df22]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_1900-account_set23-budget_set23-memo_rule_set23-20000101-20000103-milestone_set23-expected_result_df23]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_overpay-account_set24-budget_set24-memo_rule_set24-20000101-20000103-milestone_set24-expected_result_df24]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_initialize_forecast_from_excel_not_yet_run - AttributeError: 'NoneType' object has no...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_initialize_forecast_from_excel_already_run - ValueError: undefined case in propagateO...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_initialize_forecast_from_json_not_yet_run - TypeError: strptime() argument 1 must be ...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_initialize_forecast_from_json_already_run - ValueError: undefined case in propagateOp...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_run_forecast_from_json_at_path - ValueError: undefined case in propagateOptimizationT...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_run_forecast_from_excel_at_path - AttributeError: 'NoneType' object has no attribute ...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_multiple_additional_loan_payments__expect_eliminate_future_min_payments - TypeError: ...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_multiple_additional_loan_payments_on_consecutive_days - TypeError: '>' not supported ...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_additional_loan_payments_overpayment - TypeError: '>' not supported between instances...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_billing_cycle_earlier_additional_payment - AssertionError: assert 'ADDTL CC PAYMEN...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_billing_cycle_earlier_and_later_additional_payments - AssertionError: assert ' CC ...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_1_payment_pay_over_minimum - AssertionError: assert 'AD...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_2_payments_pay_over_minimum - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_2_payments_pay_exact_minimum - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_2_payments_pay_under_minimum - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_3_payments_pay_over_minimum - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_3_payments_pay_exact_minimum - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_3_payments_pay_under_minimum - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_partial_payment_allowed_on_cc_bill_case_1 - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_partial_payment_allowed_on_cc_bill_case_2 - AttributeError: 'NoneType' object has no ...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_IRL_case_1 - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_IRL_case_2 - AttributeError: 'NoneType' object has no attribute 'group'
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_propagate_curr_only - UnboundLocalError: local variable 'og_interest_memo' referenced...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_propagate_curr_and_prev - AttributeError: 'NoneType' object has no attribute 'group'
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_propagate_prev_only - AttributeError: 'NoneType' object has no attribute 'group'
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_propagate_principal_only - NotImplementedError
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_propagate_interest_only - NotImplementedError
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_propagate_principal_and_interest - NotImplementedError
-# FAILED test_ForecastHandler.py::TestForecastHandlerMethods::test_run_forecast_set - AttributeError: 'BudgetSet' object has no attribute 'initial_budge...
-# FAILED test_ForecastRunner.py::TestForecastRunnerMethods::test_start_forecast[param1-param2] - ValueError: Start date (2024-10-12) must be on or befor...
-# FAILED test_ForecastSet.py::TestForecastSet::test_ForecastSet_writeToDatabase_empty_notRun - psycopg2.OperationalError: could not translate host name ...
-# FAILED test_ForecastSet.py::TestForecastSet::test_ForecastSet_writeToDatabase_empty_Run - psycopg2.OperationalError: could not translate host name "ho...
-# FAILED test_ForecastSet.py::TestForecastSet::test_ForecastSet_writeToDatabase_zeroChoices_NotRun - psycopg2.OperationalError: could not translate host...
-# FAILED test_ForecastSet.py::TestForecastSet::test_ForecastSet_writeToDatabase_zeroChoices_Run - psycopg2.OperationalError: could not translate host na...
-# FAILED test_ForecastSet.py::TestForecastSet::test_ForecastSet_writeToDatabase_oneChoice_Run - psycopg2.OperationalError: could not translate host name...
-# FAILED test_ForecastSet.py::TestForecastSet::test_ForecastSet_writeToDatabase_oneChoice_NotRun - psycopg2.OperationalError: could not translate host n...
-# FAILED test_ForecastSet.py::TestForecastSet::test_ForecastSet_writeToDatabase_twoChoices_NotRun - psycopg2.OperationalError: could not translate host ...
-# FAILED test_ForecastSet.py::TestForecastSet::test_ForecastSet_writeToDatabase_twoChoices_Run - psycopg2.OperationalError: could not translate host nam...
-# FAILED test_MilestoneSet.py::TestMilestoneSetMethods::test_MilestoneSet_constructor__valid_inputs - ValueError: Cannot add more than one checking acco...
-# FAILED test_MilestoneSet.py::TestMilestoneSetMethods::test_str - ValueError: Cannot add more than one checking account.
-# FAILED test_MilestoneSet.py::TestMilestoneSetMethods::test_addAccountMilestone - ValueError: Cannot add more than one checking account.
-# FAILED test_MilestoneSet.py::TestMilestoneSetMethods::test_addMemoMilestone - ValueError: Cannot add more than one checking account.
-# FAILED test_MilestoneSet.py::TestMilestoneSetMethods::test_addCompositeMilestone - ValueError: Cannot add more than one checking account.
-# FAILED test_ef_cli.py::TestEFCLIMethods::test_help[cmd_string] - subprocess.CalledProcessError: Command '['python', '-m', 'ef_cli', 'cmd_string']' ret...
-# FAILED test_ef_cli.py::TestEFCLIMethods::test_parameterize_file_forecast_no_label[parameterize forecast --id 031987 --source file --start_date 20240101 --end_date 20241231 --username hume --log_directory ./out/]
-# FAILED test_ef_cli.py::TestEFCLIMethods::test_parameterize_file_forecast_with_label[parameterize forecast --id 031987 --source file --start_date 20240101 --end_date 20241231 --username hume --log_directory ./out/ --label FORECAST_LABEL]
-# FAILED test_ef_cli.py::TestEFCLIMethods::test_parameterize_file_forecastset_no_label[parameterize forecastset --source file --id S --username hume --output_directory ./out/ --start_date 20240120 --end_date 20240601]
-# FAILED test_ef_cli.py::TestEFCLIMethods::test_parameterize_file_forecastset_no_label[parameterize forecastset --source file --id S --username hume --output_directory ./out/ --start_date 20000120 --end_date 20000601]
-# FAILED test_ef_cli.py::TestEFCLIMethods::test_parameterize_file_forecastset_no_label[parameterize forecastset --source file --id S --username hume --output_directory ./out/ --start_date 20240420 --end_date 20240601]
-# FAILED test_ef_cli.py::TestEFCLIMethods::test_parameterize_file_forecastset_with_label[parameterize forecastset --filename S.json --start_date 20000601 --end_date 20001231 --username hume --label NEW_FORECAST_SET_NAME]
-# FAILED test_ef_cli.py::TestEFCLIMethods::test_run_forecast[run forecast --id 062822 --source file --username hume --working_directory ./out/] - subpro...
-# FAILED test_ef_cli.py::TestEFCLIMethods::test_run_forecast[run forecast --id 062822 --source file --username hume --working_directory ./out/ --approximate]
-# FAILED test_ef_cli.py::TestEFCLIMethods::test_run_forecast[run forecast --id 062822 --source file --username hume --working_directory ./out/ --overwrite]
-# FAILED test_ef_cli.py::TestEFCLIMethods::test_run_forecast[run forecast --id 062822 --source file --username hume --working_directory ./out/ --approximate --overwrite]
-# FAILED test_ef_cli.py::TestEFCLIMethods::test_run_forecastset[run forecastset --source file --id S033683 --username hume --working_directory ./out/]
-# FAILED test_ef_cli.py::TestEFCLIMethods::test_run_forecastset[run forecastset --source file --id S033683 --username hume --working_directory ./out/ --approximate]
-# FAILED test_ef_cli.py::TestEFCLIMethods::test_run_forecastset[run forecastset --source file --id S033683 --username hume --working_directory ./out/ --overwrite]
-# FAILED test_ef_cli.py::TestEFCLIMethods::test_run_forecastset[run forecastset --source file --id S033683 --username hume --working_directory ./out/ --approximate --overwrite]
-# FAILED test_ef_cli.py::TestEFCLIMethods::test_list[list] - subprocess.CalledProcessError: Command '['python', '-m', 'ef_cli', 'list']' returned non-ze...
-# ====================================================== 65 failed, 168 passed in 1348.63s (0:21:44) ====================================================
-### before executeCreditCardMinimumPayments gpt version ^
-
-### after executeCreditCardMinimumPayments gpt version
-# tests i want to implement just based on the name
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_multiple_additional_loan_payments__expect_eliminate_future_min_payments - TypeError: ...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_multiple_additional_loan_payments_on_consecutive_days - TypeError: '>' not supported ...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_additional_loan_payments_overpayment - TypeError: '>' not supported between instances...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_1_payment_pay_over_minimum - AssertionError: assert 'AD...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_1_payment_pay_exact_minimum - AssertionError: assert 'A...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_1_payment_pay_under_minimum - AssertionError: assert 'A...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_2_payments_pay_over_minimum - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_2_payments_pay_exact_minimum - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_2_payments_pay_under_minimum - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_3_payments_pay_over_minimum - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_3_payments_pay_exact_minimum - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_3_payments_pay_under_minimum - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_billing_cycle_2_consecutive_min_payments - AssertionError: assert 'CC INTEREST (Cr...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_billing_cycle_earlier_additional_payment - AssertionError: assert 'ADDTL CC PAYMEN...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_billing_cycle_later_additional_payment - AssertionError: assert 'CC INTEREST (Cred...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_billing_cycle_earlier_and_later_additional_payments - AssertionError: assert ' CC ...
-
-
-
-
-
-
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_10-account_set19-budget_set19-memo_rule_set19-20000101-20000103-milestone_set19-expected_result_df19]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_110-account_set20-budget_set20-memo_rule_set20-20000101-20000103-milestone_set20-expected_result_df20]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_560-account_set21-budget_set21-memo_rule_set21-20000101-20000103-milestone_set21-expected_result_df21]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_610-account_set22-budget_set22-memo_rule_set22-20000101-20000103-milestone_set22-expected_result_df22]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_1900-account_set23-budget_set23-memo_rule_set23-20000101-20000103-milestone_set23-expected_result_df23]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_overpay-account_set24-budget_set24-memo_rule_set24-20000101-20000103-milestone_set24-expected_result_df24]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_initialize_forecast_from_excel_not_yet_run - AttributeError: 'NoneType' object has no...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_initialize_forecast_from_excel_already_run - ValueError: undefined case in propagateO...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_initialize_forecast_from_json_not_yet_run - TypeError: strptime() argument 1 must be ...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_initialize_forecast_from_json_already_run - ValueError: undefined case in propagateOp...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_run_forecast_from_json_at_path - ValueError: undefined case in propagateOptimizationT...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_run_forecast_from_excel_at_path - AttributeError: 'NoneType' object has no attribute ...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_multiple_additional_loan_payments__expect_eliminate_future_min_payments - TypeError: ...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_multiple_additional_loan_payments_on_consecutive_days - TypeError: '>' not supported ...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_additional_loan_payments_overpayment - TypeError: '>' not supported between instances...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_billing_cycle_2_consecutive_min_payments - AssertionError: assert 'CC INTEREST (Cr...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_billing_cycle_earlier_additional_payment - AssertionError: assert 'ADDTL CC PAYMEN...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_billing_cycle_later_additional_payment - AssertionError: assert 'CC INTEREST (Cred...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_billing_cycle_earlier_and_later_additional_payments - AssertionError: assert ' CC ...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_1_payment_pay_over_minimum - AssertionError: assert 'AD...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_1_payment_pay_exact_minimum - AssertionError: assert 'A...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_1_payment_pay_under_minimum - AssertionError: assert 'A...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_2_payments_pay_over_minimum - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_2_payments_pay_exact_minimum - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_2_payments_pay_under_minimum - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_3_payments_pay_over_minimum - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_3_payments_pay_exact_minimum - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_3_payments_pay_under_minimum - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_partial_payment_allowed_on_cc_bill_case_1 - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_partial_payment_allowed_on_cc_bill_case_2 - AttributeError: 'NoneType' object has no ...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_IRL_case_1 - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_IRL_case_2 - AttributeError: 'NoneType' object has no attribute 'group'
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_propagate_curr_only - AttributeError: 'NoneType' object has no attribute 'group'
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_propagate_curr_and_prev - AttributeError: 'NoneType' object has no attribute 'group'
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_propagate_prev_only - AttributeError: 'NoneType' object has no attribute 'group'
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_propagate_principal_only - NotImplementedError
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_propagate_interest_only - NotImplementedError
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_propagate_principal_and_interest - NotImplementedError
-# FAILED test_ForecastHandler.py::TestForecastHandlerMethods::test_run_forecast_set - AttributeError: 'BudgetSet' object has no attribute 'initial_budge...
-# FAILED test_ForecastRunner.py::TestForecastRunnerMethods::test_start_forecast[param1-param2] - ValueError: Start date (2024-10-12) must be on or befor...
-# FAILED test_ForecastSet.py::TestForecastSet::test_ForecastSet_writeToDatabase_empty_notRun - psycopg2.OperationalError: could not translate host name ...
-# FAILED test_ForecastSet.py::TestForecastSet::test_ForecastSet_writeToDatabase_empty_Run - psycopg2.OperationalError: could not translate host name "ho...
-# FAILED test_ForecastSet.py::TestForecastSet::test_ForecastSet_writeToDatabase_zeroChoices_NotRun - psycopg2.OperationalError: could not translate host...
-# FAILED test_ForecastSet.py::TestForecastSet::test_ForecastSet_writeToDatabase_zeroChoices_Run - psycopg2.OperationalError: could not translate host na...
-# FAILED test_ForecastSet.py::TestForecastSet::test_ForecastSet_writeToDatabase_oneChoice_Run - psycopg2.OperationalError: could not translate host name...
-# FAILED test_ForecastSet.py::TestForecastSet::test_ForecastSet_writeToDatabase_oneChoice_NotRun - psycopg2.OperationalError: could not translate host n...
-# FAILED test_ForecastSet.py::TestForecastSet::test_ForecastSet_writeToDatabase_twoChoices_NotRun - psycopg2.OperationalError: could not translate host ...
-# FAILED test_ForecastSet.py::TestForecastSet::test_ForecastSet_writeToDatabase_twoChoices_Run - psycopg2.OperationalError: could not translate host nam...
-# FAILED test_MilestoneSet.py::TestMilestoneSetMethods::test_MilestoneSet_constructor__valid_inputs - ValueError: Cannot add more than one checking acco...
-# FAILED test_MilestoneSet.py::TestMilestoneSetMethods::test_str - ValueError: Cannot add more than one checking account.
-# FAILED test_MilestoneSet.py::TestMilestoneSetMethods::test_addAccountMilestone - ValueError: Cannot add more than one checking account.
-# FAILED test_MilestoneSet.py::TestMilestoneSetMethods::test_addMemoMilestone - ValueError: Cannot add more than one checking account.
-# FAILED test_MilestoneSet.py::TestMilestoneSetMethods::test_addCompositeMilestone - ValueError: Cannot add more than one checking account.
-# FAILED test_ef_cli.py::TestEFCLIMethods::test_help[cmd_string] - subprocess.CalledProcessError: Command '['python', '-m', 'ef_cli', 'cmd_string']' ret...
-# FAILED test_ef_cli.py::TestEFCLIMethods::test_parameterize_file_forecast_no_label[parameterize forecast --id 031987 --source file --start_date 20240101 --end_date 20241231 --username hume --log_directory ./out/]
-# FAILED test_ef_cli.py::TestEFCLIMethods::test_parameterize_file_forecast_with_label[parameterize forecast --id 031987 --source file --start_date 20240101 --end_date 20241231 --username hume --log_directory ./out/ --label FORECAST_LABEL]
-# FAILED test_ef_cli.py::TestEFCLIMethods::test_parameterize_file_forecastset_no_label[parameterize forecastset --source file --id S --username hume --output_directory ./out/ --start_date 20240120 --end_date 20240601]
-# FAILED test_ef_cli.py::TestEFCLIMethods::test_parameterize_file_forecastset_no_label[parameterize forecastset --source file --id S --username hume --output_directory ./out/ --start_date 20000120 --end_date 20000601]
-# FAILED test_ef_cli.py::TestEFCLIMethods::test_parameterize_file_forecastset_no_label[parameterize forecastset --source file --id S --username hume --output_directory ./out/ --start_date 20240420 --end_date 20240601]
-# FAILED test_ef_cli.py::TestEFCLIMethods::test_parameterize_file_forecastset_with_label[parameterize forecastset --filename S.json --start_date 20000601 --end_date 20001231 --username hume --label NEW_FORECAST_SET_NAME]
-# FAILED test_ef_cli.py::TestEFCLIMethods::test_run_forecast[run forecast --id 062822 --source file --username hume --working_directory ./out/] - subpro...
-# FAILED test_ef_cli.py::TestEFCLIMethods::test_run_forecast[run forecast --id 062822 --source file --username hume --working_directory ./out/ --approximate]
-# FAILED test_ef_cli.py::TestEFCLIMethods::test_run_forecast[run forecast --id 062822 --source file --username hume --working_directory ./out/ --overwrite]
-# FAILED test_ef_cli.py::TestEFCLIMethods::test_run_forecast[run forecast --id 062822 --source file --username hume --working_directory ./out/ --approximate --overwrite]
-# FAILED test_ef_cli.py::TestEFCLIMethods::test_run_forecastset[run forecastset --source file --id S033683 --username hume --working_directory ./out/]
-# FAILED test_ef_cli.py::TestEFCLIMethods::test_run_forecastset[run forecastset --source file --id S033683 --username hume --working_directory ./out/ --approximate]
-# FAILED test_ef_cli.py::TestEFCLIMethods::test_run_forecastset[run forecastset --source file --id S033683 --username hume --working_directory ./out/ --overwrite]
-# FAILED test_ef_cli.py::TestEFCLIMethods::test_run_forecastset[run forecastset --source file --id S033683 --username hume --working_directory ./out/ --approximate --overwrite]
-# FAILED test_ef_cli.py::TestEFCLIMethods::test_list[list] - subprocess.CalledProcessError: Command '['python', '-m', 'ef_cli', 'list']' returned non-ze...
-# ====================================================== 69 - 6 failed, 164 + 6 passed in 1268.59s (0:21:08)
-
-
-
-### w new prop method
-
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_multiple_additional_loan_payments__expect_eliminate_future_min_payments - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_multiple_additional_loan_payments_on_consecutive_days - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_1_payment_pay_over_minimum - AssertionError: assert 'AD...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_1_payment_pay_exact_minimum - AssertionError: assert 'A...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_1_payment_pay_under_minimum - AssertionError: assert 'A...
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_2_payments_pay_over_minimum - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_2_payments_pay_exact_minimum - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_2_payments_pay_under_minimum - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_3_payments_pay_over_minimum - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_3_payments_pay_exact_minimum - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_cc_advance_minimum_payment_in_3_payments_pay_under_minimum - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_partial_payment_allowed_on_cc_bill_case_1 - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_partial_payment_allowed_on_cc_bill_case_2 - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_IRL_case_1 - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_IRL_case_2 - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_propagate_curr_only - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_propagate_curr_and_prev - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_propagate_prev_only - assert False
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_propagate_principal_only - NotImplementedError
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_propagate_interest_only - NotImplementedError
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_propagate_principal_and_interest - NotImplementedError
-# ================================================ 21 failed, 173 passed, 3 warnings in 2294.81s (0:38:14)
 
 
 

@@ -121,40 +121,37 @@ def credit_bsd12_w_eopc_acct_list(prev_balance,curr_balance,apr,end_of_prev_cycl
     return A.accounts
 
 if __name__ == '__main__':
-    test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df = ('test_cc_two_additional_payments_on_due_date__curr_only',  # confirmed correct
-         AccountSet.AccountSet(checking_acct_list(5000) + credit_bsd12_w_eopc_acct_list(0, 0, 0.05, 0)),
-         BudgetSet.BudgetSet(
-             [BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 100, 'test credit payment 1', False, False),
-              BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 100, 'test credit payment 2', False, False),
-              BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 400, 'cc txn', False, False)]),
-         MemoRuleSet.MemoRuleSet([
-             MemoRule.MemoRule('.*', 'Checking', None, 1),
-             MemoRule.MemoRule('cc txn', 'Credit', 'None', 2),
-             MemoRule.MemoRule('test credit payment.*', 'Checking', 'Credit', 2)
-         ]),
-         '20000111',
-         '20000113',
-         MilestoneSet.MilestoneSet([], [], []),
-         pd.DataFrame({
-             'Date': ['20000111', '20000112', '20000113'],
-             'Checking': [5000, 5000 - 200, 5000 - 200],
-             'Credit: Curr Stmt Bal': [0, 200, 200],
-             'Credit: Prev Stmt Bal': [0, 0, 0],
-             'Credit: Credit Billing Cycle Payment Bal': [0, 0, 200],
-             'Credit: Credit End of Prev Cycle Bal': [0, 0, 0],
-             'Marginal Interest': [0, 0, 0],
-             'Net Gain': [0, 0, 0],
-             'Net Loss': [0, 400, 0],
-             'Net Worth': [5000, 5000 - 400, 5000 - 400],
-             'Loan Total': [0, 0, 0],
-             'CC Debt Total': [0, 200, 200],
-             'Liquid Total': [5000, 5000 - 200, 5000 - 200],
-             'Memo Directives': ['',
-                                 '',
-                                 ''],
-             'Memo': ['', 'cc txn (Credit -$400.00)', '']
-         })
-         )
+    test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df = (
+                'test_p5_and_6__expect_defer__daily',
+                AccountSet.AccountSet(checking_acct_list(1000)),
+                BudgetSet.BudgetSet(
+                    [BudgetItem.BudgetItem('20000102', '20000102', 5, 'once', 100, 'p5 txn 1/2/00', False, False),
+                     BudgetItem.BudgetItem('20000103', '20000103', 1, 'once', 100, 'income 1/3/00', False, False),
+                     BudgetItem.BudgetItem('20000102', '20000102', 6, 'once', 1000, 'p6 deferrable txn 1/2/00', True, False),
+                     ]),
+                MemoRuleSet.MemoRuleSet([
+                    MemoRule.MemoRule('.*', None, 'Checking', 1),
+                    MemoRule.MemoRule('.*', 'Checking', None, 5),
+                    MemoRule.MemoRule('.*', 'Checking', None, 6)
+                ]),
+                '20000101',
+                '20000103',
+                MilestoneSet.MilestoneSet( [], [], []),
+                pd.DataFrame({
+                    'Date': ['20000101', '20000102', '20000103'],
+                    'Checking': [1000, 900, 0],
+                    'Marginal Interest': [0, 0, 0],
+                    'Net Gain': [0, 0, 0],
+                    'Net Loss': [0, 100, 900],
+                    'Net Worth': [1000, 900, 0],
+                    'Loan Total': [0, 0, 0],
+                    'CC Debt Total': [0, 0, 0],
+                    'Liquid Total': [1000, 900, 0],
+                    'Next Income Date': ['20000103', '20000103', ''],
+                    'Memo Directives': ['', '', 'INCOME (Checking +$100.00)'],
+                    'Memo': ['', 'p5 txn 1/2/00 (Checking -$100.00)', 'income 1/3/00 (Checking +$100.00); p6 deferrable txn 1/2/00 (Checking -$1000.00)']
+                })
+        )
 
     E = ExpenseForecast.ExpenseForecast(account_set, budget_set,
                                         memo_rule_set,
