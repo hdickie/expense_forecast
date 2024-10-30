@@ -407,7 +407,7 @@ class TestExpenseForecastMethods:
                                     'Credit: Credit Billing Cycle Payment Bal': [0, 0, 0],
                                     'Credit: Credit End of Prev Cycle Bal': [0, 0, 0],
                                     'Marginal Interest': [0, 0, 0],
-                                    'Net Gain': [0, 100, 0],
+                                    'Net Gain': [0, 0, 0],
                                     'Net Loss': [0, 0, 0],
                                     'Net Worth': [0, 0, 0],
                                     'Loan Total': [0, 0, 0],
@@ -5112,3 +5112,5 @@ class TestExpenseForecastMethods:
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_deferrals[test_p5_and_6__expect_defer-account_set0-budget_set0-memo_rule_set0-20000101-20000103-milestone_set0-expected_result_df0-p6 deferrable txn 1/2/00-None]
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_deferrals[test_expect_defer_past_end_of_forecast-account_set2-budget_set2-memo_rule_set2-20000101-20000103-milestone_set2-expected_result_df2-deferred past end-None]
 # =============================================== 3 failed, 3 passed, 192 deselected, 18 warnings in 25.67s =============
+
+# append LOAN MIN PAYMENT to md needs to get the semicolons right

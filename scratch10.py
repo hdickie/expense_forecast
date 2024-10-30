@@ -122,36 +122,32 @@ def credit_bsd12_w_eopc_acct_list(prev_balance,curr_balance,apr,end_of_prev_cycl
 
 if __name__ == '__main__':
     test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df = (
-                'test_p5_and_6__expect_defer__daily',
-                AccountSet.AccountSet(checking_acct_list(1000)),
-                BudgetSet.BudgetSet(
-                    [BudgetItem.BudgetItem('20000102', '20000102', 5, 'once', 100, 'p5 txn 1/2/00', False, False),
-                     BudgetItem.BudgetItem('20000103', '20000103', 1, 'once', 100, 'income 1/3/00', False, False),
-                     BudgetItem.BudgetItem('20000102', '20000102', 6, 'once', 1000, 'p6 deferrable txn 1/2/00', True, False),
-                     ]),
-                MemoRuleSet.MemoRuleSet([
-                    MemoRule.MemoRule('.*', None, 'Checking', 1),
-                    MemoRule.MemoRule('.*', 'Checking', None, 5),
-                    MemoRule.MemoRule('.*', 'Checking', None, 6)
-                ]),
-                '20000101',
-                '20000103',
-                MilestoneSet.MilestoneSet( [], [], []),
-                pd.DataFrame({
-                    'Date': ['20000101', '20000102', '20000103'],
-                    'Checking': [1000, 900, 0],
-                    'Marginal Interest': [0, 0, 0],
-                    'Net Gain': [0, 0, 0],
-                    'Net Loss': [0, 100, 900],
-                    'Net Worth': [1000, 900, 0],
-                    'Loan Total': [0, 0, 0],
-                    'CC Debt Total': [0, 0, 0],
-                    'Liquid Total': [1000, 900, 0],
-                    'Next Income Date': ['20000103', '20000103', ''],
-                    'Memo Directives': ['', '', 'INCOME (Checking +$100.00)'],
-                    'Memo': ['', 'p5 txn 1/2/00 (Checking -$100.00)', 'income 1/3/00 (Checking +$100.00); p6 deferrable txn 1/2/00 (Checking -$1000.00)']
-                })
-        )
+                                'test_p1_only__income_and_payment_on_same_day',
+                                AccountSet.AccountSet(checking_acct_list(0) + credit_acct_list(0, 0, 0.05)),
+                                BudgetSet.BudgetSet(txn_budget_item_once_list(100,1, 'income',False,False) + txn_budget_item_once_list(100,1, 'test txn',False,False)),
+                                MemoRuleSet.MemoRuleSet(match_p1_test_txn_checking_memo_rule_list() + income_rule_list()),
+                                '20000101',
+                                '20000103',
+                                MilestoneSet.MilestoneSet( [], [], []),
+                                pd.DataFrame({
+                                'Date': ['20000101', '20000102', '20000103'],
+                                'Checking': [0, 0, 0],
+                                'Credit: Curr Stmt Bal': [0, 0, 0],
+                                'Credit: Prev Stmt Bal': [0, 0, 0],
+                                    'Credit: Credit Billing Cycle Payment Bal': [0, 0, 0],
+                                    'Credit: Credit End of Prev Cycle Bal': [0, 0, 0],
+                                    'Marginal Interest': [0, 0, 0],
+                                    'Net Gain': [0, 100, 0],
+                                    'Net Loss': [0, 0, 0],
+                                    'Net Worth': [0, 0, 0],
+                                    'Loan Total': [0, 0, 0],
+                                    'CC Debt Total': [0, 0, 0],
+                                    'Liquid Total': [0, 0, 0],
+                                    'Next Income Date': ['20000102', '', ''],
+                                  'Memo Directives': ['', 'INCOME (Checking +$100.00)', ''],
+                                'Memo': ['', 'income (Checking +$100.00); test txn (Checking -$100.00)', '']
+                                })
+                                )
 
     E = ExpenseForecast.ExpenseForecast(account_set, budget_set,
                                         memo_rule_set,

@@ -1,4 +1,4 @@
 ,Date,Checking,Credit: Curr Stmt Bal,Credit: Prev Stmt Bal,Credit: Credit Billing Cycle Payment Bal,Credit: Credit End of Prev Cycle Bal,Marginal Interest,Net Gain,Net Loss,Net Worth,Loan Total,CC Debt Total,Liquid Total,Next Income Date,Memo Directives,Memo
 0,20000101,0.0,0.0,0.0,0.0,0.0,0,0,0,0.0,0.0,0.0,0.0,20000102,,
-1,20000102,0.0,0,0.0,0,0.0,0,100,0,0.0,0.0,0.0,0.0,,INCOME (Checking +$100.00),income (Checking +$100.00); test txn (Checking -$100.00)
+1,20000102,0.0,0,0.0,0,0.0,0,0,0,0.0,0.0,0.0,0.0,,INCOME (Checking +$100.00),income (Checking +$100.00); test txn (Checking -$100.00)
 2,20000103,0.0,0.0,0.0,0.0,0.0,0,0,0,0.0,0.0,0.0,0.0,,,

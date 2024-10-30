@@ -26,20 +26,19 @@ pd.options.mode.chained_assignment = None #apparently this warning can throw fal
 # from generate_date_sequence import generate_date_sequence
 
 if __name__ == '__main__':
+
+
+    # Only didn't make 1 cc additional payment, this was the result
+    # 289	20250814	0	220	907.34	0	907.34	10900	0	0	10900	13521.28	24.42	0	13521.28	2.22	0	22.22	-25573.04	24445.699999999997	1127.3400000000001	0	20250815
     start_date_YYYYMMDD = datetime.datetime.now().strftime('%Y%m%d')
-
-    #end_date_YYYYMMDD = '20241107'
-    #end_date_YYYYMMDD = '20250110'
-    end_date_YYYYMMDD = '20250901'
-    #end_date_YYYYMMDD = (datetime.datetime.strptime(start_date_YYYYMMDD,'%Y%m%d') + datetime.timedelta(days=365)).strftime('%Y%m%d')
-
+    #end_date_YYYYMMDD = '20250105'
+    end_date_YYYYMMDD = '20250205' #1/5 payment fails
 
     A = AccountSet.AccountSet([])
-    A.createCheckingAccount('Checking', 4020 + 80, 0, 999999999, True)
-    A.createCreditCardAccount('Credit', 0, 12609.79, 0, 25000, '20240107', 0.2899, 40)
-    #A.createCreditCardAccount('Credit', 0, 7609.79, 0, 25000, '20240107', 0.2899, 40)
-    A.createLoanAccount('Dad',(15000 + 1400) - 500*1,0,0,20000,'20240101',0,500)
-    A.createLoanAccount('Student Loans', 15000, 100, 0, 16000, '20241003', 0.06, 223.19)
+    A.createCheckingAccount('Checking', 3825.36 + 88.42 + 45.39, 0, 999999999, True)
+    A.createCreditCardAccount('Credit', 0, 14286.00, 0, 25000, '20240107', 0.2899, 40, billing_cycle_payment_balance=0, end_of_previous_cycle_balance=14286.00)
+    A.createLoanAccount('Dad',(15000 + 1400) - 500*1,0,0,20000,'20240101',0,500, billing_cycle_payment_balance=0, end_of_previous_cycle_balance=(15000 + 1400) - 500*1)
+    A.createLoanAccount('Student Loans', 15000, 100, 0, 16000, '20241003', 0.06, 223.19, billing_cycle_payment_balance=0, end_of_previous_cycle_balance=15000)
 
     B = BudgetSet.BudgetSet([])
     B.addBudgetItem('20240105', end_date_YYYYMMDD, 1, 'semiweekly', 1600, 'EMT income')
