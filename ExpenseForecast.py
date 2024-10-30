@@ -9778,7 +9778,88 @@ class ExpenseForecast:
                     log_in_color(logger, 'white', 'debug', str(date_string_YYYYMMDD)+' EXIT propagateOptimizationTransactionsIntoTheFuture', self.log_stack_depth)
                     raise ValueError(error_msg)
 
+                ### If an error occurs here, it is because of systemic error in the algroithm
+                ### Not a valid rejection of a transactions
                 #also check for rounding that caused real deltas to mismatch the memos!!!!
+                for f_i, f_row in future_rows_only_df.iterrows():
+                    #we don't use index bc it won't be 1 and reindexing is expensive
+                    current_row = f_row
+                    current_date_string = f_row.Date
+                    first_row_date_string = future_rows_only_df.head(1).Date.iat[0]
+                    if current_date_string == first_row_date_string:
+                        previous_row = forecast_df[forecast_df.Date == date_string_YYYYMMDD]
+                    else:
+                        previous_row = future_rows_only_df.loc[f_i - 1,:]
+
+                    reported_acct_deltas = {}
+                    for md in f_row['Memo Directives'].split(';'):
+                        if md.strip() == '':
+                            continue
+                        if 'CC MIN PAYMENT ALREADY MADE' in md:
+                            continue
+                        print('md:'+str(md))
+                        txn_info = re.search('\((.*):.*\$(.*)\)',md)
+                        acct_name = txn_info.group(1)
+                        memo_balance = float(txn_info.group(2))
+                        if acct_name not in reported_acct_deltas.keys():
+                            reported_acct_deltas[acct_name] = memo_balance
+                            print('reported_acct_deltas[' + str(acct_name) + '] = ' + str(memo_balance))
+                        else:
+                            reported_acct_deltas[acct_name] += memo_balance
+                            print('reported_acct_deltas[' + str(acct_name) + '] += ' + str(memo_balance) + ' = ' + str( reported_acct_deltas[acct_name]))
+
+
+                    for m in f_row['Memo'].split(';'):
+                        if 'income' in m or m.strip() == '':
+                            # bc otherwise would be double counted. this is a known design weakness
+                            # don't bully me i'll cum
+                            continue
+                        txn_info = re.search('\((.*).*\$(.*)\)',m)
+                        acct_name = txn_info.group(1)
+                        acct_name = acct_name.replace('-','').strip()
+                        memo_balance = float(txn_info.group(2))
+                        if acct_name not in reported_acct_deltas.keys():
+                            reported_acct_deltas[acct_name] = memo_balance
+                            print('reported_acct_deltas[' + str(acct_name) + '] = ' + str(memo_balance))
+                        else:
+                            reported_acct_deltas[acct_name] += memo_balance
+                            print('reported_acct_deltas[' + str(acct_name) + '] += ' + str(memo_balance) + ' = ' + str( reported_acct_deltas[acct_name]))
+
+                    observed_acct_deltas = {}
+                    for cname in forecast_df.columns:
+                        if cname in ['Date','Memo Directives','Memo']:
+                            continue
+                        if 'Loan' in cname or 'Billing Cycle Payment Bal' in cname:
+                            continue #todo consider adding interset accrual to memo directives
+                        full_cname = cname
+                        cname = cname.split(':')[0]
+                        current_delta = float(current_row[full_cname]) - float(previous_row[full_cname])
+                        if cname not in observed_acct_deltas.keys():
+                            observed_acct_deltas[cname] = current_delta
+                            print('observed_acct_deltas['+str(cname)+'] = '+str(current_delta))
+                        else:
+                            observed_acct_deltas[cname] += current_delta
+                            print('observed_acct_deltas[' + str(cname) + '] += '+str(current_delta)+' = '+str(observed_acct_deltas[cname]))
+
+                    observed_acct_deltas_2 = {}
+                    for k, v in observed_acct_deltas.items():
+                        if observed_acct_deltas[k] != 0:
+                            observed_acct_deltas_2[k] = v
+                    observed_acct_deltas = observed_acct_deltas_2
+                    del observed_acct_deltas_2
+
+                    if set(reported_acct_deltas.keys()) != set(observed_acct_deltas.keys()):
+                        print('reported_acct_deltas.keys():')
+                        print(reported_acct_deltas.keys())
+                        print('observed_acct_deltas.keys():')
+                        print(observed_acct_deltas.keys())
+                        raise ValueError("Bad programming. Please revisit.")
+
+                    for k, v in reported_acct_deltas.items():
+                        if reported_acct_deltas[k] != observed_acct_deltas[k]:
+                            exception_string = current_date_string+" Memo Lied!!! reported != observed for "+str(k)+" "
+                            exception_string += str(reported_acct_deltas[k])+" != " + str(observed_acct_deltas[k])
+                            raise ValueError(exception_string)
 
 
             #todo very slow to do this
