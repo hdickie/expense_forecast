@@ -28,11 +28,8 @@ pd.options.mode.chained_assignment = None #apparently this warning can throw fal
 if __name__ == '__main__':
 
 
-    # Only didn't make 1 cc additional payment, this was the result
-    # 289	20250814	0	220	907.34	0	907.34	10900	0	0	10900	13521.28	24.42	0	13521.28	2.22	0	22.22	-25573.04	24445.699999999997	1127.3400000000001	0	20250815
     start_date_YYYYMMDD = datetime.datetime.now().strftime('%Y%m%d')
-    #end_date_YYYYMMDD = '20250105'
-    end_date_YYYYMMDD = '20250205' #1/5 payment fails
+    end_date_YYYYMMDD = '20250815'
 
     A = AccountSet.AccountSet([])
     A.createCheckingAccount('Checking', 3825.36 + 88.42 + 45.39, 0, 999999999, True)
