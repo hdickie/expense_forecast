@@ -10,6 +10,8 @@ from log_methods import setup_logger
 #logger = setup_logger('AccountSet','./log/AccountSet.log',logging.INFO)
 logger = logging.getLogger(__name__)
 
+ROUNDING_ERROR_TOLERANCE =  0.0000000001 #10 places? overkill but I want to see if it works
+
 def initialize_from_dataframe(accounts_df):
     #print('ENTER AccountSet initialize_from_dataframe')
     A = AccountSet([])
@@ -215,7 +217,10 @@ class AccountSet:
 
     def getPrimaryCheckingAccountName(self):
         if self.primary_checking_account_name is None:
-            self.primary_checking_account_name = self.getAccounts()[self.getAccounts().Primary_Checking_Ind].iloc[0,0]
+            try:
+                self.primary_checking_account_name = self.getAccounts()[self.getAccounts().Primary_Checking_Ind].iloc[0,0]
+            except Exception as e:
+                return None
 
         return self.primary_checking_account_name
 
@@ -491,8 +496,7 @@ class AccountSet:
 
     def executeTransaction(self, Account_From, Account_To, Amount, income_flag=False, minimum_payment_flag=False):
         log_in_color(logger,'white', 'debug','ENTER executeTransaction('+str(Account_From)+','+str(Account_To)+','+str(Amount)+', minimum_payment_flag='+str(minimum_payment_flag)+')')
-        # print('ENTER executeTransaction('+str(Account_From)+','+str(Account_To)+','+str(Amount)+',minimum_payment_flag='+str(minimum_payment_flag)+')')
-        Amount = round(Amount,2)
+        #print('ENTER executeTransaction('+str(Account_From)+','+str(Account_To)+','+str(Amount)+',minimum_payment_flag='+str(minimum_payment_flag)+')')
 
         if Amount == 0:
             log_in_color(logger, 'white', 'debug', 'EXIT executeTransaction(' + str(Account_From) + ',' + str(Account_To) + ',' + str( Amount) + ')')
@@ -500,14 +504,17 @@ class AccountSet:
 
         if Account_To == 'ALL_LOANS':
             loan_payment__list = self.allocate_additional_loan_payments(Amount)
-            # print('loan_payment__list:')
-            # print(loan_payment__list)
+            print('loan_payment__list:')
+            print(loan_payment__list)
             for i in range(0,len(loan_payment__list)):
                 single_account_loan_payment = loan_payment__list[i]
+                print('single_account_loan_payment:' + str(single_account_loan_payment))
                 self.executeTransaction(single_account_loan_payment[0], #From
                                         single_account_loan_payment[1], #To
                                         single_account_loan_payment[2], #Amount
                                         income_flag=False)
+                print('post txn-state:')
+                print(self.getAccounts().to_string())
             return
 
         boundary_error_ind = False
@@ -591,9 +598,6 @@ class AccountSet:
             if AF_Account_Type == 'checking':
 
                 balance_after_proposed_transaction = self.accounts[account_from_index].balance - abs(Amount)
-
-                if abs(balance_after_proposed_transaction) < 0.01:
-                    balance_after_proposed_transaction = 0 #rounding errors are a bitch
 
                 try:
                     assert self.accounts[account_from_index].min_balance <= balance_after_proposed_transaction <= self.accounts[account_from_index].max_balance
@@ -741,7 +745,7 @@ class AccountSet:
         for a in available_funds.keys():
             after_txn_total_available_funds += available_funds[a]
 
-        empirical_delta = round(after_txn_total_available_funds - before_txn_total_available_funds,2)
+        empirical_delta = after_txn_total_available_funds - before_txn_total_available_funds
 
 
         if boundary_error_ind: raise ValueError("Account boundaries were violated\n"+error_msg)
@@ -750,16 +754,24 @@ class AccountSet:
 
         explanation_of_mismatch_string = ''
         if single_account_transaction_ind and income_flag:
-            if empirical_delta != Amount: equivalent_exchange_error_ind = True
+            # if empirical_delta != Amount:
+            #     equivalent_exchange_error_ind = True
+            equivalent_exchange_error_ind = abs(empirical_delta - Amount) > ROUNDING_ERROR_TOLERANCE
             explanation_of_mismatch_string += str(empirical_delta) + ' != ' + str(Amount)
         elif not single_account_transaction_ind and debt_payment_ind:
-            if empirical_delta != (Amount * -2): equivalent_exchange_error_ind = True
+            # if empirical_delta != (Amount * -2):
+            #     equivalent_exchange_error_ind = True
+            equivalent_exchange_error_ind = abs(empirical_delta - (-2 * Amount)) > ROUNDING_ERROR_TOLERANCE
             explanation_of_mismatch_string += str(empirical_delta) + ' != -2 * ' + str(Amount)
         elif single_account_transaction_ind and not income_flag:
-            if empirical_delta != (Amount * -1): equivalent_exchange_error_ind = True
+            # if empirical_delta != (Amount * -1):
+            #     equivalent_exchange_error_ind = True
+            equivalent_exchange_error_ind = abs(empirical_delta - (-1 * Amount)) > ROUNDING_ERROR_TOLERANCE
             explanation_of_mismatch_string += str(empirical_delta) + ' != -1 * ' + str(Amount)
         elif not single_account_transaction_ind and not income_flag:
-            if empirical_delta != 0: equivalent_exchange_error_ind = True
+            # if empirical_delta != 0:
+            #     equivalent_exchange_error_ind = True
+            equivalent_exchange_error_ind = abs(empirical_delta) > ROUNDING_ERROR_TOLERANCE
             explanation_of_mismatch_string += str(empirical_delta) + ' != 0'
         else: equivalent_exchange_error_ind = True
             #raise ValueError("impossible error in  AccountSet::executeTransaction(). if 2 accounts were indicated, then the pre-post delta must be 0.") #this should not be possible.
@@ -780,7 +792,7 @@ class AccountSet:
             log_in_color(logger,'red', 'error', equivalent_exchange_error_text, 0)
             raise ValueError("Funds not accounted for in AccountSet::executeTransaction()") # Funds not accounted for
 
-        # print('EXIT executeTransaction(' + str(Account_From) + ',' + str(Account_To) + ',' + str(Amount) + ', minimum_payment_flag=' + str(minimum_payment_flag) + ')')
+        #print('EXIT executeTransaction(' + str(Account_From) + ',' + str(Account_To) + ',' + str(Amount) + ', minimum_payment_flag=' + str(minimum_payment_flag) + ')')
 
     # def from_excel(self,path):
     #     self.accounts = []
@@ -906,29 +918,17 @@ class AccountSet:
     #     A.to_excel(path)
 
 
-    #this algorithm does not work because satisfice can be affected by optimizations
-    #that is, p1 transactions will disappear if some p7 transactions occur before it
-    #Here is the  case that made me realize this:
-    #the algorithm receives the forecast with satisfice payments already made
-    #however, then an additional payment is made that reduces the principal balance
-    #consequently, the satisficed payment has now overpaid interest
-    #...
-    #...
-    #...
-    #definitely troublesome
     def allocate_additional_loan_payments(self, amount):
         # print('ENTER allocate_additional_loan_payments: '+str(amount))
-        #bal_string = ''
-        #for account_index, account_row in self.getAccounts().iterrows():
-        #    bal_string += '$' + str(account_row.Balance) + ' '
 
-        #log_in_color(logger,'blue','debug','ENTER allocate_additional_loan_payments(amount='+str(amount)+') '+bal_string)
+        og_amount = amount
 
-        row_sel_vec = [ x for x in ( self.getAccounts().Account_Type == 'checking' ) ]
-        checking_acct_name = self.getAccounts()[row_sel_vec].Name[0] #we use this waaay later during executeTransaction
-        if self.getAccounts()[row_sel_vec].Balance.iat[0] < amount:
+        check_sel_vec = [ x for x in ( self.getAccounts().Account_Type == 'checking' ) ]
+        #checking_acct_name = self.getAccounts()[row_sel_vec].Name[0] #we use this waaay later during executeTransaction
+        checking_acct_name = self.getPrimaryCheckingAccountName()
+        if self.getAccounts()[check_sel_vec].Balance.iat[0] < amount:
             log_in_color(logger,'green', 'debug', 'input amount is greater than available balance. Reducing amount.')
-            amount = self.getAccounts().loc[row_sel_vec,:].Balance.iat[0]
+            amount = self.getAccounts().loc[check_sel_vec,:].Balance.iat[0]
 
         date_string_YYYYMMDD = '20000101' #this method needs to be refactored
 
@@ -962,12 +962,16 @@ class AccountSet:
         payment_amounts__BudgetSet = BudgetSet.BudgetSet([])
         payment_amount_tuple_list = []
 
+        # print('number_of_phase_space_regions:'+str(number_of_phase_space_regions))
         for i in range(0, int(number_of_phase_space_regions)):
+            # print('Phase space region index........: ' + str(i))
+            # print('remaining amount to be allocated: '+str(amount))
 
             if amount == 0:
                 break
 
             log_in_color(logger,'yellow', 'debug','Phase space region index: '+str(i))
+
             A = account_set.getAccounts()
             #print('A:\n')
             #print(A.to_string())
@@ -982,8 +986,9 @@ class AccountSet:
 
                 total_amount_per_loan[acct_name] = principal_amt + interest_amt
 
+            # print('total_amount_per_loan:'+str(total_amount_per_loan))
             # Let P0 be initial principal
-            # Let M0 be initial marginal_interst
+            # Let M0 be initial marginal_interest
             # Let R be vector of APRs
             #then, P0 * R = M0
 
@@ -1052,8 +1057,6 @@ class AccountSet:
             #print('current_state:' + str(current_state))
             #print('total_amount_per_loan:'+str(total_amount_per_loan))
 
-            A = account_set.getAccounts()
-
             #print('current_state:\n'+str(current_state))
 
             #print('next_step_marginal_interest_vector:')
@@ -1087,15 +1090,17 @@ class AccountSet:
 
                 #todo, currently, if the final payment includes interest, then the total gets distributed across multiple loans and does not go to interest first
                 if proposed_payment_on_principal[i][0] > 0:
-                    loop__amount = round(proposed_payment_on_principal[i][0] + current_loan_interest,2)
+                    loop__amount = proposed_payment_on_principal[i][0] + current_loan_interest
                 else:
                     loop__amount = 0
                 payment_amounts.append(loop__amount)
+            # print('payment_amounts:'+str(payment_amounts))
 
             total_interest_on_loans_w_non_0_payment = 0
             for i in range(0,len(payment_amounts)):
                 if principal_balance_delta[i] > 0:
                     total_interest_on_loans_w_non_0_payment += interest_accts_df.iloc[i,:].Balance
+            # print('total_interest_on_loans_w_non_0_payment:'+str(total_interest_on_loans_w_non_0_payment))
 
             if amount <= sum(payment_amounts):
                 payment_amounts = [a * (amount) / sum(payment_amounts) for a in payment_amounts]
@@ -1116,6 +1121,7 @@ class AccountSet:
                 account_set.executeTransaction(Account_From=checking_acct_name, Account_To=loop__to_name, Amount=loop__amount)
                 #payment_amounts__BudgetSet.addBudgetItem(date_string_YYYYMMDD, date_string_YYYYMMDD, 7, 'once', round(loop__amount,2), loop__to_name,False,partial_payment_allowed=False)
                 payment_amount_tuple_list.append((loop__to_name,loop__amount))
+        # print('payment_amount_tuple_list:'+str(payment_amount_tuple_list))
 
         unique_payment_amount_tuple_dict = {}
         for tp in payment_amount_tuple_list:
@@ -1123,6 +1129,7 @@ class AccountSet:
                 unique_payment_amount_tuple_dict[tp[0]] = tp[1]
             else:
                 unique_payment_amount_tuple_dict[tp[0]] += tp[1]
+        # print('unique_payment_amount_tuple_dict:' + str(unique_payment_amount_tuple_dict))
 
         for key, value in unique_payment_amount_tuple_dict.items():
             payment_amounts__BudgetSet.addBudgetItem(date_string_YYYYMMDD, date_string_YYYYMMDD, 7, 'once',
@@ -1142,12 +1149,19 @@ class AccountSet:
                 payment_dict[row.Memo] = payment_dict[row.Memo] + row.Amount
             else:
                 payment_dict[row.Memo] = row.Amount
+        # print('payment_dict:'+str(payment_dict))
 
         final_txns = []
         for key in payment_dict.keys():
             final_txns.append([checking_acct_name,key,payment_dict[key]])
             #final_budget_items.append(BudgetItem.BudgetItem(date_string_YYYYMMDD, date_string_YYYYMMDD, 7, 'once', payment_dict[key], False, key, ))
+        # print('final_txns:'+str(final_txns))
 
+        running_total = 0
+        for t in final_txns:
+            running_total += t[2]
+        # print(str(running_total)+' ?= '+str(og_amount))
+        assert running_total == og_amount
 
         #log_in_color(logger,'green', 'debug', 'final_txns:')
         #log_in_color(logger,'green', 'debug', final_txns)
@@ -1241,5 +1255,3 @@ if __name__ == "__main__": import doctest; doctest.testmod()
 # 96 passed, 137 deselected in 19.31s
 
 
-
-#failing test_execute_transaction_valid_inputs

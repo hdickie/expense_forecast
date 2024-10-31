@@ -929,6 +929,7 @@ class TestAccountSet:
                                        principal_balance=None,
                                        interest_balance=None,
                                        billing_cycle_payment_balance=0,
+                                       primary_checking_ind=True,
                                        print_debug_messages=False)
 
         test_account_set.createAccount(name="test credit",

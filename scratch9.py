@@ -37,7 +37,7 @@ if __name__ == '__main__':
     A = AccountSet.AccountSet([])
     A.createCheckingAccount('Checking', 3825.36 + 88.42 + 45.39, 0, 999999999, True)
     A.createCreditCardAccount('Credit', 0, 14286.00, 0, 25000, '20240107', 0.2899, 40, billing_cycle_payment_balance=0, end_of_previous_cycle_balance=14286.00)
-    A.createLoanAccount('Dad',(15000 + 1400) - 500*1,0,0,20000,'20240101',0,500, billing_cycle_payment_balance=0, end_of_previous_cycle_balance=(15000 + 1400) - 500*1)
+    A.createLoanAccount('Dad Loan',(15000 + 1400) - 500*1,0,0,20000,'20240101',0,500, billing_cycle_payment_balance=0, end_of_previous_cycle_balance=(15000 + 1400) - 500*1)
     A.createLoanAccount('Student Loans', 15000, 100, 0, 16000, '20241003', 0.06, 223.19, billing_cycle_payment_balance=0, end_of_previous_cycle_balance=15000)
 
     B = BudgetSet.BudgetSet([])
