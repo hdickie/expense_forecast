@@ -2297,11 +2297,43 @@ class TestExpenseForecastMethods:
          })
          ),
 
+        ('test_cc_interest_accrued_reaches_0',
+         AccountSet.AccountSet(checking_acct_list(0) + credit_bsd12_w_eopc_acct_list(0, 0, 0.05, 500)),  # todo implement
+         # BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 600, 'single additional payment on due date', False, False)]),
+         BudgetSet.BudgetSet(),
+         MemoRuleSet.MemoRuleSet([
+             MemoRule.MemoRule('.*', 'Checking', None, 1),
+             MemoRule.MemoRule('.*', 'Checking', 'Credit', 2)
+         ]),
+         '20000110',
+         '20000214',
+         MilestoneSet.MilestoneSet([], [], []),
+         pd.DataFrame({
+             'Date': generate_date_sequence('20000110', 35, 'daily'),
+             'Checking': [0] * 36,
+             'Credit: Curr Stmt Bal': [0] * 36,
+             'Credit: Prev Stmt Bal': [0] * 36,
+             'Credit: Credit Billing Cycle Payment Bal': [0] * 36,
+             'Credit: Credit End of Prev Cycle Bal': [0] * 36,
+             'Marginal Interest': [0] * 36,
+             'Net Gain': [0] * 36,
+             'Net Loss': [0] * 36,
+             'Net Worth': [0] * 36,
+             'Loan Total': [0] * 36,
+             'CC Debt Total': [0] * 36,
+             'Liquid Total': [0] * 36,
+             'Next Income Date': [''] * 36,
+             'Memo Directives': ['NOT IMPLEMENTED'] * 36,
+             'Memo': [''] * 36
+         })
+         ),
+
 
         # there might be something about allocation and the ALL_LOANS memo rule as well
         # Note also that the basic loan tests test single payment same day
 
         # todo could there be problems w interest accrual and billing cycle being on different cadences?
+        # (would only happen when interest accrual happens more frequently. interest will always overlap_
 
         # test_loan_single_additional_payment_day_before #4 day result
         # test_loan_two_additional_payments_on_due_date #3 day result
@@ -2566,6 +2598,54 @@ class TestExpenseForecastMethods:
         #                                                  end_date_YYYYMMDD,
         #                                                  expected_result_df,
         #                                                  test_description)
+
+
+
+    ### Let's see how you like THESE apples!
+    @pytest.mark.parametrize(
+        'test_name, advance_payment_amount, interest_accrued_this_cycle, prev_prev_stmt_bal, total_balance, min_payment, expected_result',[
+            ('00210_1100', '100', '200', '300', '300', '300', '200'),
+            ('21100_0111', '300', '100', '100', '200', '400', 'idk'),
+            ('03000_0001', '100', '100', '100', '200', '100', 'RESULT INT'),
+            ('21200_0010', '200', '100', '100', '200', '100', 'RESULT INT'),
+            ('13010_0000', '100', '100', '100', '100', '100', 'RESULT INT'),
+            ('23000_1101', '300', '300', '100', '400', '200', 'RESULT INT'),
+            ('23210_1001', '300', '200', '100', '200', '200', 'RESULT INT'),
+            ('02010_1100', '100', '300', '300', '200', '300', 'RESULT INT'),
+            ('03200_1000', '100', '200', '200', '200', '200', 'RESULT INT'),
+            ('03210_0111', '100', '400', '300', '200', '100', 'RESULT INT'),
+            ('12010_1100', '300', '100', '300', '200', '300', 'RESULT INT'),
+            ('12110_0010', '200', '100', '100', '100', '200', 'RESULT INT'),
+            ('31010_0101', '200', '100', '300', '100', '200', 'RESULT INT'),
+            ('30000_1100', '200', '300', '300', '100', '300', 'RESULT INT'),
+            ('40210_0110', '100', '300', '300', '200', '100', 'RESULT INT'),
+            ('43000_0001', '100', '100', '200', '100', '100', 'RESULT INT'),
+            ('13010_0110', '200', '100', '300', '300', '100', 'RESULT INT'),
+            ('03200_0001', '100', '100', '200', '100', '100', 'RESULT INT'),
+            ('30200_0011', '100', '200', '300', '100', '100', 'RESULT INT'),
+            ('00000_0101', '100', '100', '200', '200', '300', 'RESULT INT'),
+            ('42010_1011', '200', '400', '200', '300', '100', 'RESULT INT'),
+            ('33100_1100', '300', '300', '300', '100', '200', 'RESULT INT'),
+            ('42210_0101', '300', '200', '100', '200', '100', 'RESULT INT'),
+            ('00110_0010', '100', '100', '200', '100', '200', 'RESULT INT'),
+            ('00200_0011', '100', '100', '200', '300', '100', 'RESULT INT'),
+            ('31110_0011', '300', '100', '100', '100', '200', 'RESULT INT'),
+            ('22010_0010', '100', '200', '100', '100', '200', 'RESULT INT'),
+            ('13200_1111', '400', '100', '500', '300', '200', 'RESULT INT'),
+            ('20010_0001', '100', '100', '100', '200', '100', 'RESULT INT'),
+            ('33200_0011', '200', '300', '100', '100', '100', 'RESULT INT'),
+    ])
+    def test_determineMinPaymentAmount(self,test_name, advance_payment_amount, interest_accrued_this_cycle, prev_prev_stmt_bal, total_balance, min_payment, expected_result):
+        if expected_result == 'RESULT INT':
+            pass
+        else:
+            try:
+                print('test_name, advance_payment_amount, interest_accrued_this_cycle, prev_prev_stmt_bal, total_balance, min_payment, expected_result')
+                print(test_name, advance_payment_amount, interest_accrued_this_cycle, prev_prev_stmt_bal, total_balance, min_payment, expected_result)
+                assert float(expected_result) == ExpenseForecast.determineMinPaymentAmount(float(advance_payment_amount), float(interest_accrued_this_cycle), float(prev_prev_stmt_bal), float(total_balance), float(min_payment))
+            except Exception as e:
+                raise e
+
 
     def test_str(self):
         start_date_YYYYMMDD = '20000101'
@@ -2880,7 +2960,7 @@ class TestExpenseForecastMethods:
     #                                                                               2)
     #             else:
     #                 assert E1.forecast_df.iloc[index, c_index] == E2.forecast_df.iloc[index, c_index]
-    #
+
     # def test_initialize_forecast_from_json_not_yet_run(self):
     #     start_date_YYYYMMDD = '20000101'
     #     end_date_YYYYMMDD = '20000105'
@@ -3058,8 +3138,8 @@ class TestExpenseForecastMethods:
     #                 assert round(E1.forecast_df.iloc[index,c_index],2) == round(E2.forecast_df.iloc[index,c_index],2)
     #             else:
     #                 assert E1.forecast_df.iloc[index, c_index] == E2.forecast_df.iloc[index, c_index]
-    #
-    #
+
+
     # def test_initialize_forecast_from_json_already_run(self):
     #     start_date_YYYYMMDD = '20000101'
     #     end_date_YYYYMMDD = '20000105'
@@ -3147,7 +3227,7 @@ class TestExpenseForecastMethods:
     #                 assert round(E1.forecast_df.iloc[index, c_index], 2) == round(E2.forecast_df.iloc[index, c_index],2)
     #             else:
     #                 assert E1.forecast_df.iloc[index, c_index] == E2.forecast_df.iloc[index, c_index]
-    #
+
     # def test_run_forecast_from_json_at_path(self):
     #
     #     sd = '20000101'
@@ -3217,7 +3297,7 @@ class TestExpenseForecastMethods:
     #     # print('------------------------------------------------------------------------------------')
     #
     #     assert comparable_E1_str_lines == comparable_E2_str_lines
-    #
+
     # def test_run_forecast_from_excel_at_path(self):
     #
     #     sd = '20000101'
@@ -3368,463 +3448,6 @@ class TestExpenseForecastMethods:
         # log_in_color(logger,'white', 'debug', 'Forecast:')
         # log_in_color(logger,'white', 'debug', E.forecast_df.to_string())
 
-    ### I'm p sure min loan payments wor kcorrectly and coding this in a way that makes sense is annoying me
-    # def test_minimum_loan_payments(self):
-    #     test_description = 'test_minimum_loan_payments'
-    #
-    #     start_date_YYYYMMDD = '20000101'
-    #     end_date_YYYYMMDD = '20000103'
-    #
-    #     account_set = AccountSet.AccountSet([])
-    #     budget_set = BudgetSet.BudgetSet([])
-    #     memo_rule_set = MemoRuleSet.MemoRuleSet([])
-    #
-    #     account_set.createAccount(name='Checking',
-    #                               balance=2000,
-    #                               min_balance=0,
-    #                               max_balance=float('Inf'),
-    #                               account_type="checking")
-    #
-    #     account_set.createAccount(name='Loan A',
-    #                               balance=5000,
-    #                               min_balance=0,
-    #                               max_balance=float("inf"),
-    #                               account_type="loan",
-    #                               billing_start_date_YYYYMMDD='20000102',
-    #                               interest_type='simple',
-    #                               apr=0.05,
-    #                               interest_cadence='daily',
-    #                               minimum_payment=50,
-    #                               previous_statement_balance=None,
-    #                               principal_balance=5000,
-    #                               interest_balance=0
-    #                               )
-    #
-    #     account_set.createAccount(name='Loan B',
-    #                               balance=5025,
-    #                               min_balance=0,
-    #                               max_balance=float("inf"),
-    #                               account_type="loan",
-    #                               billing_start_date_YYYYMMDD='20000102',
-    #                               interest_type='simple',
-    #                               apr=0.05,
-    #                               interest_cadence='daily',
-    #                               minimum_payment=50,
-    #                               previous_statement_balance=None,
-    #                               principal_balance=5000,
-    #                               interest_balance=25
-    #                               )
-    #
-    #     account_set.createAccount(name='Loan C',
-    #                               balance=5075,
-    #                               min_balance=0,
-    #                               max_balance=float("inf"),
-    #                               account_type="loan",
-    #                               billing_start_date_YYYYMMDD='20000102',
-    #                               interest_type='simple',
-    #                               apr=0.05,
-    #                               interest_cadence='daily',
-    #                               minimum_payment=50,
-    #                               previous_statement_balance=None,
-    #                               principal_balance=5000,
-    #                               interest_balance=75
-    #                               )
-    #
-    #     account_set.createAccount(name='Loan D',
-    #                               balance=50,
-    #                               min_balance=0,
-    #                               max_balance=float("inf"),
-    #                               account_type="loan",
-    #                               billing_start_date_YYYYMMDD='20000102',
-    #                               interest_type='simple',
-    #                               apr=0.12,
-    #                               interest_cadence='daily',
-    #                               minimum_payment=50,
-    #                               previous_statement_balance=None,
-    #                               principal_balance=50,
-    #                               interest_balance=0
-    #                               )
-    #
-    #     account_set.createAccount(name='Loan E',
-    #                               balance=25,
-    #                               min_balance=0,
-    #                               max_balance=float("inf"),
-    #                               account_type="loan",
-    #                               billing_start_date_YYYYMMDD='20000102',
-    #                               interest_type='simple',
-    #                               apr=0.12,
-    #                               interest_cadence='daily',
-    #                               minimum_payment=50,
-    #                               previous_statement_balance=None,
-    #                               principal_balance=25,
-    #                               interest_balance=0
-    #                               )
-    #
-    #
-    #     memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=1)
-    #
-    #     expected_result_df = pd.DataFrame({
-    #         'Date': ['20000101', '20000102', '20000103'],
-    #         'Checking': [2000, 1775, 1775],
-    #         'Loan A: Principal Balance': [5000,4950 ,4950 ],
-    #         'Loan A: Interest': [0, 0.68, 1.36 ],
-    #         'Loan B: Principal Balance': [5000,4975 ,4975 ],
-    #         'Loan B: Interest': [25, 0.68, 1.36],
-    #         'Loan C: Principal Balance': [5000,5000 ,5000 ],
-    #         'Loan C: Interest': [75, 25.68, 26.36],
-    #         'Loan D: Principal Balance': [50, 0, 0],
-    #         'Loan D: Interest': [0, 0, 0],
-    #         'Loan E: Principal Balance': [25, 0, 0],
-    #         'Loan E: Interest': [0, 0, 0],
-    #         'Memo': ['', 'loan min payment (Loan A: Interest -$0.68); loan min payment (Loan A: Principal Balance -$49.32); loan min payment (Loan B: Interest -$25.68);  loan min payment (Loan B: Principal Balance -$24.32); loan min payment (Loan C: Interest -$50.0); loan min payment (Loan D: Interest -$0.02); loan min payment (Loan D: Principal Balance -$49.98); loan min payment (Loan E: Interest -$0.01); loan min payment (Loan E: Principal Balance -$25.0);', '']
-    #     })
-    #     expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d') for x in
-    #                                expected_result_df.Date]
-    #
-    #     milestone_set = MilestoneSet.MilestoneSet(account_set, budget_set, [], [], [])
-    #
-    #     E = self.compute_forecast_and_actual_vs_expected(account_set,
-    #                                                      budget_set,
-    #                                                      memo_rule_set,
-    #                                                      start_date_YYYYMMDD,
-    #                                                      end_date_YYYYMMDD,
-    #                                                      milestone_set,
-    #                                                      expected_result_df,
-    #                                                      test_description)
-
-
-
-
-    # Interest accruals are calculated before any payments for that day
-    #
-    # scenarios:
-    # 1. daily accrual simple ( 0 APR )
-    # 2. daily accrual simple
-    # 3. monthly accrual simple
-    # 4. daily accrual compound
-    # 5. monthly accrual compound
-    # 6. daily accrual simple (make a payment)
-    # 7. monthly accrual compound (make a payment)
-    #
-    # each test case can have success defined by a 3 x n matrix
-
-    #
-
-    # scenarios: min payments only
-    # 1. minimum payments only
-    #
-    # scenarios: hard coded payments in excess of minimum
-    # 2. extra payment: 1 loan, less than total balance
-    # 3. extra payment: 1 loan, more than total balance
-    # 4. extra payment: 1 loan, less than total balance when insufficient funds
-    # 5. extra payment: 1 loan, more than total balance when insufficient funds
-
-    # 6. extra payment: 2 loans, same interest rate diff balances, less than total balance
-    # 7. extra payment: 2 loans, same interest rate diff balances, more than total balance
-    # 8. extra payment: 2 loans, same interest rate diff balances, less than total balance when insufficient funds
-    # 9. extra payment: 2 loans, same interest rate diff balances, more than total balance when insufficient funds
-
-    # 10. extra payment: 2 loans, diff interest rate diff balances, less than total balance
-    # 11. extra payment: 2 loans, diff interest rate diff balances, more than total balance
-    # 12. extra payment: 2 loans, diff interest rate diff balances, less than total balance when insufficient funds
-    # 13. extra payment: 2 loans, diff interest rate diff balances, more than total balance when insufficient funds
-
-    # 14. extra payment: 5 loans, diff interest rate diff balances, less than total balance
-    # 15. extra payment: 5 loans, diff interest rate diff balances, more than total balance
-    # 16. extra payment: 5 loans, diff interest rate diff balances, less than total balance when insufficient funds
-    # 17. extra payment: 5 loans, diff interest rate diff balances, more than total balance when insufficient funds
-    #
-    # scenarios: amount = "*"
-    # 18. extra payment: 5 loans, diff interest rate diff balances,
-    # def test_loan_payments(self):
-    #     test_descriptions = [
-    #         'Test 1 : ',
-    #         'Test 2 : '
-    #     ]
-    #
-    #     account_sets = []
-    #     budget_sets = []
-    #     memo_rule_sets = []
-    #
-    #     expected_results = []
-    #
-    #     start_date_YYYYMMDD = self.start_date_YYYYMMDD
-    #     end_date_YYYYMMDD = self.end_date_YYYYMMDD
-    #
-    #     for i in range(0, len(test_descriptions)):
-    #         account_sets.append(copy.deepcopy(self.account_set))
-    #         budget_sets.append(copy.deepcopy(self.budget_set))
-    #         memo_rule_sets.append(copy.deepcopy(self.memo_rule_set))
-    #
-    #     ### BEGIN Test Case 1
-    #     account_sets[0].addAccount(name='Checking',
-    #                                balance=0,
-    #                                min_balance=0,
-    #                                max_balance=float('Inf'),
-    #                                account_type="checking")
-    #
-    #     account_sets[0].addAccount(name='Loan',
-    #                                balance=1000,
-    #                                min_balance=0,
-    #                                max_balance=float('Inf'),
-    #                                account_type="loan",
-    #                                billing_start_date_YYYYMMDD='20000102',
-    #                                interest_type='Simple',
-    #                                apr=0.05,
-    #                                interest_cadence='Daily',
-    #                                minimum_payment=0,
-    #                                previous_statement_balance=None,
-    #                                principal_balance=1000,
-    #                                interest_balance=0
-    #                                )
-    #
-    #     budget_sets[0].addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
-    #                                  cadence='daily', amount=0, memo='dummy memo',
-    #                                  deferrable=False)
-    #
-    #     memo_rule_sets[0].addMemoRule(memo_regex='.*', account_from='Checking', account_to='Loan',
-    #                                   transaction_priority=1)
-    #
-    #     expected_result_0_df = pd.DataFrame({
-    #         'Date': ['20000101', '20000102', '20000103'],
-    #         'Checking': [0, 0, 0],
-    #         'Loan: Principal Balance': [0, 0, 0],
-    #         'Loan: Interest': [0, 0, 0],
-    #         'Memo': ['', '', '']
-    #     })
-    #     expected_result_0_df.Date = [datetime.datetime.strptime(x, '%Y%m%d').strftime('%Y-%m-%d') for x in
-    #                                  expected_result_0_df.Date]
-    #     expected_results.append(expected_result_0_df)
-    #     ### END
-    #
-    #     ### BEGIN Test Case 2
-    #     account_sets[1].addAccount(name='Checking',
-    #                                balance=0,
-    #                                min_balance=0,
-    #                                max_balance=float('Inf'),
-    #                                account_type="checking")
-    #
-    #     account_sets[1].addAccount(name='Credit',
-    #                                balance=1000,
-    #                                min_balance=0,
-    #                                max_balance=float('Inf'),
-    #                                account_type="credit",
-    #                                billing_start_date_YYYYMMDD='20000102',
-    #                                interest_type='Compound',
-    #                                apr=0.05,
-    #                                interest_cadence='Monthly',
-    #                                minimum_payment=0,
-    #                                previous_statement_balance=0,
-    #                                principal_balance=None,
-    #                                interest_balance=None
-    #                                )
-    #
-    #     budget_sets[1].addBudgetItem(start_date_YYYYMMDD='20000101', end_date_YYYYMMDD='20000103', priority=1,
-    #                                  cadence='daily', amount=0, memo='dummy memo',
-    #                                  deferrable=False)
-    #
-    #     memo_rule_sets[1].addMemoRule(memo_regex='.*', account_from='Checking', account_to='Credit',
-    #                                   transaction_priority=1)
-    #
-    #     expected_result_1_df = pd.DataFrame({
-    #         'Date': ['20000101', '20000102', '20000103'],
-    #         'Checking': [0, 0, 0],
-    #         'Credit: Curr Stmt Bal': [0, 0, 0],
-    #         'Credit: Prev Stmt Bal': [0, 0, 0],
-    #         'Memo': ['', '', '']
-    #     })
-    #     expected_result_1_df.Date = [datetime.datetime.strptime(x, '%Y%m%d').strftime('%Y-%m-%d') for x in
-    #                                  expected_result_1_df.Date]
-    #     expected_results.append(expected_result_1_df)
-    #     ### END
-    #
-    #     # Run the Forecasts
-    #     expense_forecasts = []
-    #     for i in range(0, len(test_descriptions)):
-    #         # print('Running Forecast #'+str(i))
-    #
-    #         try:
-    #             expense_forecasts.append(ExpenseForecast.ExpenseForecast(account_sets[i],
-    #                                                                      budget_sets[i],
-    #                                                                      memo_rule_sets[i],
-    #                                                                      start_date_YYYYMMDD,
-    #                                                                      end_date_YYYYMMDD, raise_exceptions=False))
-    #
-    #             # print(expense_forecasts[i].forecast_df.to_string())
-    #         except Exception as e:
-    #             print(e)
-    #             print(budget_sets[i])
-    #             raise e
-    #
-    #     # Compute Differences
-    #     differences = []
-    #     for i in range(0, len(test_descriptions)):
-    #         try:
-    #
-    #             print(expense_forecasts[i].forecast_df.columns)
-    #             print(expected_results[i].columns)
-    #
-    #             d = expense_forecasts[i].compute_forecast_difference(expected_results[i],
-    #                                                                  label=test_descriptions[i],
-    #                                                                  make_plots=True,
-    #                                                                  diffs_only=False,
-    #                                                                  require_matching_columns=True,
-    #                                                                  require_matching_date_range=True,
-    #                                                                  append_expected_values=True,
-    #                                                                  return_type='dataframe')
-    #             d = d.reindex(sorted(d.columns), axis=1)
-    #             differences.append(d)
-    #
-    #         except Exception as e:
-    #             print(e)
-    #
-    #     # Display Results
-    #     for i in range(0, len(test_descriptions)):
-    #         try:
-    #             display_test_result(logger,test_descriptions[i], differences[i])
-    #         except Exception as e:
-    #             print(e)
-    #
-    #     # Check Results
-    #     for i in range(0, len(test_descriptions)):
-    #         self.assertTrue(differences[i].shape[0] == 0)
-
-    # def test_summary_lines(self):
-    #
-    #     test_description = 'test_summary_lines'
-    #
-    #     start_date_YYYYMMDD = '20000101'
-    #     end_date_YYYYMMDD = '20000103'
-    #
-    #     account_set = AccountSet.AccountSet([])
-    #     budget_set = BudgetSet.BudgetSet([])
-    #     memo_rule_set = MemoRuleSet.MemoRuleSet([])
-    #
-    #     account_set.createAccount(name='Checking',
-    #                               balance=2000,
-    #                               min_balance=0,
-    #                               max_balance=float('Inf'),
-    #                               account_type="checking")
-    #
-    #     account_set.createAccount('Credit',500,0,10000,'credit','20000102','compound',0.25,'monthly',50,250,None,None)
-    #
-    #     account_set.createAccount(name='Loan A',
-    #                               balance=5000,
-    #                               min_balance=0,
-    #                               max_balance=float("inf"),
-    #                               account_type="loan",
-    #                               billing_start_date_YYYYMMDD='20000102',
-    #                               interest_type='simple',
-    #                               apr=0.05,
-    #                               interest_cadence='daily',
-    #                               minimum_payment=50,
-    #                               previous_statement_balance=None,
-    #                               principal_balance=5000,
-    #                               interest_balance=0
-    #                               )
-    #
-    #     account_set.createAccount(name='Loan B',
-    #                               balance=5025,
-    #                               min_balance=0,
-    #                               max_balance=float("inf"),
-    #                               account_type="loan",
-    #                               billing_start_date_YYYYMMDD='20000102',
-    #                               interest_type='simple',
-    #                               apr=0.05,
-    #                               interest_cadence='daily',
-    #                               minimum_payment=50,
-    #                               previous_statement_balance=None,
-    #                               principal_balance=5000,
-    #                               interest_balance=25
-    #                               )
-    #
-    #     account_set.createAccount(name='Loan C',
-    #                               balance=5075,
-    #                               min_balance=0,
-    #                               max_balance=float("inf"),
-    #                               account_type="loan",
-    #                               billing_start_date_YYYYMMDD='20000102',
-    #                               interest_type='simple',
-    #                               apr=0.05,
-    #                               interest_cadence='daily',
-    #                               minimum_payment=50,
-    #                               previous_statement_balance=None,
-    #                               principal_balance=5000,
-    #                               interest_balance=75
-    #                               )
-    #
-    #     memo_rule_set.addMemoRule(memo_regex='.*', account_from='Checking', account_to=None, transaction_priority=1)
-    #
-    #     expected_result_df = pd.DataFrame({
-    #         'Date': ['20000101', '20000102', '20000103'],
-    #         'Checking': [2000, 1810, 1810],
-    #         'Credit: Curr Stmt Bal': [500, 0, 0],
-    #         'Credit: Prev Stmt Bal': [250, 714.38, 714.38],
-    #         'Loan A: Principal Balance': [5000, 4950, 4950],
-    #         'Loan A: Interest': [0, 0.68, 1.36],
-    #         'Loan B: Principal Balance': [5000, 4975, 4975],
-    #         'Loan B: Interest': [25, 0.68, 1.36],
-    #         'Loan C: Principal Balance': [5000, 5000, 5000],
-    #         'Loan C: Interest': [75, 25.68, 26.36],
-    #         'Memo': ['', '', ''],
-    #         'NetWorth': [-13850, -13856.42, -13858.46],
-    #         'CCDebtTotal': [750, 714.38, 714.38],
-    #         'LiquidTotal': [2000, 1810, 1810],
-    #         'LoanTotal': [15100, 14952.04, 14954.08]
-    #     })
-    #     expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d') for x in
-    #                                expected_result_df.Date]
-    #
-    #     milestone_set = MilestoneSet.MilestoneSet(account_set, budget_set, [], [], [])
-    #
-    #
-    #     E = ExpenseForecast.ExpenseForecast(account_set, budget_set,
-    #                                         memo_rule_set,
-    #                                         start_date_YYYYMMDD,
-    #                                         end_date_YYYYMMDD,
-    #                                         milestone_set,
-    #                                         raise_exceptions=False)
-    #
-    #     E.runForecast()
-    #     E.appendSummaryLines()
-    #
-    #     d = E.compute_forecast_difference(copy.deepcopy(E.forecast_df), copy.deepcopy(expected_result_df),
-    #                                       label=test_description,
-    #                                       make_plots=False,
-    #                                       diffs_only=True,
-    #                                       require_matching_columns=True,
-    #                                       require_matching_date_range=True,
-    #                                       append_expected_values=False,
-    #                                       return_type='dataframe')
-    #
-    #     f = E.compute_forecast_difference(copy.deepcopy(E.forecast_df), copy.deepcopy(expected_result_df),
-    #                                       label=test_description,
-    #                                       make_plots=False,
-    #                                       diffs_only=False,
-    #                                       require_matching_columns=True,
-    #                                       require_matching_date_range=True,
-    #                                       append_expected_values=True,
-    #                                       return_type='dataframe')
-    #
-    #     print(f.T.to_string())
-    #
-    #     try:
-    #         display_test_result(logger,test_description, d)
-    #     except Exception as e:
-    #         raise e
-    #
-    #     try:
-    #         sel_vec = (d.columns != 'Date') & (d.columns != 'Memo')
-    #         #on_boilerplate_values__M = np.matrix(d.iloc[:, sel_vec])
-    #         non_boilerplate_values__M = np.ndarray(d.iloc[:, sel_vec])
-    #
-    #         error_ind = round(float(sum(sum(np.square(
-    #             non_boilerplate_values__M)).T)), 2)  # this very much DOES NOT SCALE. this is intended for small tests
-    #         assert error_ind == 0
-    #     except Exception as e:
-    #         # print(test_description) #todo use log methods
-    #         # print(f.T.to_string())
-    #         raise e
 
     @pytest.mark.parametrize(
         'test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,account_milestone_names,expected_milestone_dates',
@@ -3926,981 +3549,8 @@ class TestExpenseForecastMethods:
                 print('Expected: ' + str(expected_milestone_dates[i]))
                 raise e
 
-    # def test_multiple_additional_loan_payments__expect_eliminate_future_min_payments(self):
-    #     start_date_YYYYMMDD = '20240101'
-    #     end_date_YYYYMMDD = '20240205'
-    #
-    #     A = AccountSet.AccountSet([])
-    #     A.createCheckingAccount('Checking',5000,0,999999)
-    #     A.createLoanAccount('Loan A',3500,100,0,99999,'20230103',0.4,50)
-    #
-    #     B = BudgetSet.BudgetSet([])
-    #     B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'semiweekly', 1500, 'income', False, False)
-    #     B.addBudgetItem('20240103', end_date_YYYYMMDD, 7, 'semiweekly', 2000, 'additional loan payment', False, True)
-    #
-    #     M = MemoRuleSet.MemoRuleSet([])
-    #     M.addMemoRule('.*income.*', None, 'Checking', 1)
-    #     M.addMemoRule('additional loan payment', 'Checking', 'ALL_LOANS', 7)
-    #
-    #     MS = MilestoneSet.MilestoneSet([], [], [])
-    #
-    #     E = ExpenseForecast.ExpenseForecast(A,
-    #                                          B,
-    #                                          M,
-    #                                          start_date_YYYYMMDD,
-    #                                          end_date_YYYYMMDD,
-    #                                          MS)
-    #     E.runForecast()
-    #
-    #     # this is just for me to review
-    #     F = ForecastHandler.ForecastHandler()
-    #     F.generateHTMLReport(E) #.html
-    #
-    #     final_state_df = E.forecast_df.tail(1)
-    #     assert final_state_df.iloc[0,:].Memo.strip() == ''  # loan should already have been paid off. If fail, there will be an additional payment here
-    #     print(E.forecast_df.to_string())
-    #     assert False #this test case should be more detailed
-
-    # def test_multiple_additional_loan_payments_on_consecutive_days(self):
-    #     start_date_YYYYMMDD = '20240101'
-    #     end_date_YYYYMMDD = '20240205'
-    #
-    #     A = AccountSet.AccountSet([])
-    #     A.createCheckingAccount('Checking',5000,0,999999)
-    #     A.createLoanAccount('Loan A', 3500, 100, 0, 99999, '20230103', 0.4, 50)
-    #
-    #     B = BudgetSet.BudgetSet([])
-    #     B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'semiweekly', 1500, 'income', False, False)
-    #     B.addBudgetItem('20240110', '20240110', 7, 'once', 1000, 'additional loan payment 1', False, True)
-    #     B.addBudgetItem('20240111', '20240111', 7, 'once', 1000, 'additional loan payment 2', False, True)
-    #     B.addBudgetItem('20240112', '20240112', 7, 'once', 1000, 'additional loan payment 3', False, True)
-    #     B.addBudgetItem('20240113', '20240113', 7, 'once', 1000, 'additional loan payment 4', False, True)
-    #
-    #     M = MemoRuleSet.MemoRuleSet([])
-    #     M.addMemoRule('.*income.*', None, 'Checking', 1)
-    #     M.addMemoRule('additional loan payment', 'Checking', 'ALL_LOANS', 7)
-    #
-    #     MS = MilestoneSet.MilestoneSet([], [], [])
-    #
-    #     E = ExpenseForecast.ExpenseForecast(A,
-    #                                         B,
-    #                                         M,
-    #                                         start_date_YYYYMMDD,
-    #                                         end_date_YYYYMMDD,
-    #                                         MS)
-    #     E.runForecast()
-    #
-    #     # this is just for me to review
-    #     F = ForecastHandler.ForecastHandler()
-    #     F.generateHTMLReport(E)  # .html
-    #
-    #     final_state_df = E.forecast_df.tail(1)
-    #
-    #     #I'm not sure what the check should be here but this looks correct
-    #     #assert final_state_df.iloc[0,:].Memo.strip() == ''  #./Forecast_091547.html
-    #     assert False #add more detail to this test case
 
 
-
-    # def test_additional_loan_payments_overpayment(self):
-    #     start_date_YYYYMMDD = '20240101'
-    #     end_date_YYYYMMDD = '20240110'
-    #
-    #     A = AccountSet.AccountSet([])
-    #     A.createCheckingAccount('Checking', 5000, 0, 999999)
-    #     A.createLoanAccount('Loan A', 3500, 100, 0, 99999, '20230103', 0.4, 50)
-    #
-    #     B = BudgetSet.BudgetSet([])
-    #     B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'semiweekly', 1500, 'income', False, False)
-    #     B.addBudgetItem('20240105', '20240105', 7, 'once', 10000, 'additional loan payment 1', False, True)
-    #
-    #     M = MemoRuleSet.MemoRuleSet([])
-    #     M.addMemoRule('.*income.*', None, 'Checking', 1)
-    #     M.addMemoRule('additional loan payment', 'Checking', 'ALL_LOANS', 7)
-    #
-    #     MS = MilestoneSet.MilestoneSet([], [], [])
-    #
-    #     E = ExpenseForecast.ExpenseForecast(A,
-    #                                         B,
-    #                                         M,
-    #                                         start_date_YYYYMMDD,
-    #                                         end_date_YYYYMMDD,
-    #                                         MS)
-    #     E.runForecast()
-    #
-    #     # this is just for me to review
-    #     F = ForecastHandler.ForecastHandler()
-    #     F.generateHTMLReport(E)  # .html
-    #
-    #     final_state_df = E.forecast_df.tail(1)
-    #     assert final_state_df.iloc[0,2] == 0 #pbal
-    #     assert final_state_df.iloc[0, 2] == 0 #interest
-
-    # passed by observation
-    # def test_additional_cc_payments_overpayment(self):
-    #     start_date_YYYYMMDD = '20240101'
-    #     end_date_YYYYMMDD = '20240205'
-    #
-    #     A = AccountSet.AccountSet([])
-    #     A.createAccount('Checking', 5000, 0, 999999, 'checking')
-    #     A.createAccount('Credit', 1800, 0, 999999, 'credit', '20230103', 'compound', 0.4, 'monthly', 50, 1800, None, None)
-    #
-    #     B = BudgetSet.BudgetSet([])
-    #     B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'semiweekly', 1500, 'income', False, False)
-    #     B.addBudgetItem('20240109', '20240109', 2, 'once', 111, 'test txn', False, False)
-    #     B.addBudgetItem('20240110', '20240110', 3, 'once', 10000, 'additional cc payment', False, True)
-    #
-    #     M = MemoRuleSet.MemoRuleSet([])
-    #     M.addMemoRule('.*income.*', None, 'Checking', 1)
-    #     M.addMemoRule('.*test txn.*', 'Credit', None , 2)
-    #     M.addMemoRule('additional cc payment', 'Checking', 'Credit', 3)
-    #
-    #     MS = MilestoneSet.MilestoneSet(A, B, [], [], [])
-    #
-    #     E = ExpenseForecast.ExpenseForecast(A,
-    #                                         B,
-    #                                         M,
-    #                                         start_date_YYYYMMDD,
-    #                                         end_date_YYYYMMDD,
-    #                                         MS)
-    #     E.runForecast()
-    #     E.appendSummaryLines()
-    #
-    #     # this is just for me to review
-    #     F = ForecastHandler.ForecastHandler()
-    #     F.generateHTMLReport(E)  # .html
-    #
-    #     final_state_df = E.forecast_df.tail(1)
-    #     raise NotImplementedError
-
-    ## passed by observation
-    # def test_additional_cc_payments_expect_eliminate_future_min_payments(self):
-    #     start_date_YYYYMMDD = '20240101'
-    #     end_date_YYYYMMDD = '20240205'
-    #
-    #     A = AccountSet.AccountSet([])
-    #     A.createAccount('Checking', 5000, 0, 999999, 'checking')
-    #     A.createAccount('Loan A', 3600, 0, 999999, 'loan', '20230103', 'simple', 0.4, 'daily', 50, None, 3500, 100)
-    #
-    #     B = BudgetSet.BudgetSet([])
-    #     B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'semiweekly', 1500, 'income', False, False)
-    #     B.addBudgetItem('20240110', '20240110', 7, 'once', 10000, 'additional loan payment 1', False, True)
-    #
-    #     M = MemoRuleSet.MemoRuleSet([])
-    #     M.addMemoRule('.*income.*', None, 'Checking', 1)
-    #     M.addMemoRule('additional loan payment', 'Checking', 'ALL_LOANS', 7)
-    #
-    #     MS = MilestoneSet.MilestoneSet(A, B, [], [], [])
-    #
-    #     E = ExpenseForecast.ExpenseForecast(A,
-    #                                         B,
-    #                                         M,
-    #                                         start_date_YYYYMMDD,
-    #                                         end_date_YYYYMMDD,
-    #                                         MS)
-    #     E.runForecast()
-    #     E.appendSummaryLines()
-    #
-    #     # this is just for me to review
-    #     F = ForecastHandler.ForecastHandler()
-    #     F.generateHTMLReport(E)  # .html
-    #
-    #     final_state_df = E.forecast_df.tail(1)
-    #     raise NotImplementedError
-
-    #
-    #
-    # def test_multiple_additional_cc_payments(self):
-    #     start_date_YYYYMMDD = '20240101'
-    #     end_date_YYYYMMDD = '20240205'
-    #
-    #     A = AccountSet.AccountSet([])
-    #     A.createAccount('Checking', 5000, 0, 999999, 'checking')
-    #     A.createAccount('Credit', 5000, 0, 999999, 'credit','20240103','compound',0.24,'monthly',40,5000)
-    #
-    #     # name, balance, min_balance, max_balance, account_type, billing_start_date_YYYYMMDD, interest_type, apr,
-    #     # interest_cadence, minimum_payment, previous_statement_balance, principal_balance, interest_balance = None,
-    #
-    #     B = BudgetSet.BudgetSet([])
-    #     B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 30, 'SPEND food', False, False)
-    #     B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'semiweekly', 1500, 'income', False, False)
-    #     B.addBudgetItem('20240103', end_date_YYYYMMDD, 2, 'semiweekly', 1500, 'additional cc payment', False, True)
-    #
-    #     M = MemoRuleSet.MemoRuleSet([])
-    #     M.addMemoRule('.*income.*', None, 'Checking', 1)
-    #     M.addMemoRule('SPEND.*', 'Checking', None, 1)
-    #     M.addMemoRule('additional cc payment', 'Checking', 'Credit', 2)
-    #     #
-    #     # A1 = AccountMilestone.AccountMilestone('Loan A 0', 'Loan A', 0, 0)
-    #     # A2 = AccountMilestone.AccountMilestone('Loan A 1000', 'Loan A', 1000, 1000)
-    #     # A3 = AccountMilestone.AccountMilestone('Loan B 0', 'Loan B', 0, 0)
-    #     # A4 = AccountMilestone.AccountMilestone('Loan B 1000', 'Loan B', 1000, 1000)
-    #     # A5 = AccountMilestone.AccountMilestone('Loan C 0', 'Loan C', 0, 0)
-    #     # A6 = AccountMilestone.AccountMilestone('Loan C 1000', 'Loan C', 1000, 1000)
-    #     #
-    #     # CM1 = CompositeMilestone.CompositeMilestone('All 1k', [A2, A4, A6], [])
-    #
-    #     MS = MilestoneSet.MilestoneSet(A, B, [], [], [])
-    #
-    #     E = ExpenseForecast.ExpenseForecast(A,
-    #                                          B,
-    #                                          M,
-    #                                          start_date_YYYYMMDD,
-    #                                          end_date_YYYYMMDD,
-    #                                          MS)
-    #     E.runForecast()
-    #     E.appendSummaryLines()
-    #
-    #     # this is just for me to review
-    #     F = ForecastHandler.ForecastHandler()
-    #     F.generateHTMLReport(E) #Forecast_008797.html
-    #
-    #     #todo assert E attributes for test
-    #     raise NotImplementedError
-
-
-
-
-    #
-    # def test_cc_billing_cycle_2_consecutive_min_payments(self):
-    #     start_date_YYYYMMDD = '20240101'
-    #     end_date_YYYYMMDD = '20240205'
-    #     A = AccountSet.AccountSet([])
-    #     A.createCheckingAccount('Checking', 2000, 0, 9999999, True)
-    #     A.createCreditCardAccount('Credit', 500, 1000, 0, 25000, '20240104', 0.1, 40)
-    #     B = BudgetSet.BudgetSet([])
-    #     M = MemoRuleSet.MemoRuleSet([])
-    #     MS = MilestoneSet.MilestoneSet([], [], [])
-    #     E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
-    #     E.runForecast()
-    #     try:
-    #         #prev 1k, 0.1 is $100, 100/12 = 8.33
-    #         #1500 - 40 + 833 = 1468.33
-    #         assert E.forecast_df[E.forecast_df.Date == '20240104']['Credit: Prev Stmt Bal'].iat[0] == 1468.33
-    #         assert E.forecast_df[E.forecast_df.Date == '20240104']['Marginal Interest'].iat[0] == 8.33
-    #         assert '' == E.forecast_df[E.forecast_df.Date == '20240104']['Memo'].iat[0]
-    #         assert 'CC INTEREST (Credit: Prev Stmt Bal +$8.33); CC MIN PAYMENT (Credit: Prev Stmt Bal -$40.00); CC MIN PAYMENT (Checking -$40.00)' in E.forecast_df[E.forecast_df.Date == '20240104']['Memo Directives'].iat[0]
-    #
-    #         # prev 1468.33, 0.1 is 146.83, 146.83/12 = 12.24
-    #         # 1468.33 - 40 + 12.24 = 1440.57
-    #         assert E.forecast_df[E.forecast_df.Date == '20240204']['Credit: Prev Stmt Bal'].iat[0] == 1440.57
-    #         assert E.forecast_df[E.forecast_df.Date == '20240204']['Marginal Interest'].iat[0] == 12.24
-    #         assert '' == E.forecast_df[E.forecast_df.Date == '20240204']['Memo'].iat[0]
-    #         assert 'CC INTEREST (Credit: Prev Stmt Bal +$12.24); CC MIN PAYMENT (Credit: Prev Stmt Bal -$40.00); CC MIN PAYMENT (Checking -$40.00)' in E.forecast_df[E.forecast_df.Date == '20240204']['Memo Directives'].iat[0]
-    #     except Exception as e:
-    #         #print(E.forecast_df[E.forecast_df.Date == '20240104'].Memo.iat[0])
-    #         #print(E.forecast_df[E.forecast_df.Date == '20240204'].Memo.iat[0])
-    #         print(E.forecast_df.to_string())
-    #         raise e
-    #
-    # def test_cc_billing_cycle_earlier_additional_payment(self):
-    #     start_date_YYYYMMDD = '20240101'
-    #     end_date_YYYYMMDD = '20240205'
-    #     A = AccountSet.AccountSet([])
-    #     A.createCheckingAccount('Checking', 2000, 0, 9999999, True)
-    #     A.createCreditCardAccount('Credit', 500, 1000, 0, 25000, '20240104', 0.1, 40)
-    #     B = BudgetSet.BudgetSet([])
-    #     B.addBudgetItem('20240103','20240103',1,'once',500,'additional cc payment',False,False)
-    #     M = MemoRuleSet.MemoRuleSet([])
-    #     M.addMemoRule('additional cc payment.*','Checking','Credit',1)
-    #     MS = MilestoneSet.MilestoneSet([], [], [])
-    #     E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
-    #     E.runForecast()
-    #     E.forecast_df.to_csv('test_cc_billing_cycle_earlier_additional_payment.csv')
-    #     try:
-    #         #MI same as min payment case, but prev balance is now lower
-    #         #assums prev is $1000, even though there was a payment yesterday
-    #         # prev 1k, 0.1 is $100, 100/12 = 8.33
-    #         # 100 - 40 + 8.33 = 968.33
-    #         assert round(E.forecast_df[E.forecast_df.Date == '20240104']['Credit: Prev Stmt Bal'].iat[0],2) == 1008.33
-    #         assert round(E.forecast_df[E.forecast_df.Date == '20240104']['Marginal Interest'].iat[0],2) == 8.33
-    #         assert 'ADDTL CC PAYMENT (Checking -$500.00); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$500.00)' in E.forecast_df[E.forecast_df.Date == '20240103']['Memo Directives'].iat[0]
-    #         assert 'CC INTEREST (Credit: Prev Stmt Bal +$8.33)' in E.forecast_df[E.forecast_df.Date == '20240104']['Memo Directives'].iat[0]
-    #
-    #         #prev on last billing cycle day = 1008.33, 0.1 is 100.83, 100.83/12 = 8.40
-    #         # 1008.33 - 40 + 8.40 = 976.73
-    #         assert round(E.forecast_df[E.forecast_df.Date == '20240204']['Credit: Prev Stmt Bal'].iat[0],2) == 976.73
-    #         assert round(E.forecast_df[E.forecast_df.Date == '20240204']['Marginal Interest'].iat[0],2) == 8.40
-    #         assert '' == E.forecast_df[E.forecast_df.Date == '20240203']['Memo Directives'].iat[0]
-    #         assert 'CC INTEREST (Credit: Prev Stmt Bal +$8.40); CC MIN PAYMENT (Credit: Prev Stmt Bal -$40.00); CC MIN PAYMENT (Checking -$40.00)' in E.forecast_df[E.forecast_df.Date == '20240204']['Memo Directives'].iat[0]
-    #
-    #     except Exception as e:
-    #         # print(E.forecast_df[E.forecast_df.Date == '20240204'].Memo.iat[0])
-    #         # print(E.forecast_df.to_string())
-    #         raise e
-    #
-    # def test_cc_billing_cycle_later_additional_payment(self):
-    #     start_date_YYYYMMDD = '20240101'
-    #     end_date_YYYYMMDD = '20240205'
-    #     A = AccountSet.AccountSet([])
-    #     A.createCheckingAccount('Checking', 2000, 0, 9999999, True)
-    #     A.createCreditCardAccount('Credit', 500, 1000, 0, 25000, '20240104', 0.1, 40)
-    #     B = BudgetSet.BudgetSet([])
-    #     B.addBudgetItem('20240203','20240203',1,'once',500,'additional cc payment',False,False)
-    #     M = MemoRuleSet.MemoRuleSet([])
-    #     M.addMemoRule('additional cc payment.*', 'Checking', 'Credit', 1)
-    #     MS = MilestoneSet.MilestoneSet([], [], [])
-    #     E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
-    #     E.runForecast()
-    #     try:
-    #         #the same as min payment case
-    #         assert E.forecast_df[E.forecast_df.Date == '20240104']['Credit: Prev Stmt Bal'].iat[0] == 1468.33
-    #         assert E.forecast_df[E.forecast_df.Date == '20240104']['Marginal Interest'].iat[0] == 8.33
-    #         assert 'CC INTEREST (Credit: Prev Stmt Bal +$8.33); CC MIN PAYMENT (Credit: Prev Stmt Bal -$40.00); CC MIN PAYMENT (Checking -$40.00)' in E.forecast_df[E.forecast_df.Date == '20240104']['Memo Directives'].iat[0]
-    #         assert '' == E.forecast_df[E.forecast_df.Date == '20240104'].Memo.iat[0]
-    #
-    #
-    #         # todo I am not 100% sure that this is correct
-    #         #here, instead of inferring what prev balance is as in earlier payment only case, when can actually check
-    #         #prev = 1468.33, 0.1 = 146.83, divide 12 is 12.24
-    #         # 1468.33 - 40 + 12.24 = 1440.57, minus additional payment = 940.57
-    #         assert E.forecast_df[E.forecast_df.Date == '20240204']['Credit: Prev Stmt Bal'].iat[0] == 980.57
-    #         assert E.forecast_df[E.forecast_df.Date == '20240204']['Marginal Interest'].iat[0] == 12.24
-    #         assert 'CC INTEREST (Credit: Prev Stmt Bal +$12.24); CC MIN PAYMENT ALREADY MADE (Credit: Prev Stmt Bal -$0.00)' in E.forecast_df[E.forecast_df.Date == '20240204']['Memo Directives'].iat[0]
-    #         assert '' == E.forecast_df[E.forecast_df.Date == '20240204'].Memo.iat[0]
-    #     except Exception as e:
-    #         print(E.forecast_df.to_string())
-    #         raise e
-
-    # def test_cc_billing_cycle_earlier_and_later_additional_payments(self):
-    #     start_date_YYYYMMDD = '20240101'
-    #     end_date_YYYYMMDD = '20240205'
-    #     A = AccountSet.AccountSet([])
-    #     A.createCheckingAccount('Checking', 2000, 0, 9999999, True)
-    #     A.createCreditCardAccount('Credit', 500, 1000, 0, 25000, '20240104', 0.1, 40)
-    #     B = BudgetSet.BudgetSet([])
-    #     B.addBudgetItem('20240103', '20240103', 1, 'once', 500, 'additional cc payment', False, False)
-    #     B.addBudgetItem('20240203','20240203',1,'once',500,'additional cc payment 2',False,False)
-    #     M = MemoRuleSet.MemoRuleSet([])
-    #     M.addMemoRule('additional cc payment.*', 'Checking', 'Credit', 1)
-    #     MS = MilestoneSet.MilestoneSet([], [], [])
-    #     E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
-    #     E.runForecast()
-    #     E.forecast_df.to_csv('test_cc_billing_cycle_earlier_and_later_additional_payments.csv')
-    #     try:
-    #
-    #         assert round(E.forecast_df[E.forecast_df.Date == '20240104']['Credit: Prev Stmt Bal'].iat[0],2) == 1008.33
-    #         assert round(E.forecast_df[E.forecast_df.Date == '20240104']['Marginal Interest'].iat[0], 2) == 8.33
-    #         assert '' == E.forecast_df[E.forecast_df.Date == '20240104'].Memo.iat[0]
-    #         assert 'CC INTEREST (Credit: Prev Stmt Bal +$8.33); CC MIN PAYMENT ALREADY MADE (Credit: Prev Stmt Bal -$0.00)' in E.forecast_df[E.forecast_df.Date == '20240104']['Memo Directives'].iat[0]
-    #
-    #         # prev on last billing cycle day = 1008.33, 0.1 is 100.83, 100.83/12 = 8.40
-    #         # 1008.33 - 40 + 8.40 = 976.73
-    #         assert round(E.forecast_df[E.forecast_df.Date == '20240204']['Credit: Prev Stmt Bal'].iat[0], 2) == 516.73
-    #         assert round(E.forecast_df[E.forecast_df.Date == '20240204']['Marginal Interest'].iat[0], 2) == 8.40
-    #         assert '' ==  E.forecast_df[E.forecast_df.Date == '20240204'].Memo.iat[0]
-    #         assert 'CC INTEREST (Credit: Prev Stmt Bal +$8.40); CC MIN PAYMENT ALREADY MADE (Credit: Prev Stmt Bal -$0.00)' in E.forecast_df[E.forecast_df.Date == '20240204']['Memo Directives'].iat[0]
-    #     except Exception as e:
-    #         print(E.forecast_df.to_string())
-    #         raise e
-
-    # def test_cc_advance_minimum_payment_in_1_payment_pay_over_minimum(self):
-    #     start_date_YYYYMMDD = '20240101'
-    #     end_date_YYYYMMDD = '20240105'
-    #     A = AccountSet.AccountSet([])
-    #     A.createCheckingAccount('Checking', 500, 0, 9999999, True)
-    #     A.createCreditCardAccount('Credit', 500, 1000, 0, 25000, '20240104', 0.1, 40)
-    #     B = BudgetSet.BudgetSet([])
-    #     B.addBudgetItem('20240103', '20240103', 1, 'once', 500, 'advance cc payment', False, False)
-    #     M = MemoRuleSet.MemoRuleSet([])
-    #     M.addMemoRule('advance.*', 'Checking', 'Credit', 1)
-    #     MS = MilestoneSet.MilestoneSet([], [], [])
-    #     E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
-    #     E.runForecast()
-    #     try:
-    #         # assums prev is $1000
-    #         # prev 1k, 0.1 is $100, 100/12 = 8.33 in interest paid first
-    #         # so, after implementing, while from a certain viewpoint incorrect, it is easier to have interest only appear on min payment days
-    #         # therefore, this assert statement is not WRONG, it is just compatibile with a different implementation
-    #         # assert E.forecast_df[E.forecast_df.Date == '20240103']['Credit: Prev Stmt Bal'].iat[0] == 508.33
-    #         assert E.forecast_df[E.forecast_df.Date == '20240103']['Credit: Prev Stmt Bal'].iat[0] == 500.00
-    #         assert E.forecast_df[E.forecast_df.Date == '20240103']['Marginal Interest'].iat[0] == 0
-    #         assert '' == E.forecast_df[E.forecast_df.Date == '20240103'].Memo.iat[0]
-    #         assert 'ADDTL CC PAYMENT (Checking -$500.0);  ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$500.0);' in E.forecast_df[E.forecast_df.Date == '20240103']['Memo Directives'].iat[0]
-    #
-    #         #current balance moves over, but interest is not reapplied
-    #         assert round(E.forecast_df[E.forecast_df.Date == '20240104']['Credit: Prev Stmt Bal'].iat[0],2) == 1008.33
-    #         assert E.forecast_df[E.forecast_df.Date == '20240104']['Marginal Interest'].iat[0] == 8.33
-    #         assert '' == E.forecast_df[E.forecast_df.Date == '20240104'].Memo.iat[0]
-    #         assert 'CC INTEREST (Credit: Prev Stmt Bal +$8.33); CC MIN PAYMENT ALREADY MADE (Credit: Prev Stmt Bal -$0.00)' in E.forecast_df[E.forecast_df.Date == '20240104']['Memo Directives'].iat[0]
-    #
-    #     except Exception as e:
-    #         print(E.forecast_df.to_string())
-    #         raise e
-
-
-
-    # def test_cc_advance_minimum_payment_in_1_payment_pay_exact_minimum(self):
-    #     start_date_YYYYMMDD = '20240101'
-    #     end_date_YYYYMMDD = '20240105'
-    #     A = AccountSet.AccountSet([])
-    #     A.createCheckingAccount('Checking', 2000, 0, 9999999, True)
-    #     A.createCreditCardAccount('Credit', 500, 1000, 0, 25000, '20240104', 0.1, 40)
-    #     B = BudgetSet.BudgetSet([])
-    #     B.addBudgetItem('20240103', '20240103', 1, 'once', 40, 'addtl cc payment', False, False)
-    #     M = MemoRuleSet.MemoRuleSet([])
-    #     M.addMemoRule('addtl cc payment.*', 'Checking', 'Credit', 1)
-    #     MS = MilestoneSet.MilestoneSet([], [], [])
-    #     E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
-    #     E.runForecast()
-    #     try:
-    #         assert E.forecast_df[E.forecast_df.Date == '20240103']['Credit: Prev Stmt Bal'].iat[0] == 960.00
-    #         assert E.forecast_df[E.forecast_df.Date == '20240103']['Marginal Interest'].iat[0] == 0
-    #
-    #         assert 'ADDTL CC PAYMENT (Checking -$40.0)' in E.forecast_df[E.forecast_df.Date == '20240103']['Memo Directives'].iat[0]
-    #         assert 'ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$40.0)' in E.forecast_df[E.forecast_df.Date == '20240103']['Memo Directives'].iat[0]
-    #         assert round(E.forecast_df[E.forecast_df.Date == '20240104']['Credit: Prev Stmt Bal'].iat[0], 2) == 1468.33
-    #
-    #         assert 'CC INTEREST (Credit: Prev Stmt Bal +$8.33)' in E.forecast_df[E.forecast_df.Date == '20240104']['Memo Directives'].iat[0]
-    #     except Exception as e:
-    #         print(E.forecast_df.to_string())
-    #         raise e
-    #
-    # def test_cc_advance_minimum_payment_in_1_payment_pay_under_minimum(self):
-    #     start_date_YYYYMMDD = '20240101'
-    #     end_date_YYYYMMDD = '20240105'
-    #     A = AccountSet.AccountSet([])
-    #     A.createCheckingAccount('Checking', 2000, 0, 9999999, True)
-    #     A.createCreditCardAccount('Credit', 500, 1000, 0, 25000, '20240104', 0.1, 40)
-    #     B = BudgetSet.BudgetSet([])
-    #     B.addBudgetItem('20240103', '20240103', 1, 'once', 20, 'addtl cc payment', False, False)
-    #     M = MemoRuleSet.MemoRuleSet([])
-    #     M.addMemoRule('addtl cc payment.*', 'Checking', 'Credit', 1)
-    #     MS = MilestoneSet.MilestoneSet([], [], [])
-    #     E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
-    #     E.runForecast()
-    #     E.forecast_df.to_csv('test_cc_advance_minimum_payment_in_1_payment_under_pay.csv')
-    #     try:
-    #         assert E.forecast_df[E.forecast_df.Date == '20240103']['Credit: Prev Stmt Bal'].iat[0] == 980.00
-    #         assert E.forecast_df[E.forecast_df.Date == '20240103']['Marginal Interest'].iat[0] == 0
-    #
-    #         assert 'ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$20.0)' in E.forecast_df[E.forecast_df.Date == '20240103']['Memo Directives'].iat[0]
-    #         assert 'ADDTL CC PAYMENT (Checking -$20.0)' in E.forecast_df[E.forecast_df.Date == '20240103']['Memo Directives'].iat[0]
-    #
-    #         assert round(E.forecast_df[E.forecast_df.Date == '20240104']['Checking'].iat[0], 2) == 1960
-    #         assert round(E.forecast_df[E.forecast_df.Date == '20240104']['Credit: Prev Stmt Bal'].iat[0], 2) == 1468.33
-    #
-    #         assert 'CC INTEREST (Credit: Prev Stmt Bal +$8.33);' in E.forecast_df[E.forecast_df.Date == '20240104']['Memo Directives'].iat[0]
-    #     except Exception as e:
-    #         print(E.forecast_df.to_string())
-    #         raise e
-
-    # def test_cc_advance_minimum_payment_in_2_payments_pay_over_minimum(self):
-    #     # todo there should be memo directives calling out advance min payments
-    #
-    #     start_date_YYYYMMDD = '20240101'
-    #     end_date_YYYYMMDD = '20240205'
-    #     A = AccountSet.AccountSet([])
-    #     A.createCheckingAccount('Checking', 2000, 0, 9999999, True)
-    #     A.createCreditCardAccount('Credit', 500, 1000, 0, 25000, '20240104', 0.1, 40)
-    #     B = BudgetSet.BudgetSet([])
-    #     B.addBudgetItem('20240103', '20240103', 1, 'once', 500, 'additional cc payment', False, False)
-    #     M = MemoRuleSet.MemoRuleSet([])
-    #     M.addMemoRule('additional cc payment.*', 'Checking', 'Credit', 1)
-    #     MS = MilestoneSet.MilestoneSet([], [], [])
-    #     E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
-    #     E.runForecast()
-    #     try:
-    #         pass
-    #         # assert E.forecast_df[E.forecast_df.Date == '20240104']['Credit: Prev Stmt Bal'].iat[0] == 968.33
-    #         # assert E.forecast_df[E.forecast_df.Date == '20240104']['Marginal Interest'].iat[0] == 8.33
-    #         # assert 'cc interest (Checking -$8.33); cc min payment (Credit: Prev Stmt Bal -$31.67);' in \
-    #         #        E.forecast_df[E.forecast_df.Date == '20240104'].Memo.iat[0]
-    #         #
-    #         # # prev stmt bal = 968.33, 0.1 is 96.83, divide 12 = 8.07
-    #         # # 968.33 - 40 + 8.07 = 936.40, minus 500 = 436.40
-    #         # assert E.forecast_df[E.forecast_df.Date == '20240204']['Credit: Prev Stmt Bal'].iat[0] == 436.40
-    #         # assert E.forecast_df[E.forecast_df.Date == '20240204']['Marginal Interest'].iat[0] == 8.07
-    #         # assert 'cc interest (Checking -$8.07); cc min payment (Credit: Prev Stmt Bal -$31.93);' in \
-    #         #        E.forecast_df[E.forecast_df.Date == '20240204'].Memo.iat[0]
-    #     except Exception as e:
-    #         print(E.forecast_df.to_string())
-    #         raise e
-    #     assert False
-
-    # def test_cc_advance_minimum_payment_in_2_payments_pay_exact_minimum(self):
-    #     # todo there should be memo directives calling out advance min payments
-    #
-    #     start_date_YYYYMMDD = '20240101'
-    #     end_date_YYYYMMDD = '20240205'
-    #     A = AccountSet.AccountSet([])
-    #     A.createCheckingAccount('Checking', 2000, 0, 9999999, True)
-    #     A.createCreditCardAccount('Credit', 500, 1000, 0, 25000, '20240104', 0.1, 40)
-    #     B = BudgetSet.BudgetSet([])
-    #     B.addBudgetItem('20240103', '20240103', 1, 'once', 500, 'additional cc payment', False, False)
-    #     M = MemoRuleSet.MemoRuleSet([])
-    #     M.addMemoRule('additional cc payment.*', 'Checking', 'Credit', 1)
-    #     MS = MilestoneSet.MilestoneSet([], [], [])
-    #     E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
-    #     E.runForecast()
-    #     try:
-    #         pass
-    #         # assert E.forecast_df[E.forecast_df.Date == '20240104']['Credit: Prev Stmt Bal'].iat[0] == 968.33
-    #         # assert E.forecast_df[E.forecast_df.Date == '20240104']['Marginal Interest'].iat[0] == 8.33
-    #         # assert 'cc interest (Checking -$8.33); cc min payment (Credit: Prev Stmt Bal -$31.67);' in \
-    #         #        E.forecast_df[E.forecast_df.Date == '20240104'].Memo.iat[0]
-    #         #
-    #         # # prev stmt bal = 968.33, 0.1 is 96.83, divide 12 = 8.07
-    #         # # 968.33 - 40 + 8.07 = 936.40, minus 500 = 436.40
-    #         # assert E.forecast_df[E.forecast_df.Date == '20240204']['Credit: Prev Stmt Bal'].iat[0] == 436.40
-    #         # assert E.forecast_df[E.forecast_df.Date == '20240204']['Marginal Interest'].iat[0] == 8.07
-    #         # assert 'cc interest (Checking -$8.07); cc min payment (Credit: Prev Stmt Bal -$31.93);' in \
-    #         #        E.forecast_df[E.forecast_df.Date == '20240204'].Memo.iat[0]
-    #     except Exception as e:
-    #         print(E.forecast_df.to_string())
-    #         raise e
-    #     assert False
-
-    # def test_cc_advance_minimum_payment_in_2_payments_pay_under_minimum(self):
-    #     # todo there should be memo directives calling out advance min payments
-    #
-    #     start_date_YYYYMMDD = '20240101'
-    #     end_date_YYYYMMDD = '20240205'
-    #     A = AccountSet.AccountSet([])
-    #     A.createCheckingAccount('Checking', 2000, 0, 9999999, True)
-    #     A.createCreditCardAccount('Credit', 500, 1000, 0, 25000, '20240104', 0.1, 40)
-    #     B = BudgetSet.BudgetSet([])
-    #     B.addBudgetItem('20240103', '20240103', 1, 'once', 500, 'additional cc payment', False, False)
-    #     M = MemoRuleSet.MemoRuleSet([])
-    #     M.addMemoRule('additional cc payment.*', 'Checking', 'Credit', 1)
-    #     MS = MilestoneSet.MilestoneSet([], [], [])
-    #     E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
-    #     E.runForecast()
-    #     try:
-    #         pass
-    #         # assert E.forecast_df[E.forecast_df.Date == '20240104']['Credit: Prev Stmt Bal'].iat[0] == 968.33
-    #         # assert E.forecast_df[E.forecast_df.Date == '20240104']['Marginal Interest'].iat[0] == 8.33
-    #         # assert 'cc interest (Checking -$8.33); cc min payment (Credit: Prev Stmt Bal -$31.67);' in \
-    #         #        E.forecast_df[E.forecast_df.Date == '20240104'].Memo.iat[0]
-    #         #
-    #         # # prev stmt bal = 968.33, 0.1 is 96.83, divide 12 = 8.07
-    #         # # 968.33 - 40 + 8.07 = 936.40, minus 500 = 436.40
-    #         # assert E.forecast_df[E.forecast_df.Date == '20240204']['Credit: Prev Stmt Bal'].iat[0] == 436.40
-    #         # assert E.forecast_df[E.forecast_df.Date == '20240204']['Marginal Interest'].iat[0] == 8.07
-    #         # assert 'cc interest (Checking -$8.07); cc min payment (Credit: Prev Stmt Bal -$31.93);' in \
-    #         #        E.forecast_df[E.forecast_df.Date == '20240204'].Memo.iat[0]
-    #     except Exception as e:
-    #         print(E.forecast_df.to_string())
-    #         raise e
-    #     assert False
-
-    # def test_cc_advance_minimum_payment_in_3_payments_pay_over_minimum(self):
-    #     # todo there should be memo directives calling out advance min payments
-    #
-    #     start_date_YYYYMMDD = '20240101'
-    #     end_date_YYYYMMDD = '20240205'
-    #     A = AccountSet.AccountSet([])
-    #     A.createCheckingAccount('Checking', 2000, 0, 9999999, True)
-    #     A.createCreditCardAccount('Credit', 500, 1000, 0, 25000, '20240104', 0.1, 40)
-    #     B = BudgetSet.BudgetSet([])
-    #     B.addBudgetItem('20240103', '20240103', 1, 'once', 500, 'additional cc payment', False, False)
-    #     M = MemoRuleSet.MemoRuleSet([])
-    #     M.addMemoRule('additional cc payment.*', 'Checking', 'Credit', 1)
-    #     MS = MilestoneSet.MilestoneSet([], [], [])
-    #     E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
-    #     E.runForecast()
-    #     try:
-    #         pass
-    #         # assert E.forecast_df[E.forecast_df.Date == '20240104']['Credit: Prev Stmt Bal'].iat[0] == 968.33
-    #         # assert E.forecast_df[E.forecast_df.Date == '20240104']['Marginal Interest'].iat[0] == 8.33
-    #         # assert 'cc interest (Checking -$8.33); cc min payment (Credit: Prev Stmt Bal -$31.67);' in \
-    #         #        E.forecast_df[E.forecast_df.Date == '20240104'].Memo.iat[0]
-    #         #
-    #         # # prev stmt bal = 968.33, 0.1 is 96.83, divide 12 = 8.07
-    #         # # 968.33 - 40 + 8.07 = 936.40, minus 500 = 436.40
-    #         # assert E.forecast_df[E.forecast_df.Date == '20240204']['Credit: Prev Stmt Bal'].iat[0] == 436.40
-    #         # assert E.forecast_df[E.forecast_df.Date == '20240204']['Marginal Interest'].iat[0] == 8.07
-    #         # assert 'cc interest (Checking -$8.07); cc min payment (Credit: Prev Stmt Bal -$31.93);' in \
-    #         #        E.forecast_df[E.forecast_df.Date == '20240204'].Memo.iat[0]
-    #     except Exception as e:
-    #         print(E.forecast_df.to_string())
-    #         raise e
-    #     assert False
-
-    # def test_cc_advance_minimum_payment_in_3_payments_pay_exact_minimum(self):
-    #     # todo there should be memo directives calling out advance min payments
-    #
-    #     start_date_YYYYMMDD = '20240101'
-    #     end_date_YYYYMMDD = '20240205'
-    #     A = AccountSet.AccountSet([])
-    #     A.createCheckingAccount('Checking', 2000, 0, 9999999, True)
-    #     A.createCreditCardAccount('Credit', 500, 1000, 0, 25000, '20240104', 0.1, 40)
-    #     B = BudgetSet.BudgetSet([])
-    #     B.addBudgetItem('20240103', '20240103', 1, 'once', 500, 'additional cc payment', False, False)
-    #     M = MemoRuleSet.MemoRuleSet([])
-    #     M.addMemoRule('additional cc payment.*', 'Checking', 'Credit', 1)
-    #     MS = MilestoneSet.MilestoneSet([], [], [])
-    #     E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
-    #     E.runForecast()
-    #     try:
-    #         pass
-    #         # assert E.forecast_df[E.forecast_df.Date == '20240104']['Credit: Prev Stmt Bal'].iat[0] == 968.33
-    #         # assert E.forecast_df[E.forecast_df.Date == '20240104']['Marginal Interest'].iat[0] == 8.33
-    #         # assert 'cc interest (Checking -$8.33); cc min payment (Credit: Prev Stmt Bal -$31.67);' in \
-    #         #        E.forecast_df[E.forecast_df.Date == '20240104'].Memo.iat[0]
-    #         #
-    #         # # prev stmt bal = 968.33, 0.1 is 96.83, divide 12 = 8.07
-    #         # # 968.33 - 40 + 8.07 = 936.40, minus 500 = 436.40
-    #         # assert E.forecast_df[E.forecast_df.Date == '20240204']['Credit: Prev Stmt Bal'].iat[0] == 436.40
-    #         # assert E.forecast_df[E.forecast_df.Date == '20240204']['Marginal Interest'].iat[0] == 8.07
-    #         # assert 'cc interest (Checking -$8.07); cc min payment (Credit: Prev Stmt Bal -$31.93);' in \
-    #         #        E.forecast_df[E.forecast_df.Date == '20240204'].Memo.iat[0]
-    #     except Exception as e:
-    #         print(E.forecast_df.to_string())
-    #         raise e
-    #     assert False
-
-    # def test_cc_advance_minimum_payment_in_3_payments_pay_under_minimum(self):
-    #     # todo there should be memo directives calling out advance min payments
-    #
-    #     start_date_YYYYMMDD = '20240101'
-    #     end_date_YYYYMMDD = '20240205'
-    #     A = AccountSet.AccountSet([])
-    #     A.createCheckingAccount('Checking', 2000, 0, 9999999, True)
-    #     A.createCreditCardAccount('Credit', 500, 1000, 0, 25000, '20240104', 0.1, 40)
-    #     B = BudgetSet.BudgetSet([])
-    #     B.addBudgetItem('20240103', '20240103', 1, 'once', 500, 'additional cc payment', False, False)
-    #     M = MemoRuleSet.MemoRuleSet([])
-    #     M.addMemoRule('additional cc payment.*', 'Checking', 'Credit', 1)
-    #     MS = MilestoneSet.MilestoneSet([], [], [])
-    #     E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
-    #     E.runForecast()
-    #     try:
-    #         pass
-    #         # assert E.forecast_df[E.forecast_df.Date == '20240104']['Credit: Prev Stmt Bal'].iat[0] == 968.33
-    #         # assert E.forecast_df[E.forecast_df.Date == '20240104']['Marginal Interest'].iat[0] == 8.33
-    #         # assert 'cc interest (Checking -$8.33); cc min payment (Credit: Prev Stmt Bal -$31.67);' in \
-    #         #        E.forecast_df[E.forecast_df.Date == '20240104'].Memo.iat[0]
-    #         #
-    #         # # prev stmt bal = 968.33, 0.1 is 96.83, divide 12 = 8.07
-    #         # # 968.33 - 40 + 8.07 = 936.40, minus 500 = 436.40
-    #         # assert E.forecast_df[E.forecast_df.Date == '20240204']['Credit: Prev Stmt Bal'].iat[0] == 436.40
-    #         # assert E.forecast_df[E.forecast_df.Date == '20240204']['Marginal Interest'].iat[0] == 8.07
-    #         # assert 'cc interest (Checking -$8.07); cc min payment (Credit: Prev Stmt Bal -$31.93);' in \
-    #         #        E.forecast_df[E.forecast_df.Date == '20240204'].Memo.iat[0]
-    #     except Exception as e:
-    #         print(E.forecast_df.to_string())
-    #         raise e
-    #     assert False
-
-    # def test_multiple_additional_payments_on_the_same_not_billing_day(self):
-    #     pass
-    #
-    # def test_multiple_additional_payments_on_the_billing_day(self):
-    #     pass
-    #
-    # def test_partial_payment_allowed_on_cc_bill_case_1(self):
-    #     start_date_YYYYMMDD = '20240101'
-    #     end_date_YYYYMMDD = '20240105'
-    #
-    #     A = AccountSet.AccountSet([])
-    #     A.createCheckingAccount('Checking', 500, 0, 9999999, True)
-    #     A.createCreditCardAccount('Credit', 500, 1000, 0, 25000, '20240104', 0.1, 40)
-    #
-    #     B = BudgetSet.BudgetSet([])
-    #     B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 25, 'food', False, False)
-    #     B.addBudgetItem('20240103', '20240303', 2, 'monthly', 2000, 'pay down cc', False, True)
-    #     #B.addBudgetItem('20240103', '20240303', 2, 'monthly', 460, 'pay down cc', False, False)
-    #
-    #     M = MemoRuleSet.MemoRuleSet([])
-    #     M.addMemoRule('food', 'Credit', 'None', 1)
-    #     M.addMemoRule('pay down cc', 'Checking', 'Credit', 2)
-    #     M.addMemoRule('pay down cc', 'Checking', 'Credit', 1)
-    #
-    #     MS = MilestoneSet.MilestoneSet([], [], [])
-    #
-    #     E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
-    #     E.runForecast()
-    #     E.forecast_df.to_csv('test_partial_payment_allowed_on_cc_bill_case_1.csv')
-    #
-    #     try:
-    #         assert False
-    #
-    #     except Exception as e:
-    #         print(E.forecast_df.to_string())
-    #         raise e
-    #
-    # def test_partial_payment_allowed_on_cc_bill_case_2(self):
-    #     start_date_YYYYMMDD = '20240101'
-    #     end_date_YYYYMMDD = '20240401'
-    #
-    #     A = AccountSet.AccountSet([])
-    #     A.createCheckingAccount('Checking', 1000, 0, 9999999, True)
-    #     A.createCreditCardAccount('Credit', 0, 7500, 0, 25000, '20240107', 0.2899, 40)
-    #
-    #     B = BudgetSet.BudgetSet([])
-    #     B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 10, 'food', deferrable=False, partial_payment_allowed=False)
-    #     B.addBudgetItem('20240105', '20240405', 2, 'monthly', 7000, 'pay cc', deferrable=False, partial_payment_allowed=True)
-    #     B.addBudgetItem('20240105', '20240405', 1, 'semiweekly', 1600, 'EMT income', deferrable=False, partial_payment_allowed=False)
-    #     #B.addBudgetItem('20240103', '20240303', 2, 'monthly', 460, 'pay down cc', False, False)
-    #
-    #     M = MemoRuleSet.MemoRuleSet([])
-    #     M.addMemoRule('food', 'Credit', 'None', 1)
-    #     M.addMemoRule('.*pay cc.*', 'Checking', 'Credit', 2)
-    #     M.addMemoRule('.*income.*', 'None', 'Checking', 1)
-    #
-    #     MS = MilestoneSet.MilestoneSet([], [], [])
-    #
-    #     E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
-    #     E.runForecast()
-    #     E.forecast_df.to_csv('test_partial_payment_allowed_on_cc_bill_case_2.csv')
-    #
-    #     try:
-    #         assert False
-    #
-    #     except Exception as e:
-    #         print(E.forecast_df.to_string())
-    #         raise e
-
-    # def test_partial_payment_allowed_on_cc_bill(self):
-    #     start_date_YYYYMMDD = '20240101'
-    #     end_date_YYYYMMDD = '20240206'
-    #     A = AccountSet.AccountSet([])
-    #     A.createCheckingAccount('Checking', 500, 0, 9999999, True)
-    #     A.createCreditCardAccount('Credit', 500, 1000, 0, 25000, '20240104', 0.1, 40)
-    #     B = BudgetSet.BudgetSet([])
-    #     B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 25, 'food', False, False)
-    #     B.addBudgetItem('20240104', '20240204', 1, 'semiweekly', 1600, 'EMT income', False, False)
-    #     B.addBudgetItem('20240103', '20240205', 2, 'monthly', 7000, 'pay cc', False, True)
-    #     M = MemoRuleSet.MemoRuleSet([])
-    #     M.addMemoRule('pay cc', 'Checking', 'Credit', 2)
-    #     M.addMemoRule('food', 'Credit', 'None', 1)
-    #     M.addMemoRule('EMT income', 'None', 'Checking', 1)
-    #     MS = MilestoneSet.MilestoneSet([], [], [])
-    #     E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
-    #     E.runForecast()
-    #     E.forecast_df.to_csv('test_partial_payment_allowed_on_cc_bill.csv')
-    #     try:
-    #         assert False
-    #         # assert E.forecast_df[E.forecast_df.Date == '20240103']['Credit: Prev Stmt Bal'].iat[0] == 500.00
-    #         # assert E.forecast_df[E.forecast_df.Date == '20240103']['Marginal Interest'].iat[0] == 0
-    #         # assert '' == E.forecast_df[E.forecast_df.Date == '20240103'].Memo.iat[0]
-    #         # assert 'ADDTL CC PAYMENT (Checking -$500.0);  ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$500.0);' in \
-    #         #        E.forecast_df[E.forecast_df.Date == '20240103']['Memo Directives'].iat[0]
-    #         #
-    #         # # current balance moves over, but interest is not reapplied
-    #         # assert round(E.forecast_df[E.forecast_df.Date == '20240104']['Credit: Prev Stmt Bal'].iat[0], 2) == 1008.33
-    #         # assert E.forecast_df[E.forecast_df.Date == '20240104']['Marginal Interest'].iat[0] == 8.33
-    #         # assert '' == E.forecast_df[E.forecast_df.Date == '20240104'].Memo.iat[0]
-    #         # assert 'CC INTEREST (Credit: Prev Stmt Bal +$8.33); CC MIN PAYMENT ALREADY MADE (Credit: Prev Stmt Bal -$0.00);' in \
-    #         #        E.forecast_df[E.forecast_df.Date == '20240104']['Memo Directives'].iat[0]
-    #
-    #     except Exception as e:
-    #         print(E.forecast_df.to_string())
-    #         raise e
-
-    # def test_IRL_case_1(self):
-    #
-    #     start_date_YYYYMMDD = '20240519'
-    #     end_date_YYYYMMDD = '20240901'
-    #
-    #     A = AccountSet.AccountSet([])
-    #     A.createCheckingAccount('Checking', 1000, 0, 9999999, True)
-    #     A.createCreditCardAccount('Credit', 0, 7500, 0, 25000, '20240107', 0.2899, 40)
-    #
-    #     B = BudgetSet.BudgetSet([])
-    #     B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 20, 'food', deferrable=False,
-    #                     partial_payment_allowed=False)
-    #     # B.addBudgetItem('20240105', '20240405', 2, 'monthly', 7000, 'pay cc', deferrable=False,
-    #     #                 partial_payment_allowed=True)
-    #     B.addBudgetItem('20240105', '20240405', 1, 'semiweekly', 1600, 'EMT income', deferrable=False,
-    #                     partial_payment_allowed=False)
-    #     # B.addBudgetItem('20240103', '20240303', 2, 'monthly', 460, 'pay down cc', False, False)
-    #
-    #     M = MemoRuleSet.MemoRuleSet([])
-    #     M.addMemoRule('food', 'Credit', 'None', 1)
-    #     M.addMemoRule('.*pay cc.*', 'Checking', 'Credit', 2)
-    #     M.addMemoRule('.*income.*', 'None', 'Checking', 1)
-    #
-    #     MS = MilestoneSet.MilestoneSet([], [], [])
-    #
-    #     E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
-    #     E.runForecast()
-    #     E.forecast_df.to_csv('test_IRL_case_1.csv')
-    #
-    #     try:
-    #         assert False
-    #
-    #     except Exception as e:
-    #         print(E.forecast_df.to_string())
-    #         raise e
-    #
-    # def test_IRL_case_2(self):
-    #
-    #     start_date_YYYYMMDD = '20240519'
-    #     end_date_YYYYMMDD = '20240901'
-    #
-    #     A = AccountSet.AccountSet([])
-    #     A.createCheckingAccount('Checking', 1000, 0, 9999999, True)
-    #     A.createCreditCardAccount('Credit', 0, 7500, 0, 25000, '20240107', 0.2899, 40)
-    #
-    #     B = BudgetSet.BudgetSet([])
-    #     B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 20, 'food', deferrable=False, partial_payment_allowed=False)
-    #     B.addBudgetItem('20240105', end_date_YYYYMMDD, 2, 'monthly', 7000, 'pay cc', deferrable=False, partial_payment_allowed=True)
-    #     B.addBudgetItem('20240105', end_date_YYYYMMDD, 1, 'semiweekly', 1600, 'EMT income', deferrable=False, partial_payment_allowed=False)
-    #     # B.addBudgetItem('20240103', '20240303', 2, 'monthly', 460, 'pay cc', False, False)
-    #
-    #     M = MemoRuleSet.MemoRuleSet([])
-    #     M.addMemoRule('food', 'Credit', 'None', 1)
-    #     M.addMemoRule('.*pay cc.*', 'Checking', 'Credit', 2)
-    #     M.addMemoRule('.*income.*', 'None', 'Checking', 1)
-    #
-    #     MS = MilestoneSet.MilestoneSet([], [], [])
-    #
-    #     E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
-    #     E.runForecast()
-    #     E.forecast_df.to_csv('test_IRL_case_2.csv')
-    #
-    #     try:
-    #         assert False
-    #
-    #     except Exception as e:
-    #         print(E.forecast_df.to_string())
-    #         raise e
-
-    # def test_propagate_curr_only(self):
-    #     start_date_YYYYMMDD = '20240519'
-    #     end_date_YYYYMMDD = '20240810'
-    #
-    #     A = AccountSet.AccountSet([])
-    #     A.createCheckingAccount('Checking', 1000, 0, 9999999, True)
-    #     A.createCreditCardAccount('Credit', 0, 0, 0, 25000, '20240107', 0.2899, 40)
-    #
-    #     B = BudgetSet.BudgetSet([])
-    #     B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 20, 'food', deferrable=False,
-    #                     partial_payment_allowed=False)
-    #     B.addBudgetItem('20240105', end_date_YYYYMMDD, 2, 'monthly', 7000, 'pay cc', deferrable=False,
-    #                     partial_payment_allowed=True)
-    #     B.addBudgetItem('20240105', end_date_YYYYMMDD, 1, 'semiweekly', 1600, 'EMT income', deferrable=False,
-    #                     partial_payment_allowed=False)
-    #     # B.addBudgetItem('20240103', '20240303', 2, 'monthly', 460, 'pay cc', False, False)
-    #
-    #     M = MemoRuleSet.MemoRuleSet([])
-    #     M.addMemoRule('food', 'Credit', 'None', 1)
-    #     M.addMemoRule('.*pay cc.*', 'Checking', 'Credit', 2)
-    #     M.addMemoRule('.*income.*', 'None', 'Checking', 1)
-    #
-    #     MS = MilestoneSet.MilestoneSet([], [], [])
-    #
-    #     E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
-    #     E.runForecast()
-    #     E.forecast_df.to_csv('test_propagate_curr_only.csv')
-    #
-    #     try:
-    #         assert False #not QCed
-    #
-    #     except Exception as e:
-    #         print(E.forecast_df.to_string())
-    #         raise e
-
-    # def test_propagate_curr_and_prev(self):
-    #     start_date_YYYYMMDD = '20240504'
-    #     end_date_YYYYMMDD = '20240610'
-    #
-    #     A = AccountSet.AccountSet([])
-    #     A.createCheckingAccount('Checking', 2000, 0, 9999999, True)
-    #     A.createCreditCardAccount('Credit', 10, 10, 0, 25000, '20240107', 0.2899, 40)
-    #
-    #     B = BudgetSet.BudgetSet([])
-    #     # B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 20, 'food', deferrable=False,
-    #     #                 partial_payment_allowed=False)
-    #     B.addBudgetItem('20240506', '20240506', 2, 'once', 20, 'pay cc', deferrable=False, partial_payment_allowed=True)
-    #     B.addBudgetItem('20240105', end_date_YYYYMMDD, 1, 'semiweekly', 1600, 'EMT income', deferrable=False,
-    #                     partial_payment_allowed=False)
-    #     # B.addBudgetItem('20240103', '20240303', 2, 'monthly', 460, 'pay cc', False, False)
-    #
-    #     # without p2
-    #     # CC INTEREST (Credit: Prev Stmt Bal +$0.24); CC MIN PAYMENT (Credit: Prev Stmt Bal -$10.0); CC MIN PAYMENT (Checking -$10.0);
-    #
-    #     # with p2
-    #     #
-    #
-    #     M = MemoRuleSet.MemoRuleSet([])
-    #     M.addMemoRule('food', 'Credit', 'None', 1)
-    #     M.addMemoRule('.*pay cc.*', 'Checking', 'Credit', 2)
-    #     M.addMemoRule('.*income.*', 'None', 'Checking', 1)
-    #
-    #     MS = MilestoneSet.MilestoneSet([], [], [])
-    #
-    #     E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
-    #     E.runForecast(log_level='DEBUG')
-    #     E.forecast_df.to_csv('test_propagate_curr_and_prev.csv')
-    #
-    #     try:
-    #         #
-    #         # assert 'CC INTEREST (Credit: Prev Stmt Bal +$181.19' in \
-    #         #        E.forecast_df.loc[E.forecast_df.Date == '20240507', :]['Memo Directives'].iat[0]
-    #         #
-    #         # # if pre-payment has not been implemented correctly this could be true
-    #         # assert not 'CC MIN PAYMENT (Credit: Prev Stmt Bal -$256.19)' in \
-    #         #            E.forecast_df.loc[E.forecast_df.Date == '20240507', :]['Memo Directives'].iat[0]
-    #         # assert not 'CC MIN PAYMENT (Checking -$256.19)' in \
-    #         #            E.forecast_df.loc[E.forecast_df.Date == '20240507', :]['Memo Directives'].iat[0]
-    #
-    #         # need to check that the correct one is there
-    #         assert False
-    #     except Exception as e:
-    #         print(E.forecast_df.to_string())
-    #         raise e
-
-    # #pass by observation
-    # def test_propagate_prev_only(self):
-    #     start_date_YYYYMMDD = '20240504'
-    #     end_date_YYYYMMDD = '20240610'
-    #
-    #     A = AccountSet.AccountSet([])
-    #     A.createCheckingAccount('Checking', 2000, 0, 9999999, True)
-    #     A.createCreditCardAccount('Credit', 0, 7500, 0, 25000, '20240107', 0.2899, 40)
-    #
-    #     B = BudgetSet.BudgetSet([])
-    #     # B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 20, 'food', deferrable=False,
-    #     #                 partial_payment_allowed=False)
-    #     B.addBudgetItem('20240506', '20240506', 2, 'once', 300, 'pay cc', deferrable=False, partial_payment_allowed=True)
-    #     B.addBudgetItem('20240105', end_date_YYYYMMDD, 1, 'semiweekly', 1600, 'EMT income', deferrable=False,
-    #                     partial_payment_allowed=False)
-    #     # B.addBudgetItem('20240103', '20240303', 2, 'monthly', 460, 'pay cc', False, False)
-    #
-    #     # without p2
-    #     #  CC INTEREST (Credit: Prev Stmt Bal +$179.38); CC MIN PAYMENT (Credit: Prev Stmt Bal -$253.63); CC MIN PAYMENT (Checking -$253.63);
-    #
-    #     # with p2
-    #     #  CC INTEREST (Credit: Prev Stmt Bal +$178.32); CC MIN PAYMENT (Credit: Prev Stmt Bal -$255.68); CC MIN PAYMENT (Checking -$264.42)
-    #
-    #     M = MemoRuleSet.MemoRuleSet([])
-    #     M.addMemoRule('food', 'Credit', 'None', 1)
-    #     M.addMemoRule('.*pay cc.*', 'Checking', 'Credit', 2)
-    #     M.addMemoRule('.*income.*', 'None', 'Checking', 1)
-    #
-    #     MS = MilestoneSet.MilestoneSet([], [], [])
-    #
-    #     E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
-    #     E.runForecast(log_level='DEBUG')
-    #     E.forecast_df.to_csv('test_propagate_prev_only.csv')
-    #
-    #     try:
-    #
-    #         assert 'CC INTEREST (Credit: Prev Stmt Bal +$181.19' in E.forecast_df.loc[E.forecast_df.Date == '20240507',:]['Memo Directives'].iat[0]
-    #
-    #         #if pre-payment has not been implemented correctly this could be true
-    #         assert not 'CC MIN PAYMENT (Credit: Prev Stmt Bal -$256.19)' in E.forecast_df.loc[E.forecast_df.Date == '20240507',:]['Memo Directives'].iat[0]
-    #         assert not 'CC MIN PAYMENT (Checking -$256.19)' in E.forecast_df.loc[E.forecast_df.Date == '20240507',:]['Memo Directives'].iat[0]
-    #
-    #         #need to check that the correct one is there
-    #         assert False
-    #     except Exception as e:
-    #         print(E.forecast_df.to_string())
-    #         raise e
-    #
-    # def test_propagate_principal_only(self):
-    #     raise NotImplementedError
-    #
-    # def test_propagate_interest_only(self):
-    #     raise NotImplementedError
-    #
-    # def test_propagate_principal_and_interest(self):
-    #     raise NotImplementedError
-
-#
 # improving the names of tests would make them even longer...
 # just know that the basic cc tests do not have a billing date in their expected result set
 
@@ -4959,6 +3609,7 @@ class TestExpenseForecastMethods:
 
 ### Todo
 # implement these
+
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p2_and_3__expect_defer-account_set6-budget_set6-memo_rule_set6-20000101-20000103-milestone_set6-expected_result_df6]
 
 # passing this test will require lots of other tests to be edited
@@ -4980,9 +3631,60 @@ class TestExpenseForecastMethods:
 
 # passing this test will require many other tests to be edited
 ### test_zero_sum_validation
+### (day of last additional payment (inclusive) to last day of forecast does not match w same txns run at p1 instead of p2)
 # a test w a p2 credit expense post prop
 
 ### test_distal_propagation
 # payment, then billing date, then a full billing cycle plus 1 day
+# test_cc_interest_accrued_reaches_0
 
-# == 12 failed, 178 passed, 162 warnings in 457.61s (0:07:37) ===
+
+## 11/3/2024 10am
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p1_cc_txn_on_billing_date-account_set2-budget_set2-memo_rule_set2-20000101-20000103-milestone_set2-expected_result_df2]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p2_and_3__expect_defer-account_set7-budget_set7-memo_rule_set7-20000101-20000103-milestone_set7-expected_result_df7]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_560-account_set22-budget_set22-memo_rule_set22-20000101-20000103-milestone_set22-expected_result_df22]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_1900-account_set24-budget_set24-memo_rule_set24-20000101-20000103-milestone_set24-expected_result_df24]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_overpay-account_set25-budget_set25-memo_rule_set25-20000101-20000103-milestone_set25-expected_result_df25]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_advance_minimum_payment_in_1_payment_pay_over_minimum-account_set26-budget_set26-memo_rule_set26-20000110-20000113-milestone_set26-expected_result_df26]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_advance_minimum_payment_in_1_payment_pay_under_minimum-account_set27-budget_set27-memo_rule_set27-20000110-20000113-milestone_set27-expected_result_df27]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_advance_minimum_payment_in_1_payment_pay_exact_minimum-account_set28-budget_set28-memo_rule_set28-20000110-20000113-milestone_set28-expected_result_df28]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_on_due_date__curr_only-account_set33-budget_set33-memo_rule_set33-20000111-20000113-milestone_set33-expected_result_df33]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before__prev_only-account_set35-budget_set35-memo_rule_set35-20000110-20000113-milestone_set35-expected_result_df35]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before__prev_only-account_set36-budget_set36-memo_rule_set36-20000110-20000113-milestone_set36-expected_result_df36]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before_OVERPAY__prev_only-account_set37-budget_set37-memo_rule_set37-20000110-20000113-milestone_set37-expected_result_df37]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before_OVERPAY__prev_only-account_set38-budget_set38-memo_rule_set38-20000110-20000113-milestone_set38-expected_result_df38]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before__curr_only-account_set39-budget_set39-memo_rule_set39-20000110-20000113-milestone_set39-expected_result_df39]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before__curr_only-account_set40-budget_set40-memo_rule_set40-20000110-20000113-milestone_set40-expected_result_df40]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before_OVERPAY__curr_only-account_set41-budget_set41-memo_rule_set41-20000110-20000113-milestone_set41-expected_result_df41]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before_OVERPAY__curr_only-account_set42-budget_set42-memo_rule_set42-20000110-20000113-milestone_set42-expected_result_df42]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before__curr_prev-account_set43-budget_set43-memo_rule_set43-20000110-20000113-milestone_set43-expected_result_df43]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before_OVERPAY__curr_prev-account_set44-budget_set44-memo_rule_set44-20000110-20000113-milestone_set44-expected_result_df44]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_distal_propagation__prev_only-account_set45-budget_set45-memo_rule_set45-20000110-20000214-milestone_set45-expected_result_df45]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_distal_propagation_multiple__prev_only-account_set46-budget_set46-memo_rule_set46-20000110-20000214-milestone_set46-expected_result_df46]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_distal_propagation__curr_only-account_set47-budget_set47-memo_rule_set47-20000110-20000214-milestone_set47-expected_result_df47]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_distal_propagation_multiple__curr_only-account_set48-budget_set48-memo_rule_set48-20000110-20000214-milestone_set48-expected_result_df48]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_distal_propagation__curr_prev-account_set49-budget_set49-memo_rule_set49-20000110-20000214-milestone_set49-expected_result_df49]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_distal_propagation_multiple__curr_prev-account_set50-budget_set50-memo_rule_set50-20000110-20000214-milestone_set50-expected_result_df50]
+# =============================================== 25 failed, 165 passed, 162 warnings in 349.69s (0:05:49) ==========
+
+
+
+
+
+
+
+# Chat GPT had some GREAT advice regarding coverage!!!
+# apparently you can end a line with '# pragma: no cover' and it will not get counted in coverage
+# also use asserts instead of if branches that are never crossed!!
+
+# eopcb still isnt right bc never get to 0 interest accrued when paying off full balance
+# to fix, eopcb should not include the amount moved over from current stmt balance on that day
+
+# I will just abt pay off my cc by the end of 2026
+# if i can work 80 ER tech shifts next year, I would pay off the loan
+# that essentially means working 6 days a week from april thru EOY
+# and honestly is it even worth it if the new loans I get don't have an interest rate as good as my loans have?????
+
+# like is all that hustle even worth it?
+# Reasons for ER tech: sunk cost of my phlebotomy lol, more money, meet ppl to write reco letters for nursing school
+# practice sticking people w needles

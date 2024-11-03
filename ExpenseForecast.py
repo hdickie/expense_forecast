@@ -25,6 +25,53 @@ import jsonpickle
 import tqdm
 import os
 
+
+def determineMinPaymentAmount(advance_payment_amount, interest_accrued_this_cycle, prev_prev_stmt_bal, total_balance, min_payment):
+    # log_in_color(logger, 'white', 'debug', 'ENTER determineMinPaymentAmount', self.log_stack_depth)
+    # self.log_stack_depth += 1
+
+    amount_due = None
+
+    # may be higher than curr_prev_stmt_bal bc advance payment not considered
+    og_principal_due_this_cycle = prev_prev_stmt_bal * 0.01
+
+    #print(prev_stmt_bal, curr_stmt_bal, min_payment
+    print('')
+    print('og_principal_due_this_cycle:'+str(og_principal_due_this_cycle))
+    print('interest_accrued_this_cycle:' + str(interest_accrued_this_cycle))
+    print('advance_payment_amount:'+str(advance_payment_amount))
+    print('total_balance:' + str(total_balance))
+    print('min_payment:' + str(min_payment))
+    print('')
+
+    remaining_minimum_payment_due = None
+    remaining_principal_due = None
+
+    # since advance_payment_amount > og_principal_due_this_cycle, og_due is 0
+    # since advance_payment_amount
+    if advance_payment_amount > og_principal_due_this_cycle:
+        print('og_principal_due_this_cycle > og_principal_due_this_cycle, so remaining_principal_due = 0')
+        remaining_principal_due = 0
+
+    if advance_payment_amount != 0:
+        remaining_minimum_payment_due = min_payment - advance_payment_amount
+        print('Since there was prepayment, the minimum payment due now is reduced, so remaining_minimum_payment_due = '+str(remaining_minimum_payment_due))
+
+    print('SET amount_due == '+str(remaining_minimum_payment_due))
+    amount_due = remaining_minimum_payment_due
+
+    # advance_payment_amount, interest_accrued_this_cycle, og_principal_due_this_cycle, prev_stmt_bal, curr_stmt_bal, min_payment
+
+    # Truly this is the only way I can think to do this
+    # Case Indicators
+
+    # self.log_stack_depth -= 1
+    # log_in_color(logger, 'white', 'debug', '    = '+str(amount_due), self.log_stack_depth)
+    # log_in_color(logger, 'white', 'debug', 'EXIT determineMinPaymentAmount', self.log_stack_depth)
+    print('FINAL ANSWER: '+str(amount_due))
+    return amount_due
+
+
 ## didnt work
 # import warnings
 # # Suppress only DeprecationWarning
@@ -5967,7 +6014,7 @@ class ExpenseForecast:
         Returns:
         - Updated current_forecast_row_df with applied interest accruals.
         """
-        log_in_color(logger, 'white', 'debug', 'ENTER calculateLoanInterestAccrualsForDay', self.log_stack_depth)
+        log_in_color(logger, 'white', 'debug', str(current_forecast_row_df.Date.iat[0])+' ENTER calculateLoanInterestAccrualsForDay', self.log_stack_depth)
         # Increment log stack depth for logging purposes
         self.log_stack_depth += 1
 
@@ -6084,171 +6131,10 @@ class ExpenseForecast:
         # print('POST INTEREST ACCRUAL FORECAST ROW')
         # print(current_forecast_row_df.to_string())
 
-        log_in_color(logger, 'white', 'debug', 'EXIT calculateLoanInterestAccrualsForDay', self.log_stack_depth)
+        log_in_color(logger, 'white', 'debug', str(current_forecast_row_df.Date.iat[0])+' EXIT calculateLoanInterestAccrualsForDay', self.log_stack_depth)
         return current_forecast_row_df
 
-    # def calculateLoanInterestAccrualsForDay(self, account_set, current_forecast_row_df):
-    #
-    #     #logger.debug('self.log_stack_depth += 1')
-    #
-    #     self.log_stack_depth += 1
-    #     # This method will transfer balances from current statement to previous statement for savings and credit accounts
-    #
-    #     current_date = current_forecast_row_df.Date.iloc[0]
-    #     # generate a date sequence at the specified cadence between billing_start_date and the current date
-    #     # if the current date is in that sequence, then do accrual
-    #     for account_index, account_row in account_set.getAccounts().iterrows():
-    #         if account_row.Account_Type == 'credit prev stmt bal':
-    #             continue
-    #
-    #         if account_row.Interest_Cadence == 'None' or account_row.Interest_Cadence is None or account_row.Interest_Cadence == '':  # ithink this may be refactored. i think this will explode if interest_cadence is None
-    #             continue
-    #         num_days = (datetime.datetime.strptime(current_date,'%Y%m%d') - datetime.datetime.strptime(account_row.Billing_Start_Date,'%Y%m%d')).days
-    #         dseq = generate_date_sequence(start_date_YYYYMMDD=account_row.Billing_Start_Date, num_days=num_days, cadence=account_row.Interest_Cadence)
-    #
-    #         if current_forecast_row_df.Date.iloc[0] == account_row.Billing_Start_Date:
-    #             dseq = set(current_forecast_row_df.Date).union(dseq)
-    #
-    #         if current_date in dseq:
-    #             #log_in_color(logger,'green', 'debug', 'computing interest accruals for:' + str(account_row.Name), self.log_stack_depth)
-    #             # print('interest accrual initial conditions:')
-    #             # print(current_forecast_row_df.to_string())
-    #
-    #             if account_row.Interest_Type.lower() == 'compound' and account_row.Interest_Cadence.lower() == 'yearly':
-    #                 # print('CASE 1 : Compound, Monthly')
-    #
-    #                 raise NotImplementedError
-    #
-    #             elif account_row.Interest_Type.lower() == 'compound' and account_row.Interest_Cadence.lower() == 'quarterly':
-    #                 # print('CASE 2 : Compound, Quarterly')
-    #
-    #                 raise NotImplementedError
-    #
-    #             elif account_row.Interest_Type.lower() == 'compound' and account_row.Interest_Cadence.lower() == 'monthly':
-    #                 # print('CASE 3 : Compound, Monthly')
-    #
-    #                 interest_balance = account_row.APR * account_row.Balance / 12
-    #                 account_set.accounts[account_index].balance += interest_balance
-    #                 account_set.accounts[account_index].balance = account_set.accounts[account_index].balance
-    #
-    #                 # move credit curr stmt bal to previous
-    #                 prev_stmt_balance = account_set.accounts[account_index - 1].balance
-    #
-    #                 # prev_acct_name = account_set.accounts[account_index - 1].name
-    #                 # curr_acct_name = account_set.accounts[account_index].name
-    #                 # print('current account name:' + str(curr_acct_name))
-    #                 # print('prev_acct_name:'+str(prev_acct_name))
-    #                 # print('prev_stmt_balance:'+str(prev_stmt_balance))
-    #                 account_set.accounts[account_index].balance += prev_stmt_balance
-    #                 account_set.accounts[account_index].balance = account_set.accounts[account_index].balance
-    #                 account_set.accounts[account_index - 1].balance = 0
-    #
-    #             elif account_row.Interest_Type.lower() == 'compound' and account_row.Interest_Cadence.lower() == 'semiweekly':
-    #                 # print('CASE 4 : Compound, Semiweekly')
-    #
-    #                 raise NotImplementedError  # Compound, Semiweekly
-    #
-    #             elif account_row.Interest_Type.lower() == 'compound' and account_row.Interest_Cadence.lower() == 'weekly':
-    #                 # print('CASE 5 : Compound, Weekly')
-    #
-    #                 raise NotImplementedError  # Compound, Weekly
-    #
-    #             elif account_row.Interest_Type.lower() == 'compound' and account_row.Interest_Cadence.lower() == 'daily':
-    #                 # print('CASE 6 : Compound, Daily')
-    #
-    #                 raise NotImplementedError  # Compound, Daily
-    #
-    #             elif account_row.Interest_Type.lower() == 'simple' and account_row.Interest_Cadence.lower() == 'yearly':
-    #                 # print('CASE 7 : Simple, Yearly')
-    #
-    #                 raise NotImplementedError  # Simple, Yearly
-    #
-    #             elif account_row.Interest_Type.lower() == 'simple' and account_row.Interest_Cadence.lower() == 'quarterly':
-    #                 # print('CASE 8 : Simple, Quarterly')
-    #
-    #                 raise NotImplementedError  # Simple, Quarterly
-    #
-    #             elif account_row.Interest_Type.lower() == 'simple' and account_row.Interest_Cadence.lower() == 'monthly':
-    #                 # print('CASE 9 : Simple, Monthly')
-    #
-    #                 raise NotImplementedError  # Simple, Monthly
-    #
-    #             elif account_row.Interest_Type.lower() == 'simple' and account_row.Interest_Cadence.lower() == 'semiweekly':
-    #                 # print('CASE 10 : Simple, Semiweekly')
-    #
-    #                 raise NotImplementedError  # Simple, Semiweekly
-    #
-    #             elif account_row.Interest_Type.lower() == 'simple' and account_row.Interest_Cadence.lower() == 'weekly':
-    #                 # print('CASE 11 : Simple, Weekly')
-    #
-    #                 raise NotImplementedError  # Simple, Weekly
-    #
-    #             elif account_row.Interest_Type.lower() == 'simple' and account_row.Interest_Cadence.lower() == 'daily':
-    #                 # print('CASE 12 : Simple, Daily')
-    #
-    #                 interest_balance = account_row.APR * account_row.Balance / 365.25
-    #                 account_set.accounts[account_index + 1].balance += interest_balance  # this is the interest account
-    #                 #account_set.accounts[account_index + 1].balance = round(account_set.accounts[account_index + 1].balance,2)
-    #                 if abs(account_set.accounts[account_index + 1].balance) < 0.01:
-    #                     account_set.accounts[account_index + 1].balance = 0
-    #                 #account_set.accounts[account_index + 1].balance = account_set.accounts[account_index + 1].balance
-    #
-    #         else:
-    #             # ('There were no interest bearing items for this day')
-    #             # print(current_forecast_row_df.to_string())
-    #             pass
-    #
-    #         updated_balances = account_set.getAccounts().Balance
-    #         for account_index, account_row in account_set.getAccounts().iterrows():
-    #             if (account_index + 1) == account_set.getAccounts().shape[1]:
-    #                 break
-    #
-    #             relevant_balance = account_set.getAccounts().iloc[account_index, 1]
-    #             col_sel_vec = (current_forecast_row_df.columns == account_row.Name)
-    #             current_forecast_row_df.iloc[0, col_sel_vec] = relevant_balance
-    #
-    #         # self.log_stack_depth -= 1
-    #         # return current_forecast_row_df
-    #
-    #
-    #     self.log_stack_depth -= 1
-    #     #logger.debug('self.log_stack_depth -= 1')
-    #     return current_forecast_row_df  # this runs when there are no interest bearing accounts in the simulation at all
 
-
-    def determineMinPaymentAmount(self, advance_payment_amount, interest_accrued_this_cycle, principal_due_this_cycle, prev_stmt_bal, curr_stmt_bal, min_payment):
-        log_in_color(logger, 'white', 'debug', 'ENTER determineMinPaymentAmount', self.log_stack_depth)
-        self.log_stack_depth += 1
-        # log_in_color(logger, 'white', 'debug', '(adv , int , pbal, prev, curr, minp)', self.log_stack_depth)
-        # log_in_color(logger, 'white', 'debug', (advance_payment_amount, interest_accrued_this_cycle, principal_due_this_cycle, prev_stmt_bal, curr_stmt_bal, min_payment), self.log_stack_depth)
-
-
-        amount_due = None
-
-        # Interest has already been added to prev_stmt_bal
-        # principal_due_this_cycle is due immediately and not included in balances
-        total_balance = curr_stmt_bal + prev_stmt_bal
-
-        # Calculate the initial amount due
-        if (interest_accrued_this_cycle + principal_due_this_cycle) > 0:
-            if (interest_accrued_this_cycle + principal_due_this_cycle) >= min_payment:
-                amount_due = interest_accrued_this_cycle + principal_due_this_cycle
-            elif min_payment > (interest_accrued_this_cycle + principal_due_this_cycle) and total_balance >= min_payment:
-                amount_due = min_payment
-            else:
-                amount_due = total_balance
-        else:
-            amount_due = 0
-
-        # Subtract any advance payment
-        amount_due -= advance_payment_amount
-        if amount_due < 0:
-            amount_due = 0
-
-        self.log_stack_depth -= 1
-        # log_in_color(logger, 'white', 'debug', '    = '+str(amount_due), self.log_stack_depth)
-        log_in_color(logger, 'white', 'debug', 'EXIT determineMinPaymentAmount', self.log_stack_depth)
-        return amount_due
 
 
     #a design flaw this has is that if a cc min payment is made in advance, but that payment is past the end of the forecast,
@@ -6355,7 +6241,7 @@ class ExpenseForecast:
                 # else:
                 #     prev_prev_stmt_balance = 0
             prev_prev_aname = account_row.Name.split(':')[0]+': Credit End of Prev Cycle Bal'
-            prev_prev_stmt_balance = current_forecast_row_df[prev_prev_aname].iat[0]
+            prev_prev_stmt_bal = current_forecast_row_df[prev_prev_aname].iat[0]
 
             current_prev_stmt_balance = account_row.Balance
             current_curr_stmt_balance = account_set.getAccounts().iloc[account_index - 1]['Balance']
@@ -6366,8 +6252,8 @@ class ExpenseForecast:
             # Calculate interest and principal to be charged
             interest_rate_monthly = account_row.APR / 12
             #interest_accrued_this_cycle = round(prev_prev_stmt_balance * interest_rate_monthly, 2)
-            interest_accrued_this_cycle = prev_prev_stmt_balance * interest_rate_monthly
-            principal_due_this_cycle = prev_prev_stmt_balance * 0.01 #if prev_prev and prev dont match, that implies a payment
+            interest_accrued_this_cycle = prev_prev_stmt_bal * interest_rate_monthly
+            #principal_due_this_cycle = prev_prev_stmt_balance * 0.01 #if prev_prev and prev dont match, that implies a payment
 
             # Update account balances and memo directives
             if interest_accrued_this_cycle > 0:
@@ -6394,15 +6280,13 @@ class ExpenseForecast:
             cycle_payment_bal_aname = account_row.Name.split(':')[0] + ': Credit Billing Cycle Payment Bal'
             current_forecast_row_df[cycle_payment_bal_aname] = 0
 
+            print('advance_payment_amount:' + str(advance_payment_amount))
+            print('interest_accrued_this_cycle:' + str(interest_accrued_this_cycle))
+
+            min_payment = determineMinPaymentAmount(advance_payment_amount, interest_accrued_this_cycle, prev_prev_stmt_bal, current_prev_stmt_balance, current_curr_stmt_balance, account_row.Minimum_Payment)
 
 
-
-
-
-            min_payment = self.determineMinPaymentAmount(advance_payment_amount, interest_accrued_this_cycle, principal_due_this_cycle, new_prev_stmt_bal, current_curr_stmt_balance, account_row.Minimum_Payment)
-
-
-            # print('min_payment:'+str(min_payment))
+            print('min_payment:'+str(min_payment))
             # print('current_forecast_row_df:')
             # print(str(current_forecast_row_df.to_string()))
 
@@ -9645,11 +9529,14 @@ class ExpenseForecast:
                         new_prev_memo = self._update_memo_amount(og_prev_memo, curr_prev_stmt_bal)
                 else:
                     if og_curr_amount > 0:
+                        #this parent logic branch is for cc payments, not cc expenses, therefore
+                        #this specific branch should never happen bc adjust payment amount is always less than OG.
+                        #if adjusted_payment_amount > curr_prev_stmt_bal, then so was OG, and therefore curr was 0
                         log_in_color(logger, 'white', 'debug', '(case 26) _update_memo_amount')
                         new_curr_memo = self._update_memo_amount(og_curr_memo, 0.00)
                     if og_prev_amount > 0:
                         log_in_color(logger, 'white', 'debug', '(case 27) _update_memo_amount')
-                        new_prev_memo = self._update_memo_amount(og_prev_memo, adjusted_payment_amount)
+                        new_prev_memo = self._update_memo_amount(og_prev_memo, og_prev_amount - adjusted_payment_amount)
                 log_in_color(logger, 'white', 'debug', '(case 28) _update_memo_amount')
                 new_interest_memo = self._update_memo_amount(og_interest_memo, interest_to_be_charged)
 

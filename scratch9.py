@@ -29,12 +29,12 @@ if __name__ == '__main__':
 
 
     start_date_YYYYMMDD = datetime.datetime.now().strftime('%Y%m%d')
-    end_date_YYYYMMDD = '20250815'
+    end_date_YYYYMMDD = '20260101'
 
     A = AccountSet.AccountSet([])
-    A.createCheckingAccount('Checking', 3825.36 + 88.42 + 45.39, 0, 999999999, True)
+    A.createCheckingAccount('Checking', 3325.36 + 88.42 + 45.39, 0, 999999999, True)
     A.createCreditCardAccount('Credit', 0, 14286.00, 0, 25000, '20240107', 0.2899, 40, billing_cycle_payment_balance=0, end_of_previous_cycle_balance=14286.00)
-    A.createLoanAccount('Dad Loan',(15000 + 1400) - 500*1,0,0,20000,'20240101',0,500, billing_cycle_payment_balance=0, end_of_previous_cycle_balance=(15000 + 1400) - 500*1)
+    A.createLoanAccount('Dad Loan',(15000 + 1400) - 500*2,0,0,20000,'20240101',0,500, billing_cycle_payment_balance=0, end_of_previous_cycle_balance=(15000 + 1400) - 500*2)
     A.createLoanAccount('Student Loans', 15000, 100, 0, 16000, '20241003', 0.06, 223.19, billing_cycle_payment_balance=0, end_of_previous_cycle_balance=15000)
 
     B = BudgetSet.BudgetSet([])
@@ -51,78 +51,39 @@ if __name__ == '__main__':
     B.addBudgetItem('20250203', '20250203', 1, 'once', 400, 'sjcc spring 2025 tuition')
     B.addBudgetItem('20250603', '20250603', 1, 'once', 400, 'sjcc summer 2025 tuition')
     B.addBudgetItem('20250803', '20250803', 1, 'once', 400, 'sjcc fall 2025 tuition')
-    B.addBudgetItem('20260929', '20260929', 1, 'once', 1250, 'evergreen tuition fall 2026')
-    B.addBudgetItem('20270112', '20270112', 1, 'once', 1250, 'evergreen tuition winter 2026')
-    B.addBudgetItem('20270405', '20270405', 1, 'once', 1250, 'evergreen tuition spring 2027')
-    B.addBudgetItem('20270628', '20270628', 1, 'once', 1250, 'evergreen tuition summer 2027')
+    # B.addBudgetItem('20260929', '20260929', 1, 'once', 1250, 'evergreen tuition fall 2026')
+    # B.addBudgetItem('20270112', '20270112', 1, 'once', 1250, 'evergreen tuition winter 2026')
+    # B.addBudgetItem('20270405', '20270405', 1, 'once', 1250, 'evergreen tuition spring 2027')
+    # B.addBudgetItem('20270628', '20270628', 1, 'once', 1250, 'evergreen tuition summer 2027')
 
     B2 = BudgetSet.BudgetSet(B.budget_items)
 
     # start date 10/18
-    B2.addBudgetItem('20240505', end_date_YYYYMMDD, 2, 'monthly', 7000, 'pay cc', deferrable=False,partial_payment_allowed=True)
-    # B2.addBudgetItem('20241105', '20241105', 2, 'once', 2925.50, 'pay cc 11/5')
-    # B2.addBudgetItem('20241205', '20241205', 2, 'once', 2907.54, 'pay cc 12/5')
-    # B2.addBudgetItem('20250105', '20250105', 2, 'once', 4076.81, 'pay cc 1/5/25')
-    # B2.addBudgetItem('20250205', '20250205', 2, 'once', 2076.81, 'pay cc 2/5/25')
+    #B2.addBudgetItem('20240505', end_date_YYYYMMDD, 2, 'monthly', 7000, 'pay cc', deferrable=False,partial_payment_allowed=True)
+    B2.addBudgetItem('20241105', '20241105', 1, 'once', 3235.98, 'pay cc 11/5')
+    B2.addBudgetItem('20241205', '20241205', 1, 'once', 2476.81, 'pay cc 12/5')
+    B2.addBudgetItem('20250105', '20250105', 1, 'once', 4076.81, 'pay cc 1/5/25')
+    B2.addBudgetItem('20250205', '20250205', 1, 'once', 2076.81, 'pay cc 2/5/25')
+    B2.addBudgetItem('20250305', '20250305', 1, 'once', 2476.81, 'pay cc 3/5/25')
+    B2.addBudgetItem('20250405', '20250405', 1, 'once', 2476.81, 'pay cc 4/5/25')
+    B2.addBudgetItem('20250505', '20250505', 1, 'once', 2476.81, 'pay cc 5/5/25')
+    B2.addBudgetItem('20250605', '20250605', 1, 'once', 2076.81, 'pay cc 6/5/25')
+    B2.addBudgetItem('20250705', '20250705', 1, 'once', 4076.81, 'pay cc 7/5/25')
 
-    # B.addBudgetItem('20241105', '20241105', 1, 'once', 2925.50, 'pay cc 11/5')
-    # B.addBudgetItem('20241205', '20241205', 1, 'once', 2907.54, 'pay cc 12/5')
-    # B.addBudgetItem('20250105', '20250105', 1, 'once', 4076.81, 'pay cc 1/5/25')
-    # B.addBudgetItem('20250205', '20250205', 1, 'once', 2076.81, 'pay cc 2/5/25')
+    B2.addBudgetItem('20250805', '20250805', 1, 'once', 539.84, 'pay cc 8/5/25')
+    B2.addBudgetItem('20250905', '20250905', 1, 'once', 1275, 'pay cc 9/5/25')
+    B2.addBudgetItem('20251005', '20251005', 1, 'once', 1255, 'pay cc 10/5/25')
+    B2.addBudgetItem('20251105', '20251105', 1, 'once', 1275, 'pay cc 11/5/25')
+    B2.addBudgetItem('20251205', '20251205', 1, 'once', 1255.00, 'pay cc 12/5/25')
 
-    #These should produce the same output!
-
-
-
+    B2.addBudgetItem('20250905', end_date_YYYYMMDD, 2, 'monthly', 7000, 'pay cc', deferrable=False,partial_payment_allowed=True)
 
 
-
-
-    # if int(end_date_YYYYMMDD) > 20251203:
-    #     B.addBudgetItem('20251203', end_date_YYYYMMDD, 1, 'monthly', 250, 'fake loan payment')
-    # B.addBudgetItem('20240103', '20240303', 2, 'monthly', 460, 'pay cc', False, False)
 
     # cycle_amount = 1500
     # asymptote_surplus_amount = 500
     # B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'monthly', cycle_amount + asymptote_surplus_amount, 'pay cc cycle + extra')
 
-
-
-    # lets put evergreen at 5k for 2 years. wow :)))))))
-    # 4 semesters of 9 units. I think that this will include a summer semester
-    # this assumes that if I apply at the end of 2025, I dont start til fall 2026
-    # ah i realize this is a quarter system I've never done that
-
-    # Summer 2023: June 30
-
-    # this caused unexpected behavior
-    # B.addBudgetItem('20241106', '20241106', 2, 'once', 0, 'pay cc 11/06/24')
-    # B.addBudgetItem('20241206', '20241206', 2, 'once', 0, 'pay cc 12/06/24')
-    # B.addBudgetItem('20250106', '20250106', 2, 'once', 0, 'pay cc 1/06/25')
-    # B.addBudgetItem('20250206', '20250206', 2, 'once', 0, 'pay cc 2/06/25')
-    # B.addBudgetItem('20250306', '20250306', 2, 'once', 0, 'pay cc 3/06/25')
-    # B.addBudgetItem('20250406', '20250406', 2, 'once', 0, 'pay cc 4/06/25')
-    # B.addBudgetItem('20250506', '20250506', 2, 'once', 0, 'pay cc 5/06/25')
-    # B.addBudgetItem('20250606', '20250606', 2, 'once', 0, 'pay cc 6/06/25')
-    # B.addBudgetItem('20250706', '20250706', 2, 'once', 0, 'pay cc 7/06/25')
-    # B.addBudgetItem('20250806', '20250806', 2, 'once', 0, 'pay cc 8/06/25')
-    # B.addBudgetItem('20250906', '20250906', 2, 'once', 0, 'pay cc 9/06/25')
-    # B.addBudgetItem('20251006', '20251006', 2, 'once', 0, 'pay cc 10/06/25')
-
-    # B.addBudgetItem('20241106', '20241106', 1, 'once', 4400, 'pay cc 11/06/24')
-    # B.addBudgetItem('20241206', '20241206', 1, 'once', 2300, 'pay cc 12/06/24')
-    # B.addBudgetItem('20250106', '20250106', 1, 'once', 2000, 'pay cc 1/06/25')
-    # B.addBudgetItem('20250206', '20250206', 1, 'once', 3000, 'pay cc 2/06/25')
-    # B.addBudgetItem('20250306', '20250306', 1, 'once', 3000, 'pay cc 3/06/25')
-    # B.addBudgetItem('20250406', '20250406', 1, 'once', 3000, 'pay cc 4/06/25')
-    # B.addBudgetItem('20250506', '20250506', 1, 'once', 3000, 'pay cc 5/06/25')
-    # B.addBudgetItem('20250606', '20250606', 1, 'once', 1000, 'pay cc 6/06/25')
-    # B.addBudgetItem('20250706', '20250706', 1, 'once', 2000, 'pay cc 7/06/25')
-    # B.addBudgetItem('20250806', '20250806', 1, 'once', 2000, 'pay cc 8/06/25')
-    # B.addBudgetItem('20250906', '20250906', 1, 'once', 2000, 'pay cc 9/06/25')
-    # B.addBudgetItem('20251006', '20251006', 1, 'once', 2000, 'pay cc 10/06/25')
-
-    #todo get tuition from old commits
 
     M = MemoRuleSet.MemoRuleSet([])
     M.addMemoRule('food', 'Credit', 'None', 1)
@@ -181,67 +142,7 @@ if __name__ == '__main__':
 # 12  20251012      0.0                     0                3317.7             183.94   1276.06       0.0   -3317.7        0.0        3317.7          0.0    CC INTEREST (Credit: Prev Stmt Bal +$183.94); CC MIN PAYMENT (Checking -$260.08); CC MIN PAYMENT (Credit: Prev Stmt Bal -$260.08); ADDTL CC PAYMENT (Checking -$5450.35); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$5450.35)  EMT income x2 (Checking +$3200.00); food x30 (Credit -$600.00); repay dad (Checking -$500.00); phone (Credit -$250.00); fake loan payment (Checking -$250.00); car insurance (Credit -$100.00); ai daddy (Credit -$20.00); hulu (Credit -$20.00)
 
 
-#
-#     # sw1_sd = '20240501'
-#     # sw2_sd = '20240502'
-#     # sw3_sd = '20240503'
-#     # sw4_sd = '20240504'
-#     # sw5_sd = '20240505'
-#     # sw6_sd = '20240506'
-#     # sw7_sd = '20240507'
-#     # sw8_sd = '20240508'
-#     # sw9_sd = '20240509'
-#     # sw10_sd = '20240510'
-#     # sw11_sd = '20240511'
-#     # sw12_sd = '20240512'
-#     # sw13_sd = '20240513'
-#     # sw14_sd = '20240514'
-#     #
-#     # sw1 = generate_date_sequence(sw1_sd,15,'semiweekly')
-#     # sw2 = generate_date_sequence(sw2_sd,15,'semiweekly')
-#     # sw3 = generate_date_sequence(sw3_sd,15,'semiweekly')
-#     # sw4 = generate_date_sequence(sw4_sd,15,'semiweekly')
-#     # sw5 = generate_date_sequence(sw5_sd,15,'semiweekly')
-#     # sw6 = generate_date_sequence(sw6_sd,15,'semiweekly')
-#     # sw7 = generate_date_sequence(sw7_sd,15,'semiweekly')
-#     # sw8 = generate_date_sequence(sw8_sd,15,'semiweekly')
-#     # sw9 = generate_date_sequence(sw9_sd,15,'semiweekly')
-#     # sw10 = generate_date_sequence(sw10_sd,15,'semiweekly')
-#     # sw11 = generate_date_sequence(sw11_sd,15,'semiweekly')
-#     # sw12 = generate_date_sequence(sw12_sd,15,'semiweekly')
-#     # sw13 = generate_date_sequence(sw13_sd,15,'semiweekly')
-#     # sw14 = generate_date_sequence(sw14_sd,15,'semiweekly')
-#     #
-#     # print('sw1:'+sw1_sd+' '+str(sw1))
-#     # print('sw2:'+sw2_sd+' '+str(sw2))
-#     # print('sw3:'+sw3_sd+' '+str(sw3))
-#     # print('sw4:'+sw4_sd+' '+str(sw4))
-#     # print('sw5:'+sw5_sd+' '+str(sw5))
-#     # print('sw6:'+sw6_sd+' '+str(sw6))
-#     # print('sw7:'+sw7_sd+' '+str(sw7))
-#     # print('sw8:'+sw8_sd+' '+str(sw8))
-#     # print('sw9:'+sw9_sd+' '+str(sw9))
-#     # print('sw10:'+sw10_sd+' '+str(sw10))
-#     # print('sw11:'+sw11_sd+' '+str(sw11))
-#     # print('sw12:'+sw12_sd+' '+str(sw12))
-#     # print('sw13:'+sw13_sd+' '+str(sw13))
-#     # print('sw14:'+sw14_sd+' '+str(sw14))
-#     #
-#     # assert sw1 == ['20240501','20240515']
-#     # assert sw2 == ['20240502','20240516']
-#     # assert sw3 == ['20240503','20240517']
-#     # assert sw4 == ['20240504','20240518']
-#     # assert sw5 == ['20240505','20240519']
-#     # assert sw6 == ['20240506','20240520']
-#     # assert sw7 == ['20240507','20240521']
-#     # assert sw8 == ['20240508','20240522']
-#     # assert sw9 == ['20240509','20240523']
-#     # assert sw10 == ['20240510','20240524']
-#     # assert sw11 == ['20240511','20240525']
-#     # assert sw12 == ['20240512','20240526']
-#     # assert sw13 == ['20240513','20240527']
-#     # assert sw14 == ['20240514','20240528']
-#
+
 #     # S = ForecastSet.initialize_from_json_file('ForecastSet_S084000.json')  # let this throw an exception if needed
 #     # S.initialize_forecasts()
 #     #
@@ -271,44 +172,9 @@ if __name__ == '__main__':
 #     A.createCreditCardAccount('Credit',500,1000,0,25000,'20240104',0.1,40)
 #     #A.createLoanAccount('Approximate Loan',15858.49,0,0,25000,'20241203',0.0476,250)
 #
-#
-#     # print(A.getAccounts().to_string())
-#     #                                   Name   Balance  Min_Balance  Max_Balance       Account_Type Billing_Start_Date Interest_Type     APR Interest_Cadence Minimum_Payment  Primary_Checking_Ind
-#     # 0                             Checking    500.00          0.0    9999999.0           checking               None          None    None             None            None                  True
-#     # 1                Credit: Curr Stmt Bal      0.00          0.0      25000.0      curr stmt bal               None          None    None             None            None                 False
-#     # 2                Credit: Prev Stmt Bal   9000.00          0.0      25000.0      prev stmt bal           20240507          None  0.2899          monthly            40.0                 False
-#     # 3  Approximate Loan: Principal Balance  15858.49          0.0      25000.0  principal balance           20241203        simple  0.0476            daily           250.0                 False
-#     # 4           Approximate Loan: Interest      0.00          0.0      25000.0           interest               None          None    None             None            None                 False
-#
-#
-#     B = BudgetSet.BudgetSet([])
-#     B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 25, 'food', False, False)
-#     B.addBudgetItem('20240103', '20240303', 2, 'monthly', 2000, 'pay down cc', False, True)
-#     # B.addBudgetItem('20240518', end_date_YYYYMMDD, 1, 'monthly', 25, 'storage unit', False, False)
-#     # B.addBudgetItem('20240518', '20240628', 1, 'semiweekly', 600, 'repay mom', False, False)
-#     # B.addBudgetItem('20240701', '20270401', 1, 'monthly', 800, 'repay dad', False, False)
-#     # B.addBudgetItem('20240420', end_date_YYYYMMDD, 1, 'monthly', 90, 'car insurance', False, False)
-#     # B.addBudgetItem(income_start_date, end_date_YYYYMMDD, 1, 'semiweekly', 1600, 'EMT income', False, False)
-#     # B.addBudgetItem('20240531', end_date_YYYYMMDD, 1, 'monthly', 900, 'pay down cc', False, False)
-#     # B.addBudgetItem('20240531', end_date_YYYYMMDD, 2, 'monthly', 2200, 'more cc payment', False, True)
-#
-#
-#     optional_B = BudgetSet.BudgetSet([])
-#     # optional_B.addBudgetItem(begin_repay_cc_date, end_repay_cc_date, 1, 'monthly', 0, 'repay cc 0', False, False)
-#     # optional_B.addBudgetItem(begin_repay_cc_date, end_repay_cc_date, 1, 'monthly', 500, 'repay cc 500', False, False)
-#     # optional_B.addBudgetItem(begin_repay_cc_date, end_repay_cc_date, 1, 'monthly', 500, 'repay cc 750', False, False)
-#     # optional_B.addBudgetItem(begin_repay_cc_date, end_repay_cc_date, 1, 'monthly', 500, 'repay cc 150', False, False)
-#
-#     M = MemoRuleSet.MemoRuleSet([])
-#     # M.addMemoRule('repay.*', 'Checking', 'None', 1)
-#     # M.addMemoRule('car insurance', 'Credit', 'None', 1)
-#     M.addMemoRule('food', 'Credit', 'None', 1)
-#     # M.addMemoRule('storage unit', 'Credit', 'None', 1)
-#     # M.addMemoRule('.*income.*','None','Checking',1)
-#     M.addMemoRule('pay down cc', 'Checking', 'Credit', 2)
-#     # M.addMemoRule('more cc payment', 'Checking', 'Credit', 2)
-#
-#
+
+
+
 #     MS = MilestoneSet.MilestoneSet([],[],[])
 #     E = ExpenseForecast.ExpenseForecast(A,B,M,start_date_YYYYMMDD,end_date_YYYYMMDD,MS)
 #     E.runForecast()
