@@ -26,44 +26,266 @@ import tqdm
 import os
 
 
-def determineMinPaymentAmount(advance_payment_amount, interest_accrued_this_cycle, prev_prev_stmt_bal, total_balance, min_payment):
+
+# The rules are:
+# 1. advance payment can only be applied toward the principal due now, and cannot exceed the total balance. If input parameters are received that imply this, they should be rejected as nonsense.
+# 2. if P + I is greater than M, then P + I should be returned.
+# 3. If P + I is less than M, but greater than T, then M should be returned.
+# 4. If P + I is than M, and T is also less than M, then T should be returned.
+# 5. A can be used to reduce P to zero, but does not affect I. If A is > 0, then it would reduce M by the amount A.
+# 6. There should only be 1 possible answer. If there are multiple, the constraints I have provided here are incomplete. Raise an error if this happens please.
+
+## Extra comments
+# 7. It is possible that P + I will exceed the total balance. This is valid.
+
+#
+#
+# **Algorithm to Deduce the Minimum Payment**
+#
+# ---
+#
+# **Input Parameters:**
+#
+# - **Advance Payment (A)**
+# - **Interest Due Now (I)**
+# - **Principal Due Now (P)**
+# - **Total Balance Before Interest Accrual (T)**
+# - **Minimum Payment (M)**
+#
+# ---
+#
+# **Rules Summary:**
+#
+# 1. **Advance Payment Constraints:**
+#
+#    - **Rule 1:** Advance payment \( A \) can only be applied toward the principal due now \( P \) and cannot exceed the total balance \( T \). \( A \) is allowed to exceed \( P \).
+#    - If \( A > T \), raise an error.
+#
+# 2. **Minimum Payment Adjustments:**
+#
+#    - **Rule 5:** If \( A > 0 \), the minimum payment \( M \) is reduced by \( A \), but cannot be less than zero.
+#      - Adjusted Minimum Payment: \( M' = \max(M - A, 0) \)
+#
+# 3. **Minimum Payment Determination:**
+#
+#    - **Rule 2:** If \( P' + I > M' \), then the minimum payment is \( P' + I \).
+#    - **Rule 3:** If \( P' + I < M' \) and \( P' + I > T' \), then the minimum payment is \( M' \).
+#    - **Rule 4:** If \( P' + I \leq M' \) and \( T' \leq M' \), then the minimum payment is \( T' \).
+#    - **Rule 6:** If none of the above conditions apply or multiple conditions are met, raise an error due to incomplete constraints.
+#
+# ---
+#
+# **Algorithm Steps:**
+#
+# 1. **Validate Advance Payment Against Total Balance (Rule 1):**
+#
+#    - **If** \( A > T \):
+#      - **Raise Error:** "Advance payment \( A \) cannot exceed the total balance \( T \)."
+#
+# 2. **Apply Advance Payment to Principal and Adjust Total Balance:**
+#
+#    - **Adjusted Principal (\( P' \))**:
+#      - \( P' = \max(0, P - A) \)
+#    - **Excess Advance Payment (\( A_{\text{excess}} \))**:
+#      - \( A_{\text{excess}} = \max(0, A - P) \)
+#    - **Adjusted Total Balance (\( T' \))**:
+#      - \( T' = T - A \)
+#
+# 3. **Adjust Minimum Payment (Rule 5):**
+#
+#    - **Adjusted Minimum Payment (\( M' \))**:
+#      - \( M' = \max(0, M - A) \)
+#
+# 4. **Interest Remains Unchanged:**
+#
+#    - \( I \) remains the same.
+#
+# 5. **Calculate Sum of Adjusted Principal and Interest:**
+#
+#    - \( S = P' + I \)
+#
+# 6. **Determine the Minimum Payment to Return:**
+#
+#    - **Case 1 (Rule 2):**
+#      - **If** \( S > M' \):
+#        - **Minimum Payment** = \( S \)
+#    - **Case 2 (Rule 3):**
+#      - **Else if** \( S < M' \) and \( S > T' \):
+#        - **Minimum Payment** = \( M' \)
+#    - **Case 3 (Rule 4):**
+#      - **Else if** \( S \leq M' \) and \( T' \leq M' \):
+#        - **Minimum Payment** = \( T' \)
+#    - **Else (Rule 6):**
+#      - **Raise Error:** "Constraints are incomplete or multiple answers exist."
+#
+# ---
+#
+# **Detailed Explanation of Each Step:**
+#
+# 1. **Validate Advance Payment (Rule 1):**
+#
+#    - Ensure that the advance payment does not exceed the total balance.
+#      - **If** \( A > T \), it's an invalid scenario.
+#      - **Example Check:**
+#        - **Given** \( A = \$200 \) and \( T = \$150 \):
+#          - Since \( \$200 > \$150 \), raise an error.
+#
+# 2. **Adjust Principal and Total Balance:**
+#
+#    - **Adjusted Principal (\( P' \))**:
+#      - Subtract \( A \) from \( P \).
+#      - If \( A \) exceeds \( P \), \( P' \) becomes zero.
+#    - **Excess Advance Payment (\( A_{\text{excess}} \))**:
+#      - Calculate any amount of \( A \) that exceeds \( P \).
+#    - **Adjusted Total Balance (\( T' \))**:
+#      - Subtract \( A \) from \( T \).
+#      - The excess \( A \) reduces \( T \) after \( P \) is reduced.
+#
+# 3. **Adjust Minimum Payment (Rule 5):**
+#
+#    - Reduce \( M \) by \( A \).
+#    - Minimum payment cannot be negative; if it is, set it to zero.
+#
+# 4. **Interest Remains Unchanged:**
+#
+#    - Advance payments do not affect interest due now.
+#
+# 5. **Calculate Sum of Adjusted Principal and Interest:**
+#
+#    - Add \( P' \) and \( I \) to get \( S \).
+#
+# 6. **Determine Minimum Payment Using Rules:**
+#
+#    - **Rule 2:** If \( S > M' \), return \( S \).
+#    - **Rule 3:** If \( S < M' \) and \( S > T' \), return \( M' \).
+#    - **Rule 4:** If \( S \leq M' \) and \( T' \leq M' \), return \( T' \).
+#    - **Rule 6:** If none of these conditions apply, raise an error.
+#
+# ---
+#
+# **Example Usage:**
+#
+# Let's work through an example to illustrate how the algorithm operates.
+#
+# **Example Parameters:**
+#
+# - **Advance Payment (A):** \$100
+# - **Interest Due Now (I):** \$400
+# - **Principal Due Now (P):** \$100
+# - **Total Balance Before Interest Accrual (T):** \$300
+# - **Minimum Payment (M):** \$200
+#
+# **Algorithm Steps:**
+#
+# 1. **Validate Advance Payment:**
+#
+#    - \( A = \$100 \)
+#    - \( T = \$300 \)
+#    - \( A \leq T \), so advance payment is valid.
+#
+# 2. **Adjust Principal and Total Balance:**
+#
+#    - **Adjusted Principal (\( P' \))**:
+#      - \( P' = \max(0, P - A) = \max(0, \$100 - \$100) = \$0 \)
+#    - **Excess Advance Payment (\( A_{\text{excess}} \))**:
+#      - \( A_{\text{excess}} = \max(0, A - P) = \max(0, \$100 - \$100) = \$0 \)
+#    - **Adjusted Total Balance (\( T' \))**:
+#      - \( T' = T - A = \$300 - \$100 = \$200 \)
+#
+# 3. **Adjust Minimum Payment:**
+#
+#    - \( M' = \max(0, M - A) = \max(0, \$200 - \$100) = \$100 \)
+#
+# 4. **Interest Remains Unchanged:**
+#
+#    - \( I = \$400 \)
+#
+# 5. **Calculate Sum of Adjusted Principal and Interest:**
+#
+#    - \( S = P' + I = \$0 + \$400 = \$400 \)
+#
+# 6. **Determine Minimum Payment:**
+#
+#    - **Check Rule 2:**
+#      - Is \( S > M' \)?
+#      - \( \$400 > \$100 \) is **True**.
+#      - **Minimum Payment** = \( S = \$400 \)
+#
+# **Result:**
+#
+# - **The minimum payment required is \$400.**
+#
+# ---
+#
+# **Additional Notes:**
+#
+# - **Advance Payment Impact:**
+#   - The advance payment first reduces the principal.
+#   - Any excess reduces the total balance.
+# - **Minimum Payment Adjustment:**
+#   - The minimum payment is reduced by the amount of the advance payment.
+#   - It cannot go below zero.
+# - **Interest Unaffected by Advance Payment:**
+#   - Interest due now remains the same regardless of the advance payment.
+#
+# Summary:
+# By following this algorithm, you can determine the minimum payment required based on the provided parameters and rules.
+# The algorithm ensures all conditions are checked in order, adjustments are made appropriately,
+# and any potential errors due to incomplete constraints are identified.
+def determineMinPaymentAmount(advance_payment_amount, interest_accrued_this_cycle, principal_due_this_cycle, total_balance, min_payment):
     # log_in_color(logger, 'white', 'debug', 'ENTER determineMinPaymentAmount', self.log_stack_depth)
     # self.log_stack_depth += 1
+    print(f"determineMinPaymentAmount({advance_payment_amount}, {interest_accrued_this_cycle}, {principal_due_this_cycle}, {total_balance}, {min_payment})")
+
+    A = advance_payment_amount
+    I = interest_accrued_this_cycle
+    P = principal_due_this_cycle
+    T = total_balance
+    M = min_payment
 
     amount_due = None
 
-    # may be higher than curr_prev_stmt_bal bc advance payment not considered
-    og_principal_due_this_cycle = prev_prev_stmt_bal * 0.01
+    assert A <= T
 
-    #print(prev_stmt_bal, curr_stmt_bal, min_payment
-    print('')
-    print('og_principal_due_this_cycle:'+str(og_principal_due_this_cycle))
-    print('interest_accrued_this_cycle:' + str(interest_accrued_this_cycle))
-    print('advance_payment_amount:'+str(advance_payment_amount))
-    print('total_balance:' + str(total_balance))
-    print('min_payment:' + str(min_payment))
-    print('')
+    M_prime = max(0,M - A)
+    P_prime = max(0, P - A)
+    A_excess = max(0,A - P)
+    T_prime = T - A
 
-    remaining_minimum_payment_due = None
-    remaining_principal_due = None
+    S = P_prime + I
 
-    # since advance_payment_amount > og_principal_due_this_cycle, og_due is 0
-    # since advance_payment_amount
-    if advance_payment_amount > og_principal_due_this_cycle:
-        print('og_principal_due_this_cycle > og_principal_due_this_cycle, so remaining_principal_due = 0')
-        remaining_principal_due = 0
+    # Case 1 (Rule 2):
+    #     If S>M′S>M′, then Minimum Payment = SS.
+    #
+    # Case 2 (Revised Rule 3):
+    #     Else if S<M′S<M′ and T′≥M′T′≥M′, then Minimum Payment = M′M′.
+    #
+    # Case 3 (Rule 4):
+    #     Else if S<M′S<M′ and T′<M′T′<M′, then Minimum Payment = T′T′.
 
-    if advance_payment_amount != 0:
-        remaining_minimum_payment_due = min_payment - advance_payment_amount
-        print('Since there was prepayment, the minimum payment due now is reduced, so remaining_minimum_payment_due = '+str(remaining_minimum_payment_due))
+    if I + P == 0:
+        return 0
 
-    print('SET amount_due == '+str(remaining_minimum_payment_due))
-    amount_due = remaining_minimum_payment_due
+    if S >= M_prime:
+        return S
 
-    # advance_payment_amount, interest_accrued_this_cycle, og_principal_due_this_cycle, prev_stmt_bal, curr_stmt_bal, min_payment
+    if S < M_prime and T >= M_prime:
+        return M_prime
 
-    # Truly this is the only way I can think to do this
-    # Case Indicators
+    if S < M_prime and T_prime < M_prime:
+        return T_prime
+
+    # Rule 2: If P′+I>M′P′+I>M′, then the minimum payment is P′+IP′+I.
+    # Rule 3: If P′+I<M′P′+I<M′ and P′+I>T′P′+I>T′, then the minimum payment is M′M′.
+    # Rule 4: If P′+I≤M′P′+I≤M′ and T′≤M′T′≤M′, then the minimum payment is T′T′.
+
+    # if A == 0 and P + I > M and P + I > T:
+    #     return P + I
+    # elif A == 0 and P + I > M and T > M:
+    #     return M
+    # elif A == 0 and P + I > M and T <= M:
+    #     return T
+
 
     # self.log_stack_depth -= 1
     # log_in_color(logger, 'white', 'debug', '    = '+str(amount_due), self.log_stack_depth)
@@ -6253,7 +6475,7 @@ class ExpenseForecast:
             interest_rate_monthly = account_row.APR / 12
             #interest_accrued_this_cycle = round(prev_prev_stmt_balance * interest_rate_monthly, 2)
             interest_accrued_this_cycle = prev_prev_stmt_bal * interest_rate_monthly
-            #principal_due_this_cycle = prev_prev_stmt_balance * 0.01 #if prev_prev and prev dont match, that implies a payment
+            principal_due_this_cycle = prev_prev_stmt_bal * 0.01 #if prev_prev and prev dont match, that implies a payment
 
             # Update account balances and memo directives
             if interest_accrued_this_cycle > 0:
@@ -6283,7 +6505,8 @@ class ExpenseForecast:
             print('advance_payment_amount:' + str(advance_payment_amount))
             print('interest_accrued_this_cycle:' + str(interest_accrued_this_cycle))
 
-            min_payment = determineMinPaymentAmount(advance_payment_amount, interest_accrued_this_cycle, prev_prev_stmt_bal, current_prev_stmt_balance, current_curr_stmt_balance, account_row.Minimum_Payment)
+            total_owed_before_accrual = account_set.accounts[account_index].balance
+            min_payment = determineMinPaymentAmount(advance_payment_amount, interest_accrued_this_cycle, principal_due_this_cycle, total_owed_before_accrual, account_row.Minimum_Payment)
 
 
             print('min_payment:'+str(min_payment))

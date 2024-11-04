@@ -2603,46 +2603,27 @@ class TestExpenseForecastMethods:
 
     ### Let's see how you like THESE apples!
     @pytest.mark.parametrize(
-        'test_name, advance_payment_amount, interest_accrued_this_cycle, prev_prev_stmt_bal, total_balance, min_payment, expected_result',[
-            ('00210_1100', '100', '200', '300', '300', '300', '200'),
-            ('21100_0111', '300', '100', '100', '200', '400', 'idk'),
-            ('03000_0001', '100', '100', '100', '200', '100', 'RESULT INT'),
-            ('21200_0010', '200', '100', '100', '200', '100', 'RESULT INT'),
-            ('13010_0000', '100', '100', '100', '100', '100', 'RESULT INT'),
-            ('23000_1101', '300', '300', '100', '400', '200', 'RESULT INT'),
-            ('23210_1001', '300', '200', '100', '200', '200', 'RESULT INT'),
-            ('02010_1100', '100', '300', '300', '200', '300', 'RESULT INT'),
-            ('03200_1000', '100', '200', '200', '200', '200', 'RESULT INT'),
-            ('03210_0111', '100', '400', '300', '200', '100', 'RESULT INT'),
-            ('12010_1100', '300', '100', '300', '200', '300', 'RESULT INT'),
-            ('12110_0010', '200', '100', '100', '100', '200', 'RESULT INT'),
-            ('31010_0101', '200', '100', '300', '100', '200', 'RESULT INT'),
-            ('30000_1100', '200', '300', '300', '100', '300', 'RESULT INT'),
-            ('40210_0110', '100', '300', '300', '200', '100', 'RESULT INT'),
-            ('43000_0001', '100', '100', '200', '100', '100', 'RESULT INT'),
-            ('13010_0110', '200', '100', '300', '300', '100', 'RESULT INT'),
-            ('03200_0001', '100', '100', '200', '100', '100', 'RESULT INT'),
-            ('30200_0011', '100', '200', '300', '100', '100', 'RESULT INT'),
-            ('00000_0101', '100', '100', '200', '200', '300', 'RESULT INT'),
-            ('42010_1011', '200', '400', '200', '300', '100', 'RESULT INT'),
-            ('33100_1100', '300', '300', '300', '100', '200', 'RESULT INT'),
-            ('42210_0101', '300', '200', '100', '200', '100', 'RESULT INT'),
-            ('00110_0010', '100', '100', '200', '100', '200', 'RESULT INT'),
-            ('00200_0011', '100', '100', '200', '300', '100', 'RESULT INT'),
-            ('31110_0011', '300', '100', '100', '100', '200', 'RESULT INT'),
-            ('22010_0010', '100', '200', '100', '100', '200', 'RESULT INT'),
-            ('13200_1111', '400', '100', '500', '300', '200', 'RESULT INT'),
-            ('20010_0001', '100', '100', '100', '200', '100', 'RESULT INT'),
-            ('33200_0011', '200', '300', '100', '100', '100', 'RESULT INT'),
+        'test_name, advance_payment_amount, interest_accrued_this_cycle, principal_due_this_cycle, total_balance_post_accrual, min_payment, expected_result',[
+
+            ('NZ_20210_0111', 100, 400, 100, 300, 200, 400), #gpt helped
+            ('Z_02110_1001', 0, 200, 100, 100, 100, 300), #gpt helped
+            ('Z_42010_1110', 200, 300, 100, 300, 0, -1),
+            ('NZ_23100_1001', 200, 200, 100, 300, 200, -1),
+            ('NZ_11010_0100', 200, 100, 100, 200, 200, -1),
+            ('Z_41100_1111', 300, 100, 200, 400, 0, -1),
+            ('NZ_20200_0001', 100, 100, 100, 200, 100, -1),
+            ('NZ_10010_0001', 100, 100, 100, 200, 100, -1),
+            ('Z_03100_1011', 0, 200, 100, 300, 100, -1),
+            ('NZ_01000_0010', 100, 100, 100, 200, 200, -1),
     ])
-    def test_determineMinPaymentAmount(self,test_name, advance_payment_amount, interest_accrued_this_cycle, prev_prev_stmt_bal, total_balance, min_payment, expected_result):
-        if expected_result == 'RESULT INT':
+    def test_determineMinPaymentAmount(self,test_name, advance_payment_amount, interest_accrued_this_cycle, principal_due_this_cycle, total_balance_post_accrual, min_payment, expected_result):
+        if expected_result == -1:
             pass
         else:
             try:
-                print('test_name, advance_payment_amount, interest_accrued_this_cycle, prev_prev_stmt_bal, total_balance, min_payment, expected_result')
-                print(test_name, advance_payment_amount, interest_accrued_this_cycle, prev_prev_stmt_bal, total_balance, min_payment, expected_result)
-                assert float(expected_result) == ExpenseForecast.determineMinPaymentAmount(float(advance_payment_amount), float(interest_accrued_this_cycle), float(prev_prev_stmt_bal), float(total_balance), float(min_payment))
+                print('test_name, advance_payment_amount, interest_accrued_this_cycle, principal_due_this_cycle, total_balance_post_accrual, min_payment, expected_result')
+                print(test_name, advance_payment_amount, interest_accrued_this_cycle, principal_due_this_cycle, total_balance_post_accrual, min_payment, expected_result)
+                assert float(expected_result) == ExpenseForecast.determineMinPaymentAmount(float(advance_payment_amount), float(interest_accrued_this_cycle), float(principal_due_this_cycle), float(total_balance_post_accrual), float(min_payment))
             except Exception as e:
                 raise e
 

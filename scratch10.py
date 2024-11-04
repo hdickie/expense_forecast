@@ -122,144 +122,62 @@ def credit_bsd12_w_eopc_acct_list(prev_balance,curr_balance,apr,end_of_prev_cycl
 
 if __name__ == '__main__':
     pass
-    test_name, advance_payment_amount, interest_accrued_this_cycle, prev_prev_stmt_bal, total_balance, min_payment, expected_result = ('21100_0111', '300', '100', '100', '200', '400', '-1')
-    print('test_name, advance_payment_amount, interest_accrued_this_cycle, prev_prev_stmt_bal, total_balance, min_payment, expected_result')
-    print(test_name, advance_payment_amount, interest_accrued_this_cycle, prev_prev_stmt_bal, total_balance, min_payment, expected_result)
-    assert float(expected_result) == ExpenseForecast.determineMinPaymentAmount(float(advance_payment_amount),
-                                                                               float(interest_accrued_this_cycle),
-                                                                               float(prev_prev_stmt_bal),
-                                                                               float(total_balance), float(min_payment))
+    # test_name, advance_payment_amount, interest_accrued_this_cycle, prev_prev_stmt_bal, total_balance, min_payment, expected_result = ('Z_42010_1110', 200, 300, 100, 300, 0, -1)
+    # print('test_name, advance_payment_amount, interest_accrued_this_cycle, prev_prev_stmt_bal, total_balance, min_payment, expected_result')
+    # print(test_name, advance_payment_amount, interest_accrued_this_cycle, prev_prev_stmt_bal, total_balance, min_payment, expected_result)
+    # res =  ExpenseForecast.determineMinPaymentAmount(float(advance_payment_amount),
+    #                                                                            float(interest_accrued_this_cycle),
+    #                                                                            float(prev_prev_stmt_bal),
+    #                                                                            float(total_balance), float(min_payment))
+    # print(res)
 
-    # Ok, new plan for test_determineMinPaymentAmount
-    # The number of possible cases for this 6!, but even more since some of them can be equal
-    # I guess we could multiply those separately actually
-    # There are 5 spots where < or <= could go, so 2^5
-    # So there are 6!*2^5 or 23040 possible cases here
-    # So, to generate unique test cases, I could represent them with 2 strings:
-    # One for the order, with the max choice for each decending by one. e.g. 543210 or 000000
-    # the first is the reverse of the input list, and the second is input list returned unchanged
-    # the second string is a binary string of 5 used for the choice of <= or <
-    #
-    # Randomly generating numbers for the test cases!!!
 
-    # import math
-    # import random
-    #
-    # num_unique_test_cases_desired = 30
-    # num_of_monotonic_orderings = 5*4*3*2
-    # num_of_possible_relationships = 2**4
-    # test_definition_tuples = []
-    # for i in range(0,num_unique_test_cases_desired):
-    #     o = math.floor(random.random() * num_of_monotonic_orderings)
-    #     r = math.floor(random.random() * num_of_possible_relationships)
-    #
-    #     og_o = o
-    #     og_r = r
-    #     #
-    #     # first_element = o % 6
-    #     # o = math.floor(o / 6)
-    #
-    #     second_element = o % 5
-    #     o = math.floor(o / 5)
-    #
-    #     third_element = o % 4
-    #     o = math.floor(o / 4)
-    #
-    #     fourth_element = o % 3
-    #     o = math.floor(o / 3)
-    #
-    #     fifth_element = o % 2
-    #     o = math.floor(o / 2)
-    #
-    #     sixth_element = o
-    #     element_order = str(second_element) + str(third_element) + str(fourth_element) + str(fifth_element) + str(sixth_element)
-    #     assert sixth_element == 0
-    #
-    #     # first_relationship = r % 2
-    #     # r = math.floor(r / 2)
-    #
-    #     second_relationship = r % 2
-    #     r = math.floor(r / 2)
-    #
-    #     third_relationship = r % 2
-    #     r = math.floor(r / 2)
-    #
-    #     fourth_relationship = r % 2
-    #     r = math.floor(r / 2)
-    #
-    #     fifth_relationship = r % 2
-    #     r = math.floor(r / 2)
-    #     assert r == 0 or r == 1
-    #
-    #     relationships = str(second_relationship)+str(third_relationship)+str(fourth_relationship)+str(fifth_relationship)
-    #
-    #     #print(element_order,relationships)
-    #     test_definition_tuples.append((element_order,relationships))
-    #
-    # #
-    # og_param_list = ['advance_payment_amount','interest_accrued_this_cycle','og_principal_due_this_cycle','total_balance','min_payment']
-    # test_name_and_def = {}
-    # for test_tuple in test_definition_tuples:
-    #     test_value_dict = {}
-    #     param_list = og_param_list.copy()
-    #     amount = 100
-    #     for i in range(0,5):
-    #         c = int(test_tuple[0][i])
-    #         current_param_name = param_list.pop(int(c))
-    #         test_value_dict[current_param_name] = amount
-    #         if i == 4:
-    #             pass
-    #         elif int(test_tuple[1][i]) == 1:
-    #             amount += 100
-    #
-    #     test_name_and_def[test_tuple] = test_value_dict
-    #
-    # # ['advance_payment_amount','interest_accrued_this_cycle','og_principal_due_this_cycle','prev_stmt_bal','curr_stmt_bal','min_payment']
-    # for k, v in test_name_and_def.items():
-    #     pass
-    #     print("('"+k[0]+'_'+k[1]+"','"+str(v['advance_payment_amount'])+"','"+str(v['interest_accrued_this_cycle'])+"','"+str(v['og_principal_due_this_cycle'])+"','"+str(v['total_balance'])+"','"+str(v['min_payment'])+"','RESULT INT'),")
-    #     #print(k[0]+'_'+k[1],v['advance_payment_amount'],v['interest_accrued_this_cycle'],v['og_principal_due_this_cycle'],v['prev_stmt_bal'],v['curr_stmt_bal'],v['min_payment'])
 
-    # test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df = ('test_cc_interest_accrued_reaches_0',
-    #      AccountSet.AccountSet(checking_acct_list(500) + credit_bsd12_w_eopc_acct_list(0, 0, 0.05, 35)),  # todo implement
-    #      #BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 600, 'pay cc interest accrued on due date', False, False)]),
-    #      BudgetSet.BudgetSet(),
-    #      MemoRuleSet.MemoRuleSet([
-    #          MemoRule.MemoRule('.*', 'Checking', None, 1),
-    #          MemoRule.MemoRule('.*', 'Checking', 'Credit', 2)
-    #      ]),
-    #      '20000110',
-    #      '20000214',
-    #      MilestoneSet.MilestoneSet([], [], []),
-    #      pd.DataFrame({
-    #          'Date': generate_date_sequence('20000110', 35, 'daily'),
-    #          'Checking': [0] * 36,
-    #          'Credit: Curr Stmt Bal': [0] * 36,
-    #          'Credit: Prev Stmt Bal': [0] * 36,
-    #          'Credit: Credit Billing Cycle Payment Bal': [0] * 36,
-    #          'Credit: Credit End of Prev Cycle Bal': [0] * 36,
-    #          'Marginal Interest': [0] * 36,
-    #          'Net Gain': [0] * 36,
-    #          'Net Loss': [0] * 36,
-    #          'Net Worth': [0] * 36,
-    #          'Loan Total': [0] * 36,
-    #          'CC Debt Total': [0] * 36,
-    #          'Liquid Total': [0] * 36,
-    #          'Next Income Date': [''] * 36,
-    #          'Memo Directives': ['NOT IMPLEMENTED'] * 36,
-    #          'Memo': [''] * 36
-    #      })
-    #      )
-    #
-    # E = ExpenseForecast.ExpenseForecast(account_set, budget_set,
-    #                                     memo_rule_set,
-    #                                     start_date_YYYYMMDD,
-    #                                     end_date_YYYYMMDD,
-    #                                     milestone_set,
-    #                                     raise_exceptions=False)
-    #
-    # E.runForecast(log_level='DEBUG')
-    # #print(E.forecast_df.to_string())
+
+
+    test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df = ('test_cc_single_additional_payment_day_before_OVERPAY__curr_prev',
+         AccountSet.AccountSet(checking_acct_list(5000) + credit_bsd12_w_eopc_acct_list(500, 400, 0.05, 500)),
+         BudgetSet.BudgetSet(
+             [BudgetItem.BudgetItem('20000111', '20000111', 2, 'once', 1000, 'test credit payment 1', False, True)]),
+         MemoRuleSet.MemoRuleSet([
+             MemoRule.MemoRule('.*', 'Checking', None, 1),
+             MemoRule.MemoRule('.*', 'Checking', 'Credit', 2)
+         ]),
+         '20000110',
+         '20000113',
+         MilestoneSet.MilestoneSet([], [], []),
+         pd.DataFrame({
+             'Date': ['20000110', '20000111', '20000112', '20000113'],
+             'Checking': [5000, 4100, 4100, 4100],
+             'Credit: Curr Stmt Bal': [400, 0, 0, 0],
+             'Credit: Prev Stmt Bal': [500, 0, 2.08, 2.08],
+             'Credit: Credit Billing Cycle Payment Bal': [0, 900, 0, 0],
+             'Credit: Credit End of Prev Cycle Bal': [500, 500, 500, 2.08],
+             'Marginal Interest': [0, 0, 2.08, 0],
+             'Net Gain': [0, 0, 0, 0],
+             'Net Loss': [0, 0, 2.08, 0],
+             'Net Worth': [4100, 4100, 4100 - 2.08, 4100 - 2.08],
+             'Loan Total': [0, 0, 0, 0],
+             'CC Debt Total': [900, 0, 2.08, 2.08],
+             'Liquid Total': [5000, 4100, 4100, 4100],
+             'Next Income Date': ['', '', '', ''],
+             'Memo Directives': ['',
+                                 'ADDTL CC PAYMENT (Checking -$400.00); ADDTL CC PAYMENT (Credit: Curr Stmt Bal -$400.00); ADDTL CC PAYMENT (Checking -$500.00); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$500.00)',
+                                 'CC MIN PAYMENT ALREADY MADE (Checking -$0.00); CC MIN PAYMENT ALREADY MADE (Credit: Prev Stmt Bal -$0.00); CC INTEREST (Credit: Prev Stmt Bal +$2.08)',
+                                 ''],
+             'Memo': ['', '', '', '']
+         })
+         )
+
+    E = ExpenseForecast.ExpenseForecast(account_set, budget_set,
+                                        memo_rule_set,
+                                        start_date_YYYYMMDD,
+                                        end_date_YYYYMMDD,
+                                        milestone_set,
+                                        raise_exceptions=False)
+
+    E.runForecast(log_level='DEBUG')
+    #print(E.forecast_df.to_string())
     #
     # # def sync_account_set_w_forecast_day(account_set, forecast_df, date_YYYYMMDD):
     # #
