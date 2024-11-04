@@ -135,37 +135,34 @@ if __name__ == '__main__':
 
 
 
-    test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df = ('test_cc_single_additional_payment_day_before_OVERPAY__curr_prev',
-         AccountSet.AccountSet(checking_acct_list(5000) + credit_bsd12_w_eopc_acct_list(500, 400, 0.05, 500)),
-         BudgetSet.BudgetSet(
-             [BudgetItem.BudgetItem('20000111', '20000111', 2, 'once', 1000, 'test credit payment 1', False, True)]),
+    test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df = ('test_cc_interest_accrued_reaches_0',
+         AccountSet.AccountSet(checking_acct_list(50) + credit_bsd12_w_eopc_acct_list(0, 0, 0.05, 500)),  # todo implement
+         # BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 600, 'single additional payment on due date', False, False)]),
+         BudgetSet.BudgetSet(),
          MemoRuleSet.MemoRuleSet([
              MemoRule.MemoRule('.*', 'Checking', None, 1),
              MemoRule.MemoRule('.*', 'Checking', 'Credit', 2)
          ]),
          '20000110',
-         '20000113',
+         '20000214',
          MilestoneSet.MilestoneSet([], [], []),
          pd.DataFrame({
-             'Date': ['20000110', '20000111', '20000112', '20000113'],
-             'Checking': [5000, 4100, 4100, 4100],
-             'Credit: Curr Stmt Bal': [400, 0, 0, 0],
-             'Credit: Prev Stmt Bal': [500, 0, 2.08, 2.08],
-             'Credit: Credit Billing Cycle Payment Bal': [0, 900, 0, 0],
-             'Credit: Credit End of Prev Cycle Bal': [500, 500, 500, 2.08],
-             'Marginal Interest': [0, 0, 2.08, 0],
-             'Net Gain': [0, 0, 0, 0],
-             'Net Loss': [0, 0, 2.08, 0],
-             'Net Worth': [4100, 4100, 4100 - 2.08, 4100 - 2.08],
-             'Loan Total': [0, 0, 0, 0],
-             'CC Debt Total': [900, 0, 2.08, 2.08],
-             'Liquid Total': [5000, 4100, 4100, 4100],
-             'Next Income Date': ['', '', '', ''],
-             'Memo Directives': ['',
-                                 'ADDTL CC PAYMENT (Checking -$400.00); ADDTL CC PAYMENT (Credit: Curr Stmt Bal -$400.00); ADDTL CC PAYMENT (Checking -$500.00); ADDTL CC PAYMENT (Credit: Prev Stmt Bal -$500.00)',
-                                 'CC MIN PAYMENT ALREADY MADE (Checking -$0.00); CC MIN PAYMENT ALREADY MADE (Credit: Prev Stmt Bal -$0.00); CC INTEREST (Credit: Prev Stmt Bal +$2.08)',
-                                 ''],
-             'Memo': ['', '', '', '']
+             'Date': generate_date_sequence('20000110', 35, 'daily'),
+             'Checking': [0] * 36,
+             'Credit: Curr Stmt Bal': [0] * 36,
+             'Credit: Prev Stmt Bal': [0] * 36,
+             'Credit: Credit Billing Cycle Payment Bal': [0] * 36,
+             'Credit: Credit End of Prev Cycle Bal': [0] * 36,
+             'Marginal Interest': [0] * 36,
+             'Net Gain': [0] * 36,
+             'Net Loss': [0] * 36,
+             'Net Worth': [0] * 36,
+             'Loan Total': [0] * 36,
+             'CC Debt Total': [0] * 36,
+             'Liquid Total': [0] * 36,
+             'Next Income Date': [''] * 36,
+             'Memo Directives': ['NOT IMPLEMENTED'] * 36,
+             'Memo': [''] * 36
          })
          )
 

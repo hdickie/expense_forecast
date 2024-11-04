@@ -2298,7 +2298,7 @@ class TestExpenseForecastMethods:
          ),
 
         ('test_cc_interest_accrued_reaches_0',
-         AccountSet.AccountSet(checking_acct_list(0) + credit_bsd12_w_eopc_acct_list(0, 0, 0.05, 500)),  # todo implement
+         AccountSet.AccountSet(checking_acct_list(50) + credit_bsd12_w_eopc_acct_list(0, 0, 0.05, 500)),  # todo implement
          # BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 600, 'single additional payment on due date', False, False)]),
          BudgetSet.BudgetSet(),
          MemoRuleSet.MemoRuleSet([
@@ -3646,7 +3646,8 @@ class TestExpenseForecastMethods:
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_distal_propagation_multiple__curr_only-account_set48-budget_set48-memo_rule_set48-20000110-20000214-milestone_set48-expected_result_df48]
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_distal_propagation__curr_prev-account_set49-budget_set49-memo_rule_set49-20000110-20000214-milestone_set49-expected_result_df49]
 # FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_distal_propagation_multiple__curr_prev-account_set50-budget_set50-memo_rule_set50-20000110-20000214-milestone_set50-expected_result_df50]
-# =============================================== 25 failed, 165 passed, 162 warnings in 349.69s (0:05:49) ==========
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_interest_accrued_reaches_0-account_set51-budget_set51-memo_rule_set51-20000110-20000214-milestone_set51-expected_result_df51]
+# =============================================== 26 failed, 175 passed, 178 warnings in 305.56s (0:05:05) ===
 
 
 
