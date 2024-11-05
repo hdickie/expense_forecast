@@ -113,11 +113,12 @@ import math
 pd.set_option('display.precision', 100)
 ROUNDING_ERROR_TOLERANCE =  0.0000000001 #10 places? overkill but I want to see if it works
 
-thread_id = str(math.floor(random.random() * 1000))
-try:
-    logger = setup_logger(__name__, os.environ['EF_LOG_DIR'] + __name__ + '_'+ thread_id+'.log', level=logging.DEBUG)
-except KeyError:
-    logger = setup_logger(__name__, __name__ + '_'+ thread_id+'.log', level=logging.DEBUG)
+logger = setup_logger(__name__, './'+ __name__ + '.log', level=logging.DEBUG)
+# thread_id = str(math.floor(random.random() * 1000))
+# try:
+#     logger = setup_logger(__name__, os.environ['EF_LOG_DIR'] + __name__ + '_'+ thread_id+'.log', level=logging.DEBUG)
+# except KeyError:
+#     logger = setup_logger(__name__, __name__ + '_'+ thread_id+'.log', level=logging.DEBUG)
 
 # def initialize_from_database(start_date_YYYYMMDD,
 #                              end_date_YYYYMMDD,
@@ -1216,12 +1217,12 @@ class ExpenseForecast:
         #print('ENTER ExpenseForecast.__init__ approximate_flag = '+str(approximate_flag))
         #full_forecast_label = (forecast_title+'__'+forecast_subtitle).replace(' ','_').replace('-','_').replace(':','_')
         #logger = setup_logger('ExpenseForecast', log_directory + 'ExpenseForecast_'++'.log', level=logging.INFO)
-        thread_id = str(math.floor(random.random() * 1000))
-        try:
-            logger = setup_logger(__name__, os.environ['EF_LOG_DIR'] + __name__ + '_' + thread_id + '.log',
-                                  level=logging.DEBUG)
-        except KeyError:
-            logger = setup_logger(__name__, __name__ + '_' + thread_id + '.log', level=logging.DEBUG)
+        # thread_id = str(math.floor(random.random() * 1000))
+        # try:
+        #     logger = setup_logger(__name__, os.environ['EF_LOG_DIR'] + __name__ + '_' + thread_id + '.log',
+        #                           level=logging.DEBUG)
+        # except KeyError:
+        #     logger = setup_logger(__name__, __name__ + '_' + thread_id + '.log', level=logging.DEBUG)
         #log_in_color(logger,'green','info','ExpenseForecast(start_date_YYYYMMDD='+str(start_date_YYYYMMDD)+', end_date_YYYYMMDD='+str(end_date_YYYYMMDD)+')')
 
         self.forecast_set_name = str(forecast_set_name)
@@ -1453,10 +1454,10 @@ class ExpenseForecast:
         single_forecast_run_log_file_name = 'Forecast_'+str(self.unique_id)+'.log'
         log_in_color(logger, 'green', 'debug','Attempting switch log file to: '+single_forecast_run_log_file_name)
 
-        try:
-            logger = setup_logger(__name__, os.environ['EF_LOG_DIR'] + __name__ + '_' + self.unique_id + '.log', level=logging.DEBUG)
-        except KeyError:
-            logger = setup_logger(__name__, __name__ + '_' + self.unique_id + '.log', level=logging.DEBUG)
+        # try:
+        #     logger = setup_logger(__name__, os.environ['EF_LOG_DIR'] + __name__ + '_' + self.unique_id + '.log', level=logging.DEBUG)
+        # except KeyError:
+        #     logger = setup_logger(__name__, __name__ + '_' + self.unique_id + '.log', level=logging.DEBUG)
 
         # print("unique_id:"+str(self.unique_id))
         # print("")

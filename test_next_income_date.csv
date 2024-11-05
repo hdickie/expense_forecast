@@ -1,6 +1,0 @@
-,Date,Checking,Marginal Interest,Net Gain,Net Loss,Net Worth,Loan Total,CC Debt Total,Liquid Total,Next Income Date,Memo Directives,Memo
-0,20000101,1000.0,0,0,0,1000.0,0.0,0.0,1000.0,20000102,,
-1,20000102,1100.0,0,100,0,1100.0,0.0,0.0,1100.0,20000104,INCOME (Checking +$100.00),income 1 (Checking +$100.00)
-2,20000103,1100.0,0,0,0,1100.0,0.0,0.0,1100.0,20000104,,
-3,20000104,1200.0,0,100,0,1200.0,0.0,0.0,1200.0,,INCOME (Checking +$100.00),income 2 (Checking +$100.00)
-4,20000105,1200.0,0,0,0,1200.0,0.0,0.0,1200.0,,,

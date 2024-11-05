@@ -672,35 +672,3 @@ may consider it more useful to permit linking proprietary applications with
 the library.  If this is what you want to do, use the GNU Lesser General
 Public License instead of this License.  But first, please read
 <https://www.gnu.org/licenses/why-not-lgpl.html>.
-
-
-
-
-
-
-
-TODO
- - Tutorial document
- 
- Plots I want:
-1. Overall (All)
-2. Net worth ( Loan Sum, CC, Check, Save)
-3. Marginal Interest
-
-Output datasets:
-4. Dates for memo items w priority > 2
- 
-This goes in tutorial doc
-In this implementation, the meaning of priority indices is implied by the way they are used in memo rules.
-This is to allow custom priority indices to be implemented via configuration.
-
-The way I am currently using it:
-1. Non-negotiables (minimum cc and loan payments)
-2. additional cc and loan payments
-3. unskippable things i am willing  to pay interest on
-4. deferrable things i am willing to pay interest on
-5. unskippable things I am not willing to pay interest on
-6. deferabble things I am not willing to pay interest on
-7. additional loan payments
-8. savings
-9. investments
