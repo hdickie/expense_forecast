@@ -25,7 +25,7 @@ pd.options.mode.chained_assignment = None #apparently this warning can throw fal
 
 # from generate_date_sequence import generate_date_sequence
 
-if __name__ == '__main__':
+
 
 
     start_date_YYYYMMDD = datetime.datetime.now().strftime('%Y%m%d')
