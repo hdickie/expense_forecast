@@ -10,7 +10,44 @@ from log_methods import setup_logger
 #logger = setup_logger('AccountSet','./log/AccountSet.log',logging.INFO)
 logger = logging.getLogger(__name__)
 
-ROUNDING_ERROR_TOLERANCE =  0.0000000001 #10 places? overkill but I want to see if it works
+ROUNDING_ERROR_TOLERANCE =  0.0000000001
+
+def determineMinPaymentAmount(advance_payment_amount, interest_accrued_this_cycle, principal_due_this_cycle, total_balance, min_payment):
+    # log_in_color(logger, 'white', 'debug', 'ENTER determineMinPaymentAmount', self.log_stack_depth)
+    # self.log_stack_depth += 1
+    #print(f"determineMinPaymentAmount({advance_payment_amount}, {interest_accrued_this_cycle}, {principal_due_this_cycle}, {total_balance}, {min_payment})")
+
+    A = advance_payment_amount
+    I = interest_accrued_this_cycle
+    P = principal_due_this_cycle
+    T = total_balance
+    M = min_payment
+
+    amount_due = None
+
+    if A > T:
+        A = T
+
+    M_prime = max(0,M - A)
+    P_prime = max(0, P - A)
+    T_prime = T - A
+
+    S = P_prime + I
+
+    if I + P == 0:
+        return 0
+
+    if S >= M_prime:
+        return S
+
+    if S < M_prime and T >= M_prime:
+        return M_prime
+
+    if S < M_prime and T_prime < M_prime:
+        return T_prime
+
+    #print('FINAL ANSWER: '+str(amount_due))
+    return amount_due
 
 def initialize_from_dataframe(accounts_df):
     #print('ENTER AccountSet initialize_from_dataframe')
@@ -166,7 +203,7 @@ class AccountSet:
                 raise ValueError(
                     f"Max_Balance mismatch between Principal Balance and Interest accounts for '{acct_name}'.")
 
-            #todo add validation for Loan Billing Cycle Payment Bal and Loan Prev End of Cycle Bal
+            #todo add validation for Loan Billing Cycle Payment Bal and Loan Prev End of Cycle Bal #https://github.com/hdickie/expense_forecast/issues/12
 
             combined_balance = pb_account.Balance.values[0] + interest_account.Balance.values[0]
             if combined_balance < pb_account.Min_Balance.values[0]:
@@ -201,7 +238,7 @@ class AccountSet:
                 raise ValueError(
                     f"Credit accounts must have End of Prev Cycle Bal account for '{acct_name}'.")
 
-            # todo add validation for Credit Billing Cycle Payment Bal and Loan Prev End of Cycle Bal
+            # todo add validation for Credit Billing Cycle Payment Bal and Loan Prev End of Cycle Bal #https://github.com/hdickie/expense_forecast/issues/12
 
             if prev_account.Max_Balance.values[0] != curr_account.Max_Balance.values[0]:
                 raise ValueError(
@@ -297,7 +334,7 @@ class AccountSet:
             self.accounts.append(account_interest)
 
             billing_cycle_payment = Account.Account(name=f"{name}: Loan Billing Cycle Payment Bal",
-                                               balance=billing_cycle_payment_balance,
+                                               balance=billing_cycle_payment_balance, #todo refactor to have this be end_of_previous_cycle_balance - prev_balance #https://github.com/hdickie/expense_forecast/issues/13
                                                min_balance=min_balance,
                                                max_balance=max_balance,
                                                account_type='loan billing cycle payment bal',
@@ -307,7 +344,7 @@ class AccountSet:
             self.accounts.append(billing_cycle_payment)
 
             eopc = Account.Account(name=f"{name}: Loan End of Prev Cycle Bal",
-                                                    balance=end_of_previous_cycle_balance, #todo I'm actually not sure if this makes sense
+                                                    balance=end_of_previous_cycle_balance,
                                                     min_balance=min_balance,
                                                     max_balance=max_balance,
                                                     account_type='loan end of prev cycle bal',
@@ -794,130 +831,6 @@ class AccountSet:
 
         #print('EXIT executeTransaction(' + str(Account_From) + ',' + str(Account_To) + ',' + str(Amount) + ', minimum_payment_flag=' + str(minimum_payment_flag) + ')')
 
-    # def from_excel(self,path):
-    #     self.accounts = []
-    #     A_df = pd.read_excel(path)
-    #
-    #     # "Name": "test",
-    #     # "Balance": "0.0",
-    #     # "Min_Balance": "0.0",
-    #     # "Max_Balance": "0.0",
-    #     # "Account_Type": "checking",
-    #     # "Billing_Start_Date": "None",
-    #     # "Interest_Type": "None",
-    #     # "APR": "None",
-    #     # "Interest_Cadence": "None",
-    #     # "Minimum_Payment": "None"
-    #
-    #     #info for paired accounts needs to be in one row, so we have to iterate over once
-    #     expect_secondary_acct = False
-    #     name = None
-    #     balance = None
-    #     min_balance = None
-    #     max_balance = None
-    #     billing_start_date_YYYYMMDD = None
-    #     interest_type = None
-    #     apr = None
-    #     interest_cadence = None
-    #     minimum_payment = None
-    #     for index, row in A_df.iterrows():
-    #         if expect_secondary_acct:
-    #             assert min_balance == row.Min_Balance
-    #             assert max_balance == row.Max_Balance
-    #             assert name.split(':')[0] == row.Name.split(':')[0] #these are the only checks createAccount cant catch
-    #         else:
-    #             name = row.Name
-    #             balance = row.Balance
-    #             min_balance = row.Min_Balance
-    #             max_balance = row.Max_Balance
-    #
-    #             billing_start_date_YYYYMMDD = row.Billing_Start_Dt
-    #             interest_type = row.Interest_Type
-    #             apr = row.APR
-    #             interest_cadence = row.Interest_Cadence
-    #             minimum_payment = row.Minimum_Payment
-    #
-    #         if row.Account_Type == 'checking':
-    #             self.createAccount(name,
-    #                   balance,
-    #                   min_balance,
-    #                   max_balance,
-    #                   'checking')
-    #         elif (row.Account_Type == 'curr stmt bal' or row.Account_Type == 'interest'
-    #               or row.Account_Type == 'prev stmt bal' or row.Account_Type == 'principal balance') and not expect_secondary_acct: #we cant count on row order here
-    #             expect_secondary_acct = True
-    #             continue
-    #         elif row.Account_Type == 'prev stmt bal' and expect_secondary_acct:
-    #             expect_secondary_acct = False
-    #             self.createAccount(name.split(':')[0],
-    #                             balance,
-    #                             min_balance,
-    #                             max_balance,
-    #                             'credit',
-    #                             billing_start_date_YYYYMMDD=int(row.Billing_Start_Dt),
-    #                             interest_type=row.Interest_Type,
-    #                             apr=row.APR,
-    #                             interest_cadence=row.Interest_Cadence,
-    #                             minimum_payment=row.Minimum_Payment,
-    #                             previous_statement_balance=row.Balance,
-    #                             principal_balance=None,
-    #                             interest_balance=None)
-    #         elif row.Account_Type == 'curr stmt bal' and expect_secondary_acct:
-    #             expect_secondary_acct = False
-    #             self.createAccount(name.split(':')[0],
-    #                             row.Balance,
-    #                             min_balance,
-    #                             max_balance,
-    #                             'loan',
-    #                            billing_start_date_YYYYMMDD=int(billing_start_date_YYYYMMDD),
-    #                            interest_type=interest_type,
-    #                            apr=apr,
-    #                            interest_cadence=interest_cadence,
-    #                            minimum_payment=minimum_payment,
-    #                            previous_statement_balance=balance,
-    #                            principal_balance=None,
-    #                            interest_balance=None)
-    #         elif row.Account_Type == 'principal balance' and expect_secondary_acct:
-    #             expect_secondary_acct = False
-    #             self.createAccount(name.split(':')[0],
-    #                             balance + row.Balance,
-    #                             min_balance,
-    #                             max_balance,
-    #                             'loan',
-    #                             billing_start_date_YYYYMMDD=int(row.Billing_Start_Dt),
-    #                             interest_type=row.Interest_Type,
-    #                             apr=row.APR,
-    #                             interest_cadence=row.Interest_Cadence,
-    #                             minimum_payment=row.Minimum_Payment,
-    #                             previous_statement_balance=None,
-    #                             principal_balance=balance,
-    #                             interest_balance=row.Balance)
-    #         elif row.Account_Type == 'interest' and expect_secondary_acct:
-    #             expect_secondary_acct = False
-    #             self.createAccount(name.split(':')[0],
-    #                             balance + row.Balance,
-    #                             min_balance,
-    #                             max_balance,
-    #                             'loan',
-    #                             billing_start_date_YYYYMMDD=int(billing_start_date_YYYYMMDD),
-    #                             interest_type=interest_type,
-    #                             apr=apr,
-    #                             interest_cadence=interest_cadence,
-    #                             minimum_payment=minimum_payment,
-    #                             previous_statement_balance=None,
-    #                             principal_balance=balance,
-    #                             interest_balance=row.Balance)
-    #         else: raise NotImplementedError #an unexpected account type was found, or expect_secondary_acct was set inappropriately
-    #
-
-    #
-    # def to_excel(self,path):
-    #     A = self.getAccounts()
-    #     #A['Billing_Start_Dt'] = pd.to_datetime(A['Billing_Start_Dt'])
-    #     #print(A.dtypes)
-    #     A.to_excel(path)
-
-
     def allocate_additional_loan_payments(self, amount):
         # print('ENTER allocate_additional_loan_payments: '+str(amount))
 
@@ -1052,7 +965,6 @@ class AccountSet:
             #print('next_step_marginal_interest_vector:\n')
             #print(next_step_marginal_interest_vector)
 
-            #todo include interest in these amounts
             current_principal_balance_state = P
             #print('current_state:' + str(current_state))
             #print('total_amount_per_loan:'+str(total_amount_per_loan))
@@ -1088,7 +1000,7 @@ class AccountSet:
 
                 proposed_payment_on_principal = principal_balance_delta
 
-                #todo, currently, if the final payment includes interest, then the total gets distributed across multiple loans and does not go to interest first
+                #todo, currently, if the final payment includes interest, then the total gets distributed across multiple loans and does not go to interest first # https://github.com/hdickie/expense_forecast/issues/14
                 if proposed_payment_on_principal[i][0] > 0:
                     loop__amount = proposed_payment_on_principal[i][0] + current_loan_interest
                 else:
@@ -1248,10 +1160,6 @@ class AccountSet:
 # written in one line so that test coverage can reach 100%
 if __name__ == "__main__": import doctest; doctest.testmod()
 
-
-# todo known bug- i was able to create multiple loan accounts with the same name
-
-# Before gpt -k test_Account
-# 96 passed, 137 deselected in 19.31s
+# todo known bug- i was able to create multiple loan accounts with the same name #https://github.com/hdickie/expense_forecast/issues/15
 
 

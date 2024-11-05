@@ -9,10 +9,9 @@ class CompositeMilestone:
     def __init__(self,milestone_name,account_milestones__list, memo_milestones__list):
         self.milestone_name = milestone_name
 
-        #todo validate required attributes
+        #todo validate required attributes (memo as well) https://github.com/hdickie/expense_forecast/issues/16
         self.account_milestones = account_milestones__list
 
-        # todo validate required attributes
         self.memo_milestones = memo_milestones__list
 
 

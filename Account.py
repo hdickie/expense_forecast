@@ -209,9 +209,3 @@ class Account:
 
 #written in one line so that test coverage can reach 100%
 if __name__ == "__main__": import doctest ; doctest.testmod()
-
-# Before GPT
-# 96 passed, 137 deselected in 17.85s
-
-# After GPT
-# 96 passed, 137 deselected in 18.76s

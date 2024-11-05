@@ -27,17 +27,7 @@ class MemoRuleSet:
         """
         Create a <MemoRuleSet> from a <list> of <MemoRule> objects.
 
-        | Test Cases
-        | Expected Successes
-        | S1 Provide valid parameters.
-        |
-        | Expected Fails
-        | F1 input a list with objects that are not BudgetItem type. Do this without explicitly checking type. #todo refactor MemoRuleSet.MemoRuleSet() doctest F1 to use _F1 label
-        | F2 provide a list of MemoRules with a memo and priority that matches a MemoRule already in self.memo_riles (same from and to) #todo refactor MemoRuleSet.MemoRuleSet() doctest F2 to use _F2 label
-        | F3 provide a list of MemoRules with a memo and priority that matches a MemoRule already in self.memo_rules (different from and to) #todo refactor MemoRuleSet.MemoRuleSet() doctest F3 to use _F3 label
-
-
-        :param memo_rules__list:
+        #todo gpt can do this better
         """
 
         if memo_rules__list is None:
@@ -121,15 +111,7 @@ class MemoRuleSet:
     def addMemoRule(self,memo_regex,account_from,account_to,transaction_priority):
         """ Add a <MemoRule> to <list> MemoRuleSet.memo_rules.
 
-        | Test Cases
-        | Expected Successes
-        | S1 Provide valid parameters.
-        |
-        | Expected Fails
-        | F1 Provide incorrect types for each parameter  #todo refactor MemoRuleSet.addMemoRule() doctest F1 to use _F1 label
-        | F2 add a BudgetItem with a memo and priority that matches a BudgetItem already in self.budgetItems (same from and to) #todo refactor MemoRuleSet.addMemoRule() doctest F2 to use _F2 label
-        | F3 add a BudgetItem with a memo and priority that matches a BudgetItem already in self.budgetItems (different from and to) #todo refactor MemoRuleSet.addMemoRule() doctest F3 to use _F3 label
-
+        # todo document
         """
         log_in_color(logger,'green','info','addMemoRule(memo_regex='+str(memo_regex)+',account_from='+str(account_from)+',account_to='+str(account_to)+',transaction_priority='+str(transaction_priority)+')')
 
