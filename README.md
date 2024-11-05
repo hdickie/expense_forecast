@@ -9,14 +9,7 @@ This tool is useful for:
 <li>Tracking long-term financial goals</li>
 </ul>
 
+## License
 
-## How to Use
-If you already know how to use Docker then the official link to the latest image for this project is here:
-https://hub.docker.com/repository/docker/hdickie/virtuoso-insights-local/general
+This project is licensed under the GNU General Public License v3.0. See the [license.txt](./license.txt) file for details.
 
-## Documentation
-extremely old at this point:
-<a href="https://hdickie.github.io/expense_forecast/build/html/"/>Documentation</a>
-
-## Contact
-You can reach me at hume.dickie@live.com.  
