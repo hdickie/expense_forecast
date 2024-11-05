@@ -135,34 +135,46 @@ if __name__ == '__main__':
 
 
 
-    test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df = ('test_cc_interest_accrued_reaches_0',
-         AccountSet.AccountSet(checking_acct_list(50) + credit_bsd12_w_eopc_acct_list(0, 0, 0.05, 500)),  # todo implement
-         # BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 600, 'single additional payment on due date', False, False)]),
-         BudgetSet.BudgetSet(),
+    test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df = ('test_p7__additional_loan_payment__amt_560',
+         AccountSet.AccountSet(
+             checking_acct_list(5000) + non_trivial_loan('Loan A', 1000, 100, 0.1) + non_trivial_loan('Loan B', 1000,
+                                                                                                      100,
+                                                                                                      0.05) + non_trivial_loan(
+                 'Loan C', 1000, 100, 0.01)),
+         BudgetSet.BudgetSet(
+             [BudgetItem.BudgetItem('20000102', '20000102', 7, 'once', 560, 'additional_loan_payment')]),
          MemoRuleSet.MemoRuleSet([
              MemoRule.MemoRule('.*', 'Checking', None, 1),
-             MemoRule.MemoRule('.*', 'Checking', 'Credit', 2)
+             MemoRule.MemoRule('additional_loan_payment', 'Checking', 'ALL_LOANS', 7)
          ]),
-         '20000110',
-         '20000214',
-         MilestoneSet.MilestoneSet([], [], []),
+         '20000101',
+         '20000103',
+         MilestoneSet.MilestoneSet( [], [], []),
          pd.DataFrame({
-             'Date': generate_date_sequence('20000110', 35, 'daily'),
-             'Checking': [0] * 36,
-             'Credit: Curr Stmt Bal': [0] * 36,
-             'Credit: Prev Stmt Bal': [0] * 36,
-             'Credit: Credit Billing Cycle Payment Bal': [0] * 36,
-             'Credit: Credit End of Prev Cycle Bal': [0] * 36,
-             'Marginal Interest': [0] * 36,
-             'Net Gain': [0] * 36,
-             'Net Loss': [0] * 36,
-             'Net Worth': [0] * 36,
-             'Loan Total': [0] * 36,
-             'CC Debt Total': [0] * 36,
-             'Liquid Total': [0] * 36,
-             'Next Income Date': [''] * 36,
-             'Memo Directives': ['NOT IMPLEMENTED'] * 36,
-             'Memo': [''] * 36
+             'Date': ['20000101', '20000102', '20000103'],
+             'Checking': [5000, 5000 - 150 - 560, 5000 - 150 - 560],
+             'Loan A: Principal Balance': [1000, 496.89 , 496.89 ],
+             'Loan A: Interest': [100, 0, 0.14],
+             'Loan A: Loan Billing Cycle Payment Bal': [0, 503.11 + 50.27, 503.11 + 50.27],
+             'Loan A: Loan End of Prev Cycle Bal': [1000, 1000, 1000],
+             'Loan B: Principal Balance': [1000, 1000, 1000],
+             'Loan B: Interest': [100, 43.52, 43.66],
+             'Loan B: Loan Billing Cycle Payment Bal': [0, 6.62, 6.62],
+             'Loan B: Loan End of Prev Cycle Bal': [1000, 1000, 1000],
+             'Loan C: Principal Balance': [1000, 1000, 1000],
+             'Loan C: Interest': [ 100, 50.03, 50.06 ],
+             'Loan C: Loan Billing Cycle Payment Bal': [0, 0, 0],
+             'Loan C: Loan End of Prev Cycle Bal': [1000, 1000, 1000],
+             'Marginal Interest': [0, 0.44, 0.31],
+             'Net Gain': [0, 0, 0],
+             'Net Loss': [0, 0.44, 0.31],
+             'Net Worth': [1700, 1699.56, 1699.25],
+             'Loan Total': [3300, 2590.44, 2590.75],
+             'CC Debt Total': [0, 0, 0],
+             'Liquid Total': [5000, 5000 - 150 - 560, 5000 - 150 - 560],
+             'Next Income Date': ['', '', ''],
+                                  'Memo Directives': ['', 'LOAN MIN PAYMENT (Loan A: Interest -$50.00); LOAN MIN PAYMENT (Checking -$50.00); LOAN MIN PAYMENT (Loan B: Interest -$50.00); LOAN MIN PAYMENT (Checking -$50.00); LOAN MIN PAYMENT (Loan C: Interest -$50.00); LOAN MIN PAYMENT (Checking -$50.00); ADDTL LOAN PAYMENT (Checking -$503.11); ADDTL LOAN PAYMENT (Loan A: Principal Balance -$503.11); ADDTL LOAN PAYMENT (Checking -$50.27); ADDTL LOAN PAYMENT (Loan A: Interest -$50.27); ADDTL LOAN PAYMENT (Checking -$6.62); ADDTL LOAN PAYMENT (Loan B: Interest -$6.62)', ''],
+             'Memo': ['', '', '']
          })
          )
 

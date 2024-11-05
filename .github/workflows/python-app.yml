@@ -1,0 +1,56 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: Prod Python application
+
+on:
+  pull_request:
+    branches: [ "prod" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.12.0
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.12.0"
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 pytest pytest-cov coverage
+        pip install pandas numpy jsonpickle tqdm colorama sqlalchemy psycopg2 matplotlib plotly
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    - name: Lint with flake8
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 *.py --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 *.py --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    - name: Test with pytest
+      run: |
+        coverage run -m pytest
+    - name: Write coverage report
+      if: always()
+      run: |
+        coverage report > coverage.txt
+        coverage html
+    - name: Archive code coverage results .txt
+      uses: actions/upload-artifact@v4
+      with:
+        name: code-coverage-report-txt
+        path: coverage.txt
+      if: always()
+    - name: Archive code coverage results .html
+      uses: actions/upload-artifact@v4
+      with:
+        name: code-coverage-report-html
+        path: htmlcov/*
+      if: always()
+

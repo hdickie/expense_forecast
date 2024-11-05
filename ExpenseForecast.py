@@ -1460,9 +1460,11 @@ class ExpenseForecast:
         #Final QC. If we trust the code, we can comment this out
         #checking, credit, loan,
         # loan_acct_sel_vec = loan_acct_sel_vec.append(pd.Series([False])) #this works
-        loan_acct_sel_vec = pd.Series([False]).append(loan_acct_sel_vec).append(pd.Series([False] * 6))
-        cc_acct_sel_vec = pd.Series([False]).append(cc_acct_sel_vec).append(pd.Series([False] * 6))
-        checking_sel_vec = pd.Series([False]).append(checking_sel_vec).append(pd.Series([False] * 6))
+
+        loan_acct_sel_vec = pd.concat([pd.Series([False]),loan_acct_sel_vec,pd.Series([False] * 6)])
+        cc_acct_sel_vec = pd.concat([pd.Series([False]), cc_acct_sel_vec, pd.Series([False] * 6)])
+        checking_sel_vec = pd.concat([pd.Series([False]), checking_sel_vec, pd.Series([False] * 6)])
+
         # loan_acct_sel_vec = pd.concat([False],loan_acct_sel_vec,[False] * 5)
         # cc_acct_sel_vec = pd.concat([False], cc_acct_sel_vec, [False] * 5)
         # checking_sel_vec = pd.concat([False], checking_sel_vec, [False] * 5)
@@ -1980,7 +1982,7 @@ class ExpenseForecast:
                 if m.strip() == '':
                     continue
                 try:
-                    og_amt = float(re.search('.*\$(.*)\)', m).group(1))
+                    og_amt = float(re.search('.*\\$(.*)\\)', m).group(1))
                 except Exception as e:
                     print('Offending memo: ' + str(m))
                     raise e
@@ -1994,7 +1996,7 @@ class ExpenseForecast:
                 if md.strip() == '':
                     continue
                 try:
-                    og_amt = float(re.search('.*\$(.*)\)', md).group(1))
+                    og_amt = float(re.search('.*\\$(.*)\\)', md).group(1))
                 except Exception as e:
                     print('Offending memo directive: ' + str(md))
                     raise e
@@ -2457,7 +2459,7 @@ class ExpenseForecast:
         #print('memo_directives: '+str(memo_directives))
         for md in memo_directives.split(';'):
             #print('md: '+str(md))
-            m = re.search('CC INTEREST \((.*):(.*)\+\$(.*)\)',md)
+            m = re.search('CC INTEREST \\((.*):(.*)\\+\\$(.*)\\)',md)
             try:
                 basename_str = m.group(1)
 
@@ -2671,7 +2673,7 @@ class ExpenseForecast:
             if (f'CC MIN PAYMENT ({base_account_name}: Prev Stmt Bal' in memo or
                     f'CC MIN PAYMENT ({base_account_name}: Curr Stmt Bal' in memo):
 
-                match = re.search('(.*) \((.*)[-+]{1}\$(.*)\)', memo)
+                match = re.search('(.*) \\((.*)[-+]{1}\\$(.*)\\)', memo)
                 #match = re.search(r'\(.*-\$(\d+(\.\d{1,2})?)\)', memo)
                 if match:
                     amount = float(match.group(3))
@@ -2894,8 +2896,8 @@ class ExpenseForecast:
 
         # we have to add the curr and prev for the acct in case multiple credit cards were paid the same day
         # CC MIN PAYMENT (Credit: Prev Stmt Bal -$487.99)
-        prev_search_substring = 'CC MIN PAYMENT \('+credit_basename+': Prev Stmt Bal -\$(.*)\)'
-        curr_search_substring = 'CC MIN PAYMENT \(' + credit_basename + ': Curr Stmt Bal -\$(.*)\)'
+        prev_search_substring = 'CC MIN PAYMENT \\('+credit_basename+': Prev Stmt Bal -\\$(.*)\\)'
+        curr_search_substring = 'CC MIN PAYMENT \\(' + credit_basename + ': Curr Stmt Bal -\\$(.*)\\)'
 
         min_cc_payment_found = False
         prev_amt_float = None
@@ -4078,14 +4080,14 @@ class ExpenseForecast:
             cycle_payment_bal_aname = account_row.Name.split(':')[0] + ': Credit Billing Cycle Payment Bal'
             current_forecast_row_df[cycle_payment_bal_aname] = 0
 
-            print('advance_payment_amount:' + str(advance_payment_amount))
-            print('interest_accrued_this_cycle:' + str(interest_accrued_this_cycle))
+            # print('advance_payment_amount:' + str(advance_payment_amount))
+            # print('interest_accrued_this_cycle:' + str(interest_accrued_this_cycle))
 
             total_owed_before_accrual = account_set.accounts[account_index].balance
-            min_payment = determineMinPaymentAmount(advance_payment_amount, interest_accrued_this_cycle, principal_due_this_cycle, total_owed_before_accrual, account_row.Minimum_Payment)
+            min_payment = AccountSet.determineMinPaymentAmount(advance_payment_amount, interest_accrued_this_cycle, principal_due_this_cycle, total_owed_before_accrual, account_row.Minimum_Payment)
 
 
-            print('min_payment:'+str(min_payment))
+            # print('min_payment:'+str(min_payment))
             # print('current_forecast_row_df:')
             # print(str(current_forecast_row_df.to_string()))
 
@@ -4628,8 +4630,6 @@ class ExpenseForecast:
                         checking_delta += ( og_prev_amount + og_curr_amount )
 
 
-
-                        #todo
                         # advance payment is applied to prev first
                         if advance_payment_amount >= min_payment_amount:
                             #new_check_memo = og_check_memo.replace(str(og_check_amount), '0.00')
@@ -5363,7 +5363,7 @@ class ExpenseForecast:
                                 interest_to_be_charged_immediately = previous_previous_stmt_bal * (account_row.APR.iat[0] / 12)
 
                                 # print('md:'+str(md))
-                                match_obj = re.search('\((.*)+\$(.*)\)', md)
+                                match_obj = re.search('\\((.*)+\\$(.*)\\)', md)
                                 og_interest_amount = float(match_obj.group(2))
 
                                 previous_stmt_delta += interest_to_be_charged_immediately
@@ -5630,7 +5630,7 @@ class ExpenseForecast:
                 # Handle other billing dates
 
                 # Ensure we have a valid previous_prev_stmt_bal
-                if previous_prev_stmt_bal == 0:
+                if f_row[eopc_account_name] == 0:
                     continue  # Skip if we don't have previous balance
 
                 # Initialize memo variables
@@ -5675,8 +5675,8 @@ class ExpenseForecast:
                 # Compute interest and current due
                 apr = account_row.APR.iat[0]
                 #interest_to_be_charged = round(previous_prev_stmt_bal * (apr / 12), 2)
-                interest_to_be_charged = previous_prev_stmt_bal * (apr / 12)
-                principal_due = previous_prev_stmt_bal * 0.01
+                interest_to_be_charged = f_row[eopc_account_name] * (apr / 12)
+                principal_due = f_row[eopc_account_name] * 0.01
                 current_due = principal_due + interest_to_be_charged
 
                 # Adjusted payment amounts
@@ -7243,7 +7243,7 @@ class ExpenseForecast:
 
         # log_in_color(logger, 'cyan', 'debug', 'memo_line: '+str(memo_line), self.log_stack_depth)
 
-        matches = re.search('(.*) \((.*)[-+]{1}\$(.*)\)', memo_line)
+        matches = re.search('(.*) \\((.*)[-+]{1}\\$(.*)\\)', memo_line)
         memo_amount = matches.group(3)
 
         # log_in_color(logger, 'cyan', 'debug', 'memo_amount: ' + str(memo_amount), self.log_stack_depth)
@@ -7264,7 +7264,7 @@ class ExpenseForecast:
 
 
         #  r'(\-$' + f'{new_amount:.2f}' + ')'
-        matches = re.search('(.*) \((.*)[-+]{1}\$(.*)\)',memo_line)
+        matches = re.search('(.*) \\((.*)[-+]{1}\\$(.*)\\)',memo_line)
         og_amount = matches.group(3)
         #new_memo_line = re.sub(str(og_amount), str(f'{new_amount:.2f}'), str(memo_line))
         new_memo_line = re.sub(str(og_amount), str(f'{new_amount}'), str(memo_line))
@@ -7560,7 +7560,7 @@ class ExpenseForecast:
                     if 'CC MIN PAYMENT ALREADY MADE' in md:
                         continue
                     log_in_color(logger, 'white', 'debug', 'md:'+str(md), self.log_stack_depth)
-                    txn_info = re.search('\((.*)\$(.*)\)',md)
+                    txn_info = re.search('\\((.*)\\$(.*)\\)',md)
                     acct_name = txn_info.group(1).split(':')[0]
                     acct_name = acct_name.replace('-', '').replace('+', '').strip()
                     memo_balance = float(txn_info.group(2))
@@ -7589,7 +7589,7 @@ class ExpenseForecast:
                         # don't bully me i'll cum
                         continue
                     log_in_color(logger, 'white', 'debug', 'm:'+str(m), self.log_stack_depth)
-                    txn_info = re.search('\((.*).*\$(.*)\)',m)
+                    txn_info = re.search('\\((.*).*\\$(.*)\\)',m)
                     acct_name = txn_info.group(1)
                     acct_name = acct_name.replace('-','').replace('+','').strip()
                     memo_balance = float(txn_info.group(2))
@@ -8629,6 +8629,278 @@ class ExpenseForecast:
         return_df = return_df.rename(columns={'index':'Field',0:'Value'})
         return return_df
 
+
+    def evaluateAccountMilestone(self,account_name,min_balance,max_balance):
+        log_in_color(logger,'yellow','debug','ENTER evaluateAccountMilestone('+str(account_name)+','+str(min_balance)+','+str(max_balance)+')',self.log_stack_depth)
+        self.log_stack_depth += 1
+        account_info = self.initial_account_set.getAccounts()
+        account_base_names = [ a.split(':')[0] for a in account_info.Name ]
+        row_sel_vec = [ a == account_name for a in account_base_names]
+
+        relevant_account_info_rows_df = account_info[row_sel_vec]
+        log_in_color(logger, 'yellow', 'debug', 'relevant_account_info_rows_df:')
+        log_in_color(logger, 'yellow', 'debug',relevant_account_info_rows_df.to_string())
+
+        #this df should be either 1 or 2 rows, but have same account type either way
+        try:
+            assert relevant_account_info_rows_df.Name.unique().shape[0] == 1
+        except Exception as e:
+            print(e)
+
+        if relevant_account_info_rows_df.shape[0] == 1: #case for checking and savings
+            col_sel_vec = self.forecast_df.columns == relevant_account_info_rows_df.head(1)['Name'].iat[0]
+            col_sel_vec[0] = True
+            relevant_time_series_df = self.forecast_df.iloc[:, col_sel_vec]
+
+            # a valid success date stays valid until the end
+            found_a_valid_success_date = False
+            success_date = 'None'
+            for index, row in relevant_time_series_df.iterrows():
+                current_value = relevant_time_series_df.iloc[index, 1]
+                if ((min_balance <= current_value) & (current_value <= max_balance)) and not found_a_valid_success_date:
+                    found_a_valid_success_date = True
+                    success_date = row.Date
+                    log_in_color(logger, 'yellow', 'debug', 'success_date:'+str(success_date),self.log_stack_depth)
+                elif ((min_balance > current_value) | (current_value > max_balance)):
+                    found_a_valid_success_date = False
+                    success_date = 'None'
+                    log_in_color(logger, 'yellow', 'debug', 'success_date:None',self.log_stack_depth)
+
+        elif relevant_account_info_rows_df.shape[0] == 2:  # case for credit and loan
+            curr_stmt_bal_acct_name = relevant_account_info_rows_df.iloc[0,0]
+            prev_stmt_bal_acct_name = relevant_account_info_rows_df.iloc[1, 0]
+
+            # log_in_color(logger, 'yellow', 'debug', 'curr_stmt_bal_acct_name:')
+            # log_in_color(logger, 'yellow', 'debug', curr_stmt_bal_acct_name)
+            # log_in_color(logger, 'yellow', 'debug', 'prev_stmt_bal_acct_name:')
+            # log_in_color(logger, 'yellow', 'debug', prev_stmt_bal_acct_name)
+
+            col_sel_vec = self.forecast_df.columns == curr_stmt_bal_acct_name
+            col_sel_vec = col_sel_vec | (self.forecast_df.columns == prev_stmt_bal_acct_name)
+            col_sel_vec[0] = True #Date
+
+            # log_in_color(logger, 'yellow', 'debug', 'col_sel_vec:')
+            # log_in_color(logger, 'yellow', 'debug', col_sel_vec)
+
+            relevant_time_series_df = self.forecast_df.iloc[:, col_sel_vec]
+
+            #a valid success date stays valid until the end
+            found_a_valid_success_date = False
+            success_date = 'None'
+            for index, row in relevant_time_series_df.iterrows():
+                current_value = relevant_time_series_df.iloc[index,1] + relevant_time_series_df.iloc[index,2]
+                if ((min_balance <= current_value) & (current_value <= max_balance)) and not found_a_valid_success_date:
+                    found_a_valid_success_date = True
+                    success_date = row.Date
+                    log_in_color(logger, 'yellow', 'debug', 'success_date:' + str(success_date),self.log_stack_depth)
+                elif ((min_balance > current_value) | (current_value > max_balance)):
+                    found_a_valid_success_date = False
+                    success_date = 'None'
+                    log_in_color(logger, 'yellow', 'debug', 'success_date:None',self.log_stack_depth)
+
+        # Summary lines
+        elif account_name in ('Marginal Interest','Net Gain','Net Loss','Net Worth','Loan Total','CC Debt Total','Liquid Total'):
+            col_sel_vec = self.forecast_df.columns == account_name
+            col_sel_vec[0] = True
+            relevant_time_series_df = self.forecast_df.iloc[:, col_sel_vec]
+
+            # a valid success date stays valid until the end
+            found_a_valid_success_date = False
+            success_date = 'None'
+            for index, row in relevant_time_series_df.iterrows():
+                current_value = relevant_time_series_df.iloc[index, 1]
+                if ((min_balance <= current_value) & (current_value <= max_balance)) and not found_a_valid_success_date:
+                    found_a_valid_success_date = True
+                    success_date = row.Date
+                    log_in_color(logger, 'yellow', 'debug', 'success_date:' + str(success_date), self.log_stack_depth)
+                elif ((min_balance > current_value) | (current_value > max_balance)):
+                    found_a_valid_success_date = False
+                    success_date = 'None'
+                    log_in_color(logger, 'yellow', 'debug', 'success_date:None', self.log_stack_depth)
+        else:
+            raise ValueError("undefined edge case in ExpenseForecast::evaulateAccountMilestone""")
+
+        # log_in_color(logger, 'yellow', 'debug', 'relevant_time_series_df:')
+        # log_in_color(logger, 'yellow', 'debug', relevant_time_series_df.to_string())
+        #
+        # log_in_color(logger, 'yellow', 'debug', 'last_value:')
+        # log_in_color(logger, 'yellow', 'debug', last_value)
+
+
+
+        #
+        # #if the last day of the forecast does not satisfy account bounds, then none of the days of the forecast qualify
+        # if not (( min_balance <= last_value ) & ( last_value <= max_balance )):
+        #     log_in_color(logger,'yellow', 'debug','EXIT evaluateAccountMilestone(' + str(account_name) + ',' + str(min_balance) + ',' + str(max_balance) + ') None')
+        #     return None
+        #
+        # #if the code reaches this point, then the milestone was for sure reached.
+        # #We can find the first day that qualifies my reverseing the sequence and returning the day before the first day that doesnt qualify
+        # relevant_time_series_df = relevant_time_series_df.loc[::-1]
+        # last_qualifying_date = relevant_time_series_df.head(1).Date.iat[0]
+        # for index, row in relevant_time_series_df.iterrows():
+        #     # print('row:')
+        #     # print(row)
+        #     # print(row.iloc[1])
+        #     if (( min_balance <= row.iloc[1] ) & ( row.iloc[1] <= max_balance )):
+        #         last_qualifying_date = row.Date.iat[0]
+        #     else:
+        #         break
+        self.log_stack_depth -= 1
+        log_in_color(logger,'yellow', 'debug','EXIT evaluateAccountMilestone(' + str(account_name) + ',' + str(min_balance) + ',' + str(max_balance) + ') '+str(success_date),self.log_stack_depth)
+        return success_date
+
+    def evaulateMemoMilestone(self,memo_regex):
+        log_in_color(logger,'yellow', 'debug','ENTER evaluateMemoMilestone(' + str(memo_regex)+')',self.log_stack_depth)
+        self.log_stack_depth += 1
+        for forecast_index, forecast_row in self.forecast_df.iterrows():
+            m = re.search(memo_regex,forecast_row.Memo)
+            if m is not None:
+                self.log_stack_depth -= 1
+                log_in_color(logger,'yellow', 'debug', 'EXIT evaluateMemoMilestone(' + str(memo_regex) + ')',self.log_stack_depth)
+                return forecast_row.Date
+
+        self.log_stack_depth -= 1
+        log_in_color(logger,'yellow', 'debug', 'EXIT evaluateMemoMilestone(' + str(memo_regex) + ')',self.log_stack_depth)
+        return 'None'
+
+    def evaluateCompositeMilestone(self,list_of_account_milestones,list_of_memo_milestones):
+        log_in_color(logger, 'yellow', 'debug', 'ENTER evaluateCompositeMilestone()',self.log_stack_depth)
+        self.log_stack_depth += 1
+        #list_of_account_milestones is lists of 3-tuples that are (string,float,float) for parameters
+
+        #todo composite milestones may contain some milestones that arent listed in the composite #https://github.com/hdickie/expense_forecast/issues/22
+
+        num_of_acct_milestones = len(list_of_account_milestones)
+        num_of_memo_milestones = len(list_of_memo_milestones)
+        account_milestone_dates = []
+        memo_milestone_dates = []
+
+        for i in range(0,num_of_acct_milestones):
+            account_milestone = list_of_account_milestones[i]
+            am_result = self.evaluateAccountMilestone(account_milestone.account_name,account_milestone.min_balance,account_milestone.max_balance)
+            if am_result is None: #disqualified immediately because success requires ALL
+                self.log_stack_depth -= 1
+                log_in_color(logger, 'yellow', 'debug', 'EXIT evaluateCompositeMilestone() None',self.log_stack_depth)
+                return None
+            account_milestone_dates.append(am_result)
+
+        for i in range(0,num_of_memo_milestones):
+            memo_milestone = list_of_memo_milestones[i]
+            mm_result = self.evaulateMemoMilestone(memo_milestone.memo_regex)
+            if mm_result is None:  # disqualified immediately because success requires ALL
+                self.log_stack_depth -= 1
+                log_in_color(logger, 'yellow', 'debug', 'EXIT evaluateCompositeMilestone() None',self.log_stack_depth)
+                return None
+            memo_milestone_dates.append(mm_result)
+
+        result_date = max(account_milestone_dates + memo_milestone_dates)
+        log_in_color(logger, 'yellow', 'debug', 'EXIT evaluateCompositeMilestone() '+str(result_date),self.log_stack_depth)
+        self.log_stack_depth -= 1
+        return result_date
+
+
+    def evaluateMilestones(self):
+
+        account_milestone_results = {}
+        for a_m in self.milestone_set.account_milestones:
+            res = self.evaluateAccountMilestone(a_m.account_name, a_m.min_balance, a_m.max_balance)
+            account_milestone_results[a_m.milestone_name] = res
+        self.account_milestone_results = account_milestone_results
+
+        memo_milestone_results = {}
+        for m_m in self.milestone_set.memo_milestones:
+            res = self.evaulateMemoMilestone(m_m.memo_regex)
+            memo_milestone_results[m_m.milestone_name] = res
+        self.memo_milestone_results = memo_milestone_results
+
+        composite_milestone_results = {}
+        for c_m in self.milestone_set.composite_milestones:
+            res = self.evaluateCompositeMilestone(c_m.account_milestones,
+                                                  c_m.memo_milestones)
+            composite_milestone_results[c_m.milestone_name] = res
+        self.composite_milestone_results = composite_milestone_results
+
 # if __name__ == "__main__": import doctest ; doctest.testmod()
 if __name__ == "__main__":
     pass
+
+
+#
+#
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p1_cc_txn_on_billing_date-account_set2-budget_set2-memo_rule_set2-20000101-20000103-milestone_set2-expected_result_df2]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p2_and_3__expect_defer-account_set7-budget_set7-memo_rule_set7-20000101-20000103-milestone_set7-expected_result_df7]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_560-account_set22-budget_set22-memo_rule_set22-20000101-20000103-milestone_set22-expected_result_df22]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_1900-account_set24-budget_set24-memo_rule_set24-20000101-20000103-milestone_set24-expected_result_df24]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_overpay-account_set25-budget_set25-memo_rule_set25-20000101-20000103-milestone_set25-expected_result_df25]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_advance_minimum_payment_in_1_payment_pay_over_minimum-account_set26-budget_set26-memo_rule_set26-20000110-20000113-milestone_set26-expected_result_df26]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_advance_minimum_payment_in_1_payment_pay_under_minimum-account_set27-budget_set27-memo_rule_set27-20000110-20000113-milestone_set27-expected_result_df27]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_advance_minimum_payment_in_1_payment_pay_exact_minimum-account_set28-budget_set28-memo_rule_set28-20000110-20000113-milestone_set28-expected_result_df28]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_on_due_date__curr_only-account_set33-budget_set33-memo_rule_set33-20000111-20000113-milestone_set33-expected_result_df33]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before__prev_only-account_set35-budget_set35-memo_rule_set35-20000110-20000113-milestone_set35-expected_result_df35]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before__prev_only-account_set36-budget_set36-memo_rule_set36-20000110-20000113-milestone_set36-expected_result_df36]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before_OVERPAY__prev_only-account_set37-budget_set37-memo_rule_set37-20000110-20000113-milestone_set37-expected_result_df37]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before_OVERPAY__prev_only-account_set38-budget_set38-memo_rule_set38-20000110-20000113-milestone_set38-expected_result_df38]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before__curr_only-account_set39-budget_set39-memo_rule_set39-20000110-20000113-milestone_set39-expected_result_df39]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before__curr_only-account_set40-budget_set40-memo_rule_set40-20000110-20000113-milestone_set40-expected_result_df40]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before_OVERPAY__curr_only-account_set41-budget_set41-memo_rule_set41-20000110-20000113-milestone_set41-expected_result_df41]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before_OVERPAY__curr_only-account_set42-budget_set42-memo_rule_set42-20000110-20000113-milestone_set42-expected_result_df42]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before__curr_prev-account_set43-budget_set43-memo_rule_set43-20000110-20000113-milestone_set43-expected_result_df43]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before_OVERPAY__curr_prev-account_set44-budget_set44-memo_rule_set44-20000110-20000113-milestone_set44-expected_result_df44]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_distal_propagation__prev_only-account_set45-budget_set45-memo_rule_set45-20000110-20000214-milestone_set45-expected_result_df45]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_distal_propagation_multiple__prev_only-account_set46-budget_set46-memo_rule_set46-20000110-20000214-milestone_set46-expected_result_df46]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_distal_propagation__curr_only-account_set47-budget_set47-memo_rule_set47-20000110-20000214-milestone_set47-expected_result_df47]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_distal_propagation_multiple__curr_only-account_set48-budget_set48-memo_rule_set48-20000110-20000214-milestone_set48-expected_result_df48]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_distal_propagation__curr_prev-account_set49-budget_set49-memo_rule_set49-20000110-20000214-milestone_set49-expected_result_df49]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_distal_propagation_multiple__curr_prev-account_set50-budget_set50-memo_rule_set50-20000110-20000214-milestone_set50-expected_result_df50]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_interest_accrued_reaches_0-account_set51-budget_set51-memo_rule_set51-20000110-20000214-milestone_set51-expected_result_df51]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_evaluate_account_milestone[test_account_milestone-account_set0-budget_set0-memo_rule_set0-20000101-20000103-milestone_set0-account_milestone_names0-expected_milestone_dates0]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_evaluate_memo_milestone[test_memo_milestone-account_set0-budget_set0-memo_rule_set0-20000101-20000103-milestone_set0-memo_milestone_names0-expected_milestone_dates0]
+# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_evaluate_composite_milestone[test composite milestone-account_set0-budget_set0-memo_rule_set0-20000101-20000103-milestone_set0-composite_milestone_names0-expected_milestone_dates0]
+# =============================================== 31 failed, 170 passed, 165 warnings in 279.36s (0:04:39) ==========
+#
+#
+#
+# Chat GPT had some GREAT advice regarding coverage!!!
+# apparently you can end a line with '# pragma: no cover' and it will not get counted in coverage
+# also use asserts instead of if branches that are never crossed!!
+#
+#
+# Name                              Stmts   Miss  Cover
+# -----------------------------------------------------
+# Account.py                           92      6    93%
+# AccountMilestone.py                  13      1    92%
+# AccountSet.py                       521    119    77%
+# BudgetItem.py                        59      3    95%
+# BudgetSet.py                         80     19    76%
+# CompositeMilestone.py                24      1    96%
+# ExpenseForecast.py                 4180   2364    43%
+# ForecastHandler.py                 1376   1315     4%
+# MemoMilestone.py                     14      1    93%
+# MemoRule.py                          51      3    94%
+# MemoRuleSet.py                       83     10    88%
+# MilestoneSet.py                     224    162    28%
+# __init__.py                           0      0   100%
+# generate_date_sequence.py            42      1    98%
+# log_methods.py                      141     52    63%
+# multithread_test.py                  27     20    26%
+# test_Account.py                      14      0   100%
+# test_AccountMilestone.py             12      0   100%
+# test_AccountSet.py                   81     28    65%
+# test_BudgetItem.py                   13      0   100%
+# test_BudgetSet.py                    42      0   100%
+# test_CompositeMilestone.py           20      0   100%
+# test_ExpenseForecast.py             216     41    81%
+# test_ForecastHandler.py               0      0   100%
+# test_ForecastRunner.py                0      0   100%
+# test_ForecastSet.py                   0      0   100%
+# test_MemoMilestone.py                10      0   100%
+# test_MemoRule.py                     11      0   100%
+# test_MemoRuleSet.py                  68      0   100%
+# test_MilestoneSet.py                  0      0   100%
+# test_calculateMinimumPayment.py     108    104     4%
+# test_ef_cli.py                        0      0   100%
+# tqdm_test.py                         14      0   100%
+# -----------------------------------------------------
+# TOTAL                              7536   4250    44%
+#
