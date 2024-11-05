@@ -1,0 +1,119 @@
+pseudocode
+propagateOptimizationTransactionsIntoTheFuture(self, account_set_before_p2_plus_txn, forecast_df, date_string_YYYYMMDD):
+
+let future_only_rows_df
+
+for account_index, account_row:
+    for forecast_index, forecast_row in future_only_rows_df:
+
+        if account_row.Account_Type != 'Interest':
+            add delta to all future-only rows
+
+        if account_row.Account_Type == 'Interest':
+
+            #todo
+
+            if f_row.Date in pbal_billing_dates:
+
+                #todo
+
+                if 'loan min payment' in f_row.Memo:
+
+                    let interest_denominator;
+                    let memo_line_items_relevant_to_minimum_payment;
+
+                    if len(memo_line_items_relevant_to_minimum_payment) == 0:
+                        continue  # I think that this never happens
+
+                    elif len(memo_line_items_relevant_to_minimum_payment) == 1:
+
+                        # todo this is negative and has not been corrected yet
+                        pbal_before_min_payment_applied = future_rows_only_df[f_i, a_i - 1]
+
+                        new_marginal_interest = pbal_before_min_payment_applied * pbal_account_row.APR / interest_denominator
+                        interest_before_min_payment_applied = future_rows_only_df[f_i - 1, a_i] + new_marginal_interest
+                        future_rows_only_df[f_i, a_i] = interest_before_min_payment_applied
+
+                        let account_name;
+                        let og_amount
+
+                        if ': Interest' in account_name:
+                            if og_amount > interest_before_min_payment_applied:
+                                amt_to_pay_toward_interest = interest_before_min_payment_applied
+
+                                already_paid_toward_pbal = future_rows_only_df.iloc[f_i - 1, a_i - 1] - future_rows_only_df.iloc[f_i, a_i - 1]
+                                amt_to_pay_toward_pbal = (og_amount - already_paid_toward_pbal) - amt_to_pay_toward_interest
+                                amt_to_pay_toward_pbal = min(future_rows_only_df.iloc[f_i, a_i - 1],amt_to_pay_toward_pbal)
+
+                                future_rows_only_df[row_sel_vec, a_i - 1] -= amt_to_pay_toward_pbal
+                                future_rows_only_df[row_sel_vec, a_i] -= amt_to_pay_toward_interest
+                                memo_pbal_amount = og_amount - amt_to_pay_toward_interest
+
+                                update pbal memo
+                                update interest memo
+
+                            else:
+                                future_rows_only_df.iloc[row_sel_vec, a_i] -= og_amount
+
+                        elif ': Principal Balance' in account_name:
+                            if og_amount > pbal_before_min_payment_applied:  # I think that this case will never happen in practice
+                                amt_to_pay_toward_pbal = pbal_before_min_payment_applied
+                                amt_to_pay_toward_interest = og_amount - amt_to_pay_toward_pbal
+
+                                future_rows_only_df[row_sel_vec, a_i - 1] -= amt_to_pay_toward_pbal
+                                future_rows_only_df[row_sel_vec, a_i] -= amt_to_pay_toward_interest
+                            else:
+                                future_rows_only_df[row_sel_vec, a_i - 1] -= og_amount
+
+                        else:
+                            assert len(memo_line_items_relevant_to_minimum_payment) == 2
+
+                            let og_interest_amount;
+                            let og_pbal_amount;
+
+                            amt_to_pay_toward_interest = future_rows_only_df[f_i - 1, a_i]
+                            amt_to_pay_toward_pbal = og_interest_amount - amt_to_pay_toward_interest
+
+
+                            # todo this is negative and has not been corrected yet
+                            pbal_before_min_payment_applied = future_rows_only_df[f_i, a_i - 1]
+
+                            new_marginal_interest = pbal_before_min_payment_applied * pbal_account_row.APR / interest_denominator
+                            interest_before_min_payment_applied = future_rows_only_df[f_i - 1, a_i] + new_marginal_interest
+                            future_rows_only_df[f_i, a_i] = interest_before_min_payment_applied
+
+
+                            memo_pbal_amount = og_pbal_amount + amt_to_pay_toward_pbal
+
+                            if future_rows_only_df.iloc[f_i, a_i - 1] <= 0:
+                                amt_to_pay_toward_pbal = -1 * amt_to_pay_toward_pbal  # the min payment needs to be reversed
+                                memo_pbal_amount = 0
+
+                            future_rows_only_df[row_sel_vec, a_i - 1] -= amt_to_pay_toward_pbal
+
+                            future_rows_only_df[row_sel_vec, a_i] -= amt_to_pay_toward_interest
+
+                            update pbal memo
+                            update interest memo
+
+
+                    #todo
+
+        elif account_row.Account_Type == 'prev stmt bal':
+
+            if 'cc min payment' in f_row.Memo:
+
+                #todo
+
+        if f_row.Date in pbal_interest_accrual_dates and account_row.Account_Type == 'interest':
+
+            #todo
+
+        if account_row.Account_Type == 'curr stmt bal':
+
+            #todo
+
+    check future_only_rows_df for account boundary violations
+
+concat future_only_rows_df to forecast_df
+return_df

@@ -1,0 +1,86 @@
+ef_cli notes
+
+So happy with all the progress I have made with this project. I know turn my attention from running in parallel to clearly managing the parallel process. I have decided to use concurrent.futures for this instead of multiprocessing because the module seems simpler and my impression is a lot of the features exclusive to multiprocessing regard sharing data between threads which is not necessary here.
+
+I was trying to design the api for this and I was getting stuck on how should the process prooerly be invoked. A lot of what was tripping me up was regarding how the different forecasts are grouped, which have already been evaluated, which have been defined but not evaluated... bottom line is that I didn't want the UI to hang and I wanted to make sure any parallelism was implemented in python and not in php or the terminal. The logging becoming confusion with multiple processes is what convinced me that I needed a cli api to access information about:
+	- what data is currently loaded that is not associated with a forecast
+	- what forecasts are currently defined that have not been loaded
+	- what forecasts have already been evaluated
+	- what forecasts are in progress. How far along? Are they stuck?
+
+Also, I tried to avoid this as much as possible, but if ef_cli is called from different processes, but will share information. I took another look at multiprocessing to think again if it might be the more appropriate choice, but I think concurrent.futures is still good enough. It seems like the data sharing for multiprocessing is more useful for complex data structures or high-speed data sharing. The data I would like to share between thread is just a few tables.
+
+Also, I want the ef_cli module to be able to work without a database, and file locks are enough to enforce the concurrency I need.
+
+stage directory will contain not yet run and have a ForecastSet.json for all currently staged not yet run forecasts
+data directory is output and currently in progress
+
+And with all this complexity, I think it is appropriate to start a new suite of test cases.
+
+Using ArgumentParser module btw
+Here are the use cases I have thought of so far:
+
+for all uses (or else default):
+ef_cli --lock_directory LOCK_DIR --username USERNAME --log_directory LOG_DIR --stage_directory STAGE_DIR --data_directory DATA_DIR
+
+for all uses (or optional):
+ef_cli --force --approximate
+
+for all cases from file:
+ef_cli --source json
+ef_cli --source excel
+
+for unstaged cases from file:
+ef_cli --source json stage forecast.json //this will edit the JSON to add a forecast_id AND updates a ForecastSet.json
+ef_cli --source excel stage forecast.xlsx //this will edit the excel to add a forecast_id AND updates a ForecastSet.json
+
+for staged or unstaged cases from file:
+ef_cli --source json run forecast forecast.json //runs just the single forecast
+ef_cli --source excel run forecast forecast.xlsx //runs just the single forecast
+ef_cli --source json run forecastset forecast_set.json //runs the forecast_set
+//forecast_set for excel not supported- organizing the sheets would be hard so just don't even go there
+
+for all db cases:
+ef_cli --source database --database_hostname HOSTNAME --database_username USERNAME --database_name DATABASE_NAME --database_port DATABASE_PORT --database_password DATABASE_PASSWORD
+
+for unstaged cases from db:
+//this takes no arguments, because it looks at hard-coded tables
+ef_cli --source database stage --start_date START_DATE --end_date END_DATE --forecast_label LABEL
+
+//truncate the hard-coded tables after
+ef_cli --source database stage --start_date START_DATE --end_date END_DATE --forecast_label LABEL --flush 
+
+//include a select statement pointing to each dataset to stage
+ef_cli --source database stage-select --account_set "" --budget_item_set "" --memo_rule_set "" --account_milestone_set "" --memo_milestone_set "" --composite_milestone_set "" --forecast_label LABEL
+
+for staged cases from db:
+ef_cli --source database run forecast --id FORECAST_ID
+ef_cli --source database run forecastset --id FORECAST_SET_ID
+
+//overwrite the start and end dates of a forecast, and the recalculate and record a new forecast id. Does not erase OG.
+ef_cli --source database restage forecast --id ID --start_date START_DATE --end_date END_DATE --forecast_label LABEL
+ef_cli --source database restage forecastset --id ID --start_date START_DATE --end_date END_DATE --forecast_label LABEL
+ef_cli --source json restage forecast --id ID --start_date START_DATE --end_date END_DATE --forecast_label LABEL
+ef_cli --source excel restage forecast --id ID --start_date START_DATE --end_date END_DATE --forecast_label LABEL
+ef_cli --source json restage forecastset --id ID --start_date START_DATE --end_date END_DATE --forecast_label LABEL
+
+//this makes sense. I think "list forecast" should be treated as a case of this
+ef_cli list forecastset
+
+//In order for this to work, the original instance of ef_cli will still be running, and will act as a server...
+ef_cli ps
+ef_cli kill forecast FORECAST_ID
+ef_cli kill forecastset FORECAST_SET_ID
+
+Here is the full list then:
+ef_cli stage forecast
+ef_cli restage forecast
+ef_cli restage forecastset
+ef_cli run forecast
+ef_cli run forecastset
+ef_cli list
+ef_cli ps
+ef_cli kill forecast
+ef_cli kill forecastset
+ef_cli report forecast FORECAST_ID
+ef_cli report forecastset FORECAST_SET_ID
