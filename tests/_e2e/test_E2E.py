@@ -30,7 +30,7 @@ class TestE2E:
 
     @pytest.mark.E2E
     @pytest.mark.skip(reason="not yet implemented")
-    def test_E2E_impluse_spending(self):
+    def test_E2E_impulse_spending(self):
         pass
 
     @pytest.mark.E2E
@@ -40,7 +40,7 @@ class TestE2E:
 
     @pytest.mark.E2E
     @pytest.mark.skip(reason="not yet implemented")
-    def test_E2E_rich(self):
+    def test_E2E_define_rich(self):
         pass
 
     @pytest.mark.E2E
