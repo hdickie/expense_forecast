@@ -1442,10 +1442,10 @@ class ExpenseForecast:
                 line_item_value = float(line_item_value_string)
                 if 'INCOME' in memo_line_item:
                     self.forecast_df.loc[index, 'Net Gain'] += abs(line_item_value)
-                    print(str(self.forecast_df.loc[index, 'Date']) + ' Net Gain += ' + str( abs(line_item_value)) + ' ' + str(memo_line_item) + ' = ' + str( self.forecast_df.loc[index, 'Net Gain']))
+                    # print(str(self.forecast_df.loc[index, 'Date']) + ' Net Gain += ' + str( abs(line_item_value)) + ' ' + str(memo_line_item) + ' = ' + str( self.forecast_df.loc[index, 'Net Gain']))
                 else:
                     self.forecast_df.loc[index, 'Net Loss'] += abs(line_item_value)
-                    print(str(self.forecast_df.loc[index, 'Date']) + ' Net Loss += ' + str(abs(line_item_value))+' '+str(memo_line_item)+' = '+str(self.forecast_df.loc[index,'Net Loss']))
+                    # print(str(self.forecast_df.loc[index, 'Date']) + ' Net Loss += ' + str(abs(line_item_value))+' '+str(memo_line_item)+' = '+str(self.forecast_df.loc[index,'Net Loss']))
 
             if self.forecast_df.loc[index,'Net Loss'] > 0 and self.forecast_df.loc[index,'Net Gain'] > 0:
                 if self.forecast_df.loc[index,'Net Gain'] > self.forecast_df.loc[index,'Net Loss']:
@@ -1987,7 +1987,7 @@ class ExpenseForecast:
                     print('Offending memo: ' + str(m))
                     raise e
                 new_amount = f'{og_amt:.2f}'
-                # log_in_color(logger, 'white', 'debug', '(case 29) _update_memo_amount')
+                #log_in_color(logger, 'white', 'debug', '(case 29) _update_memo_amount')
                 new_m = self._update_memo_amount(m, new_amount).strip()
                 new_memo_lines.append(new_m)
 
@@ -2001,12 +2001,14 @@ class ExpenseForecast:
                     print('Offending memo directive: ' + str(md))
                     raise e
                 new_amount = f'{og_amt:.2f}'
-                # log_in_color(logger, 'white', 'debug', '(case 30) _update_memo_amount')
+                #log_in_color(logger, 'white', 'debug', '(case 30) _update_memo_amount')
                 new_md = self._update_memo_amount(md, new_amount).strip()
                 new_md_lines.append(new_md)
 
-            row['Memo'] = '; '.join(new_memo_lines)
-            row['Memo Directives'] = '; '.join(new_md_lines)
+            forecast_df.loc[index,'Memo'] = '; '.join(new_memo_lines)
+            forecast_df.loc[index, 'Memo Directives'] = '; '.join(new_md_lines)
+
+
 
         self.forecast_df = forecast_df
         self.skipped_df = skipped_df
@@ -7270,9 +7272,9 @@ class ExpenseForecast:
         new_memo_line = re.sub(str(og_amount), str(f'{new_amount}'), str(memo_line))
 
         # if memo_line != new_memo_line:
-        #     log_in_color(logger, 'cyan', 'debug', 'memo_line: ' + str(memo_line), self.log_stack_depth)
-        #     log_in_color(logger, 'cyan', 'debug', str(og_amount) + ' -> '+str(new_amount), self.log_stack_depth)
-        #     log_in_color(logger, 'cyan', 'debug', 'new_memo_line: ' + str(new_memo_line), self.log_stack_depth)
+        log_in_color(logger, 'cyan', 'debug', 'memo_line: ' + str(memo_line), self.log_stack_depth)
+        log_in_color(logger, 'cyan', 'debug', str(og_amount) + ' -> '+str(new_amount), self.log_stack_depth)
+        log_in_color(logger, 'cyan', 'debug', 'new_memo_line: ' + str(new_memo_line), self.log_stack_depth)
 
         self.log_stack_depth -= 1
         log_in_color(logger, 'white', 'debug', ' EXIT _update_memo_amount', self.log_stack_depth)
