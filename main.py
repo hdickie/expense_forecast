@@ -219,44 +219,52 @@ def credit_bsd12_w_eopc_acct_list(prev_balance,curr_balance,apr,end_of_prev_cycl
 
 
 if __name__ == '__main__':
-    test_description, account_set, budget_set, memo_rule_set, start_date_YYYYMMDD, end_date_YYYYMMDD, milestone_set, expected_result_df =(
-                    'test_next_income_date',
-                    AccountSet.AccountSet(checking_acct_list(1000)),
-                    BudgetSet.BudgetSet(
-                        [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'income 1', False, False),
-                         BudgetItem.BudgetItem('20000104', '20000104', 1, 'once', 100, 'income 2', False, False)
-                         ]),
-                    MemoRuleSet.MemoRuleSet([
-                        MemoRule.MemoRule('.*', None, 'Checking', 1)
-                    ]),
-                    '20000101',
-                    '20000105',
-                    MilestoneSet.MilestoneSet([], [], []),
-                    pd.DataFrame({
-                        'Date': ['20000101', '20000102', '20000103', '20000104', '20000105'],
-                        'Checking': [1000, 1100, 1100, 1200, 1200],
-                        'Marginal Interest': [0, 0, 0, 0, 0],
-                        'Net Gain': [0, 100, 0, 100, 0],
-                        'Net Loss': [0, 0, 0, 0, 0],
-                        'Net Worth': [1000, 1100, 1100, 1200, 1200],
-                        'Loan Total': [0, 0, 0, 0, 0],
-                        'CC Debt Total': [0, 0, 0, 0, 0],
-                        'Liquid Total': [1000, 1100, 1100, 1200, 1200],
-                        'Next Income Date': ['20000102', '20000104', '20000104', '', ''],
-                        'Memo Directives': ['', 'INCOME (Checking +$100.00)', '', 'INCOME (Checking +$100.00)', ''],
-                        'Memo': ['', 'income 1 (Checking +$100.00)', '', 'income 2 (Checking +$100.00)', '']
-                    })
-            )
+    import json
+    with open('coverage.json','r') as f:
+        #print(f.readlines())
+        string_lines = ''.join(f.readlines())
+        print(string_lines)
+        lines = json.loads(string_lines)
+        print(lines['totals']['percent_covered_display'])
 
-    E = ExpenseForecast.ExpenseForecast(account_set, budget_set,
-                                        memo_rule_set,
-                                        start_date_YYYYMMDD,
-                                        end_date_YYYYMMDD,
-                                        milestone_set,
-                                        raise_exceptions=False)
-
-    E.runForecast()
-    print(E.forecast_df.to_string())
+    # test_description, account_set, budget_set, memo_rule_set, start_date_YYYYMMDD, end_date_YYYYMMDD, milestone_set, expected_result_df =(
+    #                 'test_next_income_date',
+    #                 AccountSet.AccountSet(checking_acct_list(1000)),
+    #                 BudgetSet.BudgetSet(
+    #                     [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'income 1', False, False),
+    #                      BudgetItem.BudgetItem('20000104', '20000104', 1, 'once', 100, 'income 2', False, False)
+    #                      ]),
+    #                 MemoRuleSet.MemoRuleSet([
+    #                     MemoRule.MemoRule('.*', None, 'Checking', 1)
+    #                 ]),
+    #                 '20000101',
+    #                 '20000105',
+    #                 MilestoneSet.MilestoneSet([], [], []),
+    #                 pd.DataFrame({
+    #                     'Date': ['20000101', '20000102', '20000103', '20000104', '20000105'],
+    #                     'Checking': [1000, 1100, 1100, 1200, 1200],
+    #                     'Marginal Interest': [0, 0, 0, 0, 0],
+    #                     'Net Gain': [0, 100, 0, 100, 0],
+    #                     'Net Loss': [0, 0, 0, 0, 0],
+    #                     'Net Worth': [1000, 1100, 1100, 1200, 1200],
+    #                     'Loan Total': [0, 0, 0, 0, 0],
+    #                     'CC Debt Total': [0, 0, 0, 0, 0],
+    #                     'Liquid Total': [1000, 1100, 1100, 1200, 1200],
+    #                     'Next Income Date': ['20000102', '20000104', '20000104', '', ''],
+    #                     'Memo Directives': ['', 'INCOME (Checking +$100.00)', '', 'INCOME (Checking +$100.00)', ''],
+    #                     'Memo': ['', 'income 1 (Checking +$100.00)', '', 'income 2 (Checking +$100.00)', '']
+    #                 })
+    #         )
+    #
+    # E = ExpenseForecast.ExpenseForecast(account_set, budget_set,
+    #                                     memo_rule_set,
+    #                                     start_date_YYYYMMDD,
+    #                                     end_date_YYYYMMDD,
+    #                                     milestone_set,
+    #                                     raise_exceptions=False)
+    #
+    # E.runForecast()
+    # print(E.forecast_df.to_string())
 
     # compute_forecast_and_actual_vs_expected(account_set,
     #                                              budget_set,
