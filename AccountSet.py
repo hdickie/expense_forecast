@@ -914,7 +914,6 @@ class AccountSet:
             # this is equivalent to taking the next desired state of marginal interest amounts and right multiplying by a vector of the reciprocal rates
 
             #P = np.matrix(principal_accts_df.Balance)
-            #todo learn more about numpy ndarray and improve this
             P = np.array(principal_accts_df.Balance)
             P = P[:,None]
 
