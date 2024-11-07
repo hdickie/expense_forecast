@@ -8830,35 +8830,35 @@ if __name__ == "__main__":
 
 #
 #
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p1_cc_txn_on_billing_date-account_set2-budget_set2-memo_rule_set2-20000101-20000103-milestone_set2-expected_result_df2]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p2_and_3__expect_defer-account_set7-budget_set7-memo_rule_set7-20000101-20000103-milestone_set7-expected_result_df7]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_560-account_set22-budget_set22-memo_rule_set22-20000101-20000103-milestone_set22-expected_result_df22]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_1900-account_set24-budget_set24-memo_rule_set24-20000101-20000103-milestone_set24-expected_result_df24]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_overpay-account_set25-budget_set25-memo_rule_set25-20000101-20000103-milestone_set25-expected_result_df25]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_advance_minimum_payment_in_1_payment_pay_over_minimum-account_set26-budget_set26-memo_rule_set26-20000110-20000113-milestone_set26-expected_result_df26]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_advance_minimum_payment_in_1_payment_pay_under_minimum-account_set27-budget_set27-memo_rule_set27-20000110-20000113-milestone_set27-expected_result_df27]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_advance_minimum_payment_in_1_payment_pay_exact_minimum-account_set28-budget_set28-memo_rule_set28-20000110-20000113-milestone_set28-expected_result_df28]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_on_due_date__curr_only-account_set33-budget_set33-memo_rule_set33-20000111-20000113-milestone_set33-expected_result_df33]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before__prev_only-account_set35-budget_set35-memo_rule_set35-20000110-20000113-milestone_set35-expected_result_df35]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before__prev_only-account_set36-budget_set36-memo_rule_set36-20000110-20000113-milestone_set36-expected_result_df36]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before_OVERPAY__prev_only-account_set37-budget_set37-memo_rule_set37-20000110-20000113-milestone_set37-expected_result_df37]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before_OVERPAY__prev_only-account_set38-budget_set38-memo_rule_set38-20000110-20000113-milestone_set38-expected_result_df38]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before__curr_only-account_set39-budget_set39-memo_rule_set39-20000110-20000113-milestone_set39-expected_result_df39]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before__curr_only-account_set40-budget_set40-memo_rule_set40-20000110-20000113-milestone_set40-expected_result_df40]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before_OVERPAY__curr_only-account_set41-budget_set41-memo_rule_set41-20000110-20000113-milestone_set41-expected_result_df41]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before_OVERPAY__curr_only-account_set42-budget_set42-memo_rule_set42-20000110-20000113-milestone_set42-expected_result_df42]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before__curr_prev-account_set43-budget_set43-memo_rule_set43-20000110-20000113-milestone_set43-expected_result_df43]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before_OVERPAY__curr_prev-account_set44-budget_set44-memo_rule_set44-20000110-20000113-milestone_set44-expected_result_df44]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_distal_propagation__prev_only-account_set45-budget_set45-memo_rule_set45-20000110-20000214-milestone_set45-expected_result_df45]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_distal_propagation_multiple__prev_only-account_set46-budget_set46-memo_rule_set46-20000110-20000214-milestone_set46-expected_result_df46]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_distal_propagation__curr_only-account_set47-budget_set47-memo_rule_set47-20000110-20000214-milestone_set47-expected_result_df47]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_distal_propagation_multiple__curr_only-account_set48-budget_set48-memo_rule_set48-20000110-20000214-milestone_set48-expected_result_df48]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_distal_propagation__curr_prev-account_set49-budget_set49-memo_rule_set49-20000110-20000214-milestone_set49-expected_result_df49]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_distal_propagation_multiple__curr_prev-account_set50-budget_set50-memo_rule_set50-20000110-20000214-milestone_set50-expected_result_df50]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_business_case[test_cc_interest_accrued_reaches_0-account_set51-budget_set51-memo_rule_set51-20000110-20000214-milestone_set51-expected_result_df51]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_evaluate_account_milestone[test_account_milestone-account_set0-budget_set0-memo_rule_set0-20000101-20000103-milestone_set0-account_milestone_names0-expected_milestone_dates0]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_evaluate_memo_milestone[test_memo_milestone-account_set0-budget_set0-memo_rule_set0-20000101-20000103-milestone_set0-memo_milestone_names0-expected_milestone_dates0]
-# FAILED test_ExpenseForecast.py::TestExpenseForecastMethods::test_evaluate_composite_milestone[test composite milestone-account_set0-budget_set0-memo_rule_set0-20000101-20000103-milestone_set0-composite_milestone_names0-expected_milestone_dates0]
+# FAILED test_ExpenseForecast__unit_test.py::TestExpenseForecastMethods::test_business_case[test_p1_cc_txn_on_billing_date-account_set2-budget_set2-memo_rule_set2-20000101-20000103-milestone_set2-expected_result_df2]
+# FAILED test_ExpenseForecast__unit_test.py::TestExpenseForecastMethods::test_business_case[test_p2_and_3__expect_defer-account_set7-budget_set7-memo_rule_set7-20000101-20000103-milestone_set7-expected_result_df7]
+# FAILED test_ExpenseForecast__unit_test.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_560-account_set22-budget_set22-memo_rule_set22-20000101-20000103-milestone_set22-expected_result_df22]
+# FAILED test_ExpenseForecast__unit_test.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_1900-account_set24-budget_set24-memo_rule_set24-20000101-20000103-milestone_set24-expected_result_df24]
+# FAILED test_ExpenseForecast__unit_test.py::TestExpenseForecastMethods::test_business_case[test_p7__additional_loan_payment__amt_overpay-account_set25-budget_set25-memo_rule_set25-20000101-20000103-milestone_set25-expected_result_df25]
+# FAILED test_ExpenseForecast__unit_test.py::TestExpenseForecastMethods::test_business_case[test_cc_advance_minimum_payment_in_1_payment_pay_over_minimum-account_set26-budget_set26-memo_rule_set26-20000110-20000113-milestone_set26-expected_result_df26]
+# FAILED test_ExpenseForecast__unit_test.py::TestExpenseForecastMethods::test_business_case[test_cc_advance_minimum_payment_in_1_payment_pay_under_minimum-account_set27-budget_set27-memo_rule_set27-20000110-20000113-milestone_set27-expected_result_df27]
+# FAILED test_ExpenseForecast__unit_test.py::TestExpenseForecastMethods::test_business_case[test_cc_advance_minimum_payment_in_1_payment_pay_exact_minimum-account_set28-budget_set28-memo_rule_set28-20000110-20000113-milestone_set28-expected_result_df28]
+# FAILED test_ExpenseForecast__unit_test.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_on_due_date__curr_only-account_set33-budget_set33-memo_rule_set33-20000111-20000113-milestone_set33-expected_result_df33]
+# FAILED test_ExpenseForecast__unit_test.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before__prev_only-account_set35-budget_set35-memo_rule_set35-20000110-20000113-milestone_set35-expected_result_df35]
+# FAILED test_ExpenseForecast__unit_test.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before__prev_only-account_set36-budget_set36-memo_rule_set36-20000110-20000113-milestone_set36-expected_result_df36]
+# FAILED test_ExpenseForecast__unit_test.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before_OVERPAY__prev_only-account_set37-budget_set37-memo_rule_set37-20000110-20000113-milestone_set37-expected_result_df37]
+# FAILED test_ExpenseForecast__unit_test.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before_OVERPAY__prev_only-account_set38-budget_set38-memo_rule_set38-20000110-20000113-milestone_set38-expected_result_df38]
+# FAILED test_ExpenseForecast__unit_test.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before__curr_only-account_set39-budget_set39-memo_rule_set39-20000110-20000113-milestone_set39-expected_result_df39]
+# FAILED test_ExpenseForecast__unit_test.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before__curr_only-account_set40-budget_set40-memo_rule_set40-20000110-20000113-milestone_set40-expected_result_df40]
+# FAILED test_ExpenseForecast__unit_test.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before_OVERPAY__curr_only-account_set41-budget_set41-memo_rule_set41-20000110-20000113-milestone_set41-expected_result_df41]
+# FAILED test_ExpenseForecast__unit_test.py::TestExpenseForecastMethods::test_business_case[test_cc_two_additional_payments_day_before_OVERPAY__curr_only-account_set42-budget_set42-memo_rule_set42-20000110-20000113-milestone_set42-expected_result_df42]
+# FAILED test_ExpenseForecast__unit_test.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before__curr_prev-account_set43-budget_set43-memo_rule_set43-20000110-20000113-milestone_set43-expected_result_df43]
+# FAILED test_ExpenseForecast__unit_test.py::TestExpenseForecastMethods::test_business_case[test_cc_single_additional_payment_day_before_OVERPAY__curr_prev-account_set44-budget_set44-memo_rule_set44-20000110-20000113-milestone_set44-expected_result_df44]
+# FAILED test_ExpenseForecast__unit_test.py::TestExpenseForecastMethods::test_business_case[test_distal_propagation__prev_only-account_set45-budget_set45-memo_rule_set45-20000110-20000214-milestone_set45-expected_result_df45]
+# FAILED test_ExpenseForecast__unit_test.py::TestExpenseForecastMethods::test_business_case[test_distal_propagation_multiple__prev_only-account_set46-budget_set46-memo_rule_set46-20000110-20000214-milestone_set46-expected_result_df46]
+# FAILED test_ExpenseForecast__unit_test.py::TestExpenseForecastMethods::test_business_case[test_distal_propagation__curr_only-account_set47-budget_set47-memo_rule_set47-20000110-20000214-milestone_set47-expected_result_df47]
+# FAILED test_ExpenseForecast__unit_test.py::TestExpenseForecastMethods::test_business_case[test_distal_propagation_multiple__curr_only-account_set48-budget_set48-memo_rule_set48-20000110-20000214-milestone_set48-expected_result_df48]
+# FAILED test_ExpenseForecast__unit_test.py::TestExpenseForecastMethods::test_business_case[test_distal_propagation__curr_prev-account_set49-budget_set49-memo_rule_set49-20000110-20000214-milestone_set49-expected_result_df49]
+# FAILED test_ExpenseForecast__unit_test.py::TestExpenseForecastMethods::test_business_case[test_distal_propagation_multiple__curr_prev-account_set50-budget_set50-memo_rule_set50-20000110-20000214-milestone_set50-expected_result_df50]
+# FAILED test_ExpenseForecast__unit_test.py::TestExpenseForecastMethods::test_business_case[test_cc_interest_accrued_reaches_0-account_set51-budget_set51-memo_rule_set51-20000110-20000214-milestone_set51-expected_result_df51]
+# FAILED test_ExpenseForecast__unit_test.py::TestExpenseForecastMethods::test_evaluate_account_milestone[test_account_milestone-account_set0-budget_set0-memo_rule_set0-20000101-20000103-milestone_set0-account_milestone_names0-expected_milestone_dates0]
+# FAILED test_ExpenseForecast__unit_test.py::TestExpenseForecastMethods::test_evaluate_memo_milestone[test_memo_milestone-account_set0-budget_set0-memo_rule_set0-20000101-20000103-milestone_set0-memo_milestone_names0-expected_milestone_dates0]
+# FAILED test_ExpenseForecast__unit_test.py::TestExpenseForecastMethods::test_evaluate_composite_milestone[test composite milestone-account_set0-budget_set0-memo_rule_set0-20000101-20000103-milestone_set0-composite_milestone_names0-expected_milestone_dates0]
 # =============================================== 31 failed, 170 passed, 165 warnings in 279.36s (0:04:39) ==========
 #
 #
@@ -8886,22 +8886,22 @@ if __name__ == "__main__":
 # generate_date_sequence.py            42      1    98%
 # log_methods.py                      141     52    63%
 # multithread_test.py                  27     20    26%
-# test_Account.py                      14      0   100%
-# test_AccountMilestone.py             12      0   100%
-# test_AccountSet.py                   81     28    65%
-# test_BudgetItem.py                   13      0   100%
-# test_BudgetSet.py                    42      0   100%
-# test_CompositeMilestone.py           20      0   100%
-# test_ExpenseForecast.py             216     41    81%
-# test_ForecastHandler.py               0      0   100%
-# test_ForecastRunner.py                0      0   100%
-# test_ForecastSet.py                   0      0   100%
-# test_MemoMilestone.py                10      0   100%
+# test_Account__unit_test.py                      14      0   100%
+# test_AccountMilestone__unit_test.py             12      0   100%
+# test_AccountSet__unit_test.py                   81     28    65%
+# test_BudgetItem__unit_test.py                   13      0   100%
+# test_BudgetSet__unit_test.py                    42      0   100%
+# test_CompositeMilestone__unit_test.py           20      0   100%
+# test_ExpenseForecast__unit_test.py             216     41    81%
+# test_ForecastHandler__unit_test.py               0      0   100%
+# test_ForecastRunner__unit_test.py                0      0   100%
+# test_ForecastSet__unit_test.py                   0      0   100%
+# test_MemoMilestone__unit_test.py                10      0   100%
 # test_MemoRule.py                     11      0   100%
 # test_MemoRuleSet.py                  68      0   100%
-# test_MilestoneSet.py                  0      0   100%
-# test_calculateMinimumPayment.py     108    104     4%
-# test_ef_cli.py                        0      0   100%
+# test_MilestoneSet__unit_test.py                  0      0   100%
+# test_calculateMinimumPayment__unit_test.py     108    104     4%
+# test_ef_cli__unit_test.py                        0      0   100%
 # tqdm_test.py                         14      0   100%
 # -----------------------------------------------------
 # TOTAL                              7536   4250    44%
