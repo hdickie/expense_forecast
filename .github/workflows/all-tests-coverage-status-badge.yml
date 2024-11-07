@@ -4,8 +4,6 @@
 name: All Test Coverage
 
 on:
-  push:
-    branches: [ "prod" ]
   pull_request:
     branches: [ "prod" ]
 
