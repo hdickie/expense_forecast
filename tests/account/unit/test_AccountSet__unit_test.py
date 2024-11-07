@@ -835,3 +835,33 @@ class TestAccountSet:
                                        )
 
         str(test_str_account_set)
+
+
+    # These test cases were selected using math to ensure coverage of all cases.
+    # See the gist of explanation here:
+    # https://gist.github.com/hdickie/98e35458aac8a5cfd4cd7e268cf3bd55
+    @pytest.mark.unit
+    @pytest.mark.parametrize(
+        'test_name, advance_payment_amount, interest_accrued_this_cycle, principal_due_this_cycle, total_balance_post_accrual, min_payment, expected_result',[
+
+            ('NZ_20210_0111', 100, 400, 100, 300, 200, 400), #gpt helped
+            ('Z_02110_1001', 0, 200, 100, 100, 100, 300), #gpt helped
+            ('Z_42010_1110', 200, 300, 100, 300, 0, -1), #todo get rid of these or make them real
+            ('NZ_23100_1001', 200, 200, 100, 300, 200, -1),
+            ('NZ_11010_0100', 200, 100, 100, 200, 200, -1),
+            ('Z_41100_1111', 300, 100, 200, 400, 0, -1),
+            ('NZ_20200_0001', 100, 100, 100, 200, 100, -1),
+            ('NZ_10010_0001', 100, 100, 100, 200, 100, -1),
+            ('Z_03100_1011', 0, 200, 100, 300, 100, -1),
+            ('NZ_01000_0010', 100, 100, 100, 200, 200, -1),
+    ])
+    def test_determineMinPaymentAmount(self,test_name, advance_payment_amount, interest_accrued_this_cycle, principal_due_this_cycle, total_balance_post_accrual, min_payment, expected_result):
+        if expected_result == -1:
+            pass
+        else:
+            try:
+                print('test_name, advance_payment_amount, interest_accrued_this_cycle, principal_due_this_cycle, total_balance_post_accrual, min_payment, expected_result')
+                print(test_name, advance_payment_amount, interest_accrued_this_cycle, principal_due_this_cycle, total_balance_post_accrual, min_payment, expected_result)
+                assert float(expected_result) == AccountSet.determineMinPaymentAmount(float(advance_payment_amount), float(interest_accrued_this_cycle), float(principal_due_this_cycle), float(total_balance_post_accrual), float(min_payment))
+            except Exception as e:
+                raise e
