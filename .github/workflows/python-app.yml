@@ -20,10 +20,7 @@ jobs:
     - name: Set up Python 3.12.3
       uses: actions/setup-python@v3
       with:
-<<<<<<< Updated upstream
         python-version: "3.12.3"
-=======
-        python-version: "3.12.0"
     - name: Cache pip dependencies
       id: cache-pip
       uses: actions/cache@v4
@@ -32,7 +29,6 @@ jobs:
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
         restore-keys: |
           ${{ runner.os }}-pip-
->>>>>>> Stashed changes
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
