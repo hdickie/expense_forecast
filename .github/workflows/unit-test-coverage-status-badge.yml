@@ -36,11 +36,11 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        coverage run -m pytest -k unit_test
+        coverage run --data-file=./unit_test_coverage.dat -m pytest -k unit_test
     - name: Write coverage results to .json
       run: |
-        python -m coverage json
-        mv coverage.json unit_tests_coverage.json
+        coverage json --data-file=unit_test_coverage.dat -o unit_test_coverage.json
+        mv coverage.json unit_test_coverage.json
     - name: "Combine"
       run: |
         export TOTAL=$(python -c "import json;print(json.load(open('unit_tests_coverage.json'))['totals']['percent_covered_display'])")
