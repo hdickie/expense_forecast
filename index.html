@@ -5,35 +5,95 @@
 	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
 -->
 <html>
-	<head>
-		<title>expense_forecast python module Homepage</title>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-		<link rel="stylesheet" href="pages/assets/css/main.css" />
-		<noscript><link rel="stylesheet" href="pages/assets/css/noscript.css" /></noscript>
-	</head>
-	<body class="homepage is-preload">
-		<div id="page-wrapper">
+<head>
+	<title>expense_forecast python module Homepage</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+	<link rel="stylesheet" href="pages/assets/css/main.css" />
+	<noscript><link rel="stylesheet" href="pages/assets/css/noscript.css" /></noscript>
+	<style type="text/css" media="screen">
 
-			<!-- Header -->
-				<div id="header">
+		#banner-container {
+			border-radius: 5px;
+			position: sticky; 
+			top: 0; 
+			left: 0; 
+			width: 100%; 
+			z-index:10;
+			background-color:#eb4034; 
+			color:#fff; 
+		}
 
-					<!-- Inner -->
-						<div class="inner">
-							<header>
-								<h1><a href="index.html" id="logo">Expense Forecast Toolkit</a></h1>
-								<hr />
-								<p>Python Module to Predict Your Spending + Optimize Your Time</p>
-							</header>
-							<footer>
-								<a href="#banner" class="button circled scrolly">Start</a>
-							</footer>
-						</div>
+		#banner-content {
+			/* animation properties */
+			-moz-transform: translateX(100%);
+			-webkit-transform: translateX(100%);
+			transform: translateX(100%);
 
-					<!-- Nav -->
-						<nav id="nav">
-							<ul>
-								<li><a href="index.html">Home</a></li>
+			-moz-animation: my-animation 15s linear infinite;
+			-webkit-animation: my-animation 15s linear infinite;
+			animation: my-animation 15s linear infinite;
+
+
+		}
+
+/* for Firefox */
+@-moz-keyframes my-animation {
+	from { -moz-transform: translateX(100%); }
+	to { -moz-transform: translateX(-100%); }
+}
+
+/* for Chrome */
+@-webkit-keyframes my-animation {
+	from { -webkit-transform: translateX(100%); }
+	to { -webkit-transform: translateX(-100%); }
+}
+
+@keyframes my-animation {
+	from {
+		-moz-transform: translateX(100%);
+		-webkit-transform: translateX(100%);
+		transform: translateX(100%);
+	}
+	to {
+		-moz-transform: translateX(-100%);
+		-webkit-transform: translateX(-100%);
+		transform: translateX(-100%);
+	}
+}
+
+
+</style>
+</head>
+<body class="homepage is-preload">
+	<div id="banner-container">
+		<div id="banner-content">
+			This project has not had it's first release. Thank you for your interest :) Follow the Github repo if you would like updates.
+		</div>
+	</div>
+	<div id="page-wrapper">
+		
+
+		<!-- Header -->
+		<div id="header">
+
+			<!-- Inner -->
+			<div class="inner">
+				<header>
+					<h1><a href="index.html" id="logo">Expense Forecast Toolkit</a></h1>
+					<hr />
+					<p>Python Module to Predict Your Spending + Optimize Your Time</p>
+				</header>
+				<footer>
+					<a href="#banner" class="button circled scrolly">Start</a>
+				</footer>
+			</div>
+
+			<!-- Nav -->
+			<nav id="nav">
+				
+				<ul>
+					<li><a href="index.html">Home</a></li>
 								<!--<li>
 									<a href="#">Dropdown</a>
 									<ul>
@@ -55,190 +115,203 @@
 								<li><a href="">Documentation</a></li>
 								<li><a href="">Case Studies</a></li>
 								<li><a href="">User Guides</a></li>
-								<li><a href="">Collaborate</a></li>
+								<li><a href="pages/collaborate.html">Collaborate</a></li>
 								<li><a href="">About</a></li>
 								<!--
 								<li><a href="pages/left-sidebar.html">Left Sidebar</a></li>
 								<li><a href="pages/right-sidebar.html">Right Sidebar</a></li>
 								<li><a href="pages/no-sidebar.html">No Sidebar</a></li>-->
-							</ul>
+							</ul>	
 						</nav>
 
-				</div>
-
-			<!-- Banner -->
-				<section id="banner">
-					<header>
-						<h2>Save with Purpose. Choose with Confidence.</h2>
-						<p>
-							Put an end to napkin math and analysis paralysis.
-						</p>
-					</header>
-				</section>
-
-			<!-- Carousel -->
-				<section class="carousel">
-					<div class="reel">
-
-						<article>
-							<a href="#" class="image featured"><img src="pages/images/pay_off_credit_card.jpg" alt="" /></a>
-							<header>
-								<h3><a href="#">Paying off a credit card</a></h3>
-							</header>
-							<p>An example that shows a credit card being paid off over a year, and the impact of several optional purchases.</p>
-						</article>
-
-						<article>
-							<a href="#" class="image featured"><img src="pages/images/optimize_loan_payments.jpg" alt="" /></a>
-							<header>
-								<h3><a href="#">Optimizing loan payments</a></h3>
-							</header>
-							<p>An example that shows how much to allocate loan payments and choose: borrow now, do now, pay later, OR save now, do later, pay later.</p>
-						</article>
-
-						<article>
-							<a href="#" class="image featured"><img src="pages/images/home_ownership.jpg" alt="" /></a>
-							<header>
-								<h3><a href="#">Home Ownership</a></h3>
-							</header>
-							<p>An example that compares the purchase of several different homes and the impact on retirement.</p>
-						</article>
-
-						<article>
-							<a href="#" class="image featured"><img src="pages/images/retirement.png" alt="" /></a>
-							<header>
-								<h3><a href="#">Retirement</a></h3>
-							</header>
-							<p>An example that shows a forecast all the way to an estimated end of life date.</p>
-						</article>
-
-						<article>
-							<a href="#" class="image featured"><img src="pages/images/risk_management.jpg" alt="" /></a>
-							<header>
-								<h3><a href="#">Risk Management</a></h3>
-							</header>
-							<p>An example that uses Monte Carlo sampling to provide confidence bands on projections.</p>
-						</article>
-
-						<article>
-							<a href="#" class="image featured"><img src="pages/images/impulse_spending.png" alt="" /></a>
-							<header>
-								<h3><a href="#">Impulse Spending</a></h3>
-							</header>
-							<p>An example that shows how making an intentional purchase at a certain frequency instead of impulse spending improves outcomes.</p>
-						</article>
-
-						<article>
-							<a href="#" class="image featured"><img src="pages/images/milestone_tracking.png" alt="" /></a>
-							<header>
-								<h3><a href="#">Accruals & Milestone Tracking</a></h3>
-							</header>
-							<p>An example showing how milestone drift indicates an incorrect budget.</p>
-						</article>
-
-						<article>
-							<a href="#" class="image featured"><img src="pages/images/rich.png" alt="" /></a>
-							<header>
-								<h3><a href="#">Define "Rich"</a></h3>
-							</header>
-							<p>What does it take to feel rich? Start from the life you imagine and work backwards.</p>
-						</article>
-
-						<article>
-							<a href="#" class="image featured"><img src="pages/images/communicate.png" alt="" /></a>
-							<header>
-								<h3><a href="#">Communicate with Confidence</a></h3>
-							</header>
-							<p>If you are making financial plans with someone, sure would be good to have a clear plan, and a timeline to know you're staying on track!.</p>
-						</article>
-
-						<article>
-							<a href="#" class="image featured"><img src="pages/images/privacy.png" alt="" /></a>
-							<header>
-								<h3><a href="#">Perfect Privacy</a></h3>
-							</header>
-							<p>This software is for you to run on your own machine. Never worry about your data being stolen, because you will never have to share it!</p>
-						</article>
-
 					</div>
-				</section>
 
-			<!-- Main -->
-				<div class="wrapper style2">
-					<article id="main" class="container special">
-						<a href="#" class="image featured"><img src="pages/images/long_journey.png" alt="" /></a>
+					<!-- Banner -->
+					<section id="banner">
 						<header>
-							<h2><a href="#">Start Your Journey</a></h2>
+							<h2>Save with Purpose. Choose with Confidence.</h2>
 							<p>
-								New to programming? No problem! Let's start from the beginning, together.
+								Put an end to napkin math and analysis paralysis.
 							</p>
 						</header>
-						<p>
-							TODO Write the actual article, and put the preview here
-						</p>
-						<footer>
+					</section>
+
+					<!-- Carousel -->
+					<section class="carousel">
+						<div class="reel">
+
+							<article>
+								<a href="#" class="image featured"><img src="pages/images/pay_off_credit_card.jpg" alt="" /></a>
+								<header>
+									<h3><a href="#">Paying off a credit card</a></h3>
+								</header>
+								<p>An example that shows a credit card being paid off over a year, and the impact of several optional purchases.</p>
+							</article>
+
+							<article>
+								<a href="#" class="image featured"><img src="pages/images/optimize_loan_payments.jpg" alt="" /></a>
+								<header>
+									<h3><a href="#">Optimizing loan payments</a></h3>
+								</header>
+								<p>An example that shows how much to allocate loan payments and choose: borrow now, do now, pay later, OR save now, do later, pay later.</p>
+							</article>
+
+							<article>
+								<a href="#" class="image featured"><img src="pages/images/home_ownership.jpg" alt="" /></a>
+								<header>
+									<h3><a href="#">Home Ownership</a></h3>
+								</header>
+								<p>An example that compares the purchase of several different homes and the impact on retirement.</p>
+							</article>
+
+							<article>
+								<a href="#" class="image featured"><img src="pages/images/retirement.png" alt="" /></a>
+								<header>
+									<h3><a href="#">Retirement</a></h3>
+								</header>
+								<p>An example that shows a forecast all the way to an estimated end of life date.</p>
+							</article>
+
+							<article>
+								<a href="#" class="image featured"><img src="pages/images/risk_management.jpg" alt="" /></a>
+								<header>
+									<h3><a href="#">Risk Management</a></h3>
+								</header>
+								<p>An example that uses Monte Carlo sampling to provide confidence bands on projections.</p>
+							</article>
+
+							<article>
+								<a href="#" class="image featured"><img src="pages/images/impulse_spending.png" alt="" /></a>
+								<header>
+									<h3><a href="#">Impulse Spending</a></h3>
+								</header>
+								<p>An example that shows how making an intentional purchase at a certain frequency instead of impulse spending improves outcomes.</p>
+							</article>
+
+							<article>
+								<a href="#" class="image featured"><img src="pages/images/milestone_tracking.png" alt="" /></a>
+								<header>
+									<h3><a href="#">Accruals & Milestone Tracking</a></h3>
+								</header>
+								<p>An example showing how milestone drift indicates an incorrect budget.</p>
+							</article>
+
+							<article>
+								<a href="#" class="image featured"><img src="pages/images/rich.png" alt="" /></a>
+								<header>
+									<h3><a href="#">Define "Rich"</a></h3>
+								</header>
+								<p>What does it take to feel rich? Start from the life you imagine and work backwards.</p>
+							</article>
+
+							<article>
+								<a href="#" class="image featured"><img src="pages/images/communicate.png" alt="" /></a>
+								<header>
+									<h3><a href="#">Communicate with Confidence</a></h3>
+								</header>
+								<p>If you are making financial plans with someone, sure would be good to have a clear plan, and a timeline to know you're staying on track!.</p>
+							</article>
+
+							<article>
+								<a href="#" class="image featured"><img src="pages/images/privacy.png" alt="" /></a>
+								<header>
+									<h3><a href="#">Perfect Privacy</a></h3>
+								</header>
+								<p>This software is for you to run on your own machine. Never worry about your data being stolen, because you will never have to share it!</p>
+							</article>
+
+						</div>
+					</section>
+
+					<!-- Main -->
+					<div class="wrapper style2">
+						<article id="main" class="container special">
+
+							<header>
+								<div style="display: flex; align-items: center">
+									<img src="pages/images/long_journey.png" style="width:60%;margin:10 auto;padding: 2em" alt="" />
+									<div>
+										<h2>Start Your Journey</h2>
+										<p style="margin:2em">
+											New to programming? No problem!<br> Let's start from the beginning, together.
+										</p>
+
+										<a href="#" class="button">Continue Reading</a>
+									</div>
+								</div>
+							</header>
+
+
+						<!--<footer>
 							<a href="#" class="button">Continue Reading</a>
-						</footer>
+						</footer>-->
 					</article>
 				</div>
 
 				<div class="wrapper style2">
 					<article id="main" class="container special">
-						<a href="#" class="image featured"><img src="pages/images/matrix.png" alt="" /></a>
+
 						<header>
-							<h2><a href="#">Guide for Programmers</a></h2>
-							<p>
-								Already familiar with Python? Let me tell you about this project without stating the obvious.
-							</p>
+							<div style="display: flex; align-items: center">
+								<img src="pages/images/matrix.png" style="width:60%;margin:10 auto;padding: 2em" alt="" />
+								<div>
+									<h2>Guide for Programmers</h2>
+									<p style="margin:2em">
+										Already familiar with Python? Great!<br>Let's see documentation and examples.
+									</p>
 
-							<div style="margin:auto;display:flex;justify-content:center">
-    <table style="border-collapse: collapse; width: 60%; font-family: Arial, sans-serif;">
-        <tr>
-            <th style="border: 1px solid #ddd; padding: 8px; width: 100px;">Build Status</td>
-            <th style="border: 1px solid #ddd; padding: 8px; width: 100px;;"><a href="https://github.com/hdickie/expense_forecast/actions/workflows/python-app.yml">
-        <img src="https://github.com/hdickie/expense_forecast/actions/workflows/python-app.yml/badge.svg" alt="Build Status">
-    </a></td>
-        </tr>
-        <tr>
-            <td style="border: 1px solid #ddd; padding: 8px;">Coverage</td>
-            <td style="border: 1px solid #ddd; padding: 8px;">todo</td>
-        </tr>
-
-        <tr>
-            <td style="border: 1px solid #ddd; padding: 8px;">Unit Tests</td>
-            <td style="border: 1px solid #ddd; padding: 8px;">todo</td>
-        </tr>
-        <tr>
-            <td style="border: 1px solid #ddd; padding: 8px;">Integration Tests</td>
-            <td style="border: 1px solid #ddd; padding: 8px;">todo</td>
-        </tr>
-        <tr>
-            <td style="border: 1px solid #ddd; padding: 8px;">E2E Tests</td>
-            <td style="border: 1px solid #ddd; padding: 8px;">todo</td>
-        </tr>
-    </table>
-</div>
-
-
-    
-
-
-
+									<a href="#" class="button">Continue Reading</a>
+								</div>
+							</div>
 						</header>
-						<p>
+						
+						<!--<header>
+								<div style="display: flex; align-items: center">
+									<img src="pages/images/matrix.png" style="width:60%;margin:10 auto;padding: 2em" alt="" />
+									<div>
+										<h2>Guide for Programmers</h2>
+										<p style="margin:2em">
+											Already familiar with Python? Let me skip the preamble and show you documentation and examples.
+										</p>
+
+										<a href="#" class="button">Continue Reading</a> -->
+								<!--<table style="border-collapse: collapse; width: 60%; font-family: Arial, sans-serif;">
+									<tr>
+										<th style="border: 1px solid #ddd; padding: 8px; width: 100px;">Build Status</td>
+											<th style="border: 1px solid #ddd; padding: 8px; width: 100px;;"><a href="https://github.com/hdickie/expense_forecast/actions/workflows/python-app.yml">
+												<img src="https://github.com/hdickie/expense_forecast/actions/workflows/python-app.yml/badge.svg" alt="Build Status">
+											</a></td>
+										</tr>
+										<tr>
+											<td style="border: 1px solid #ddd; padding: 8px;">Coverage</td>
+											<td style="border: 1px solid #ddd; padding: 8px;">todo</td>
+										</tr>
+
+										<tr>
+											<td style="border: 1px solid #ddd; padding: 8px;">Unit Tests</td>
+											<td style="border: 1px solid #ddd; padding: 8px;">todo</td>
+										</tr>
+										<tr>
+											<td style="border: 1px solid #ddd; padding: 8px;">Integration Tests</td>
+											<td style="border: 1px solid #ddd; padding: 8px;">todo</td>
+										</tr>
+										<tr>
+											<td style="border: 1px solid #ddd; padding: 8px;">E2E Tests</td>
+											<td style="border: 1px solid #ddd; padding: 8px;">todo</td>
+										</tr>
+									</table>-->
+
+									<!--<br>-->
+									
+									<!--</div>
+								</div>
+							</header>-->
 							
-						</p>
-						<p>
-							TODO Write the actual article, and put the preview here
-						</p>
-						<footer>
-							<a href="#" class="button">Continue Reading</a>
-						</footer>
-					</article>
-				</div>
+						</article>
+					</div>
 
-			<!-- Features -->
-			
+					<!-- Features -->
+
 				<!--
 				<div class="wrapper style1">
 
@@ -281,12 +354,12 @@
 					</section>
 
 				</div> -->
-			
 
-			<!-- Footer -->
+
+				<!-- Footer -->
 				<div id="footer">
 					<div class="container">
-							<div class="row">
+						<div class="row">
 							<!-- Tweets -->
 							<!--
 								<section class="col-4 col-12-mobile">
@@ -323,123 +396,123 @@
 							-->
 
 							<!-- Posts -->
-								<section class="col-4 col-12-mobile">
-									<header>
-										<h2 class="icon solid fa-file circled"><span class="label">Templates</span></h2>
-									</header>
-									<ul class="divided">
-										<li>
-											<article class="post stub">
-												<header>
-													<h3><a href="#">TODO basic excel input template</a></h3>
-												</header>
-												<span class="timestamp">3 hours ago</span>
-											</article>
-										</li>
-										<li>
-											<article class="post stub">
-												<header>
-													<h3><a href="#">TODO max complex input template</a></h3>
-												</header>
-												<span class="timestamp">6 hours ago</span>
-											</article>
-										</li>
-										<li>
-											<article class="post stub">
-												<header>
-													<h3><a href="#">TODO ForecastSet example</a></h3>
-												</header>
-												<span class="timestamp">Yesterday</span>
-											</article>
-										</li>
-										<li>
-											<article class="post stub">
-												<header>
-													<h3><a href="#">TODO Monte Carlo example</a></h3>
-												</header>
-												<span class="timestamp">2 days ago</span>
-											</article>
-										</li>
-									</ul>
-								</section>
-								<section class="col-4 col-12-mobile">
-									<header>
-										<h2 class="icon solid fa-file circled"><span class="label">Posts</span></h2>
-									</header>
-									<ul class="divided">
-										<li>
-											<article class="post stub">
-												<header>
-													<h3><a href="#">TODO basic excel input template</a></h3>
-												</header>
-												<span class="timestamp">3 hours ago</span>
-											</article>
-										</li>
-										<li>
-											<article class="post stub">
-												<header>
-													<h3><a href="#">TODO max complex input template</a></h3>
-												</header>
-												<span class="timestamp">6 hours ago</span>
-											</article>
-										</li>
-										<li>
-											<article class="post stub">
-												<header>
-													<h3><a href="#">TODO ForecastSet example</a></h3>
-												</header>
-												<span class="timestamp">Yesterday</span>
-											</article>
-										</li>
-										<li>
-											<article class="post stub">
-												<header>
-													<h3><a href="#">TODO Monte Carlo example</a></h3>
-												</header>
-												<span class="timestamp">2 days ago</span>
-											</article>
-										</li>
-									</ul>
-								</section>
-								<section class="col-4 col-12-mobile">
-									<header>
-										<h2 class="icon solid fa-file circled"><span class="label">Posts</span></h2>
-									</header>
-									<ul class="divided">
-										<li>
-											<article class="post stub">
-												<header>
-													<h3><a href="#">TODO basic excel input template</a></h3>
-												</header>
-												<span class="timestamp">3 hours ago</span>
-											</article>
-										</li>
-										<li>
-											<article class="post stub">
-												<header>
-													<h3><a href="#">TODO max complex input template</a></h3>
-												</header>
-												<span class="timestamp">6 hours ago</span>
-											</article>
-										</li>
-										<li>
-											<article class="post stub">
-												<header>
-													<h3><a href="#">TODO ForecastSet example</a></h3>
-												</header>
-												<span class="timestamp">Yesterday</span>
-											</article>
-										</li>
-										<li>
-											<article class="post stub">
-												<header>
-													<h3><a href="#">TODO Monte Carlo example</a></h3>
-												</header>
-												<span class="timestamp">2 days ago</span>
-											</article>
-										</li>
-									</ul>
-								</section>
+							<section class="col-4 col-12-mobile">
+								<header>
+									<h2 class="icon solid fa-file circled"><span class="label">Templates</span></h2>
+								</header>
+								<ul class="divided">
+									<li>
+										<article class="post stub">
+											<header>
+												<h3><a href="#">TODO basic excel input template</a></h3>
+											</header>
+											<span class="timestamp">3 hours ago</span>
+										</article>
+									</li>
+									<li>
+										<article class="post stub">
+											<header>
+												<h3><a href="#">TODO max complex input template</a></h3>
+											</header>
+											<span class="timestamp">6 hours ago</span>
+										</article>
+									</li>
+									<li>
+										<article class="post stub">
+											<header>
+												<h3><a href="#">TODO ForecastSet example</a></h3>
+											</header>
+											<span class="timestamp">Yesterday</span>
+										</article>
+									</li>
+									<li>
+										<article class="post stub">
+											<header>
+												<h3><a href="#">TODO Monte Carlo example</a></h3>
+											</header>
+											<span class="timestamp">2 days ago</span>
+										</article>
+									</li>
+								</ul>
+							</section>
+							<section class="col-4 col-12-mobile">
+								<header>
+									<h2 class="icon solid fa-file circled"><span class="label">Posts</span></h2>
+								</header>
+								<ul class="divided">
+									<li>
+										<article class="post stub">
+											<header>
+												<h3><a href="#">TODO basic excel input template</a></h3>
+											</header>
+											<span class="timestamp">3 hours ago</span>
+										</article>
+									</li>
+									<li>
+										<article class="post stub">
+											<header>
+												<h3><a href="#">TODO max complex input template</a></h3>
+											</header>
+											<span class="timestamp">6 hours ago</span>
+										</article>
+									</li>
+									<li>
+										<article class="post stub">
+											<header>
+												<h3><a href="#">TODO ForecastSet example</a></h3>
+											</header>
+											<span class="timestamp">Yesterday</span>
+										</article>
+									</li>
+									<li>
+										<article class="post stub">
+											<header>
+												<h3><a href="#">TODO Monte Carlo example</a></h3>
+											</header>
+											<span class="timestamp">2 days ago</span>
+										</article>
+									</li>
+								</ul>
+							</section>
+							<section class="col-4 col-12-mobile">
+								<header>
+									<h2 class="icon solid fa-file circled"><span class="label">Posts</span></h2>
+								</header>
+								<ul class="divided">
+									<li>
+										<article class="post stub">
+											<header>
+												<h3><a href="#">TODO basic excel input template</a></h3>
+											</header>
+											<span class="timestamp">3 hours ago</span>
+										</article>
+									</li>
+									<li>
+										<article class="post stub">
+											<header>
+												<h3><a href="#">TODO max complex input template</a></h3>
+											</header>
+											<span class="timestamp">6 hours ago</span>
+										</article>
+									</li>
+									<li>
+										<article class="post stub">
+											<header>
+												<h3><a href="#">TODO ForecastSet example</a></h3>
+											</header>
+											<span class="timestamp">Yesterday</span>
+										</article>
+									</li>
+									<li>
+										<article class="post stub">
+											<header>
+												<h3><a href="#">TODO Monte Carlo example</a></h3>
+											</header>
+											<span class="timestamp">2 days ago</span>
+										</article>
+									</li>
+								</ul>
+							</section>
 
 							<!-- Photos -->
 							<!--
@@ -468,7 +541,7 @@
 										</div>
 									</div>
 								</section>
-								-->
+							-->
 
 						</div>
 						<hr />
@@ -494,11 +567,11 @@
 								-->
 
 								<!-- Copyright -->
-									<div class="copyright">
-										<ul class="menu">
-											<li>&copy; Expense Forecast Toolkit. All rights reserved.</li><li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
-										</ul>
-									</div>
+								<div class="copyright">
+									<ul class="menu">
+										<li>&copy; Expense Forecast Toolkit. All rights reserved.</li><li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+									</ul>
+								</div>
 
 							</div>
 
@@ -506,9 +579,9 @@
 					</div>
 				</div>
 
-		</div>
+			</div>
 
-		<!-- Scripts -->
+			<!-- Scripts -->
 			<script src="pages/assets/js/jquery.min.js"></script>
 			<script src="pages/assets/js/jquery.dropotron.min.js"></script>
 			<script src="pages/assets/js/jquery.scrolly.min.js"></script>
@@ -518,5 +591,5 @@
 			<script src="pages/assets/js/util.js"></script>
 			<script src="pages/assets/js/main.js"></script>
 
-	</body>
-</html>
+		</body>
+		</html>
