@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 import jsonpickle
 
 def initialize_from_dataframe(budget_set_df):
-    #print('ENTER BudgetSet initialize_from_dataframe')
     B = BudgetSet([])
     try:
         for index, row in budget_set_df.iterrows():
@@ -28,8 +27,6 @@ def initialize_from_dataframe(budget_set_df):
     except Exception as e:
         print(e.args)
         raise e
-    #print(B.getBudgetItems().to_string())
-    #print('EXIT BudgetSet initialize_from_dataframe')
     return B
 
 def initialize_from_json_string(json_string):
@@ -90,12 +87,6 @@ class BudgetSet:
                                                'Partial_Payment_Allowed': [budget_item.partial_payment_allowed]
                                                })
 
-
-            #print('all_budget_items_df:')
-            #print(all_budget_items_df.to_string())
-            #print('new_budget_item_row_df:')
-            #print(new_budget_item_row_df.to_string())
-
             if (not all_budget_items_df.empty) & (not new_budget_item_row_df.empty):
                 all_budget_items_df = pd.concat([all_budget_items_df, new_budget_item_row_df], axis=0)
 
@@ -115,14 +106,6 @@ class BudgetSet:
         :param num_days:
         :return:
         """
-        #log_in_color(logger,'green', 'debug','ENTER getBudgetSchedule(start_date_YYYYMMDD='+str(start_date_YYYYMMDD)+',end_date_YYYYMMDD='+str(end_date_YYYYMMDD)+')', 0)
-        # log_in_color(logger,'green', 'debug','self.budget_items:', 0)
-        # for b in self.budget_items:
-        #    log_in_color(logger,'green', 'debug', '\n'+str(b), 0)
-        #
-        # log_in_color(logger,'green', 'debug', 'getBudgetSchedule():')
-        # log_in_color(logger,'green', 'debug', 'self.budget_items:')
-        # log_in_color(logger,'green', 'debug', self.budget_items)
 
         current_budget_schedule = pd.DataFrame({'Date':[],'Priority':[],'Amount':[],'Memo':[],'Deferrable':[],'Partial_Payment_Allowed':[]})
         for budget_item in self.budget_items:
@@ -140,14 +123,9 @@ class BudgetSet:
 
             current_budget_schedule = pd.concat([current_budget_schedule,new_budget_schedule_rows_df],axis=0)
 
-            #print(current_budget_schedule.head(1))
-
         current_budget_schedule.sort_values(inplace=True,axis=0,by="Date")
         current_budget_schedule.reset_index(inplace=True,drop=True)
 
-        log_in_color(logger,'green', 'debug', 'current_budget_schedule:')
-        log_in_color(logger,'green', 'debug', current_budget_schedule.to_string())
-        # log_in_color(logger,'green', 'debug', 'EXIT getBudgetSchedule(start_date_YYYYMMDD=' + str(start_date_YYYYMMDD) + ',end_date_YYYYMMDD=' + str(end_date_YYYYMMDD) + ')', 0)
         return current_budget_schedule
 
     def addBudgetItem(self,
@@ -176,12 +154,7 @@ class BudgetSet:
         :param bool raise_exceptions: If True, raises exceptions on errors.
         :raises ValueError: If a budget item with the same priority and memo already exists.
         """
-        # Log the addition attempt
-        log_message = (f"addBudgetItem(priority={priority}, cadence='{cadence}', memo='{memo}', "
-                       f"start_date='{start_date_YYYYMMDD}', end_date='{end_date_YYYYMMDD}')")
-        log_in_color(logger, 'green', 'debug', log_message)
 
-        # Create the BudgetItem
         try:
             budget_item = BudgetItem.BudgetItem(start_date_YYYYMMDD,
                                      end_date_YYYYMMDD,
@@ -220,8 +193,6 @@ class BudgetSet:
 
         # Append the budget item
         self.budget_items.append(budget_item)
-        if print_debug_messages:
-            log_in_color(logger, 'green', 'info', f"Budget item '{memo}' added successfully.")
 
     def to_json(self):
         """
@@ -231,6 +202,3 @@ class BudgetSet:
         return jsonpickle.encode(self, indent=4)
 
 if __name__ == "__main__": import doctest ; doctest.testmod()
-
-# before gpt  7 passed, 226 deselected in 15.81s
-# after gpt 7 passed, 226 deselected in 15.28s

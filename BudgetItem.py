@@ -143,23 +143,5 @@ class BudgetItem:
 
         """
         return jsonpickle.encode(self, indent=4)
-        # return pd.DataFrame({
-        #     'Start_Date': [self.start_date_YYYYMMDD],
-        #     'End_Date': [self.end_date_YYYYMMDD],
-        #     'Priority': [self.priority],
-        #     'Cadence': [self.cadence],
-        #     'Amount': [self.amount],
-        #     'Memo': [self.memo],
-        #     'Deferrable': [self.deferrable],
-        #     'Partial_Payment_Allowed': [self.partial_payment_allowed]
-        # }).to_json(orient="records")
-
-    # def fromJSON(self,JSON_string):
-    #     pass
 
 if __name__ == "__main__": import doctest ; doctest.testmod()
-
-
-#before gpt: 11 passed, 222 deselected in 15.38s
-
-#after gpt:

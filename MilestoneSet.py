@@ -5,6 +5,10 @@ import MemoMilestone
 import CompositeMilestone
 import AccountMilestone
 import jsonpickle
+import logging
+from log_methods import log_in_color
+from log_methods import setup_logger
+logger = setup_logger(__name__, './'+ __name__ + '.log', level=logging.DEBUG)
 
 def initialize_from_dataframe(account_milestones_df, memo_milestones_df, composite_milestones_df):
 
@@ -41,7 +45,7 @@ def initialize_from_dataframe(account_milestones_df, memo_milestones_df, composi
 class MilestoneSet:
 
     def __init__(self,account_milestones__list=None,memo_milestones__list=None,composite_milestones__list=None):
-
+        self.log_stack_depth = 0
         # for account_milestone in account_milestones__list:
         #     all_account_names = set([ a.split(':')[0] for a in account_set.getAccounts().Name ])
         #     if not account_milestone.account_name in all_account_names:
@@ -115,7 +119,7 @@ class MilestoneSet:
         self.account_milestones += [ AccountMilestone.AccountMilestone(milestone_name,account_name,min_balance,max_balance) ]
 
     def addCompositeMilestone(self,milestone_name,account_milestones__list, memo_milestones__list):
-        #todo raise error if input milestones did not already exist
+        #todo raise error if input milestones did not already exist #https://github.com/hdickie/expense_forecast/issues/22
         self.composite_milestones += [ CompositeMilestone.CompositeMilestone(milestone_name,account_milestones__list, memo_milestones__list) ]
 
     def to_json(self):
@@ -172,3 +176,81 @@ class MilestoneSet:
                                            })])
         composite_milestone_df.reset_index(drop=True, inplace=True)
         return composite_milestone_df
+
+
+
+
+    def getMilestoneResultsDF(self):
+        if not hasattr(self,'forecast_df'):
+            print('Forecast has not been run, so there are no results.')
+            return
+
+        milestone_results_df = pd.DataFrame({'Milestone_Name':[],
+                                             'Milestone_Type': [],
+                                             'Result_Date':[]})
+
+        for key, value in self.account_milestone_results.items():
+            milestone_results_df = pd.concat([milestone_results_df,
+                                                  pd.DataFrame({'Milestone_Name': [ key ], 'Milestone_Type': [ 'Account' ], 'Result_Date': [ value ]}) ])
+
+        for key, value in self.memo_milestone_results.items():
+            milestone_results_df = pd.concat([milestone_results_df,
+                                                  pd.DataFrame({'Milestone_Name': [ key ], 'Milestone_Type': [ 'Memo' ], 'Result_Date': [ value ]}) ])
+
+        for key, value in self.composite_milestone_results.items():
+            milestone_results_df = pd.concat([milestone_results_df,
+                                                  pd.DataFrame({'Milestone_Name': [ key ], 'Milestone_Type': [ 'Composite' ], 'Result_Date': [ value ]}) ])
+
+
+
+# def evaluateMilestones(self):
+    #
+    #     account_milestone_results = {}
+    #     for a_m in self.milestone_set.account_milestones:
+    #         res = self.evaluateAccountMilestone(a_m.account_name, a_m.min_balance, a_m.max_balance)
+    #         account_milestone_results[a_m.milestone_name] = res
+    #     self.account_milestone_results = account_milestone_results
+    #
+    #     memo_milestone_results = {}
+    #     for m_m in self.milestone_set.memo_milestones:
+    #         res = self.evaulateMemoMilestone(m_m.memo_regex)
+    #         memo_milestone_results[m_m.milestone_name] = res
+    #     self.memo_milestone_results = memo_milestone_results
+    #
+    #     composite_milestone_results = {}
+    #     for c_m in self.milestone_set.composite_milestones:
+    #         res = self.evaluateCompositeMilestone(c_m.account_milestones,
+    #                                               c_m.memo_milestones)
+    #         composite_milestone_results[c_m.milestone_name] = res
+    #     self.composite_milestone_results = composite_milestone_results
+
+    # def getAccountMilestoneResultsDF(self):
+    #     return_df = pd.DataFrame({'Milestone_Name':[],'Date':[]})
+    #     for key, value in self.account_milestone_results.items():
+    #         try:
+    #             value = datetime.datetime.strptime(value, '%Y%m%d')
+    #         except:
+    #             value = None
+    #         return_df = pd.concat([return_df, pd.DataFrame({'Milestone_Name':[key],'Date':[ value ] })])
+    #     return return_df
+
+    # def getMemoMilestoneResultsDF(self):
+    #     return_df = pd.DataFrame({'Milestone_Name': [], 'Date': []})
+    #     for key, value in self.memo_milestone_results.items():
+    #         try:
+    #             value = datetime.datetime.strptime(value, '%Y%m%d')
+    #         except:
+    #             value = None
+    #         return_df = pd.concat([return_df, pd.DataFrame({'Milestone_Name': [key], 'Date': [value]})])
+    #     return return_df
+
+
+    # def getCompositeMilestoneResultsDF(self):
+    #     return_df = pd.DataFrame({'Milestone_Name': [], 'Date': []})
+    #     for key, value in self.composite_milestone_results.items():
+    #         try:
+    #             value = datetime.datetime.strptime(value, '%Y%m%d')
+    #         except:
+    #             value = None
+    #         return_df = pd.concat([return_df, pd.DataFrame({'Milestone_Name': [key], 'Date': [value]})])
+    #     return return_df
