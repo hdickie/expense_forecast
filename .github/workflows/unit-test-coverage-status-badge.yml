@@ -39,7 +39,7 @@ jobs:
         coverage run -m pytest -k unit
     - name: Write coverage results to .json
       run: |
-        coverage report --skip-covered -m > coverage.json
+        coverage report --skip-covered -m
     - name: "Combine"
       run: |
         export TOTAL=$(python -c "import json;print(json.load(open('coverage.json'))['totals']['percent_covered_display'])")
