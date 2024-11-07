@@ -39,8 +39,7 @@ jobs:
         coverage run --data-file=./unit_test_coverage.dat -m pytest -k unit_test
     - name: Write coverage results to .json
       run: |
-        coverage json --data-file=unit_test_coverage.dat -o unit_test_coverage.json
-        mv coverage.json unit_test_coverage.json
+        coverage json --data-file=unit_test_coverage.dat -o unit_tests_coverage.json
     - name: "Combine"
       run: |
         export TOTAL=$(python -c "import json;print(json.load(open('unit_tests_coverage.json'))['totals']['percent_covered_display'])")
