@@ -1,6 +1,5 @@
 *.json
 *.log
-*.html
 archive/*
 out/*
 log/*
