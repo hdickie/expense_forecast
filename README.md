@@ -9,6 +9,8 @@ This tool is useful for:
 <li>Tracking long-term financial goals</li>
 </ul>
 
+[![Prod Python application](https://github.com/hdickie/expense_forecast/actions/workflows/python-app.yml/badge.svg)](https://github.com/hdickie/expense_forecast/actions/workflows/python-app.yml)
+
 ## License
 
 This project is licensed under the GNU General Public License v3.0. See the [license.txt](./license.txt) file for details.
