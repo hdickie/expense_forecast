@@ -11,9 +11,9 @@ This tool is useful for:
 <li>Tracking long-term financial goals</li>
 </ul>
 
-| Build Status | [![Prod Python application](https://github.com/hdickie/expense_forecast/actions/workflows/python-app.yml/badge.svg)](https://github.com/hdickie/expense_forecast/actions/workflows/python-app.yml)<br> |
+| Build Status | [![All Test Coverage](https://github.com/hdickie/expense_forecast/actions/workflows/all-tests-coverage-status-badge.yml/badge.svg)](https://github.com/hdickie/expense_forecast/actions/workflows/all-tests-coverage-status-badge.yml)<br> |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Coverage     | ![badge](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/hdickie/69631cca73647a817c2678cf0250a54a/raw/covbadge.json)                                                                                                                                                                                                   |
+| Coverage     | ![badge](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/hdickie/69631cca73647a817c2678cf0250a54a/raw/all_tests_coverage.json)                                                                                                                                                                                                   |
 
 | Test SuiteS       | Status | Description                              |
 | ----------------- | ------ | ---------------------------------------- |

@@ -36,14 +36,13 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        coverage run -m pytest -k unit
+        coverage run --data-file=./unit_test_coverage.dat -m pytest -k unit_test
     - name: Write coverage results to .json
       run: |
-        python -m coverage json
-        mv coverage.json all_tests_coverage.json
+        coverage json --data-file=unit_test_coverage.dat -o unit_tests_coverage.json
     - name: "Combine"
       run: |
-        export TOTAL=$(python -c "import json;print(json.load(open('all_tests_coverage.json'))['totals']['percent_covered_display'])")
+        export TOTAL=$(python -c "import json;print(json.load(open('unit_tests_coverage.json'))['totals']['percent_covered_display'])")
         echo "total=$TOTAL" >> $GITHUB_ENV
         echo "### Total coverage: ${TOTAL}%" >> $GITHUB_STEP_SUMMARY
     - name: "Make badge"
@@ -52,7 +51,7 @@ jobs:
         # GIST_TOKEN is a GitHub personal access token with scope "gist".
         auth: ${{ secrets.GIST_TOKEN }}
         gistID: 69631cca73647a817c2678cf0250a54a   # replace with your real Gist id.
-        filename: all_tests_coverage.json
+        filename: unit_tests_coverage.json
         label: Coverage
         message: ${{ env.total }}%
         minColorRange: 50
