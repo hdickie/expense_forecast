@@ -219,13 +219,124 @@ def credit_bsd12_w_eopc_acct_list(prev_balance,curr_balance,apr,end_of_prev_cycl
 
 
 if __name__ == '__main__':
-    import json
-    with open('coverage.json','r') as f:
-        #print(f.readlines())
-        string_lines = ''.join(f.readlines())
-        print(string_lines)
-        lines = json.loads(string_lines)
-        print(lines['totals']['percent_covered_display'])
+    pass
+
+    name_tuples=[]
+    name_tuples.append(('INT - AccountSet', 'test_AccountSet__integration_test'))
+    name_tuples.append(('INT - BudgetSet', 'test_BudgetSet__integration_test'))
+    name_tuples.append(('INT - ExpenseForecastClient', 'test_ExpenseForecastClient__integration_test'))
+    name_tuples.append(('INT - ExpenseForecastServer', 'test_ExpenseForecastServer__integration_test'))
+    name_tuples.append(('INT - ExpenseForecast', 'test_ExpenseForecast__integration_test'))
+    name_tuples.append(('INT - MemoRuleSet', 'test_MemoRuleSet__integration_test'))
+    name_tuples.append(('INT - MilestoneSet', 'test_MilestoneSet__integration_test'))
+    name_tuples.append(('INT - ForecastHandler', 'test_ForecastHandler__integration_test'))
+
+    name_tuples.append(('UNIT - Account', 'test_Account__unit_test'))
+    name_tuples.append(('UNIT - AccountSet', 'test_AccountSet__unit_test'))
+    name_tuples.append(('UNIT - BudgetItem', 'test_BudgetItem__unit_test'))
+    name_tuples.append(('UNIT - BudgetSet', 'test_BudgetSet__unit_test'))
+    #name_tuples.append((formal_test_name, test_ef_cli__unit_test)) #todo refactor
+    #name_tuples.append((formal_test_name, test_ForecastRunner__unit_test)) #todo refactor
+    name_tuples.append(('UNIT - ExpenseForecast', 'test_ExpenseForecast__unit_test'))
+    name_tuples.append(('UNIT - ForecastSet', 'test_ForecastSet__unit_test'))
+    name_tuples.append(('UNIT - MemoRule', 'test_MemoRule__unit_test'))
+    name_tuples.append(('UNIT - MemoRuleSet', 'test_MemoRuleSet__unit_test'))
+    name_tuples.append(('UNIT - AccountMilestone', 'test_AccountMilestone__unit_test'))
+    name_tuples.append(('UNIT - CompositeMilestone', 'test_CompositeMilestone__unit_test'))
+    name_tuples.append(('UNIT - MemoMilestone', 'test_MemoMilestone__unit_test'))
+    name_tuples.append(('UNIT - MilestoneSet', 'test_MilestoneSet__unit_test'))
+    #name_tuples.append((formal_test_name, test_ForecastHandler__unit_test)) #todo refactor
+    #name_tuples.append((formal_test_name, test_method_name))
+
+    #formal_test_name, test_method_name
+    for t in name_tuples:
+        formal_test_name=t[0]
+        test_method_name=t[1]
+
+        status_badge_template=f"""
+    # This workflow will install Python dependencies, run tests and lint with a single version of Python
+    # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+    
+    name: {formal_test_name}
+    
+    on:
+      pull_request:
+        branches: [ "prod" ]
+    
+    permissions:
+      contents: read
+    
+    jobs:
+      build:
+        runs-on: ubuntu-latest
+        steps:
+        - uses: actions/checkout@v4
+        - name: Set up Python 3.10
+          uses: actions/setup-python@v3
+          with:
+            python-version: "3.10"
+        - name: Install dependencies
+          run: |
+            python -m pip install --upgrade pip
+            pip install flake8 pytest junitparser
+            if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        - name: Test with pytest
+          run: |
+            coverage run -m pytest -k {test_method_name} --junitxml={test_method_name}.xml
+        - name: "Combine"
+          run: |
+            export TOTAL_TEST_COUNT=$(python -c "from junitparser import JUnitXml;xml = JUnitXml.fromfile('{test_method_name}.xml');count_all_tests = len([case for suite in xml for case in suite if case.result]);print(count_all_tests)")
+            echo "### Total Count Tests: $""" + "{TOTAL_TEST_COUNT}" + f""">> $GITHUB_STEP_SUMMARY
+            export COUNT_SKIPPED_TESTS=$(python -c "from junitparser import JUnitXml;xml = JUnitXml.fromfile('{test_method_name}.xml');count_skipped_tests = len([case for suite in xml for case in suite if case.result and case.result[0].type == 'pytest.skip']);print(count_skipped_tests)")
+            echo "### Total Count Skipped Tests: $""" + "{COUNT_SKIPPED_TESTS}" + """ >> $GITHUB_STEP_SUMMARY
+    
+            if [[ $TOTAL_TEST_COUNT -ne 0 && $COUNT_FAILED_TESTS -eq 0 && $COUNT_SKIPPED_TESTS -eq 0 ]]; then
+              export SKIP_BADGE_MESSAGE='PASS'
+              export COLOR='green'
+            elif [[ $TOTAL_TEST_COUNT -ne 0 && $COUNT_FAILED_TESTS -eq 0 && $COUNT_SKIPPED_TESTS -ne 0 ]]; then
+              export SKIP_BADGE_MESSAGE='SKIP'
+              export COLOR='yellow'
+            fi
+            echo "skip_message=$SKIP_BADGE_MESSAGE" >> $GITHUB_ENV
+            echo "### skip_message: ${SKIP_BADGE_MESSAGE}" >> $GITHUB_STEP_SUMMARY
+            echo "color=$COLOR" >> $GITHUB_ENV
+            echo "### color: ${COLOR}" >> $GITHUB_STEP_SUMMARY
+            export SKIP_TOTAL_MESSAGE=$(($TOTAL_TEST_COUNT - $COUNT_SKIPPED_TESTS))"/"$TOTAL_TEST_COUNT
+            echo "skip_total_message=$SKIP_TOTAL_MESSAGE" >> $GITHUB_ENV
+            echo "### skip_total_message: ${SKIP_TOTAL_MESSAGE}" >> $GITHUB_STEP_SUMMARY
+        - name: "Make Skip or Pass Badge"
+          uses: schneegans/dynamic-badges-action@v1.4.0
+          with:
+            # GIST_TOKEN is a GitHub personal access token with scope "gist".
+            auth: ${{ secrets.GIST_TOKEN }}
+            gistID: 69631cca73647a817c2678cf0250a54a   # replace with your real Gist id.""" + f"""
+            filename: {test_method_name}__test_result.json
+            label: {formal_test_name} - Test Status""" + """
+            message: ${{ env.skip_message }}
+            color: ${{ env.color }}
+        - name: "Make Pass/Total Ratio Badge"
+          uses: schneegans/dynamic-badges-action@v1.4.0
+          with:
+            # GIST_TOKEN is a GitHub personal access token with scope "gist".
+            auth: ${{ secrets.GIST_TOKEN }}
+            gistID: 69631cca73647a817c2678cf0250a54a   # replace with your real Gist id.""" + f"""
+            filename: {test_method_name}__pass_total_ratio.json
+            label: {formal_test_name} - Pass Count""" + """
+            message: ${{ env.skip_total_message }}
+            color: ${{ env.color }}
+        """
+        with open(test_method_name+'.yml','w') as f:
+            f.writelines(status_badge_template)
+
+
+
+    # import json
+    # with open('coverage.json','r') as f:
+    #     #print(f.readlines())
+    #     string_lines = ''.join(f.readlines())
+    #     print(string_lines)
+    #     lines = json.loads(string_lines)
+    #     print(lines['totals']['percent_covered_display'])
 
     # test_description, account_set, budget_set, memo_rule_set, start_date_YYYYMMDD, end_date_YYYYMMDD, milestone_set, expected_result_df =(
     #                 'test_next_income_date',

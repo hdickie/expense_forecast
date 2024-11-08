@@ -47,4 +47,7 @@ class TestAccountSetIntegration:
     def test_AccountSet_log_output(self):
         pass
 
-    #someday REST API tests could go here
+    @pytest.mark.integration
+    @pytest.mark.skip(reason="not yet implemented")
+    def test_AccountSet_interactions_w_API_Client_object(self):
+        pass

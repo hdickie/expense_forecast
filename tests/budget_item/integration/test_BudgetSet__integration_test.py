@@ -47,4 +47,7 @@ class TestBudgetSetIntegration:
     def test_BudgetSet_log_output(self):
         pass
 
-    #someday REST API tests could go here
+    @pytest.mark.integration
+    @pytest.mark.skip(reason="not yet implemented")
+    def test_BudgetSet_interactions_w_API_Client_object(self):
+        pass

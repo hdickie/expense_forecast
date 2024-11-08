@@ -47,4 +47,7 @@ class TestMilestoneSetIntegration:
     def test_MilestoneSet_log_output(self):
         pass
 
-    #someday REST API tests could go here
+    @pytest.mark.integration
+    @pytest.mark.skip(reason="not yet implemented")
+    def test_MilestoneSet_interactions_w_API_Client_object(self):
+        pass

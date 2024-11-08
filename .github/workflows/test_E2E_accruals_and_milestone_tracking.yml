@@ -56,7 +56,7 @@ jobs:
         # GIST_TOKEN is a GitHub personal access token with scope "gist".
         auth: ${{ secrets.GIST_TOKEN }}
         gistID: 69631cca73647a817c2678cf0250a54a   # replace with your real Gist id.
-        filename: test_E2E_accruals_and_milestone_tracking.json
+        filename: test_E2E_accruals_and_milestone_tracking__test_result.json
         label: E2E - Accruals and Milestone Tracking - Test Status
         message: ${{ env.skip_message }}
         color: ${{ env.color }}
