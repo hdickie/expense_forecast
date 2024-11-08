@@ -55,7 +55,7 @@ jobs:
         auth: ${{ secrets.GIST_TOKEN }}
         gistID: 69631cca73647a817c2678cf0250a54a   # replace with your real Gist id.
         filename: test_E2E_pay_off_credit_card__test_result.json
-        label: Coverage
+        label: Test Status
         message: ${{ env.message }}
         color: ${{ env.color }}
 
