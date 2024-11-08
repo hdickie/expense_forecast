@@ -47,7 +47,8 @@ jobs:
         echo "### skip_message: ${SKIP_BADGE_MESSAGE}" >> $GITHUB_STEP_SUMMARY
         echo "color=$COLOR" >> $GITHUB_ENV
         echo "### color: ${COLOR}" >> $GITHUB_STEP_SUMMARY
-        echo skip_total_message=$(($TOTAL_TEST_COUNT - $COUNT_SKIPPED_TESTS))"/"$TOTAL_TEST_COUNT
+        export SKIP_TOTAL_MESSAGE=$(($TOTAL_TEST_COUNT - $COUNT_SKIPPED_TESTS))"/"$TOTAL_TEST_COUNT
+        echo "### skip_total_message: ${SKIP_TOTAL_MESSAGE}" >> $GITHUB_STEP_SUMMARY
 
     - name: "Make Skip or Pass Badge"
       uses: schneegans/dynamic-badges-action@v1.4.0
