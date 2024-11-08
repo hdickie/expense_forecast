@@ -282,7 +282,7 @@ if __name__ == '__main__':
             if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         - name: Test with pytest
           run: |
-            coverage run -m pytest -k {test_method_name} --junitxml=test_E2E_impulse_spending.xml
+            coverage run -m pytest -k {test_method_name} --junitxml={test_method_name}.xml
         - name: "Combine"
           run: |
             export TOTAL_TEST_COUNT=$(python -c "from junitparser import JUnitXml;xml = JUnitXml.fromfile('{test_method_name}.xml');count_all_tests = len([case for suite in xml for case in suite if case.result]);print(count_all_tests)")
