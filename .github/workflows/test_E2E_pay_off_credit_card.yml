@@ -48,6 +48,7 @@ jobs:
         echo "color=$COLOR" >> $GITHUB_ENV
         echo "### color: ${COLOR}" >> $GITHUB_STEP_SUMMARY
         export SKIP_TOTAL_MESSAGE=$(($TOTAL_TEST_COUNT - $COUNT_SKIPPED_TESTS))"/"$TOTAL_TEST_COUNT
+        echo "skip_total_message=$SKIP_TOTAL_MESSAGE" >> $GITHUB_ENV
         echo "### skip_total_message: ${SKIP_TOTAL_MESSAGE}" >> $GITHUB_STEP_SUMMARY
 
     - name: "Make Skip or Pass Badge"
