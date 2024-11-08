@@ -41,7 +41,7 @@ jobs:
           export COLOR='green'
         elif [[ $TOTAL_TEST_COUNT -ne 0 && $COUNT_FAILED_TESTS -eq 0 && $COUNT_SKIPPED_TESTS -ne 0 ]]; then
           export BADGE_MESSAGE='SKIP'
-          export COLOR ='yellow'
+          export COLOR='yellow'
         fi
         echo "message=$BADGE_MESSAGE" >> $GITHUB_ENV
         echo "### message: ${BADGE_MESSAGE}" >> $GITHUB_STEP_SUMMARY
