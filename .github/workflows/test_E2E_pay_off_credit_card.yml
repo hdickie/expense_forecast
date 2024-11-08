@@ -57,6 +57,6 @@ jobs:
         filename: test_E2E_pay_off_credit_card__test_result.json
         label: Coverage
         message: ${{ env.message }}
-        color: ${{ env.color }}%
+        color: ${{ env.color }}
 
 
