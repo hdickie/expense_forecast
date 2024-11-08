@@ -47,4 +47,7 @@ class TestMemoRuleSetIntegration:
     def test_MemoRuleSet_log_output(self):
         pass
 
-    #someday REST API tests could go here
+    @pytest.mark.integration
+    @pytest.mark.skip(reason="not yet implemented")
+    def test_MemoRuleSet_interactions_w_API_Client_object(self):
+        pass

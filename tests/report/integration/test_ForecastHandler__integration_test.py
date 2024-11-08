@@ -47,4 +47,7 @@ class TestForecastHandlerIntegration:
     def test_ForecastHandler_log_output(self):
         pass
 
-    #someday REST API tests could go here
+    @pytest.mark.integration
+    @pytest.mark.skip(reason="not yet implemented")
+    def test_ForecastHandler_interactions_w_API_Client_object(self):
+        pass
