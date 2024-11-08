@@ -1,8 +1,8 @@
-
 import multiprocessing as mp
 import time
 
-def p_test(n,return_dict):
+
+def p_test(n, return_dict):
 
     foo_list = []
     for i in range(0, n):
@@ -10,7 +10,7 @@ def p_test(n,return_dict):
 
     process_list = []
     for f in foo_list:
-        P = mp.Process(target=f.foo,args=(return_dict,))
+        P = mp.Process(target=f.foo, args=(return_dict,))
         P.start()
         process_list.append(P)
 
@@ -18,6 +18,7 @@ def p_test(n,return_dict):
         P.join()
 
     return process_list
+
 
 class Foo:
 
@@ -30,10 +31,11 @@ class Foo:
         return_dict[self.n] = self.n
         return self.n
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     manager = mp.Manager()
     return_dict = manager.dict()
 
-    p_test(10,return_dict)
+    p_test(10, return_dict)
 
     print(return_dict.values())

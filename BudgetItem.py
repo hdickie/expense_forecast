@@ -1,20 +1,23 @@
-import pandas as pd, datetime
-
+import pandas as pd
+import datetime
 import jsonpickle
+
 
 class BudgetItem:
 
-    def __init__(self,
-                 start_date_YYYYMMDD,
-                 end_date_YYYYMMDD,
-                 priority,
-                 cadence,
-                 amount,
-                 memo,
-                 deferrable=False,
-                 partial_payment_allowed=False,
-                 print_debug_messages=True,
-                 raise_exceptions=True):
+    def __init__(
+        self,
+        start_date_YYYYMMDD,
+        end_date_YYYYMMDD,
+        priority,
+        cadence,
+        amount,
+        memo,
+        deferrable=False,
+        partial_payment_allowed=False,
+        print_debug_messages=True,
+        raise_exceptions=True,
+    ):
         """
         Creates a BudgetItem object. Input validation is performed.
 
@@ -55,22 +58,34 @@ class BudgetItem:
 
         # Validate and parse dates
         try:
-            self.start_date = datetime.datetime.strptime(start_date_YYYYMMDD.replace('-', ''), '%Y%m%d').date()
+            self.start_date = datetime.datetime.strptime(
+                start_date_YYYYMMDD.replace("-", ""), "%Y%m%d"
+            ).date()
         except ValueError:
-            errors.append(f"Invalid start date format: '{start_date_YYYYMMDD}'. Expected format is YYYYMMDD.")
+            errors.append(
+                f"Invalid start date format: '{start_date_YYYYMMDD}'. Expected format is YYYYMMDD."
+            )
 
         try:
-            self.end_date = datetime.datetime.strptime(end_date_YYYYMMDD.replace('-', ''), '%Y%m%d').date()
+            self.end_date = datetime.datetime.strptime(
+                end_date_YYYYMMDD.replace("-", ""), "%Y%m%d"
+            ).date()
         except ValueError:
-            errors.append(f"Invalid end date format: '{end_date_YYYYMMDD}'. Expected format is YYYYMMDD.")
+            errors.append(
+                f"Invalid end date format: '{end_date_YYYYMMDD}'. Expected format is YYYYMMDD."
+            )
 
         self.cadence = cadence
 
-        if hasattr(self, 'start_date') and hasattr(self, 'end_date'):
+        if hasattr(self, "start_date") and hasattr(self, "end_date"):
             if self.start_date > self.end_date:
-                errors.append(f"Start date ({self.start_date}) must be on or before end date ({self.end_date}).")
-            if self.cadence.lower() == 'once' and self.start_date != self.end_date:
-                errors.append("If cadence is 'once', then start_date must equal end_date.")
+                errors.append(
+                    f"Start date ({self.start_date}) must be on or before end date ({self.end_date})."
+                )
+            if self.cadence.lower() == "once" and self.start_date != self.end_date:
+                errors.append(
+                    "If cadence is 'once', then start_date must equal end_date."
+                )
 
         # Validate priority
         try:
@@ -81,10 +96,20 @@ class BudgetItem:
             errors.append(f"Priority must be an integer. Value provided: '{priority}'.")
 
         # Validate cadence
-        valid_cadences = ['once', 'daily', 'weekly', 'semiweekly', 'monthly', 'quarterly', 'yearly']
+        valid_cadences = [
+            "once",
+            "daily",
+            "weekly",
+            "semiweekly",
+            "monthly",
+            "quarterly",
+            "yearly",
+        ]
         self.cadence = str(cadence).lower()
         if self.cadence not in valid_cadences:
-            errors.append(f"Cadence must be one of: {', '.join(valid_cadences)}. Value provided: '{cadence}'.")
+            errors.append(
+                f"Cadence must be one of: {', '.join(valid_cadences)}. Value provided: '{cadence}'."
+            )
 
         # Validate amount
         try:
@@ -100,18 +125,20 @@ class BudgetItem:
         self.partial_payment_allowed = bool(partial_payment_allowed)
 
         # Additional validations
-        if self.memo.lower() == 'income' and self.priority != 1:
+        if self.memo.lower() == "income" and self.priority != 1:
             errors.append("If memo is 'income', then priority must be 1.")
 
         if self.priority == 1 and self.deferrable:
             errors.append("If priority is 1, then deferrable must be False.")
 
         if self.priority == 1 and self.partial_payment_allowed:
-            errors.append("If priority is 1, then partial_payment_allowed must be False.")
+            errors.append(
+                "If priority is 1, then partial_payment_allowed must be False."
+            )
 
         # Handle errors
         if errors:
-            error_message = '\n'.join(errors)
+            error_message = "\n".join(errors)
             if self.print_debug_messages:
                 print("Errors in BudgetItem initialization:")
                 print(error_message)
@@ -126,16 +153,18 @@ class BudgetItem:
             # are already set during validation
 
     def __str__(self):
-        return pd.DataFrame({
-            'Start_Date': [self.start_date_YYYYMMDD],
-            'End_Date': [self.end_date_YYYYMMDD],
-            'Priority': [self.priority],
-            'Cadence': [self.cadence],
-            'Amount': [self.amount],
-            'Memo': [self.memo],
-            'Deferrable': [self.deferrable],
-            'Partial_Payment_Allowed': [self.partial_payment_allowed]
-        }).to_string()
+        return pd.DataFrame(
+            {
+                "Start_Date": [self.start_date_YYYYMMDD],
+                "End_Date": [self.end_date_YYYYMMDD],
+                "Priority": [self.priority],
+                "Cadence": [self.cadence],
+                "Amount": [self.amount],
+                "Memo": [self.memo],
+                "Deferrable": [self.deferrable],
+                "Partial_Payment_Allowed": [self.partial_payment_allowed],
+            }
+        ).to_string()
 
     def to_json(self):
         """
@@ -144,4 +173,8 @@ class BudgetItem:
         """
         return jsonpickle.encode(self, indent=4)
 
-if __name__ == "__main__": import doctest ; doctest.testmod()
+
+if __name__ == "__main__":
+    import doctest
+
+    doctest.testmod()

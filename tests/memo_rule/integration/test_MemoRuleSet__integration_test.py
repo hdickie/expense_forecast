@@ -1,5 +1,6 @@
 import pytest
 
+
 class TestMemoRuleSetIntegration:
 
     @pytest.mark.integration
