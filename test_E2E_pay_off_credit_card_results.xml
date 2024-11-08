@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="15.770" timestamp="2024-11-07T18:10:27.524368-08:00" hostname="Hume-Dickies-MacBook-Pro.local"><testcase classname="tests._e2e.test_E2E.TestE2E" name="test_E2E_pay_off_credit_card" time="0.002"><failure message="NotImplementedError">self = &lt;test_E2E.TestE2E object at 0x1107b0470&gt;
+
+    @pytest.mark.E2E
+    #@pytest.mark.skip(reason="not yet implemented")
+    def test_E2E_pay_off_credit_card(self):
+&gt;       raise NotImplementedError
+E       NotImplementedError
+
+tests/_e2e/test_E2E.py:9: NotImplementedError</failure></testcase></testsuite></testsuites>
