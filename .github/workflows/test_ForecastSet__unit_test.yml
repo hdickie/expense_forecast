@@ -34,9 +34,9 @@
         - name: "Combine"
           run: |
             export TOTAL_TEST_COUNT=$(python -c "from junitparser import JUnitXml;xml = JUnitXml.fromfile('test_ForecastSet__unit_test.xml');count_all_tests = len([case for suite in xml for case in suite if case.result]);print(count_all_tests)")
-            echo "### Total Count Tests: ${TOTAL_TEST_COUNT}>> $GITHUB_STEP_SUMMARY
+            echo "### Total Count Tests: ${TOTAL_TEST_COUNT}" >> $GITHUB_STEP_SUMMARY
             export COUNT_SKIPPED_TESTS=$(python -c "from junitparser import JUnitXml;xml = JUnitXml.fromfile('test_ForecastSet__unit_test.xml');count_skipped_tests = len([case for suite in xml for case in suite if case.result and case.result[0].type == 'pytest.skip']);print(count_skipped_tests)")
-            echo "### Total Count Skipped Tests: ${COUNT_SKIPPED_TESTS} >> $GITHUB_STEP_SUMMARY
+            echo "### Total Count Skipped Tests: ${COUNT_SKIPPED_TESTS}" >> $GITHUB_STEP_SUMMARY
     
             if [[ $TOTAL_TEST_COUNT -ne 0 && $COUNT_FAILED_TESTS -eq 0 && $COUNT_SKIPPED_TESTS -eq 0 ]]; then
               export SKIP_BADGE_MESSAGE='PASS'
