@@ -9,6 +9,7 @@
         branches: [ "prod" ]
         paths:
           - '**/*ExpenseForecastClient*.py'
+      workflow_dispatch:
     
     permissions:
       contents: read

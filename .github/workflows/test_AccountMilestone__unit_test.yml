@@ -9,6 +9,7 @@
         branches: [ "prod" ]
         paths:
           - '**/*AccountMilestone*.py'
+        workflow_dispatch:
     
     permissions:
       contents: read

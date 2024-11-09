@@ -9,6 +9,7 @@
         branches: [ "prod" ]
         paths:
         - '**/*ForecastSet*.py'
+      workflow_dispatch:
     
     permissions:
       contents: read
