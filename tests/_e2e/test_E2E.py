@@ -1,5 +1,6 @@
 import pytest
 
+
 class TestE2E:
     pass
 
@@ -7,9 +8,9 @@ class TestE2E:
     @pytest.mark.skip(reason="not yet implemented")
     def test_E2E_pay_off_credit_card(self):
         pass
-        #raise NotImplementedError
+        # raise NotImplementedError
 
-# ;count_skipped_tests = len();print(count_skipped_tests)
+    # ;count_skipped_tests = len();print(count_skipped_tests)
 
     @pytest.mark.E2E
     @pytest.mark.skip(reason="not yet implemented")

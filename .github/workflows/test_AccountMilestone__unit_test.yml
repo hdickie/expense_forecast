@@ -7,6 +7,8 @@
     on:
       pull_request:
         branches: [ "prod" ]
+          paths:
+              - '**AccountMilestone**.py'
     
     permissions:
       contents: read

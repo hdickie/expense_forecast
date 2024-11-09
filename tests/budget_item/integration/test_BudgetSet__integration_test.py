@@ -1,5 +1,6 @@
 import pytest
 
+
 class TestBudgetSetIntegration:
 
     @pytest.mark.integration

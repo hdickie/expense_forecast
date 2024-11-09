@@ -1,5 +1,6 @@
 import pytest
 
+
 class TestExpenseForecastServer:
     pass
 

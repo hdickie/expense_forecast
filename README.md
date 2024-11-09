@@ -1,4 +1,4 @@
-# Expense_Forecast
+# expense_forecast
 
 This project has not had its first release.
 
@@ -11,16 +11,34 @@ This tool is useful for:
 <li>Tracking long-term financial goals</li>
 </ul>
 
-| Build Status | [![All Test Coverage](https://github.com/hdickie/expense_forecast/actions/workflows/all-tests-coverage-status-badge.yml/badge.svg)](https://github.com/hdickie/expense_forecast/actions/workflows/all-tests-coverage-status-badge.yml)<br> |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Coverage     | ![badge](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/hdickie/69631cca73647a817c2678cf0250a54a/raw/all_tests_coverage.json)                                                                                                                                                                                                   |
+<table style="border-collapse: collapse; width: 60%; font-family: Arial, sans-serif;">
+<tr>
+	<th style="border: 1px solid #ddd; padding: 8px; width: 100px;">Test Suite</th>
+	<th style="border: 1px solid #ddd; padding: 8px; width: 100px;"><a href="https://github.com/hdickie/expense_forecast/actions/workflows/python-app.yml">
+		<img src="https://github.com/hdickie/expense_forecast/actions/workflows/python-app.yml/badge.svg" alt="Build Status">
+	</a></th>
+</tr>
+<tr>
+	<td style="border: 1px solid #ddd; padding: 8px;">Coverage</td>
+	<td style="border: 1px solid #ddd; padding: 8px;"><img src="https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/hdickie/69631cca73647a817c2678cf0250a54a/raw/all_tests_coverage.json" alt="Build Status"></td>
+</tr>
 
-| Test SuiteS       | Status | Description                              |
-| ----------------- | ------ | ---------------------------------------- |
-| Unit Tests        | todo   | Tests individual functions and methods.  |
-| Integration Tests | todo   | Verifies component interactions.         |
-| End-to-End Tests  | todo   | Tests full user workflows and scenarios. |
+<tr>
+	<td style="border: 1px solid #ddd; padding: 8px;">Unit Tests</td>
+	<td style="border: 1px solid #ddd; padding: 8px;"><img src="https://github.com/hdickie/expense_forecast/actions/workflows/unit-tests-status-badge.yml/badge.svg" alt="Build Status"></td>
+</tr>
+<tr>
+	<td style="border: 1px solid #ddd; padding: 8px;">Integration Tests</td>
+	<td style="border: 1px solid #ddd; padding: 8px;"><img src="https://github.com/hdickie/expense_forecast/actions/workflows/integration-tests-status-badge.yml/badge.svg" alt="Build Status"></td>
+</tr>
+<tr>
+	<td style="border: 1px solid #ddd; padding: 8px;">E2E Tests</td>
+	<td style="border: 1px solid #ddd; padding: 8px;"><img src="https://github.com/hdickie/expense_forecast/actions/workflows/E2E-tests-status-badge.yml/badge.svg" alt="Build Status"></td>
+</tr>
+</table>                                      |
 
+# Github Pages
+<a href="https://hdickie.github.io/expense_forecast/pages/collaborate.html">Expense Forecast Toolkit</a>
 
 ## License
 
