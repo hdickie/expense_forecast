@@ -4,10 +4,7 @@
 name: UNIT - ALL - Test Status
 
 on:
-  pull_request:
-    branches: [ "prod" ]
-  paths:
-    - '**/*.py'
+  workflow_dispatch:
 
 permissions:
   contents: read
