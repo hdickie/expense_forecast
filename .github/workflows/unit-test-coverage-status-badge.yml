@@ -4,10 +4,10 @@
 name: UNIT - ALL - Coverage
 
 on:
-  push:
-    branches: [ "prod" ]
   pull_request:
     branches: [ "prod" ]
+  paths:
+    - '**/*.py'
 
 permissions:
   contents: read

@@ -7,8 +7,8 @@
     on:
       pull_request:
         branches: [ "prod" ]
-          paths:
-              - '**ForecastHandler**.py'
+        paths:
+          - '**/*ForecastHandler*.py'
     
     permissions:
       contents: read

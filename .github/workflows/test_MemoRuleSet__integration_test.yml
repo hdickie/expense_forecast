@@ -7,8 +7,8 @@
     on:
       pull_request:
         branches: [ "prod" ]
-          paths:
-              - '**MemoRule**.py'
+        paths:
+          - '**/*MemoRule*.py'
     
     permissions:
       contents: read
