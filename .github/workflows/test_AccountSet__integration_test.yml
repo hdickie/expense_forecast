@@ -7,8 +7,8 @@
     on:
       pull_request:
         branches: [ "prod" ]
-          paths:
-              - '**AccountSet**.py'
+        paths:
+          - '**/*Account*.py'
     
     permissions:
       contents: read

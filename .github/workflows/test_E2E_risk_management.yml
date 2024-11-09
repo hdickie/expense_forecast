@@ -4,8 +4,7 @@
 name: E2E Risk Management
 
 on:
-  pull_request:
-    branches: [ "prod" ]
+  workflow_dispatch:
 
 permissions:
   contents: read

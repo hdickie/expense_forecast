@@ -4,10 +4,7 @@
 name: E2E - ALL - Test Status
 
 on:
-  push:
-    branches: [ "prod" ]
-  pull_request:
-    branches: [ "prod" ]
+  workflow_dispatch:
 
 permissions:
   contents: read

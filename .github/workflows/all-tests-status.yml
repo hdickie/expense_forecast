@@ -4,8 +4,7 @@
 name: ALL - Test Status
 
 on:
-  pull_request:
-    branches: [ "prod" ]
+  workflow_dispatch:
 
 permissions:
   contents: read
