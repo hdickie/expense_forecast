@@ -1,4 +1,4 @@
-# Expense_Forecast
+# expense_forecast
 
 This project has not had its first release.
 

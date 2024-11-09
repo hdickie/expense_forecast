@@ -1,13 +1,13 @@
-2024-11-08 15:39:25,228 - DEBUG    - [32m0 Attempting switch log file to: Forecast_991231_1_1_0087.log[0m
-2024-11-08 15:39:25,270 - ERROR    - [31m0 ()[0m
-2024-11-08 15:39:25,270 - ERROR    - [31m0 An account name was mentioned in a memo rule that did not exist in the account set[0m
-2024-11-08 15:39:25,270 - ERROR    - [31m0 all accounts mentioned in memo rules:[0m
-2024-11-08 15:39:25,270 - ERROR    - [31m0 0    Credit[0m
-2024-11-08 15:39:25,270 - ERROR    - [31m0 all defined accounts:[0m
-2024-11-08 15:39:25,270 - ERROR    - [31m0 0    Checking[0m
-2024-11-08 15:39:25,271 - ERROR    - [31m0 intersection:[0m
-2024-11-08 15:39:25,271 - ERROR    - [31m0 {''}[0m
-2024-11-08 15:39:25,271 - ERROR    - [31m0 Accounts from Memo:[0m
-2024-11-08 15:39:25,271 - ERROR    - [31m0 {'', 'Credit'}[0m
-2024-11-08 15:39:25,271 - ERROR    - [31m0 [0m
-2024-11-08 15:39:25,379 - DEBUG    - [32m0 Attempting switch log file to: Forecast_000101_2_1_0064.log[0m
+2024-11-08 17:31:44,219 - DEBUG    - [32m0 Attempting switch log file to: Forecast_991231_1_1_0087.log[0m
+2024-11-08 17:31:44,266 - ERROR    - [31m0 ()[0m
+2024-11-08 17:31:44,266 - ERROR    - [31m0 An account name was mentioned in a memo rule that did not exist in the account set[0m
+2024-11-08 17:31:44,266 - ERROR    - [31m0 all accounts mentioned in memo rules:[0m
+2024-11-08 17:31:44,266 - ERROR    - [31m0 0    Credit[0m
+2024-11-08 17:31:44,266 - ERROR    - [31m0 all defined accounts:[0m
+2024-11-08 17:31:44,266 - ERROR    - [31m0 0    Checking[0m
+2024-11-08 17:31:44,266 - ERROR    - [31m0 intersection:[0m
+2024-11-08 17:31:44,267 - ERROR    - [31m0 {''}[0m
+2024-11-08 17:31:44,267 - ERROR    - [31m0 Accounts from Memo:[0m
+2024-11-08 17:31:44,267 - ERROR    - [31m0 {'', 'Credit'}[0m
+2024-11-08 17:31:44,267 - ERROR    - [31m0 [0m
+2024-11-08 17:31:44,378 - DEBUG    - [32m0 Attempting switch log file to: Forecast_000101_2_1_0064.log[0m

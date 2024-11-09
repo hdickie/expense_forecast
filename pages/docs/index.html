@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>expense_forecast Official Documentation &#8212; expense_forecast 0.0.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css?v=8d4bad54" />
+    
+    <script src="_static/documentation_options.js?v=7026087e"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">expense_forecast 0.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">expense_forecast Official Documentation</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="expense-forecast-official-documentation">
+<h1>expense_forecast Official Documentation<a class="headerlink" href="#expense-forecast-official-documentation" title="Link to this heading">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<div class="line-block">
+<div class="line">This document is for the python module expense_forecast in development by Hume Dickie.</div>
+<div class="line">Github repo: <a class="reference external" href="https://github.com/hdickie/Expense_Forecast">https://github.com/hdickie/Expense_Forecast</a></div>
+</div>
+<dl class="py class" id="module-Account">
+<dt class="sig sig-object py" id="Account.Account">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Account.</span></span><span class="sig-name descname"><span class="pre">Account</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">billing_start_date_YYYYMMDD</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interest_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interest_cadence</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimum_payment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">primary_checking_ind</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_debug_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raise_exceptions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Account.Account" title="Link to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="Account.Account.to_json">
+<span class="sig-name descname"><span class="pre">to_json</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#Account.Account.to_json" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class" id="module-AccountSet">
+<dt class="sig sig-object py" id="AccountSet.AccountSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">AccountSet.</span></span><span class="sig-name descname"><span class="pre">AccountSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">accounts_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_debug_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raise_exceptions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#AccountSet.AccountSet" title="Link to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="AccountSet.AccountSet.allocate_additional_loan_payments">
+<span class="sig-name descname"><span class="pre">allocate_additional_loan_payments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">amount</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#AccountSet.AccountSet.allocate_additional_loan_payments" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="AccountSet.AccountSet.createAccount">
+<span class="sig-name descname"><span class="pre">createAccount</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">billing_start_date_YYYYMMDD</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interest_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interest_cadence</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimum_payment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">previous_statement_balance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_statement_balance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">principal_balance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interest_balance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">billing_cycle_payment_balance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_of_previous_cycle_balance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">primary_checking_ind</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_debug_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raise_exceptions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#AccountSet.AccountSet.createAccount" title="Link to this definition">¶</a></dt>
+<dd><p>Add an Account to list AccountSet.accounts. For credit and loan type accounts, previous statement balance and interest accounts are created.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="AccountSet.AccountSet.createCheckingAccount">
+<span class="sig-name descname"><span class="pre">createCheckingAccount</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">primary_checking_account_ind</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#AccountSet.AccountSet.createCheckingAccount" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="AccountSet.AccountSet.createCreditCardAccount">
+<span class="sig-name descname"><span class="pre">createCreditCardAccount</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_stmt_bal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prev_stmt_bal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">billing_start_date_YYYYMMDD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimum_payment</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">billing_cycle_payment_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_of_previous_cycle_balance</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#AccountSet.AccountSet.createCreditCardAccount" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="AccountSet.AccountSet.createInvestmentAccount">
+<span class="sig-name descname"><span class="pre">createInvestmentAccount</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apr</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#AccountSet.AccountSet.createInvestmentAccount" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="AccountSet.AccountSet.createLoanAccount">
+<span class="sig-name descname"><span class="pre">createLoanAccount</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">principal_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interest_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">billing_start_date_YYYYMMDD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimum_payment</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">billing_cycle_payment_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_of_previous_cycle_balance</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#AccountSet.AccountSet.createLoanAccount" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="AccountSet.AccountSet.executeTransaction">
+<span class="sig-name descname"><span class="pre">executeTransaction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Account_From</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Account_To</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Amount</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">income_flag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimum_payment_flag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#AccountSet.AccountSet.executeTransaction" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="AccountSet.AccountSet.getAccounts">
+<span class="sig-name descname"><span class="pre">getAccounts</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#AccountSet.AccountSet.getAccounts" title="Link to this definition">¶</a></dt>
+<dd><p>Get a DataFrame representing the AccountSet object.</p>
+<p>This test is failing even though this is indeed the result I get when I try this in the console.
+# &gt;&gt;&gt; x=AccountSet().getAccounts()
+# Empty DataFrame
+# Columns: [Name, Balance, Previous_Statement_Balance, Min_Balance, Max_Balance, APR, Interest_Cadence, Interest_Type, Billing_Start_Dt, Account_Type, Principal_Balance, interest_balance, Minimum_Payment]
+# Index: []</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">AccountSet</span><span class="p">([</span><span class="n">Account</span><span class="o">.</span><span class="n">Account</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;test&#39;</span><span class="p">,</span><span class="n">balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">min_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">max_balance</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">account_type</span><span class="o">=</span><span class="s2">&quot;checking&quot;</span><span class="p">)])</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+<span class="go">{</span>
+<span class="go">{</span>
+<span class="go">&quot;Name&quot;:&quot;test&quot;,</span>
+<span class="go">&quot;Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Min_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Max_Balance&quot;:&quot;0.0&quot;,</span>
+<span class="go">&quot;Account_Type&quot;:&quot;checking&quot;,</span>
+<span class="go">&quot;Billing_Start_Date&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Type&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;APR&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Interest_Cadence&quot;:&quot;None&quot;,</span>
+<span class="go">&quot;Minimum_Payment&quot;:&quot;None&quot;</span>
+<span class="go">}</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="AccountSet.AccountSet.getBalances">
+<span class="sig-name descname"><span class="pre">getBalances</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#AccountSet.AccountSet.getBalances" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="AccountSet.AccountSet.getPrimaryCheckingAccountName">
+<span class="sig-name descname"><span class="pre">getPrimaryCheckingAccountName</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#AccountSet.AccountSet.getPrimaryCheckingAccountName" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="AccountSet.AccountSet.to_json">
+<span class="sig-name descname"><span class="pre">to_json</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#AccountSet.AccountSet.to_json" title="Link to this definition">¶</a></dt>
+<dd><p>Get a JSON &lt;string&gt; representation of the &lt;AccountSet&gt; object.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="AccountSet.determineMinPaymentAmount">
+<span class="sig-prename descclassname"><span class="pre">AccountSet.</span></span><span class="sig-name descname"><span class="pre">determineMinPaymentAmount</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">advance_payment_amount</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interest_accrued_this_cycle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">principal_due_this_cycle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">total_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_payment</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#AccountSet.determineMinPaymentAmount" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="AccountSet.initialize_from_dataframe">
+<span class="sig-prename descclassname"><span class="pre">AccountSet.</span></span><span class="sig-name descname"><span class="pre">initialize_from_dataframe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">accounts_df</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#AccountSet.initialize_from_dataframe" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class" id="module-BudgetItem">
+<dt class="sig sig-object py" id="BudgetItem.BudgetItem">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">BudgetItem.</span></span><span class="sig-name descname"><span class="pre">BudgetItem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_date_YYYYMMDD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date_YYYYMMDD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">priority</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cadence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amount</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deferrable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partial_payment_allowed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_debug_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raise_exceptions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#BudgetItem.BudgetItem" title="Link to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="BudgetItem.BudgetItem.to_json">
+<span class="sig-name descname"><span class="pre">to_json</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#BudgetItem.BudgetItem.to_json" title="Link to this definition">¶</a></dt>
+<dd><p>Get a &lt;string&gt; representing the &lt;BudgetItem&gt; object.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class" id="module-BudgetSet">
+<dt class="sig sig-object py" id="BudgetSet.BudgetSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">BudgetSet.</span></span><span class="sig-name descname"><span class="pre">BudgetSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">budget_items__list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#BudgetSet.BudgetSet" title="Link to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="BudgetSet.BudgetSet.addBudgetItem">
+<span class="sig-name descname"><span class="pre">addBudgetItem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_date_YYYYMMDD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date_YYYYMMDD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">priority</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cadence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amount</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deferrable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partial_payment_allowed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_debug_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raise_exceptions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#BudgetSet.BudgetSet.addBudgetItem" title="Link to this definition">¶</a></dt>
+<dd><p>Add a BudgetItem to the list of budget items.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>start_date_YYYYMMDD</strong> (<em>str</em>) – Start date in YYYYMMDD format.</p></li>
+<li><p><strong>end_date_YYYYMMDD</strong> (<em>str</em>) – End date in YYYYMMDD format.</p></li>
+<li><p><strong>priority</strong> (<em>int</em>) – Priority level of the budget item.</p></li>
+<li><p><strong>cadence</strong> (<em>str</em>) – Frequency of the budget item.</p></li>
+<li><p><strong>amount</strong> (<em>float</em>) – Amount of the budget item.</p></li>
+<li><p><strong>memo</strong> (<em>str</em>) – Memo for the budget item.</p></li>
+<li><p><strong>deferrable</strong> (<em>bool</em>) – Indicates if the budget item is deferrable.</p></li>
+<li><p><strong>partial_payment_allowed</strong> (<em>bool</em>) – Indicates if partial payments are allowed.</p></li>
+<li><p><strong>print_debug_messages</strong> (<em>bool</em>) – If True, prints debug messages.</p></li>
+<li><p><strong>raise_exceptions</strong> (<em>bool</em>) – If True, raises exceptions on errors.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If a budget item with the same priority and memo already exists.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="BudgetSet.BudgetSet.getBudgetItems">
+<span class="sig-name descname"><span class="pre">getBudgetItems</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#BudgetSet.BudgetSet.getBudgetItems" title="Link to this definition">¶</a></dt>
+<dd><p>Returns a DataFrame of BudgetItems.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="BudgetSet.BudgetSet.getBudgetSchedule">
+<span class="sig-name descname"><span class="pre">getBudgetSchedule</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#BudgetSet.BudgetSet.getBudgetSchedule" title="Link to this definition">¶</a></dt>
+<dd><p>Generate a dataframe of proposed transactions</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>start_date_YYYYMMDD</strong></p></li>
+<li><p><strong>num_days</strong></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="BudgetSet.BudgetSet.to_json">
+<span class="sig-name descname"><span class="pre">to_json</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#BudgetSet.BudgetSet.to_json" title="Link to this definition">¶</a></dt>
+<dd><p>Get a JSON &lt;string&gt; representing the &lt;BudgetSet&gt; object.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="BudgetSet.initialize_from_dataframe">
+<span class="sig-prename descclassname"><span class="pre">BudgetSet.</span></span><span class="sig-name descname"><span class="pre">initialize_from_dataframe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">budget_set_df</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#BudgetSet.initialize_from_dataframe" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="BudgetSet.initialize_from_json_string">
+<span class="sig-prename descclassname"><span class="pre">BudgetSet.</span></span><span class="sig-name descname"><span class="pre">initialize_from_json_string</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">json_string</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#BudgetSet.initialize_from_json_string" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class" id="module-ExpenseForecast">
+<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ExpenseForecast.</span></span><span class="sig-name descname"><span class="pre">ExpenseForecast</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">account_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">budget_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memo_rule_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_date_YYYYMMDD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date_YYYYMMDD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">milestone_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">approximate_flag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_directory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forecast_set_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forecast_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_debug_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raise_exceptions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast" title="Link to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.compute_forecast_difference">
+<span class="sig-name descname"><span class="pre">compute_forecast_difference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">forecast_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forecast2_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'forecast_difference'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">make_plots</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_directory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'dataframe'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">require_matching_columns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">require_matching_date_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append_expected_values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diffs_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.compute_forecast_difference" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.evaluateAccountMilestone">
+<span class="sig-name descname"><span class="pre">evaluateAccountMilestone</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">account_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_balance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_balance</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.evaluateAccountMilestone" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.evaluateCompositeMilestone">
+<span class="sig-name descname"><span class="pre">evaluateCompositeMilestone</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">list_of_account_milestones</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_of_memo_milestones</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.evaluateCompositeMilestone" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.evaluateMilestones">
+<span class="sig-name descname"><span class="pre">evaluateMilestones</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.evaluateMilestones" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.evaulateMemoMilestone">
+<span class="sig-name descname"><span class="pre">evaulateMemoMilestone</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">memo_regex</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.evaulateMemoMilestone" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.getSummaryPageForExcelLandingPageDF">
+<span class="sig-name descname"><span class="pre">getSummaryPageForExcelLandingPageDF</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.getSummaryPageForExcelLandingPageDF" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.runForecast">
+<span class="sig-name descname"><span class="pre">runForecast</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'WARNING'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">play_notification_sound</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.runForecast" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.runForecastApproximate">
+<span class="sig-name descname"><span class="pre">runForecastApproximate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_level</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.runForecastApproximate" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.to_excel">
+<span class="sig-name descname"><span class="pre">to_excel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.to_excel" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.to_html">
+<span class="sig-name descname"><span class="pre">to_html</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.to_html" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.to_json">
+<span class="sig-name descname"><span class="pre">to_json</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.to_json" title="Link to this definition">¶</a></dt>
+<dd><p>Returns a JSON string representing the ExpenseForecast object.</p>
+<p>#todo ExpenseForecast.to_json() say what the columns are</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.update_date_range">
+<span class="sig-name descname"><span class="pre">update_date_range</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_date_YYYYMMDD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date_YYYYMMDD</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.update_date_range" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.writeToJSONFile">
+<span class="sig-name descname"><span class="pre">writeToJSONFile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'./'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.writeToJSONFile" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ExpenseForecast.ExpenseForecast.write_to_database">
+<span class="sig-name descname"><span class="pre">write_to_database</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">database_hostname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database_username</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database_password</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database_port</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">username</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forecast_set_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.ExpenseForecast.write_to_database" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ExpenseForecast.initialize_from_database_with_id">
+<span class="sig-prename descclassname"><span class="pre">ExpenseForecast.</span></span><span class="sig-name descname"><span class="pre">initialize_from_database_with_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">username</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forecast_set_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forecast_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database_hostname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'localhost'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'postgres'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database_username</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'postgres'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database_password</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'postgres'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database_port</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'5432'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.initialize_from_database_with_id" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ExpenseForecast.initialize_from_database_with_select">
+<span class="sig-prename descclassname"><span class="pre">ExpenseForecast.</span></span><span class="sig-name descname"><span class="pre">initialize_from_database_with_select</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_date_YYYYMMDD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date_YYYYMMDD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_set_select_q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">budget_set_select_q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memo_rule_set_select_q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_milestone_select_q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memo_milestone_select_q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">composite_milestone_select_q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">set_def_q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata_q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">budget_item_post_run_category_select_q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forecast_select_q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database_hostname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database_username</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database_password</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database_port</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forecast_set_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forecast_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.initialize_from_database_with_select" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ExpenseForecast.initialize_from_dict">
+<span class="sig-prename descclassname"><span class="pre">ExpenseForecast.</span></span><span class="sig-name descname"><span class="pre">initialize_from_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.initialize_from_dict" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ExpenseForecast.initialize_from_excel_file">
+<span class="sig-prename descclassname"><span class="pre">ExpenseForecast.</span></span><span class="sig-name descname"><span class="pre">initialize_from_excel_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path_to_excel_file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.initialize_from_excel_file" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ExpenseForecast.initialize_from_json_file">
+<span class="sig-prename descclassname"><span class="pre">ExpenseForecast.</span></span><span class="sig-name descname"><span class="pre">initialize_from_json_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path_to_json</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.initialize_from_json_file" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ExpenseForecast.initialize_from_json_string">
+<span class="sig-prename descclassname"><span class="pre">ExpenseForecast.</span></span><span class="sig-name descname"><span class="pre">initialize_from_json_string</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">json_string</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ExpenseForecast.initialize_from_json_string" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class" id="module-MemoRule">
+<dt class="sig sig-object py" id="MemoRule.MemoRule">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">MemoRule.</span></span><span class="sig-name descname"><span class="pre">MemoRule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">memo_regex</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_from</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_to</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transaction_priority</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_debug_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raise_exceptions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#MemoRule.MemoRule" title="Link to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="MemoRule.MemoRule.to_json">
+<span class="sig-name descname"><span class="pre">to_json</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#MemoRule.MemoRule.to_json" title="Link to this definition">¶</a></dt>
+<dd><p>Get a JSON &lt;string&gt; representing the &lt;MemoRule&gt; object.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class" id="module-MemoRuleSet">
+<dt class="sig sig-object py" id="MemoRuleSet.MemoRuleSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">MemoRuleSet.</span></span><span class="sig-name descname"><span class="pre">MemoRuleSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">memo_rules__list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#MemoRuleSet.MemoRuleSet" title="Link to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="MemoRuleSet.MemoRuleSet.addMemoRule">
+<span class="sig-name descname"><span class="pre">addMemoRule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">memo_regex</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_from</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_to</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transaction_priority</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#MemoRuleSet.MemoRuleSet.addMemoRule" title="Link to this definition">¶</a></dt>
+<dd><p>Add a &lt;MemoRule&gt; to &lt;list&gt; MemoRuleSet.memo_rules.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="MemoRuleSet.MemoRuleSet.findMatchingMemoRule">
+<span class="sig-name descname"><span class="pre">findMatchingMemoRule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">txn_memo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transaction_priority</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#MemoRuleSet.MemoRuleSet.findMatchingMemoRule" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="MemoRuleSet.MemoRuleSet.getMemoRules">
+<span class="sig-name descname"><span class="pre">getMemoRules</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#MemoRuleSet.MemoRuleSet.getMemoRules" title="Link to this definition">¶</a></dt>
+<dd><p>Get a &lt;DataFrame&gt; representing the &lt;MemoRuleSet&gt; object.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="MemoRuleSet.MemoRuleSet.to_json">
+<span class="sig-name descname"><span class="pre">to_json</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#MemoRuleSet.MemoRuleSet.to_json" title="Link to this definition">¶</a></dt>
+<dd><p>Get a JSON &lt;string&gt; representing the &lt;MemoRuleSet&gt; object.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="MemoRuleSet.initialize_from_dataframe">
+<span class="sig-prename descclassname"><span class="pre">MemoRuleSet.</span></span><span class="sig-name descname"><span class="pre">initialize_from_dataframe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">memo_set_df</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#MemoRuleSet.initialize_from_dataframe" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Link to this heading">¶</a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="#">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">expense_forecast Official Documentation</a><ul>
+<li><a class="reference internal" href="#Account.Account"><code class="docutils literal notranslate"><span class="pre">Account</span></code></a><ul>
+<li><a class="reference internal" href="#Account.Account.to_json"><code class="docutils literal notranslate"><span class="pre">Account.to_json()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#AccountSet.AccountSet"><code class="docutils literal notranslate"><span class="pre">AccountSet</span></code></a><ul>
+<li><a class="reference internal" href="#AccountSet.AccountSet.allocate_additional_loan_payments"><code class="docutils literal notranslate"><span class="pre">AccountSet.allocate_additional_loan_payments()</span></code></a></li>
+<li><a class="reference internal" href="#AccountSet.AccountSet.createAccount"><code class="docutils literal notranslate"><span class="pre">AccountSet.createAccount()</span></code></a></li>
+<li><a class="reference internal" href="#AccountSet.AccountSet.createCheckingAccount"><code class="docutils literal notranslate"><span class="pre">AccountSet.createCheckingAccount()</span></code></a></li>
+<li><a class="reference internal" href="#AccountSet.AccountSet.createCreditCardAccount"><code class="docutils literal notranslate"><span class="pre">AccountSet.createCreditCardAccount()</span></code></a></li>
+<li><a class="reference internal" href="#AccountSet.AccountSet.createInvestmentAccount"><code class="docutils literal notranslate"><span class="pre">AccountSet.createInvestmentAccount()</span></code></a></li>
+<li><a class="reference internal" href="#AccountSet.AccountSet.createLoanAccount"><code class="docutils literal notranslate"><span class="pre">AccountSet.createLoanAccount()</span></code></a></li>
+<li><a class="reference internal" href="#AccountSet.AccountSet.executeTransaction"><code class="docutils literal notranslate"><span class="pre">AccountSet.executeTransaction()</span></code></a></li>
+<li><a class="reference internal" href="#AccountSet.AccountSet.getAccounts"><code class="docutils literal notranslate"><span class="pre">AccountSet.getAccounts()</span></code></a></li>
+<li><a class="reference internal" href="#AccountSet.AccountSet.getBalances"><code class="docutils literal notranslate"><span class="pre">AccountSet.getBalances()</span></code></a></li>
+<li><a class="reference internal" href="#AccountSet.AccountSet.getPrimaryCheckingAccountName"><code class="docutils literal notranslate"><span class="pre">AccountSet.getPrimaryCheckingAccountName()</span></code></a></li>
+<li><a class="reference internal" href="#AccountSet.AccountSet.to_json"><code class="docutils literal notranslate"><span class="pre">AccountSet.to_json()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#AccountSet.determineMinPaymentAmount"><code class="docutils literal notranslate"><span class="pre">determineMinPaymentAmount()</span></code></a></li>
+<li><a class="reference internal" href="#AccountSet.initialize_from_dataframe"><code class="docutils literal notranslate"><span class="pre">initialize_from_dataframe()</span></code></a></li>
+<li><a class="reference internal" href="#BudgetItem.BudgetItem"><code class="docutils literal notranslate"><span class="pre">BudgetItem</span></code></a><ul>
+<li><a class="reference internal" href="#BudgetItem.BudgetItem.to_json"><code class="docutils literal notranslate"><span class="pre">BudgetItem.to_json()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#BudgetSet.BudgetSet"><code class="docutils literal notranslate"><span class="pre">BudgetSet</span></code></a><ul>
+<li><a class="reference internal" href="#BudgetSet.BudgetSet.addBudgetItem"><code class="docutils literal notranslate"><span class="pre">BudgetSet.addBudgetItem()</span></code></a></li>
+<li><a class="reference internal" href="#BudgetSet.BudgetSet.getBudgetItems"><code class="docutils literal notranslate"><span class="pre">BudgetSet.getBudgetItems()</span></code></a></li>
+<li><a class="reference internal" href="#BudgetSet.BudgetSet.getBudgetSchedule"><code class="docutils literal notranslate"><span class="pre">BudgetSet.getBudgetSchedule()</span></code></a></li>
+<li><a class="reference internal" href="#BudgetSet.BudgetSet.to_json"><code class="docutils literal notranslate"><span class="pre">BudgetSet.to_json()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#BudgetSet.initialize_from_dataframe"><code class="docutils literal notranslate"><span class="pre">initialize_from_dataframe()</span></code></a></li>
+<li><a class="reference internal" href="#BudgetSet.initialize_from_json_string"><code class="docutils literal notranslate"><span class="pre">initialize_from_json_string()</span></code></a></li>
+<li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast</span></code></a><ul>
+<li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.compute_forecast_difference"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.compute_forecast_difference()</span></code></a></li>
+<li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.evaluateAccountMilestone"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.evaluateAccountMilestone()</span></code></a></li>
+<li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.evaluateCompositeMilestone"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.evaluateCompositeMilestone()</span></code></a></li>
+<li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.evaluateMilestones"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.evaluateMilestones()</span></code></a></li>
+<li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.evaulateMemoMilestone"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.evaulateMemoMilestone()</span></code></a></li>
+<li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.getSummaryPageForExcelLandingPageDF"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.getSummaryPageForExcelLandingPageDF()</span></code></a></li>
+<li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.runForecast"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.runForecast()</span></code></a></li>
+<li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.runForecastApproximate"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.runForecastApproximate()</span></code></a></li>
+<li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.to_excel"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.to_excel()</span></code></a></li>
+<li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.to_html"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.to_html()</span></code></a></li>
+<li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.to_json"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.to_json()</span></code></a></li>
+<li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.update_date_range"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.update_date_range()</span></code></a></li>
+<li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.writeToJSONFile"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.writeToJSONFile()</span></code></a></li>
+<li><a class="reference internal" href="#ExpenseForecast.ExpenseForecast.write_to_database"><code class="docutils literal notranslate"><span class="pre">ExpenseForecast.write_to_database()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ExpenseForecast.initialize_from_database_with_id"><code class="docutils literal notranslate"><span class="pre">initialize_from_database_with_id()</span></code></a></li>
+<li><a class="reference internal" href="#ExpenseForecast.initialize_from_database_with_select"><code class="docutils literal notranslate"><span class="pre">initialize_from_database_with_select()</span></code></a></li>
+<li><a class="reference internal" href="#ExpenseForecast.initialize_from_dict"><code class="docutils literal notranslate"><span class="pre">initialize_from_dict()</span></code></a></li>
+<li><a class="reference internal" href="#ExpenseForecast.initialize_from_excel_file"><code class="docutils literal notranslate"><span class="pre">initialize_from_excel_file()</span></code></a></li>
+<li><a class="reference internal" href="#ExpenseForecast.initialize_from_json_file"><code class="docutils literal notranslate"><span class="pre">initialize_from_json_file()</span></code></a></li>
+<li><a class="reference internal" href="#ExpenseForecast.initialize_from_json_string"><code class="docutils literal notranslate"><span class="pre">initialize_from_json_string()</span></code></a></li>
+<li><a class="reference internal" href="#MemoRule.MemoRule"><code class="docutils literal notranslate"><span class="pre">MemoRule</span></code></a><ul>
+<li><a class="reference internal" href="#MemoRule.MemoRule.to_json"><code class="docutils literal notranslate"><span class="pre">MemoRule.to_json()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#MemoRuleSet.MemoRuleSet"><code class="docutils literal notranslate"><span class="pre">MemoRuleSet</span></code></a><ul>
+<li><a class="reference internal" href="#MemoRuleSet.MemoRuleSet.addMemoRule"><code class="docutils literal notranslate"><span class="pre">MemoRuleSet.addMemoRule()</span></code></a></li>
+<li><a class="reference internal" href="#MemoRuleSet.MemoRuleSet.findMatchingMemoRule"><code class="docutils literal notranslate"><span class="pre">MemoRuleSet.findMatchingMemoRule()</span></code></a></li>
+<li><a class="reference internal" href="#MemoRuleSet.MemoRuleSet.getMemoRules"><code class="docutils literal notranslate"><span class="pre">MemoRuleSet.getMemoRules()</span></code></a></li>
+<li><a class="reference internal" href="#MemoRuleSet.MemoRuleSet.to_json"><code class="docutils literal notranslate"><span class="pre">MemoRuleSet.to_json()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#MemoRuleSet.initialize_from_dataframe"><code class="docutils literal notranslate"><span class="pre">initialize_from_dataframe()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">expense_forecast 0.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">expense_forecast Official Documentation</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2024, Hume Dickie.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>
