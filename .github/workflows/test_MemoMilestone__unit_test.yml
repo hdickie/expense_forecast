@@ -9,6 +9,7 @@
         branches: [ "prod" ]
         paths:
           - '**/*MemoMilestone*.py'
+      workflow_dispatch:
     
     permissions:
       contents: read

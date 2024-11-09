@@ -9,6 +9,7 @@
         branches: [ "prod" ]
         paths:
           - '**/*MemoRule*.py'
+      workflow_dispatch:
     
     permissions:
       contents: read
