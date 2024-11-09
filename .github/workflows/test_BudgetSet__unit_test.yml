@@ -9,7 +9,7 @@
         branches: [ "prod" ]
         paths:
           - '**/*BudgetSet*.py'
-        workflow_dispatch:
+      workflow_dispatch:
     
     permissions:
       contents: read
