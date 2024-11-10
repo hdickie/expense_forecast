@@ -1,0 +1,2224 @@
+import pandas as pd
+import datetime
+import re
+import copy
+import json
+import AccountMilestone
+import MemoMilestone
+import BudgetSet
+import AccountSet
+import MemoRuleSet
+import hashlib
+import MilestoneSet
+from log_methods import log_in_color
+from log_methods import setup_logger
+import logging
+from generate_date_sequence import generate_date_sequence
+import numpy as np
+import CompositeMilestone
+import jsonpickle
+import tqdm
+import os
+import random
+import math
+from sqlalchemy import create_engine
+import psycopg2
+
+# todo maybe there is a more approrpiate place to put this
+pd.set_option("display.precision", 100)
+
+ROUNDING_ERROR_TOLERANCE = 0.0000000001
+
+logger = setup_logger(__name__, "./" + __name__ + ".log", level=logging.DEBUG)
+
+
+# def initialize_from_database_with_select(
+#     start_date_YYYYMMDD,
+#     end_date_YYYYMMDD,
+#     account_set_select_q,
+#     budget_set_select_q,
+#     memo_rule_set_select_q,
+#     account_milestone_select_q,
+#     memo_milestone_select_q,
+#     composite_milestone_select_q,
+#     set_def_q,
+#     metadata_q,
+#     budget_item_post_run_category_select_q,
+#     forecast_select_q,
+#     database_hostname,
+#     database_name,
+#     database_username,
+#     database_password,
+#     database_port,
+#     log_directory,
+#     forecast_set_name,
+#     forecast_name,
+# ):
+#     # print('ENTER ExpenseForecast::initialize_from_database_with_select')
+#     # print('metadata_q:')
+#     # print(metadata_q)
+#     start_date_YYYYMMDD = start_date_YYYYMMDD.replace("-", "")
+#     end_date_YYYYMMDD = end_date_YYYYMMDD.replace("-", "").replace("-", "")
+#
+#     connect_string = (
+#         "postgresql://"
+#         + database_username
+#         + ":"
+#         + database_password
+#         + "@"
+#         + database_hostname
+#         + ":"
+#         + str(database_port)
+#         + "/"
+#         + database_name
+#     )
+#     engine = create_engine(connect_string)
+#
+#     accounts_df = pd.read_sql_query(account_set_select_q, con=engine)
+#     # assert accounts_df.shape[0] > 0
+#     budget_items_df = pd.read_sql_query(budget_set_select_q, con=engine)
+#     # print(budget_set_select_q)
+#     # assert budget_items_df.shape[0] > 0 #not generically true but true in testing. remove this for prod
+#     memo_rules_df = pd.read_sql_query(memo_rule_set_select_q, con=engine)
+#     # assert memo_rules_df.shape[0] > 0 #not generically true but true in testing. remove this for prod
+#     account_milestones_df = pd.read_sql_query(account_milestone_select_q, con=engine)
+#     memo_milestones_df = pd.read_sql_query(memo_milestone_select_q, con=engine)
+#     composite_milestones_df = pd.read_sql_query(
+#         composite_milestone_select_q, con=engine
+#     )
+#
+#     try:
+#         forecast_df = pd.read_sql_query(forecast_select_q, con=engine)
+#         forecast_df["Date"] = [str(int(d)) for d in forecast_df["Date"]]
+#     except Exception:
+#         forecast_df = None
+#
+#     set_def_df = pd.read_sql_query(set_def_q, con=engine)
+#
+#     # if forecast has not been run, this will be empty
+#     # forecast_set_id, forecast_id, forecast_title, forecast_subtitle
+#     # submit_ts, complete_ts, error_flag, _satisfice_failed_flag, insert_ts
+#     metadata_df = pd.read_sql_query(metadata_q, con=engine)
+#     start_ts = None
+#     end_ts = None
+#     forecast_name = ""
+#
+#     forecast_name = set_def_df["forecast_name"].iat[0]
+#
+#     if metadata_df.shape[0] > 0:
+#         start_ts = metadata_df["submit_ts"].iat[0].strftime("%Y-%m-%d %H:%M:%S")
+#         end_ts = metadata_df["complete_ts"].iat[0].strftime("%Y-%m-%d %H:%M:%S")
+#
+#     budget_item_post_run_category_df = pd.read_sql_query(
+#         budget_item_post_run_category_select_q, con=engine
+#     )
+#     budget_item_post_run_category_df.rename(
+#         columns={
+#             "category": "Category",
+#             "forecast_id": "Forecast_Id",
+#             "date": "Date",
+#             "priority": "Priority",
+#             "amount": "Amount",
+#             "memo": "Memo",
+#             "deferrable": "Deferrable",
+#             "partial_payment_allowed": "Partial_Payment_Allowed",
+#         },
+#         inplace=True,
+#     )
+#     budget_item_post_run_category_df.Date = [
+#         d.strftime("%Y%m%d") for d in budget_item_post_run_category_df.Date
+#     ]
+#     # print('budget_item_post_run_category_df:')
+#     # print(budget_item_post_run_category_df.to_string())
+#
+#     account_set = AccountSet.initialize_from_dataframe(accounts_df)
+#     budget_set = BudgetSet.initialize_from_dataframe(budget_items_df)
+#     memo_rule_set = MemoRuleSet.initialize_from_dataframe(memo_rules_df)
+#     milestone_set = MilestoneSet.initialize_from_dataframe(
+#         account_milestones_df, memo_milestones_df, composite_milestones_df
+#     )
+#
+#     E = ExpenseForecast(
+#         account_set=account_set,
+#         budget_set=budget_set,
+#         memo_rule_set=memo_rule_set,
+#         start_date_YYYYMMDD=start_date_YYYYMMDD,
+#         end_date_YYYYMMDD=end_date_YYYYMMDD,
+#         milestone_set=milestone_set,
+#         log_directory=log_directory,
+#         forecast_set_name=forecast_set_name,
+#         forecast_name=forecast_name,
+#     )
+#
+#     relevant_cols = [
+#         "Date",
+#         "Priority",
+#         "Amount",
+#         "Memo",
+#         "Deferrable",
+#         "Partial_Payment_Allowed",
+#     ]
+#     confirmed_df = budget_item_post_run_category_df.loc[
+#         budget_item_post_run_category_df.Category == "Confirmed", relevant_cols
+#     ]
+#     deferred_df = budget_item_post_run_category_df.loc[
+#         budget_item_post_run_category_df.Category == "Deferred", relevant_cols
+#     ]
+#     skipped_df = budget_item_post_run_category_df.loc[
+#         budget_item_post_run_category_df.Category == "Skipped", relevant_cols
+#     ]
+#
+#     # print('confirmed_df:')
+#     # print(confirmed_df.to_string())
+#     # print('deferred_df:')
+#     # print(deferred_df.to_string())
+#     # print('skipped_df:')
+#     # print(skipped_df.to_string())
+#
+#     E.confirmed_df = confirmed_df
+#     E.skipped_df = skipped_df
+#     E.deferred_df = deferred_df
+#     E.start_ts = start_ts
+#     E.end_ts = end_ts
+#     E.forecast_df = forecast_df
+#
+#     # todo this needs to be handled upstream
+#     # E.forecast_df.Date = [ d.strftime('%Y%m%d') for d in E.forecast_df.Date ]
+#     # E.forecast_df = E.forecast_df.astype({"Date": int})
+#     # E.forecast_df = E.forecast_df.astype({"Date": str})
+#
+#     # todo validation of confirmed, skipped, deferred, start_ts, end_ts
+#
+#     return E
+#
+#
+# def initialize_from_database_with_id(
+#     username,
+#     forecast_set_id,
+#     forecast_id,
+#     database_hostname="localhost",
+#     database_name="postgres",
+#     database_username="postgres",
+#     database_password="postgres",
+#     database_port="5432",
+# ):  # todo may need a few more parameters
+#     # print('ENTER ExpenseForecast::initialize_from_database_with_id forecast_id='+str(forecast_id))
+#     connect_string = (
+#         "postgresql://"
+#         + database_username
+#         + ":"
+#         + database_password
+#         + "@"
+#         + database_hostname
+#         + ":"
+#         + str(database_port)
+#         + "/"
+#         + database_name
+#     )
+#     engine = create_engine(connect_string)
+#     # engine = create_engine('postgresql://bsdegjmy_humedick@localhost:5432/bsdegjmy_sandbox')
+#
+#     get_date_ranges_q = (
+#         "select distinct start_date, end_date from prod."
+#         + username
+#         + "_forecast_set_definitions where forecast_id = '"
+#         + str(forecast_id)
+#         + "' and forecast_set_id = '"
+#         + str(forecast_set_id)
+#         + "'"
+#     )
+#     # print('get_date_ranges_q:')
+#     # print(get_date_ranges_q)
+#     date_range_df = pd.read_sql_query(get_date_ranges_q, con=engine)
+#     assert date_range_df.shape[0] == 1
+#
+#     start_date_YYYYMMDD = date_range_df.iloc[0, 0].strftime("%Y%m%d")
+#     end_date_YYYYMMDD = date_range_df.iloc[0, 1].strftime("%Y%m%d")
+#
+#     account_set_select_q = (
+#         "select * from prod.ef_account_set_"
+#         + username
+#         + " where forecast_id = '"
+#         + forecast_id
+#         + "'"
+#     )
+#     # print('forecast_set_id:'+forecast_set_id)
+#     # print('forecast_id:'+forecast_id)
+#     # print('account_set_select_q:')
+#     # print(account_set_select_q)
+#
+#     budget_set_select_q = (
+#         "select * from prod.ef_budget_item_set_"
+#         + username
+#         + " where forecast_id = '"
+#         + forecast_id
+#         + "'"
+#     )
+#     memo_rule_set_select_q = (
+#         "select * from prod.ef_memo_rule_set_"
+#         + username
+#         + " where forecast_id = '"
+#         + forecast_id
+#         + "'"
+#     )
+#     account_milestone_select_q = (
+#         "select * from prod.ef_account_milestones_"
+#         + username
+#         + " where forecast_id = '"
+#         + forecast_id
+#         + "'"
+#     )
+#     memo_milestone_select_q = (
+#         "select * from prod.ef_memo_milestones_"
+#         + username
+#         + " where forecast_id = '"
+#         + forecast_id
+#         + "'"
+#     )
+#     composite_milestone_select_q = (
+#         "select * from prod.ef_composite_milestones_"
+#         + username
+#         + " where forecast_id = '"
+#         + forecast_id
+#         + "'"
+#     )
+#     set_def_q = (
+#         """
+#     select *
+#     from prod."""
+#         + username
+#         + """_forecast_set_definitions
+#     where forecast_set_id = '"""
+#         + forecast_set_id
+#         + """' and forecast_id = '"""
+#         + forecast_id
+#         + """'
+#     """
+#     )
+#     # it has to be forecast_set bc if forecast hasnt been run yet we still need that info
+#     metadata_q = (
+#         """
+#     select forecast_set_id, forecast_id, forecast_title, forecast_subtitle,
+#     submit_ts, complete_ts, error_flag, _satisfice_failed_flag
+#     from (
+#     select *, row_number() over(partition by forecast_id order by insert_ts desc) as rn
+#     from prod."""
+#         + username
+#         + """_forecast_run_metadata
+#     where forecast_id = '"""
+#         + forecast_id
+#         + """'
+#     order by forecast_id
+#     ) where rn = 1 and forecast_id = '"""
+#         + forecast_id
+#         + """'
+#     """
+#     )
+#     budget_item_post_run_category_select_q = (
+#         "select * from prod."
+#         + username
+#         + "_budget_item_post_run_category where forecast_id = '"
+#         + forecast_id
+#         + "'"
+#     )
+#
+#     forecast_select_q = "select * from prod." + username + "_forecast_" + forecast_id
+#
+#     E = initialize_from_database_with_select(
+#         start_date_YYYYMMDD=start_date_YYYYMMDD,
+#         end_date_YYYYMMDD=end_date_YYYYMMDD,
+#         account_set_select_q=account_set_select_q,
+#         budget_set_select_q=budget_set_select_q,
+#         memo_rule_set_select_q=memo_rule_set_select_q,
+#         account_milestone_select_q=account_milestone_select_q,
+#         memo_milestone_select_q=memo_milestone_select_q,
+#         composite_milestone_select_q=composite_milestone_select_q,
+#         set_def_q=set_def_q,
+#         metadata_q=metadata_q,
+#         budget_item_post_run_category_select_q=budget_item_post_run_category_select_q,
+#         forecast_select_q=forecast_select_q,
+#         database_hostname=database_hostname,
+#         database_name=database_name,
+#         database_username=database_username,
+#         database_password=database_password,
+#         database_port=database_port,
+#         log_directory=".",
+#         forecast_set_name="",
+#         forecast_name="",
+#     )
+#
+#     return E
+#
+#
+# # whether or not the expense forecast has been run will be determined at runtime
+# # this can return a list of initialized ExpenseForecast objects from ChooseOneSet
+# # therefore, even if no ChooseOneSets, return the single ExpenseForecast in a list
+# def initialize_from_excel_file(path_to_excel_file):
+#
+#     summary_df = pd.read_excel(path_to_excel_file, sheet_name="Summary")
+#
+#     summary_df = summary_df.T
+#     summary_df.columns = summary_df.iloc[0, :]
+#     summary_df.drop(summary_df.index[0], inplace=True)
+#
+#     summary_df["start_date_YYYYMMDD"] = str(int(summary_df["start_date_YYYYMMDD"]))
+#     summary_df["end_date_YYYYMMDD"] = str(int(summary_df["end_date_YYYYMMDD"]))
+#     # summary_df['unique_id'] = str(int(summary_df['unique_id'])).rjust(6,'0')
+#
+#     account_set_df = pd.read_excel(path_to_excel_file, sheet_name="AccountSet")
+#     budget_set_df = pd.read_excel(path_to_excel_file, sheet_name="BudgetSet")
+#     memo_rule_set_df = pd.read_excel(path_to_excel_file, sheet_name="MemoRuleSet")
+#     choose_one_set_df = pd.read_excel(path_to_excel_file, sheet_name="ChooseOneSet")
+#     account_milestones_df = pd.read_excel(
+#         path_to_excel_file, sheet_name="AccountMilestones"
+#     )
+#     memo_milestones_df = pd.read_excel(path_to_excel_file, sheet_name="MemoMilestones")
+#     composite_milestones_df = pd.read_excel(
+#         path_to_excel_file, sheet_name="CompositeMilestones"
+#     )
+#
+#     # These are here to remove the 'might be referenced before assignment' warning
+#     forecast_df = None
+#     skipped_df = None
+#     confirmed_df = None
+#     deferred_df = None
+#     milestone_results_df = None
+#
+#     try:
+#         forecast_df = pd.read_excel(path_to_excel_file, sheet_name="Forecast")
+#         skipped_df = pd.read_excel(path_to_excel_file, sheet_name="Skipped")
+#         confirmed_df = pd.read_excel(path_to_excel_file, sheet_name="Confirmed")
+#         deferred_df = pd.read_excel(path_to_excel_file, sheet_name="Deferred")
+#         milestone_results_df = pd.read_excel(
+#             path_to_excel_file, sheet_name="Milestone Results"
+#         )
+#     except Exception as e:
+#         pass  # if forecast was not run this will happen
+#
+#     A = AccountSet.AccountSet([])
+#     expect_curr_bal_acct = False
+#     expect_prev_bal_acct = False
+#     expect_principal_bal_acct = False
+#     expect_interest_acct = False
+#
+#     billing_start_date = None
+#     interest_type = None
+#     apr = None
+#     interest_cadence = None
+#     minimum_payment = None
+#     previous_statement_balance = None
+#     current_statement_balance = None
+#     principal_balance = None
+#     interest_balance = None
+#
+#     for index, row in account_set_df.iterrows():
+#         if row.Account_Type.lower() == "checking":
+#             A.createCheckingAccount(
+#                 row.Name,
+#                 row.Balance,
+#                 row.Min_Balance,
+#                 row.Max_Balance,
+#                 row.Primary_Checking_Ind,
+#             )
+#             # A.createAccount(row.Name,row.Balance,row.Min_Balance,row.Max_Balance,'checking',None,None,None,None,None,None,None,None)
+#
+#         if (
+#             row.Account_Type.lower() == "credit curr stmt bal"
+#             and not expect_curr_bal_acct
+#         ):
+#             current_statement_balance = row.Balance
+#             expect_prev_bal_acct = True
+#             continue
+#
+#         if (
+#             row.Account_Type.lower() == "credit prev stmt bal"
+#             and not expect_prev_bal_acct
+#         ):
+#             previous_statement_balance = row.Balance
+#             interest_cadence = row.Interest_Cadence
+#             minimum_payment = row.Minimum_Payment
+#             billing_start_date = str(int(row.Billing_Start_Date))
+#             interest_type = row.Interest_Type
+#             apr = row.APR
+#
+#             expect_curr_bal_acct = True
+#             continue
+#
+#         if row.Account_Type.lower() == "interest" and not expect_interest_acct:
+#             interest_balance = row.Balance
+#             expect_principal_bal_acct = True
+#             continue
+#
+#         if (
+#             row.Account_Type.lower() == "principal balance"
+#             and not expect_principal_bal_acct
+#         ):
+#             principal_balance = row.Balance
+#             interest_cadence = row.Interest_Cadence
+#             minimum_payment = row.Minimum_Payment
+#             billing_start_date = str(int(row.Billing_Start_Date))
+#             interest_type = row.Interest_Type
+#             apr = row.APR
+#             expect_interest_acct = True
+#             continue
+#
+#         # todo i was tired when I wrote these likely worth a second look
+#         if row.Account_Type.lower() == "credit curr stmt bal" and expect_curr_bal_acct:
+#             A.createAccount(
+#                 name=row.Name.split(":")[0],
+#                 balance=previous_statement_balance + previous_statement_balance,
+#                 min_balance=row.Min_Balance,
+#                 max_balance=row.Max_Balance,
+#                 account_type="credit",
+#                 billing_start_date_YYYYMMDD=billing_start_date,
+#                 interest_type=interest_type,
+#                 apr=apr,
+#                 interest_cadence=interest_cadence,
+#                 minimum_payment=minimum_payment,
+#                 previous_statement_balance=previous_statement_balance,
+#                 current_statement_balance=current_statement_balance,
+#             )
+#             expect_curr_bal_acct = False
+#
+#         if row.Account_Type.lower() == "credit prev stmt bal" and expect_prev_bal_acct:
+#             A.createAccount(
+#                 name=row.Name.split(":")[0],
+#                 balance=current_statement_balance + row.Balance,
+#                 min_balance=row.Min_Balance,
+#                 max_balance=row.Max_Balance,
+#                 account_type="credit",
+#                 billing_start_date_YYYYMMDD=str(int(row.Billing_Start_Date)),
+#                 interest_type=row.Interest_Type,
+#                 apr=row.APR,
+#                 interest_cadence=row.Interest_Cadence,
+#                 minimum_payment=row.Minimum_Payment,
+#                 previous_statement_balance=row.Balance,
+#                 current_statement_balance=current_statement_balance,
+#             )
+#             expect_prev_bal_acct = False
+#
+#         if row.Account_Type.lower() == "interest" and expect_interest_acct:
+#
+#             A.createAccount(
+#                 name=row.Name.split(":")[0],
+#                 balance=row.Balance + principal_balance,
+#                 min_balance=row.Min_Balance,
+#                 max_balance=row.Max_Balance,
+#                 account_type="loan",
+#                 billing_start_date_YYYYMMDD=billing_start_date,
+#                 interest_type=interest_type,
+#                 apr=apr,
+#                 interest_cadence=interest_cadence,
+#                 minimum_payment=minimum_payment,
+#                 previous_statement_balance=None,
+#                 current_statement_balance=None,
+#                 principal_balance=principal_balance,
+#                 interest_balance=row.Balance,
+#             )
+#             expect_interest_acct = False
+#
+#         if (
+#             row.Account_Type.lower() == "principal balance"
+#             and expect_principal_bal_acct
+#         ):
+#             A.createAccount(
+#                 name=row.Name.split(":")[0],
+#                 balance=row.Balance + interest_balance,
+#                 min_balance=row.Min_Balance,
+#                 max_balance=row.Max_Balance,
+#                 account_type="loan",
+#                 billing_start_date_YYYYMMDD=str(int(row.Billing_Start_Date)),
+#                 interest_type=row.Interest_Type,
+#                 apr=row.APR,
+#                 interest_cadence=row.Interest_Cadence,
+#                 minimum_payment=row.Minimum_Payment,
+#                 previous_statement_balance=None,
+#                 current_statement_balance=None,
+#                 principal_balance=row.Balance,
+#                 interest_balance=interest_balance,
+#             )
+#             expect_principal_bal_acct = False
+#
+#     B = BudgetSet.BudgetSet([])
+#     for index, row in budget_set_df.iterrows():
+#         B.addBudgetItem(
+#             row.Start_Date,
+#             row.End_Date,
+#             row.Priority,
+#             row.Cadence,
+#             row.Amount,
+#             row.Memo,
+#             row.Deferrable,
+#             row.Partial_Payment_Allowed,
+#         )
+#
+#     M = MemoRuleSet.MemoRuleSet([])
+#     for index, row in memo_rule_set_df.iterrows():
+#         M.addMemoRule(
+#             row.Memo_Regex, row.Account_From, row.Account_To, row.Transaction_Priority
+#         )
+#
+#     am__list = []
+#     am__dict = {}
+#     for index, row in account_milestones_df.iterrows():
+#         AM = AccountMilestone.AccountMilestone(
+#             row.Milestone_Name, row.Account_Name, row.Min_Balance, row.Max_Balance
+#         )
+#         am__list.append(AM)
+#         am__dict[row.Milestone_Name] = AM
+#
+#     mm__list = []
+#     mm__dict = {}
+#     for index, row in memo_milestones_df.iterrows():
+#         MM = MemoMilestone.MemoMilestone(row.Milestone_Name, row.Memo_Regex)
+#         mm__list.append(MM)
+#         mm__dict[row.Milestone_Name] = MM
+#
+#     # (self,milestone_name,account_milestones__list, memo_milestones__list)
+#     cm__list = []
+#     composite_milestones = {}
+#     for index, row in composite_milestones_df.iterrows():
+#         if row.Composite_Milestone_Name not in composite_milestones.keys():
+#             composite_milestones[row.Composite_Milestone_Name] = {
+#                 "account_milestones": [],
+#                 "memo_milestones": [],
+#             }
+#
+#         # todo i think there is an error here
+#         if row.Milestone_Type == "Account":
+#             component_account_milestone = am__dict[row.Milestone_Name]
+#             # print('component_account_milestone:')
+#             # print(component_account_milestone.to_json())
+#             composite_milestones[row.Composite_Milestone_Name][
+#                 "account_milestones"
+#             ].append(component_account_milestone)
+#         elif row.Milestone_Type == "Memo":
+#             component_memo_milestone = mm__dict[row.Milestone_Name]
+#             # print('component_memo_milestone:')
+#             # print(component_memo_milestone.to_json())
+#             composite_milestones[row.Composite_Milestone_Name][
+#                 "memo_milestones"
+#             ].append(component_memo_milestone)
+#
+#     for key, value in composite_milestones.items():
+#
+#         # component_account_milestones = []
+#         # for am_name in value['Account']:
+#         #     component_account_milestones.append( am__dict[am_name] )
+#         #
+#         # component_memo_milestones = []
+#         # for mm_name in value['Memo']:
+#         #     component_memo_milestones.append( mm__dict[mm_name] )
+#
+#         # print('composite_milestones[key][account_milestones]:')
+#         # print(composite_milestones[key]['account_milestones'])
+#         # print('composite_milestones[key][memo_milestones]:')
+#         # print(composite_milestones[key]['memo_milestones'])
+#
+#         new_composite_milestone = CompositeMilestone.CompositeMilestone(
+#             key,
+#             composite_milestones[key]["account_milestones"],
+#             composite_milestones[key]["memo_milestones"],
+#         )
+#         cm__list.append(new_composite_milestone)
+#         # print('cm__list:')
+#         # for cm in cm__list:
+#         #     print(cm.to_json())
+#
+#     # (self,account_set,budget_set,account_milestones__list,memo_milestones__list,composite_milestones__list)
+#     MS = MilestoneSet.MilestoneSet(am__list, mm__list, cm__list)
+#
+#     start_date_YYYYMMDD = summary_df.start_date_YYYYMMDD.iat[0]
+#     end_date_YYYYMMDD = summary_df.end_date_YYYYMMDD.iat[0]
+#
+#     E = ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
+#
+#     # todo
+#     for index, row in choose_one_set_df.iterrows():
+#         pass
+#
+#     if forecast_df is not None:
+#
+#         E.start_ts = summary_df.start_ts.iat[0]
+#
+#         E.end_ts = summary_df.end_ts.iat[0]
+#
+#         E.forecast_df = forecast_df
+#         E.forecast_df["Date"] = [str(d) for d in E.forecast_df["Date"]]
+#
+#         E.forecast_df = E.forecast_df.replace(np.NaN, "")
+#
+#         E.skipped_df = skipped_df
+#         E.skipped_df["Date"] = [str(d) for d in E.skipped_df["Date"]]
+#
+#         E.confirmed_df = confirmed_df
+#         E.confirmed_df["Date"] = [str(d) for d in E.confirmed_df["Date"]]
+#
+#         E.deferred_df = deferred_df
+#         E.deferred_df["Date"] = [str(d) for d in E.deferred_df["Date"]]
+#
+#         E.account_milestone_results = {}
+#         E.memo_milestone_results = {}
+#         E.composite_milestone_results = {}
+#         for index, row in milestone_results_df.iterrows():
+#             if row.Milestone_Type == "Account":
+#                 E.account_milestone_results[row.Milestone_Name] = str(row.Result_Date)
+#             elif row.Milestone_Type == "Memo":
+#                 E.memo_milestone_results[row.Milestone_Name] = str(row.Result_Date)
+#             elif row.Milestone_Type == "Composite":
+#                 E.composite_milestone_results[row.Milestone_Name] = str(row.Result_Date)
+#             else:
+#                 raise ValueError(
+#                     "Unknown Milestone result type encountered while reading excel file."
+#                 )
+#
+#     return E
+#
+#
+# # whether or not the expense forecast has been run will be determined at runtime
+# # returns a list of ExpenseForecast objects
+#
+#
+# def initialize_from_json_file(path_to_json):
+#     with open(path_to_json) as json_data:
+#         data = json.load(json_data)
+#         return initialize_from_dict(data)
+#
+#
+# def initialize_from_json_string(json_string):
+#     data = json.loads(json_string)
+#     return initialize_from_dict(data)
+#
+#
+# def initialize_from_dict(data):
+#     initial_account_set = data["initial_account_set"]
+#     initial_budget_set = data["initial_budget_set"]
+#     initial_memo_rule_set = data["initial_memo_rule_set"]
+#     start_date_YYYYMMDD = data["start_date_YYYYMMDD"]
+#     end_date_YYYYMMDD = data["end_date_YYYYMMDD"]
+#     milestone_set = data["milestone_set"]
+#
+#     A = AccountSet.AccountSet([])
+#     B = BudgetSet.BudgetSet([])
+#     M = MemoRuleSet.MemoRuleSet([])
+#     MS = MilestoneSet.MilestoneSet([], [], [])
+#
+#     # these are here to remove 'might be referenced before assignment' warning
+#     credit_acct_name = None
+#     credit_curr_bal = None
+#     loan_acct_name = None
+#     loan_balance = None
+#     loan_billing_start_date = None
+#     loan_interest_type = None
+#     loan_apr = None
+#     loan_interest_cadence = None
+#     loan_min_payment = None
+#
+#     for Account__dict in initial_account_set["accounts"]:
+#
+#         # Account__dict = Account__dict[0] #the dict came in a list
+#         if Account__dict["account_type"].lower() == "checking":
+#             A.createCheckingAccount(
+#                 Account__dict["name"],
+#                 Account__dict["balance"],
+#                 Account__dict["min_balance"],
+#                 Account__dict["max_balance"],
+#                 Account__dict["primary_checking_ind"],
+#             )
+#
+#         elif Account__dict["account_type"].lower() == "credit curr stmt bal":
+#             credit_acct_name = Account__dict["name"].split(":")[0]
+#             credit_curr_bal = Account__dict["balance"]
+#
+#         elif Account__dict["account_type"].lower() == "credit prev stmt bal":
+#             # (self,name,current_stmt_bal,prev_stmt_bal,min_balance,max_balance,billing_start_date_YYYYMMDD,apr,minimum_payment):
+#             A.createCreditCardAccount(
+#                 credit_acct_name,
+#                 credit_curr_bal,
+#                 Account__dict["balance"],
+#                 Account__dict["min_balance"],
+#                 Account__dict["max_balance"],
+#                 Account__dict["billing_start_date_YYYYMMDD"],
+#                 Account__dict["apr"],
+#                 Account__dict["minimum_payment"],
+#             )
+#
+#         elif Account__dict["account_type"].lower() == "principal balance":
+#
+#             loan_acct_name = Account__dict["name"].split(":")[0]
+#             loan_balance = Account__dict["balance"]
+#             loan_apr = Account__dict["apr"]
+#             loan_billing_start_date = Account__dict["billing_start_date_YYYYMMDD"]
+#             loan_min_payment = Account__dict["minimum_payment"]
+#             loan_interest_cadence = Account__dict["interest_cadence"]
+#             loan_interest_type = Account__dict["interest_type"]
+#
+#         elif Account__dict["account_type"].lower() == "interest":
+#
+#             # principal balance then interest
+#             # (self,name,principal_balance,interest_balance,min_balance,max_balance,billing_start_date_YYYYMMDD,apr,minimum_payment):
+#             A.createLoanAccount(
+#                 loan_acct_name,
+#                 float(loan_balance),
+#                 float(Account__dict["balance"]),
+#                 Account__dict["min_balance"],
+#                 Account__dict["max_balance"],
+#                 loan_billing_start_date,
+#                 loan_apr,
+#                 loan_min_payment,
+#             )
+#
+#         else:
+#             raise ValueError(
+#                 "unrecognized account type in ExpenseForecast::initialize_from_json_file: "
+#                 + str(Account__dict["account_type"])
+#             )
+#
+#     for BudgetItem__dict in initial_budget_set["budget_items"]:
+#         # BudgetItem__dict = BudgetItem__dict[0]
+#         sd_YYYYMMDD = BudgetItem__dict["start_date_YYYYMMDD"]
+#         ed_YYYYMMDD = BudgetItem__dict["end_date_YYYYMMDD"]
+#
+#         B.addBudgetItem(
+#             start_date_YYYYMMDD=sd_YYYYMMDD,
+#             end_date_YYYYMMDD=ed_YYYYMMDD,
+#             priority=BudgetItem__dict["priority"],
+#             cadence=BudgetItem__dict["cadence"],
+#             amount=BudgetItem__dict["amount"],
+#             memo=BudgetItem__dict["memo"],
+#             deferrable=BudgetItem__dict["deferrable"],
+#             partial_payment_allowed=BudgetItem__dict["partial_payment_allowed"],
+#         )
+#
+#     for MemoRule__dict in initial_memo_rule_set["memo_rules"]:
+#         # MemoRule__dict = MemoRule__dict[0]
+#         M.addMemoRule(
+#             memo_regex=MemoRule__dict["memo_regex"],
+#             account_from=MemoRule__dict["account_from"],
+#             account_to=MemoRule__dict["account_to"],
+#             transaction_priority=MemoRule__dict["transaction_priority"],
+#         )
+#
+#     for am in milestone_set["account_milestones"]:
+#         MS.addAccountMilestone(
+#             am["milestone_name"],
+#             am["account_name"],
+#             am["min_balance"],
+#             am["max_balance"],
+#         )
+#
+#     for mm in milestone_set["memo_milestones"]:
+#         MS.addMemoMilestone(mm["milestone_name"], mm["memo_regex"])
+#
+#     # milestone_name,account_milestones__list, memo_milestones__list
+#     for cm in milestone_set["composite_milestones"]:
+#         account_milestones__list = []
+#         for acc_mil in cm["account_milestones"]:
+#             account_milestones__list.append(
+#                 AccountMilestone.AccountMilestone(
+#                     acc_mil["milestone_name"],
+#                     acc_mil["account_name"],
+#                     acc_mil["min_balance"],
+#                     acc_mil["max_balance"],
+#                 )
+#             )
+#
+#         memo_milestones__list = []
+#         for memo_mil in cm["memo_milestones"]:
+#             memo_milestones__list.append(
+#                 MemoMilestone.MemoMilestone(
+#                     memo_mil["milestone_name"], memo_mil["memo_regex"]
+#                 )
+#             )
+#
+#         MS.addCompositeMilestone(
+#             cm["milestone_name"], account_milestones__list, memo_milestones__list
+#         )
+#
+#     E = ExpenseForecast(
+#         A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS, print_debug_messages=True
+#     )
+#     E.forecast_set_name = data["forecast_set_name"]
+#     E.forecast_name = data["forecast_name"]
+#
+#     if not data["start_ts"] is None:
+#         E.account_milestone_results = data["account_milestone_results"]
+#         E.memo_milestone_results = data["memo_milestone_results"]
+#         E.composite_milestone_results = data["composite_milestone_results"]
+#         E.start_ts = data["start_ts"]
+#         E.end_ts = data["end_ts"]
+#
+#         # todo it is so dumb that I have to do this just to interpret string as json
+#         f = open("./out/forecast_df_" + str(E.unique_id) + ".json", "w")
+#         f.write(json.dumps(data["forecast_df"], indent=4))
+#         f.close()
+#
+#         f = open("./out/skipped_df_" + str(E.unique_id) + ".json", "w")
+#         f.write(json.dumps(data["skipped_df"], indent=4))
+#         f.close()
+#
+#         f = open("./out/confirmed_df_" + str(E.unique_id) + ".json", "w")
+#         f.write(json.dumps(data["confirmed_df"], indent=4))
+#         f.close()
+#
+#         f = open("./out/deferred_df_" + str(E.unique_id) + ".json", "w")
+#         f.write(json.dumps(data["deferred_df"], indent=4))
+#         f.close()
+#
+#         try:
+#             E.forecast_df = pd.read_json(
+#                 "./out/forecast_df_" + str(E.unique_id) + ".json"
+#             )
+#             E.skipped_df = pd.read_json(
+#                 "./out/skipped_df_" + str(E.unique_id) + ".json"
+#             )
+#             E.confirmed_df = pd.read_json(
+#                 "./out/confirmed_df_" + str(E.unique_id) + ".json"
+#             )
+#             E.deferred_df = pd.read_json(
+#                 "./out/deferred_df_" + str(E.unique_id) + ".json"
+#             )
+#
+#             E.forecast_df.Date = [str(d) for d in E.forecast_df.Date]
+#             if E.skipped_df.shape[0] > 0:
+#                 E.skipped_df.Date = [str(d) for d in E.skipped_df.Date]
+#             if E.confirmed_df.shape[0] > 0:
+#                 E.confirmed_df.Date = [str(d) for d in E.confirmed_df.Date]
+#             if E.deferred_df.shape[0] > 0:
+#                 E.deferred_df.Date = [str(d) for d in E.deferred_df.Date]
+#         except Exception:
+#             pass  # todo this logic needs to be rethought out
+#
+#     return E
+
+
+class ExpenseForecast:
+
+    def __eq__(self, other):
+        raise NotImplementedError #todo
+
+    def __ne__(self, other):
+        raise NotImplementedError #todo
+
+    def __hash__(self):
+        raise NotImplementedError #todo
+
+    # todo confirm that I don't need __getstate__, __setstate__. I think pickle can compress data frames and I might not want that
+
+    def __init__(self, unique_id, forecast_df, **kwargs):
+
+        allowed_kwargs = ['confirmed_df', 'deferred_df', 'skipped_df', 'milestone_set', 'milestone_results']
+        for key in kwargs:
+            if key not in allowed_kwargs:
+                raise TypeError(f"Unexpected keyword argument '{key}'")
+
+        if 'milestone_set' in kwargs:
+            assert 'milestone_results' in kwargs
+
+        if 'milestone_results' in kwargs:
+            assert 'milestone_set' in kwargs
+
+        # interval can be inferred, and validation logic for that belongs in SimulationStepper
+        # this is an internal method, so we don't validate here. Validate only at entry points
+
+        self.unique_id = unique_id
+        self.forecast_df = forecast_df
+
+        if 'confirmed_df' not in kwargs:
+            self.confirmed_df = None #todo
+
+        if 'deferred_df' not in kwargs:
+            self.deferred_df = None #todo
+
+        if 'skipped_df' not in kwargs:
+            self.skipped_df = None #todo
+
+        if 'milestone_set' not in kwargs:
+            self.milestone_set = None #todo
+
+        if 'milestone_results' not in kwargs:
+            self.milestone_results = None #todo
+
+    def __str__(self):
+        raise NotImplementedError #todo
+
+    def __repr__(self):
+        raise NotImplementedError #todo
+
+    # Class methods for loading data
+    @classmethod
+    def load_csv_file(cls):
+        raise NotImplementedError
+
+    @classmethod
+    def load_xml_file(cls):
+        raise NotImplementedError
+
+    @classmethod
+    def load_json_file(cls):
+        raise NotImplementedError
+
+    @classmethod
+    def load_database_tables(cls):
+        raise NotImplementedError
+
+    @classmethod
+    def load_excel_file(cls):
+        raise NotImplementedError
+
+    @classmethod
+    def load_pickle_file(cls):
+        raise NotImplementedError
+
+    # Instance methods for exporting data to strings
+    def to_csv_string(self):
+        raise NotImplementedError
+
+    def to_xml_string(self):
+        raise NotImplementedError
+
+    def to_json_string(self):
+        raise NotImplementedError
+
+    # Instance methods for writing data to external sources
+    def write_csv_file(self):
+        raise NotImplementedError
+
+    def write_xml_file(self):
+        raise NotImplementedError
+
+    def write_json_file(self):
+        raise NotImplementedError
+
+    def write_database_tables(self):
+        raise NotImplementedError
+
+    def write_excel_file(self):
+        raise NotImplementedError
+
+    def write_pickle_file(self):
+        raise NotImplementedError
+
+    # def write_to_database(
+    #     self,
+    #     database_hostname,  # localhost
+    #     database_name,  # bsdegjmy_sandbox
+    #     database_username,  # bsdegjmy_humedick
+    #     database_password,  #
+    #     database_port,  # 5432
+    #     username,
+    #     forecast_set_id="",
+    #     overwrite=False,
+    # ):
+    #     # engine = create_engine('postgresql://bsdegjmy_humedick@localhost:5432/bsdegjmy_sandbox')
+    #     connection = psycopg2.connect(
+    #         host=database_hostname,
+    #         database=database_name,
+    #         user=database_username,
+    #         password=database_password,
+    #         port=database_port,
+    #     )
+    #     connection.autocommit = True
+    #     cursor = connection.cursor()
+    #
+    #     # todo implement force
+    #
+    #     account_set_table_name = "prod.ef_account_set_" + username
+    #     budget_set_table_name = "prod.ef_budget_item_set_" + username
+    #     memo_rule_set_table_name = "prod.ef_memo_rule_set_" + username
+    #     account_milestone_table_name = "prod.ef_account_milestones_" + username
+    #     memo_milestone_table_name = "prod.ef_memo_milestones_" + username
+    #     composite_milestone_table_name = "prod.ef_composite_milestones_" + username
+    #     budget_item_post_run_category_table_name = (
+    #         "prod." + username + "_budget_item_post_run_category"
+    #     )
+    #
+    #     cursor.execute(
+    #         "DELETE FROM "
+    #         + account_set_table_name
+    #         + " WHERE forecast_id = '"
+    #         + str(self.unique_id)
+    #         + "'"
+    #     )
+    #     for index, row in self.initial_account_set.getAccounts().iterrows():
+    #         if row.Billing_Start_Date is None:
+    #             bsd = "Null"
+    #         else:
+    #             bsd = "'" + str(row.Billing_Start_Date) + "'"
+    #         if row.APR is None:
+    #             apr = "Null"
+    #         else:
+    #             apr = "'" + str(row.APR) + "'"
+    #         if row.Minimum_Payment is None:
+    #             min_payment = "Null"
+    #         else:
+    #             min_payment = str(row.Minimum_Payment)
+    #
+    #         insert_account_row_q = (
+    #             "INSERT INTO "
+    #             + account_set_table_name
+    #             + " (forecast_id, account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_cadence, minimum_payment, primary_checking_ind) VALUES "
+    #         )
+    #         insert_account_row_q += (
+    #             "('"
+    #             + str(self.unique_id)
+    #             + "', '"
+    #             + str(row.Name)
+    #             + "', "
+    #             + str(row.Balance)
+    #             + ", "
+    #             + str(row.Min_Balance)
+    #             + ", "
+    #             + str(row.Max_Balance)
+    #             + ", '"
+    #             + str(row.Account_Type)
+    #             + "', "
+    #             + str(bsd)
+    #             + ", "
+    #             + apr
+    #             + ", '"
+    #             + str(row.Interest_Cadence)
+    #             + "', "
+    #             + min_payment
+    #             + ", '"
+    #             + str(row.Primary_Checking_Ind)
+    #             + "')"
+    #         )
+    #         # print(insert_account_row_q)
+    #         cursor.execute(insert_account_row_q)
+    #
+    #     cursor.execute(
+    #         "DELETE FROM "
+    #         + budget_set_table_name
+    #         + " WHERE forecast_id = '"
+    #         + str(self.unique_id)
+    #         + "'"
+    #     )
+    #     for index, row in self.initial_budget_set.getBudgetItems().iterrows():
+    #         insert_budget_item_row_q = (
+    #             "INSERT INTO "
+    #             + budget_set_table_name
+    #             + ' (forecast_id, memo, priority, start_date, end_date, cadence, amount, "deferrable", partial_payment_allowed) VALUES '
+    #         )
+    #         insert_budget_item_row_q += (
+    #             "('"
+    #             + str(self.unique_id)
+    #             + "','"
+    #             + str(row.Memo)
+    #             + "',"
+    #             + str(row.Priority)
+    #             + ",'"
+    #             + str(row.Start_Date)
+    #             + "','"
+    #             + str(row.End_Date)
+    #             + "','"
+    #             + str(row.Cadence)
+    #             + "',"
+    #             + str(row.Amount)
+    #             + ",'"
+    #             + str(row.Deferrable)
+    #             + "','"
+    #             + str(row.Partial_Payment_Allowed)
+    #             + "')"
+    #         )
+    #         cursor.execute(insert_budget_item_row_q)
+    #
+    #     cursor.execute(
+    #         "DELETE FROM "
+    #         + budget_item_post_run_category_table_name
+    #         + " WHERE forecast_id = '"
+    #         + str(self.unique_id)
+    #         + "'"
+    #     )
+    #     if self.confirmed_df is not None:
+    #         for index, row in self.confirmed_df.iterrows():
+    #             insert_confirmed_q = (
+    #                 "INSERT INTO "
+    #                 + budget_item_post_run_category_table_name
+    #                 + ' ( category, forecast_id, "date", priority, amount, memo, "deferrable", partial_payment_allowed) VALUES '
+    #             )
+    #             insert_confirmed_q += (
+    #                 "('Confirmed','" + str(self.unique_id) + "','" + str(row.Date) + "'"
+    #             )
+    #             insert_confirmed_q += (
+    #                 ","
+    #                 + str(row.Priority)
+    #                 + ","
+    #                 + str(row.Amount)
+    #                 + ",'"
+    #                 + str(row.Memo)
+    #                 + "'"
+    #             )
+    #             insert_confirmed_q += (
+    #                 ",'"
+    #                 + str(row.Deferrable)
+    #                 + "','"
+    #                 + str(row.Partial_Payment_Allowed)
+    #                 + "')"
+    #             )
+    #             cursor.execute(insert_confirmed_q)
+    #
+    #     if self.deferred_df is not None:
+    #         for index, row in self.deferred_df.iterrows():
+    #             insert_deferred_q = (
+    #                 "INSERT INTO "
+    #                 + budget_item_post_run_category_table_name
+    #                 + ' ( category, forecast_id, "date", priority, amount, memo, "deferrable", partial_payment_allowed) VALUES '
+    #             )
+    #             insert_deferred_q += (
+    #                 "('Deferred','" + str(self.unique_id) + "','" + str(row.Date) + "'"
+    #             )
+    #             insert_deferred_q += (
+    #                 ","
+    #                 + str(row.Priority)
+    #                 + ","
+    #                 + str(row.Amount)
+    #                 + ",'"
+    #                 + str(row.Memo)
+    #                 + "'"
+    #             )
+    #             insert_deferred_q += (
+    #                 ",'"
+    #                 + str(row.Deferrable)
+    #                 + "','"
+    #                 + str(row.Partial_Payment_Allowed)
+    #                 + "')"
+    #             )
+    #             cursor.execute(insert_deferred_q)
+    #
+    #     if self.skipped_df is not None:
+    #         for index, row in self.skipped_df.iterrows():
+    #             insert_skipped_q = (
+    #                 "INSERT INTO "
+    #                 + budget_item_post_run_category_table_name
+    #                 + ' ( category, forecast_id, "date", priority, amount, memo, "deferrable", partial_payment_allowed) VALUES '
+    #             )
+    #             insert_skipped_q += (
+    #                 "('Skipped','" + str(self.unique_id) + "','" + str(row.Date) + "'"
+    #             )
+    #             insert_skipped_q += (
+    #                 ","
+    #                 + str(row.Priority)
+    #                 + ","
+    #                 + str(row.Amount)
+    #                 + ",'"
+    #                 + str(row.Memo)
+    #                 + "'"
+    #             )
+    #             insert_skipped_q += (
+    #                 ",'"
+    #                 + str(row.Deferrable)
+    #                 + "','"
+    #                 + str(row.Partial_Payment_Allowed)
+    #                 + "')"
+    #             )
+    #             cursor.execute(insert_skipped_q)
+    #
+    #     cursor.execute(
+    #         "DELETE FROM "
+    #         + memo_rule_set_table_name
+    #         + " WHERE forecast_id = '"
+    #         + str(self.unique_id)
+    #         + "'"
+    #     )
+    #     for index, row in self.initial_memo_rule_set.getMemoRules().iterrows():
+    #         insert_memo_rule_row_q = (
+    #             "INSERT INTO "
+    #             + memo_rule_set_table_name
+    #             + " (forecast_id, memo_regex, account_from, account_to, priority ) VALUES "
+    #         )
+    #         insert_memo_rule_row_q += (
+    #             "('"
+    #             + str(self.unique_id)
+    #             + "','"
+    #             + str(row.Memo_Regex)
+    #             + "','"
+    #             + str(row.Account_From)
+    #             + "','"
+    #             + str(row.Account_To)
+    #             + "',"
+    #             + str(row.Transaction_Priority)
+    #             + ")"
+    #         )
+    #         cursor.execute(insert_memo_rule_row_q)
+    #
+    #     cursor.execute(
+    #         "DELETE FROM prod.ef_account_milestones_"
+    #         + username
+    #         + " WHERE forecast_id = '"
+    #         + self.unique_id
+    #         + "'"
+    #     )
+    #     for index, row in self.milestone_set.getAccountMilestonesDF().iterrows():
+    #         # forecast_id, milestone_name, account_name, min_balance, max_balance
+    #         am_insert_q = (
+    #             "INSERT INTO prod.ef_account_milestones_"
+    #             + username
+    #             + " SELECT '"
+    #             + self.unique_id
+    #             + "' as forecast_id, "
+    #         )
+    #         am_insert_q += (
+    #             "'"
+    #             + row.milestone_name
+    #             + "' as milestone_name, '"
+    #             + row.account_name
+    #             + "' as account_name, "
+    #         )
+    #         am_insert_q += (
+    #             str(row.min_balance)
+    #             + " as min_balance, "
+    #             + str(row.max_balance)
+    #             + " as max_balance"
+    #         )
+    #         cursor.execute(am_insert_q)
+    #
+    #     cursor.execute(
+    #         "DELETE FROM prod.ef_memo_milestones_"
+    #         + username
+    #         + " WHERE forecast_id = '"
+    #         + self.unique_id
+    #         + "'"
+    #     )
+    #     for index, row in self.milestone_set.getMemoMilestonesDF().iterrows():
+    #         mm_insert_q = (
+    #             "INSERT INTO prod.ef_memo_milestones_"
+    #             + username
+    #             + " SELECT '"
+    #             + self.unique_id
+    #             + "' as forecast_id, "
+    #         )
+    #         mm_insert_q += (
+    #             "'"
+    #             + row.milestone_name
+    #             + "' as milestone_name, '"
+    #             + row.memo_regex
+    #             + "' as memo_regex "
+    #         )
+    #         cursor.execute(mm_insert_q)
+    #
+    #     cursor.execute(
+    #         "DELETE FROM prod.ef_composite_milestones_"
+    #         + username
+    #         + " WHERE forecast_id = '"
+    #         + self.unique_id
+    #         + "'"
+    #     )
+    #     for index, row in self.milestone_set.getCompositeMilestonesDF().iterrows():
+    #         cm_insert_q = (
+    #             "INSERT INTO prod.ef_memo_milestones_"
+    #             + username
+    #             + " SELECT '"
+    #             + self.unique_id
+    #             + "' as forecast_id, "
+    #         )
+    #         cm_insert_q += (
+    #             "'" + row.composite_milestone_name + "' as composite_milestone_name, "
+    #         )
+    #         cm_insert_q += (
+    #             "'"
+    #             + row.account_milestone_name_list
+    #             + "' as account_milestone_name_list, "
+    #         )
+    #         cm_insert_q += (
+    #             "'" + row.memo_milestone_name_list + "' as memo_milestone_name_list, "
+    #         )
+    #         cursor.execute(cm_insert_q)
+    #
+    #     # if hasattr(self,'forecast_df'):
+    #     if self.forecast_df is not None:
+    #         tablename = username + "_Forecast_" + str(self.unique_id)
+    #
+    #         if overwrite:
+    #             cursor.execute("drop table if exists prod." + tablename)
+    #             # log_in_color(logger, 'white', 'info', 'drop table if exists prod.'+tablename)
+    #         DDL = "CREATE TABLE prod." + tablename + " (\n"
+    #         # Date	Checking	Credit: Curr Stmt Bal	Credit: Prev Stmt Bal	test loan: Principal Balance	test loan: Interest	Marginal Interest	Net Gain	Net Loss	Net Worth	Loan Total	CC Debt Total	Liquid Total	Memo
+    #         for i in range(0, len(self.forecast_df.columns)):
+    #             column_name = (
+    #                 '"' + self.forecast_df.columns[i] + '"'
+    #             )  # adding quotes to preserve capitalization
+    #             # todo isn't date missing ?
+    #             if column_name == '"Memo"':
+    #                 DDL += '"Memo" text'  # removing last comma. add double quotes just for consistency
+    #             elif column_name == '"Memo Directives"':
+    #                 DDL += '"Memo Directives" text, '  # removing last comma. add double quotes just for consistency
+    #             else:
+    #                 DDL += column_name + " float, "
+    #             DDL += "\n"
+    #         DDL += ")"
+    #         # log_in_color(logger,'white','info',DDL)
+    #         cursor.execute(DDL)
+    #
+    #         # Not needed bc will be changed to insert / delete
+    #         grant_q = "grant all privileges on prod." + tablename + " to " + username
+    #         # log_in_color(logger,'white','info',grant_q)
+    #         cursor.execute(grant_q)
+    #
+    #         for index, row in self.forecast_df.iterrows():
+    #             insert_q = "INSERT INTO prod." + tablename + " ("
+    #             for i in range(0, len(self.forecast_df.columns)):
+    #                 column_name = (
+    #                     '"' + self.forecast_df.columns[i] + '"'
+    #                 )  # adding quotes to preserve capitalization
+    #                 if column_name == '"Date"':
+    #                     insert_q += '"Date", '
+    #                 elif column_name == '"Memo"':
+    #                     insert_q += '"Memo"'
+    #                     insert_q += " ) VALUES ("
+    #                 elif column_name == '"Memo Directives"':
+    #                     insert_q += '"Memo Directives", '
+    #                 else:
+    #                     insert_q += column_name + ", "
+    #
+    #             for i in range(0, len(self.forecast_df.columns)):
+    #                 column_name = (
+    #                     '"' + self.forecast_df.columns[i] + '"'
+    #                 )  # adding quotes to preserve capitalization
+    #                 if column_name == '"Date"':
+    #                     insert_q += "'" + str(row.Date) + "'" + ", "
+    #                 elif column_name == '"Memo Directives"':
+    #                     insert_q += "'" + str(row["Memo Directives"]) + "'" + ", "
+    #                 elif column_name == '"Memo"':
+    #                     insert_q += "'" + str(row.Memo) + "'"
+    #                     insert_q += " )"
+    #
+    #                 else:
+    #                     insert_q += str(row[self.forecast_df.columns[i]]) + ", "
+    #             # log_in_color(logger,'white','info',insert_q)
+    #             cursor.execute(insert_q)
+    #
+    #         # cursor.execute("TRUNCATE prod.ef_account_set_"+username+"_temporary")
+    #         # cursor.execute("TRUNCATE prod.ef_budget_item_set_" + username+"_temporary")
+    #         # cursor.execute("TRUNCATE prod.ef_memo_rule_set_" + username+"_temporary")
+    #         # cursor.execute("INSERT INTO prod.ef_account_set_"+username+" Select '"+self.unique_id+"', account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_cadence, minimum_payment, primary_checking_ind from prod.ef_account_set_"+username+"_temporary")
+    #         # cursor.execute("INSERT INTO prod.ef_budget_item_set_"+username+" Select '" + self.unique_id + "', memo, priority, start_date, end_date,  cadence, amount, \"deferrable\", partial_payment_allowed from prod.ef_budget_item_set_"+username+"_temporary")
+    #         # cursor.execute("INSERT INTO prod.ef_memo_rule_set_"+username+" Select '" + self.unique_id + "', memo_regex, account_from, account_to, priority from prod.ef_memo_rule_set_"+username+"_temporary")
+    #
+    #         if overwrite:
+    #             cursor.execute(
+    #                 "drop table if exists prod."
+    #                 + username
+    #                 + "_milestone_results_"
+    #                 + self.unique_id
+    #             )
+    #             # log_in_color(logger, 'white', 'info', 'drop table if exists prod.'+username+'_milestone_results_'+self.unique_id)
+    #
+    #         cursor.execute(
+    #             """CREATE TABLE prod."""
+    #             + username
+    #             + """_milestone_results_"""
+    #             + self.unique_id
+    #             + """ (
+    #         forecast_id text,
+    #         milestone_name text,
+    #         milestone_type text,
+    #         result_date date
+    #         ) """
+    #         )
+    #         cursor.execute(
+    #             "grant all privileges on prod."
+    #             + username
+    #             + "_milestone_results_"
+    #             + self.unique_id
+    #             + " to "
+    #             + username
+    #         )
+    #
+    #         # log_in_color(logger, 'white', 'info', 'self.account_milestone_results')
+    #         # log_in_color(logger, 'white', 'info', self.account_milestone_results)
+    #         for k, v in self.account_milestone_results.items():
+    #             if v == "None":
+    #                 v = "null"
+    #             else:
+    #                 v = "'" + v + "'"
+    #
+    #             insert_q = (
+    #                 """INSERT INTO prod."""
+    #                 + username
+    #                 + """_milestone_results_"""
+    #                 + self.unique_id
+    #                 + """
+    #             SELECT \'"""
+    #                 + self.unique_id
+    #                 + """\',\'"""
+    #                 + k
+    #                 + """\',\'Account\',"""
+    #                 + v
+    #                 + """
+    #             """
+    #             )
+    #             # log_in_color(logger, 'white', 'info', insert_q)
+    #             cursor.execute(insert_q)
+    #
+    #         # log_in_color(logger, 'white', 'info', 'self.memo_milestone_results')
+    #         # log_in_color(logger, 'white', 'info', self.memo_milestone_results)
+    #         for k, v in self.memo_milestone_results.items():
+    #
+    #             if v == "None":
+    #                 v = "null"
+    #             else:
+    #                 v = "'" + v + "'"
+    #
+    #             insert_q = (
+    #                 """INSERT INTO prod."""
+    #                 + username
+    #                 + """_milestone_results_"""
+    #                 + self.unique_id
+    #                 + """
+    #                             SELECT \'"""
+    #                 + self.unique_id
+    #                 + """\',\'"""
+    #                 + k
+    #                 + """\',\'Memo\',"""
+    #                 + v
+    #                 + """
+    #                             """
+    #             )
+    #             # log_in_color(logger, 'white', 'info', insert_q)
+    #             cursor.execute(insert_q)
+    #
+    #         # log_in_color(logger, 'white', 'info', 'self.composite_milestone_results')
+    #         # log_in_color(logger, 'white', 'info', self.composite_milestone_results)
+    #         for k, v in self.composite_milestone_results.items():
+    #
+    #             if v == "None":
+    #                 v = "null"
+    #             else:
+    #                 v = "'" + v + "'"
+    #
+    #             insert_q = (
+    #                 """INSERT INTO prod."""
+    #                 + username
+    #                 + """_milestone_results_"""
+    #                 + self.unique_id
+    #                 + """
+    #                             SELECT \'"""
+    #                 + self.unique_id
+    #                 + """\',\'"""
+    #                 + k
+    #                 + """\',\'Composite\',"""
+    #                 + v
+    #                 + """
+    #                             """
+    #             )
+    #             # log_in_color(logger, 'white', 'info', insert_q)
+    #             cursor.execute(insert_q)
+    #
+    #         # print('self.start_ts:')
+    #         # print(self.start_ts)
+    #
+    #         # forecast_set_id, forecast_id, forecast_title, forecast_subtitle, submit_ts, complete_ts, error_flag, _satisfice_failed_flag, insert_ts
+    #         metadata_q = "INSERT INTO prod." + username + "_forecast_run_metadata "
+    #         metadata_q += (
+    #             "Select '"
+    #             + forecast_set_id
+    #             + "' as forecast_set_id, '"
+    #             + str(self.unique_id)
+    #             + "' as forecast_id, "
+    #         )
+    #         metadata_q += "'" + self.forecast_set_name + "' as forecast_title, "
+    #         metadata_q += "'" + self.forecast_name + "' as forecast_subtitle, "
+    #         metadata_q += "'" + str(self.start_ts) + "' as submit_ts, "
+    #         metadata_q += "'" + str(self.end_ts) + "' as complete_ts, "
+    #         metadata_q += (
+    #             "'" + str(0) + "' as error_flag, "
+    #         )  # todo implement error flag
+    #         metadata_q += (
+    #             "'" + str(0) + "' as _satisfice_failed_flag, "
+    #         )  # todo implement _satisfice failed flag
+    #         metadata_q += (
+    #             "'"
+    #             + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    #             + "' as insert_ts "
+    #         )
+    #         cursor.execute(metadata_q)
+    #
+    # def __str__(self):
+    #
+    #     left_margin_width = 5
+    #
+    #     return_string = ""
+    #     return_string += "ExpenseForecast object.\n"
+    #     # return_string += self.forecast_title+"\n"
+    #     # return_string +=  self.forecast_title+"\n"
+    #
+    #     if self.forecast_df is None:
+    #         return_string += """ This forecast has not yet been run. Use runForecast() to compute this forecast. """
+    #         json_file_name = "FILE NAME UNDEFINED"
+    #     else:
+    #         # (if skipped is empty or min skipped priority is greater than 1) AND ( max forecast date == end date ) #todo check this second clause #https://github.com/hdickie/expense_forecast/issues/17
+    #
+    #         return_string += (""" Start timestamp: """ + str(self.start_ts)).rjust(
+    #             left_margin_width, " "
+    #         ) + "\n"
+    #         return_string += (""" End timestamp: """ + str(self.end_ts)).rjust(
+    #             left_margin_width, " "
+    #         ) + "\n"
+    #         if self.end_ts is not None:
+    #             end_dtts = datetime.datetime.strptime(self.end_ts, "%Y-%m-%d %H:%M:%S")
+    #             start_dtts = datetime.datetime.strptime(
+    #                 self.start_ts, "%Y-%m-%d %H:%M:%S"
+    #             )
+    #             seconds_elapsed = (end_dtts - start_dtts).seconds
+    #             if seconds_elapsed >= 3600:
+    #                 time_string = str(seconds_elapsed / (60 * 60)) + " hours"
+    #             elif seconds_elapsed >= 60:
+    #                 time_string = str(seconds_elapsed / 60) + " minutes"
+    #             else:
+    #                 time_string = str(seconds_elapsed) + " seconds"
+    #             return_string += (""" Time Elapsed: """ + time_string).rjust(
+    #                 left_margin_width, " "
+    #             ) + "\n"
+    #
+    #         # whether or not this object has ever been written to disk, we know its file name
+    #         json_file_name = (
+    #             "Forecast__" + str(self.unique_id) + "__" + self.start_ts + ".json"
+    #         )
+    #
+    #     return_string += (
+    #         """Forecast  #"""
+    #         + str(self.unique_id)
+    #         + """: """
+    #         + self.start_date_YYYYMMDD
+    #         + """ -> """
+    #         + self.end_date_YYYYMMDD
+    #         + "\n"
+    #     )
+    #     return_string += (
+    #         " "
+    #         + (
+    #             str(self.initial_account_set.getAccounts().shape[0])
+    #             + """ accounts, """
+    #             + str(self.initial_budget_set.getBudgetItems().shape[0])
+    #             + """  budget items, """
+    #             + str(self.initial_memo_rule_set.getMemoRules().shape[0])
+    #             + """ memo rules."""
+    #         ).rjust(left_margin_width, " ")
+    #         + "\n"
+    #     )
+    #     return_string += " " + json_file_name + "\n"
+    #
+    #     return_string += "\n Account Sets: \n"
+    #     return_string += self.initial_account_set.getAccounts().to_string() + "\n"
+    #
+    #     return_string += "\n Budget schedule items: \n"
+    #     return_string += self.initial_budget_set.getBudgetItems().to_string() + "\n"
+    #
+    #     return_string += "\n Memo Rules: \n"
+    #     return_string += self.initial_memo_rule_set.getMemoRules().to_string() + "\n"
+    #
+    #     return_string += "\n Account Milestones: \n"
+    #     return_string += self.milestone_set.getAccountMilestonesDF().to_string() + "\n"
+    #
+    #     return_string += "\n Memo Milestones: \n"
+    #     return_string += self.milestone_set.getMemoMilestonesDF().to_string() + "\n"
+    #
+    #     return_string += "\n Composite Milestones: \n"
+    #     return_string += (
+    #         self.milestone_set.getCompositeMilestonesDF().to_string() + "\n"
+    #     )
+    #
+    #     if self.forecast_df is not None:
+    #         return_string += "Final Forecast Row:\n"
+    #         return_string += self.forecast_df.tail(1).to_string() + "\n"
+    #
+    #         return_string += "\n Account Milestone Results: \n"
+    #         return_string += str(self.account_milestone_results) + "\n"
+    #
+    #         return_string += "\n Memo Milestones Results: \n"
+    #         return_string += str(self.memo_milestone_results) + "\n"
+    #
+    #         return_string += "\n Composite Milestones Results: \n"
+    #         return_string += str(self.composite_milestone_results) + "\n"
+    #
+    #     return return_string
+    #
+    # def __init__(
+    #     self,
+    #     account_set,
+    #     budget_set,
+    #     memo_rule_set,
+    #     start_date_YYYYMMDD,
+    #     end_date_YYYYMMDD,
+    #     milestone_set,
+    #     approximate_flag=False,
+    #     log_directory=".",
+    #     forecast_set_name="",
+    #     forecast_name="",
+    #     print_debug_messages=True,
+    #     raise_exceptions=True,
+    # ):
+    #     """
+    #     ExpenseForecast one-line description
+    #
+    #
+    #     :param account_set:
+    #     :param budget_set:
+    #     :param memo_rule_set:
+    #     """
+    #
+    #     self.forecast_set_name = str(forecast_set_name)
+    #     self.forecast_name = str(forecast_name)
+    #     self.approximate_flag = approximate_flag
+    #     self.forecast_df = None
+    #     self.skipped_df = None
+    #     self.confirmed_df = None
+    #     self.deferred_df = None
+    #     self.start_ts = None
+    #     self.end_ts = None
+    #
+    #     try:
+    #         datetime.datetime.strptime(str(start_date_YYYYMMDD), "%Y%m%d")
+    #         self.start_date_YYYYMMDD = str(start_date_YYYYMMDD)
+    #     except Exception:
+    #         print("value was:" + str(start_date_YYYYMMDD) + "\n")
+    #         raise ValueError(
+    #             "Failed to cast start_date_YYYYMMDD to datetime with format %Y%m%d: "
+    #             + str(start_date_YYYYMMDD)
+    #         )
+    #
+    #     try:
+    #         datetime.datetime.strptime(str(end_date_YYYYMMDD), "%Y%m%d")
+    #         self.end_date_YYYYMMDD = str(end_date_YYYYMMDD)
+    #     except Exception:
+    #         raise ValueError(
+    #             "Failed to cast end_date_YYYYMMDD to datetime with format %Y%m%d: "
+    #             + str(end_date_YYYYMMDD)
+    #         )
+    #
+    #     if datetime.datetime.strptime(
+    #         str(start_date_YYYYMMDD), "%Y%m%d"
+    #     ) >= datetime.datetime.strptime(str(end_date_YYYYMMDD), "%Y%m%d"):
+    #         raise ValueError(
+    #             str(self.start_date_YYYYMMDD) + " >= " + str(self.end_date_YYYYMMDD)
+    #         )  # start_date must be before end_date
+    #
+    #     accounts_df = account_set.getAccounts()
+    #     if accounts_df.shape[0] == 0:
+    #         # if len(account_set) == 0:
+    #         raise ValueError  # There needs to be at least 1 account for ExpenseForecast to do anything.
+    #     # todo more strict checking #https://github.com/hdickie/expense_forecast/issues/18
+    #
+    #     budget_df = budget_set.getBudgetItems()
+    #     memo_df = memo_rule_set.getMemoRules()
+    #
+    #     error_text = ""
+    #     error_ind = False
+    #
+    #     # for each distinct account name in all memo rules to and from fields, there is a matching account
+    #     # that is, for each memo rule that mentions an account, the mentioned account should exist
+    #     # not that it is NOT a requirement that the converse is true
+    #     # that is, there can be an account that has no corresponding memo rules
+    #
+    #     # should be no duplicates and credit and loan acct splitting is already handled
+    #
+    #     distinct_base_account_names__from_acct = pd.DataFrame(
+    #         pd.DataFrame(accounts_df.Name)
+    #         .apply(lambda x: x[0].split(":")[0], axis=1)
+    #         .drop_duplicates()
+    #     ).rename(columns={0: "Name"})
+    #     account_names__from_memo = pd.concat(
+    #         [
+    #             pd.DataFrame(memo_df[["Account_From"]]).rename(
+    #                 columns={"Account_From": "Name"}
+    #             ),
+    #             pd.DataFrame(memo_df[["Account_To"]]).rename(
+    #                 columns={"Account_To": "Name"}
+    #             ),
+    #         ]
+    #     )
+    #
+    #     distinct_account_names__from_memo = pd.DataFrame(
+    #         account_names__from_memo.loc[
+    #             account_names__from_memo.Name != "None", "Name"
+    #         ]
+    #         .drop_duplicates()
+    #         .reset_index(drop=True)
+    #     )
+    #
+    #     A = None
+    #     B = None
+    #     try:
+    #
+    #         A = {""}
+    #         for a in distinct_account_names__from_memo.Name.tolist():
+    #             A = A.union({a})
+    #         A = A - {
+    #             "ALL_LOANS"
+    #         }  # if we have a memo rule for ALL_LOANS, we don't want that to be checked against the list of account names
+    #
+    #         A2 = {""}
+    #         for a in distinct_base_account_names__from_acct.Name.tolist():
+    #             A2 = A2.union({a})
+    #
+    #         B = A.intersection(A2)
+    #
+    #         assert A == B
+    #     except Exception as e:
+    #         error_text = str(e.args) + "\n"
+    #         error_text += "An account name was mentioned in a memo rule that did not exist in the account set\n"
+    #         error_text += "all accounts mentioned in memo rules:\n"
+    #         error_text += distinct_account_names__from_memo.Name.to_string() + "\n"
+    #         error_text += "all defined accounts:\n"
+    #         error_text += distinct_base_account_names__from_acct.Name.to_string() + "\n"
+    #         error_text += "intersection:\n"
+    #         error_text += str(B) + "\n"
+    #         error_text += "Accounts from Memo:\n"
+    #         error_text += str(A) + "\n"
+    #         error_ind = True
+    #
+    #     for index, row in budget_df.iterrows():
+    #         memo_rule_set.findMatchingMemoRule(
+    #             row.Memo, row.Priority
+    #         )  # this will throw errors as needed
+    #
+    #     if print_debug_messages:
+    #         if error_ind:
+    #             print(error_text)
+    #
+    #     if raise_exceptions:
+    #         if error_ind:
+    #             log_in_color(logger, "red", "error", error_text)
+    #             raise ValueError(error_text)
+    #
+    #     self.initial_account_set = copy.deepcopy(account_set)
+    #     self.initial_budget_set = copy.deepcopy(budget_set)
+    #     self.initial_memo_rule_set = copy.deepcopy(memo_rule_set)
+    #
+    #     self.log_stack_depth = 0
+    #
+    #     first_proposed_df = budget_set.getBudgetSchedule()
+    #
+    #     lb_sel_vec = [
+    #         datetime.datetime.strptime(self.start_date_YYYYMMDD, "%Y%m%d")
+    #         <= datetime.datetime.strptime(d, "%Y%m%d")
+    #         for d in first_proposed_df.Date
+    #     ]
+    #     rb_sel_vec = [
+    #         datetime.datetime.strptime(d, "%Y%m%d")
+    #         <= datetime.datetime.strptime(self.end_date_YYYYMMDD, "%Y%m%d")
+    #         for d in first_proposed_df.Date
+    #     ]
+    #     date_range_sel_vec = lb_sel_vec and rb_sel_vec
+    #
+    #     # todo I don't understand why this is not working
+    #     proposed_df = first_proposed_df[date_range_sel_vec]
+    #     proposed_df.reset_index(drop=True, inplace=True)
+    #
+    #     # todo this works instead of the above and I don't know why
+    #     if not proposed_df.empty:
+    #         proposed_df = proposed_df[proposed_df.Date >= self.start_date_YYYYMMDD]
+    #     if not proposed_df.empty:
+    #         proposed_df = proposed_df[proposed_df.Date <= self.end_date_YYYYMMDD]
+    #
+    #     # otherwise proposed has no columns
+    #     if proposed_df.empty:
+    #         proposed_df = pd.DataFrame(
+    #             {
+    #                 "Date": [],
+    #                 "Priority": [],
+    #                 "Amount": [],
+    #                 "Memo": [],
+    #                 "Deferrable": [],
+    #                 "Partial_Payment_Allowed": [],
+    #             }
+    #         )
+    #
+    #     # take priority 1 items and put them in confirmed
+    #     confirmed_df = proposed_df[proposed_df.Priority == 1]
+    #     confirmed_df.reset_index(drop=True, inplace=True)
+    #
+    #     proposed_df = proposed_df[proposed_df.Priority != 1]
+    #     proposed_df.reset_index(drop=True, inplace=True)
+    #
+    #     deferred_df = copy.deepcopy(proposed_df.head(0))
+    #     skipped_df = copy.deepcopy(proposed_df.head(0))
+    #
+    #     account_hash = hashlib.sha1(
+    #         account_set.getAccounts().to_string().encode("utf-8")
+    #     ).hexdigest()
+    #     budget_hash = hashlib.sha1(
+    #         budget_set.getBudgetItems().to_string().encode("utf-8")
+    #     ).hexdigest()
+    #     memo_hash = hashlib.sha1(
+    #         memo_rule_set.getMemoRules().to_string().encode("utf-8")
+    #     ).hexdigest()
+    #     start_date_hash = int(start_date_YYYYMMDD)
+    #     end_date_hash = int(end_date_YYYYMMDD)
+    #
+    #     num_days = (
+    #         datetime.datetime.strptime(end_date_YYYYMMDD, "%Y%m%d")
+    #         - datetime.datetime.strptime(start_date_YYYYMMDD, "%Y%m%d")
+    #     ).days
+    #     num_distinct_priority = len(
+    #         set(self.initial_budget_set.getBudgetItems().Priority)
+    #     )
+    #     self.unique_id = (
+    #         start_date_YYYYMMDD[2:]
+    #         + "_"
+    #         + str(num_days)
+    #         + "_"
+    #         + str(num_distinct_priority)
+    #         + "_"
+    #     )
+    #     self.unique_id += str(
+    #         hash(
+    #             int(account_hash, 16)
+    #             + int(budget_hash, 16)
+    #             + int(memo_hash, 16)
+    #             + start_date_hash
+    #             + end_date_hash
+    #         )
+    #         % 1000
+    #     ).rjust(4, "0")
+    #     if self.approximate_flag:
+    #         self.unique_id += "A"
+    #
+    #     single_forecast_run_log_file_name = "Forecast_" + str(self.unique_id) + ".log"
+    #     log_in_color(
+    #         logger,
+    #         "green",
+    #         "debug",
+    #         "Attempting switch log file to: " + single_forecast_run_log_file_name,
+    #     )
+    #
+    #     self.initial_proposed_df = proposed_df
+    #     self.initial_deferred_df = deferred_df
+    #     self.initial_skipped_df = skipped_df
+    #     self.initial_confirmed_df = confirmed_df
+    #
+    #     self.milestone_set = milestone_set
+    #
+    #     self.account_milestone_results = {}
+    #     self.memo_milestone_results = {}
+    #     self.composite_milestone_results = {}
+    #
+    #
+    # # todo this could probably have a better name
+    # def writeToJSONFile(self, output_dir="./"):
+    #
+    #     # self.forecast_df.to_csv('./Forecast__'+run_ts+'.csv')
+    #     log_in_color(
+    #         logger,
+    #         "green",
+    #         "info",
+    #         "Writing to " + str(output_dir) + "/Forecast_" + self.unique_id + ".json",
+    #     )
+    #     print("Writing to " + str(output_dir) + "/Forecast_" + self.unique_id + ".json")
+    #     # self.forecast_df.to_csv('./Forecast__' + run_ts + '.json')
+    #
+    #     # self.forecast_df.index = self.forecast_df['Date']
+    #     if hasattr(self, "forecast_df"):
+    #         file_name = "ForecastResult_" + self.unique_id + ".json"
+    #     else:
+    #         file_name = "Forecast_" + self.unique_id + ".json"
+    #
+    #     f = open(str(output_dir) + file_name, "w")
+    #     f.write(self.to_json())
+    #     f.close()
+    #
+    #     # write all_data.csv  # self.forecast_df.iloc[:,0:(self.forecast_df.shape[1]-1)].to_csv('all_data.csv',index=False)
+    #
+    #     # self.forecast_df.to_csv('out.csv', index=False)
+    #
+    # def to_json_string(self):
+    #     """
+    #     Returns a JSON string representing the ExpenseForecast object.
+    #
+    #     #todo ExpenseForecast.to_json() say what the columns are
+    #
+    #     :return:
+    #     """
+    #
+    #     # return jsonpickle.encode(self, indent=4)
+    #
+    #     JSON_string = "{\n"
+    #
+    #     unique_id_string = '"unique_id":"' + self.unique_id + '",\n'
+    #
+    #     # if self.start_ts is not None:
+    #     # if hasattr(self,'start_ts'):
+    #     if self.start_ts is not None:
+    #         start_ts_string = '"start_ts":"' + str(self.start_ts) + '",\n'
+    #         end_ts_string = '"end_ts":"' + str(self.end_ts) + '",\n'
+    #     else:
+    #         start_ts_string = '"start_ts":"None",\n'
+    #         end_ts_string = '"end_ts":"None",\n'
+    #
+    #     start_date_string = '"start_date_YYYYMMDD":' + self.start_date_YYYYMMDD + ",\n"
+    #     end_date_string = '"end_date_YYYYMMDD":' + self.end_date_YYYYMMDD + ",\n"
+    #
+    #     memo_rule_set_string = (
+    #         '"initial_memo_rule_set":' + self.initial_memo_rule_set.to_json() + ","
+    #     )
+    #     initial_account_set_string = (
+    #         '"initial_account_set":' + self.initial_account_set.to_json() + ","
+    #     )
+    #     initial_budget_set_string = (
+    #         '"initial_budget_set":' + self.initial_budget_set.to_json() + ","
+    #     )
+    #
+    #     if self.start_ts is None:
+    #         forecast_df_string = '"forecast_df":"None",\n'
+    #         skipped_df_string = '"skipped_df":"None",\n'
+    #         confirmed_df_string = '"confirmed_df":"None",\n'
+    #         deferred_df_string = '"deferred_df":"None",\n'
+    #     else:
+    #         tmp__forecast_df = self.forecast_df.copy()
+    #         tmp__skipped_df = self.skipped_df.copy()
+    #         tmp__confirmed_df = self.confirmed_df.copy()
+    #         tmp__deferred_df = self.deferred_df.copy()
+    #
+    #         # standardize decimal points
+    #
+    #         # todo every value should have a decimal
+    #         for i in range(1, len(tmp__forecast_df.columns) - 2):
+    #             column_name = tmp__forecast_df.columns[i]
+    #             tmp__forecast_df[column_name] = [
+    #                 "{:.2f}".format(v) for v in tmp__forecast_df[column_name]
+    #             ]
+    #
+    #         tmp__forecast_df["Date"] = tmp__forecast_df["Date"].astype(str)
+    #         if tmp__skipped_df.shape[0] > 0:
+    #             tmp__skipped_df["Date"] = tmp__skipped_df["Date"].astype(str)
+    #         tmp__confirmed_df["Date"] = tmp__confirmed_df["Date"].astype(str)
+    #         if tmp__deferred_df.shape[0] > 0:
+    #             tmp__deferred_df["Date"] = tmp__deferred_df["Date"].astype(str)
+    #
+    #         normalized_forecast_df_JSON_string = tmp__forecast_df.to_json(
+    #             orient="records", date_format="iso"
+    #         )
+    #         normalized_skipped_df_JSON_string = tmp__skipped_df.to_json(
+    #             orient="records", date_format="iso"
+    #         )
+    #         normalized_confirmed_df_JSON_string = tmp__confirmed_df.to_json(
+    #             orient="records", date_format="iso"
+    #         )
+    #         normalized_deferred_df_JSON_string = tmp__deferred_df.to_json(
+    #             orient="records", date_format="iso"
+    #         )
+    #
+    #         forecast_df_string = (
+    #             '"forecast_df":' + normalized_forecast_df_JSON_string + ",\n"
+    #         )
+    #         skipped_df_string = (
+    #             '"skipped_df":' + normalized_skipped_df_JSON_string + ",\n"
+    #         )
+    #         confirmed_df_string = (
+    #             '"confirmed_df":' + normalized_confirmed_df_JSON_string + ",\n"
+    #         )
+    #         deferred_df_string = (
+    #             '"deferred_df":' + normalized_deferred_df_JSON_string + ",\n"
+    #         )
+    #
+    #     JSON_string += unique_id_string
+    #     JSON_string += '"forecast_set_name":"' + self.forecast_set_name + '",\n'
+    #     JSON_string += '"forecast_name":"' + self.forecast_name + '",\n'
+    #
+    #     JSON_string += start_ts_string
+    #     JSON_string += end_ts_string
+    #
+    #     JSON_string += start_date_string
+    #     JSON_string += end_date_string
+    #     JSON_string += memo_rule_set_string
+    #     JSON_string += initial_account_set_string
+    #     JSON_string += initial_budget_set_string
+    #
+    #     JSON_string += forecast_df_string
+    #     JSON_string += skipped_df_string
+    #     JSON_string += confirmed_df_string
+    #     JSON_string += deferred_df_string
+    #
+    #     account_milestone_string = jsonpickle.encode(
+    #         self.account_milestone_results, indent=4, unpicklable=False, make_refs=False
+    #     )
+    #
+    #     memo_milestone_string = jsonpickle.encode(
+    #         self.memo_milestone_results, indent=4, unpicklable=False, make_refs=False
+    #     )
+    #
+    #     composite_milestone_string = jsonpickle.encode(
+    #         self.composite_milestone_results,
+    #         indent=4,
+    #         unpicklable=False,
+    #         make_refs=False,
+    #     )
+    #
+    #     JSON_string += '"milestone_set":' + self.milestone_set.to_json()
+    #
+    #     JSON_string += ",\n"
+    #     JSON_string += '"account_milestone_results":' + account_milestone_string + ",\n"
+    #     JSON_string += '"memo_milestone_results":' + memo_milestone_string + ",\n"
+    #     JSON_string += '"composite_milestone_results":' + composite_milestone_string
+    #
+    #     JSON_string += "}"
+    #
+    #     # to pretty print
+    #     JSON_string = json.dumps(json.loads(JSON_string), indent=4)
+    #
+    #     return JSON_string
+    #
+    #
+    # # todo make sure return type matches name
+    # def to_html_string(self):
+    #     # todo consider adding commas to long numbers
+    #     # res = ('{:,}'.format(test_num))
+    #     return self.forecast_df.to_html()
+    #
+    # def write_html(self):
+    #     pass
+    #     raise NotImplementedError #todo
+    #
+    # def from_html_string(self):
+    #     pass
+    #     raise NotImplementedError #todo
+    #
+    # def to_excel(self, output_dir):
+    #
+    #     # first page, run parameters
+    #     summary_df = self.getSummaryPageForExcelLandingPageDF()
+    #     account_set_df = self.initial_account_set.getAccounts()
+    #     budget_set_df = self.initial_budget_set.getBudgetItems()
+    #     memo_rule_set_df = self.initial_memo_rule_set.getMemoRules()
+    #     choose_one_set_df = pd.DataFrame()  # todo
+    #     account_milestones_df = self.milestone_set.getAccountMilestonesDF()
+    #     memo_milestones_df = self.milestone_set.getMemoMilestonesDF()
+    #     composite_milestones_df = self.milestone_set.getCompositeMilestonesDF()
+    #     milestone_results_df = self.getMilestoneResultsDF()
+    #
+    #     with pd.ExcelWriter(
+    #         output_dir + "/Forecast_" + self.unique_id + ".xlsx", engine="xlsxwriter"
+    #     ) as writer:
+    #         summary_df.to_excel(writer, sheet_name="Summary", index=False)
+    #         for column in summary_df:
+    #             column_length = max(
+    #                 summary_df[column].astype(str).map(len).max(), len(column)
+    #             )
+    #             col_idx = summary_df.columns.get_loc(column)
+    #             writer.sheets["Summary"].set_column(col_idx, col_idx, column_length)
+    #
+    #         account_set_df.to_excel(writer, sheet_name="AccountSet", index=False)
+    #         for column in account_set_df:
+    #             column_length = max(
+    #                 account_set_df[column].astype(str).map(len).max(), len(column)
+    #             )
+    #             col_idx = account_set_df.columns.get_loc(column)
+    #             writer.sheets["AccountSet"].set_column(col_idx, col_idx, column_length)
+    #
+    #         budget_set_df.to_excel(writer, sheet_name="BudgetSet", index=False)
+    #         for column in budget_set_df:
+    #             column_length = max(
+    #                 budget_set_df[column].astype(str).map(len).max(), len(column)
+    #             )
+    #             col_idx = budget_set_df.columns.get_loc(column)
+    #             writer.sheets["BudgetSet"].set_column(col_idx, col_idx, column_length)
+    #
+    #         memo_rule_set_df.to_excel(writer, sheet_name="MemoRuleSet", index=False)
+    #         for column in memo_rule_set_df:
+    #             column_length = max(
+    #                 memo_rule_set_df[column].astype(str).map(len).max(), len(column)
+    #             )
+    #             col_idx = memo_rule_set_df.columns.get_loc(column)
+    #             writer.sheets["MemoRuleSet"].set_column(col_idx, col_idx, column_length)
+    #
+    #         choose_one_set_df.to_excel(writer, sheet_name="ChooseOneSet", index=False)
+    #         for column in choose_one_set_df:
+    #             column_length = max(
+    #                 choose_one_set_df[column].astype(str).map(len).max(), len(column)
+    #             )
+    #             col_idx = choose_one_set_df.columns.get_loc(column)
+    #             writer.sheets["ChooseOneSet"].set_column(
+    #                 col_idx, col_idx, column_length
+    #             )
+    #
+    #         account_milestones_df.to_excel(
+    #             writer, sheet_name="AccountMilestones", index=False
+    #         )
+    #         for column in account_milestones_df:
+    #             column_length = max(
+    #                 account_milestones_df[column].astype(str).map(len).max(),
+    #                 len(column),
+    #             )
+    #             col_idx = account_milestones_df.columns.get_loc(column)
+    #             writer.sheets["AccountMilestones"].set_column(
+    #                 col_idx, col_idx, column_length
+    #             )
+    #
+    #         memo_milestones_df.to_excel(
+    #             writer, sheet_name="MemoMilestones", index=False
+    #         )
+    #         for column in memo_milestones_df:
+    #             column_length = max(
+    #                 memo_milestones_df[column].astype(str).map(len).max(), len(column)
+    #             )
+    #             col_idx = memo_milestones_df.columns.get_loc(column)
+    #             writer.sheets["MemoMilestones"].set_column(
+    #                 col_idx, col_idx, column_length
+    #             )
+    #
+    #         composite_milestones_df.to_excel(
+    #             writer, sheet_name="CompositeMilestones", index=False
+    #         )
+    #         for column in composite_milestones_df:
+    #             column_length = max(
+    #                 composite_milestones_df[column].astype(str).map(len).max(),
+    #                 len(column),
+    #             )
+    #             col_idx = composite_milestones_df.columns.get_loc(column)
+    #             writer.sheets["CompositeMilestones"].set_column(
+    #                 col_idx, col_idx, column_length
+    #             )
+    #
+    #         if hasattr(self, "forecast_df"):
+    #             self.forecast_df.to_excel(writer, sheet_name="Forecast", index=False)
+    #             for column in self.forecast_df:
+    #                 column_length = max(
+    #                     self.forecast_df[column].astype(str).map(len).max(), len(column)
+    #                 )
+    #                 col_idx = self.forecast_df.columns.get_loc(column)
+    #                 writer.sheets["Forecast"].set_column(
+    #                     col_idx, col_idx, column_length
+    #                 )
+    #
+    #             self.skipped_df.to_excel(writer, sheet_name="Skipped", index=False)
+    #             for column in self.skipped_df:
+    #                 column_length = max(
+    #                     self.skipped_df[column].astype(str).map(len).max(), len(column)
+    #                 )
+    #                 col_idx = self.skipped_df.columns.get_loc(column)
+    #                 writer.sheets["Skipped"].set_column(col_idx, col_idx, column_length)
+    #
+    #             self.confirmed_df.to_excel(writer, sheet_name="Confirmed", index=False)
+    #             for column in self.confirmed_df:
+    #                 column_length = max(
+    #                     self.confirmed_df[column].astype(str).map(len).max(),
+    #                     len(column),
+    #                 )
+    #                 col_idx = self.confirmed_df.columns.get_loc(column)
+    #                 writer.sheets["Confirmed"].set_column(
+    #                     col_idx, col_idx, column_length
+    #                 )
+    #
+    #             self.deferred_df.to_excel(writer, sheet_name="Deferred", index=False)
+    #             for column in self.deferred_df:
+    #                 column_length = max(
+    #                     self.deferred_df[column].astype(str).map(len).max(), len(column)
+    #                 )
+    #                 col_idx = self.deferred_df.columns.get_loc(column)
+    #                 writer.sheets["Deferred"].set_column(
+    #                     col_idx, col_idx, column_length
+    #                 )
+    #
+    #             milestone_results_df.to_excel(
+    #                 writer, sheet_name="Milestone Results", index=False
+    #             )
+    #             for column in milestone_results_df:
+    #                 column_length = max(
+    #                     milestone_results_df[column].astype(str).map(len).max(),
+    #                     len(column),
+    #                 )
+    #                 col_idx = milestone_results_df.columns.get_loc(column)
+    #                 writer.sheets["Milestone Results"].set_column(
+    #                     col_idx, col_idx, column_length
+    #                 )

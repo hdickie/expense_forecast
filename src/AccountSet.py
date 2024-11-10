@@ -164,6 +164,9 @@ def initialize_from_dataframe(accounts_df):
 
 class AccountSet:
 
+    def isSufficientToBeginForecast(self):
+        raise NotImplementedError # todo more strict checking #https://github.com/hdickie/expense_forecast/issues/18
+
     def __init__(
         self, accounts_list=None, print_debug_messages=True, raise_exceptions=True
     ):

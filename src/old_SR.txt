@@ -1,0 +1,204 @@
+
+    @classmethod
+    def compute_forecast_difference(
+            self,
+            forecast_df,
+            forecast2_df,
+            label="forecast_difference",
+            make_plots=False,
+            plot_directory=".",
+            return_type="dataframe",
+            require_matching_columns=False,
+            require_matching_date_range=False,
+            append_expected_values=False,
+            diffs_only=False,
+    ):
+        forecast_df["Date"] = forecast_df.Date.apply(
+            lambda x: datetime.datetime.strptime(x, "%Y%m%d"), 0
+        )
+        # forecast2_df['Date'] = forecast_df.Date.apply(lambda x: datetime.datetime.strptime(x, '%Y%m%d'), 0)
+
+        forecast_df.reset_index(inplace=True, drop=True)
+        forecast2_df.reset_index(inplace=True, drop=True)
+
+        forecast_df = forecast_df.reindex(sorted(forecast_df.columns), axis=1)
+        forecast2_df = forecast2_df.reindex(sorted(forecast2_df.columns), axis=1)
+
+        # print('compute_forecast_difference()')
+        # print('self.forecast_df:')
+        # print(self.forecast_df.to_string())
+        # print('forecast2_df:')
+        # print(forecast2_df.to_string())
+
+        # return_type in ['dataframe','html','both']
+        # make
+        # I want the html table to have a row with values all '...' for non-consecutive dates
+        # Data frame will not return rows that match
+
+        if require_matching_columns:
+            try:
+                assert forecast_df.shape[1] == forecast2_df.shape[1]
+                assert set(forecast_df.columns) == set(forecast2_df.columns)
+            except Exception as e:
+                print(
+                    "ERROR: ATTEMPTED TO TAKE DIFF OF FORECASTS WITH DIFFERENT COLUMNS"
+                )
+                print("# Check Number of Columns:")
+                print("self.forecast_df.shape[1]:" + str(self.forecast_df.shape[1]))
+                print("forecast2_df.shape[1]....:" + str(forecast2_df.shape[1]))
+                print("")
+                print("# Check Column Names:")
+                print("In 1 not in 2:")
+                print(
+                    str(
+                        [
+                            cname
+                            for cname in forecast_df.columns
+                            if cname not in forecast2_df.columns
+                        ]
+                    )
+                )
+                print("In 2 not in 1:")
+                print(
+                    str(
+                        [
+                            cname
+                            for cname in forecast2_df.columns
+                            if cname not in forecast_df.columns
+                        ]
+                    )
+                )
+                print("")
+                raise e
+
+        if require_matching_date_range:
+            try:
+                assert min(forecast_df["Date"]) == min(forecast2_df["Date"])
+                assert max(forecast_df["Date"]) == max(forecast2_df["Date"])
+            except Exception as e:
+                print(
+                    "ERROR: ATTEMPTED TO TAKE DIFF OF FORECASTS WITH DIFFERENT DATE RANGE"
+                )
+                print(
+                    "LHS: "
+                    + str(min(forecast_df["Date"]))
+                    + " - "
+                    + str(max(forecast_df["Date"]))
+                )
+                print(
+                    "RHS: "
+                    + str(min(forecast2_df["Date"]))
+                    + " - "
+                    + str(max(forecast2_df["Date"]))
+                )
+                raise e
+        else:
+            overlapping_date_range = set(forecast_df["Date"]) & set(
+                forecast2_df["Date"]
+            )
+            LHS_only_dates = set(forecast_df["Date"]) - set(forecast2_df["Date"])
+            RHS_only_dates = set(forecast2_df["Date"]) - set(forecast_df["Date"])
+            if len(overlapping_date_range) == 0:
+                raise ValueError  # the date ranges for the forecasts being compared are disjoint
+
+            LHS_columns = forecast_df.columns
+            LHS_example_row = pd.DataFrame(forecast_df.iloc[0, :]).copy().T
+            LHS_example_row.columns = LHS_columns
+            # print('LHS_example_row:')
+            # print(LHS_example_row.to_string())
+            # print('LHS_example_row.columns:')
+            # print(LHS_example_row.columns)
+            for cname in LHS_example_row.columns:
+                if cname == "Date":
+                    continue
+                elif cname == "Memo":
+                    LHS_example_row[cname] = ""
+                else:
+                    LHS_example_row[cname] = float("nan")
+
+            for dt in RHS_only_dates:
+                LHS_zero_row_to_add = LHS_example_row.copy()
+                LHS_zero_row_to_add["Date"] = dt
+                forecast_df = pd.concat([LHS_zero_row_to_add, forecast_df])
+            forecast_df.sort_values(by="Date", inplace=True, ascending=True)
+
+            RHS_example_row = pd.DataFrame(forecast2_df.iloc[0, :]).copy()
+            for cname in RHS_example_row.columns:
+                if cname == "Date":
+                    continue
+                elif cname == "Memo":
+                    RHS_example_row[cname] = ""
+                else:
+                    RHS_example_row[cname] = float("nan")
+
+            for dt in LHS_only_dates:
+                RHS_zero_row_to_add = RHS_example_row.copy()
+                RHS_zero_row_to_add["Date"] = dt
+                forecast2_df = pd.concat([RHS_zero_row_to_add, self.forecast_df])
+            forecast2_df.sort_values(by="Date", inplace=True, ascending=True)
+
+        if diffs_only:
+            return_df = forecast_df[["Date", "Memo"]].copy()
+        else:
+            return_df = forecast_df.copy()
+        return_df.reset_index(inplace=True, drop=True)
+
+        # print(return_df.columns)
+        # print('BEFORE return_df:\n' + return_df.to_string())
+
+        relevant_column_names__set = set(forecast_df.columns) - set(
+            ["Date", "Next Income Date", "Memo", "Memo Directives"]
+        )
+        # print('relevant_column_names__set:'+str(relevant_column_names__set))
+        assert set(forecast_df.columns) == set(forecast2_df)
+        for c in relevant_column_names__set:
+            new_column_name = str(c) + " (Diff) "
+            # print('new_column_name:'+str(new_column_name))
+            res = pd.DataFrame(forecast2_df[c] - forecast_df[c])
+            # res = forecast2_df[c].sub(self.forecast_df[c])
+            res.reset_index(inplace=True, drop=True)
+            # print('res:'+str(res))
+            return_df[new_column_name] = res
+
+        if append_expected_values:
+            for cname in forecast2_df.columns:
+                if cname in ["Memo", "Date", "Memo Directives"]:
+                    continue
+                return_df[cname + " (Expected)"] = forecast2_df[cname]
+
+        return_df.index = return_df["Date"]
+
+        if make_plots:
+            pass  # todo draw plots
+
+        return_df = return_df.reindex(sorted(return_df.columns), axis=1)
+
+        return return_df
+
+
+        def getSummaryPageForExcelLandingPageDF(self):
+
+            if hasattr(self, "forecast_df"):
+                return_df = pd.DataFrame(
+                    {
+                        "start_date_YYYYMMDD": [self.start_date_YYYYMMDD],
+                        "end_date_YYYYMMDD": [self.end_date_YYYYMMDD],
+                        "unique_id": [self.unique_id],
+                        "start_ts": [self.start_ts],
+                        "end_ts": [self.end_ts],
+                    }
+                ).T
+            else:
+                return_df = pd.DataFrame(
+                    {
+                        "start_date_YYYYMMDD": [self.start_date_YYYYMMDD],
+                        "end_date_YYYYMMDD": [self.end_date_YYYYMMDD],
+                        "unique_id": [self.unique_id],
+                        "start_ts": [None],
+                        "end_ts": [None],
+                    }
+                ).T
+
+            return_df.reset_index(inplace=True)
+            return_df = return_df.rename(columns={"index": "Field", 0: "Value"})
+            return return_df

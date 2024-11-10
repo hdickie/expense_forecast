@@ -1,0 +1,3 @@
+
+class SimulationReport:
+    pass
