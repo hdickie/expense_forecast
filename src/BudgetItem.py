@@ -5,158 +5,94 @@ import jsonpickle
 
 class BudgetItem:
 
-    def __init__(
-        self,
-        start_date_YYYYMMDD,
-        end_date_YYYYMMDD,
-        priority,
-        cadence,
-        amount,
-        memo,
-        deferrable=False,
-        partial_payment_allowed=False,
-        print_debug_messages=True,
-        raise_exceptions=True,
-    ):
-        """
-        Creates a BudgetItem object. Input validation is performed.
+    @staticmethod
+    def _validate_start_and_end_date(start_date, end_date):
+        assert isinstance(start_date, datetime.datetime)
+        assert isinstance(end_date, datetime.datetime)
+        assert start_date <= end_date
 
-        :param str start_date_YYYYMMDD: A string that indicates the start date with format %Y%m%d.
-        :param str end_date_YYYYMMDD: A string that indicates the end date with format %Y%m%d.
-        :param int priority: An integer >= 1 that indicates priority. See below for priority level meanings.
-        :param str cadence: One of: 'once', 'daily', 'weekly', 'semiweekly', 'monthly', 'quarterly', 'yearly'
-        :param float amount: A dollar value for the amount of the transaction.
-        :param str memo: A label for the transaction.
-        :param bool deferrable: True if the transaction can be delayed. False if it is time-sensitive.
-        :param bool partial_payment_allowed: True if partial payments are allowed.
-        :param bool print_debug_messages: If True, prints debug messages.
-        :param bool raise_exceptions: If True, raises exceptions on errors.
-        :raises ValueError: if input parameters are invalid.
-        :rtype: BudgetItem
+    @staticmethod
+    def _validate_cadence(cadence, start_date, end_date):
+        allowed_cadences = ['once','daily','weekly','semiweekly','monthly','quarterly','yearly']
+        assert cadence in allowed_cadences
+        if cadence == 'once':
+            assert start_date == end_date
+        # todo maybe warnings if interval is shorted than cadence?
+        # also maybe call cadence interval instead??
+        # also maybe allow integer intervals??
 
-        Comment on Priority levels:
-        This code executes transactions starting at priority 1 and moving up. Level 1 indicates non-negotiable, and the code will
-        break if non-negotiable budget items cause account boundaries to be violated. Higher level priorities have no
-        hard-coded meaning, but here is how they can be used:
+    @staticmethod
+    def _validate_priority(priority):
+        assert priority == int(priority)
+        assert priority >= 1
 
-        1. Non-negotiable (Income, Rent, Minimum credit card payments, Minimum loan payments, essential expenses)
-        2. Non-deferrable items willing to incur interest
-        3. Deferrable items willing to incur interest
-        4. Additional payments on credit card debt
-        5. Non-deferrable items not willing to incur interest
-        6. Deferrable items not willing to incur interest
-        7. Additional loan payments
-        8. Savings
-        9. Investments
+    @staticmethod
+    def _validate_amount(amount):
+        assert amount == float(amount)
+        assert amount >= 0
 
-        """
+    @staticmethod
+    def _validate_memo(memo):
+        assert memo == str(memo)
+        assert len(memo.strip()) > 0
+        assert ';' not in memo
 
-        self.print_debug_messages = print_debug_messages
-        self.raise_exceptions = raise_exceptions
+    def __init__(self, start_date, end_date, priority, cadence, amount, memo, income_flag=False, **kwargs):
 
-        errors = []
+        allowed_kwargs = ['deferrable','partial_payment_allowed']
+        for key in kwargs:
+           if key not in allowed_kwargs:
+               raise TypeError(f"Unexpected keyword argument '{key}'")
 
-        # Validate and parse dates
-        try:
-            self.start_date = datetime.datetime.strptime(
-                start_date_YYYYMMDD.replace("-", ""), "%Y%m%d"
-            ).date()
-        except ValueError:
-            errors.append(
-                f"Invalid start date format: '{start_date_YYYYMMDD}'. Expected format is YYYYMMDD."
-            )
-
-        try:
-            self.end_date = datetime.datetime.strptime(
-                end_date_YYYYMMDD.replace("-", ""), "%Y%m%d"
-            ).date()
-        except ValueError:
-            errors.append(
-                f"Invalid end date format: '{end_date_YYYYMMDD}'. Expected format is YYYYMMDD."
-            )
+        self.start_date = start_date
+        self.end_date = end_date
+        BudgetItem._validate_start_and_end_date(self.start_date, self.end_date)
 
         self.cadence = cadence
+        BudgetItem._validate_cadence(self.cadence, self.start_date, self.end_date)
 
-        if hasattr(self, "start_date") and hasattr(self, "end_date"):
-            if self.start_date > self.end_date:
-                errors.append(
-                    f"Start date ({self.start_date}) must be on or before end date ({self.end_date})."
-                )
-            if self.cadence.lower() == "once" and self.start_date != self.end_date:
-                errors.append(
-                    "If cadence is 'once', then start_date must equal end_date."
-                )
+        self.priority = priority
+        BudgetItem._validate_priority(self.priority)
 
-        # Validate priority
-        try:
-            self.priority = int(priority)
-            if self.priority < 1:
-                errors.append("Priority must be an integer greater than or equal to 1.")
-        except ValueError:
-            errors.append(f"Priority must be an integer. Value provided: '{priority}'.")
-
-        # Validate cadence
-        valid_cadences = [
-            "once",
-            "daily",
-            "weekly",
-            "semiweekly",
-            "monthly",
-            "quarterly",
-            "yearly",
-        ]
-        self.cadence = str(cadence).lower()
-        if self.cadence not in valid_cadences:
-            errors.append(
-                f"Cadence must be one of: {', '.join(valid_cadences)}. Value provided: '{cadence}'."
-            )
-
-        # Validate amount
-        try:
-            self.amount = float(amount)
-        except ValueError:
-            errors.append(f"Amount must be a number. Value provided: '{amount}'.")
+        self.amount = amount
+        BudgetItem._validate_amount(self.amount)
 
         # Validate memo
-        self.memo = str(memo)
+        self.memo = memo
+        BudgetItem._validate_memo(self.memo)
 
-        # Validate deferrable and partial_payment_allowed
-        self.deferrable = bool(deferrable)
-        self.partial_payment_allowed = bool(partial_payment_allowed)
+        self.income_flag = income_flag
+        assert income_flag == bool(income_flag)
+
+        if 'deferrable' in kwargs:
+            self.deferrable = kwargs['deferrable']
+            assert self.deferrable == bool(kwargs['deferrable'])
+
+        if 'partial_payment_allowed' in kwargs:
+            self.partial_payment_allowed = kwargs['partial_payment_allowed']
+            assert self.partial_payment_allowed == bool(kwargs['partial_payment_allowed'])
 
         # Additional validations
-        if self.memo.lower() == "income" and self.priority != 1:
-            errors.append("If memo is 'income', then priority must be 1.")
+        if income_flag:
+            assert self.priority == 1
+            assert not self.deferrable
+            assert not self.partial_payment_allowed
 
-        if self.priority == 1 and self.deferrable:
-            errors.append("If priority is 1, then deferrable must be False.")
+        if self.priority == 1:
+            assert not self.deferrable
+            assert not self.partial_payment_allowed
 
-        if self.priority == 1 and self.partial_payment_allowed:
-            errors.append(
-                "If priority is 1, then partial_payment_allowed must be False."
-            )
+        if self.deferrable:
+            assert not self.priority == 1
 
-        # Handle errors
-        if errors:
-            error_message = "\n".join(errors)
-            if self.print_debug_messages:
-                print("Errors in BudgetItem initialization:")
-                print(error_message)
-            if self.raise_exceptions:
-                raise ValueError(error_message)
-
-        # Set attributes if no errors occurred
-        if not errors:
-            self.start_date_YYYYMMDD = start_date_YYYYMMDD
-            self.end_date_YYYYMMDD = end_date_YYYYMMDD
-            # self.priority, self.cadence, self.amount, self.memo, self.deferrable, and self.partial_payment_allowed
-            # are already set during validation
+        if self.partial_payment_allowed:
+            assert not self.priority == 1
 
     def __str__(self):
         return pd.DataFrame(
             {
-                "Start_Date": [self.start_date_YYYYMMDD],
-                "End_Date": [self.end_date_YYYYMMDD],
+                "Start_Date": [self.start_date.strftime('%Y%m%d')],
+                "End_Date": [self.end_date.strftime('%Y%m%d')],
                 "Priority": [self.priority],
                 "Cadence": [self.cadence],
                 "Amount": [self.amount],
@@ -167,10 +103,6 @@ class BudgetItem:
         ).to_string()
 
     def to_json(self):
-        """
-        Get a <string> representing the <BudgetItem> object.
-
-        """
         return jsonpickle.encode(self, indent=4)
 
 

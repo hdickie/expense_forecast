@@ -11,265 +11,190 @@ from log_methods import setup_logger
 # logger = setup_logger('AccountSet','./log/AccountSet.log',logging.INFO)
 logger = logging.getLogger(__name__)
 
-ROUNDING_ERROR_TOLERANCE = 0.0000000001
-
-
-def determineMinPaymentAmount(
-    advance_payment_amount,
-    interest_accrued_this_cycle,
-    principal_due_this_cycle,
-    total_balance,
-    min_payment,
-):
-    # log_in_color(logger, 'white', 'debug', 'ENTER determineMinPaymentAmount', self.log_stack_depth)
-    # self.log_stack_depth += 1
-    # print(f"determineMinPaymentAmount({advance_payment_amount}, {interest_accrued_this_cycle}, {principal_due_this_cycle}, {total_balance}, {min_payment})")
-
-    Advance = advance_payment_amount
-    Interest = interest_accrued_this_cycle
-    Principal = principal_due_this_cycle
-    Total = total_balance
-    Minimum = min_payment
-
-    amount_due = None
-
-    if Advance > Total:
-        Advance = Total
-
-    M_prime = max(0, Minimum - Advance)
-    P_prime = max(0, Principal - Advance)
-    T_prime = Total - Advance
-
-    Sum_1 = P_prime + Interest
-
-    if Interest + Principal == 0:
-        return 0
-
-    if Sum_1 >= M_prime:
-        return Sum_1
-
-    if Sum_1 < M_prime and Total >= M_prime:
-        return M_prime
-
-    if Sum_1 < M_prime and T_prime < M_prime:
-        return T_prime
-
-    # print('FINAL ANSWER: '+str(amount_due))
-    return amount_due
-
-
-def initialize_from_dataframe(accounts_df):
-    # print('ENTER AccountSet initialize_from_dataframe')
-    A = AccountSet([])
-    try:
-        expect_curr_stmt_bal = False
-        expect_prev_stmt_bal = False
-        expect_principal_bal = False
-        expect_interest_bal = False
-        for index, row in accounts_df.iterrows():
-            row = pd.DataFrame(row).T
-
-            accountname = row.account_name.iat[0].split(":")[0]
-            balance = row.balance.iat[0]
-            min_balance = row.min_balance.iat[0]
-            max_balance = row.max_balance.iat[0]
-            primary_checking_ind = row.primary_checking_ind.iat[0]
-
-            account_type = row.account_type.iat[0]
-            if account_type == "curr stmt bal" and not expect_prev_stmt_bal:
-                current_statement_balance = row.balance.iat[0]
-                expect_prev_stmt_bal = True
-            elif account_type == "prev stmt bal" and not expect_curr_stmt_bal:
-                previous_statement_balance = row.balance.iat[0]
-                billing_start_date_yyyymmdd = row.billing_start_date_yyyymmdd.iat[0]
-                apr = row.apr.iat[0]
-                minimum_payment = row.minimum_payment.iat[0]
-                expect_curr_stmt_bal = True
-            elif account_type == "principal balance" and not expect_interest_bal:
-                billing_start_date_yyyymmdd = row.billing_start_date_yyyymmdd.iat[0]
-                apr = row.apr.iat[0]
-                minimum_payment = row.minimum_payment.iat[0]
-                principal_balance = row.balance.iat[0]
-                expect_interest_bal = True
-            elif account_type == "interest" and not expect_principal_bal:
-                interest_balance = row.balance.iat[0]
-                expect_principal_bal = True
-
-            if account_type == "curr stmt bal" and expect_curr_stmt_bal:
-                current_statement_balance = row.balance.iat[0]
-                A.createCreditCardAccount(
-                    accountname,
-                    current_statement_balance,
-                    previous_statement_balance,
-                    min_balance,
-                    max_balance,
-                    billing_start_date_yyyymmdd,
-                    apr,
-                    minimum_payment,
-                )
-                expect_prev_stmt_bal = False
-            elif account_type == "prev stmt bal" and expect_prev_stmt_bal:
-                A.createCreditCardAccount(
-                    accountname,
-                    current_statement_balance,
-                    previous_statement_balance,
-                    min_balance,
-                    max_balance,
-                    billing_start_date_yyyymmdd,
-                    apr,
-                    minimum_payment,
-                )
-                expect_curr_stmt_bal = False
-            elif account_type == "principal balance" and expect_principal_bal:
-                principal_balance = row.balance.iat[0]
-                A.createLoanAccount(
-                    accountname,
-                    principal_balance,
-                    interest_balance,
-                    min_balance,
-                    max_balance,
-                    billing_start_date_yyyymmdd,
-                    apr,
-                    minimum_payment,
-                )
-                expect_interest_bal = False
-            elif account_type == "interest" and expect_interest_bal:
-                A.createLoanAccount(
-                    accountname,
-                    principal_balance,
-                    interest_balance,
-                    min_balance,
-                    max_balance,
-                    billing_start_date_yyyymmdd,
-                    apr,
-                    minimum_payment,
-                )
-                expect_principal_bal = False
-
-            if account_type.lower() == "checking":
-                A.createCheckingAccount(
-                    accountname, balance, min_balance, max_balance, primary_checking_ind
-                )
-            elif account_type.lower() == "investment":
-                A.createInvestmentAccount(
-                    accountname, row.balance, row.min_balance, row.max_balance, row.apr
-                )
-    except Exception as e:
-        print(e.args)
-        raise e
-    # print(A.getAccounts().to_string())
-    # print('EXIT AccountSet initialize_from_dataframe')
-    return A
-
 
 class AccountSet:
 
+    ROUNDING_ERROR_TOLERANCE = 0.0000000001
+
+    # @staticmethod
+    # def initialize_from_dataframe(accounts_df):
+    #     # print('ENTER AccountSet initialize_from_dataframe')
+    #     A = AccountSet([])
+    #     try:
+    #         expect_curr_stmt_bal = False
+    #         expect_prev_stmt_bal = False
+    #         expect_principal_bal = False
+    #         expect_interest_bal = False
+    #         for index, row in accounts_df.iterrows():
+    #             row = pd.DataFrame(row).T
+    #
+    #             accountname = row.account_name.iat[0].split(":")[0]
+    #             balance = row.balance.iat[0]
+    #             min_balance = row.min_balance.iat[0]
+    #             max_balance = row.max_balance.iat[0]
+    #             primary_checking_ind = row.primary_checking_ind.iat[0]
+    #
+    #             account_type = row.account_type.iat[0]
+    #             if account_type == "curr stmt bal" and not expect_prev_stmt_bal:
+    #                 current_statement_balance = row.balance.iat[0]
+    #                 expect_prev_stmt_bal = True
+    #             elif account_type == "prev stmt bal" and not expect_curr_stmt_bal:
+    #                 previous_statement_balance = row.balance.iat[0]
+    #                 billing_start_date_yyyymmdd = row.billing_start_date_yyyymmdd.iat[0]
+    #                 apr = row.apr.iat[0]
+    #                 minimum_payment = row.minimum_payment.iat[0]
+    #                 expect_curr_stmt_bal = True
+    #             elif account_type == "principal balance" and not expect_interest_bal:
+    #                 billing_start_date_yyyymmdd = row.billing_start_date_yyyymmdd.iat[0]
+    #                 apr = row.apr.iat[0]
+    #                 minimum_payment = row.minimum_payment.iat[0]
+    #                 principal_balance = row.balance.iat[0]
+    #                 expect_interest_bal = True
+    #             elif account_type == "interest" and not expect_principal_bal:
+    #                 interest_balance = row.balance.iat[0]
+    #                 expect_principal_bal = True
+    #
+    #             if account_type == "curr stmt bal" and expect_curr_stmt_bal:
+    #                 current_statement_balance = row.balance.iat[0]
+    #                 A.createCreditCardAccount(
+    #                     accountname,
+    #                     current_statement_balance,
+    #                     previous_statement_balance,
+    #                     min_balance,
+    #                     max_balance,
+    #                     billing_start_date_yyyymmdd,
+    #                     apr,
+    #                     minimum_payment,
+    #                 )
+    #                 expect_prev_stmt_bal = False
+    #             elif account_type == "prev stmt bal" and expect_prev_stmt_bal:
+    #                 A.createCreditCardAccount(
+    #                     accountname,
+    #                     current_statement_balance,
+    #                     previous_statement_balance,
+    #                     min_balance,
+    #                     max_balance,
+    #                     billing_start_date_yyyymmdd,
+    #                     apr,
+    #                     minimum_payment,
+    #                 )
+    #                 expect_curr_stmt_bal = False
+    #             elif account_type == "principal balance" and expect_principal_bal:
+    #                 principal_balance = row.balance.iat[0]
+    #                 A.createLoanAccount(
+    #                     accountname,
+    #                     principal_balance,
+    #                     interest_balance,
+    #                     min_balance,
+    #                     max_balance,
+    #                     billing_start_date_yyyymmdd,
+    #                     apr,
+    #                     minimum_payment,
+    #                 )
+    #                 expect_interest_bal = False
+    #             elif account_type == "interest" and expect_interest_bal:
+    #                 A.createLoanAccount(
+    #                     accountname,
+    #                     principal_balance,
+    #                     interest_balance,
+    #                     min_balance,
+    #                     max_balance,
+    #                     billing_start_date_yyyymmdd,
+    #                     apr,
+    #                     minimum_payment,
+    #                 )
+    #                 expect_principal_bal = False
+    #
+    #             if account_type.lower() == "checking":
+    #                 A.createCheckingAccount(
+    #                     accountname, balance, min_balance, max_balance, primary_checking_ind
+    #                 )
+    #             elif account_type.lower() == "investment":
+    #                 A.createInvestmentAccount(
+    #                     accountname, row.balance, row.min_balance, row.max_balance, row.apr
+    #                 )
+    #     except Exception as e:
+    #         print(e.args)
+    #         raise e
+    #     # print(A.getAccounts().to_string())
+    #     # print('EXIT AccountSet initialize_from_dataframe')
+    #     return A
+
+    @staticmethod
+    def determineMinPaymentAmount(
+            advance_payment_amount,
+            interest_accrued_this_cycle,
+            principal_due_this_cycle,
+            total_balance,
+            min_payment,
+    ):
+        # log_in_color(logger, 'white', 'debug', 'ENTER determineMinPaymentAmount', self.log_stack_depth)
+        # self.log_stack_depth += 1
+        # print(f"determineMinPaymentAmount({advance_payment_amount}, {interest_accrued_this_cycle}, {principal_due_this_cycle}, {total_balance}, {min_payment})")
+
+        Advance = advance_payment_amount
+        Interest = interest_accrued_this_cycle
+        Principal = principal_due_this_cycle
+        Total = total_balance
+        Minimum = min_payment
+
+        amount_due = None
+
+        if Advance > Total:
+            Advance = Total
+
+        M_prime = max(0, Minimum - Advance)
+        P_prime = max(0, Principal - Advance)
+        T_prime = Total - Advance
+
+        Sum_1 = P_prime + Interest
+
+        if Interest + Principal == 0:
+            return 0
+
+        if Sum_1 >= M_prime:
+            return Sum_1
+
+        if Sum_1 < M_prime and Total >= M_prime:
+            return M_prime
+
+        if Sum_1 < M_prime and T_prime < M_prime:
+            return T_prime
+
+        # print('FINAL ANSWER: '+str(amount_due))
+        return amount_due
+
     def isSufficientToBeginForecast(self):
+        accounts_df = self.getAccounts()
+        AccountSet._validate_one_and_only_one_primary_checking_account(accounts_df)
         raise NotImplementedError # todo more strict checking #https://github.com/hdickie/expense_forecast/issues/18
 
-    def __init__(
-        self, accounts_list=None, print_debug_messages=True, raise_exceptions=True
-    ):
-        """
-        Creates an AccountSet object. Possible Account Types are: Checking, Credit, Loan, Savings. Consistency is checked.
+    @staticmethod
+    def _validate_related_accounts_matching_bounds(related_account_rows_df):
+        raise NotImplementedError
 
-        :param list accounts_list: A list of Account objects. Empty list by default. Consistency is checked.
-        :raises ValueError: if the combination of input parameters is not valid.
-        :raises TypeError: if members of input list do not have the methods and attributes of an Account object.
-        :rtype: AccountSet
-
-        | Reasons for ValueError exception:
-        | Combined balance between prev and curr violate account boundaries.
-        | Accounts that are related (as implied by name) have different parameters.
-        | A principal balance account was input without an interest account, vice versa, and etc.
-
-        | Creating an AccountSet without passing parameters is a valid thing to do.
-
-        >>> AccountSet()
-        Empty DataFrame
-        Columns: [Name, Balance, Min_Balance, Max_Balance, Account_Type, Billing_Start_Dt, Interest_Type, APR, Interest_Cadence, Minimum_Payment]
-        Index: []
-
-        | If you want to pass a list of Accounts explicitly you can do that as well.
-
-
-        """
-
-        # runForecast can set this so we don't waste compute figuring it out every time
-        self.primary_checking_account_name = None
-
-        if accounts_list is None:
-            accounts_list = []
-
-        self.accounts = accounts_list
-
-        if not self.accounts:
-            return
-
-        required_attributes = [
-            "name",
-            "balance",
-            "min_balance",
-            "max_balance",
-            "account_type",
-            "billing_start_date_YYYYMMDD",
-            "interest_type",
-            "apr",
-            "interest_cadence",
-            "minimum_payment",
-        ]
-
-        for account in self.accounts:
-            if not all(hasattr(account, attr) for attr in required_attributes):
-                raise TypeError("All accounts must have the required attributes.")
-
-        accounts_df = self.getAccounts()
-
-        loan_accounts = accounts_df[
-            accounts_df.Account_Type.isin(
-                [
-                    "principal balance",
-                    "interest",
-                    "loan billing cycle payment bal",
-                    "loan end of prev cycle bal",
-                ]
-            )
-        ]
-        credit_accounts = accounts_df[
-            accounts_df.Account_Type.isin(
-                [
-                    "credit prev stmt bal",
-                    "credit curr stmt bal",
-                    "credit billing cycle payment bal",
-                    "credit end of prev cycle bal",
-                ]
-            )
-        ]
-
-        loan_account_names = loan_accounts.Name.apply(
-            lambda x: x.split(":")[0].strip()
-        ).unique()
-        credit_account_names = credit_accounts.Name.apply(
+    @staticmethod
+    def _validate_related_loan_account_types_are_present(accounts_loan_rows_df):
+        loan_account_names = accounts_loan_rows_df.Name.apply(
             lambda x: x.split(":")[0].strip()
         ).unique()
 
         for acct_name in loan_account_names:
-
-            pb_account = loan_accounts[
-                loan_accounts.Name.str.contains(
+            pb_account = accounts_loan_rows_df[
+                accounts_loan_rows_df.Name.str.contains(
                     f"{acct_name}: Principal Balance", regex=False
                 )
             ]
-            interest_account = loan_accounts[
-                loan_accounts.Name.str.contains(f"{acct_name}: Interest", regex=False)
+            interest_account = accounts_loan_rows_df[
+                accounts_loan_rows_df.Name.str.contains(f"{acct_name}: Interest", regex=False)
             ]
-            bcp_account = loan_accounts[
-                loan_accounts.Name.str.contains(
+            bcp_account = accounts_loan_rows_df[
+                accounts_loan_rows_df.Name.str.contains(
                     f"{acct_name}: Loan Billing Cycle Payment Bal", regex=False
                 )
             ]
-            peoc_account = loan_accounts[
-                loan_accounts.Name.str.contains(
+            peoc_account = accounts_loan_rows_df[
+                accounts_loan_rows_df.Name.str.contains(
                     f"{acct_name}: Loan End of Prev Cycle Bal", regex=False
                 )
             ]
@@ -294,55 +219,31 @@ class AccountSet:
                     f"Loan accounts must have End of Prev Cycle Bal account for '{acct_name}'."
                 )
 
-            if (
-                pb_account.Min_Balance.values[0]
-                != interest_account.Min_Balance.values[0]
-            ):
-                raise ValueError(
-                    f"Min_Balance mismatch between Principal Balance and Interest accounts for '{acct_name}'."
-                )
-
-            if (
-                pb_account.Max_Balance.values[0]
-                != interest_account.Max_Balance.values[0]
-            ):
-                raise ValueError(
-                    f"Max_Balance mismatch between Principal Balance and Interest accounts for '{acct_name}'."
-                )
-
-            # todo add validation for Loan Billing Cycle Payment Bal and Loan Prev End of Cycle Bal #https://github.com/hdickie/expense_forecast/issues/12
-
-            combined_balance = (
-                pb_account.Balance.values[0] + interest_account.Balance.values[0]
-            )
-            if combined_balance < pb_account.Min_Balance.values[0]:
-                raise ValueError(
-                    f"Combined balance is less than Min_Balance for loan account '{acct_name}'."
-                )
-            if combined_balance > pb_account.Max_Balance.values[0]:
-                raise ValueError(
-                    f"Combined balance is greater than Max_Balance for loan account '{acct_name}'."
-                )
+    @staticmethod
+    def _validate_related_credit_account_types_are_present(accounts_credit_rows_df):
+        credit_account_names = accounts_credit_rows_df.Name.apply(
+            lambda x: x.split(":")[0].strip()
+        ).unique()
 
         for acct_name in credit_account_names:
 
-            prev_account = credit_accounts[
-                credit_accounts.Name.str.contains(
+            prev_account = accounts_credit_rows_df[
+                accounts_credit_rows_df.Name.str.contains(
                     f"{acct_name}: Prev Stmt Bal", regex=False
                 )
             ]
-            curr_account = credit_accounts[
-                credit_accounts.Name.str.contains(
+            curr_account = accounts_credit_rows_df[
+                accounts_credit_rows_df.Name.str.contains(
                     f"{acct_name}: Curr Stmt Bal", regex=False
                 )
             ]
-            bcp_account = credit_accounts[
-                credit_accounts.Name.str.contains(
+            bcp_account = accounts_credit_rows_df[
+                accounts_credit_rows_df.Name.str.contains(
                     f"{acct_name}: Credit Billing Cycle Payment Bal", regex=False
                 )
             ]
-            peoc_account = credit_accounts[
-                credit_accounts.Name.str.contains(
+            peoc_account = accounts_credit_rows_df[
+                accounts_credit_rows_df.Name.str.contains(
                     f"{acct_name}: Credit End of Prev Cycle Bal", regex=False
                 )
             ]
@@ -367,15 +268,101 @@ class AccountSet:
                     f"Credit accounts must have End of Prev Cycle Bal account for '{acct_name}'."
                 )
 
-            # todo add validation for Credit Billing Cycle Payment Bal and Loan Prev End of Cycle Bal #https://github.com/hdickie/expense_forecast/issues/12
+    #todo
+    @staticmethod
+    def _validate_related_credit_account_bounds(credit_account_rows_df):
+        credit_account_names = credit_account_rows_df.Name.apply(
+            lambda x: x.split(":")[0].strip()
+        ).unique()
+
+        for acct_name in credit_account_names:
+            prev_account = credit_account_rows_df[
+                credit_account_rows_df.Name.str.contains(
+                    f"{acct_name}: Prev Stmt Bal", regex=False
+                )
+            ]
+            curr_account = credit_account_rows_df[
+                credit_account_rows_df.Name.str.contains(
+                    f"{acct_name}: Curr Stmt Bal", regex=False
+                )
+            ]
+            bcp_account = credit_account_rows_df[
+                credit_account_rows_df.Name.str.contains(
+                    f"{acct_name}: Credit Billing Cycle Payment Bal", regex=False
+                )
+            ]
+            peoc_account = credit_account_rows_df[
+                credit_account_rows_df.Name.str.contains(
+                    f"{acct_name}: Credit End of Prev Cycle Bal", regex=False
+                )
+            ]
 
             if prev_account.Max_Balance.values[0] != curr_account.Max_Balance.values[0]:
                 raise ValueError(
                     f"Max_Balance mismatch between Prev Stmt Bal and Curr Stmt Bal accounts for '{acct_name}'."
                 )
 
+
+    @staticmethod
+    def _validate_related_loan_account_bounds(loan_account_rows_df):
+        loan_account_names = loan_account_rows_df.Name.apply(
+            lambda x: x.split(":")[0].strip()
+        ).unique()
+
+        for acct_name in loan_account_names:
+            pb_account = loan_account_rows_df[
+                loan_account_rows_df.Name.str.contains(
+                    f"{acct_name}: Principal Balance", regex=False
+                )
+            ]
+            interest_account = loan_account_rows_df[
+                loan_account_rows_df.Name.str.contains(f"{acct_name}: Interest", regex=False)
+            ]
+            bcp_account = loan_account_rows_df[
+                loan_account_rows_df.Name.str.contains(
+                    f"{acct_name}: Loan Billing Cycle Payment Bal", regex=False
+                )
+            ]
+            peoc_account = loan_account_rows_df[
+                loan_account_rows_df.Name.str.contains(
+                    f"{acct_name}: Loan End of Prev Cycle Bal", regex=False
+                )
+            ]
+
+            #todo
+
+    #todo
+    @staticmethod
+    def _validate_related_credit_account_balances(credit_account_rows_df):
+        credit_account_names = credit_account_rows_df.Name.apply(
+            lambda x: x.split(":")[0].strip()
+        ).unique()
+
+        for acct_name in credit_account_names:
+            prev_account = credit_account_rows_df[
+                credit_account_rows_df.Name.str.contains(
+                    f"{acct_name}: Prev Stmt Bal", regex=False
+                )
+            ]
+            curr_account = credit_account_rows_df[
+                credit_account_rows_df.Name.str.contains(
+                    f"{acct_name}: Curr Stmt Bal", regex=False
+                )
+            ]
+            bcp_account = credit_account_rows_df[
+                credit_account_rows_df.Name.str.contains(
+                    f"{acct_name}: Credit Billing Cycle Payment Bal", regex=False
+                )
+            ]
+            peoc_account = credit_account_rows_df[
+                credit_account_rows_df.Name.str.contains(
+                    f"{acct_name}: Credit End of Prev Cycle Bal", regex=False
+                )
+            ]
+
+
             combined_balance = (
-                prev_account.Balance.values[0] + curr_account.Balance.values[0]
+                    prev_account.Balance.values[0] + curr_account.Balance.values[0]
             )
             if combined_balance < prev_account.Min_Balance.values[0]:
                 raise ValueError(
@@ -386,19 +373,141 @@ class AccountSet:
                     f"Combined balance is greater than Max_Balance for credit account '{acct_name}'."
                 )
 
+            #todo
+
+    @staticmethod
+    def _validate_related_loan_account_balances(loan_account_rows_df):
+        loan_account_names = loan_account_rows_df.Name.apply(
+            lambda x: x.split(":")[0].strip()
+        ).unique()
+
+        for acct_name in loan_account_names:
+            pb_account = loan_account_rows_df[
+                loan_account_rows_df.Name.str.contains(
+                    f"{acct_name}: Principal Balance", regex=False
+                )
+            ]
+            interest_account = loan_account_rows_df[
+                loan_account_rows_df.Name.str.contains(f"{acct_name}: Interest", regex=False)
+            ]
+            bcp_account = loan_account_rows_df[
+                loan_account_rows_df.Name.str.contains(
+                    f"{acct_name}: Loan Billing Cycle Payment Bal", regex=False
+                )
+            ]
+            peoc_account = loan_account_rows_df[
+                loan_account_rows_df.Name.str.contains(
+                    f"{acct_name}: Loan End of Prev Cycle Bal", regex=False
+                )
+            ]
+
+        if (
+                pb_account.Min_Balance.values[0]
+                != interest_account.Min_Balance.values[0]
+        ):
+            raise ValueError(
+                f"Min_Balance mismatch between Principal Balance and Interest accounts for '{acct_name}'."
+            )
+
+        if (
+                pb_account.Max_Balance.values[0]
+                != interest_account.Max_Balance.values[0]
+        ):
+            raise ValueError(
+                f"Max_Balance mismatch between Principal Balance and Interest accounts for '{acct_name}'."
+            )
+
+        # todo add validation for Loan Billing Cycle Payment Bal and Loan Prev End of Cycle Bal #https://github.com/hdickie/expense_forecast/issues/12
+
+        combined_balance = (
+                pb_account.Balance.values[0] + interest_account.Balance.values[0]
+        )
+        if combined_balance < pb_account.Min_Balance.values[0]:
+            raise ValueError(
+                f"Combined balance is less than Min_Balance for loan account '{acct_name}'."
+            )
+        if combined_balance > pb_account.Max_Balance.values[0]:
+            raise ValueError(
+                f"Combined balance is greater than Max_Balance for loan account '{acct_name}'."
+            )
+
+    @staticmethod
+    def _validate_one_and_only_one_primary_checking_account(accounts_df):
+        raise NotImplementedError
+
+    @staticmethod
+    def _validate_unique_names(accounts_df):
+        raise NotImplementedError
+
+    def __init__(self, accounts_list=None):
+
+        self.primary_checking_account_name = None
+
+        if accounts_list is None:
+            accounts_list = []
+
+        self.accounts = accounts_list
+
+        if not self.accounts:
+            return
+
+        required_attributes = [
+            "name",
+            "balance",
+            "min_balance",
+            "max_balance",
+            "account_type",
+            "billing_start_date",
+            "interest_type",
+            "apr",
+            "interest_cadence",
+            "minimum_payment",
+        ]
+
+        for account in self.accounts:
+            for attr in required_attributes:
+                if not hasattr(account, attr):
+                    raise TypeError(str(account.account_type)+" did not have expected attribute "+str(attr)) #All accounts must have the required attributes.
+
+        accounts_df = self.getAccounts()
+
+        loan_account_rows_df = accounts_df[
+            accounts_df.Account_Type.isin(
+                [
+                    "principal balance",
+                    "interest",
+                    "loan billing cycle payment bal",
+                    "loan end of prev cycle bal",
+                ]
+            )
+        ]
+        AccountSet._validate_related_loan_account_types_are_present(loan_account_rows_df)
+        AccountSet._validate_related_loan_account_bounds(loan_account_rows_df)
+        AccountSet._validate_related_loan_account_balances(loan_account_rows_df)
+
+        credit_account_rows_df = accounts_df[
+            accounts_df.Account_Type.isin(
+                [
+                    "credit prev stmt bal",
+                    "credit curr stmt bal",
+                    "credit billing cycle payment bal",
+                    "credit end of prev cycle bal",
+                ]
+            )
+        ]
+        AccountSet._validate_related_credit_account_types_are_present(credit_account_rows_df)
+        AccountSet._validate_related_credit_account_bounds(credit_account_rows_df)
+        AccountSet._validate_related_credit_account_balances(credit_account_rows_df)
+
+        AccountSet._validate_unique_names(accounts_df)
+
     def __str__(self):
         return self.getAccounts().to_string()
 
     def getPrimaryCheckingAccountName(self):
-        if self.primary_checking_account_name is None:
-            try:
-                self.primary_checking_account_name = self.getAccounts()[
-                    self.getAccounts().Primary_Checking_Ind
-                ].iloc[0, 0]
-            except Exception as e:
-                return None
-
         return self.primary_checking_account_name
+
+
 
     def createAccount(
         self,
@@ -407,300 +516,227 @@ class AccountSet:
         min_balance,
         max_balance,
         account_type,
-        billing_start_date_YYYYMMDD=None,
-        interest_type=None,
-        apr=None,
-        interest_cadence=None,
-        minimum_payment=None,
-        previous_statement_balance=None,
-        current_statement_balance=None,
-        principal_balance=None,
-        interest_balance=None,
-        billing_cycle_payment_balance=None,
-        end_of_previous_cycle_balance=None,
-        primary_checking_ind=False,
-        print_debug_messages=True,
-        raise_exceptions=True,
+            **kwargs
     ):
-        """
-        Add an Account to list AccountSet.accounts. For credit and loan type accounts, previous statement balance and interest accounts are created.
-        """
-        # Disallow adding a second checking account
-        if account_type.lower() == "checking" and any(
-            acct.account_type.lower() == "checking" for acct in self.accounts
-        ):
-            raise ValueError("Cannot add more than one checking account.")
 
-        log_string = (
-            f"createAccount(name={name}, balance={balance}, account_type={account_type}"
-        )
-        if account_type.lower() == "credit":
-            log_string += f", billing_start_date_YYYYMMDD={billing_start_date_YYYYMMDD}, apr={apr}, previous_statement_balance={previous_statement_balance}"
-        elif account_type.lower() == "loan":
-            log_string += f", billing_start_date_YYYYMMDD={billing_start_date_YYYYMMDD}, apr={apr}, principal_balance={principal_balance}, interest_balance={interest_balance}"
-        log_string += ")"
-        log_in_color(logger, "green", "debug", log_string, 0)
+        allowed_kwargs = ['billing_start_date', 'interest_type', 'apr', 'interest_cadence', 'minimum_payment',
+                          'previous_statement_balance', 'current_statement_balance', 'principal_balance',
+                          'interest_balance', 'end_of_previous_cycle_balance', 'primary_checking_ind']
+        for key in kwargs:
+            if key not in allowed_kwargs:
+                raise TypeError(f"Unexpected keyword argument '{key}'")
 
-        if account_type.lower() != "checking" and primary_checking_ind:
-            raise ValueError(
-                "primary_checking_ind was True when account_type was not 'checking'"
+        allowed_account_types = ['checking', 'credit', 'loan', 'investment']
+        assert account_type in allowed_account_types
+
+        #assert groups are all present
+        checking_required_kwargs = ['primary_checking_ind']
+        credit_required_kwargs = ['billing_start_date', 'apr', 'interest_cadence', 'minimum_payment', 'previous_statement_balance', 'current_statement_balance', 'end_of_previous_cycle_balance']
+        loan_required_kwargs = ['billing_start_date', 'apr', 'interest_cadence', 'minimum_payment', 'principal_balance',
+                          'interest_balance', 'end_of_previous_cycle_balance']
+
+        # todo i don't know what I want for this
+        # investment_required_kwargs = ['billing_start_date', 'interest_type', 'apr', 'interest_cadence', 'minimum_payment',
+        #                   'previous_statement_balance', 'current_statement_balance', 'principal_balance',
+        #                   'interest_balance', 'end_of_previous_cycle_balance']
+
+
+        if account_type == 'checking':
+            for checking_required_kwarg in checking_required_kwargs:
+                assert checking_required_kwarg in kwargs
+            self.createCheckingAccount(name, balance, min_balance, max_balance, kwargs['primary_checking_account_ind'])
+        elif account_type == 'credit':
+            for credit_required_kwarg in credit_required_kwargs:
+                assert credit_required_kwarg in kwargs
+            assert balance == kwargs['current_statement_balance'] + kwargs['previous_statement_balance']
+            self.createCreditCardAccount(name,
+                                         current_statement_balance=kwargs['current_statement_balance'],
+                                         previous_statement_balance=kwargs['previous_statement_balance'],
+                                         min_balance=min_balance,
+                                         max_balance=max_balance,
+                                         billing_start_date=kwargs['billing_start_date'],
+                                         apr=kwargs['apr'],
+                                         minimum_payment=kwargs['minimum_payment'],
+                                         end_of_previous_cycle_balance=kwargs['end_of_previous_cycle_balance'])
+        elif account_type == 'loan':
+            for loan_required_kwarg in loan_required_kwargs:
+                assert loan_required_kwarg in kwargs
+            assert balance == kwargs['principal_balance'] + kwargs['interest_balance']
+            self.createLoanAccount(name,
+                                   principal_balance=kwargs['principal_balance'],
+                                   interest_balance=kwargs['interest_balance'],
+                                   min_balance=min_balance,
+                                   max_balance=max_balance,
+                                   billing_start_date=kwargs['billing_start_date'],
+                                   apr=kwargs['apr'],
+                                   minimum_payment=kwargs['minimum_payment'],
+                                   end_of_previous_cycle_balance=kwargs['end_of_previous_cycle_balance'])
+
+        # todo I don't know what I want for this
+        # elif account_type == 'investment':
+        #     assert balance == kwargs['current_statement_balance'] + kwargs['previous_statement_balance']
+        #     self.createInvestmentAccount(name,
+        #                                  current_statement_balance=kwargs['current_statement_balance'],
+        #                                  previous_statement_balance=kwargs['previous_statement_balance'],
+        #                                  billing_start_date=kwargs['billing_start_date'],
+        #                                  apr=kwargs['apr'],
+        #                                  end_of_previous_cycle_balance=kwargs['end_of_previous_cycle_balance'])
+
+        accounts_df = self.getAccounts()
+        loan_account_rows_df = accounts_df[
+            accounts_df.Account_Type.isin(
+                [
+                    "principal balance",
+                    "interest",
+                    "loan billing cycle payment bal",
+                    "loan end of prev cycle bal",
+                ]
             )
-
-        if account_type.lower() == "loan":
-            if principal_balance is None:
-                raise ValueError(
-                    "principal_balance is required for account_type 'loan'"
-                )
-            if interest_balance is None:
-                raise ValueError("interest_balance is required for account_type 'loan'")
-
-            if float(balance) != float(principal_balance) + float(interest_balance):
-                raise ValueError(
-                    f"{name}: {principal_balance} + {interest_balance} != {balance}"
-                )
-
-            account_pb = Account.Account(
-                name=f"{name}: Principal Balance",
-                balance=principal_balance,
-                min_balance=min_balance,
-                max_balance=max_balance,
-                account_type="principal balance",
-                billing_start_date_YYYYMMDD=billing_start_date_YYYYMMDD,
-                interest_type=interest_type,
-                apr=apr,
-                interest_cadence=interest_cadence,
-                minimum_payment=minimum_payment,
-                print_debug_messages=print_debug_messages,
-                raise_exceptions=raise_exceptions,
+        ]
+        credit_account_rows_df = accounts_df[
+            accounts_df.Account_Type.isin(
+                [
+                    "credit prev stmt bal",
+                    "credit curr stmt bal",
+                    "credit billing cycle payment bal",
+                    "credit end of prev cycle bal",
+                ]
             )
-            self.accounts.append(account_pb)
+        ]
 
-            account_interest = Account.Account(
-                name=f"{name}: Interest",
-                balance=interest_balance,
-                min_balance=min_balance,
-                max_balance=max_balance,
-                account_type="interest",
-                print_debug_messages=print_debug_messages,
-                raise_exceptions=raise_exceptions,
-            )
-            self.accounts.append(account_interest)
+        AccountSet._validate_related_loan_account_types_are_present(loan_account_rows_df)
+        AccountSet._validate_related_loan_account_bounds(loan_account_rows_df)
+        AccountSet._validate_related_loan_account_balances(loan_account_rows_df)
+        AccountSet._validate_related_credit_account_types_are_present(credit_account_rows_df)
+        AccountSet._validate_related_credit_account_bounds(credit_account_rows_df)
+        AccountSet._validate_related_credit_account_balances(credit_account_rows_df)
+        AccountSet._validate_unique_names(accounts_df)
 
-            billing_cycle_payment = Account.Account(
-                name=f"{name}: Loan Billing Cycle Payment Bal",
-                balance=billing_cycle_payment_balance,  # todo refactor to have this be end_of_previous_cycle_balance - prev_balance #https://github.com/hdickie/expense_forecast/issues/13
-                min_balance=min_balance,
-                max_balance=max_balance,
-                account_type="loan billing cycle payment bal",
-                billing_start_date_YYYYMMDD=billing_start_date_YYYYMMDD,
-                print_debug_messages=print_debug_messages,
-                raise_exceptions=raise_exceptions,
-            )
-            self.accounts.append(billing_cycle_payment)
 
-            eopc = Account.Account(
-                name=f"{name}: Loan End of Prev Cycle Bal",
-                balance=end_of_previous_cycle_balance,
-                min_balance=min_balance,
-                max_balance=max_balance,
-                account_type="loan end of prev cycle bal",
-                billing_start_date_YYYYMMDD=billing_start_date_YYYYMMDD,
-                print_debug_messages=print_debug_messages,
-                raise_exceptions=raise_exceptions,
-            )
-            self.accounts.append(eopc)
 
-        elif account_type.lower() == "credit":
-            if previous_statement_balance is None:
-                raise ValueError(
-                    "previous_statement_balance is required for account_type 'credit'"
-                )
-            if current_statement_balance is None:
-                raise ValueError(
-                    "current_statement_balance is required for account_type 'credit'"
-                )
 
-            if float(balance) != float(previous_statement_balance) + float(
-                current_statement_balance
-            ):
-                raise ValueError(
-                    f"{name}: {current_statement_balance} + {previous_statement_balance} != {balance}"
-                )
-
-            account_curr = Account.Account(
-                name=f"{name}: Curr Stmt Bal",
-                balance=current_statement_balance,
-                min_balance=min_balance,
-                max_balance=max_balance,
-                account_type="credit curr stmt bal",
-                print_debug_messages=print_debug_messages,
-                raise_exceptions=raise_exceptions,
-            )
-            self.accounts.append(account_curr)
-
-            account_prev = Account.Account(
-                name=f"{name}: Prev Stmt Bal",
-                balance=previous_statement_balance,
-                min_balance=min_balance,
-                max_balance=max_balance,
-                account_type="credit prev stmt bal",
-                billing_start_date_YYYYMMDD=billing_start_date_YYYYMMDD,
-                apr=apr,
-                interest_cadence="monthly",
-                minimum_payment=minimum_payment,
-                print_debug_messages=print_debug_messages,
-                raise_exceptions=raise_exceptions,
-            )
-            self.accounts.append(account_prev)
-
-            if end_of_previous_cycle_balance != previous_statement_balance:
-                # this implies that a prepayment occurred
-
-                try:
-                    assert billing_cycle_payment_balance == (
-                        end_of_previous_cycle_balance - previous_statement_balance
-                    )
-                except Exception as e:
-                    raise ValueError(
-                        "if end_of_previous_cycle_balance doesnt match prev_stmt_bal, then billing_cycle_payment_balance must equal the difference. Please correct input and try again."
-                    )
-
-            billing_cycle_payment = Account.Account(
-                name=f"{name}: Credit Billing Cycle Payment Bal",
-                balance=billing_cycle_payment_balance,
-                min_balance=min_balance,
-                max_balance=max_balance,
-                account_type="credit billing cycle payment bal",
-                billing_start_date_YYYYMMDD=billing_start_date_YYYYMMDD,
-                print_debug_messages=print_debug_messages,
-                raise_exceptions=raise_exceptions,
-            )
-            self.accounts.append(billing_cycle_payment)
-
-            eopc = Account.Account(
-                name=f"{name}: Credit End of Prev Cycle Bal",
-                balance=end_of_previous_cycle_balance,
-                min_balance=min_balance,
-                max_balance=max_balance,
-                account_type="credit end of prev cycle bal",
-                billing_start_date_YYYYMMDD=billing_start_date_YYYYMMDD,
-                print_debug_messages=print_debug_messages,
-                raise_exceptions=raise_exceptions,
-            )
-            self.accounts.append(eopc)
-
-        elif account_type.lower() == "checking":
-            account = Account.Account(
-                name=name,
-                balance=balance,
-                min_balance=min_balance,
-                max_balance=max_balance,
-                account_type="checking",
-                primary_checking_ind=primary_checking_ind,
-                print_debug_messages=print_debug_messages,
-                raise_exceptions=raise_exceptions,
-            )
-            self.accounts.append(account)
-
-        elif account_type.lower() == "investment":
-            account = Account.Account(
-                name=name,
-                balance=balance,
-                min_balance=min_balance,
-                max_balance=max_balance,
-                account_type="investment",
-                apr=apr,
-                print_debug_messages=print_debug_messages,
-                raise_exceptions=raise_exceptions,
-            )
-            self.accounts.append(account)
-
-        else:
-            raise NotImplementedError(f"Account type not recognized: {account_type}")
-
-    def createCheckingAccount(
-        self, name, balance, min_balance, max_balance, primary_checking_account_ind=True
-    ):
-        self.createAccount(
+    def createCheckingAccount(self, name, balance, min_balance, max_balance, primary_checking_ind):
+        account = Account.Account(
             name=name,
             balance=balance,
             min_balance=min_balance,
             max_balance=max_balance,
             account_type="checking",
-            primary_checking_ind=primary_checking_account_ind,
+            primary_checking_ind=primary_checking_ind,
         )
+        self.accounts.append(account)
 
-    def createLoanAccount(
-        self,
-        name,
-        principal_balance,
-        interest_balance,
-        min_balance,
-        max_balance,
-        billing_start_date_YYYYMMDD,
-        apr,
-        minimum_payment,
-        billing_cycle_payment_balance,
-        end_of_previous_cycle_balance,
-    ):
-        self.createAccount(
-            name=name,
-            balance=principal_balance + interest_balance,
+        if primary_checking_ind:
+            accounts_df = self.getAccounts()
+            AccountSet._validate_one_and_only_one_primary_checking_account(accounts_df)
+
+    def createLoanAccount(self, name, principal_balance, interest_balance, min_balance, max_balance, billing_start_date,
+                          apr, minimum_payment, end_of_previous_cycle_balance,):
+
+        account_pb = Account.Account(
+            name=f"{name}: Principal Balance",
+            balance=principal_balance,
             min_balance=min_balance,
             max_balance=max_balance,
-            account_type="loan",
-            billing_start_date_YYYYMMDD=billing_start_date_YYYYMMDD,
-            interest_type="simple",
+            account_type="principal balance",
+            billing_start_date=billing_start_date,
+            interest_type='compound',
             apr=apr,
-            interest_cadence="daily",
+            interest_cadence='daily',
             minimum_payment=minimum_payment,
-            principal_balance=principal_balance,
-            interest_balance=interest_balance,
-            billing_cycle_payment_balance=billing_cycle_payment_balance,
-            end_of_previous_cycle_balance=end_of_previous_cycle_balance,
         )
+        self.accounts.append(account_pb)
 
-    def createCreditCardAccount(
-        self,
-        name,
-        current_stmt_bal,
-        prev_stmt_bal,
-        min_balance,
-        max_balance,
-        billing_start_date_YYYYMMDD,
-        apr,
-        minimum_payment,
-        billing_cycle_payment_balance,
-        end_of_previous_cycle_balance,
-    ):
-        self.createAccount(
-            name=name,
-            balance=current_stmt_bal + prev_stmt_bal,
+        account_interest = Account.Account(
+            name=f"{name}: Interest",
+            balance=interest_balance,
             min_balance=min_balance,
             max_balance=max_balance,
-            account_type="credit",
-            billing_start_date_YYYYMMDD=billing_start_date_YYYYMMDD,
-            interest_type=None,
+            account_type="interest",
+        )
+        self.accounts.append(account_interest)
+
+        billing_cycle_payment_balance = end_of_previous_cycle_balance - principal_balance
+        assert billing_cycle_payment_balance >= 0
+
+        billing_cycle_payment = Account.Account(
+            name=f"{name}: Loan Billing Cycle Payment Bal",
+            balance=billing_cycle_payment_balance,
+            min_balance=min_balance,
+            max_balance=max_balance,
+            account_type="loan billing cycle payment bal",
+            billing_start_date=billing_start_date,
+        )
+        self.accounts.append(billing_cycle_payment)
+
+        eopc = Account.Account(
+            name=f"{name}: Loan End of Prev Cycle Bal",
+            balance=end_of_previous_cycle_balance,
+            min_balance=min_balance,
+            max_balance=max_balance,
+            account_type="loan end of prev cycle bal",
+            billing_start_date=billing_start_date,
+        )
+        self.accounts.append(eopc)
+
+    def createCreditCardAccount(self, name, current_statement_balance, previous_statement_balance, min_balance, max_balance,
+                                billing_start_date, apr, minimum_payment, end_of_previous_cycle_balance,):
+
+        account_curr = Account.Account(
+            name=f"{name}: Curr Stmt Bal",
+            balance=current_statement_balance,
+            min_balance=min_balance,
+            max_balance=max_balance,
+            account_type="credit curr stmt bal",
+        )
+        self.accounts.append(account_curr)
+
+        account_prev = Account.Account(
+            name=f"{name}: Prev Stmt Bal",
+            balance=previous_statement_balance,
+            min_balance=min_balance,
+            max_balance=max_balance,
+            account_type="credit prev stmt bal",
+            billing_start_date=billing_start_date,
             apr=apr,
             interest_cadence="monthly",
             minimum_payment=minimum_payment,
-            previous_statement_balance=prev_stmt_bal,
-            current_statement_balance=current_stmt_bal,
-            billing_cycle_payment_balance=billing_cycle_payment_balance,
-            end_of_previous_cycle_balance=end_of_previous_cycle_balance,
         )
+        self.accounts.append(account_prev)
 
-    def createInvestmentAccount(self, name, balance, min_balance, max_balance, apr):
-        self.createAccount(
-            name=name,
-            balance=balance,
+        billing_cycle_payment_balance = end_of_previous_cycle_balance - previous_statement_balance
+        assert billing_cycle_payment_balance >= 0
+
+        billing_cycle_payment = Account.Account(
+            name=f"{name}: Credit Billing Cycle Payment Bal",
+            balance=billing_cycle_payment_balance,
             min_balance=min_balance,
             max_balance=max_balance,
-            account_type="investment",
-            interest_type="compound",
-            apr=apr,
-            interest_cadence="monthly",
+            account_type="credit billing cycle payment bal",
+            billing_start_date=billing_start_date,
         )
+        self.accounts.append(billing_cycle_payment)
+
+        eopc = Account.Account(
+            name=f"{name}: Credit End of Prev Cycle Bal",
+            balance=end_of_previous_cycle_balance,
+            min_balance=min_balance,
+            max_balance=max_balance,
+            account_type="credit end of prev cycle bal",
+            billing_start_date=billing_start_date,
+        )
+        self.accounts.append(eopc)
+
+    # def createInvestmentAccount(self, name, balance, apr):
+    #     #todo
+    #     account = Account.Account(
+    #         name=name,
+    #         balance=balance,
+    #         account_type="investment",
+    #         apr=apr,
+    #     )
+    #     self.accounts.append(account)
+
 
     def getBalances(self):
         # log_in_color(logger,'magenta','debug','ENTER getBalances()')
@@ -1557,31 +1593,6 @@ class AccountSet:
         return final_txns
 
     def getAccounts(self):
-        """
-        Get a DataFrame representing the AccountSet object.
-
-        This test is failing even though this is indeed the result I get when I try this in the console.
-        # >>> x=AccountSet().getAccounts()
-        # Empty DataFrame
-        # Columns: [Name, Balance, Previous_Statement_Balance, Min_Balance, Max_Balance, APR, Interest_Cadence, Interest_Type, Billing_Start_Dt, Account_Type, Principal_Balance, interest_balance, Minimum_Payment]
-        # Index: []
-
-        >>> print(AccountSet([Account.Account(name='test',balance=0,min_balance=0,max_balance=0,account_type="checking")]).toJSON())
-        {
-        {
-        "Name":"test",
-        "Balance":"0.0",
-        "Min_Balance":"0.0",
-        "Max_Balance":"0.0",
-        "Account_Type":"checking",
-        "Billing_Start_Date":"None",
-        "Interest_Type":"None",
-        "APR":"None",
-        "Interest_Cadence":"None",
-        "Minimum_Payment":"None"
-        }
-        }
-        """
         all_accounts_df = pd.DataFrame(
             {
                 "Name": [],
@@ -1606,7 +1617,7 @@ class AccountSet:
                     "Min_Balance": [account.min_balance],
                     "Max_Balance": [account.max_balance],
                     "Account_Type": [account.account_type],
-                    "Billing_Start_Date": [account.billing_start_date_YYYYMMDD],
+                    "Billing_Start_Date": [account.billing_start_date],
                     "Interest_Type": [account.interest_type],
                     "APR": [account.apr],
                     "Interest_Cadence": [account.interest_cadence],

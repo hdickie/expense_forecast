@@ -2,17 +2,16 @@ import pandas as pd
 import datetime
 
 
-def generate_date_sequence(start_date_YYYYMMDD, num_days, cadence):
+def generate_date_sequence(start_date, num_days, cadence):
     """A wrapper for pd.date_range intended to make code easier to read."""
 
-    start_date = datetime.datetime.strptime(start_date_YYYYMMDD, "%Y%m%d")
     end_date = start_date + datetime.timedelta(days=num_days)
 
     if num_days == 0:
-        return [start_date_YYYYMMDD]
+        return [start_date]
 
     if cadence.lower() == "once":
-        return pd.Series(start_date_YYYYMMDD)
+        return pd.Series(start_date)
     elif cadence.lower() == "daily":
         return_series = pd.date_range(start_date, end_date, freq="D")
     elif cadence.lower() == "weekly":
@@ -57,5 +56,4 @@ def generate_date_sequence(start_date_YYYYMMDD, num_days, cadence):
     else:
         raise ValueError("Undefined cadence in generate_date_sequence: " + str(cadence))
 
-    return_series = [d.strftime("%Y%m%d") for d in return_series]
     return return_series

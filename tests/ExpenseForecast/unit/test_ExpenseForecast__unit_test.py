@@ -1,3 +1,7 @@
+
+import sys
+sys.path.append('../../../src/')
+
 import unittest, pytest
 
 import AccountMilestone
@@ -7,7 +11,7 @@ import datetime, logging
 import tempfile
 import BudgetItem
 import CompositeMilestone
-import ForecastHandler
+#import ForecastHandler
 import MemoMilestone
 import MemoRule
 
@@ -44,7 +48,7 @@ def credit_acct_list(curr_balance, prev_balance, apr):
         min_balance=0,
         max_balance=20000,
         account_type="credit",
-        billing_start_date_YYYYMMDD="20000102",
+        billing_start_date=datetime.datetime.strptime("20000102",'%Y%m%d'),
         interest_type=None,
         apr=apr,
         interest_cadence="monthly",
@@ -69,7 +73,7 @@ def credit_bsd12_acct_list(prev_balance, curr_balance, apr):
         min_balance=0,
         max_balance=20000,
         account_type="credit",
-        billing_start_date_YYYYMMDD="20000112",
+        billing_start_date=datetime.datetime.strptime("20000112",'%Y%m%d'),
         interest_type=None,
         apr=apr,
         interest_cadence="monthly",
@@ -127,7 +131,7 @@ def non_trivial_loan(name, pbal, interest, apr):
         min_balance=0,
         max_balance=9999,
         account_type="loan",
-        billing_start_date_YYYYMMDD="20000102",
+        billing_start_date=datetime.datetime.strptime("20000102",'%Y%m%d'),
         interest_type="simple",
         apr=apr,
         interest_cadence="daily",
@@ -153,7 +157,7 @@ def credit_bsd12_w_eopc_acct_list(
         min_balance=0,
         max_balance=20000,
         account_type="credit",
-        billing_start_date_YYYYMMDD="19990112",
+        billing_start_date=datetime.datetime.strptime("19990112",'%Y%m%d'),
         apr=apr,
         interest_cadence="monthly",
         minimum_payment=40,
@@ -167,7 +171,7 @@ def credit_bsd12_w_eopc_acct_list(
     return A.accounts
 
 
-class TestExpenseForecastMethods:
+class TestExpenseForecastUnit:
 
     @pytest.mark.unit
     @pytest.mark.parametrize(
@@ -4126,7 +4130,7 @@ class TestExpenseForecastMethods:
             min_balance=0,
             max_balance=20000,
             account_type="credit",
-            billing_start_date_YYYYMMDD="20000102",
+            billing_start_date="20000102",
             interest_type=None,
             apr=0.05,
             interest_cadence="Monthly",
@@ -4222,7 +4226,7 @@ class TestExpenseForecastMethods:
             min_balance=0,
             max_balance=20000,
             account_type="credit",
-            billing_start_date_YYYYMMDD="20000102",
+            billing_start_date="20000102",
             interest_type=None,
             apr=0.05,
             interest_cadence="Monthly",

@@ -128,17 +128,18 @@ class InitialConditionsSet:
                 raise TypeError(f"Unexpected keyword argument '{key}'")
 
         if 'forecast_set_name' not in kwargs:
-            forecast_set_name = ''
+            self.forecast_set_name = '' #todo do I want this?
+        elif not isinstance(kwargs['forecast_set_name'], str):
+            raise TypeError("Expected a string for 'forecast_set_name'")
+        else:
+            self.forecast_set_name = kwargs['forecast_set_name'] #todo do I want this?
 
         if 'forecast_name' not in kwargs:
-            forecast_name = ''
-
-        #this recognizes subclasses of str as well without casting the input
-        if not isinstance(forecast_name, str):
+            self.forecast_name = '' #todo do I want this?
+        elif not isinstance(kwargs['forecast_name'], str):
             raise TypeError("Expected a string for 'forecast_name'")
-
-        if not isinstance(forecast_set_name, str):
-            raise TypeError("Expected a string for 'forecast_set_name'")
+        else:
+            self.forecast_name = kwargs['forecast_name'] #todo do I want this?
 
         assert account_set.isSufficientToBeginForecast()
         assert InitialConditionsSet.all_budget_items_have_one_and_only_one_matching_memo_rule(budget_item_set, memo_rule_set)

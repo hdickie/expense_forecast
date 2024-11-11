@@ -1,0 +1,3 @@
+
+class TestForecastSetIntegration:
+    pass
