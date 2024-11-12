@@ -49,18 +49,13 @@ def credit_acct_list(curr_balance, prev_balance, apr):
         max_balance=20000,
         account_type="credit",
         billing_start_date=datetime.datetime.strptime("20000102",'%Y%m%d'),
-        interest_type=None,
+        #interest_type=None,
         apr=apr,
         interest_cadence="monthly",
         minimum_payment=40,
         previous_statement_balance=prev_balance,
         current_statement_balance=curr_balance,
-        principal_balance=None,
-        interest_balance=None,
-        billing_cycle_payment_balance=0,
         end_of_previous_cycle_balance=prev_balance,
-        print_debug_messages=True,
-        raise_exceptions=True,
     )
     return A.accounts
 
@@ -74,35 +69,32 @@ def credit_bsd12_acct_list(prev_balance, curr_balance, apr):
         max_balance=20000,
         account_type="credit",
         billing_start_date=datetime.datetime.strptime("20000112",'%Y%m%d'),
-        interest_type=None,
         apr=apr,
         interest_cadence="monthly",
         minimum_payment=40,
         previous_statement_balance=prev_balance,
         current_statement_balance=curr_balance,
-        principal_balance=None,
-        interest_balance=None,
-        billing_cycle_payment_balance=0,
         end_of_previous_cycle_balance=prev_balance,
-        print_debug_messages=True,
-        raise_exceptions=True,
     )
     return A.accounts
 
 
 def txn_budget_item_once_list(
-    amount, priority, memo, deferrable, partial_payment_allowed
+    amount, priority, memo, **kwargs
 ):
+
     return [
         BudgetItem.BudgetItem(
-            "20000102",
-            "20000102",
+            datetime.datetime.strptime("20000102",'%Y%m%d'),
+            datetime.datetime.strptime("20000102",'%Y%m%d'),
             priority,
             "once",
             amount,
             memo,
-            deferrable,
-            partial_payment_allowed,
+            deferrable=kwargs.get('deferrable', False),
+            partial_payment_allowed=kwargs.get('partial_payment_allowed', False)
+            # {'deferrable':deferrable,
+            #  'partial_payment_allowed': partial_payment_allowed}
         )
     ]
 
@@ -132,15 +124,11 @@ def non_trivial_loan(name, pbal, interest, apr):
         max_balance=9999,
         account_type="loan",
         billing_start_date=datetime.datetime.strptime("20000102",'%Y%m%d'),
-        interest_type="simple",
         apr=apr,
         interest_cadence="daily",
         minimum_payment=50,
-        previous_statement_balance=None,
-        current_statement_balance=None,
         principal_balance=pbal,
         interest_balance=interest,
-        billing_cycle_payment_balance=0,
         end_of_previous_cycle_balance=pbal,
     )
 
@@ -163,10 +151,7 @@ def credit_bsd12_w_eopc_acct_list(
         minimum_payment=40,
         previous_statement_balance=prev_balance,
         current_statement_balance=curr_balance,
-        billing_cycle_payment_balance=end_of_prev_cycle_balance - prev_balance,
         end_of_previous_cycle_balance=end_of_prev_cycle_balance,
-        print_debug_messages=True,
-        raise_exceptions=True,
     )
     return A.accounts
 
@@ -180,12 +165,12 @@ class TestExpenseForecastUnit:
             (
                 AccountSet.AccountSet(checking_acct_list(10)),
                 BudgetSet.BudgetSet(
-                    txn_budget_item_once_list(10, 1, "test txn", False, False)
+                    txn_budget_item_once_list(10, 1, "test txn")
                 ),
                 MemoRuleSet.MemoRuleSet(match_p1_test_txn_checking_memo_rule_list()),
                 "19991231",
                 "20000101",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
             )
             # (AccountSet.AccountSet([]),
             #  BudgetSet.BudgetSet([]),
@@ -225,7 +210,7 @@ class TestExpenseForecastUnit:
                 MemoRuleSet.MemoRuleSet([]),
                 "incorrect date format",
                 "20000103",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 ValueError,
             ),  # malformed start date
             (
@@ -234,7 +219,7 @@ class TestExpenseForecastUnit:
                 MemoRuleSet.MemoRuleSet([]),
                 "20000101",
                 "incorrect date format",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 ValueError,
             ),  # malformed end date
             (
@@ -243,7 +228,7 @@ class TestExpenseForecastUnit:
                 MemoRuleSet.MemoRuleSet([]),
                 "20000101",
                 "19991231",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 ValueError,
             ),  # end date before start date
             (
@@ -252,29 +237,29 @@ class TestExpenseForecastUnit:
                 MemoRuleSet.MemoRuleSet([]),
                 "19991231",
                 "20000101",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 ValueError,
             ),  # empty account_set
             (
                 AccountSet.AccountSet(checking_acct_list(10)),
                 BudgetSet.BudgetSet(
-                    txn_budget_item_once_list(10, 1, "test txn", False, False)
+                    txn_budget_item_once_list(10, 1, "test txn", )
                 ),
                 MemoRuleSet.MemoRuleSet([]),
                 "19991231",
                 "20000101",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 ValueError,
             ),  # A budget memo x priority element does not have a matching regex in memo rule set
             (
                 AccountSet.AccountSet(checking_acct_list(10)),
                 BudgetSet.BudgetSet(
-                    txn_budget_item_once_list(10, 1, "test txn", False, False)
+                    txn_budget_item_once_list(10, 1, "test txn", )
                 ),
                 MemoRuleSet.MemoRuleSet(match_p1_test_txn_credit_memo_rule_list()),
                 "19991231",
                 "20000101",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 ValueError,
             ),  # A memo rule has an account that does not exist in AccountSet
             # (AccountSet.AccountSet([]),
@@ -479,7 +464,7 @@ class TestExpenseForecastUnit:
                 MemoRuleSet.MemoRuleSet(match_p1_test_txn_checking_memo_rule_list()),
                 "20000101",
                 "20000103",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000101", "20000102", "20000103"],
@@ -507,15 +492,15 @@ class TestExpenseForecastUnit:
                     checking_acct_list(0) + credit_acct_list(0, 0, 0.05)
                 ),
                 BudgetSet.BudgetSet(
-                    txn_budget_item_once_list(100, 1, "income", False, False)
-                    + txn_budget_item_once_list(100, 1, "test txn", False, False)
+                    txn_budget_item_once_list(100, 1, "income", )
+                    + txn_budget_item_once_list(100, 1, "test txn", )
                 ),
                 MemoRuleSet.MemoRuleSet(
                     match_p1_test_txn_checking_memo_rule_list() + income_rule_list()
                 ),
                 "20000101",
                 "20000103",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000101", "20000102", "20000103"],
@@ -547,7 +532,7 @@ class TestExpenseForecastUnit:
                     checking_acct_list(0) + credit_acct_list(0, 0, 0.05)
                 ),
                 BudgetSet.BudgetSet(
-                    txn_budget_item_once_list(100, 1, "test txn", False, False)
+                    txn_budget_item_once_list(100, 1, "test txn", )
                 ),
                 MemoRuleSet.MemoRuleSet(
                     [
@@ -561,7 +546,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000101",
                 "20000103",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000101", "20000102", "20000103"],
@@ -601,7 +586,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000101",
                 "20000103",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000101", "20000102", "20000103"],
@@ -641,7 +626,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000101",
                 "20000103",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000101", "20000102", "20000103"],
@@ -685,7 +670,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000101",
                 "20000103",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000101", "20000102", "20000103"],
@@ -717,7 +702,7 @@ class TestExpenseForecastUnit:
                     checking_acct_list(50)
                     + credit_bsd12_w_eopc_acct_list(0, 0, 0.05, 500)
                 ),  # todo implement
-                # BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 600, 'single additional payment on due date', False, False)]),
+                # BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 600, 'single additional payment on due date', )]),
                 BudgetSet.BudgetSet(),
                 MemoRuleSet.MemoRuleSet(
                     [
@@ -727,10 +712,10 @@ class TestExpenseForecastUnit:
                 ),
                 "20000110",
                 "20000214",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
-                        "Date": generate_date_sequence("20000110", 35, "daily"),
+                        "Date": generate_date_sequence(datetime.datetime.strptime("20000110","%Y%m%d"), 35, "daily"),
                         "Checking": [0] * 36,
                         "Credit: Curr Stmt Bal": [0] * 36,
                         "Credit: Prev Stmt Bal": [0] * 36,
@@ -790,7 +775,7 @@ class TestExpenseForecastUnit:
                 ),
                 BudgetSet.BudgetSet(
                     txn_budget_item_once_list(
-                        10, 2, "this should be deferred", True, False
+                        10, 2, "this should be deferred", deferrable=True,
                     )
                 ),
                 MemoRuleSet.MemoRuleSet(
@@ -817,7 +802,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000101",
                 "20000103",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000101", "20000102", "20000103"],
@@ -844,10 +829,10 @@ class TestExpenseForecastUnit:
                 AccountSet.AccountSet(checking_acct_list(100)),
                 BudgetSet.BudgetSet(
                     txn_budget_item_once_list(
-                        100, 2, "this should be executed", False, False
+                        100, 2, "this should be executed",
                     )
                     + txn_budget_item_once_list(
-                        100, 3, "this should be deferred", True, False
+                        100, 3, "this should be deferred", deferrable=True,
                     )
                 ),
                 MemoRuleSet.MemoRuleSet(
@@ -874,7 +859,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000101",
                 "20000103",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000101", "20000102", "20000103"],
@@ -898,64 +883,46 @@ class TestExpenseForecastUnit:
                 BudgetSet.BudgetSet(
                     [
                         BudgetItem.BudgetItem(
-                            "20000102",
-                            "20000102",
+                            datetime.datetime.strptime("20000102","%Y%m%d"),
+                            datetime.datetime.strptime("20000102","%Y%m%d"),
                             1,
                             "once",
                             100,
                             "SPEND daily p1 txn",
-                            False,
-                            False,
                         ),  # EOD 400
-                        BudgetItem.BudgetItem(
-                            "20000103",
-                            "20000103",
+                        BudgetItem.BudgetItem(datetime.datetime.strptime("20000103","%Y%m%d"),datetime.datetime.strptime("20000103","%Y%m%d"),
                             1,
                             "once",
                             100,
                             "SPEND daily p1 txn 2",
-                            False,
-                            False,
                         ),  # EOD 300
-                        BudgetItem.BudgetItem(
-                            "20000103",
-                            "20000103",
+                        BudgetItem.BudgetItem(datetime.datetime.strptime("20000103","%Y%m%d"),datetime.datetime.strptime("20000103","%Y%m%d"),
                             3,
                             "once",
                             400,
                             "SPEND p3 txn on 1/3 that is skipped bc later lower priority_index txn",
-                            False,
-                            False,
                         ),
-                        BudgetItem.BudgetItem(
-                            "20000104",
-                            "20000104",
+                        BudgetItem.BudgetItem(datetime.datetime.strptime("20000104","%Y%m%d"),datetime.datetime.strptime("20000104","%Y%m%d"),
                             1,
                             "once",
                             200,
                             "200 income on 1/4",
-                            False,
-                            False,
                         ),  # 500
-                        BudgetItem.BudgetItem(
-                            "20000104",
-                            "20000104",
+                        BudgetItem.BudgetItem(datetime.datetime.strptime("20000104","%Y%m%d"),datetime.datetime.strptime("20000104","%Y%m%d"),
                             1,
                             "once",
                             100,
                             "SPEND daily p1 txn 3",
-                            False,
-                            False,
+                            
                         ),  # 400
                         BudgetItem.BudgetItem(
-                            "20000102",
-                            "20000102",
+                            datetime.datetime.strptime("20000102","%Y%m%d"),
+                            datetime.datetime.strptime("20000102","%Y%m%d"),
                             2,
                             "once",
                             400,
                             "SPEND p2 txn deferred from 1/2 to 1/4",
-                            True,
-                            False,
+                            deferrable=True,
                         ),  # EOD 0
                     ]
                 ),
@@ -989,7 +956,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000101",
                 "20000104",  # note that this is later than the test defined above
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000101", "20000102", "20000103", "20000104"],
@@ -1052,7 +1019,7 @@ class TestExpenseForecastUnit:
                 ),
                 BudgetSet.BudgetSet(
                     txn_budget_item_once_list(
-                        10, 2, "this should be skipped", False, False
+                        10, 2, "this should be skipped",
                     )
                 ),
                 MemoRuleSet.MemoRuleSet(
@@ -1073,7 +1040,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000101",
                 "20000103",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000101", "20000102", "20000103"],
@@ -1100,10 +1067,10 @@ class TestExpenseForecastUnit:
                 AccountSet.AccountSet(checking_acct_list(100)),
                 BudgetSet.BudgetSet(
                     txn_budget_item_once_list(
-                        100, 2, "this should be executed", False, False
+                        100, 2, "this should be executed",
                     )
                     + txn_budget_item_once_list(
-                        100, 3, "this should be skipped", False, False
+                        100, 3, "this should be skipped",
                     )
                 ),
                 MemoRuleSet.MemoRuleSet(
@@ -1130,7 +1097,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000101",
                 "20000103",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000101", "20000102", "20000103"],
@@ -1155,7 +1122,7 @@ class TestExpenseForecastUnit:
                 ),
                 BudgetSet.BudgetSet(
                     txn_budget_item_once_list(
-                        100, 4, "additional credit card payment", False, False
+                        100, 4, "additional credit card payment",
                     )
                 ),
                 MemoRuleSet.MemoRuleSet(
@@ -1176,7 +1143,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000101",
                 "20000103",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000101", "20000102", "20000103"],
@@ -1205,7 +1172,7 @@ class TestExpenseForecastUnit:
                 ),
                 BudgetSet.BudgetSet(
                     txn_budget_item_once_list(
-                        100, 4, "this should be skipped", False, False
+                        100, 4, "this should be skipped",
                     )
                 ),
                 MemoRuleSet.MemoRuleSet(
@@ -1226,7 +1193,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000101",
                 "20000103",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000101", "20000102", "20000103"],
@@ -1254,84 +1221,68 @@ class TestExpenseForecastUnit:
                 BudgetSet.BudgetSet(
                     [
                         BudgetItem.BudgetItem(
-                            "20000102",
-                            "20000102",
+                            datetime.datetime.strptime("20000102","%Y%m%d"),
+                            datetime.datetime.strptime("20000102","%Y%m%d"),
                             1,
                             "once",
                             100,
                             "p1 daily txn 1",
-                            False,
-                            False,
+                            
                         ),
-                        BudgetItem.BudgetItem(
-                            "20000103",
-                            "20000103",
+                        BudgetItem.BudgetItem(datetime.datetime.strptime("20000103","%Y%m%d"),datetime.datetime.strptime("20000103","%Y%m%d"),
                             1,
                             "once",
                             100,
                             "p1 daily txn 2",
-                            False,
-                            False,
+                            
                         ),
-                        BudgetItem.BudgetItem(
-                            "20000104",
-                            "20000104",
+                        BudgetItem.BudgetItem(datetime.datetime.strptime("20000104","%Y%m%d"),datetime.datetime.strptime("20000104","%Y%m%d"),
                             1,
                             "once",
                             100,
                             "p1 daily txn 3",
-                            False,
-                            False,
+                            
                         ),
                         BudgetItem.BudgetItem(
-                            "20000105",
-                            "20000105",
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
                             1,
                             "once",
                             100,
                             "p1 daily txn 4",
-                            False,
-                            False,
+
                         ),
                         BudgetItem.BudgetItem(
-                            "20000102",
-                            "20000102",
+                            datetime.datetime.strptime("20000102","%Y%m%d"),
+                            datetime.datetime.strptime("20000102","%Y%m%d"),
                             2,
                             "once",
                             100,
                             "p2 daily txn 1/2/00",
-                            False,
-                            False,
+
                         ),
-                        BudgetItem.BudgetItem(
-                            "20000103",
-                            "20000103",
+                        BudgetItem.BudgetItem(datetime.datetime.strptime("20000103","%Y%m%d"),datetime.datetime.strptime("20000103","%Y%m%d"),
                             2,
                             "once",
                             100,
                             "p2 daily txn 1/3/00",
-                            False,
-                            False,
+
                         ),
-                        BudgetItem.BudgetItem(
-                            "20000104",
-                            "20000104",
+                        BudgetItem.BudgetItem(datetime.datetime.strptime("20000104","%Y%m%d"),datetime.datetime.strptime("20000104","%Y%m%d"),
                             2,
                             "once",
                             100,
                             "p2 daily txn 1/4/00",
-                            False,
-                            False,
+
                         ),
                         BudgetItem.BudgetItem(
-                            "20000105",
-                            "20000105",
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
                             2,
                             "once",
                             100,
                             "p2 daily txn 1/5/00",
-                            False,
-                            False,
+
                         ),
                     ]
                 ),
@@ -1353,7 +1304,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000101",
                 "20000106",  # note that this is later than the test defined above
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": [
@@ -1391,124 +1342,96 @@ class TestExpenseForecastUnit:
                 BudgetSet.BudgetSet(
                     [
                         BudgetItem.BudgetItem(
-                            "20000102",
-                            "20000102",
+                            datetime.datetime.strptime("20000102","%Y%m%d"),
+                            datetime.datetime.strptime("20000102","%Y%m%d"),
                             1,
                             "once",
                             100,
                             "p1 daily txn 1/2/00",
-                            False,
-                            False,
+
                         ),
-                        BudgetItem.BudgetItem(
-                            "20000103",
-                            "20000103",
+                        BudgetItem.BudgetItem(datetime.datetime.strptime("20000103","%Y%m%d"),datetime.datetime.strptime("20000103","%Y%m%d"),
                             1,
                             "once",
                             100,
                             "p1 daily txn 1/3/00",
-                            False,
-                            False,
+
                         ),
-                        BudgetItem.BudgetItem(
-                            "20000104",
-                            "20000104",
+                        BudgetItem.BudgetItem(datetime.datetime.strptime("20000104","%Y%m%d"),datetime.datetime.strptime("20000104","%Y%m%d"),
                             1,
                             "once",
                             100,
                             "p1 daily txn 1/4/00",
-                            False,
-                            False,
+
                         ),
                         BudgetItem.BudgetItem(
-                            "20000105",
-                            "20000105",
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
                             1,
                             "once",
                             100,
                             "p1 daily txn 1/5/00",
-                            False,
-                            False,
+
                         ),
-                        BudgetItem.BudgetItem(
-                            "20000102",
-                            "20000102",
+                        BudgetItem.BudgetItem(datetime.datetime.strptime("20000102","%Y%m%d"),datetime.datetime.strptime("20000102","%Y%m%d"),
                             2,
                             "once",
                             100,
                             "p2 daily txn 1/2/00",
-                            False,
-                            False,
+
                         ),
-                        BudgetItem.BudgetItem(
-                            "20000103",
-                            "20000103",
+                        BudgetItem.BudgetItem(datetime.datetime.strptime("20000103","%Y%m%d"),datetime.datetime.strptime("20000103","%Y%m%d"),
                             2,
                             "once",
                             100,
                             "p2 daily txn 1/3/00",
-                            False,
-                            False,
+
                         ),
-                        BudgetItem.BudgetItem(
-                            "20000104",
-                            "20000104",
+                        BudgetItem.BudgetItem(datetime.datetime.strptime("20000104","%Y%m%d"),datetime.datetime.strptime("20000104","%Y%m%d"),
                             2,
                             "once",
                             100,
                             "p2 daily txn 1/4/00",
-                            False,
-                            False,
+
                         ),
                         BudgetItem.BudgetItem(
-                            "20000105",
-                            "20000105",
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
                             2,
                             "once",
                             100,
                             "p2 daily txn 1/5/00",
-                            False,
-                            False,
+
                         ),
-                        BudgetItem.BudgetItem(
-                            "20000102",
-                            "20000102",
+                        BudgetItem.BudgetItem(datetime.datetime.strptime("20000102","%Y%m%d"),datetime.datetime.strptime("20000102","%Y%m%d"),
                             3,
                             "once",
                             100,
                             "p3 daily txn 1/2/00",
-                            False,
-                            False,
+
                         ),
-                        BudgetItem.BudgetItem(
-                            "20000103",
-                            "20000103",
+                        BudgetItem.BudgetItem(datetime.datetime.strptime("20000103","%Y%m%d"),datetime.datetime.strptime("20000103","%Y%m%d"),
                             3,
                             "once",
                             100,
                             "p3 daily txn 1/3/00",
-                            False,
-                            False,
+
                         ),
-                        BudgetItem.BudgetItem(
-                            "20000104",
-                            "20000104",
+                        BudgetItem.BudgetItem(datetime.datetime.strptime("20000104","%Y%m%d"),datetime.datetime.strptime("20000104","%Y%m%d"),
                             3,
                             "once",
                             100,
                             "p3 daily txn 1/4/00",
-                            False,
-                            False,
+
                         ),
                         BudgetItem.BudgetItem(
-                            "20000105",
-                            "20000105",
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
                             3,
                             "once",
                             100,
                             "p3 daily txn 1/5/00",
-                            False,
-                            False,
+
                         ),
                     ]
                 ),
@@ -1536,7 +1459,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000101",
                 "20000106",  # note that this is later than the test defined above
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": [
@@ -1608,7 +1531,7 @@ class TestExpenseForecastUnit:
                 ),
                 BudgetSet.BudgetSet(
                     txn_budget_item_once_list(
-                        800, 4, "test pay all prev part of curr", False, False
+                        800, 4, "test pay all prev part of curr",
                     )
                 ),
                 MemoRuleSet.MemoRuleSet(
@@ -1629,7 +1552,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000101",
                 "20000103",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000101", "20000102", "20000103"],
@@ -1662,7 +1585,7 @@ class TestExpenseForecastUnit:
                 ),
                 BudgetSet.BudgetSet(
                     txn_budget_item_once_list(
-                        200, 4, "additional cc payment test", False, False
+                        200, 4, "additional cc payment test",
                     )
                 ),
                 MemoRuleSet.MemoRuleSet(
@@ -1683,7 +1606,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000101",
                 "20000103",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000101", "20000102", "20000103"],
@@ -1716,7 +1639,7 @@ class TestExpenseForecastUnit:
                 ),
                 BudgetSet.BudgetSet(
                     txn_budget_item_once_list(
-                        100, 4, "additional cc payment test", False, False
+                        100, 4, "additional cc payment test",
                     )
                 ),
                 MemoRuleSet.MemoRuleSet(
@@ -1737,7 +1660,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000101",
                 "20000103",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000101", "20000102", "20000103"],
@@ -1770,7 +1693,7 @@ class TestExpenseForecastUnit:
                 ),
                 BudgetSet.BudgetSet(
                     txn_budget_item_once_list(
-                        20000, 4, "partial cc payment", False, True
+                        20000, 4, "partial cc payment", partial_payment_allowed=True
                     )
                 ),
                 MemoRuleSet.MemoRuleSet(
@@ -1791,7 +1714,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000101",
                 "20000103",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000101", "20000102", "20000103"],
@@ -1822,29 +1745,23 @@ class TestExpenseForecastUnit:
                 AccountSet.AccountSet(checking_acct_list(400)),
                 BudgetSet.BudgetSet(
                     [
-                        BudgetItem.BudgetItem(
-                            "20000104",
-                            "20000104",
+                        BudgetItem.BudgetItem(datetime.datetime.strptime("20000104","%Y%m%d"),datetime.datetime.strptime("20000104","%Y%m%d"),
                             2,
                             "once",
                             200,
                             "pay 200 after reduced amt txn",
-                            False,
-                            False,
+
                         ),
-                        BudgetItem.BudgetItem(
-                            "20000103",
-                            "20000103",
+                        BudgetItem.BudgetItem(datetime.datetime.strptime("20000103","%Y%m%d"),datetime.datetime.strptime("20000103","%Y%m%d"),
                             3,
                             "once",
                             400,
                             "pay reduced amount",
-                            False,
-                            True,
+                            partial_payment_allowed=True,
                         ),
                     ]
                     # +
-                    # txn_budget_item_once_list(200, 2, 'pay 200 after reduced amt txn', False, False) +
+                    # txn_budget_item_once_list(200, 2, 'pay 200 after reduced amt txn', ) +
                     # txn_budget_item_once_list(400, 3,'pay reduced amount',False, True)
                 ),
                 MemoRuleSet.MemoRuleSet(
@@ -1870,8 +1787,8 @@ class TestExpenseForecastUnit:
                     ]
                 ),
                 "20000101",
-                "20000105",  # note that this is later than the test defined above
-                MilestoneSet.MilestoneSet([], [], []),
+                datetime.datetime.strptime("20000105","%Y%m%d"),  # note that this is later than the test defined above
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": [
@@ -1942,8 +1859,8 @@ class TestExpenseForecastUnit:
                 BudgetSet.BudgetSet(
                     [
                         BudgetItem.BudgetItem(
-                            "20000111",
-                            "20000111",
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
                             2,
                             "once",
                             500,
@@ -1961,7 +1878,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000110",
                 "20000113",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000110", "20000111", "20000112", "20000113"],
@@ -2001,8 +1918,8 @@ class TestExpenseForecastUnit:
                 BudgetSet.BudgetSet(
                     [
                         BudgetItem.BudgetItem(
-                            "20000111",
-                            "20000111",
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
                             2,
                             "once",
                             20,
@@ -2020,7 +1937,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000110",
                 "20000113",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000110", "20000111", "20000112", "20000113"],
@@ -2071,8 +1988,8 @@ class TestExpenseForecastUnit:
                 BudgetSet.BudgetSet(
                     [
                         BudgetItem.BudgetItem(
-                            "20000111",
-                            "20000111",
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
                             2,
                             "once",
                             40,
@@ -2090,7 +2007,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000110",
                 "20000113",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000110", "20000111", "20000112", "20000113"],
@@ -2131,14 +2048,13 @@ class TestExpenseForecastUnit:
                 BudgetSet.BudgetSet(
                     [
                         BudgetItem.BudgetItem(
-                            "20000112",
-                            "20000112",
+                            datetime.datetime.strptime("20000102","%Y%m%d"),
+                            datetime.datetime.strptime("20000102","%Y%m%d"),
                             2,
                             "once",
                             600,
                             "single additional payment on due date",
-                            False,
-                            False,
+
                         )
                     ]
                 ),
@@ -2148,9 +2064,9 @@ class TestExpenseForecastUnit:
                         MemoRule.MemoRule(".*", "Checking", "Credit", 2),
                     ]
                 ),
-                "20000111",
+                datetime.datetime.strptime("20000105","%Y%m%d"),
                 "20000113",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000111", "20000112", "20000113"],
@@ -2184,7 +2100,7 @@ class TestExpenseForecastUnit:
                     checking_acct_list(5000)
                     + credit_bsd12_w_eopc_acct_list(0, 0, 0.05, 500)
                 ),
-                # BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 600, 'single additional payment on due date', False, False)]),
+                # BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 600, 'single additional payment on due date', )]),
                 BudgetSet.BudgetSet(),
                 MemoRuleSet.MemoRuleSet(
                     [
@@ -2194,10 +2110,10 @@ class TestExpenseForecastUnit:
                 ),
                 "20000110",
                 "20000214",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
-                        "Date": generate_date_sequence("20000110", 35, "daily"),
+                        "Date": generate_date_sequence(datetime.datetime.strptime("20000110","%Y%m%d"), 35, "daily"),
                         "Checking": ([5000] * 33) + ([4997.91] * 3),
                         "Credit: Curr Stmt Bal": [0] * 36,
                         "Credit: Prev Stmt Bal": ([0] * 2) + ([2.08] * 31) + ([0] * 3),
@@ -2245,24 +2161,22 @@ class TestExpenseForecastUnit:
                 BudgetSet.BudgetSet(
                     [
                         BudgetItem.BudgetItem(
-                            "20000112",
-                            "20000112",
+                            datetime.datetime.strptime("20000102","%Y%m%d"),
+                            datetime.datetime.strptime("20000102","%Y%m%d"),
                             2,
                             "once",
                             100,
                             "test credit payment 1",
-                            False,
-                            False,
+
                         ),
                         BudgetItem.BudgetItem(
-                            "20000112",
-                            "20000112",
+                            datetime.datetime.strptime("20000102","%Y%m%d"),
+                            datetime.datetime.strptime("20000102","%Y%m%d"),
                             2,
                             "once",
                             100,
                             "test credit payment 2",
-                            False,
-                            False,
+
                         ),
                     ]
                 ),
@@ -2272,9 +2186,9 @@ class TestExpenseForecastUnit:
                         MemoRule.MemoRule(".*", "Checking", "Credit", 2),
                     ]
                 ),
-                "20000111",
+                datetime.datetime.strptime("20000105","%Y%m%d"),
                 "20000113",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000111", "20000112", "20000113"],
@@ -2317,14 +2231,13 @@ class TestExpenseForecastUnit:
                 BudgetSet.BudgetSet(
                     [
                         BudgetItem.BudgetItem(
-                            "20000112",
-                            "20000112",
+                            datetime.datetime.strptime("20000102","%Y%m%d"),
+                            datetime.datetime.strptime("20000102","%Y%m%d"),
                             2,
                             "once",
                             1000,
                             "test credit payment 1",
-                            False,
-                            True,
+                            partial_payment_allowed=True,
                         )
                     ]
                 ),
@@ -2334,9 +2247,9 @@ class TestExpenseForecastUnit:
                         MemoRule.MemoRule(".*", "Checking", "Credit", 2),
                     ]
                 ),
-                "20000111",
+                datetime.datetime.strptime("20000105","%Y%m%d"),
                 "20000113",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000111", "20000112", "20000113"],
@@ -2371,34 +2284,31 @@ class TestExpenseForecastUnit:
                 BudgetSet.BudgetSet(
                     [
                         BudgetItem.BudgetItem(
-                            "20000112",
-                            "20000112",
+                            datetime.datetime.strptime("20000102","%Y%m%d"),
+                            datetime.datetime.strptime("20000102","%Y%m%d"),
                             2,
                             "once",
                             100,
                             "test credit payment 1",
-                            False,
-                            False,
+
                         ),
                         BudgetItem.BudgetItem(
-                            "20000112",
-                            "20000112",
+                            datetime.datetime.strptime("20000102","%Y%m%d"),
+                            datetime.datetime.strptime("20000102","%Y%m%d"),
                             2,
                             "once",
                             100,
                             "test credit payment 2",
-                            False,
-                            False,
+
                         ),
                         BudgetItem.BudgetItem(
-                            "20000112",
-                            "20000112",
+                            datetime.datetime.strptime("20000102","%Y%m%d"),
+                            datetime.datetime.strptime("20000102","%Y%m%d"),
                             2,
                             "once",
                             400,
                             "cc txn",
-                            False,
-                            False,
+
                         ),
                     ]
                 ),
@@ -2411,9 +2321,9 @@ class TestExpenseForecastUnit:
                         ),
                     ]
                 ),
-                "20000111",
+                datetime.datetime.strptime("20000105","%Y%m%d"),
                 "20000113",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000111", "20000112", "20000113"],
@@ -2452,24 +2362,22 @@ class TestExpenseForecastUnit:
                 BudgetSet.BudgetSet(
                     [
                         BudgetItem.BudgetItem(
-                            "20000112",
-                            "20000112",
+                            datetime.datetime.strptime("20000102","%Y%m%d"),
+                            datetime.datetime.strptime("20000102","%Y%m%d"),
                             2,
                             "once",
                             500,
                             "test credit payment 1",
-                            False,
-                            True,
+                            partial_payment_allowed=True,
                         ),
                         BudgetItem.BudgetItem(
-                            "20000112",
-                            "20000112",
+                            datetime.datetime.strptime("20000102","%Y%m%d"),
+                            datetime.datetime.strptime("20000102","%Y%m%d"),
                             2,
                             "once",
                             500,
                             "test credit payment 2",
-                            False,
-                            True,
+                            partial_payment_allowed=True,
                         ),
                     ]
                 ),
@@ -2479,9 +2387,9 @@ class TestExpenseForecastUnit:
                         MemoRule.MemoRule(".*", "Checking", "Credit", 2),
                     ]
                 ),
-                "20000111",
+                datetime.datetime.strptime("20000105","%Y%m%d"),
                 "20000113",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000111", "20000112", "20000113"],
@@ -2523,14 +2431,13 @@ class TestExpenseForecastUnit:
                 BudgetSet.BudgetSet(
                     [
                         BudgetItem.BudgetItem(
-                            "20000111",
-                            "20000111",
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
                             2,
                             "once",
                             300,
                             "single additional payment day before due date",
-                            False,
-                            False,
+
                         )
                     ]
                 ),
@@ -2542,7 +2449,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000110",
                 "20000113",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000110", "20000111", "20000112", "20000113"],
@@ -2577,24 +2484,22 @@ class TestExpenseForecastUnit:
                 BudgetSet.BudgetSet(
                     [
                         BudgetItem.BudgetItem(
-                            "20000111",
-                            "20000111",
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
                             2,
                             "once",
                             100,
                             "first additional payment day before due date",
-                            False,
-                            False,
+
                         ),
                         BudgetItem.BudgetItem(
-                            "20000111",
-                            "20000111",
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
                             2,
                             "once",
                             100,
                             "second additional payment day before due date",
-                            False,
-                            False,
+
                         ),
                     ]
                 ),
@@ -2606,7 +2511,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000110",
                 "20000113",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000110", "20000111", "20000112", "20000113"],
@@ -2641,14 +2546,13 @@ class TestExpenseForecastUnit:
                 BudgetSet.BudgetSet(
                     [
                         BudgetItem.BudgetItem(
-                            "20000111",
-                            "20000111",
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
                             2,
                             "once",
                             1100,
                             "single additional payment day before due date",
-                            False,
-                            True,
+                            partial_payment_allowed=True,
                         )
                     ]
                 ),
@@ -2660,7 +2564,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000110",
                 "20000113",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000110", "20000111", "20000112", "20000113"],
@@ -2696,24 +2600,22 @@ class TestExpenseForecastUnit:
                 BudgetSet.BudgetSet(
                     [
                         BudgetItem.BudgetItem(
-                            "20000111",
-                            "20000111",
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
                             2,
                             "once",
                             100,
                             "test credit payment 1",
-                            False,
-                            False,
+
                         ),
                         BudgetItem.BudgetItem(
-                            "20000111",
-                            "20000111",
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
                             2,
                             "once",
                             1000,
                             "test credit payment 2",
-                            False,
-                            True,
+                            partial_payment_allowed=True,
                         ),
                     ]
                 ),
@@ -2725,7 +2627,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000110",
                 "20000113",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000110", "20000111", "20000112", "20000113"],
@@ -2760,14 +2662,13 @@ class TestExpenseForecastUnit:
                 BudgetSet.BudgetSet(
                     [
                         BudgetItem.BudgetItem(
-                            "20000111",
-                            "20000111",
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
                             2,
                             "once",
                             300,
                             "single additional payment day before due date",
-                            False,
-                            False,
+
                         )
                     ]
                 ),
@@ -2779,7 +2680,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000110",
                 "20000113",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000110", "20000111", "20000112", "20000113"],
@@ -2814,24 +2715,22 @@ class TestExpenseForecastUnit:
                 BudgetSet.BudgetSet(
                     [
                         BudgetItem.BudgetItem(
-                            "20000111",
-                            "20000111",
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
                             2,
                             "once",
                             300,
                             "txn 1",
-                            False,
-                            False,
+
                         ),
                         BudgetItem.BudgetItem(
-                            "20000111",
-                            "20000111",
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
                             2,
                             "once",
                             100,
                             "txn 2",
-                            False,
-                            False,
+
                         ),
                     ]
                 ),
@@ -2843,7 +2742,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000110",
                 "20000113",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000110", "20000111", "20000112", "20000113"],
@@ -2878,14 +2777,13 @@ class TestExpenseForecastUnit:
                 BudgetSet.BudgetSet(
                     [
                         BudgetItem.BudgetItem(
-                            "20000111",
-                            "20000111",
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
                             2,
                             "once",
                             600,
                             "single additional payment day before due date",
-                            False,
-                            True,
+                            partial_payment_allowed=True,
                         )
                     ]
                 ),
@@ -2897,7 +2795,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000110",
                 "20000113",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000110", "20000111", "20000112", "20000113"],
@@ -2932,10 +2830,10 @@ class TestExpenseForecastUnit:
                 BudgetSet.BudgetSet(
                     [
                         BudgetItem.BudgetItem(
-                            "20000111", "20000111", 2, "once", 400, "txn 1", False, True
+                            datetime.datetime.strptime("20000105","%Y%m%d"), datetime.datetime.strptime("20000105","%Y%m%d"), 2, "once", 400, "txn 1", partial_payment_allowed=True
                         ),
                         BudgetItem.BudgetItem(
-                            "20000111", "20000111", 2, "once", 400, "txn 2", False, True
+                            datetime.datetime.strptime("20000105","%Y%m%d"), datetime.datetime.strptime("20000105","%Y%m%d"), 2, "once", 400, "txn 2", partial_payment_allowed=True
                         ),
                     ]
                 ),
@@ -2947,7 +2845,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000110",
                 "20000113",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000110", "20000111", "20000112", "20000113"],
@@ -2983,14 +2881,13 @@ class TestExpenseForecastUnit:
                 BudgetSet.BudgetSet(
                     [
                         BudgetItem.BudgetItem(
-                            "20000111",
-                            "20000111",
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
                             2,
                             "once",
                             700,
                             "test credit payment 1",
-                            False,
-                            False,
+
                         )
                     ]
                 ),
@@ -3002,7 +2899,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000110",
                 "20000113",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000110", "20000111", "20000112", "20000113"],
@@ -3038,14 +2935,13 @@ class TestExpenseForecastUnit:
                 BudgetSet.BudgetSet(
                     [
                         BudgetItem.BudgetItem(
-                            "20000111",
-                            "20000111",
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
+                            datetime.datetime.strptime("20000105","%Y%m%d"),
                             2,
                             "once",
                             1000,
                             "test credit payment 1",
-                            False,
-                            True,
+                            partial_payment_allowed=True,
                         )
                     ]
                 ),
@@ -3057,7 +2953,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000110",
                 "20000113",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000110", "20000111", "20000112", "20000113"],
@@ -3123,7 +3019,7 @@ class TestExpenseForecastUnit:
                     checking_acct_list(0) + credit_bsd12_w_eopc_acct_list(0, 0, 0.05, 0)
                 ),
                 # todo implement
-                # BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 600, 'single additional payment on due date', False, False)]),
+                # BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 600, 'single additional payment on due date', )]),
                 BudgetSet.BudgetSet(),
                 MemoRuleSet.MemoRuleSet(
                     [
@@ -3133,10 +3029,10 @@ class TestExpenseForecastUnit:
                 ),
                 "20000110",
                 "20000214",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
-                        "Date": generate_date_sequence("20000110", 35, "daily"),
+                        "Date": generate_date_sequence(datetime.datetime.strptime("20000110","%Y%m%d"), 35, "daily"),
                         "Checking": [0] * 36,
                         "Credit: Curr Stmt Bal": [0] * 36,
                         "Credit: Prev Stmt Bal": [0] * 36,
@@ -3161,7 +3057,7 @@ class TestExpenseForecastUnit:
                     checking_acct_list(0) + credit_bsd12_w_eopc_acct_list(0, 0, 0.05, 0)
                 ),
                 # todo implement
-                # BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 600, 'single additional payment on due date', False, False)]),
+                # BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 600, 'single additional payment on due date', )]),
                 BudgetSet.BudgetSet(),
                 MemoRuleSet.MemoRuleSet(
                     [
@@ -3171,10 +3067,10 @@ class TestExpenseForecastUnit:
                 ),
                 "20000110",
                 "20000214",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
-                        "Date": generate_date_sequence("20000110", 35, "daily"),
+                        "Date": generate_date_sequence(datetime.datetime.strptime("20000110","%Y%m%d"), 35, "daily"),
                         "Checking": [0] * 36,
                         "Credit: Curr Stmt Bal": [0] * 36,
                         "Credit: Prev Stmt Bal": [0] * 36,
@@ -3199,7 +3095,7 @@ class TestExpenseForecastUnit:
                     checking_acct_list(0) + credit_bsd12_w_eopc_acct_list(0, 0, 0.05, 0)
                 ),
                 # todo implement
-                # BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 600, 'single additional payment on due date', False, False)]),
+                # BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 600, 'single additional payment on due date', )]),
                 BudgetSet.BudgetSet(),
                 MemoRuleSet.MemoRuleSet(
                     [
@@ -3209,10 +3105,10 @@ class TestExpenseForecastUnit:
                 ),
                 "20000110",
                 "20000214",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
-                        "Date": generate_date_sequence("20000110", 35, "daily"),
+                        "Date": generate_date_sequence(datetime.datetime.strptime("20000110","%Y%m%d"), 35, "daily"),
                         "Checking": [0] * 36,
                         "Credit: Curr Stmt Bal": [0] * 36,
                         "Credit: Prev Stmt Bal": [0] * 36,
@@ -3237,7 +3133,7 @@ class TestExpenseForecastUnit:
                     checking_acct_list(0) + credit_bsd12_w_eopc_acct_list(0, 0, 0.05, 0)
                 ),
                 # todo implement
-                # BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 600, 'single additional payment on due date', False, False)]),
+                # BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 600, 'single additional payment on due date', )]),
                 BudgetSet.BudgetSet(),
                 MemoRuleSet.MemoRuleSet(
                     [
@@ -3247,10 +3143,10 @@ class TestExpenseForecastUnit:
                 ),
                 "20000110",
                 "20000214",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
-                        "Date": generate_date_sequence("20000110", 35, "daily"),
+                        "Date": generate_date_sequence(datetime.datetime.strptime("20000110","%Y%m%d"), 35, "daily"),
                         "Checking": [0] * 36,
                         "Credit: Curr Stmt Bal": [0] * 36,
                         "Credit: Prev Stmt Bal": [0] * 36,
@@ -3275,7 +3171,7 @@ class TestExpenseForecastUnit:
                     checking_acct_list(0) + credit_bsd12_w_eopc_acct_list(0, 0, 0.05, 0)
                 ),
                 # todo implement
-                # BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 600, 'single additional payment on due date', False, False)]),
+                # BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 600, 'single additional payment on due date', )]),
                 BudgetSet.BudgetSet(),
                 MemoRuleSet.MemoRuleSet(
                     [
@@ -3285,10 +3181,10 @@ class TestExpenseForecastUnit:
                 ),
                 "20000110",
                 "20000214",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
-                        "Date": generate_date_sequence("20000110", 35, "daily"),
+                        "Date": generate_date_sequence(datetime.datetime.strptime("20000110","%Y%m%d"), 35, "daily"),
                         "Checking": [0] * 36,
                         "Credit: Curr Stmt Bal": [0] * 36,
                         "Credit: Prev Stmt Bal": [0] * 36,
@@ -3313,7 +3209,7 @@ class TestExpenseForecastUnit:
                     checking_acct_list(0) + credit_bsd12_w_eopc_acct_list(0, 0, 0.05, 0)
                 ),
                 # todo implement
-                # BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 600, 'single additional payment on due date', False, False)]),
+                # BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000112', '20000112', 2, 'once', 600, 'single additional payment on due date', )]),
                 BudgetSet.BudgetSet(),
                 MemoRuleSet.MemoRuleSet(
                     [
@@ -3323,10 +3219,10 @@ class TestExpenseForecastUnit:
                 ),
                 "20000110",
                 "20000214",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
-                        "Date": generate_date_sequence("20000110", 35, "daily"),
+                        "Date": generate_date_sequence(datetime.datetime.strptime("20000110","%Y%m%d"), 35, "daily"),
                         "Checking": [0] * 36,
                         "Credit: Curr Stmt Bal": [0] * 36,
                         "Credit: Prev Stmt Bal": [0] * 36,
@@ -3388,9 +3284,7 @@ class TestExpenseForecastUnit:
                 ),
                 BudgetSet.BudgetSet(
                     [
-                        BudgetItem.BudgetItem(
-                            "20000102",
-                            "20000102",
+                        BudgetItem.BudgetItem(datetime.datetime.strptime("20000102","%Y%m%d"),datetime.datetime.strptime("20000102","%Y%m%d"),
                             7,
                             "once",
                             10,
@@ -3408,7 +3302,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000101",
                 "20000103",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000101", "20000102", "20000103"],
@@ -3452,9 +3346,7 @@ class TestExpenseForecastUnit:
                 ),
                 BudgetSet.BudgetSet(
                     [
-                        BudgetItem.BudgetItem(
-                            "20000102",
-                            "20000102",
+                        BudgetItem.BudgetItem(datetime.datetime.strptime("20000102","%Y%m%d"),datetime.datetime.strptime("20000102","%Y%m%d"),
                             7,
                             "once",
                             110,
@@ -3472,7 +3364,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000101",
                 "20000103",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000101", "20000102", "20000103"],
@@ -3521,9 +3413,7 @@ class TestExpenseForecastUnit:
                 ),
                 BudgetSet.BudgetSet(
                     [
-                        BudgetItem.BudgetItem(
-                            "20000102",
-                            "20000102",
+                        BudgetItem.BudgetItem(datetime.datetime.strptime("20000102","%Y%m%d"),datetime.datetime.strptime("20000102","%Y%m%d"),
                             7,
                             "once",
                             560,
@@ -3541,7 +3431,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000101",
                 "20000103",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000101", "20000102", "20000103"],
@@ -3589,9 +3479,7 @@ class TestExpenseForecastUnit:
                 ),
                 BudgetSet.BudgetSet(
                     [
-                        BudgetItem.BudgetItem(
-                            "20000102",
-                            "20000102",
+                        BudgetItem.BudgetItem(datetime.datetime.strptime("20000102","%Y%m%d"),datetime.datetime.strptime("20000102","%Y%m%d"),
                             7,
                             "once",
                             610,
@@ -3609,7 +3497,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000101",
                 "20000103",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000101", "20000102", "20000103"],
@@ -3657,9 +3545,7 @@ class TestExpenseForecastUnit:
                 ),
                 BudgetSet.BudgetSet(
                     [
-                        BudgetItem.BudgetItem(
-                            "20000102",
-                            "20000102",
+                        BudgetItem.BudgetItem(datetime.datetime.strptime("20000102","%Y%m%d"),datetime.datetime.strptime("20000102","%Y%m%d"),
                             7,
                             "once",
                             1900,
@@ -3677,7 +3563,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000101",
                 "20000103",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000101", "20000102", "20000103"],
@@ -3733,9 +3619,7 @@ class TestExpenseForecastUnit:
                 ),
                 BudgetSet.BudgetSet(
                     [
-                        BudgetItem.BudgetItem(
-                            "20000102",
-                            "20000102",
+                        BudgetItem.BudgetItem(datetime.datetime.strptime("20000102","%Y%m%d"),datetime.datetime.strptime("20000102","%Y%m%d"),
                             7,
                             "once",
                             3500,
@@ -3753,7 +3637,7 @@ class TestExpenseForecastUnit:
                 ),
                 "20000101",
                 "20000103",
-                MilestoneSet.MilestoneSet([], [], []),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": ["20000101", "20000102", "20000103"],
@@ -3882,7 +3766,7 @@ class TestExpenseForecastUnit:
     # (
     #         'test_p5_and_6__expect_defer',
     #         AccountSet.AccountSet(checking_acct_list(1000)),
-    #         BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000102', '20000102', 5, 'once', 100, 'p5 txn 1/2/00', False, False),
+    #         BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000102', '20000102', 5, 'once', 100, 'p5 txn 1/2/00', ),
     #                              BudgetItem.BudgetItem('20000102', '20000102', 6, 'once', 1000, 'p6 deferrable txn 1/2/00', True, False),
     #                              ]),
     #         MemoRuleSet.MemoRuleSet( [
@@ -3914,8 +3798,8 @@ class TestExpenseForecastUnit:
     #             'test_p5_and_6__expect_defer__daily',
     #             AccountSet.AccountSet(checking_acct_list(1000)),
     #             BudgetSet.BudgetSet(
-    #                 [BudgetItem.BudgetItem('20000102', '20000102', 5, 'once', 100, 'p5 txn 1/2/00', False, False),
-    #                  BudgetItem.BudgetItem('20000103', '20000103', 1, 'once', 100, 'income 1/3/00', False, False),
+    #                 [BudgetItem.BudgetItem('20000102', '20000102', 5, 'once', 100, 'p5 txn 1/2/00', ),
+    #                  BudgetItem.BudgetItem('20000103', '20000103', 1, 'once', 100, 'income 1/3/00', ),
     #                  BudgetItem.BudgetItem('20000102', '20000102', 6, 'once', 1000, 'p6 deferrable txn 1/2/00', True, False),
     #                  ]),
     #             MemoRuleSet.MemoRuleSet([
@@ -4011,32 +3895,26 @@ class TestExpenseForecastUnit:
                 AccountSet.AccountSet(checking_acct_list(1000)),
                 BudgetSet.BudgetSet(
                     [
-                        BudgetItem.BudgetItem(
-                            "20000102",
-                            "20000102",
+                        BudgetItem.BudgetItem(datetime.datetime.strptime("20000102","%Y%m%d"),datetime.datetime.strptime("20000102","%Y%m%d"),
                             1,
                             "once",
                             100,
                             "income 1",
-                            False,
-                            False,
+
                         ),
-                        BudgetItem.BudgetItem(
-                            "20000104",
-                            "20000104",
+                        BudgetItem.BudgetItem(datetime.datetime.strptime("20000104","%Y%m%d"),datetime.datetime.strptime("20000104","%Y%m%d"),
                             1,
                             "once",
                             100,
                             "income 2",
-                            False,
-                            False,
+
                         ),
                     ]
                 ),
                 MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(".*", None, "Checking", 1)]),
                 "20000101",
-                "20000105",
-                MilestoneSet.MilestoneSet([], [], []),
+                datetime.datetime.strptime("20000105","%Y%m%d"),
+                MilestoneSet.MilestoneSet(),
                 pd.DataFrame(
                     {
                         "Date": [
@@ -4149,9 +4027,7 @@ class TestExpenseForecastUnit:
             priority=2,
             cadence="once",
             amount=0,
-            memo="test memo",
-            deferrable=False,
-            partial_payment_allowed=False,
+            memo="test memo"
         )
 
         memo_rule_set.addMemoRule(
@@ -4245,9 +4121,7 @@ class TestExpenseForecastUnit:
             priority=1,
             cadence="daily",
             amount=0,
-            memo="dummy memo",
-            deferrable=False,
-            partial_payment_allowed=False,
+            memo="dummy memo"
         )
 
         memo_rule_set.addMemoRule(
@@ -4296,10 +4170,10 @@ class TestExpenseForecastUnit:
     #         checking_acct_list(2000) + credit_acct_list(100, 100, 0.01) + non_trivial_loan('test loan', 100, 0, 0.01))
     #
     #     B = BudgetSet.BudgetSet(
-    #         [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'p1 daily txn 1/2/00', False, False),
-    #          BudgetItem.BudgetItem('20000103', '20000103', 2, 'once', 100, 'p2 daily txn 1/3/00', False, False),
-    #          BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', False, False),
-    #          BudgetItem.BudgetItem('20010101', '20010101', 3, 'once', 100, 'specific regex 2', False, False)
+    #         [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'p1 daily txn 1/2/00', ),
+    #          BudgetItem.BudgetItem('20000103', '20000103', 2, 'once', 100, 'p2 daily txn 1/3/00', ),
+    #          BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', ),
+    #          BudgetItem.BudgetItem('20010101', '20010101', 3, 'once', 100, 'specific regex 2', )
     #          ]
     #     )
     #     M = MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*',
@@ -4366,10 +4240,10 @@ class TestExpenseForecastUnit:
     #         checking_acct_list(2000) + credit_acct_list(100, 100, 0.01) + non_trivial_loan('test loan', 100, 0, 0.01))
     #
     #     B = BudgetSet.BudgetSet(
-    #         [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'p1 daily txn 1/2/00', False, False),
-    #          BudgetItem.BudgetItem('20000103', '20000103', 2, 'once', 100, 'p2 daily txn 1/3/00', False, False),
-    #          BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', False, False),
-    #          BudgetItem.BudgetItem('20010101', '20010101', 3, 'once', 100, 'specific regex 2', False, False)
+    #         [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'p1 daily txn 1/2/00', ),
+    #          BudgetItem.BudgetItem('20000103', '20000103', 2, 'once', 100, 'p2 daily txn 1/3/00', ),
+    #          BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', ),
+    #          BudgetItem.BudgetItem('20010101', '20010101', 3, 'once', 100, 'specific regex 2', )
     #          ]
     #     )
     #     M = MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*',
@@ -4458,10 +4332,10 @@ class TestExpenseForecastUnit:
     #         checking_acct_list(2000) + credit_acct_list(100, 100, 0.01) + non_trivial_loan('test loan', 100, 0, 0.01))
     #
     #     B = BudgetSet.BudgetSet(
-    #         [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'p1 daily txn 1/2/00', False, False),
-    #          BudgetItem.BudgetItem('20000103', '20000103', 2, 'once', 100, 'p2 daily txn 1/3/00', False, False),
-    #          BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', False, False),
-    #          BudgetItem.BudgetItem('20010101', '20010101', 3, 'once', 100, 'specific regex 2', False, False)
+    #         [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'p1 daily txn 1/2/00', ),
+    #          BudgetItem.BudgetItem('20000103', '20000103', 2, 'once', 100, 'p2 daily txn 1/3/00', ),
+    #          BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', ),
+    #          BudgetItem.BudgetItem('20010101', '20010101', 3, 'once', 100, 'specific regex 2', )
     #          ]
     #     )
     #     M = MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*',
@@ -4548,9 +4422,9 @@ class TestExpenseForecastUnit:
     #         checking_acct_list(2000) + credit_acct_list(100, 100, 0.01) + non_trivial_loan('test loan', 100, 0, 0.01))
     #
     #     B = BudgetSet.BudgetSet(
-    #         [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'p1 daily txn 1/2/00', False, False),
-    #          BudgetItem.BudgetItem('20000103', '20000103', 2, 'once', 100, 'p2 daily txn 1/3/00', False, False),
-    #          BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', False, False)
+    #         [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'p1 daily txn 1/2/00', ),
+    #          BudgetItem.BudgetItem('20000103', '20000103', 2, 'once', 100, 'p2 daily txn 1/3/00', ),
+    #          BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', )
     #          ]
     #     )
     #     M = MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*',
@@ -4640,9 +4514,9 @@ class TestExpenseForecastUnit:
     #         checking_acct_list(2000) + credit_acct_list(100, 100, 0.01) + non_trivial_loan('test loan', 100, 0, 0.01))
     #
     #     B = BudgetSet.BudgetSet(
-    #         [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'p1 daily txn 1/2/00', False, False),
-    #          BudgetItem.BudgetItem('20000103', '20000103', 2, 'once', 100, 'p2 daily txn 1/3/00', False, False),
-    #          BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', False, False)
+    #         [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'p1 daily txn 1/2/00', ),
+    #          BudgetItem.BudgetItem('20000103', '20000103', 2, 'once', 100, 'p2 daily txn 1/3/00', ),
+    #          BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', )
     #          ]
     #     )
     #     M = MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*',
@@ -4726,9 +4600,9 @@ class TestExpenseForecastUnit:
     #         checking_acct_list(2000) + credit_acct_list(100, 100, 0.01) + non_trivial_loan('test loan', 100, 0, 0.01))
     #
     #     B = BudgetSet.BudgetSet(
-    #         [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'p1 daily txn 1/2/00', False, False),
-    #          BudgetItem.BudgetItem('20000103', '20000103', 2, 'once', 100, 'p2 daily txn 1/3/00', False, False),
-    #          BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', False, False)
+    #         [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'p1 daily txn 1/2/00', ),
+    #          BudgetItem.BudgetItem('20000103', '20000103', 2, 'once', 100, 'p2 daily txn 1/3/00', ),
+    #          BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', )
     #          ]
     #     )
     #     M = MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*',
@@ -4813,9 +4687,9 @@ class TestExpenseForecastUnit:
     #
     #     A = AccountSet.AccountSet(checking_acct_list(2000) + credit_acct_list(100,100,0.01) + non_trivial_loan('test loan',100,0,0.01))
     #     B = BudgetSet.BudgetSet(
-    #         [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'p1 daily txn 1/2/00', False, False),
-    #          BudgetItem.BudgetItem('20000102', '20000102', 2, 'once', 100, 'p2 daily txn 1/2/00', False, False),
-    #          BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', False, False)
+    #         [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'p1 daily txn 1/2/00', ),
+    #          BudgetItem.BudgetItem('20000102', '20000102', 2, 'once', 100, 'p2 daily txn 1/2/00', ),
+    #          BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', )
     #          ]
     #     )
     #     M = MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*',
@@ -4883,9 +4757,9 @@ class TestExpenseForecastUnit:
     #
     #     A = AccountSet.AccountSet(checking_acct_list(2000) + credit_acct_list(100,100,0.01) + non_trivial_loan('test loan',100,0,0.01))
     #     B = BudgetSet.BudgetSet(
-    #         [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'specific regex', False, False),
-    #          BudgetItem.BudgetItem('20000102', '20000102', 2, 'once', 100, 'specific regex 2', False, False),
-    #          BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', False, False)
+    #         [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'specific regex', ),
+    #          BudgetItem.BudgetItem('20000102', '20000102', 2, 'once', 100, 'specific regex 2', ),
+    #          BudgetItem.BudgetItem('20000104', '20000104', 3, 'once', 100, 'p3 daily txn 1/4/00', )
     #          ]
     #     )
     #     M = MemoRuleSet.MemoRuleSet([MemoRule.MemoRule(memo_regex='.*',
@@ -4987,8 +4861,6 @@ class TestExpenseForecastUnit:
             cadence="daily",
             amount=50,
             memo="dummy memo",
-            deferrable=False,
-            partial_payment_allowed=False,
         )
 
         memo_rule_set.addMemoRule(
@@ -5053,7 +4925,9 @@ class TestExpenseForecastUnit:
                 BudgetSet.BudgetSet(
                     [
                         BudgetItem.BudgetItem(
-                            "20000102", "20000102", 1, "once", 10, "test txn"
+                            datetime.datetime.strptime("20000102",'%Y%m%d'),
+                            datetime.datetime.strptime("20000102",'%Y%m%d'),
+                            1, "once", 10, "test txn"
                         )
                     ]
                 ),
@@ -5061,13 +4935,11 @@ class TestExpenseForecastUnit:
                 "20000101",
                 "20000103",
                 MilestoneSet.MilestoneSet(
-                    [
+                    account_milestones=[
                         AccountMilestone.AccountMilestone(
                             "test account milestone", "Checking", 0, 0
                         )
                     ],
-                    [],
-                    [],
                 ),
                 ["test account milestone"],
                 ["20000102"],
@@ -5124,7 +4996,7 @@ class TestExpenseForecastUnit:
                 BudgetSet.BudgetSet(
                     [
                         BudgetItem.BudgetItem(
-                            "20000102", "20000102", 1, "once", 10, "memo milestone"
+                            datetime.datetime.strptime("20000102",'%Y%m%d'), datetime.datetime.strptime("20000102",'%Y%m%d'), 1, "once", 10, "memo milestone"
                         )
                     ]
                 ),
@@ -5132,16 +5004,14 @@ class TestExpenseForecastUnit:
                 "20000101",
                 "20000103",
                 MilestoneSet.MilestoneSet(
-                    [],
-                    [
+                    memo_milestones=[
                         MemoMilestone.MemoMilestone(
                             "test memo milestone", "memo milestone"
                         )
                     ],
-                    [],
                 ),
                 ["test memo milestone"],
-                ["20000102"],
+                [datetime.datetime.strptime("20000102",'%Y%m%d')],
             ),
         ],
     )
@@ -5194,7 +5064,7 @@ class TestExpenseForecastUnit:
                 BudgetSet.BudgetSet(
                     [
                         BudgetItem.BudgetItem(
-                            "20000102", "20000102", 1, "once", 10, "memo milestone"
+                            datetime.datetime.strptime("20000102",'%Y%m%d'), datetime.datetime.strptime("20000102",'%Y%m%d'), 1, "once", 10, "memo milestone"
                         )
                     ]
                 ),
@@ -5202,17 +5072,17 @@ class TestExpenseForecastUnit:
                 "20000101",
                 "20000103",
                 MilestoneSet.MilestoneSet(
-                    [
+                    account_milestones=[
                         AccountMilestone.AccountMilestone(
                             "test account milestone", "Checking", 0, 0
                         )
                     ],
-                    [
+                    memo_milestones=[
                         MemoMilestone.MemoMilestone(
                             "test memo milestone", "memo milestone"
                         )
                     ],
-                    [
+                    composite_milestones=[
                         CompositeMilestone.CompositeMilestone(
                             "test composite milestone",
                             [
@@ -5229,7 +5099,7 @@ class TestExpenseForecastUnit:
                     ],
                 ),
                 ["test composite milestone"],
-                ["20000102"],
+                [datetime.datetime.strptime("20000102",'%Y%m%d')],
             ),
         ],
     )

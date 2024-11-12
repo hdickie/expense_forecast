@@ -37,9 +37,9 @@ class BudgetItem:
         assert len(memo.strip()) > 0
         assert ';' not in memo
 
-    def __init__(self, start_date, end_date, priority, cadence, amount, memo, income_flag=False, **kwargs):
+    def __init__(self, start_date, end_date, priority, cadence, amount, memo, **kwargs):
 
-        allowed_kwargs = ['deferrable','partial_payment_allowed']
+        allowed_kwargs = ['deferrable','partial_payment_allowed', 'income_flag']
         for key in kwargs:
            if key not in allowed_kwargs:
                raise TypeError(f"Unexpected keyword argument '{key}'")
@@ -61,19 +61,23 @@ class BudgetItem:
         self.memo = memo
         BudgetItem._validate_memo(self.memo)
 
-        self.income_flag = income_flag
-        assert income_flag == bool(income_flag)
+        # todo this may not be best practice bc this behaves like an optional parameters
+        # but it is not obvious from looking at the method signature? Genuinely don't know
+        self.income_flag = kwargs.get('income_flag',False)
+        assert self.income_flag == bool(self.income_flag)
 
         if 'deferrable' in kwargs:
-            self.deferrable = kwargs['deferrable']
-            assert self.deferrable == bool(kwargs['deferrable'])
+            assert kwargs['deferrable'] == bool(kwargs['deferrable'])
+        self.deferrable = kwargs.get('deferrable', False)
+
 
         if 'partial_payment_allowed' in kwargs:
-            self.partial_payment_allowed = kwargs['partial_payment_allowed']
-            assert self.partial_payment_allowed == bool(kwargs['partial_payment_allowed'])
+            assert kwargs['partial_payment_allowed'] == bool(kwargs['partial_payment_allowed'])
+        self.partial_payment_allowed = kwargs.get('partial_payment_allowed',False)
+
 
         # Additional validations
-        if income_flag:
+        if 'income_flag' in kwargs:
             assert self.priority == 1
             assert not self.deferrable
             assert not self.partial_payment_allowed

@@ -1,11 +1,11 @@
 import pytest
 import BudgetItem, BudgetSet
-
+import datetime
 
 def example_budget_item():
     return BudgetItem.BudgetItem(
-        start_date_YYYYMMDD="20000101",
-        end_date_YYYYMMDD="20000101",
+        start_date=datetime.datetime.strptime("20000101",'%Y%m%d'),
+        end_date=datetime.datetime.strptime("20000101",'%Y%m%d'),
         priority=1,
         cadence="once",
         amount=10,

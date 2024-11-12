@@ -35,14 +35,21 @@ class MemoRuleSet:
         if memo_rules__list is None:
             return
 
-        required_attributes = ['memo_regex', 'account_from', 'account_to', 'transaction_priority']
+        required_attributes = ['memo_regex',
+                               'account_from',
+                               'account_to',
+                               'transaction_priority',
+                               'to_json']
 
         for memo_rule in memo_rules__list:
 
             # not perfect but good enough
             non_builtin_attr = [x for x in dir(memo_rule) if '__' not in x]
             for attr in non_builtin_attr:
-                assert attr in required_attributes
+                try:
+                    assert attr in required_attributes
+                except Exception:
+                    raise ValueError('Unrecognized attribute on MemoRuleSet: '+str(attr))
 
             for required_attr in required_attributes:
                 assert required_attr in non_builtin_attr

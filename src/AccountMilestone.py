@@ -5,9 +5,15 @@ import jsonpickle
 class AccountMilestone:
     def __init__(self, Milestone_Name, Account_Name, Min_Balance, Max_Balance):
         self.milestone_name = Milestone_Name
+        assert self.milestone_name is not None
+
         self.account_name = Account_Name
+        assert self.account_name is not None
+        assert ';' not in self.account_name
+
         self.min_balance = float(Min_Balance)
         self.max_balance = float(Max_Balance)
+
         assert Min_Balance <= Max_Balance
 
     def __str__(self):

@@ -51,9 +51,15 @@ class BudgetSet:
             "priority",
             "cadence",
             "amount",
-            "income_flag"
+            "memo",
+            "_validate_amount",
+            "_validate_memo",
+            "_validate_priority",
+            "_validate_cadence",
+            "_validate_start_and_end_date",
+            "to_json"
         ]
-        allowed_kwargs = ["deferrable", "partial_payment_allowed"]
+        allowed_kwargs = ["deferrable", "partial_payment_allowed","income_flag"]
 
         self.budget_items = []
         for budget_item in budget_items__list:
@@ -61,7 +67,10 @@ class BudgetSet:
             # not perfect but good enough
             non_builtin_attr = [x for x in dir(budget_item) if '__' not in x]
             for attr in non_builtin_attr:
-                assert attr in required_attributes or attr in allowed_kwargs
+                try:
+                    assert attr in required_attributes or attr in allowed_kwargs
+                except Exception:
+                    raise ValueError('Unrecognized attribute on BudgetItem: '+str(attr))
 
             for required_attr in required_attributes:
                 assert required_attr in non_builtin_attr

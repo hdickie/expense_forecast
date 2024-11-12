@@ -6,13 +6,56 @@ import pandas as pd
 
 class CompositeMilestone:
 
-    def __init__(self, milestone_name, account_milestones__list, memo_milestones__list):
+    @staticmethod
+    def _validate_account_milestones(account_milestones):
+
+        account_milestone_required_attributes = ['milestone_name',
+                                                 'account_name',
+                                                 'min_balance',
+                                                 'max_balance',
+                                                 'to_json']
+
+        for account_milestone in account_milestones:
+            for attr in account_milestone_required_attributes:
+                if not hasattr(account_milestone, attr):
+                    raise TypeError("AccountMilestone did not have expected attribute: " + str(attr))
+
+            non_builtin_attr = [x for x in dir(account_milestone) if '__' not in x]
+            for attr in non_builtin_attr:
+                assert attr in account_milestone_required_attributes
+
+    @staticmethod
+    def _validate_memo_milestones(memo_milestones):
+        memo_milestone_required_attributes = ['milestone_name', 'memo_regex', 'to_json']
+
+        for memo_milestone in memo_milestones:
+            for attr in memo_milestone_required_attributes:
+                if not hasattr(memo_milestone, attr):
+                    raise TypeError("MemoMilestone did not have expected attribute: " + str(attr))
+
+            non_builtin_attr = [x for x in dir(memo_milestone) if '__' not in x]
+            for attr in non_builtin_attr:
+                assert attr in memo_milestone_required_attributes
+
+
+    def __init__(self, milestone_name, account_milestones, memo_milestones):
         self.milestone_name = milestone_name
 
-        # todo validate required attributes (memo as well) https://github.com/hdickie/expense_forecast/issues/16
-        self.account_milestones = account_milestones__list
+        self.account_milestones = account_milestones
+        CompositeMilestone._validate_account_milestones(self.account_milestones)
 
-        self.memo_milestones = memo_milestones__list
+        self.memo_milestones = memo_milestones
+        CompositeMilestone._validate_memo_milestones(self.memo_milestones)
+
+        #todo validate unique names
+
+
+
+
+
+
+
+
 
     def __str__(self):
 

@@ -377,6 +377,10 @@ class AccountSet:
 
     @staticmethod
     def _validate_related_loan_account_balances(loan_account_rows_df):
+
+        if loan_account_rows_df.shape[0] == 0:
+            return
+
         loan_account_names = loan_account_rows_df.Name.apply(
             lambda x: x.split(":")[0].strip()
         ).unique()
@@ -401,21 +405,21 @@ class AccountSet:
                 )
             ]
 
-        if (
-                pb_account.Min_Balance.values[0]
-                != interest_account.Min_Balance.values[0]
-        ):
-            raise ValueError(
-                f"Min_Balance mismatch between Principal Balance and Interest accounts for '{acct_name}'."
-            )
+            if (
+                    pb_account.Min_Balance.values[0]
+                    != interest_account.Min_Balance.values[0]
+            ):
+                raise ValueError(
+                    f"Min_Balance mismatch between Principal Balance and Interest accounts for '{acct_name}'."
+                )
 
-        if (
-                pb_account.Max_Balance.values[0]
-                != interest_account.Max_Balance.values[0]
-        ):
-            raise ValueError(
-                f"Max_Balance mismatch between Principal Balance and Interest accounts for '{acct_name}'."
-            )
+            if (
+                    pb_account.Max_Balance.values[0]
+                    != interest_account.Max_Balance.values[0]
+            ):
+                raise ValueError(
+                    f"Max_Balance mismatch between Principal Balance and Interest accounts for '{acct_name}'."
+                )
 
         # todo add validation for Loan Billing Cycle Payment Bal and Loan Prev End of Cycle Bal #https://github.com/hdickie/expense_forecast/issues/12
 
@@ -437,7 +441,7 @@ class AccountSet:
 
     @staticmethod
     def _validate_unique_names(accounts_df):
-        raise NotImplementedError
+        assert len(accounts_df.Name) == len(set(accounts_df.Name))
 
     def __init__(self, accounts_list=None):
 
@@ -1629,13 +1633,33 @@ class AccountSet:
             # old line
             # all_accounts_df = pd.concat([all_accounts_df, new_account_row_df], axis=0)
 
+            column_types = {'Name':'str',
+                            'Balance':'float64',
+                            'Min_Balance':'float64',
+                            'Max_Balance':'float64',
+                            'Account_Type':'str',
+                            'Billing_Start_Date':'datetime64[ns]',
+                            'Interest_Type':'str',
+                            'APR':'float64',
+                            'Interest_Cadence':'str',
+                            'Minimum_Payment':'float64',
+                            'Primary_Checking_Ind':'bool'}
+
+
             # new line
             if all_accounts_df.shape[0] == 0:
                 all_accounts_df = new_account_row_df
             else:
-                all_accounts_df = pd.concat(
-                    [all_accounts_df, new_account_row_df.astype(all_accounts_df.dtypes)]
-                )
+                # print('all_accounts_df:')
+                # print(all_accounts_df.to_string())
+                try:
+                    all_accounts_df = pd.concat(
+                        [all_accounts_df, new_account_row_df.astype(column_types)]
+                    )
+                except Exception as e:
+                    print(all_accounts_df.dtypes)
+                    print(new_account_row_df.to_string())
+                    raise e
 
             all_accounts_df.reset_index(drop=True, inplace=True)
 

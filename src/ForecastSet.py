@@ -22,17 +22,17 @@ import hashlib
 import psycopg2
 import datetime
 
-thread_id = str(math.floor(random.random() * 1000))
-try:
-    logger = setup_logger(
-        __name__,
-        os.environ["EF_LOG_DIR"] + __name__ + "_" + thread_id + ".log",
-        level=logging.INFO,
-    )
-except KeyError:
-    logger = setup_logger(
-        __name__, __name__ + "_" + thread_id + ".log", level=logging.INFO
-    )
+# thread_id = str(math.floor(random.random() * 1000))
+# try:
+#     logger = setup_logger(
+#         __name__,
+#         os.environ["EF_LOG_DIR"] + __name__ + "_" + thread_id + ".log",
+#         level=logging.INFO,
+#     )
+# except KeyError:
+logger = setup_logger(
+    __name__, __name__ + "_" + thread_id + ".log", level=logging.INFO
+)
 
 
 def initialize_from_json_string(json_string):

@@ -17,17 +17,21 @@ class MemoRule:
         re.compile(self.memo_regex) #will raise error if not valid
 
         self.account_from = account_from
-        assert self.account_from == str(self.account_from)
-        assert len(self.account_from.strip()) > 0
-        assert ';' not in self.account_from
-        assert self.account_from != 'ALL_LOANS' #this can be account_to
+        if self.account_from is not None:
+            assert self.account_from == str(self.account_from)
+            assert len(self.account_from.strip()) > 0
+            assert ';' not in self.account_from
+            assert self.account_from != 'ALL_LOANS' #this can be account_to
 
         self.account_to = account_to
-        assert self.account_to == str(self.account_to)
-        assert len(self.account_to.strip()) > 0
-        assert ';' not in self.account_to
+        if self.account_to is not None:
+            assert self.account_to == str(self.account_to)
+            assert len(self.account_to.strip()) > 0
+            assert ';' not in self.account_to
 
         assert self.account_from != self.account_to
+        if self.account_from is None:
+            assert self.account_to is not None
 
         self.transaction_priority = transaction_priority
         assert self.transaction_priority == int(self.transaction_priority)
