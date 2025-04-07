@@ -1,15 +1,12 @@
-import Account
+from . import Account
 import pandas as pd
 import copy
-from log_methods import log_in_color
+# from log_methods import log_in_color
 import logging
 import numpy as np
-import BudgetSet  # this could be refactored out, and should be in terms of independent dependencies and clear organization, but it works
+from . import BudgetSet  # this could be refactored out, and should be in terms of independent dependencies and clear organization, but it works
 import jsonpickle
-from log_methods import setup_logger
-
-# logger = setup_logger('AccountSet','./log/AccountSet.log',logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("core.AccountSet")
 
 ROUNDING_ERROR_TOLERANCE = 0.0000000001
 
@@ -164,224 +161,279 @@ def initialize_from_dataframe(accounts_df):
 
 class AccountSet:
 
-    def __init__(
-        self, accounts_list=None, print_debug_messages=True, raise_exceptions=True
-    ):
-        """
-        Creates an AccountSet object. Possible Account Types are: Checking, Credit, Loan, Savings. Consistency is checked.
+    @classmethod
+    def empty(cls):
+        """Return a new empty AccountSet."""
+        return cls(accounts=[], validate=False)
 
-        :param list accounts_list: A list of Account objects. Empty list by default. Consistency is checked.
-        :raises ValueError: if the combination of input parameters is not valid.
-        :raises TypeError: if members of input list do not have the methods and attributes of an Account object.
-        :rtype: AccountSet
+    @classmethod
+    def from_accounts(cls, account_list: list):
+        """Construct from a list of Account objects."""
+        return cls(account_list)
 
-        | Reasons for ValueError exception:
-        | Combined balance between prev and curr violate account boundaries.
-        | Accounts that are related (as implied by name) have different parameters.
-        | A principal balance account was input without an interest account, vice versa, and etc.
+    @classmethod
+    def from_raw(cls, raw_dict: dict):
+        """Construct from unvalidated raw input."""
+        accounts = [Account(**data) for data in raw_dict["accounts"]]
+        return cls(accounts)
 
-        | Creating an AccountSet without passing parameters is a valid thing to do.
+    @classmethod
+    def from_storage(cls, raw_dict: dict):
+        """Construct from known-good storage."""
+        accounts = [Account(**data) for data in raw_dict["accounts"]]
+        return cls(accounts, validate=False)
 
-        >>> AccountSet()
-        Empty DataFrame
-        Columns: [Name, Balance, Min_Balance, Max_Balance, Account_Type, Billing_Start_Dt, Interest_Type, APR, Interest_Cadence, Minimum_Payment]
-        Index: []
+    @classmethod
+    def from_dataframe(cls, df: pd.DataFrame):
+        ...
+    
+    @classmethod
+    def from_excel(cls, path: str):
+        ...
+    
+    @classmethod
+    def from_db(cls, result):
+        ...
 
-        | If you want to pass a list of Accounts explicitly you can do that as well.
 
 
-        """
 
-        # runForecast can set this so we don't waste compute figuring it out every time
-        self.primary_checking_account_name = None
+    def to_storage_dict(self) -> dict:
+        """Serialize for persistence"""
+        return {
+            "accounts": [a.dict() for a in self.accounts],
+            "_meta": {
+                "schema_version": "0.1.0"
+            }
+        }
+    
+    def __init__(self, accounts: list, validate: bool = True):
+        self.accounts = accounts
+        if validate:
+            self._validate()
 
-        if accounts_list is None:
-            accounts_list = []
+    def _validate(self):
+        # Your business rule validation here
+        ...
 
-        self.accounts = accounts_list
+    # def __init__(
+    #     self, accounts_list=None, print_debug_messages=True, raise_exceptions=True
+    # ):
+    #     """
+    #     Creates an AccountSet object. Possible Account Types are: Checking, Credit, Loan, Savings. Consistency is checked.
 
-        if not self.accounts:
-            return
+    #     :param list accounts_list: A list of Account objects. Empty list by default. Consistency is checked.
+    #     :raises ValueError: if the combination of input parameters is not valid.
+    #     :raises TypeError: if members of input list do not have the methods and attributes of an Account object.
+    #     :rtype: AccountSet
 
-        required_attributes = [
-            "name",
-            "balance",
-            "min_balance",
-            "max_balance",
-            "account_type",
-            "billing_start_date_YYYYMMDD",
-            "interest_type",
-            "apr",
-            "interest_cadence",
-            "minimum_payment",
-        ]
+    #     | Reasons for ValueError exception:
+    #     | Combined balance between prev and curr violate account boundaries.
+    #     | Accounts that are related (as implied by name) have different parameters.
+    #     | A principal balance account was input without an interest account, vice versa, and etc.
 
-        for account in self.accounts:
-            if not all(hasattr(account, attr) for attr in required_attributes):
-                raise TypeError("All accounts must have the required attributes.")
+    #     | Creating an AccountSet without passing parameters is a valid thing to do.
 
-        accounts_df = self.getAccounts()
+    #     >>> AccountSet()
+    #     Empty DataFrame
+    #     Columns: [Name, Balance, Min_Balance, Max_Balance, Account_Type, Billing_Start_Dt, Interest_Type, APR, Interest_Cadence, Minimum_Payment]
+    #     Index: []
 
-        loan_accounts = accounts_df[
-            accounts_df.Account_Type.isin(
-                [
-                    "principal balance",
-                    "interest",
-                    "loan billing cycle payment bal",
-                    "loan end of prev cycle bal",
-                ]
-            )
-        ]
-        credit_accounts = accounts_df[
-            accounts_df.Account_Type.isin(
-                [
-                    "credit prev stmt bal",
-                    "credit curr stmt bal",
-                    "credit billing cycle payment bal",
-                    "credit end of prev cycle bal",
-                ]
-            )
-        ]
+    #     | If you want to pass a list of Accounts explicitly you can do that as well.
 
-        loan_account_names = loan_accounts.Name.apply(
-            lambda x: x.split(":")[0].strip()
-        ).unique()
-        credit_account_names = credit_accounts.Name.apply(
-            lambda x: x.split(":")[0].strip()
-        ).unique()
 
-        for acct_name in loan_account_names:
+    #     """
 
-            pb_account = loan_accounts[
-                loan_accounts.Name.str.contains(
-                    f"{acct_name}: Principal Balance", regex=False
-                )
-            ]
-            interest_account = loan_accounts[
-                loan_accounts.Name.str.contains(f"{acct_name}: Interest", regex=False)
-            ]
-            bcp_account = loan_accounts[
-                loan_accounts.Name.str.contains(
-                    f"{acct_name}: Loan Billing Cycle Payment Bal", regex=False
-                )
-            ]
-            peoc_account = loan_accounts[
-                loan_accounts.Name.str.contains(
-                    f"{acct_name}: Loan End of Prev Cycle Bal", regex=False
-                )
-            ]
+    #     # runForecast can set this so we don't waste compute figuring it out every time
+    #     self.primary_checking_account_name = None
 
-            if pb_account.empty:
-                raise ValueError(
-                    f"Loan accounts must have Principal Balance account for '{acct_name}'."
-                )
+    #     if accounts_list is None:
+    #         accounts_list = []
 
-            if interest_account.empty:
-                raise ValueError(
-                    f"Loan accounts must have Interest account for '{acct_name}'."
-                )
+    #     self.accounts = accounts_list
 
-            if bcp_account.empty:
-                raise ValueError(
-                    f"Loan accounts must have Billing Cycle Payment account for '{acct_name}'."
-                )
+    #     if not self.accounts:
+    #         return
 
-            if peoc_account.empty:
-                raise ValueError(
-                    f"Loan accounts must have End of Prev Cycle Bal account for '{acct_name}'."
-                )
+    #     required_attributes = [
+    #         "name",
+    #         "balance",
+    #         "min_balance",
+    #         "max_balance",
+    #         "account_type",
+    #         "billing_start_date_YYYYMMDD",
+    #         "interest_type",
+    #         "apr",
+    #         "interest_cadence",
+    #         "minimum_payment",
+    #     ]
 
-            if (
-                pb_account.Min_Balance.values[0]
-                != interest_account.Min_Balance.values[0]
-            ):
-                raise ValueError(
-                    f"Min_Balance mismatch between Principal Balance and Interest accounts for '{acct_name}'."
-                )
+    #     for account in self.accounts:
+    #         if not all(hasattr(account, attr) for attr in required_attributes):
+    #             raise TypeError("All accounts must have the required attributes.")
 
-            if (
-                pb_account.Max_Balance.values[0]
-                != interest_account.Max_Balance.values[0]
-            ):
-                raise ValueError(
-                    f"Max_Balance mismatch between Principal Balance and Interest accounts for '{acct_name}'."
-                )
+    #     accounts_df = self.getAccounts()
 
-            # todo add validation for Loan Billing Cycle Payment Bal and Loan Prev End of Cycle Bal #https://github.com/hdickie/expense_forecast/issues/12
+    #     loan_accounts = accounts_df[
+    #         accounts_df.Account_Type.isin(
+    #             [
+    #                 "principal balance",
+    #                 "interest",
+    #                 "loan billing cycle payment bal",
+    #                 "loan end of prev cycle bal",
+    #             ]
+    #         )
+    #     ]
+    #     credit_accounts = accounts_df[
+    #         accounts_df.Account_Type.isin(
+    #             [
+    #                 "credit prev stmt bal",
+    #                 "credit curr stmt bal",
+    #                 "credit billing cycle payment bal",
+    #                 "credit end of prev cycle bal",
+    #             ]
+    #         )
+    #     ]
 
-            combined_balance = (
-                pb_account.Balance.values[0] + interest_account.Balance.values[0]
-            )
-            if combined_balance < pb_account.Min_Balance.values[0]:
-                raise ValueError(
-                    f"Combined balance is less than Min_Balance for loan account '{acct_name}'."
-                )
-            if combined_balance > pb_account.Max_Balance.values[0]:
-                raise ValueError(
-                    f"Combined balance is greater than Max_Balance for loan account '{acct_name}'."
-                )
+    #     loan_account_names = loan_accounts.Name.apply(
+    #         lambda x: x.split(":")[0].strip()
+    #     ).unique()
+    #     credit_account_names = credit_accounts.Name.apply(
+    #         lambda x: x.split(":")[0].strip()
+    #     ).unique()
 
-        for acct_name in credit_account_names:
+    #     for acct_name in loan_account_names:
 
-            prev_account = credit_accounts[
-                credit_accounts.Name.str.contains(
-                    f"{acct_name}: Prev Stmt Bal", regex=False
-                )
-            ]
-            curr_account = credit_accounts[
-                credit_accounts.Name.str.contains(
-                    f"{acct_name}: Curr Stmt Bal", regex=False
-                )
-            ]
-            bcp_account = credit_accounts[
-                credit_accounts.Name.str.contains(
-                    f"{acct_name}: Credit Billing Cycle Payment Bal", regex=False
-                )
-            ]
-            peoc_account = credit_accounts[
-                credit_accounts.Name.str.contains(
-                    f"{acct_name}: Credit End of Prev Cycle Bal", regex=False
-                )
-            ]
+    #         pb_account = loan_accounts[
+    #             loan_accounts.Name.str.contains(
+    #                 f"{acct_name}: Principal Balance", regex=False
+    #             )
+    #         ]
+    #         interest_account = loan_accounts[
+    #             loan_accounts.Name.str.contains(f"{acct_name}: Interest", regex=False)
+    #         ]
+    #         bcp_account = loan_accounts[
+    #             loan_accounts.Name.str.contains(
+    #                 f"{acct_name}: Loan Billing Cycle Payment Bal", regex=False
+    #             )
+    #         ]
+    #         peoc_account = loan_accounts[
+    #             loan_accounts.Name.str.contains(
+    #                 f"{acct_name}: Loan End of Prev Cycle Bal", regex=False
+    #             )
+    #         ]
 
-            if prev_account.empty:
-                raise ValueError(
-                    f"Credit accounts must have Prev Stmt Bal account for '{acct_name}'."
-                )
+    #         if pb_account.empty:
+    #             raise ValueError(
+    #                 f"Loan accounts must have Principal Balance account for '{acct_name}'."
+    #             )
 
-            if curr_account.empty:
-                raise ValueError(
-                    f"Credit accounts must have Curr Stmt Bal account for '{acct_name}'."
-                )
+    #         if interest_account.empty:
+    #             raise ValueError(
+    #                 f"Loan accounts must have Interest account for '{acct_name}'."
+    #             )
 
-            if bcp_account.empty:
-                raise ValueError(
-                    f"Credit accounts must have Billing Cycle Payment Bal account for '{acct_name}'."
-                )
+    #         if bcp_account.empty:
+    #             raise ValueError(
+    #                 f"Loan accounts must have Billing Cycle Payment account for '{acct_name}'."
+    #             )
 
-            if peoc_account.empty:
-                raise ValueError(
-                    f"Credit accounts must have End of Prev Cycle Bal account for '{acct_name}'."
-                )
+    #         if peoc_account.empty:
+    #             raise ValueError(
+    #                 f"Loan accounts must have End of Prev Cycle Bal account for '{acct_name}'."
+    #             )
 
-            # todo add validation for Credit Billing Cycle Payment Bal and Loan Prev End of Cycle Bal #https://github.com/hdickie/expense_forecast/issues/12
+    #         if (
+    #             pb_account.Min_Balance.values[0]
+    #             != interest_account.Min_Balance.values[0]
+    #         ):
+    #             raise ValueError(
+    #                 f"Min_Balance mismatch between Principal Balance and Interest accounts for '{acct_name}'."
+    #             )
 
-            if prev_account.Max_Balance.values[0] != curr_account.Max_Balance.values[0]:
-                raise ValueError(
-                    f"Max_Balance mismatch between Prev Stmt Bal and Curr Stmt Bal accounts for '{acct_name}'."
-                )
+    #         if (
+    #             pb_account.Max_Balance.values[0]
+    #             != interest_account.Max_Balance.values[0]
+    #         ):
+    #             raise ValueError(
+    #                 f"Max_Balance mismatch between Principal Balance and Interest accounts for '{acct_name}'."
+    #             )
 
-            combined_balance = (
-                prev_account.Balance.values[0] + curr_account.Balance.values[0]
-            )
-            if combined_balance < prev_account.Min_Balance.values[0]:
-                raise ValueError(
-                    f"Combined balance is less than Min_Balance for credit account '{acct_name}'."
-                )
-            if combined_balance > prev_account.Max_Balance.values[0]:
-                raise ValueError(
-                    f"Combined balance is greater than Max_Balance for credit account '{acct_name}'."
-                )
+    #         # todo add validation for Loan Billing Cycle Payment Bal and Loan Prev End of Cycle Bal #https://github.com/hdickie/expense_forecast/issues/12
+
+    #         combined_balance = (
+    #             pb_account.Balance.values[0] + interest_account.Balance.values[0]
+    #         )
+    #         if combined_balance < pb_account.Min_Balance.values[0]:
+    #             raise ValueError(
+    #                 f"Combined balance is less than Min_Balance for loan account '{acct_name}'."
+    #             )
+    #         if combined_balance > pb_account.Max_Balance.values[0]:
+    #             raise ValueError(
+    #                 f"Combined balance is greater than Max_Balance for loan account '{acct_name}'."
+    #             )
+
+    #     for acct_name in credit_account_names:
+
+    #         prev_account = credit_accounts[
+    #             credit_accounts.Name.str.contains(
+    #                 f"{acct_name}: Prev Stmt Bal", regex=False
+    #             )
+    #         ]
+    #         curr_account = credit_accounts[
+    #             credit_accounts.Name.str.contains(
+    #                 f"{acct_name}: Curr Stmt Bal", regex=False
+    #             )
+    #         ]
+    #         bcp_account = credit_accounts[
+    #             credit_accounts.Name.str.contains(
+    #                 f"{acct_name}: Credit Billing Cycle Payment Bal", regex=False
+    #             )
+    #         ]
+    #         peoc_account = credit_accounts[
+    #             credit_accounts.Name.str.contains(
+    #                 f"{acct_name}: Credit End of Prev Cycle Bal", regex=False
+    #             )
+    #         ]
+
+    #         if prev_account.empty:
+    #             raise ValueError(
+    #                 f"Credit accounts must have Prev Stmt Bal account for '{acct_name}'."
+    #             )
+
+    #         if curr_account.empty:
+    #             raise ValueError(
+    #                 f"Credit accounts must have Curr Stmt Bal account for '{acct_name}'."
+    #             )
+
+    #         if bcp_account.empty:
+    #             raise ValueError(
+    #                 f"Credit accounts must have Billing Cycle Payment Bal account for '{acct_name}'."
+    #             )
+
+    #         if peoc_account.empty:
+    #             raise ValueError(
+    #                 f"Credit accounts must have End of Prev Cycle Bal account for '{acct_name}'."
+    #             )
+
+    #         # todo add validation for Credit Billing Cycle Payment Bal and Loan Prev End of Cycle Bal #https://github.com/hdickie/expense_forecast/issues/12
+
+    #         if prev_account.Max_Balance.values[0] != curr_account.Max_Balance.values[0]:
+    #             raise ValueError(
+    #                 f"Max_Balance mismatch between Prev Stmt Bal and Curr Stmt Bal accounts for '{acct_name}'."
+    #             )
+
+    #         combined_balance = (
+    #             prev_account.Balance.values[0] + curr_account.Balance.values[0]
+    #         )
+    #         if combined_balance < prev_account.Min_Balance.values[0]:
+    #             raise ValueError(
+    #                 f"Combined balance is less than Min_Balance for credit account '{acct_name}'."
+    #             )
+    #         if combined_balance > prev_account.Max_Balance.values[0]:
+    #             raise ValueError(
+    #                 f"Combined balance is greater than Max_Balance for credit account '{acct_name}'."
+    #             )
 
     def __str__(self):
         return self.getAccounts().to_string()

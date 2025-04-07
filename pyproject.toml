@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "expense-forecast"
+version = "0.1.0"
+description = ""
+authors = ["hdickie"]
+license = "GPL-3.0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "^0.115.12"
+uvicorn = "^0.34.0"
+fief-client = "^0.20.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

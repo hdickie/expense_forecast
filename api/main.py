@@ -3,6 +3,8 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from tasks.worker import run_task
 
+
+
 app = FastAPI()
 
 class InputData(BaseModel):

@@ -1,10 +1,42 @@
-from fastapi import FastAPI
+# from fastapi import FastAPI
+
+# app = FastAPI()
+
+# @app.get("/")
+# async def root():
+#     return {"message": "Hello World"}
+
+
+from fastapi import Depends, FastAPI
+from fastapi.security import OAuth2AuthorizationCodeBearer
+from fief_client import FiefAccessTokenInfo, FiefAsync
+from fief_client.integrations.fastapi import FiefAuth
+
+fief = FiefAsync(  
+    "https://fief.expenseforecast.com",
+    "YOUR_CLIENT_ID",
+    "YOUR_CLIENT_SECRET",
+)
+
+scheme = OAuth2AuthorizationCodeBearer(  
+    "https://fief.expenseforecast.com/authorize",  
+    "https://fief.expenseforecast.com/api/token",  
+    scopes={"openid": "openid", "offline_access": "offline_access"},
+    auto_error=False,  
+)
+
+auth = FiefAuth(fief, scheme)  
 
 app = FastAPI()
 
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
+
+@app.get("/user")
+async def get_user(
+    access_token_info: FiefAccessTokenInfo = Depends(auth.authenticated()),  
+):
+    return access_token_info
+
+
 
 # import logging
 # # import sys

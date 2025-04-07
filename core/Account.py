@@ -1,7 +1,8 @@
 import datetime
 import pandas as pd
 import jsonpickle
-
+import logging
+logger = logging.getLogger("core.Account")
 
 class Account:
 

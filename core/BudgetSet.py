@@ -1,15 +1,12 @@
-import BudgetItem
+from . import BudgetItem
 import pandas as pd
 import datetime
-from log_methods import log_in_color
+# from log_methods import log_in_color
 import jsonpickle
 from generate_date_sequence import generate_date_sequence
 import logging
 
-from log_methods import setup_logger
-
-# logger = setup_logger('BudgetSet', './log/BudgetSet.log', level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("core.BudgetSet")
 
 
 def initialize_from_dataframe(budget_set_df):
