@@ -1,0 +1,20 @@
+# requirements.in
+fastapi
+uvicorn
+fief-client
+tqdm
+pandas
+typing
+jsonpickle
+numpy
+psycopg2-binary
+sqlalchemy
+httpx
+pydantic
+dotenv
+matplotlib
+plotly
+colorama
+makefun
+redis
+pytest-asyncio
