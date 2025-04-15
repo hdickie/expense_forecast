@@ -1,7 +1,8 @@
 import datetime
 import pandas as pd
 from typing import Optional
-from models.account.params import AccountParams
+from models.accountset.params import AccountParams
+
 
 import logging
 logger = logging.getLogger("core.Account")

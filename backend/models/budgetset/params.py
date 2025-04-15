@@ -17,8 +17,11 @@ class BudgetItemCadence(Enum):
 @dataclass
 class BudgetItemParams:
     memo: str
+    amount: float
     priority: int
     cadence: BudgetItemCadence
     start_date: datetime.datetime
     end_date: datetime.datetime
+    deferrable: bool
+    partial_payment_allowed: bool
     

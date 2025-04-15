@@ -7,6 +7,7 @@ import jsonpickle
 import logging
 from core.log_methods import log_in_color
 from core.log_methods import setup_logger
+from models.milestoneset.params import AccountMilestoneParams
 
 logger = setup_logger(__name__, "./" + __name__ + ".log", level=logging.DEBUG)
 
@@ -135,14 +136,20 @@ class MilestoneSet:
             MemoMilestone.MemoMilestone(milestone_name, memo_regex_string)
         ]
 
-    def addAccountMilestone(
-        self, milestone_name, account_name, min_balance, max_balance
-    ):
+    def addAccountMilestone(self, params: AccountMilestoneParams, validate: bool = True) -> None:
         self.account_milestones += [
             AccountMilestone.AccountMilestone(
-                milestone_name, account_name, min_balance, max_balance
+                params
             )
         ]
+    # def addAccountMilestone(
+    #     self, milestone_name, account_name, min_balance, max_balance
+    # ):
+    #     self.account_milestones += [
+    #         AccountMilestone.AccountMilestone(
+    #             milestone_name, account_name, min_balance, max_balance
+    #         )
+    #     ]
 
     def addCompositeMilestone(
         self, milestone_name, account_milestones__list, memo_milestones__list

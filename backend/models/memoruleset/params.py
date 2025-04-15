@@ -4,7 +4,7 @@ from typing import Optional
 @dataclass
 class MemoRuleParams:
     memo_regex: str
-    priority: int
+    transaction_priority: int
     account_from: Optional[str] = None
     account_to: Optional[str] = None
     

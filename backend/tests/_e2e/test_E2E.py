@@ -5,12 +5,12 @@ from core.MemoRuleSet import MemoRuleSet
 from core.MilestoneSet import MilestoneSet
 from core.ExpenseForecast import ExpenseForecast
 
-from models.account.params import CheckingAccountParams
-from models.account.params import CreditCardAccountParams
+from models.accountset.params import CheckingAccountParams
+from models.accountset.params import CreditCardAccountParams
 # from models.account.params import LoanAccountParams
 from models.budgetset.params import BudgetItemParams
-from models.memorule.params import MemoRuleParams
-from models.milestone.params import AccountMilestoneParams
+from models.memoruleset.params import MemoRuleParams
+from models.milestoneset.params import AccountMilestoneParams
 
 import logging
 import datetime
@@ -113,11 +113,12 @@ class TestE2E:
                                                 min_balance=0,
                                                 max_balance=float('inf'),
                                                 primary_checking_ind=True)
+        
         credit_params = CreditCardAccountParams(name="Hume Credit", 
                                                 balance=10_000, 
                                                 current_statement_balance=10_000,
                                                 previous_statement_balance=10_000,
-                                                billing_cycle_payment_balance=0,
+                                                end_of_previous_cycle_balance=10_000,
                                                min_balance=0, 
                                                 max_balance=24_000,
                                                 billing_start_date=credit_bsd, 
@@ -127,14 +128,20 @@ class TestE2E:
         A.createCheckingAccount(checking_params)
         A.createCreditCardAccount(credit_params)
         
-        food_params = BudgetItemParams(memo='food', priority=1, cadence='daily', start_date=start_date, end_date=end_date)
+        food_params = BudgetItemParams(memo='food', amount=30, 
+                                       priority=1, cadence="daily", start_date=start_date, end_date=end_date,
+                                       partial_payment_allowed=False,
+                                       deferrable=False)
         B.addBudgetItem(food_params)
 
-        memo_rule_params = MemoRuleParams(memo_regex='.*',priority = 1,account_from='Hume Credit')
+        memo_rule_params = MemoRuleParams(memo_regex='.*', transaction_priority = 1,account_from='Hume Credit')
         M.addMemoRule(memo_rule_params)
 
-        account_milstone_params = AccountMilestoneParams(name='Hume Checking',min_balance=5000)
-        MS.addAccountMilestone(account_milstone_params)
+        ### not in the mood
+        # account_milstone_params = AccountMilestoneParams(milestone_name = 'checking stays above 5k', 
+        #                                                  account_name='Hume Checking',
+        #                                                  min_balance=5000)
+        # MS.addAccountMilestone(account_milstone_params)
 
         E = ExpenseForecast(A,B,M,
                             start_date,

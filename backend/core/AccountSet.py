@@ -5,9 +5,9 @@ import logging
 import numpy as np
 from typing import Optional, List
 from collections import defaultdict
-from models.account.params import CheckingAccountParams
-from models.account.params import CreditCardAccountParams
-from models.account.params import AccountType
+from models.accountset.params import CheckingAccountParams
+from models.accountset.params import CreditCardAccountParams
+from models.accountset.params import AccountType
 import json
 from core import BudgetSet  # this could be refactored out, and should be in terms of independent dependencies and clear organization, but it works
 logger = logging.getLogger("core.AccountSet")
@@ -639,7 +639,7 @@ class AccountSet:
 
         billing_cycle_payment = Account(
             name=f"{params.name}: Credit Billing Cycle Payment Bal",
-            balance=params.billing_cycle_payment_balance,
+            balance=params.end_of_previous_cycle_balance - params.previous_statement_balance,
             min_balance=params.min_balance,
             max_balance=params.max_balance,
             account_type="credit billing cycle payment bal",

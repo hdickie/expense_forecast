@@ -50,7 +50,7 @@ class CreditCardAccountParams(AccountParams):
     minimum_payment: float
     current_statement_balance: float
     previous_statement_balance: float
-    billing_cycle_payment_balance: Optional[float] = None
+    end_of_previous_cycle_balance: Optional[float] = None
 
 @dataclass
 class LoanAccountParams(AccountParams):

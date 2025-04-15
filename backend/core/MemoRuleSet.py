@@ -1,6 +1,7 @@
 from core import MemoRule
 import pandas as pd
 import re
+from models.memoruleset.params import MemoRuleParams
 
 import logging
 logger = logging.getLogger("core.MemoRuleSet")
@@ -125,38 +126,27 @@ class MemoRuleSet:
     # def fromExcel(self):
     #     raise NotImplementedError
 
-    def addMemoRule(self, memo_regex, account_from, account_to, transaction_priority):
+    def addMemoRule(self, item: MemoRuleParams, validate: bool = True) -> None:
+    # def addMemoRule(self, memo_regex, account_from, account_to, transaction_priority):
         """Add a <MemoRule> to <list> MemoRuleSet.memo_rules."""
-        log_in_color(
-            logger,
-            "green",
-            "info",
-            "addMemoRule(memo_regex="
-            + str(memo_regex)
-            + ",account_from="
-            + str(account_from)
-            + ",account_to="
-            + str(account_to)
-            + ",transaction_priority="
-            + str(transaction_priority)
-            + ")",
-        )
-
         current_memo_rules_df = self.getMemoRules()
         memo_rules_of_same_priority_df = current_memo_rules_df.loc[
-            current_memo_rules_df.Transaction_Priority == transaction_priority, :
+            current_memo_rules_df.Transaction_Priority == item.transaction_priority
         ]
 
-        for index, row in memo_rules_of_same_priority_df.iterrows():
-            if row.Memo_Regex == memo_regex:
-                if row.Account_From == account_from and row.Account_To == account_to:
-                    raise ValueError  # An attempt was made to add a memo rule to a memo rule set that already existed.
+        for _, row in memo_rules_of_same_priority_df.iterrows():
+            if row.Memo_Regex == item.memo_regex:
+                if row.Account_From == item.account_from and row.Account_To == item.account_to:
+                    raise ValueError("Duplicate memo rule.")
                 else:
-                    raise ValueError  # A MemoRule with the same memo_regex and priority as an existing rule, but with different from or to was added. This creates an ambiguous situation and we cannot continue.
+                    raise ValueError("Ambiguous memo rule: same regex/priority, different accounts.")
 
         # Lower-level validation will occur in the MemoRule constructor
         memo_rule = MemoRule.MemoRule(
-            memo_regex, account_from, account_to, transaction_priority
+            item.memo_regex,
+            item.account_from,
+            item.account_to,
+            item.transaction_priority
         )
         self.memo_rules.append(memo_rule)
 
