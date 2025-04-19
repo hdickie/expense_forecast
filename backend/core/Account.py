@@ -1,7 +1,7 @@
 import datetime
 import pandas as pd
 from typing import Optional
-from models.accountset.params import AccountParams
+from models.account.params import AccountParams
 
 
 import logging
@@ -26,46 +26,6 @@ class Account:
                 f"Account.max_balance ({max_balance}) cannot be less than min_balance ({min_balance})"
             )
 
-    #obsolete
-    # @classmethod
-    # def _validate_account_type(cls, account_type: str) -> None:
-    #     valid_account_types = [
-    #         "checking",
-    #         "credit prev stmt bal",
-    #         "credit curr stmt bal",
-    #         "savings",
-    #         "principal balance",
-    #         "interest",
-    #         "credit billing cycle payment bal",
-    #         "loan billing cycle payment bal",
-    #         "loan end of prev cycle bal",
-    #         "credit end of prev cycle bal",
-    #     ]
-    #     assert account_type == account_type.lower()
-    #     if account_type not in valid_account_types:
-    #         raise ValueError(
-    #             f"Invalid account_type: {account_type}. Must be one of {', '.join(valid_account_types)}"
-    #         )
-
-    #obsolete also named wrong
-    # @classmethod
-    # def _validate_account_name(cls, account_type: str, account_name: str) -> None:
-    #     account_types_that_require_colon_in_name = [
-    #         "credit curr stmt bal",
-    #         "credit prev stmt bal",
-    #         "principal balance",
-    #         "credit billing cycle payment bal",
-    #         "loan billing cycle payment bal",
-    #         "loan prev end of cycle balance",
-    #         "credit prev end of cycle balance",
-    #     ]
-    #     if account_type in account_types_that_require_colon_in_name:
-    #         if ":" not in account_name:
-    #             raise ValueError(
-    #                 "Accounts of these types: [" + ', '.join(
-    #                     account_types_that_require_colon_in_name) + "] require colon char in the account name. Got: "+account_name
-    #             )
-
     @classmethod
     def _validate_apr(cls, account_type: str, apr: Optional[float]) -> None:
         account_types_that_require_apr = [
@@ -83,39 +43,6 @@ class Account:
             raise ValueError(
                 f"Account.apr should be None for account_type '{account_type}'"
             )
-
-    # @classmethod
-    # def _validate_interest_cadence(cls, account_type: str, interest_cadence: Optional[str]) -> None:
-    
-    #     account_types_that_require_interest_cadence = [
-    #         "credit prev stmt bal",
-    #         "principal balance",
-    #         "savings",
-    #     ]
-    #     if account_type in account_types_that_require_interest_cadence and interest_cadence not in ['daily','monthly']: #todo more strict
-    #         raise ValueError(
-    #             f"Account.interest_cadence should be daily or monthly for account_type '{account_type}'"
-    #         )
-    #     elif account_type not in account_types_that_require_interest_cadence and interest_cadence is not None:
-    #         raise ValueError(
-    #             f"Account.interest_cadence should be None for account_type '{account_type}'"
-    #         )
-
-    # @classmethod
-    # def _validate_interest_type(cls, account_type: str, interest_type: Optional[str]) -> None:
-    
-    #     if account_type in ["principal balance", "savings"] and interest_type is None:
-    #         raise ValueError(
-    #             f"Account.interest_type is required for account_type '{account_type}'"
-    #         )
-    #     elif account_type in ["principal balance", "savings"] and interest_type not in ["simple", "compound"]:
-    #         raise ValueError(
-    #             f"Account.interest_type should be simple or compound for account_type '{account_type}'"
-    #         )
-    #     elif account_type not in ["principal balance", "savings"] and interest_type is not None:
-    #         raise ValueError(
-    #             f"Account.interest_type should be None for account_type '{account_type}'"
-    #         )
 
     @classmethod
     def _validate_billing_start_date(cls, account_type: str, billing_start_date: Optional[datetime.datetime]) -> None:
@@ -153,19 +80,6 @@ class Account:
             raise ValueError(
                 f"Account.minimum_payment should be None for account_type '{account_type}'"
             )
-
-    # @classmethod
-    # def _validate_primary_checking_ind(cls, account_type: str, primary_checking_ind: Optional[bool]) -> None:
-    #     if account_type != 'checking' and primary_checking_ind is not None:
-    #         raise ValueError(
-    #             f"Account.primary_checking_ind should be None for account_type '{account_type}'"
-    #         )
-    #     elif account_type == 'checking' and primary_checking_ind is None:
-    #         raise TypeError(
-    #             f"Account.primary_checking_ind must be a bool Value was: {primary_checking_ind}"
-    #         )
-    #     elif account_type == 'checking' and primary_checking_ind is not None:
-    #         assert isinstance(primary_checking_ind,bool)
 
     # e.g. account = Account.from_params(AccountParams(...))
     @classmethod
@@ -215,15 +129,10 @@ class Account:
         self.primary_checking_ind = primary_checking_ind
 
         if validate:
-            # self._validate_account_name(account_type, self.name)
             self._validate_balances(self.min_balance, self.balance, self.max_balance)
-            # self._validate_account_type(self.account_type)
             self._validate_billing_start_date(self.account_type, self.billing_start_date)
-            # self._validate_interest_type(self.account_type, self.interest_type)
             self._validate_apr(self.account_type, self.apr)
-            # self._validate_interest_cadence(self.account_type, self.interest_cadence)
             self._validate_minimum_payment(self.account_type, self.minimum_payment)
-            # self._validate_primary_checking_ind(self.account_type, self.primary_checking_ind)
 
     def to_dict(self) -> dict:
         return {
@@ -239,7 +148,6 @@ class Account:
             "minimum_payment": self.minimum_payment,
             "primary_checking_ind": self.primary_checking_ind,
         }
-
 
     def __str__(self) -> str:
         bsd = [ bsd.strftime('%Y%m%d') for bsd in [self.billing_start_date] if self.billing_start_date ]

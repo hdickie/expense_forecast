@@ -2,25 +2,25 @@ import unittest, pytest
 
 from core import AccountMilestone
 from core import AccountSet
-from core import BudgetSet
-from core import MemoRuleSet
+from backend.core import LineItemSet
+from backend.core import DecisionRuleSet
 from core import ExpenseForecast
 import pandas as pd, numpy as np
 import datetime, logging
 import tempfile
-from core import BudgetItem
+from backend.core import LineItem
 from core import CompositeMilestone
 from core import ForecastHandler
 from core import MemoMilestone
-from core import MemoRule
+from backend.core import DecisionRule
 
 pd.options.mode.chained_assignment = (
     None  # apparently this warning can throw false positives???
 )
 from core import MilestoneSet
 from core import Account
-from core import BudgetSet
-from core import MemoRuleSet
+from backend.core import LineItemSet
+from backend.core import DecisionRuleSet
 import copy
 
 from core import generate_date_sequence
@@ -91,7 +91,7 @@ def txn_budget_item_once_list(
     amount, priority, memo, deferrable, partial_payment_allowed
 ):
     return [
-        BudgetItem.BudgetItem(
+        LineItem.BudgetItem(
             "20000102",
             "20000102",
             priority,
@@ -105,19 +105,19 @@ def txn_budget_item_once_list(
 
 
 def match_all_p1_checking_memo_rule_list():
-    return [MemoRule.MemoRule(".*", "Checking", None, 1)]
+    return [DecisionRule.MemoRule(".*", "Checking", None, 1)]
 
 
 def match_p1_test_txn_checking_memo_rule_list():
-    return [MemoRule.MemoRule("test txn", "Checking", None, 1)]
+    return [DecisionRule.MemoRule("test txn", "Checking", None, 1)]
 
 
 def match_p1_test_txn_credit_memo_rule_list():
-    return [MemoRule.MemoRule("test txn", "Credit", None, 1)]
+    return [DecisionRule.MemoRule("test txn", "Credit", None, 1)]
 
 
 def income_rule_list():
-    return [MemoRule.MemoRule(".*income.*", None, "Checking", 1)]
+    return [DecisionRule.MemoRule(".*income.*", None, "Checking", 1)]
 
 
 def non_trivial_loan(name, pbal, interest, apr):
@@ -170,6 +170,7 @@ def credit_bsd12_w_eopc_acct_list(
 
 class TestExpenseForecastMethods:
     pass
+
 
 #     @pytest.mark.unit
 #     @pytest.mark.parametrize(

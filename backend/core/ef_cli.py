@@ -13,8 +13,8 @@ from log_methods import log_in_color
 import pandas as pd
 import psycopg2
 import AccountSet
-import BudgetSet
-import MemoRuleSet
+import backend.core.LineItemSet as LineItemSet
+import backend.core.DecisionRuleSet as DecisionRuleSet
 import MilestoneSet
 
 logger = logging.getLogger(__name__)
@@ -1212,7 +1212,7 @@ def main(args, loglevel):
             option_budget_set_table_name = (
                 "prod.ef_budget_item_set_optional_" + args.username + "_temporary"
             )
-            option_budget_set = BudgetSet.initialize_from_dataframe(
+            option_budget_set = LineItemSet.initialize_from_dataframe(
                 pd.read_sql_query(
                     "select * from " + option_budget_set_table_name, con=engine
                 )

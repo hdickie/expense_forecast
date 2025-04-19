@@ -18,3 +18,5 @@ colorama
 makefun
 redis
 pytest-asyncio
+jinja2
+selenium

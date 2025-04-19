@@ -1,0 +1,116 @@
+body {
+    font-family: sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow-x: auto;
+  }
+
+  .tabs {
+    display: flex;
+    align-items: center; /* vertically center all children */
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid #ccc;
+    flex-wrap: wrap;
+  }
+  
+  .tab-buttons {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center; /* ensures the buttons align with text */
+  }
+  
+  .tab {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center; /* centers text in each tab */
+  }
+  
+  .navbar-page-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+    color: #333;
+    pointer-events: none; /* optional: makes it "invisible" to clicks */
+  }
+  
+  .submit-button {
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    height: 100%;
+  }
+
+  .tab {
+    margin-right: 20px;
+    padding: 8px 16px;
+    cursor: pointer;
+  }
+  .tab.active {
+    background-color: white;
+    border: 2px solid #ccc;
+    border-bottom: none;
+    border-radius: 5px 5px 0 0;
+  }
+  .tab-content {
+    display: none;
+    padding: 20px;
+  }
+  .tab-content.active {
+    display: block;
+  }
+  .draft-columns {
+    display: flex;
+    gap: 20px;
+    flex-wrap: nowrap;
+    min-width: 1600px;
+  }
+  .section {
+    flex: 0 0 auto;
+    min-width: 300px;
+    border: 1px solid #ddd;
+    padding: 10px;
+    background-color: #fafafa;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 10px;
+  }
+  table, th, td {
+    border: 1px solid #ccc;
+  }
+  th, td {
+    padding: 4px;
+    text-align: left;
+  }
+  button.add-row {
+    margin-bottom: 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    cursor: pointer;
+  }
+  fieldset {
+    margin-bottom: 1em;
+  }
+  label {
+    display: block;
+    margin-top: 5px;
+  }
+  input, select {
+    width: 100%;
+  }
+
+.highlighted {
+    background-color: yellow;
+    stroke: red;
+    stroke-width: 2px;
+}

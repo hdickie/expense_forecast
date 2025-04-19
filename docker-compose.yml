@@ -64,8 +64,6 @@ services:
       - "letsencrypt-data:/letsencrypt"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       
-
-
   fief:
     image: ghcr.io/fief-dev/fief:latest
     env_file:
@@ -86,7 +84,6 @@ services:
        - FIEF__DATABASE_URL=postgresql://fief:fief@postgres:5432/fief
        - FIEF_DOMAIN=fief.localhost
 
-
   fief-worker:
     image: ghcr.io/fief-dev/fief:latest
     command: fief run-worker -p 1 -t 1
@@ -103,7 +100,7 @@ services:
     expose:
       - "8080"
     volumes:
-    - ./frontend/public/:/usr/local/apache2/htdocs/
+    - ./frontend/public-html/:/usr/local/apache2/htdocs/
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=Host(`expense_forecast.localhost`)"

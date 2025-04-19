@@ -7,8 +7,8 @@ from core.Account import Account
 from core.AccountSet import AccountSet
 import doctest, copy
 import datetime
-from models.accountset.params import CreditCardAccountParams
-from models.accountset.params import AccountType
+from models.account.params import CreditCardAccountParams
+from models.account.params import AccountType
 
 logger = logging.getLogger("test.unit.AccountSet")
 

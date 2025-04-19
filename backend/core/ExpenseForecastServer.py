@@ -657,4 +657,443 @@ async def submit_draft(draft: DraftSubmission):
     # ✅ Passed validation
     return { "status": "accepted" }
 
+# Date,Hume Checking,Hume Credit: Curr Stmt Bal,Hume Credit: Prev Stmt Bal,Hume Credit: Credit Billing Cycle Payment Bal,Hume Credit: Credit End of Prev Cycle Bal,Marginal Interest,Net Gain,Net Loss,Net Worth,Loan Total,CC Debt Total,Liquid Total,Next Income Date,Memo Directives,Memo
+@router.get("/view/forecast/sample")
+async def get_sample_view_table_data(request: Request):
+    return JSONResponse(
+            status_code=200,
+            content=
+            [
+    {
+        "Date": "2025-04-01",
+        "Hume Checking": "214.60",
+        "Hume Credit: Curr Stmt Bal": "175.62",
+        "Hume Credit: Prev Stmt Bal": "212.66",
+        "Hume Credit: Credit Billing Cycle Payment Bal": "308.17",
+        "Hume Credit: Credit End of Prev Cycle Bal": "322.86",
+        "Marginal Interest": "430.18",
+        "Net Gain": "173.85",
+        "Net Loss": "457.40",
+        "Net Worth": "85.87",
+        "Loan Total": "20.01",
+        "CC Debt Total": "106.24",
+        "Liquid Total": "116.30",
+        "Next Income Date": "2025-04-15",
+        "Memo Directives": "",
+        "Memo": ""
+    },
+    {
+        "Date": "2025-04-02",
+        "Hume Checking": "215.54",
+        "Hume Credit: Curr Stmt Bal": "248.97",
+        "Hume Credit: Prev Stmt Bal": "352.01",
+        "Hume Credit: Credit Billing Cycle Payment Bal": "8.34",
+        "Hume Credit: Credit End of Prev Cycle Bal": "250.43",
+        "Marginal Interest": "421.58",
+        "Net Gain": "120.98",
+        "Net Loss": "354.76",
+        "Net Worth": "258.85",
+        "Loan Total": "251.08",
+        "CC Debt Total": "336.68",
+        "Liquid Total": "225.16",
+        "Next Income Date": "2025-04-16",
+        "Memo Directives": "",
+        "Memo": ""
+    },
+    {
+        "Date": "2025-04-03",
+        "Hume Checking": "331.99",
+        "Hume Credit: Curr Stmt Bal": "4.83",
+        "Hume Credit: Prev Stmt Bal": "104.81",
+        "Hume Credit: Credit Billing Cycle Payment Bal": "423.73",
+        "Hume Credit: Credit End of Prev Cycle Bal": "431.36",
+        "Marginal Interest": "261.66",
+        "Net Gain": "430.14",
+        "Net Loss": "197.40",
+        "Net Worth": "418.20",
+        "Loan Total": "79.17",
+        "CC Debt Total": "406.52",
+        "Liquid Total": "94.07",
+        "Next Income Date": "2025-04-17",
+        "Memo Directives": "",
+        "Memo": ""
+    },
+    {
+        "Date": "2025-04-04",
+        "Hume Checking": "245.16",
+        "Hume Credit: Curr Stmt Bal": "81.47",
+        "Hume Credit: Prev Stmt Bal": "139.83",
+        "Hume Credit: Credit Billing Cycle Payment Bal": "217.77",
+        "Hume Credit: Credit End of Prev Cycle Bal": "352.94",
+        "Marginal Interest": "308.03",
+        "Net Gain": "171.60",
+        "Net Loss": "492.80",
+        "Net Worth": "87.68",
+        "Loan Total": "117.61",
+        "CC Debt Total": "217.51",
+        "Liquid Total": "129.50",
+        "Next Income Date": "2025-04-18",
+        "Memo Directives": "",
+        "Memo": ""
+    },
+    {
+        "Date": "2025-04-05",
+        "Hume Checking": "129.16",
+        "Hume Credit: Curr Stmt Bal": "346.18",
+        "Hume Credit: Prev Stmt Bal": "429.95",
+        "Hume Credit: Credit Billing Cycle Payment Bal": "266.06",
+        "Hume Credit: Credit End of Prev Cycle Bal": "16.50",
+        "Marginal Interest": "428.39",
+        "Net Gain": "420.47",
+        "Net Loss": "54.86",
+        "Net Worth": "299.99",
+        "Loan Total": "389.41",
+        "CC Debt Total": "203.93",
+        "Liquid Total": "103.47",
+        "Next Income Date": "2025-04-19",
+        "Memo Directives": "",
+        "Memo": ""
+    }
+]
+)
+
+@router.get('/view/sankey/sample')
+async def get_sample_sankey_table_data(request: Request):
+    return JSONResponse(
+            status_code=200,
+            content=[
+                {  
+                    "source": "Website",
+                    "target": "Sign Up Page",
+                    "value": 300
+                },
+                {  
+                    "source": "Sign Up Page",
+                    "target": "Completed Signup",
+                    "value": 200
+                },
+                {  
+                    "source": "Sign Up Page",
+                    "target": "Abandoned",
+                    "value": 100
+                },
+                {  
+                    "source": "Website",
+                    "target": "Product Page",
+                    "value": 500
+                },
+                {  
+                    "source": "Product Page",
+                    "target": "Added to Cart",
+                    "value": 250
+                },
+                {  
+                    "source": "Product Page",
+                    "target": "Bounced",
+                    "value": 250
+                },
+                {  
+                    "source": "Added to Cart",
+                    "target": "Completed Purchase",
+                    "value": 150
+                },
+                {  
+                    "source": "Added to Cart",
+                    "target": "Abandoned Cart",
+                    "value": 100
+                },
+            ]
+        )
+
+@router.get('/view/lineitem/sample')
+async def get_sample_sankey_table_data(request: Request):
+    return JSONResponse(
+            status_code=200,
+            content=
+            [{
+                "Date": "2025-04-01",
+                "Amount": "100.00",
+                "Memo": "Income"
+            },
+            {
+                "Date": "2025-04-02",
+                "Amount": "50.00",
+                "Memo": "Txn 1"
+            },
+            {
+                "Date": "2025-04-03",
+                "Amount": "120.00",
+                "Memo": "Txn 2"
+            }])
+
+@router.get('/view/milestone/sample')
+async def get_sample_sankey_table_data(request: Request):
+    return JSONResponse(
+            status_code=200,
+            content=
+            [{
+                "Name": "Account Milestone 1",
+                "Type": "Account",
+                "Condition": "account condition"
+            },
+            {
+                "Name": "Memo Milestone 1",
+                "Type": "Memo",
+                "Condition": "memp condition"
+            },
+            {
+                "Name": "Composite Milestone 1",
+                "Type": "Composite",
+                "Condition": "composite condition"
+            }])
+
+
+@router.get("/browse/sample")
+async def get_sample_browse_table_data(request: Request):
+    #   { title: "Forecast Name", field: "name", headerFilter: "input" },
+    #   { title: "Start Date", field: "start_date", sorter: "date", headerFilter: "input" },
+    #   { title: "End Date", field: "end_date", sorter: "date", headerFilter: "input" },
+    #   { title: "Status", field: "status", headerFilter: "list", headerFilterParams: { values: true } },
+    #   { title: "Progress", field: "progress", sorter: "string" },
+    #   { title: "Start Timestamp", field: "start_timestamp", sorter: "datetime" },
+    #   { title: "ETC", field: "etc", sorter: "datetime" }
+    return JSONResponse(
+            status_code=200,
+            content=
+            [{  
+                "set_name": "",
+                "name": "April Forecast",
+                "start_date": "2025-04-01",
+                "end_date": "2025-04-30",
+                "status": "Completed",
+                "progress": "100%",
+                "start_timestamp": "2025-04-01T08:00:00Z",
+                "etc": "2025-04-01T10:30:00Z"
+            },
+            {
+                "set_name": "",
+                "name": "May Forecast",
+                "start_date": "2025-05-01",
+                "end_date": "2025-05-31",
+                "status": "Running",
+                "progress": "42%",
+                "start_timestamp": "2025-05-01T07:45:00Z",
+                "etc": "2025-05-01T11:15:00Z"
+            },
+            {
+                "set_name": "",
+                "name": "June Forecast",
+                "start_date": "2025-06-01",
+                "end_date": "2025-06-30",
+                "status": "Pending",
+                "progress": "0%",
+                "start_timestamp": "2025-06-01T09:00:00Z",
+                "etc": "2025-06-01T10:00:00Z"
+            }
+            
+            ,
+            {
+                "set_name": "Test Set",
+                "name": "AB",
+                "start_date": "2025-06-01",
+                "end_date": "2025-06-30",
+                "status": "Pending",
+                "progress": "0%",
+                "start_timestamp": "2025-06-01T09:00:00Z",
+                "etc": "2025-06-01T10:00:00Z"
+            },
+            {
+                "set_name": "Test Set",
+                "name": "AC",
+                "start_date": "2025-06-01",
+                "end_date": "2025-06-30",
+                "status": "Pending",
+                "progress": "0%",
+                "start_timestamp": "2025-06-01T09:00:00Z",
+                "etc": "2025-06-01T10:00:00Z"
+            },
+            {
+                "set_name": "Test Set",
+                "name": "AD",
+                "start_date": "2025-06-01",
+                "end_date": "2025-06-30",
+                "status": "Pending",
+                "progress": "0%",
+                "start_timestamp": "2025-06-01T09:00:00Z",
+                "etc": "2025-06-01T10:00:00Z"
+            }
+            
+            ])
+    
+
+@router.get("/draft/parameter/sample")
+async def get_sample_draft_account_data(request: Request):
+    pass
+    #return JSONResponse(
+    # status_code=200,
+    # content=
+    # [{
+    #     "name": "April Forecast",
+    #     "start_date": "2025-04-01",
+    #     "end_date": "2025-04-30",
+    #     "status": "Completed",
+    #     "progress": "100%",
+    #     "start_timestamp": "2025-04-01T08:00:00Z",
+    #     "etc": "2025-04-01T10:30:00Z"
+    # },
+    # {
+    #     "name": "May Forecast",
+    #     "start_date": "2025-05-01",
+    #     "end_date": "2025-05-31",
+    #     "status": "Running",
+    #     "progress": "42%",
+    #     "start_timestamp": "2025-05-01T07:45:00Z",
+    #     "etc": "2025-05-01T11:15:00Z"
+    # },
+    # {
+    #     "name": "June Forecast",
+    #     "start_date": "2025-06-01",
+    #     "end_date": "2025-06-30",
+    #     "status": "Pending",
+    #     "progress": "0%",
+    #     "start_timestamp": "2025-06-01T09:00:00Z",
+    #     "etc": "2025-06-01T10:00:00Z"
+    # }])
+
+@router.get("/draft/account/sample")
+async def get_sample_draft_account_data(request: Request):
+    pass
+    #return JSONResponse(
+    # status_code=200,
+    # content=
+    # [{
+    #     "name": "April Forecast",
+    #     "start_date": "2025-04-01",
+    #     "end_date": "2025-04-30",
+    #     "status": "Completed",
+    #     "progress": "100%",
+    #     "start_timestamp": "2025-04-01T08:00:00Z",
+    #     "etc": "2025-04-01T10:30:00Z"
+    # },
+    # {
+    #     "name": "May Forecast",
+    #     "start_date": "2025-05-01",
+    #     "end_date": "2025-05-31",
+    #     "status": "Running",
+    #     "progress": "42%",
+    #     "start_timestamp": "2025-05-01T07:45:00Z",
+    #     "etc": "2025-05-01T11:15:00Z"
+    # },
+    # {
+    #     "name": "June Forecast",
+    #     "start_date": "2025-06-01",
+    #     "end_date": "2025-06-30",
+    #     "status": "Pending",
+    #     "progress": "0%",
+    #     "start_timestamp": "2025-06-01T09:00:00Z",
+    #     "etc": "2025-06-01T10:00:00Z"
+    # }])
+
+@router.get("/draft/lineitem/sample")
+async def get_sample_draft_account_data(request: Request):
+    pass
+    #return JSONResponse(
+    # status_code=200,
+    # content=
+    # [{
+    #     "name": "April Forecast",
+    #     "start_date": "2025-04-01",
+    #     "end_date": "2025-04-30",
+    #     "status": "Completed",
+    #     "progress": "100%",
+    #     "start_timestamp": "2025-04-01T08:00:00Z",
+    #     "etc": "2025-04-01T10:30:00Z"
+    # },
+    # {
+    #     "name": "May Forecast",
+    #     "start_date": "2025-05-01",
+    #     "end_date": "2025-05-31",
+    #     "status": "Running",
+    #     "progress": "42%",
+    #     "start_timestamp": "2025-05-01T07:45:00Z",
+    #     "etc": "2025-05-01T11:15:00Z"
+    # },
+    # {
+    #     "name": "June Forecast",
+    #     "start_date": "2025-06-01",
+    #     "end_date": "2025-06-30",
+    #     "status": "Pending",
+    #     "progress": "0%",
+    #     "start_timestamp": "2025-06-01T09:00:00Z",
+    #     "etc": "2025-06-01T10:00:00Z"
+    # }])
+
+@router.get("/draft/decisionrule/sample")
+async def get_sample_draft_account_data(request: Request):
+    pass
+    #return JSONResponse(
+    # status_code=200,
+    # content=
+    # [{
+    #     "name": "April Forecast",
+    #     "start_date": "2025-04-01",
+    #     "end_date": "2025-04-30",
+    #     "status": "Completed",
+    #     "progress": "100%",
+    #     "start_timestamp": "2025-04-01T08:00:00Z",
+    #     "etc": "2025-04-01T10:30:00Z"
+    # },
+    # {
+    #     "name": "May Forecast",
+    #     "start_date": "2025-05-01",
+    #     "end_date": "2025-05-31",
+    #     "status": "Running",
+    #     "progress": "42%",
+    #     "start_timestamp": "2025-05-01T07:45:00Z",
+    #     "etc": "2025-05-01T11:15:00Z"
+    # },
+    # {
+    #     "name": "June Forecast",
+    #     "start_date": "2025-06-01",
+    #     "end_date": "2025-06-30",
+    #     "status": "Pending",
+    #     "progress": "0%",
+    #     "start_timestamp": "2025-06-01T09:00:00Z",
+    #     "etc": "2025-06-01T10:00:00Z"
+    # }])
+
+@router.get("/draft/milestone/sample")
+async def get_sample_draft_account_data(request: Request):
+    pass
+    #return JSONResponse(
+    # status_code=200,
+    # content=
+    # [{
+    #     "name": "April Forecast",
+    #     "start_date": "2025-04-01",
+    #     "end_date": "2025-04-30",
+    #     "status": "Completed",
+    #     "progress": "100%",
+    #     "start_timestamp": "2025-04-01T08:00:00Z",
+    #     "etc": "2025-04-01T10:30:00Z"
+    # },
+    # {
+    #     "name": "May Forecast",
+    #     "start_date": "2025-05-01",
+    #     "end_date": "2025-05-31",
+    #     "status": "Running",
+    #     "progress": "42%",
+    #     "start_timestamp": "2025-05-01T07:45:00Z",
+    #     "etc": "2025-05-01T11:15:00Z"
+    # },
+    # {
+    #     "name": "June Forecast",
+    #     "start_date": "2025-06-01",
+    #     "end_date": "2025-06-30",
+    #     "status": "Pending",
+    #     "progress": "0%",
+    #     "start_timestamp": "2025-06-01T09:00:00Z",
+    #     "etc": "2025-06-01T10:00:00Z"
+    # }])
+
 # app.include_router(router) #this needs to be at bottom of file

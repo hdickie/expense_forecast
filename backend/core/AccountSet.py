@@ -5,11 +5,12 @@ import logging
 import numpy as np
 from typing import Optional, List
 from collections import defaultdict
-from models.accountset.params import CheckingAccountParams
-from models.accountset.params import CreditCardAccountParams
-from models.accountset.params import AccountType
+from models.account.params import CheckingAccountParams
+from models.account.params import CreditCardAccountParams
+from models.account.params import LoanAccountParams
+from models.account.params import AccountType
 import json
-from core import BudgetSet  # this could be refactored out, and should be in terms of independent dependencies and clear organization, but it works
+from core import LineItemSet  # this could be refactored out, and should be in terms of independent dependencies and clear organization, but it works
 logger = logging.getLogger("core.AccountSet")
 
 class AccountSet:
@@ -557,55 +558,59 @@ class AccountSet:
         )
         self.accounts.append(account)
 
+        if params.primary_checking_ind:
+            self.primary_checking_account_name = params.name
+
         if validate:
             AccountSet._validate_one_and_only_one_primary_checking_account(self.accounts)
 
-    def createLoanAccount(self, name, principal_balance, interest_balance, min_balance, max_balance, billing_start_date,
-                          apr, minimum_payment, end_of_previous_cycle_balance,):
+    def createLoanAccount(self, params: LoanAccountParams, validate: bool = True):
+    # def createLoanAccount(self, name, principal_balance, interest_balance, min_balance, max_balance, billing_start_date,
+    #                       apr, minimum_payment, end_of_previous_cycle_balance,):
 
         account_pb = Account(
-            name=f"{name}: Principal Balance",
-            balance=principal_balance,
-            min_balance=min_balance,
-            max_balance=max_balance,
+            name=f"{params.name}: Principal Balance",
+            balance=params.principal_balance,
+            min_balance=params.min_balance,
+            max_balance=params.max_balance,
             account_type="principal balance",
-            billing_start_date=billing_start_date,
+            billing_start_date=params.billing_start_date,
             interest_type='compound',
-            apr=apr,
+            apr=params.apr,
             interest_cadence='daily',
-            minimum_payment=minimum_payment,
+            minimum_payment=params.minimum_payment,
         )
         self.accounts.append(account_pb)
 
         account_interest = Account(
-            name=f"{name}: Interest",
-            balance=interest_balance,
-            min_balance=min_balance,
-            max_balance=max_balance,
+            name=f"{params.name}: Interest",
+            balance=params.interest_balance,
+            min_balance=params.min_balance,
+            max_balance=params.max_balance,
             account_type="interest",
         )
         self.accounts.append(account_interest)
 
-        billing_cycle_payment_balance = end_of_previous_cycle_balance - principal_balance
+        billing_cycle_payment_balance = params.end_of_previous_cycle_balance - params.principal_balance
         assert billing_cycle_payment_balance >= 0
 
         billing_cycle_payment = Account(
-            name=f"{name}: Loan Billing Cycle Payment Bal",
+            name=f"{params.name}: Loan Billing Cycle Payment Bal",
             balance=billing_cycle_payment_balance,
-            min_balance=min_balance,
-            max_balance=max_balance,
+            min_balance=params.min_balance,
+            max_balance=params.max_balance,
             account_type="loan billing cycle payment bal",
-            billing_start_date=billing_start_date,
+            billing_start_date=params.billing_start_date,
         )
         self.accounts.append(billing_cycle_payment)
 
         eopc = Account(
-            name=f"{name}: Loan End of Prev Cycle Bal",
-            balance=end_of_previous_cycle_balance,
-            min_balance=min_balance,
-            max_balance=max_balance,
+            name=f"{params.name}: Loan End of Prev Cycle Bal",
+            balance=params.end_of_previous_cycle_balance,
+            min_balance=params.min_balance,
+            max_balance=params.max_balance,
             account_type="loan end of prev cycle bal",
-            billing_start_date=billing_start_date,
+            billing_start_date=params.billing_start_date,
         )
         self.accounts.append(eopc)
 

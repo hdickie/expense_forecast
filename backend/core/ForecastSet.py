@@ -2,8 +2,8 @@ import pandas as pd
 
 import re
 import copy
-import BudgetItem
-import BudgetSet
+import backend.core.LineItem as LineItem
+import backend.core.LineItemSet as LineItemSet
 import jsonpickle
 import logging
 import json
@@ -49,7 +49,7 @@ def initialize_from_dict(data):
     # print('--------------------')
     # print(data['core_budget_set'])
 
-    core_budget_set = BudgetSet.BudgetSet([])
+    core_budget_set = LineItemSet.BudgetSet([])
     for BudgetItem__dict in data["core_budget_set"]["budget_items"]:
         # BudgetItem__dict = BudgetItem__dict[0]
         sd_YYYYMMDD = BudgetItem__dict["start_date_YYYYMMDD"]
@@ -68,7 +68,7 @@ def initialize_from_dict(data):
 
     # print('--------------------')
     # print(data['option_budget_set'])
-    option_budget_set = BudgetSet.BudgetSet([])
+    option_budget_set = LineItemSet.BudgetSet([])
     for BudgetItem__dict in data["option_budget_set"]["budget_items"]:
         # BudgetItem__dict = BudgetItem__dict[0]
         sd_YYYYMMDD = BudgetItem__dict["start_date_YYYYMMDD"]
@@ -95,7 +95,7 @@ def initialize_from_dict(data):
     ].items():
 
         # print(forecast_name)
-        B = BudgetSet.BudgetSet([])
+        B = LineItemSet.BudgetSet([])
         for BudgetItem__dict in budget_item_set_dict["budget_items"]:
             # BudgetItem__dict = BudgetItem__dict[0]
             sd_YYYYMMDD = BudgetItem__dict["start_date_YYYYMMDD"]
@@ -212,7 +212,7 @@ def initialize_forecast_set_from_database(
         + "'",
         con=engine,
     )
-    option_budget_set = BudgetSet.initialize_from_dataframe(option_budget_set_df)
+    option_budget_set = LineItemSet.initialize_from_dataframe(option_budget_set_df)
 
     initialized_forecasts = {}
     id_to_name = {}
@@ -643,7 +643,7 @@ class ForecastSet:
                             new_option_budget_set_list.append(bi)
                         except Exception:
                             pass
-                new_option_budget_set = BudgetSet.BudgetSet(new_option_budget_set_list)
+                new_option_budget_set = LineItemSet.BudgetSet(new_option_budget_set_list)
                 new_dict_of_scenarios[s_key + " | " + choice_name] = (
                     new_option_budget_set
                 )
