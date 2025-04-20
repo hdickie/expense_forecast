@@ -4,6 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from core.ExpenseForecastServer import router
 from fastapi.responses import JSONResponse
 from fastapi import Request
+import sys
+import traceback
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -30,9 +32,19 @@ app.add_middleware(
 # Access-Control-Allow-Headers: X-CSRF-Token, Content-Type
 
 
+# @app.exception_handler(Exception)
+# async def global_exception_handler(request: Request, exc: Exception):
+#     logger.exception("Unhandled exception occurred")
+#     return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    logger.exception("Unhandled exception occurred")
-    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": str(exc),
+            "traceback": traceback.format_exc()
+        }
+    )
 
 app.include_router(router)

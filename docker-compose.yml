@@ -82,7 +82,7 @@ services:
       "
     environment:
        - FIEF__DATABASE_URL=postgresql://fief:fief@postgres:5432/fief
-       - FIEF_DOMAIN=fief.localhost
+       - FIEF_DOMAIN=http://fief.localhost
 
   fief-worker:
     image: ghcr.io/fief-dev/fief:latest
@@ -96,11 +96,14 @@ services:
        - FIEF__DATABASE_URL=postgresql://fief:fief@postgres:5432/fief
 
   apache:
-    image: httpd:latest
+    build:
+      context: ./frontend
     expose:
       - "8080"
     volumes:
-    - ./frontend/public-html/:/usr/local/apache2/htdocs/
+      - ./frontend/public-html/:/usr/local/apache2/htdocs/
+      - ./frontend/apache-config/my-site.conf:/usr/local/apache2/conf.d/my-site.conf
+      - ./frontend/apache-config/httpd.conf:/usr/local/apache2/conf/httpd.conf
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=Host(`expense_forecast.localhost`)"

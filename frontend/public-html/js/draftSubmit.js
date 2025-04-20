@@ -8,7 +8,7 @@ export async function submitDraftData() {
   }
 
   const payload = {
-    parameters: extractTableData("parameters-table"),
+    parameters: extractTableData("run-parameters-table"),
     accounts: extractTableData("accounts-table"),
     line_items: extractTableData("lineitems-table"),
     decision_rules: extractTableData("decisionrules-table"),
@@ -16,12 +16,23 @@ export async function submitDraftData() {
   };
 
   try {
+    console.log("Payload:");
+    console.log(JSON.stringify(payload));
+
     const response = await fetch("http://api.localhost/draft/submit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
       credentials: "include"
     });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Submission failed!", errorData);
+    } else {
+      const data = await response.json();
+      console.log("Submission succeeded!", data);
+    }
 
     alert(response.ok ? "Draft submitted successfully!" : "Failed to submit draft.");
   } catch (error) {

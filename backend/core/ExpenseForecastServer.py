@@ -2,7 +2,6 @@
 # HumanMiles “Your future called. It’s fine with this.”
 
 from fastapi import Depends, FastAPI
-from pydantic import BaseModel
 from typing import Optional
 from uuid import uuid4
 from fief_client import FiefAsync
@@ -15,7 +14,6 @@ import json
 from fastapi.responses import RedirectResponse
 import datetime
 from fastapi.responses import JSONResponse
-from fastapi import FastAPI
 from pydantic import BaseModel, Field
 import httpx
 import subprocess
@@ -25,15 +23,98 @@ from fastapi import Depends, HTTPException, Header
 from fief_client import FiefAccessTokenInfo, FiefAsync
 from core import AccountSet
 from models.account.schemas import AccountCreate
-from fastapi import Request
 from urllib.parse import urlencode
-load_dotenv(".env") 
-
+from fastapi import APIRouter, HTTPException
+from typing import List, Literal
 import logging
+from fastapi import APIRouter
+from os import getenv
+import sys
+
+load_dotenv(".env") 
 logger = logging.getLogger("core.ExpenseForecastServer")
 
-from fastapi import APIRouter
+logger.setLevel(logging.INFO)  # Or DEBUG if you want more noise
+
+# Create console handler
+handler = logging.StreamHandler(sys.stdout)  # Important! stdout not stderr
+formatter = logging.Formatter(
+    "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+handler.setFormatter(formatter)
+
+# Avoid duplicate handlers if code reloads
+if not logger.handlers:
+    logger.addHandler(handler)
+
 router = APIRouter()
+
+class ParameterRow(BaseModel):
+    start_date: str
+    end_date: str
+    forecast_name: str
+    approximate: Optional[bool] = False
+
+class AccountRow(BaseModel):
+    name: str
+    balance: float
+    min_balance: Optional[float]
+    max_balance: Optional[float]
+    type: Literal["checking", "credit", "loan", "investment"]
+    billing_start_date: Optional[str]
+    interest_type: Optional[str]
+    apr: Optional[float]
+    interest_cadence: Optional[Literal["daily", "monthly"]]
+    minimum_payment: Optional[float]
+    primary_checking: Optional[bool] = False
+
+class LineItemRow(BaseModel):
+    name: str
+    amount: float
+    priority: int
+    cadence: Literal["once", "daily", "weekly", "semiweekly", "monthly", "quarterly", "yearly"]
+    start_date: Optional[str]
+    end_date: Optional[str]
+    deferrable: bool
+    partial_payment_allowed: bool
+
+class DecisionRuleRow(BaseModel):
+    memo_regex: str
+    priority: int
+    account_from: str
+    account_to: str
+
+class MilestoneRow(BaseModel):
+    milestone_name: str
+    account_name: str
+    min_balance: Optional[float]
+    max_balance: Optional[float]
+    memo_regex: Optional[str]
+    account_milestone_names: Optional[str]
+    memo_milestone_name: Optional[str]
+
+class DraftSubmission(BaseModel):
+    parameters: List[ParameterRow]
+    accounts: List[AccountRow]
+    line_items: List[LineItemRow]
+    decision_rules: List[DecisionRuleRow]
+    milestones: List[MilestoneRow]
+
+
+class SessionData(BaseModel):
+    user_id: str
+    forecast_id: Optional[str] = None
+
+class User(BaseModel):
+    username: str
+    # role: str
+    # isAdmin: str
+    # add whatever fields you want to collect from the client
+
+
+class ForecastSelect(BaseModel):
+    forecast_name: str
+
 
 # 400 Bad Request - This means that client-side input fails validation.
 # 401 Unauthorized - This means the user isn't not authorized to access a resource. It usually returns when the user isn't authenticated.
@@ -49,7 +130,7 @@ router = APIRouter()
 
 
 redis = Redis(host="redis", port=6379, db=0, decode_responses=True)
-from os import getenv
+
 
 fief = FiefAsync(
     getenv("FIEF_INTERNAL_DOMAIN"),
@@ -64,19 +145,12 @@ scheme = OAuth2AuthorizationCodeBearer(
     auto_error=False,
 )
 
-class SessionData(BaseModel):
-    user_id: str
-    forecast_id: Optional[str] = None
 
 auth = FiefAuth(fief, scheme)
 
 
 
-class User(BaseModel):
-    username: str
-    # role: str
-    # isAdmin: str
-    # add whatever fields you want to collect from the client
+
 
 # class SessionData(BaseModel):
 #     user_id: str
@@ -85,16 +159,27 @@ class User(BaseModel):
 SESSION_COOKIE_NAME = "session_id"
 SESSION_TTL = 3600  # 1 hour
 
-class ForecastSelect(BaseModel):
-    forecast_name: str
-
 def get_current_user(request: Request):
-    access_token = request.headers.get('authorization').split(' ')[1]
-    #url = "http://localhost:8000/api/userinfo" #todo could be cached
-    url = f"{getenv('FIEF_DOMAIN')}/api/userinfo"
-    headers = {"Authorization": "Bearer "+access_token}
-    response = httpx.get(url, headers=headers, follow_redirects=True)
-    return response.json()["email"]
+    # Try cookie first
+    access_token = request.cookies.get('access_token')
+    
+    # # Try Authorization header second
+    # if not access_token:
+    #     auth_header = request.headers.get('authorization')
+    #     if auth_header and auth_header.startswith('Bearer '):
+    #         access_token = auth_header.split(' ')[1]
+    
+    if not access_token:
+        raise HTTPException(status_code=401, detail="Missing access token")
+
+    url = f"{os.getenv('FIEF_DOMAIN')}/api/userinfo"
+    headers = {"Authorization": f"Bearer {access_token}"}
+    response = httpx.get(url, headers=headers)
+    response.raise_for_status()
+    userinfo = response.json()
+
+    return userinfo["email"] 
+
 
 
 
@@ -120,32 +205,16 @@ def get_session_data(request: Request) -> SessionData:
 @router.get("/login", name="login")
 async def login(request: Request):
     try:
-        print('ENTER login')
-        
-        redirect_uri = str(request.url_for("auth_callback"))
-        
-        print("redirect_uri:"+str(redirect_uri))
-        # auth_url = await fief.auth_url(
-        #     redirect_uri=redirect_uri,
-        #     scope=["openid", "offline_access", "profile", "email"],
-        #     extras_params={"tenant": "expense-forecast"}
-        # )
-        print("FIEF config:")
-        print("FIEF_INTERNAL_DOMAIN:", getenv("FIEF_INTERNAL_DOMAIN"))
-        print("FIEF_CLIENT_ID:", getenv("FIEF_CLIENT_ID"))
-        print("FIEF_CLIENT_SECRET:", getenv("FIEF_CLIENT_SECRET"))
-
+        # redirect_uri = str(request.url_for("auth_callback"))
         
         discovery_url = f"{getenv('FIEF_INTERNAL_DOMAIN')}/.well-known/openid-configuration"
-        print("🔎 Discovery URL:", discovery_url)
+        
 
         async with httpx.AsyncClient() as client:
             try:
                 response = await client.get(discovery_url)
                 response.raise_for_status()
-                print("✅ Discovery response:", response.json())
             except Exception as e:
-                print("💥 Exception while hitting discovery URL:", str(e))
                 raise
 
         redirect_uri = "http://api.localhost/auth/callback"
@@ -160,14 +229,6 @@ async def login(request: Request):
         query_string = urlencode(params)
         auth_url = f"{getenv('FIEF_DOMAIN')}/authorize?{query_string}"
 
-        # auth_url = await fief.auth_url(
-        #         redirect_uri=redirect_uri,
-        #         scope=["openid", "offline_access", "profile", "email"],
-        #         extras_params={"tenant": "expense-forecast"}
-        #     )
-
-        print("auth_url:", auth_url)
-        print('EXIT login')
         return RedirectResponse(auth_url)
     except Exception as e:
         print(e)
@@ -184,21 +245,9 @@ async def auth_callback(request: Request, response: Response):
     if not code:
         raise HTTPException(status_code=400, detail="Missing code")
 
-    # redirect_uri = str(request.url_for("auth_callback"))
-    # redirect_uri = f"{getenv('FIEF_DOMAIN')}/callback"
     redirect_uri = "http://api.localhost/auth/callback"
 
-
-    print("CODE:", code, flush=True)
-    print("REDIRECT URI:", redirect_uri, flush=True)
-    print("FIEF_CLIENT_ID:", getenv("FIEF_CLIENT_ID"), flush=True)
-    print("FIEF_CLIENT_SECRET:", getenv("FIEF_CLIENT_SECRET"), flush=True)
-    print("Token endpoint should be:", f"{getenv('FIEF_INTERNAL_DOMAIN')}/api/token", flush=True)
-
-
     try:
-
-        # token, userinfo = await fief.auth_callback(code, redirect_uri)
         async with httpx.AsyncClient() as client:
             try:
                 token_resp = await client.post(
@@ -234,17 +283,32 @@ async def auth_callback(request: Request, response: Response):
             "expires_at": token_data.get("expires_at")  # optional
         }
 
-        response.set_cookie("session_id", session_id, httponly=True)
-        print('Set session_id cookie to '+str(session_id))
+            # Set cookie with the access token
+        response.set_cookie(
+            key="access_token",
+            value=token_data.get("access_token"),
+            domain=".localhost",   # important: share across subdomains
+            httponly=True,
+            samesite="none",
+            secure=False           # True if you're on HTTPS, False for local dev
+        )
+
+        response.set_cookie(key="session_id", 
+                            value=session_id, 
+                            domain=".localhost",   # important: share across subdomains
+                            httponly=True,
+                            samesite="none",
+                            secure=False   )
+        # print('Set session_id cookie to '+str(session_id))
 
         redis.setex(f"sessionid_to_sessiondata:{session_id}", 3600, json.dumps(session_data))
-        print('Set session_id -> session data for '+str(session_id))
+        # print('Set session_id -> session data for '+str(session_id))
 
         redis.setex(f"email_to_sessionid:{userinfo['email']}", 3600, session_id)
-        print('Set Email -> session_id for '+str(userinfo['email'] + ' = '+str(session_id)))
+        # print('Set Email -> session_id for '+str(userinfo['email'] + ' = '+str(session_id)))
         
         print('EXIT auth_callback (SUCCESS)')
-        return session_data
+        return RedirectResponse(url="http://expense_forecast.localhost/")
 
     except Exception as e:
         print(e)
@@ -262,8 +326,9 @@ async def logout(request: Request, response: Response):
     for cookie_name in request.cookies.keys():
         response.delete_cookie(cookie_name)
     
-    # Optionally: redirect to Fief logout URL
-    return {"message": "Logged out"}
+    return RedirectResponse(
+        url="http://fief.localhost/authorize?client_id=_EKEqlT8iLXsr4lE9UbokooFxXORsj2AelqPv0q9Bu0&redirect_uri=http%3A%2F%2Fapi.localhost%2Fauth%2Fcallback&response_type=code&scope=openid%20email%20profile&prompt=login"
+    )
 
 
 
@@ -352,17 +417,6 @@ async def create_account_for_user_forecast(
         "forecast_name": forecast_name,
         "account": account.dict()
     }
-
-# @app.post("/draft/accounts")
-# async def create_account_for_user_forecast(
-#     user_id: str,
-#     forecast_id: str
-# ):
-#     return {
-#         "user_id": user_id,
-#         "forecast_id": forecast_id,
-#         "account": account.dict()
-#     }
 
 
 @router.post("/draft/accounts")
@@ -498,49 +552,6 @@ async def ready():
                      "fief": fief_ok}
         )
     
-
-
-# def verify_fief_api_key(authorization: str = Header(...)) -> dict:
-#     if not authorization.startswith("Bearer "):
-#         raise HTTPException(status_code=401, detail="Invalid Authorization header")
-
-#     token = authorization.split(" ", 1)[1]
-
-#     response = httpx.post(
-#         "http://localhost:8001/api/token/introspect",
-#         data={"token": token},
-#         auth=("your-client-id", "your-client-secret")  # Only if introspection is protected
-#     )
-
-#     if response.status_code != 200 or not response.json().get("active"):
-#         raise HTTPException(status_code=401, detail="Invalid token")
-
-#     return response.json()  # contains user_id, scope, etc.
-
-
-# fief = FiefAsync( 
-#     "http://localhost:8000",  # (1)!
-#     "_EKEqlT8iLXsr4lE9UbokooFxXORsj2AelqPv0q9Bu0",  # (2)!
-#     "DR63yfZCDvVrKa4qp4_JjOEhIrNcZEITXxlxdM5Xvqs",  # (3)!
-# )
-
-# scheme = OAuth2AuthorizationCodeBearer(  
-#     "http://localhost:8000/authorize",  
-#     "http://localhost:8000/api/token",  
-#     scopes={"openid": "openid", "offline_access": "offline_access"},
-#     auto_error=False,  
-# )
-# auth = FiefAuth(fief, scheme)  
-
-# @router.get("/user")
-# async def get_user(
-#     access_token_info: FiefAccessTokenInfo = Depends(
-#         auth.authenticated()
-#         # auth.authenticated(scope=["openid", "required_scope"])
-#     ),
-# ):
-#     return access_token_info
-
 @router.get("/user")
 async def get_user(request: Request):
     access_token = request.cookies.get("access_token")
@@ -558,65 +569,12 @@ async def debug_headers(request: Request):
 async def debug_cookies(request: Request):
     return request.cookies
 
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
-from typing import List, Literal, Optional
-
-class ParameterRow(BaseModel):
-    start_date: str
-    end_date: str
-    forecast_name: str
-    approximate: Optional[bool] = False
-
-class AccountRow(BaseModel):
-    name: str
-    balance: float
-    min_balance: Optional[float]
-    max_balance: Optional[float]
-    type: Literal["checking", "credit", "loan", "investment"]
-    billing_start_date: Optional[str]
-    interest_type: Optional[str]
-    apr: Optional[float]
-    interest_cadence: Optional[Literal["daily", "monthly"]]
-    minimum_payment: Optional[float]
-    primary_checking: Optional[bool] = False
-
-class LineItemRow(BaseModel):
-    name: str
-    amount: float
-    priority: int
-    cadence: Literal["once", "daily", "weekly", "semiweekly", "monthly", "quarterly", "yearly"]
-    start_date: Optional[str]
-    end_date: Optional[str]
-    deferrable: bool
-    partial_payment_allowed: bool
-
-class DecisionRuleRow(BaseModel):
-    memo_regex: str
-    priority: int
-    account_from: str
-    account_to: str
-
-class MilestoneRow(BaseModel):
-    milestone_name: str
-    account_name: str
-    min_balance: Optional[float]
-    max_balance: Optional[float]
-    memo_regex: Optional[str]
-    account_milestone_names: Optional[str]
-    memo_milestone_name: Optional[str]
-
-class DraftSubmission(BaseModel):
-    parameters: List[ParameterRow]
-    accounts: List[AccountRow]
-    line_items: List[LineItemRow]
-    decision_rules: List[DecisionRuleRow]
-    milestones: List[MilestoneRow]
-
 # --- API endpoint with business rule validation ---
 
 @router.post("/draft/submit")
-async def submit_draft(draft: DraftSubmission):
+async def submit_draft(draft: DraftSubmission,
+    current_user: User = Depends(get_current_user)):
+    logger.info('ENTER submit_draft')
     errors = []
 
     # Business rule: Only one account can be marked as primary checking
@@ -649,17 +607,53 @@ async def submit_draft(draft: DraftSubmission):
             })
 
     if errors:
-        return {
+        rv = {
             "status": "rejected",
             "errors": errors
         }
+        logger.error(rv)
+        return rv
+    
+    # parameters: List[ParameterRow]
+    # accounts: List[AccountRow]
+    # line_items: List[LineItemRow]
+    # decision_rules: List[DecisionRuleRow]
+    # milestones: List[MilestoneRow]
+    # logger.info('dir(draft):')
+    # logger.info(dir(draft))
+    # logger.info('dir(draft.parameters):')
+    # logger.info(dir(draft.parameters))
+    logger.info(current_user)
+    logger.info(str(draft.parameters))
+    # parameters = draft.parameters[0]
+    # logger.info(print(f"{parameters.start_date=}"))
+    # logger.info(print(f"{parameters.end_date=}"))
+    # logger.info(print(f"{parameters.forecast_name=}"))
+    # logger.info(print(f"{parameters.approximate=}"))
+    # logger.info(f"# of Accounts......: {len(draft.accounts)}")
+    # logger.info(f"# of Line Items....: {len(draft.accounts)}")
+    # logger.info(f"# of Decision Rules: {len(draft.accounts)}")
+    # logger.info(f"# of Milestones....: {len(draft.accounts)}")
 
     # ✅ Passed validation
-    return { "status": "accepted" }
+    rv = { "status": "accepted" }
+    logger.info(rv)
+    return rv
+@router.post("/request-feature")
+async def post_request_feature(request: Request):
+    raise NotImplementedError
+
+@router.post("/report-problem")
+async def post_report_problem(request: Request):
+    raise NotImplementedError
+
+@router.post("/report-error")
+async def post_report_error(request: Request):
+    raise NotImplementedError
 
 # Date,Hume Checking,Hume Credit: Curr Stmt Bal,Hume Credit: Prev Stmt Bal,Hume Credit: Credit Billing Cycle Payment Bal,Hume Credit: Credit End of Prev Cycle Bal,Marginal Interest,Net Gain,Net Loss,Net Worth,Loan Total,CC Debt Total,Liquid Total,Next Income Date,Memo Directives,Memo
 @router.get("/view/forecast/sample")
-async def get_sample_view_table_data(request: Request):
+async def get_sample_view_forecast_table_data(request: Request):
     return JSONResponse(
             status_code=200,
             content=
@@ -758,7 +752,7 @@ async def get_sample_view_table_data(request: Request):
 )
 
 @router.get('/view/sankey/sample')
-async def get_sample_sankey_table_data(request: Request):
+async def get_sample_view_sankey_data(request: Request):
     return JSONResponse(
             status_code=200,
             content=[
@@ -806,7 +800,7 @@ async def get_sample_sankey_table_data(request: Request):
         )
 
 @router.get('/view/lineitem/sample')
-async def get_sample_sankey_table_data(request: Request):
+async def get_sample_view_lineitem_table_data(request: Request):
     return JSONResponse(
             status_code=200,
             content=
@@ -827,7 +821,7 @@ async def get_sample_sankey_table_data(request: Request):
             }])
 
 @router.get('/view/milestone/sample')
-async def get_sample_sankey_table_data(request: Request):
+async def get_sample_view_milestone_table_data(request: Request):
     return JSONResponse(
             status_code=200,
             content=
@@ -927,7 +921,7 @@ async def get_sample_browse_table_data(request: Request):
     
 
 @router.get("/draft/parameter/sample")
-async def get_sample_draft_account_data(request: Request):
+async def get_sample_draft_parameter_data(request: Request):
     pass
     #return JSONResponse(
     # status_code=200,
@@ -995,7 +989,7 @@ async def get_sample_draft_account_data(request: Request):
     # }])
 
 @router.get("/draft/lineitem/sample")
-async def get_sample_draft_account_data(request: Request):
+async def get_sample_draft_lineitem_data(request: Request):
     pass
     #return JSONResponse(
     # status_code=200,
@@ -1029,7 +1023,7 @@ async def get_sample_draft_account_data(request: Request):
     # }])
 
 @router.get("/draft/decisionrule/sample")
-async def get_sample_draft_account_data(request: Request):
+async def get_sample_draft_decisionrule_data(request: Request):
     pass
     #return JSONResponse(
     # status_code=200,
@@ -1063,7 +1057,7 @@ async def get_sample_draft_account_data(request: Request):
     # }])
 
 @router.get("/draft/milestone/sample")
-async def get_sample_draft_account_data(request: Request):
+async def get_sample_draft_milestone_data(request: Request):
     pass
     #return JSONResponse(
     # status_code=200,
@@ -1095,5 +1089,61 @@ async def get_sample_draft_account_data(request: Request):
     #     "start_timestamp": "2025-06-01T09:00:00Z",
     #     "etc": "2025-06-01T10:00:00Z"
     # }])
+
+
+
+
+@router.get("/draft/parameter/{user_id}")
+async def get_user_draft_parameter_data(request: Request,
+    current_user: User = Depends(get_current_user)):
+    raise NotImplementedError
+
+@router.get("/draft/account/{user_id}")
+async def get_user_draft_account_data(request: Request,
+    current_user: User = Depends(get_current_user)):
+    raise NotImplementedError
+
+@router.get("/draft/lineitem/{user_id}")
+async def get_user_draft_account_data(request: Request,
+    current_user: User = Depends(get_current_user)):
+    raise NotImplementedError
+
+@router.get("/draft/decisionrule/{user_id}")
+async def get_user_draft_account_data(request: Request,
+    current_user: User = Depends(get_current_user)):
+    raise NotImplementedError
+
+@router.get("/draft/milestone/{user_id}")
+async def get_user_draft_account_data(request: Request,
+    current_user: User = Depends(get_current_user)):
+    raise NotImplementedError
+
+
+@router.get("/browse/{user_id}")
+async def get_user_browse_forecast_data(request: Request,
+    current_user: User = Depends(get_current_user)):
+    raise NotImplementedError
+
+
+@router.get("/view/forecast/{user_id}/{forecast_id}")
+async def get_user_view_forecast_data(request: Request,
+    current_user: User = Depends(get_current_user)):
+    raise NotImplementedError
+
+@router.get("/view/sankey/{user_id}/{forecast_id}")
+async def get_user_view_sankey_data(request: Request,
+    current_user: User = Depends(get_current_user)):
+    raise NotImplementedError
+
+@router.get("/view/milestone/{user_id}/{forecast_id}")
+async def get_user_view_milestone_data(request: Request,
+    current_user: User = Depends(get_current_user)):
+    raise NotImplementedError
+  
+@router.get("/view/lineitem/{user_id}/{forecast_id}")
+async def get_user_view_lineitem_data(request: Request,
+    current_user: User = Depends(get_current_user)):
+    raise NotImplementedError
+  
 
 # app.include_router(router) #this needs to be at bottom of file

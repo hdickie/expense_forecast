@@ -139,6 +139,36 @@ export async function setupBrowseForecastTable() {
           headerSort: false,
           width: 100,
         },
+        {
+          title: "",
+          formatter: function(cell, formatterParams, onRendered) {
+            const button = document.createElement("button");
+            button.innerText = "Delete";
+            button.style.padding = "4px 8px";
+            button.style.border = "none";
+            button.style.borderRadius = "4px";
+            button.style.background = "#d61d00";
+            button.style.color = "white";
+            button.style.cursor = "pointer";
+
+              // 👇 Center the content inside the cell
+            const cellElement = cell.getElement();
+            cellElement.style.textAlign = "center";
+            cellElement.style.verticalAlign = "middle"; // optional, for perfect centering vertically
+
+      
+            button.addEventListener("click", function(e) {
+              e.stopPropagation(); // prevent row selection or expansion
+              const rowData = cell.getRow().getData();
+              console.log("Clicked row:", rowData);
+              alert(`You clicked on forecast: ${rowData.name}`);
+            });
+      
+            return button;
+          },
+          headerSort: false,
+          width: 100,
+        },
         { title: "Set Name", field: "set_name", headerFilter: "input" },
         { title: "Forecast Name", field: "name", headerFilter: "input" },
         { title: "Start Date", field: "start_date", sorter: "date", headerFilter: "input" },
@@ -595,3 +625,157 @@ export async function drawSankey() {
     console.error("Failed to draw Sankey diagram:", error);
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// setupDraftRunParameterTable();
+// setupDraftAccountTable();
+// setupDraftLineItemTable();
+// setupDraftDecisionRuleTable();
+// setupDraftMilestoneTable();
+
+export async function setupDraftRunParameterTable() {
+
+  try {
+    const response = await fetch("http://api.localhost/view/lineitem/sample");
+    const data = await response.json();
+      
+      const forecastTable = new Tabulator("#lineitem-view-table", {
+        data,
+        layout: "fitColumns",
+        placeholder: "No Line Items",
+        rowMouseEnter: function(e, row){
+          const id = row.getData().id;
+          d3.select(`[data-id='${id}']`).classed("highlighted", true);
+        },
+        rowMouseLeave: function(e, row){
+            const id = row.getData().id;
+            d3.select(`[data-id='${id}']`).classed("highlighted", false);
+        },
+        columnDefaults:{
+          tooltip: function(e, cell, onRendered) {
+            const rowData = cell.getRow().getData();
+          
+            const el = document.createElement("div");
+            el.style.backgroundColor = "white";
+            el.style.padding = "8px";
+            el.style.border = "1px solid #ccc";
+            el.style.borderRadius = "8px";
+            el.style.boxShadow = "0 2px 6px rgba(0,0,0,0.2)";
+            el.style.maxWidth = "300px";
+            el.style.fontSize = "12px";
+            el.style.color = "#333";
+          
+            el.innerHTML = `
+              <strong>Set:</strong> ${rowData.set_name || "(none)"}<br>
+              <strong>Name:</strong> ${rowData.name || "(no name)"}<br>
+              <strong>Status:</strong> ${rowData.status || "(unknown)"}<br>
+              <strong>Progress:</strong> ${rowData.progress || "(n/a)"}<br>
+              <strong>Start Date:</strong> ${rowData.start_date || "(n/a)"}<br>
+              <strong>End Date:</strong> ${rowData.end_date || "(n/a)"}<br>
+              <strong>Started:</strong> ${rowData.start_timestamp || "(n/a)"}<br>
+              <strong>ETC:</strong> ${rowData.etc || "(n/a)"}
+            `;
+          
+            return el;
+          },
+          
+        },
+        tooltips: function(cell) {
+          const data = cell.getRow().getData();
+          return `
+            <div>
+              <strong>Set:</strong> ${data.set_name || "(none)"}<br>
+              <strong>Name:</strong> ${data.name || "(no name)"}<br>
+              <strong>Status:</strong> ${data.status || "(unknown)"}<br>
+              <strong>Progress:</strong> ${data.progress || "(n/a)"}<br>
+              <strong>Start Date:</strong> ${data.start_date || "(n/a)"}<br>
+              <strong>End Date:</strong> ${data.end_date || "(n/a)"}<br>
+              <strong>Started:</strong> ${data.start_timestamp || "(n/a)"}<br>
+              <strong>Elapsed:</strong> ${data.elapsed || "(n/a)"}<br>
+              <strong>ETC:</strong> ${data.etc || "(n/a)"}
+            </div>
+          `;
+        },
+    
+        columns: [
+          {
+            title: "",
+            formatter: function(cell, formatterParams, onRendered) {
+              const button = document.createElement("button");
+              button.innerText = "Report Error";
+              button.style.padding = "4px 8px";
+              button.style.border = "none";
+              button.style.borderRadius = "4px";
+              button.style.background = "#d61d00";
+              button.style.color = "white";
+              button.style.cursor = "pointer";
+  
+                // 👇 Center the content inside the cell
+              const cellElement = cell.getElement();
+              cellElement.style.textAlign = "center";
+              cellElement.style.verticalAlign = "middle"; // optional, for perfect centering vertically
+  
+        
+              button.addEventListener("click", function(e) {
+                e.stopPropagation(); // prevent row selection or expansion
+                const rowData = cell.getRow().getData();
+                console.log("Clicked row:", rowData);
+                alert(`You clicked on forecast: ${rowData.name}`);
+              });
+        
+              return button;
+            },
+            headerSort: false,
+            width: 100,
+          },
+          { title: "Date", field: "Date", sorter: "date" },
+          { title: "Amount", field: "Amount" },
+          { title: "Memo", field: "Memo",  headerFilter: "input" }
+        ]
+      });
+    
+      forecastTable.on("tableBuilt", async () => {
+        try {
+          const response = await fetch("http://api.localhost/view/lineitem/sample");
+          const data = await response.json();
+          forecastTable.setData(data);
+        } catch (err) {
+          console.error("Failed to load forecast data:", err);
+        }
+      });
+    
+      // fetch("http://api.localhost/forecasts")
+      // .then(res => res.json())
+      // .then(data => forecastTable.setData(data))
+      // .catch(err => console.error("Failed to load forecasts:", err));
+    
+    
+      document.getElementById("lineitem-view-table-search").addEventListener("input", e => {
+        forecastTable.setFilter([
+          [
+            { field: "name", type: "like", value: e.target.value },
+            { field: "status", type: "like", value: e.target.value }
+          ]
+        ]);
+      });
+    
+      return forecastTable;
+    } catch (error) {
+      console.error("Failed to load dynamic table:", error);
+    }
+  }
