@@ -113,6 +113,16 @@ class LineItemSet:
             - Deferrable (bool)
             - Partial_Payment_Allowed (bool)
         """
+        if len(self.line_items) == 0:
+            return pd.DataFrame({
+                    "Date": [],
+                    "Priority":  [],
+                    "Amount":  [],
+                    "Memo":  [],
+                    "Deferrable":  [],
+                    "Partial_Payment_Allowed":  [],
+                })
+        
         schedule_rows = []
 
         for item in self.line_items:

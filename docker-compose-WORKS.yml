@@ -11,8 +11,7 @@ services:
       - FIEF_CLIENT_ID=_EKEqlT8iLXsr4lE9UbokooFxXORsj2AelqPv0q9Bu0
       - FIEF_CLIENT_SECRET=DR63yfZCDvVrKa4qp4_JjOEhIrNcZEITXxlxdM5Xvqs
        - CELERY_BROKER_URL=redis://redis:6379/0 
-    # command: uvicorn main:app --host 0.0.0.0 --reload --port 8001
-    command: /bin/sh -c "sleep 10 && uvicorn main:app --host 0.0.0.0 --port 8001 --reload"
+    command: uvicorn main:app --host 0.0.0.0 --reload --port 8001
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.api.rule=Host(`api.localhost`)"
@@ -26,14 +25,7 @@ services:
       - "traefik.http.middlewares.api-cors.headers.accesscontrolallowcredentials=true"  
 
       - "traefik.http.routers.api.middlewares=api-cors"
-    # depends_on:
-    #   fief:
-    #     condition: service_healthy
-      # postgres:
-      #   condition: service_healthy
-      # redis:
-      #   condition: service_started
-      
+    
   postgres:
     image: postgres:alpine
     environment:
@@ -94,11 +86,6 @@ services:
       "
     environment:
        - FIEF__DATABASE_URL=postgresql://fief:fief@postgres:5432/fief
-    # healthcheck:
-    #   test: ["CMD-SHELL", "pg_isready -U fief -h postgres"]
-    #   interval: 5s
-    #   timeout: 3s
-    #   retries: 5
 
   fief-worker:
     image: ghcr.io/fief-dev/fief:latest

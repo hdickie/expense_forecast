@@ -2,10 +2,22 @@ import datetime
 import pandas as pd
 from typing import Optional
 from models.account.params import AccountParams
-
+import sys
 
 import logging
 logger = logging.getLogger("core.Account")
+logger.setLevel(logging.INFO)  # Or DEBUG if you want more noise
+
+# Create console handler
+handler = logging.StreamHandler(sys.stdout)  # Important! stdout not stderr
+formatter = logging.Formatter(
+    "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+handler.setFormatter(formatter)
+
+# Avoid duplicate handlers if code reloads
+if not logger.handlers:
+    logger.addHandler(handler)
 
 class Account:
 
@@ -84,18 +96,19 @@ class Account:
     # e.g. account = Account.from_params(AccountParams(...))
     @classmethod
     def from_params(cls, params: AccountParams, validate: bool = True) -> "Account":
+        logger.debug('ENTER/EXIT Account.from_params')
         return cls(
             name=params.name,
             balance=params.balance,
             min_balance=params.min_balance,
             max_balance=params.max_balance,
             account_type=params.account_type,
-            billing_start_date=params.billing_start_date,
-            interest_type=params.interest_type,
-            apr=params.apr,
-            interest_cadence=params.interest_cadence,
-            minimum_payment=params.minimum_payment,
-            primary_checking_ind=params.primary_checking_ind,
+            billing_start_date=getattr(params, "billing_start_date", None),
+            interest_type=getattr(params, "interest_type", None),
+            apr=getattr(params, "apr", None),
+            interest_cadence=getattr(params, "interest_cadence", None),
+            minimum_payment=getattr(params, "minimum_payment", None),
+            primary_checking_ind=getattr(params, "primary_checking_ind", False),
             validate=validate
         )
 
@@ -115,6 +128,7 @@ class Account:
         primary_checking_ind: Optional[bool] = None,
         validate: bool = True
     ) -> None:
+        logger.debug('ENTER Account()')
 
         self.name = name
         self.balance = balance
@@ -133,6 +147,8 @@ class Account:
             self._validate_billing_start_date(self.account_type, self.billing_start_date)
             self._validate_apr(self.account_type, self.apr)
             self._validate_minimum_payment(self.account_type, self.minimum_payment)
+
+        logger.debug('EXIT Account()')
 
     def to_dict(self) -> dict:
         return {

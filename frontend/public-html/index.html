@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/css/index.css">
     
+<script src="./js/luxon.min.js"></script>
 <script src="./js/tabulator.min.js"></script>
 <link href="./css/tabulator.min.css" rel="stylesheet">
 <script src="./js/d3.v7.min.js"></script>
@@ -36,12 +37,13 @@
     <div class="draft-columns">
       <div class="section">
 
-        <table id="run-parameters-table">
+        <!-- <table id="run-parameters-table">
           <thead>
             <tr><th>Start Date</th><th>End Date</th><th>Name</th><th>Approx.</th></tr>
           </thead>
           <tbody></tbody>
-        </table>
+        </table> -->
+        <div id="run-parameters-table"></div>
 
         <h3>Parameters</h3>
         <label>Forecast Name <input type="text" name="forecast_name"></label>
@@ -50,20 +52,27 @@
         <label>Approximate <input type="checkbox" name="approximate"></label>
 
         <button class="add-row" id="add-row-run-parameters-table">Add Row</button>
+        <div>
+        <button class="submit-button" id="save-draft-button">SAVE DRAFT</button>
         <button class="submit-button" id="submit-draft-button">SUBMIT DRAFT</button>
+      </div>
       </div>
 
       <div class="section">
 
-        <table id="accounts-table">
+        <!-- <table id="accounts-table">
           <thead>
             <tr><th>Name</th><th>Balance</th><th>Min</th><th>Max</th><th>Type</th><th>Billing Date</th><th>Interest Type</th><th>APR</th><th>Cadence</th><th>Min Pay</th><th>Primary</th></tr>
           </thead>
           <tbody></tbody>
-        </table>
+        </table> -->
+        <div id="accounts-table"></div>
 
         <h3>Accounts</h3>
         <label>Name <input type="text" name="account_name"></label>
+        <label>Balance <input type="number" step="any" name="balance"></label>
+        <label>Min Balance <input type="number" step="any" name="min_balance"></label>
+        <label>Max Balance <input type="number" step="any" name="max_balance"></label>
         <fieldset>
           <legend>Type</legend>
           <label><input type="radio" name="account_type" value="checking"> Checking</label>
@@ -76,9 +85,11 @@
           <label><input type="radio" name="interest_cadence" value="daily"> Daily</label>
           <label><input type="radio" name="interest_cadence" value="monthly"> Monthly</label>
         </fieldset>
-        <label>Balance <input type="number" step="any" name="balance"></label>
-        <label>Min Balance <input type="number" step="any" name="min_balance"></label>
-        <label>Max Balance <input type="number" step="any" name="max_balance"></label>
+        <fieldset>
+          <legend>Interest Type</legend>
+          <label><input type="radio" name="interest_type" value="simple"> Simple</label>
+          <label><input type="radio" name="interest_type" value="compound"> Compound</label>
+        </fieldset>
         <label>Previous Cycle Balance <input type="number" step="any" name="prev_cycle_balance"></label>
         <label>APR <input type="number" step="any" name="apr"></label>
         <label>Minimum Payment <input type="number" step="any" name="minimum_payment"></label>
@@ -89,15 +100,16 @@
       </div>
 
       <div class="section">
-        <h3>Line Items</h3>
+        
 
-        <table id="lineitems-table">
+        <!-- <table id="lineitems-table">
           <thead>
             <tr><th>Name</th><th>Amount</th><th>Priority</th><th>Choice Index</th><th>Cadence</th><th>Start</th><th>End</th><th>Deferrable</th><th>Partial</th></tr>
           </thead>
           <tbody></tbody>
-        </table>
-
+        </table> -->
+        <div id="lineitems-table"></div>
+        <h3>Line Items</h3>
         <label>Name <input type="text" name="line_item_name"></label>
         <label>Amount <input type="number" min="0" step="any" name="amount"></label>
         <label>Priority <input type="number" min="0" name="priority"></label>
@@ -121,12 +133,13 @@
 
       <div class="section">
 
-        <table id="decisionrules-table">
+        <!-- <table id="decisionrules-table">
           <thead>
             <tr><th>Memo Regex</th><th>Priority</th><th>Account From</th><th>Account To</th></tr>
           </thead>
           <tbody></tbody>
-        </table>
+        </table> -->
+        <div id="decisionrules-table"></div>
 
         <h3>Decision Rules</h3>
         <label>Memo Regex <input type="text" name="memo_regex"></label>
@@ -138,15 +151,16 @@
       </div>
 
       <div class="section">
-        <h3>Milestones</h3>
+        
 
-        <table id="milestones-table">
+        <!-- <table id="milestones-table">
           <thead>
             <tr><th>Name</th><th>Type</th><th>Field 1</th><th>Field 2</th></tr>
           </thead>
           <tbody></tbody>
-        </table>
-
+        </table> -->
+        <div id="milestones-table"></div>
+        <h3>Milestones</h3>
         <label>Milestone Name <input type="text" name="milestone_name"></label>
         <label>Account Name <input type="text" name="milestone_account"></label>
         <label>Min Balance <input type="number" step="any" name="milestone_min"></label>

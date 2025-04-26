@@ -1,4 +1,4 @@
-from backend.core import DecisionRule
+from core import DecisionRule
 import pandas as pd
 import re
 from models.decisionrule.params import DecisionRuleParams

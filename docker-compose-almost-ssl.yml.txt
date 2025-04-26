@@ -1,0 +1,109 @@
+services:
+  api:
+    build: 
+      context: ./backend
+    expose:
+      - "8001"
+    environment:
+      - UVICORN_PORT=8001
+      - FIEF_DOMAIN=http://fief.localhost
+      - FIEF_INTERNAL_DOMAIN=http://fief:8000
+      - FIEF_CLIENT_ID=_EKEqlT8iLXsr4lE9UbokooFxXORsj2AelqPv0q9Bu0
+      - FIEF_CLIENT_SECRET=DR63yfZCDvVrKa4qp4_JjOEhIrNcZEITXxlxdM5Xvqs
+    command: uvicorn main:app --host 0.0.0.0 --reload --port 8001
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api-router.rule=Host(`api.localhost`)"
+      - "traefik.http.routers.api-router.entrypoints=websecure"
+      - "traefik.http.routers.api-router.tls=true"
+      - "traefik.http.services.api-service.loadbalancer.server.port=8001"
+
+      - "traefik.http.middlewares.api-cors.headers.accesscontrolallowmethods=GET,POST,OPTIONS"
+      - "traefik.http.middlewares.api-cors.headers.accesscontrolalloworiginlist=http://expense_forecast.localhost"
+      - "traefik.http.middlewares.api-cors.headers.accesscontrolallowcredentials=true"
+      - "traefik.http.middlewares.api-cors.headers.accesscontrolallowheaders=Content-Type"
+
+      - "traefik.http.routers.api-router.middlewares=api-cors"
+    
+  postgres:
+    image: postgres:alpine
+    environment:
+      - POSTGRES_PASSWORD=fief
+      - POSTGRES_USER=fief
+      - POSTGRES_DB=fief
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:alpine
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - redis-data:/data
+
+  traefik:
+    image: traefik:v2.11
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--log.level=DEBUG"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./traefik:/etc/traefik
+      
+
+      
+  fief:
+    image: ghcr.io/fief-dev/fief:latest
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+      - redis
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.fief.rule=Host(`fief.localhost`)"
+      - "traefik.http.routers.fief.entrypoints=websecure"     
+      - "traefik.http.services.fief.loadbalancer.server.port=8000"
+    command: >
+      sh -c "
+        fief run-server
+      "
+    environment:
+       - FIEF__DATABASE_URL=postgresql://fief:fief@postgres:5432/fief
+       - FIEF_DOMAIN=https://fief.localhost
+
+  fief-worker:
+    image: ghcr.io/fief-dev/fief:latest
+    command: fief run-worker -p 1 -t 1
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+      - redis
+    environment:
+       - FIEF__DATABASE_URL=postgresql://fief:fief@postgres:5432/fief
+
+  apache:
+    build:
+      context: ./frontend
+    expose:
+      - "8080"
+    volumes:
+      - ./frontend/public-html/:/usr/local/apache2/htdocs/
+      - ./frontend/apache-config/my-site.conf:/usr/local/apache2/conf.d/my-site.conf
+      - ./frontend/apache-config/httpd.conf:/usr/local/apache2/conf/httpd.conf
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend-router.rule=Host(`expense_forecast.localhost`)"
+      - "traefik.http.routers.frontend-router.entrypoints=websecure"
+      - "traefik.http.routers.frontend-router.tls=true"
+      - "traefik.http.services.frontend-service.loadbalancer.server.port=80"
+
+
+volumes:
+  redis-data:
+  postgres-data:

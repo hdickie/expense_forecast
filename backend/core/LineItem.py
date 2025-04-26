@@ -2,6 +2,7 @@ import pandas as pd
 import datetime
 import jsonpickle
 from typing import Literal
+from models.lineitem.params import LineItemParams
 
 class LineItem:
 
@@ -34,6 +35,21 @@ class LineItem:
         assert memo == str(memo)
         assert len(memo.strip()) > 0
         assert ';' not in memo
+
+    @classmethod
+    def from_params(cls, params: LineItemParams, validate: bool = True) -> "LineItem":
+        return cls(
+            start_date=params.start_date,
+            end_date=params.end_date,
+            priority=params.priority,
+            cadence=params.cadence,
+            amount=params.amount,
+            deferrable=params.deferrable,
+            partial_payment_allowed=params.partial_payment_allowed,
+            income_flag=params.income_flag,
+            validate=validate
+        )
+
 
     def __init__(
         self,

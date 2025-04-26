@@ -24,4 +24,5 @@ class LineItemParams:
     end_date: datetime.datetime
     deferrable: bool
     partial_payment_allowed: bool
+    income_flag: bool
     

@@ -17,6 +17,5 @@ class ExpenseForecastParams:
     end_date: datetime.datetime
     milestone_set: MilestoneSet
     approximate_flag: bool = False
-    forecast_set_name: str = ""
     forecast_name: str = ""
     validate: bool = True

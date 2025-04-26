@@ -1,7 +1,7 @@
 export async function setupBrowseForecastTable() {
 
   try {
-    const response = await fetch("http://api.localhost/browse/sample");
+    const response = await fetch("http://api.localhost/browse/data");
     const data = await response.json();
       
     const forecastTable = new Tabulator("#browse-table", {
@@ -143,6 +143,36 @@ export async function setupBrowseForecastTable() {
           title: "",
           formatter: function(cell, formatterParams, onRendered) {
             const button = document.createElement("button");
+            button.innerText = "Run";
+            button.style.padding = "4px 8px";
+            button.style.border = "none";
+            button.style.borderRadius = "4px";
+            button.style.background = "#007bff";
+            button.style.color = "white";
+            button.style.cursor = "pointer";
+
+              // 👇 Center the content inside the cell
+            const cellElement = cell.getElement();
+            cellElement.style.textAlign = "center";
+            cellElement.style.verticalAlign = "middle"; // optional, for perfect centering vertically
+
+      
+            button.addEventListener("click", function(e) {
+              e.stopPropagation(); // prevent row selection or expansion
+              const rowData = cell.getRow().getData();
+              console.log("Clicked row:", rowData);
+              alert(`You clicked on forecast: ${rowData.name}`);
+            });
+      
+            return button;
+          },
+          headerSort: false,
+          width: 100,
+        },
+        {
+          title: "",
+          formatter: function(cell, formatterParams, onRendered) {
+            const button = document.createElement("button");
             button.innerText = "Delete";
             button.style.padding = "4px 8px";
             button.style.border = "none";
@@ -169,7 +199,6 @@ export async function setupBrowseForecastTable() {
           headerSort: false,
           width: 100,
         },
-        { title: "Set Name", field: "set_name", headerFilter: "input" },
         { title: "Forecast Name", field: "name", headerFilter: "input" },
         { title: "Start Date", field: "start_date", sorter: "date", headerFilter: "input" },
         { title: "End Date", field: "end_date", sorter: "date", headerFilter: "input" },
@@ -183,7 +212,7 @@ export async function setupBrowseForecastTable() {
 
     forecastTable.on("tableBuilt", async () => {
       try {
-        const response = await fetch("http://api.localhost/browse/sample");
+        const response = await fetch("http://api.localhost/browse/data");
         const data = await response.json();
         forecastTable.setData(data);
       } catch (err) {

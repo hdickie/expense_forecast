@@ -21,7 +21,7 @@ from dotenv import load_dotenv
 import os
 from fastapi import Depends, HTTPException, Header
 from fief_client import FiefAccessTokenInfo, FiefAsync
-from core import AccountSet
+from core.AccountSet import AccountSet
 from models.account.schemas import AccountCreate
 from urllib.parse import urlencode
 from fastapi import APIRouter, HTTPException
@@ -30,6 +30,38 @@ import logging
 from fastapi import APIRouter
 from os import getenv
 import sys
+from core.ExpenseForecast import ExpenseForecast
+from core.LineItem import LineItem
+from core.LineItemSet import LineItemSet
+from core.DecisionRule import DecisionRule
+from core.DecisionRuleSet import DecisionRuleSet
+from core.MilestoneSet import MilestoneSet
+
+from models.expenseforecast.params import ExpenseForecastParams
+
+from models.account.params import CheckingAccountParams
+from models.account.params import CreditCardAccountParams
+from models.account.params import LoanAccountParams
+from models.account.params import InvestmentAccountParams
+from models.lineitem.params import LineItemParams
+from models.decisionrule.params import DecisionRuleParams
+from models.milestone.params import AccountMilestoneParams
+from models.milestone.params import MemoMilestoneParams
+from models.milestone.params import CompositeMilestoneParams
+from models.expenseforecast.schemas import DraftSubmission
+
+from models.expenseforecast.schemas import User
+from models.expenseforecast.schemas import SessionData
+from models.expenseforecast.schemas import ForecastSelect
+from tasks.submit_forecast import validate_and_submit_draft_task
+
+from datetime import datetime
+from models.sqlalchemy.models import ForecastStage
+from models.sqlalchemy.database import SessionLocal
+
+from fastapi import WebSocket
+from celery.result import AsyncResult
+import asyncio
 
 load_dotenv(".env") 
 logger = logging.getLogger("core.ExpenseForecastServer")
@@ -49,71 +81,6 @@ if not logger.handlers:
 
 router = APIRouter()
 
-class ParameterRow(BaseModel):
-    start_date: str
-    end_date: str
-    forecast_name: str
-    approximate: Optional[bool] = False
-
-class AccountRow(BaseModel):
-    name: str
-    balance: float
-    min_balance: Optional[float]
-    max_balance: Optional[float]
-    type: Literal["checking", "credit", "loan", "investment"]
-    billing_start_date: Optional[str]
-    interest_type: Optional[str]
-    apr: Optional[float]
-    interest_cadence: Optional[Literal["daily", "monthly"]]
-    minimum_payment: Optional[float]
-    primary_checking: Optional[bool] = False
-
-class LineItemRow(BaseModel):
-    name: str
-    amount: float
-    priority: int
-    cadence: Literal["once", "daily", "weekly", "semiweekly", "monthly", "quarterly", "yearly"]
-    start_date: Optional[str]
-    end_date: Optional[str]
-    deferrable: bool
-    partial_payment_allowed: bool
-
-class DecisionRuleRow(BaseModel):
-    memo_regex: str
-    priority: int
-    account_from: str
-    account_to: str
-
-class MilestoneRow(BaseModel):
-    milestone_name: str
-    account_name: str
-    min_balance: Optional[float]
-    max_balance: Optional[float]
-    memo_regex: Optional[str]
-    account_milestone_names: Optional[str]
-    memo_milestone_name: Optional[str]
-
-class DraftSubmission(BaseModel):
-    parameters: List[ParameterRow]
-    accounts: List[AccountRow]
-    line_items: List[LineItemRow]
-    decision_rules: List[DecisionRuleRow]
-    milestones: List[MilestoneRow]
-
-
-class SessionData(BaseModel):
-    user_id: str
-    forecast_id: Optional[str] = None
-
-class User(BaseModel):
-    username: str
-    # role: str
-    # isAdmin: str
-    # add whatever fields you want to collect from the client
-
-
-class ForecastSelect(BaseModel):
-    forecast_name: str
 
 
 # 400 Bad Request - This means that client-side input fails validation.
@@ -161,24 +128,36 @@ SESSION_TTL = 3600  # 1 hour
 
 def get_current_user(request: Request):
     # Try cookie first
-    access_token = request.cookies.get('access_token')
+    logger.info('ENTER get_current_user')
+    logger.info(f'query_params={request.query_params}')
+    user = request.query_params.get("user")
+    logger.info(f'user={user}')
+    logger.info('EXIT get_current_user (success)')
+    return user
+    # access_token = request.cookies.get('access_token')
+    # logger.info(f'access_token:{access_token}')
     
-    # # Try Authorization header second
+    # # # Try Authorization header second
+    # # if not access_token:
+    # #     auth_header = request.headers.get('authorization')
+    # #     if auth_header and auth_header.startswith('Bearer '):
+    # #         access_token = auth_header.split(' ')[1]
+    
     # if not access_token:
-    #     auth_header = request.headers.get('authorization')
-    #     if auth_header and auth_header.startswith('Bearer '):
-    #         access_token = auth_header.split(' ')[1]
-    
-    if not access_token:
-        raise HTTPException(status_code=401, detail="Missing access token")
+    #     raise HTTPException(status_code=401, detail="Missing access token")
 
-    url = f"{os.getenv('FIEF_DOMAIN')}/api/userinfo"
-    headers = {"Authorization": f"Bearer {access_token}"}
-    response = httpx.get(url, headers=headers)
-    response.raise_for_status()
-    userinfo = response.json()
+    # url = f"{os.getenv('FIEF_DOMAIN')}/api/userinfo"
+    # headers = {"Authorization": f"Bearer {access_token}"}
 
-    return userinfo["email"] 
+
+    # response = httpx.get(url, headers=headers)
+    # logger.info(f'response:{str(response)}')
+
+
+    # response.raise_for_status()
+    # userinfo = response.json()
+
+    # return userinfo["email"] 
 
 
 
@@ -201,6 +180,19 @@ def get_session_data(request: Request) -> SessionData:
 #     extras={"tenant": "your-tenant-id"}  # 👈 Add your tenant here
 # )
 
+@router.get("/test-cookie")
+async def test_cookie():
+    response = RedirectResponse(url="http://expense_forecast.localhost")
+    response.set_cookie(
+        key="test_cookie",
+        value="abc123",
+        domain=".localhost",
+        httponly=True,
+        samesite="lax",  # this will work locally
+        secure=False     # this is key for http://localhost
+    )
+    logger.info(response)
+    return response
 
 @router.get("/login", name="login")
 async def login(request: Request):
@@ -238,8 +230,10 @@ async def login(request: Request):
         raise e
 
 @router.get("/auth/callback", name="auth_callback")
-async def auth_callback(request: Request, response: Response):
+async def auth_callback(request: Request, response: Response): #not sure if i am allowed to take response out of the signature here
     print('ENTER auth_callback')
+
+    response = RedirectResponse(url="http://expense_forecast.localhost/")
     
     code = request.query_params.get("code")
     if not code:
@@ -297,7 +291,7 @@ async def auth_callback(request: Request, response: Response):
                             value=session_id, 
                             domain=".localhost",   # important: share across subdomains
                             httponly=True,
-                            samesite="none",
+                            # samesite="none",
                             secure=False   )
         # print('Set session_id cookie to '+str(session_id))
 
@@ -308,7 +302,7 @@ async def auth_callback(request: Request, response: Response):
         # print('Set Email -> session_id for '+str(userinfo['email'] + ' = '+str(session_id)))
         
         print('EXIT auth_callback (SUCCESS)')
-        return RedirectResponse(url="http://expense_forecast.localhost/")
+        return response
 
     except Exception as e:
         print(e)
@@ -571,74 +565,85 @@ async def debug_cookies(request: Request):
 
 # --- API endpoint with business rule validation ---
 
+
+
+# @router.post("/draft/submit")
+# async def submit_draft(draft: DraftSubmission,
+#     current_user: User = Depends(get_current_user)):
+#     logger.info('ENTER submit_draft')
+
+#     validation_response = validate_draft_submission(draft)
+#     # submitVettedForecast(draft)
+
+#     logger.info(current_user)
+#     logger.info(str(draft.parameters))
+    
+#     # ✅ Passed validation
+#     rv = { "status": "accepted" }
+#     logger.info(rv)
+#     logger.info('EXIT submit_draft')
+#     return rv
+
+
+
+@router.get("/task/status/{task_id}")
+async def check_task_status(task_id: str):
+    result = AsyncResult(task_id)
+
+    if result.state == 'PENDING':
+        return {"status": "pending"}
+    elif result.state == 'SUCCESS':
+        return {"status": "success", "result": result.result}
+    elif result.state == 'FAILURE':
+        return {"status": "failure", "error": str(result.result)}
+    else:
+        return {"status": result.state.lower()}
+
+@router.websocket("/ws/task_status/{task_id}")
+async def websocket_task_status(websocket: WebSocket, task_id: str):
+    await websocket.accept()
+    result = AsyncResult(task_id)
+
+    while True:
+        if result.ready():
+            if result.successful():
+                await websocket.send_json({"status": "success", "result": result.result})
+            else:
+                await websocket.send_json({"status": "failure", "error": str(result.result)})
+            break
+        await asyncio.sleep(2)  # wait 2 seconds before checking again
+
+    await websocket.close()
+
 @router.post("/draft/submit")
 async def submit_draft(draft: DraftSubmission,
     current_user: User = Depends(get_current_user)):
-    logger.info('ENTER submit_draft')
-    errors = []
-
-    # Business rule: Only one account can be marked as primary checking
-    primary_count = sum(1 for a in draft.accounts if a.primary_checking)
-    if primary_count > 1:
-        errors.append({
-            "section": "accounts",
-            "field": "primary_checking",
-            "message": "Only one account can be set as primary checking"
-        })
-
-    # Example: No account can have negative balance
-    for i, account in enumerate(draft.accounts):
-        if account.balance < 0:
-            errors.append({
-                "section": "accounts",
-                "row": i,
-                "field": "balance",
-                "message": "Balance cannot be negative"
-            })
-
-    # Example: Line item amounts must be positive
-    for i, item in enumerate(draft.line_items):
-        if item.amount < 0:
-            errors.append({
-                "section": "line_items",
-                "row": i,
-                "field": "amount",
-                "message": "Amount must be non-negative"
-            })
-
-    if errors:
-        rv = {
-            "status": "rejected",
-            "errors": errors
-        }
-        logger.error(rv)
-        return rv
     
-    # parameters: List[ParameterRow]
-    # accounts: List[AccountRow]
-    # line_items: List[LineItemRow]
-    # decision_rules: List[DecisionRuleRow]
-    # milestones: List[MilestoneRow]
-    # logger.info('dir(draft):')
-    # logger.info(dir(draft))
-    # logger.info('dir(draft.parameters):')
-    # logger.info(dir(draft.parameters))
-    logger.info(current_user)
-    logger.info(str(draft.parameters))
-    # parameters = draft.parameters[0]
-    # logger.info(print(f"{parameters.start_date=}"))
-    # logger.info(print(f"{parameters.end_date=}"))
-    # logger.info(print(f"{parameters.forecast_name=}"))
-    # logger.info(print(f"{parameters.approximate=}"))
-    # logger.info(f"# of Accounts......: {len(draft.accounts)}")
-    # logger.info(f"# of Line Items....: {len(draft.accounts)}")
-    # logger.info(f"# of Decision Rules: {len(draft.accounts)}")
-    # logger.info(f"# of Milestones....: {len(draft.accounts)}")
+    task = validate_and_submit_draft_task.delay(draft.dict())
 
-    # ✅ Passed validation
-    rv = { "status": "accepted" }
-    logger.info(rv)
-    return rv
+    return {"task_id": task.id}
+
+   
+@router.get("/draft/load")
+async def get_draft(current_user: User = Depends(get_current_user)):
+    # redis.setex(f"user_to_saved_draft:{current_user}", 3600, json.dumps(draft.dict()))
+
+    draft_data = redis.get(f"user_to_saved_draft:{current_user}")
+    return draft_data
+
+@router.post("/draft/save")
+async def save_draft(draft: DraftSubmission,
+    current_user: User = Depends(get_current_user)):
+    logger.info('ENTER save_draft')
+    logger.info(f'user:{current_user}')
+    logger.info('Current Draft (may be incomplete):')
+    logger.info(draft)
+    # logger.info(draft.parameters)
+    
+    redis.setex(f"user_to_saved_draft:{current_user}", 3600, json.dumps(draft.dict()))
+
+    
+
 @router.post("/request-feature")
 async def post_request_feature(request: Request):
     raise NotImplementedError
@@ -841,6 +846,34 @@ async def get_sample_view_milestone_table_data(request: Request):
                 "Condition": "composite condition"
             }])
 
+
+@router.get("/browse/data")
+async def get_browse_table_data(request: Request):
+    logger.info('ENTER get_browse_table_data')
+    logger.info(request)
+    return_content = []
+
+    db = SessionLocal()
+    all_stages = db.query(ForecastStage).all()
+    for stage in all_stages:
+        # print(stage.forecast_name, stage.status, stage.start_date)
+        return_content.append({
+            "name": "April Forecast",
+            "start_date": "2025-04-01",
+            "end_date": "2025-04-30",
+            "status": "Completed",
+            "progress": "100%",
+            "start_timestamp": "2025-04-01T08:00:00Z",
+            "etc": "2025-04-01T10:30:00Z"
+        })
+
+    db.close()
+
+    logger.info('EXIT get_browse_table_data')
+    return JSONResponse(
+        status_code=200,
+        content=return_content
+    )
 
 @router.get("/browse/sample")
 async def get_sample_browse_table_data(request: Request):

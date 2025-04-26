@@ -23,6 +23,7 @@ template_values[index_page_name]['css_links'] = '<link rel="stylesheet" href="/c
 # """
 template_values[index_page_name]['header_script_links'] = \
 """
+<script src="./js/luxon.min.js"></script>
 <script src="./js/tabulator.min.js"></script>
 <link href="./css/tabulator.min.css" rel="stylesheet">
 <script src="./js/d3.v7.min.js"></script>
