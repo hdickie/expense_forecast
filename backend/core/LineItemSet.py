@@ -8,6 +8,8 @@ import logging
 from models.lineitem.params import LineItemParams
 from typing import Optional, List
 
+import hashlib
+
 logger = logging.getLogger("core.LineItemSet")
 
 
@@ -44,6 +46,8 @@ class LineItemSet:
         Add BudgetItemParams to self.budget_items with type checking.
         """
         self.line_items = []
+
+        self.stable_id_cache_is_valid = False
 
         if line_items__list is None:
             return
@@ -100,6 +104,15 @@ class LineItemSet:
             all_line_items_df.reset_index(drop=True, inplace=True)
 
         return all_line_items_df
+    
+    def get_stable_id(self):
+        # if self.stable_id_cache_is_valid:
+        #     return self.stable_id
+        m = hashlib.sha256()
+        m.update(self.getLineItems().to_string().encode())
+        self.stable_id = m.hexdigest()
+        self.stable_id_cache_is_valid = True
+        return self.stable_id
 
     def getLineItemSchedule(self) -> pd.DataFrame:
         """

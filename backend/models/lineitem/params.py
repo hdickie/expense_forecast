@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional
 import datetime
-
 from enum import Enum
 
 class LineItemCadence(Enum):
@@ -20,8 +19,8 @@ class LineItemParams:
     amount: float
     priority: int
     cadence: LineItemCadence
-    start_date: datetime.datetime
-    end_date: datetime.datetime
+    start_date: datetime.date
+    end_date: datetime.date
     deferrable: bool
     partial_payment_allowed: bool
     income_flag: bool

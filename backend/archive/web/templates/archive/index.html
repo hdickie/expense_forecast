@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {{ css_links }}
+    {{ header_script_links }}
+    {{ favicon_link }}
+</head>
+<body>
+    {{ page_header }}
+    
+    {% include "index_navbar.html" %}
+    {% include "index_draft_tab.html" %}
+    {% include "index_browse_tab.html" %}
+    {% include "index_view_tab.html" %}
+
+    {{ page_footer }}
+    {{ footer_script_links }}
+</body>
+</html>

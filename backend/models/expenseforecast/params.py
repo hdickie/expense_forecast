@@ -13,8 +13,8 @@ class ExpenseForecastParams:
     account_set: AccountSet
     lineitem_set: LineItemSet
     decisionrule_set: DecisionRuleSet
-    start_date: datetime.datetime
-    end_date: datetime.datetime
+    start_date: datetime.date
+    end_date: datetime.date
     milestone_set: MilestoneSet
     approximate_flag: bool = False
     forecast_name: str = ""

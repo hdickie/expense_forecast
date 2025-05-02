@@ -11,7 +11,7 @@ services:
       - FIEF_CLIENT_ID=_EKEqlT8iLXsr4lE9UbokooFxXORsj2AelqPv0q9Bu0
       - FIEF_CLIENT_SECRET=DR63yfZCDvVrKa4qp4_JjOEhIrNcZEITXxlxdM5Xvqs
        - CELERY_BROKER_URL=redis://redis:6379/0 
-    # command: uvicorn main:app --host 0.0.0.0 --reload --port 8001
+    # command: /bin/sh -c "sleep 10 && (uvicorn main:app --host 0.0.0.0 --port 8001 --reload &) && sleep 15 && alembic upgrade head && wait"
     command: /bin/sh -c "sleep 10 && uvicorn main:app --host 0.0.0.0 --port 8001 --reload"
     labels:
       - "traefik.enable=true"
@@ -29,10 +29,12 @@ services:
     # depends_on:
     #   fief:
     #     condition: service_healthy
-      # postgres:
-      #   condition: service_healthy
-      # redis:
-      #   condition: service_started
+    # healthcheck:
+    #   test: ["CMD", "sleep", "15"]
+      # test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      # interval: 5s
+      # timeout: 3s
+      # retries: 20
       
   postgres:
     image: postgres:alpine
@@ -95,10 +97,11 @@ services:
     environment:
        - FIEF__DATABASE_URL=postgresql://fief:fief@postgres:5432/fief
     # healthcheck:
-    #   test: ["CMD-SHELL", "pg_isready -U fief -h postgres"]
-    #   interval: 5s
-    #   timeout: 3s
-    #   retries: 5
+    #   test: ["CMD", "sleep", "10"]
+    #   # test: ["CMD", "curl", "-f", "http://localhost:8000/.well-known/openid-configuration"]
+    #   # interval: 5s
+    #   # timeout: 5s
+    #   # retries: 20
 
   fief-worker:
     image: ghcr.io/fief-dev/fief:latest
@@ -135,6 +138,17 @@ services:
     depends_on:
       - redis
       - api
+
+  migrate:
+    build: ./backend
+    # depends_on:
+    #   api:
+    #     condition: service_healthy
+    entrypoint: >
+      sh -c "sleep 15 && alembic upgrade head"
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    restart: "no"
 
 
 volumes:

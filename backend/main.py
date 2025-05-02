@@ -10,10 +10,11 @@ import os
 from sqlalchemy import inspect
 from models.sqlalchemy.database import SessionLocal
 from models.sqlalchemy.database import Base, engine
-from models.sqlalchemy.models import User
+from models.sqlalchemy.models import UserModel
 from sqlalchemy import text
-
+from fastapi.exceptions import RequestValidationError
 from contextlib import asynccontextmanager
+from fastapi.encoders import jsonable_encoder
 
 # # "Hey! Treat the parent folder (expense_forecast/) as a module root. You can import backend now."
 # sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -52,7 +53,14 @@ async def lifespan(app: FastAPI):
     logger.info(f"✅ Tables currently existing in database: {existing_tables}")
 
     import models.sqlalchemy.models
-    Base.metadata.create_all(bind=engine)
+    # Base.metadata.create_all(bind=engine)
+    Base.metadata.create_all(
+    bind=engine,
+    tables=[
+        t for t in Base.metadata.tables.values()
+        if t.name != "forecast_status"
+    ]
+)
 
     # Load Fief users
     with engine.connect() as connection:
@@ -69,9 +77,9 @@ async def lifespan(app: FastAPI):
         logger.info((email, user_id))
 
         # Check if user already exists
-        existing_user = db.query(User).filter(User.id == user_id).first()
+        existing_user = db.query(UserModel).filter(UserModel.id == user_id).first()
         if not existing_user:
-            new_user = User(
+            new_user = UserModel(
                 id=user_id,  # If your User model uses UUIDs
                 email=email,
             )
@@ -123,5 +131,14 @@ async def global_exception_handler(request: Request, exc: Exception):
             "traceback": "".join(tb.format())
         }
     )
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    logging.error(f"Validation error for request to {request.url}: {exc.errors()}")
+    return JSONResponse(
+        status_code=422,
+        content=jsonable_encoder({"detail": exc.errors(), "body": exc.body}),
+    )
+
 app.include_router(router)
 

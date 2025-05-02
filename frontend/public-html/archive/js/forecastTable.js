@@ -96,7 +96,7 @@ export async function setupBrowseForecastTable() {
             cellElement.style.textAlign = "center";
             cellElement.style.verticalAlign = "middle"; // optional, for perfect centering vertically
 
-      
+
             button.addEventListener("click", function(e) {
               e.stopPropagation(); // prevent row selection or expansion
               const rowData = cell.getRow().getData();
@@ -126,13 +126,15 @@ export async function setupBrowseForecastTable() {
             cellElement.style.textAlign = "center";
             cellElement.style.verticalAlign = "middle"; // optional, for perfect centering vertically
 
-      
             button.addEventListener("click", function(e) {
               e.stopPropagation(); // prevent row selection or expansion
               const rowData = cell.getRow().getData();
               console.log("Clicked row:", rowData);
               alert(`You clicked on forecast: ${rowData.name}`);
             });
+            
+
+            
       
             return button;
           },
@@ -161,7 +163,24 @@ export async function setupBrowseForecastTable() {
               e.stopPropagation(); // prevent row selection or expansion
               const rowData = cell.getRow().getData();
               console.log("Clicked row:", rowData);
-              alert(`You clicked on forecast: ${rowData.name}`);
+            
+              fetch("http://api.localhost/draft/run/"+rowData['stable_id'], {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json"
+                },
+                body: JSON.stringify(rowData)
+              })
+              .then(response => {
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                return response.json();
+              })
+              .then(data => {
+                console.log("Server response:", data);
+              })
+              .catch(error => {
+                console.error("POST request failed:", error);
+              });
             });
       
             return button;

@@ -1382,8 +1382,8 @@ class ExpenseForecast:
         account_set, # :AccountSet
         lineitem_set, # :LineItemSet
         decisionrule_set, # :DecisionRuleSet
-        start_date: datetime.datetime,
-        end_date: datetime.datetime,
+        start_date: datetime.date,
+        end_date: datetime.date,
         milestone_set,
         approximate_flag: bool = False,
         forecast_name: str = "",
@@ -2529,23 +2529,24 @@ class ExpenseForecast:
         return_dict[self.unique_id] = self
 
     # @profile
-    def runForecast(self, log_level="WARNING", play_notification_sound=False):
+    def runForecast(self, play_notification_sound=False):
+        logger.info('ENTER runForecast')
         # print('Starting Forecast #'+str(self.unique_id))
         self.start_ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        if log_level == "DEBUG":
-            loglevel = logging.DEBUG
-        elif log_level == "INFO":
-            loglevel = logging.INFO
-        elif log_level == "WARNING":
-            loglevel = logging.WARNING
-        elif log_level == "ERROR":
-            loglevel = logging.ERROR
-        elif log_level == "CRITICAL":
-            loglevel = logging.CRITICAL
-        else:
-            loglevel = logging.WARNING
-        logger.setLevel(loglevel)
+        # if log_level == "DEBUG":
+        #     loglevel = logging.DEBUG
+        # elif log_level == "INFO":
+        #     loglevel = logging.INFO
+        # elif log_level == "WARNING":
+        #     loglevel = logging.WARNING
+        # elif log_level == "ERROR":
+        #     loglevel = logging.ERROR
+        # elif log_level == "CRITICAL":
+        #     loglevel = logging.CRITICAL
+        # else:
+        #     loglevel = logging.WARNING
+        # logger.setLevel(loglevel)
 
         #log_in_color(
         #     logger, "white", "info", "Starting Forecast " + str(self.unique_id)
@@ -9850,7 +9851,7 @@ class ExpenseForecast:
             )
 
         # Generate the list of days for the forecast, excluding the first day
-        all_days = pd.date_range( start_date + datetime.timedelta(days=1), end_date  )
+        all_days = [ts.date() for ts in pd.date_range(start_date + datetime.timedelta(days=1), end_date)]
 
         # Initialize the forecast DataFrame with the first day's account balances
         forecast_df = self._getInitialForecastRow(start_date, account_set)

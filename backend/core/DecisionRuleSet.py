@@ -2,7 +2,7 @@ from core import DecisionRule
 import pandas as pd
 import re
 from models.decisionrule.params import DecisionRuleParams
-
+import hashlib
 import logging
 logger = logging.getLogger("core.DecisionRuleSet")
 
@@ -25,6 +25,15 @@ def initialize_from_dataframe(memo_set_df):
 
 class DecisionRuleSet:
 
+    def get_stable_id(self):
+        # if self.stable_id_cache_is_valid:
+        #     return self.stable_id
+        m = hashlib.sha256()
+        m.update(self.getDecisionRules().to_string().encode())
+        self.stable_id = m.hexdigest()
+        self.stable_id_cache_is_valid = True
+        return self.stable_id
+
     def __init__(self, decision_rules__list=None):
         """
         Create a <MemoRuleSet> from a <list> of <MemoRule> objects.
@@ -33,6 +42,8 @@ class DecisionRuleSet:
 
         if decision_rules__list is None:
             decision_rules__list = []
+
+        self.stable_id = False
 
         self.decision_rules = []
         for decision_rule in decision_rules__list:

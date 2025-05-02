@@ -3,7 +3,7 @@ import pandas as pd
 from typing import Optional
 from models.account.params import AccountParams
 import sys
-
+import hashlib
 import logging
 logger = logging.getLogger("core.Account")
 logger.setLevel(logging.INFO)  # Or DEBUG if you want more noise
@@ -20,6 +20,12 @@ if not logger.handlers:
     logger.addHandler(handler)
 
 class Account:
+
+    def get_stable_id(self):
+        m = hashlib.sha256()
+        m.update(str(self).encode())
+        self.stable_id = m.hexdigest()
+        return self.stable_id
 
     @classmethod
     def _validate_balances(cls, min_balance: float, balance: float, max_balance: float) -> None:
@@ -165,6 +171,7 @@ class Account:
             "primary_checking_ind": self.primary_checking_ind,
         }
 
+    ### this could contain None which apparently are not hashable
     def __str__(self) -> str:
         bsd = [ bsd.strftime('%Y%m%d') for bsd in [self.billing_start_date] if self.billing_start_date ]
 
@@ -183,4 +190,20 @@ class Account:
                 "Primary_Checking_Ind": [self.primary_checking_ind],
             }
         ).to_string()
+
+    ### I do like this better but it didn't fix the problem I was trying to solve, so let's return to this later
+    # def __str__(self) -> str:
+    #     return "|".join([
+    #         str(self.name),
+    #         str(self.balance),
+    #         str(self.min_balance),
+    #         str(self.max_balance),
+    #         str(self.account_type),
+    #         self.billing_start_date.strftime('%Y%m%d') if self.billing_start_date else "",
+    #         str(self.interest_type),
+    #         str(self.apr),
+    #         str(self.interest_cadence),
+    #         str(self.minimum_payment),
+    #         str(self.primary_checking_ind),
+    #     ])
 

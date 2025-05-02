@@ -174,28 +174,6 @@ export async function saveDraftData() {
 
 import { populateTable } from "./tableEditor.js";
 export async function loadSavedDraft() {
-
-
-
-  // // populate saved draft
-  // const user = new URLSearchParams(window.location.search).get("user");
-  // const response = await fetch(`http://api.localhost/draft/load?user=${encodeURIComponent(user)}`, {
-  //   method: "GET",
-  //   credentials: "include"
-  // });
-  // const saved_draft_data = await response.json();
-  // // console.log('saved_draft_data');
-  // // console.log(saved_draft_data);
-
-  // window["runParametersTable"].replaceData(saved_draft_data.parameters);
-  // window["accountsTable"].replaceData(saved_draft_data.accounts);
-  // window["lineItemsTable"].replaceData(saved_draft_data.line_items);
-  // window["decisionRulesTable"].replaceData(saved_draft_data.decision_rules);
-  // window["milestonesTable"].replaceData(saved_draft_data.milestones);
-
-
-
-
   const user = new URLSearchParams(window.location.search).get("user");
   if (!user) {
     console.warn("No user provided. Skipping draft load.");

@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Optional
 import datetime
-
 from enum import Enum
 
 class AccountType(Enum):
@@ -37,13 +36,14 @@ class AccountParams:
 
 @dataclass
 class CheckingAccountParams(AccountParams):
-    account_type: AccountType = field(default=AccountType.CHECKING, init=False)
     primary_checking_ind: bool
+    account_type: AccountType = field(default=AccountType.CHECKING, init=False)
+    
 
 @dataclass
 class CreditCardAccountParams(AccountParams):
     account_type: AccountType = field(default=AccountType.CREDIT, init=False)
-    billing_start_date: datetime.datetime
+    billing_start_date: datetime.date
     interest_type: InterestType = field(default=InterestType.COMPOUND, init=False)
     apr: float
     interest_cadence: InterestCadence = field(default=InterestCadence.MONTHLY, init=False)
@@ -57,7 +57,7 @@ class LoanAccountParams(AccountParams):
     account_type: AccountType = field(default=AccountType.LOAN, init=False)
     principal_balance: float
     interest_balance: float
-    billing_start_date: datetime.datetime
+    billing_start_date: datetime.date
     interest_type: InterestType
     apr: float
     interest_cadence: InterestCadence
@@ -67,7 +67,7 @@ class LoanAccountParams(AccountParams):
 @dataclass
 class InvestmentAccountParams(AccountParams):
     account_type: AccountType = field(default=AccountType.INVESTMENT, init=False)
-    billing_start_date: Optional[datetime.datetime] = None
+    billing_start_date: Optional[datetime.date] = None
     interest_type: Optional[InterestType] = None
     apr: Optional[float] = None
     interest_cadence: Optional[InterestCadence] = None

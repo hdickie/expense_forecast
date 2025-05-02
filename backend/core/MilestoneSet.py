@@ -8,6 +8,7 @@ import logging
 from core.log_methods import log_in_color
 from core.log_methods import setup_logger
 from models.milestone.params import AccountMilestoneParams
+import hashlib
 
 logger = setup_logger(__name__, "./" + __name__ + ".log", level=logging.DEBUG)
 
@@ -55,6 +56,15 @@ def initialize_from_dataframe(
 
 class MilestoneSet:
 
+    def get_stable_id(self):
+        # if self.stable_id_cache_is_valid:
+        #     return self.stable_id
+        m = hashlib.sha256()
+        m.update(self.to_json().encode())
+        self.stable_id = m.hexdigest()
+        self.stable_id_cache_is_valid = True
+        return self.stable_id
+
     def __init__(
         self,
         account_milestones__list=None,
@@ -66,6 +76,8 @@ class MilestoneSet:
         #     all_account_names = set([ a.split(':')[0] for a in account_set.getAccounts().Name ])
         #     if not account_milestone.account_name in all_account_names:
         #         raise ValueError("Account Name for Milestone not found in accounts: "+str(account_milestone.account_name))
+
+        self.stable_id_cache_is_valid = False
 
         if account_milestones__list is None:
             account_milestones__list = []

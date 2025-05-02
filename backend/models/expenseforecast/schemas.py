@@ -12,6 +12,7 @@ class ParameterRow(BaseModel):
 
 class AccountRow(BaseModel):
     account_name: str
+    # stable_id: str #No because this data is passed from UI and stable_id has not been computed yet
     account_type: Literal["checking", "credit", "loan", "investment"]
     interest_type: Optional[Literal["simple", "compound"]]
     interest_cadence: Optional[Literal["daily", "monthly"]]

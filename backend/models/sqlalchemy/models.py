@@ -4,35 +4,30 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
 from sqlalchemy import UniqueConstraint
+from sqlalchemy import ForeignKeyConstraint
+from sqlalchemy.orm import relationship, foreign
+from sqlalchemy import and_
+
+
 
 Base = declarative_base()
 
-class User(Base):
+class UserModel(Base):
     __tablename__ = "users"
 
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     email = Column(String, unique=True, nullable=False)
 
-    # Relationships
-    parameters = relationship("Parameter", back_populates="user", cascade="all, delete")
-    accounts = relationship("AccountSet", back_populates="user", cascade="all, delete")
-    line_item_sets = relationship("LineItemSet", back_populates="user", cascade="all, delete")
-    decision_rule_sets = relationship("DecisionRuleSet", back_populates="user", cascade="all, delete")
-    milestone_sets = relationship("MilestoneSet", back_populates="user", cascade="all, delete")
-    forecasts = relationship("ExpenseForecast", back_populates="user", cascade="all, delete")
-    forecast_sets = relationship("ExpenseForecastSet", back_populates="user", cascade="all, delete")
-    checking_accounts = relationship("CheckingAccount", back_populates="user", cascade="all, delete")
-    credit_accounts = relationship("CreditAccount", back_populates="user", cascade="all, delete")
-    loan_accounts = relationship("LoanAccount", back_populates="user", cascade="all, delete")
-    investment_accounts = relationship("InvestmentAccount", back_populates="user", cascade="all, delete")
-    
+    expense_forecasts = relationship("ExpenseForecastModel", back_populates="user")
 
-class Parameter(Base):
+class ParameterModel(Base):
     __tablename__ = "parameter"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    user = relationship("User", back_populates="parameters")
+    user = relationship("UserModel")
+
+    stable_parameter_id = Column(String, nullable=False)
 
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
@@ -40,30 +35,36 @@ class Parameter(Base):
     approximate = Column(Boolean, default=False)
 
     __table_args__ = (
-        UniqueConstraint('user_id', 'start_date', 'end_date', 'forecast_name', 'approximate', name='uq_parameter_natural_key'),
+        UniqueConstraint('user_id', 'stable_parameter_id', name='uq_parameter_natural_key'),
     )
 
-class AccountSet(Base):
+class AccountSetModel(Base):
     __tablename__ = "account_set"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    user = relationship("User", back_populates="accounts")
+    user = relationship("UserModel")
 
-    account_id = Column(Integer, nullable=False)
+    stable_account_set_id = Column(String, nullable=False)
+
+    account_type = Column(String, nullable=False)
+    stable_account_id = Column(String, nullable=False)
 
     __table_args__ = (
-        UniqueConstraint('user_id', 'account_id', name='uq_account_set_natural_key'),
+        # UniqueConstraint('user_id', 'stable_account_set_id', name='uq_account_set_user_stable'),
+        UniqueConstraint('user_id', 'stable_account_set_id', 'account_type', 'stable_account_id', name='uq_account_set_natural_key'),
     )
 
 # --- Account Types ---
 
-class InvestmentAccount(Base):
+class InvestmentAccountModel(Base):
     __tablename__ = "investment_account"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    user = relationship("User", back_populates="investment_accounts")
+    user = relationship("UserModel")
+
+    stable_account_id = Column(String, nullable=False)
 
     account_name = Column(String, nullable=False)
     account_type = Column(String, nullable=False)
@@ -78,17 +79,17 @@ class InvestmentAccount(Base):
     prev_cycle_balance = Column(Float, nullable=False)
 
     __table_args__ = (
-        UniqueConstraint('user_id', 'account_name', 'balance','min_balance',
-                        'max_balance', 'interest_type', 'interest_cadence','billing_start_date',
-                        'apr', 'minimum_payment', 'prev_cycle_balance', name='uq_investment_account_natural_key'),
+        UniqueConstraint('user_id', 'stable_account_id', name='uq_investment_account_natural_key'),
     )
 
-class LoanAccount(Base):
+class LoanAccountModel(Base):
     __tablename__ = "loan_account"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    user = relationship("User", back_populates="loan_accounts")
+    user = relationship("UserModel")
+
+    stable_account_id = Column(String, nullable=False)
 
     account_name = Column(String, nullable=False)
     account_type = Column(String, nullable=False)
@@ -103,17 +104,17 @@ class LoanAccount(Base):
     prev_cycle_balance = Column(Float, nullable=False)
 
     __table_args__ = (
-        UniqueConstraint('user_id', 'account_name', 'balance','min_balance',
-                        'max_balance', 'interest_type', 'interest_cadence','billing_start_date',
-                        'apr', 'minimum_payment', 'prev_cycle_balance', name='uq_loan_account_natural_key'),
+        UniqueConstraint('user_id', 'stable_account_id', name='uq_loan_account_natural_key'),
     )
 
-class CreditAccount(Base):
+class CreditAccountModel(Base):
     __tablename__ = "credit_account"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    user = relationship("User", back_populates="credit_accounts")
+    user = relationship("UserModel")
+
+    stable_account_id = Column(String, nullable=False)
 
     account_name = Column(String, nullable=False)
     balance = Column(Float, nullable=False)
@@ -125,17 +126,17 @@ class CreditAccount(Base):
     prev_cycle_balance = Column(Float, nullable=False)
 
     __table_args__ = (
-        UniqueConstraint('user_id', 'account_name', 'balance','min_balance',
-                        'max_balance', 'billing_start_date', 'apr','minimum_payment',
-                        'prev_cycle_balance', name='uq_credit_account_natural_key'),
+        UniqueConstraint('user_id', 'stable_account_id', name='uq_credit_account_natural_key'),
     )
 
-class CheckingAccount(Base):
+class CheckingAccountModel(Base):
     __tablename__ = "checking_account"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    user = relationship("User", back_populates="checking_accounts")
+    user = relationship("UserModel")
+
+    stable_account_id = Column(String, nullable=False)
 
     account_name = Column(String, nullable=False)
     balance = Column(Float, nullable=False)
@@ -144,27 +145,33 @@ class CheckingAccount(Base):
     primary_checking = Column(Boolean, nullable=False)
 
     __table_args__ = (
-        UniqueConstraint('user_id', 'account_name', 'balance','min_balance',
-                        'max_balance','primary_checking', name='uq_checking_account_natural_key'),
+        UniqueConstraint('user_id', 'stable_account_id', name='uq_checking_account_natural_key'),
     )
 
 # --- Line Items ---
 
-class LineItemSet(Base):
+class LineItemSetModel(Base):
     __tablename__ = "line_item_set"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    user = relationship("User", back_populates="line_item_sets")
+    user = relationship("UserModel")
 
-    line_item_id = Column(Integer)  # Might eventually want a relationship here!
+    stable_line_item_set_id = Column(String, nullable=False)
+    stable_line_item_id = Column(Integer, nullable=False) 
 
-class LineItem(Base):
+    __table_args__ = (
+        UniqueConstraint('user_id', 'stable_line_item_set_id', 'stable_line_item_id', name='uq_line_item_set_natural_key'),
+    )
+
+class LineItemModel(Base):
     __tablename__ = "line_item"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    user = relationship("User")
+    user = relationship("UserModel")
+
+    stable_line_item_id = Column(String, nullable=False)
 
     name = Column(String, nullable=False)
     amount = Column(Float, nullable=False)
@@ -176,27 +183,33 @@ class LineItem(Base):
     partial_payment_allowed = Column(Boolean, nullable=False)
 
     __table_args__ = (
-        UniqueConstraint('user_id', 'name', 'amount', 'priority', 'cadence',
-                        'start_date','end_date','deferrable','partial_payment_allowed', name='uq_line_item_natural_key'),
+        UniqueConstraint('user_id', 'stable_line_item_id', name='uq_line_item_natural_key'),
     )
 
 # --- Decision Rules ---
 
-class DecisionRuleSet(Base):
+class DecisionRuleSetModel(Base):
     __tablename__ = "decision_rule_set"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    user = relationship("User", back_populates="decision_rule_sets")
+    user = relationship("UserModel")
 
-    decision_rule_id = Column(Integer)
+    stable_decision_rule_set_id = Column(String, nullable=False)
+    stable_decision_rule_id = Column(String, nullable=False)
 
-class DecisionRule(Base):
+    __table_args__ = (
+        UniqueConstraint('user_id', 'stable_decision_rule_set_id', 'stable_decision_rule_id', name='uq_decision_rule_set_natural_key'),
+    )
+
+class DecisionRuleModel(Base):
     __tablename__ = "decision_rule"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    user = relationship("User")
+    user = relationship("UserModel")
+
+    stable_decision_rule_id = Column(String, nullable=False)
 
     memo_regex = Column(String, nullable=False)
     priority = Column(Integer, nullable=False)
@@ -204,96 +217,231 @@ class DecisionRule(Base):
     account_to = Column(String, nullable=False)
 
     __table_args__ = (
-        UniqueConstraint('user_id', 'memo_regex', 'priority', 'account_from', 'account_to', name='uq_decision_rule_natural_key'),
+        UniqueConstraint('user_id', 'stable_decision_rule_id', name='uq_decision_rule_natural_key'),
     )
 
 # --- Milestones ---
 
-class AccountMilestone(Base):
+class AccountMilestoneModel(Base):
     __tablename__ = "account_milestone"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    user = relationship("User")
+    user = relationship("UserModel")
+
+    stable_account_milestone_id = Column(String, nullable=False)
 
     milestone_name = Column(String, nullable=False)
     account_name = Column(String)
     min_balance = Column(Float)
     max_balance = Column(Float)
 
-class MemoMilestone(Base):
+    __table_args__ = (
+        UniqueConstraint('user_id', 'stable_account_milestone_id', name='uq_account_milestone_natural_key'),
+    )
+
+class MemoMilestoneModel(Base):
     __tablename__ = "memo_milestone"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    user = relationship("User")
+    user = relationship("UserModel")
+
+    stable_memo_milestone_id = Column(String, nullable=False)
 
     milestone_name = Column(String, nullable=False)
     memo_regex = Column(String)
-    account_milestone_names = Column(String)
 
-class CompositeMilestone(Base):
+    __table_args__ = (
+        UniqueConstraint('user_id', 'stable_memo_milestone_id', name='uq_memo_milestone_natural_key'),
+    )
+
+class CompositeMilestoneModel(Base):
     __tablename__ = "composite_milestone"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    user = relationship("User")
+    user = relationship("UserModel")
+
+    stable_composite_milestone_id = Column(String, nullable=False)
 
     milestone_name = Column(String, nullable=False)
-    account_milestone = Column(Integer, ForeignKey("account_milestone.id", ondelete="SET NULL"))
-    memo_milestone = Column(Integer, ForeignKey("memo_milestone.id", ondelete="SET NULL"))
+    milestone_id = Column(Integer)
 
-class MilestoneSet(Base):
+    __table_args__ = (
+        UniqueConstraint('user_id', 'stable_composite_milestone_id', name='uq_composite_milestone_natural_key'),
+    )
+
+class MilestoneSetModel(Base):
     __tablename__ = "milestone_set"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    user = relationship("User", back_populates="milestone_sets")
+    user = relationship("UserModel")
 
-    milestone_name = Column(String, nullable=False)
-    account_milestone = Column(Integer, ForeignKey("account_milestone.id", ondelete="SET NULL"))
-    memo_milestone = Column(Integer, ForeignKey("memo_milestone.id", ondelete="SET NULL"))
-    composite_milestone = Column(Integer, ForeignKey("composite_milestone.id", ondelete="SET NULL"))
+    stable_milestone_set_id = Column(String, nullable=False)
+
+    # milestone_set_name = Column(String, nullable=False)
+    # stable_id = Column(String, nullable=False)
+    milestone_type = Column(String, nullable=False)
+    milestone_id = Column(String, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint('user_id', 'stable_milestone_set_id', name='uq_milestone_set_natural_key'),
+    )
+    
 
 # --- Forecasts ---
 
-class ExpenseForecast(Base):
+class ExpenseForecastModel(Base):
     __tablename__ = "expense_forecast"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    user = relationship("User", back_populates="forecasts")
+    user = relationship("UserModel")
 
-    stable_id = Column(String, nullable=False)
+    stable_forecast_id = Column(String, nullable=False)
+    
+    parameter_id = Column(String, nullable=False)
+    account_set_id = Column(String, nullable=False)
+    line_item_set_id = Column(String, nullable=True)
+    decision_rule_set_id = Column(String, nullable=True)
+    milestone_set_id = Column(String, nullable=True)
 
-    parameter_id = Column(Integer, ForeignKey("parameter.id", ondelete="CASCADE"), nullable=False)
-    account_set_id = Column(Integer, ForeignKey("account_set.id", ondelete="CASCADE"), nullable=False)
-    line_item_set_id = Column(Integer, ForeignKey("line_item_set.id", ondelete="CASCADE"), nullable=False)
-    decision_rule_set_id = Column(Integer, ForeignKey("decision_rule_set.id", ondelete="CASCADE"), nullable=False)
-    milestone_set_id = Column(Integer, ForeignKey("milestone_set.id", ondelete="CASCADE"), nullable=False)
+    # Relationships
+    parameter = relationship(
+        "ParameterModel",
+        primaryjoin=and_(
+            foreign(user_id) == ParameterModel.user_id,
+            foreign(parameter_id) == ParameterModel.stable_parameter_id
+        )
+    )
 
-class ExpenseForecastSet(Base):
+    account_set = relationship(
+        "AccountSetModel",
+        primaryjoin=and_(
+            foreign(user_id) == AccountSetModel.user_id,
+            foreign(account_set_id) == AccountSetModel.stable_account_set_id
+        )
+    )
+
+    line_item_set = relationship(
+        "LineItemSetModel",
+        primaryjoin=and_(
+            foreign(user_id) == LineItemSetModel.user_id,
+            foreign(line_item_set_id) == LineItemSetModel.stable_line_item_set_id
+        )
+    )
+
+    decision_rule_set = relationship(
+        "DecisionRuleSetModel",
+        primaryjoin=and_(
+            foreign(user_id) == DecisionRuleSetModel.user_id,
+            foreign(decision_rule_set_id) == DecisionRuleSetModel.stable_decision_rule_set_id
+        )
+    )
+
+    milestone_set = relationship(
+        "MilestoneSetModel",
+        primaryjoin=and_(
+            foreign(user_id) == MilestoneSetModel.user_id,
+            foreign(milestone_set_id) == MilestoneSetModel.stable_milestone_set_id
+        )
+    )
+
+
+
+    __table_args__ = (
+        UniqueConstraint('user_id', 'stable_forecast_id', 'parameter_id', 'account_set_id', name='uq_expense_forecast_natural_key'),
+    )
+
+    # Foreign key constraints
+    # __table_args__ = (
+    #     ForeignKeyConstraint(
+    #         ['user_id', 'parameter_id'],
+    #         ['parameter.user_id', 'parameter.stable_parameter_id'],
+    #         ondelete='CASCADE'
+    #     ),
+    #     ForeignKeyConstraint(
+    #         ['user_id', 'account_set_id'],
+    #         ['account_set.user_id', 'account_set.stable_account_set_id'],
+    #         ondelete='CASCADE'
+    #     ),
+    #     ForeignKeyConstraint(
+    #         ['user_id', 'line_item_set_id'],
+    #         ['line_item_set.user_id', 'line_item_set.stable_line_item_set_id'],
+    #         ondelete='CASCADE'
+    #     ),
+    #     ForeignKeyConstraint(
+    #         ['user_id', 'decision_rule_set_id'],
+    #         ['decision_rule_set.user_id', 'decision_rule_set.stable_decision_rule_set_id'],
+    #         ondelete='CASCADE'
+    #     ),
+    #     ForeignKeyConstraint(
+    #         ['user_id', 'milestone_set_id'],
+    #         ['milestone_set.user_id', 'milestone_set.stable_milestone_set_id'],
+    #         ondelete='CASCADE'
+    #     ),
+    # )
+
+
+
+
+
+class ExpenseForecastSetModel(Base):
     __tablename__ = "expense_forecast_set"
 
     id = Column(Integer, primary_key=True, index=True)
+    stable_forecast_set_id = Column(String, nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    user = relationship("User", back_populates="forecast_sets")
+    user = relationship("UserModel")
 
-    
+    stable_forecast_id = Column(String, nullable=False)
 
-class ForecastStage(Base):
-    __tablename__ = "forecast_stage"
+    __table_args__ = (
+        UniqueConstraint('user_id', 'stable_forecast_set_id', 'stable_forecast_id', name='uq_expense_forecast_set_natural_key'),
+    )
+
+class ForecastStatusHistoryModel(Base):
+    __tablename__ = "forecast_status_history"
 
     id = Column(Integer, primary_key=True, index=True)
+    stable_id = Column(String, nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    # user = relationship("User", back_populates="parameters")
-
-    start_date = Column(Date, nullable=False)
-    end_date = Column(Date, nullable=False)
-    forecast_name = Column(String, nullable=False)
-    approximate = Column(Boolean, default=False)
+    user = relationship("UserModel")
 
     status = Column(String, nullable=False)
-    progress = Column(String, nullable=False)
-    start_ts = Column(DateTime, nullable=False)
-    elapsed = Column(Float, nullable=False)
+    insert_ts = Column(DateTime, nullable=False)
+
+class ForecastStatusModel(Base):
+    __tablename__ = "forecast_status"
+    __table_args__ = {"info": {"is_view": True}}
+
+    stable_id = Column(String, primary_key=True)  # must declare a fake PK
+    forecast_name = Column(String)
+    start_date = Column(DateTime)
+    end_date = Column(DateTime)
+    status = Column(String)
+    start_ts = Column(DateTime)
+
+
+# class ForecastStageModel(Base):
+#     __tablename__ = "forecast_stage"
+
+#     id = Column(Integer, primary_key=True, index=True)
+#     stable_id = Column(String, nullable=False)
+#     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+#     user = relationship("UserModel", back_populates="parameters")
+
+#     # start_date = Column(Date, nullable=False)
+#     # end_date = Column(Date, nullable=False)
+#     # forecast_name = Column(String, nullable=False)
+#     # approximate = Column(Boolean, default=False)
+
+#     status = Column(String, nullable=False)
+#     progress = Column(String, nullable=False)
+#     start_ts = Column(DateTime, nullable=False)
+#     elapsed = Column(Float, nullable=False)
+
+#     insert_ts = Column(DateTime, nullable=False)
+#     last_updated_ts = Column(DateTime, nullable=False)

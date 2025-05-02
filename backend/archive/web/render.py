@@ -14,13 +14,6 @@ template_values['index_view_tab.html'] = {}
 template_values[index_page_name]['title'] = 'Expense Forecast UI'
 template_values[index_page_name]['css_links'] = '<link rel="stylesheet" href="/css/index.css">'
 
-# template_values[index_page_name]['header_script_links'] = \
-# """
-# <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
-# <link href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css" rel="stylesheet">
-# <script src="https://d3js.org/d3.v7.min.js"></script>
-# <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
-# """
 template_values[index_page_name]['header_script_links'] = \
 """
 <script src="./js/luxon.min.js"></script>

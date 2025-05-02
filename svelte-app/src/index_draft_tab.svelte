@@ -1,0 +1,136 @@
+<script>
+import RunParametersTable from './RunParametersTable.svelte';
+</script>
+<div id="draft" class="tab-content">
+    <div class="draft-columns">
+      <div class="section">
+
+        <!-- <table id="run-parameters-table">
+          <thead>
+            <tr><th>Start Date</th><th>End Date</th><th>Name</th><th>Approx.</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table> -->
+        <RunParametersTable />
+        
+        <div>
+          <button class="submit-button" id="save-draft-button">SAVE DRAFT</button>
+          <button class="submit-button" id="submit-draft-button">SUBMIT DRAFT</button>
+        </div>
+      </div>
+
+      <div class="section">
+
+        <!-- <table id="accounts-table">
+          <thead>
+            <tr><th>Name</th><th>Balance</th><th>Min</th><th>Max</th><th>Type</th><th>Billing Date</th><th>Interest Type</th><th>APR</th><th>Cadence</th><th>Min Pay</th><th>Primary</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table> -->
+        <div id="accounts-table"></div>
+
+        <h3>Accounts</h3>
+        <label>Name <input type="text" name="account_name"></label>
+        <label>Balance <input type="number" step="any" name="balance"></label>
+        <label>Min Balance <input type="number" step="any" name="min_balance"></label>
+        <label>Max Balance <input type="number" step="any" name="max_balance"></label>
+        <fieldset>
+          <legend>Type</legend>
+          <label><input type="radio" name="account_type" value="checking"> Checking</label>
+          <label><input type="radio" name="account_type" value="credit"> Credit</label>
+          <label><input type="radio" name="account_type" value="loan"> Loan</label>
+          <label><input type="radio" name="account_type" value="investment"> Investment</label>
+        </fieldset>
+        <fieldset>
+          <legend>Interest Cadence</legend>
+          <label><input type="radio" name="interest_cadence" value="daily"> Daily</label>
+          <label><input type="radio" name="interest_cadence" value="monthly"> Monthly</label>
+        </fieldset>
+        <fieldset>
+          <legend>Interest Type</legend>
+          <label><input type="radio" name="interest_type" value="simple"> Simple</label>
+          <label><input type="radio" name="interest_type" value="compound"> Compound</label>
+        </fieldset>
+        <label>Previous Cycle Balance <input type="number" step="any" name="prev_cycle_balance"></label>
+        <label>APR <input type="number" step="any" name="apr"></label>
+        <label>Minimum Payment <input type="number" step="any" name="minimum_payment"></label>
+        <label>Billing Start Date <input type="date" name="billing_start_date"></label>
+        <label>Primary Checking <input type="checkbox" name="primary_checking"></label>
+
+        <button class="add-row"  id="add-row-accounts-table">Add Row</button>
+      </div>
+
+      <div class="section">
+        
+
+        <!-- <table id="lineitems-table">
+          <thead>
+            <tr><th>Name</th><th>Amount</th><th>Priority</th><th>Choice Index</th><th>Cadence</th><th>Start</th><th>End</th><th>Deferrable</th><th>Partial</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table> -->
+        <div id="lineitems-table"></div>
+        <h3>Line Items</h3>
+        <label>Name <input type="text" name="line_item_name"></label>
+        <label>Amount <input type="number" min="0" step="any" name="amount"></label>
+        <label>Priority <input type="number" min="0" name="priority"></label>
+        <label>Choice Index <input type="number" min="0" name="choice"></label>
+        <label>Cadence <select name="cadence">
+          <option>once</option>
+          <option>daily</option>
+          <option>weekly</option>
+          <option>semiweekly</option>
+          <option>monthly</option>
+          <option>quarterly</option>
+          <option>yearly</option>
+        </select></label>
+        <label>Start Date <input type="date" name="li_start_date"></label>
+        <label>End Date <input type="date" name="li_end_date"></label>
+        <label>Deferrable <input type="checkbox" name="deferrable"></label>
+        <label>Partial Payment Allowed <input type="checkbox" name="partial_allowed"></label>
+
+        <button class="add-row" id="add-row-lineitems-table">Add Row</button>
+      </div>
+
+      <div class="section">
+
+        <!-- <table id="decisionrules-table">
+          <thead>
+            <tr><th>Memo Regex</th><th>Priority</th><th>Account From</th><th>Account To</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table> -->
+        <div id="decisionrules-table"></div>
+
+        <h3>Decision Rules</h3>
+        <label>Memo Regex <input type="text" name="memo_regex"></label>
+        <label>Priority <input type="number" min="0" name="rule_priority"></label>
+        <label>Account From <input type="text" name="account_from"></label>
+        <label>Account To <input type="text" name="account_to"></label>
+
+        <button class="add-row"  id="add-row-decisionrules-table">Add Row</button>
+      </div>
+
+      <div class="section">
+        
+
+        <!-- <table id="milestones-table">
+          <thead>
+            <tr><th>Name</th><th>Type</th><th>Field 1</th><th>Field 2</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table> -->
+        <div id="milestones-table"></div>
+        <h3>Milestones</h3>
+        <label>Milestone Name <input type="text" name="milestone_name"></label>
+        <label>Account Name <input type="text" name="milestone_account"></label>
+        <label>Min Balance <input type="number" step="any" name="milestone_min"></label>
+        <label>Max Balance <input type="number" step="any" name="milestone_max"></label>
+        <label>Memo Regex <input type="text" name="milestone_memo"></label>
+        <label>Account Milestone Names <input type="text" name="account_milestone_names"></label>
+        <label>Memo Milestone Name <input type="text" name="memo_milestone_name"></label>
+
+        <button class="add-row" id="add-row-milestones-table">Add Row</button>
+      </div>
+    </div>
+  </div>

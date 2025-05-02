@@ -53,10 +53,10 @@ from models.expenseforecast.schemas import DraftSubmission
 from models.expenseforecast.schemas import User
 from models.expenseforecast.schemas import SessionData
 from models.expenseforecast.schemas import ForecastSelect
-from tasks.submit_forecast import validate_and_submit_draft_task
+from tasks.submit_forecast import validate_and_submit_draft_task, run_forecast
 
 from datetime import datetime
-from models.sqlalchemy.models import ForecastStage
+from models.sqlalchemy.models import ForecastStatusHistoryModel, ForecastStatusModel
 from models.sqlalchemy.database import SessionLocal
 
 from fastapi import WebSocket
@@ -126,14 +126,26 @@ auth = FiefAuth(fief, scheme)
 SESSION_COOKIE_NAME = "session_id"
 SESSION_TTL = 3600  # 1 hour
 
+
+from models.sqlalchemy.database import engine
+from sqlalchemy import text
+
 def get_current_user(request: Request):
     # Try cookie first
     logger.info('ENTER get_current_user')
-    logger.info(f'query_params={request.query_params}')
-    user = request.query_params.get("user")
-    logger.info(f'user={user}')
+    # logger.info(f'query_params={request.query_params}')
+    # user = request.query_params.get("user")
+    # logger.info(f'user={user}')
+    # 
+    with engine.connect() as connection:
+        result = connection.execute(text("SELECT id FROM fief_users where email = 'hume.dickie@live.com'"))
+        row = result.fetchone()
+        if row is None:
+            raise HTTPException(status_code=404, detail="User not found")
+        dev_user_uuid = row[0]
+    logger.info(f'dev_user_uuid={dev_user_uuid}')
     logger.info('EXIT get_current_user (success)')
-    return user
+    return dev_user_uuid
     # access_token = request.cookies.get('access_token')
     # logger.info(f'access_token:{access_token}')
     
@@ -619,7 +631,7 @@ async def websocket_task_status(websocket: WebSocket, task_id: str):
 async def submit_draft(draft: DraftSubmission,
     current_user: User = Depends(get_current_user)):
     
-    task = validate_and_submit_draft_task.delay(draft.dict())
+    task = validate_and_submit_draft_task.delay(draft.model_dump(mode="json"))
 
     return {"task_id": task.id}
 
@@ -854,19 +866,25 @@ async def get_browse_table_data(request: Request):
     return_content = []
 
     db = SessionLocal()
-    all_stages = db.query(ForecastStage).all()
-    for stage in all_stages:
-        # print(stage.forecast_name, stage.status, stage.start_date)
+    rows = db.query(ForecastStatusModel).all()
+
+    return_content = []
+    for row in rows:
         return_content.append({
-            "name": "April Forecast",
-            "start_date": "2025-04-01",
-            "end_date": "2025-04-30",
-            "status": "Completed",
-            "progress": "100%",
-            "start_timestamp": "2025-04-01T08:00:00Z",
-            "etc": "2025-04-01T10:30:00Z"
+            "stable_id": row.stable_id,
+            "name": row.forecast_name,
+            "start_date": row.start_date.strftime('%Y-%m-%d'),
+            "end_date": row.end_date.strftime('%Y-%m-%d'),
+            "status": row.status,
+            "start_timestamp": row.start_ts.strftime('%Y-%m-%d %H:%M:%S'),
+            "elapsed": str(datetime.now() - row.start_ts), 
         })
 
+    logger.info('return_content:')
+    logger.info(return_content)
+    ### start_date and end_date are null?
+    # [{'stable_id': '250430_4_0_0f99F', 'name': None, 'start_date': None, 'end_date': None, 'status': 'Submitted', 
+    # 'start_timestamp': datetime.datetime(2025, 4, 30, 11, 24, 20, 826567), 'elapsed': '-1 day, 23:59:55.018944'}]
     db.close()
 
     logger.info('EXIT get_browse_table_data')
@@ -1123,7 +1141,13 @@ async def get_sample_draft_milestone_data(request: Request):
     #     "etc": "2025-06-01T10:00:00Z"
     # }])
 
-
+@router.post("/draft/run/{forecast_id}")
+async def run_forecast_endpoint(
+    forecast_id: str,
+    current_user: User = Depends(get_current_user),
+):
+    task = run_forecast.delay(current_user, forecast_id)
+    return {"task_id": task.id}
 
 
 @router.get("/draft/parameter/{user_id}")
@@ -1180,3 +1204,4 @@ async def get_user_view_lineitem_data(request: Request,
   
 
 # app.include_router(router) #this needs to be at bottom of file
+

@@ -21,3 +21,4 @@ pytest-asyncio
 jinja2
 selenium
 celery
+alembic

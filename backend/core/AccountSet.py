@@ -1,3 +1,4 @@
+# from __future__ import annotations
 from core.Account import Account
 import pandas as pd
 import copy
@@ -12,6 +13,9 @@ from models.account.params import AccountType
 import json
 from core import LineItemSet  # this could be refactored out, and should be in terms of independent dependencies and clear organization, but it works
 import sys
+import hashlib
+
+
 logger = logging.getLogger("core.AccountSet")
 logger.setLevel(logging.INFO)  # Or DEBUG if you want more noise
 
@@ -452,6 +456,15 @@ class AccountSet:
     # def from_json(cls, json_string: str) -> "AccountSet":
     #     return cls.from_dicts(json.loads(json_string), validate=False)
 
+    def get_stable_id(self):
+        if self.stable_id_cache_is_valid:
+            return self.stable_id
+        m = hashlib.sha256()
+        m.update(self.getAccounts().to_string().encode())
+        self.stable_id = m.hexdigest()
+        self.stable_id_cache_is_valid = True
+        return self.stable_id
+
 # cache is good
     def __init__(self, accounts_list: Optional[List[Account]] = None, validate: bool = True) -> None:
         logger.debug('ENTER AccountSet()')
@@ -468,8 +481,18 @@ class AccountSet:
             return
 
         # logger.info('about to call getAccounts() in AccountSet()')
-        self.df_cache_is_valid = False #will be set true in below call
+
+        #will be set true in below calls
+        self.df_cache_is_valid = False 
+        self.stable_id_cache_is_valid = False
+
         self.accounts_df = self.getAccounts()
+        self.stable_id = self.get_stable_id()
+
+        for _, row in self.accounts_df.iterrows():
+            if row.Primary_Checking_Ind:
+                self.primary_checking_account_name = row.Name
+                break
         
         # logger.info('just after call getAccounts() in AccountSet()')
 
@@ -653,6 +676,7 @@ class AccountSet:
             AccountSet._validate_one_and_only_one_primary_checking_account(self.accounts)
 
         self.df_cache_is_valid = False
+        self.stable_id_cache_is_valid = False
 
 # cache is good
     def createLoanAccount(self, params: LoanAccountParams, validate: bool = True):
@@ -706,6 +730,7 @@ class AccountSet:
         self.accounts.append(eopc)
 
         self.df_cache_is_valid = False
+        self.stable_id_cache_is_valid = False
 
 # cache is good
     def createCreditCardAccount(self, params: CreditCardAccountParams, validate: bool = True) -> None:
@@ -763,6 +788,7 @@ class AccountSet:
             assert billing_cycle_payment_balance >= 0
             # todo additional validation
         self.df_cache_is_valid = False
+        self.stable_id_cache_is_valid = False
 
     
     # def createInvestmentAccount(self, name, balance, apr):
@@ -1232,6 +1258,7 @@ class AccountSet:
         )
 
         self.df_cache_is_valid = False
+        self.stable_id_cache_is_valid = False
 
         if boundary_error_ind:
             raise ValueError("Account boundaries were violated\n" + error_msg)
@@ -1636,6 +1663,7 @@ class AccountSet:
                     "Interest_Cadence": [],
                     "Minimum_Payment": [],
                     "Primary_Checking_Ind": [],
+                    "Stable_id": [],
                 }
             )
 
@@ -1653,6 +1681,7 @@ class AccountSet:
                         "Interest_Cadence": [account.interest_cadence],
                         "Minimum_Payment": [account.minimum_payment],
                         "Primary_Checking_Ind": [account.primary_checking_ind],
+                        "Stable_Id": [account.get_stable_id()],
                     }
                 )
 
@@ -1669,7 +1698,8 @@ class AccountSet:
                                 'APR':'float64',
                                 'Interest_Cadence':'str',
                                 'Minimum_Payment':'float64',
-                                'Primary_Checking_Ind':'bool'}
+                                'Primary_Checking_Ind':'bool',
+                                'Stable_Id':'str'}
 
 
                 # new line

@@ -52,14 +52,8 @@ body {
     padding: 8px 16px;
     cursor: pointer;
   }
-  .tab.active {
-    background-color: white;
-    border: 2px solid #ccc;
-    border-bottom: none;
-    border-radius: 5px 5px 0 0;
-  }
   .tab-content {
-    display: none;
+    /* display: none; */
     padding: 20px;
   }
   .tab-content.active {
