@@ -1,7 +1,3 @@
-
-import sys
-sys.path.append('../../../src/')
-
 import unittest, pytest
 
 from expense_forecast.AccountMilestone import AccountMilestone

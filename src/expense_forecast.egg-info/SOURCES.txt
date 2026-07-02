@@ -9,6 +9,7 @@ src/expense_forecast/CompositeMilestone.py
 src/expense_forecast/ExpenseForecast.py
 src/expense_forecast/ExpenseForecastClient.py
 src/expense_forecast/ExpenseForecastServer.py
+src/expense_forecast/ForecastHandler.py
 src/expense_forecast/ForecastSet.py
 src/expense_forecast/InitialConditionsSet.py
 src/expense_forecast/MemoMilestone.py

@@ -52,3 +52,6 @@ The repository currently has working unit tests and a CLI skeleton. Helpful next
 
 This project is licensed under the GNU General Public License v3.0. See the [license.txt](./license.txt) file for details.
 
+
+### Notes to self
+Run tests: python3 -m pytest

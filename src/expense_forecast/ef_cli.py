@@ -4,18 +4,21 @@ import os
 import datetime
 import hashlib
 from time import sleep
-import sys
 import argparse
 import logging
 from .ExpenseForecast import ExpenseForecast
 from .ForecastSet import ForecastSet
-from . import log_methods
+from .log_methods import log_in_color
 import pandas as pd
 import psycopg2
 from .AccountSet import AccountSet
 from .BudgetSet import BudgetSet
 from .MemoRuleSet import MemoRuleSet
 from .MilestoneSet import MilestoneSet
+import pandas as pd
+from .ForecastHandler import ForecastHandler
+from sqlalchemy import create_engine
+import configparser
 
 logger = logging.getLogger(__name__)
 formatter = logging.Formatter("%(asctime)s - %(levelname)-8s - %(message)s")
@@ -29,6 +32,17 @@ logger.addHandler(fileHandler)
 logger.addHandler(streamHandler)
 logger.propagate = False
 
+# asserts that config has reasonable values and is internally consistent
+# agnostic of (and before) action
+def validate_config(args):
+
+    return NotImplementedError
+
+# asserts that args has reasonable values and is internally consistent
+# in the context of the specific action
+def validate_args(args):
+
+    return NotImplementedError
 
 def scrape_dir_for_forecast_details(target_directory):
     return_df = pd.DataFrame(
@@ -153,40 +167,21 @@ def scrape_dir_for_forecast_details(target_directory):
     return_df.reset_index(inplace=True, drop=True)
     return return_df
 
-
 # Gather our code in a main() function
-def main(args, loglevel):
+def run(args):
     # logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
     os.environ["EF_LOG_DIR"] = args.log_directory
-    try:
-        config_lines = ""
-        config_args = {}
-        with open(args.config, "r") as f:
-            log_in_color(logger, "green", "debug", "Loading " + str(args.config))
-            config_lines = f.readlines()
-            for line in config_lines:
-                line = line.replace("\n", "")
-                l_split = line.split("=")
-                log_in_color(
-                    logger, "green", "debug", "SET " + l_split[0] + "=" + l_split[1]
-                )
-                config_args[l_split[0]] = l_split[1]
-    except Exception:
-        log_in_color(
-            logger,
-            "red",
-            "warning",
-            "Could not read config file " + str(os.getcwd()) + "/" + str(args.config),
-        )
+    
+    validate_config(args)
 
-    sys.path.append("/Users/hume/Github/expense_forecast")
-    import ExpenseForecast
-    import ForecastHandler
-    import ForecastSet
-    import pandas as pd
-    from sqlalchemy import create_engine
+    logging.debug("Running ef_cli with args:")
+    logging.debug(args)
+    validate_args(args)
+    
+    F = ForecastHandler()
 
-    F = ForecastHandler.ForecastHandler()
+    
+    
 
     # print('ARGS:')
 
@@ -281,7 +276,7 @@ def main(args, loglevel):
         )  # the string literal 'None' is a valid option for database
 
     # the label arg is only valid when used with parameterize and reparameterize
-    if args.label is not None:
+    if args.label != '':
         assert args.action[0] in ["parameterize"]
 
     assert os.path.isdir(args.log_directory)  # check log_directory exists
@@ -303,48 +298,52 @@ def main(args, loglevel):
             "parameterize",
         ]
 
-    if args.start_date is not None:
-        args.start_date = args.start_date.replace("-", "")
-        datetime.datetime.strptime(
-            args.start_date, "%Y%m%d"
-        )  # will raise an exception if there is a problem
+    #TODO there has to be a better way to validate date formats, but this works for now
+    if args.start_date != '':
+        pass
+    #     args.start_date = args.start_date.replace("-", "")
+    #     datetime.datetime.strptime(
+    #         args.start_date, "%Y%m%d"
+    #     )  # will raise an exception if there is a problem
 
-    if args.end_date is not None:
-        args.end_date = args.end_date.replace("-", "")
-        datetime.datetime.strptime(args.end_date, "%Y%m%d")
+    if args.end_date != '':
+        pass
+        # args.end_date = args.end_date.replace("-", "")
+        # datetime.datetime.strptime(args.end_date, "%Y%m%d")
 
+    ### TODO this checking seems no longer needed now that we merged config and args upstream
     # this would happen if neither filename nor database was passed explicitly
     # in that case, we check loaded config for db details
     # if there are no db details, then error, because there is no input to process
-    if args.database_hostname is None:
-        try:
-            args.database_hostname = config_args["database_hostname"]
-        except Exception as e:
-            raise ValueError("db hostname not specified on cmd line or in config")
+    # if args.database_hostname is None:
+    #     try:
+    #         args.database_hostname = args["database_hostname"]
+    #     except Exception as e:
+    #         raise ValueError("db hostname not specified on cmd line or in config")
 
-    if args.database_name is None:
-        try:
-            args.database_name = config_args["database_name"]
-        except Exception as e:
-            raise ValueError("db name not specified on cmd line or in config")
+    # if args.database_name is None:
+    #     try:
+    #         args.database_name = args["database_name"]
+    #     except Exception as e:
+    #         raise ValueError("db name not specified on cmd line or in config")
 
-    if args.database_username is None:
-        try:
-            args.database_username = config_args["database_username"]
-        except Exception as e:
-            raise ValueError("db username not specified on cmd line or in config")
+    # if args.database_username is None:
+    #     try:
+    #         args.database_username = args["database_username"]
+    #     except Exception as e:
+    #         raise ValueError("db username not specified on cmd line or in config")
 
-    if args.database_port is None:
-        try:
-            args.database_port = config_args["database_port"]
-        except Exception as e:
-            raise ValueError("db port not specified on cmd line or in config")
+    # if args.database_port is None:
+    #     try:
+    #         args.database_port = args["database_port"]
+    #     except Exception as e:
+    #         raise ValueError("db port not specified on cmd line or in config")
 
-    if args.database_password is None:
-        try:
-            args.database_password = config_args["database_password"]
-        except Exception as e:
-            raise ValueError("db password not specified on cmd line or in config")
+    # if args.database_password is None:
+    #     try:
+    #         args.database_password = args["database_password"]
+    #     except Exception as e:
+    #         raise ValueError("db password not specified on cmd line or in config")
 
     if args.source == "database" or args.source == "both":
         # try to connect
@@ -627,7 +626,7 @@ def main(args, loglevel):
                         E.runForecast()
                     E.appendSummaryLines()
                     E.writeToJSONFile(args.working_directory)
-                    F = ForecastHandler.ForecastHandler()
+                    F = ForecastHandler()
                     F.generateHTMLReport(E)
                     break  # bc only running a single forecast
             if not forecast_found:
@@ -660,7 +659,7 @@ def main(args, loglevel):
                     S.writeToJSONFile(
                         args.working_directory
                     )  # todo this is not writing forecast_df and indeed some of the other data frames as intended
-                    F = ForecastHandler.ForecastHandler()
+                    F = ForecastHandler()
                     for unique_id, E in S.initialized_forecasts.items():
                         E.writeToJSONFile(args.working_directory)
                         F.generateHTMLReport(E)
@@ -838,7 +837,7 @@ def main(args, loglevel):
 
             # print('Writing ForecastSet json to file HELLO')
             S.writeToJSONFile(args.working_directory)
-            F = ForecastHandler.ForecastHandler()
+            F = ForecastHandler()
             # todo also write Set JSON and report. i think 'write child reports' could be a parameter
             for unique_id, E in S.initialized_forecasts.items():
                 E.writeToJSONFile(args.working_directory)
@@ -1317,7 +1316,7 @@ def main(args, loglevel):
 # ef_cli report forecastset --id FORECAST_SET_ID
 # ef_cli export
 # ef_cli import
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(
         description="Runs a Forecast or ForecastSet and displays a progress bar.",
         epilog="As an alternative to the commandline, params can be placed in a file, one per line, and specified on the commandline like '%(prog)s @params.conf'.",
@@ -1409,8 +1408,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--config",
         required=False,
-        default="./ef_cli.config",
-        help="Default ./ef_cli.config. path of config file, else other values such as db conn details and username are expected",
+        default="./expense_forecast.conf",
+        help="Path to config file. Default: ./expense_forecast.conf",
         action="store",
     )
     parser.add_argument(
@@ -1447,4 +1446,18 @@ if __name__ == "__main__":
     # print('args:')
     # print(args)
 
-    main(args, loglevel)
+    config = configparser.ConfigParser()
+    files_read = config.read(args.config)
+
+    logger.debug("args.config:", args.config)
+    logger.debug("files_read:", files_read)
+    logger.debug("sections:", config.sections())
+
+    for key, value in config["default"].items():
+        if getattr(args, key, None) in (None, ""):
+            setattr(args, key, value)
+
+    run(args)
+
+if __name__ == "__main__":
+    main()
