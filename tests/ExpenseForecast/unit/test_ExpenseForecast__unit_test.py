@@ -4,7 +4,8 @@ from expense_forecast.AccountMilestone import AccountMilestone
 from expense_forecast.AccountSet import AccountSet
 from expense_forecast.BudgetSet import BudgetSet
 from expense_forecast.MemoRuleSet import MemoRuleSet
-from expense_forecast.ExpenseForecast import ExpenseForecast
+from expense_forecast.ExpenseForecastInitialConditions import ExpenseForecastInitialConditions
+from expense_forecast.ExpenseForecastResult import ExpenseForecastResult
 import pandas as pd, numpy as np
 import datetime, logging
 import tempfile

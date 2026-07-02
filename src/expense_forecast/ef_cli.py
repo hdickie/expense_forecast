@@ -6,7 +6,7 @@ import hashlib
 from time import sleep
 import argparse
 import logging
-from .ExpenseForecast import ExpenseForecast
+from .ExpenseForecastInitialConditions import ExpenseForecastInitialConditions
 from .ForecastSet import ForecastSet
 from .log_methods import log_in_color
 import pandas as pd
@@ -183,8 +183,8 @@ def run(args):
     
     
 
-    print('ARGS:')
-    print(args)
+    # print('ARGS:')
+    # print(args)
 
     # up front validations
     # always valid: --log-directory
@@ -577,10 +577,10 @@ def run(args):
             and args.source == "file"
         ):
 
-            E = ExpenseForecast.initialize_from_json_file(
+            E = ExpenseForecastInitialConditions.load_json_file(
                 args.filename
             )  # let this throw an exception if needed
-            E.update_date_range(args.start_date, args.end_date)
+            # E.update_date_range(args.start_date, args.end_date)
             if args.label:
                 E.forecast_name = args.label
             E.writeToJSONFile(args.working_directory)
@@ -1465,9 +1465,9 @@ def main():
     config = configparser.ConfigParser()
     files_read = config.read(args.config)
 
-    logger.debug("args.config:", args.config)
-    logger.debug("files_read:", files_read)
-    logger.debug("sections:", config.sections())
+    logger.debug("args.config: %s", args.config)
+    logger.debug("files_read: %s", files_read)
+    logger.debug("sections: %s", config.sections())
 
     for key, value in config["default"].items():
         if getattr(args, key, None) in (None, ""):

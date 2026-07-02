@@ -7,7 +7,7 @@ import pandas as pd
 import jsonpickle
 
 
-class ExpenseForecast:
+class ExpenseForecastResult:
 
     @staticmethod
     def _dataframe_to_json_data(dataframe):

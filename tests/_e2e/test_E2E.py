@@ -4,9 +4,12 @@ from datetime import date
 
 from expense_forecast.AccountSet import AccountSet
 from expense_forecast.BudgetSet import BudgetSet
-from expense_forecast.ExpenseForecast import ExpenseForecast
+from expense_forecast.ExpenseForecastInitialConditions import ExpenseForecastInitialConditions
+from expense_forecast.SimulationStepper import SimulationStepper
+from expense_forecast.ExpenseForecastResult import ExpenseForecastResult
 from expense_forecast.MemoRuleSet import MemoRuleSet
 from expense_forecast.MilestoneSet import MilestoneSet
+from expense_forecast.ForecastHandler import ForecastHandler
 
 import subprocess
 
@@ -52,34 +55,17 @@ class TestE2E:
             transaction_priority=1,
         )
 
-        for _, budget_item in B.getBudgetSchedule().iterrows():
-            memo_rule = M.findMatchingMemoRule(
-                budget_item.Memo,
-                budget_item.Priority,
-            )
-            A.executeTransaction(
-                memo_rule.account_from,
-                memo_rule.account_to,
-                budget_item.Amount,
-                income_flag=budget_item.Income_Flag,
-            )
+        E_IO = ExpenseForecastInitialConditions(
+            start_date=start_date,
+            end_date=end_date,
+            account_set=A,
+            budget_set=B,
+            memo_rule_set=M,
+            milestone_set=MS)
+        
+        R = ForecastHandler().runForecast(E_IO)
 
-        forecast_df = pd.DataFrame(
-            [
-                {
-                    "Date": end_date,
-                    "Checking": A.getBalances()["Checking"],
-                }
-            ]
-        )
-        E = ExpenseForecast(
-            unique_id="MVP",
-            forecast_df=forecast_df,
-            milestone_set=MS,
-            milestone_results={},
-        )
-
-        assert E.forecast_df["Checking"].iat[0] == 700
+        assert R.forecast_df["Checking"].iat[0] == 700
 
     @pytest.mark.E2E
     def test_E2E_MVP(self):
