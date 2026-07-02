@@ -37,6 +37,14 @@ This tool is useful for:
 </tr>
 </table>                                      |
 
+## Next steps
+
+The repository currently has working unit tests and a CLI skeleton. Helpful next tasks are:
+
+- stabilize `ef_cli.py` by removing hard-coded local paths and making config loading more robust
+- implement the placeholder integration tests under `tests/` so they validate real forecast flows
+- add a clear installation and usage section to `README.md`
+- provide a small example workflow for building a forecast, running it, and generating a report
 # Github Pages
 <a href="https://hdickie.github.io/expense_forecast/pages/collaborate.html">Expense Forecast Toolkit</a>
 

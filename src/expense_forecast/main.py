@@ -35,7 +35,7 @@ async def root():
 #     expected_result_df,
 #     test_description,
 # ):
-#     E = ExpenseForecast.ExpenseForecast(
+#     E = ExpenseForecast(
 #         account_set,
 #         budget_set,
 #         memo_rule_set,
@@ -174,14 +174,14 @@ async def root():
 #
 # def checking_acct_list(balance):
 #     return [
-#         Account.Account(
+#         Account(
 #             "Checking", balance, 0, 100000, "checking", primary_checking_ind=True
 #         )
 #     ]
 #
 #
 # def credit_acct_list(curr_balance, prev_balance, apr):
-#     A = AccountSet.AccountSet([])
+#     A = AccountSet([])
 #     A.createAccount(
 #         name="Credit",
 #         balance=curr_balance + prev_balance,
@@ -206,7 +206,7 @@ async def root():
 #
 #
 # def credit_bsd12_acct_list(prev_balance, curr_balance, apr):
-#     A = AccountSet.AccountSet([])
+#     A = AccountSet([])
 #     A.createAccount(
 #         name="Credit",
 #         balance=curr_balance + prev_balance,
@@ -234,7 +234,7 @@ async def root():
 #     amount, priority, memo, deferrable, partial_payment_allowed
 # ):
 #     return [
-#         BudgetItem.BudgetItem(
+#         BudgetItem(
 #             "20000102",
 #             "20000102",
 #             priority,
@@ -248,23 +248,23 @@ async def root():
 #
 #
 # def match_all_p1_checking_memo_rule_list():
-#     return [MemoRule.MemoRule(".*", "Checking", None, 1)]
+#     return [MemoRule(".*", "Checking", None, 1)]
 #
 #
 # def match_p1_test_txn_checking_memo_rule_list():
-#     return [MemoRule.MemoRule("test txn", "Checking", None, 1)]
+#     return [MemoRule("test txn", "Checking", None, 1)]
 #
 #
 # def match_p1_test_txn_credit_memo_rule_list():
-#     return [MemoRule.MemoRule("test txn", "Credit", None, 1)]
+#     return [MemoRule("test txn", "Credit", None, 1)]
 #
 #
 # def income_rule_list():
-#     return [MemoRule.MemoRule(".*income.*", None, "Checking", 1)]
+#     return [MemoRule(".*income.*", None, "Checking", 1)]
 #
 #
 # def non_trivial_loan(name, pbal, interest, apr):
-#     A = AccountSet.AccountSet([])
+#     A = AccountSet([])
 #     A.createAccount(
 #         name=name,
 #         balance=pbal + interest,
@@ -290,7 +290,7 @@ async def root():
 # def credit_bsd12_w_eopc_acct_list(
 #     prev_balance, curr_balance, apr, end_of_prev_cycle_balance
 # ):
-#     A = AccountSet.AccountSet([])
+#     A = AccountSet([])
 #     A.createAccount(
 #         name="Credit",
 #         balance=curr_balance + prev_balance,
@@ -450,17 +450,17 @@ async def root():
 #
 #     # test_description, account_set, budget_set, memo_rule_set, start_date_YYYYMMDD, end_date_YYYYMMDD, milestone_set, expected_result_df =(
 #     #                 'test_next_income_date',
-#     #                 AccountSet.AccountSet(checking_acct_list(1000)),
-#     #                 BudgetSet.BudgetSet(
-#     #                     [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 100, 'income 1', False, False),
-#     #                      BudgetItem.BudgetItem('20000104', '20000104', 1, 'once', 100, 'income 2', False, False)
+#     #                 AccountSet(checking_acct_list(1000)),
+#     #                 BudgetSet(
+#     #                     [BudgetItem('20000102', '20000102', 1, 'once', 100, 'income 1', False, False),
+#     #                      BudgetItem('20000104', '20000104', 1, 'once', 100, 'income 2', False, False)
 #     #                      ]),
-#     #                 MemoRuleSet.MemoRuleSet([
-#     #                     MemoRule.MemoRule('.*', None, 'Checking', 1)
+#     #                 MemoRuleSet([
+#     #                     MemoRule('.*', None, 'Checking', 1)
 #     #                 ]),
 #     #                 '20000101',
 #     #                 '20000105',
-#     #                 MilestoneSet.MilestoneSet([], [], []),
+#     #                 MilestoneSet([], [], []),
 #     #                 pd.DataFrame({
 #     #                     'Date': ['20000101', '20000102', '20000103', '20000104', '20000105'],
 #     #                     'Checking': [1000, 1100, 1100, 1200, 1200],
@@ -477,7 +477,7 @@ async def root():
 #     #                 })
 #     #         )
 #     #
-#     # E = ExpenseForecast.ExpenseForecast(account_set, budget_set,
+#     # E = ExpenseForecast(account_set, budget_set,
 #     #                                     memo_rule_set,
 #     #                                     start_date_YYYYMMDD,
 #     #                                     end_date_YYYYMMDD,

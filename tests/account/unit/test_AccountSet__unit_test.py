@@ -3,13 +3,15 @@ import logging
 import pytest
 import pandas as pd
 import tempfile
-import Account, AccountSet, doctest, copy
+from expense_forecast.Account import Account
+from expense_forecast.AccountSet import AccountSet
+import doctest, copy
 import datetime
-from log_methods import log_in_color
+from expense_forecast.log_methods import log_in_color
 
 
 def compound_loan_A():
-    A = AccountSet.AccountSet([])
+    A = AccountSet([])
     A.createAccount(
         "test loan A",
         balance=1100,
@@ -29,7 +31,7 @@ def compound_loan_A():
 
 
 def compound_loan_A_no_interest():
-    A = AccountSet.AccountSet([])
+    A = AccountSet([])
     A.createAccount(
         "test loan A",
         balance=1000,
@@ -49,7 +51,7 @@ def compound_loan_A_no_interest():
 
 
 def compound_loan_B():
-    A = AccountSet.AccountSet([])
+    A = AccountSet([])
     A.createAccount(
         "test loan B",
         balance=1600,
@@ -69,7 +71,7 @@ def compound_loan_B():
 
 
 def compound_loan_B_no_interest():
-    A = AccountSet.AccountSet([])
+    A = AccountSet([])
     A.createAccount(
         "test loan B",
         balance=1500,
@@ -89,7 +91,7 @@ def compound_loan_B_no_interest():
 
 
 def compound_loan_C():
-    A = AccountSet.AccountSet([])
+    A = AccountSet([])
     A.createAccount(
         "test loan C",
         balance=2600,
@@ -109,7 +111,7 @@ def compound_loan_C():
 
 
 def compound_loan_C_no_interest():
-    A = AccountSet.AccountSet([])
+    A = AccountSet([])
     A.createAccount(
         "test loan C",
         balance=2500,
@@ -129,7 +131,7 @@ def compound_loan_C_no_interest():
 
 
 def checking():
-    A = AccountSet.AccountSet([])
+    A = AccountSet([])
     A.createAccount(
         "test checking",
         balance=10000,
@@ -141,7 +143,7 @@ def checking():
 
 
 def cc(curr_bal, prev_bal, apr, bsd):
-    A = AccountSet.AccountSet([])
+    A = AccountSet([])
     A.createAccount(
         "test cc",
         curr_bal,
@@ -159,29 +161,29 @@ def cc(curr_bal, prev_bal, apr, bsd):
 
 
 def one_loan__p_1000__i_100__apr_01():
-    return AccountSet.AccountSet(checking() + compound_loan_A())
+    return AccountSet(checking() + compound_loan_A())
 
 
 def two_loans__p_1000__i_100__apr_01___p_1500__i_100__apr_001():
-    return AccountSet.AccountSet(checking() + compound_loan_A() + compound_loan_B())
+    return AccountSet(checking() + compound_loan_A() + compound_loan_B())
 
 
 def three_loans__p_1000__i_100__apr_01___p_1500__i_100__apr_001___p_2500__i_100__apr_005():
-    return AccountSet.AccountSet(
+    return AccountSet(
         checking() + compound_loan_A() + compound_loan_B() + compound_loan_C()
     )
 
 
 # def one_loan__p_1000__i_000__apr_01():
-#     return AccountSet.AccountSet(checking()+compound_loan_A_no_interest())
+#     return AccountSet(checking()+compound_loan_A_no_interest())
 #
 # def two_loans__p_1000__i_000__apr_01___p_1500__i_000__apr_001():
-#     return AccountSet.AccountSet(checking() + compound_loan_A_no_interest() + compound_loan_B_no_interest())
+#     return AccountSet(checking() + compound_loan_A_no_interest() + compound_loan_B_no_interest())
 
 
 # todo should these be fixtures?
 def three_loans__p_1000__i_000__apr_01___p_1500__i_000__apr_001___p_2500__i_000__apr_005():
-    return AccountSet.AccountSet(
+    return AccountSet(
         checking()
         + compound_loan_A_no_interest()
         + compound_loan_B_no_interest()
@@ -208,7 +210,7 @@ class TestAccountSet:
     #     [
     #         (
     #             [
-    #                 Account.Account(
+    #                 Account(
     #                     name="test combined total violates maximum : Principal Balance",
     #                     balance=60,
     #                     min_balance=0,
@@ -220,7 +222,7 @@ class TestAccountSet:
     #                     interest_cadence="monthly",
     #                     minimum_payment=50,
     #                 ),
-    #                 Account.Account(
+    #                 Account(
     #                     name="test combined total violates maximum : Interest",
     #                     balance=60,
     #                     min_balance=0,
@@ -232,7 +234,7 @@ class TestAccountSet:
     #                     interest_cadence=None,
     #                     minimum_payment=None,
     #                 ),
-    #                 Account.Account(
+    #                 Account(
     #                     name="test combined total violates maximum : Credit Billing Cycle Payment Bal",
     #                     balance=0,
     #                     min_balance=0,
@@ -249,7 +251,7 @@ class TestAccountSet:
     #         ),  # combined balance violates max (loan)
     #         (
     #             [
-    #                 Account.Account(
+    #                 Account(
     #                     name="test cc : Prev Stmt Bal",
     #                     balance=60,
     #                     min_balance=0,
@@ -261,7 +263,7 @@ class TestAccountSet:
     #                     interest_cadence="monthly",
     #                     minimum_payment=50,
     #                 ),
-    #                 Account.Account(
+    #                 Account(
     #                     name="test cc : Curr Stmt Bal",
     #                     balance=60,
     #                     min_balance=0,
@@ -273,7 +275,7 @@ class TestAccountSet:
     #                     interest_cadence=None,
     #                     minimum_payment=None,
     #                 ),
-    #                 Account.Account(
+    #                 Account(
     #                     name="test cc : Credit Billing Cycle Payment Bal",
     #                     balance=0,
     #                     min_balance=0,
@@ -290,7 +292,7 @@ class TestAccountSet:
     #         ),  # combined balance violates max (cc)
     #         (
     #             [
-    #                 Account.Account(
+    #                 Account(
     #                     name="test cc : Prev Stmt Bal",
     #                     balance=-100,
     #                     min_balance=-100,
@@ -302,7 +304,7 @@ class TestAccountSet:
     #                     interest_cadence="monthly",
     #                     minimum_payment=50,
     #                 ),
-    #                 Account.Account(
+    #                 Account(
     #                     name="test cc : Curr Stmt Bal",
     #                     balance=-100,
     #                     min_balance=-100,
@@ -314,7 +316,7 @@ class TestAccountSet:
     #                     interest_cadence=None,
     #                     minimum_payment=None,
     #                 ),
-    #                 Account.Account(
+    #                 Account(
     #                     name="test cc : Credit Billing Cycle Payment Bal",
     #                     balance=0,
     #                     min_balance=-100,
@@ -331,7 +333,7 @@ class TestAccountSet:
     #         ),  # combined balance violates min (cc)
     #         (
     #             [
-    #                 Account.Account(
+    #                 Account(
     #                     name="test : Principal Balance",
     #                     balance=-100,
     #                     min_balance=-100,
@@ -343,7 +345,7 @@ class TestAccountSet:
     #                     interest_cadence="monthly",
     #                     minimum_payment=50,
     #                 ),
-    #                 Account.Account(
+    #                 Account(
     #                     name="test : Interest",
     #                     balance=-100,
     #                     min_balance=-100,
@@ -355,7 +357,7 @@ class TestAccountSet:
     #                     interest_cadence=None,
     #                     minimum_payment=None,
     #                 ),
-    #                 Account.Account(
+    #                 Account(
     #                     name="test : Credit Billing Cycle Payment Bal",
     #                     balance=0,
     #                     min_balance=0,
@@ -372,7 +374,7 @@ class TestAccountSet:
     #         ),  # combined balance violates min (loan)
     #         (
     #             [
-    #                 Account.Account(
+    #                 Account(
     #                     name="test combined total violates maximum : Principal Balance",
     #                     balance=0,
     #                     min_balance=0,
@@ -384,7 +386,7 @@ class TestAccountSet:
     #                     interest_cadence="monthly",
     #                     minimum_payment=50,
     #                 ),
-    #                 Account.Account(
+    #                 Account(
     #                     name="test combined total violates maximum : Interest",
     #                     balance=60,
     #                     min_balance=0,
@@ -396,7 +398,7 @@ class TestAccountSet:
     #                     interest_cadence=None,
     #                     minimum_payment=None,
     #                 ),
-    #                 Account.Account(
+    #                 Account(
     #                     name="test combined total violates maximum : Credit Billing Cycle Payment Bal",
     #                     balance=0,
     #                     min_balance=0,
@@ -413,7 +415,7 @@ class TestAccountSet:
     #         ),  # non-matching max_balance (loan)
     #         (
     #             [
-    #                 Account.Account(
+    #                 Account(
     #                     name="test combined total violates maximum : Prev Stm Bal",
     #                     balance=0,
     #                     min_balance=0,
@@ -425,7 +427,7 @@ class TestAccountSet:
     #                     interest_cadence="monthly",
     #                     minimum_payment=50,
     #                 ),
-    #                 Account.Account(
+    #                 Account(
     #                     name="test combined total violates maximum : Curr Stmt Bal",
     #                     balance=60,
     #                     min_balance=60,
@@ -437,7 +439,7 @@ class TestAccountSet:
     #                     interest_cadence=None,
     #                     minimum_payment=None,
     #                 ),
-    #                 Account.Account(
+    #                 Account(
     #                     name="test combined total violates maximum : Credit Billing Cycle Payment Bal",
     #                     balance=60,
     #                     min_balance=60,
@@ -454,7 +456,7 @@ class TestAccountSet:
     #         ),  # non-matching min_balance (cc)
     #         (
     #             [
-    #                 Account.Account(
+    #                 Account(
     #                     name="test : Principal Balance",
     #                     balance=10,
     #                     min_balance=10,
@@ -466,7 +468,7 @@ class TestAccountSet:
     #                     interest_cadence="monthly",
     #                     minimum_payment=50,
     #                 ),
-    #                 Account.Account(
+    #                 Account(
     #                     name="test : Interest",
     #                     balance=60,
     #                     min_balance=0,
@@ -478,7 +480,7 @@ class TestAccountSet:
     #                     interest_cadence=None,
     #                     minimum_payment=None,
     #                 ),
-    #                 Account.Account(
+    #                 Account(
     #                     name="test : Credit Billing Cycle Payment Bal",
     #                     balance=0,
     #                     min_balance=0,
@@ -495,7 +497,7 @@ class TestAccountSet:
     #         ),  # non-matching min_balance (loan)
     #         (
     #             [
-    #                 Account.Account(
+    #                 Account(
     #                     name="test : Prev Stmt Bal",
     #                     balance=10,
     #                     min_balance=10,
@@ -507,7 +509,7 @@ class TestAccountSet:
     #                     interest_cadence="monthly",
     #                     minimum_payment=50,
     #                 ),
-    #                 Account.Account(
+    #                 Account(
     #                     name="test : Curr Stmt Bal",
     #                     balance=60,
     #                     min_balance=0,
@@ -519,7 +521,7 @@ class TestAccountSet:
     #                     interest_cadence=None,
     #                     minimum_payment=None,
     #                 ),
-    #                 Account.Account(
+    #                 Account(
     #                     name="test : Credit Billing Cycle Payment Bal",
     #                     balance=0,
     #                     min_balance=0,
@@ -536,7 +538,7 @@ class TestAccountSet:
     #         ),  # non-matching min_balance (cc)
     #         (
     #             [
-    #                 Account.Account(
+    #                 Account(
     #                     name="test : Prev Stmt Bal",
     #                     balance=0,
     #                     min_balance=0,
@@ -548,7 +550,7 @@ class TestAccountSet:
     #                     interest_cadence="monthly",
     #                     minimum_payment=50,
     #                 ),
-    #                 Account.Account(
+    #                 Account(
     #                     name="test : Curr Stmt Bal",
     #                     balance=0,
     #                     min_balance=0,
@@ -560,7 +562,7 @@ class TestAccountSet:
     #                     interest_cadence=None,
     #                     minimum_payment=None,
     #                 ),
-    #                 Account.Account(
+    #                 Account(
     #                     name="test : Credit Billing Cycle Payment Bal",
     #                     balance=0,
     #                     min_balance=0,
@@ -577,7 +579,7 @@ class TestAccountSet:
     #         ),  # non-matching max_balance (cc)
     #         (
     #             [
-    #                 Account.Account(
+    #                 Account(
     #                     name="loan : Principal Balance",
     #                     balance=0,
     #                     min_balance=0,
@@ -594,7 +596,7 @@ class TestAccountSet:
     #         ),  # pbal no interest
     #         (
     #             [
-    #                 Account.Account(
+    #                 Account(
     #                     name="loan : Interest",
     #                     balance=60,
     #                     min_balance=0,
@@ -606,7 +608,7 @@ class TestAccountSet:
     #                     interest_cadence=None,
     #                     minimum_payment=None,
     #                 ),
-    #                 Account.Account(
+    #                 Account(
     #                     name="loan : Loan Billing Cycle Payment Bal",
     #                     balance=0,
     #                     min_balance=0,
@@ -623,7 +625,7 @@ class TestAccountSet:
     #         ),  # interest no pbal
     #         (
     #             [
-    #                 Account.Account(
+    #                 Account(
     #                     name="cc : Curr Stmt Bal",
     #                     balance=60,
     #                     min_balance=0,
@@ -640,7 +642,7 @@ class TestAccountSet:
     #         ),  # curr no prev
     #         (
     #             [
-    #                 Account.Account(
+    #                 Account(
     #                     name="cc : Prev Stmt Bal",
     #                     balance=0,
     #                     min_balance=0,
@@ -657,7 +659,7 @@ class TestAccountSet:
     #         ),  # prev no curr
     #         (
     #             [
-    #                 Account.Account(
+    #                 Account(
     #                     name="test loan : Principal Balance",
     #                     balance=60,
     #                     min_balance=0,
@@ -674,7 +676,7 @@ class TestAccountSet:
     #         ),  # pbal no int
     #         (
     #             [
-    #                 Account.Account(
+    #                 Account(
     #                     name="test loan : Interest",
     #                     balance=60,
     #                     min_balance=0,
@@ -689,7 +691,7 @@ class TestAccountSet:
     #             ],
     #             ValueError,
     #         ),  # int no pbal
-    #         # [Account.Account(
+    #         # [Account(
     #         #     name,
     #         #     balance,
     #         #     min_balance,
@@ -708,7 +710,7 @@ class TestAccountSet:
     # ):
     #
     #     with pytest.raises(expected_exception):
-    #         AccountSet.AccountSet(accounts__list)
+    #         AccountSet(accounts__list)
 
     # @pytest.mark.parametrize(
     #     "accounts__list",
@@ -716,7 +718,7 @@ class TestAccountSet:
     #         ([]),  # empty list as input
     #         (
     #             [
-    #                 Account.Account(
+    #                 Account(
     #                     name="test checking",
     #                     balance=0,
     #                     min_balance=0,
@@ -730,7 +732,7 @@ class TestAccountSet:
     # )
     # def test_AccountSet_Constructor__valid_inputs(self, accounts__list):
     #
-    #     AccountSet.AccountSet(accounts__list)
+    #     AccountSet(accounts__list)
 
     # @pytest.mark.unit
     # @pytest.mark.parametrize(
@@ -804,7 +806,7 @@ class TestAccountSet:
     # def test_execute_transaction_valid_inputs(
     #     self, Account_From, Account_To, Amount, income_flag, expected_result_vector
     # ):
-    #     test_account_set = AccountSet.AccountSet([])
+    #     test_account_set = AccountSet([])
     #     test_account_set.createAccount(
     #         name="test checking",
     #         balance=1000.0,
@@ -975,7 +977,7 @@ class TestAccountSet:
     # ):
     #
     #     with pytest.raises(expected_exception):
-    #         A = AccountSet.AccountSet([])
+    #         A = AccountSet([])
     #         A.createAccount(
     #             name,
     #             balance,
@@ -995,7 +997,7 @@ class TestAccountSet:
     ### I think this test isn't very strong and will be covered in E2E cases
     # @pytest.mark.unit
     # def test_getAccounts(self):
-    #     test_account_set = AccountSet.AccountSet([])
+    #     test_account_set = AccountSet([])
     #
     #     test_account_set.createAccount(
     #         name="test checking",
@@ -1011,7 +1013,7 @@ class TestAccountSet:
     # @pytest.mark.unit
     # @pytest.mark.skip(reason="this test needs to be improved")
     # def test_str(self):
-    #     test_str_account_set = AccountSet.AccountSet([])
+    #     test_str_account_set = AccountSet([])
     #
     #     # create a non-loan and non-credit type account
     #     test_str_account_set.createAccount(

@@ -1,12 +1,10 @@
-import BudgetItem
+from .BudgetItem import BudgetItem
 import pandas as pd
 import datetime
-from log_methods import log_in_color
+from . import log_methods
 import jsonpickle
-from generate_date_sequence import generate_date_sequence
+from . import generate_date_sequence
 import logging
-
-from log_methods import setup_logger
 
 # logger = setup_logger('BudgetSet', './log/BudgetSet.log', level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -180,7 +178,7 @@ class BudgetSet:
         return current_budget_schedule
 
     def addBudgetItem(self, start_date, end_date, priority, cadence, amount, memo, income_flag = False, **kwargs):
-        budget_item = BudgetItem.BudgetItem(
+        budget_item = BudgetItem(
             start_date,
             end_date,
             priority,

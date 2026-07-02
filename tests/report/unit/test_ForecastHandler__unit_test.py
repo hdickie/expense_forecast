@@ -28,11 +28,11 @@
 #         start_date_YYYYMMDD = '20240101'
 #         end_date_YYYYMMDD = '20240105'
 #
-#         A = AccountSet.AccountSet([])
+#         A = AccountSet([])
 #         A.createAccount('Checking',10_000,0,99999,'checking')
 #
-#         core_budget_set = BudgetSet.BudgetSet([])
-#         option_budget_set = BudgetSet.BudgetSet([])
+#         core_budget_set = BudgetSet([])
+#         option_budget_set = BudgetSet([])
 #
 #         core_budget_set.addBudgetItem(start_date_YYYYMMDD,end_date_YYYYMMDD,1,'daily',11,'food',False,False)
 #         option_budget_set.addBudgetItem(start_date_YYYYMMDD,end_date_YYYYMMDD,1,'daily',10,'txn 1A',False,False)
@@ -42,15 +42,15 @@
 #         option_budget_set.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 200, 'txn 2B', False, False)
 #         option_budget_set.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 500, 'txn 2C', False, False)
 #
-#         M = MemoRuleSet.MemoRuleSet([])
+#         M = MemoRuleSet([])
 #         M.addMemoRule('.*','Checking',None,1)
 #
 #
-#         MS = MilestoneSet.MilestoneSet([AccountMilestone.AccountMilestone('Checking below 9500','Checking',0,9500),
-#                                         AccountMilestone.AccountMilestone('Checking below 8000', 'Checking', 0, 8000)
+#         MS = MilestoneSet([AccountMilestone('Checking below 9500','Checking',0,9500),
+#                                         AccountMilestone('Checking below 8000', 'Checking', 0, 8000)
 #                                         ],[],[])
 #
-#         S = ForecastSet.ForecastSet(core_budget_set, option_budget_set)
+#         S = ForecastSet(core_budget_set, option_budget_set)
 #
 #         scenario_A = ['.*A.*']
 #         scenario_B = ['.*B.*']

@@ -1,6 +1,6 @@
 import jsonpickle
-import MemoMilestone
-import AccountMilestone
+from .MemoMilestone import MemoMilestone
+from .AccountMilestone import AccountMilestone
 import pandas as pd
 
 

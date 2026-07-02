@@ -1,0 +1,10 @@
+[project]
+name = "expense-forecast"
+version = "0.1.0"
+dependencies = []
+
+[project.scripts]
+ef = "expense_forecast.ef_cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

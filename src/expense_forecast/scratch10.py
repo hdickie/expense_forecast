@@ -1,27 +1,27 @@
-import AccountSet
-import ExpenseForecast
+from .AccountSet import AccountSet
+from .ExpenseForecast import ExpenseForecast
 import pandas as pd
-import BudgetItem
-import MemoRule
-import MilestoneSet
-import Account
-import BudgetSet
-import MemoRuleSet
+from .BudgetItem import BudgetItem
+from .MemoRule import MemoRule
+from .MilestoneSet import MilestoneSet
+from .Account import Account
+from .BudgetSet import BudgetSet
+from .MemoRuleSet import MemoRuleSet
 pd.options.mode.chained_assignment = (
     None  # apparently this warning can throw false positives??? #todo is this true?
 )
 
 
 def match_p1_test_txn_checking_memo_rule_list():
-    return [MemoRule.MemoRule("test txn", "Checking", None, 1)]
+    return [MemoRule("test txn", "Checking", None, 1)]
 
 
 def income_rule_list():
-    return [MemoRule.MemoRule(".*income.*", None, "Checking", 1)]
+    return [MemoRule(".*income.*", None, "Checking", 1)]
 
 
 def non_trivial_loan(name, pbal, interest, apr):
-    A = AccountSet.AccountSet([])
+    A = AccountSet([])
     A.createAccount(
         name=name,
         balance=pbal + interest,
@@ -45,7 +45,7 @@ def non_trivial_loan(name, pbal, interest, apr):
 
 
 def credit_acct_list(curr_balance, prev_balance, apr):
-    A = AccountSet.AccountSet([])
+    A = AccountSet([])
     A.createAccount(
         name="Credit",
         balance=curr_balance + prev_balance,
@@ -70,7 +70,7 @@ def credit_acct_list(curr_balance, prev_balance, apr):
 
 
 def credit_bsd12_acct_list(prev_balance, curr_balance, apr):
-    A = AccountSet.AccountSet([])
+    A = AccountSet([])
     A.createAccount(
         name="Credit",
         balance=curr_balance + prev_balance,
@@ -96,7 +96,7 @@ def credit_bsd12_acct_list(prev_balance, curr_balance, apr):
 
 def checking_acct_list(balance):
     return [
-        Account.Account(
+        Account(
             "Checking", balance, 0, 100000, "checking", primary_checking_ind=True
         )
     ]
@@ -106,7 +106,7 @@ def txn_budget_item_once_list(
     amount, priority, memo, deferrable, partial_payment_allowed
 ):
     return [
-        BudgetItem.BudgetItem(
+        BudgetItem(
             "20000102",
             "20000102",
             priority,
@@ -122,7 +122,7 @@ def txn_budget_item_once_list(
 def credit_bsd12_w_eopc_acct_list(
     prev_balance, curr_balance, apr, end_of_prev_cycle_balance
 ):
-    A = AccountSet.AccountSet([])
+    A = AccountSet([])
     A.createAccount(
         name="Credit",
         balance=curr_balance + prev_balance,
@@ -165,30 +165,30 @@ if __name__ == "__main__":
         expected_result_df,
     ) = (
         "test_p7__additional_loan_payment__amt_560",
-        AccountSet.AccountSet(
+        AccountSet(
             checking_acct_list(5000)
             + non_trivial_loan("Loan A", 1000, 100, 0.1)
             + non_trivial_loan("Loan B", 1000, 100, 0.05)
             + non_trivial_loan("Loan C", 1000, 100, 0.01)
         ),
-        BudgetSet.BudgetSet(
+        BudgetSet(
             [
-                BudgetItem.BudgetItem(
+                BudgetItem(
                     "20000102", "20000102", 7, "once", 560, "additional_loan_payment"
                 )
             ]
         ),
-        MemoRuleSet.MemoRuleSet(
+        MemoRuleSet(
             [
-                MemoRule.MemoRule(".*", "Checking", None, 1),
-                MemoRule.MemoRule(
+                MemoRule(".*", "Checking", None, 1),
+                MemoRule(
                     "additional_loan_payment", "Checking", "ALL_LOANS", 7
                 ),
             ]
         ),
         "20000101",
         "20000103",
-        MilestoneSet.MilestoneSet([], [], []),
+        MilestoneSet([], [], []),
         pd.DataFrame(
             {
                 "Date": ["20000101", "20000102", "20000103"],
@@ -227,7 +227,7 @@ if __name__ == "__main__":
         ),
     )
 
-    E = ExpenseForecast.ExpenseForecast(
+    E = ExpenseForecast(
         account_set,
         budget_set,
         memo_rule_set,
@@ -277,12 +277,12 @@ if __name__ == "__main__":
     # # forecast_w_check_and_loan_C = pd.DataFrame(
     # #     {'Date': ['20000101', '20000102'], 'test checking': [0, 0], 'test loan: Principal Balance': [0, 0], 'test loan: Interest': [0, 0], 'test credit: Loan Billing Cycle Payment Bal': [0, 0], 'test credit: Loan End of Prev Cycle Bal': [0, 0], 'Memo': ['', ''], 'Memo Directives': ['', '']})
     # #
-    # # A1 = AccountSet.AccountSet([])
-    # # A2 = AccountSet.AccountSet([])
-    # # B1 = AccountSet.AccountSet([])
-    # # B2 = AccountSet.AccountSet([])
-    # # C1 = AccountSet.AccountSet([])
-    # # C2 = AccountSet.AccountSet([])
+    # # A1 = AccountSet([])
+    # # A2 = AccountSet([])
+    # # B1 = AccountSet([])
+    # # B2 = AccountSet([])
+    # # C1 = AccountSet([])
+    # # C2 = AccountSet([])
     # #
     # # A1.createAccount(name="test checking",
     # #                  balance=1000.0,

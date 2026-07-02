@@ -1,9 +1,10 @@
 import pytest
-import BudgetItem, BudgetSet
+from expense_forecast.BudgetItem import BudgetItem
+from expense_forecast.BudgetSet import BudgetSet
 import datetime
 
 def example_budget_item():
-    return BudgetItem.BudgetItem(
+    return BudgetItem(
         start_date=datetime.datetime.strptime("20000101",'%Y%m%d'),
         end_date=datetime.datetime.strptime("20000101",'%Y%m%d'),
         priority=1,
@@ -23,7 +24,7 @@ class TestBudgetSetMethods:
         ],
     )
     def test_BudgetSet_Constructor(self, budget_items__list):
-        BudgetSet.BudgetSet(budget_items__list)
+        BudgetSet(budget_items__list)
 
     @pytest.mark.parametrize(
         "start_date_YYYYMMDD,end_date_YYYYMMDD,priority,cadence,amount,memo,deferrable,partial_payment_allowed",
@@ -42,7 +43,7 @@ class TestBudgetSetMethods:
         deferrable,
         partial_payment_allowed,
     ):
-        test_budget_set = BudgetSet.BudgetSet([])
+        test_budget_set = BudgetSet([])
         test_budget_set.addBudgetItem(
             start_date_YYYYMMDD="20000101",
             end_date_YYYYMMDD="20000101",
@@ -55,7 +56,7 @@ class TestBudgetSetMethods:
         )
 
     def test_getBudgetItems(self):
-        test_budget_set = BudgetSet.BudgetSet([])
+        test_budget_set = BudgetSet([])
 
         test_budget_set.addBudgetItem(
             start_date_YYYYMMDD="20000101",
@@ -71,7 +72,7 @@ class TestBudgetSetMethods:
         assert test_df is not None
 
     def test_getBudgetSchedule(self):
-        test_budget_set = BudgetSet.BudgetSet([])
+        test_budget_set = BudgetSet([])
         test_budget_set.addBudgetItem(
             start_date_YYYYMMDD="20220101",
             end_date_YYYYMMDD="20230101",
@@ -145,7 +146,7 @@ class TestBudgetSetMethods:
         test_df = test_budget_set.getBudgetSchedule()
 
     def test_str(self):
-        test_budget_set = BudgetSet.BudgetSet([])
+        test_budget_set = BudgetSet([])
         budgetset_str = str(test_budget_set)
         assert budgetset_str is not None
 
@@ -164,7 +165,7 @@ class TestBudgetSetMethods:
         assert budgetset_str is not None
 
     def test_duplicate_budget_items_not_allowed(self):
-        test_budget_set = BudgetSet.BudgetSet([])
+        test_budget_set = BudgetSet([])
         with pytest.raises(ValueError):
             test_budget_set.addBudgetItem(
                 start_date_YYYYMMDD="20220101",

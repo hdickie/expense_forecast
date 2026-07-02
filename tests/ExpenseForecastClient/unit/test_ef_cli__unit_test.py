@@ -73,13 +73,13 @@
 # start_date = datetime.datetime.now().strftime('%Y%m%d')
 # end_date = '20241110'
 #
-# A = AccountSet.AccountSet([])
-# B1 = BudgetSet.BudgetSet([])
-# B2 = BudgetSet.BudgetSet([])
-# B3 = BudgetSet.BudgetSet([])
-# B4 = BudgetSet.BudgetSet([])
-# B5 = BudgetSet.BudgetSet([])
-# M = MemoRuleSet.MemoRuleSet([])
+# A = AccountSet([])
+# B1 = BudgetSet([])
+# B2 = BudgetSet([])
+# B3 = BudgetSet([])
+# B4 = BudgetSet([])
+# B5 = BudgetSet([])
+# M = MemoRuleSet([])
 #
 # A.createCheckingAccount('Checking', 5000, 0, 99999)
 # B1.addBudgetItem(start_date, end_date, 1, 'daily', 10, 'food 1', False, False)
@@ -89,12 +89,12 @@
 # B5.addBudgetItem(start_date, end_date, 1, 'daily', 10, 'food 5', False, False)
 # M.addMemoRule('.*', 'Checking', 'None', 1)
 #
-# MS = MilestoneSet.MilestoneSet([], [], [])
-# E1 = ExpenseForecast.ExpenseForecast(A, B1, M, start_date, end_date, MS) #031987
-# E2 = ExpenseForecast.ExpenseForecast(A, B2, M, start_date, end_date, MS) #093122
-# E3 = ExpenseForecast.ExpenseForecast(A, B3, M, start_date, end_date, MS) #051928
-# E4 = ExpenseForecast.ExpenseForecast(A, B4, M, start_date, end_date, MS) #064210
-# E5 = ExpenseForecast.ExpenseForecast(A, B5, M, start_date, end_date, MS) #052438
+# MS = MilestoneSet([], [], [])
+# E1 = ExpenseForecast(A, B1, M, start_date, end_date, MS) #031987
+# E2 = ExpenseForecast(A, B2, M, start_date, end_date, MS) #093122
+# E3 = ExpenseForecast(A, B3, M, start_date, end_date, MS) #051928
+# E4 = ExpenseForecast(A, B4, M, start_date, end_date, MS) #064210
+# E5 = ExpenseForecast(A, B5, M, start_date, end_date, MS) #052438
 #
 # class TestEFCLIMethods:
 #

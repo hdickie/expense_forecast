@@ -30,20 +30,20 @@
 #         start_date5 = datetime.datetime.now().strftime('%Y%m%d')
 #         end_date5 = '20240504'
 #
-#         A = AccountSet.AccountSet([])
-#         B = BudgetSet.BudgetSet([])
-#         M = MemoRuleSet.MemoRuleSet([])
+#         A = AccountSet([])
+#         B = BudgetSet([])
+#         M = MemoRuleSet([])
 #
 #         A.createCheckingAccount('Checking', 5000, 0, 99999)
 #         B.addBudgetItem(start_date, end_date, 1, 'daily', 10, 'food', False, False)
 #         M.addMemoRule('.*', 'Checking', 'None', 1)
 #
-#         MS = MilestoneSet.MilestoneSet([], [], [])
-#         E1 = ExpenseForecast.ExpenseForecast(A, B, M, start_date, end_date, MS)
-#         E2 = ExpenseForecast.ExpenseForecast(A, B, M, start_date2, end_date2, MS)
-#         E3 = ExpenseForecast.ExpenseForecast(A, B, M, start_date3, end_date3, MS)
-#         E4 = ExpenseForecast.ExpenseForecast(A, B, M, start_date4, end_date4, MS)
-#         E5 = ExpenseForecast.ExpenseForecast(A, B, M, start_date5, end_date5, MS)
+#         MS = MilestoneSet([], [], [])
+#         E1 = ExpenseForecast(A, B, M, start_date, end_date, MS)
+#         E2 = ExpenseForecast(A, B, M, start_date2, end_date2, MS)
+#         E3 = ExpenseForecast(A, B, M, start_date3, end_date3, MS)
+#         E4 = ExpenseForecast(A, B, M, start_date4, end_date4, MS)
+#         E5 = ExpenseForecast(A, B, M, start_date5, end_date5, MS)
 #
 #         R = ForecastRunner.ForecastRunner('/Users/hume/Github/expense_forecast/lock/')
 #         R.start_forecast(E1)

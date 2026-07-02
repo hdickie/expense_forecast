@@ -1,14 +1,13 @@
 import pandas as pd
 import re
-import MemoMilestone
-import CompositeMilestone
-import AccountMilestone
+from .MemoMilestone import MemoMilestone
+from .CompositeMilestone import CompositeMilestone
+from .AccountMilestone import AccountMilestone
 import jsonpickle
 import logging
-from log_methods import log_in_color
-from log_methods import setup_logger
+from . import log_methods
 
-logger = setup_logger(__name__, "./" + __name__ + ".log", level=logging.DEBUG)
+logger = log_methods.setup_logger(__name__, "./" + __name__ + ".log", level=logging.DEBUG)
 
 
 # def initialize_from_dataframe(
@@ -23,14 +22,14 @@ logger = setup_logger(__name__, "./" + __name__ + ".log", level=logging.DEBUG)
 #     mm__dict = {}
 #
 #     for index, row in account_milestones_df.iterrows():
-#         new_AM = AccountMilestone.AccountMilestone(
+#         new_AM = AccountMilestone(
 #             row.milestone_name, row.account_name, row.min_balance, row.max_balance
 #         )
 #         am__list += [new_AM]
 #         am__dict[row.milestone_name] = new_AM
 #
 #     for index, row in memo_milestones_df.iterrows():
-#         new_MM = MemoMilestone.MemoMilestone(row.milestone_name, row.memo_regex)
+#         new_MM = MemoMilestone(row.milestone_name, row.memo_regex)
 #         mm__list += [new_MM]
 #         mm__dict[row.milestone_name] = new_MM
 #
@@ -44,7 +43,7 @@ logger = setup_logger(__name__, "./" + __name__ + ".log", level=logging.DEBUG)
 #         for MM_name in MM_names:
 #             related_MM.append(mm__dict[MM_name])
 #         cm__list += [
-#             CompositeMilestone.CompositeMilestone(
+#             CompositeMilestone(
 #                 row.composite_milestone_name, related_AM, related_MM
 #             )
 #         ]
@@ -82,7 +81,7 @@ class MilestoneSet:
         if composite_milestones is not None:
             for composite_milestone in composite_milestones:
                 MilestoneSet._validate_unique_account_milestones(composite_milestone.account_milestones)
-                MilestoneSet._validate_unique_memo_milestones(composite_milestone.account_milestones)
+                MilestoneSet._validate_unique_memo_milestones(composite_milestone.memo_milestones)
 
 
                 # cm_key = (
@@ -95,16 +94,16 @@ class MilestoneSet:
     @staticmethod
     def _validate_unique_milestone_names(account_milestones, memo_milestones, composite_milestones):
         milestone_names = []
-        if self.account_milestones is not None:
-            for account_milestone in self.account_milestones:
+        if account_milestones is not None:
+            for account_milestone in account_milestones:
                 milestone_names.append(account_milestone.milestone_name)
 
-        if self.memo_milestones is not None:
-            for memo_milestone in self.memo_milestones:
+        if memo_milestones is not None:
+            for memo_milestone in memo_milestones:
                 milestone_names.append(memo_milestone.milestone_name)
 
-        if self.composite_milestones is not None:
-            for composite_milestone in self.composite_milestones:
+        if composite_milestones is not None:
+            for composite_milestone in composite_milestones:
                 milestone_names.append(composite_milestone.milestone_name)
 
         if len(milestone_names) != len(set(milestone_names)):
@@ -162,14 +161,14 @@ class MilestoneSet:
 
     def addMemoMilestone(self, milestone_name, memo_regex_string):
         self.memo_milestones += [
-            MemoMilestone.MemoMilestone(milestone_name, memo_regex_string)
+            MemoMilestone(milestone_name, memo_regex_string)
         ]
 
     def addAccountMilestone(
         self, milestone_name, account_name, min_balance, max_balance
     ):
         self.account_milestones += [
-            AccountMilestone.AccountMilestone(
+            AccountMilestone(
                 milestone_name, account_name, min_balance, max_balance
             )
         ]
@@ -179,7 +178,7 @@ class MilestoneSet:
     ):
 
         self.composite_milestones += [
-            CompositeMilestone.CompositeMilestone(
+            CompositeMilestone(
                 milestone_name, account_milestones__list, memo_milestones__list
             )
         ]

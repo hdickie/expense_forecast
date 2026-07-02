@@ -1,5 +1,5 @@
 import unittest
-import MemoRule
+from expense_forecast.MemoRule import MemoRule
 import pytest
 
 
@@ -9,10 +9,10 @@ class TestMemoRuleMethods(unittest.TestCase):
     def test_MemoRule_Constructor(self):
 
         self.assertEqual(
-            "<class 'MemoRule.MemoRule'>",
+            "<class 'MemoRule'>",
             str(
                 type(
-                    MemoRule.MemoRule(
+                    MemoRule(
                         memo_regex=".*",
                         account_from="",
                         account_to="",
@@ -24,7 +24,7 @@ class TestMemoRuleMethods(unittest.TestCase):
 
         # provoking exceptions for test coverage
         with self.assertRaises(TypeError):
-            MemoRule.MemoRule(
+            MemoRule(
                 memo_regex=None,
                 account_from=None,
                 account_to=None,
@@ -33,7 +33,7 @@ class TestMemoRuleMethods(unittest.TestCase):
             )
 
         with self.assertRaises(ValueError):
-            MemoRule.MemoRule(
+            MemoRule(
                 memo_regex="*",
                 account_from="",
                 account_to="",
@@ -45,7 +45,7 @@ class TestMemoRuleMethods(unittest.TestCase):
     def test_MemoRule_str(self):
         self.assertIsNotNone(
             str(
-                MemoRule.MemoRule(
+                MemoRule(
                     memo_regex=".*",
                     account_from="",
                     account_to="",

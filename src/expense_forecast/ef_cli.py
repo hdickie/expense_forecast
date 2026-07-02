@@ -7,15 +7,15 @@ from time import sleep
 import sys
 import argparse
 import logging
-import ExpenseForecast
-import ForecastSet
-from log_methods import log_in_color
+from .ExpenseForecast import ExpenseForecast
+from .ForecastSet import ForecastSet
+from . import log_methods
 import pandas as pd
 import psycopg2
-import AccountSet
-import BudgetSet
-import MemoRuleSet
-import MilestoneSet
+from .AccountSet import AccountSet
+from .BudgetSet import BudgetSet
+from .MemoRuleSet import MemoRuleSet
+from .MilestoneSet import MilestoneSet
 
 logger = logging.getLogger(__name__)
 formatter = logging.Formatter("%(asctime)s - %(levelname)-8s - %(message)s")
@@ -775,7 +775,7 @@ def main(args, loglevel):
             #     MM_df = pd.read_sql_query(MM_q, con=engine)
             #     CM_df = pd.read_sql_query(CM_q, con=engine)
             #     MS = MilestoneSet.initialize_from_dataframe(AM_df, MM_df, CM_df)
-            #     E = ExpenseForecast.ExpenseForecast(A, B, M, start_date, end_date, MS, args.log_directory, forecast_set_name, forecast_name)
+            #     E = ExpenseForecast(A, B, M, start_date, end_date, MS, args.log_directory, forecast_set_name, forecast_name)
             #     log_in_color(logger, 'white', 'info', E)
             #     if args.approximate:
             #         E.runForecastApproximate()
@@ -1218,7 +1218,7 @@ def main(args, loglevel):
                 )
             )
 
-            S = ForecastSet.ForecastSet(
+            S = ForecastSet(
                 base_E, option_budget_set, forecast_set_name=args.label
             )
             choice_table_name = "prod.ef_choices_" + args.username + "_temporary"

@@ -1,12 +1,12 @@
-import Account
+from .Account import Account
 import pandas as pd
 import copy
-from log_methods import log_in_color
+from . import log_methods
 import logging
 import numpy as np
-import BudgetSet  # this could be refactored out, and should be in terms of independent dependencies and clear organization, but it works
+from .BudgetSet import BudgetSet  # this could be refactored out, and should be in terms of independent dependencies and clear organization, but it works
 import jsonpickle
-from log_methods import setup_logger
+# from log_methods import setup_logger
 
 # logger = setup_logger('AccountSet','./log/AccountSet.log',logging.INFO)
 logger = logging.getLogger(__name__)
@@ -620,7 +620,7 @@ class AccountSet:
 
 
     def createCheckingAccount(self, name, balance, min_balance, max_balance, primary_checking_ind):
-        account = Account.Account(
+        account = Account(
             name=name,
             balance=balance,
             min_balance=min_balance,
@@ -637,7 +637,7 @@ class AccountSet:
     def createLoanAccount(self, name, principal_balance, interest_balance, min_balance, max_balance, billing_start_date,
                           apr, minimum_payment, end_of_previous_cycle_balance,):
 
-        account_pb = Account.Account(
+        account_pb = Account(
             name=f"{name}: Principal Balance",
             balance=principal_balance,
             min_balance=min_balance,
@@ -651,7 +651,7 @@ class AccountSet:
         )
         self.accounts.append(account_pb)
 
-        account_interest = Account.Account(
+        account_interest = Account(
             name=f"{name}: Interest",
             balance=interest_balance,
             min_balance=min_balance,
@@ -663,7 +663,7 @@ class AccountSet:
         billing_cycle_payment_balance = end_of_previous_cycle_balance - principal_balance
         assert billing_cycle_payment_balance >= 0
 
-        billing_cycle_payment = Account.Account(
+        billing_cycle_payment = Account(
             name=f"{name}: Loan Billing Cycle Payment Bal",
             balance=billing_cycle_payment_balance,
             min_balance=min_balance,
@@ -673,7 +673,7 @@ class AccountSet:
         )
         self.accounts.append(billing_cycle_payment)
 
-        eopc = Account.Account(
+        eopc = Account(
             name=f"{name}: Loan End of Prev Cycle Bal",
             balance=end_of_previous_cycle_balance,
             min_balance=min_balance,
@@ -686,7 +686,7 @@ class AccountSet:
     def createCreditCardAccount(self, name, current_statement_balance, previous_statement_balance, min_balance, max_balance,
                                 billing_start_date, apr, minimum_payment, end_of_previous_cycle_balance,):
 
-        account_curr = Account.Account(
+        account_curr = Account(
             name=f"{name}: Curr Stmt Bal",
             balance=current_statement_balance,
             min_balance=min_balance,
@@ -695,7 +695,7 @@ class AccountSet:
         )
         self.accounts.append(account_curr)
 
-        account_prev = Account.Account(
+        account_prev = Account(
             name=f"{name}: Prev Stmt Bal",
             balance=previous_statement_balance,
             min_balance=min_balance,
@@ -711,7 +711,7 @@ class AccountSet:
         billing_cycle_payment_balance = end_of_previous_cycle_balance - previous_statement_balance
         assert billing_cycle_payment_balance >= 0
 
-        billing_cycle_payment = Account.Account(
+        billing_cycle_payment = Account(
             name=f"{name}: Credit Billing Cycle Payment Bal",
             balance=billing_cycle_payment_balance,
             min_balance=min_balance,
@@ -721,7 +721,7 @@ class AccountSet:
         )
         self.accounts.append(billing_cycle_payment)
 
-        eopc = Account.Account(
+        eopc = Account(
             name=f"{name}: Credit End of Prev Cycle Bal",
             balance=end_of_previous_cycle_balance,
             min_balance=min_balance,
@@ -733,7 +733,7 @@ class AccountSet:
 
     # def createInvestmentAccount(self, name, balance, apr):
     #     #todo
-    #     account = Account.Account(
+    #     account = Account(
     #         name=name,
     #         balance=balance,
     #         account_type="investment",
@@ -1341,7 +1341,7 @@ class AccountSet:
         ]
         all_account_names = set(all_account_names__2) - set([" Principal Balance"])
 
-        payment_amounts__BudgetSet = BudgetSet.BudgetSet([])
+        payment_amounts__BudgetSet = BudgetSet([])
         payment_amount_tuple_list = []
 
         # print('number_of_phase_space_regions:'+str(number_of_phase_space_regions))
@@ -1580,7 +1580,7 @@ class AccountSet:
         final_txns = []
         for key in payment_dict.keys():
             final_txns.append([checking_acct_name, key, payment_dict[key]])
-            # final_budget_items.append(BudgetItem.BudgetItem(date_string_YYYYMMDD, date_string_YYYYMMDD, 7, 'once', payment_dict[key], False, key, ))
+            # final_budget_items.append(BudgetItem(date_string_YYYYMMDD, date_string_YYYYMMDD, 7, 'once', payment_dict[key], False, key, ))
         # print('final_txns:'+str(final_txns))
 
         running_total = 0

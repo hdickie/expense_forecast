@@ -17,27 +17,27 @@ class TestForecastSetUnit:
 #
 #     # @pytest.mark.parametrize('core_budget_set,option_budget_set',
 #     #
-#     #                          [(BudgetSet.BudgetSet([]),BudgetSet.BudgetSet([]))]
+#     #                          [(BudgetSet([]),BudgetSet([]))]
 #     #
 #     #                          )
 #     # def test_ForecastSetConstructor(self,core_budget_set,option_budget_set):
-#     #     S = ForecastSet.ForecastSet(core_budget_set, option_budget_set)
+#     #     S = ForecastSet(core_budget_set, option_budget_set)
 #     #
 #     # @pytest.mark.parametrize('core_budget_set,option_budget_set',
 #     #
-#     #                          [(BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'core 1')
+#     #                          [(BudgetSet([BudgetItem('20000102', '20000102', 1, 'once', 10, 'core 1')
 #     #
 #     #                                                 ]),
-#     #                            BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'core 1')
+#     #                            BudgetSet([BudgetItem('20000102', '20000102', 1, 'once', 10, 'core 1')
 #     #
 #     #                                                 ])),
 #     #
-#     #                           (BudgetSet.BudgetSet(
-#     #                               [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'core 1')
+#     #                           (BudgetSet(
+#     #                               [BudgetItem('20000102', '20000102', 1, 'once', 10, 'core 1')
 #     #
 #     #                                ]),
-#     #                            BudgetSet.BudgetSet(
-#     #                                [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'core 1')
+#     #                            BudgetSet(
+#     #                                [BudgetItem('20000102', '20000102', 1, 'once', 10, 'core 1')
 #     #
 #     #                                 ])), #todo make this different from pervious test case
 #     #
@@ -47,27 +47,27 @@ class TestForecastSetUnit:
 #     # def test_ForecastSetConstructor__expect_fail(self, core_budget_set, option_budget_set):
 #     #
 #     #     with pytest.raises(ValueError):
-#     #         S = ForecastSet.ForecastSet(core_budget_set, option_budget_set)
+#     #         S = ForecastSet(core_budget_set, option_budget_set)
 #     #
 #     # @pytest.mark.parametrize('core_budget_set,option_budget_set',
 #     #
-#     #                          [(BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'core 1'),
-#     #                                                 BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'core 2'),
-#     #                                                 BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'core 3')
+#     #                          [(BudgetSet([BudgetItem('20000102', '20000102', 1, 'once', 10, 'core 1'),
+#     #                                                 BudgetItem('20000102', '20000102', 1, 'once', 10, 'core 2'),
+#     #                                                 BudgetItem('20000102', '20000102', 1, 'once', 10, 'core 3')
 #     #
 #     #                                                 ]),
-#     #                            BudgetSet.BudgetSet([BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 1A'),
-#     #                                                 BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 1B'),
-#     #                                                 BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 1C'),
-#     #                                                 BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 2A'),
-#     #                                                 BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 2B'),
-#     #                                                 BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 2C')
+#     #                            BudgetSet([BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 1A'),
+#     #                                                 BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 1B'),
+#     #                                                 BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 1C'),
+#     #                                                 BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 2A'),
+#     #                                                 BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 2B'),
+#     #                                                 BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 2C')
 #     #                                                 ])),
 #     #
 #     #
 #     #                           ])
 #     # # def test_addScenario(self,core_budget_set,option_budget_set):
-#     # #     S = ForecastSet.ForecastSet(core_budget_set, option_budget_set)
+#     # #     S = ForecastSet(core_budget_set, option_budget_set)
 #     # #
 #     # #     S.addScenario(['.*A.*'])
 #     # #     S.addScenario(['.*B.*'])
@@ -77,26 +77,26 @@ class TestForecastSetUnit:
 #     #
 #     # @pytest.mark.parametrize('core_budget_set,option_budget_set',
 #     #
-#     #                          [(BudgetSet.BudgetSet(
-#     #                              [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'core 1'),
-#     #                               BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'core 2'),
-#     #                               BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'core 3')
+#     #                          [(BudgetSet(
+#     #                              [BudgetItem('20000102', '20000102', 1, 'once', 10, 'core 1'),
+#     #                               BudgetItem('20000102', '20000102', 1, 'once', 10, 'core 2'),
+#     #                               BudgetItem('20000102', '20000102', 1, 'once', 10, 'core 3')
 #     #
 #     #                               ]),
-#     #                            BudgetSet.BudgetSet(
-#     #                                [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 1A'),
-#     #                                 BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 1B'),
-#     #                                 BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 1C'),
-#     #                                 BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 1D'),
-#     #                                 BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 2A'),
-#     #                                 BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 2B'),
-#     #                                 BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 2C'),
-#     #                                 BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 2D')
+#     #                            BudgetSet(
+#     #                                [BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 1A'),
+#     #                                 BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 1B'),
+#     #                                 BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 1C'),
+#     #                                 BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 1D'),
+#     #                                 BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 2A'),
+#     #                                 BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 2B'),
+#     #                                 BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 2C'),
+#     #                                 BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 2D')
 #     #                                 ])),
 #     #
 #     #                           ])
 #     # def test_addChoiceToAllForecasts(self,core_budget_set,option_budget_set):
-#     #     S = ForecastSet.ForecastSet(core_budget_set, option_budget_set)
+#     #     S = ForecastSet(core_budget_set, option_budget_set)
 #     #
 #     #     scenario_A = ['.*A.*']
 #     #     scenario_B = ['.*B.*']
@@ -117,11 +117,11 @@ class TestForecastSetUnit:
 #         start_date = '20240401'
 #         end_date = '20240430'
 #
-#         A = AccountSet.AccountSet([])
-#         B1 = BudgetSet.BudgetSet([])
-#         M = MemoRuleSet.MemoRuleSet([])
+#         A = AccountSet([])
+#         B1 = BudgetSet([])
+#         M = MemoRuleSet([])
 #
-#         B_optional = BudgetSet.BudgetSet([])
+#         B_optional = BudgetSet([])
 #         B_optional.addBudgetItem(start_date, end_date, 1, 'daily', 10, 'Choice 1 Option A', False, False)
 #         B_optional.addBudgetItem(start_date, end_date, 1, 'daily', 10, 'Choice 1 Option B', False, False)
 #         B_optional.addBudgetItem(start_date, end_date, 1, 'daily', 10, 'Choice 2 Option C', False, False)
@@ -131,21 +131,21 @@ class TestForecastSetUnit:
 #         B1.addBudgetItem(start_date, end_date, 1, 'daily', 10, 'food 1', False, False)
 #         M.addMemoRule('.*', 'Checking', 'None', 1)
 #
-#         MS = MilestoneSet.MilestoneSet([], [], [])
-#         E1 = ExpenseForecast.ExpenseForecast(A, B1, M, start_date, end_date, MS)
+#         MS = MilestoneSet([], [], [])
+#         E1 = ExpenseForecast(A, B1, M, start_date, end_date, MS)
 #
-#         option_budget_set = BudgetSet.BudgetSet(
-#             [BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 1A'),
-#              BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 1B'),
-#              BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 1C'),
-#              BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 1D'),
-#              BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 2A'),
-#              BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 2B'),
-#              BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 2C'),
-#              BudgetItem.BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 2D')
+#         option_budget_set = BudgetSet(
+#             [BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 1A'),
+#              BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 1B'),
+#              BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 1C'),
+#              BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 1D'),
+#              BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 2A'),
+#              BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 2B'),
+#              BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 2C'),
+#              BudgetItem('20000102', '20000102', 1, 'once', 10, 'option 2D')
 #              ])
 #
-#         S = ForecastSet.ForecastSet(E1, option_budget_set)
+#         S = ForecastSet(E1, option_budget_set)
 #         S.addChoiceToAllForecasts(['A', 'B'], [['.*A.*'], ['.*B.*']])
 #         S.addChoiceToAllForecasts(['C', 'D'], [['.*C.*'], ['.*D.*']])
 #
@@ -171,15 +171,15 @@ class TestForecastSetUnit:
 #         start_date_YYYYMMDD = '20000101'
 #         end_date_YYYYMMDD = '20000201'
 #
-#         A = AccountSet.AccountSet()
+#         A = AccountSet()
 #         A.createCheckingAccount('Checking',100,0,100000)
 #
-#         B = BudgetSet.BudgetSet()
-#         M = MemoRuleSet.MemoRuleSet()
-#         MS = MilestoneSet.MilestoneSet()
+#         B = BudgetSet()
+#         M = MemoRuleSet()
+#         MS = MilestoneSet()
 #
-#         E = ExpenseForecast.ExpenseForecast(A,B,M,start_date_YYYYMMDD,end_date_YYYYMMDD,MS)
-#         S = ForecastSet.ForecastSet(base_forecast=E, option_budget_set=B)
+#         E = ExpenseForecast(A,B,M,start_date_YYYYMMDD,end_date_YYYYMMDD,MS)
+#         S = ForecastSet(base_forecast=E, option_budget_set=B)
 #         S.writeToDatabase(database_hostname, database_name, database_username, database_password, database_port,username)
 #
 #         S2 = ForecastSet.initialize_forecast_set_from_database(set_id=S.unique_id,
@@ -224,15 +224,15 @@ class TestForecastSetUnit:
 #         start_date_YYYYMMDD = '20000101'
 #         end_date_YYYYMMDD = '20000201'
 #
-#         A = AccountSet.AccountSet()
+#         A = AccountSet()
 #         A.createCheckingAccount('Checking', 100, 0, 100000)
 #
-#         B = BudgetSet.BudgetSet()
-#         M = MemoRuleSet.MemoRuleSet()
-#         MS = MilestoneSet.MilestoneSet()
+#         B = BudgetSet()
+#         M = MemoRuleSet()
+#         MS = MilestoneSet()
 #
-#         E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
-#         S = ForecastSet.ForecastSet(base_forecast=E, option_budget_set=B)
+#         E = ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
+#         S = ForecastSet(base_forecast=E, option_budget_set=B)
 #         S.runAllForecasts()
 #         S.writeToDatabase(database_hostname, database_name, database_username, database_password, database_port,
 #                           username)
@@ -258,22 +258,22 @@ class TestForecastSetUnit:
 #         start_date_YYYYMMDD = '20000101'
 #         end_date_YYYYMMDD = '20000201'
 #
-#         A = AccountSet.AccountSet()
+#         A = AccountSet()
 #         A.createCheckingAccount('Checking', 100, 0, 100000)
 #
-#         B = BudgetSet.BudgetSet()
+#         B = BudgetSet()
 #         B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 10, 'test txn', False,False)
 #
-#         B_option = BudgetSet.BudgetSet()
+#         B_option = BudgetSet()
 #         B_option.addBudgetItem(start_date_YYYYMMDD,end_date_YYYYMMDD,1,'daily',10,'test optional txn',False,False)
 #
-#         M = MemoRuleSet.MemoRuleSet()
+#         M = MemoRuleSet()
 #         M.addMemoRule('.*','Checking','None',1)
 #
-#         MS = MilestoneSet.MilestoneSet()
+#         MS = MilestoneSet()
 #
-#         E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
-#         S = ForecastSet.ForecastSet(base_forecast=E, option_budget_set=B_option)
+#         E = ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
+#         S = ForecastSet(base_forecast=E, option_budget_set=B_option)
 #         S.writeToDatabase(database_hostname, database_name, database_username, database_password, database_port,
 #                           username)
 #
@@ -314,22 +314,22 @@ class TestForecastSetUnit:
 #         start_date_YYYYMMDD = '20000101'
 #         end_date_YYYYMMDD = '20000201'
 #
-#         A = AccountSet.AccountSet()
+#         A = AccountSet()
 #         A.createCheckingAccount('Checking', 1000, 0, 100000)
 #
-#         B = BudgetSet.BudgetSet()
+#         B = BudgetSet()
 #         B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 10, 'test txn', False,False)
 #
-#         B_option = BudgetSet.BudgetSet()
+#         B_option = BudgetSet()
 #         B_option.addBudgetItem(start_date_YYYYMMDD,end_date_YYYYMMDD,1,'daily',10,'test optional txn',False,False)
 #
-#         M = MemoRuleSet.MemoRuleSet()
+#         M = MemoRuleSet()
 #         M.addMemoRule('.*','Checking','None',1)
 #
-#         MS = MilestoneSet.MilestoneSet()
+#         MS = MilestoneSet()
 #
-#         E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
-#         S = ForecastSet.ForecastSet(base_forecast=E, option_budget_set=B_option)
+#         E = ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
+#         S = ForecastSet(base_forecast=E, option_budget_set=B_option)
 #         S.runAllForecasts()
 #         S.writeToDatabase(database_hostname, database_name, database_username, database_password, database_port,
 #                           username)
@@ -383,23 +383,23 @@ class TestForecastSetUnit:
 #         cursor = connection.cursor()
 #
 #
-#         A = AccountSet.AccountSet()
+#         A = AccountSet()
 #         A.createCheckingAccount('Checking', 1000, 0, 100000)
 #
-#         B = BudgetSet.BudgetSet()
+#         B = BudgetSet()
 #         B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 10, 'test txn', False, False)
 #
-#         B_option = BudgetSet.BudgetSet()
+#         B_option = BudgetSet()
 #         B_option.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 2, 'option A', False, False)
 #         B_option.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 4, 'option B', False, False)
 #
-#         M = MemoRuleSet.MemoRuleSet()
+#         M = MemoRuleSet()
 #         M.addMemoRule('.*', 'Checking', 'None', 1)
 #
-#         MS = MilestoneSet.MilestoneSet()
+#         MS = MilestoneSet()
 #
-#         E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
-#         S = ForecastSet.ForecastSet(base_forecast=E, option_budget_set=B_option)
+#         E = ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
+#         S = ForecastSet(base_forecast=E, option_budget_set=B_option)
 #         S.addChoiceToAllForecasts(['option A','option B'],[['.*option A.*'],['.*option B.*']])
 #         #print(S)
 #         assert len(S.id_to_name) == 3
@@ -461,23 +461,23 @@ class TestForecastSetUnit:
 #         cursor = connection.cursor()
 #
 #
-#         A = AccountSet.AccountSet()
+#         A = AccountSet()
 #         A.createCheckingAccount('Checking', 1000, 0, 100000)
 #
-#         B = BudgetSet.BudgetSet()
+#         B = BudgetSet()
 #         B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 10, 'test txn', False, False)
 #
-#         B_option = BudgetSet.BudgetSet()
+#         B_option = BudgetSet()
 #         B_option.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 2, 'option A', False, False)
 #         B_option.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 4, 'option B', False, False)
 #
-#         M = MemoRuleSet.MemoRuleSet()
+#         M = MemoRuleSet()
 #         M.addMemoRule('.*', 'Checking', 'None', 1)
 #
-#         MS = MilestoneSet.MilestoneSet()
+#         MS = MilestoneSet()
 #
-#         E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
-#         S = ForecastSet.ForecastSet(base_forecast=E, option_budget_set=B_option)
+#         E = ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
+#         S = ForecastSet(base_forecast=E, option_budget_set=B_option)
 #         S.addChoiceToAllForecasts(['option A','option B'],[['.*option A.*'],['.*option B.*']])
 #         #print(S)
 #         # assert len(S.id_to_name) == 3
@@ -531,26 +531,26 @@ class TestForecastSetUnit:
 #         start_date_YYYYMMDD = '20000101'
 #         end_date_YYYYMMDD = '20000105'
 #
-#         A = AccountSet.AccountSet()
+#         A = AccountSet()
 #         A.createCheckingAccount('Checking', 1000, 0, 100000)
 #
-#         B = BudgetSet.BudgetSet()
+#         B = BudgetSet()
 #         B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 10, 'test txn', False, False)
 #
-#         B_option = BudgetSet.BudgetSet()
+#         B_option = BudgetSet()
 #         B_option.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 2, 'option A', False, False)
 #         B_option.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 4, 'option B', False, False)
 #         B_option.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 3, 'option C', False, False)
 #         B_option.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 6, 'option D', False, False)
 #
-#         M = MemoRuleSet.MemoRuleSet()
+#         M = MemoRuleSet()
 #         M.addMemoRule('.*', 'Checking', 'None', 1)
 #
-#         MS = MilestoneSet.MilestoneSet()
+#         MS = MilestoneSet()
 #
-#         E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
+#         E = ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
 #         # print('Base Forecast id: '.ljust(40)+E.unique_id)
-#         S = ForecastSet.ForecastSet(base_forecast=E, option_budget_set=B_option)
+#         S = ForecastSet(base_forecast=E, option_budget_set=B_option)
 #
 #         S.addChoiceToAllForecasts(['option A', 'option B'], [['.*option A.*'], ['.*option B.*']])
 #         S.addChoiceToAllForecasts(['option C', 'option D'], [['.*option C.*'], ['.*option D.*']])
@@ -583,25 +583,25 @@ class TestForecastSetUnit:
 #         start_date_YYYYMMDD = '20000101'
 #         end_date_YYYYMMDD = '20000201'
 #
-#         A = AccountSet.AccountSet()
+#         A = AccountSet()
 #         A.createCheckingAccount('Checking', 1000, 0, 100000)
 #
-#         B = BudgetSet.BudgetSet()
+#         B = BudgetSet()
 #         B.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 10, 'test txn', False, False)
 #
-#         B_option = BudgetSet.BudgetSet()
+#         B_option = BudgetSet()
 #         B_option.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 2, 'option A', False, False)
 #         B_option.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 4, 'option B', False, False)
 #         B_option.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 3, 'option C', False, False)
 #         B_option.addBudgetItem(start_date_YYYYMMDD, end_date_YYYYMMDD, 1, 'daily', 6, 'option D', False, False)
 #
-#         M = MemoRuleSet.MemoRuleSet()
+#         M = MemoRuleSet()
 #         M.addMemoRule('.*', 'Checking', 'None', 1)
 #
-#         MS = MilestoneSet.MilestoneSet()
+#         MS = MilestoneSet()
 #
-#         E = ExpenseForecast.ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
-#         S = ForecastSet.ForecastSet(base_forecast=E, option_budget_set=B_option)
+#         E = ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
+#         S = ForecastSet(base_forecast=E, option_budget_set=B_option)
 #
 #         S.addChoiceToAllForecasts(['option A', 'option B'], [['.*option A.*'], ['.*option B.*']])
 #         S.addChoiceToAllForecasts(['option C', 'option D'], [['.*option C.*'], ['.*option D.*']])

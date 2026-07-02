@@ -1,4 +1,4 @@
-import Account
+from expense_forecast.Account import Account
 import pytest
 import pandas as pd
 import datetime
@@ -117,7 +117,7 @@ class TestAccount:
     #     print_debug_messages,
     #     raise_exceptions,
     # ):
-    #     A = Account.Account(
+    #     A = Account(
     #         name,
     #         balance,
     #         min_balance,
@@ -352,7 +352,7 @@ class TestAccount:
     #
     #     # todo maybe check for substrings in exception bc i wanna make sure they throw for the right reason
     #     with pytest.raises(Exception):
-    #         Account.Account(
+    #         Account(
     #             name,
     #             balance,
     #             min_balance,
@@ -364,7 +364,7 @@ class TestAccount:
     # @pytest.mark.unit
     # @pytest.mark.skip(reason="this test sucks")
     # def test_str(self):
-    #     test_account = Account.Account(
+    #     test_account = Account(
     #         name="test checking",
     #         balance=0,
     #         min_balance=0,

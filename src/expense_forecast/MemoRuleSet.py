@@ -1,10 +1,9 @@
-import MemoRule
+from .MemoRule import MemoRule
 import pandas as pd
 import re
-from log_methods import log_in_color
+from . import log_methods
 import logging
 import jsonpickle
-from log_methods import setup_logger
 
 # logger = setup_logger('MemoRuleSet', './log/MemoRuleSet.log', level=logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -83,7 +82,7 @@ class MemoRuleSet:
 
         matching_memo_rule_row = memo_rules_of_matching_priority.loc[match_index]
 
-        relevant_memo_rule = MemoRule.MemoRule(
+        relevant_memo_rule = MemoRule(
             matching_memo_rule_row.Memo_Regex.iat[0],
             matching_memo_rule_row.Account_From.iat[0],
             matching_memo_rule_row.Account_To.iat[0],
@@ -113,7 +112,7 @@ class MemoRuleSet:
                 raise ValueError(f"Memo rule already in set. Values were: priority:{transaction_priority}, memo_regex{memo_regex}")  #
 
 
-        memo_rule = MemoRule.MemoRule(
+        memo_rule = MemoRule(
             memo_regex, account_from, account_to, transaction_priority
         )
         self.memo_rules.append(memo_rule)

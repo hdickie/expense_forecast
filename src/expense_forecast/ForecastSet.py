@@ -2,15 +2,14 @@ import pandas as pd
 
 import re
 import copy
-import BudgetItem
-import BudgetSet
+from .BudgetItem import BudgetItem
+from .BudgetSet import BudgetSet
 import jsonpickle
 import logging
 import json
-import ExpenseForecast
-import ForecastRunner
-from log_methods import log_in_color
-from log_methods import setup_logger
+from .ExpenseForecast import ExpenseForecast
+# from . import ForecastRunner
+from . import log_methods
 import os
 
 # logger = setup_logger('ForecastSet', './log/ForecastSet.log', level=logging.WARNING)
@@ -30,9 +29,12 @@ import datetime
 #         level=logging.INFO,
 #     )
 # except KeyError:
-logger = setup_logger(
-    __name__, __name__ + "_" + thread_id + ".log", level=logging.INFO
-)
+
+#TODO i just commented this out instead of fixing it
+logger = None
+# logger = log_methods.setup_logger(
+#     __name__, __name__ + "_" + thread_id + ".log", level=logging.INFO
+# )
 
 
 def initialize_from_json_string(json_string):
@@ -42,14 +44,14 @@ def initialize_from_json_string(json_string):
 
 
 def initialize_from_dict(data):
-    # print(data['py/object']) #ForecastSet.ForecastSet
+    # print(data['py/object']) #ForecastSet
     # print('--------------------')
     base_forecast = ExpenseForecast.initialize_from_dict(data["base_forecast"])
 
     # print('--------------------')
     # print(data['core_budget_set'])
 
-    core_budget_set = BudgetSet.BudgetSet([])
+    core_budget_set = BudgetSet([])
     for BudgetItem__dict in data["core_budget_set"]["budget_items"]:
         # BudgetItem__dict = BudgetItem__dict[0]
         sd_YYYYMMDD = BudgetItem__dict["start_date_YYYYMMDD"]
@@ -68,7 +70,7 @@ def initialize_from_dict(data):
 
     # print('--------------------')
     # print(data['option_budget_set'])
-    option_budget_set = BudgetSet.BudgetSet([])
+    option_budget_set = BudgetSet([])
     for BudgetItem__dict in data["option_budget_set"]["budget_items"]:
         # BudgetItem__dict = BudgetItem__dict[0]
         sd_YYYYMMDD = BudgetItem__dict["start_date_YYYYMMDD"]
@@ -95,7 +97,7 @@ def initialize_from_dict(data):
     ].items():
 
         # print(forecast_name)
-        B = BudgetSet.BudgetSet([])
+        B = BudgetSet([])
         for BudgetItem__dict in budget_item_set_dict["budget_items"]:
             # BudgetItem__dict = BudgetItem__dict[0]
             sd_YYYYMMDD = BudgetItem__dict["start_date_YYYYMMDD"]
@@ -572,7 +574,7 @@ class ForecastSet:
     #     new_initialized_forecasts = {}
     #     for forecast_name, budget_set in self.forecast_name_to_budget_item_set__dict.items():
     #         #print('Initializing '+forecast_name)
-    #         new_E = ExpenseForecast.ExpenseForecast(account_set=self.base_forecast.initial_account_set,
+    #         new_E = ExpenseForecast(account_set=self.base_forecast.initial_account_set,
     #                                                 budget_set=budget_set,
     #                                                 memo_rule_set=self.base_forecast.initial_memo_rule_set,
     #                                                 start_date_YYYYMMDD=self.base_forecast.start_date_YYYYMMDD,
@@ -643,7 +645,7 @@ class ForecastSet:
                             new_option_budget_set_list.append(bi)
                         except Exception:
                             pass
-                new_option_budget_set = BudgetSet.BudgetSet(new_option_budget_set_list)
+                new_option_budget_set = BudgetSet(new_option_budget_set_list)
                 new_dict_of_scenarios[s_key + " | " + choice_name] = (
                     new_option_budget_set
                 )
@@ -662,7 +664,7 @@ class ForecastSet:
         for forecast_name, budget_set in new_dict_of_scenarios.items():
             # for s_key, s_value in self.forecast_name_to_budget_item_set__dict.items():
             # print('Initializing '+forecast_name)
-            new_E = ExpenseForecast.ExpenseForecast(
+            new_E = ExpenseForecast(
                 account_set=self.base_forecast.initial_account_set,
                 budget_set=budget_set,
                 memo_rule_set=self.base_forecast.initial_memo_rule_set,

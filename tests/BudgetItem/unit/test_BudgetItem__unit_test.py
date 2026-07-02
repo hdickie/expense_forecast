@@ -1,5 +1,5 @@
 import pytest
-import BudgetItem
+from expense_forecast.BudgetItem import BudgetItem
 
 
 class TestBudgetItemMethods:
@@ -30,7 +30,7 @@ class TestBudgetItemMethods:
         deferrable,
         partial_payment_allowed,
     ):
-        BudgetItem.BudgetItem(
+        BudgetItem(
             start_date_YYYYMMDD,
             end_date_YYYYMMDD,
             priority,
@@ -157,7 +157,7 @@ class TestBudgetItemMethods:
         partial_payment_allowed,
     ):
         with pytest.raises(Exception):
-            BudgetItem.BudgetItem(
+            BudgetItem(
                 start_date_YYYYMMDD,
                 end_date_YYYYMMDD,
                 priority,
@@ -171,7 +171,7 @@ class TestBudgetItemMethods:
     @pytest.mark.unit
     @pytest.mark.skip(reason="this test needs to be improved")
     def test_to_str(self):
-        B = BudgetItem.BudgetItem(
+        B = BudgetItem(
             "20000101", "20000101", 1, "daily", 10, "test", False, False
         )
         str(B)
