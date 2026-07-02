@@ -7,6 +7,9 @@ from .MilestoneSet import MilestoneSet
 from .Account import Account
 from .BudgetSet import BudgetSet
 from .MemoRuleSet import MemoRuleSet
+
+from datetime import date
+
 pd.options.mode.chained_assignment = (
     None  # apparently this warning can throw false positives??? #todo is this true?
 )
@@ -28,7 +31,7 @@ def non_trivial_loan(name, pbal, interest, apr):
         min_balance=0,
         max_balance=9999,
         account_type="loan",
-        billing_start_date_YYYYMMDD="20000102",
+        billing_start_date=date(2000, 1, 2),
         interest_type="simple",
         apr=apr,
         interest_cadence="daily",
@@ -52,7 +55,7 @@ def credit_acct_list(curr_balance, prev_balance, apr):
         min_balance=0,
         max_balance=20000,
         account_type="credit",
-        billing_start_date_YYYYMMDD="20000102",
+        billing_start_date=date(2000, 1, 2),
         interest_type=None,
         apr=apr,
         interest_cadence="monthly",
@@ -77,7 +80,7 @@ def credit_bsd12_acct_list(prev_balance, curr_balance, apr):
         min_balance=0,
         max_balance=20000,
         account_type="credit",
-        billing_start_date_YYYYMMDD="19990112",
+        billing_start_date=date(1999, 1, 12),
         interest_type=None,
         apr=apr,
         interest_cadence="monthly",
@@ -129,7 +132,7 @@ def credit_bsd12_w_eopc_acct_list(
         min_balance=0,
         max_balance=20000,
         account_type="credit",
-        billing_start_date_YYYYMMDD="19990112",
+        billing_start_date=date(1999, 1, 12),
         apr=apr,
         interest_cadence="monthly",
         minimum_payment=40,
