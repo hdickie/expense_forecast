@@ -1,384 +1,655 @@
-from expense_forecast.Account import Account
-import pytest
-import pandas as pd
 import datetime
+
+import pandas as pd
+import pytest
+
+from expense_forecast.Account import Account
+
+
+def dt(date_string):
+    return datetime.datetime.strptime(date_string, "%Y%m%d")
+
 
 class TestAccount:
 
-    # @pytest.mark.unit
-    # @pytest.mark.parametrize(
-    #     "name,balance,min_balance,max_balance,account_type,billing_start_date_YYYYMMDD,interest_type,apr,interest_cadence,minimum_payment,primary_checking_ind,print_debug_messages,raise_exceptions",
-    #     [
-    #         (
-    #             "checking",
-    #             0,
-    #             0,
-    #             0,
-    #             "Checking",
-    #             None,
-    #             None,
-    #             None,
-    #             None,
-    #             None,
-    #             True,
-    #             True,
-    #             True,
-    #         ),
-    #         (
-    #             "cc: prev stmt bal",
-    #             0,
-    #             0,
-    #             0,
-    #             "credit prev stmt bal",
-    #             "20000101",
-    #             None,
-    #             0.25,
-    #             "monthly",
-    #             50,
-    #             False,
-    #             True,
-    #             True,
-    #         ),
-    #         (
-    #             "cc: curr stmt bal",
-    #             0,
-    #             0,
-    #             0,
-    #             "credit curr stmt bal",
-    #             None,
-    #             None,
-    #             None,
-    #             None,
-    #             None,
-    #             False,
-    #             True,
-    #             True,
-    #         ),
-    #         (
-    #             "loan simple daily: principal balance",
-    #             0,
-    #             0,
-    #             0,
-    #             "principal balance",
-    #             "20000101",
-    #             "simple",
-    #             0.25,
-    #             "daily",
-    #             50,
-    #             False,
-    #             True,
-    #             True,
-    #         ),
-    #         (
-    #             "loan compound monthly: principal balance",
-    #             0,
-    #             0,
-    #             0,
-    #             "principal balance",
-    #             "20000101",
-    #             "compound",
-    #             0.25,
-    #             "monthly",
-    #             50,
-    #             False,
-    #             True,
-    #             True,
-    #         ),
-    #         (
-    #             "loan: interest",
-    #             0,
-    #             0,
-    #             0,
-    #             "interest",
-    #             None,
-    #             None,
-    #             None,
-    #             None,
-    #             None,
-    #             False,
-    #             True,
-    #             True,
-    #         ),
-    #     ],
-    # )
-    # def test_Account_constructor_valid_inputs(
-    #     self,
-    #     name,  # no default because it is a required field
-    #     balance,
-    #     min_balance,
-    #     max_balance,
-    #     account_type,  # checking, savings, credit, principal balance, interest
-    #     billing_start_date_YYYYMMDD,
-    #     interest_type,
-    #     apr,
-    #     interest_cadence,
-    #     minimum_payment,
-    #     primary_checking_ind,
-    #     print_debug_messages,
-    #     raise_exceptions,
-    # ):
-    #     A = Account(
-    #         name,
-    #         balance,
-    #         min_balance,
-    #         max_balance,
-    #         account_type,
-    #         billing_start_date_YYYYMMDD,
-    #         interest_type,
-    #         apr,
-    #         interest_cadence,
-    #         minimum_payment,
-    #         primary_checking_ind,
-    #         print_debug_messages,
-    #         raise_exceptions,
-    #     )
+    @pytest.mark.unit
+    @pytest.mark.parametrize(
+        "name,balance,min_balance,max_balance,account_type,kwargs",
+        [
+            (
+                "checking",
+                0,
+                0,
+                0,
+                "checking",
+                {"primary_checking_ind": True},
+            ),
+            (
+                "cc: prev stmt bal",
+                0,
+                0,
+                0,
+                "credit prev stmt bal",
+                {
+                    "billing_start_date": dt("20000101"),
+                    "apr": 0.25,
+                    "interest_cadence": "monthly",
+                    "minimum_payment": 50,
+                },
+            ),
+            (
+                "cc: curr stmt bal",
+                0,
+                0,
+                0,
+                "credit curr stmt bal",
+                {},
+            ),
+            (
+                "loan: principal balance",
+                0,
+                0,
+                0,
+                "principal balance",
+                {
+                    "billing_start_date": dt("20000101"),
+                    "interest_type": "simple",
+                    "apr": 0.25,
+                    "interest_cadence": "daily",
+                    "minimum_payment": 50,
+                },
+            ),
+            (
+                "loan: principal balance",
+                0,
+                0,
+                0,
+                "principal balance",
+                {
+                    "billing_start_date": dt("20000101"),
+                    "interest_type": "compound",
+                    "apr": 0.25,
+                    "interest_cadence": "monthly",
+                    "minimum_payment": 50,
+                },
+            ),
+            (
+                "loan: interest",
+                0,
+                0,
+                0,
+                "interest",
+                {},
+            ),
+        ],
+    )
+    def test_Account_constructor_valid_inputs(
+        self, name, balance, min_balance, max_balance, account_type, kwargs
+    ):
+        account = Account(
+            name,
+            balance,
+            min_balance,
+            max_balance,
+            account_type,
+            **kwargs,
+        )
+
+        assert account.name == name
+        assert account.balance == balance
+        assert account.min_balance == min_balance
+        assert account.max_balance == max_balance
+        assert account.account_type == account_type
 
     @pytest.mark.unit
-    @pytest.mark.skip(reason="Not yet implemented")
-    @pytest.mark.parametrize("min_balance,balance,max_balance",
-                             [(0, 0, 0)]) #todo
+    @pytest.mark.parametrize(
+        "name,balance,min_balance,max_balance,account_type,kwargs",
+        [
+            ("typo- invalid account type", 0, 0, 0, "shmecking", {}),
+            ("NoneType- no account type", 0, 0, 0, None, {}),
+            ("context warning for account type- used credit type", 0, 0, 0, "credit", {}),
+            ("context warning for account type- used loan type", 0, 0, 0, "loan", {}),
+            (
+                "name missing colon- prev stmt bal",
+                0,
+                0,
+                0,
+                "credit prev stmt bal",
+                {
+                    "billing_start_date": dt("20000101"),
+                    "apr": 0,
+                    "interest_cadence": "monthly",
+                    "minimum_payment": 0,
+                },
+            ),
+            (
+                "name missing colon- principal balance",
+                0,
+                0,
+                0,
+                "principal balance",
+                {
+                    "billing_start_date": dt("20000101"),
+                    "interest_type": "simple",
+                    "apr": 0,
+                    "interest_cadence": "daily",
+                    "minimum_payment": 0,
+                },
+            ),
+            ("checking- bal not comparable (None)", None, 0, 0, "checking", {"primary_checking_ind": True}),
+            ("checking- bal not comparable (pd.NA)", pd.NA, 0, 0, "checking", {"primary_checking_ind": True}),
+            ("checking- bal not comparable (string)", "X", 0, 0, "checking", {"primary_checking_ind": True}),
+            ("checking- min bal not comparable (None)", 0, None, 0, "checking", {"primary_checking_ind": True}),
+            ("checking- min bal not comparable (pd.NA)", 0, pd.NA, 0, "checking", {"primary_checking_ind": True}),
+            ("checking- min bal not comparable (string)", 0, "X", 0, "checking", {"primary_checking_ind": True}),
+            ("checking- max bal not comparable (None)", 0, 0, None, "checking", {"primary_checking_ind": True}),
+            ("checking- max bal not comparable (pd.NA)", 0, 0, pd.NA, "checking", {"primary_checking_ind": True}),
+            ("checking- max bal not comparable (string)", 0, 0, "X", "checking", {"primary_checking_ind": True}),
+            ("checking- min gt balance", 0, 10, 20, "checking", {"primary_checking_ind": True}),
+            ("checking- balance gt max", 10, 0, 5, "checking", {"primary_checking_ind": True}),
+            ("checking- max lt min", 0, -100, -10, "checking", {"primary_checking_ind": True}),
+            (
+                "checking- billing_start_dt is not None",
+                0,
+                0,
+                0,
+                "checking",
+                {"billing_start_date": dt("20000101"), "primary_checking_ind": True},
+            ),
+            (
+                "checking- interest_type is not None",
+                0,
+                0,
+                0,
+                "checking",
+                {"interest_type": "simple", "primary_checking_ind": True},
+            ),
+            (
+                "checking- apr is not None",
+                0,
+                0,
+                0,
+                "checking",
+                {"apr": 0, "primary_checking_ind": True},
+            ),
+            (
+                "checking- interest_cadence is not None",
+                0,
+                0,
+                0,
+                "checking",
+                {"interest_cadence": "daily", "primary_checking_ind": True},
+            ),
+            (
+                "checking- min_payment is not None",
+                0,
+                0,
+                0,
+                "checking",
+                {"minimum_payment": 0, "primary_checking_ind": True},
+            ),
+            (
+                "cc- billing_start_dt not datetime: prev stmt bal",
+                0,
+                0,
+                0,
+                "credit prev stmt bal",
+                {
+                    "billing_start_date": "1234",
+                    "apr": 0.25,
+                    "interest_cadence": "monthly",
+                    "minimum_payment": 50,
+                },
+            ),
+            (
+                "cc- apr missing: prev stmt bal",
+                0,
+                0,
+                0,
+                "credit prev stmt bal",
+                {
+                    "billing_start_date": dt("20000101"),
+                    "interest_cadence": "monthly",
+                    "minimum_payment": 50,
+                },
+            ),
+            (
+                "cc- apr is negative: prev stmt bal",
+                0,
+                0,
+                0,
+                "credit prev stmt bal",
+                {
+                    "billing_start_date": dt("20000101"),
+                    "apr": -0.25,
+                    "interest_cadence": "monthly",
+                    "minimum_payment": 50,
+                },
+            ),
+            (
+                "cc- interest_cadence invalid: prev stmt bal",
+                0,
+                0,
+                0,
+                "credit prev stmt bal",
+                {
+                    "billing_start_date": dt("20000101"),
+                    "apr": 0.25,
+                    "interest_cadence": "weekly",
+                    "minimum_payment": 50,
+                },
+            ),
+            (
+                "cc- min_payment missing: prev stmt bal",
+                0,
+                0,
+                0,
+                "credit prev stmt bal",
+                {
+                    "billing_start_date": dt("20000101"),
+                    "apr": 0.25,
+                    "interest_cadence": "monthly",
+                },
+            ),
+            (
+                "cc- min_payment negative: prev stmt bal",
+                0,
+                0,
+                0,
+                "credit prev stmt bal",
+                {
+                    "billing_start_date": dt("20000101"),
+                    "apr": 0.25,
+                    "interest_cadence": "monthly",
+                    "minimum_payment": -50,
+                },
+            ),
+            (
+                "loan- interest_type invalid: principal balance",
+                0,
+                0,
+                0,
+                "principal balance",
+                {
+                    "billing_start_date": dt("20000101"),
+                    "interest_type": "shmimple",
+                    "apr": 0.25,
+                    "interest_cadence": "monthly",
+                    "minimum_payment": 50,
+                },
+            ),
+            (
+                "interest- loan fields should be None",
+                0,
+                0,
+                0,
+                "interest",
+                {
+                    "billing_start_date": dt("20000101"),
+                    "interest_type": "compound",
+                    "apr": 0.25,
+                    "interest_cadence": "monthly",
+                    "minimum_payment": 50,
+                },
+            ),
+            ("unexpected kwarg", 0, 0, 0, "checking", {"primary_checking_ind": True, "unknown": True}),
+        ],
+    )
+    def test_Account_constructor_invalid_inputs(
+        self, name, balance, min_balance, max_balance, account_type, kwargs
+    ):
+        with pytest.raises(Exception):
+            Account(
+                name,
+                balance,
+                min_balance,
+                max_balance,
+                account_type,
+                **kwargs,
+            )
+
+    @pytest.mark.unit
+    @pytest.mark.parametrize(
+        "min_balance,balance,max_balance",
+        [
+            (0, 0, 0),
+            (0, 5, 10),
+            (-100, 0, 100),
+        ],
+    )
+    def test_validate_balances__expect_success(self, min_balance, balance, max_balance):
+        Account._validate_balances(min_balance, balance, max_balance)
+
+    @pytest.mark.unit
+    @pytest.mark.parametrize(
+        "min_balance,balance,max_balance",
+        [
+            (10, 0, 20),
+            (0, 10, 5),
+            (10, 10, 0),
+            (None, 0, 0),
+            (0, None, 0),
+            (0, 0, None),
+            ("X", 0, 0),
+            (0, "X", 0),
+            (0, 0, "X"),
+            (pd.NA, 0, 0),
+            (0, pd.NA, 0),
+            (0, 0, pd.NA),
+        ],
+    )
     def test_validate_balances__expect_fail(self, min_balance, balance, max_balance):
         with pytest.raises(Exception):
             Account._validate_balances(min_balance, balance, max_balance)
-        raise NotImplementedError
 
     @pytest.mark.unit
-    @pytest.mark.skip(reason="Not yet implemented")
-    @pytest.mark.parametrize("account_type",
-                             [('account_type')]) #todo
+    @pytest.mark.parametrize(
+        "account_type",
+        [
+            "checking",
+            "credit prev stmt bal",
+            "credit curr stmt bal",
+            "savings",
+            "principal balance",
+            "interest",
+            "credit billing cycle payment bal",
+            "loan billing cycle payment bal",
+            "loan end of prev cycle bal",
+            "credit end of prev cycle bal",
+        ],
+    )
+    def test_validate_account_type__expect_success(self, account_type):
+        Account._validate_account_type(account_type)
+
+    @pytest.mark.unit
+    @pytest.mark.parametrize(
+        "account_type",
+        ["Checking", "credit", "loan", "shmecking", None],
+    )
     def test_validate_account_type__expect_fail(self, account_type):
         with pytest.raises(Exception):
             Account._validate_account_type(account_type)
-        raise NotImplementedError
 
     @pytest.mark.unit
-    @pytest.mark.skip(reason="Not yet implemented")
-    @pytest.mark.parametrize("account_type, account_name",
-                             [("account_type", "account_name")]) #todo
+    @pytest.mark.parametrize(
+        "account_type,account_name",
+        [
+            ("checking", "checking"),
+            ("savings", "savings"),
+            ("interest", "loan interest"),
+            ("credit prev stmt bal", "credit card: prev stmt bal"),
+            ("credit curr stmt bal", "credit card: curr stmt bal"),
+            ("principal balance", "loan: principal balance"),
+        ],
+    )
+    def test_validate_account_name__expect_success(self, account_type, account_name):
+        Account._validate_account_name(account_type, account_name)
+
+    @pytest.mark.unit
+    @pytest.mark.parametrize(
+        "account_type,account_name",
+        [
+            ("credit prev stmt bal", "credit prev stmt bal"),
+            ("credit curr stmt bal", "credit curr stmt bal"),
+            ("principal balance", "principal balance"),
+        ],
+    )
     def test_validate_account_name__expect_fail(self, account_type, account_name):
         with pytest.raises(Exception):
             Account._validate_account_name(account_type, account_name)
-        raise NotImplementedError
 
     @pytest.mark.unit
-    @pytest.mark.skip(reason="Not yet implemented")
-    @pytest.mark.parametrize("account_type, apr",
-                             [("account_type", 0)]) #todo
+    @pytest.mark.parametrize(
+        "account_type,apr",
+        [
+            ("credit prev stmt bal", 0),
+            ("credit prev stmt bal", 0.25),
+            ("principal balance", 0.25),
+            ("savings", 0.01),
+            ("checking", None),
+            ("credit curr stmt bal", None),
+            ("interest", None),
+        ],
+    )
+    def test_validate_apr__expect_success(self, account_type, apr):
+        Account._validate_apr(account_type, apr)
+
+    @pytest.mark.unit
+    @pytest.mark.parametrize(
+        "account_type,apr",
+        [
+            ("credit prev stmt bal", None),
+            ("principal balance", None),
+            ("savings", None),
+            ("credit prev stmt bal", -0.25),
+            ("principal balance", -0.25),
+            ("credit prev stmt bal", "X"),
+            ("credit prev stmt bal", pd.NA),
+            ("checking", 0),
+            ("credit curr stmt bal", 0.25),
+            ("interest", 0.25),
+        ],
+    )
     def test_validate_apr__expect_fail(self, account_type, apr):
         with pytest.raises(Exception):
             Account._validate_apr(account_type, apr)
-        raise NotImplementedError
 
     @pytest.mark.unit
-    @pytest.mark.skip(reason="Not yet implemented")
-    @pytest.mark.parametrize("account_type, interest_cadence",
-                             [("account_type", "interest_cadence")]) #todo
+    @pytest.mark.parametrize(
+        "account_type,interest_cadence",
+        [
+            ("credit prev stmt bal", "monthly"),
+            ("credit prev stmt bal", "daily"),
+            ("principal balance", "daily"),
+            ("principal balance", "monthly"),
+            ("savings", "daily"),
+            ("checking", None),
+            ("credit curr stmt bal", None),
+            ("interest", None),
+        ],
+    )
+    def test_validate_interest_cadence__expect_success(self, account_type, interest_cadence):
+        Account._validate_interest_cadence(account_type, interest_cadence)
+
+    @pytest.mark.unit
+    @pytest.mark.parametrize(
+        "account_type,interest_cadence",
+        [
+            ("credit prev stmt bal", None),
+            ("credit prev stmt bal", "weekly"),
+            ("principal balance", None),
+            ("principal balance", "yearly"),
+            ("checking", "daily"),
+            ("credit curr stmt bal", "monthly"),
+            ("interest", "monthly"),
+        ],
+    )
     def test_validate_interest_cadence__expect_fail(self, account_type, interest_cadence):
         with pytest.raises(Exception):
             Account._validate_interest_cadence(account_type, interest_cadence)
-        raise NotImplementedError
 
     @pytest.mark.unit
-    @pytest.mark.skip(reason="Not yet implemented")
-    @pytest.mark.parametrize("account_type, interest_type",
-                             [("account_type", "interest_type")]) #todo
-    def test_validate_interest_type__expect_fail(self, account_type, interest_type):
-        with pytest.raises(Exception):
-            Account._validate_interest_type()
-        raise NotImplementedError
-
-    @pytest.mark.unit
-    @pytest.mark.skip(reason="Not yet implemented")
-    @pytest.mark.parametrize("account_type, billing_start_date",
-                             [("account_type", "billing_start_date")]) #todo
-    def test_validate_billing_start_date__expect_fail(self, account_type, billing_start_date):
-        with pytest.raises(Exception):
-            Account._validate_billing_start_date(account_type, billing_start_date)
-        raise NotImplementedError
-
-    @pytest.mark.unit
-    @pytest.mark.skip(reason="Not yet implemented")
-    @pytest.mark.parametrize("account_type, minimum_payment",
-                             [("account_type", 0)]) #todo
-    def test_validate_minimum_payment__expect_fail(self, account_type, minimum_payment):
-        with pytest.raises(Exception):
-            Account._validate_minimum_payment(account_type, minimum_payment)
-        raise NotImplementedError
-
-    @pytest.mark.unit
-    @pytest.mark.skip(reason="Not yet implemented")
-    @pytest.mark.parametrize("account_type, primary_checking_ind",
-                             [("account_type", "primary_checking_ind")]) #todo
-    def test_validate_primary_checking_ind__expect_fail(self, account_type, primary_checking_ind):
-        with pytest.raises(Exception):
-            Account._validate_primary_checking_ind(account_type, primary_checking_ind)
-        raise NotImplementedError
-
-
-
-    @pytest.mark.unit
-    @pytest.mark.skip(reason="Not yet implemented")
-    @pytest.mark.parametrize("min_balance,balance,max_balance",
-                             [(0, 0, 0)])  # todo
-    def test_validate_balances__expect_success(self, min_balance, balance, max_balance):
-        Account._validate_balances(min_balance, balance, max_balance)
-        raise NotImplementedError
-
-    @pytest.mark.unit
-    @pytest.mark.skip(reason="Not yet implemented")
-    @pytest.mark.parametrize("account_type",
-                             [('account_type')])  # todo
-    def test_validate_account_type__expect_success(self, account_type):
-        Account._validate_account_type(account_type)
-        raise NotImplementedError
-
-    @pytest.mark.unit
-    @pytest.mark.skip(reason="Not yet implemented")
-    @pytest.mark.parametrize("account_type, account_name",
-                             [("account_type", "account_name")])  # todo
-    def test_validate_account_name__expect_success(self, account_type, account_name):
-        Account._validate_account_name(account_type, account_name)
-        raise NotImplementedError
-
-    @pytest.mark.unit
-    @pytest.mark.skip(reason="Not yet implemented")
-    @pytest.mark.parametrize("account_type, apr",
-                             [("account_type", 0)])  # todo
-    def test_validate_apr__expect_success(self, account_type, apr):
-        Account._validate_apr(account_type, apr)
-        raise NotImplementedError
-
-    @pytest.mark.unit
-    @pytest.mark.skip(reason="Not yet implemented")
-    @pytest.mark.parametrize("account_type, interest_cadence",
-                             [("account_type", "interest_cadence")])  # todo
-    def test_validate_interest_cadence__expect_success(self, account_type, interest_cadence):
-        Account._validate_interest_cadence(account_type, interest_cadence)
-        raise NotImplementedError
-
-    @pytest.mark.unit
-    @pytest.mark.skip(reason="Not yet implemented")
-    @pytest.mark.parametrize("account_type, interest_type",
-                             [("account_type", "interest_type")])  # todo
+    @pytest.mark.parametrize(
+        "account_type,interest_type",
+        [
+            ("principal balance", "simple"),
+            ("principal balance", "compound"),
+            ("savings", "simple"),
+            ("savings", "compound"),
+            ("checking", None),
+            ("credit prev stmt bal", None),
+            ("credit curr stmt bal", None),
+            ("interest", None),
+        ],
+    )
     def test_validate_interest_type__expect_success(self, account_type, interest_type):
         Account._validate_interest_type(account_type, interest_type)
-        raise NotImplementedError
 
     @pytest.mark.unit
-    @pytest.mark.skip(reason="Not yet implemented")
-    @pytest.mark.parametrize("account_type, billing_start_date",
-                             [("account_type", "billing_start_date")])  # todo
-    def test_validate_billing_start_date__expect_success(self, account_type, billing_start_date):
+    @pytest.mark.parametrize(
+        "account_type,interest_type",
+        [
+            ("principal balance", None),
+            ("principal balance", "shmimple"),
+            ("savings", None),
+            ("savings", "shmimple"),
+            ("checking", "simple"),
+            ("credit prev stmt bal", "compound"),
+            ("credit curr stmt bal", "compound"),
+            ("interest", "compound"),
+        ],
+    )
+    def test_validate_interest_type__expect_fail(self, account_type, interest_type):
+        with pytest.raises(Exception):
+            Account._validate_interest_type(account_type, interest_type)
+
+    @pytest.mark.unit
+    @pytest.mark.parametrize(
+        "account_type,billing_start_date",
+        [
+            ("credit prev stmt bal", dt("20000101")),
+            ("principal balance", dt("20000101")),
+            ("savings", dt("20000101")),
+            ("credit billing cycle payment bal", dt("20000101")),
+            ("loan billing cycle payment bal", dt("20000101")),
+            ("loan end of prev cycle bal", dt("20000101")),
+            ("credit end of prev cycle bal", dt("20000101")),
+            ("checking", None),
+            ("credit curr stmt bal", None),
+            ("interest", None),
+        ],
+    )
+    def test_validate_billing_start_date__expect_success(
+        self, account_type, billing_start_date
+    ):
         Account._validate_billing_start_date(account_type, billing_start_date)
-        raise NotImplementedError
 
     @pytest.mark.unit
-    @pytest.mark.skip(reason="Not yet implemented")
-    @pytest.mark.parametrize("account_type, minimum_payment",
-                             [("account_type", 0)])  # todo
-    def test_validate_minimum_payment__expect_success(self, account_type, minimum_payment):
+    @pytest.mark.parametrize(
+        "account_type,billing_start_date",
+        [
+            ("credit prev stmt bal", None),
+            ("credit prev stmt bal", "20000101"),
+            ("principal balance", None),
+            ("principal balance", "20000101"),
+            ("savings", None),
+            ("checking", dt("20000101")),
+            ("credit curr stmt bal", dt("20000101")),
+            ("interest", dt("20000101")),
+        ],
+    )
+    def test_validate_billing_start_date__expect_fail(
+        self, account_type, billing_start_date
+    ):
+        with pytest.raises(Exception):
+            Account._validate_billing_start_date(account_type, billing_start_date)
+
+    @pytest.mark.unit
+    @pytest.mark.parametrize(
+        "account_type,minimum_payment",
+        [
+            ("credit prev stmt bal", 0),
+            ("credit prev stmt bal", 50),
+            ("principal balance", 0),
+            ("principal balance", 50),
+            ("checking", None),
+            ("credit curr stmt bal", None),
+            ("interest", None),
+        ],
+    )
+    def test_validate_minimum_payment__expect_success(
+        self, account_type, minimum_payment
+    ):
         Account._validate_minimum_payment(account_type, minimum_payment)
-        raise NotImplementedError
 
     @pytest.mark.unit
-    @pytest.mark.skip(reason="Not yet implemented")
-    @pytest.mark.parametrize("account_type, primary_checking_ind",
-                             [("account_type", "primary_checking_ind")])  # todo
-    def test_validate_primary_checking_ind__expect_success(self, account_type, primary_checking_ind):
+    @pytest.mark.parametrize(
+        "account_type,minimum_payment",
+        [
+            ("credit prev stmt bal", None),
+            ("credit prev stmt bal", -1),
+            ("credit prev stmt bal", "X"),
+            ("credit prev stmt bal", pd.NA),
+            ("principal balance", None),
+            ("principal balance", -50),
+            ("checking", 0),
+            ("credit curr stmt bal", 50),
+            ("interest", 50),
+        ],
+    )
+    def test_validate_minimum_payment__expect_fail(
+        self, account_type, minimum_payment
+    ):
+        with pytest.raises(Exception):
+            Account._validate_minimum_payment(account_type, minimum_payment)
+
+    @pytest.mark.unit
+    @pytest.mark.parametrize(
+        "account_type,primary_checking_ind",
+        [
+            ("checking", True),
+            ("checking", False),
+            ("credit prev stmt bal", None),
+            ("credit curr stmt bal", None),
+            ("principal balance", None),
+            ("interest", None),
+            ("savings", None),
+        ],
+    )
+    def test_validate_primary_checking_ind__expect_success(
+        self, account_type, primary_checking_ind
+    ):
         Account._validate_primary_checking_ind(account_type, primary_checking_ind)
-        raise NotImplementedError
 
-    # @pytest.mark.unit
-    # @pytest.mark.parametrize(
-    #     "name,balance,min_balance,max_balance,account_type,**kwargs",
-    #     [
-    #         ("typo- invalid account type", 0, 0, 0, "shmecking",{}),
-    #         ("NoneType- no account type", 0, 0, 0, None, {}),
-    #         ("context warning for account type- used credit type", 0, 0, 0, "credit", {}),
-    #         ("context warning for account type- used loan type", 0, 0, 0, "loan", {}),
-    #         ("name missing colon- prev stmt bal", 0, 0, 0, "prev stmt bal", {"billing_start_date":datetime.datetime.strptime("20000101",'%Y%m%d'), "interest_type":"compound", "apr":0, "interest_cadence":"monthly", "minimum_payment":0, "primary_checking_ind":False}),
-    #         ("name missing colon- prev stmt bal", 0, 0, 0, "principal balance", {"billing_start_date":datetime.datetime.strptime("20000101",'%Y%m%d'), "interest_type":"simple", "apr":0, "interest_cadence":"daily", "minimum_payment":0, "primary_checking_ind":False}),
-    #         ("checking- bal not castable to numeric (None)", None, 0, 0, "Checking",{'primary_checking_ind':True}),
-    #         ("checking- bal not castable to numeric (pd.NA)", pd.NA, 0, 0, "Checking", {'primary_checking_ind':True}),
-    #         ("checking- bal not castable to numeric (string)", "X", 0, 0, "Checking", {'primary_checking_ind':True}),
-    #         ("checking- min bal not castable to numeric (None)", 0, None, 0, "Checking", {'primary_checking_ind':True}),
-    #         ("checking- min bal not castable to numeric (pd.NA)", 0, pd.NA, 0, "Checking", {'primary_checking_ind':True}),
-    #         ("checking- min bal not castable to numeric (string)", 0, "X", 0, "Checking", {'primary_checking_ind':True}),
-    #         ("checking- max bal not castable to numeric (None)", 0, 0, None, "Checking", {'primary_checking_ind':True}),
-    #         ("checking- max bal not castable to numeric (pd.NA)", 0, 0, pd.NA, "Checking", {'primary_checking_ind':True}),
-    #         ("checking- max bal not castable to numeric (string)", 0, 0, "X", "Checking", {'primary_checking_ind':True}),
-    #         ("checking- min gt max", 0, 10, 0, "Checking", {'primary_checking_ind':True}),
-    #         ("checking- max lt 0", 0, -100, -10, "Checking", {'primary_checking_ind':True}),
-    #         ("checking- billing_start_dt is not None", 0, 0, 0, "Checking", {'billing_start_date':datetime.datetime.strptime("20000101",'%Y%m%d'),'primary_checking_ind':True}),
-    #         ("checking- interest_type is not None", 0, 0, 0, "Checking",{'interest_type':'simple','primary_checking_ind':True}),
-    #         ("checking- apr is not None", 0, 0, 0, "Checking",{'apr':0, 'primary_checking_ind':True}),
-    #         ("checking- interest_cadence is not None", 0, 0, 0, "Checking", {'interest_cadence':'daily','primary_checking_ind':True}),
-    #         ("checking- min_payment is not None", 0, 0, 0, "Checking", {'minimum_payment':0, 'primary_checking_ind':True}),
-    #         ("cc- billing_start_dt not castable to date YYYYMMDD: prev stmt bal ", 0, 0, 0, "credit prev stmt bal", {'billing_start_date':'not castable to date', 'interest_type':'compound','apr':0.25,'interest_cadence':'monthly','primary_checking_ind':True}),
-    #         # ("cc- interest_type is not compound: prev stmt bal ", 0, 0, 0, "prev stmt bal", "20000101", "simple", 0.25, "monthly", 50, True, True, ValueError),
-    #         ("cc- apr is not castable to numeric (None): prev stmt bal ", 0, 0, 0, "credit prev stmt bal", {'billing_start_date':datetime.datetime.strptime("20000101","%Y%m%d"), 'interest_type':'compound','apr':None,'interest_cadence':'monthly','minimum_payment':0,'primary_checking_ind':True}),
-    #         ("cc- apr is not castable to numeric (pd.NA): prev stmt bal ", 0, 0, 0, "credit prev stmt bal", {'billing_start_date':datetime.datetime.strptime("20000101","%Y%m%d"), 'interest_type':'compound','apr':pd.NA,'interest_cadence':'monthly','minimum_payment':0,'primary_checking_ind':True}),
-    #         ("cc- apr is not castable to numeric (string): prev stmt bal ", 0, 0, 0, "credit prev stmt bal", {'billing_start_date':datetime.datetime.strptime("20000101","%Y%m%d"), 'interest_type':'compound','apr':'X','interest_cadence':'monthly','minimum_payment':0,'primary_checking_ind':True}),
-    #         ("cc- apr is lt 0: prev stmt bal ", 0, 0, 0, "credit prev stmt bal", {'billing_start_date':datetime.datetime.strptime("20000101","%Y%m%d"), 'interest_type':'compound','apr':-1,'interest_cadence':'monthly','minimum_payment':0,'primary_checking_ind':True}),
-    #         ("cc- interest_cadence is not monthly: prev stmt bal ", 0, 0, 0, "credit prev stmt bal", {'billing_start_date':datetime.datetime.strptime("20000101","%Y%m%d"), 'interest_type':'compound','apr':0,'interest_cadence':'shmonthly','minimum_payment':0,'primary_checking_ind':True}),
-    #         ("cc- min_payment is not castable to numeric (None): prev stmt bal ", 0, 0, 0, "credit prev stmt bal", {'billing_start_date':datetime.datetime.strptime("20000101","%Y%m%d"), 'interest_type':'compound','apr':0,'interest_cadence':'monthly','minimum_payment':None,'primary_checking_ind':True}),
-    #         ("cc- min_payment is not castable to numeric (pd.NA): prev stmt bal ", 0, 0, 0, "credit prev stmt bal", {'billing_start_date':datetime.datetime.strptime("20000101","%Y%m%d"), 'interest_type':'compound','apr':0,'interest_cadence':'monthly','minimum_payment':pd.NA,'primary_checking_ind':True}),
-    #         ("cc- min_payment is not castable to numeric (string): prev stmt bal ", 0, 0, 0, "credit prev stmt bal", {'billing_start_date':datetime.datetime.strptime("20000101","%Y%m%d"), 'interest_type':'compound','apr':0,'interest_cadence':'monthly','minimum_payment':'Not Castable','primary_checking_ind':True}),
-    #         ("cc- min_payment lt 0: prev stmt bal ", 0, 0, 0, "credit prev stmt bal", "20000101", {'billing_start_date':datetime.datetime.strptime("20000101","%Y%m%d"), 'interest_type':'compound','apr':0,'interest_cadence':'monthly','minimum_payment':-1,'primary_checking_ind':True}),
-    #         ("cc- billing_start_dt is not None: curr stmt bal ", 0, 0, 0, "credit prev stmt bal", "not None", "compound", 0.25, "monthly", 50, False),
-    #         ("cc- interest_type is not None: curr stmt bal ", 0, 0, 0, "credit prev stmt bal", None, "compound", 0.25, "monthly", 50, False),
-    #         ("cc- apr is not None: curr stmt bal ", 0, 0, 0, "credit prev stmt bal", None, None, 0.25, "monthly", 50, False),
-    #         ("cc- interest_cadence is not None: curr stmt bal ", 0, 0, 0, "credit prev stmt bal", None, None, None, "monthly", 50, False),
-    #         ("cc- min_payment is not None: curr stmt bal ", 0, 0, 0, "credit prev stmt bal", None, None, None, None, 50, False),
-    #         ("loan- billing_start_dt not castable to date YYYYMMDD: principal balance ", 0, 0, 0, "principal balance", "1234", "compound", 0.25, "monthly", 50, False),
-    #         ("loan- interest_type is not simple or compound: principal balance ", 0, 0, 0, "principal balance", "20000101", "shmimple", 0.25, "monthly", 50, False),
-    #         ("loan- apr is not castable to numeric (None): principal balance ", 0, 0, 0, "principal balance", "20000101", "compound", None, "monthly", 50, False),
-    #         ("loan- apr is not castable to numeric (pd.NA): principal balance ", 0, 0, 0, "principal balance", "20000101", "compound", pd.NA, "monthly", 50, False),
-    #         ("loan- apr is not castable to numeric (string): principal balance ", 0, 0, 0, "principal balance", "20000101", "compound", "X", "monthly", 50, False),
-    #         ("loan- apr is lt 0: principal balance ", 0, 0, 0, "principal balance", "20000101", "compound", -0.25, "monthly", 50, False),
-    #         # ("loan- interest_cadence is not daily, monthly or yearly: principal balance ", 0, 0, 0, "principal balance", "20000101", "compound", -0.25, "weekly", 50, True, True, ValueError),
-    #         ("loan- min_payment is not castable to numeric (None): principal balance ", 0, 0, 0, "principal balance", "20000101", "compound", 0.25, "monthly", None, False),
-    #         ("loan- min_payment is not castable to numeric (pd.NA): principal balance ", 0, 0, 0, "principal balance", "20000101", "compound", 0.25, "monthly", pd.NA, False),
-    #         ("loan- min_payment is not castable to numeric (string): principal balance ", 0, 0, 0, "principal balance", "20000101", "compound", 0.25, "monthly", "X", False),
-    #         ("loan- min_payment lt 0: principal balance ", 0, 0, 0, "principal balance", "20000101", "compound", 0.25, "monthly", -50, False),
-    #         ("loan- billing_start_dt is not None: interest ", 0, 0, 0, "interest", "not None", "compound", 0.25, "monthly", 50, False),
-    #         ("loan- interest_type is not None: interest ", 0, 0, 0, "interest", None, "compound", 0.25, "monthly", 50, False),
-    #         ("loan- apr is not None: interest ", 0, 0, 0, "interest", None, None, 0.25, "monthly", 50, False),
-    #         ("loan- interest_cadence is not None: interest ", 0, 0, 0, "interest", None, None, None, "monthly", 50, False),
-    #         ("loan- min_payment is not None: interest ", 0, 0, 0, "interest", None, None, None, None, 50, False),
-    #     ],
-    # )
-    # def test_Account_constructor_invalid_inputs( self, name, balance, min_balance, max_balance, account_type, **kwargs ):
-    #
-    #     # todo maybe check for substrings in exception bc i wanna make sure they throw for the right reason
-    #     with pytest.raises(Exception):
-    #         Account(
-    #             name,
-    #             balance,
-    #             min_balance,
-    #             max_balance,
-    #             account_type,
-    #             **kwargs
-    #         )
+    @pytest.mark.unit
+    @pytest.mark.parametrize(
+        "account_type,primary_checking_ind",
+        [
+            ("checking", None),
+            ("checking", "True"),
+            ("credit prev stmt bal", False),
+            ("credit curr stmt bal", False),
+            ("principal balance", False),
+            ("interest", False),
+            ("savings", False),
+        ],
+    )
+    def test_validate_primary_checking_ind__expect_fail(
+        self, account_type, primary_checking_ind
+    ):
+        with pytest.raises(Exception):
+            Account._validate_primary_checking_ind(account_type, primary_checking_ind)
 
-    # @pytest.mark.unit
-    # @pytest.mark.skip(reason="this test sucks")
-    # def test_str(self):
-    #     test_account = Account(
-    #         name="test checking",
-    #         balance=0,
-    #         min_balance=0,
-    #         max_balance=0,
-    #         account_type="checking",
-    #     )
-    #     str(test_account)
+    @pytest.mark.unit
+    def test_str(self):
+        test_account = Account(
+            name="test checking",
+            balance=0,
+            min_balance=0,
+            max_balance=0,
+            account_type="checking",
+            primary_checking_ind=True,
+        )
+
+        assert "test checking" in str(test_account)
 
 
-# FAILED tests/Account/unit/test_Account__unit_test.py::TestAccount::test_Account_constructor_valid_inputs[checking-0-0-0-Checking-None-None-None-None-None-True-True-True] - TypeError: Account.__init__() takes 6 positional arguments but 14 were given
-# FAILED tests/Account/unit/test_Account__unit_test.py::TestAccount::test_Account_constructor_valid_inputs[cc: prev stmt bal-0-0-0-credit prev stmt bal-20000101-None-0.25-monthly-50-False-True-True] - TypeError: Account.__init__() takes 6 positional arguments but 14 were given
-# FAILED tests/Account/unit/test_Account__unit_test.py::TestAccount::test_Account_constructor_valid_inputs[cc: curr stmt bal-0-0-0-credit curr stmt bal-None-None-None-None-None-False-True-True] - TypeError: Account.__init__() takes 6 positional arguments but 14 were given
-# FAILED tests/Account/unit/test_Account__unit_test.py::TestAccount::test_Account_constructor_valid_inputs[loan simple daily: principal balance-0-0-0-principal balance-20000101-simple-0.25-daily-50-False-True-True] - TypeError: Account.__init__() takes 6 positional arguments but 14 were given
-# FAILED tests/Account/unit/test_Account__unit_test.py::TestAccount::test_Account_constructor_valid_inputs[loan compound monthly: principal balance-0-0-0-principal balance-20000101-compound-0.25-monthly-50-False-True-True] - TypeError: Account.__init__() takes 6 positional arguments but 14 were given
-# FAILED tests/Account/unit/test_Account__unit_test.py::TestAccount::test_Account_constructor_valid_inputs[loan: interest-0-0-0-interest-None-None-None-None-None-False-True-True] - TypeError: Account.__init__() takes 6 positional arguments but 14 were given
-# FAILED tests/ExpenseForecast/unit/test_ExpenseForecast__unit_test.py::TestExpenseForecastUnit::test_evaluate_account_milestone[test_account_milestone-account_set0-budget_set0-memo_rule_set0-20000101-20000103-milestone_set0-account_milestone_names0-expected_milestone_dates0] - TypeError: ExpenseForecast.__init__() takes 3 positional arguments but 7 were given
-# 25 failed, 78 passed, 13 skipped, 158 deselected in 21.58s
+# Migration notes:
+# - Migrated coverage from old__test_Account__unit_test.py into the newer test shape:
+#   package import, direct Account(...) calls, constructor **kwargs, and active
+#   private/static validator tests.
+# - Removed placeholder skips once each validator test had concrete success/failure cases.
+# - Kept cases conservative: old cases that depended on the former positional constructor
+#   were translated only when the current Account API made the equivalent behavior clear.
+# - Updated old date-string constructor inputs to datetime objects because the current
+#   _validate_billing_start_date API explicitly requires datetime.datetime.
+# - Lowercased valid account types because the current _validate_account_type asserts
+#   that account_type is already lower-case.
+#
+# Recommended next changes:
+# - Decide whether validators should raise ValueError/TypeError consistently instead of
+#   a mix of ValueError, TypeError, and AssertionError; then tighten these tests to the
+#   exact exception types.
+# - Revisit the "not comparable" cases from the old file after the Account validators
+#   either formally support or reject type casting.
+# - Consider extracting the valid account fixtures here for reuse by AccountSet tests.
