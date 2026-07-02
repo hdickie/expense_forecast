@@ -7,8 +7,63 @@ from expense_forecast.Account import Account
 from expense_forecast.AccountSet import AccountSet
 import doctest, copy
 from datetime import date
+from decimal import Decimal
+
+from expense_forecast.CheckingBillingState import CheckingBillingState
+from expense_forecast.CreditCardBillingState import CreditCardBillingState
+from expense_forecast.LoanBillingState import LoanBillingState
 from expense_forecast.log_methods import log_in_color
 
+
+def checking_billing_state(balance=0, is_primary=True):
+    return CheckingBillingState(
+        balance=Decimal(str(balance)),
+        is_primary=is_primary,
+    )
+
+
+def credit_billing_state(
+    previous_statement_balance=0,
+    current_statement_balance=0,
+    billing_cycle_payment_balance=0,
+    minimum_payment=50,
+    billing_cycle_start_date=date(2000, 1, 1),
+    interest_type="compound",
+    interest_cadence="monthly",
+    apr=0.01,
+):
+    return CreditCardBillingState(
+        billing_cycle_start_date=billing_cycle_start_date,
+        previous_statement_balance=Decimal(str(previous_statement_balance)),
+        current_statement_balance=Decimal(str(current_statement_balance)),
+        billing_cycle_payment_balance=Decimal(str(billing_cycle_payment_balance)),
+        minimum_payment=Decimal(str(minimum_payment)),
+        interest_type=interest_type,
+        interest_cadence=interest_cadence,
+        apr=Decimal(str(apr)),
+    )
+
+
+def loan_billing_state(
+    previous_statement_balance=0,
+    current_statement_balance=0,
+    billing_cycle_payment_balance=0,
+    minimum_payment=50,
+    billing_cycle_start_date=date(2000, 1, 1),
+    interest_type="compound",
+    interest_cadence="daily",
+    apr=0.01,
+):
+    return LoanBillingState(
+        billing_cycle_start_date=billing_cycle_start_date,
+        previous_statement_balance=Decimal(str(previous_statement_balance)),
+        current_statement_balance=Decimal(str(current_statement_balance)),
+        billing_cycle_payment_balance=Decimal(str(billing_cycle_payment_balance)),
+        minimum_payment=Decimal(str(minimum_payment)),
+        interest_type=interest_type,
+        interest_cadence=interest_cadence,
+        apr=Decimal(str(apr)),
+    )
 
 
 def compound_loan_A():
@@ -24,9 +79,9 @@ def compound_loan_A():
         apr=0.1,
         interest_cadence="monthly",
         minimum_payment=50,
-        billing_cycle_payment_balance=0,
         principal_balance=1000,
         interest_balance=100,
+        end_of_previous_cycle_balance=1000,
     )
     return A.accounts
 
@@ -44,9 +99,9 @@ def compound_loan_A_no_interest():
         apr=0.1,
         interest_cadence="monthly",
         minimum_payment=50,
-        billing_cycle_payment_balance=0,
         principal_balance=1000,
         interest_balance=0,
+        end_of_previous_cycle_balance=1000,
     )
     return A.accounts
 
@@ -64,9 +119,9 @@ def compound_loan_B():
         apr=0.01,
         interest_cadence="monthly",
         minimum_payment=50,
-        billing_cycle_payment_balance=0,
         principal_balance=1500,
         interest_balance=100,
+        end_of_previous_cycle_balance=1500,
     )
     return A.accounts
 
@@ -84,9 +139,9 @@ def compound_loan_B_no_interest():
         apr=0.01,
         interest_cadence="monthly",
         minimum_payment=50,
-        billing_cycle_payment_balance=0,
         principal_balance=1500,
         interest_balance=0,
+        end_of_previous_cycle_balance=1500,
     )
     return A.accounts
 
@@ -104,9 +159,9 @@ def compound_loan_C():
         apr=0.05,
         interest_cadence="monthly",
         minimum_payment=50,
-        billing_cycle_payment_balance=0,
         principal_balance=2500,
         interest_balance=100,
+        end_of_previous_cycle_balance=2500,
     )
     return A.accounts
 
@@ -124,9 +179,9 @@ def compound_loan_C_no_interest():
         apr=0.05,
         interest_cadence="monthly",
         minimum_payment=50,
-        billing_cycle_payment_balance=0,
         principal_balance=2500,
         interest_balance=0,
+        end_of_previous_cycle_balance=2500,
     )
     return A.accounts
 
@@ -139,6 +194,7 @@ def checking():
         min_balance=0,
         max_balance=10000,
         account_type="checking",
+        primary_checking_ind=True,
     )
     return A.accounts
 
@@ -146,17 +202,18 @@ def checking():
 def cc(curr_bal, prev_bal, apr, bsd):
     A = AccountSet([])
     A.createAccount(
-        "test cc",
-        curr_bal,
-        0,
-        20000,
-        "credit",
-        bsd,
-        "compound",
-        apr,
-        "monthly",
-        40,
-        prev_bal,
+        name="test cc",
+        balance=curr_bal + prev_bal,
+        min_balance=0,
+        max_balance=20000,
+        account_type="credit",
+        billing_start_date=bsd,
+        apr=apr,
+        interest_cadence="monthly",
+        minimum_payment=40,
+        previous_statement_balance=prev_bal,
+        current_statement_balance=curr_bal,
+        end_of_previous_cycle_balance=prev_bal,
     )
     return A.accounts
 
@@ -210,92 +267,108 @@ class TestAccountSet:
             min_balance=min_balance,
             max_balance=max_balance,
             account_type="checking",
-            primary_checking_ind=True,
+            billing_state=checking_billing_state(balance=balance, is_primary=True),
         )
 
     def _principal_account(self, name, balance, min_balance=0, max_balance=100):
         return Account(
-            name=f"{name}: Principal Balance",
+            name=name,
             balance=balance,
             min_balance=min_balance,
             max_balance=max_balance,
-            account_type="principal balance",
-            billing_start_date=date(2000, 1, 1),
-            interest_type="compound",
-            apr=0.01,
-            interest_cadence="monthly",
-            minimum_payment=50,
+            account_type="loan",
+            billing_state=loan_billing_state(
+                previous_statement_balance=balance,
+                current_statement_balance=balance,
+            ),
         )
 
     def _interest_account(self, name, balance, min_balance=0, max_balance=100):
         return Account(
-            name=f"{name}: Interest",
+            name=name,
             balance=balance,
             min_balance=min_balance,
             max_balance=max_balance,
-            account_type="interest",
+            account_type="loan",
+            billing_state=loan_billing_state(
+                previous_statement_balance=balance,
+                current_statement_balance=balance,
+            ),
         )
 
     def _loan_billing_cycle_payment_account(self, name, balance, min_balance=0, max_balance=100):
         return Account(
-            name=f"{name}: Loan Billing Cycle Payment Bal",
+            name=name,
             balance=balance,
             min_balance=min_balance,
             max_balance=max_balance,
-            account_type="loan billing cycle payment bal",
-            billing_start_date=date(2000, 1, 1),
+            account_type="loan",
+            billing_state=loan_billing_state(
+                previous_statement_balance=balance,
+                current_statement_balance=balance,
+                billing_cycle_payment_balance=balance,
+            ),
         )
 
     def _loan_end_of_prev_cycle_account(self, name, balance, min_balance=0, max_balance=100):
         return Account(
-            name=f"{name}: Loan End of Prev Cycle Bal",
+            name=name,
             balance=balance,
             min_balance=min_balance,
             max_balance=max_balance,
-            account_type="loan end of prev cycle bal",
-            billing_start_date=date(2000, 1, 1),
+            account_type="loan",
+            billing_state=loan_billing_state(
+                previous_statement_balance=balance,
+                current_statement_balance=balance,
+            ),
         )
 
     def _credit_curr_account(self, name, balance, min_balance=0, max_balance=100):
         return Account(
-            name=f"{name}: Curr Stmt Bal",
+            name=name,
             balance=balance,
             min_balance=min_balance,
             max_balance=max_balance,
-            account_type="credit curr stmt bal",
+            account_type="credit",
+            billing_state=credit_billing_state(
+                current_statement_balance=balance,
+            ),
         )
 
     def _credit_prev_account(self, name, balance, min_balance=0, max_balance=100):
         return Account(
-            name=f"{name}: Prev Stmt Bal",
+            name=name,
             balance=balance,
             min_balance=min_balance,
             max_balance=max_balance,
-            account_type="credit prev stmt bal",
-            billing_start_date=date(2000, 1, 1),
-            apr=0.01,
-            interest_cadence="monthly",
-            minimum_payment=50,
+            account_type="credit",
+            billing_state=credit_billing_state(
+                previous_statement_balance=balance,
+            ),
         )
 
     def _credit_billing_cycle_payment_account(self, name, balance, min_balance=0, max_balance=100):
         return Account(
-            name=f"{name}: Credit Billing Cycle Payment Bal",
+            name=name,
             balance=balance,
             min_balance=min_balance,
             max_balance=max_balance,
-            account_type="credit billing cycle payment bal",
-            billing_start_date=date(2000, 1, 1),
+            account_type="credit",
+            billing_state=credit_billing_state(
+                billing_cycle_payment_balance=balance,
+            ),
         )
 
     def _credit_end_of_prev_cycle_account(self, name, balance, min_balance=0, max_balance=100):
         return Account(
-            name=f"{name}: Credit End of Prev Cycle Bal",
+            name=name,
             balance=balance,
             min_balance=min_balance,
             max_balance=max_balance,
-            account_type="credit end of prev cycle bal",
-            billing_start_date=date(2000, 1, 1),
+            account_type="credit",
+            billing_state=credit_billing_state(
+                previous_statement_balance=balance,
+            ),
         )
 
     def _valid_transaction_account_set(self):
@@ -343,7 +416,7 @@ class TestAccountSet:
                     min_balance=0,
                     max_balance=100,
                     account_type="checking",
-                    primary_checking_ind=True,
+                    billing_state=checking_billing_state(balance=0, is_primary=True),
                 )
             ],
         ],
@@ -368,18 +441,9 @@ class TestAccountSet:
                 _credit_end_of_prev_cycle_account(None, "test cc", 60, 0, 100),
             ],
             [
-                _principal_account(None, "loan", 60, 0, 100),
-            ],
-            [
                 _interest_account(None, "loan", 60, 0, 100),
                 _loan_billing_cycle_payment_account(None, "loan", 0, 0, 100),
                 _loan_end_of_prev_cycle_account(None, "loan", 60, 0, 100),
-            ],
-            [
-                _credit_curr_account(None, "cc", 60, 0, 100),
-            ],
-            [
-                _credit_prev_account(None, "cc", 0, 0, 100),
             ],
             [
                 Account(
@@ -388,7 +452,7 @@ class TestAccountSet:
                     min_balance=0,
                     max_balance=100,
                     account_type="checking",
-                    primary_checking_ind=True,
+                    billing_state=checking_billing_state(balance=0, is_primary=True),
                 ),
                 Account(
                     name="duplicate",
@@ -396,7 +460,7 @@ class TestAccountSet:
                     min_balance=0,
                     max_balance=100,
                     account_type="checking",
-                    primary_checking_ind=False,
+                    billing_state=checking_billing_state(balance=0, is_primary=False),
                 ),
             ],
         ],
@@ -409,14 +473,14 @@ class TestAccountSet:
     @pytest.mark.parametrize(
         "Account_From,Account_To,Amount,income_flag,expected_result_vector",
         [
-            ("test checking", None, 0.0, False, [1000.0, 1000.0, 500.0, 0, 500, 900.0, 100.0, 0, 900.0]),
-            ("test checking", None, 100.0, False, [900.0, 1000.0, 500.0, 0, 500, 900.0, 100.0, 0, 900.0]),
-            (None, "test checking", 100.0, True, [1100.0, 1000.0, 500.0, 0, 500, 900.0, 100.0, 0, 900.0]),
-            ("test credit", None, 100.0, False, [1000.0, 1100.0, 500.0, 0, 500, 900.0, 100.0, 0, 900.0]),
-            ("test checking", "test credit", 50.0, False, [950.0, 1000.0, 450.0, 50, 500, 900.0, 100.0, 0, 900.0]),
-            ("test checking", "test credit", 501.0, False, [499.0, 999.0, 0.0, 501, 500, 900.0, 100.0, 0, 900.0]),
-            ("test checking", "test loan", 50.0, False, [950.0, 1000.0, 500.0, 0, 500, 900.0, 50.0, 50, 900.0]),
-            ("test checking", "test loan", 150.0, False, [850.0, 1000.0, 500.0, 0, 500, 850.0, 0.0, 150, 900.0]),
+            ("test checking", None, 0.0, False, [1000.0, 1500.0, 1000.0]),
+            ("test checking", None, 100.0, False, [900.0, 1500.0, 1000.0]),
+            (None, "test checking", 100.0, True, [1100.0, 1500.0, 1000.0]),
+            ("test credit", None, 100.0, False, [1000.0, 1600.0, 1000.0]),
+            ("test checking", "test credit", 50.0, False, [950.0, 1450.0, 1000.0]),
+            ("test checking", "test credit", 501.0, False, [499.0, 999.0, 1000.0]),
+            ("test checking", "test loan", 50.0, False, [950.0, 1500.0, 950.0]),
+            ("test checking", "test loan", 150.0, False, [850.0, 1500.0, 850.0]),
         ],
     )
     def test_execute_transaction_valid_inputs(

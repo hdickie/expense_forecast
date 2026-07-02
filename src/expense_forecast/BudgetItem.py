@@ -13,7 +13,7 @@ class BudgetItem:
 
     @staticmethod
     def _validate_cadence(cadence, start_date, end_date):
-        allowed_cadences = ['once','daily','weekly','semiweekly','monthly','quarterly','yearly']
+        allowed_cadences = ['once','daily','weekly','semiweekly','monthly','quarterly','anually']
         assert cadence in allowed_cadences
         if cadence == 'once':
             assert start_date == end_date

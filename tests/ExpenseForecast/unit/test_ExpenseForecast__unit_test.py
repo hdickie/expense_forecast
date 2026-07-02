@@ -34,11 +34,15 @@ from expense_forecast.log_methods import display_test_result
 
 
 def checking_acct_list(balance):
-    return [
-        Account(
-            "Checking", balance, 0, 100000, "checking", primary_checking_ind=True
-        )
-    ]
+    A = AccountSet([])
+    A.createCheckingAccount(
+        "Checking",
+        balance=balance,
+        min_balance=0,
+        max_balance=100000,
+        primary_checking_ind=True,
+    )
+    return A.accounts
 
 
 def credit_acct_list(curr_balance, prev_balance, apr):
@@ -4009,16 +4013,12 @@ class TestExpenseForecastUnit:
             min_balance=0,
             max_balance=20000,
             account_type="credit",
-            billing_start_date="20000102",
-            interest_type=None,
+            billing_start_date=datetime.datetime.strptime("20000102", "%Y%m%d"),
             apr=0.05,
-            interest_cadence="Monthly",
+            interest_cadence="monthly",
             minimum_payment=40,
             previous_statement_balance=0,
             current_statement_balance=0,
-            principal_balance=None,
-            interest_balance=None,
-            billing_cycle_payment_balance=0,
             end_of_previous_cycle_balance=0,
         )
 
@@ -4103,16 +4103,12 @@ class TestExpenseForecastUnit:
             min_balance=0,
             max_balance=20000,
             account_type="credit",
-            billing_start_date="20000102",
-            interest_type=None,
+            billing_start_date=datetime.datetime.strptime("20000102", "%Y%m%d"),
             apr=0.05,
-            interest_cadence="Monthly",
+            interest_cadence="monthly",
             minimum_payment=40,
             previous_statement_balance=0,
             current_statement_balance=0,
-            principal_balance=None,
-            interest_balance=None,
-            billing_cycle_payment_balance=0,
             end_of_previous_cycle_balance=0,
         )
 
@@ -4853,6 +4849,7 @@ class TestExpenseForecastUnit:
             min_balance=0,
             max_balance=float("Inf"),
             account_type="checking",
+            primary_checking_ind=True,
         )
 
         budget_set.addBudgetItem(

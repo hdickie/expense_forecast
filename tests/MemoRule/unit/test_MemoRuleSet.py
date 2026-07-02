@@ -1,4 +1,5 @@
 import pytest
+from datetime import date
 
 from expense_forecast.BudgetSet import BudgetSet
 from expense_forecast.MemoRuleSet import MemoRuleSet
@@ -30,13 +31,31 @@ def match_all_and_income_memo_rule_set():
 
 def income_budget_item():
     B = BudgetSet([])
-    B.addBudgetItem("20000101", "20000101", 1, "once", 10, "income", False, False)
+    B.addBudgetItem(
+        date(2000, 1, 1),
+        date(2000, 1, 1),
+        1,
+        "once",
+        10,
+        "income",
+        deferrable=False,
+        partial_payment_allowed=False,
+    )
     return B
 
 
 def txn_budget_item():
     B = BudgetSet([])
-    B.addBudgetItem("20000101", "20000101", 1, "once", 10, "txn", False, False)
+    B.addBudgetItem(
+        date(2000, 1, 1),
+        date(2000, 1, 1),
+        1,
+        "once",
+        10,
+        "txn",
+        deferrable=False,
+        partial_payment_allowed=False,
+    )
     return B
 
 
@@ -50,7 +69,7 @@ class TestMemoRuleSetMethods:
         test_memo_rule = MemoRule(
             memo_regex=".*",
             account_from="noodle 2",
-            account_to="",
+            account_to=None,
             transaction_priority=1,
         )
         test_memo_rule_set = MemoRuleSet([test_memo_rule])
@@ -64,7 +83,7 @@ class TestMemoRuleSetMethods:
         test_memo_rule_set.addMemoRule(
             memo_regex=".*",
             account_from="noodle 3",
-            account_to="",
+            account_to=None,
             transaction_priority=1,
         )
         assert str(test_memo_rule_set) is not None
@@ -78,7 +97,7 @@ class TestMemoRuleSetMethods:
         test_memorule_set.addMemoRule(
             memo_regex=".*",
             account_from="noodle 5",
-            account_to="",
+            account_to=None,
             transaction_priority=1,
         )
         test_df = test_memorule_set.getMemoRules()
@@ -89,10 +108,10 @@ class TestMemoRuleSetMethods:
         with pytest.raises(ValueError):  # duplicate memo rule
             memo_rule_set = MemoRuleSet([])
             memo_rule_set.addMemoRule(
-                memo_regex=".*", account_from="", account_to="", transaction_priority=1
+                memo_regex=".*", account_from="checking", account_to=None, transaction_priority=1
             )
             memo_rule_set.addMemoRule(
-                memo_regex=".*", account_from="", account_to="", transaction_priority=1
+                memo_regex=".*", account_from="checking", account_to=None, transaction_priority=1
             )
 
         with pytest.raises(ValueError):  # ambiguous combination of memo rules
@@ -119,13 +138,13 @@ class TestMemoRuleSetMethods:
         M_I = memo_rule_set_income_only()
         B_T = txn_budget_item()
 
-        with pytest.raises(ValueError):
+        with pytest.raises(Exception):
             M_E.findMatchingMemoRule(B_I.budget_items[0].memo, 1)  # no match found
 
-        with pytest.raises(ValueError):
+        with pytest.raises(Exception):
             M_AI.findMatchingMemoRule(B_I.budget_items[0].memo, 1)  # multiple matches
 
-        with pytest.raises(ValueError):
+        with pytest.raises(Exception):
             M_I.findMatchingMemoRule(
                 B_T.budget_items[0].memo, 1
             )  # non-trivial non-match

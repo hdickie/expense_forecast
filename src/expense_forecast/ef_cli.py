@@ -183,7 +183,8 @@ def run(args):
     
     
 
-    # print('ARGS:')
+    print('ARGS:')
+    print(args)
 
     # up front validations
     # always valid: --log-directory
@@ -226,7 +227,7 @@ def run(args):
 
     assert len(args.action) <= 2
     assert args.action[0] in [
-        "parameterize",
+        "stage",
         "run",
         "list",
         "ps",
@@ -236,7 +237,7 @@ def run(args):
         "import",
         "inspect",
     ]
-    if args.action[0] in ["parameterize", "run", "kill", "report", "export", "import"]:
+    if args.action[0] in ["stage", "run", "kill", "report", "export", "import"]:
         assert len(args.action) == 2
         assert args.action[1] in ["forecast", "forecastset"]
 
@@ -251,7 +252,7 @@ def run(args):
     # if args.action[0] in ['parameterize']:
     #     assert args.filename is not None
 
-    if args.action[0] in ["parameterize", "run", "report", "export"]:
+    if args.action[0] in ["stage", "run", "report", "export"]:
         assert args.working_directory is not None
         assert os.path.isdir(args.working_directory)
 
@@ -268,16 +269,18 @@ def run(args):
     #     assert args.action[0] in ['parameterize','run','report','export']
 
     # parameterize and reparameterize require start and end date
-    if args.action[0] in ["parameterize"]:
+    if args.action[0] in ["stage"]:
         assert args.start_date is not None
         assert args.end_date is not None
-        assert (
-            args.id is not None
-        )  # the string literal 'None' is a valid option for database
+        
+        ### TODO why would stage need this? i dont think it does
+        # assert (
+        #     args.id is not None
+        # )  # the string literal 'None' is a valid option for database
 
     # the label arg is only valid when used with parameterize and reparameterize
     if args.label != '':
-        assert args.action[0] in ["parameterize"]
+        assert args.action[0] in ["stage"]
 
     assert os.path.isdir(args.log_directory)  # check log_directory exists
     assert os.access(args.log_directory, os.W_OK)  # check log_directory is writable
@@ -295,7 +298,7 @@ def run(args):
             "report",
             "export",
             "import",
-            "parameterize",
+            # "stage",
         ]
 
     #TODO there has to be a better way to validate date formats, but this works for now
@@ -365,7 +368,7 @@ def run(args):
         )
 
         assert args.action[0] in [
-            "parameterize",
+            "stage",
             "export",
             "import",
             "run",
@@ -569,7 +572,7 @@ def run(args):
 
     if len(args.action) == 2:
         if (
-            args.action[0] == "parameterize"
+            args.action[0] == "stage"
             and args.action[1] == "forecast"
             and args.source == "file"
         ):
@@ -583,7 +586,7 @@ def run(args):
             E.writeToJSONFile(args.working_directory)
             os.remove(args.filename)
         elif (
-            args.action[0] == "parameterize"
+            args.action[0] == "stage"
             and args.action[1] == "forecastset"
             and args.source == "file"
         ):
@@ -1316,7 +1319,8 @@ def run(args):
 # ef_cli report forecastset --id FORECAST_SET_ID
 # ef_cli export
 # ef_cli import
-def main():
+
+def build_parser():
     parser = argparse.ArgumentParser(
         description="Runs a Forecast or ForecastSet and displays a progress bar.",
         epilog="As an alternative to the commandline, params can be placed in a file, one per line, and specified on the commandline like '%(prog)s @params.conf'.",
@@ -1326,7 +1330,8 @@ def main():
         "action",
         nargs="*",
         choices=[
-            "parameterize",
+            "stage",
+            #"restage",
             "run",
             "list",
             "ps",
@@ -1426,6 +1431,17 @@ def main():
         help="both, file or database.",
         action="store",
     )
+    parser.add_argument(
+        "--filename",
+        required=False,
+        help="A JSON path that contains the initial conditions for the forecast.",
+        action="store",
+    )
+
+    return parser
+
+def main():
+    parser = build_parser()
 
     args = parser.parse_args()
     if args.log_level == "DEBUG":

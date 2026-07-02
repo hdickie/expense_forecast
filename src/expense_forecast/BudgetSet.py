@@ -40,6 +40,7 @@ class BudgetSet:
 
     def __init__(self, budget_items__list=None):
         self.budget_items__list = []
+        self.budget_items = []
         if budget_items__list is None:
             return
 
@@ -59,7 +60,6 @@ class BudgetSet:
         ]
         allowed_kwargs = ["deferrable", "partial_payment_allowed","income_flag"]
 
-        self.budget_items = []
         for budget_item in budget_items__list:
 
             # not perfect but good enough
@@ -159,8 +159,9 @@ class BudgetSet:
                     0: "Priority",
                     1: "Amount",
                     2: "Memo",
-                    3: "Deferrable",
-                    4: "Partial_Payment_Allowed",
+                    3: "Income_Flag",
+                    4: "Deferrable",
+                    5: "Partial_Payment_Allowed",
                 }
             )
 

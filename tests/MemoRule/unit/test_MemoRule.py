@@ -1,4 +1,6 @@
 import unittest
+import re
+
 from expense_forecast.MemoRule import MemoRule
 import pytest
 
@@ -8,18 +10,14 @@ class TestMemoRuleMethods(unittest.TestCase):
     @pytest.mark.unit
     def test_MemoRule_Constructor(self):
 
-        self.assertEqual(
-            "<class 'MemoRule'>",
-            str(
-                type(
-                    MemoRule(
-                        memo_regex=".*",
-                        account_from="",
-                        account_to="",
-                        transaction_priority=1,
-                    )
-                )
+        self.assertIsInstance(
+            MemoRule(
+                memo_regex=".*",
+                account_from="checking",
+                account_to=None,
+                transaction_priority=1,
             ),
+            MemoRule,
         )
 
         # provoking exceptions for test coverage
@@ -32,13 +30,12 @@ class TestMemoRuleMethods(unittest.TestCase):
                 print_debug_messages=False,
             )
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(re.PatternError):
             MemoRule(
                 memo_regex="*",
-                account_from="",
-                account_to="",
+                account_from="checking",
+                account_to=None,
                 transaction_priority=1,
-                print_debug_messages=False,
             )
 
     @pytest.mark.unit
@@ -47,8 +44,8 @@ class TestMemoRuleMethods(unittest.TestCase):
             str(
                 MemoRule(
                     memo_regex=".*",
-                    account_from="",
-                    account_to="",
+                    account_from="checking",
+                    account_to=None,
                     transaction_priority=1,
                 )
             )

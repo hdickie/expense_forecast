@@ -78,15 +78,19 @@ class MemoRuleSet:
                 match_count += 1
                 match_index = index
 
-        assert match_count == 1
+        if match_count != 1:
+            raise ValueError(
+                f"Expected exactly one memo rule match for memo {txn_memo!r} "
+                f"at priority {transaction_priority}; found {match_count}."
+            )
 
         matching_memo_rule_row = memo_rules_of_matching_priority.loc[match_index]
 
         relevant_memo_rule = MemoRule(
-            matching_memo_rule_row.Memo_Regex.iat[0],
-            matching_memo_rule_row.Account_From.iat[0],
-            matching_memo_rule_row.Account_To.iat[0],
-            matching_memo_rule_row.Transaction_Priority.iat[0],
+            matching_memo_rule_row.Memo_Regex,
+            matching_memo_rule_row.Account_From,
+            matching_memo_rule_row.Account_To,
+            matching_memo_rule_row.Transaction_Priority,
         )
         self.memoized_rule_matches[(txn_memo, transaction_priority)] = relevant_memo_rule
 
