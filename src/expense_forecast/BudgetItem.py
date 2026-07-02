@@ -7,8 +7,8 @@ class BudgetItem:
 
     @staticmethod
     def _validate_start_and_end_date(start_date, end_date):
-        assert isinstance(start_date, datetime.datetime)
-        assert isinstance(end_date, datetime.datetime)
+        assert isinstance(start_date, datetime.date)
+        assert isinstance(end_date, datetime.date)
         assert start_date <= end_date
 
     @staticmethod

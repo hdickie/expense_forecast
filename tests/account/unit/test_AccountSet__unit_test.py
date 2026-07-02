@@ -6,8 +6,9 @@ import tempfile
 from expense_forecast.Account import Account
 from expense_forecast.AccountSet import AccountSet
 import doctest, copy
-import datetime
+from datetime import date
 from expense_forecast.log_methods import log_in_color
+
 
 
 def compound_loan_A():
@@ -18,7 +19,7 @@ def compound_loan_A():
         min_balance=0,
         max_balance=1100,
         account_type="loan",
-        billing_start_date="20240101",
+        billing_start_date=date(2024, 1, 1),
         interest_type="compound",
         apr=0.1,
         interest_cadence="monthly",
@@ -38,7 +39,7 @@ def compound_loan_A_no_interest():
         min_balance=0,
         max_balance=1100,
         account_type="loan",
-        billing_start_date="20240101",
+        billing_start_date=date(2024, 1, 1),
         interest_type="compound",
         apr=0.1,
         interest_cadence="monthly",
@@ -58,7 +59,7 @@ def compound_loan_B():
         min_balance=0,
         max_balance=1600,
         account_type="loan",
-        billing_start_date="20240101",
+        billing_start_date=date(2024, 1, 1),
         interest_type="compound",
         apr=0.01,
         interest_cadence="monthly",
@@ -78,7 +79,7 @@ def compound_loan_B_no_interest():
         min_balance=0,
         max_balance=1600,
         account_type="loan",
-        billing_start_date="20240101",
+        billing_start_date=date(2024, 1, 1),
         interest_type="compound",
         apr=0.01,
         interest_cadence="monthly",
@@ -98,7 +99,7 @@ def compound_loan_C():
         min_balance=0,
         max_balance=2600,
         account_type="loan",
-        billing_start_date="20240101",
+        billing_start_date=date(2024, 1, 1),
         interest_type="compound",
         apr=0.05,
         interest_cadence="monthly",
@@ -118,7 +119,7 @@ def compound_loan_C_no_interest():
         min_balance=0,
         max_balance=2600,
         account_type="loan",
-        billing_start_date="20240101",
+        billing_start_date=date(2024, 1, 1),
         interest_type="compound",
         apr=0.05,
         interest_cadence="monthly",
@@ -202,6 +203,358 @@ class TestAccountSet:
         # doctest.run_docstring_examples('doctest_AccountSet.py',globs={})
         doctest.testmod(AccountSet)
 
+    def _checking_account(self, name="test checking", balance=0, min_balance=0, max_balance=100):
+        return Account(
+            name=name,
+            balance=balance,
+            min_balance=min_balance,
+            max_balance=max_balance,
+            account_type="checking",
+            primary_checking_ind=True,
+        )
+
+    def _principal_account(self, name, balance, min_balance=0, max_balance=100):
+        return Account(
+            name=f"{name}: Principal Balance",
+            balance=balance,
+            min_balance=min_balance,
+            max_balance=max_balance,
+            account_type="principal balance",
+            billing_start_date=date(2000, 1, 1),
+            interest_type="compound",
+            apr=0.01,
+            interest_cadence="monthly",
+            minimum_payment=50,
+        )
+
+    def _interest_account(self, name, balance, min_balance=0, max_balance=100):
+        return Account(
+            name=f"{name}: Interest",
+            balance=balance,
+            min_balance=min_balance,
+            max_balance=max_balance,
+            account_type="interest",
+        )
+
+    def _loan_billing_cycle_payment_account(self, name, balance, min_balance=0, max_balance=100):
+        return Account(
+            name=f"{name}: Loan Billing Cycle Payment Bal",
+            balance=balance,
+            min_balance=min_balance,
+            max_balance=max_balance,
+            account_type="loan billing cycle payment bal",
+            billing_start_date=date(2000, 1, 1),
+        )
+
+    def _loan_end_of_prev_cycle_account(self, name, balance, min_balance=0, max_balance=100):
+        return Account(
+            name=f"{name}: Loan End of Prev Cycle Bal",
+            balance=balance,
+            min_balance=min_balance,
+            max_balance=max_balance,
+            account_type="loan end of prev cycle bal",
+            billing_start_date=date(2000, 1, 1),
+        )
+
+    def _credit_curr_account(self, name, balance, min_balance=0, max_balance=100):
+        return Account(
+            name=f"{name}: Curr Stmt Bal",
+            balance=balance,
+            min_balance=min_balance,
+            max_balance=max_balance,
+            account_type="credit curr stmt bal",
+        )
+
+    def _credit_prev_account(self, name, balance, min_balance=0, max_balance=100):
+        return Account(
+            name=f"{name}: Prev Stmt Bal",
+            balance=balance,
+            min_balance=min_balance,
+            max_balance=max_balance,
+            account_type="credit prev stmt bal",
+            billing_start_date=date(2000, 1, 1),
+            apr=0.01,
+            interest_cadence="monthly",
+            minimum_payment=50,
+        )
+
+    def _credit_billing_cycle_payment_account(self, name, balance, min_balance=0, max_balance=100):
+        return Account(
+            name=f"{name}: Credit Billing Cycle Payment Bal",
+            balance=balance,
+            min_balance=min_balance,
+            max_balance=max_balance,
+            account_type="credit billing cycle payment bal",
+            billing_start_date=date(2000, 1, 1),
+        )
+
+    def _credit_end_of_prev_cycle_account(self, name, balance, min_balance=0, max_balance=100):
+        return Account(
+            name=f"{name}: Credit End of Prev Cycle Bal",
+            balance=balance,
+            min_balance=min_balance,
+            max_balance=max_balance,
+            account_type="credit end of prev cycle bal",
+            billing_start_date=date(2000, 1, 1),
+        )
+
+    def _valid_transaction_account_set(self):
+        account_set = AccountSet([])
+        account_set.createCheckingAccount(
+            "test checking",
+            balance=1000.0,
+            min_balance=0.0,
+            max_balance=float("inf"),
+            primary_checking_ind=False,
+        )
+        account_set.createCreditCardAccount(
+            "test credit",
+            current_statement_balance=1000.0,
+            previous_statement_balance=500.0,
+            min_balance=0.0,
+            max_balance=20000.0,
+            billing_start_date=date(2000, 1, 7),
+            apr=0.2479,
+            minimum_payment=20.0,
+            end_of_previous_cycle_balance=500.0,
+        )
+        account_set.createLoanAccount(
+            "test loan",
+            principal_balance=900.0,
+            interest_balance=100.0,
+            min_balance=0,
+            max_balance=26000.0,
+            billing_start_date=date(2023, 3, 3),
+            apr=0.067,
+            minimum_payment=223.19,
+            end_of_previous_cycle_balance=900,
+        )
+        return account_set
+
+    @pytest.mark.unit
+    @pytest.mark.parametrize(
+        "accounts__list",
+        [
+            [],
+            [
+                Account(
+                    name="test checking",
+                    balance=0,
+                    min_balance=0,
+                    max_balance=100,
+                    account_type="checking",
+                    primary_checking_ind=True,
+                )
+            ],
+        ],
+    )
+    def test_AccountSet_Constructor__valid_inputs(self, accounts__list):
+        AccountSet(accounts__list)
+
+    @pytest.mark.unit
+    @pytest.mark.parametrize(
+        "accounts__list",
+        [
+            [
+                _principal_account(None, "test combined total violates maximum", 60, 0, 100),
+                _interest_account(None, "test combined total violates maximum", 60, 0, 100),
+                _loan_billing_cycle_payment_account(None, "test combined total violates maximum", 0, 0, 100),
+                _loan_end_of_prev_cycle_account(None, "test combined total violates maximum", 60, 0, 100),
+            ],
+            [
+                _credit_curr_account(None, "test cc", 60, 0, 100),
+                _credit_prev_account(None, "test cc", 60, 0, 100),
+                _credit_billing_cycle_payment_account(None, "test cc", 0, 0, 100),
+                _credit_end_of_prev_cycle_account(None, "test cc", 60, 0, 100),
+            ],
+            [
+                _principal_account(None, "loan", 60, 0, 100),
+            ],
+            [
+                _interest_account(None, "loan", 60, 0, 100),
+                _loan_billing_cycle_payment_account(None, "loan", 0, 0, 100),
+                _loan_end_of_prev_cycle_account(None, "loan", 60, 0, 100),
+            ],
+            [
+                _credit_curr_account(None, "cc", 60, 0, 100),
+            ],
+            [
+                _credit_prev_account(None, "cc", 0, 0, 100),
+            ],
+            [
+                Account(
+                    name="duplicate",
+                    balance=0,
+                    min_balance=0,
+                    max_balance=100,
+                    account_type="checking",
+                    primary_checking_ind=True,
+                ),
+                Account(
+                    name="duplicate",
+                    balance=0,
+                    min_balance=0,
+                    max_balance=100,
+                    account_type="checking",
+                    primary_checking_ind=False,
+                ),
+            ],
+        ],
+    )
+    def test_AccountSet_Constructor__invalid_inputs(self, accounts__list):
+        with pytest.raises(Exception):
+            AccountSet(accounts__list)
+
+    @pytest.mark.unit
+    @pytest.mark.parametrize(
+        "Account_From,Account_To,Amount,income_flag,expected_result_vector",
+        [
+            ("test checking", None, 0.0, False, [1000.0, 1000.0, 500.0, 0, 500, 900.0, 100.0, 0, 900.0]),
+            ("test checking", None, 100.0, False, [900.0, 1000.0, 500.0, 0, 500, 900.0, 100.0, 0, 900.0]),
+            (None, "test checking", 100.0, True, [1100.0, 1000.0, 500.0, 0, 500, 900.0, 100.0, 0, 900.0]),
+            ("test credit", None, 100.0, False, [1000.0, 1100.0, 500.0, 0, 500, 900.0, 100.0, 0, 900.0]),
+            ("test checking", "test credit", 50.0, False, [950.0, 1000.0, 450.0, 50, 500, 900.0, 100.0, 0, 900.0]),
+            ("test checking", "test credit", 501.0, False, [499.0, 999.0, 0.0, 501, 500, 900.0, 100.0, 0, 900.0]),
+            ("test checking", "test loan", 50.0, False, [950.0, 1000.0, 500.0, 0, 500, 900.0, 50.0, 50, 900.0]),
+            ("test checking", "test loan", 150.0, False, [850.0, 1000.0, 500.0, 0, 500, 850.0, 0.0, 150, 900.0]),
+        ],
+    )
+    def test_execute_transaction_valid_inputs(
+        self, Account_From, Account_To, Amount, income_flag, expected_result_vector
+    ):
+        test_account_set = self._valid_transaction_account_set()
+
+        test_account_set.executeTransaction(
+            Account_From=Account_From,
+            Account_To=Account_To,
+            Amount=Amount,
+            income_flag=income_flag,
+        )
+
+        result_vector = list(test_account_set.getAccounts().iloc[:, 1])
+        assert result_vector == expected_result_vector
+
+    @pytest.mark.unit
+    @pytest.mark.parametrize(
+        "name,balance,min_balance,max_balance,account_type,kwargs",
+        [
+            (
+                "test loan",
+                100,
+                0,
+                100,
+                "loan",
+                {
+                    "billing_start_date": date(2000, 1, 1),
+                    "apr": 0.1,
+                    "interest_cadence": "monthly",
+                    "minimum_payment": 50,
+                    "interest_balance": 100,
+                    "end_of_previous_cycle_balance": 100,
+                },
+            ),
+            (
+                "test loan",
+                100,
+                0,
+                100,
+                "loan",
+                {
+                    "billing_start_date": date(2000, 1, 1),
+                    "apr": 0.1,
+                    "interest_cadence": "monthly",
+                    "minimum_payment": 50,
+                    "principal_balance": 100,
+                    "end_of_previous_cycle_balance": 100,
+                },
+            ),
+            (
+                "test credit",
+                100,
+                0,
+                100,
+                "credit",
+                {
+                    "billing_start_date": date(2000, 1, 1),
+                    "apr": 0.1,
+                    "interest_cadence": "monthly",
+                    "minimum_payment": 50,
+                    "end_of_previous_cycle_balance": 100,
+                },
+            ),
+            (
+                "test loan",
+                100,
+                0,
+                100,
+                "loan",
+                {
+                    "billing_start_date": date(2000, 1, 1),
+                    "apr": 0.1,
+                    "interest_cadence": "monthly",
+                    "minimum_payment": 50,
+                    "principal_balance": 100,
+                    "interest_balance": 100,
+                    "end_of_previous_cycle_balance": 100,
+                },
+            ),
+            (
+                "test checking",
+                0,
+                0,
+                100,
+                "checking",
+                {"primary_checking_ind": True},
+            ),
+        ],
+    )
+    def test_createAccount__invalid_inputs(
+        self, name, balance, min_balance, max_balance, account_type, kwargs
+    ):
+        with pytest.raises(Exception):
+            A = AccountSet([])
+            A.createAccount(
+                name,
+                balance,
+                min_balance,
+                max_balance,
+                account_type,
+                **kwargs,
+            )
+
+    @pytest.mark.unit
+    def test_getAccounts(self):
+        test_account_set = AccountSet([self._checking_account()])
+        test_df = test_account_set.getAccounts()
+
+        assert list(test_df.columns) == [
+            "Name",
+            "Balance",
+            "Min_Balance",
+            "Max_Balance",
+            "Account_Type",
+            "Billing_Start_Date",
+            "Interest_Type",
+            "APR",
+            "Interest_Cadence",
+            "Minimum_Payment",
+            "Primary_Checking_Ind",
+        ]
+        assert test_df.iloc[0].Name == "test checking"
+
+    @pytest.mark.unit
+    def test_str(self):
+        test_str_account_set = AccountSet([self._checking_account()])
+
+        assert "test checking" in str(test_str_account_set)
+
+    @pytest.mark.unit
+    @pytest.mark.skip(reason="Production validator is not implemented yet")
+    def test_validate_one_and_only_one_primary_checking_account__stub(self):
+        raise NotImplementedError(
+            "AccountSet._validate_one_and_only_one_primary_checking_account is not implemented yet."
+        )
+
     #
 
     # @pytest.mark.unit
@@ -216,7 +569,7 @@ class TestAccountSet:
     #                     min_balance=0,
     #                     max_balance=100,
     #                     account_type="principal balance",
-    #                     billing_start_date=datetime.datetime.strptime("20000101","%Y%m%d"),
+    #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type="compound",
     #                     apr=0.01,
     #                     interest_cadence="monthly",
@@ -240,7 +593,7 @@ class TestAccountSet:
     #                     min_balance=0,
     #                     max_balance=100,
     #                     account_type="credit billing cycle payment bal",
-    #                     billing_start_date=datetime.datetime.strptime("20000101","%Y%m%d"),
+    #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type=None,
     #                     apr=None,
     #                     interest_cadence=None,
@@ -257,7 +610,7 @@ class TestAccountSet:
     #                     min_balance=0,
     #                     max_balance=100,
     #                     account_type="credit prev stmt bal",
-    #                     billing_start_date=datetime.datetime.strptime("20000101","%Y%m%d"),
+    #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type=None,
     #                     apr=0.01,
     #                     interest_cadence="monthly",
@@ -281,7 +634,7 @@ class TestAccountSet:
     #                     min_balance=0,
     #                     max_balance=100,
     #                     account_type="credit billing cycle payment bal",
-    #                     billing_start_date=datetime.datetime.strptime("20000101","%Y%m%d"),
+    #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type=None,
     #                     apr=None,
     #                     interest_cadence=None,
@@ -298,7 +651,7 @@ class TestAccountSet:
     #                     min_balance=-100,
     #                     max_balance=100,
     #                     account_type="credit prev stmt bal",
-    #                     billing_start_date=datetime.datetime.strptime("20000101","%Y%m%d"),
+    #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type=None,
     #                     apr=0.01,
     #                     interest_cadence="monthly",
@@ -322,7 +675,7 @@ class TestAccountSet:
     #                     min_balance=-100,
     #                     max_balance=100,
     #                     account_type="credit billing cycle payment bal",
-    #                     billing_start_date=datetime.datetime.strptime("20000101","%Y%m%d"),
+    #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type=None,
     #                     apr=None,
     #                     interest_cadence=None,
@@ -339,7 +692,7 @@ class TestAccountSet:
     #                     min_balance=-100,
     #                     max_balance=100,
     #                     account_type="principal balance",
-    #                     billing_start_date=datetime.datetime.strptime("20000101","%Y%m%d"),
+    #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type="compound",
     #                     apr=0.01,
     #                     interest_cadence="monthly",
@@ -363,7 +716,7 @@ class TestAccountSet:
     #                     min_balance=0,
     #                     max_balance=100,
     #                     account_type="credit billing cycle payment bal",
-    #                     billing_start_date=datetime.datetime.strptime("20000101","%Y%m%d"),
+    #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type=None,
     #                     apr=None,
     #                     interest_cadence=None,
@@ -380,7 +733,7 @@ class TestAccountSet:
     #                     min_balance=0,
     #                     max_balance=100,
     #                     account_type="principal balance",
-    #                     billing_start_date=datetime.datetime.strptime("20000101","%Y%m%d"),
+    #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type="compound",
     #                     apr=0.01,
     #                     interest_cadence="monthly",
@@ -404,7 +757,7 @@ class TestAccountSet:
     #                     min_balance=0,
     #                     max_balance=1000,
     #                     account_type="credit billing cycle payment bal",
-    #                     billing_start_date=datetime.datetime.strptime("20000101","%Y%m%d"),
+    #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type=None,
     #                     apr=None,
     #                     interest_cadence=None,
@@ -421,7 +774,7 @@ class TestAccountSet:
     #                     min_balance=0,
     #                     max_balance=1000,
     #                     account_type="credit prev stmt bal",
-    #                     billing_start_date=datetime.datetime.strptime("20000101","%Y%m%d"),
+    #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type=None,
     #                     apr=0.01,
     #                     interest_cadence="monthly",
@@ -445,7 +798,7 @@ class TestAccountSet:
     #                     min_balance=60,
     #                     max_balance=100,
     #                     account_type="credit billing cycle payment bal",
-    #                     billing_start_date=datetime.datetime.strptime("20000101","%Y%m%d"),
+    #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type=None,
     #                     apr=None,
     #                     interest_cadence=None,
@@ -462,7 +815,7 @@ class TestAccountSet:
     #                     min_balance=10,
     #                     max_balance=100,
     #                     account_type="principal balance",
-    #                     billing_start_date=datetime.datetime.strptime("20000101","%Y%m%d"),
+    #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type="compound",
     #                     apr=0.01,
     #                     interest_cadence="monthly",
@@ -486,7 +839,7 @@ class TestAccountSet:
     #                     min_balance=0,
     #                     max_balance=100,
     #                     account_type="credit billing cycle payment bal",
-    #                     billing_start_date=datetime.datetime.strptime("20000101","%Y%m%d"),
+    #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type=None,
     #                     apr=None,
     #                     interest_cadence=None,
@@ -503,7 +856,7 @@ class TestAccountSet:
     #                     min_balance=10,
     #                     max_balance=100,
     #                     account_type="credit prev stmt bal",
-    #                     billing_start_date=datetime.datetime.strptime("20000101","%Y%m%d"),
+    #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type=None,
     #                     apr=0.01,
     #                     interest_cadence="monthly",
@@ -527,7 +880,7 @@ class TestAccountSet:
     #                     min_balance=0,
     #                     max_balance=100,
     #                     account_type="credit billing cycle payment bal",
-    #                     billing_start_date=datetime.datetime.strptime("20000101","%Y%m%d"),
+    #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type=None,
     #                     apr=None,
     #                     interest_cadence=None,
@@ -544,7 +897,7 @@ class TestAccountSet:
     #                     min_balance=0,
     #                     max_balance=110,
     #                     account_type="credit prev stmt bal",
-    #                     billing_start_date=datetime.datetime.strptime("20000101","%Y%m%d"),
+    #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type=None,
     #                     apr=0.01,
     #                     interest_cadence="monthly",
@@ -568,7 +921,7 @@ class TestAccountSet:
     #                     min_balance=0,
     #                     max_balance=100,
     #                     account_type="credit billing cycle payment bal",
-    #                     billing_start_date=datetime.datetime.strptime("20000101","%Y%m%d"),
+    #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type=None,
     #                     apr=None,
     #                     interest_cadence=None,
@@ -585,7 +938,7 @@ class TestAccountSet:
     #                     min_balance=0,
     #                     max_balance=100,
     #                     account_type="principal balance",
-    #                     billing_start_date=datetime.datetime.strptime("20000101","%Y%m%d"),
+    #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type="compound",
     #                     apr=0.01,
     #                     interest_cadence="monthly",
@@ -614,7 +967,7 @@ class TestAccountSet:
     #                     min_balance=0,
     #                     max_balance=1000,
     #                     account_type="loan billing cycle payment bal",
-    #                     billing_start_date=datetime.datetime.strptime("20000101","%Y%m%d"),
+    #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type=None,
     #                     apr=None,
     #                     interest_cadence=None,
@@ -648,7 +1001,7 @@ class TestAccountSet:
     #                     min_balance=0,
     #                     max_balance=1000,
     #                     account_type="credit prev stmt bal",
-    #                     billing_start_date=datetime.datetime.strptime("20000101","%Y%m%d"),
+    #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type=None,
     #                     apr=0.01,
     #                     interest_cadence="monthly",
@@ -665,7 +1018,7 @@ class TestAccountSet:
     #                     min_balance=0,
     #                     max_balance=100,
     #                     account_type="principal balance",
-    #                     billing_start_date=datetime.datetime.strptime("20000101","%Y%m%d"),
+    #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type="compound",
     #                     apr=0.01,
     #                     interest_cadence="monthly",
@@ -1119,3 +1472,28 @@ class TestAccountSet:
                 )
             except Exception as e:
                 raise e
+
+
+# Migration notes:
+# - Migrated active coverage from old__test_AccountSet__unit_test.py into the newer
+#   package-import/direct-class style used by test_Account__unit_test.py.
+# - Added current-API fixture helpers that construct Account objects with **kwargs and
+#   date billing_start_date values instead of the old positional/string-date API.
+# - Restored active coverage for AccountSet constructor valid/invalid inputs,
+#   executeTransaction happy paths, createAccount invalid inputs, getAccounts, and __str__.
+# - Kept createAccount valid-input coverage out of the active suite because the current
+#   checking branch requires primary_checking_ind but reads primary_checking_account_ind.
+# - Added a skipped stub for _validate_one_and_only_one_primary_checking_account because
+#   the production validator currently raises NotImplementedError.
+# - Did not migrate the old ALL_LOANS executeTransaction case because it depends on the
+#   unimplemented primary-checking-account validator/name tracking behavior.
+# - While restoring transaction coverage, fixed two production NameErrors in AccountSet:
+#   bare log_in_color usage and bare ROUNDING_ERROR_TOLERANCE usage.
+#
+# Recommended next changes:
+# - Implement _validate_one_and_only_one_primary_checking_account and primary checking
+#   name tracking, then unskip the stub and restore ALL_LOANS transaction coverage.
+# - Fix createAccount's checking kwargs mismatch, then add active createAccount valid
+#   tests for checking, credit, and loan account creation.
+# - Tighten invalid constructor tests to specific exception types once AccountSet
+#   validators consistently use ValueError/TypeError instead of assertions.

@@ -122,7 +122,7 @@ class Account:
         ]
 
         if account_type in account_types_that_require_billing_start_date and billing_start_date is not None:
-            assert isinstance(billing_start_date, datetime.datetime)
+            assert isinstance(billing_start_date, datetime.date)
         elif account_type in account_types_that_require_billing_start_date and billing_start_date is None:
             raise ValueError(
                 f"Account.billing_start_date is required for account_type '{account_type}'"

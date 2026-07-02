@@ -3,7 +3,7 @@ import pandas as pd
 import datetime
 from . import log_methods
 import jsonpickle
-from . import generate_date_sequence
+from .generate_date_sequence import generate_date_sequence
 import logging
 
 # logger = setup_logger('BudgetSet', './log/BudgetSet.log', level=logging.INFO)
@@ -172,7 +172,12 @@ class BudgetSet:
                 [current_budget_schedule, new_budget_schedule_rows_df], axis=0
             )
 
-        current_budget_schedule.sort_values(inplace=True, axis=0, by="Date")
+        current_budget_schedule.sort_values(
+            inplace=True,
+            axis=0,
+            by="Date",
+            key=lambda date_column: pd.to_datetime(date_column),
+        )
         current_budget_schedule.reset_index(inplace=True, drop=True)
 
         return current_budget_schedule
@@ -185,7 +190,7 @@ class BudgetSet:
             cadence,
             amount,
             memo,
-            income_flag,
+            income_flag=income_flag,
             deferrable=kwargs.get('deferrable',None),
             partial_payment_allowed=kwargs.get('partial_payment_allowed',None),
         )

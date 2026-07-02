@@ -2,6 +2,7 @@ from .Account import Account
 import pandas as pd
 import copy
 from . import log_methods
+from .log_methods import log_in_color
 import logging
 import numpy as np
 from .BudgetSet import BudgetSet  # this could be refactored out, and should be in terms of independent dependencies and clear organization, but it works
@@ -10,6 +11,8 @@ import jsonpickle
 
 # logger = setup_logger('AccountSet','./log/AccountSet.log',logging.INFO)
 logger = logging.getLogger(__name__)
+
+ROUNDING_ERROR_TOLERANCE = 0.0000000001
 
 
 class AccountSet:

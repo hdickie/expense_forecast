@@ -1,13 +1,10 @@
-import datetime
+from datetime import date
 
 import pandas as pd
 import pytest
 
 from expense_forecast.Account import Account
 
-
-def dt(date_string):
-    return datetime.datetime.strptime(date_string, "%Y%m%d")
 
 
 class TestAccount:
@@ -31,7 +28,7 @@ class TestAccount:
                 0,
                 "credit prev stmt bal",
                 {
-                    "billing_start_date": dt("20000101"),
+                    "billing_start_date": date(2000, 1, 1),
                     "apr": 0.25,
                     "interest_cadence": "monthly",
                     "minimum_payment": 50,
@@ -52,7 +49,7 @@ class TestAccount:
                 0,
                 "principal balance",
                 {
-                    "billing_start_date": dt("20000101"),
+                    "billing_start_date": date(2000, 1, 1),
                     "interest_type": "simple",
                     "apr": 0.25,
                     "interest_cadence": "daily",
@@ -66,7 +63,7 @@ class TestAccount:
                 0,
                 "principal balance",
                 {
-                    "billing_start_date": dt("20000101"),
+                    "billing_start_date": date(2000, 1, 1),
                     "interest_type": "compound",
                     "apr": 0.25,
                     "interest_cadence": "monthly",
@@ -116,7 +113,7 @@ class TestAccount:
                 0,
                 "credit prev stmt bal",
                 {
-                    "billing_start_date": dt("20000101"),
+                    "billing_start_date": date(2000, 1, 1),
                     "apr": 0,
                     "interest_cadence": "monthly",
                     "minimum_payment": 0,
@@ -129,7 +126,7 @@ class TestAccount:
                 0,
                 "principal balance",
                 {
-                    "billing_start_date": dt("20000101"),
+                    "billing_start_date": date(2000, 1, 1),
                     "interest_type": "simple",
                     "apr": 0,
                     "interest_cadence": "daily",
@@ -154,7 +151,7 @@ class TestAccount:
                 0,
                 0,
                 "checking",
-                {"billing_start_date": dt("20000101"), "primary_checking_ind": True},
+                {"billing_start_date": date(2000, 1, 1), "primary_checking_ind": True},
             ),
             (
                 "checking- interest_type is not None",
@@ -189,7 +186,7 @@ class TestAccount:
                 {"minimum_payment": 0, "primary_checking_ind": True},
             ),
             (
-                "cc- billing_start_dt not datetime: prev stmt bal",
+                "cc- billing_start_dt not date: prev stmt bal",
                 0,
                 0,
                 0,
@@ -208,7 +205,7 @@ class TestAccount:
                 0,
                 "credit prev stmt bal",
                 {
-                    "billing_start_date": dt("20000101"),
+                    "billing_start_date": date(2000, 1, 1),
                     "interest_cadence": "monthly",
                     "minimum_payment": 50,
                 },
@@ -220,7 +217,7 @@ class TestAccount:
                 0,
                 "credit prev stmt bal",
                 {
-                    "billing_start_date": dt("20000101"),
+                    "billing_start_date": date(2000, 1, 1),
                     "apr": -0.25,
                     "interest_cadence": "monthly",
                     "minimum_payment": 50,
@@ -233,7 +230,7 @@ class TestAccount:
                 0,
                 "credit prev stmt bal",
                 {
-                    "billing_start_date": dt("20000101"),
+                    "billing_start_date": date(2000, 1, 1),
                     "apr": 0.25,
                     "interest_cadence": "weekly",
                     "minimum_payment": 50,
@@ -246,7 +243,7 @@ class TestAccount:
                 0,
                 "credit prev stmt bal",
                 {
-                    "billing_start_date": dt("20000101"),
+                    "billing_start_date": date(2000, 1, 1),
                     "apr": 0.25,
                     "interest_cadence": "monthly",
                 },
@@ -258,7 +255,7 @@ class TestAccount:
                 0,
                 "credit prev stmt bal",
                 {
-                    "billing_start_date": dt("20000101"),
+                    "billing_start_date": date(2000, 1, 1),
                     "apr": 0.25,
                     "interest_cadence": "monthly",
                     "minimum_payment": -50,
@@ -271,7 +268,7 @@ class TestAccount:
                 0,
                 "principal balance",
                 {
-                    "billing_start_date": dt("20000101"),
+                    "billing_start_date": date(2000, 1, 1),
                     "interest_type": "shmimple",
                     "apr": 0.25,
                     "interest_cadence": "monthly",
@@ -285,7 +282,7 @@ class TestAccount:
                 0,
                 "interest",
                 {
-                    "billing_start_date": dt("20000101"),
+                    "billing_start_date": date(2000, 1, 1),
                     "interest_type": "compound",
                     "apr": 0.25,
                     "interest_cadence": "monthly",
@@ -507,13 +504,13 @@ class TestAccount:
     @pytest.mark.parametrize(
         "account_type,billing_start_date",
         [
-            ("credit prev stmt bal", dt("20000101")),
-            ("principal balance", dt("20000101")),
-            ("savings", dt("20000101")),
-            ("credit billing cycle payment bal", dt("20000101")),
-            ("loan billing cycle payment bal", dt("20000101")),
-            ("loan end of prev cycle bal", dt("20000101")),
-            ("credit end of prev cycle bal", dt("20000101")),
+            ("credit prev stmt bal", date(2000, 1, 1)),
+            ("principal balance", date(2000, 1, 1)),
+            ("savings", date(2000, 1, 1)),
+            ("credit billing cycle payment bal", date(2000, 1, 1)),
+            ("loan billing cycle payment bal", date(2000, 1, 1)),
+            ("loan end of prev cycle bal", date(2000, 1, 1)),
+            ("credit end of prev cycle bal", date(2000, 1, 1)),
             ("checking", None),
             ("credit curr stmt bal", None),
             ("interest", None),
@@ -533,9 +530,9 @@ class TestAccount:
             ("principal balance", None),
             ("principal balance", "20000101"),
             ("savings", None),
-            ("checking", dt("20000101")),
-            ("credit curr stmt bal", dt("20000101")),
-            ("interest", dt("20000101")),
+            ("checking", date(2000, 1, 1)),
+            ("credit curr stmt bal", date(2000, 1, 1)),
+            ("interest", date(2000, 1, 1)),
         ],
     )
     def test_validate_billing_start_date__expect_fail(
@@ -641,8 +638,7 @@ class TestAccount:
 # - Removed placeholder skips once each validator test had concrete success/failure cases.
 # - Kept cases conservative: old cases that depended on the former positional constructor
 #   were translated only when the current Account API made the equivalent behavior clear.
-# - Updated old date-string constructor inputs to datetime objects because the current
-#   _validate_billing_start_date API explicitly requires datetime.datetime.
+# - Updated old date-string constructor inputs to date objects.
 # - Lowercased valid account types because the current _validate_account_type asserts
 #   that account_type is already lower-case.
 #
