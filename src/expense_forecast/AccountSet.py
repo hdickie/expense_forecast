@@ -2,7 +2,8 @@ from .Account import Account
 from .CheckingBillingState import CheckingBillingState
 from .CreditCardBillingState import CreditCardBillingState
 from .LoanBillingState import LoanBillingState
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
+from decimal import Decimal
 import pandas as pd
 import copy
 from expense_forecast.log_methods import setup_logger
@@ -11,6 +12,7 @@ import logging
 import numpy as np
 from .BudgetSet import BudgetSet  # this could be refactored out, and should be in terms of independent dependencies and clear organization, but it works
 import jsonpickle
+from .generate_date_sequence import generate_date_sequence
 
 # logger = setup_logger('AccountSet','./log/AccountSet.log',logging.INFO)
 logger = logging.getLogger(__name__)
@@ -23,6 +25,16 @@ class AccountBoundaryError(ValueError):
 
 
 class AccountSet:
+    @staticmethod
+    def _money(value):
+        return Decimal(str(value))
+
+    @staticmethod
+    def _forecast_value(value):
+        if isinstance(value, Decimal):
+            return float(value)
+        return value
+
 
     ROUNDING_ERROR_TOLERANCE = 0.0000000001
 
@@ -226,6 +238,15 @@ class AccountSet:
         return self.getAccounts().to_string()
 
     def getPrimaryCheckingAccountName(self):
+        if self.primary_checking_account_name is None:
+            primary_checking_accounts = [
+                account.name
+                for account in self.accounts
+                if account.account_type == "checking"
+                and account.primary_checking_ind is True
+            ]
+            if len(primary_checking_accounts) == 1:
+                self.primary_checking_account_name = primary_checking_accounts[0]
         return self.primary_checking_account_name
 
 
@@ -397,6 +418,7 @@ class AccountSet:
             interest_type="compound",
             interest_cadence="monthly",
             apr=apr,
+            end_of_previous_cycle_balance=end_of_previous_cycle_balance,
         )
 
         account = Account(
@@ -461,11 +483,14 @@ class AccountSet:
 
     @staticmethod
     def _increase_debt_balance(account, amount):
+        if account.account_type == "credit":
+            amount = AccountSet._money(amount)
         account.billing_state.current_statement_balance += amount
         AccountSet._sync_debt_account_from_billing_state(account)
 
     @staticmethod
     def _decrease_credit_balance(account, amount, minimum_payment_flag):
+        amount = AccountSet._money(amount)
         payment_remaining = amount
         previous_statement_payment = min(
             payment_remaining,
@@ -518,6 +543,111 @@ class AccountSet:
         if not minimum_payment_flag:
             account.billing_state.billing_cycle_payment_balance += amount
         AccountSet._sync_debt_account_from_billing_state(account)
+
+    @staticmethod
+    def is_billing_date(account, current_date):
+        billing_start_date = account.billing_state.billing_cycle_start_date
+        if isinstance(current_date, datetime):
+            current_date = current_date.date()
+        if isinstance(billing_start_date, datetime):
+            billing_start_date = billing_start_date.date()
+
+        num_days = (current_date - billing_start_date).days
+        if num_days < 0:
+            return False
+        billing_days = set(
+            generate_date_sequence(
+                start_date=billing_start_date,
+                num_days=num_days,
+                cadence="monthly",
+            )
+        )
+        billing_days.add(billing_start_date)
+        return current_date in billing_days
+
+    def processCreditCardBillingDay(self, current_date):
+        interest_directives = []
+
+        for account in self.accounts:
+            if account.account_type != "credit":
+                continue
+            if not self.is_billing_date(account, current_date):
+                continue
+
+            previous_statement_name = f"{account.name}: Prev Stmt Bal"
+            interest_accrued = account.billing_state.interest_accrued_this_cycle()
+            if interest_accrued > 0:
+                interest_directives.append(
+                    f"CC INTEREST ({previous_statement_name} +${interest_accrued})"
+                )
+
+            account.billing_state = account.billing_state.roll_cycle(current_date)
+            account.billing_start_date = account.billing_state.billing_cycle_start_date
+            account.minimum_payment = account.billing_state.minimum_payment
+            self._sync_debt_account_from_billing_state(account)
+
+        return interest_directives
+
+    def updateCreditCardEndOfPreviousCycleBalances(self, current_date):
+        for account in self.accounts:
+            if account.account_type != "credit":
+                continue
+
+            billing_start_date = account.billing_state.billing_cycle_start_date
+            if isinstance(current_date, datetime):
+                current_date = current_date.date()
+            if isinstance(billing_start_date, datetime):
+                billing_start_date = billing_start_date.date()
+
+            if current_date == billing_start_date + timedelta(days=1):
+                account.billing_state.end_of_previous_cycle_balance = (
+                    account.billing_state.previous_statement_balance
+                    + account.billing_state.billing_cycle_payment_balance
+                )
+
+    @staticmethod
+    def getForecastColumnsForAccount(account):
+        columns = {account.name: AccountSet._forecast_value(account.balance)}
+        billing_state = getattr(account, "billing_state", None)
+        if billing_state is None:
+            return columns
+
+        if account.account_type == "credit":
+            columns[f"{account.name}: Curr Stmt Bal"] = AccountSet._forecast_value(
+                billing_state.current_statement_balance
+            )
+            columns[f"{account.name}: Prev Stmt Bal"] = AccountSet._forecast_value(
+                billing_state.previous_statement_balance
+            )
+            columns[
+                f"{account.name}: Credit Billing Cycle Payment Bal"
+            ] = AccountSet._forecast_value(billing_state.billing_cycle_payment_balance)
+            columns[
+                f"{account.name}: Credit End of Prev Cycle Bal"
+            ] = AccountSet._forecast_value(billing_state.end_of_previous_cycle_balance)
+        elif account.account_type == "loan":
+            columns[f"{account.name}: Curr Stmt Bal"] = AccountSet._forecast_value(
+                billing_state.current_statement_balance
+            )
+            columns[f"{account.name}: Prev Stmt Bal"] = AccountSet._forecast_value(
+                billing_state.previous_statement_balance
+            )
+            columns[
+                f"{account.name}: Loan Billing Cycle Payment Bal"
+            ] = AccountSet._forecast_value(billing_state.billing_cycle_payment_balance)
+            columns[f"{account.name}: Loan End of Prev Cycle Bal"] = AccountSet._forecast_value(
+                billing_state.previous_statement_balance
+            )
+
+        return columns
+
+    def getForecastAccountBalances(self, include_debug_columns=False):
+        balances = {}
+        for account in self.accounts:
+            balances[account.name] = self._forecast_value(account.balance)
+            if include_debug_columns:
+                balances.update(self.getForecastColumnsForAccount(account))
+        return balances
 
     @staticmethod
     def _decrease_debt_balance(account, amount, minimum_payment_flag):
@@ -594,7 +724,10 @@ class AccountSet:
 
         if account_from is not None:
             if account_from.account_type == "checking":
-                proposed_balance = account_from.balance - amount
+                if isinstance(amount, Decimal):
+                    proposed_balance = self._money(account_from.balance) - amount
+                else:
+                    proposed_balance = account_from.balance - amount
                 self._validate_account_balance_bounds(
                     account_from, proposed_balance, "Account_From"
                 )
@@ -612,7 +745,10 @@ class AccountSet:
 
         if account_to is not None:
             if account_to.account_type == "checking":
-                proposed_balance = account_to.balance + amount
+                if isinstance(amount, Decimal):
+                    proposed_balance = self._money(account_to.balance) + amount
+                else:
+                    proposed_balance = account_to.balance + amount
                 self._validate_account_balance_bounds(
                     account_to, proposed_balance, "Account_To"
                 )
