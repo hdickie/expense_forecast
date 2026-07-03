@@ -34,6 +34,71 @@ logger = logging.getLogger(__name__)
 from expense_forecast.log_methods import display_test_result
 
 
+def _diff_column_to_actual_column_name(column_name):
+    return column_name.removesuffix(" (Diff) ").removesuffix(" (Diff)")
+
+
+def _format_forecast_numeric_value(value):
+    if isinstance(value, (int, float, np.integer, np.floating)) and not pd.isna(value):
+        return f"{value:.2f}"
+    return value
+
+
+def _format_forecast_difference_message(
+    comparison_df_diffs_only,
+    comparison_df,
+    actual_df,
+    expected_df,
+    diff_columns,
+    max_rows=25,
+):
+    mismatch_rows = []
+    for row_index, row in comparison_df_diffs_only.iterrows():
+        for diff_column in diff_columns:
+            diff_value = row[diff_column]
+            if pd.isna(diff_value) or diff_value == 0:
+                continue
+
+            actual_column = _diff_column_to_actual_column_name(diff_column)
+            expected_column = f"{actual_column} (Expected)"
+            expected_value = (
+                comparison_df.at[row_index, expected_column]
+                if expected_column in comparison_df.columns
+                else expected_df.at[row_index, actual_column]
+            )
+            actual_value = (
+                comparison_df.at[row_index, actual_column]
+                if actual_column in comparison_df.columns
+                else actual_df.at[row_index, actual_column]
+            )
+            mismatch_rows.append(
+                {
+                    "Date": row.get("Date", row_index),
+                    "Column": actual_column,
+                    "Expected": _format_forecast_numeric_value(expected_value),
+                    "Actual": _format_forecast_numeric_value(actual_value),
+                    "Diff": _format_forecast_numeric_value(diff_value),
+                }
+            )
+
+    mismatch_df = pd.DataFrame(mismatch_rows)
+    if mismatch_df.empty:
+        return "Forecast comparison failed, but no nonzero diff cells were found."
+
+    truncated_message = ""
+    if mismatch_df.shape[0] > max_rows:
+        truncated_message = (
+            f"\n\nShowing first {max_rows} of {mismatch_df.shape[0]} mismatches."
+        )
+        mismatch_df = mismatch_df.head(max_rows)
+
+    return (
+        "Forecast numeric values did not match expected results.\n\n"
+        + mismatch_df.to_string(index=False)
+        + truncated_message
+    )
+
+
 def checking_acct_list(balance):
     A = AccountSet([])
     A.createCheckingAccount(
@@ -320,7 +385,7 @@ class TestExpenseForecastUnit:
             raise_exceptions=False,
         )
         F = ForecastHandler()
-        R = F.runForecast(IO, milestone_set)
+        R = F.runForecast(IO, milestone_set, include_debug_columns=True)
         # E.forecast_df.to_csv(test_description+'.csv')
         comparison_df_diffs_only = F.compute_forecast_difference(
             copy.deepcopy(R.forecast_df),
@@ -365,15 +430,32 @@ class TestExpenseForecastUnit:
             raise e
 
         try:
-            sel_vec = (
-                (R.forecast_df.columns != "Date")
-                & (R.forecast_df.columns != "Memo")
-                & (R.forecast_df.columns != "Memo Directives")
-            )
+            boilerplate_columns = {
+                "Date",
+                "Memo",
+                "Memo Directives",
+                "Next Income Date",
+            }
+            non_boilerplate_columns = [
+                column
+                for column in comparison_df_diffs_only.columns
+                if column not in boilerplate_columns
+            ]
 
-            non_boilerplate_values = comparison_df_diffs_only.iloc[:, sel_vec].to_numpy()
+            non_boilerplate_values = comparison_df_diffs_only.loc[
+                :, non_boilerplate_columns
+            ].to_numpy()
 
-            assert np.all(non_boilerplate_values == 0)
+            if not np.all(non_boilerplate_values == 0):
+                raise AssertionError(
+                    _format_forecast_difference_message(
+                        comparison_df_diffs_only=comparison_df_diffs_only,
+                        comparison_df=comparison_df,
+                        actual_df=R.forecast_df,
+                        expected_df=expected_result_df,
+                        diff_columns=non_boilerplate_columns,
+                    )
+                )
 
             try:
                 for i in range(0, expected_result_df.shape[0]):
@@ -418,9 +500,15 @@ class TestExpenseForecastUnit:
 
             try:
                 for i in range(0, expected_result_df.shape[0]):
-                    assert (
+                    expected_next_income_date = ForecastHandler._normalize_date_value(
                         expected_result_df.loc[i, "Next Income Date"]
-                        == R.forecast_df.loc[i, "Next Income Date"]
+                    )
+                    actual_next_income_date = ForecastHandler._normalize_date_value(
+                        R.forecast_df.loc[i, "Next Income Date"]
+                    )
+                    assert (
+                        expected_next_income_date
+                        == actual_next_income_date
                     )
             except Exception as e:
                 log_in_color(
@@ -466,6 +554,7 @@ class TestExpenseForecastUnit:
                     {
                         "Date": ["20000101", "20000102", "20000103"],
                         "Checking": [0, 0, 0],
+                        "Credit": [0, 0, 0],
                         "Credit: Curr Stmt Bal": [0, 0, 0],
                         "Credit: Prev Stmt Bal": [0, 0, 0],
                         "Credit: Credit Billing Cycle Payment Bal": [0, 0, 0],
@@ -502,6 +591,14 @@ class TestExpenseForecastUnit:
                     {
                         "Date": ["20000101", "20000102", "20000103"],
                         "Checking": [0, 0, 0],
+                        "Credit": [
+                            curr + prev
+                            for curr, prev in zip(
+                                [0, 0, 0]
+                                ,
+                                [0, 0, 0]
+                            )
+                        ],
                         "Credit: Curr Stmt Bal": [0, 0, 0],
                         "Credit: Prev Stmt Bal": [0, 0, 0],
                         "Credit: Credit Billing Cycle Payment Bal": [0, 0, 0],
@@ -524,7 +621,7 @@ class TestExpenseForecastUnit:
                 ),
             ),
             (
-                "test_p1_cc_txn_on_billing_date",  # todo update expected values. p2+ works btw
+                "test_p1_cc_txn_on_billing_date", 
                 AccountSet(
                     checking_acct_list(0) + credit_acct_list(0, 0, 0.05)
                 ),
@@ -548,6 +645,14 @@ class TestExpenseForecastUnit:
                     {
                         "Date": ["20000101", "20000102", "20000103"],
                         "Checking": [0, 0, 0],
+                        "Credit": [
+                            curr + prev
+                            for curr, prev in zip(
+                                [0, 100, 100]
+                                ,
+                                [0, 0, 0]
+                            )
+                        ],
                         "Credit: Curr Stmt Bal": [0, 100, 100],
                         "Credit: Prev Stmt Bal": [0, 0, 0],
                         "Credit: Credit Billing Cycle Payment Bal": [0, 0, 0],
@@ -588,6 +693,14 @@ class TestExpenseForecastUnit:
                     {
                         "Date": ["20000101", "20000102", "20000103"],
                         "Checking": [2000, 2000, 2000],
+                        "Credit": [
+                            curr + prev
+                            for curr, prev in zip(
+                                [25, 0, 0]
+                                ,
+                                [0, 25, 25]
+                            )
+                        ],
                         "Credit: Curr Stmt Bal": [25, 0, 0],
                         "Credit: Prev Stmt Bal": [0, 25, 25],
                         "Credit: Credit Billing Cycle Payment Bal": [0, 0, 0],
@@ -628,6 +741,14 @@ class TestExpenseForecastUnit:
                     {
                         "Date": ["20000101", "20000102", "20000103"],
                         "Checking": [2000, 1960, 1960],
+                        "Credit": [
+                            curr + prev
+                            for curr, prev in zip(
+                                [0, 0, 0]
+                                ,
+                                [1000, 964.17, 964.17]
+                            )
+                        ],
                         "Credit: Curr Stmt Bal": [0, 0, 0],
                         "Credit: Prev Stmt Bal": [1000, 964.17, 964.17],
                         "Credit: Credit Billing Cycle Payment Bal": [0, 0, 0],
@@ -672,6 +793,14 @@ class TestExpenseForecastUnit:
                     {
                         "Date": ["20000101", "20000102", "20000103"],
                         "Checking": [2000, 1940, 1940],
+                        "Credit": [
+                            curr + prev
+                            for curr, prev in zip(
+                                [0, 0, 0]
+                                ,
+                                [3000, 2970, 2970]
+                            )
+                        ],
                         "Credit: Curr Stmt Bal": [0, 0, 0],
                         "Credit: Prev Stmt Bal": [3000, 2970, 2970],
                         "Credit: Credit Billing Cycle Payment Bal": [0, 0, 0],
@@ -714,6 +843,14 @@ class TestExpenseForecastUnit:
                     {
                         "Date": generate_date_sequence(datetime.datetime.strptime("20000110","%Y%m%d"), 35, "daily"),
                         "Checking": [0] * 36,
+                        "Credit": [
+                            curr + prev
+                            for curr, prev in zip(
+                                [0] * 36
+                                ,
+                                [0] * 36
+                            )
+                        ],
                         "Credit: Curr Stmt Bal": [0] * 36,
                         "Credit: Prev Stmt Bal": [0] * 36,
                         "Credit: Credit Billing Cycle Payment Bal": [0] * 36,
@@ -800,6 +937,14 @@ class TestExpenseForecastUnit:
                     {
                         "Date": ["20000101", "20000102", "20000103"],
                         "Checking": [0, 0, 0],
+                        "Credit": [
+                            curr + prev
+                            for curr, prev in zip(
+                                [0, 0, 0]
+                                ,
+                                [0, 0, 0]
+                            )
+                        ],
                         "Credit: Curr Stmt Bal": [0, 0, 0],
                         "Credit: Prev Stmt Bal": [0, 0, 0],
                         "Credit: Credit Billing Cycle Payment Bal": [0, 0, 0],
@@ -1038,6 +1183,14 @@ class TestExpenseForecastUnit:
                     {
                         "Date": ["20000101", "20000102", "20000103"],
                         "Checking": [0, 0, 0],
+                        "Credit": [
+                            curr + prev
+                            for curr, prev in zip(
+                                [0, 0, 0]
+                                ,
+                                [0, 0, 0]
+                            )
+                        ],
                         "Credit: Curr Stmt Bal": [0, 0, 0],
                         "Credit: Prev Stmt Bal": [0, 0, 0],
                         "Credit: Credit Billing Cycle Payment Bal": [0, 0, 0],
@@ -1141,6 +1294,14 @@ class TestExpenseForecastUnit:
                     {
                         "Date": ["20000101", "20000102", "20000103"],
                         "Checking": [0, 0, 0],
+                        "Credit": [
+                            curr + prev
+                            for curr, prev in zip(
+                                [0, 0, 0]
+                                ,
+                                [0, 0, 0]
+                            )
+                        ],
                         "Credit: Curr Stmt Bal": [0, 0, 0],
                         "Credit: Prev Stmt Bal": [0, 0, 0],
                         "Credit: Credit Billing Cycle Payment Bal": [0, 0, 0],
@@ -1191,6 +1352,14 @@ class TestExpenseForecastUnit:
                     {
                         "Date": ["20000101", "20000102", "20000103"],
                         "Checking": [2000, 2000, 2000],
+                        "Credit": [
+                            curr + prev
+                            for curr, prev in zip(
+                                [0, 0, 0]
+                                ,
+                                [0, 0, 0]
+                            )
+                        ],
                         "Credit: Curr Stmt Bal": [0, 0, 0],
                         "Credit: Prev Stmt Bal": [0, 0, 0],
                         "Credit: Credit Billing Cycle Payment Bal": [0, 0, 0],
@@ -1546,6 +1715,14 @@ class TestExpenseForecastUnit:
                     {
                         "Date": ["20000101", "20000102", "20000103"],
                         "Checking": [2000, 1200, 1200],
+                        "Credit": [
+                            curr + prev
+                            for curr, prev in zip(
+                                [500, 200, 200]
+                                ,
+                                [500, 0, 0]
+                            )
+                        ],
                         "Credit: Curr Stmt Bal": [500, 200, 200],
                         "Credit: Prev Stmt Bal": [500, 0, 0],
                         "Credit: Credit Billing Cycle Payment Bal": [0, 800, 800],
@@ -1600,6 +1777,14 @@ class TestExpenseForecastUnit:
                     {
                         "Date": ["20000101", "20000102", "20000103"],
                         "Checking": [200, 0, 0],
+                        "Credit": [
+                            curr + prev
+                            for curr, prev in zip(
+                                [500, 500, 500]
+                                ,
+                                [500, 300, 300]
+                            )
+                        ],
                         "Credit: Curr Stmt Bal": [500, 500, 500],
                         "Credit: Prev Stmt Bal": [500, 300, 300],
                         "Credit: Credit Billing Cycle Payment Bal": [0, 200, 200],
@@ -1654,6 +1839,14 @@ class TestExpenseForecastUnit:
                     {
                         "Date": ["20000101", "20000102", "20000103"],
                         "Checking": [40, 0, 0],
+                        "Credit": [
+                            curr + prev
+                            for curr, prev in zip(
+                                [500, 0, 0]
+                                ,
+                                [500, 962.08, 962.08]
+                            )
+                        ],
                         "Credit: Curr Stmt Bal": [500, 0, 0],
                         "Credit: Prev Stmt Bal": [500, 962.08, 962.08],
                         "Credit: Credit Billing Cycle Payment Bal": [0, 0, 0],
@@ -1708,6 +1901,14 @@ class TestExpenseForecastUnit:
                     {
                         "Date": ["20000101", "20000102", "20000103"],
                         "Checking": [1000, 0, 0],
+                        "Credit": [
+                            curr + prev
+                            for curr, prev in zip(
+                                [1500, 1000, 1000]
+                                ,
+                                [500, 0, 0]
+                            )
+                        ],
                         "Credit: Curr Stmt Bal": [1500, 1000, 1000],
                         "Credit: Prev Stmt Bal": [500, 0, 0],
                         "Credit: Credit Billing Cycle Payment Bal": [0, 1000, 1000],
@@ -1872,6 +2073,14 @@ class TestExpenseForecastUnit:
                     {
                         "Date": ["20000110", "20000111", "20000112", "20000113"],
                         "Checking": [5000, 4500, 4500, 4500],
+                        "Credit": [
+                            curr + prev
+                            for curr, prev in zip(
+                                [1000, 1000, 0, 0]
+                                ,
+                                [1000, 500, 1504.17, 1504.17]
+                            )
+                        ],
                         "Credit: Curr Stmt Bal": [1000, 1000, 0, 0],
                         "Credit: Prev Stmt Bal": [1000, 500, 1504.17, 1504.17],
                         "Credit: Credit Billing Cycle Payment Bal": [0, 500, 0, 0],
@@ -1931,6 +2140,14 @@ class TestExpenseForecastUnit:
                     {
                         "Date": ["20000110", "20000111", "20000112", "20000113"],
                         "Checking": [5000, 4980, 4960, 4960],
+                        "Credit": [
+                            curr + prev
+                            for curr, prev in zip(
+                                [1000, 1000, 0, 0]
+                                ,
+                                [1000, 980, 1964.17, 1964.17]
+                            )
+                        ],
                         "Credit: Curr Stmt Bal": [1000, 1000, 0, 0],
                         "Credit: Prev Stmt Bal": [1000, 980, 1964.17, 1964.17],
                         "Credit: Credit Billing Cycle Payment Bal": [0, 20, 0, 0],
@@ -2001,6 +2218,14 @@ class TestExpenseForecastUnit:
                     {
                         "Date": ["20000110", "20000111", "20000112", "20000113"],
                         "Checking": [5000, 4960, 4960, 4960],
+                        "Credit": [
+                            curr + prev
+                            for curr, prev in zip(
+                                [1000, 1000, 0, 0]
+                                ,
+                                [1000, 960, 1964.17, 1964.17]
+                            )
+                        ],
                         "Credit: Curr Stmt Bal": [1000, 1000, 0, 0],
                         "Credit: Prev Stmt Bal": [1000, 960, 1964.17, 1964.17],
                         "Credit: Credit Billing Cycle Payment Bal": [0, 40, 0, 0],
@@ -2060,6 +2285,14 @@ class TestExpenseForecastUnit:
                     {
                         "Date": ["20000111", "20000112", "20000113"],
                         "Checking": [5000, 4360, 4360],
+                        "Credit": [
+                            curr + prev
+                            for curr, prev in zip(
+                                [500, 0, 0]
+                                ,
+                                [500, 362.08, 362.08]
+                            )
+                        ],
                         "Credit: Curr Stmt Bal": [500, 0, 0],
                         "Credit: Prev Stmt Bal": [500, 362.08, 362.08],
                         "Credit: Credit Billing Cycle Payment Bal": [0, 600, 600],
@@ -2104,6 +2337,14 @@ class TestExpenseForecastUnit:
                     {
                         "Date": generate_date_sequence(datetime.datetime.strptime("20000110","%Y%m%d"), 35, "daily"),
                         "Checking": ([5000] * 33) + ([4997.91] * 3),
+                        "Credit": [
+                            curr + prev
+                            for curr, prev in zip(
+                                [0] * 36
+                                ,
+                                ([0] * 2) + ([2.08] * 31) + ([0] * 3)
+                            )
+                        ],
                         "Credit: Curr Stmt Bal": [0] * 36,
                         "Credit: Prev Stmt Bal": ([0] * 2) + ([2.08] * 31) + ([0] * 3),
                         "Credit: Credit Billing Cycle Payment Bal": ([500] * 2)
@@ -2182,6 +2423,7 @@ class TestExpenseForecastUnit:
                     {
                         "Date": ["20000111", "20000112", "20000113"],
                         "Checking": [5000, 5000 - 240, 5000 - 240],
+                        "Credit": [900, 900 - 240 + 2.08, 900 - 240 + 2.08],
                         "Credit: Curr Stmt Bal": [400, 0, 0],
                         "Credit: Prev Stmt Bal": [
                             500,
@@ -2243,6 +2485,7 @@ class TestExpenseForecastUnit:
                     {
                         "Date": ["20000111", "20000112", "20000113"],
                         "Checking": [5000, 4097.92, 4097.92],
+                        "Credit": [900, 0, 0],
                         "Credit: Curr Stmt Bal": [400, 0, 0],
                         "Credit: Prev Stmt Bal": [500, 0, 0],
                         "Credit: Credit Billing Cycle Payment Bal": [0, 862.08, 862.08],
@@ -2317,6 +2560,7 @@ class TestExpenseForecastUnit:
                     {
                         "Date": ["20000111", "20000112", "20000113"],
                         "Checking": [5000, 5000 - 200, 5000 - 200],
+                        "Credit": [0, 200, 200],
                         "Credit: Curr Stmt Bal": [0, 200, 200],
                         "Credit: Prev Stmt Bal": [0, 0, 0],
                         "Credit: Credit Billing Cycle Payment Bal": [
@@ -2383,6 +2627,7 @@ class TestExpenseForecastUnit:
                     {
                         "Date": ["20000111", "20000112", "20000113"],
                         "Checking": [5000, 5000 - 900 - 2.08, 5000 - 900 - 2.08],
+                        "Credit": [900, 0, 0],
                         "Credit: Curr Stmt Bal": [400, 0, 0],
                         "Credit: Prev Stmt Bal": [500, 0, 0],
                         "Credit: Credit Billing Cycle Payment Bal": [
@@ -2443,6 +2688,7 @@ class TestExpenseForecastUnit:
                     {
                         "Date": ["20000110", "20000111", "20000112", "20000113"],
                         "Checking": [5000, 4700, 4700, 4700],
+                        "Credit": [1000, 700, 702.08, 702.08],
                         "Credit: Curr Stmt Bal": [500, 500, 0, 0],
                         "Credit: Prev Stmt Bal": [500, 200, 702.08, 702.08],
                         "Credit: Credit Billing Cycle Payment Bal": [0, 300, 0, 0],
@@ -2505,6 +2751,7 @@ class TestExpenseForecastUnit:
                     {
                         "Date": ["20000110", "20000111", "20000112", "20000113"],
                         "Checking": [5000, 4800, 4800, 4800],
+                        "Credit": [1000, 800, 802.08, 802.08],
                         "Credit: Curr Stmt Bal": [500, 500, 0, 0],
                         "Credit: Prev Stmt Bal": [500, 300, 802.08, 802.08],
                         "Credit: Credit Billing Cycle Payment Bal": [0, 200, 0, 0],
@@ -2558,6 +2805,7 @@ class TestExpenseForecastUnit:
                     {
                         "Date": ["20000110", "20000111", "20000112", "20000113"],
                         "Checking": [5000, 4500, 4500, 4500],
+                        "Credit": [500, 0, 2.08, 2.08],
                         "Credit: Curr Stmt Bal": [0, 0, 0, 0],
                         "Credit: Prev Stmt Bal": [500, 0, 2.08, 2.08],
                         "Credit: Credit Billing Cycle Payment Bal": [0, 500, 0, 0],
@@ -2621,6 +2869,7 @@ class TestExpenseForecastUnit:
                     {
                         "Date": ["20000110", "20000111", "20000112", "20000113"],
                         "Checking": [5000, 4100, 4100, 4100],
+                        "Credit": [900, 0, 2.08, 2.08],
                         "Credit: Curr Stmt Bal": [400, 0, 0, 0],
                         "Credit: Prev Stmt Bal": [500, 0, 2.08, 2.08],
                         "Credit: Credit Billing Cycle Payment Bal": [0, 900, 0, 0],
@@ -2674,6 +2923,7 @@ class TestExpenseForecastUnit:
                     {
                         "Date": ["20000110", "20000111", "20000112", "20000113"],
                         "Checking": [5000, 4700, 4700, 4700],
+                        "Credit": [500, 200, 200, 200],
                         "Credit: Curr Stmt Bal": [500, 200, 0, 0],
                         "Credit: Prev Stmt Bal": [0, 0, 200, 200],
                         "Credit: Credit Billing Cycle Payment Bal": [0, 300, 0, 0],
@@ -2736,6 +2986,7 @@ class TestExpenseForecastUnit:
                     {
                         "Date": ["20000110", "20000111", "20000112", "20000113"],
                         "Checking": [5000, 4600, 4600, 4600],
+                        "Credit": [500, 100, 100, 100],
                         "Credit: Curr Stmt Bal": [500, 100, 0, 0],
                         "Credit: Prev Stmt Bal": [0, 0, 100, 100],
                         "Credit: Credit Billing Cycle Payment Bal": [0, 400, 0, 0],
@@ -2789,6 +3040,7 @@ class TestExpenseForecastUnit:
                     {
                         "Date": ["20000110", "20000111", "20000112", "20000113"],
                         "Checking": [5000, 4500, 4500, 4500],
+                        "Credit": [500, 0, 0, 0],
                         "Credit: Curr Stmt Bal": [500, 0, 0, 0],
                         "Credit: Prev Stmt Bal": [0, 0, 0, 0],
                         "Credit: Credit Billing Cycle Payment Bal": [0, 500, 0, 0],
@@ -2839,6 +3091,7 @@ class TestExpenseForecastUnit:
                     {
                         "Date": ["20000110", "20000111", "20000112", "20000113"],
                         "Checking": [5000, 4500, 4500, 4500],
+                        "Credit": [500, 0, 0, 0],
                         "Credit: Curr Stmt Bal": [500, 0, 0, 0],
                         "Credit: Prev Stmt Bal": [0, 0, 0, 0],
                         "Credit: Credit Billing Cycle Payment Bal": [0, 500, 0, 0],
@@ -2893,6 +3146,7 @@ class TestExpenseForecastUnit:
                     {
                         "Date": ["20000110", "20000111", "20000112", "20000113"],
                         "Checking": [5000, 4300, 4300, 4300],
+                        "Credit": [900, 200, 202.08, 202.08],
                         "Credit: Curr Stmt Bal": [400, 200, 0, 0],
                         "Credit: Prev Stmt Bal": [500, 0, 202.08, 202.08],
                         "Credit: Credit Billing Cycle Payment Bal": [0, 700, 0, 0],
@@ -2947,6 +3201,7 @@ class TestExpenseForecastUnit:
                     {
                         "Date": ["20000110", "20000111", "20000112", "20000113"],
                         "Checking": [5000, 4100, 4100, 4100],
+                        "Credit": [900, 0, 2.08, 2.08],
                         "Credit: Curr Stmt Bal": [400, 0, 0, 0],
                         "Credit: Prev Stmt Bal": [500, 0, 2.08, 2.08],
                         "Credit: Credit Billing Cycle Payment Bal": [0, 900, 0, 0],
@@ -3023,6 +3278,7 @@ class TestExpenseForecastUnit:
                     {
                         "Date": generate_date_sequence(datetime.datetime.strptime("20000110","%Y%m%d"), 35, "daily"),
                         "Checking": [0] * 36,
+                        "Credit": [0] * 36,
                         "Credit: Curr Stmt Bal": [0] * 36,
                         "Credit: Prev Stmt Bal": [0] * 36,
                         "Credit: Credit Billing Cycle Payment Bal": [0] * 36,
@@ -3061,6 +3317,7 @@ class TestExpenseForecastUnit:
                     {
                         "Date": generate_date_sequence(datetime.datetime.strptime("20000110","%Y%m%d"), 35, "daily"),
                         "Checking": [0] * 36,
+                        "Credit": [0] * 36,
                         "Credit: Curr Stmt Bal": [0] * 36,
                         "Credit: Prev Stmt Bal": [0] * 36,
                         "Credit: Credit Billing Cycle Payment Bal": [0] * 36,
@@ -3099,6 +3356,7 @@ class TestExpenseForecastUnit:
                     {
                         "Date": generate_date_sequence(datetime.datetime.strptime("20000110","%Y%m%d"), 35, "daily"),
                         "Checking": [0] * 36,
+                        "Credit": [0] * 36,
                         "Credit: Curr Stmt Bal": [0] * 36,
                         "Credit: Prev Stmt Bal": [0] * 36,
                         "Credit: Credit Billing Cycle Payment Bal": [0] * 36,
@@ -3137,6 +3395,7 @@ class TestExpenseForecastUnit:
                     {
                         "Date": generate_date_sequence(datetime.datetime.strptime("20000110","%Y%m%d"), 35, "daily"),
                         "Checking": [0] * 36,
+                        "Credit": [0] * 36,
                         "Credit: Curr Stmt Bal": [0] * 36,
                         "Credit: Prev Stmt Bal": [0] * 36,
                         "Credit: Credit Billing Cycle Payment Bal": [0] * 36,
@@ -3175,6 +3434,7 @@ class TestExpenseForecastUnit:
                     {
                         "Date": generate_date_sequence(datetime.datetime.strptime("20000110","%Y%m%d"), 35, "daily"),
                         "Checking": [0] * 36,
+                        "Credit": [0] * 36,
                         "Credit: Curr Stmt Bal": [0] * 36,
                         "Credit: Prev Stmt Bal": [0] * 36,
                         "Credit: Credit Billing Cycle Payment Bal": [0] * 36,
@@ -3213,6 +3473,7 @@ class TestExpenseForecastUnit:
                     {
                         "Date": generate_date_sequence(datetime.datetime.strptime("20000110","%Y%m%d"), 35, "daily"),
                         "Checking": [0] * 36,
+                        "Credit": [0] * 36,
                         "Credit: Curr Stmt Bal": [0] * 36,
                         "Credit: Prev Stmt Bal": [0] * 36,
                         "Credit: Credit Billing Cycle Payment Bal": [0] * 36,
@@ -4116,6 +4377,14 @@ class TestExpenseForecastUnit:
             {
                 "Date": ["20000101", "20000102", "20000103"],
                 "Checking": [1000, 0, 0],
+                "Credit": [
+                    curr + prev
+                    for curr, prev in zip(
+                        [0, 0, 0]
+                        ,
+                        [0, 0, 0]
+                    )
+                ],
                 "Credit: Curr Stmt Bal": [0, 0, 0],
                 "Credit: Prev Stmt Bal": [0, 0, 0],
                 "Credit: Credit Billing Cycle Payment Bal": [0, 0, 0],

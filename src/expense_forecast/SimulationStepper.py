@@ -5,7 +5,7 @@ from expense_forecast.ExpenseForecastResult import ExpenseForecastResult
 from expense_forecast.log_methods import log_in_color
 import logging
 import datetime
-pd.set_option("display.precision", 100) #todo this may more appropriate near some code for output or logging
+pd.set_option("display.precision", 2) #todo this may more appropriate near some code for output or logging
 
 logger = logging.getLogger(__name__)
 formatter = logging.Formatter("%(asctime)s - %(levelname)-8s - %(message)s")

@@ -267,8 +267,12 @@ class AccountSet:
                 assert checking_required_kwarg in kwargs #primary_checking_ind is missing
             self.createCheckingAccount(name, balance, min_balance, max_balance, kwargs['primary_checking_ind'])
         elif account_type == 'credit':
-            for credit_required_kwarg in credit_required_kwargs:
-                assert credit_required_kwarg in kwargs
+            missing = [
+                kwarg for kwarg in credit_required_kwargs
+                if kwarg not in kwargs
+            ]
+
+            assert not missing, f"Missing required kwargs: {', '.join(missing)}"
             assert balance == kwargs['current_statement_balance'] + kwargs['previous_statement_balance']
             self.createCreditCardAccount(name,
                                          current_statement_balance=kwargs['current_statement_balance'],
@@ -378,7 +382,7 @@ class AccountSet:
         self.accounts.append(account)
 
     def createCreditCardAccount(self, name, current_statement_balance, previous_statement_balance, min_balance, max_balance,
-                                billing_start_date, apr, minimum_payment, end_of_previous_cycle_balance,):
+                                billing_start_date, apr, minimum_payment, end_of_previous_cycle_balance):
 
         billing_cycle_payment_balance = end_of_previous_cycle_balance - previous_statement_balance
         assert billing_cycle_payment_balance >= 0
@@ -947,6 +951,7 @@ class AccountSet:
         # print('EXIT allocate_additional_loan_payments')
         return final_txns
 
+    # TODO include_debug_columns is not a needed parameter here
     def getAccounts(self, include_debug_columns=False):
         columns = [
             "Name",

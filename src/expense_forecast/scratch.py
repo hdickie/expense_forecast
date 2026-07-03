@@ -13,7 +13,7 @@ from datetime import date
 if __name__ == '__main__':
     
     start_date = date(2026,6,1)
-    end_date = date(2026,7,1)
+    end_date = date(2026,6,5)
 
     A = AccountSet()
     B = BudgetSet()
@@ -26,6 +26,20 @@ if __name__ == '__main__':
                     max_balance=float('inf'),
                     account_type="checking",
                     primary_checking_ind=True)
+    A.createAccount(name="Credit",
+                    balance=1000,
+                    min_balance=0,
+                    max_balance=25_000,
+                    account_type="credit",
+                    billing_start_date=date(2026,5,3),
+                    current_statement_balance=0,
+                    previous_statement_balance=1000,
+                    minimum_payment=40,
+                    apr=0.28,
+                    end_of_previous_cycle_balance=1000,
+                    interest_cadence="monthly"
+                    )
+    
     B.addBudgetItem(start_date=start_date, end_date=end_date, priority=1,
                     cadence='daily',amount=10,memo='food',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
@@ -38,7 +52,7 @@ if __name__ == '__main__':
     
     IO = ExpenseForecastInitialConditions(start_date, end_date, A,B,M)
 
-    R = F.runForecast(IO, MS)
+    R = F.runForecast(IO, MS, include_debug_columns=True)
 
-    print(R)
+    print(R.forecast_df.to_string())
 
