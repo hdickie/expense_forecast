@@ -14,7 +14,11 @@ class BudgetItem:
     @staticmethod
     def _validate_cadence(cadence, start_date, end_date):
         allowed_cadences = ['once','daily','weekly','semiweekly','monthly','quarterly','anually']
-        assert cadence in allowed_cadences
+        if not cadence in allowed_cadences:
+            raise ValueError(
+                f"Invalid cadence: {cadence!r}. "
+                f"Allowed values are: {sorted(allowed_cadences)}"
+            )
         if cadence == 'once':
             assert start_date == end_date
         # todo maybe warnings if interval is shorted than cadence?

@@ -2,6 +2,7 @@ from .Account import Account
 from .CheckingBillingState import CheckingBillingState
 from .CreditCardBillingState import CreditCardBillingState
 from .LoanBillingState import LoanBillingState
+from datetime import date, datetime
 import pandas as pd
 import copy
 from expense_forecast.log_methods import setup_logger
@@ -17,9 +18,25 @@ logger = logging.getLogger(__name__)
 ROUNDING_ERROR_TOLERANCE = 0.0000000001
 
 
+class AccountBoundaryError(ValueError):
+    pass
+
+
 class AccountSet:
 
     ROUNDING_ERROR_TOLERANCE = 0.0000000001
+
+    @staticmethod
+    def _normalize_billing_start_date(value):
+        if pd.isnull(value):
+            return None
+        if isinstance(value, pd.Timestamp):
+            return value.date()
+        if isinstance(value, datetime):
+            return value.date()
+        if isinstance(value, date):
+            return value
+        return value
 
     # TODO I am not sure if I need this
     # @staticmethod
@@ -419,7 +436,7 @@ class AccountSet:
     @staticmethod
     def _validate_account_balance_bounds(account, proposed_balance, role):
         if not account.min_balance <= proposed_balance <= account.max_balance:
-            raise ValueError(
+            raise AccountBoundaryError(
                 f"transaction violated {role} boundaries:\n"
                 f"{role}:\n{account}\n"
                 f"Proposed balance: {proposed_balance}"
@@ -930,76 +947,41 @@ class AccountSet:
         # print('EXIT allocate_additional_loan_payments')
         return final_txns
 
-    def getAccounts(self):
-        all_accounts_df = pd.DataFrame(
-            {
-                "Name": [],
-                "Balance": [],
-                "Min_Balance": [],
-                "Max_Balance": [],
-                "Account_Type": [],
-                "Billing_Start_Date": [],
-                "Interest_Type": [],
-                "APR": [],
-                "Interest_Cadence": [],
-                "Minimum_Payment": [],
-                "Primary_Checking_Ind": [],
-            }
-        )
-
+    def getAccounts(self, include_debug_columns=False):
+        columns = [
+            "Name",
+            "Balance",
+            "Min_Balance",
+            "Max_Balance",
+            "Account_Type",
+            "Billing_Start_Date",
+            "Interest_Type",
+            "APR",
+            "Interest_Cadence",
+            "Minimum_Payment",
+            "Primary_Checking_Ind",
+        ]
+        account_rows = []
         for account in self.accounts:
-            new_account_row_df = pd.DataFrame(
+            account_rows.append(
                 {
-                    "Name": [account.name],
-                    "Balance": [account.balance],
-                    "Min_Balance": [account.min_balance],
-                    "Max_Balance": [account.max_balance],
-                    "Account_Type": [account.account_type],
-                    "Billing_Start_Date": [account.billing_start_date],
-                    "Interest_Type": [account.interest_type],
-                    "APR": [account.apr],
-                    "Interest_Cadence": [account.interest_cadence],
-                    "Minimum_Payment": [account.minimum_payment],
-                    "Primary_Checking_Ind": [account.primary_checking_ind],
+                    "Name": account.name,
+                    "Balance": account.balance,
+                    "Min_Balance": account.min_balance,
+                    "Max_Balance": account.max_balance,
+                    "Account_Type": account.account_type,
+                    "Billing_Start_Date": self._normalize_billing_start_date(
+                        account.billing_start_date
+                    ),
+                    "Interest_Type": account.interest_type,
+                    "APR": account.apr,
+                    "Interest_Cadence": account.interest_cadence,
+                    "Minimum_Payment": account.minimum_payment,
+                    "Primary_Checking_Ind": account.primary_checking_ind,
                 }
             )
 
-            # old line
-            # all_accounts_df = pd.concat([all_accounts_df, new_account_row_df], axis=0)
-
-            column_types = {'Name':'str',
-                            'Balance':'float64',
-                            'Min_Balance':'float64',
-                            'Max_Balance':'float64',
-                            'Account_Type':'str',
-                            'Billing_Start_Date':'datetime64[ns]',
-                            'Interest_Type':'str',
-                            'APR':'float64',
-                            'Interest_Cadence':'str',
-                            'Minimum_Payment':'float64',
-                            'Primary_Checking_Ind':'bool'}
-
-
-            # new line
-            if all_accounts_df.shape[0] == 0:
-                all_accounts_df = new_account_row_df
-            else:
-                # print('all_accounts_df:')
-                # print(all_accounts_df.to_string())
-                try:
-                    all_accounts_df = pd.concat(
-                        [all_accounts_df, new_account_row_df.astype(column_types)]
-                    )
-                except Exception as e:
-                    print(all_accounts_df.dtypes)
-                    print(new_account_row_df.to_string())
-                    raise e
-
-            all_accounts_df.reset_index(drop=True, inplace=True)
-
-        # if there are no accounts, I want to return a data frame with 0 rows
-
-        return all_accounts_df
+        return pd.DataFrame(account_rows, columns=columns)
 
     def to_json(self):
         """

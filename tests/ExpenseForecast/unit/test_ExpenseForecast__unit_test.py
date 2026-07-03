@@ -11,7 +11,7 @@ import datetime, logging
 import tempfile
 from expense_forecast.BudgetItem import BudgetItem
 from expense_forecast.CompositeMilestone import CompositeMilestone
-#import ForecastHandler
+from expense_forecast.ForecastHandler import ForecastHandler
 from expense_forecast.MemoMilestone import MemoMilestone
 from expense_forecast.MemoRule import MemoRule
 
@@ -166,7 +166,7 @@ class TestExpenseForecastUnit:
 
     @pytest.mark.unit
     @pytest.mark.parametrize(
-        "account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set",
+        "account_set,budget_set,memo_rule_set,start_date,end_date,milestone_set",
         [
             (
                 AccountSet(checking_acct_list(10)),
@@ -181,8 +181,8 @@ class TestExpenseForecastUnit:
             # (AccountSet([]),
             #  BudgetSet([]),
             #  MemoRuleSet([]),
-            #  start_date_YYYYMMDD,
-            #  end_date_YYYYMMDD,
+            #  start_date,
+            #  end_date,
             #  MilestoneSet([])
             #  ),
         ],
@@ -192,23 +192,21 @@ class TestExpenseForecastUnit:
         account_set,
         budget_set,
         memo_rule_set,
-        start_date_YYYYMMDD,
-        end_date_YYYYMMDD,
+        start_date,
+        end_date,
         milestone_set,
     ):
-        ExpenseForecast(
+        ExpenseForecastInitialConditions(
+            datetime.datetime.strptime(start_date, "%Y%m%d").date(),
+            datetime.datetime.strptime(end_date, "%Y%m%d").date(),
             account_set,
             budget_set,
             memo_rule_set,
-            start_date_YYYYMMDD,
-            end_date_YYYYMMDD,
-            milestone_set,
-            print_debug_messages=False,
         )
 
     @pytest.mark.unit
     @pytest.mark.parametrize(
-        "account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_exception",
+        "account_set,budget_set,memo_rule_set,start_date,end_date,milestone_set,expected_exception",
         [
             (
                 AccountSet([]),
@@ -271,8 +269,8 @@ class TestExpenseForecastUnit:
             # (AccountSet([]),
             #  BudgetSet([]),
             #  MemoRuleSet([]),
-            #  'start_date_YYYYMMDD',
-            #  'end_date_YYYYMMDD',
+            #  'start_date',
+            #  'end_date',
             #  MilestoneSet(
             #      [],
             #      [],
@@ -286,20 +284,19 @@ class TestExpenseForecastUnit:
         account_set,
         budget_set,
         memo_rule_set,
-        start_date_YYYYMMDD,
-        end_date_YYYYMMDD,
+        start_date,
+        end_date,
         milestone_set,
         expected_exception,
     ):
         with pytest.raises(expected_exception):
-            ExpenseForecast(
+            ExpenseForecastInitialConditions(
+                datetime.datetime.strptime(start_date, "%Y%m%d").date(),
+                datetime.datetime.strptime(end_date, "%Y%m%d").date(),
                 account_set,
                 budget_set,
                 memo_rule_set,
-                start_date_YYYYMMDD,
-                end_date_YYYYMMDD,
-                milestone_set,
-                print_debug_messages=False,
+                raise_exceptions=True,
             )
 
     def compute_forecast_and_actual_vs_expected(
@@ -307,27 +304,26 @@ class TestExpenseForecastUnit:
         account_set,
         budget_set,
         memo_rule_set,
-        start_date_YYYYMMDD,
-        end_date_YYYYMMDD,
+        start_date,
+        end_date,
         milestone_set,
         expected_result_df,
         test_description,
     ):
 
-        E = ExpenseForecast(
+        IO = ExpenseForecastInitialConditions(
+            datetime.datetime.strptime(start_date, "%Y%m%d").date(),
+            datetime.datetime.strptime(end_date, "%Y%m%d").date(),
             account_set,
             budget_set,
             memo_rule_set,
-            start_date_YYYYMMDD,
-            end_date_YYYYMMDD,
-            milestone_set,
             raise_exceptions=False,
         )
-
-        E.runForecast()
+        F = ForecastHandler()
+        R = F.runForecast(IO, milestone_set)
         # E.forecast_df.to_csv(test_description+'.csv')
-        d = E.compute_forecast_difference(
-            copy.deepcopy(E.forecast_df),
+        comparison_df_diffs_only = F.compute_forecast_difference(
+            copy.deepcopy(R.forecast_df),
             copy.deepcopy(expected_result_df),
             label=test_description,
             make_plots=False,
@@ -338,8 +334,8 @@ class TestExpenseForecastUnit:
             return_type="dataframe",
         )
 
-        f = E.compute_forecast_difference(
-            copy.deepcopy(E.forecast_df),
+        comparison_df = F.compute_forecast_difference(
+            copy.deepcopy(R.forecast_df),
             copy.deepcopy(expected_result_df),
             label=test_description,
             make_plots=False,
@@ -350,45 +346,40 @@ class TestExpenseForecastUnit:
             return_type="dataframe",
         )
 
-        print(f.T.to_string())
+        # print(f.T.to_string()) #TODO log_in_color
 
         try:
-            log_in_color(
-                logger, "white", "debug", "###################################"
-            )
-            log_in_color(logger, "white", "debug", f.to_string())
-            log_in_color(
-                logger, "white", "debug", "###################################"
-            )
-            log_in_color(logger, "white", "debug", f.T.to_string())
-            log_in_color(
-                logger, "white", "debug", "###################################"
-            )
-            display_test_result(logger, test_description, d)
+            # log_in_color(
+            #     logger, "white", "debug", "###################################"
+            # )
+            # log_in_color(logger, "white", "debug", diff.to_string())
+            # log_in_color(
+            #     logger, "white", "debug", "###################################"
+            # )
+            # log_in_color(logger, "white", "debug", diff2.T.to_string())
+            # log_in_color(
+            #     logger, "white", "debug", "###################################"
+            # )
+            display_test_result(logger, test_description, comparison_df_diffs_only)
         except Exception as e:
             raise e
 
         try:
             sel_vec = (
-                (d.columns != "Date")
-                & (d.columns != "Memo")
-                & (d.columns != "Memo Directives")
+                (R.forecast_df.columns != "Date")
+                & (R.forecast_df.columns != "Memo")
+                & (R.forecast_df.columns != "Memo Directives")
             )
 
-            # non_boilerplate_values__M = np.matrix(d.iloc[:, sel_vec])
-            non_boilerplate_values__M = np.array(d.iloc[:, sel_vec])
-            non_boilerplate_values__M = non_boilerplate_values__M[:, None]
+            non_boilerplate_values = comparison_df_diffs_only.iloc[:, sel_vec].to_numpy()
 
-            error_ind = round(
-                float(sum(sum(np.square(non_boilerplate_values__M)).T)), 2
-            )  # this very much DOES NOT SCALE. this is intended for small tests
-            assert error_ind == 0
+            assert np.all(non_boilerplate_values == 0)
 
             try:
                 for i in range(0, expected_result_df.shape[0]):
                     assert (
                         expected_result_df.loc[i, "Memo"].strip()
-                        == E.forecast_df.loc[i, "Memo"].strip()
+                        == R.forecast_df.loc[i, "Memo"].strip()
                     )
             except Exception as e:
                 log_in_color(
@@ -397,7 +388,7 @@ class TestExpenseForecastUnit:
                 date_memo1_memo2_df = pd.DataFrame()
                 date_memo1_memo2_df["Date"] = expected_result_df.Date
                 date_memo1_memo2_df["Expected_Memo"] = expected_result_df.Memo
-                date_memo1_memo2_df["Actual_Memo"] = E.forecast_df.Memo
+                date_memo1_memo2_df["Actual_Memo"] = R.forecast_df.Memo
                 log_in_color(logger, "red", "error", date_memo1_memo2_df.to_string())
                 raise e
 
@@ -405,7 +396,7 @@ class TestExpenseForecastUnit:
                 for i in range(0, expected_result_df.shape[0]):
                     assert (
                         expected_result_df.loc[i, "Memo Directives"].strip()
-                        == E.forecast_df.loc[i, "Memo Directives"].strip()
+                        == R.forecast_df.loc[i, "Memo Directives"].strip()
                     )
             except Exception as e:
                 log_in_color(
@@ -419,7 +410,7 @@ class TestExpenseForecastUnit:
                 date_memo1_memo2_df["Expected_Memo_Directives"] = expected_result_df[
                     "Memo Directives"
                 ]
-                date_memo1_memo2_df["Actual_Memo_Directives"] = E.forecast_df[
+                date_memo1_memo2_df["Actual_Memo_Directives"] = R.forecast_df[
                     "Memo Directives"
                 ]
                 log_in_color(logger, "red", "error", date_memo1_memo2_df.to_string())
@@ -429,7 +420,7 @@ class TestExpenseForecastUnit:
                 for i in range(0, expected_result_df.shape[0]):
                     assert (
                         expected_result_df.loc[i, "Next Income Date"]
-                        == E.forecast_df.loc[i, "Next Income Date"]
+                        == R.forecast_df.loc[i, "Next Income Date"]
                     )
             except Exception as e:
                 log_in_color(
@@ -443,7 +434,7 @@ class TestExpenseForecastUnit:
                 date_id1_id2_df["Expected Next Income Date"] = expected_result_df[
                     "Next Income Date"
                 ]
-                date_id1_id2_df["Actual Next Income Date"] = E.forecast_df[
+                date_id1_id2_df["Actual Next Income Date"] = R.forecast_df[
                     "Next Income Date"
                 ]
                 log_in_color(logger, "red", "error", date_id1_id2_df.to_string())
@@ -454,12 +445,12 @@ class TestExpenseForecastUnit:
             # print(f.T.to_string())
             raise e
 
-        return E
+        return R 
 
     @pytest.mark.unit
-    @pytest.mark.skip(reason="Skip so github action doesnt fail")
+    # @pytest.mark.skip(reason="Skip so github action doesnt fail")
     @pytest.mark.parametrize(
-        "test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df",
+        "test_description,account_set,budget_set,memo_rule_set,start_date,end_date,milestone_set,expected_result_df",
         [
             (
                 "test_p1_only_no_budget_items",
@@ -748,22 +739,18 @@ class TestExpenseForecastUnit:
         account_set,
         budget_set,
         memo_rule_set,
-        start_date_YYYYMMDD,
-        end_date_YYYYMMDD,
+        start_date,
+        end_date,
         milestone_set,
         expected_result_df,
     ):
-
-        expected_result_df.Date = [
-            datetime.datetime.strptime(x, "%Y%m%d") for x in expected_result_df.Date
-        ]
 
         E = self.compute_forecast_and_actual_vs_expected(
             account_set,
             budget_set,
             memo_rule_set,
-            start_date_YYYYMMDD,
-            end_date_YYYYMMDD,
+            start_date,
+            end_date,
             milestone_set,
             expected_result_df,
             test_description,
@@ -772,7 +759,7 @@ class TestExpenseForecastUnit:
     @pytest.mark.unit
     @pytest.mark.skip(reason="Skip bc github action fails")
     @pytest.mark.parametrize(
-        "test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df",
+        "test_description,account_set,budget_set,memo_rule_set,start_date,end_date,milestone_set,expected_result_df",
         [
             (
                 "test_p2_and_3__expect_defer",  # todo
@@ -993,8 +980,8 @@ class TestExpenseForecastUnit:
         account_set,
         budget_set,
         memo_rule_set,
-        start_date_YYYYMMDD,
-        end_date_YYYYMMDD,
+        start_date,
+        end_date,
         milestone_set,
         expected_result_df,
     ):
@@ -1007,8 +994,8 @@ class TestExpenseForecastUnit:
             account_set,
             budget_set,
             memo_rule_set,
-            start_date_YYYYMMDD,
-            end_date_YYYYMMDD,
+            start_date,
+            end_date,
             milestone_set,
             expected_result_df,
             test_description,
@@ -1016,7 +1003,7 @@ class TestExpenseForecastUnit:
 
     @pytest.mark.unit
     @pytest.mark.parametrize(
-        "test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df",
+        "test_description,account_set,budget_set,memo_rule_set,start_date,end_date,milestone_set,expected_result_df",
         [
             (
                 "test_p2_and_3__expect_skip",
@@ -1505,22 +1492,18 @@ class TestExpenseForecastUnit:
         account_set,
         budget_set,
         memo_rule_set,
-        start_date_YYYYMMDD,
-        end_date_YYYYMMDD,
+        start_date,
+        end_date,
         milestone_set,
         expected_result_df,
     ):
-
-        expected_result_df.Date = [
-            datetime.datetime.strptime(x, "%Y%m%d") for x in expected_result_df.Date
-        ]
 
         E = self.compute_forecast_and_actual_vs_expected(
             account_set,
             budget_set,
             memo_rule_set,
-            start_date_YYYYMMDD,
-            end_date_YYYYMMDD,
+            start_date,
+            end_date,
             milestone_set,
             expected_result_df,
             test_description,
@@ -1528,7 +1511,7 @@ class TestExpenseForecastUnit:
 
     @pytest.mark.unit
     @pytest.mark.parametrize(
-        "test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df",
+        "test_description,account_set,budget_set,memo_rule_set,start_date,end_date,milestone_set,expected_result_df",
         [
             (
                 "test_p4__cc_payment__pay_all_of_prev_part_of_curr__expect_800",
@@ -1832,8 +1815,8 @@ class TestExpenseForecastUnit:
         account_set,
         budget_set,
         memo_rule_set,
-        start_date_YYYYMMDD,
-        end_date_YYYYMMDD,
+        start_date,
+        end_date,
         milestone_set,
         expected_result_df,
     ):
@@ -1845,8 +1828,8 @@ class TestExpenseForecastUnit:
             account_set,
             budget_set,
             memo_rule_set,
-            start_date_YYYYMMDD,
-            end_date_YYYYMMDD,
+            start_date,
+            end_date,
             milestone_set,
             expected_result_df,
             test_description,
@@ -1855,7 +1838,7 @@ class TestExpenseForecastUnit:
     @pytest.mark.unit
     @pytest.mark.skip(reason="Skipping this test bc github action")
     @pytest.mark.parametrize(
-        "test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df",
+        "test_description,account_set,budget_set,memo_rule_set,start_date,end_date,milestone_set,expected_result_df",
         [
             (
                 "test_cc_advance_minimum_payment_in_1_payment_pay_over_minimum",  # implemented
@@ -2994,8 +2977,8 @@ class TestExpenseForecastUnit:
         account_set,
         budget_set,
         memo_rule_set,
-        start_date_YYYYMMDD,
-        end_date_YYYYMMDD,
+        start_date,
+        end_date,
         milestone_set,
         expected_result_df,
     ):
@@ -3007,8 +2990,8 @@ class TestExpenseForecastUnit:
             account_set,
             budget_set,
             memo_rule_set,
-            start_date_YYYYMMDD,
-            end_date_YYYYMMDD,
+            start_date,
+            end_date,
             milestone_set,
             expected_result_df,
             test_description,
@@ -3017,7 +3000,7 @@ class TestExpenseForecastUnit:
     @pytest.mark.unit
     @pytest.mark.skip(reason="Skipping this test for now")
     @pytest.mark.parametrize(
-        "test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df",
+        "test_description,account_set,budget_set,memo_rule_set,start_date,end_date,milestone_set,expected_result_df",
         [
             (
                 "test_distal_propagation__prev_only",
@@ -3255,8 +3238,8 @@ class TestExpenseForecastUnit:
         account_set,
         budget_set,
         memo_rule_set,
-        start_date_YYYYMMDD,
-        end_date_YYYYMMDD,
+        start_date,
+        end_date,
         milestone_set,
         expected_result_df,
     ):
@@ -3268,8 +3251,8 @@ class TestExpenseForecastUnit:
             account_set,
             budget_set,
             memo_rule_set,
-            start_date_YYYYMMDD,
-            end_date_YYYYMMDD,
+            start_date,
+            end_date,
             milestone_set,
             expected_result_df,
             test_description,
@@ -3278,7 +3261,7 @@ class TestExpenseForecastUnit:
     @pytest.mark.unit
     @pytest.mark.skip(reason="Skipping this test for now")
     @pytest.mark.parametrize(
-        "test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df",
+        "test_description,account_set,budget_set,memo_rule_set,start_date,end_date,milestone_set,expected_result_df",
         [
             (
                 "test_p7__additional_loan_payment__amt_10",
@@ -3697,8 +3680,8 @@ class TestExpenseForecastUnit:
         account_set,
         budget_set,
         memo_rule_set,
-        start_date_YYYYMMDD,
-        end_date_YYYYMMDD,
+        start_date,
+        end_date,
         milestone_set,
         expected_result_df,
     ):
@@ -3710,8 +3693,8 @@ class TestExpenseForecastUnit:
             account_set,
             budget_set,
             memo_rule_set,
-            start_date_YYYYMMDD,
-            end_date_YYYYMMDD,
+            start_date,
+            end_date,
             milestone_set,
             expected_result_df,
             test_description,
@@ -3719,7 +3702,7 @@ class TestExpenseForecastUnit:
 
     @pytest.mark.unit
     @pytest.mark.parametrize(
-        "test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df",
+        "test_description,account_set,budget_set,memo_rule_set,start_date,end_date,milestone_set,expected_result_df",
         [],
     )
     def test_TEMPLATE(
@@ -3728,8 +3711,8 @@ class TestExpenseForecastUnit:
         account_set,
         budget_set,
         memo_rule_set,
-        start_date_YYYYMMDD,
-        end_date_YYYYMMDD,
+        start_date,
+        end_date,
         milestone_set,
         expected_result_df,
     ):
@@ -3741,8 +3724,8 @@ class TestExpenseForecastUnit:
             account_set,
             budget_set,
             memo_rule_set,
-            start_date_YYYYMMDD,
-            end_date_YYYYMMDD,
+            start_date,
+            end_date,
             milestone_set,
             expected_result_df,
             test_description,
@@ -3768,7 +3751,7 @@ class TestExpenseForecastUnit:
     # test_loan_multiple_earliest_prepayment_possible_OVERPAY #36 day result
 
     ### Not sure if this is testing for deferrals properly
-    # @pytest.mark.parametrize('test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df,expected_memo_of_deferred_txn,expected_deferred_date',[
+    # @pytest.mark.parametrize('test_description,account_set,budget_set,memo_rule_set,start_date,end_date,milestone_set,expected_result_df,expected_memo_of_deferred_txn,expected_deferred_date',[
     # (
     #         'test_p5_and_6__expect_defer',
     #         AccountSet(checking_acct_list(1000)),
@@ -3866,8 +3849,8 @@ class TestExpenseForecastUnit:
     #     ),
     #
     # ])
-    # def test_deferrals(self, test_description, account_set, budget_set, memo_rule_set, start_date_YYYYMMDD,
-    #                        end_date_YYYYMMDD, milestone_set, expected_result_df, expected_memo_of_deferred_txn,
+    # def test_deferrals(self, test_description, account_set, budget_set, memo_rule_set, start_date,
+    #                        end_date, milestone_set, expected_result_df, expected_memo_of_deferred_txn,
     #                    expected_deferred_date):
     #
     #     expected_result_df.Date = [datetime.datetime.strptime(x, '%Y%m%d') for x in
@@ -3876,8 +3859,8 @@ class TestExpenseForecastUnit:
     #     E = self.compute_forecast_and_actual_vs_expected(account_set,
     #                                                      budget_set,
     #                                                      memo_rule_set,
-    #                                                      start_date_YYYYMMDD,
-    #                                                      end_date_YYYYMMDD,
+    #                                                      start_date,
+    #                                                      end_date,
     #                                                      milestone_set,
     #                                                      expected_result_df,
     #                                                      test_description)
@@ -3894,7 +3877,7 @@ class TestExpenseForecastUnit:
 
     @pytest.mark.unit
     @pytest.mark.parametrize(
-        "test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,expected_result_df",
+        "test_description,account_set,budget_set,memo_rule_set,start_date,end_date,milestone_set,expected_result_df",
         [
             (
                 "test_next_income_date",
@@ -3970,8 +3953,8 @@ class TestExpenseForecastUnit:
         account_set,
         budget_set,
         memo_rule_set,
-        start_date_YYYYMMDD,
-        end_date_YYYYMMDD,
+        start_date,
+        end_date,
         milestone_set,
         expected_result_df,
     ):
@@ -3983,8 +3966,8 @@ class TestExpenseForecastUnit:
             account_set,
             budget_set,
             memo_rule_set,
-            start_date_YYYYMMDD,
-            end_date_YYYYMMDD,
+            start_date,
+            end_date,
             milestone_set,
             expected_result_df,
             test_description,
@@ -3992,8 +3975,8 @@ class TestExpenseForecastUnit:
 
     def test_multiple_matching_memo_rule_regex(self):
 
-        start_date_YYYYMMDD = "20000101"
-        end_date_YYYYMMDD = "20000103"
+        start_date = "20000101"
+        end_date = "20000103"
 
         account_set = AccountSet([])
         budget_set = BudgetSet([])
@@ -4024,8 +4007,8 @@ class TestExpenseForecastUnit:
         )
 
         budget_set.addBudgetItem(
-            start_date_YYYYMMDD="20000102",
-            end_date_YYYYMMDD="20000102",
+            start_date="20000102",
+            end_date="20000102",
             priority=2,
             cadence="once",
             amount=0,
@@ -4054,13 +4037,13 @@ class TestExpenseForecastUnit:
         milestone_set = MilestoneSet([], [], [])
 
         with pytest.raises(ValueError):
-            ExpenseForecast(
+            ExpenseForecastInitialConditions(
+                datetime.datetime.strptime(start_date, "%Y%m%d").date(),
+                datetime.datetime.strptime(end_date, "%Y%m%d").date(),
                 account_set,
                 budget_set,
                 memo_rule_set,
-                start_date_YYYYMMDD,
-                end_date_YYYYMMDD,
-                milestone_set,
+                raise_exceptions=True,
             )
 
         # expected_result_df = pd.DataFrame({
@@ -4076,14 +4059,14 @@ class TestExpenseForecastUnit:
         # E = self.compute_forecast_and_actual_vs_expected(account_set,
         #                                                  budget_set,
         #                                                  memo_rule_set,
-        #                                                  start_date_YYYYMMDD,
-        #                                                  end_date_YYYYMMDD,
+        #                                                  start_date,
+        #                                                  end_date,
         #                                                  expected_result_df,
         #                                                  test_description)
 
     def test_str(self):
-        start_date_YYYYMMDD = "20000101"
-        end_date_YYYYMMDD = "20000103"
+        start_date = "20000101"
+        end_date = "20000103"
 
         account_set = AccountSet([])
         budget_set = BudgetSet([])
@@ -4114,8 +4097,8 @@ class TestExpenseForecastUnit:
         )
 
         budget_set.addBudgetItem(
-            start_date_YYYYMMDD="20000101",
-            end_date_YYYYMMDD="20000103",
+            start_date="20000101",
+            end_date="20000103",
             priority=1,
             cadence="daily",
             amount=0,
@@ -4145,24 +4128,23 @@ class TestExpenseForecastUnit:
 
         milestone_set = MilestoneSet([], [], [])
 
-        E = ExpenseForecast(
+        E = ExpenseForecastInitialConditions(
+            datetime.datetime.strptime(start_date, "%Y%m%d").date(),
+            datetime.datetime.strptime(end_date, "%Y%m%d").date(),
             account_set,
             budget_set,
             memo_rule_set,
-            start_date_YYYYMMDD,
-            end_date_YYYYMMDD,
-            milestone_set,
         )
 
         str(E)
 
-        E.runForecast()
+        E = ForecastHandler().runForecast(E, milestone_set)
 
         str(E)
 
     # def test_initialize_forecast_from_excel_not_yet_run(self):
-    #     start_date_YYYYMMDD = '20000101'
-    #     end_date_YYYYMMDD = '20000105'
+    #     start_date = '20000101'
+    #     end_date = '20000105'
     #
     #     A = AccountSet(
     #         checking_acct_list(2000) + credit_acct_list(100, 100, 0.01) + non_trivial_loan('test loan', 100, 0, 0.01))
@@ -4204,7 +4186,7 @@ class TestExpenseForecastUnit:
     #     MS.addCompositeMilestone('test composite milestone 1', [AM1], [MM1])  # does happen
     #     MS.addCompositeMilestone('test composite milestone 2', [AM2], [MM2])  # doesnt happen
     #
-    #     E1 = ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
+    #     E1 = ExpenseForecast(A, B, M, start_date, end_date, MS)
     #
     #     # E1.runForecast()  # Forecast_028363.html
     #     # E1.appendSummaryLines()
@@ -4223,16 +4205,16 @@ class TestExpenseForecastUnit:
     #     assert E1.unique_id == E2.unique_id
     #     # assert E1.start_ts == E2.start_ts
     #     # assert E1.end_ts == E2.end_ts
-    #     assert E1.start_date_YYYYMMDD == E2.start_date_YYYYMMDD
-    #     assert E1.end_date_YYYYMMDD == E2.end_date_YYYYMMDD
+    #     assert E1.start_date == E2.start_date
+    #     assert E1.end_date == E2.end_date
     #     assert E1.initial_account_set.getAccounts().to_string() == E2.initial_account_set.getAccounts().to_string()
     #     assert E1.initial_budget_set.getBudgetItems().to_string() == E2.initial_budget_set.getBudgetItems().to_string()
     #     assert E1.initial_memo_rule_set.getMemoRules().to_string() == E2.initial_memo_rule_set.getMemoRules().to_string()
     #     assert E1.milestone_set.to_json() == E2.milestone_set.to_json()
 
     # def test_initialize_from_excel_already_run__no_append(self):
-    #     start_date_YYYYMMDD = '20000101'
-    #     end_date_YYYYMMDD = '20000105'
+    #     start_date = '20000101'
+    #     end_date = '20000105'
     #
     #     A = AccountSet(
     #         checking_acct_list(2000) + credit_acct_list(100, 100, 0.01) + non_trivial_loan('test loan', 100, 0, 0.01))
@@ -4274,7 +4256,7 @@ class TestExpenseForecastUnit:
     #     MS.addCompositeMilestone('test composite milestone 1', [AM1], [MM1])  # does happen
     #     MS.addCompositeMilestone('test composite milestone 2', [AM2], [MM2])  # doesnt happen
     #
-    #     E1 = ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
+    #     E1 = ExpenseForecast(A, B, M, start_date, end_date, MS)
     #
     #     E1.runForecast()  # Forecast_028363.html
     #     E1.to_excel('./out')  # ./out/Forecast_028363.xlsx
@@ -4286,8 +4268,8 @@ class TestExpenseForecastUnit:
     #     assert E1.unique_id == E2.unique_id
     #     assert E1.start_ts == E2.start_ts
     #     assert E1.end_ts == E2.end_ts
-    #     assert E1.start_date_YYYYMMDD == E2.start_date_YYYYMMDD
-    #     assert E1.end_date_YYYYMMDD == E2.end_date_YYYYMMDD
+    #     assert E1.start_date == E2.start_date
+    #     assert E1.end_date == E2.end_date
     #     assert E1.initial_account_set.getAccounts().to_string() == E2.initial_account_set.getAccounts().to_string()
     #     assert E1.initial_budget_set.getBudgetItems().to_string() == E2.initial_budget_set.getBudgetItems().to_string()
     #     assert E1.initial_memo_rule_set.getMemoRules().to_string() == E2.initial_memo_rule_set.getMemoRules().to_string()
@@ -4323,8 +4305,8 @@ class TestExpenseForecastUnit:
     #                     raise e
 
     # def test_initialize_forecast_from_excel_already_run(self):
-    #     start_date_YYYYMMDD = '20000101'
-    #     end_date_YYYYMMDD = '20000105'
+    #     start_date = '20000101'
+    #     end_date = '20000105'
     #
     #     A = AccountSet(
     #         checking_acct_list(2000) + credit_acct_list(100, 100, 0.01) + non_trivial_loan('test loan', 100, 0, 0.01))
@@ -4366,7 +4348,7 @@ class TestExpenseForecastUnit:
     #     MS.addCompositeMilestone('test composite milestone 1', [AM1], [MM1])  # does happen
     #     MS.addCompositeMilestone('test composite milestone 2', [AM2], [MM2])  # doesnt happen
     #
-    #     E1 = ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
+    #     E1 = ExpenseForecast(A, B, M, start_date, end_date, MS)
     #
     #     E1.runForecast()  # Forecast_028363.html
     #     E1.to_excel('./out')  # ./out/Forecast_028363.xlsx
@@ -4378,8 +4360,8 @@ class TestExpenseForecastUnit:
     #     assert E1.unique_id == E2.unique_id
     #     assert E1.start_ts == E2.start_ts
     #     assert E1.end_ts == E2.end_ts
-    #     assert E1.start_date_YYYYMMDD == E2.start_date_YYYYMMDD
-    #     assert E1.end_date_YYYYMMDD == E2.end_date_YYYYMMDD
+    #     assert E1.start_date == E2.start_date
+    #     assert E1.end_date == E2.end_date
     #     assert E1.initial_account_set.getAccounts().to_string() == E2.initial_account_set.getAccounts().to_string()
     #     assert E1.initial_budget_set.getBudgetItems().to_string() == E2.initial_budget_set.getBudgetItems().to_string()
     #     assert E1.initial_memo_rule_set.getMemoRules().to_string() == E2.initial_memo_rule_set.getMemoRules().to_string()
@@ -4413,8 +4395,8 @@ class TestExpenseForecastUnit:
     #                 assert E1.forecast_df.iloc[index, c_index] == E2.forecast_df.iloc[index, c_index]
 
     # def test_initialize_forecast_from_json_not_yet_run(self):
-    #     start_date_YYYYMMDD = '20000101'
-    #     end_date_YYYYMMDD = '20000105'
+    #     start_date = '20000101'
+    #     end_date = '20000105'
     #
     #     A = AccountSet(
     #         checking_acct_list(2000) + credit_acct_list(100, 100, 0.01) + non_trivial_loan('test loan', 100, 0, 0.01))
@@ -4455,7 +4437,7 @@ class TestExpenseForecastUnit:
     #     MS.addCompositeMilestone('test composite milestone 1', [AM1], [MM1])  # does happen
     #     MS.addCompositeMilestone('test composite milestone 2', [AM2], [MM2])  # doesnt happen
     #
-    #     E1 = ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS,
+    #     E1 = ExpenseForecast(A, B, M, start_date, end_date, MS,
     #                                          forecast_set_name='Forecast Set Name',
     #                                          forecast_name='Forecast Name'
     #                                          )
@@ -4470,8 +4452,8 @@ class TestExpenseForecastUnit:
     #     assert E1.unique_id == E2.unique_id
     #     # assert E1.start_ts == E2.start_tsx
     #     # assert E1.end_ts == E2.end_ts
-    #     assert E1.start_date_YYYYMMDD == E2.start_date_YYYYMMDD
-    #     assert E1.end_date_YYYYMMDD == E2.end_date_YYYYMMDD
+    #     assert E1.start_date == E2.start_date
+    #     assert E1.end_date == E2.end_date
     #     assert E1.initial_account_set.getAccounts().to_string() == E2.initial_account_set.getAccounts().to_string()
     #     assert E1.initial_budget_set.getBudgetItems().to_string() == E2.initial_budget_set.getBudgetItems().to_string()
     #     assert E1.initial_memo_rule_set.getMemoRules().to_string() == E2.initial_memo_rule_set.getMemoRules().to_string()
@@ -4505,8 +4487,8 @@ class TestExpenseForecastUnit:
     #     #             assert E1.forecast_df.iloc[index, c_index] == E2.forecast_df.iloc[index, c_index]
 
     # def test_initialize_from_json_already_run__no_append(self):
-    #     start_date_YYYYMMDD = '20000101'
-    #     end_date_YYYYMMDD = '20000105'
+    #     start_date = '20000101'
+    #     end_date = '20000105'
     #
     #     A = AccountSet(
     #         checking_acct_list(2000) + credit_acct_list(100, 100, 0.01) + non_trivial_loan('test loan', 100, 0, 0.01))
@@ -4547,7 +4529,7 @@ class TestExpenseForecastUnit:
     #     MS.addCompositeMilestone('test composite milestone 1', [AM1], [MM1])  # does happen
     #     MS.addCompositeMilestone('test composite milestone 2', [AM2], [MM2])  # doesnt happen
     #
-    #     E1 = ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
+    #     E1 = ExpenseForecast(A, B, M, start_date, end_date, MS)
     #
     #     E1.runForecast()  # Forecast_028363.html
     #     E1.writeToJSONFile('./out') # ./out/Forecast_028363.json
@@ -4559,8 +4541,8 @@ class TestExpenseForecastUnit:
     #     assert E1.unique_id == E2.unique_id
     #     assert E1.start_ts == E2.start_ts
     #     assert E1.end_ts == E2.end_ts
-    #     assert E1.start_date_YYYYMMDD == E2.start_date_YYYYMMDD
-    #     assert E1.end_date_YYYYMMDD == E2.end_date_YYYYMMDD
+    #     assert E1.start_date == E2.start_date
+    #     assert E1.end_date == E2.end_date
     #     assert E1.initial_account_set.getAccounts().to_string() == E2.initial_account_set.getAccounts().to_string()
     #     assert E1.initial_budget_set.getBudgetItems().to_string() == E2.initial_budget_set.getBudgetItems().to_string()
     #     assert E1.initial_memo_rule_set.getMemoRules().to_string() == E2.initial_memo_rule_set.getMemoRules().to_string()
@@ -4591,8 +4573,8 @@ class TestExpenseForecastUnit:
     #                 assert E1.forecast_df.iloc[index, c_index] == E2.forecast_df.iloc[index, c_index]
 
     # def test_initialize_forecast_from_json_already_run(self):
-    #     start_date_YYYYMMDD = '20000101'
-    #     end_date_YYYYMMDD = '20000105'
+    #     start_date = '20000101'
+    #     end_date = '20000105'
     #
     #     A = AccountSet(
     #         checking_acct_list(2000) + credit_acct_list(100, 100, 0.01) + non_trivial_loan('test loan', 100, 0, 0.01))
@@ -4633,7 +4615,7 @@ class TestExpenseForecastUnit:
     #     MS.addCompositeMilestone('test composite milestone 1', [AM1], [MM1])  # does happen
     #     MS.addCompositeMilestone('test composite milestone 2', [AM2], [MM2])  # doesnt happen
     #
-    #     E1 = ExpenseForecast(A, B, M, start_date_YYYYMMDD, end_date_YYYYMMDD, MS)
+    #     E1 = ExpenseForecast(A, B, M, start_date, end_date, MS)
     #
     #     E1.runForecast()  # Forecast_028363.html
     #     E1.writeToJSONFile('./out/')  # ./out/Forecast_028363.json
@@ -4645,8 +4627,8 @@ class TestExpenseForecastUnit:
     #     assert E1.unique_id == E2.unique_id
     #     assert E1.start_ts == E2.start_ts
     #     assert E1.end_ts == E2.end_ts
-    #     assert E1.start_date_YYYYMMDD == E2.start_date_YYYYMMDD
-    #     assert E1.end_date_YYYYMMDD == E2.end_date_YYYYMMDD
+    #     assert E1.start_date == E2.start_date
+    #     assert E1.end_date == E2.end_date
     #     assert E1.initial_account_set.getAccounts().to_string() == E2.initial_account_set.getAccounts().to_string()
     #     assert E1.initial_budget_set.getBudgetItems().to_string() == E2.initial_budget_set.getBudgetItems().to_string()
     #     assert E1.initial_memo_rule_set.getMemoRules().to_string() == E2.initial_memo_rule_set.getMemoRules().to_string()
@@ -4837,8 +4819,8 @@ class TestExpenseForecastUnit:
     def test_forecast_longer_than_satisfice(self):
         # if satisfice fails on the second day of the forecast, there is weirdness
 
-        start_date_YYYYMMDD = "20000101"
-        end_date_YYYYMMDD = "20000104"
+        start_date = "20000101"
+        end_date = "20000104"
 
         account_set = AccountSet([])
         budget_set = BudgetSet([])
@@ -4854,8 +4836,8 @@ class TestExpenseForecastUnit:
         )
 
         budget_set.addBudgetItem(
-            start_date_YYYYMMDD="20000101",
-            end_date_YYYYMMDD="20000104",
+            start_date="20000101",
+            end_date="20000104",
             priority=1,
             cadence="daily",
             amount=50,
@@ -4884,18 +4866,17 @@ class TestExpenseForecastUnit:
         # E = self.compute_forecast_and_actual_vs_expected(account_set,
         #                                                  budget_set,
         #                                                  memo_rule_set,
-        #                                                  start_date_YYYYMMDD,
-        #                                                  end_date_YYYYMMDD,
+        #                                                  start_date,
+        #                                                  end_date,
         #                                                  expected_result_df,
         #                                                  test_description)
 
-        E = ExpenseForecast(
+        E = ExpenseForecastInitialConditions(
+            datetime.datetime.strptime(start_date, "%Y%m%d").date(),
+            datetime.datetime.strptime(end_date, "%Y%m%d").date(),
             account_set,
             budget_set,
             memo_rule_set,
-            start_date_YYYYMMDD,
-            end_date_YYYYMMDD,
-            milestone_set,
         )
 
         # todo what should we do here?
@@ -4914,7 +4895,7 @@ class TestExpenseForecastUnit:
 
     @pytest.mark.unit
     @pytest.mark.parametrize(
-        "test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,account_milestone_names,expected_milestone_dates",
+        "test_description,account_set,budget_set,memo_rule_set,start_date,end_date,milestone_set,account_milestone_names,expected_milestone_dates",
         [
             (
                 "test_account_milestone",
@@ -4951,21 +4932,20 @@ class TestExpenseForecastUnit:
         account_set,
         budget_set,
         memo_rule_set,
-        start_date_YYYYMMDD,
-        end_date_YYYYMMDD,
+        start_date,
+        end_date,
         milestone_set,
         account_milestone_names,
         expected_milestone_dates,
     ):
-        E = ExpenseForecast(
+        E = ExpenseForecastInitialConditions(
+            datetime.datetime.strptime(start_date, "%Y%m%d").date(),
+            datetime.datetime.strptime(end_date, "%Y%m%d").date(),
             account_set,
             budget_set,
             memo_rule_set,
-            start_date_YYYYMMDD,
-            end_date_YYYYMMDD,
-            milestone_set,
         )
-        E.runForecast()
+        E = ForecastHandler().runForecast(E, milestone_set)
         assert len(account_milestone_names) == len(expected_milestone_dates)
 
         for i in range(0, len(account_milestone_names)):
@@ -4985,7 +4965,7 @@ class TestExpenseForecastUnit:
 
     @pytest.mark.unit
     @pytest.mark.parametrize(
-        "test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,memo_milestone_names,expected_milestone_dates",
+        "test_description,account_set,budget_set,memo_rule_set,start_date,end_date,milestone_set,memo_milestone_names,expected_milestone_dates",
         [
             (
                 "test_memo_milestone",
@@ -5020,21 +5000,20 @@ class TestExpenseForecastUnit:
         account_set,
         budget_set,
         memo_rule_set,
-        start_date_YYYYMMDD,
-        end_date_YYYYMMDD,
+        start_date,
+        end_date,
         milestone_set,
         memo_milestone_names,
         expected_milestone_dates,
     ):
-        E = ExpenseForecast(
+        E = ExpenseForecastInitialConditions(
+            datetime.datetime.strptime(start_date, "%Y%m%d").date(),
+            datetime.datetime.strptime(end_date, "%Y%m%d").date(),
             account_set,
             budget_set,
             memo_rule_set,
-            start_date_YYYYMMDD,
-            end_date_YYYYMMDD,
-            milestone_set,
         )
-        E.runForecast()
+        E = ForecastHandler().runForecast(E, milestone_set)
 
         assert len(memo_milestone_names) == len(expected_milestone_dates)
 
@@ -5053,7 +5032,7 @@ class TestExpenseForecastUnit:
 
     @pytest.mark.unit
     @pytest.mark.parametrize(
-        "test_description,account_set,budget_set,memo_rule_set,start_date_YYYYMMDD,end_date_YYYYMMDD,milestone_set,composite_milestone_names,expected_milestone_dates",
+        "test_description,account_set,budget_set,memo_rule_set,start_date,end_date,milestone_set,composite_milestone_names,expected_milestone_dates",
         [
             (
                 "test composite milestone",
@@ -5108,22 +5087,21 @@ class TestExpenseForecastUnit:
         account_set,
         budget_set,
         memo_rule_set,
-        start_date_YYYYMMDD,
-        end_date_YYYYMMDD,
+        start_date,
+        end_date,
         milestone_set,
         composite_milestone_names,
         expected_milestone_dates,
     ):
 
-        E = ExpenseForecast(
+        E = ExpenseForecastInitialConditions(
+            datetime.datetime.strptime(start_date, "%Y%m%d").date(),
+            datetime.datetime.strptime(end_date, "%Y%m%d").date(),
             account_set,
             budget_set,
             memo_rule_set,
-            start_date_YYYYMMDD,
-            end_date_YYYYMMDD,
-            milestone_set,
         )
-        E.runForecast()
+        E = ForecastHandler().runForecast(E, milestone_set)
         assert len(composite_milestone_names) == len(expected_milestone_dates)
 
         for i in range(0, len(composite_milestone_names)):

@@ -40,10 +40,10 @@ def generate_date_sequence(start_date, num_days, cadence):
     elif cadence.lower() == "quarterly":
         day_delta = start_date.day
         start_date = start_date - datetime.timedelta(days=day_delta)
-        first_of_each_relevant_quarter = pd.date_range(start_date, end_date, freq="Q")
+        first_of_each_relevant_quarter = pd.date_range(start_date, end_date, freq="QE")
         return_series = first_of_each_relevant_quarter + datetime.timedelta(days=day_delta)
 
-    elif cadence.lower() == "yearly":
+    elif cadence.lower() == "anually":
         day_delta = start_date.day - 1
         start_date = start_date - datetime.timedelta(days=day_delta)
         first_of_each_relevant_year = pd.date_range(start_date, end_date, freq="YS")

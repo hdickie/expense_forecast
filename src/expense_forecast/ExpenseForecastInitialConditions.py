@@ -203,7 +203,7 @@ class ExpenseForecastInitialConditions:
         #TODO this should be refactored out to a validation method
         distinct_base_account_names__from_acct = pd.DataFrame(
             pd.DataFrame(accounts_df.Name)
-            .apply(lambda x: x[0].split(":")[0], axis=1)
+            .apply(lambda x: x.iloc[0].split(":")[0], axis=1)
             .drop_duplicates()
         ).rename(columns={0: "Name"})
         account_names__from_memo = pd.concat(

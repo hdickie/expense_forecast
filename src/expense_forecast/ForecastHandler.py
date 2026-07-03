@@ -1,4 +1,4 @@
-from expense_forecast.AccountSet import AccountSet
+from expense_forecast.AccountSet import AccountBoundaryError, AccountSet
 from expense_forecast.BudgetSet import BudgetSet
 from expense_forecast.ForecastSet import ForecastSet
 from expense_forecast.MemoRuleSet import MemoRuleSet 
@@ -69,8 +69,11 @@ class ForecastHandler:
     #     cls.milestone_set = milestone_set
 
     @classmethod
-    def runForecast(cls, IO: ExpenseForecastInitialConditions, milestone_set: MilestoneSet, 
-                    ):
+    def runForecast(cls, 
+                    IO: ExpenseForecastInitialConditions, 
+                    milestone_set: MilestoneSet, 
+                    include_debug_columns = False
+                    ) -> ExpenseForecastResult:
         # print('Starting Forecast #'+str(cls.unique_id))
         log_stack_depth = 0
         cls.start_ts = datetime.datetime.now()
@@ -107,7 +110,8 @@ class ForecastHandler:
                 memo_rule_set=copy.deepcopy(IO.initial_memo_rule_set), 
                 log_stack_depth=log_stack_depth,
                 raise__satisfice_failed_exception=False,
-                progress_bar=progress_bar
+                progress_bar=progress_bar,
+                include_debug_columns=include_debug_columns
             )
         )
 
@@ -156,8 +160,12 @@ class ForecastHandler:
 
         cls.end_ts = datetime.datetime.now()
         forecast_df = cls._appendSummaryLines(IO.initial_account_set, forecast_df, log_stack_depth=log_stack_depth)
-        cls.evaluateMilestones(forecast_df, milestone_set, log_stack_depth=log_stack_depth)
+        milestone_results = cls.evaluateMilestones(forecast_df, milestone_set, log_stack_depth=log_stack_depth)
 
+        if milestone_set:
+            R = ExpenseForecastResult(IO, forecast_df, milestone_set=milestone_set, milestone_results=milestone_results)
+        else:
+            R = ExpenseForecastResult(IO, forecast_df)
         log_in_color(
             logger, "white", "info", "Finished Forecast " + str(IO.unique_id)
         )
@@ -167,6 +175,7 @@ class ForecastHandler:
 
         # cls.forecast_df.to_csv('./out//Forecast_' + cls.unique_id + '.csv') #this is only the forecast not the whole ExpenseForecast object
         # cls.writeToJSONFile() #this is the whole ExpenseForecast object #todo this should accept a path parameter
+        return R
 
     
     
@@ -199,58 +208,26 @@ class ForecastHandler:
     #     # cls.forecast_df.to_csv('out.csv', index=False)
 
     @classmethod
-    def _getInitialForecastRow(cls, start_date, account_set):
+    def _getInitialForecastRow(cls, start_date, account_set, include_debug_columns=False):
         # print('ENTER _getInitialForecastRow')
         min_sched_date = start_date
-        account_set_df = account_set.getAccounts()
-        # print('account_set_df:')
-        # print(account_set_df.to_string())
+        account_set_df = account_set.getAccounts(include_debug_columns=include_debug_columns)
 
-        date_only_df = pd.DataFrame(["Date", min_sched_date]).T
-
-        accounts_only_df = pd.DataFrame(account_set_df.iloc[:, 0:1]).T
-        accounts_only_df.reset_index(inplace=True, drop=True)
-        accounts_only_df.columns = accounts_only_df.iloc[0]
-
-        starting_zero_balances_df = pd.DataFrame([0] * account_set_df.shape[0]).T
-        starting_zero_balances_df.reset_index(inplace=True, drop=True)
-        starting_zero_balances_df.columns = accounts_only_df.iloc[0]
-
-        accounts_only_df = pd.concat([accounts_only_df, starting_zero_balances_df]).T
-        accounts_only_df.reset_index(drop=True, inplace=True)
-        accounts_only_df.columns = [0, 1]
-
-        next_income_date_only_df = pd.DataFrame(["Next Income Date", ""]).T
-        memo_directive_only_df = pd.DataFrame(["Memo Directives", ""]).T
-        memo_only_df = pd.DataFrame(["Memo", ""]).T
-
-        initial_forecast_row_df = pd.concat(
-            [
-                date_only_df,
-                accounts_only_df,
-                next_income_date_only_df,
-                memo_directive_only_df,
-                memo_only_df,
-            ]
+        account_balances = dict(
+            zip(account_set_df.iloc[:, 0], account_set_df["Balance"])
         )
 
-        initial_forecast_row_df = initial_forecast_row_df.T
-        initial_forecast_row_df.columns = initial_forecast_row_df.iloc[0, :]
-        initial_forecast_row_df = initial_forecast_row_df[1:]
-        initial_forecast_row_df.reset_index(drop=True, inplace=True)
-
-        # print('initial forecast values pre assignment:')
-        # print(forecast_df.to_string())
-
-        # set initial values
-        for i in range(0, account_set_df.shape[0]):
-            row = account_set_df.iloc[i, :]
-            # print('row:'+str(row))
-            # print('Setting '+forecast_df.columns.tolist()[i+1]+' = '+str(row.Balance))
-
-            initial_forecast_row_df.iloc[0, 1 + i] = row.Balance
-
-        return initial_forecast_row_df
+        return pd.DataFrame(
+            [
+                {
+                    "Date": min_sched_date,
+                    **account_balances,
+                    "Next Income Date": "",
+                    "Memo Directives": "",
+                    "Memo": "",
+                }
+            ]
+        )
 
     @classmethod
     def _addANewDayToTheForecast(cls, forecast_df, d):
@@ -559,7 +536,7 @@ class ForecastHandler:
     # @profile
     @classmethod
     def _attemptTransaction(
-        cls, forecast_df, account_set, memo_set, confirmed_df, proposed_row_df, log_stack_depth
+        cls, end_date, forecast_df, account_set, memo_set, confirmed_df, proposed_row_df, log_stack_depth
     ):
         """
         Attempts to execute a proposed transaction and returns the hypothetical future state of the forecast
@@ -613,10 +590,9 @@ class ForecastHandler:
 
             # Determine the transaction date and previous date
             txn_date = proposed_row_df["Date"]
-            txn_datetime = pd.to_datetime(txn_date, format="%Y%m%d")
 
             # WITH OPTIMIZATION
-            previous_date = (txn_datetime - datetime.timedelta(days=1))
+            previous_date = (txn_date - datetime.timedelta(days=1))
 
             # # WITHOUT OPTIMIZATION
             # previous_date = cls.start_date
@@ -628,7 +604,7 @@ class ForecastHandler:
             # Compute the hypothetical future forecast starting from the previous date
             hypothetical_future_forecast = cls._computeOptimalForecast(
                 start_date=previous_date,
-                end_date=cls.end_date,
+                end_date=end_date,
                 confirmed_df=updated_confirmed_df,
                 proposed_df=empty_df,
                 deferred_df=empty_df,
@@ -659,13 +635,9 @@ class ForecastHandler:
             )
             return updated_forecast  # Transaction is permitted
 
-        except ValueError as e:
+        except AccountBoundaryError as e:
             # Log the exception
             log_in_color(logger, "red", "debug", str(e), log_stack_depth)
-
-            # Reraise the exception if it's not due to account boundary violations
-            if "Account boundaries were violated" not in str(e):
-                raise e
 
             log_stack_depth -= 1
             log_in_color(
@@ -807,8 +779,7 @@ class ForecastHandler:
             )
 
         # Get the billing start date
-        billing_start_date_str = account_row["Billing_Start_Date"].iloc[0]
-        billing_start_date = pd.to_datetime(billing_start_date_str, format="%Y%m%d")
+        billing_start_date = account_row["Billing_Start_Date"].iloc[0]
 
         current_date = d
 
@@ -1073,6 +1044,7 @@ class ForecastHandler:
     @classmethod
     def _processProposedTransactions(
         cls,
+        end_date,
         account_set,
         forecast_df,
         d,
@@ -1141,7 +1113,7 @@ class ForecastHandler:
         # log_in_color(logger, 'white', 'debug', relevant_proposed_df.to_string(), log_stack_depth)
 
         # Iterate over each proposed transaction
-        for proposed_index, proposed_row in relevant_proposed_df.iterrows():
+        for _, proposed_row in relevant_proposed_df.iterrows():
             log_in_color(
                 logger,
                 "cyan",
@@ -1159,17 +1131,17 @@ class ForecastHandler:
             # log_in_color(logger, 'cyan', 'info', account_set.getAccounts().to_string(), log_stack_depth)
             # log_in_color(logger, 'cyan', 'info', confirmed_df.to_string(), log_stack_depth)
 
-            # Find the matching memo rule for the proposed transaction
-            memo_rule_set = memo_set.findMatchingMemoRule(
-                proposed_row["Memo"], proposed_row["Priority"]
-            )
-            memo_rule_row = memo_rule_set.getMemoRules().iloc[0]
+            ### TODO was this supposed to go somewhere ?
+            # # Find the matching memo rule for the proposed transaction
+            # memo_rule = memo_set.findMatchingMemoRule(
+            #     proposed_row["Memo"], proposed_row["Priority"]
+            # )
 
             # multiple txns same day same priority p!=1 have not been propagated even if approved
             # editing confirmed_df causes downstream problems, so we have a working copy for the scope of this method
             # local_scope_og_confirmed_df = confirmed_df
             local_scope_confirmed_df = pd.concat([new_confirmed_df, confirmed_df])
-            result = cls._attemptTransaction(
+            result = cls._attemptTransaction(end_date=end_date,
                 forecast_df=forecast_df,
                 account_set=copy.deepcopy(account_set),
                 memo_set=memo_set,
@@ -1249,7 +1221,7 @@ class ForecastHandler:
                     proposed_row["Amount"] = reduced_amount
 
                     # local_scope_confirmed_df = pd.concat([new_confirmed_df, local_scope_og_confirmed_df])
-                    result = cls._attemptTransaction(
+                    result = cls._attemptTransaction(end_date=end_date,
                         forecast_df=forecast_df,
                         account_set=copy.deepcopy(account_set),
                         memo_set=memo_set,
@@ -2319,11 +2291,7 @@ class ForecastHandler:
                 )[0]
 
                 transaction_permitted = True
-            except ValueError as e:
-                # Check if the exception is due to account boundary violations
-                if "Account boundaries were violated" not in str(e):
-                    # Reraise the exception if it's not expected
-                    raise e
+            except AccountBoundaryError:
                 transaction_permitted = False
 
             if not transaction_permitted and deferred_row["Deferrable"]:
@@ -2594,7 +2562,8 @@ class ForecastHandler:
         deferred_df,
         skipped_df,
         priority_level,
-        log_stack_depth
+        log_stack_depth,
+        include_debug_columns=False
     ):
         log_in_color(
             logger,
@@ -2621,6 +2590,9 @@ class ForecastHandler:
             (proposed_df.Priority == priority_level)
             & (proposed_df.Date == d)
         ]
+
+        # log_in_color(logger, 'green', 'debug', (confirmed_df.Priority == priority_level), log_stack_depth)
+        # log_in_color(logger, 'green', 'debug', (confirmed_df.Date == d), log_stack_depth)
         relevant_confirmed_df = confirmed_df[
             (confirmed_df.Priority == priority_level)
             & (confirmed_df.Date == d)
@@ -2675,9 +2647,9 @@ class ForecastHandler:
                 account_set=account_set, forecast_df=forecast_df, d=d, log_stack_depth=log_stack_depth
             )
 
-        # if not relevant_confirmed_df.empty:
-        #     log_in_color(logger, 'white', 'debug', 'relevant_confirmed_df:', log_stack_depth)
-        #     log_in_color(logger, 'white', 'debug', relevant_confirmed_df.to_string(), log_stack_depth)
+        if not relevant_confirmed_df.empty:
+            log_in_color(logger, 'magenta', 'debug', 'relevant_confirmed_df:', log_stack_depth)
+            log_in_color(logger, 'magenta', 'debug', relevant_confirmed_df.to_string(), log_stack_depth)
 
         try:
             # Process confirmed transactions
@@ -2701,6 +2673,7 @@ class ForecastHandler:
         if priority_level > 1:
             forecast_df, new_confirmed_df, new_deferred_df, new_skipped_df = (
                 cls._processProposedTransactions(
+                    end_date=end_date,
                     account_set=account_set,
                     forecast_df=forecast_df,
                     d=d,
@@ -2829,8 +2802,8 @@ class ForecastHandler:
             # Calculate the number of days since the billing start date
             billing_start_date = account_row["Billing_Start_Date"]
             num_days = (
-                pd.to_datetime(current_date, format="%Y%m%d")
-                - pd.to_datetime(billing_start_date, format="%Y%m%d")
+                current_date
+                - billing_start_date
             ).days
 
             # Skip if current date is before billing start date
@@ -3414,9 +3387,6 @@ class ForecastHandler:
         log_stack_depth += 1
 
         current_date = d
-
-        # Ensure 'Date' column is in datetime format
-        # forecast_df['Date_dt'] = pd.to_datetime(forecast_df['Date'], format='%Y%m%d')
 
         # Filter forecast_df for current and future dates
         current_and_future_forecast_df = forecast_df[
@@ -5916,7 +5886,7 @@ class ForecastHandler:
     # @profile
     @classmethod
     def _propagateOptimizationTransactionsIntoTheFuture(
-        cls, account_set_before_p2_plus_txn, forecast_df, date_string, log_stack_depth
+        cls, end_date, account_set_before_p2_plus_txn, forecast_df, date_string, log_stack_depth
     ):
         """
         Propagates optimization transactions into the future forecast.
@@ -6024,8 +5994,8 @@ class ForecastHandler:
                 interest_accrual_dates__list_of_lists.append([])
                 continue
 
-            start_date = pd.to_datetime(a_row["Billing_Start_Date"], format="%Y%m%d")
-            end_date = pd.to_datetime(cls.end_date, format="%Y%m%d")
+            start_date = a_row["Billing_Start_Date"]
+            end_date = end_date
             num_days = (end_date - start_date).days
             account_specific_iad = generate_date_sequence(
                 a_row["Billing_Start_Date"], num_days, interest_cadence
@@ -6041,8 +6011,8 @@ class ForecastHandler:
                 billing_dates__list_of_lists.append([])
                 continue
 
-            start_date = pd.to_datetime(billing_start_date, format="%Y%m%d")
-            end_date = pd.to_datetime(cls.end_date, format="%Y%m%d")
+            start_date = billing_start_date
+            end_date = end_date
             num_days = (end_date - start_date).days
             account_specific_bd = generate_date_sequence(
                 billing_start_date, num_days, "monthly"
@@ -6839,7 +6809,8 @@ class ForecastHandler:
         skipped_df,
         raise__satisfice_failed_exception,
         log_stack_depth,
-        progress_bar=None
+        progress_bar=None,
+        include_debug_columns=False
     ):
         log_in_color(
             logger,
@@ -6868,7 +6839,7 @@ class ForecastHandler:
         last_iteration_ts = None  # this is here to remove a warning
 
         if not raise__satisfice_failed_exception:
-            log_in_color(logger, "white", "info", "Beginning Optimization.")
+            log_in_color(logger, "green", "info", "Beginning Optimization.")
             # log_in_color(logger, 'white', 'info', forecast_df.to_string())
             last_iteration_ts = datetime.datetime.now()
 
@@ -6922,7 +6893,7 @@ class ForecastHandler:
                     # print('BEFORE ETFD:')
                     # print(confirmed_df.to_string())
                     forecast_df, confirmed_df, deferred_df, skipped_df = (
-                        cls._executeTransactionsForDay(cls,
+                        cls._executeTransactionsForDay(
                             end_date=end_date,
                             account_set=account_set,
                             forecast_df=forecast_df,
@@ -6932,7 +6903,9 @@ class ForecastHandler:
                             proposed_df=remaining_unproposed_transactions_df,
                             deferred_df=deferred_df,
                             skipped_df=skipped_df,
-                            priority_level=priority_index, log_stack_depth=log_stack_depth
+                            priority_level=priority_index, 
+                            log_stack_depth=log_stack_depth,
+                            include_debug_columns=include_debug_columns
                         )
                     )
                     # print('AFTER ETFD:')
@@ -6982,10 +6955,12 @@ class ForecastHandler:
                     # print('about to _propagateOptimizationTransactionsIntoTheFuture')
                     # print('BEFORE')
                     # print(forecast_df.to_string())
-                    forecast_df = cls._propagateOptimizationTransactionsIntoTheFuture(
+                    forecast_df = cls._propagateOptimizationTransactionsIntoTheFuture(end_date=end_date,
                         account_set_before_p2_plus_txn=account_set_before_p2_plus_txn,
                         forecast_df=forecast_df,
-                        date_string=d, log_stack_depth=log_stack_depth
+                        date_string=d, 
+                        log_stack_depth=log_stack_depth,
+                        include_debug_columns=include_debug_columns
                     )
 
                     # print('AFTER')
@@ -7005,8 +6980,8 @@ class ForecastHandler:
     @classmethod
     def _cleanUpAfterFailedSatisfice(
         cls, end_date, confirmed_df, proposed_df, deferred_df, skipped_df, log_stack_depth
-    ):
-
+    ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        log_in_color(logger, 'red', 'debug', 'ENTER _cleanUpAfterFailedSatisfice', log_stack_depth)
         # this logic takes everything that was not executed and adds it to skipped_df
         not_confirmed_sel_vec = [
             (
@@ -7187,7 +7162,8 @@ class ForecastHandler:
         forecast_df,
         raise__satisfice_failed_exception,
         log_stack_depth,
-        progress_bar=None
+        progress_bar=None,
+        include_debug_columns=False
     ):
         log_in_color(logger, "white", "info", "ENTER _satisfice", log_stack_depth)
         log_stack_depth += 1
@@ -7195,7 +7171,6 @@ class ForecastHandler:
         all_days = list_of_date_strings  # Rename for clarity
 
         for d in all_days:
-            log_in_color(logger, "white", "info", 'satisfice :: '+d.strftime('%Y-%m-%d'), log_stack_depth)
             if progress_bar:
                 progress_bar.update(1)
                 progress_bar.refresh()
@@ -7206,15 +7181,16 @@ class ForecastHandler:
             # Skip the first day, considered as final
             if d == start_date:
                 continue
+            log_in_color(logger, "white", "info", 'satisfice TOP :: '+d.strftime('%Y-%m-%d'), log_stack_depth)
 
             try:
                 # Log transaction details if exception handling is not strict
                 if not raise__satisfice_failed_exception:
                     log_string = f"1 {d}"
 
-                # if not confirmed_df.empty:
-                #     log_in_color(logger, 'white', 'debug', 'confirmed_df:', log_stack_depth)
-                #     log_in_color(logger, 'white', 'debug', confirmed_df.to_string(), log_stack_depth)
+                if not confirmed_df.empty:
+                    log_in_color(logger, 'magenta', 'debug', 'satisfice confirmed_df:', log_stack_depth)
+                    log_in_color(logger, 'magenta', 'debug', confirmed_df.to_string(), log_stack_depth)
 
                 # Execute transactions for the day, priority 1 (non-negotiable)
                 forecast_df, confirmed_df, deferred_df, skipped_df = (
@@ -7301,14 +7277,13 @@ class ForecastHandler:
                 # Final sync for the day
                 account_set = cls._sync_account_set_w_forecast_day(
                     account_set=account_set, forecast_df=forecast_df, d=d, log_stack_depth=log_stack_depth)
+                
+                log_in_color(logger, "white", "info", 'satisfice BOTTOM :: '+d.strftime('%Y-%m-%d'), log_stack_depth)
 
-            except ValueError as e:
+            except AccountBoundaryError as e:
                 error_message = str(e.args)
-                # Handle specific account boundary violations
-                if (
-                    re.search(".*Account boundaries were violated.*", error_message)
-                    and not raise__satisfice_failed_exception
-                ):
+                log_in_color(logger, 'red', 'error', error_message, log_stack_depth)
+                if not raise__satisfice_failed_exception:
                     cls.end_date = d - datetime.timedelta(days=1)
 
                     log_in_color(
@@ -7373,6 +7348,7 @@ class ForecastHandler:
         log_stack_depth,
         raise__satisfice_failed_exception=True,
         progress_bar=None,
+        include_debug_columns=False
     ):
         log_in_color(
             logger,
@@ -7408,19 +7384,16 @@ class ForecastHandler:
             proposed_df = cls._sortTxnsToPreventErrors(
                 proposed_df, account_set=account_set, memo_set=memo_rule_set, log_stack_depth=log_stack_depth)
 
-
-        ### TODO MANUAL REVIEW ENDED HERE
-
         # Generate the list of days for the forecast, excluding the first day
         all_days = generate_date_sequence(start_date, 
-                                          (end_date - start_date).days - 1,  
+                                          (end_date - start_date).days,  
                                           "daily")
         # logger.debug('all_days:')
         # logger.debug(all_days)
         # all_days = [d.strftime("%Y%m%d") for d in all_days]
 
         # Initialize the forecast DataFrame with the first day's account balances
-        forecast_df = cls._getInitialForecastRow(start_date=start_date, account_set=account_set)
+        forecast_df = cls._getInitialForecastRow(start_date=start_date, account_set=account_set, include_debug_columns=include_debug_columns)
 
         # Attempt to _satisfice (execute priority 1 transactions for each day)
         log_in_color(logger, 'magenta', 'debug', confirmed_df.to_string(), log_stack_depth)
@@ -7433,7 +7406,8 @@ class ForecastHandler:
             forecast_df=forecast_df,
             raise__satisfice_failed_exception=raise__satisfice_failed_exception,
             progress_bar=progress_bar,
-            log_stack_depth=log_stack_depth
+            log_stack_depth=log_stack_depth,
+            include_debug_columns=include_debug_columns
         )
 
         # Check if _satisfice succeeded by verifying the last date in the forecast
@@ -7463,7 +7437,9 @@ class ForecastHandler:
                         deferred_df=deferred_df,
                         skipped_df=skipped_df,
                         raise__satisfice_failed_exception=raise__satisfice_failed_exception,
-                        progress_bar=progress_bar, log_stack_depth=log_stack_depth
+                        progress_bar=progress_bar, 
+                        log_stack_depth=log_stack_depth,
+                        include_debug_columns=include_debug_columns
                     )
                 )
 
@@ -7484,8 +7460,10 @@ class ForecastHandler:
 
             confirmed_df, deferred_df, skipped_df = cls._cleanUpAfterFailedSatisfice(
                 end_date=end_date,
-                confirmed_df=confirmed_df, proposed_df=proposed_df,
-                deferred_df=deferred_df, skipped_df=skipped_df,
+                confirmed_df=confirmed_df, 
+                proposed_df=proposed_df,
+                deferred_df=deferred_df, 
+                skipped_df=skipped_df,
                 log_stack_depth=log_stack_depth)
 
         # Decrement the log stack depth as we exit this method

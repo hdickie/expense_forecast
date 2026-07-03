@@ -139,7 +139,7 @@ class TestBudgetSetMethods:
             start_date=date(2022, 1, 1),
             end_date=date(2023, 1, 1),
             priority=1,
-            cadence="yearly",
+            cadence="anually",
             amount=0,
             deferrable=False,
             partial_payment_allowed=False,

@@ -2,7 +2,7 @@
 import json
 from io import StringIO
 from pathlib import Path
-
+from expense_forecast.ExpenseForecastInitialConditions import ExpenseForecastInitialConditions 
 import pandas as pd
 import jsonpickle
 
@@ -44,7 +44,7 @@ class ExpenseForecastResult:
 
     # todo confirm that I don't need __getstate__, __setstate__. I think pickle can compress data frames and I might not want that
 
-    def __init__(self, unique_id, forecast_df, **kwargs):
+    def __init__(self, IO: ExpenseForecastInitialConditions, forecast_df, **kwargs):
 
         allowed_kwargs = ['confirmed_df', 'deferred_df', 'skipped_df', 'milestone_set', 'milestone_results']
         for key in kwargs:
@@ -60,7 +60,7 @@ class ExpenseForecastResult:
         # interval can be inferred, and validation logic for that belongs in SimulationStepper
         # this is an internal method, so we don't validate here. Validate only at entry points
 
-        self.unique_id = unique_id
+        self.unique_id = IO.unique_id
         self.forecast_df = forecast_df
 
         self.confirmed_df = kwargs.get('confirmed_df', None)

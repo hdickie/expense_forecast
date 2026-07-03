@@ -122,63 +122,48 @@ class BudgetSet:
 
     def getBudgetSchedule(self):
 
-        current_budget_schedule = pd.DataFrame(
-            {
-                "Date": [],
-                "Priority": [],
-                "Amount": [],
-                "Memo": [],
-                "Income_Flag": [],
-                "Deferrable": [],
-                "Partial_Payment_Allowed": [],
-            }
-        )
+        budget_schedule_rows = []
         for budget_item in self.budget_items:
             relative_num_days = (budget_item.end_date - budget_item.start_date).days
             relevant_date_sequence = generate_date_sequence(
                 budget_item.start_date, relative_num_days, budget_item.cadence
             )
 
-            relevant_date_sequence_df = pd.DataFrame(relevant_date_sequence)
-            relevant_date_sequence_df = relevant_date_sequence_df.rename(
-                columns={0: "Date"}
-            )
-            current_item_cols_df = pd.DataFrame(
-                (
-                    budget_item.priority,
-                    budget_item.amount,
-                    budget_item.memo,
-                    budget_item.income_flag,
-                    budget_item.deferrable,
-                    budget_item.partial_payment_allowed,
+            for scheduled_date in relevant_date_sequence:
+                budget_schedule_rows.append(
+                    {
+                        "Date": scheduled_date,
+                        "Priority": budget_item.priority,
+                        "Amount": budget_item.amount,
+                        "Memo": budget_item.memo,
+                        "Income_Flag": budget_item.income_flag,
+                        "Deferrable": budget_item.deferrable,
+                        "Partial_Payment_Allowed": budget_item.partial_payment_allowed,
+                    }
                 )
-            ).T
 
-            current_item_cols_df = current_item_cols_df.rename(
-                columns={
-                    0: "Priority",
-                    1: "Amount",
-                    2: "Memo",
-                    3: "Income_Flag",
-                    4: "Deferrable",
-                    5: "Partial_Payment_Allowed",
-                }
-            )
+        current_budget_schedule = pd.DataFrame(
+            budget_schedule_rows,
+            columns=[
+                "Date",
+                "Priority",
+                "Amount",
+                "Memo",
+                "Income_Flag",
+                "Deferrable",
+                "Partial_Payment_Allowed",
+            ],
+        )
 
-            new_budget_schedule_rows_df = relevant_date_sequence_df.merge(
-                current_item_cols_df, how="cross"
-            )
-
-            current_budget_schedule = pd.concat(
-                [current_budget_schedule, new_budget_schedule_rows_df], axis=0
-            )
+        if current_budget_schedule.empty:
+            return current_budget_schedule
 
         current_budget_schedule.sort_values(
             inplace=True,
             axis=0,
             by="Date",
             key=lambda date_column: pd.to_datetime(date_column),
-        )
+            )
         current_budget_schedule.reset_index(inplace=True, drop=True)
 
         return current_budget_schedule
