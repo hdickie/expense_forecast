@@ -5127,20 +5127,15 @@ class TestExpenseForecastUnit:
         assert len(composite_milestone_names) == len(expected_milestone_dates)
 
         for i in range(0, len(composite_milestone_names)):
+            cm_name = composite_milestone_names[i]
+
             try:
-                cm_name = composite_milestone_names[i]
-                assert (
-                    E.composite_milestone_results[cm_name]
-                    == expected_milestone_dates[i]
-                )
-            except Exception as e:
-                print(
-                    str(composite_milestone_names[i])
-                    + " did not match expected milestone date"
-                )
+                assert E.composite_milestone_results[cm_name] == expected_milestone_dates[i]
+            except Exception:
+                print(f"{cm_name} did not match expected milestone date")
                 print("Received: " + str(E.composite_milestone_results[cm_name]))
                 print("Expected: " + str(expected_milestone_dates[i]))
-                raise e
+                raise
 
 
 # improving the names of tests would make them even longer...

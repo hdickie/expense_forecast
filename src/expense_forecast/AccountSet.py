@@ -145,7 +145,7 @@ class AccountSet:
         Total = total_balance
         Minimum = min_payment
 
-        amount_due = None
+        amount_due = 0 #setting this 0 instead of None to make type checker happy
 
         if Advance > Total:
             Advance = Total
@@ -247,7 +247,7 @@ class AccountSet:
 
         if account_type == 'checking':
             for checking_required_kwarg in checking_required_kwargs:
-                assert checking_required_kwarg in kwargs
+                assert checking_required_kwarg in kwargs #primary_checking_ind is missing
             self.createCheckingAccount(name, balance, min_balance, max_balance, kwargs['primary_checking_ind'])
         elif account_type == 'credit':
             for credit_required_kwarg in credit_required_kwargs:
