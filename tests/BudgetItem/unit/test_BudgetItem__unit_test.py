@@ -182,16 +182,25 @@ class TestBudgetItemMethods:
             )
 
     @pytest.mark.unit
-    @pytest.mark.skip(reason="this test needs to be improved")
-    def test_to_str(self):
-        B = BudgetItem(
-            date(2000, 1, 1),
-            date(2000, 1, 1),
-            1,
-            "daily",
-            10,
-            "test",
+    def test_budget_item_to_dict(self):
+        valid_budget_item = BudgetItem(
+            start_date=date(2000,1,2),
+            end_date=date(2000,1,2),
+            priority=1,
+            cadence="once",
+            amount=50,
+            memo="rent",
             deferrable=False,
-            partial_payment_allowed=False,
+            partial_payment_allowed=False
         )
-        str(B)
+
+        assert valid_budget_item.to_dict() == {
+            "Start_Date": "20000102",
+            "End_Date": "20000102",
+            "Priority": 1,
+            "Cadence": "once",
+            "Amount": 50.0,
+            "Memo": "rent",
+            "Deferrable": False,
+            "Partial_Payment_Allowed": False,
+        }

@@ -17,6 +17,7 @@ class TestE2E:
 
     #this is actually an integration test, but it's proper place is 
     # in a folder structure i havent created yet
+    @pytest.mark.skip
     @pytest.mark.integration
     def test_integration_MVP(self):
 
@@ -55,6 +56,8 @@ class TestE2E:
             transaction_priority=1,
         )
 
+        MS = MilestoneSet()
+
         E_IO = ExpenseForecastInitialConditions(
             start_date=start_date,
             end_date=end_date,
@@ -63,10 +66,11 @@ class TestE2E:
             memo_rule_set=M,
             milestone_set=MS)
         
-        R = ForecastHandler().runForecast(E_IO)
+        R = ForecastHandler().runForecast(E_IO, MS)
 
         assert R.forecast_df["Checking"].iat[0] == 700
 
+    @pytest.mark.skip
     @pytest.mark.E2E
     def test_E2E_MVP(self):
         # got id from

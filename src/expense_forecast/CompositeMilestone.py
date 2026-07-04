@@ -39,6 +39,12 @@ class CompositeMilestone:
 
 
     def __init__(self, milestone_name, account_milestones, memo_milestones):
+        if milestone_name is None:
+            raise ValueError("Composite Milestone name must not be None")
+        
+        if milestone_name.lower().strip() == "":
+            raise ValueError("Composite Milestone name must not be empty string")
+    
         self.milestone_name = milestone_name
 
         self.account_milestones = account_milestones
@@ -47,7 +53,7 @@ class CompositeMilestone:
         self.memo_milestones = memo_milestones
         CompositeMilestone._validate_memo_milestones(self.memo_milestones)
 
-        #todo validate unique names
+        #TODO validate unique names
 
 
 

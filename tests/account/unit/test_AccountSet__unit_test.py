@@ -14,6 +14,10 @@ from expense_forecast.CreditCardBillingState import CreditCardBillingState
 from expense_forecast.LoanBillingState import LoanBillingState
 from expense_forecast.log_methods import log_in_color
 
+import pandas as pd
+import pytest
+
+from expense_forecast.AccountSet import AccountSet
 
 def checking_billing_state(balance=0, is_primary=True):
     return CheckingBillingState(
@@ -251,14 +255,14 @@ def three_loans__p_1000__i_000__apr_01___p_1500__i_000__apr_001___p_2500__i_000_
 
 class TestAccountSet:
 
-    @pytest.mark.unit
-    @pytest.mark.skip(reason="do I still need this?")
-    def test_AccountSet_doctests(self):
-        # doctest.testmod(doctest_AccountSet,name="doctest_AccountSet")
-        # doctest.DocTestSuite(module='doctest_AccountSet')
-        # doctest.testfile('doctest_AccountSet.py')
-        # doctest.run_docstring_examples('doctest_AccountSet.py',globs={})
-        doctest.testmod(AccountSet)
+    # @pytest.mark.unit
+    # @pytest.mark.skip(reason="do I still need this?")
+    # def test_AccountSet_doctests(self):
+    #     # doctest.testmod(doctest_AccountSet,name="doctest_AccountSet")
+    #     # doctest.DocTestSuite(module='doctest_AccountSet')
+    #     # doctest.testfile('doctest_AccountSet.py')
+    #     # doctest.run_docstring_examples('doctest_AccountSet.py',globs={})
+    #     doctest.testmod(AccountSet)
 
     def _checking_account(self, name="test checking", balance=0, min_balance=0, max_balance=100):
         return Account(
@@ -562,20 +566,20 @@ class TestAccountSet:
                     "end_of_previous_cycle_balance": 100,
                 },
             ),
-            (
-                "test checking",
-                0,
-                0,
-                100,
-                "checking",
-                {"primary_checking_ind": True},
-            ),
+            # ( #this looks like valid input to me
+            #     "test checking",
+            #     0,
+            #     0,
+            #     100,
+            #     "checking",
+            #     {"primary_checking_ind": True},
+            # ),
         ],
     )
     def test_createAccount__invalid_inputs(
         self, name, balance, min_balance, max_balance, account_type, kwargs
     ):
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             A = AccountSet([])
             A.createAccount(
                 name,
@@ -613,11 +617,56 @@ class TestAccountSet:
         assert "test checking" in str(test_str_account_set)
 
     @pytest.mark.unit
-    @pytest.mark.skip(reason="Production validator is not implemented yet")
-    def test_validate_one_and_only_one_primary_checking_account__stub(self):
-        raise NotImplementedError(
-            "AccountSet._validate_one_and_only_one_primary_checking_account is not implemented yet."
+    def test_validate_one_and_only_one_primary_checking_account(self):
+        # exactly one primary checking account: valid
+        A = AccountSet()
+        A.createAccount(
+            name="Checking",
+            balance=100,
+            min_balance=0,
+            max_balance=999999,
+            account_type="checking",
+            primary_checking_ind=True,
         )
+
+        AccountSet._validate_one_and_only_one_primary_checking_account(A.getAccounts())
+
+        # zero primary checking accounts: invalid
+        A = AccountSet()
+        A.createAccount(
+            name="Checking",
+            balance=100,
+            min_balance=0,
+            max_balance=999999,
+            account_type="checking",
+            primary_checking_ind=False,
+        )
+
+        with pytest.raises(ValueError, match="AccountSet must have one and only one primary checking account"):
+            AccountSet._validate_one_and_only_one_primary_checking_account(A.getAccounts())
+
+        # two primary checking accounts: invalid
+        A = AccountSet()
+        A.createAccount(
+            name="Checking 1",
+            balance=100,
+            min_balance=0,
+            max_balance=999999,
+            account_type="checking",
+            primary_checking_ind=True,
+        )
+        with pytest.raises(ValueError, match="AccountSet must have one and only one primary checking account"):
+            # AccountSet._validate_one_and_only_one_primary_checking_account(A.getAccounts())
+            A.createAccount(
+                name="Checking 2",
+                balance=200,
+                min_balance=0,
+                max_balance=999999,
+                account_type="checking",
+                primary_checking_ind=True,
+            )
+
+        
 
     #
 

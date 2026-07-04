@@ -41,6 +41,7 @@ class BudgetSet:
     def __init__(self, budget_items__list=None):
         self.budget_items__list = []
         self.budget_items = []
+
         if budget_items__list is None:
             return
 
@@ -51,28 +52,29 @@ class BudgetSet:
             "cadence",
             "amount",
             "memo",
-            "_validate_amount",
-            "_validate_memo",
-            "_validate_priority",
-            "_validate_cadence",
-            "_validate_start_and_end_date",
-            "to_json"
         ]
-        allowed_kwargs = ["deferrable", "partial_payment_allowed","income_flag"]
+
+        required_methods = [
+            "to_dataframe",
+            "to_dict",
+            "to_json",
+        ]
 
         for budget_item in budget_items__list:
+            for attr in required_attributes:
+                if not hasattr(budget_item, attr):
+                    raise ValueError(
+                        f"BudgetItem is missing required attribute '{attr}'. "
+                        f"Found attributes: {[x for x in dir(budget_item) if '__' not in x]}"
+                    )
 
-            # not perfect but good enough
-            non_builtin_attr = [x for x in dir(budget_item) if '__' not in x]
-            for attr in non_builtin_attr:
-                try:
-                    assert attr in required_attributes or attr in allowed_kwargs
-                except Exception:
-                    raise ValueError('Unrecognized attribute on BudgetItem: '+str(attr))
+            for method in required_methods:
+                if not hasattr(budget_item, method) or not callable(getattr(budget_item, method)):
+                    raise ValueError(
+                        f"BudgetItem is missing required method '{method}'."
+                    )
 
-            for required_attr in required_attributes:
-                assert required_attr in non_builtin_attr
-
+            self.budget_items__list.append(budget_item)
             self.budget_items.append(budget_item)
 
     def __str__(self):

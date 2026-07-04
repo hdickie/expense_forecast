@@ -8,21 +8,22 @@ collected 289 items / 288 deselected / 1 selected
 tests/ExpenseForecast/unit/test_ExpenseForecast__unit_test.py F          [100%]
 
 =================================== FAILURES ===================================
-_ TestExpenseForecastUnit.test_satisfice[test_p1_cc_txn_on_billing_date-account_set2-budget_set2-memo_rule_set2-20000101-20000103-milestone_set2-expected_result_df2] _
+_ TestExpenseForecastUnit.test_satisfice[test_cc_interest_accrued_reaches_0-account_set6-budget_set6-memo_rule_set6-20000110-20000214-milestone_set6-expected_result_df6] _
 
-self = <test_ExpenseForecast__unit_test.TestExpenseForecastUnit object at 0x2d05c7b60>
-test_description = 'test_p1_cc_txn_on_billing_date'
-account_set = <expense_forecast.AccountSet.AccountSet object at 0x2d124c310>
-budget_set = <expense_forecast.BudgetSet.BudgetSet object at 0x2d1268350>
+self = <test_ExpenseForecast__unit_test.TestExpenseForecastUnit object at 0x2d4ef2a90>
+test_description = 'test_cc_interest_accrued_reaches_0'
+account_set = <expense_forecast.AccountSet.AccountSet object at 0x2d4a5e6f0>
+budget_set = <expense_forecast.BudgetSet.BudgetSet object at 0x2d4e5d0f0>
 memo_rule_set =   Memo_Regex Account_From Account_To  Transaction_Priority
-0         .*       Credit       None                   1.0
-start_date = '20000101', end_date = '20000103'
-milestone_set = <expense_forecast.MilestoneSet.MilestoneSet object at 0x2d1268550>
-expected_result_df =        Date  Checking  ...  Memo Directives                        Memo
-0  20000101         0  ...                    ...st txn (Credit -$100.00)
-2  20000103         0  ...                                             
+0         .*     Checking       None                   1.0
+1         .*     Checking     Credit                   2.0
+start_date = '20000110', end_date = '20000214'
+milestone_set = <expense_forecast.MilestoneSet.MilestoneSet object at 0x2d4e5cf30>
+expected_result_df =           Date  Checking  Credit  ...  Next Income Date  Memo Directives  Memo
+0   2000-01-10         0       0  ...  ...MPLEMENTED      
+35  2000-02-14         0       0  ...                    NOT IMPLEMENTED      
 
-[3 rows x 17 columns]
+[36 rows x 17 columns]
 
     @pytest.mark.unit
     # @pytest.mark.skip(reason="Skip so github action doesnt fail")
@@ -388,19 +389,20 @@ tests/ExpenseForecast/unit/test_ExpenseForecast__unit_test.py:534: in compute_fo
     raise e
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <test_ExpenseForecast__unit_test.TestExpenseForecastUnit object at 0x2d05c7b60>
-account_set = <expense_forecast.AccountSet.AccountSet object at 0x2d124c310>
-budget_set = <expense_forecast.BudgetSet.BudgetSet object at 0x2d1268350>
+self = <test_ExpenseForecast__unit_test.TestExpenseForecastUnit object at 0x2d4ef2a90>
+account_set = <expense_forecast.AccountSet.AccountSet object at 0x2d4a5e6f0>
+budget_set = <expense_forecast.BudgetSet.BudgetSet object at 0x2d4e5d0f0>
 memo_rule_set =   Memo_Regex Account_From Account_To  Transaction_Priority
-0         .*       Credit       None                   1.0
-start_date = '20000101', end_date = '20000103'
-milestone_set = <expense_forecast.MilestoneSet.MilestoneSet object at 0x2d1268550>
-expected_result_df =        Date  Checking  ...  Memo Directives                        Memo
-0  20000101         0  ...                    ...st txn (Credit -$100.00)
-2  20000103         0  ...                                             
+0         .*     Checking       None                   1.0
+1         .*     Checking     Credit                   2.0
+start_date = '20000110', end_date = '20000214'
+milestone_set = <expense_forecast.MilestoneSet.MilestoneSet object at 0x2d4e5cf30>
+expected_result_df =           Date  Checking  Credit  ...  Next Income Date  Memo Directives  Memo
+0   2000-01-10         0       0  ...  ...MPLEMENTED      
+35  2000-02-14         0       0  ...                    NOT IMPLEMENTED      
 
-[3 rows x 17 columns]
-test_description = 'test_p1_cc_txn_on_billing_date'
+[36 rows x 17 columns]
+test_description = 'test_cc_interest_accrued_reaches_0'
 
     def compute_forecast_and_actual_vs_expected(
         self,
@@ -496,110 +498,835 @@ test_description = 'test_p1_cc_txn_on_billing_date'
                 )
 E               AssertionError: Forecast numeric values did not match expected results.
 E               
-E                     Date                Column Expected  Actual   Diff
-E               2000-01-02         CC Debt Total   100.00  100.42  -0.42
-E               2000-01-02                Credit   100.00  100.42  -0.42
-E               2000-01-02 Credit: Curr Stmt Bal   100.00    0.00 100.00
-E               2000-01-02             Net Worth  -100.00 -100.42   0.42
-E               2000-01-03         CC Debt Total   100.00  100.42  -0.42
-E               2000-01-03                Credit   100.00  100.42  -0.42
-E               2000-01-03 Credit: Curr Stmt Bal   100.00    0.00 100.00
-E               2000-01-03             Net Worth  -100.00 -100.42   0.42
+E                     Date                                   Column Expected Actual    Diff
+E               2000-01-10                                 Checking     0.00  50.00  -50.00
+E               2000-01-10 Credit: Credit Billing Cycle Payment Bal     0.00 500.00 -500.00
+E               2000-01-10     Credit: Credit End of Prev Cycle Bal     0.00 500.00 -500.00
+E               2000-01-10                             Liquid Total     0.00  50.00  -50.00
+E               2000-01-10                                Net Worth     0.00  50.00  -50.00
+E               2000-01-11                                 Checking     0.00  50.00  -50.00
+E               2000-01-11 Credit: Credit Billing Cycle Payment Bal     0.00 500.00 -500.00
+E               2000-01-11     Credit: Credit End of Prev Cycle Bal     0.00 500.00 -500.00
+E               2000-01-11                             Liquid Total     0.00  50.00  -50.00
+E               2000-01-11                                Net Worth     0.00  50.00  -50.00
+E               2000-01-12                                 Checking     0.00  50.00  -50.00
+E               2000-01-12     Credit: Credit End of Prev Cycle Bal     0.00 500.00 -500.00
+E               2000-01-12                             Liquid Total     0.00  50.00  -50.00
+E               2000-01-12                                Net Worth     0.00  50.00  -50.00
+E               2000-01-13                                 Checking     0.00  50.00  -50.00
+E               2000-01-13                             Liquid Total     0.00  50.00  -50.00
+E               2000-01-13                                Net Worth     0.00  50.00  -50.00
+E               2000-01-14                                 Checking     0.00  50.00  -50.00
+E               2000-01-14                             Liquid Total     0.00  50.00  -50.00
+E               2000-01-14                                Net Worth     0.00  50.00  -50.00
+E               2000-01-15                                 Checking     0.00  50.00  -50.00
+E               2000-01-15                             Liquid Total     0.00  50.00  -50.00
+E               2000-01-15                                Net Worth     0.00  50.00  -50.00
+E               2000-01-16                                 Checking     0.00  50.00  -50.00
+E               2000-01-16                             Liquid Total     0.00  50.00  -50.00
+E               
+E               Showing first 25 of 113 mismatches.
 
 tests/ExpenseForecast/unit/test_ExpenseForecast__unit_test.py:450: AssertionError
 ----------------------------- Captured stderr call -----------------------------
-2026-07-03 16:31:05,317 - DEBUG    - [32m0 Attempting switch log file to: Forecast_000101_2_1_73978e1dda.log[0m
-2026-07-03 16:31:05,317 - INFO     - [37m0 Starting Forecast 000101_2_1_73978e1dda[0m
-2026-07-03 16:31:05,317 - DEBUG    - [37m0 ENTER _computeOptimalForecast 2000-01-01 -> 2000-01-03[0m
-2026-07-03 16:31:05,326 - DEBUG    - [35m1             Date  Priority  Amount      Memo  Income_Flag  Deferrable  Partial_Payment_Allowed[0m
-2026-07-03 16:31:05,326 - DEBUG    - [35m1    0  2000-01-02         1     100  test txn        False       False                    False[0m
-2026-07-03 16:31:05,327 - INFO     - [37m1    ENTER _satisfice[0m
-2026-07-03 16:31:05,327 - INFO     - [37m2        satisfice TOP :: 2000-01-02[0m
-2026-07-03 16:31:05,327 - DEBUG    - [35m2        satisfice confirmed_df:[0m
-2026-07-03 16:31:05,329 - DEBUG    - [35m2                 Date  Priority  Amount      Memo  Income_Flag  Deferrable  Partial_Payment_Allowed[0m
-2026-07-03 16:31:05,329 - DEBUG    - [35m2        0  2000-01-02         1     100  test txn        False       False                    False[0m
-2026-07-03 16:31:05,329 - DEBUG    - [37m2        2000-01-02 ENTER _executeTransactionsForDay p=1[0m
-2026-07-03 16:31:05,332 - DEBUG    - [35m3            relevant_confirmed_df:[0m
-2026-07-03 16:31:05,334 - DEBUG    - [35m3                     Date  Priority  Amount      Memo  Income_Flag  Deferrable  Partial_Payment_Allowed[0m
-2026-07-03 16:31:05,334 - DEBUG    - [35m3            0  2000-01-02         1     100  test txn        False       False                    False[0m
-2026-07-03 16:31:05,334 - DEBUG    - [37m3            2000-01-02 ENTER _processConfirmedTransactions[0m
-2026-07-03 16:31:05,334 - DEBUG    - [37m4                2000-01-02 executing txn 'test txn' Credit -> None for $100[0m
-2026-07-03 16:31:05,343 - DEBUG    - [37m3            2000-01-02 EXIT _processConfirmedTransactions[0m
-2026-07-03 16:31:05,344 - DEBUG    - [37m2        2000-01-02 EXIT _executeTransactionsForDay p=1[0m
-2026-07-03 16:31:05,346 - DEBUG    - [37m2        2000-01-02 ENTER _calculateLoanInterestAccrualsForDay[0m
-2026-07-03 16:31:05,348 - DEBUG    - [37m2        2000-01-02 EXIT _calculateLoanInterestAccrualsForDay[0m
-2026-07-03 16:31:05,355 - DEBUG    - [37m2        2000-01-02 ENTER _executeLoanMinimumPayments[0m
-2026-07-03 16:31:05,364 - DEBUG    - [37m2        2000-01-02 EXIT _executeLoanMinimumPayments[0m
-2026-07-03 16:31:05,368 - DEBUG    - [37m2        2000-01-02 ENTER _updateEndOfPrevCycleBal[0m
-2026-07-03 16:31:05,370 - DEBUG    - [37m2        2000-01-02 EXIT _updateEndOfPrevCycleBal[0m
-2026-07-03 16:31:05,379 - DEBUG    - [37m2        2000-01-02 ENTER _executeCreditCardMinimumPayments [0m
-2026-07-03 16:31:05,380 - DEBUG    - [37m2        2000-01-02 EXIT _executeCreditCardMinimumPayments [0m
-2026-07-03 16:31:05,384 - INFO     - [37m2        satisfice BOTTOM :: 2000-01-02[0m
-2026-07-03 16:31:05,385 - INFO     - [37m2        satisfice TOP :: 2000-01-03[0m
-2026-07-03 16:31:05,385 - DEBUG    - [35m2        satisfice confirmed_df:[0m
-2026-07-03 16:31:05,388 - DEBUG    - [35m2                 Date  Priority  Amount      Memo  Income_Flag  Deferrable  Partial_Payment_Allowed[0m
-2026-07-03 16:31:05,388 - DEBUG    - [35m2        0  2000-01-02         1     100  test txn        False       False                    False[0m
-2026-07-03 16:31:05,389 - DEBUG    - [37m2        2000-01-03 ENTER _executeTransactionsForDay p=1[0m
-2026-07-03 16:31:05,395 - DEBUG    - [37m3            2000-01-03 ENTER _processConfirmedTransactions[0m
-2026-07-03 16:31:05,395 - DEBUG    - [37m3            2000-01-03 EXIT _processConfirmedTransactions[0m
-2026-07-03 16:31:05,395 - DEBUG    - [37m2        2000-01-03 EXIT _executeTransactionsForDay p=1[0m
-2026-07-03 16:31:05,397 - DEBUG    - [37m2        2000-01-03 ENTER _calculateLoanInterestAccrualsForDay[0m
-2026-07-03 16:31:05,400 - DEBUG    - [37m2        2000-01-03 EXIT _calculateLoanInterestAccrualsForDay[0m
-2026-07-03 16:31:05,407 - DEBUG    - [37m2        2000-01-03 ENTER _executeLoanMinimumPayments[0m
-2026-07-03 16:31:05,413 - DEBUG    - [37m2        2000-01-03 EXIT _executeLoanMinimumPayments[0m
-2026-07-03 16:31:05,422 - DEBUG    - [37m2        2000-01-03 ENTER _updateEndOfPrevCycleBal[0m
-2026-07-03 16:31:05,424 - DEBUG    - [37m2        2000-01-03 EXIT _updateEndOfPrevCycleBal[0m
-2026-07-03 16:31:05,439 - DEBUG    - [37m2        2000-01-03 ENTER _executeCreditCardMinimumPayments [0m
-2026-07-03 16:31:05,446 - DEBUG    - [37m2        2000-01-03 EXIT _executeCreditCardMinimumPayments [0m
-2026-07-03 16:31:05,465 - INFO     - [37m2        satisfice BOTTOM :: 2000-01-03[0m
-2026-07-03 16:31:05,473 - INFO     - [37m2                 Date  Checking  Credit  Credit: Curr Stmt Bal  Credit: Prev Stmt Bal  Credit: Credit Billing Cycle Payment Bal  Credit: Credit End of Prev Cycle Bal Next Income Date Memo Directives                     Memo[0m
-2026-07-03 16:31:05,473 - INFO     - [37m2        0  2000-01-01         0    0.00                      0                      0                                         0                                     0                                                          [0m
-2026-07-03 16:31:05,473 - INFO     - [37m2        1  2000-01-02         0  100.42                      0                      0                                         0                                     0                                   test txn (Credit -$100)[0m
-2026-07-03 16:31:05,473 - INFO     - [37m2        2  2000-01-03         0  100.42                      0                      0                                         0                                     0                                                          [0m
-2026-07-03 16:31:05,473 - INFO     - [37m1    EXIT _satisfice[0m
-2026-07-03 16:31:05,474 - DEBUG    - [37m0 Satisfice succeeded.[0m
-2026-07-03 16:31:05,480 - DEBUG    - [37m0          Date  Checking  Credit  Credit: Curr Stmt Bal  Credit: Prev Stmt Bal  Credit: Credit Billing Cycle Payment Bal  Credit: Credit End of Prev Cycle Bal Next Income Date Memo Directives                     Memo[0m
-2026-07-03 16:31:05,480 - DEBUG    - [37m0 0  2000-01-01         0    0.00                      0                      0                                         0                                     0                                                          [0m
-2026-07-03 16:31:05,480 - DEBUG    - [37m0 1  2000-01-02         0  100.42                      0                      0                                         0                                     0                                   test txn (Credit -$100)[0m
-2026-07-03 16:31:05,480 - DEBUG    - [37m0 2  2000-01-03         0  100.42                      0                      0                                         0                                     0                                                          [0m
-2026-07-03 16:31:05,480 - INFO     - [37m1    ENTER _assessPotentialOptimizations[0m
-2026-07-03 16:31:05,484 - INFO     - [37m2                 Date  Checking  Credit  Credit: Curr Stmt Bal  Credit: Prev Stmt Bal  Credit: Credit Billing Cycle Payment Bal  Credit: Credit End of Prev Cycle Bal Next Income Date Memo Directives                     Memo[0m
-2026-07-03 16:31:05,484 - INFO     - [37m2        0  2000-01-01         0    0.00                      0                      0                                         0                                     0                                                          [0m
-2026-07-03 16:31:05,485 - INFO     - [37m2        1  2000-01-02         0  100.42                      0                      0                                         0                                     0                                   test txn (Credit -$100)[0m
-2026-07-03 16:31:05,485 - INFO     - [37m2        2  2000-01-03         0  100.42                      0                      0                                         0                                     0                                                          [0m
-2026-07-03 16:31:05,490 - INFO     - [32m0 Beginning Optimization.[0m
-2026-07-03 16:31:05,490 - DEBUG    - [37m1    EXIT _assessPotentialOptimizations[0m
-2026-07-03 16:31:05,490 - DEBUG    - [37m0 EXIT _computeOptimalForecast[0m
-2026-07-03 16:31:05,491 - DEBUG    - [37m0  ENTER _update_memo_amount[0m
-2026-07-03 16:31:05,492 - DEBUG    - [36m1    memo_line: test txn (Credit -$100)[0m
-2026-07-03 16:31:05,492 - DEBUG    - [36m1    100 -> 100.00[0m
-2026-07-03 16:31:05,492 - DEBUG    - [36m1    new_memo_line: test txn (Credit -$100.00)[0m
-2026-07-03 16:31:05,492 - DEBUG    - [37m0  EXIT _update_memo_amount[0m
-2026-07-03 16:31:05,515 - DEBUG    - [35m0 Forecast Pre-Validation[0m
-2026-07-03 16:31:05,518 - DEBUG    - [35m0          Date  Checking  Credit  Credit: Curr Stmt Bal  Credit: Prev Stmt Bal  Credit: Credit Billing Cycle Payment Bal  Credit: Credit End of Prev Cycle Bal Next Income Date Memo Directives                        Memo  Marginal Interest  Net Gain  Net Loss[0m
-2026-07-03 16:31:05,518 - DEBUG    - [35m0 0  2000-01-01         0    0.00                      0                      0                                         0                                     0                                                                               0         0         0[0m
-2026-07-03 16:31:05,518 - DEBUG    - [35m0 1  2000-01-02         0  100.42                      0                      0                                         0                                     0                                   test txn (Credit -$100.00)                  0         0       100[0m
-2026-07-03 16:31:05,521 - DEBUG    - [35m0 2  2000-01-03         0  100.42                      0                      0                                         0                                     0                                                                               0         0         0[0m
-2026-07-03 16:31:05,521 - DEBUG    - [35m0 Validation Delta Values[0m
-2026-07-03 16:31:05,521 - DEBUG    - [35m0       Date      Check         CC       Loan      Net +      Net -[0m
-2026-07-03 16:31:05,524 - DEBUG    - [35m0 2000-01-02          0          0          0          0        100[0m
-2026-07-03 16:31:05,526 - DEBUG    - [35m0 2000-01-03          0          0          0          0          0[0m
-2026-07-03 16:31:05,526 - DEBUG    - [32m0 Validation SUCCESS[0m
-2026-07-03 16:31:05,534 - INFO     - [37m0 Finished Forecast 000101_2_1_73978e1dda[0m
-2026-07-03 16:31:05,539 - INFO     - [37m0          Date  Checking  Credit  Credit: Curr Stmt Bal  Credit: Prev Stmt Bal  Credit: Credit Billing Cycle Payment Bal  Credit: Credit End of Prev Cycle Bal  Marginal Interest  Net Gain  Net Loss  Net Worth  Loan Total  CC Debt Total  Liquid Total Next Income Date Memo Directives                        Memo[0m
-2026-07-03 16:31:05,539 - INFO     - [37m0 0  2000-01-01         0    0.00                      0                      0                                         0                                     0                  0         0         0       0.00           0           0.00             0                                                             [0m
-2026-07-03 16:31:05,539 - INFO     - [37m0 1  2000-01-02         0  100.42                      0                      0                                         0                                     0                  0         0       100    -100.42           0         100.42             0                                   test txn (Credit -$100.00)[0m
-2026-07-03 16:31:05,539 - INFO     - [37m0 2  2000-01-03         0  100.42                      0                      0                                         0                                     0                  0         0         0    -100.42           0         100.42             0                                                             [0m
-=============================== warnings summary ===============================
-tests/ExpenseForecast/unit/test_ExpenseForecast__unit_test.py::TestExpenseForecastUnit::test_satisfice[test_p1_cc_txn_on_billing_date-account_set2-budget_set2-memo_rule_set2-20000101-20000103-milestone_set2-expected_result_df2]
-  /Users/hume/CodeProjects/Github/expense_forecast/src/expense_forecast/ForecastHandler.py:2999: FutureWarning: Setting an item of incompatible dtype is deprecated and will raise an error in a future version of pandas. Value '100.41666666666667' has dtype incompatible with int64, please explicitly cast to a compatible dtype first.
-    current_forecast_row_df.iloc[
-
-tests/ExpenseForecast/unit/test_ExpenseForecast__unit_test.py::TestExpenseForecastUnit::test_satisfice[test_p1_cc_txn_on_billing_date-account_set2-budget_set2-memo_rule_set2-20000101-20000103-milestone_set2-expected_result_df2]
-  /Users/hume/CodeProjects/Github/expense_forecast/src/expense_forecast/ForecastHandler.py:7341: FutureWarning: Setting an item of incompatible dtype is deprecated and will raise an error in a future version of pandas. Value '[100.41666667]' has dtype incompatible with int64, please explicitly cast to a compatible dtype first.
-    forecast_df.loc[forecast_df.Date == d] = (
-
--- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+2026-07-03 16:58:09,390 - DEBUG    - [32m0 Attempting switch log file to: Forecast_000110_35_0_d14ba9326a.log[0m
+2026-07-03 16:58:09,390 - INFO     - [37m0 Starting Forecast 000110_35_0_d14ba9326a[0m
+2026-07-03 16:58:09,391 - DEBUG    - [37m0 ENTER _computeOptimalForecast 2000-01-10 -> 2000-02-14[0m
+2026-07-03 16:58:09,395 - DEBUG    - [35m1    Empty DataFrame[0m
+2026-07-03 16:58:09,395 - DEBUG    - [35m1    Columns: [Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed][0m
+2026-07-03 16:58:09,395 - DEBUG    - [35m1    Index: [][0m
+2026-07-03 16:58:09,395 - INFO     - [37m1    ENTER _satisfice[0m
+2026-07-03 16:58:09,396 - INFO     - [37m2        satisfice TOP :: 2000-01-11[0m
+2026-07-03 16:58:09,398 - DEBUG    - [37m2        2000-01-11 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,400 - DEBUG    - [37m2        2000-01-11 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,404 - DEBUG    - [37m2        2000-01-11 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,405 - DEBUG    - [37m3            2000-01-11 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:09,406 - DEBUG    - [37m3            2000-01-11 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:09,406 - DEBUG    - [37m2        2000-01-11 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,407 - DEBUG    - [37m2        2000-01-11 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,408 - DEBUG    - [37m2        2000-01-11 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,412 - DEBUG    - [37m2        2000-01-11 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,415 - DEBUG    - [37m2        2000-01-11 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,419 - DEBUG    - [37m2        2000-01-11 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,420 - DEBUG    - [37m2        2000-01-11 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,424 - DEBUG    - [37m2        2000-01-11 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,425 - DEBUG    - [37m2        2000-01-11 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,429 - INFO     - [37m2        satisfice BOTTOM :: 2000-01-11[0m
+2026-07-03 16:58:09,429 - INFO     - [37m2        satisfice TOP :: 2000-01-12[0m
+2026-07-03 16:58:09,431 - DEBUG    - [37m2        2000-01-12 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,432 - DEBUG    - [37m2        2000-01-12 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,436 - DEBUG    - [37m2        2000-01-12 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,437 - DEBUG    - [37m3            2000-01-12 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:09,437 - DEBUG    - [37m3            2000-01-12 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:09,438 - DEBUG    - [37m2        2000-01-12 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,439 - DEBUG    - [37m2        2000-01-12 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,440 - DEBUG    - [37m2        2000-01-12 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,444 - DEBUG    - [37m2        2000-01-12 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,447 - DEBUG    - [37m2        2000-01-12 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,451 - DEBUG    - [37m2        2000-01-12 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,452 - DEBUG    - [37m2        2000-01-12 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,456 - DEBUG    - [37m2        2000-01-12 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,457 - DEBUG    - [37m2        2000-01-12 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,461 - INFO     - [37m2        satisfice BOTTOM :: 2000-01-12[0m
+2026-07-03 16:58:09,461 - INFO     - [37m2        satisfice TOP :: 2000-01-13[0m
+2026-07-03 16:58:09,463 - DEBUG    - [37m2        2000-01-13 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,464 - DEBUG    - [37m2        2000-01-13 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,467 - DEBUG    - [37m2        2000-01-13 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,469 - DEBUG    - [37m3            2000-01-13 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:09,469 - DEBUG    - [37m3            2000-01-13 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:09,469 - DEBUG    - [37m2        2000-01-13 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,471 - DEBUG    - [37m2        2000-01-13 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,472 - DEBUG    - [37m2        2000-01-13 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,476 - DEBUG    - [37m2        2000-01-13 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,479 - DEBUG    - [37m2        2000-01-13 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,483 - DEBUG    - [37m2        2000-01-13 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,484 - DEBUG    - [37m2        2000-01-13 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,487 - DEBUG    - [37m2        2000-01-13 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,489 - DEBUG    - [37m2        2000-01-13 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,492 - INFO     - [37m2        satisfice BOTTOM :: 2000-01-13[0m
+2026-07-03 16:58:09,492 - INFO     - [37m2        satisfice TOP :: 2000-01-14[0m
+2026-07-03 16:58:09,494 - DEBUG    - [37m2        2000-01-14 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,495 - DEBUG    - [37m2        2000-01-14 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,498 - DEBUG    - [37m2        2000-01-14 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,500 - DEBUG    - [37m3            2000-01-14 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:09,500 - DEBUG    - [37m3            2000-01-14 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:09,500 - DEBUG    - [37m2        2000-01-14 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,502 - DEBUG    - [37m2        2000-01-14 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,503 - DEBUG    - [37m2        2000-01-14 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,506 - DEBUG    - [37m2        2000-01-14 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,510 - DEBUG    - [37m2        2000-01-14 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,514 - DEBUG    - [37m2        2000-01-14 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,514 - DEBUG    - [37m2        2000-01-14 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,518 - DEBUG    - [37m2        2000-01-14 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,519 - DEBUG    - [37m2        2000-01-14 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,523 - INFO     - [37m2        satisfice BOTTOM :: 2000-01-14[0m
+2026-07-03 16:58:09,523 - INFO     - [37m2        satisfice TOP :: 2000-01-15[0m
+2026-07-03 16:58:09,524 - DEBUG    - [37m2        2000-01-15 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,525 - DEBUG    - [37m2        2000-01-15 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,529 - DEBUG    - [37m2        2000-01-15 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,531 - DEBUG    - [37m3            2000-01-15 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:09,531 - DEBUG    - [37m3            2000-01-15 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:09,531 - DEBUG    - [37m2        2000-01-15 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,532 - DEBUG    - [37m2        2000-01-15 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,533 - DEBUG    - [37m2        2000-01-15 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,537 - DEBUG    - [37m2        2000-01-15 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,540 - DEBUG    - [37m2        2000-01-15 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,544 - DEBUG    - [37m2        2000-01-15 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,545 - DEBUG    - [37m2        2000-01-15 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,549 - DEBUG    - [37m2        2000-01-15 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,550 - DEBUG    - [37m2        2000-01-15 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,553 - INFO     - [37m2        satisfice BOTTOM :: 2000-01-15[0m
+2026-07-03 16:58:09,554 - INFO     - [37m2        satisfice TOP :: 2000-01-16[0m
+2026-07-03 16:58:09,555 - DEBUG    - [37m2        2000-01-16 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,556 - DEBUG    - [37m2        2000-01-16 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,560 - DEBUG    - [37m2        2000-01-16 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,561 - DEBUG    - [37m3            2000-01-16 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:09,561 - DEBUG    - [37m3            2000-01-16 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:09,562 - DEBUG    - [37m2        2000-01-16 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,563 - DEBUG    - [37m2        2000-01-16 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,564 - DEBUG    - [37m2        2000-01-16 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,568 - DEBUG    - [37m2        2000-01-16 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,571 - DEBUG    - [37m2        2000-01-16 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,575 - DEBUG    - [37m2        2000-01-16 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,576 - DEBUG    - [37m2        2000-01-16 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,580 - DEBUG    - [37m2        2000-01-16 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,581 - DEBUG    - [37m2        2000-01-16 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,585 - INFO     - [37m2        satisfice BOTTOM :: 2000-01-16[0m
+2026-07-03 16:58:09,585 - INFO     - [37m2        satisfice TOP :: 2000-01-17[0m
+2026-07-03 16:58:09,586 - DEBUG    - [37m2        2000-01-17 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,587 - DEBUG    - [37m2        2000-01-17 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,591 - DEBUG    - [37m2        2000-01-17 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,592 - DEBUG    - [37m3            2000-01-17 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:09,593 - DEBUG    - [37m3            2000-01-17 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:09,593 - DEBUG    - [37m2        2000-01-17 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,594 - DEBUG    - [37m2        2000-01-17 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,595 - DEBUG    - [37m2        2000-01-17 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,599 - DEBUG    - [37m2        2000-01-17 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,602 - DEBUG    - [37m2        2000-01-17 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,606 - DEBUG    - [37m2        2000-01-17 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,607 - DEBUG    - [37m2        2000-01-17 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,611 - DEBUG    - [37m2        2000-01-17 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,612 - DEBUG    - [37m2        2000-01-17 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,615 - INFO     - [37m2        satisfice BOTTOM :: 2000-01-17[0m
+2026-07-03 16:58:09,615 - INFO     - [37m2        satisfice TOP :: 2000-01-18[0m
+2026-07-03 16:58:09,617 - DEBUG    - [37m2        2000-01-18 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,618 - DEBUG    - [37m2        2000-01-18 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,621 - DEBUG    - [37m2        2000-01-18 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,623 - DEBUG    - [37m3            2000-01-18 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:09,623 - DEBUG    - [37m3            2000-01-18 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:09,623 - DEBUG    - [37m2        2000-01-18 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,625 - DEBUG    - [37m2        2000-01-18 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,626 - DEBUG    - [37m2        2000-01-18 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,630 - DEBUG    - [37m2        2000-01-18 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,633 - DEBUG    - [37m2        2000-01-18 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,637 - DEBUG    - [37m2        2000-01-18 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,638 - DEBUG    - [37m2        2000-01-18 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,642 - DEBUG    - [37m2        2000-01-18 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,643 - DEBUG    - [37m2        2000-01-18 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,650 - INFO     - [37m2        satisfice BOTTOM :: 2000-01-18[0m
+2026-07-03 16:58:09,650 - INFO     - [37m2        satisfice TOP :: 2000-01-19[0m
+2026-07-03 16:58:09,652 - DEBUG    - [37m2        2000-01-19 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,652 - DEBUG    - [37m2        2000-01-19 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,656 - DEBUG    - [37m2        2000-01-19 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,658 - DEBUG    - [37m3            2000-01-19 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:09,658 - DEBUG    - [37m3            2000-01-19 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:09,658 - DEBUG    - [37m2        2000-01-19 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,660 - DEBUG    - [37m2        2000-01-19 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,660 - DEBUG    - [37m2        2000-01-19 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,664 - DEBUG    - [37m2        2000-01-19 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,668 - DEBUG    - [37m2        2000-01-19 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,672 - DEBUG    - [37m2        2000-01-19 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,672 - DEBUG    - [37m2        2000-01-19 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,676 - DEBUG    - [37m2        2000-01-19 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,677 - DEBUG    - [37m2        2000-01-19 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,681 - INFO     - [37m2        satisfice BOTTOM :: 2000-01-19[0m
+2026-07-03 16:58:09,681 - INFO     - [37m2        satisfice TOP :: 2000-01-20[0m
+2026-07-03 16:58:09,683 - DEBUG    - [37m2        2000-01-20 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,684 - DEBUG    - [37m2        2000-01-20 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,687 - DEBUG    - [37m2        2000-01-20 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,689 - DEBUG    - [37m3            2000-01-20 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:09,689 - DEBUG    - [37m3            2000-01-20 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:09,689 - DEBUG    - [37m2        2000-01-20 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,691 - DEBUG    - [37m2        2000-01-20 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,692 - DEBUG    - [37m2        2000-01-20 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,696 - DEBUG    - [37m2        2000-01-20 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,699 - DEBUG    - [37m2        2000-01-20 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,703 - DEBUG    - [37m2        2000-01-20 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,704 - DEBUG    - [37m2        2000-01-20 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,708 - DEBUG    - [37m2        2000-01-20 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,709 - DEBUG    - [37m2        2000-01-20 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,712 - INFO     - [37m2        satisfice BOTTOM :: 2000-01-20[0m
+2026-07-03 16:58:09,713 - INFO     - [37m2        satisfice TOP :: 2000-01-21[0m
+2026-07-03 16:58:09,714 - DEBUG    - [37m2        2000-01-21 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,715 - DEBUG    - [37m2        2000-01-21 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,719 - DEBUG    - [37m2        2000-01-21 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,721 - DEBUG    - [37m3            2000-01-21 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:09,721 - DEBUG    - [37m3            2000-01-21 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:09,721 - DEBUG    - [37m2        2000-01-21 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,723 - DEBUG    - [37m2        2000-01-21 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,723 - DEBUG    - [37m2        2000-01-21 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,727 - DEBUG    - [37m2        2000-01-21 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,730 - DEBUG    - [37m2        2000-01-21 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,735 - DEBUG    - [37m2        2000-01-21 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,736 - DEBUG    - [37m2        2000-01-21 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,740 - DEBUG    - [37m2        2000-01-21 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,741 - DEBUG    - [37m2        2000-01-21 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,745 - INFO     - [37m2        satisfice BOTTOM :: 2000-01-21[0m
+2026-07-03 16:58:09,745 - INFO     - [37m2        satisfice TOP :: 2000-01-22[0m
+2026-07-03 16:58:09,747 - DEBUG    - [37m2        2000-01-22 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,748 - DEBUG    - [37m2        2000-01-22 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,753 - DEBUG    - [37m2        2000-01-22 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,755 - DEBUG    - [37m3            2000-01-22 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:09,755 - DEBUG    - [37m3            2000-01-22 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:09,755 - DEBUG    - [37m2        2000-01-22 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,756 - DEBUG    - [37m2        2000-01-22 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,757 - DEBUG    - [37m2        2000-01-22 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,761 - DEBUG    - [37m2        2000-01-22 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,764 - DEBUG    - [37m2        2000-01-22 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,769 - DEBUG    - [37m2        2000-01-22 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,769 - DEBUG    - [37m2        2000-01-22 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,773 - DEBUG    - [37m2        2000-01-22 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,774 - DEBUG    - [37m2        2000-01-22 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,778 - INFO     - [37m2        satisfice BOTTOM :: 2000-01-22[0m
+2026-07-03 16:58:09,778 - INFO     - [37m2        satisfice TOP :: 2000-01-23[0m
+2026-07-03 16:58:09,780 - DEBUG    - [37m2        2000-01-23 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,781 - DEBUG    - [37m2        2000-01-23 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,786 - DEBUG    - [37m2        2000-01-23 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,788 - DEBUG    - [37m3            2000-01-23 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:09,788 - DEBUG    - [37m3            2000-01-23 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:09,788 - DEBUG    - [37m2        2000-01-23 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,790 - DEBUG    - [37m2        2000-01-23 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,791 - DEBUG    - [37m2        2000-01-23 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,795 - DEBUG    - [37m2        2000-01-23 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,798 - DEBUG    - [37m2        2000-01-23 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,802 - DEBUG    - [37m2        2000-01-23 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,803 - DEBUG    - [37m2        2000-01-23 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,807 - DEBUG    - [37m2        2000-01-23 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,808 - DEBUG    - [37m2        2000-01-23 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,812 - INFO     - [37m2        satisfice BOTTOM :: 2000-01-23[0m
+2026-07-03 16:58:09,812 - INFO     - [37m2        satisfice TOP :: 2000-01-24[0m
+2026-07-03 16:58:09,814 - DEBUG    - [37m2        2000-01-24 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,815 - DEBUG    - [37m2        2000-01-24 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,818 - DEBUG    - [37m2        2000-01-24 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,820 - DEBUG    - [37m3            2000-01-24 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:09,820 - DEBUG    - [37m3            2000-01-24 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:09,820 - DEBUG    - [37m2        2000-01-24 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,822 - DEBUG    - [37m2        2000-01-24 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,823 - DEBUG    - [37m2        2000-01-24 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,827 - DEBUG    - [37m2        2000-01-24 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,830 - DEBUG    - [37m2        2000-01-24 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,834 - DEBUG    - [37m2        2000-01-24 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,835 - DEBUG    - [37m2        2000-01-24 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,839 - DEBUG    - [37m2        2000-01-24 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,840 - DEBUG    - [37m2        2000-01-24 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,843 - INFO     - [37m2        satisfice BOTTOM :: 2000-01-24[0m
+2026-07-03 16:58:09,843 - INFO     - [37m2        satisfice TOP :: 2000-01-25[0m
+2026-07-03 16:58:09,845 - DEBUG    - [37m2        2000-01-25 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,846 - DEBUG    - [37m2        2000-01-25 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,849 - DEBUG    - [37m2        2000-01-25 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,851 - DEBUG    - [37m3            2000-01-25 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:09,851 - DEBUG    - [37m3            2000-01-25 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:09,851 - DEBUG    - [37m2        2000-01-25 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,853 - DEBUG    - [37m2        2000-01-25 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,854 - DEBUG    - [37m2        2000-01-25 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,858 - DEBUG    - [37m2        2000-01-25 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,861 - DEBUG    - [37m2        2000-01-25 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,865 - DEBUG    - [37m2        2000-01-25 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,866 - DEBUG    - [37m2        2000-01-25 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,870 - DEBUG    - [37m2        2000-01-25 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,871 - DEBUG    - [37m2        2000-01-25 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,874 - INFO     - [37m2        satisfice BOTTOM :: 2000-01-25[0m
+2026-07-03 16:58:09,874 - INFO     - [37m2        satisfice TOP :: 2000-01-26[0m
+2026-07-03 16:58:09,876 - DEBUG    - [37m2        2000-01-26 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,877 - DEBUG    - [37m2        2000-01-26 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,880 - DEBUG    - [37m2        2000-01-26 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,882 - DEBUG    - [37m3            2000-01-26 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:09,882 - DEBUG    - [37m3            2000-01-26 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:09,883 - DEBUG    - [37m2        2000-01-26 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,884 - DEBUG    - [37m2        2000-01-26 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,885 - DEBUG    - [37m2        2000-01-26 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,889 - DEBUG    - [37m2        2000-01-26 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,892 - DEBUG    - [37m2        2000-01-26 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,896 - DEBUG    - [37m2        2000-01-26 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,897 - DEBUG    - [37m2        2000-01-26 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,901 - DEBUG    - [37m2        2000-01-26 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,902 - DEBUG    - [37m2        2000-01-26 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,906 - INFO     - [37m2        satisfice BOTTOM :: 2000-01-26[0m
+2026-07-03 16:58:09,906 - INFO     - [37m2        satisfice TOP :: 2000-01-27[0m
+2026-07-03 16:58:09,908 - DEBUG    - [37m2        2000-01-27 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,908 - DEBUG    - [37m2        2000-01-27 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,912 - DEBUG    - [37m2        2000-01-27 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,914 - DEBUG    - [37m3            2000-01-27 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:09,914 - DEBUG    - [37m3            2000-01-27 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:09,914 - DEBUG    - [37m2        2000-01-27 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,915 - DEBUG    - [37m2        2000-01-27 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,916 - DEBUG    - [37m2        2000-01-27 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,920 - DEBUG    - [37m2        2000-01-27 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,923 - DEBUG    - [37m2        2000-01-27 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,927 - DEBUG    - [37m2        2000-01-27 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,928 - DEBUG    - [37m2        2000-01-27 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,932 - DEBUG    - [37m2        2000-01-27 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,933 - DEBUG    - [37m2        2000-01-27 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,937 - INFO     - [37m2        satisfice BOTTOM :: 2000-01-27[0m
+2026-07-03 16:58:09,937 - INFO     - [37m2        satisfice TOP :: 2000-01-28[0m
+2026-07-03 16:58:09,938 - DEBUG    - [37m2        2000-01-28 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,939 - DEBUG    - [37m2        2000-01-28 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,943 - DEBUG    - [37m2        2000-01-28 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,945 - DEBUG    - [37m3            2000-01-28 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:09,945 - DEBUG    - [37m3            2000-01-28 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:09,945 - DEBUG    - [37m2        2000-01-28 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,947 - DEBUG    - [37m2        2000-01-28 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,947 - DEBUG    - [37m2        2000-01-28 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,951 - DEBUG    - [37m2        2000-01-28 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,955 - DEBUG    - [37m2        2000-01-28 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,959 - DEBUG    - [37m2        2000-01-28 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,959 - DEBUG    - [37m2        2000-01-28 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,963 - DEBUG    - [37m2        2000-01-28 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,964 - DEBUG    - [37m2        2000-01-28 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,968 - INFO     - [37m2        satisfice BOTTOM :: 2000-01-28[0m
+2026-07-03 16:58:09,968 - INFO     - [37m2        satisfice TOP :: 2000-01-29[0m
+2026-07-03 16:58:09,970 - DEBUG    - [37m2        2000-01-29 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,971 - DEBUG    - [37m2        2000-01-29 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:09,974 - DEBUG    - [37m2        2000-01-29 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,976 - DEBUG    - [37m3            2000-01-29 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:09,976 - DEBUG    - [37m3            2000-01-29 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:09,976 - DEBUG    - [37m2        2000-01-29 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:09,978 - DEBUG    - [37m2        2000-01-29 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,979 - DEBUG    - [37m2        2000-01-29 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:09,983 - DEBUG    - [37m2        2000-01-29 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,986 - DEBUG    - [37m2        2000-01-29 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:09,990 - DEBUG    - [37m2        2000-01-29 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,991 - DEBUG    - [37m2        2000-01-29 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:09,995 - DEBUG    - [37m2        2000-01-29 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:09,996 - DEBUG    - [37m2        2000-01-29 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:10,000 - INFO     - [37m2        satisfice BOTTOM :: 2000-01-29[0m
+2026-07-03 16:58:10,000 - INFO     - [37m2        satisfice TOP :: 2000-01-30[0m
+2026-07-03 16:58:10,002 - DEBUG    - [37m2        2000-01-30 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:10,003 - DEBUG    - [37m2        2000-01-30 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:10,007 - DEBUG    - [37m2        2000-01-30 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:10,009 - DEBUG    - [37m3            2000-01-30 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:10,009 - DEBUG    - [37m3            2000-01-30 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:10,009 - DEBUG    - [37m2        2000-01-30 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:10,011 - DEBUG    - [37m2        2000-01-30 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:10,011 - DEBUG    - [37m2        2000-01-30 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:10,015 - DEBUG    - [37m2        2000-01-30 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:10,019 - DEBUG    - [37m2        2000-01-30 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:10,022 - DEBUG    - [37m2        2000-01-30 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:10,023 - DEBUG    - [37m2        2000-01-30 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:10,027 - DEBUG    - [37m2        2000-01-30 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:10,028 - DEBUG    - [37m2        2000-01-30 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:10,032 - INFO     - [37m2        satisfice BOTTOM :: 2000-01-30[0m
+2026-07-03 16:58:10,032 - INFO     - [37m2        satisfice TOP :: 2000-01-31[0m
+2026-07-03 16:58:10,034 - DEBUG    - [37m2        2000-01-31 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:10,034 - DEBUG    - [37m2        2000-01-31 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:10,038 - DEBUG    - [37m2        2000-01-31 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:10,040 - DEBUG    - [37m3            2000-01-31 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:10,040 - DEBUG    - [37m3            2000-01-31 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:10,040 - DEBUG    - [37m2        2000-01-31 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:10,042 - DEBUG    - [37m2        2000-01-31 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:10,042 - DEBUG    - [37m2        2000-01-31 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:10,046 - DEBUG    - [37m2        2000-01-31 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:10,049 - DEBUG    - [37m2        2000-01-31 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:10,053 - DEBUG    - [37m2        2000-01-31 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:10,054 - DEBUG    - [37m2        2000-01-31 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:10,058 - DEBUG    - [37m2        2000-01-31 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:10,059 - DEBUG    - [37m2        2000-01-31 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:10,063 - INFO     - [37m2        satisfice BOTTOM :: 2000-01-31[0m
+2026-07-03 16:58:10,063 - INFO     - [37m2        satisfice TOP :: 2000-02-01[0m
+2026-07-03 16:58:10,064 - DEBUG    - [37m2        2000-02-01 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:10,065 - DEBUG    - [37m2        2000-02-01 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:10,069 - DEBUG    - [37m2        2000-02-01 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:10,071 - DEBUG    - [37m3            2000-02-01 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:10,071 - DEBUG    - [37m3            2000-02-01 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:10,071 - DEBUG    - [37m2        2000-02-01 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:10,072 - DEBUG    - [37m2        2000-02-01 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:10,073 - DEBUG    - [37m2        2000-02-01 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:10,077 - DEBUG    - [37m2        2000-02-01 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:10,080 - DEBUG    - [37m2        2000-02-01 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:10,084 - DEBUG    - [37m2        2000-02-01 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:10,085 - DEBUG    - [37m2        2000-02-01 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:10,089 - DEBUG    - [37m2        2000-02-01 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:10,090 - DEBUG    - [37m2        2000-02-01 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:10,093 - INFO     - [37m2        satisfice BOTTOM :: 2000-02-01[0m
+2026-07-03 16:58:10,093 - INFO     - [37m2        satisfice TOP :: 2000-02-02[0m
+2026-07-03 16:58:10,095 - DEBUG    - [37m2        2000-02-02 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:10,096 - DEBUG    - [37m2        2000-02-02 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:10,099 - DEBUG    - [37m2        2000-02-02 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:10,101 - DEBUG    - [37m3            2000-02-02 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:10,101 - DEBUG    - [37m3            2000-02-02 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:10,101 - DEBUG    - [37m2        2000-02-02 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:10,103 - DEBUG    - [37m2        2000-02-02 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:10,104 - DEBUG    - [37m2        2000-02-02 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:10,108 - DEBUG    - [37m2        2000-02-02 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:10,111 - DEBUG    - [37m2        2000-02-02 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:10,115 - DEBUG    - [37m2        2000-02-02 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:10,115 - DEBUG    - [37m2        2000-02-02 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:10,119 - DEBUG    - [37m2        2000-02-02 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:10,121 - DEBUG    - [37m2        2000-02-02 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:10,124 - INFO     - [37m2        satisfice BOTTOM :: 2000-02-02[0m
+2026-07-03 16:58:10,124 - INFO     - [37m2        satisfice TOP :: 2000-02-03[0m
+2026-07-03 16:58:10,126 - DEBUG    - [37m2        2000-02-03 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:10,127 - DEBUG    - [37m2        2000-02-03 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:10,130 - DEBUG    - [37m2        2000-02-03 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:10,132 - DEBUG    - [37m3            2000-02-03 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:10,132 - DEBUG    - [37m3            2000-02-03 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:10,132 - DEBUG    - [37m2        2000-02-03 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:10,134 - DEBUG    - [37m2        2000-02-03 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:10,134 - DEBUG    - [37m2        2000-02-03 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:10,138 - DEBUG    - [37m2        2000-02-03 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:10,141 - DEBUG    - [37m2        2000-02-03 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:10,145 - DEBUG    - [37m2        2000-02-03 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:10,146 - DEBUG    - [37m2        2000-02-03 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:10,150 - DEBUG    - [37m2        2000-02-03 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:10,151 - DEBUG    - [37m2        2000-02-03 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:10,155 - INFO     - [37m2        satisfice BOTTOM :: 2000-02-03[0m
+2026-07-03 16:58:10,155 - INFO     - [37m2        satisfice TOP :: 2000-02-04[0m
+2026-07-03 16:58:10,156 - DEBUG    - [37m2        2000-02-04 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:10,157 - DEBUG    - [37m2        2000-02-04 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:10,161 - DEBUG    - [37m2        2000-02-04 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:10,163 - DEBUG    - [37m3            2000-02-04 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:10,163 - DEBUG    - [37m3            2000-02-04 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:10,163 - DEBUG    - [37m2        2000-02-04 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:10,164 - DEBUG    - [37m2        2000-02-04 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:10,165 - DEBUG    - [37m2        2000-02-04 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:10,169 - DEBUG    - [37m2        2000-02-04 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:10,172 - DEBUG    - [37m2        2000-02-04 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:10,176 - DEBUG    - [37m2        2000-02-04 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:10,177 - DEBUG    - [37m2        2000-02-04 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:10,181 - DEBUG    - [37m2        2000-02-04 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:10,182 - DEBUG    - [37m2        2000-02-04 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:10,185 - INFO     - [37m2        satisfice BOTTOM :: 2000-02-04[0m
+2026-07-03 16:58:10,185 - INFO     - [37m2        satisfice TOP :: 2000-02-05[0m
+2026-07-03 16:58:10,187 - DEBUG    - [37m2        2000-02-05 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:10,188 - DEBUG    - [37m2        2000-02-05 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:10,192 - DEBUG    - [37m2        2000-02-05 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:10,193 - DEBUG    - [37m3            2000-02-05 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:10,193 - DEBUG    - [37m3            2000-02-05 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:10,194 - DEBUG    - [37m2        2000-02-05 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:10,195 - DEBUG    - [37m2        2000-02-05 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:10,196 - DEBUG    - [37m2        2000-02-05 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:10,200 - DEBUG    - [37m2        2000-02-05 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:10,203 - DEBUG    - [37m2        2000-02-05 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:10,207 - DEBUG    - [37m2        2000-02-05 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:10,208 - DEBUG    - [37m2        2000-02-05 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:10,212 - DEBUG    - [37m2        2000-02-05 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:10,213 - DEBUG    - [37m2        2000-02-05 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:10,217 - INFO     - [37m2        satisfice BOTTOM :: 2000-02-05[0m
+2026-07-03 16:58:10,217 - INFO     - [37m2        satisfice TOP :: 2000-02-06[0m
+2026-07-03 16:58:10,218 - DEBUG    - [37m2        2000-02-06 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:10,219 - DEBUG    - [37m2        2000-02-06 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:10,223 - DEBUG    - [37m2        2000-02-06 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:10,225 - DEBUG    - [37m3            2000-02-06 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:10,225 - DEBUG    - [37m3            2000-02-06 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:10,225 - DEBUG    - [37m2        2000-02-06 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:10,227 - DEBUG    - [37m2        2000-02-06 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:10,227 - DEBUG    - [37m2        2000-02-06 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:10,231 - DEBUG    - [37m2        2000-02-06 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:10,235 - DEBUG    - [37m2        2000-02-06 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:10,239 - DEBUG    - [37m2        2000-02-06 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:10,240 - DEBUG    - [37m2        2000-02-06 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:10,244 - DEBUG    - [37m2        2000-02-06 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:10,245 - DEBUG    - [37m2        2000-02-06 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:10,248 - INFO     - [37m2        satisfice BOTTOM :: 2000-02-06[0m
+2026-07-03 16:58:10,249 - INFO     - [37m2        satisfice TOP :: 2000-02-07[0m
+2026-07-03 16:58:10,250 - DEBUG    - [37m2        2000-02-07 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:10,252 - DEBUG    - [37m2        2000-02-07 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:10,256 - DEBUG    - [37m2        2000-02-07 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:10,258 - DEBUG    - [37m3            2000-02-07 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:10,258 - DEBUG    - [37m3            2000-02-07 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:10,258 - DEBUG    - [37m2        2000-02-07 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:10,260 - DEBUG    - [37m2        2000-02-07 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:10,261 - DEBUG    - [37m2        2000-02-07 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:10,265 - DEBUG    - [37m2        2000-02-07 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:10,268 - DEBUG    - [37m2        2000-02-07 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:10,272 - DEBUG    - [37m2        2000-02-07 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:10,273 - DEBUG    - [37m2        2000-02-07 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:10,277 - DEBUG    - [37m2        2000-02-07 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:10,278 - DEBUG    - [37m2        2000-02-07 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:10,281 - INFO     - [37m2        satisfice BOTTOM :: 2000-02-07[0m
+2026-07-03 16:58:10,282 - INFO     - [37m2        satisfice TOP :: 2000-02-08[0m
+2026-07-03 16:58:10,283 - DEBUG    - [37m2        2000-02-08 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:10,284 - DEBUG    - [37m2        2000-02-08 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:10,288 - DEBUG    - [37m2        2000-02-08 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:10,290 - DEBUG    - [37m3            2000-02-08 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:10,290 - DEBUG    - [37m3            2000-02-08 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:10,290 - DEBUG    - [37m2        2000-02-08 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:10,291 - DEBUG    - [37m2        2000-02-08 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:10,292 - DEBUG    - [37m2        2000-02-08 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:10,296 - DEBUG    - [37m2        2000-02-08 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:10,299 - DEBUG    - [37m2        2000-02-08 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:10,303 - DEBUG    - [37m2        2000-02-08 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:10,304 - DEBUG    - [37m2        2000-02-08 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:10,308 - DEBUG    - [37m2        2000-02-08 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:10,309 - DEBUG    - [37m2        2000-02-08 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:10,313 - INFO     - [37m2        satisfice BOTTOM :: 2000-02-08[0m
+2026-07-03 16:58:10,313 - INFO     - [37m2        satisfice TOP :: 2000-02-09[0m
+2026-07-03 16:58:10,315 - DEBUG    - [37m2        2000-02-09 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:10,315 - DEBUG    - [37m2        2000-02-09 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:10,319 - DEBUG    - [37m2        2000-02-09 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:10,321 - DEBUG    - [37m3            2000-02-09 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:10,321 - DEBUG    - [37m3            2000-02-09 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:10,321 - DEBUG    - [37m2        2000-02-09 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:10,323 - DEBUG    - [37m2        2000-02-09 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:10,323 - DEBUG    - [37m2        2000-02-09 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:10,327 - DEBUG    - [37m2        2000-02-09 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:10,331 - DEBUG    - [37m2        2000-02-09 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:10,334 - DEBUG    - [37m2        2000-02-09 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:10,335 - DEBUG    - [37m2        2000-02-09 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:10,339 - DEBUG    - [37m2        2000-02-09 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:10,340 - DEBUG    - [37m2        2000-02-09 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:10,344 - INFO     - [37m2        satisfice BOTTOM :: 2000-02-09[0m
+2026-07-03 16:58:10,344 - INFO     - [37m2        satisfice TOP :: 2000-02-10[0m
+2026-07-03 16:58:10,346 - DEBUG    - [37m2        2000-02-10 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:10,347 - DEBUG    - [37m2        2000-02-10 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:10,350 - DEBUG    - [37m2        2000-02-10 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:10,352 - DEBUG    - [37m3            2000-02-10 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:10,352 - DEBUG    - [37m3            2000-02-10 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:10,352 - DEBUG    - [37m2        2000-02-10 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:10,354 - DEBUG    - [37m2        2000-02-10 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:10,355 - DEBUG    - [37m2        2000-02-10 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:10,359 - DEBUG    - [37m2        2000-02-10 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:10,362 - DEBUG    - [37m2        2000-02-10 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:10,366 - DEBUG    - [37m2        2000-02-10 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:10,367 - DEBUG    - [37m2        2000-02-10 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:10,371 - DEBUG    - [37m2        2000-02-10 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:10,372 - DEBUG    - [37m2        2000-02-10 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:10,376 - INFO     - [37m2        satisfice BOTTOM :: 2000-02-10[0m
+2026-07-03 16:58:10,376 - INFO     - [37m2        satisfice TOP :: 2000-02-11[0m
+2026-07-03 16:58:10,378 - DEBUG    - [37m2        2000-02-11 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:10,378 - DEBUG    - [37m2        2000-02-11 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:10,382 - DEBUG    - [37m2        2000-02-11 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:10,384 - DEBUG    - [37m3            2000-02-11 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:10,384 - DEBUG    - [37m3            2000-02-11 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:10,384 - DEBUG    - [37m2        2000-02-11 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:10,386 - DEBUG    - [37m2        2000-02-11 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:10,386 - DEBUG    - [37m2        2000-02-11 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:10,390 - DEBUG    - [37m2        2000-02-11 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:10,394 - DEBUG    - [37m2        2000-02-11 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:10,397 - DEBUG    - [37m2        2000-02-11 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:10,398 - DEBUG    - [37m2        2000-02-11 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:10,402 - DEBUG    - [37m2        2000-02-11 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:10,403 - DEBUG    - [37m2        2000-02-11 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:10,407 - INFO     - [37m2        satisfice BOTTOM :: 2000-02-11[0m
+2026-07-03 16:58:10,407 - INFO     - [37m2        satisfice TOP :: 2000-02-12[0m
+2026-07-03 16:58:10,409 - DEBUG    - [37m2        2000-02-12 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:10,410 - DEBUG    - [37m2        2000-02-12 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:10,413 - DEBUG    - [37m2        2000-02-12 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:10,415 - DEBUG    - [37m3            2000-02-12 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:10,415 - DEBUG    - [37m3            2000-02-12 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:10,415 - DEBUG    - [37m2        2000-02-12 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:10,417 - DEBUG    - [37m2        2000-02-12 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:10,418 - DEBUG    - [37m2        2000-02-12 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:10,422 - DEBUG    - [37m2        2000-02-12 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:10,425 - DEBUG    - [37m2        2000-02-12 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:10,429 - DEBUG    - [37m2        2000-02-12 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:10,429 - DEBUG    - [37m2        2000-02-12 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:10,433 - DEBUG    - [37m2        2000-02-12 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:10,434 - DEBUG    - [37m2        2000-02-12 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:10,438 - INFO     - [37m2        satisfice BOTTOM :: 2000-02-12[0m
+2026-07-03 16:58:10,438 - INFO     - [37m2        satisfice TOP :: 2000-02-13[0m
+2026-07-03 16:58:10,440 - DEBUG    - [37m2        2000-02-13 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:10,440 - DEBUG    - [37m2        2000-02-13 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:10,444 - DEBUG    - [37m2        2000-02-13 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:10,446 - DEBUG    - [37m3            2000-02-13 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:10,446 - DEBUG    - [37m3            2000-02-13 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:10,446 - DEBUG    - [37m2        2000-02-13 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:10,448 - DEBUG    - [37m2        2000-02-13 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:10,448 - DEBUG    - [37m2        2000-02-13 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:10,453 - DEBUG    - [37m2        2000-02-13 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:10,456 - DEBUG    - [37m2        2000-02-13 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:10,461 - DEBUG    - [37m2        2000-02-13 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:10,462 - DEBUG    - [37m2        2000-02-13 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:10,466 - DEBUG    - [37m2        2000-02-13 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:10,467 - DEBUG    - [37m2        2000-02-13 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:10,471 - INFO     - [37m2        satisfice BOTTOM :: 2000-02-13[0m
+2026-07-03 16:58:10,471 - INFO     - [37m2        satisfice TOP :: 2000-02-14[0m
+2026-07-03 16:58:10,473 - DEBUG    - [37m2        2000-02-14 ENTER _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:10,473 - DEBUG    - [37m2        2000-02-14 EXIT _processCreditCardBillingDayForDay[0m
+2026-07-03 16:58:10,477 - DEBUG    - [37m2        2000-02-14 ENTER _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:10,479 - DEBUG    - [37m3            2000-02-14 ENTER _processConfirmedTransactions[0m
+2026-07-03 16:58:10,479 - DEBUG    - [37m3            2000-02-14 EXIT _processConfirmedTransactions[0m
+2026-07-03 16:58:10,479 - DEBUG    - [37m2        2000-02-14 EXIT _executeTransactionsForDay p=1[0m
+2026-07-03 16:58:10,481 - DEBUG    - [37m2        2000-02-14 ENTER _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:10,482 - DEBUG    - [37m2        2000-02-14 EXIT _calculateLoanInterestAccrualsForDay[0m
+2026-07-03 16:58:10,486 - DEBUG    - [37m2        2000-02-14 ENTER _executeLoanMinimumPayments[0m
+2026-07-03 16:58:10,489 - DEBUG    - [37m2        2000-02-14 EXIT _executeLoanMinimumPayments[0m
+2026-07-03 16:58:10,493 - DEBUG    - [37m2        2000-02-14 ENTER _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:10,494 - DEBUG    - [37m2        2000-02-14 EXIT _updateEndOfPrevCycleBal[0m
+2026-07-03 16:58:10,498 - DEBUG    - [37m2        2000-02-14 ENTER _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:10,500 - DEBUG    - [37m2        2000-02-14 EXIT _executeCreditCardMinimumPayments [0m
+2026-07-03 16:58:10,503 - INFO     - [37m2        satisfice BOTTOM :: 2000-02-14[0m
+2026-07-03 16:58:10,514 - INFO     - [37m2                  Date  Checking  Credit  Credit: Curr Stmt Bal  Credit: Prev Stmt Bal  Credit: Credit Billing Cycle Payment Bal  Credit: Credit End of Prev Cycle Bal Next Income Date Memo Directives Memo[0m
+2026-07-03 16:58:10,514 - INFO     - [37m2        0   2000-01-10      50.0     0.0                    0.0                    0.0                                     500.0                                 500.0                                      [0m
+2026-07-03 16:58:10,514 - INFO     - [37m2        1   2000-01-11      50.0     0.0                    0.0                    0.0                                     500.0                                 500.0                                      [0m
+2026-07-03 16:58:10,514 - INFO     - [37m2        2   2000-01-12      50.0     0.0                    0.0                    0.0                                       0.0                                 500.0                                      [0m
+2026-07-03 16:58:10,515 - INFO     - [37m2        3   2000-01-13      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,515 - INFO     - [37m2        4   2000-01-14      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,515 - INFO     - [37m2        5   2000-01-15      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,515 - INFO     - [37m2        6   2000-01-16      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,515 - INFO     - [37m2        7   2000-01-17      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,515 - INFO     - [37m2        8   2000-01-18      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,515 - INFO     - [37m2        9   2000-01-19      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,515 - INFO     - [37m2        10  2000-01-20      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,515 - INFO     - [37m2        11  2000-01-21      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,515 - INFO     - [37m2        12  2000-01-22      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,515 - INFO     - [37m2        13  2000-01-23      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,515 - INFO     - [37m2        14  2000-01-24      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,515 - INFO     - [37m2        15  2000-01-25      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,515 - INFO     - [37m2        16  2000-01-26      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,516 - INFO     - [37m2        17  2000-01-27      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,516 - INFO     - [37m2        18  2000-01-28      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,516 - INFO     - [37m2        19  2000-01-29      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,516 - INFO     - [37m2        20  2000-01-30      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,516 - INFO     - [37m2        21  2000-01-31      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,516 - INFO     - [37m2        22  2000-02-01      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,516 - INFO     - [37m2        23  2000-02-02      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,516 - INFO     - [37m2        24  2000-02-03      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,516 - INFO     - [37m2        25  2000-02-04      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,516 - INFO     - [37m2        26  2000-02-05      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,516 - INFO     - [37m2        27  2000-02-06      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,516 - INFO     - [37m2        28  2000-02-07      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,516 - INFO     - [37m2        29  2000-02-08      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,516 - INFO     - [37m2        30  2000-02-09      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,516 - INFO     - [37m2        31  2000-02-10      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,516 - INFO     - [37m2        32  2000-02-11      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,517 - INFO     - [37m2        33  2000-02-12      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,517 - INFO     - [37m2        34  2000-02-13      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,517 - INFO     - [37m2        35  2000-02-14      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,517 - INFO     - [37m1    EXIT _satisfice[0m
+2026-07-03 16:58:10,517 - DEBUG    - [37m0 Satisfice succeeded.[0m
+2026-07-03 16:58:10,523 - DEBUG    - [37m0           Date  Checking  Credit  Credit: Curr Stmt Bal  Credit: Prev Stmt Bal  Credit: Credit Billing Cycle Payment Bal  Credit: Credit End of Prev Cycle Bal Next Income Date Memo Directives Memo[0m
+2026-07-03 16:58:10,523 - DEBUG    - [37m0 0   2000-01-10      50.0     0.0                    0.0                    0.0                                     500.0                                 500.0                                      [0m
+2026-07-03 16:58:10,523 - DEBUG    - [37m0 1   2000-01-11      50.0     0.0                    0.0                    0.0                                     500.0                                 500.0                                      [0m
+2026-07-03 16:58:10,523 - DEBUG    - [37m0 2   2000-01-12      50.0     0.0                    0.0                    0.0                                       0.0                                 500.0                                      [0m
+2026-07-03 16:58:10,523 - DEBUG    - [37m0 3   2000-01-13      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,523 - DEBUG    - [37m0 4   2000-01-14      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,523 - DEBUG    - [37m0 5   2000-01-15      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,523 - DEBUG    - [37m0 6   2000-01-16      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,523 - DEBUG    - [37m0 7   2000-01-17      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,523 - DEBUG    - [37m0 8   2000-01-18      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,523 - DEBUG    - [37m0 9   2000-01-19      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,524 - DEBUG    - [37m0 10  2000-01-20      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,524 - DEBUG    - [37m0 11  2000-01-21      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,524 - DEBUG    - [37m0 12  2000-01-22      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,524 - DEBUG    - [37m0 13  2000-01-23      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,524 - DEBUG    - [37m0 14  2000-01-24      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,524 - DEBUG    - [37m0 15  2000-01-25      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,524 - DEBUG    - [37m0 16  2000-01-26      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,524 - DEBUG    - [37m0 17  2000-01-27      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,524 - DEBUG    - [37m0 18  2000-01-28      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,524 - DEBUG    - [37m0 19  2000-01-29      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,524 - DEBUG    - [37m0 20  2000-01-30      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,524 - DEBUG    - [37m0 21  2000-01-31      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,524 - DEBUG    - [37m0 22  2000-02-01      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,524 - DEBUG    - [37m0 23  2000-02-02      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,524 - DEBUG    - [37m0 24  2000-02-03      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,525 - DEBUG    - [37m0 25  2000-02-04      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,525 - DEBUG    - [37m0 26  2000-02-05      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,525 - DEBUG    - [37m0 27  2000-02-06      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,525 - DEBUG    - [37m0 28  2000-02-07      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,525 - DEBUG    - [37m0 29  2000-02-08      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,525 - DEBUG    - [37m0 30  2000-02-09      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,525 - DEBUG    - [37m0 31  2000-02-10      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,525 - DEBUG    - [37m0 32  2000-02-11      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,525 - DEBUG    - [37m0 33  2000-02-12      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,525 - DEBUG    - [37m0 34  2000-02-13      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,525 - DEBUG    - [37m0 35  2000-02-14      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,525 - INFO     - [37m1    ENTER _assessPotentialOptimizations[0m
+2026-07-03 16:58:10,531 - INFO     - [37m2                  Date  Checking  Credit  Credit: Curr Stmt Bal  Credit: Prev Stmt Bal  Credit: Credit Billing Cycle Payment Bal  Credit: Credit End of Prev Cycle Bal Next Income Date Memo Directives Memo[0m
+2026-07-03 16:58:10,531 - INFO     - [37m2        0   2000-01-10      50.0     0.0                    0.0                    0.0                                     500.0                                 500.0                                      [0m
+2026-07-03 16:58:10,531 - INFO     - [37m2        1   2000-01-11      50.0     0.0                    0.0                    0.0                                     500.0                                 500.0                                      [0m
+2026-07-03 16:58:10,531 - INFO     - [37m2        2   2000-01-12      50.0     0.0                    0.0                    0.0                                       0.0                                 500.0                                      [0m
+2026-07-03 16:58:10,531 - INFO     - [37m2        3   2000-01-13      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,531 - INFO     - [37m2        4   2000-01-14      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,531 - INFO     - [37m2        5   2000-01-15      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,531 - INFO     - [37m2        6   2000-01-16      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,531 - INFO     - [37m2        7   2000-01-17      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,532 - INFO     - [37m2        8   2000-01-18      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,532 - INFO     - [37m2        9   2000-01-19      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,532 - INFO     - [37m2        10  2000-01-20      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,532 - INFO     - [37m2        11  2000-01-21      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,532 - INFO     - [37m2        12  2000-01-22      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,532 - INFO     - [37m2        13  2000-01-23      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,532 - INFO     - [37m2        14  2000-01-24      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,532 - INFO     - [37m2        15  2000-01-25      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,532 - INFO     - [37m2        16  2000-01-26      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,532 - INFO     - [37m2        17  2000-01-27      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,532 - INFO     - [37m2        18  2000-01-28      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,532 - INFO     - [37m2        19  2000-01-29      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,532 - INFO     - [37m2        20  2000-01-30      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,532 - INFO     - [37m2        21  2000-01-31      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,532 - INFO     - [37m2        22  2000-02-01      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,532 - INFO     - [37m2        23  2000-02-02      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,533 - INFO     - [37m2        24  2000-02-03      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,533 - INFO     - [37m2        25  2000-02-04      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,533 - INFO     - [37m2        26  2000-02-05      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,533 - INFO     - [37m2        27  2000-02-06      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,533 - INFO     - [37m2        28  2000-02-07      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,533 - INFO     - [37m2        29  2000-02-08      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,533 - INFO     - [37m2        30  2000-02-09      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,533 - INFO     - [37m2        31  2000-02-10      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,533 - INFO     - [37m2        32  2000-02-11      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,533 - INFO     - [37m2        33  2000-02-12      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,533 - INFO     - [37m2        34  2000-02-13      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,533 - INFO     - [37m2        35  2000-02-14      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                      [0m
+2026-07-03 16:58:10,534 - INFO     - [32m0 Beginning Optimization.[0m
+2026-07-03 16:58:10,534 - DEBUG    - [37m1    EXIT _assessPotentialOptimizations[0m
+2026-07-03 16:58:10,534 - DEBUG    - [37m0 EXIT _computeOptimalForecast[0m
+2026-07-03 16:58:10,696 - DEBUG    - [35m0 Forecast Pre-Validation[0m
+2026-07-03 16:58:10,704 - DEBUG    - [35m0           Date  Checking  Credit  Credit: Curr Stmt Bal  Credit: Prev Stmt Bal  Credit: Credit Billing Cycle Payment Bal  Credit: Credit End of Prev Cycle Bal Next Income Date Memo Directives Memo  Marginal Interest  Net Gain  Net Loss[0m
+2026-07-03 16:58:10,704 - DEBUG    - [35m0 0   2000-01-10      50.0     0.0                    0.0                    0.0                                     500.0                                 500.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,704 - DEBUG    - [35m0 1   2000-01-11      50.0     0.0                    0.0                    0.0                                     500.0                                 500.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,704 - DEBUG    - [35m0 2   2000-01-12      50.0     0.0                    0.0                    0.0                                       0.0                                 500.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,704 - DEBUG    - [35m0 3   2000-01-13      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,704 - DEBUG    - [35m0 4   2000-01-14      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,704 - DEBUG    - [35m0 5   2000-01-15      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,704 - DEBUG    - [35m0 6   2000-01-16      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,704 - DEBUG    - [35m0 7   2000-01-17      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,704 - DEBUG    - [35m0 8   2000-01-18      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,704 - DEBUG    - [35m0 9   2000-01-19      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,705 - DEBUG    - [35m0 10  2000-01-20      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,705 - DEBUG    - [35m0 11  2000-01-21      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,705 - DEBUG    - [35m0 12  2000-01-22      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,705 - DEBUG    - [35m0 13  2000-01-23      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,705 - DEBUG    - [35m0 14  2000-01-24      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,705 - DEBUG    - [35m0 15  2000-01-25      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,705 - DEBUG    - [35m0 16  2000-01-26      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,705 - DEBUG    - [35m0 17  2000-01-27      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,705 - DEBUG    - [35m0 18  2000-01-28      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,705 - DEBUG    - [35m0 19  2000-01-29      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,705 - DEBUG    - [35m0 20  2000-01-30      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,705 - DEBUG    - [35m0 21  2000-01-31      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,705 - DEBUG    - [35m0 22  2000-02-01      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,705 - DEBUG    - [35m0 23  2000-02-02      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,705 - DEBUG    - [35m0 24  2000-02-03      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,705 - DEBUG    - [35m0 25  2000-02-04      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,705 - DEBUG    - [35m0 26  2000-02-05      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,706 - DEBUG    - [35m0 27  2000-02-06      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,706 - DEBUG    - [35m0 28  2000-02-07      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,706 - DEBUG    - [35m0 29  2000-02-08      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,706 - DEBUG    - [35m0 30  2000-02-09      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,706 - DEBUG    - [35m0 31  2000-02-10      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,706 - DEBUG    - [35m0 32  2000-02-11      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,706 - DEBUG    - [35m0 33  2000-02-12      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,706 - DEBUG    - [35m0 34  2000-02-13      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,706 - DEBUG    - [35m0 35  2000-02-14      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                                                      0.0         0       0.0[0m
+2026-07-03 16:58:10,706 - DEBUG    - [35m0 Validation Delta Values[0m
+2026-07-03 16:58:10,706 - DEBUG    - [35m0       Date      Check         CC       Loan      Net +      Net -[0m
+2026-07-03 16:58:10,707 - DEBUG    - [35m0 2000-01-11          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,708 - DEBUG    - [35m0 2000-01-12          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,709 - DEBUG    - [35m0 2000-01-13          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,710 - DEBUG    - [35m0 2000-01-14          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,711 - DEBUG    - [35m0 2000-01-15          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,712 - DEBUG    - [35m0 2000-01-16          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,712 - DEBUG    - [35m0 2000-01-17          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,713 - DEBUG    - [35m0 2000-01-18          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,714 - DEBUG    - [35m0 2000-01-19          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,715 - DEBUG    - [35m0 2000-01-20          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,716 - DEBUG    - [35m0 2000-01-21          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,717 - DEBUG    - [35m0 2000-01-22          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,718 - DEBUG    - [35m0 2000-01-23          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,718 - DEBUG    - [35m0 2000-01-24          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,719 - DEBUG    - [35m0 2000-01-25          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,720 - DEBUG    - [35m0 2000-01-26          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,721 - DEBUG    - [35m0 2000-01-27          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,722 - DEBUG    - [35m0 2000-01-28          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,722 - DEBUG    - [35m0 2000-01-29          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,723 - DEBUG    - [35m0 2000-01-30          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,724 - DEBUG    - [35m0 2000-01-31          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,725 - DEBUG    - [35m0 2000-02-01          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,726 - DEBUG    - [35m0 2000-02-02          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,726 - DEBUG    - [35m0 2000-02-03          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,727 - DEBUG    - [35m0 2000-02-04          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,728 - DEBUG    - [35m0 2000-02-05          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,729 - DEBUG    - [35m0 2000-02-06          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,730 - DEBUG    - [35m0 2000-02-07          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,731 - DEBUG    - [35m0 2000-02-08          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,731 - DEBUG    - [35m0 2000-02-09          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,732 - DEBUG    - [35m0 2000-02-10          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,734 - DEBUG    - [35m0 2000-02-11          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,735 - DEBUG    - [35m0 2000-02-12          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,736 - DEBUG    - [35m0 2000-02-13          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,736 - DEBUG    - [35m0 2000-02-14          0          0          0          0        0.0[0m
+2026-07-03 16:58:10,737 - DEBUG    - [32m0 Validation SUCCESS[0m
+2026-07-03 16:58:10,745 - INFO     - [37m0 Finished Forecast 000110_35_0_d14ba9326a[0m
+2026-07-03 16:58:10,757 - INFO     - [37m0           Date  Checking  Credit  Credit: Curr Stmt Bal  Credit: Prev Stmt Bal  Credit: Credit Billing Cycle Payment Bal  Credit: Credit End of Prev Cycle Bal  Marginal Interest  Net Gain  Net Loss  Net Worth  Loan Total  CC Debt Total  Liquid Total Next Income Date Memo Directives Memo[0m
+2026-07-03 16:58:10,757 - INFO     - [37m0 0   2000-01-10      50.0     0.0                    0.0                    0.0                                     500.0                                 500.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,757 - INFO     - [37m0 1   2000-01-11      50.0     0.0                    0.0                    0.0                                     500.0                                 500.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,757 - INFO     - [37m0 2   2000-01-12      50.0     0.0                    0.0                    0.0                                       0.0                                 500.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,757 - INFO     - [37m0 3   2000-01-13      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,757 - INFO     - [37m0 4   2000-01-14      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,757 - INFO     - [37m0 5   2000-01-15      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,757 - INFO     - [37m0 6   2000-01-16      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,757 - INFO     - [37m0 7   2000-01-17      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,757 - INFO     - [37m0 8   2000-01-18      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,757 - INFO     - [37m0 9   2000-01-19      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,757 - INFO     - [37m0 10  2000-01-20      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,757 - INFO     - [37m0 11  2000-01-21      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,758 - INFO     - [37m0 12  2000-01-22      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,758 - INFO     - [37m0 13  2000-01-23      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,758 - INFO     - [37m0 14  2000-01-24      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,758 - INFO     - [37m0 15  2000-01-25      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,758 - INFO     - [37m0 16  2000-01-26      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,758 - INFO     - [37m0 17  2000-01-27      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,758 - INFO     - [37m0 18  2000-01-28      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,758 - INFO     - [37m0 19  2000-01-29      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,758 - INFO     - [37m0 20  2000-01-30      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,758 - INFO     - [37m0 21  2000-01-31      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,758 - INFO     - [37m0 22  2000-02-01      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,758 - INFO     - [37m0 23  2000-02-02      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,758 - INFO     - [37m0 24  2000-02-03      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,758 - INFO     - [37m0 25  2000-02-04      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,759 - INFO     - [37m0 26  2000-02-05      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,759 - INFO     - [37m0 27  2000-02-06      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,759 - INFO     - [37m0 28  2000-02-07      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,759 - INFO     - [37m0 29  2000-02-08      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,759 - INFO     - [37m0 30  2000-02-09      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,759 - INFO     - [37m0 31  2000-02-10      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,759 - INFO     - [37m0 32  2000-02-11      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,759 - INFO     - [37m0 33  2000-02-12      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,759 - INFO     - [37m0 34  2000-02-13      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
+2026-07-03 16:58:10,759 - INFO     - [37m0 35  2000-02-14      50.0     0.0                    0.0                    0.0                                       0.0                                   0.0                0.0         0       0.0       50.0         0.0            0.0          50.0                                      [0m
 =========================== short test summary info ============================
-FAILED tests/ExpenseForecast/unit/test_ExpenseForecast__unit_test.py::TestExpenseForecastUnit::test_satisfice[test_p1_cc_txn_on_billing_date-account_set2-budget_set2-memo_rule_set2-20000101-20000103-milestone_set2-expected_result_df2]
-================ 1 failed, 288 deselected, 2 warnings in 12.50s ================
+FAILED tests/ExpenseForecast/unit/test_ExpenseForecast__unit_test.py::TestExpenseForecastUnit::test_satisfice[test_cc_interest_accrued_reaches_0-account_set6-budget_set6-memo_rule_set6-20000110-20000214-milestone_set6-expected_result_df6]
+====================== 1 failed, 288 deselected in 13.44s ======================

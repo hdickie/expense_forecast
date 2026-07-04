@@ -6103,7 +6103,7 @@ class ForecastHandler:
     # @profile
     @classmethod
     def _propagateOptimizationTransactionsIntoTheFuture(
-        cls, end_date, account_set_before_p2_plus_txn, forecast_df, date_string, log_stack_depth
+        cls, end_date, account_set_before_p2_plus_txn, forecast_df, date_string, log_stack_depth, include_debug_columns=False #TODO unsure if include_debug_columns belongs here
     ):
         """
         Propagates optimization transactions into the future forecast.
@@ -6129,7 +6129,7 @@ class ForecastHandler:
         account_set_after_p2_plus_txn = cls._sync_account_set_w_forecast_day(
             copy.deepcopy(account_set_before_p2_plus_txn),
             forecast_df=forecast_df,
-            d=d_string,log_stack_depth=log_stack_depth
+            d=d,log_stack_depth=log_stack_depth
         )
 
         A_df = account_set_after_p2_plus_txn.getAccounts()

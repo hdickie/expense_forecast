@@ -269,7 +269,8 @@ class AccountSet:
                 raise TypeError(f"Unexpected keyword argument '{key}'")
 
         allowed_account_types = ['checking', 'credit', 'loan', 'savings']
-        assert account_type in allowed_account_types
+        if not account_type in allowed_account_types:
+            raise ValueError(f"Unexpected account type: ({account_type})")
 
         #assert groups are all present
         checking_required_kwargs = ['primary_checking_ind']
@@ -283,6 +284,21 @@ class AccountSet:
         #                   'interest_balance', 'end_of_previous_cycle_balance']
 
 
+        if min_balance > balance:
+            raise ValueError(
+                f"min_balance ({min_balance}) must be less than or equal to balance ({balance})."
+            )
+
+        if balance > max_balance:
+            raise ValueError(
+                f"balance ({balance}) must be less than or equal to max_balance ({max_balance})."
+            )
+
+        if min_balance > max_balance:
+            raise ValueError(
+                f"min_balance ({min_balance}) must be less than or equal to max_balance ({max_balance})."
+            )
+
         if account_type == 'checking':
             for checking_required_kwarg in checking_required_kwargs:
                 assert checking_required_kwarg in kwargs #primary_checking_ind is missing
@@ -293,8 +309,10 @@ class AccountSet:
                 if kwarg not in kwargs
             ]
 
-            assert not missing, f"Missing required kwargs: {', '.join(missing)}"
-            assert balance == kwargs['current_statement_balance'] + kwargs['previous_statement_balance']
+            if missing:
+                raise ValueError(f"Missing required kwargs: {', '.join(missing)}")
+            if balance != kwargs['current_statement_balance'] + kwargs['previous_statement_balance']:
+                raise ValueError(f"balance != ({kwargs['current_statement_balance']}) + ({kwargs['previous_statement_balance']})")
             self.createCreditCardAccount(name,
                                          current_statement_balance=kwargs['current_statement_balance'],
                                          previous_statement_balance=kwargs['previous_statement_balance'],
@@ -306,8 +324,11 @@ class AccountSet:
                                          end_of_previous_cycle_balance=kwargs['end_of_previous_cycle_balance'])
         elif account_type == 'loan':
             for loan_required_kwarg in loan_required_kwargs:
-                assert loan_required_kwarg in kwargs
-            assert balance == kwargs['principal_balance'] + kwargs['interest_balance']
+                if not loan_required_kwarg in kwargs:
+                    raise ValueError("Missing kwarg creating loan account:{loan_required_kwarg}")
+
+            if balance != kwargs['principal_balance'] + kwargs['interest_balance']:
+                raise ValueError(f"balance != ({kwargs['principal_balance']}) + ({kwargs['interest_balance']})")
             self.createLoanAccount(name,
                                    principal_balance=kwargs['principal_balance'],
                                    interest_balance=kwargs['interest_balance'],

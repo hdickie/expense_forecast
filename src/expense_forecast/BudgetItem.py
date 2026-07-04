@@ -1,7 +1,7 @@
 import pandas as pd
 import datetime
 import jsonpickle
-
+import json
 
 class BudgetItem:
 
@@ -96,22 +96,26 @@ class BudgetItem:
         if self.partial_payment_allowed:
             assert not self.priority == 1
 
-    def __str__(self):
-        return pd.DataFrame(
-            {
-                "Start_Date": [self.start_date.strftime('%Y%m%d')],
-                "End_Date": [self.end_date.strftime('%Y%m%d')],
-                "Priority": [self.priority],
-                "Cadence": [self.cadence],
-                "Amount": [self.amount],
-                "Memo": [self.memo],
-                "Deferrable": [self.deferrable],
-                "Partial_Payment_Allowed": [self.partial_payment_allowed],
-            }
-        ).to_string()
+    def to_dict(self):
+        return {
+            "Start_Date": self.start_date.strftime("%Y%m%d"),
+            "End_Date": self.end_date.strftime("%Y%m%d"),
+            "Priority": self.priority,
+            "Cadence": self.cadence,
+            "Amount": self.amount,
+            "Memo": self.memo,
+            "Deferrable": self.deferrable,
+            "Partial_Payment_Allowed": self.partial_payment_allowed,
+        }
 
+    def to_dataframe(self):
+        return pd.DataFrame([self.to_dict()])
+    
     def to_json(self):
-        return jsonpickle.encode(self, indent=4)
+        return json.dumps(self.to_dict(), indent=4)
+
+    def __str__(self):
+        return self.to_dataframe().to_string(index=False)
 
 
 if __name__ == "__main__":
