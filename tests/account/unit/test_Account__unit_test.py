@@ -46,7 +46,7 @@ def loan_billing_state(
     billing_cycle_payment_balance=0,
     minimum_payment=50,
     billing_cycle_start_date=date(2000, 1, 1),
-    interest_type="compound",
+    interest_type="simple",
     interest_cadence="daily",
     apr=0.25,
 ):

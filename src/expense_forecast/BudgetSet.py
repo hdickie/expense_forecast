@@ -197,6 +197,24 @@ class BudgetSet:
         # Append the budget item
         self.budget_items.append(budget_item)
 
+    def to_dict(self):
+        return {
+            "budget_items": [
+                {
+                    "Start_Date": budget_item.start_date.isoformat(),
+                    "End_Date": budget_item.end_date.isoformat(),
+                    "Priority": budget_item.priority,
+                    "Cadence": budget_item.cadence,
+                    "Amount": budget_item.amount,
+                    "Memo": budget_item.memo,
+                    "Income_Flag": budget_item.income_flag,
+                    "Deferrable": budget_item.deferrable,
+                    "Partial_Payment_Allowed": budget_item.partial_payment_allowed,
+                }
+                for budget_item in self.budget_items
+            ]
+        }
+
     def to_json(self):
         return jsonpickle.encode(self, indent=4)
 

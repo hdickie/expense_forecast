@@ -146,6 +146,19 @@ class MemoRuleSet:
         all_memo_rules_df.reset_index(drop=True, inplace=True)
         return all_memo_rules_df
 
+    def to_dict(self):
+        return {
+            "memo_rules": [
+                {
+                    "Memo_Regex": memo_rule.memo_regex,
+                    "Account_From": memo_rule.account_from,
+                    "Account_To": memo_rule.account_to,
+                    "Transaction_Priority": memo_rule.transaction_priority,
+                }
+                for memo_rule in self.memo_rules
+            ]
+        }
+
     def to_json(self):
         return jsonpickle.encode(self, indent=4)
 

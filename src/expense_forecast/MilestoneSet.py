@@ -134,6 +134,12 @@ class MilestoneSet:
         self._validate_unique_composite_milestones(self.composite_milestones)
 
 
+    def __eq__(self, other):
+        if not isinstance(other, MilestoneSet):
+            return False
+        return self.to_json() == other.to_json()
+
+
     def __str__(self):
 
         return_string = ""

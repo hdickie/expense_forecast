@@ -30,6 +30,14 @@ class AccountSet:
         return Decimal(str(value))
 
     @staticmethod
+    def _dict_value(value):
+        if isinstance(value, Decimal):
+            return float(value)
+        if isinstance(value, (datetime, date)):
+            return value.isoformat()
+        return value
+
+    @staticmethod
     def _forecast_value(value):
         if isinstance(value, Decimal):
             return float(value)
@@ -398,17 +406,23 @@ class AccountSet:
     def createLoanAccount(self, name, principal_balance, interest_balance, min_balance, max_balance, billing_start_date,
                           apr, minimum_payment, end_of_previous_cycle_balance,):
 
+        principal_balance = self._money(principal_balance)
+        interest_balance = self._money(interest_balance)
+        minimum_payment = self._money(minimum_payment)
+        apr = self._money(apr)
+        end_of_previous_cycle_balance = self._money(end_of_previous_cycle_balance)
+
         billing_cycle_payment_balance = end_of_previous_cycle_balance - principal_balance
         assert billing_cycle_payment_balance >= 0
 
         balance = principal_balance + interest_balance
         billing_state = LoanBillingState(
             billing_cycle_start_date=billing_start_date,
-            previous_statement_balance=end_of_previous_cycle_balance,
-            current_statement_balance=balance,
+            principal_balance=principal_balance,
+            interest_balance=interest_balance,
             billing_cycle_payment_balance=billing_cycle_payment_balance,
             minimum_payment=minimum_payment,
-            interest_type="compound",
+            interest_type="simple",
             interest_cadence="daily",
             apr=apr,
         )
@@ -500,13 +514,17 @@ class AccountSet:
                 + account.billing_state.current_statement_balance
             )
         elif account.account_type == "loan":
-            account.balance = account.billing_state.current_statement_balance
+            account.balance = account.billing_state.balance
 
     @staticmethod
     def _increase_debt_balance(account, amount):
+        amount = AccountSet._money(amount)
         if account.account_type == "credit":
-            amount = AccountSet._money(amount)
-        account.billing_state.current_statement_balance += amount
+            account.billing_state.current_statement_balance += amount
+        elif account.account_type == "loan":
+            account.billing_state.principal_balance += amount
+        else:
+            raise ValueError(f"Account '{account.name}' is not a debt account")
         AccountSet._sync_debt_account_from_billing_state(account)
 
     @staticmethod
@@ -527,7 +545,7 @@ class AccountSet:
         account.billing_state.current_statement_balance -= current_statement_payment
         payment_remaining -= current_statement_payment
 
-        if payment_remaining > ROUNDING_ERROR_TOLERANCE:
+        if payment_remaining > Decimal(str(ROUNDING_ERROR_TOLERANCE)):
             raise ValueError(
                 f"Payment amount {amount} exceeds credit balance for '{account.name}'"
             )
@@ -538,23 +556,10 @@ class AccountSet:
 
     @staticmethod
     def _decrease_loan_balance(account, amount, minimum_payment_flag):
-        payment_remaining = amount
-        interest_balance = (
-            account.billing_state.current_statement_balance
-            - account.billing_state.previous_statement_balance
-        )
-
-        interest_payment = min(payment_remaining, interest_balance)
-        account.billing_state.current_statement_balance -= interest_payment
-        payment_remaining -= interest_payment
-
-        principal_payment = min(
-            payment_remaining,
-            account.billing_state.previous_statement_balance,
-        )
-        account.billing_state.previous_statement_balance -= principal_payment
-        account.billing_state.current_statement_balance -= principal_payment
-        payment_remaining -= principal_payment
+        amount = AccountSet._money(amount)
+        starting_balance = account.billing_state.balance
+        interest_payment, principal_payment = account.billing_state.apply_payment(amount)
+        payment_remaining = amount - interest_payment - principal_payment
 
         if payment_remaining > ROUNDING_ERROR_TOLERANCE:
             raise ValueError(
@@ -564,6 +569,7 @@ class AccountSet:
         if not minimum_payment_flag:
             account.billing_state.billing_cycle_payment_balance += amount
         AccountSet._sync_debt_account_from_billing_state(account)
+        assert starting_balance - account.billing_state.balance == amount
 
     @staticmethod
     def is_billing_date(account, current_date):
@@ -647,17 +653,17 @@ class AccountSet:
                 f"{account.name}: Credit End of Prev Cycle Bal"
             ] = AccountSet._forecast_value(billing_state.end_of_previous_cycle_balance)
         elif account.account_type == "loan":
-            columns[f"{account.name}: Curr Stmt Bal"] = AccountSet._forecast_value(
-                billing_state.current_statement_balance
+            columns[f"{account.name}: Principal Balance"] = AccountSet._forecast_value(
+                billing_state.principal_balance
             )
-            columns[f"{account.name}: Prev Stmt Bal"] = AccountSet._forecast_value(
-                billing_state.previous_statement_balance
+            columns[f"{account.name}: Interest"] = AccountSet._forecast_value(
+                billing_state.interest_balance
             )
             columns[
                 f"{account.name}: Loan Billing Cycle Payment Bal"
             ] = AccountSet._forecast_value(billing_state.billing_cycle_payment_balance)
             columns[f"{account.name}: Loan End of Prev Cycle Bal"] = AccountSet._forecast_value(
-                billing_state.previous_statement_balance
+                billing_state.principal_balance
             )
 
         return columns
@@ -754,7 +760,9 @@ class AccountSet:
                 )
                 account_from.balance = proposed_balance
             elif account_from.account_type in ["credit", "loan"]:
-                proposed_balance = account_from.balance + amount
+                proposed_balance = (
+                    self._money(account_from.balance) + self._money(amount)
+                )
                 self._validate_account_balance_bounds(
                     account_from, proposed_balance, "Account_From"
                 )
@@ -775,7 +783,9 @@ class AccountSet:
                 )
                 account_to.balance = proposed_balance
             elif account_to.account_type in ["credit", "loan"]:
-                proposed_balance = account_to.balance - amount
+                proposed_balance = (
+                    self._money(account_to.balance) - self._money(amount)
+                )
                 self._validate_account_balance_bounds(
                     account_to, proposed_balance, "Account_To"
                 )
@@ -1144,6 +1154,66 @@ class AccountSet:
             )
 
         return pd.DataFrame(account_rows, columns=columns)
+
+    def to_dict(self):
+        account_rows = []
+        for account in self.accounts:
+            account_row = {
+                    "Name": account.name,
+                    "Balance": self._dict_value(account.balance),
+                    "Min_Balance": self._dict_value(account.min_balance),
+                    "Max_Balance": self._dict_value(account.max_balance),
+                    "Account_Type": account.account_type,
+                    "Billing_Start_Date": self._dict_value(
+                        self._normalize_billing_start_date(account.billing_start_date)
+                    ),
+                    "Interest_Type": account.interest_type,
+                    "APR": self._dict_value(account.apr),
+                    "Interest_Cadence": account.interest_cadence,
+                    "Minimum_Payment": self._dict_value(account.minimum_payment),
+                    "Primary_Checking_Ind": account.primary_checking_ind,
+            }
+
+            billing_state = account.billing_state
+            if account.account_type == "credit":
+                account_row.update(
+                    {
+                        "Current_Statement_Balance": self._dict_value(
+                            billing_state.current_statement_balance
+                        ),
+                        "Previous_Statement_Balance": self._dict_value(
+                            billing_state.previous_statement_balance
+                        ),
+                        "Billing_Cycle_Payment_Balance": self._dict_value(
+                            billing_state.billing_cycle_payment_balance
+                        ),
+                        "End_Of_Previous_Cycle_Balance": self._dict_value(
+                            billing_state.end_of_previous_cycle_balance
+                        ),
+                    }
+                )
+            elif account.account_type == "loan":
+                account_row.update(
+                    {
+                        "Principal_Balance": self._dict_value(
+                            billing_state.principal_balance
+                        ),
+                        "Interest_Balance": self._dict_value(
+                            billing_state.interest_balance
+                        ),
+                        "Billing_Cycle_Payment_Balance": self._dict_value(
+                            billing_state.billing_cycle_payment_balance
+                        ),
+                        "End_Of_Previous_Cycle_Balance": self._dict_value(
+                            billing_state.principal_balance
+                            + billing_state.billing_cycle_payment_balance
+                        ),
+                    }
+                )
+
+            account_rows.append(account_row)
+
+        return {"accounts": account_rows}
 
     def to_json(self):
         """

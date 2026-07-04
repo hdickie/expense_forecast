@@ -2916,124 +2916,56 @@ class ForecastHandler:
         # print('PRE INTEREST ACCRUAL FORECAST ROW')
         # print(current_forecast_row_df.to_string())
 
-        # Extract the current date
         current_date = current_forecast_row_df["Date"].iat[0]
 
-        # Iterate over each account to calculate interest accruals
-        for account_index, account_row in account_set.getAccounts().iterrows():
-            if account_row["Account_Type"] != "loan":
+        for account in account_set.accounts:
+            if account.account_type != "loan":
                 continue
 
-            # log_in_color(logger, 'white', 'debug', 'Might skip '+account_row.Name, log_stack_depth)
-            # Skip accounts that are not interest-bearing or are previous statement balances
-            if account_row["Account_Type"] == "credit prev stmt bal":
+            billing_state = account.billing_state
+            interest_cadence = getattr(billing_state, "interest_cadence", None)
+            if interest_cadence is None:
                 continue
 
-            # Get the interest cadence and type
-            if account_row.get("Interest_Cadence", "") is not None:
-                interest_cadence = account_row.get("Interest_Cadence", "").lower()
-            else:
-                continue
+            billing_start_date = billing_state.billing_cycle_start_date
+            if isinstance(billing_start_date, datetime.datetime):
+                billing_start_date = billing_start_date.date()
+            num_days = (current_date - billing_start_date).days
 
-            if account_row.get("Interest_Type", "") is not None:
-                interest_type = account_row.get("Interest_Type", "").lower()
-            else:
-                continue
-
-            # log_in_color(logger, 'white', 'debug', 'Did not skip '+account_row.Name, log_stack_depth)
-
-            # # Skip if interest cadence or type is not defined
-            # if not interest_cadence or interest_cadence == 'none' or not interest_type:
-            #     continue
-
-            # Calculate the number of days since the billing start date
-            billing_start_date = account_row["Billing_Start_Date"]
-            num_days = (
-                current_date
-                - billing_start_date
-            ).days
-
-            # Skip if current date is before billing start date
             if num_days < 0:
                 continue
 
-            # Generate date sequence based on billing start date and interest cadence
-            # Assume generate_date_sequence is a function that returns a set of dates
             dseq = generate_date_sequence(
                 start_date=billing_start_date,
                 num_days=num_days,
                 cadence=interest_cadence,
             )
-
-            # Include billing start date if current date matches
             if current_date == billing_start_date:
                 dseq.append(current_date)
 
-            # Check if current date is in the interest accrual dates
-            if current_date in dseq:
-                apr = account_row["APR"]
-                balance = account_row["Balance"]
+            if current_date not in dseq:
+                continue
 
-                # Calculate interest based on type and cadence
-                if interest_type == "compound":
-                    if interest_cadence == "monthly":
-                        # Compound interest, monthly accrual
-                        interest_accrued = balance * (apr / 12)
-                        # Update account balance
-                        account_set.accounts[account_index].balance += interest_accrued
+            interest_accrued = billing_state.accrue_interest()
+            AccountSet._sync_debt_account_from_billing_state(account)
+            if interest_accrued > 0:
+                md_split_semicolon = (
+                    current_forecast_row_df["Memo Directives"].iat[0].split(";")
+                )
+                md_split_semicolon = [md for md in md_split_semicolon if md]
+                md_split_semicolon.append(
+                    f"LOAN INTEREST ({account.name}: Interest +${interest_accrued})"
+                )
+                current_forecast_row_df["Memo Directives"] = "; ".join(
+                    md_split_semicolon
+                )
 
-                        # # Move current statement balance to previous statement balance for credit accounts
-                        # if account_row['Account_Type'] == 'credit curr stmt bal':
-                        #     prev_account_index = account_index - 1
-                        #     prev_stmt_balance = account_set.accounts[prev_account_index].balance
-                        #     account_set.accounts[account_index].balance += prev_stmt_balance
-                        #     account_set.accounts[prev_account_index].balance = 0
-                    else:
-                        # Other compound interest cadences not implemented
-                        raise NotImplementedError(
-                            f"Compound interest with '{interest_cadence}' cadence is not implemented."
-                        )
-                elif interest_type == "simple":
-                    if interest_cadence == "daily":
-                        # Simple interest, daily accrual
-                        interest_accrued = balance * (apr / 365.25)
-
-                        # print('current_date, Name, interest '+str(current_date)+' '+str(account_row.Name)+' '+str(round(interest_accrued,2)))
-
-                        # Update interest account balance (assuming it's the next account)
-                        interest_account_index = account_index + 1
-                        # if interest_account_index < len(account_set.accounts):
-                        account_set.accounts[
-                            interest_account_index
-                        ].balance += interest_accrued
-                        # Round small balances to zero
-                        # if abs(account_set.accounts[interest_account_index].balance) < 0.01:
-                        #     account_set.accounts[interest_account_index].balance = 0.0
-                    else:
-                        # Other simple interest cadences not implemented
-                        raise NotImplementedError(
-                            f"Simple interest with '{interest_cadence}' cadence is not implemented."
-                        )
-                else:
-                    raise ValueError(
-                        f"Unknown interest type '{interest_type}' for account '{account_row['Name']}'."
-                    )
-
-            # print('PRE-UPDATE ACCRUAL FORECAST ROW')
-            # print(current_forecast_row_df.to_string())
-
-            # Update the current forecast row with the updated account balances
-            for idx, acc_row in account_set.getAccounts().iterrows():
-                account_name = acc_row["Name"]
-                balance = acc_row["Balance"]
-                if account_name in current_forecast_row_df.columns:
-                    current_forecast_row_df.iloc[
-                        0, current_forecast_row_df.columns == account_name
-                    ] = balance
-                    pass
-
-            # print('POST-UPDATE ACCRUAL FORECAST ROW')
-            # print(current_forecast_row_df.to_string())
+        projected_balances = account_set.getForecastAccountBalances(
+            include_debug_columns=True
+        )
+        for column_name, value in projected_balances.items():
+            if column_name in current_forecast_row_df.columns:
+                current_forecast_row_df.loc[:, column_name] = value
 
         # Decrement log stack depth
         log_stack_depth -= 1
@@ -3410,108 +3342,67 @@ class ForecastHandler:
 
         primary_checking_account_name = account_set.getPrimaryCheckingAccountName()
 
-        # the branch logic here assumes the sort order of accounts in account list
-        for account_index, account_row in account_set.getAccounts().iterrows():
-
-            if account_row.Account_Type == "prev smt bal":
+        current_date = current_forecast_row_df.Date.iloc[0]
+        for account in account_set.accounts:
+            if account.account_type != "loan":
                 continue
 
-            # not sure why both of these checks are necessary
-            if account_row.Billing_Start_Date == "None":
+            billing_state = account.billing_state
+            billing_start_date = billing_state.billing_cycle_start_date
+            if billing_start_date in [None, "None"] or pd.isnull(billing_start_date):
+                continue
+            if isinstance(billing_start_date, datetime.datetime):
+                billing_start_date = billing_start_date.date()
+
+            if not AccountSet.is_billing_date(account, current_date):
                 continue
 
-            if pd.isnull(account_row.Billing_Start_Date):
+            minimum_payment_amount = min(
+                billing_state.minimum_payment,
+                billing_state.balance,
+            )
+            if minimum_payment_amount <= 0:
                 continue
 
-            num_days = (
-                current_forecast_row_df.Date.iloc[0]
-                - account_row.Billing_Start_Date
-            ).days
-            billing_days = set(
-                generate_date_sequence(
-                    account_row.Billing_Start_Date, num_days, "monthly"
-                )
+            payment_toward_interest = min(
+                minimum_payment_amount,
+                billing_state.interest_balance,
+            )
+            payment_toward_principal = min(
+                billing_state.principal_balance,
+                minimum_payment_amount - payment_toward_interest,
+            )
+            loan_payment_amount = payment_toward_interest + payment_toward_principal
+
+            account_set.executeTransaction(
+                Account_From=primary_checking_account_name,
+                Account_To=account.name,
+                Amount=loan_payment_amount,
+                minimum_payment_flag=True,
             )
 
-            # if the input date matches the start date, add it to the set (bc range where start = end == null set)
-            if current_forecast_row_df.Date.iloc[0] == account_row.Billing_Start_Date:
-                billing_days = set(current_forecast_row_df.Date).union(billing_days)
+            memo_parts = []
+            if payment_toward_interest > 0:
+                memo_parts.append(
+                    f"LOAN MIN PAYMENT ({account.name}: Interest -${payment_toward_interest})"
+                )
+            if payment_toward_principal > 0:
+                memo_parts.append(
+                    f"LOAN MIN PAYMENT ({account.name}: Principal Balance -${payment_toward_principal})"
+                )
+            if loan_payment_amount > 0:
+                memo_parts.append(
+                    f"LOAN MIN PAYMENT ({primary_checking_account_name} -${loan_payment_amount})"
+                )
 
-            if current_forecast_row_df.Date.iloc[0] in billing_days:
-
-                if account_row.Account_Type == "principal balance":  # loan min payment
-
-                    minimum_payment_amount = (
-                        account_set.getAccounts().loc[account_index, :].Minimum_Payment
-                    )
-
-                    # todo I notice that this depends on the order of accounts
-
-                    # new
-                    current_pbal_balance = account_row.Balance
-                    current_interest_balance = (
-                        account_set.getAccounts().loc[account_index + 1, :].Balance
-                    )
-                    current_debt_balance = (
-                        current_pbal_balance + current_interest_balance
-                    )
-
-                    payment_toward_interest = min(
-                        minimum_payment_amount, current_interest_balance
-                    )
-                    payment_toward_principal = min(
-                        current_pbal_balance,
-                        minimum_payment_amount - payment_toward_interest,
-                    )
-
-                    loan_payment_amount = min(
-                        current_debt_balance, minimum_payment_amount
-                    )
-
-                    if loan_payment_amount > 0:
-                        # log_in_color(logger, 'white', 'debug','loan_payment_amount:'+str(loan_payment_amount), log_stack_depth)
-                        account_set.executeTransaction(
-                            Account_From=primary_checking_account_name,
-                            Account_To=account_row.Name.split(":")[0],
-                            # Note that the execute transaction method will split the amount paid between the 2 accounts
-                            Amount=loan_payment_amount,
-                            minimum_payment_flag=True,
-                        )
-
-                        if payment_toward_interest > 0:
-                            # current_forecast_row_df['Memo Directives'] += '; LOAN MIN PAYMENT (' + account_row.Name.split(':')[0] + ': Interest -$' + str(f'{payment_toward_interest:.2f}') + ')'
-                            current_forecast_row_df["Memo Directives"] += (
-                                "; LOAN MIN PAYMENT ("
-                                + account_row.Name.split(":")[0]
-                                + ": Interest -$"
-                                + str(f"{payment_toward_interest}")
-                                + ")"
-                            )
-
-                        if payment_toward_principal > 0:
-                            # current_forecast_row_df['Memo Directives'] += '; LOAN MIN PAYMENT (' + account_row.Name.split(':')[0] + ': Principal Balance -$' + str(f'{payment_toward_principal:.2f}') + ')'
-                            current_forecast_row_df["Memo Directives"] += (
-                                "; LOAN MIN PAYMENT ("
-                                + account_row.Name.split(":")[0]
-                                + ": Principal Balance -$"
-                                + str(f"{payment_toward_principal}")
-                                + ")"
-                            )
-
-                        if (payment_toward_interest + payment_toward_principal) > 0:
-                            # print('primary_checking_account_name:'+str(primary_checking_account_name))
-                            # print('primary_checking_account_name:' + str(payment_toward_interest))
-                            # print('primary_checking_account_name:' + str(payment_toward_principal))
-                            # current_forecast_row_df['Memo Directives'] += '; LOAN MIN PAYMENT ('+primary_checking_account_name+' -$' + str(f'{( payment_toward_interest + payment_toward_principal ):.2f}') + ')'
-                            current_forecast_row_df["Memo Directives"] += (
-                                "; LOAN MIN PAYMENT ("
-                                + primary_checking_account_name
-                                + " -$"
-                                + str(
-                                    f"{(payment_toward_interest + payment_toward_principal)}"
-                                )
-                                + ")"
-                            )
+            md_split_semicolon = (
+                current_forecast_row_df["Memo Directives"].iat[0].split(";")
+            )
+            md_split_semicolon = [md for md in md_split_semicolon if md]
+            md_split_semicolon += memo_parts
+            current_forecast_row_df["Memo Directives"] = "; ".join(
+                md_split_semicolon
+            )
 
         md_split = [
             md.strip()
@@ -3522,17 +3413,12 @@ class ForecastHandler:
             0, current_forecast_row_df.columns.get_loc("Memo Directives")
         ] = ("; ".join(md_split)).strip()
 
-        for account_index, account_row in account_set.getAccounts().iterrows():
-            relevant_balance = AccountSet._forecast_value(
-                account_set.getAccounts().iloc[account_index, 1]
-            )
-            # current_forecast_row_df.iloc[0, col_sel_vec] = round(relevant_balance,2)
-            current_forecast_row_df.loc[:, account_row.Name] = relevant_balance
-
-            # account_set.accounts[account_index].balance = round(account_set.accounts[account_index].balance,2)
-            account_set.accounts[account_index].balance = account_set.accounts[
-                account_index
-            ].balance
+        projected_balances = account_set.getForecastAccountBalances(
+            include_debug_columns=True
+        )
+        for column_name, value in projected_balances.items():
+            if column_name in current_forecast_row_df.columns:
+                current_forecast_row_df.loc[:, column_name] = value
 
         # log_in_color(logger, 'white', 'debug', 'after current_forecast_row_df:', log_stack_depth)
         # log_in_color(logger, 'white', 'debug', current_forecast_row_df.to_string(), log_stack_depth)
@@ -3738,6 +3624,25 @@ class ForecastHandler:
                 if end_of_previous_cycle_column in relevant_forecast_day.columns:
                     billing_state.end_of_previous_cycle_balance = Decimal(
                         str(relevant_forecast_day[end_of_previous_cycle_column].iat[0])
+                    )
+                AccountSet._sync_debt_account_from_billing_state(account)
+            elif account.account_type == "loan":
+                billing_state = account.billing_state
+                principal_column = f"{account.name}: Principal Balance"
+                interest_column = f"{account.name}: Interest"
+                payment_column = f"{account.name}: Loan Billing Cycle Payment Bal"
+
+                if principal_column in relevant_forecast_day.columns:
+                    billing_state.principal_balance = Decimal(
+                        str(relevant_forecast_day[principal_column].iat[0])
+                    )
+                if interest_column in relevant_forecast_day.columns:
+                    billing_state.interest_balance = Decimal(
+                        str(relevant_forecast_day[interest_column].iat[0])
+                    )
+                if payment_column in relevant_forecast_day.columns:
+                    billing_state.billing_cycle_payment_balance = Decimal(
+                        str(relevant_forecast_day[payment_column].iat[0])
                     )
                 AccountSet._sync_debt_account_from_billing_state(account)
 
@@ -8671,6 +8576,31 @@ class ForecastHandler:
                             line_item_value
                         )
 
+            if "LOAN INTEREST" in row["Memo Directives"]:
+                memo_directives_line = row["Memo Directives"]
+                memo_directives_line_items = memo_directives_line.split(";")
+                for memo_directives_line_item in memo_directives_line_items:
+                    memo_directives_line_item = memo_directives_line_item.strip()
+                    if "LOAN INTEREST" not in memo_directives_line_item:
+                        continue
+
+                    value_match = re.search(
+                        r"\(([A-Za-z0-9_ :]*) ([-+]?\$.*)\)$",
+                        memo_directives_line_item,
+                    )
+                    if value_match is None:
+                        continue
+                    line_item_value_string = value_match.group(2)
+                    line_item_value_string = (
+                        line_item_value_string.replace("(", "")
+                        .replace(")", "")
+                        .replace("$", "")
+                    )
+                    line_item_value = float(line_item_value_string)
+                    forecast_df.loc[index, "Marginal Interest"] += abs(
+                        line_item_value
+                    )
+
             if prev_interest.shape[0] > 0:
                 delta = 0
                 for i in range(0, prev_interest.shape[0]):
@@ -8718,7 +8648,7 @@ class ForecastHandler:
             previous_row = row
 
         # just memo
-        forecast_df["Net Gain"] = 0
+        forecast_df["Net Gain"] = 0.0
         forecast_df["Net Loss"] = forecast_df["Marginal Interest"]
         for index, row in forecast_df.iterrows():
 
@@ -8789,6 +8719,7 @@ class ForecastHandler:
                     or "CC MIN PAYMENT" in memo_line_item
                     or "ADDTL LOAN PAYMENT" in memo_line_item
                     or "CC INTEREST" in memo_line_item
+                    or "LOAN INTEREST" in memo_line_item
                 ):
                     continue
 

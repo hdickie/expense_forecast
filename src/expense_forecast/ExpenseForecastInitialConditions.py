@@ -13,6 +13,7 @@ from expense_forecast.log_methods import log_in_color
 from expense_forecast.AccountSet import AccountSet
 from expense_forecast.BudgetSet import BudgetSet
 from expense_forecast.MemoRuleSet import MemoRuleSet
+from expense_forecast.MilestoneSet import MilestoneSet
 
 logger = logging.getLogger(__name__)
 formatter = logging.Formatter("%(asctime)s - %(levelname)-8s - %(message)s")
@@ -58,6 +59,106 @@ class ExpenseForecastInitialConditions:
         if data is None:
             return None
         return jsonpickle.decode(json.dumps(data))
+
+    @staticmethod
+    def _date_from_dict_value(value):
+        if isinstance(value, date):
+            return value
+        return date.fromisoformat(str(value))
+
+    @classmethod
+    def _account_set_from_dict(cls, data):
+        if "accounts" not in data:
+            return cls._object_from_json_data(data)
+
+        account_set = AccountSet()
+        for account_row in data["accounts"]:
+            account_type = account_row["Account_Type"]
+            if account_type == "checking":
+                account_set.createCheckingAccount(
+                    name=account_row["Name"],
+                    balance=account_row["Balance"],
+                    min_balance=account_row["Min_Balance"],
+                    max_balance=account_row["Max_Balance"],
+                    primary_checking_ind=account_row["Primary_Checking_Ind"],
+                )
+            elif account_type == "credit":
+                account_set.createCreditCardAccount(
+                    name=account_row["Name"],
+                    current_statement_balance=account_row[
+                        "Current_Statement_Balance"
+                    ],
+                    previous_statement_balance=account_row[
+                        "Previous_Statement_Balance"
+                    ],
+                    min_balance=account_row["Min_Balance"],
+                    max_balance=account_row["Max_Balance"],
+                    billing_start_date=cls._date_from_dict_value(
+                        account_row["Billing_Start_Date"]
+                    ),
+                    apr=account_row["APR"],
+                    minimum_payment=account_row["Minimum_Payment"],
+                    end_of_previous_cycle_balance=account_row[
+                        "End_Of_Previous_Cycle_Balance"
+                    ],
+                )
+            elif account_type == "loan":
+                account_set.createLoanAccount(
+                    name=account_row["Name"],
+                    principal_balance=account_row["Principal_Balance"],
+                    interest_balance=account_row["Interest_Balance"],
+                    min_balance=account_row["Min_Balance"],
+                    max_balance=account_row["Max_Balance"],
+                    billing_start_date=cls._date_from_dict_value(
+                        account_row["Billing_Start_Date"]
+                    ),
+                    apr=account_row["APR"],
+                    minimum_payment=account_row["Minimum_Payment"],
+                    end_of_previous_cycle_balance=account_row[
+                        "End_Of_Previous_Cycle_Balance"
+                    ],
+                )
+            else:
+                raise NotImplementedError(
+                    f"Cannot initialize account_type from dict: {account_type}"
+                )
+
+        return account_set
+
+    @classmethod
+    def _budget_set_from_dict(cls, data):
+        if "budget_items" not in data:
+            return cls._object_from_json_data(data)
+
+        budget_set = BudgetSet()
+        for budget_item in data["budget_items"]:
+            budget_set.addBudgetItem(
+                start_date=cls._date_from_dict_value(budget_item["Start_Date"]),
+                end_date=cls._date_from_dict_value(budget_item["End_Date"]),
+                priority=budget_item["Priority"],
+                cadence=budget_item["Cadence"],
+                amount=budget_item["Amount"],
+                memo=budget_item["Memo"],
+                income_flag=budget_item.get("Income_Flag", False),
+                deferrable=budget_item.get("Deferrable"),
+                partial_payment_allowed=budget_item.get("Partial_Payment_Allowed"),
+            )
+        return budget_set
+
+    @classmethod
+    def _memo_rule_set_from_dict(cls, data):
+        if "memo_rules" not in data:
+            return cls._object_from_json_data(data)
+
+        memo_rule_set = MemoRuleSet()
+        for memo_rule in data["memo_rules"]:
+            memo_rule_set.addMemoRule(
+                memo_regex=memo_rule["Memo_Regex"],
+                account_from=memo_rule["Account_From"],
+                account_to=memo_rule["Account_To"],
+                transaction_priority=memo_rule["Transaction_Priority"],
+            )
+        return memo_rule_set
     
     #TODO stepsize will be added to this eventually
     @staticmethod
@@ -164,6 +265,7 @@ class ExpenseForecastInitialConditions:
 
 
         self.milestone_set = kwargs.get('milestone_set', None)
+        self.initial_milestone_set = self.milestone_set
 
         self.forecast_name = kwargs.get('forecast_name', None)
 
@@ -376,10 +478,14 @@ class ExpenseForecastInitialConditions:
     @classmethod
     def initialize_from_dict(cls, data: dict):
         return cls(
-            A=cls._object_from_json_data(data["account_set"]),
-            B=cls._object_from_json_data(data["budget_set"]),
-            M=cls._object_from_json_data(data["memo_rule_set"]),
-            MS=cls._object_from_json_data(data["milestone_set"]),
+            start_date=cls._date_from_dict_value(data["start_date"]),
+            end_date=cls._date_from_dict_value(data["end_date"]),
+            account_set=cls._account_set_from_dict(data["account_set"]),
+            budget_set=cls._budget_set_from_dict(data["budget_set"]),
+            memo_rule_set=cls._memo_rule_set_from_dict(data["memo_rule_set"]),
+            milestone_set=cls._object_from_json_data(
+                data.get("milestone_set")
+            ) or MilestoneSet(),
         ) #TODO forecast name 
 
     @classmethod
@@ -444,3 +550,14 @@ class ExpenseForecastInitialConditions:
 
     def write_pickle_file(self):
         raise NotImplementedError
+
+    def to_dict(self):
+        return {
+            "unique_id": self.unique_id,
+            "start_date": self.start_date.isoformat(),
+            "end_date": self.end_date.isoformat(),
+            "account_set": self.initial_account_set.to_dict(),
+            "budget_set": self.initial_budget_set.to_dict(),
+            "memo_rule_set": self.initial_memo_rule_set.to_dict(),
+            "milestone_set": self._object_to_json_data(self.milestone_set),
+        }
