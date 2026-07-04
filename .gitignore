@@ -4,6 +4,5 @@ archive/*
 out/*
 log/*
 .idea/*
-__pycache__/*
 .coverage
 .DS_Store
