@@ -3,6 +3,16 @@ import pytest
 
 class TestExpenseForecastIntegration:
 
+    ## Recommended interface
+    # to_dict()
+    # from_dict()
+
+    # to_json()
+    # from_json()
+
+    # save_json(path)
+    # load_json(path)
+
     @pytest.mark.integration
     @pytest.mark.skip(reason="not yet implemented")
     def test_ExpenseForecast_to_json(self):
