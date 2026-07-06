@@ -30,18 +30,18 @@ class ExpenseForecastResult:
             )
         return dataframe
 
-    ### commented out bc I believe _object is not a good name and therefore this did not get used
-    # @staticmethod
-    # def _object_to_json_data(obj):
-    #     if obj is None:
-    #         return None
-    #     return json.loads(jsonpickle.encode(obj))
-    #
-    # @staticmethod
-    # def _object_from_json_data(data):
-    #     if data is None:
-    #         return None
-    #     return jsonpickle.decode(json.dumps(data))
+    ### I don't understand why these helper methods were created
+    @staticmethod
+    def _object_to_json_data(obj):
+        if obj is None:
+            return None
+        return json.loads(jsonpickle.encode(obj))
+    
+    @staticmethod
+    def _object_from_json_data(data):
+        if data is None:
+            return None
+        return jsonpickle.decode(json.dumps(data))
 
     def __eq__(self, other):
         raise NotImplementedError #todo
@@ -84,8 +84,11 @@ class ExpenseForecastResult:
         self.milestone_results = kwargs.get('milestone_results', None)
 
         self.approximate_flag = kwargs.get('approximate_flag', False)
-        self.unique_id = initial_conditions.unique_id + "_A"
-
+        if self.approximate_flag:
+            self.unique_id = initial_conditions.unique_id + "_A"
+        else:
+            self.unique_id = initial_conditions.unique_id
+            
     def __str__(self):
         raise NotImplementedError #todo
 

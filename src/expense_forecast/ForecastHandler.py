@@ -12,13 +12,23 @@ from datetime import date
 from decimal import Decimal
 from typing import Any
 import datetime
+import os
 from expense_forecast.log_methods import log_in_color
 import logging
 import tqdm
+import matplotlib
+import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
 import pandas as pd
 import re
 import copy 
 from expense_forecast.generate_date_sequence import generate_date_sequence
+from matplotlib.pyplot import figure
+
+try:
+    import plotly.graph_objects as go
+except ImportError:
+    go = None
 
 logger = logging.getLogger(__name__)
 formatter = logging.Formatter("%(asctime)s - %(levelname)-8s - %(message)s")
@@ -37,6 +47,7 @@ pd.set_option("display.precision", 2)
 ROUNDING_ERROR_TOLERANCE = (
     0.0000000001  # 10 places? overkill but I want to see if it works
 )
+default_color_cycle_list = ["blue", "orange", "green"]
 
 
 def _stable_df_payload(df):
@@ -8986,3 +8997,1157 @@ class ForecastHandler:
         forecast_df["Memo"] = memo_column
 
         return forecast_df
+
+    @staticmethod
+    def _report_date_to_datetime(value):
+        if pd.isnull(value):
+            return value
+        if isinstance(value, pd.Timestamp):
+            return value.to_pydatetime()
+        if isinstance(value, datetime.datetime):
+            return value
+        if isinstance(value, date):
+            return datetime.datetime.combine(value, datetime.time.min)
+
+        value_string = str(value)
+        for date_format in ("%Y%m%d", "%Y-%m-%d", "%Y-%m-%d %H:%M:%S"):
+            try:
+                return datetime.datetime.strptime(value_string, date_format)
+            except ValueError:
+                pass
+        return pd.to_datetime(value).to_pydatetime()
+
+    @staticmethod
+    def _report_amount(value):
+        return str(f"${float(value):,}")
+
+    def _report_date_label(self, value):
+        return self._report_date_to_datetime(value).strftime("%Y-%m-%d")
+
+    def _report_initial_conditions(self, expense_forecast):
+        return getattr(expense_forecast, "initial_conditions", expense_forecast)
+
+    def _report_start_date(self, expense_forecast):
+        initial_conditions = self._report_initial_conditions(expense_forecast)
+        return getattr(
+            expense_forecast,
+            "start_date_YYYYMMDD",
+            getattr(initial_conditions, "start_date", None),
+        )
+
+    def _report_end_date(self, expense_forecast):
+        initial_conditions = self._report_initial_conditions(expense_forecast)
+        return getattr(
+            expense_forecast,
+            "end_date_YYYYMMDD",
+            getattr(initial_conditions, "end_date", None),
+        )
+
+    def _report_forecast_name(self, expense_forecast):
+        initial_conditions = self._report_initial_conditions(expense_forecast)
+        return (
+            getattr(expense_forecast, "forecast_name", None)
+            or getattr(initial_conditions, "forecast_name", None)
+            or f"Forecast {expense_forecast.unique_id}"
+        )
+
+    def _report_account_set(self, expense_forecast):
+        initial_conditions = self._report_initial_conditions(expense_forecast)
+        return getattr(
+            expense_forecast,
+            "initial_account_set",
+            getattr(initial_conditions, "initial_account_set", None),
+        )
+
+    def _report_budget_set(self, expense_forecast):
+        initial_conditions = self._report_initial_conditions(expense_forecast)
+        return getattr(
+            expense_forecast,
+            "initial_budget_set",
+            getattr(initial_conditions, "initial_budget_set", None),
+        )
+
+    def _report_memo_rule_set(self, expense_forecast):
+        initial_conditions = self._report_initial_conditions(expense_forecast)
+        return getattr(
+            expense_forecast,
+            "initial_memo_rule_set",
+            getattr(initial_conditions, "initial_memo_rule_set", None),
+        )
+
+    def _report_milestone_set(self, expense_forecast):
+        initial_conditions = self._report_initial_conditions(expense_forecast)
+        return getattr(
+            expense_forecast,
+            "milestone_set",
+            getattr(initial_conditions, "milestone_set", None),
+        )
+
+    @staticmethod
+    def _empty_report_df():
+        return pd.DataFrame()
+
+    def _report_milestone_table(self, milestone_set, method_name):
+        if milestone_set is None or not hasattr(milestone_set, method_name):
+            return self._empty_report_df()
+        return getattr(milestone_set, method_name)()
+
+    def _report_milestone_results_df(self, expense_forecast, result_type):
+        method_name = f"get{result_type}MilestoneResultsDF"
+        if hasattr(expense_forecast, method_name):
+            return getattr(expense_forecast, method_name)()
+
+        milestone_results = getattr(expense_forecast, "milestone_results", None)
+        if isinstance(milestone_results, dict):
+            result_data = milestone_results.get(result_type, {})
+        else:
+            result_data = getattr(expense_forecast, f"{result_type.lower()}_milestone_results", {})
+
+        if not result_data:
+            return pd.DataFrame(columns=["Milestone", "Date"])
+
+        rows = []
+        end_date = self._report_end_date(expense_forecast)
+        for milestone_name, milestone_date in result_data.items():
+            if milestone_date in (None, "None"):
+                milestone_date = end_date
+            rows.append(
+                {
+                    "Milestone": milestone_name,
+                    "Date": self._report_date_to_datetime(milestone_date),
+                }
+            )
+        return pd.DataFrame(rows)
+
+    def _report_confirmed_df(self, expense_forecast):
+        confirmed_df = getattr(expense_forecast, "confirmed_df", None)
+        if confirmed_df is not None:
+            return confirmed_df
+
+        initial_conditions = self._report_initial_conditions(expense_forecast)
+        confirmed_df = getattr(initial_conditions, "initial_confirmed_df", None)
+        if confirmed_df is not None:
+            return confirmed_df
+
+        return pd.DataFrame(columns=["Date", "Priority", "Amount", "Memo"])
+
+    def _report_dates_for_plot(self, expense_forecast):
+        return [
+            self._report_date_to_datetime(d)
+            for d in expense_forecast.forecast_df["Date"]
+        ]
+
+    def _decorate_report_plot(self, expense_forecast):
+        bottom, top = plt.ylim()
+        if top == bottom:
+            top = top + 1
+            bottom = bottom - 1
+        if 0 < bottom:
+            plt.ylim(0, top)
+        elif top < 0:
+            plt.ylim(bottom, 0)
+
+        ax = plt.subplot(111)
+        box = ax.get_position()
+        ax.set_position(
+            [box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9]
+        )
+        ax.legend(
+            loc="upper center",
+            bbox_to_anchor=(0.5, -0.05),
+            fancybox=True,
+            shadow=True,
+            ncol=4,
+        )
+
+        date_as_datetime_type = self._report_dates_for_plot(expense_forecast)
+        min_date = min(date_as_datetime_type).strftime("%Y-%m-%d")
+        max_date = max(date_as_datetime_type).strftime("%Y-%m-%d")
+        plt.title(
+            "Forecast #"
+            + str(expense_forecast.unique_id)
+            + ": "
+            + str(min_date)
+            + " -> "
+            + str(max_date)
+        )
+        plt.xticks(rotation=90)
+
+    def plotMilestoneDates(
+        self, expense_forecast, output_path, plot_colors=["red", "blue", "purple"]
+    ):
+        assert hasattr(expense_forecast, "forecast_df")
+        assert len(plot_colors) >= 3
+
+        milestone_groups = [
+            ("account", self._report_milestone_results_df(expense_forecast, "Account")),
+            ("memo", self._report_milestone_results_df(expense_forecast, "Memo")),
+            ("composite", self._report_milestone_results_df(expense_forecast, "Composite")),
+        ]
+
+        data_x = []
+        data_y = []
+        labels = []
+        colors = []
+        date_counter = 0
+        for group_index, (group_name, milestone_df) in enumerate(milestone_groups):
+            if milestone_df is None or milestone_df.empty or "Date" not in milestone_df.columns:
+                continue
+            name_column = "Milestone" if "Milestone" in milestone_df.columns else milestone_df.columns[0]
+            for _, row in milestone_df.iterrows():
+                milestone_date = row["Date"]
+                if milestone_date in (None, "None"):
+                    continue
+                data_x.append(self._report_date_to_datetime(milestone_date))
+                data_y.append(date_counter)
+                labels.append(str(row[name_column]))
+                colors.append(plot_colors[group_index])
+                date_counter += 1
+
+        figure(figsize=(10, 6), dpi=80)
+        fig, ax = plt.subplots()
+        fig.subplots_adjust(left=0.25)
+        if len(data_x) > 0:
+            ax.barh(data_y, data_x, color=colors)
+            ax.set_yticks(data_y)
+            ax.set_yticklabels(labels, minor=False)
+            plt.xlim(
+                self._report_date_to_datetime(self._report_start_date(expense_forecast)),
+                self._report_date_to_datetime(self._report_end_date(expense_forecast)),
+            )
+            plt.ylim(-0.5, len(data_y) - 0.5)
+            red_patch = mpatches.Patch(color="red", label="account")
+            blue_patch = mpatches.Patch(color="blue", label="memo")
+            purple_patch = mpatches.Patch(color="purple", label="composite")
+            plt.legend(
+                handles=[red_patch, blue_patch, purple_patch],
+                bbox_to_anchor=(1.15, 1),
+                loc="upper right",
+            )
+            plt.xticks(rotation=90)
+            date_as_datetime_type = self._report_dates_for_plot(expense_forecast)
+            min_date = min(date_as_datetime_type).strftime("%Y-%m-%d")
+            max_date = max(date_as_datetime_type).strftime("%Y-%m-%d")
+            plt.title(
+                "Forecast #"
+                + str(expense_forecast.unique_id)
+                + ": "
+                + str(min_date)
+                + " -> "
+                + str(max_date)
+            )
+        else:
+            plt.axis("off")
+            plt.text(
+                0.5,
+                0.5,
+                s="There are no milestones to show.",
+                horizontalalignment="center",
+            )
+
+        plt.savefig(output_path)
+        matplotlib.pyplot.close()
+
+    def plotAccountTypeTotals(
+        self,
+        expense_forecast,
+        output_path,
+        line_color_cycle_list=["blue", "orange", "green"],
+        linestyle="solid",
+    ):
+        assert hasattr(expense_forecast, "forecast_df")
+
+        figure(figsize=(10, 6), dpi=80)
+        plt.gca().set_prop_cycle(plt.cycler(color=line_color_cycle_list))
+
+        relevant_columns = [
+            column
+            for column in ["Loan Total", "CC Debt Total", "Liquid Total"]
+            if column in expense_forecast.forecast_df.columns
+        ]
+        x_values = self._report_dates_for_plot(expense_forecast)
+        for column in relevant_columns:
+            plt.plot(
+                x_values,
+                expense_forecast.forecast_df[column],
+                label=column + " " + str(expense_forecast.unique_id),
+                linestyle=linestyle,
+            )
+
+        self._decorate_report_plot(expense_forecast)
+        plt.savefig(output_path)
+        matplotlib.pyplot.close()
+
+    def plotNetGainLoss(
+        self,
+        expense_forecast,
+        output_path,
+        line_color_cycle_list=["green", "red"],
+        linestyle="solid",
+    ):
+        assert hasattr(expense_forecast, "forecast_df")
+
+        figure(figsize=(10, 6), dpi=80)
+        plt.gca().set_prop_cycle(plt.cycler(color=line_color_cycle_list))
+        x_values = self._report_dates_for_plot(expense_forecast)
+        for column in ["Net Gain", "Net Loss"]:
+            if column not in expense_forecast.forecast_df.columns:
+                continue
+            plt.plot(
+                x_values,
+                expense_forecast.forecast_df[column],
+                label=column + " " + str(expense_forecast.unique_id),
+                linestyle=linestyle,
+            )
+
+        self._decorate_report_plot(expense_forecast)
+        plt.savefig(output_path)
+        matplotlib.pyplot.close()
+
+    def plotNetWorth(
+        self,
+        expense_forecast,
+        output_path,
+        line_color_cycle_list=["blue"],
+        linestyle="solid",
+    ):
+        assert hasattr(expense_forecast, "forecast_df")
+
+        figure(figsize=(10, 6), dpi=80)
+        plt.gca().set_prop_cycle(plt.cycler(color=line_color_cycle_list))
+        x_values = self._report_dates_for_plot(expense_forecast)
+        plt.plot(
+            x_values,
+            expense_forecast.forecast_df["Net Worth"],
+            label="Net Worth " + str(expense_forecast.unique_id),
+            linestyle=linestyle,
+        )
+
+        bottom, top = plt.ylim()
+        plt.ylim(bottom, top * 1.1 if top else 1)
+        self._decorate_report_plot(expense_forecast)
+        plt.savefig(output_path)
+        matplotlib.pyplot.close()
+
+    def plotAll(
+        self,
+        expense_forecast,
+        output_path,
+        line_color_cycle_list=default_color_cycle_list,
+    ):
+        assert hasattr(expense_forecast, "forecast_df")
+
+        figure(figsize=(10, 6), dpi=80)
+        plt.gca().set_prop_cycle(plt.cycler(color=line_color_cycle_list))
+
+        account_set = self._report_account_set(expense_forecast)
+        if account_set is not None:
+            account_info = account_set.getAccounts()
+            account_base_names = set([a.split(":")[0] for a in account_info.Name])
+        else:
+            summary_columns = {
+                "Date",
+                "Net Worth",
+                "Loan Total",
+                "CC Debt Total",
+                "Liquid Total",
+                "Net Gain",
+                "Net Loss",
+                "Marginal Interest",
+                "Memo",
+                "Memo Directives",
+                "Next Income Date",
+            }
+            account_base_names = set(
+                column.split(":")[0]
+                for column in expense_forecast.forecast_df.columns
+                if column not in summary_columns
+            )
+
+        x_values = self._report_dates_for_plot(expense_forecast)
+        for account_base_name in account_base_names:
+            matching_columns = [
+                column
+                for column in expense_forecast.forecast_df.columns
+                if column.split(":")[0] == account_base_name
+                and pd.api.types.is_numeric_dtype(expense_forecast.forecast_df[column])
+            ]
+            if not matching_columns:
+                continue
+            if len(matching_columns) == 1:
+                account_values = expense_forecast.forecast_df[matching_columns[0]]
+            else:
+                account_values = expense_forecast.forecast_df[matching_columns].sum(axis=1)
+            plt.plot(x_values, account_values, label=account_base_name)
+
+        self._decorate_report_plot(expense_forecast)
+        plt.savefig(output_path)
+        matplotlib.pyplot.close()
+
+    def plotMarginalInterest(self, expense_forecast, output_path, linestyle="solid"):
+        assert hasattr(expense_forecast, "forecast_df")
+
+        figure(figsize=(10, 6), dpi=80)
+        plt.gca().set_prop_cycle(plt.cycler(color=["blue"]))
+        x_values = self._report_dates_for_plot(expense_forecast)
+        plt.plot(
+            x_values,
+            expense_forecast.forecast_df["Marginal Interest"],
+            label="Marginal Interest " + str(expense_forecast.unique_id),
+            linestyle=linestyle,
+        )
+
+        self._decorate_report_plot(expense_forecast)
+        plt.savefig(output_path)
+        matplotlib.pyplot.close()
+
+    def plotSankeyDiagram(self, expense_forecast, output_path):
+        if go is None:
+            raise ImportError("plotly is required to generate the Sankey diagram")
+
+        budget_set = self._report_budget_set(expense_forecast)
+        memo_rule_set = self._report_memo_rule_set(expense_forecast)
+        if budget_set is None or memo_rule_set is None:
+            raise ValueError("BudgetSet and MemoRuleSet are required for Sankey report")
+
+        income_memos = []
+        expense_memos = []
+        for _, row in budget_set.getBudgetItems().iterrows():
+            matching_memo_rule_set = memo_rule_set.findMatchingMemoRule(
+                row.Memo, row.Priority
+            )
+            if len(matching_memo_rule_set.memo_rules) == 0:
+                continue
+            relevant_memo_rule = matching_memo_rule_set.memo_rules[0]
+            if (
+                relevant_memo_rule.account_from in ("Checking", "Credit")
+                and relevant_memo_rule.account_to in (None, "None")
+            ):
+                expense_memos.append(row.Memo)
+            elif (
+                relevant_memo_rule.account_from in (None, "None")
+                and relevant_memo_rule.account_to == "Checking"
+            ):
+                income_memos.append(row.Memo)
+
+        total_income = 0
+        total_expense = 0
+        total_interest = 0
+        income_node_dict = {}
+        expense_node_dict = {}
+        for _, row in expense_forecast.forecast_df.iterrows():
+            memo_line_items = str(row.Memo).split(";")
+            for memo_line_item in memo_line_items:
+                memo_line_item = memo_line_item.strip()
+                if memo_line_item == "":
+                    continue
+                payment_amount_match = re.search("\\(.*-?\\$(.*)\\)", memo_line_item)
+                if payment_amount_match is None:
+                    continue
+                amount = float(payment_amount_match.group(1))
+                for income_memo in income_memos:
+                    if income_memo in memo_line_item:
+                        total_income += amount
+                        income_node_dict[income_memo] = (
+                            income_node_dict.get(income_memo, 0) + amount
+                        )
+
+                for expense_memo in expense_memos:
+                    if expense_memo in memo_line_item:
+                        total_expense += amount
+                        expense_node_dict[expense_memo] = (
+                            expense_node_dict.get(expense_memo, 0) + amount
+                        )
+
+                if "cc interest" in memo_line_item.lower():
+                    total_interest += amount
+
+        total_expense += total_interest
+        total_remaining = total_income - total_expense
+
+        labels = []
+        source = []
+        target = []
+        values = []
+        colors = []
+        income_color = "#42f542"
+        expense_color = "#ecf542"
+
+        index = 0
+        for key, value in income_node_dict.items():
+            labels.append(key)
+            source.append(index)
+            values.append(value)
+            colors.append(income_color)
+            index += 1
+
+        total_income_index = index
+        labels.append("Total Income")
+        index += 1
+
+        total_expense_index = index
+        labels.append("Total Expense")
+        index += 1
+
+        for income_index in range(len(income_node_dict)):
+            target.append(total_income_index)
+
+        source.append(total_income_index)
+        target.append(total_expense_index)
+        values.append(total_expense)
+        colors.append(expense_color)
+
+        remaining_index = index + len(expense_node_dict) + 1
+        source.append(total_income_index)
+        target.append(remaining_index)
+        values.append(max(total_remaining, 0))
+        colors.append(income_color)
+
+        for key, value in expense_node_dict.items():
+            labels.append(key)
+            source.append(total_expense_index)
+            target.append(index)
+            values.append(value)
+            colors.append(expense_color)
+            index += 1
+
+        interest_index = index
+        labels.append("Total Interest")
+        source.append(total_expense_index)
+        target.append(interest_index)
+        values.append(total_interest)
+        colors.append(expense_color)
+        index += 1
+
+        labels.append("Remaining")
+
+        fig = go.Figure(
+            data=[
+                go.Sankey(
+                    node=dict(
+                        pad=15,
+                        thickness=20,
+                        line=dict(color="black", width=0.5),
+                        label=labels,
+                        color="grey",
+                    ),
+                    link=dict(
+                        source=source,
+                        target=target,
+                        value=values,
+                        color=colors,
+                    ),
+                )
+            ],
+            layout=go.Layout(height=480, width=800),
+        )
+
+        fig.update_layout(title_text=self._report_forecast_name(expense_forecast), font_size=10)
+        fig.write_image(output_path)
+
+    def generateHTMLReport(self, E, output_dir="./", parent_report_path=None):
+        start_date = self._report_date_label(self._report_start_date(E))
+        end_date = self._report_date_label(self._report_end_date(E))
+
+        forecast_failed = (
+            self._report_date_to_datetime(E.forecast_df.tail(1).Date.iat[0]).date()
+            != self._report_date_to_datetime(self._report_end_date(E)).date()
+        )
+
+        report_id = E.unique_id
+        output_file_name = "Forecast_" + str(report_id)
+
+        start_ts = getattr(E, "start_ts", None)
+        end_ts = getattr(E, "end_ts", None)
+        if start_ts is None:
+            start_ts__datetime = datetime.datetime.now()
+        else:
+            start_ts__datetime = self._report_date_to_datetime(start_ts)
+        if end_ts is None:
+            end_ts__datetime = start_ts__datetime
+        else:
+            end_ts__datetime = self._report_date_to_datetime(end_ts)
+        simulation_time_elapsed = end_ts__datetime - start_ts__datetime
+
+        if parent_report_path is not None:
+            parent_report_text = (
+                """This report was generated alongside some others. See <a href=\""""
+                + parent_report_path
+                + """\">this page</a> for information about related forecasts."""
+            )
+        else:
+            parent_report_text = ""
+
+        summary_text = (
+            """
+        This forecast started at """
+            + str(start_ts__datetime)
+            + """, took """
+            + str(simulation_time_elapsed)
+            + """ to complete, and finished at """
+            + str(end_ts__datetime)
+            + """.
+        """
+        )
+
+        account_set = self._report_account_set(E)
+        budget_set = self._report_budget_set(E)
+        memo_rule_set = self._report_memo_rule_set(E)
+        milestone_set = self._report_milestone_set(E)
+
+        account_text = (
+            """
+        The initial conditions and account boundaries are defined as:"""
+            + (account_set.getAccounts().to_html() if account_set is not None else "")
+            + """
+        """
+        )
+
+        budget_set_text = (
+            """
+        These transactions are considered for analysis:"""
+            + (budget_set.getBudgetItems().to_html() if budget_set is not None else "")
+            + """
+        """
+        )
+
+        memo_rule_text = (
+            """
+        These decision rules are used:"""
+            + (memo_rule_set.getMemoRules().to_html() if memo_rule_set is not None else "")
+            + """
+        """
+        )
+
+        account_milestone_text = (
+            """
+        These account milestones are defined:"""
+            + self._report_milestone_table(milestone_set, "getAccountMilestonesDF").to_html()
+            + """
+        """
+        )
+
+        memo_milestone_text = (
+            """
+        These memo milestones are defined:"""
+            + self._report_milestone_table(milestone_set, "getMemoMilestonesDF").to_html()
+            + """
+        """
+        )
+
+        composite_milestone_text = (
+            """
+        These composite milestones are defined:"""
+            + self._report_milestone_table(milestone_set, "getCompositeMilestonesDF").to_html()
+            + """
+        """
+        )
+
+        initial_networth = round(E.forecast_df.head(1)["Net Worth"].iat[0], 2)
+        final_networth = round(E.forecast_df.tail(1)["Net Worth"].iat[0], 2)
+        networth_delta = round(final_networth - initial_networth, 2)
+        num_days = E.forecast_df.shape[0]
+        avg_networth_change = round(networth_delta / float(num_days), 2)
+        rose_or_fell = "rose" if networth_delta >= 0 else "fell"
+
+        networth_text = (
+            """
+        Net Worth began at """
+            + self._report_amount(initial_networth)
+            + """ and """
+            + rose_or_fell
+            + """ to """
+            + self._report_amount(final_networth)
+            + """ over """
+            + str(f"{float(num_days):,.0f}")
+            + """ days, averaging """
+            + self._report_amount(avg_networth_change)
+            + """ per day.
+        """
+        )
+
+        initial_loan_total = round(E.forecast_df.head(1)["Loan Total"].iat[0], 2)
+        final_loan_total = round(E.forecast_df.tail(1)["Loan Total"].iat[0], 2)
+        loan_delta = round(final_loan_total - initial_loan_total, 2)
+        initial_cc_debt_total = round(E.forecast_df.head(1)["CC Debt Total"].iat[0], 2)
+        final_cc_debt_total = round(E.forecast_df.tail(1)["CC Debt Total"].iat[0], 2)
+        cc_debt_delta = round(final_cc_debt_total - initial_cc_debt_total, 2)
+        initial_liquid_total = round(E.forecast_df.head(1)["Liquid Total"].iat[0], 2)
+        final_liquid_total = round(E.forecast_df.tail(1)["Liquid Total"].iat[0], 2)
+        liquid_delta = round(final_liquid_total - initial_liquid_total, 2)
+
+        avg_loan_delta = round(loan_delta / num_days, 2)
+        avg_cc_debt_delta = round(cc_debt_delta / num_days, 2)
+        avg_liquid_delta = round(liquid_delta / num_days, 2)
+
+        account_type_text = (
+            """
+        Loan debt began at """
+            + self._report_amount(initial_loan_total)
+            + """ and """
+            + ("rose" if avg_loan_delta >= 0 else "fell")
+            + """ to """
+            + self._report_amount(final_loan_total)
+            + """ over """
+            + str(f"{float(num_days):,.0f}")
+            + """ days, averaging """
+            + self._report_amount(avg_loan_delta)
+            + """ per day.
+        <br><br>
+        Credit card debt began at """
+            + self._report_amount(initial_cc_debt_total)
+            + """ and """
+            + ("rose" if avg_cc_debt_delta >= 0 else "fell")
+            + """ to """
+            + self._report_amount(final_cc_debt_total)
+            + """ over """
+            + str(f"{float(num_days):,.0f}")
+            + """ days, averaging """
+            + self._report_amount(avg_cc_debt_delta)
+            + """ per day.
+        <br><br>
+        Liquid cash began at """
+            + self._report_amount(initial_liquid_total)
+            + """ and """
+            + ("rose" if avg_liquid_delta >= 0 else "fell")
+            + """ to """
+            + self._report_amount(final_liquid_total)
+            + """ over """
+            + str(f"{float(num_days):,.0f}")
+            + """ days, averaging """
+            + self._report_amount(avg_liquid_delta)
+            + """ per day.
+        """
+        )
+
+        total_gain = round(sum(E.forecast_df["Net Gain"]), 2)
+        avg_daily_gain = round(total_gain / num_days, 2)
+        total_loss = round(sum(E.forecast_df["Net Loss"]), 2)
+        avg_daily_loss = round(total_loss / num_days, 2)
+
+        net_gain_loss_text = (
+            "Total gain was "
+            + self._report_amount(total_gain)
+            + " over "
+            + str(num_days)
+            + " days, averaging "
+            + self._report_amount(avg_daily_gain)
+            + " per day.<br><br>"
+        )
+        net_gain_loss_text += (
+            "Total loss was "
+            + str(f"-${float(total_loss):,}")
+            + " over "
+            + str(num_days)
+            + " days, averaging "
+            + str(f"-${float(avg_daily_loss):,}")
+            + " per day."
+        )
+
+        total_interest_accrued = round(sum(E.forecast_df["Marginal Interest"]), 2)
+        avg_interest_accrued = round(total_interest_accrued / num_days, 2)
+
+        interest_text = (
+            "Total interest accrued was "
+            + self._report_amount(total_interest_accrued)
+            + " over "
+            + str(num_days)
+            + " days, averaging "
+            + self._report_amount(avg_interest_accrued)
+            + " per day.<br>"
+        )
+        interest_text += "This plot shows the new interest by day, not the total interest at a given time."
+
+        cc_interest_sel_vec = [
+            "cc interest" in str(m).lower() for m in E.forecast_df.Memo
+        ]
+        interest_rows_df = E.forecast_df.loc[cc_interest_sel_vec]
+        interest_table_to_display_df = pd.DataFrame(interest_rows_df["Date"])
+        interest_table_to_display_df["Total CC Interest"] = 0.0
+        for index, row in interest_rows_df.iterrows():
+            memo_line = str(row.Memo)
+            memo_line_items = memo_line.split(";")
+            for memo_line_item in memo_line_items:
+                memo_line_item = memo_line_item.strip()
+                if "cc interest" not in memo_line_item.lower():
+                    continue
+
+                value_match = re.search(
+                    "\\(([A-Za-z0-9_ :]*) ([-+]?\\$.*)\\)$", memo_line_item
+                )
+                if value_match is None:
+                    continue
+                line_item_value_string = value_match.group(2)
+                line_item_value_string = (
+                    line_item_value_string.replace("(", "")
+                    .replace(")", "")
+                    .replace("$", "")
+                )
+                line_item_value = float(line_item_value_string)
+                interest_table_to_display_df.loc[
+                    index, "Total CC Interest"
+                ] += line_item_value
+        interest_table_html = interest_table_to_display_df.to_html()
+
+        am_result_df = self._report_milestone_results_df(E, "Account")
+        mm_result_df = self._report_milestone_results_df(E, "Memo")
+        cm_result_df = self._report_milestone_results_df(E, "Composite")
+
+        end_date_datetime = self._report_date_to_datetime(self._report_end_date(E))
+        achieved_am_count = (
+            am_result_df[am_result_df.Date < end_date_datetime].shape[0]
+            if "Date" in am_result_df.columns
+            else 0
+        )
+        achieved_mm_count = (
+            mm_result_df[mm_result_df.Date < end_date_datetime].shape[0]
+            if "Date" in mm_result_df.columns
+            else 0
+        )
+        achieved_cm_count = (
+            cm_result_df[cm_result_df.Date < end_date_datetime].shape[0]
+            if "Date" in cm_result_df.columns
+            else 0
+        )
+        total_milestone_count = (
+            am_result_df.shape[0] + mm_result_df.shape[0] + cm_result_df.shape[0]
+        )
+        achieved_milestone_count = (
+            achieved_am_count + achieved_mm_count + achieved_cm_count
+        )
+
+        milestone_text = (
+            str(total_milestone_count)
+            + " milestones were defined, and "
+            + str(achieved_milestone_count)
+            + " were achieved before the end of the forecast.<br>"
+        )
+        milestone_text += "Note that unachieved milestones are displayed on the last day of the forecast."
+
+        transaction_schedule_text = "Transactions are displayed below."
+        confirmed_df = self._report_confirmed_df(E)
+        if "Priority" in confirmed_df.columns:
+            p2_plus_txns_html_table = confirmed_df[confirmed_df.Priority >= 2].to_html()
+        else:
+            p2_plus_txns_html_table = confirmed_df.to_html()
+
+        payment_rows = []
+        for _, row in E.forecast_df.iterrows():
+            memo_line_items = str(row.Memo).split(";")
+            for memo_line_item in memo_line_items:
+                memo_line_item_lower = memo_line_item.lower()
+                if (
+                    "loan min payment" in memo_line_item_lower
+                    or "additional loan payment" in memo_line_item_lower
+                ):
+                    payment_rows.append(
+                        {"Payment Type": "Loan", "Date": row.Date, "Memo": memo_line_item}
+                    )
+                elif (
+                    "cc min payment" in memo_line_item_lower
+                    or "additional cc payment" in memo_line_item_lower
+                    or "cc interest" in memo_line_item_lower
+                ):
+                    payment_rows.append(
+                        {"Payment Type": "Credit Card", "Date": row.Date, "Memo": memo_line_item}
+                    )
+
+        payments_df = pd.DataFrame(payment_rows)
+        cc_payments_html_table = payments_df[
+            payments_df.get("Payment Type", pd.Series(dtype=str)) == "Credit Card"
+        ].to_html()
+        loan_payment_html_table = payments_df[
+            payments_df.get("Payment Type", pd.Series(dtype=str)) == "Loan"
+        ].to_html()
+
+        all_plot_page_text = ""
+        sankey_text = ""
+
+        os.makedirs(output_dir, exist_ok=True)
+        networth_line_plot_path = report_id + "_networth_line_plot.png"
+        net_gain_loss_line_plot_path = report_id + "_net_gain_loss_line_plot.png"
+        accounttype_line_plot_path = report_id + "_accounttype_line_plot.png"
+        marginal_interest_line_plot_path = (
+            report_id + "_marginal_interest_line_plot.png"
+        )
+        milestone_scatter_plot_path = report_id + "_milestone_scatter_plot.png"
+        all_line_plot_path = report_id + "_all_line_plot.png"
+        sankey_path = report_id + "_sankey.jpg"
+
+        self.plotAll(E, os.path.join(output_dir, all_line_plot_path))
+        self.plotNetWorth(E, os.path.join(output_dir, networth_line_plot_path))
+        self.plotAccountTypeTotals(E, os.path.join(output_dir, accounttype_line_plot_path))
+        self.plotMarginalInterest(E, os.path.join(output_dir, marginal_interest_line_plot_path))
+        self.plotNetGainLoss(E, os.path.join(output_dir, net_gain_loss_line_plot_path))
+        self.plotMilestoneDates(E, os.path.join(output_dir, milestone_scatter_plot_path))
+        try:
+            self.plotSankeyDiagram(E, os.path.join(output_dir, sankey_path))
+        except Exception as exc:
+            sankey_text = "Sankey diagram generation failed: " + str(exc)
+            sankey_path = ""
+
+        left_fail_style_tag = ""
+        right_fail_style_tag = ""
+        fail_message = ""
+        if forecast_failed:
+            left_fail_style_tag = '<font color ="red">'
+            right_fail_style_tag = "</font>"
+            fail_message = "This forecast failed to reach the end. The results may not reflect the effect of non-essential transactions accurately."
+
+        html_body = (
+            """
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Expense Forecast Report #"""
+            + str(report_id)
+            + """</title>
+        <style>
+        .tab {
+          overflow: hidden;
+          border: 1px solid #ccc;
+          background-color: #f1f1f1;
+        }
+        .tab button {
+          background-color: inherit;
+          float: left;
+          border: none;
+          outline: none;
+          cursor: pointer;
+          padding: 14px 16px;
+          transition: 0.3s;
+        }
+        .tab button:hover {
+          background-color: #ddd;
+        }
+        .tab button.active {
+          background-color: #ccc;
+        }
+        .tabcontent {
+          display: none;
+          padding: 6px 12px;
+          border: 1px solid #ccc;
+          border-top: none;
+        }
+        </style>
+        </head>
+        <body>
+        <h1>"""
+            + left_fail_style_tag
+            + """Expense Forecast Report #"""
+            + str(report_id)
+            + right_fail_style_tag
+            + """</h1>
+        <p>"""
+            + start_date
+            + """ to """
+            + end_date
+            + " "
+            + left_fail_style_tag
+            + fail_message
+            + right_fail_style_tag
+            + " "
+            + parent_report_text
+            + """</p>
+
+        <div class="tab">
+          <button class="tablinks active" onclick="openTab(event, 'ForecastParameters')">Forecast Parameters</button>
+          <button class="tablinks" onclick="openTab(event, 'NetWorth')">Net Worth</button>
+          <button class="tablinks" onclick="openTab(event, 'NetGainLoss')">Net Gain & Loss</button>
+          <button class="tablinks" onclick="openTab(event, 'AccountType')">Account Type</button>
+          <button class="tablinks" onclick="openTab(event, 'Interest')">Interest</button>
+          <button class="tablinks" onclick="openTab(event, 'Milestones')">Milestones</button>
+          <button class="tablinks" onclick="openTab(event, 'All')">All</button>
+          <button class="tablinks" onclick="openTab(event, 'TransactionSchedule')">Transaction Schedule</button>
+          <button class="tablinks" onclick="openTab(event, 'Sankey')">Sankey</button>
+          <button class="tablinks" onclick="openTab(event, 'Forecast Results')">Forecast Results</button>
+        </div>
+
+        <div id="ForecastParameters" class="tabcontent">
+          <h3>Forecast Parameters</h3>
+          <p>"""
+            + summary_text
+            + """</p>
+          <h3>Accounts</h3>
+          <p>"""
+            + account_text
+            + """</p>
+          <h3>Budget Items</h3>
+          <p>"""
+            + budget_set_text
+            + """</p>
+          <h3>Memo Rules</h3>
+          <p>"""
+            + memo_rule_text
+            + """</p>
+          <h3>Account Milestones</h3>
+          <p>"""
+            + account_milestone_text
+            + """</p>
+          <h3>Memo Milestones</h3>
+          <p>"""
+            + memo_milestone_text
+            + """</p>
+          <h3>Composite Milestones</h3>
+          <p>"""
+            + composite_milestone_text
+            + """</p>
+        </div>
+
+        <div id="NetWorth" class="tabcontent">
+          <h3>Net Worth</h3>
+          <p>"""
+            + networth_text
+            + """</p>
+          <img src=\""""
+            + networth_line_plot_path
+            + """\">
+        </div>
+
+        <div id="NetGainLoss" class="tabcontent">
+          <h3>Net Gain & Loss</h3>
+          <p>"""
+            + net_gain_loss_text
+            + """</p>
+          <img src=\""""
+            + net_gain_loss_line_plot_path
+            + """\">
+        </div>
+
+        <div id="AccountType" class="tabcontent">
+          <h3>Account Type</h3>
+          <p>"""
+            + account_type_text
+            + """</p>
+          <img src=\""""
+            + accounttype_line_plot_path
+            + """\">
+        </div>
+
+        <div id="Interest" class="tabcontent">
+          <h3>Interest</h3>
+          <p>"""
+            + interest_text
+            + """</p>
+          <img src=\""""
+            + marginal_interest_line_plot_path
+            + """\">
+          """
+            + interest_table_html
+            + """
+        </div>
+
+        <div id="Milestones" class="tabcontent">
+          <h3>Milestones</h3>
+          <p>"""
+            + milestone_text
+            + """</p>
+          <img src=\""""
+            + milestone_scatter_plot_path
+            + """\">
+          <h4>Account Milestones</h4>
+          """
+            + am_result_df.to_html()
+            + """ <br>
+          <h4>Memo Milestones</h4>
+          """
+            + mm_result_df.to_html()
+            + """ <br>
+          <h4>Composite Milestones</h4>
+          """
+            + cm_result_df.to_html()
+            + """ <br>
+        </div>
+
+        <div id="All" class="tabcontent">
+          <h3>All</h3>
+          <p>"""
+            + all_plot_page_text
+            + """</p>
+          <img src=\""""
+            + all_line_plot_path
+            + """\">
+        </div>
+
+        <div id="TransactionSchedule" class="tabcontent">
+          <h3>Transaction Schedule</h3>
+          <p>"""
+            + transaction_schedule_text
+            + """</p><br>
+          Non-essential transactions: <br>
+          <p>"""
+            + p2_plus_txns_html_table
+            + """</p><br><br>
+          Credit Card Payments: <br>
+          <p>"""
+            + cc_payments_html_table
+            + """</p><br><br>
+          Loan Payments: <br>
+          <p>"""
+            + loan_payment_html_table
+            + """</p><br><br>
+          All Transactions: <br>
+          """
+            + confirmed_df.to_html()
+            + """
+        </div>
+
+        <div id="Sankey" class="tabcontent">
+          <h3>Sankey</h3>
+          <p>"""
+            + sankey_text
+            + """</p>
+          <img src=\""""
+            + sankey_path
+            + """\">
+        </div>
+
+        <div id="Forecast Results" class="tabcontent">
+          <h3>Forecast Results</h3>
+          <p>"""
+            + summary_text
+            + """</p>
+          <p>The visualized data are below:</p>
+          <h4>Forecast #"""
+            + str(E.unique_id)
+            + """:</h4>
+          """
+            + E.forecast_df.to_html()
+            + """
+        </div>
+
+        <br>
+
+        <script>
+        function openTab(evt, tabName) {
+          var i, tabcontent, tablinks;
+          tabcontent = document.getElementsByClassName("tabcontent");
+          for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+          }
+          tablinks = document.getElementsByClassName("tablinks");
+          for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(" active", "");
+          }
+          document.getElementById(tabName).style.display = "block";
+          evt.currentTarget.className += " active";
+        }
+        document.getElementById("ForecastParameters").style.display = "block";
+        </script>
+
+        </body>
+        </html>
+        """
+        )
+
+        output_path = os.path.join(output_dir, output_file_name + ".html")
+        with open(output_path, "w") as f:
+            f.write(html_body)
+        log_in_color(
+            logger,
+            "green",
+            "info",
+            "Finished writing single forecast report to " + output_path,
+        )
+        return output_path

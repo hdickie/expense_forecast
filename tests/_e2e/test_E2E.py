@@ -68,9 +68,9 @@ class TestE2E:
                     "forecast",
                     "--source",
                     "file",
-                    "--ifilename",
+                    "--ifile",
                     "initial_conditions.json",
-                    "--ofilename",
+                    "--ofile",
                     "forecast_result.json"],
                 cwd=temp_path,
                 capture_output=True,
@@ -79,6 +79,56 @@ class TestE2E:
 
             assert result.returncode == 0
             assert forecast_result_path.exists()
+
+    # TODO this could be pared down to a generate-report-only test
+    def test_cli_run_forecast_and_generate(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            initial_conditions_path = temp_path / "initial_conditions.json"
+            forecast_result_path = temp_path / "forecast_result.json"
+            config_path = temp_path / "expense_forecast.conf"
+            log_dir = temp_path / "log"
+            log_dir.mkdir()
+
+            simple_forecast_initial_conditions(initial_conditions_path)
+            config_path.write_text("[default]\n")
+
+            #assume working
+            subprocess.run(
+                [
+                    "python3",
+                    "-m",
+                    "expense_forecast.ef_cli",
+                    "run",
+                    "forecast",
+                    "--source",
+                    "file",
+                    "--ifile",
+                    "initial_conditions.json",
+                    "--ofile",
+                    "forecast_result.json"],
+                cwd=temp_path,
+                capture_output=True,
+                text=True,
+            )
+
+            result = subprocess.run(
+                [
+                    "python3",
+                    "-m",
+                    "expense_forecast.ef_cli",
+                    "report",
+                    "forecast",
+                    "--ifile",
+                    "forecast_result.json",
+                    "--ofile",
+                    "forecast_report.json"],
+                cwd=temp_path,
+                capture_output=True,
+                text=True,
+            )
+
+
 
     def test_cli_help_runs(self):
         result = subprocess.run(

@@ -354,7 +354,7 @@ class ExpenseForecastInitialConditions:
                 account_set: AccountSet, 
                  budget_set: BudgetSet, 
                  memo_rule_set: MemoRuleSet, 
-                 log_stack_depth,
+                 log_stack_depth=0,
                  **kwargs):
 
         allowed_kwargs = ['forecast_name',
@@ -364,19 +364,19 @@ class ExpenseForecastInitialConditions:
         for key in kwargs:
             if key not in allowed_kwargs:
                 raise TypeError(f"Unexpected keyword argument '{key}'")
+            
+        self.forecast_name = kwargs.get('forecast_name', None)
+        self.forecast_set_name = kwargs.get('forecast_set_name', None)
 
         self._validate_start_and_end_dates(start_date, end_date)
         self.start_date = start_date
         self.end_date = end_date
-
 
         self._validate_account_budget_memo_rule_intersection(account_set, budget_set, memo_rule_set)
 
         self.initial_account_set = copy.deepcopy(account_set)
         self.initial_budget_set = copy.deepcopy(budget_set)
         self.initial_memo_rule_set = copy.deepcopy(memo_rule_set)
-
-        confirmed_df, proposed_df, deferred_df, skipped_df = self._preprocess_budget_items(start_date, end_date, budget_set)
 
         self.unique_id = ExpenseForecastInitialConditions.compute_forecast_id(
             start_date=self.start_date,
@@ -385,15 +385,15 @@ class ExpenseForecastInitialConditions:
             budget_set=self.initial_budget_set,
             memo_rule_set=self.initial_memo_rule_set)
 
+        # GPT doesn't like that ExpenseForecastInitialConditions is owning this logic
+        # and that data frame manipulation is occuring inside __init__ here,
+        # but I have decided to ignore this advice
+        confirmed_df, proposed_df, deferred_df, skipped_df = self._preprocess_budget_items(start_date, end_date, budget_set)
+
         self.initial_proposed_df = proposed_df
         self.initial_deferred_df = deferred_df
         self.initial_skipped_df = skipped_df
         self.initial_confirmed_df = confirmed_df
-
-        self.forecast_name = kwargs.get('forecast_name', None)
-
-        self.forecast_set_name = kwargs.get('forecast_set_name', None)
-
 
     def __str__(self):
         raise NotImplementedError #todo
@@ -411,7 +411,7 @@ class ExpenseForecastInitialConditions:
         raise NotImplementedError
 
     @classmethod
-    def loadJSON(cls, json_or_path):
+    def load_json_file(cls, json_or_path):
         # logger.debug("ENTER ExpenseForecastInitialConditions.loadJSON")
         json_string_candidate = str(json_or_path).strip()
         # logger.debug(f"json_string_candidate: {json_string_candidate}")
@@ -496,6 +496,5 @@ class ExpenseForecastInitialConditions:
             "end_date": self.end_date.isoformat(),
             "account_set": self.initial_account_set.to_dict(),
             "budget_set": self.initial_budget_set.to_dict(),
-            "memo_rule_set": self.initial_memo_rule_set.to_dict(),
-            "milestone_set": self._object_to_json_data(self.milestone_set),
+            "memo_rule_set": self.initial_memo_rule_set.to_dict()
         }

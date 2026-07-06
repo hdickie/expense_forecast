@@ -7,6 +7,7 @@ from time import sleep
 import argparse
 import logging
 from .ExpenseForecastInitialConditions import ExpenseForecastInitialConditions
+from .ExpenseForecastResult import ExpenseForecastResult
 from .ForecastSet import ForecastSet
 from .log_methods import log_in_color
 import pandas as pd
@@ -283,16 +284,16 @@ def run(args):
     # working directory
     #
 
-    if args.action[0] in {"stage", "run", "report", "export"}:
-        if args.working_directory is None:
-            raise ValueError(
-                f"Action '{args.action[0]}' requires --working-directory."
-            )
+    # if args.action[0] in {"stage", "run", "report", "export"}:
+    #     if args.working_directory is None:
+    #         raise ValueError(
+    #             f"Action '{args.action[0]}' requires --working-directory."
+    #         )
 
-        if not os.path.isdir(args.working_directory):
-            raise ValueError(
-                f"Working directory does not exist: {args.working_directory}"
-            )
+    #     if not os.path.isdir(args.working_directory):
+    #         raise ValueError(
+    #             f"Working directory does not exist: {args.working_directory}"
+    #         )
 
     #
     # database
@@ -330,7 +331,7 @@ def run(args):
     #
 
     if args.label is not None:
-        if args.action[0] != "stage":
+        if args.label != "" and args.action[0] != "stage":
             raise ValueError(
                 "--label may only be used with the 'stage' action."
             )
@@ -646,11 +647,11 @@ def run(args):
             and args.source == "file"
         ):
 
-            if not os.path.exists(args.ifilename):
-                raise ValueError("Error: "+str(args.ifilename) + " not found ; Forecast initial conditions json file not found")
+            if not os.path.exists(args.ifile):
+                raise ValueError("Error: "+str(args.ifile) + " not found ; Forecast initial conditions json file not found")
             # print('Starting forecast '+str(args.id))
             E_IO = ExpenseForecastInitialConditions.load_json_file(
-                args.ifilename
+                args.ifile
             )  # let this throw an exception if needed
             # TODO these should be uncommented eventually
             # if args.label:
@@ -1101,6 +1102,7 @@ def run(args):
             and args.action[1] == "forecastset"
             and args.source == "database"
         ):
+            
             # todo the logic in this block assumes the forecast is run, bc even if it did we don't plan on using it
             # while this would most often produce expected results, it may not be strictly true (there may be cached data)
             # if there is cached data there COULD be unexpected results. I haven't thought it all the way through
@@ -1333,7 +1335,14 @@ def run(args):
             #     forecast_name = S.id_to_name[E.unique_id]
             #     insert_stage_q = "INSERT INTO prod." + str(args.username) + "_staged_forecast_details Select '"+str(S.unique_id)+"','"+str(E.unique_id)+"','"+str(args.label)+"','"+str(forecast_name)+"','"+str(args.start_date)+"','"+str(args.end_date)+"'"
             #     cursor.execute(insert_stage_q)
-
+        elif (
+            args.action[0] == "report"
+            and args.action[1] == "forecast"
+            and args.source == "file"
+        ):
+            print(args)
+            R = ExpenseForecastResult.load_json_file(args.ifile)
+            ForecastHandler().generateHTMLReport(R)
 
 # ef_cli parameterize forecast
 # ef_cli reparameterize forecast
@@ -1351,7 +1360,7 @@ def run(args):
 
 def build_parser():
     parser = argparse.ArgumentParser(
-        description="Runs a Forecast or ForecastSet and displays a progress bar.\r\ne.g. ef run forecast --ifilename initial_conditions.json --ofilename forecast_result.json",
+        description="Runs a Forecast or ForecastSet and displays a progress bar.\r\ne.g. ef run forecast --ifile initial_conditions.json --ofile forecast_result.json",
         epilog="As an alternative to the commandline, params can be placed in a file, one per line, and specified on the commandline like '%(prog)s @params.conf'.",
         fromfile_prefix_chars="@",
     )
@@ -1461,13 +1470,13 @@ def build_parser():
         action="store",
     )
     parser.add_argument(
-        "--ifilename",
+        "--ifile",
         required=False,
         help="A JSON path that contains the initial conditions for the forecast.",
         action="store",
     )
     parser.add_argument(
-        "--ofilename",
+        "--ofile",
         required=False,
         help="A JSON path that the forecast result object will be written to.",
         action="store",
