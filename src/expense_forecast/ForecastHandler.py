@@ -2956,7 +2956,7 @@ class ForecastHandler:
                 md_split_semicolon.append(
                     f"LOAN INTEREST ({account.name}: Interest +${interest_accrued})"
                 )
-                current_forecast_row_df["Memo Directives"] = "; ".join(
+                current_forecast_row_df.loc[:, "Memo Directives"] = "; ".join(
                     md_split_semicolon
                 )
 
@@ -3358,7 +3358,7 @@ class ForecastHandler:
                 continue
 
             minimum_payment_amount = min(
-                billing_state.minimum_payment,
+                billing_state.remaining_minimum_payment_due(),
                 billing_state.balance,
             )
             if minimum_payment_amount <= 0:
@@ -3400,7 +3400,7 @@ class ForecastHandler:
             )
             md_split_semicolon = [md for md in md_split_semicolon if md]
             md_split_semicolon += memo_parts
-            current_forecast_row_df["Memo Directives"] = "; ".join(
+            current_forecast_row_df.loc[:, "Memo Directives"] = "; ".join(
                 md_split_semicolon
             )
 
@@ -7332,6 +7332,27 @@ class ForecastHandler:
                     log_stack_depth=log_stack_depth,
                 )
 
+                # Calculate loan interest accruals before same-day loan payments.
+                forecast_df.loc[forecast_df.Date == d] = (
+                    cls._calculateLoanInterestAccrualsForDay(
+                        account_set=account_set, current_forecast_row_df=forecast_df[forecast_df.Date == d], log_stack_depth=log_stack_depth
+                    )
+                )
+
+                account_set = cls._sync_account_set_w_forecast_day(
+                    account_set=account_set, forecast_df=forecast_df, d=d, log_stack_depth=log_stack_depth
+                )
+
+                # Execute loan minimum payments before same-day loan payments.
+                forecast_df.loc[forecast_df.Date == d] = (
+                    cls._executeLoanMinimumPayments(
+                        account_set=account_set, current_forecast_row_df=forecast_df[forecast_df.Date == d], log_stack_depth=log_stack_depth
+                    )
+                )
+
+                account_set = cls._sync_account_set_w_forecast_day(
+                    account_set=account_set, forecast_df=forecast_df, d=d, log_stack_depth=log_stack_depth)
+
                 # Execute transactions for the day, priority 1 (non-negotiable)
                 forecast_df, confirmed_df, deferred_df, skipped_df = (
                     cls._executeTransactionsForDay(
@@ -7358,35 +7379,6 @@ class ForecastHandler:
                 account_set = cls._sync_account_set_w_forecast_day(
                     account_set=account_set, forecast_df=forecast_df, d=d, log_stack_depth=log_stack_depth
                 )
-
-                # Calculate loan interest accruals for the day
-                forecast_df.loc[forecast_df.Date == d] = (
-                    cls._calculateLoanInterestAccrualsForDay(
-                        account_set=account_set, current_forecast_row_df=forecast_df[forecast_df.Date == d], log_stack_depth=log_stack_depth
-                    )
-                )
-
-                # Sync again after interest accruals
-                account_set = cls._sync_account_set_w_forecast_day(
-                    account_set=account_set, forecast_df=forecast_df, d=d, log_stack_depth=log_stack_depth
-                )
-
-                # log_in_color(logger, 'green', 'info', 'BEFORE loan min payment', log_stack_depth)
-                # log_in_color(logger, 'green', 'info', forecast_df.to_string(), log_stack_depth)
-
-                # Execute minimum loan payments
-                forecast_df.loc[forecast_df.Date == d] = (
-                    cls._executeLoanMinimumPayments(
-                        account_set=account_set, current_forecast_row_df=forecast_df[forecast_df.Date == d], log_stack_depth=log_stack_depth
-                    )
-                )
-
-                # log_in_color(logger, 'green', 'info', 'AFTER loan min payment', log_stack_depth)
-                # log_in_color(logger, 'green', 'info', forecast_df.to_string(), log_stack_depth)
-
-                # Sync after loan payments
-                account_set = cls._sync_account_set_w_forecast_day(
-                    account_set=account_set, forecast_df=forecast_df, d=d, log_stack_depth=log_stack_depth)
 
                 # log_in_color(logger, 'green', 'info', 'BEFORE cc min payment', log_stack_depth)
                 # log_in_color(logger, 'green', 'info', forecast_df.to_string(), log_stack_depth)
