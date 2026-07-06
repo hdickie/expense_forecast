@@ -229,82 +229,25 @@ class ExpenseForecastInitialConditions:
 
     # todo confirm that I don't need __getstate__, __setstate__. I think pickle can compress data frames and I might not want that
     
-    def __init__(self, start_date: date, end_date: date, 
-                account_set: AccountSet, 
-                 budget_set: BudgetSet, 
-                 memo_rule_set: MemoRuleSet, **kwargs):
+    def _validate_start_and_end_dates(self, start_date, end_date):
+        assert start_date != end_date
+        assert start_date < end_date
 
-        allowed_kwargs = [#'confirmed_df', 'deferred_df', 'skipped_df', 
-                          'milestone_set', 
-                          'forecast_name',
-                          'forecast_set_name',
-                          'raise_exceptions',
-                          #'milestone_results'
-                          ]
-        for key in kwargs:
-            if key not in allowed_kwargs:
-                raise TypeError(f"Unexpected keyword argument '{key}'")
-            
-        #TODO validation?
-        self.start_date = start_date
-        self.end_date = end_date
-
-        # if 'milestone_set' in kwargs:
-        #     assert 'milestone_results' in kwargs
-
-        # if 'milestone_results' in kwargs:
-        #     assert 'milestone_set' in kwargs
-
-        # interval can be inferred, and validation logic for that belongs in SimulationStepper
-        # this is an internal method, so we don't validate here. Validate only at entry points
-
-        # TODO perhaps put the hash logic in ForecastHandler and call it there
-        self.unique_id = ExpenseForecastInitialConditions.compute_forecast_id(
-            start_date=start_date,
-            end_date=end_date,
-            account_set=account_set,
-            budget_set=budget_set,
-            memo_rule_set=memo_rule_set
-        )
-
-
-        self.milestone_set = kwargs.get('milestone_set', None)
-        self.initial_milestone_set = self.milestone_set
-
-        self.forecast_name = kwargs.get('forecast_name', None)
-
-        self.forecast_set_name = kwargs.get('forecast_set_name', None)
-
-        raise_exceptions = kwargs.get('raise_exceptions', False)
-
-        self.forecast_df = None
-        self.skipped_df = None
-        self.confirmed_df = None
-        self.deferred_df = None
-        # self.start_ts = None
-        # self.end_ts = None
-
+    def _validate_account_budget_memo_rule_intersection(self, account_set: AccountSet, 
+                                                        budget_item_set: BudgetSet, 
+                                                        memo_rule_set: MemoRuleSet):
         accounts_df = account_set.getAccounts()
-        if accounts_df.shape[0] == 0:
-            # if len(account_set) == 0:
-            raise ValueError  # There needs to be at least 1 account for ExpenseForecast to do anything.
-        # todo more strict checking #https://github.com/hdickie/expense_forecast/issues/18
-
-        budget_df = budget_set.getBudgetItems()
+        budget_df = budget_item_set.getBudgetItems()
         memo_df = memo_rule_set.getMemoRules()
 
-        # TODO this can probably be refactored out if logging is set up correctly
-        error_text = ""
         error_ind = False
+        error_text = ""
 
-        # for each distinct account name in all memo rules to and from fields, there is a matching account
-        # that is, for each memo rule that mentions an account, the mentioned account should exist
-        # not that it is NOT a requirement that the converse is true
-        # that is, there can be an account that has no corresponding memo rules
+        if accounts_df.shape[0] == 0:
+            # if len(account_set) == 0:
+            raise ValueError("There needs to be at least 1 account for ExpenseForecast to do anything.")
 
-        # should be no duplicates and credit and loan acct splitting is already handled
-
-        #TODO this should be refactored out to a validation method
+        
         distinct_base_account_names__from_acct = pd.DataFrame(
             pd.DataFrame(accounts_df.Name)
             .apply(lambda x: x.iloc[0].split(":")[0], axis=1)
@@ -365,25 +308,19 @@ class ExpenseForecastInitialConditions:
                 row.Memo, row.Priority
             )  # this will throw errors as needed
 
-        if raise_exceptions:
-            if error_ind:
-                log_in_color(logger, "red", "error", error_text)
-                raise ValueError(error_text)
-
-        self.initial_account_set = copy.deepcopy(account_set)
-        self.initial_budget_set = copy.deepcopy(budget_set)
-        self.initial_memo_rule_set = copy.deepcopy(memo_rule_set)
-
-        self.log_stack_depth = 0
-
+        if error_ind:
+            log_in_color(logger, "red", "error", error_text)
+            raise ValueError(error_text)
+        
+    def _preprocess_budget_items(self, start_date, end_date, budget_set):
         first_proposed_df = budget_set.getBudgetSchedule()
         if not first_proposed_df.empty:
             first_proposed_df = first_proposed_df.copy()
             first_proposed_df["Date"] = pd.to_datetime(first_proposed_df["Date"]).dt.date
 
         date_range_sel_vec = (
-            (first_proposed_df.Date >= self.start_date)
-            & (first_proposed_df.Date <= self.end_date)
+            (first_proposed_df.Date >= start_date)
+            & (first_proposed_df.Date <= end_date)
         )
         proposed_df = first_proposed_df[date_range_sel_vec]
         proposed_df.reset_index(drop=True, inplace=True)
@@ -411,6 +348,36 @@ class ExpenseForecastInitialConditions:
         deferred_df = copy.deepcopy(proposed_df.head(0))
         skipped_df = copy.deepcopy(proposed_df.head(0))
 
+        return confirmed_df, proposed_df, deferred_df, skipped_df
+
+    def __init__(self, start_date: date, end_date: date, 
+                account_set: AccountSet, 
+                 budget_set: BudgetSet, 
+                 memo_rule_set: MemoRuleSet, 
+                 log_stack_depth,
+                 **kwargs):
+
+        allowed_kwargs = ['forecast_name',
+                          'forecast_set_name',
+                          'milestone_set'
+                          ]
+        for key in kwargs:
+            if key not in allowed_kwargs:
+                raise TypeError(f"Unexpected keyword argument '{key}'")
+
+        self._validate_start_and_end_dates(start_date, end_date)
+        self.start_date = start_date
+        self.end_date = end_date
+
+
+        self._validate_account_budget_memo_rule_intersection(account_set, budget_set, memo_rule_set)
+
+        self.initial_account_set = copy.deepcopy(account_set)
+        self.initial_budget_set = copy.deepcopy(budget_set)
+        self.initial_memo_rule_set = copy.deepcopy(memo_rule_set)
+
+        confirmed_df, proposed_df, deferred_df, skipped_df = self._preprocess_budget_items(start_date, end_date, budget_set)
+
         self.unique_id = ExpenseForecastInitialConditions.compute_forecast_id(
             start_date=self.start_date,
             end_date=self.end_date,
@@ -418,23 +385,14 @@ class ExpenseForecastInitialConditions:
             budget_set=self.initial_budget_set,
             memo_rule_set=self.initial_memo_rule_set)
 
-        single_forecast_run_log_file_name = "Forecast_" + str(self.unique_id) + ".log"
-        log_in_color(
-            logger,
-            "green",
-            "debug",
-            "Attempting switch log file to: " + single_forecast_run_log_file_name,
-        )
-
         self.initial_proposed_df = proposed_df
         self.initial_deferred_df = deferred_df
         self.initial_skipped_df = skipped_df
         self.initial_confirmed_df = confirmed_df
 
-        self.account_milestone_results = {}
-        self.memo_milestone_results = {}
-        self.composite_milestone_results = {}
+        self.forecast_name = kwargs.get('forecast_name', None)
 
+        self.forecast_set_name = kwargs.get('forecast_set_name', None)
 
 
     def __str__(self):
@@ -468,15 +426,6 @@ class ExpenseForecastInitialConditions:
         return cls.initialize_from_dict(data)
 
     @classmethod
-    def load_json_file(cls, path_to_json):
-        # logger.debug("ENTER ExpenseForecastInitialConditions.load_json_file")
-        return cls.loadJSON(path_to_json)
-
-    @classmethod
-    def initialize_from_json_string(cls, json_string):
-        return cls.loadJSON(json_string)
-
-    @classmethod
     def initialize_from_dict(cls, data: dict):
         return cls(
             start_date=cls._date_from_dict_value(data["start_date"]),
@@ -508,11 +457,8 @@ class ExpenseForecastInitialConditions:
     def to_xml_string(self):
         raise NotImplementedError
 
-    def to_json_string(self):
-        return json.dumps(self.to_dict(), indent=4)
-
     def to_json(self):
-        return self.to_json_string()
+        return json.dumps(self.to_dict(), indent=4)
 
     # Instance methods for writing data to external sources
     def write_csv_file(self):
@@ -527,7 +473,7 @@ class ExpenseForecastInitialConditions:
     def dumpJSON(self, path_to_json):
         target_path = Path(path_to_json)
         target_path.parent.mkdir(parents=True, exist_ok=True)
-        target_path.write_text(self.to_json_string())
+        target_path.write_text(self.to_json())
         return True
 
     def writeToJSONFile(self, output_dir="./"):
