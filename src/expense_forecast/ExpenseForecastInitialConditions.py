@@ -102,6 +102,17 @@ class ExpenseForecastInitialConditions:
                         "End_Of_Previous_Cycle_Balance"
                     ],
                 )
+                account = account_set.accounts[-1]
+                if "Minimum_Payment_Floor" in account_row:
+                    account.billing_state.minimum_payment_floor = account_set._money(
+                        account_row["Minimum_Payment_Floor"]
+                    )
+                if "Minimum_Payment_Credit_Balance" in account_row:
+                    account.billing_state.minimum_payment_credit_balance = (
+                        account_set._money(
+                            account_row["Minimum_Payment_Credit_Balance"]
+                        )
+                    )
             elif account_type == "loan":
                 account_set.createLoanAccount(
                     name=account_row["Name"],

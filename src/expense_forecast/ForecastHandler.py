@@ -749,13 +749,13 @@ class ForecastHandler:
     def _processConfirmedTransactions(
         cls, forecast_df, relevant_confirmed_df, memo_set, account_set, d, log_stack_depth
     ):
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            d.strftime('%Y-%m-%d') + " ENTER _processConfirmedTransactions",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     d.strftime('%Y-%m-%d') + " ENTER _processConfirmedTransactions",
+        #     log_stack_depth,
+        # )
         log_stack_depth += 1
         # if not relevant_confirmed_df.empty:
         #     log_in_color(logger, 'cyan', 'debug', 'relevant_confirmed_df:', log_stack_depth)
@@ -800,13 +800,13 @@ class ForecastHandler:
 
         # log_in_color(logger, 'green', 'debug', forecast_df.to_string(), log_stack_depth)
         log_stack_depth -= 1
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            str(d) + " EXIT _processConfirmedTransactions",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     str(d) + " EXIT _processConfirmedTransactions",
+        #     log_stack_depth,
+        # )
         return forecast_df
 
     # todo I have seen similar methods so I think that maybe this can be refactored
@@ -2658,15 +2658,15 @@ class ForecastHandler:
         log_stack_depth,
         include_debug_columns=False
     ):
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            d.strftime('%Y-%m-%d')
-            + " ENTER _executeTransactionsForDay p="
-            + str(priority_level),
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     d.strftime('%Y-%m-%d')
+        #     + " ENTER _executeTransactionsForDay p="
+        #     + str(priority_level),
+        #     log_stack_depth,
+        # )
         log_stack_depth += 1
 
         # log_in_color(logger, 'white', 'debug', 'before forecast_df:', log_stack_depth)
@@ -2751,15 +2751,15 @@ class ForecastHandler:
             )
         except Exception as e:
             log_stack_depth -= 1
-            log_in_color(
-                logger,
-                "white",
-                "debug",
-                d.strftime('%Y-%m-%d')
-                + " EXIT _executeTransactionsForDay p="
-                + str(priority_level),
-                log_stack_depth,
-            )
+            # log_in_color(
+            #     logger,
+            #     "white",
+            #     "debug",
+            #     d.strftime('%Y-%m-%d')
+            #     + " EXIT _executeTransactionsForDay p="
+            #     + str(priority_level),
+            #     log_stack_depth,
+            # )
             raise e
 
         # Process proposed transactions for priority levels greater than 1
@@ -2844,14 +2844,14 @@ class ForecastHandler:
         current_forecast_row_df,
         log_stack_depth,
     ):
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            str(current_forecast_row_df.Date.iat[0])
-            + " ENTER _processCreditCardBillingDayForDay",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     str(current_forecast_row_df.Date.iat[0])
+        #     + " ENTER _processCreditCardBillingDayForDay",
+        #     log_stack_depth,
+        # )
         log_stack_depth += 1
 
         current_date = current_forecast_row_df["Date"].iat[0]
@@ -2877,14 +2877,14 @@ class ForecastHandler:
                 current_forecast_row_df.loc[:, column_name] = value
 
         log_stack_depth -= 1
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            str(current_forecast_row_df.Date.iat[0])
-            + " EXIT _processCreditCardBillingDayForDay",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     str(current_forecast_row_df.Date.iat[0])
+        #     + " EXIT _processCreditCardBillingDayForDay",
+        #     log_stack_depth,
+        # )
         return current_forecast_row_df
 
     # @profile
@@ -2902,14 +2902,14 @@ class ForecastHandler:
         Returns:
         - Updated current_forecast_row_df with applied interest accruals.
         """
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            str(current_forecast_row_df.Date.iat[0])
-            + " ENTER _calculateLoanInterestAccrualsForDay",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     str(current_forecast_row_df.Date.iat[0])
+        #     + " ENTER _calculateLoanInterestAccrualsForDay",
+        #     log_stack_depth,
+        # )
         # Increment log stack depth for logging purposes
         log_stack_depth += 1
 
@@ -2973,14 +2973,14 @@ class ForecastHandler:
         # print('POST INTEREST ACCRUAL FORECAST ROW')
         # print(current_forecast_row_df.to_string())
 
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            str(current_forecast_row_df.Date.iat[0])
-            + " EXIT _calculateLoanInterestAccrualsForDay",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     str(current_forecast_row_df.Date.iat[0])
+        #     + " EXIT _calculateLoanInterestAccrualsForDay",
+        #     log_stack_depth,
+        # )
         return current_forecast_row_df
 
     # a design flaw this has is that if a cc min payment is made in advance, but that payment is past the end of the forecast,
@@ -3009,14 +3009,14 @@ class ForecastHandler:
         Returns:
         - Updated current_forecast_row_df after executing credit card minimum payments.
         """
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            str(current_forecast_row_df.Date.iat[0])
-            + " ENTER _executeCreditCardMinimumPayments ",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     str(current_forecast_row_df.Date.iat[0])
+        #     + " ENTER _executeCreditCardMinimumPayments ",
+        #     log_stack_depth,
+        # )
         log_stack_depth += 1
 
         # log_in_color(logger, 'white', 'debug','BEFORE forecast_df:', log_stack_depth)
@@ -3060,7 +3060,7 @@ class ForecastHandler:
                 )
                 md_split_semicolon = [md for md in md_split_semicolon if md]
                 md_split_semicolon += memo_parts
-                current_forecast_row_df["Memo Directives"] = "; ".join(
+                current_forecast_row_df.loc[:, "Memo Directives"] = "; ".join(
                     md_split_semicolon
                 )
                 continue
@@ -3314,27 +3314,27 @@ class ForecastHandler:
         log_stack_depth -= 1
         # print('current_forecast_row_df:')
         # print(current_forecast_row_df.to_string())
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            str(current_forecast_row_df.Date.iat[0])
-            + " EXIT _executeCreditCardMinimumPayments ",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     str(current_forecast_row_df.Date.iat[0])
+        #     + " EXIT _executeCreditCardMinimumPayments ",
+        #     log_stack_depth,
+        # )
         return current_forecast_row_df
 
     # @profile
     @classmethod
     def _executeLoanMinimumPayments(cls, account_set, current_forecast_row_df, log_stack_depth):
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            str(current_forecast_row_df.Date.iat[0])
-            + " ENTER _executeLoanMinimumPayments",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     str(current_forecast_row_df.Date.iat[0])
+        #     + " ENTER _executeLoanMinimumPayments",
+        #     log_stack_depth,
+        # )
         log_stack_depth += 1
 
         # log_in_color(logger, 'white', 'debug','before current_forecast_row_df:', log_stack_depth)
@@ -3424,14 +3424,14 @@ class ForecastHandler:
         # log_in_color(logger, 'white', 'debug', current_forecast_row_df.to_string(), log_stack_depth)
 
         log_stack_depth -= 1
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            str(current_forecast_row_df.Date.iat[0])
-            + " EXIT _executeLoanMinimumPayments",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     str(current_forecast_row_df.Date.iat[0])
+        #     + " EXIT _executeLoanMinimumPayments",
+        #     log_stack_depth,
+        # )
 
         return current_forecast_row_df
 
@@ -7141,14 +7141,14 @@ class ForecastHandler:
     def _updateEndOfPrevCycleBal(
         cls, forecast_df, account_set, current_forecast_row_df, log_stack_depth
     ):
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            str(current_forecast_row_df.Date.iat[0])
-            + " ENTER _updateEndOfPrevCycleBal",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     str(current_forecast_row_df.Date.iat[0])
+        #     + " ENTER _updateEndOfPrevCycleBal",
+        #     log_stack_depth,
+        # )
         log_stack_depth += 1
         # Naively:
         # if it is the day after a credit card minimum payment,
@@ -7262,13 +7262,13 @@ class ForecastHandler:
         # log_in_color(logger, 'white', 'debug', current_forecast_row_df.to_string(), log_stack_depth)
 
         log_stack_depth -= 1
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            str(current_forecast_row_df.Date.iat[0]) + " EXIT _updateEndOfPrevCycleBal",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     str(current_forecast_row_df.Date.iat[0]) + " EXIT _updateEndOfPrevCycleBal",
+        #     log_stack_depth,
+        # )
         return current_forecast_row_df
 
     # @profile

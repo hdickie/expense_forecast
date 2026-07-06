@@ -5,6 +5,10 @@ from pathlib import Path
 from expense_forecast.ExpenseForecastInitialConditions import ExpenseForecastInitialConditions 
 import pandas as pd
 import jsonpickle
+from datetime import date
+from expense_forecast.AccountSet import AccountSet
+from expense_forecast.BudgetSet import BudgetSet
+from expense_forecast.MemoRuleSet import MemoRuleSet
 
 
 class ExpenseForecastResult:
@@ -19,7 +23,12 @@ class ExpenseForecastResult:
     def _dataframe_from_json_data(data):
         if data is None:
             return None
-        return pd.read_json(StringIO(json.dumps(data)), orient="split")
+        dataframe = pd.read_json(StringIO(json.dumps(data)), orient="split")
+        if "Date" in dataframe.columns:
+            dataframe["Date"] = dataframe["Date"].apply(
+                lambda value: value.date() if hasattr(value, "date") else value
+            )
+        return dataframe
 
     @staticmethod
     def _object_to_json_data(obj):
@@ -44,7 +53,7 @@ class ExpenseForecastResult:
 
     # todo confirm that I don't need __getstate__, __setstate__. I think pickle can compress data frames and I might not want that
 
-    def __init__(self, IO: ExpenseForecastInitialConditions, forecast_df, **kwargs):
+    def __init__(self, initial_conditions: ExpenseForecastInitialConditions, forecast_df, **kwargs):
 
         allowed_kwargs = ['confirmed_df', 'deferred_df', 'skipped_df', 'milestone_set', 'milestone_results']
         for key in kwargs:
@@ -60,7 +69,8 @@ class ExpenseForecastResult:
         # interval can be inferred, and validation logic for that belongs in SimulationStepper
         # this is an internal method, so we don't validate here. Validate only at entry points
 
-        self.unique_id = IO.unique_id
+        self.initial_conditions = initial_conditions
+        self.unique_id = initial_conditions.unique_id
         self.forecast_df = forecast_df
 
         self.confirmed_df = kwargs.get('confirmed_df', None)
@@ -114,14 +124,26 @@ class ExpenseForecastResult:
 
     @classmethod
     def initialize_from_dict(cls, data):
+        if "initial_conditions" in data:
+            initial_conditions = ExpenseForecastInitialConditions.initialize_from_dict(data["initial_conditions"])
+        else:
+            raise ValueError("Initial Conditions not found.")
+
+        milestone_set = cls._object_from_json_data(data.get("milestone_set"))
+        milestone_results = cls._object_from_json_data(data.get("milestone_results"))
+        optional_kwargs = {
+            "confirmed_df": cls._dataframe_from_json_data(data.get("confirmed_df")),
+            "deferred_df": cls._dataframe_from_json_data(data.get("deferred_df")),
+            "skipped_df": cls._dataframe_from_json_data(data.get("skipped_df")),
+        }
+        if milestone_set is not None or milestone_results is not None:
+            optional_kwargs["milestone_set"] = milestone_set
+            optional_kwargs["milestone_results"] = milestone_results
+
         return cls(
-            unique_id=data["unique_id"],
+            initial_conditions=initial_conditions,
             forecast_df=cls._dataframe_from_json_data(data["forecast_df"]),
-            confirmed_df=cls._dataframe_from_json_data(data.get("confirmed_df")),
-            deferred_df=cls._dataframe_from_json_data(data.get("deferred_df")),
-            skipped_df=cls._dataframe_from_json_data(data.get("skipped_df")),
-            milestone_set=cls._object_from_json_data(data.get("milestone_set")),
-            milestone_results=cls._object_from_json_data(data.get("milestone_results")),
+            **optional_kwargs,
         )
 
     @classmethod
@@ -144,8 +166,12 @@ class ExpenseForecastResult:
         raise NotImplementedError
 
     def to_json_string(self):
+        return json.dumps(self.to_dict(), indent=4)
+
+    def to_dict(self):
         data = {
             "unique_id": self.unique_id,
+            "initial_conditions": self.initial_conditions.to_dict(),
             "forecast_df": self._dataframe_to_json_data(self.forecast_df),
             "confirmed_df": self._dataframe_to_json_data(self.confirmed_df),
             "deferred_df": self._dataframe_to_json_data(self.deferred_df),
@@ -153,7 +179,7 @@ class ExpenseForecastResult:
             "milestone_set": self._object_to_json_data(self.milestone_set),
             "milestone_results": self._object_to_json_data(self.milestone_results),
         }
-        return json.dumps(data, indent=4)
+        return data
 
     def to_json(self):
         return self.to_json_string()

@@ -597,11 +597,11 @@ class TestForecastHandler:
         self,
         expected_billing_date_state,
         expected_final,
-        previous_statement_balance=1000,
-        checking_balance=1000,
+        previous_statement_balance=1000.0,
+        checking_balance=1000.0,
         payment_date=None,
         payment_amount=None,
-        minimum_payment=40,
+        minimum_payment=40.0,
     ):
         start_date = date(2026,6,1)
         end_date = date(2026,6,5)
@@ -723,23 +723,127 @@ class TestForecastHandler:
 
         return expected_billing_date_state, expected_final
 
-    @pytest.mark.skip
+    def _fill_credit_expected_rows(
+        self,
+        expected_billing_date_state,
+        expected_final,
+        checking,
+        credit,
+        billing_cycle_payment_balance,
+        billing_date_end_of_previous_cycle_balance,
+        final_end_of_previous_cycle_balance,
+        marginal_interest,
+        memo_directives,
+    ):
+        expected_billing_date_state["Checking"] = checking
+        expected_billing_date_state["Credit"] = credit
+        expected_billing_date_state["Credit: Curr Stmt Bal"] = 0.0
+        expected_billing_date_state["Credit: Prev Stmt Bal"] = credit
+        expected_billing_date_state["Credit: Credit Billing Cycle Payment Bal"] = (
+            billing_cycle_payment_balance
+        )
+        expected_billing_date_state["Credit: Credit End of Prev Cycle Bal"] = (
+            billing_date_end_of_previous_cycle_balance
+        )
+        expected_billing_date_state["Marginal Interest"] = marginal_interest
+        expected_billing_date_state["Net Gain"] = 0.0
+        expected_billing_date_state["Net Loss"] = marginal_interest
+        expected_billing_date_state["Net Worth"] = checking - credit
+        expected_billing_date_state["Loan Total"] = 0.0
+        expected_billing_date_state["CC Debt Total"] = credit
+        expected_billing_date_state["Liquid Total"] = checking
+        expected_billing_date_state["Memo Directives"] = memo_directives
+        expected_billing_date_state["Memo"] = ""
+
+        expected_final["Checking"] = checking
+        expected_final["Credit"] = credit
+        expected_final["Credit: Curr Stmt Bal"] = 0.0
+        expected_final["Credit: Prev Stmt Bal"] = credit
+        expected_final["Credit: Credit Billing Cycle Payment Bal"] = (
+            billing_cycle_payment_balance
+        )
+        expected_final["Credit: Credit End of Prev Cycle Bal"] = (
+            final_end_of_previous_cycle_balance
+        )
+        expected_final["Marginal Interest"] = 0.0
+        expected_final["Net Gain"] = 0.0
+        expected_final["Net Loss"] = 0.0
+        expected_final["Net Worth"] = checking - credit
+        expected_final["Loan Total"] = 0.0
+        expected_final["CC Debt Total"] = credit
+        expected_final["Liquid Total"] = checking
+        expected_final["Memo Directives"] = ""
+        expected_final["Memo"] = ""
+
     @pytest.mark.integration
     def test_ForecastHandler__checking_and_credit__min_cc_payment_gt_default(self):
         expected_billing_date_state, expected_final = self._credit_expected_rows_with_placeholders()
-        #TODO edit needed rows in above dfs
+        
+        checking = 1000.0
+        prev_stmt_bal = 3000.0
+        expected_min_payment = 100.0
+        expected_interest = 70.0
+
+        expected_billing_date_state["Checking"] = checking - expected_min_payment
+        expected_billing_date_state["Credit"] = prev_stmt_bal - expected_min_payment + expected_interest
+        expected_billing_date_state["Credit: Curr Stmt Bal"] = 0.0
+        expected_billing_date_state["Credit: Prev Stmt Bal"] = prev_stmt_bal - expected_min_payment + expected_interest
+        expected_billing_date_state["Credit: Credit Billing Cycle Payment Bal"] = 0.0
+        expected_billing_date_state["Credit: Credit End of Prev Cycle Bal"] = prev_stmt_bal #payment is added next day
+        expected_billing_date_state["Marginal Interest"] = expected_interest
+        expected_billing_date_state["Net Gain"] = 0.0
+        expected_billing_date_state["Net Loss"] = expected_interest
+        expected_billing_date_state["Net Worth"] = checking - prev_stmt_bal - expected_interest
+        expected_billing_date_state["Loan Total"] = 0.0
+        expected_billing_date_state["CC Debt Total"] = prev_stmt_bal - expected_min_payment + expected_interest
+        expected_billing_date_state["Liquid Total"] = checking - expected_min_payment
+        expected_billing_date_state["Memo Directives"] = "CC INTEREST (Credit: Prev Stmt Bal +$70.00); CC MIN PAYMENT (Credit: Prev Stmt Bal -$100.00); CC MIN PAYMENT (Checking -$100.00)"
+        expected_billing_date_state["Memo"] = ""
+
+        expected_final["Checking"] = checking - expected_min_payment
+        expected_final["Credit"] = prev_stmt_bal - expected_min_payment + expected_interest
+        expected_final["Credit: Curr Stmt Bal"] = 0.0
+        expected_final["Credit: Prev Stmt Bal"] = prev_stmt_bal - expected_min_payment + expected_interest
+        expected_final["Credit: Credit Billing Cycle Payment Bal"] = 0.0
+        expected_final["Credit: Credit End of Prev Cycle Bal"] = prev_stmt_bal - expected_min_payment + expected_interest
+        expected_final["Marginal Interest"] = 0.0
+        expected_final["Net Gain"] = 0.0
+        expected_final["Net Loss"] = 0.0
+        expected_final["Net Worth"] = checking - prev_stmt_bal - expected_interest
+        expected_final["Loan Total"] = 0.0
+        expected_final["CC Debt Total"] = prev_stmt_bal - expected_min_payment + expected_interest
+        expected_final["Liquid Total"] = checking - expected_min_payment
+        expected_final["Memo Directives"] = ""
+        expected_final["Memo"] = ""
+
+        # previous_statement_balance=1000,
+        # checking_balance=1000,
+        # payment_date=None,
+        # payment_amount=None,
+        # minimum_payment=40,
+
         self._run_checking_and_credit_min_payment_case(
             expected_billing_date_state=expected_billing_date_state,
             expected_final=expected_final,
-            previous_statement_balance=10000,
-            checking_balance=20000,
+            previous_statement_balance=prev_stmt_bal,
+            checking_balance=checking,
         )
     
-    @pytest.mark.skip
+    #TODO manual review
     @pytest.mark.integration
     def test_ForecastHandler__checking_and_credit__min_cc_payment_w_advance_partial_payment(self):
         expected_billing_date_state, expected_final = self._credit_expected_rows_with_placeholders()
-        #TODO edit needed rows in above dfs
+        self._fill_credit_expected_rows(
+            expected_billing_date_state,
+            expected_final,
+            checking=960.0,
+            credit=982.87,
+            billing_cycle_payment_balance=0.0,
+            billing_date_end_of_previous_cycle_balance=1000.0,
+            final_end_of_previous_cycle_balance=982.87,
+            marginal_interest=22.87,
+            memo_directives="CC INTEREST (Credit: Prev Stmt Bal +$22.87); CC MIN PAYMENT (Credit: Prev Stmt Bal -$20.00); CC MIN PAYMENT (Checking -$20.00)",
+        )
         self._run_checking_and_credit_min_payment_case(
             expected_billing_date_state=expected_billing_date_state,
             expected_final=expected_final,
@@ -747,11 +851,21 @@ class TestForecastHandler:
             payment_amount=20,
         )
     
-    @pytest.mark.skip
+    #TODO manual review
     @pytest.mark.integration
     def test_ForecastHandler__checking_and_credit__min_cc_payment_w_advance_exact_payment(self):
         expected_billing_date_state, expected_final = self._credit_expected_rows_with_placeholders()
-        #TODO edit needed rows in above dfs
+        self._fill_credit_expected_rows(
+            expected_billing_date_state,
+            expected_final,
+            checking=960.0,
+            credit=982.4,
+            billing_cycle_payment_balance=0.0,
+            billing_date_end_of_previous_cycle_balance=1000.0,
+            final_end_of_previous_cycle_balance=982.4,
+            marginal_interest=22.4,
+            memo_directives="CC INTEREST (Credit: Prev Stmt Bal +$22.40)",
+        )
         self._run_checking_and_credit_min_payment_case(
             expected_billing_date_state=expected_billing_date_state,
             expected_final=expected_final,
@@ -759,11 +873,21 @@ class TestForecastHandler:
             payment_amount=40,
         )
     
-    @pytest.mark.skip
+    #TODO manual review
     @pytest.mark.integration
     def test_ForecastHandler__checking_and_credit__min_cc_payment_w_advance_surplus_payment(self):
         expected_billing_date_state, expected_final = self._credit_expected_rows_with_placeholders()
-        #TODO edit needed rows in above dfs
+        self._fill_credit_expected_rows(
+            expected_billing_date_state,
+            expected_final,
+            checking=940.0,
+            credit=961.93,
+            billing_cycle_payment_balance=0.0,
+            billing_date_end_of_previous_cycle_balance=1000.0,
+            final_end_of_previous_cycle_balance=961.93,
+            marginal_interest=21.93,
+            memo_directives="CC INTEREST (Credit: Prev Stmt Bal +$21.93)",
+        )
         self._run_checking_and_credit_min_payment_case(
             expected_billing_date_state=expected_billing_date_state,
             expected_final=expected_final,
@@ -771,11 +895,21 @@ class TestForecastHandler:
             payment_amount=60,
         )
 
-    @pytest.mark.skip
+    #TODO manual review
     @pytest.mark.integration
     def test_ForecastHandler__checking_and_credit__min_cc_payment_w_same_day_partial_payment(self):
         expected_billing_date_state, expected_final = self._credit_expected_rows_with_placeholders()
-        #TODO edit needed rows in above dfs
+        self._fill_credit_expected_rows(
+            expected_billing_date_state,
+            expected_final,
+            checking=940.0,
+            credit=963.33,
+            billing_cycle_payment_balance=20.0,
+            billing_date_end_of_previous_cycle_balance=1000.0,
+            final_end_of_previous_cycle_balance=983.33,
+            marginal_interest=23.33,
+            memo_directives="CC INTEREST (Credit: Prev Stmt Bal +$23.33); CC MIN PAYMENT (Credit: Prev Stmt Bal -$40.00); CC MIN PAYMENT (Checking -$40.00)",
+        )
         self._run_checking_and_credit_min_payment_case(
             expected_billing_date_state=expected_billing_date_state,
             expected_final=expected_final,
@@ -783,11 +917,21 @@ class TestForecastHandler:
             payment_amount=20,
         )
     
-    @pytest.mark.skip
+    #TODO manual review
     @pytest.mark.integration
     def test_ForecastHandler__checking_and_credit__min_cc_payment_w_same_day_exact_payment(self):
         expected_billing_date_state, expected_final = self._credit_expected_rows_with_placeholders()
-        #TODO edit needed rows in above dfs
+        self._fill_credit_expected_rows(
+            expected_billing_date_state,
+            expected_final,
+            checking=920.0,
+            credit=943.33,
+            billing_cycle_payment_balance=40.0,
+            billing_date_end_of_previous_cycle_balance=1000.0,
+            final_end_of_previous_cycle_balance=983.33,
+            marginal_interest=23.33,
+            memo_directives="CC INTEREST (Credit: Prev Stmt Bal +$23.33); CC MIN PAYMENT (Credit: Prev Stmt Bal -$40.00); CC MIN PAYMENT (Checking -$40.00)",
+        )
         self._run_checking_and_credit_min_payment_case(
             expected_billing_date_state=expected_billing_date_state,
             expected_final=expected_final,
@@ -795,11 +939,21 @@ class TestForecastHandler:
             payment_amount=40,
         )
     
-    @pytest.mark.skip
+    #TODO manual review
     @pytest.mark.integration
     def test_ForecastHandler__checking_and_credit__min_cc_payment_w_same_day_surplus_payment(self):
         expected_billing_date_state, expected_final = self._credit_expected_rows_with_placeholders()
-        #TODO edit needed rows in above dfs
+        self._fill_credit_expected_rows(
+            expected_billing_date_state,
+            expected_final,
+            checking=900.0,
+            credit=923.33,
+            billing_cycle_payment_balance=60.0,
+            billing_date_end_of_previous_cycle_balance=1000.0,
+            final_end_of_previous_cycle_balance=983.33,
+            marginal_interest=23.33,
+            memo_directives="CC INTEREST (Credit: Prev Stmt Bal +$23.33); CC MIN PAYMENT (Credit: Prev Stmt Bal -$40.00); CC MIN PAYMENT (Checking -$40.00)",
+        )
         self._run_checking_and_credit_min_payment_case(
             expected_billing_date_state=expected_billing_date_state,
             expected_final=expected_final,
@@ -807,11 +961,21 @@ class TestForecastHandler:
             payment_amount=60,
         )
 
-    @pytest.mark.skip
+    #TODO manual review
     @pytest.mark.integration
     def test_ForecastHandler__checking_and_credit__min_cc_payment_gt_default_w_advance_partial_payment(self):
         expected_billing_date_state, expected_final = self._credit_expected_rows_with_placeholders()
-        #TODO edit needed rows in above dfs
+        self._fill_credit_expected_rows(
+            expected_billing_date_state,
+            expected_final,
+            checking=19670.0,
+            credit=9901.0,
+            billing_cycle_payment_balance=0.0,
+            billing_date_end_of_previous_cycle_balance=10000.0,
+            final_end_of_previous_cycle_balance=9901.0,
+            marginal_interest=231.0,
+            memo_directives="CC INTEREST (Credit: Prev Stmt Bal +$231.00); CC MIN PAYMENT (Credit: Prev Stmt Bal -$230.00); CC MIN PAYMENT (Checking -$230.00)",
+        )
         self._run_checking_and_credit_min_payment_case(
             expected_billing_date_state=expected_billing_date_state,
             expected_final=expected_final,
@@ -821,11 +985,21 @@ class TestForecastHandler:
             payment_amount=100,
         )
     
-    @pytest.mark.skip
+    #TODO manual review
     @pytest.mark.integration
     def test_ForecastHandler__checking_and_credit__min_cc_payment_gt_default_w_advance_exact_payment(self):
         expected_billing_date_state, expected_final = self._credit_expected_rows_with_placeholders()
-        #TODO edit needed rows in above dfs
+        self._fill_credit_expected_rows(
+            expected_billing_date_state,
+            expected_final,
+            checking=19666.67,
+            credit=9892.23,
+            billing_cycle_payment_balance=0.0,
+            billing_date_end_of_previous_cycle_balance=10000.0,
+            final_end_of_previous_cycle_balance=9892.23,
+            marginal_interest=225.56,
+            memo_directives="CC INTEREST (Credit: Prev Stmt Bal +$225.56)",
+        )
         self._run_checking_and_credit_min_payment_case(
             expected_billing_date_state=expected_billing_date_state,
             expected_final=expected_final,
@@ -835,11 +1009,21 @@ class TestForecastHandler:
             payment_amount=333.33,
         )
     
-    @pytest.mark.skip
+    #TODO manual review
     @pytest.mark.integration
     def test_ForecastHandler__checking_and_credit__min_cc_payment_gt_default_w_advance_surplus_payment(self):
         expected_billing_date_state, expected_final = self._credit_expected_rows_with_placeholders()
-        #TODO edit needed rows in above dfs
+        self._fill_credit_expected_rows(
+            expected_billing_date_state,
+            expected_final,
+            checking=19600.0,
+            credit=9824.0,
+            billing_cycle_payment_balance=0.0,
+            billing_date_end_of_previous_cycle_balance=10000.0,
+            final_end_of_previous_cycle_balance=9824.0,
+            marginal_interest=224.0,
+            memo_directives="CC INTEREST (Credit: Prev Stmt Bal +$224.00)",
+        )
         self._run_checking_and_credit_min_payment_case(
             expected_billing_date_state=expected_billing_date_state,
             expected_final=expected_final,
@@ -849,11 +1033,21 @@ class TestForecastHandler:
             payment_amount=400,
         )
 
-    @pytest.mark.skip
+    #TODO manual review
     @pytest.mark.integration
     def test_ForecastHandler__checking_and_credit__min_cc_payment_gt_default_w_same_day_partial_payment(self):
         expected_billing_date_state, expected_final = self._credit_expected_rows_with_placeholders()
-        #TODO edit needed rows in above dfs
+        self._fill_credit_expected_rows(
+            expected_billing_date_state,
+            expected_final,
+            checking=19566.67,
+            credit=9800.0,
+            billing_cycle_payment_balance=100.0,
+            billing_date_end_of_previous_cycle_balance=10000.0,
+            final_end_of_previous_cycle_balance=9900.0,
+            marginal_interest=233.33,
+            memo_directives="CC INTEREST (Credit: Prev Stmt Bal +$233.33); CC MIN PAYMENT (Credit: Prev Stmt Bal -$333.33); CC MIN PAYMENT (Checking -$333.33)",
+        )
         self._run_checking_and_credit_min_payment_case(
             expected_billing_date_state=expected_billing_date_state,
             expected_final=expected_final,
@@ -863,11 +1057,21 @@ class TestForecastHandler:
             payment_amount=100,
         )
     
-    @pytest.mark.skip
+    #TODO manual review
     @pytest.mark.integration
     def test_ForecastHandler__checking_and_credit__min_cc_payment_gt_default_w_same_day_exact_payment(self):
         expected_billing_date_state, expected_final = self._credit_expected_rows_with_placeholders()
-        #TODO edit needed rows in above dfs
+        self._fill_credit_expected_rows(
+            expected_billing_date_state,
+            expected_final,
+            checking=19333.34,
+            credit=9566.67,
+            billing_cycle_payment_balance=333.33,
+            billing_date_end_of_previous_cycle_balance=10000.0,
+            final_end_of_previous_cycle_balance=9900.0,
+            marginal_interest=233.33,
+            memo_directives="CC INTEREST (Credit: Prev Stmt Bal +$233.33); CC MIN PAYMENT (Credit: Prev Stmt Bal -$333.33); CC MIN PAYMENT (Checking -$333.33)",
+        )
         self._run_checking_and_credit_min_payment_case(
             expected_billing_date_state=expected_billing_date_state,
             expected_final=expected_final,
@@ -877,11 +1081,21 @@ class TestForecastHandler:
             payment_amount=333.33,
         )
     
-    @pytest.mark.skip
+    #TODO manual review
     @pytest.mark.integration
     def test_ForecastHandler__checking_and_credit__min_cc_payment_gt_default_w_same_day_surplus_payment(self):
         expected_billing_date_state, expected_final = self._credit_expected_rows_with_placeholders()
-        #TODO edit needed rows in above dfs
+        self._fill_credit_expected_rows(
+            expected_billing_date_state,
+            expected_final,
+            checking=19266.67,
+            credit=9500.0,
+            billing_cycle_payment_balance=400.0,
+            billing_date_end_of_previous_cycle_balance=10000.0,
+            final_end_of_previous_cycle_balance=9900.0,
+            marginal_interest=233.33,
+            memo_directives="CC INTEREST (Credit: Prev Stmt Bal +$233.33); CC MIN PAYMENT (Credit: Prev Stmt Bal -$333.33); CC MIN PAYMENT (Checking -$333.33)",
+        )
         self._run_checking_and_credit_min_payment_case(
             expected_billing_date_state=expected_billing_date_state,
             expected_final=expected_final,
@@ -1141,6 +1355,63 @@ class TestForecastHandler:
             rebuilt_result.forecast_df,
         )
 
+    def test_expense_forecast_result_round_trip_preserves_forecast_result(self):
+
+        start_date = date(2026, 6, 1)
+        end_date = date(2026, 6, 5)
+
+        A = AccountSet()
+        A.createCheckingAccount(
+            name="Checking",
+            balance=1000,
+            min_balance=0,
+            max_balance=float("inf"),
+            primary_checking_ind=True,
+        )
+
+        B = BudgetSet()
+        B.addBudgetItem(
+            start_date=date(2026, 6, 2),
+            end_date=date(2026, 6, 2),
+            priority=1,
+            cadence="once",
+            amount=100,
+            memo="test expense",
+        )
+
+        M = MemoRuleSet()
+        M.addMemoRule(
+            memo_regex="test expense",
+            account_from="Checking",
+            account_to=None,
+            transaction_priority=1,
+        )
+
+        MS = MilestoneSet()
+
+        E_IO = ExpenseForecastInitialConditions(
+            start_date=start_date,
+            end_date=end_date,
+            account_set=A,
+            budget_set=B,
+            memo_rule_set=M,
+            milestone_set=MS,
+        )
+
+        R = ForecastHandler().runForecast(
+            E_IO,
+            MS,
+            include_debug_columns=True,
+        )
+
+        json_string = R.to_json_string()
+        round_tripped_result = ExpenseForecastResult.initialize_from_json_string(json_string)
+
+        pd.testing.assert_frame_equal(
+            R.forecast_df,
+            round_tripped_result.forecast_df,
+            check_dtype=False,
+        )
 
 
 

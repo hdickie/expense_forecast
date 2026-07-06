@@ -1190,6 +1190,12 @@ class AccountSet:
                         "End_Of_Previous_Cycle_Balance": self._dict_value(
                             billing_state.end_of_previous_cycle_balance
                         ),
+                        "Minimum_Payment_Floor": self._dict_value(
+                            billing_state.minimum_payment_floor
+                        ),
+                        "Minimum_Payment_Credit_Balance": self._dict_value(
+                            billing_state.minimum_payment_credit_balance
+                        ),
                     }
                 )
             elif account.account_type == "loan":

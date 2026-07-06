@@ -3,6 +3,7 @@ import pytest
 
 class TestExpenseForecastIntegration:
     pass
+    
     ## Recommended interface
     # to_dict()
     # from_dict()
