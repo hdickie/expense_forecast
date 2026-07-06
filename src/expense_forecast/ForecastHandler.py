@@ -13,9 +13,22 @@ from decimal import Decimal
 from typing import Any
 import datetime
 import os
+import tempfile
+from pathlib import Path
 from expense_forecast.log_methods import log_in_color
 import logging
 import tqdm
+
+os.environ.setdefault("MPLBACKEND", "Agg")
+os.environ.setdefault(
+    "MPLCONFIGDIR", os.path.join(tempfile.gettempdir(), "expense_forecast_mplconfig")
+)
+os.environ.setdefault(
+    "XDG_CACHE_HOME", os.path.join(tempfile.gettempdir(), "expense_forecast_xdgcache")
+)
+os.makedirs(os.environ["MPLCONFIGDIR"], exist_ok=True)
+os.makedirs(os.environ["XDG_CACHE_HOME"], exist_ok=True)
+
 import matplotlib
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
@@ -29,6 +42,10 @@ try:
     import plotly.graph_objects as go
 except ImportError:
     go = None
+
+matplotlib.rcParams["figure.facecolor"] = "#d1d5db"
+matplotlib.rcParams["axes.facecolor"] = "#e5e7eb"
+matplotlib.rcParams["savefig.facecolor"] = "#d1d5db"
 
 logger = logging.getLogger(__name__)
 formatter = logging.Formatter("%(asctime)s - %(levelname)-8s - %(message)s")
@@ -47,9 +64,6 @@ pd.set_option("display.precision", 2)
 ROUNDING_ERROR_TOLERANCE = (
     0.0000000001  # 10 places? overkill but I want to see if it works
 )
-default_color_cycle_list = ["blue", "orange", "green"]
-
-
 def _stable_df_payload(df):
     return (
         df.sort_index(axis=1)
@@ -227,10 +241,16 @@ class ForecastHandler:
         cls.forecast_df = forecast_df
         milestone_results = cls.evaluateMilestones(forecast_df, milestone_set, log_stack_depth=log_stack_depth)
 
+        result_kwargs = {
+            "confirmed_df": confirmed_df,
+            "deferred_df": deferred_df,
+            "skipped_df": skipped_df,
+        }
         if milestone_set:
-            R = ExpenseForecastResult(IO, forecast_df, milestone_set=milestone_set, milestone_results=milestone_results)
-        else:
-            R = ExpenseForecastResult(IO, forecast_df)
+            result_kwargs["milestone_set"] = milestone_set
+            result_kwargs["milestone_results"] = milestone_results
+
+        R = ExpenseForecastResult(IO, forecast_df, **result_kwargs)
         log_in_color(
             logger, "white", "info", "Finished Forecast " + str(IO.unique_id)
         )
@@ -552,6 +572,43 @@ class ForecastHandler:
         # log_in_color(logger, 'white', 'debug', 'EXIT _updateBalancesAndMemo', log_stack_depth)
         return forecast_df
 
+    @classmethod
+    def _annotateAcceptedProposedTransaction(
+        cls, forecast_df, proposed_row, memo_rule_row, d, account_set, log_stack_depth
+    ):
+        row_sel_vec = forecast_df["Date"] == d
+        account_info = account_set.getAccounts()
+        account_type_by_name = dict(zip(account_info["Name"], account_info["Account_Type"]))
+        amount = proposed_row["Amount"]
+        account_from = memo_rule_row["Account_From"]
+        account_to = memo_rule_row["Account_To"]
+        account_to_type = account_type_by_name.get(account_to)
+
+        if account_to_type == "credit":
+            forecast_df.loc[
+                row_sel_vec, "Memo Directives"
+            ] += f"; ADDTL CC PAYMENT ({account_from} -${amount}) "
+            forecast_df.loc[
+                row_sel_vec, "Memo Directives"
+            ] += f"; ADDTL CC PAYMENT ({account_to} -${amount}) "
+        elif account_to_type == "loan" or account_to == "ALL_LOANS":
+            forecast_df.loc[
+                row_sel_vec, "Memo Directives"
+            ] += f"; ADDTL LOAN PAYMENT ({account_from} -${amount}) "
+            forecast_df.loc[
+                row_sel_vec, "Memo Directives"
+            ] += f"; ADDTL LOAN PAYMENT ({account_to} -${amount}) "
+        else:
+            return forecast_df
+
+        md_split = [
+            md.strip()
+            for md in forecast_df.loc[row_sel_vec, "Memo Directives"].iat[0].split(";")
+            if md.strip()
+        ]
+        forecast_df.loc[row_sel_vec, "Memo Directives"] = ("; ".join(md_split)).strip()
+        return forecast_df
+
     # def _attemptTransactionApproximate(
     #     cls, forecast_df, account_set, memo_set, confirmed_df, proposed_row_df
     # ):
@@ -641,7 +698,7 @@ class ForecastHandler:
     # @profile
     @classmethod
     def _attemptTransaction(
-        cls, end_date, forecast_df, account_set, memo_set, confirmed_df, proposed_row_df, log_stack_depth
+        cls, end_date, forecast_df, account_set, memo_set, confirmed_df, proposed_row_df, log_stack_depth, include_debug_columns=False
     ):
         """
         Attempts to execute a proposed transaction and returns the hypothetical future state of the forecast
@@ -716,7 +773,8 @@ class ForecastHandler:
                 skipped_df=empty_df,
                 account_set=synced_account_set,
                 memo_rule_set=memo_set,
-                log_stack_depth=log_stack_depth
+                log_stack_depth=log_stack_depth,
+                include_debug_columns=include_debug_columns,
             )[0]
 
             # Exclude the first row since it's considered final and not part of the new forecast
@@ -993,7 +1051,10 @@ class ForecastHandler:
             & (accounts_df["Account_Type"] == "credit prev stmt bal")
         ]
 
-        if account_row.empty:
+        if account_row.empty and not (
+            (accounts_df["Name"] == base_account_name)
+            & (accounts_df["Account_Type"].isin(["credit", "loan"]))
+        ).any():
             raise ValueError(
                 f"Account '{account_name}' with type 'credit prev stmt bal' not found in account_set."
             )
@@ -1025,7 +1086,7 @@ class ForecastHandler:
         # todo this is wrong
         next_billing_date = generate_date_sequence(
             d, 32, cadence="monthly"
-        )[-1]
+        ).iloc[-1]
 
         current_date = d
 
@@ -1157,7 +1218,8 @@ class ForecastHandler:
         confirmed_df,
         relevant_proposed_df,
         priority_level,
-        log_stack_depth
+        log_stack_depth,
+        include_debug_columns=False
     ):
         """
         Processes proposed transactions by attempting to execute them, handling partial payments, deferrals,
@@ -1178,15 +1240,15 @@ class ForecastHandler:
         - new_deferred_df: DataFrame of newly deferred transactions.
         - new_skipped_df: DataFrame of newly skipped transactions.
         """
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            str(d)
-            + " ENTER _processProposedTransactions p == "
-            + str(priority_level),
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     str(d)
+        #     + " ENTER _processProposedTransactions p == "
+        #     + str(priority_level),
+        #     log_stack_depth,
+        # )
         # Increment the log stack depth
         log_stack_depth += 1
 
@@ -1203,15 +1265,15 @@ class ForecastHandler:
         # If there are no proposed transactions, return early
         if relevant_proposed_df.empty:
             log_stack_depth -= 1
-            log_in_color(
-                logger,
-                "white",
-                "debug",
-                str(d)
-                + " EXIT _processProposedTransactions p == "
-                + str(priority_level),
-                log_stack_depth,
-            )
+            # log_in_color(
+            #     logger,
+            #     "white",
+            #     "debug",
+            #     str(d)
+            #     + " EXIT _processProposedTransactions p == "
+            #     + str(priority_level),
+            #     log_stack_depth,
+            # )
             return forecast_df, new_confirmed_df, new_deferred_df, new_skipped_df
 
         # log_in_color(logger, 'white', 'debug', 'relevant_proposed_df:', log_stack_depth)
@@ -1236,11 +1298,16 @@ class ForecastHandler:
             # log_in_color(logger, 'cyan', 'info', account_set.getAccounts().to_string(), log_stack_depth)
             # log_in_color(logger, 'cyan', 'info', confirmed_df.to_string(), log_stack_depth)
 
-            ### TODO was this supposed to go somewhere ?
-            # # Find the matching memo rule for the proposed transaction
-            # memo_rule = memo_set.findMatchingMemoRule(
-            #     proposed_row["Memo"], proposed_row["Priority"]
-            # )
+            # Find the matching memo rule for the proposed transaction.
+            memo_rule = memo_set.findMatchingMemoRule(
+                proposed_row["Memo"], proposed_row["Priority"]
+            )
+            memo_rule_row = pd.Series(
+                {
+                    "Account_From": memo_rule.account_from,
+                    "Account_To": memo_rule.account_to,
+                }
+            )
 
             # multiple txns same day same priority p!=1 have not been propagated even if approved
             # editing confirmed_df causes downstream problems, so we have a working copy for the scope of this method
@@ -1251,7 +1318,9 @@ class ForecastHandler:
                 account_set=copy.deepcopy(account_set),
                 memo_set=memo_set,
                 confirmed_df=local_scope_confirmed_df,
-                proposed_row_df=proposed_row, log_stack_depth=log_stack_depth
+                proposed_row_df=proposed_row,
+                log_stack_depth=log_stack_depth,
+                include_debug_columns=include_debug_columns,
             )
 
             # Check if the transaction is permitted (returns a DataFrame if successful)
@@ -1309,6 +1378,7 @@ class ForecastHandler:
                     max_available_funds=max_available_funds,
                     forecast_df=forecast_df,
                     d=d,
+                    log_stack_depth=log_stack_depth,
                 )
 
                 log_in_color(
@@ -1331,7 +1401,9 @@ class ForecastHandler:
                         account_set=copy.deepcopy(account_set),
                         memo_set=memo_set,
                         confirmed_df=local_scope_confirmed_df,
-                        proposed_row_df=proposed_row, log_stack_depth=log_stack_depth
+                        proposed_row_df=proposed_row,
+                        log_stack_depth=log_stack_depth,
+                        include_debug_columns=include_debug_columns,
                     )
 
                     transaction_permitted = isinstance(result, pd.DataFrame)
@@ -1402,6 +1474,15 @@ class ForecastHandler:
                     forecast_df=forecast_df,
                     account_set=account_set,
                     d=d,
+                    log_stack_depth=log_stack_depth,
+                )
+                forecast_df = cls._annotateAcceptedProposedTransaction(
+                    forecast_df=forecast_df,
+                    proposed_row=proposed_row,
+                    memo_rule_row=memo_rule_row,
+                    d=d,
+                    account_set=account_set,
+                    log_stack_depth=log_stack_depth,
                 )
 
                 # log_in_color(logger, 'green', 'info', 'Forecast Post-Update: ', log_stack_depth)
@@ -1620,12 +1701,12 @@ class ForecastHandler:
         if (
             "credit curr stmt bal" in source_account_types
             and "credit prev stmt bal" in source_account_types
-        ):
+        ) or "credit" in source_account_types:
             source_account_type = "credit"
         elif (
             "principal balance" in source_account_types
             and "interest" in source_account_types
-        ):
+        ) or "loan" in source_account_types:
             source_account_type = "loan"
         elif len(source_account_types) == 1 and source_account_types[0] == "checking":
             source_account_type = "checking"
@@ -1635,12 +1716,12 @@ class ForecastHandler:
         if (
             "credit curr stmt bal" in dest_account_types
             and "credit prev stmt bal" in dest_account_types
-        ):
+        ) or "credit" in dest_account_types:
             dest_account_type = "credit"
         elif (
             "principal balance" in dest_account_types
             and "interest" in dest_account_types
-        ):
+        ) or "loan" in dest_account_types:
             dest_account_type = "loan"
         elif len(dest_account_types) == 1 and dest_account_types[0] == "checking":
             dest_account_type = "checking"
@@ -2785,7 +2866,9 @@ class ForecastHandler:
                     memo_set=memo_set,
                     confirmed_df=confirmed_df,
                     relevant_proposed_df=relevant_proposed_df,
-                    priority_level=priority_level, log_stack_depth=log_stack_depth
+                    priority_level=priority_level,
+                    log_stack_depth=log_stack_depth,
+                    include_debug_columns=include_debug_columns,
                 )
             )
 
@@ -3621,42 +3704,53 @@ class ForecastHandler:
                     f"{account.name}: Credit End of Prev Cycle Bal"
                 )
 
+                billing_state_updated = False
                 if curr_column in relevant_forecast_day.columns:
                     billing_state.current_statement_balance = Decimal(
                         str(relevant_forecast_day[curr_column].iat[0])
                     )
+                    billing_state_updated = True
                 if prev_column in relevant_forecast_day.columns:
                     billing_state.previous_statement_balance = Decimal(
                         str(relevant_forecast_day[prev_column].iat[0])
                     )
+                    billing_state_updated = True
                 if payment_column in relevant_forecast_day.columns:
                     billing_state.billing_cycle_payment_balance = Decimal(
                         str(relevant_forecast_day[payment_column].iat[0])
                     )
+                    billing_state_updated = True
                 if end_of_previous_cycle_column in relevant_forecast_day.columns:
                     billing_state.end_of_previous_cycle_balance = Decimal(
                         str(relevant_forecast_day[end_of_previous_cycle_column].iat[0])
                     )
-                AccountSet._sync_debt_account_from_billing_state(account)
+                    billing_state_updated = True
+                if billing_state_updated:
+                    AccountSet._sync_debt_account_from_billing_state(account)
             elif account.account_type == "loan":
                 billing_state = account.billing_state
                 principal_column = f"{account.name}: Principal Balance"
                 interest_column = f"{account.name}: Interest"
                 payment_column = f"{account.name}: Loan Billing Cycle Payment Bal"
 
+                billing_state_updated = False
                 if principal_column in relevant_forecast_day.columns:
                     billing_state.principal_balance = Decimal(
                         str(relevant_forecast_day[principal_column].iat[0])
                     )
+                    billing_state_updated = True
                 if interest_column in relevant_forecast_day.columns:
                     billing_state.interest_balance = Decimal(
                         str(relevant_forecast_day[interest_column].iat[0])
                     )
+                    billing_state_updated = True
                 if payment_column in relevant_forecast_day.columns:
                     billing_state.billing_cycle_payment_balance = Decimal(
                         str(relevant_forecast_day[payment_column].iat[0])
                     )
-                AccountSet._sync_debt_account_from_billing_state(account)
+                    billing_state_updated = True
+                if billing_state_updated:
+                    AccountSet._sync_debt_account_from_billing_state(account)
 
         # log_in_color(logger, 'cyan', 'debug', 'updated account set:', log_stack_depth)
         # log_in_color(logger, 'cyan', 'debug', account_set.getAccounts().to_string(), log_stack_depth)
@@ -3695,13 +3789,13 @@ class ForecastHandler:
         Returns:
         - Updated future_rows_only_df DataFrame.
         """
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            "ENTER _propagate_credit_txn_curr_only",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     "ENTER _propagate_credit_txn_curr_only",
+        #     log_stack_depth,
+        # )
         log_stack_depth += 1
 
         # Extract relevant account names
@@ -3720,7 +3814,7 @@ class ForecastHandler:
         # Get billing dates and next billing date
         cc_billing_dates = billing_dates_dict[prev_stmt_bal_account_name]
         future_billing_dates = [
-            d for d2 in cc_billing_dates if d2 > d
+            d2 for d2 in cc_billing_dates if d2 > d
         ]
         if future_billing_dates:
             next_billing_date = min(future_billing_dates)
@@ -3822,7 +3916,7 @@ class ForecastHandler:
                 # Get account row for APR
                 account_row = account_set_before_p2_plus_txn.getAccounts().loc[
                     account_set_before_p2_plus_txn.getAccounts().Name
-                    == prev_stmt_bal_account_name
+                    == credit_basename
                 ]
 
                 # Compute interest and current due
@@ -3970,6 +4064,7 @@ class ForecastHandler:
 
             # Update balances
             future_rows_only_df.at[f_i, checking_account_name] += checking_delta
+            future_rows_only_df.at[f_i, credit_basename] += previous_stmt_delta
             future_rows_only_df.at[
                 f_i, prev_stmt_bal_account_name
             ] += previous_stmt_delta
@@ -3985,13 +4080,13 @@ class ForecastHandler:
                 ).strip()
 
         log_stack_depth -= 1
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            "EXIT _propagate_credit_txn_curr_only",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     "EXIT _propagate_credit_txn_curr_only",
+        #     log_stack_depth,
+        # )
         return future_rows_only_df
 
     # affects checking as well
@@ -4052,7 +4147,7 @@ class ForecastHandler:
         # Get billing dates and next billing date
         cc_billing_dates = billing_dates_dict[prev_stmt_bal_account_name]
         future_billing_dates = [
-            d for d2 in cc_billing_dates if d2 > d
+            d2 for d2 in cc_billing_dates if d2 > d
         ]
         if future_billing_dates:
             next_billing_date = min(future_billing_dates)
@@ -4114,9 +4209,12 @@ class ForecastHandler:
                     curr_stmt_delta = 0
 
             elif date_iat in day_after_billing_dates:
-                updated_eopc = future_rows_only_df.at[
-                    f_i - 1, prev_stmt_bal_account_name
-                ]
+                if f_i == 0:
+                    updated_eopc = post_txn_row_df[prev_stmt_bal_account_name].iat[0]
+                else:
+                    updated_eopc = future_rows_only_df.at[
+                        f_i - 1, prev_stmt_bal_account_name
+                    ]
                 old_eopc = future_rows_only_df.at[f_i, eopc_account_name]
                 eopc_delta += updated_eopc - old_eopc
 
@@ -4142,7 +4240,7 @@ class ForecastHandler:
                         # Calculate interest and current due
                         account_row = account_set_before_p2_plus_txn.getAccounts().loc[
                             account_set_before_p2_plus_txn.getAccounts().Name
-                            == prev_stmt_bal_account_name
+                            == credit_basename
                         ]
                         apr = account_row["APR"].iat[0]
                         # interest_to_be_charged = round(previous_prev_stmt_bal * (apr / 12), 2)
@@ -4181,7 +4279,7 @@ class ForecastHandler:
                     elif f"CC INTEREST ({prev_stmt_bal_account_name}" in md:
                         account_row = account_set_before_p2_plus_txn.getAccounts().loc[
                             account_set_before_p2_plus_txn.getAccounts().Name
-                            == prev_stmt_bal_account_name
+                            == credit_basename
                         ]
                         apr = account_row["APR"].iat[0]
                         # interest_to_be_charged = round(previous_prev_stmt_bal * (apr / 12), 2)
@@ -4214,7 +4312,7 @@ class ForecastHandler:
                         # Calculate interest and current due
                         account_row = account_set_before_p2_plus_txn.getAccounts().loc[
                             account_set_before_p2_plus_txn.getAccounts().Name
-                            == prev_stmt_bal_account_name
+                            == credit_basename
                         ]
                         apr = account_row["APR"].iat[0]
                         # interest_to_be_charged = round(previous_prev_stmt_bal * (apr / 12), 2)
@@ -4339,7 +4437,7 @@ class ForecastHandler:
         # Get billing dates and next billing date
         cc_billing_dates = billing_dates_dict[prev_stmt_bal_account_name]
         future_billing_dates = [
-            d for d2 in cc_billing_dates if d2 > d
+            d2 for d2 in cc_billing_dates if d2 > d
         ]
         if future_billing_dates:
             next_billing_date = min(future_billing_dates)
@@ -4526,9 +4624,12 @@ class ForecastHandler:
 
             elif date_iat in day_after_billing_dates:
                 # print('DAY AFTER BILLING DATE')
-                updated_eopc = future_rows_only_df.at[
-                    f_i - 1, prev_stmt_bal_account_name
-                ]
+                if f_i == 0:
+                    updated_eopc = post_txn_row_df[prev_stmt_bal_account_name].iat[0]
+                else:
+                    updated_eopc = future_rows_only_df.at[
+                        f_i - 1, prev_stmt_bal_account_name
+                    ]
                 old_eopc = future_rows_only_df.at[f_i, eopc_account_name]
                 eopc_delta += updated_eopc - old_eopc
 
@@ -4553,7 +4654,7 @@ class ForecastHandler:
                         # Calculate interest and current due
                         account_row = account_set_before_p2_plus_txn.getAccounts().loc[
                             account_set_before_p2_plus_txn.getAccounts().Name
-                            == prev_stmt_bal_account_name
+                            == credit_basename
                         ]
                         apr = account_row["APR"].iat[0]
                         # interest_to_be_charged = round(previous_prev_stmt_bal * (apr / 12), 2)
@@ -4592,7 +4693,7 @@ class ForecastHandler:
                     elif f"CC INTEREST ({prev_stmt_bal_account_name}" in md:
                         account_row = account_set_before_p2_plus_txn.getAccounts().loc[
                             account_set_before_p2_plus_txn.getAccounts().Name
-                            == prev_stmt_bal_account_name
+                            == credit_basename
                         ]
                         apr = account_row["APR"].iat[0]
                         # interest_to_be_charged = round(previous_prev_stmt_bal * (apr / 12), 2)
@@ -4623,7 +4724,7 @@ class ForecastHandler:
                         # Calculate interest and current due
                         account_row = account_set_before_p2_plus_txn.getAccounts().loc[
                             account_set_before_p2_plus_txn.getAccounts().Name
-                            == prev_stmt_bal_account_name
+                            == credit_basename
                         ]
                         apr = account_row["APR"].iat[0]
                         # interest_to_be_charged = round(previous_prev_stmt_bal * (apr / 12), 2)
@@ -4662,6 +4763,7 @@ class ForecastHandler:
 
             # Update balances
             future_rows_only_df.at[f_i, checking_account_name] += checking_delta
+            future_rows_only_df.at[f_i, credit_basename] += previous_stmt_delta
             future_rows_only_df.at[
                 f_i, prev_stmt_bal_account_name
             ] += previous_stmt_delta
@@ -5501,7 +5603,7 @@ class ForecastHandler:
         # Get billing dates and next billing date
         cc_billing_dates = billing_dates_dict[prev_stmt_bal_account_name]
         future_billing_dates = [
-            d for d2 in cc_billing_dates if d2 > d
+            d2 for d2 in cc_billing_dates if d2 > d
         ]
         if future_billing_dates:
             next_billing_date = min(future_billing_dates)
@@ -5701,9 +5803,12 @@ class ForecastHandler:
 
             elif date_iat in day_after_billing_dates:
                 print("DAY AFTER BILLING DATE")
-                updated_eopc = future_rows_only_df.at[
-                    f_i - 1, prev_stmt_bal_account_name
-                ]
+                if f_i == 0:
+                    updated_eopc = post_txn_row_df[prev_stmt_bal_account_name].iat[0]
+                else:
+                    updated_eopc = future_rows_only_df.at[
+                        f_i - 1, prev_stmt_bal_account_name
+                    ]
                 old_eopc = future_rows_only_df.at[f_i, eopc_account_name]
                 print("eopc_delta += " + str(updated_eopc - old_eopc))
                 eopc_delta += updated_eopc - old_eopc
@@ -5756,7 +5861,7 @@ class ForecastHandler:
                 # Get account row for APR
                 account_row = account_set_before_p2_plus_txn.getAccounts().loc[
                     account_set_before_p2_plus_txn.getAccounts().Name
-                    == prev_stmt_bal_account_name
+                    == credit_basename
                 ]
 
                 # Compute interest and current due
@@ -5906,6 +6011,9 @@ class ForecastHandler:
             # Update balances
             future_rows_only_df.at[f_i, checking_account_name] += checking_delta
             future_rows_only_df.at[
+                f_i, credit_basename
+            ] += previous_stmt_delta + curr_stmt_delta
+            future_rows_only_df.at[
                 f_i, prev_stmt_bal_account_name
             ] += previous_stmt_delta
             future_rows_only_df.at[f_i, curr_stmt_bal_account_name] += curr_stmt_delta
@@ -6046,7 +6154,7 @@ class ForecastHandler:
         account_set_after_p2_plus_txn = cls._sync_account_set_w_forecast_day(
             copy.deepcopy(account_set_before_p2_plus_txn),
             forecast_df=forecast_df,
-            d=d,log_stack_depth=log_stack_depth
+            d=date_string, log_stack_depth=log_stack_depth
         )
 
         A_df = account_set_after_p2_plus_txn.getAccounts()
@@ -6081,8 +6189,9 @@ class ForecastHandler:
             )
 
         account_deltas_list = account_deltas.tolist()
+        account_delta_total = sum(Decimal(str(delta)) for delta in account_deltas_list)
 
-        if account_deltas.sum() == 0:
+        if account_delta_total == 0:
             log_in_color(
                 logger,
                 "white",
@@ -6154,6 +6263,37 @@ class ForecastHandler:
             billing_dates__list_of_lists.append(account_specific_bd)
             billing_dates__dict[a_row["Name"]] = account_specific_bd
 
+        for account in account_set_before_p2_plus_txn.accounts:
+            billing_state = getattr(account, "billing_state", None)
+            billing_start_date = getattr(billing_state, "billing_cycle_start_date", None)
+            if pd.isnull(billing_start_date) or billing_start_date == "None":
+                continue
+
+            num_days = (end_date - billing_start_date).days
+            account_specific_bd = generate_date_sequence(
+                billing_start_date, num_days, "monthly"
+            )
+            if account.account_type == "credit":
+                billing_dates__dict[f"{account.name}: Curr Stmt Bal"] = account_specific_bd
+                billing_dates__dict[f"{account.name}: Prev Stmt Bal"] = account_specific_bd
+                billing_dates__dict[
+                    f"{account.name}: Credit Billing Cycle Payment Bal"
+                ] = account_specific_bd
+                billing_dates__dict[
+                    f"{account.name}: Credit End of Prev Cycle Bal"
+                ] = account_specific_bd
+            elif account.account_type == "loan":
+                billing_dates__dict[
+                    f"{account.name}: Principal Balance"
+                ] = account_specific_bd
+                billing_dates__dict[f"{account.name}: Interest"] = account_specific_bd
+                billing_dates__dict[
+                    f"{account.name}: Loan Billing Cycle Payment Bal"
+                ] = account_specific_bd
+                billing_dates__dict[
+                    f"{account.name}: Loan End of Prev Cycle Bal"
+                ] = account_specific_bd
+
         # Mapping of account type combinations to processing functions
         account_type_combinations = {
             frozenset(
@@ -6187,14 +6327,77 @@ class ForecastHandler:
             frozenset(["credit curr stmt bal"]): cls._propagate_credit_txn_curr_only,
         }
 
-        # Assume accounts_df is a DataFrame containing account information
+        # Build a delta table aligned with forecast account columns. The
+        # propagation helpers index into account_deltas_list using forecast_df
+        # column positions, so this must include placeholders for aggregate debt
+        # columns when detailed debug columns are present.
         accounts_df = account_set_before_p2_plus_txn.getAccounts().copy()
+        if include_debug_columns:
+            base_accounts_df = accounts_df.set_index("Name", drop=False)
+            before_balances = (
+                account_set_before_p2_plus_txn.getForecastAccountBalances(
+                    include_debug_columns=True
+                )
+            )
+            post_txn_row = post_txn_row_df.iloc[0]
+            account_rows = []
+            account_deltas_list = []
+            metadata_columns = {"Date", "Next Income Date", "Memo Directives", "Memo"}
 
-        # print('BEFORE processing_function branch')
-        # print('account_deltas_list: '+str(account_deltas_list))
+            for column_name in forecast_df.columns:
+                if column_name in metadata_columns:
+                    continue
+                base_name = column_name.split(":")[0]
+                if base_name not in base_accounts_df.index:
+                    continue
 
-        # Create a Series for account deltas with the same index as accounts_df
-        accounts_df["Delta"] = account_deltas_list
+                base_row = base_accounts_df.loc[base_name]
+                account_type = base_row["Account_Type"]
+                if ": Curr Stmt Bal" in column_name:
+                    account_type = "credit curr stmt bal"
+                elif ": Prev Stmt Bal" in column_name:
+                    account_type = "credit prev stmt bal"
+                elif ": Credit Billing Cycle Payment Bal" in column_name:
+                    account_type = "credit billing cycle payment bal"
+                elif ": Credit End of Prev Cycle Bal" in column_name:
+                    account_type = "credit end of prev cycle bal"
+                elif ": Principal Balance" in column_name:
+                    account_type = "principal balance"
+                elif ": Interest" in column_name:
+                    account_type = "interest"
+                elif ": Loan Billing Cycle Payment Bal" in column_name:
+                    account_type = "loan billing cycle payment bal"
+                elif ": Loan End of Prev Cycle Bal" in column_name:
+                    account_type = "loan end of prev cycle bal"
+
+                before_balance = before_balances.get(column_name, base_row["Balance"])
+                after_balance = post_txn_row[column_name]
+                delta = after_balance - before_balance
+                if ":" not in column_name and account_type in ("credit", "loan"):
+                    delta = 0
+
+                account_rows.append(
+                    {
+                        "Name": column_name,
+                        "Balance": before_balance,
+                        "Min_Balance": base_row["Min_Balance"],
+                        "Max_Balance": base_row["Max_Balance"],
+                        "Account_Type": account_type,
+                        "Billing_Start_Date": base_row["Billing_Start_Date"],
+                        "Interest_Type": base_row["Interest_Type"],
+                        "APR": base_row["APR"],
+                        "Interest_Cadence": base_row["Interest_Cadence"],
+                        "Minimum_Payment": base_row["Minimum_Payment"],
+                        "Primary_Checking_Ind": base_row["Primary_Checking_Ind"],
+                        "Delta": delta,
+                    }
+                )
+                account_deltas_list.append(delta)
+
+            accounts_df = pd.DataFrame(account_rows)
+        else:
+            # Create a Series for account deltas with the same index as accounts_df
+            accounts_df["Delta"] = account_deltas_list
 
         # Extract base names (before ':') of account names
         accounts_df["Base_Name"] = accounts_df["Name"].str.split(":").str[0]
@@ -6326,6 +6529,7 @@ class ForecastHandler:
                         billing_dates__dict,
                         date_string,
                         post_txn_row_df,
+                        log_stack_depth,
                     )
 
                 else:
@@ -6407,7 +6611,7 @@ class ForecastHandler:
             # also check for rounding that caused real deltas to mismatch the memos!!!!
             for f_i, f_row in future_rows_only_df.iterrows():
                 log_in_color(
-                    logger, "white", "debug", "Date:" + f_row.Date, log_stack_depth
+                    logger, "white", "debug", "Date:" + str(f_row.Date), log_stack_depth
                 )
                 # we don't use index bc it won't be 1 and reindexing is expensive
                 current_row = f_row
@@ -6460,6 +6664,13 @@ class ForecastHandler:
                         log_stack_depth,
                     )
 
+                account_type_by_base_name = dict(
+                    zip(
+                        account_set_before_p2_plus_txn.getAccounts()["Name"],
+                        account_set_before_p2_plus_txn.getAccounts()["Account_Type"],
+                    )
+                )
+
                 reported_acct_deltas = {}
                 for md in f_row["Memo Directives"].split(";"):
                     if md.strip() == "":
@@ -6477,6 +6688,7 @@ class ForecastHandler:
 
                     acct_name = txn_info.group(1).split(":")[0]
                     acct_name = acct_name.replace("-", "").replace("+", "").strip()
+                    acct_type = account_type_by_base_name.get(acct_name)
                     memo_balance = float(txn_info.group(2))
 
                     if acct_name not in reported_acct_deltas:
@@ -6487,6 +6699,8 @@ class ForecastHandler:
                             memo_balance = -abs(memo_balance)
                         elif "+$" in md:
                             memo_balance = abs(memo_balance)
+                        if acct_type in ("credit", "loan"):
+                            memo_balance *= -1
 
                         reported_acct_deltas[acct_name] = memo_balance
 
@@ -6505,6 +6719,8 @@ class ForecastHandler:
                             memo_balance = -abs(memo_balance)
                         elif "+$" in md:
                             memo_balance = abs(memo_balance)
+                        if acct_type in ("credit", "loan"):
+                            memo_balance *= -1
 
                         reported_acct_deltas[acct_name] += memo_balance
 
@@ -6522,7 +6738,7 @@ class ForecastHandler:
                         )
 
                 for m in f_row["Memo"].split(";"):
-                    if "income" in m or m.strip() == "":
+                    if "income" in m.lower() or m.strip() == "":
                         # bc otherwise would be double counted. this is a known design weakness
                         # don't bully me i'll cum
                         continue
@@ -6581,15 +6797,14 @@ class ForecastHandler:
                             log_stack_depth,
                         )
 
-
-
-
-
-
-
                 observed_acct_deltas = {}
                 for cname in forecast_df.columns:
                     if cname in ["Date", "Next Income Date", "Memo Directives", "Memo"]:
+                        continue
+                    full_cname = cname
+                    base_cname = cname.split(":")[0]
+                    base_account_type = account_type_by_base_name.get(base_cname)
+                    if ":" in full_cname and base_account_type in ("credit", "loan"):
                         continue
                     if (
                         "Dad" in cname
@@ -6600,11 +6815,12 @@ class ForecastHandler:
                         # todo consider adding interest accrual to memo directives
                         # Not sure why Loan wasnt sufficient to catch Dad but whatever its temporary anyway
                         continue
-                    full_cname = cname
-                    cname = cname.split(":")[0]
+                    cname = base_cname
                     current_delta = float(current_row[full_cname]) - float(
                         previous_row[full_cname]
                     )
+                    if base_account_type in ("credit", "loan"):
+                        current_delta *= -1
                     if cname not in observed_acct_deltas.keys():
                         if abs(current_delta) > ROUNDING_ERROR_TOLERANCE:
                             observed_acct_deltas[cname] = current_delta
@@ -6692,7 +6908,7 @@ class ForecastHandler:
                     )
                     if rounding_error > ROUNDING_ERROR_TOLERANCE:
                         exception_string = (
-                            current_date_string
+                            str(current_date_string)
                             + " Memo Lied!!! reported != observed for "
                             + str(k)
                             + "\n"
@@ -8483,26 +8699,29 @@ class ForecastHandler:
         credit_acct_info = account_info.loc[cc_acct_sel_vec, :]
         # savings_acct_info = account_info[account_info.Account_Type.lower() == 'savings', :]
 
-        NetWorth = forecast_df.Checking
+        def summary_numeric_series(column_name):
+            return pd.to_numeric(forecast_df.loc[:, column_name], errors="coerce").fillna(0.0)
+
+        NetWorth = summary_numeric_series("Checking")
         for loan_account_index, loan_account_row in loan_acct_info.iterrows():
             # loan_acct_col_sel_vec = (cls.forecast_df.columns == loan_account_row.Name)
             # print('loan_acct_col_sel_vec')
             # print(loan_acct_col_sel_vec)
-            NetWorth = NetWorth - forecast_df.loc[:, loan_account_row.Name]
+            NetWorth = NetWorth - summary_numeric_series(loan_account_row.Name)
 
         for credit_account_index, credit_account_row in credit_acct_info.iterrows():
-            NetWorth = NetWorth - forecast_df.loc[:, credit_account_row.Name]
+            NetWorth = NetWorth - summary_numeric_series(credit_account_row.Name)
 
         # for savings_account_index, savings_account_row in savings_acct_info.iterrows():
         #     NetWorth += cls.forecast_df[:,cls.forecast_df.columns == savings_account_row.Name]
 
-        LoanTotal = forecast_df.Checking - forecast_df.Checking
+        LoanTotal = summary_numeric_series("Checking") - summary_numeric_series("Checking")
         for loan_account_index, loan_account_row in loan_acct_info.iterrows():
-            LoanTotal = LoanTotal + forecast_df.loc[:, loan_account_row.Name]
+            LoanTotal = LoanTotal + summary_numeric_series(loan_account_row.Name)
 
-        CCDebtTotal = forecast_df.Checking - forecast_df.Checking
+        CCDebtTotal = summary_numeric_series("Checking") - summary_numeric_series("Checking")
         for credit_account_index, credit_account_row in credit_acct_info.iterrows():
-            CCDebtTotal = CCDebtTotal + forecast_df.loc[:, credit_account_row.Name]
+            CCDebtTotal = CCDebtTotal + summary_numeric_series(credit_account_row.Name)
 
         forecast_df["Marginal Interest"] = 0.0
         loan_interest_acct_sel_vec = account_info.Account_Type == "interest"
@@ -8827,20 +9046,20 @@ class ForecastHandler:
             checking_row_sel_vec = row.index.isin(checking_account_names)
 
             if sum(loan_row_sel_vec) > 0:
-                loan_row_total = sum(row[loan_row_sel_vec])
+                loan_row_total = pd.to_numeric(row[loan_row_sel_vec]).sum()
                 # print('loan_row_total:')
                 # print(loan_row_total)
             else:
                 loan_row_total = 0
 
             if sum(cc_row_sel_vec) > 0:
-                cc_row_total = sum(row[cc_row_sel_vec])
+                cc_row_total = pd.to_numeric(row[cc_row_sel_vec]).sum()
                 # print('cc_row_total:')
                 # print(cc_row_total)
             else:
                 cc_row_total = 0
 
-            check_row_total = sum(row[checking_row_sel_vec])
+            check_row_total = pd.to_numeric(row[checking_row_sel_vec]).sum()
             # print('check_row_total:')
             # print(check_row_total)
 
@@ -9322,6 +9541,7 @@ class ForecastHandler:
             label="Net Worth " + str(expense_forecast.unique_id),
             linestyle=linestyle,
         )
+        plt.axhline(y=0, color="black", linestyle=":", linewidth=1)
 
         bottom, top = plt.ylim()
         plt.ylim(bottom, top * 1.1 if top else 1)
@@ -9333,17 +9553,19 @@ class ForecastHandler:
         self,
         expense_forecast,
         output_path,
-        line_color_cycle_list=default_color_cycle_list,
     ):
         assert hasattr(expense_forecast, "forecast_df")
 
         figure(figsize=(10, 6), dpi=80)
-        plt.gca().set_prop_cycle(plt.cycler(color=line_color_cycle_list))
 
         account_set = self._report_account_set(expense_forecast)
         if account_set is not None:
             account_info = account_set.getAccounts()
-            account_base_names = set([a.split(":")[0] for a in account_info.Name])
+            account_names = [
+                account_name
+                for account_name in account_info.Name
+                if account_name in expense_forecast.forecast_df.columns
+            ]
         else:
             summary_columns = {
                 "Date",
@@ -9358,27 +9580,21 @@ class ForecastHandler:
                 "Memo Directives",
                 "Next Income Date",
             }
-            account_base_names = set(
-                column.split(":")[0]
-                for column in expense_forecast.forecast_df.columns
-                if column not in summary_columns
-            )
-
-        x_values = self._report_dates_for_plot(expense_forecast)
-        for account_base_name in account_base_names:
-            matching_columns = [
+            account_names = [
                 column
                 for column in expense_forecast.forecast_df.columns
-                if column.split(":")[0] == account_base_name
-                and pd.api.types.is_numeric_dtype(expense_forecast.forecast_df[column])
+                if column not in summary_columns and ":" not in column
             ]
-            if not matching_columns:
+
+        x_values = self._report_dates_for_plot(expense_forecast)
+        for account_name in account_names:
+            if not pd.api.types.is_numeric_dtype(expense_forecast.forecast_df[account_name]):
                 continue
-            if len(matching_columns) == 1:
-                account_values = expense_forecast.forecast_df[matching_columns[0]]
-            else:
-                account_values = expense_forecast.forecast_df[matching_columns].sum(axis=1)
-            plt.plot(x_values, account_values, label=account_base_name)
+            plt.plot(
+                x_values,
+                expense_forecast.forecast_df[account_name],
+                label=account_name,
+            )
 
         self._decorate_report_plot(expense_forecast)
         plt.savefig(output_path)
@@ -9832,13 +10048,48 @@ class ForecastHandler:
             p2_plus_txns_html_table = confirmed_df.to_html()
 
         payment_rows = []
+        account_type_by_name = {}
+        if account_set is not None:
+            account_type_by_name = dict(
+                zip(account_set.getAccounts()["Name"], account_set.getAccounts()["Account_Type"])
+            )
+        if (
+            memo_rule_set is not None
+            and "Priority" in confirmed_df.columns
+            and "Memo" in confirmed_df.columns
+        ):
+            for _, confirmed_row in confirmed_df[confirmed_df.Priority >= 2].iterrows():
+                memo_rule = memo_rule_set.findMatchingMemoRule(
+                    confirmed_row.Memo, confirmed_row.Priority
+                )
+                account_to_type = account_type_by_name.get(memo_rule.account_to)
+                if account_to_type == "credit":
+                    payment_rows.append(
+                        {
+                            "Payment Type": "Credit Card",
+                            "Date": confirmed_row.Date,
+                            "Memo": confirmed_row.Memo,
+                            "Amount": confirmed_row.Amount,
+                        }
+                    )
+                elif account_to_type == "loan" or memo_rule.account_to == "ALL_LOANS":
+                    payment_rows.append(
+                        {
+                            "Payment Type": "Loan",
+                            "Date": confirmed_row.Date,
+                            "Memo": confirmed_row.Memo,
+                            "Amount": confirmed_row.Amount,
+                        }
+                    )
+
         for _, row in E.forecast_df.iterrows():
-            memo_line_items = str(row.Memo).split(";")
+            memo_line_items = str(row.Memo).split(";") + str(row["Memo Directives"]).split(";")
             for memo_line_item in memo_line_items:
                 memo_line_item_lower = memo_line_item.lower()
                 if (
                     "loan min payment" in memo_line_item_lower
                     or "additional loan payment" in memo_line_item_lower
+                    or "addtl loan payment" in memo_line_item_lower
                 ):
                     payment_rows.append(
                         {"Payment Type": "Loan", "Date": row.Date, "Memo": memo_line_item}
@@ -9846,6 +10097,7 @@ class ForecastHandler:
                 elif (
                     "cc min payment" in memo_line_item_lower
                     or "additional cc payment" in memo_line_item_lower
+                    or "addtl cc payment" in memo_line_item_lower
                     or "cc interest" in memo_line_item_lower
                 ):
                     payment_rows.append(
@@ -9863,7 +10115,15 @@ class ForecastHandler:
         all_plot_page_text = ""
         sankey_text = ""
 
-        os.makedirs(output_dir, exist_ok=True)
+        output_target = Path(output_dir)
+        if output_target.suffix:
+            html_output_path = output_target
+            image_output_dir = output_target.parent
+        else:
+            image_output_dir = output_target
+            html_output_path = image_output_dir / (output_file_name + ".html")
+
+        image_output_dir.mkdir(parents=True, exist_ok=True)
         networth_line_plot_path = report_id + "_networth_line_plot.png"
         net_gain_loss_line_plot_path = report_id + "_net_gain_loss_line_plot.png"
         accounttype_line_plot_path = report_id + "_accounttype_line_plot.png"
@@ -9874,14 +10134,14 @@ class ForecastHandler:
         all_line_plot_path = report_id + "_all_line_plot.png"
         sankey_path = report_id + "_sankey.jpg"
 
-        self.plotAll(E, os.path.join(output_dir, all_line_plot_path))
-        self.plotNetWorth(E, os.path.join(output_dir, networth_line_plot_path))
-        self.plotAccountTypeTotals(E, os.path.join(output_dir, accounttype_line_plot_path))
-        self.plotMarginalInterest(E, os.path.join(output_dir, marginal_interest_line_plot_path))
-        self.plotNetGainLoss(E, os.path.join(output_dir, net_gain_loss_line_plot_path))
-        self.plotMilestoneDates(E, os.path.join(output_dir, milestone_scatter_plot_path))
+        self.plotAll(E, image_output_dir / all_line_plot_path)
+        self.plotNetWorth(E, image_output_dir / networth_line_plot_path)
+        self.plotAccountTypeTotals(E, image_output_dir / accounttype_line_plot_path)
+        self.plotMarginalInterest(E, image_output_dir / marginal_interest_line_plot_path)
+        self.plotNetGainLoss(E, image_output_dir / net_gain_loss_line_plot_path)
+        self.plotMilestoneDates(E, image_output_dir / milestone_scatter_plot_path)
         try:
-            self.plotSankeyDiagram(E, os.path.join(output_dir, sankey_path))
+            self.plotSankeyDiagram(E, image_output_dir / sankey_path)
         except Exception as exc:
             sankey_text = "Sankey diagram generation failed: " + str(exc)
             sankey_path = ""
@@ -9904,31 +10164,121 @@ class ForecastHandler:
             + str(report_id)
             + """</title>
         <style>
+        :root {
+          color-scheme: dark;
+          --bg: #0b1120;
+          --panel: #111827;
+          --panel-soft: #172033;
+          --panel-strong: #1e293b;
+          --border: #334155;
+          --border-soft: #243244;
+          --text: #e5e7eb;
+          --text-muted: #a8b3c7;
+          --accent: #38bdf8;
+          --accent-strong: #2563eb;
+          --accent-soft: #0f3a5c;
+          --danger: #fb7185;
+        }
+        html {
+          background: var(--bg);
+        }
+        body {
+          max-width: 1180px;
+          margin: 0 auto;
+          padding: 40px 32px 64px;
+          background: var(--bg);
+          color: var(--text);
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          line-height: 1.5;
+          text-align: left;
+        }
+        h1, h3, h4 {
+          color: #f8fafc;
+        }
+        h1 {
+          margin-top: 0;
+          letter-spacing: 0;
+        }
+        h3 {
+          margin-top: 0;
+        }
+        p {
+          color: var(--text-muted);
+        }
+        a {
+          color: var(--accent);
+        }
         .tab {
-          overflow: hidden;
-          border: 1px solid #ccc;
-          background-color: #f1f1f1;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+          margin-top: 28px;
+          padding: 8px;
+          border: 1px solid var(--border);
+          border-radius: 8px 8px 0 0;
+          background-color: var(--panel);
         }
         .tab button {
-          background-color: inherit;
-          float: left;
-          border: none;
+          background-color: var(--panel-strong);
+          color: var(--text-muted);
+          border: 1px solid transparent;
+          border-radius: 6px;
           outline: none;
           cursor: pointer;
-          padding: 14px 16px;
-          transition: 0.3s;
+          padding: 12px 14px;
+          transition: background-color 0.2s, border-color 0.2s, color 0.2s;
         }
         .tab button:hover {
-          background-color: #ddd;
+          background-color: var(--accent-soft);
+          border-color: #1d4ed8;
+          color: #f8fafc;
         }
         .tab button.active {
-          background-color: #ccc;
+          background-color: var(--accent-strong);
+          border-color: #60a5fa;
+          color: #ffffff;
         }
         .tabcontent {
           display: none;
-          padding: 6px 12px;
-          border: 1px solid #ccc;
+          padding: 24px;
+          border: 1px solid var(--border);
           border-top: none;
+          border-radius: 0 0 8px 8px;
+          background: var(--panel);
+          box-shadow: 0 18px 60px rgba(0, 0, 0, 0.25);
+          overflow-x: auto;
+        }
+        table {
+          border-collapse: collapse;
+          margin: 14px 0 24px;
+          max-width: 100%;
+          color: var(--text);
+          background: var(--panel-soft);
+          font-size: 0.92rem;
+        }
+        th, td {
+          border: 1px solid var(--border-soft);
+          padding: 7px 10px;
+          white-space: nowrap;
+        }
+        th {
+          background: var(--panel-strong);
+          color: #f8fafc;
+          font-weight: 600;
+        }
+        tr:nth-child(even) td {
+          background: rgba(148, 163, 184, 0.06);
+        }
+        img {
+          max-width: 100%;
+          height: auto;
+          margin: 14px 0 24px;
+          border: 1px solid var(--border);
+          border-radius: 6px;
+          background: #f8fafc;
+        }
+        font[color="red"] {
+          color: var(--danger);
         }
         </style>
         </head>
@@ -10141,13 +10491,12 @@ class ForecastHandler:
         """
         )
 
-        output_path = os.path.join(output_dir, output_file_name + ".html")
-        with open(output_path, "w") as f:
+        with open(html_output_path, "w") as f:
             f.write(html_body)
         log_in_color(
             logger,
             "green",
             "info",
-            "Finished writing single forecast report to " + output_path,
+            "Finished writing single forecast report to " + str(html_output_path),
         )
-        return output_path
+        return html_output_path

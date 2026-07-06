@@ -661,7 +661,7 @@ def run(args):
             # else:
             #     E.runForecast()
             R = ForecastHandler().runForecast(E_IO, MilestoneSet())
-            R.write_json_file(args.ofilename)
+            R.write_json_file(args.ofile)
             # if not forecast_found:
             #     print("\033[31m\033[0m")
         elif (
@@ -1342,7 +1342,7 @@ def run(args):
         ):
             print(args)
             R = ExpenseForecastResult.load_json_file(args.ifile)
-            ForecastHandler().generateHTMLReport(R)
+            ForecastHandler().generateHTMLReport(R, args.ofile)
 
 # ef_cli parameterize forecast
 # ef_cli reparameterize forecast

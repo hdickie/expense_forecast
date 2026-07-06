@@ -219,7 +219,8 @@ class AccountSet:
         primary_checking_accounts_df = checking_accounts_df[
             checking_accounts_df.Primary_Checking_Ind == True
         ]
-        if len(primary_checking_accounts_df) != 1:
+        print(checking_accounts_df.to_string())
+        if primary_checking_accounts_df.shape[0] != 1:
             raise ValueError("AccountSet must have one and only one primary checking account")
 
     @staticmethod

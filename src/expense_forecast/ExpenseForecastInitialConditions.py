@@ -272,15 +272,15 @@ class ExpenseForecastInitialConditions:
             .reset_index(drop=True)
         )
 
-        A_names = None
+        A_names = {""}
         B_names = None
         try:
 
-            A_names = {""}
+            
             for a in distinct_account_names__from_memo["Name"].tolist():
                 A_names = A_names.union({a})
             A_names = A_names - {
-                "ALL_LOANS"
+                "ALL_LOANS", None
             }  # if we have a memo rule for ALL_LOANS, we don't want that to be checked against the list of account names
 
             A2 = {""}

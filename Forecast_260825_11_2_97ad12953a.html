@@ -1,0 +1,1589 @@
+
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Expense Forecast Report #260825_11_2_97ad12953a</title>
+        <style>
+        :root {
+          color-scheme: dark;
+          --bg: #0b1120;
+          --panel: #111827;
+          --panel-soft: #172033;
+          --panel-strong: #1e293b;
+          --border: #334155;
+          --border-soft: #243244;
+          --text: #e5e7eb;
+          --text-muted: #a8b3c7;
+          --accent: #38bdf8;
+          --accent-strong: #2563eb;
+          --accent-soft: #0f3a5c;
+          --danger: #fb7185;
+        }
+        html {
+          background: var(--bg);
+        }
+        body {
+          max-width: 1180px;
+          margin: 0 auto;
+          padding: 40px 32px 64px;
+          background: var(--bg);
+          color: var(--text);
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          line-height: 1.5;
+          text-align: left;
+        }
+        h1, h3, h4 {
+          color: #f8fafc;
+        }
+        h1 {
+          margin-top: 0;
+          letter-spacing: 0;
+        }
+        h3 {
+          margin-top: 0;
+        }
+        p {
+          color: var(--text-muted);
+        }
+        a {
+          color: var(--accent);
+        }
+        .tab {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+          margin-top: 28px;
+          padding: 8px;
+          border: 1px solid var(--border);
+          border-radius: 8px 8px 0 0;
+          background-color: var(--panel);
+        }
+        .tab button {
+          background-color: var(--panel-strong);
+          color: var(--text-muted);
+          border: 1px solid transparent;
+          border-radius: 6px;
+          outline: none;
+          cursor: pointer;
+          padding: 12px 14px;
+          transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+        }
+        .tab button:hover {
+          background-color: var(--accent-soft);
+          border-color: #1d4ed8;
+          color: #f8fafc;
+        }
+        .tab button.active {
+          background-color: var(--accent-strong);
+          border-color: #60a5fa;
+          color: #ffffff;
+        }
+        .tabcontent {
+          display: none;
+          padding: 24px;
+          border: 1px solid var(--border);
+          border-top: none;
+          border-radius: 0 0 8px 8px;
+          background: var(--panel);
+          box-shadow: 0 18px 60px rgba(0, 0, 0, 0.25);
+          overflow-x: auto;
+        }
+        table {
+          border-collapse: collapse;
+          margin: 14px 0 24px;
+          max-width: 100%;
+          color: var(--text);
+          background: var(--panel-soft);
+          font-size: 0.92rem;
+        }
+        th, td {
+          border: 1px solid var(--border-soft);
+          padding: 7px 10px;
+          white-space: nowrap;
+        }
+        th {
+          background: var(--panel-strong);
+          color: #f8fafc;
+          font-weight: 600;
+        }
+        tr:nth-child(even) td {
+          background: rgba(148, 163, 184, 0.06);
+        }
+        img {
+          max-width: 100%;
+          height: auto;
+          margin: 14px 0 24px;
+          border: 1px solid var(--border);
+          border-radius: 6px;
+          background: #f8fafc;
+        }
+        font[color="red"] {
+          color: var(--danger);
+        }
+        </style>
+        </head>
+        <body>
+        <h1>Expense Forecast Report #260825_11_2_97ad12953a</h1>
+        <p>2026-08-25 to 2026-09-05  </p>
+
+        <div class="tab">
+          <button class="tablinks active" onclick="openTab(event, 'ForecastParameters')">Forecast Parameters</button>
+          <button class="tablinks" onclick="openTab(event, 'NetWorth')">Net Worth</button>
+          <button class="tablinks" onclick="openTab(event, 'NetGainLoss')">Net Gain & Loss</button>
+          <button class="tablinks" onclick="openTab(event, 'AccountType')">Account Type</button>
+          <button class="tablinks" onclick="openTab(event, 'Interest')">Interest</button>
+          <button class="tablinks" onclick="openTab(event, 'Milestones')">Milestones</button>
+          <button class="tablinks" onclick="openTab(event, 'All')">All</button>
+          <button class="tablinks" onclick="openTab(event, 'TransactionSchedule')">Transaction Schedule</button>
+          <button class="tablinks" onclick="openTab(event, 'Sankey')">Sankey</button>
+          <button class="tablinks" onclick="openTab(event, 'Forecast Results')">Forecast Results</button>
+        </div>
+
+        <div id="ForecastParameters" class="tabcontent">
+          <h3>Forecast Parameters</h3>
+          <p>
+        This forecast started at 2026-07-06 00:55:52.829473, took 0:00:00 to complete, and finished at 2026-07-06 00:55:52.829473.
+        </p>
+          <h3>Accounts</h3>
+          <p>
+        The initial conditions and account boundaries are defined as:<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Name</th>
+      <th>Balance</th>
+      <th>Min_Balance</th>
+      <th>Max_Balance</th>
+      <th>Account_Type</th>
+      <th>Billing_Start_Date</th>
+      <th>Interest_Type</th>
+      <th>APR</th>
+      <th>Interest_Cadence</th>
+      <th>Minimum_Payment</th>
+      <th>Primary_Checking_Ind</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Checking</td>
+      <td>5897.8</td>
+      <td>0</td>
+      <td>inf</td>
+      <td>checking</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Savings</td>
+      <td>325.21</td>
+      <td>0</td>
+      <td>inf</td>
+      <td>checking</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Citi</td>
+      <td>3871.98</td>
+      <td>0</td>
+      <td>25000.0</td>
+      <td>credit</td>
+      <td>2026-06-14</td>
+      <td>compound</td>
+      <td>0.2149</td>
+      <td>monthly</td>
+      <td>40</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Chase</td>
+      <td>6566.49</td>
+      <td>0</td>
+      <td>25000.0</td>
+      <td>credit</td>
+      <td>2026-06-06</td>
+      <td>compound</td>
+      <td>0.2724</td>
+      <td>monthly</td>
+      <td>40</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Loan A</td>
+      <td>3608.67</td>
+      <td>0</td>
+      <td>20000.0</td>
+      <td>loan</td>
+      <td>2026-06-03</td>
+      <td>simple</td>
+      <td>0.0466</td>
+      <td>daily</td>
+      <td>10</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>Loan B</td>
+      <td>4586.91</td>
+      <td>0</td>
+      <td>20000.0</td>
+      <td>loan</td>
+      <td>2026-06-03</td>
+      <td>simple</td>
+      <td>0.0429</td>
+      <td>daily</td>
+      <td>10</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>Loan C</td>
+      <td>2032.86</td>
+      <td>0</td>
+      <td>20000.0</td>
+      <td>loan</td>
+      <td>2026-06-03</td>
+      <td>simple</td>
+      <td>0.0429</td>
+      <td>daily</td>
+      <td>10</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>Loan D</td>
+      <td>4558.79</td>
+      <td>0</td>
+      <td>20000.0</td>
+      <td>loan</td>
+      <td>2026-06-03</td>
+      <td>simple</td>
+      <td>0.0376</td>
+      <td>daily</td>
+      <td>10</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>Loan E</td>
+      <td>1905.87</td>
+      <td>0</td>
+      <td>20000.0</td>
+      <td>loan</td>
+      <td>2026-06-03</td>
+      <td>simple</td>
+      <td>0.0376</td>
+      <td>daily</td>
+      <td>10</td>
+      <td>None</td>
+    </tr>
+  </tbody>
+</table>
+        </p>
+          <h3>Budget Items</h3>
+          <p>
+        These transactions are considered for analysis:<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Start_Date</th>
+      <th>End_Date</th>
+      <th>Priority</th>
+      <th>Cadence</th>
+      <th>Amount</th>
+      <th>Memo</th>
+      <th>Income_Flag</th>
+      <th>Deferrable</th>
+      <th>Partial_Payment_Allowed</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>2026-08-25</td>
+      <td>2026-09-05</td>
+      <td>1</td>
+      <td>daily</td>
+      <td>10.00</td>
+      <td>food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2026-08-25</td>
+      <td>2026-09-05</td>
+      <td>1</td>
+      <td>semiweekly</td>
+      <td>80.00</td>
+      <td>gas expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>2026-08-25</td>
+      <td>2026-09-05</td>
+      <td>1</td>
+      <td>monthly</td>
+      <td>287.68</td>
+      <td>phone expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>2026-08-25</td>
+      <td>2026-09-05</td>
+      <td>1</td>
+      <td>monthly</td>
+      <td>10.00</td>
+      <td>hulu expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>2026-07-02</td>
+      <td>2026-09-05</td>
+      <td>1</td>
+      <td>monthly</td>
+      <td>14.00</td>
+      <td>paramount plus expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>2026-06-26</td>
+      <td>2026-09-05</td>
+      <td>1</td>
+      <td>monthly</td>
+      <td>9.00</td>
+      <td>netflix expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>2026-08-25</td>
+      <td>2026-09-05</td>
+      <td>1</td>
+      <td>monthly</td>
+      <td>100.00</td>
+      <td>car insurance expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>2026-07-03</td>
+      <td>2026-09-05</td>
+      <td>1</td>
+      <td>monthly</td>
+      <td>149.00</td>
+      <td>storage expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>2026-06-06</td>
+      <td>2026-09-05</td>
+      <td>1</td>
+      <td>monthly</td>
+      <td>129.00</td>
+      <td>joyous expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>2026-09-01</td>
+      <td>2026-09-05</td>
+      <td>2</td>
+      <td>monthly</td>
+      <td>10000.00</td>
+      <td>extra cc payment</td>
+      <td>False</td>
+      <td>False</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>2026-08-22</td>
+      <td>2026-09-05</td>
+      <td>1</td>
+      <td>semiweekly</td>
+      <td>1366.20</td>
+      <td>CNA Income</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+  </tbody>
+</table>
+        </p>
+          <h3>Memo Rules</h3>
+          <p>
+        These decision rules are used:<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Memo_Regex</th>
+      <th>Account_From</th>
+      <th>Account_To</th>
+      <th>Transaction_Priority</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>.*expense.*</td>
+      <td>Chase</td>
+      <td>None</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>CNA Income</td>
+      <td>None</td>
+      <td>Checking</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>extra cc payment</td>
+      <td>Checking</td>
+      <td>Chase</td>
+      <td>2.0</td>
+    </tr>
+  </tbody>
+</table>
+        </p>
+          <h3>Account Milestones</h3>
+          <p>
+        These account milestones are defined:<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Milestone_Name</th>
+      <th>Account_Name</th>
+      <th>Min_Balance</th>
+      <th>Max_Balance</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+        </p>
+          <h3>Memo Milestones</h3>
+          <p>
+        These memo milestones are defined:<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Milestone_Name</th>
+      <th>Memo_Regex</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+        </p>
+          <h3>Composite Milestones</h3>
+          <p>
+        These composite milestones are defined:<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Composite_Milestone_Name</th>
+      <th>Milestone_Type</th>
+      <th>Milestone_Name</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+        </p>
+        </div>
+
+        <div id="NetWorth" class="tabcontent">
+          <h3>Net Worth</h3>
+          <p>
+        Net Worth began at $-21,233.77 and rose to $-20,149.57 over 12 days, averaging $90.35 per day.
+        </p>
+          <img src="260825_11_2_97ad12953a_networth_line_plot.png">
+        </div>
+
+        <div id="NetGainLoss" class="tabcontent">
+          <h3>Net Gain & Loss</h3>
+          <p>Total gain was $1,356.2 over 12 days, averaging $113.02 per day.<br><br>Total loss was -$272.0 over 12 days, averaging -$22.67 per day.</p>
+          <img src="260825_11_2_97ad12953a_net_gain_loss_line_plot.png">
+        </div>
+
+        <div id="AccountType" class="tabcontent">
+          <h3>Account Type</h3>
+          <p>
+        Loan debt began at $16,693.1 and rose to $16,693.1 over 12 days, averaging $0.0 per day.
+        <br><br>
+        Credit card debt began at $10,438.47 and fell to $4,822.67 over 12 days, averaging $-467.98 per day.
+        <br><br>
+        Liquid cash began at $5,897.8 and fell to $1,366.2 over 12 days, averaging $-377.63 per day.
+        </p>
+          <img src="260825_11_2_97ad12953a_accounttype_line_plot.png">
+        </div>
+
+        <div id="Interest" class="tabcontent">
+          <h3>Interest</h3>
+          <p>Total interest accrued was $0.0 over 12 days, averaging $0.0 per day.<br>This plot shows the new interest by day, not the total interest at a given time.</p>
+          <img src="260825_11_2_97ad12953a_marginal_interest_line_plot.png">
+          <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Date</th>
+      <th>Total CC Interest</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+        </div>
+
+        <div id="Milestones" class="tabcontent">
+          <h3>Milestones</h3>
+          <p>0 milestones were defined, and 0 were achieved before the end of the forecast.<br>Note that unachieved milestones are displayed on the last day of the forecast.</p>
+          <img src="260825_11_2_97ad12953a_milestone_scatter_plot.png">
+          <h4>Account Milestones</h4>
+          <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Milestone</th>
+      <th>Date</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table> <br>
+          <h4>Memo Milestones</h4>
+          <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Milestone</th>
+      <th>Date</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table> <br>
+          <h4>Composite Milestones</h4>
+          <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Milestone</th>
+      <th>Date</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table> <br>
+        </div>
+
+        <div id="All" class="tabcontent">
+          <h3>All</h3>
+          <p></p>
+          <img src="260825_11_2_97ad12953a_all_line_plot.png">
+        </div>
+
+        <div id="TransactionSchedule" class="tabcontent">
+          <h3>Transaction Schedule</h3>
+          <p>Transactions are displayed below.</p><br>
+          Non-essential transactions: <br>
+          <p><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Date</th>
+      <th>Priority</th>
+      <th>Amount</th>
+      <th>Memo</th>
+      <th>Income_Flag</th>
+      <th>Deferrable</th>
+      <th>Partial_Payment_Allowed</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table></p><br><br>
+          Credit Card Payments: <br>
+          <p><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table></p><br><br>
+          Loan Payments: <br>
+          <p><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table></p><br><br>
+          All Transactions: <br>
+          <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Date</th>
+      <th>Priority</th>
+      <th>Amount</th>
+      <th>Memo</th>
+      <th>Income_Flag</th>
+      <th>Deferrable</th>
+      <th>Partial_Payment_Allowed</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>2026-08-25</td>
+      <td>1</td>
+      <td>100.00</td>
+      <td>car insurance expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2026-08-25</td>
+      <td>1</td>
+      <td>10.00</td>
+      <td>hulu expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>2026-08-25</td>
+      <td>1</td>
+      <td>287.68</td>
+      <td>phone expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>2026-08-25</td>
+      <td>1</td>
+      <td>10.00</td>
+      <td>food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>2026-08-25</td>
+      <td>1</td>
+      <td>80.00</td>
+      <td>gas expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>2026-08-26</td>
+      <td>1</td>
+      <td>10.00</td>
+      <td>food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>2026-08-26</td>
+      <td>1</td>
+      <td>9.00</td>
+      <td>netflix expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>2026-08-27</td>
+      <td>1</td>
+      <td>10.00</td>
+      <td>food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>2026-08-28</td>
+      <td>1</td>
+      <td>10.00</td>
+      <td>food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>2026-08-29</td>
+      <td>1</td>
+      <td>10.00</td>
+      <td>food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>2026-08-30</td>
+      <td>1</td>
+      <td>10.00</td>
+      <td>food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>2026-08-31</td>
+      <td>1</td>
+      <td>10.00</td>
+      <td>food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>2026-09-01</td>
+      <td>1</td>
+      <td>10.00</td>
+      <td>food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>2026-09-02</td>
+      <td>1</td>
+      <td>14.00</td>
+      <td>paramount plus expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>2026-09-02</td>
+      <td>1</td>
+      <td>10.00</td>
+      <td>food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>2026-09-03</td>
+      <td>1</td>
+      <td>10.00</td>
+      <td>food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>16</th>
+      <td>2026-09-03</td>
+      <td>1</td>
+      <td>149.00</td>
+      <td>storage expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>2026-09-04</td>
+      <td>1</td>
+      <td>10.00</td>
+      <td>food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>18</th>
+      <td>2026-09-05</td>
+      <td>1</td>
+      <td>1366.20</td>
+      <td>CNA Income</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>19</th>
+      <td>2026-09-05</td>
+      <td>1</td>
+      <td>10.00</td>
+      <td>food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+  </tbody>
+</table>
+        </div>
+
+        <div id="Sankey" class="tabcontent">
+          <h3>Sankey</h3>
+          <p>Sankey diagram generation failed: 'MemoRule' object has no attribute 'memo_rules'</p>
+          <img src="">
+        </div>
+
+        <div id="Forecast Results" class="tabcontent">
+          <h3>Forecast Results</h3>
+          <p>
+        This forecast started at 2026-07-06 00:55:52.829473, took 0:00:00 to complete, and finished at 2026-07-06 00:55:52.829473.
+        </p>
+          <p>The visualized data are below:</p>
+          <h4>Forecast #260825_11_2_97ad12953a:</h4>
+          <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Date</th>
+      <th>Checking</th>
+      <th>Savings</th>
+      <th>Citi</th>
+      <th>Citi: Curr Stmt Bal</th>
+      <th>Citi: Prev Stmt Bal</th>
+      <th>Citi: Credit Billing Cycle Payment Bal</th>
+      <th>Citi: Credit End of Prev Cycle Bal</th>
+      <th>Chase</th>
+      <th>Chase: Curr Stmt Bal</th>
+      <th>Chase: Prev Stmt Bal</th>
+      <th>Chase: Credit Billing Cycle Payment Bal</th>
+      <th>Chase: Credit End of Prev Cycle Bal</th>
+      <th>Loan A</th>
+      <th>Loan A: Principal Balance</th>
+      <th>Loan A: Interest</th>
+      <th>Loan A: Loan Billing Cycle Payment Bal</th>
+      <th>Loan A: Loan End of Prev Cycle Bal</th>
+      <th>Loan B</th>
+      <th>Loan B: Principal Balance</th>
+      <th>Loan B: Interest</th>
+      <th>Loan B: Loan Billing Cycle Payment Bal</th>
+      <th>Loan B: Loan End of Prev Cycle Bal</th>
+      <th>Loan C</th>
+      <th>Loan C: Principal Balance</th>
+      <th>Loan C: Interest</th>
+      <th>Loan C: Loan Billing Cycle Payment Bal</th>
+      <th>Loan C: Loan End of Prev Cycle Bal</th>
+      <th>Loan D</th>
+      <th>Loan D: Principal Balance</th>
+      <th>Loan D: Interest</th>
+      <th>Loan D: Loan Billing Cycle Payment Bal</th>
+      <th>Loan D: Loan End of Prev Cycle Bal</th>
+      <th>Loan E</th>
+      <th>Loan E: Principal Balance</th>
+      <th>Loan E: Interest</th>
+      <th>Loan E: Loan Billing Cycle Payment Bal</th>
+      <th>Loan E: Loan End of Prev Cycle Bal</th>
+      <th>Marginal Interest</th>
+      <th>Net Gain</th>
+      <th>Net Loss</th>
+      <th>Net Worth</th>
+      <th>Loan Total</th>
+      <th>CC Debt Total</th>
+      <th>Liquid Total</th>
+      <th>Next Income Date</th>
+      <th>Memo Directives</th>
+      <th>Memo</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>2026-08-25</td>
+      <td>5897.8</td>
+      <td>325.21</td>
+      <td>3871.98</td>
+      <td>0.0</td>
+      <td>3871.98</td>
+      <td>0.0</td>
+      <td>3871.98</td>
+      <td>6566.49</td>
+      <td>0.0</td>
+      <td>6566.49</td>
+      <td>0.0</td>
+      <td>6566.49</td>
+      <td>3608.67</td>
+      <td>3484.34</td>
+      <td>124.33</td>
+      <td>124.33</td>
+      <td>3484.34</td>
+      <td>4586.91</td>
+      <td>4519.9</td>
+      <td>67.01</td>
+      <td>67.01</td>
+      <td>4519.9</td>
+      <td>2032.86</td>
+      <td>1969.58</td>
+      <td>63.28</td>
+      <td>63.28</td>
+      <td>1969.58</td>
+      <td>4558.79</td>
+      <td>4506.0</td>
+      <td>52.79</td>
+      <td>52.79</td>
+      <td>4506.0</td>
+      <td>1905.87</td>
+      <td>1855.69</td>
+      <td>50.18</td>
+      <td>50.18</td>
+      <td>1855.69</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>-21233.77</td>
+      <td>16693.1</td>
+      <td>10438.47</td>
+      <td>5897.8</td>
+      <td>2026-09-05</td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2026-08-26</td>
+      <td>5897.8</td>
+      <td>325.21</td>
+      <td>3871.98</td>
+      <td>0.0</td>
+      <td>3871.98</td>
+      <td>0.0</td>
+      <td>3871.98</td>
+      <td>6585.49</td>
+      <td>19.0</td>
+      <td>6566.49</td>
+      <td>0.0</td>
+      <td>6566.49</td>
+      <td>3608.67</td>
+      <td>3484.34</td>
+      <td>124.33</td>
+      <td>124.33</td>
+      <td>3484.34</td>
+      <td>4586.91</td>
+      <td>4519.9</td>
+      <td>67.01</td>
+      <td>67.01</td>
+      <td>4519.9</td>
+      <td>2032.86</td>
+      <td>1969.58</td>
+      <td>63.28</td>
+      <td>63.28</td>
+      <td>1969.58</td>
+      <td>4558.79</td>
+      <td>4506.0</td>
+      <td>52.79</td>
+      <td>52.79</td>
+      <td>4506.0</td>
+      <td>1905.87</td>
+      <td>1855.69</td>
+      <td>50.18</td>
+      <td>50.18</td>
+      <td>1855.69</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>19.0</td>
+      <td>-21252.77</td>
+      <td>16693.1</td>
+      <td>10457.47</td>
+      <td>5897.8</td>
+      <td>2026-09-05</td>
+      <td></td>
+      <td>food expense (Chase -$10.00); netflix expense (Chase -$9.00)</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>2026-08-27</td>
+      <td>5897.8</td>
+      <td>325.21</td>
+      <td>3871.98</td>
+      <td>0.0</td>
+      <td>3871.98</td>
+      <td>0.0</td>
+      <td>3871.98</td>
+      <td>6595.49</td>
+      <td>29.0</td>
+      <td>6566.49</td>
+      <td>0.0</td>
+      <td>6566.49</td>
+      <td>3608.67</td>
+      <td>3484.34</td>
+      <td>124.33</td>
+      <td>124.33</td>
+      <td>3484.34</td>
+      <td>4586.91</td>
+      <td>4519.9</td>
+      <td>67.01</td>
+      <td>67.01</td>
+      <td>4519.9</td>
+      <td>2032.86</td>
+      <td>1969.58</td>
+      <td>63.28</td>
+      <td>63.28</td>
+      <td>1969.58</td>
+      <td>4558.79</td>
+      <td>4506.0</td>
+      <td>52.79</td>
+      <td>52.79</td>
+      <td>4506.0</td>
+      <td>1905.87</td>
+      <td>1855.69</td>
+      <td>50.18</td>
+      <td>50.18</td>
+      <td>1855.69</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>10.0</td>
+      <td>-21262.77</td>
+      <td>16693.1</td>
+      <td>10467.47</td>
+      <td>5897.8</td>
+      <td>2026-09-05</td>
+      <td></td>
+      <td>food expense (Chase -$10.00)</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>2026-08-28</td>
+      <td>5897.8</td>
+      <td>325.21</td>
+      <td>3871.98</td>
+      <td>0.0</td>
+      <td>3871.98</td>
+      <td>0.0</td>
+      <td>3871.98</td>
+      <td>6605.49</td>
+      <td>39.0</td>
+      <td>6566.49</td>
+      <td>0.0</td>
+      <td>6566.49</td>
+      <td>3608.67</td>
+      <td>3484.34</td>
+      <td>124.33</td>
+      <td>124.33</td>
+      <td>3484.34</td>
+      <td>4586.91</td>
+      <td>4519.9</td>
+      <td>67.01</td>
+      <td>67.01</td>
+      <td>4519.9</td>
+      <td>2032.86</td>
+      <td>1969.58</td>
+      <td>63.28</td>
+      <td>63.28</td>
+      <td>1969.58</td>
+      <td>4558.79</td>
+      <td>4506.0</td>
+      <td>52.79</td>
+      <td>52.79</td>
+      <td>4506.0</td>
+      <td>1905.87</td>
+      <td>1855.69</td>
+      <td>50.18</td>
+      <td>50.18</td>
+      <td>1855.69</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>10.0</td>
+      <td>-21272.77</td>
+      <td>16693.1</td>
+      <td>10477.47</td>
+      <td>5897.8</td>
+      <td>2026-09-05</td>
+      <td></td>
+      <td>food expense (Chase -$10.00)</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>2026-08-29</td>
+      <td>5897.8</td>
+      <td>325.21</td>
+      <td>3871.98</td>
+      <td>0.0</td>
+      <td>3871.98</td>
+      <td>0.0</td>
+      <td>3871.98</td>
+      <td>6615.49</td>
+      <td>49.0</td>
+      <td>6566.49</td>
+      <td>0.0</td>
+      <td>6566.49</td>
+      <td>3608.67</td>
+      <td>3484.34</td>
+      <td>124.33</td>
+      <td>124.33</td>
+      <td>3484.34</td>
+      <td>4586.91</td>
+      <td>4519.9</td>
+      <td>67.01</td>
+      <td>67.01</td>
+      <td>4519.9</td>
+      <td>2032.86</td>
+      <td>1969.58</td>
+      <td>63.28</td>
+      <td>63.28</td>
+      <td>1969.58</td>
+      <td>4558.79</td>
+      <td>4506.0</td>
+      <td>52.79</td>
+      <td>52.79</td>
+      <td>4506.0</td>
+      <td>1905.87</td>
+      <td>1855.69</td>
+      <td>50.18</td>
+      <td>50.18</td>
+      <td>1855.69</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>10.0</td>
+      <td>-21282.77</td>
+      <td>16693.1</td>
+      <td>10487.47</td>
+      <td>5897.8</td>
+      <td>2026-09-05</td>
+      <td></td>
+      <td>food expense (Chase -$10.00)</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>2026-08-30</td>
+      <td>5897.8</td>
+      <td>325.21</td>
+      <td>3871.98</td>
+      <td>0.0</td>
+      <td>3871.98</td>
+      <td>0.0</td>
+      <td>3871.98</td>
+      <td>6625.49</td>
+      <td>59.0</td>
+      <td>6566.49</td>
+      <td>0.0</td>
+      <td>6566.49</td>
+      <td>3608.67</td>
+      <td>3484.34</td>
+      <td>124.33</td>
+      <td>124.33</td>
+      <td>3484.34</td>
+      <td>4586.91</td>
+      <td>4519.9</td>
+      <td>67.01</td>
+      <td>67.01</td>
+      <td>4519.9</td>
+      <td>2032.86</td>
+      <td>1969.58</td>
+      <td>63.28</td>
+      <td>63.28</td>
+      <td>1969.58</td>
+      <td>4558.79</td>
+      <td>4506.0</td>
+      <td>52.79</td>
+      <td>52.79</td>
+      <td>4506.0</td>
+      <td>1905.87</td>
+      <td>1855.69</td>
+      <td>50.18</td>
+      <td>50.18</td>
+      <td>1855.69</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>10.0</td>
+      <td>-21292.77</td>
+      <td>16693.1</td>
+      <td>10497.47</td>
+      <td>5897.8</td>
+      <td>2026-09-05</td>
+      <td></td>
+      <td>food expense (Chase -$10.00)</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>2026-08-31</td>
+      <td>5897.8</td>
+      <td>325.21</td>
+      <td>3871.98</td>
+      <td>0.0</td>
+      <td>3871.98</td>
+      <td>0.0</td>
+      <td>3871.98</td>
+      <td>6635.49</td>
+      <td>69.0</td>
+      <td>6566.49</td>
+      <td>0.0</td>
+      <td>6566.49</td>
+      <td>3608.67</td>
+      <td>3484.34</td>
+      <td>124.33</td>
+      <td>124.33</td>
+      <td>3484.34</td>
+      <td>4586.91</td>
+      <td>4519.9</td>
+      <td>67.01</td>
+      <td>67.01</td>
+      <td>4519.9</td>
+      <td>2032.86</td>
+      <td>1969.58</td>
+      <td>63.28</td>
+      <td>63.28</td>
+      <td>1969.58</td>
+      <td>4558.79</td>
+      <td>4506.0</td>
+      <td>52.79</td>
+      <td>52.79</td>
+      <td>4506.0</td>
+      <td>1905.87</td>
+      <td>1855.69</td>
+      <td>50.18</td>
+      <td>50.18</td>
+      <td>1855.69</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>10.0</td>
+      <td>-21302.77</td>
+      <td>16693.1</td>
+      <td>10507.47</td>
+      <td>5897.8</td>
+      <td>2026-09-05</td>
+      <td></td>
+      <td>food expense (Chase -$10.00)</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>2026-09-01</td>
+      <td>0.0</td>
+      <td>325.21</td>
+      <td>3871.98</td>
+      <td>0.0</td>
+      <td>3871.98</td>
+      <td>0.0</td>
+      <td>3871.98</td>
+      <td>747.69</td>
+      <td>79.0</td>
+      <td>668.69</td>
+      <td>5897.8</td>
+      <td>6566.49</td>
+      <td>3608.67</td>
+      <td>3484.34</td>
+      <td>124.33</td>
+      <td>124.33</td>
+      <td>3484.34</td>
+      <td>4586.91</td>
+      <td>4519.9</td>
+      <td>67.01</td>
+      <td>67.01</td>
+      <td>4519.9</td>
+      <td>2032.86</td>
+      <td>1969.58</td>
+      <td>63.28</td>
+      <td>63.28</td>
+      <td>1969.58</td>
+      <td>4558.79</td>
+      <td>4506.0</td>
+      <td>52.79</td>
+      <td>52.79</td>
+      <td>4506.0</td>
+      <td>1905.87</td>
+      <td>1855.69</td>
+      <td>50.18</td>
+      <td>50.18</td>
+      <td>1855.69</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>10.0</td>
+      <td>-21312.77</td>
+      <td>16693.1</td>
+      <td>4619.67</td>
+      <td>0.0</td>
+      <td>2026-09-05</td>
+      <td></td>
+      <td>food expense (Chase -$10.00)</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>2026-09-02</td>
+      <td>0.0</td>
+      <td>325.21</td>
+      <td>3871.98</td>
+      <td>0.0</td>
+      <td>3871.98</td>
+      <td>0.0</td>
+      <td>3871.98</td>
+      <td>771.69</td>
+      <td>103.0</td>
+      <td>668.69</td>
+      <td>5897.8</td>
+      <td>668.69</td>
+      <td>3608.67</td>
+      <td>3484.34</td>
+      <td>124.33</td>
+      <td>124.33</td>
+      <td>3484.34</td>
+      <td>4586.91</td>
+      <td>4519.9</td>
+      <td>67.01</td>
+      <td>67.01</td>
+      <td>4519.9</td>
+      <td>2032.86</td>
+      <td>1969.58</td>
+      <td>63.28</td>
+      <td>63.28</td>
+      <td>1969.58</td>
+      <td>4558.79</td>
+      <td>4506.0</td>
+      <td>52.79</td>
+      <td>52.79</td>
+      <td>4506.0</td>
+      <td>1905.87</td>
+      <td>1855.69</td>
+      <td>50.18</td>
+      <td>50.18</td>
+      <td>1855.69</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>24.0</td>
+      <td>-21336.77</td>
+      <td>16693.1</td>
+      <td>4643.67</td>
+      <td>0.0</td>
+      <td>2026-09-05</td>
+      <td></td>
+      <td>paramount plus expense (Chase -$14.00); food expense (Chase -$10.00)</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>2026-09-03</td>
+      <td>0.0</td>
+      <td>325.21</td>
+      <td>3871.98</td>
+      <td>0.0</td>
+      <td>3871.98</td>
+      <td>0.0</td>
+      <td>3871.98</td>
+      <td>930.69</td>
+      <td>262.0</td>
+      <td>668.69</td>
+      <td>5897.8</td>
+      <td>668.69</td>
+      <td>3608.67</td>
+      <td>3484.34</td>
+      <td>124.33</td>
+      <td>124.33</td>
+      <td>3484.34</td>
+      <td>4586.91</td>
+      <td>4519.9</td>
+      <td>67.01</td>
+      <td>67.01</td>
+      <td>4519.9</td>
+      <td>2032.86</td>
+      <td>1969.58</td>
+      <td>63.28</td>
+      <td>63.28</td>
+      <td>1969.58</td>
+      <td>4558.79</td>
+      <td>4506.0</td>
+      <td>52.79</td>
+      <td>52.79</td>
+      <td>4506.0</td>
+      <td>1905.87</td>
+      <td>1855.69</td>
+      <td>50.18</td>
+      <td>50.18</td>
+      <td>1855.69</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>159.0</td>
+      <td>-21495.77</td>
+      <td>16693.1</td>
+      <td>4802.67</td>
+      <td>0.0</td>
+      <td>2026-09-05</td>
+      <td></td>
+      <td>storage expense (Chase -$149.00); food expense (Chase -$10.00)</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>2026-09-04</td>
+      <td>0.0</td>
+      <td>325.21</td>
+      <td>3871.98</td>
+      <td>0.0</td>
+      <td>3871.98</td>
+      <td>0.0</td>
+      <td>3871.98</td>
+      <td>940.69</td>
+      <td>272.0</td>
+      <td>668.69</td>
+      <td>5897.8</td>
+      <td>668.69</td>
+      <td>3608.67</td>
+      <td>3484.34</td>
+      <td>124.33</td>
+      <td>124.33</td>
+      <td>3484.34</td>
+      <td>4586.91</td>
+      <td>4519.9</td>
+      <td>67.01</td>
+      <td>67.01</td>
+      <td>4519.9</td>
+      <td>2032.86</td>
+      <td>1969.58</td>
+      <td>63.28</td>
+      <td>63.28</td>
+      <td>1969.58</td>
+      <td>4558.79</td>
+      <td>4506.0</td>
+      <td>52.79</td>
+      <td>52.79</td>
+      <td>4506.0</td>
+      <td>1905.87</td>
+      <td>1855.69</td>
+      <td>50.18</td>
+      <td>50.18</td>
+      <td>1855.69</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>10.0</td>
+      <td>-21505.77</td>
+      <td>16693.1</td>
+      <td>4812.67</td>
+      <td>0.0</td>
+      <td>2026-09-05</td>
+      <td></td>
+      <td>food expense (Chase -$10.00)</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>2026-09-05</td>
+      <td>1366.2</td>
+      <td>325.21</td>
+      <td>3871.98</td>
+      <td>0.0</td>
+      <td>3871.98</td>
+      <td>0.0</td>
+      <td>3871.98</td>
+      <td>950.69</td>
+      <td>282.0</td>
+      <td>668.69</td>
+      <td>5897.8</td>
+      <td>668.69</td>
+      <td>3608.67</td>
+      <td>3484.34</td>
+      <td>124.33</td>
+      <td>124.33</td>
+      <td>3484.34</td>
+      <td>4586.91</td>
+      <td>4519.9</td>
+      <td>67.01</td>
+      <td>67.01</td>
+      <td>4519.9</td>
+      <td>2032.86</td>
+      <td>1969.58</td>
+      <td>63.28</td>
+      <td>63.28</td>
+      <td>1969.58</td>
+      <td>4558.79</td>
+      <td>4506.0</td>
+      <td>52.79</td>
+      <td>52.79</td>
+      <td>4506.0</td>
+      <td>1905.87</td>
+      <td>1855.69</td>
+      <td>50.18</td>
+      <td>50.18</td>
+      <td>1855.69</td>
+      <td>0.0</td>
+      <td>1356.2</td>
+      <td>0.0</td>
+      <td>-20149.57</td>
+      <td>16693.1</td>
+      <td>4822.67</td>
+      <td>1366.2</td>
+      <td></td>
+      <td>INCOME (Checking +$1366.20)</td>
+      <td>CNA Income (Checking +$1366.20); food expense (Chase -$10.00)</td>
+    </tr>
+  </tbody>
+</table>
+        </div>
+
+        <br>
+
+        <script>
+        function openTab(evt, tabName) {
+          var i, tabcontent, tablinks;
+          tabcontent = document.getElementsByClassName("tabcontent");
+          for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+          }
+          tablinks = document.getElementsByClassName("tablinks");
+          for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(" active", "");
+          }
+          document.getElementById(tabName).style.display = "block";
+          evt.currentTarget.className += " active";
+        }
+        document.getElementById("ForecastParameters").style.display = "block";
+        </script>
+
+        </body>
+        </html>
+        
