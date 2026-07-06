@@ -1,6 +1,9 @@
 import pytest
 import pandas as pd
 from datetime import date
+import json
+from pathlib import Path
+import tempfile
 
 from expense_forecast.AccountSet import AccountSet
 from expense_forecast.BudgetSet import BudgetSet
@@ -12,8 +15,80 @@ from expense_forecast.MilestoneSet import MilestoneSet
 from expense_forecast.ForecastHandler import ForecastHandler
 
 import subprocess
+import os
+
+def simple_forecast_initial_conditions(path):
+    A = AccountSet()
+    B = BudgetSet()
+    M = MemoRuleSet()
+    MS = MilestoneSet()
+
+    A.createCheckingAccount(
+        name="Checking",
+        balance=1000,
+        min_balance=0,
+        max_balance=float("inf"),
+        primary_checking_ind=True,
+    )
+
+    E = ExpenseForecastInitialConditions(
+        start_date=date(2026, 6, 1),
+        end_date=date(2026, 6, 3),
+        account_set=A,
+        budget_set=B,
+        memo_rule_set=M,
+        milestone_set=MS,
+    )
+
+    path = Path(path)
+    path.write_text(json.dumps(E.to_dict(), indent=4))
+    return path
 
 class TestE2E:
+
+
+    def test_cli_runs_simple_forecast(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            initial_conditions_path = temp_path / "initial_conditions.json"
+            forecast_result_path = temp_path / "forecast_result.json"
+            config_path = temp_path / "expense_forecast.conf"
+            log_dir = temp_path / "log"
+            log_dir.mkdir()
+
+            simple_forecast_initial_conditions(initial_conditions_path)
+            config_path.write_text("[default]\n")
+
+            result = subprocess.run(
+                [
+                    "python3",
+                    "-m",
+                    "expense_forecast.ef_cli",
+                    "run",
+                    "forecast",
+                    "--source",
+                    "file",
+                    "--ifilename",
+                    "initial_conditions.json",
+                    "--ofilename",
+                    "forecast_result.json"],
+                cwd=temp_path,
+                capture_output=True,
+                text=True,
+            )
+
+            assert result.returncode == 0
+            assert forecast_result_path.exists()
+
+    def test_cli_help_runs(self):
+        result = subprocess.run(
+            ["python3", "-m", "expense_forecast.ef_cli", "--help"],
+            capture_output=True,
+            text=True,
+        )
+
+        assert result.returncode == 0
+        assert "usage" in result.stdout.lower()
 
     @pytest.mark.skip
     @pytest.mark.E2E

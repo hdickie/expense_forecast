@@ -1449,155 +1449,155 @@ class TestForecastHandler:
 
 
 
-    @pytest.mark.skip(reason="A combination of multiple cases, not sure if this is useful")
-    @pytest.mark.integration
-    def test_ForecastHandler__all_account_types(self):
-        start_date = date(2026,6,1)
-        end_date = date(2026,6,10)
+    # @pytest.mark.skip(reason="A combination of multiple cases, not sure if this is useful")
+    # @pytest.mark.integration
+    # def test_ForecastHandler__all_account_types(self):
+    #     start_date = date(2026,6,1)
+    #     end_date = date(2026,6,10)
         
-        A = AccountSet()
-        B = BudgetSet()
-        M = MemoRuleSet()
-        MS = MilestoneSet()
+    #     A = AccountSet()
+    #     B = BudgetSet()
+    #     M = MemoRuleSet()
+    #     MS = MilestoneSet()
 
-        A.createCheckingAccount(
-            name="Checking",
-            balance=1000,
-            min_balance=0,
-            max_balance=float("inf"),
-            primary_checking_ind=True,
-        )
+    #     A.createCheckingAccount(
+    #         name="Checking",
+    #         balance=1000,
+    #         min_balance=0,
+    #         max_balance=float("inf"),
+    #         primary_checking_ind=True,
+    #     )
 
-        A.createCreditCardAccount(
-            name="Credit",
-            current_statement_balance=100, 
-            previous_statement_balance=100, 
-            min_balance=0, 
-            max_balance=25_000,
-            billing_start_date=date(2020,1,7), 
-            apr=0.28, 
-            minimum_payment=40, 
-            end_of_previous_cycle_balance=100
-        )  
+    #     A.createCreditCardAccount(
+    #         name="Credit",
+    #         current_statement_balance=100, 
+    #         previous_statement_balance=100, 
+    #         min_balance=0, 
+    #         max_balance=25_000,
+    #         billing_start_date=date(2020,1,7), 
+    #         apr=0.28, 
+    #         minimum_payment=40, 
+    #         end_of_previous_cycle_balance=100
+    #     )  
 
-        A.createLoanAccount(
-            name="Loan", 
-            principal_balance=15_000, 
-            interest_balance=500, 
-            min_balance=0, 
-            max_balance=25_000, 
-            billing_start_date=date(2020,1,3),
-            apr=0.07, 
-            minimum_payment=212.00, 
-            end_of_previous_cycle_balance=15_000
-        )
+    #     A.createLoanAccount(
+    #         name="Loan", 
+    #         principal_balance=15_000, 
+    #         interest_balance=500, 
+    #         min_balance=0, 
+    #         max_balance=25_000, 
+    #         billing_start_date=date(2020,1,3),
+    #         apr=0.07, 
+    #         minimum_payment=212.00, 
+    #         end_of_previous_cycle_balance=15_000
+    #     )
 
-        # TODO Savings / Investment Account
+    #     # TODO Savings / Investment Account
 
-        B.addBudgetItem(
-            start_date=start_date,
-            end_date=end_date,
-            priority=1,
-            cadence="daily",
-            amount=10,
-            memo="food",
-            income_flag=False,
-            deferrable=False,
-            partial_payment_allowed=False,
-        )
+    #     B.addBudgetItem(
+    #         start_date=start_date,
+    #         end_date=end_date,
+    #         priority=1,
+    #         cadence="daily",
+    #         amount=10,
+    #         memo="food",
+    #         income_flag=False,
+    #         deferrable=False,
+    #         partial_payment_allowed=False,
+    #     )
 
-        M.addMemoRule(
-            memo_regex="food",
-            account_from="Checking",
-            account_to=None,
-            transaction_priority=1,
-        )
+    #     M.addMemoRule(
+    #         memo_regex="food",
+    #         account_from="Checking",
+    #         account_to=None,
+    #         transaction_priority=1,
+    #     )
 
-        MS = MilestoneSet()
+    #     MS = MilestoneSet()
 
-        E_IO = ExpenseForecastInitialConditions(
-            start_date=start_date,
-            end_date=end_date,
-            account_set=A,
-            budget_set=B,
-            memo_rule_set=M,
-            milestone_set=MS)
+    #     E_IO = ExpenseForecastInitialConditions(
+    #         start_date=start_date,
+    #         end_date=end_date,
+    #         account_set=A,
+    #         budget_set=B,
+    #         memo_rule_set=M,
+    #         milestone_set=MS)
         
-        R__debug_true = ForecastHandler().runForecast(E_IO, MS, include_debug_columns=True)
+    #     R__debug_true = ForecastHandler().runForecast(E_IO, MS, include_debug_columns=True)
 
-        assert isinstance(R__debug_true, ExpenseForecastResult)
-        assert isinstance(R__debug_true.forecast_df, pd.DataFrame)
+    #     assert isinstance(R__debug_true, ExpenseForecastResult)
+    #     assert isinstance(R__debug_true.forecast_df, pd.DataFrame)
 
-        required_columns__debug_true_case = {
-            "Date",
-            "Checking",
-            "Credit",
-            "Credit: Curr Stmt Bal",
-            "Credit: Prev Stmt Bal",
-            "Credit: Credit Billing Cycle Payment Bal",
-            "Credit: Credit End of Prev Cycle Bal",
+    #     required_columns__debug_true_case = {
+    #         "Date",
+    #         "Checking",
+    #         "Credit",
+    #         "Credit: Curr Stmt Bal",
+    #         "Credit: Prev Stmt Bal",
+    #         "Credit: Credit Billing Cycle Payment Bal",
+    #         "Credit: Credit End of Prev Cycle Bal",
 
-            "Loan",     #Something fishy with this
-            "Loan: Principal Balance",
-            "Loan: Interest",
-            "Loan: Loan Billing Cycle Payment Bal",
+    #         "Loan",     #Something fishy with this
+    #         "Loan: Principal Balance",
+    #         "Loan: Interest",
+    #         "Loan: Loan Billing Cycle Payment Bal",
 
-            "Marginal Interest",
-            "Net Gain",
-            "Net Loss",
-            "Net Worth",
-            "Loan Total",
-            "CC Debt Total",
-            "Liquid Total",
-            "Next Income Date",
-            "Memo Directives",
-            "Memo",
+    #         "Marginal Interest",
+    #         "Net Gain",
+    #         "Net Loss",
+    #         "Net Worth",
+    #         "Loan Total",
+    #         "CC Debt Total",
+    #         "Liquid Total",
+    #         "Next Income Date",
+    #         "Memo Directives",
+    #         "Memo",
             
-        }
+    #     }
 
-        actual_columns__debug_true_case = set(R__debug_true.forecast_df.columns)
+    #     actual_columns__debug_true_case = set(R__debug_true.forecast_df.columns)
 
-        missing__debug_true_case = required_columns__debug_true_case - actual_columns__debug_true_case
-        unexpected__debug_true_case = actual_columns__debug_true_case - required_columns__debug_true_case
+    #     missing__debug_true_case = required_columns__debug_true_case - actual_columns__debug_true_case
+    #     unexpected__debug_true_case = actual_columns__debug_true_case - required_columns__debug_true_case
 
-        assert actual_columns__debug_true_case == required_columns__debug_true_case, (
-            "Forecast dataframe columns did not match.\n"
-            f"Missing columns:    {sorted(missing__debug_true_case)}\n"
-            f"Unexpected columns: {sorted(unexpected__debug_true_case)}\n"
-            f"Actual columns:     {list(R__debug_true.forecast_df.columns)}"
-        )
+    #     assert actual_columns__debug_true_case == required_columns__debug_true_case, (
+    #         "Forecast dataframe columns did not match.\n"
+    #         f"Missing columns:    {sorted(missing__debug_true_case)}\n"
+    #         f"Unexpected columns: {sorted(unexpected__debug_true_case)}\n"
+    #         f"Actual columns:     {list(R__debug_true.forecast_df.columns)}"
+    #     )
 
-        R__debug_false = ForecastHandler().runForecast(E_IO, MS, include_debug_columns=False)
+    #     R__debug_false = ForecastHandler().runForecast(E_IO, MS, include_debug_columns=False)
 
-        assert isinstance(R__debug_false, ExpenseForecastResult)
-        assert isinstance(R__debug_false.forecast_df, pd.DataFrame)
+    #     assert isinstance(R__debug_false, ExpenseForecastResult)
+    #     assert isinstance(R__debug_false.forecast_df, pd.DataFrame)
 
-        required_columns__debug_false_case = {
-            "Date",
-            "Checking",
-            "Credit",
-            "Loan",
-            "Next Income Date",
-            "Memo Directives",
-            "Memo",
-            "CC Debt Total",
-            "Liquid Total",
-            "Net Loss"
-        }
+    #     required_columns__debug_false_case = {
+    #         "Date",
+    #         "Checking",
+    #         "Credit",
+    #         "Loan",
+    #         "Next Income Date",
+    #         "Memo Directives",
+    #         "Memo",
+    #         "CC Debt Total",
+    #         "Liquid Total",
+    #         "Net Loss"
+    #     }
 
-        actual_columns__debug_false_case = set(R__debug_false.forecast_df.columns)
+    #     actual_columns__debug_false_case = set(R__debug_false.forecast_df.columns)
 
-        missing__debug_false_case = required_columns__debug_false_case - actual_columns__debug_false_case
-        unexpected__debug_false_case = actual_columns__debug_false_case - required_columns__debug_false_case
+    #     missing__debug_false_case = required_columns__debug_false_case - actual_columns__debug_false_case
+    #     unexpected__debug_false_case = actual_columns__debug_false_case - required_columns__debug_false_case
 
-        assert actual_columns__debug_false_case == required_columns__debug_false_case, (
-            "Forecast dataframe columns did not match.\n"
-            f"Missing columns:    {sorted(missing__debug_false_case)}\n"
-            f"Unexpected columns: {sorted(unexpected__debug_false_case)}\n"
-            f"Actual columns:     {list(R__debug_false.forecast_df.columns)}"
-        )
+    #     assert actual_columns__debug_false_case == required_columns__debug_false_case, (
+    #         "Forecast dataframe columns did not match.\n"
+    #         f"Missing columns:    {sorted(missing__debug_false_case)}\n"
+    #         f"Unexpected columns: {sorted(unexpected__debug_false_case)}\n"
+    #         f"Actual columns:     {list(R__debug_false.forecast_df.columns)}"
+    #     )
 
-        # TODO assert final values, and shape of final data frames
+    #     # TODO assert final values, and shape of final data frames
 
     def test_initial_conditions_round_trip_preserves_forecast_result(self):
         start_date = date(2026, 6, 1)

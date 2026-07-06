@@ -225,8 +225,12 @@ def run(args):
     # At this point though, let's set a garbage value for debugging
     # this is technically deprecated but may have some debugging use so let's leep for now
 
-    assert len(args.action) <= 2
-    assert args.action[0] in [
+    if len(args.action) > 2:
+        raise ValueError(
+            f"Expected ACTION to contain one or two words, got {args.action!r}."
+        )
+
+    valid_actions = {
         "stage",
         "run",
         "list",
@@ -236,60 +240,128 @@ def run(args):
         "export",
         "import",
         "inspect",
-    ]
-    if args.action[0] in ["stage", "run", "kill", "report", "export", "import"]:
-        assert len(args.action) == 2
-        assert args.action[1] in ["forecast", "forecastset"]
+    }
 
-    # this is before config is loaded
-    if args.action[0] in ["kill", "ps"]:
-        assert args.database_hostname is None
-        assert args.database_name is None
-        assert args.database_username is None
-        assert args.database_port is None
-        assert args.database_password is None
+    if args.action[0] not in valid_actions:
+        raise ValueError(
+            f"Unknown action '{args.action[0]}'. "
+            f"Expected one of: {', '.join(sorted(valid_actions))}."
+        )
 
-    # if args.action[0] in ['parameterize']:
-    #     assert args.filename is not None
+    if args.action[0] in {"stage", "run", "kill", "report", "export", "import"}:
+        if len(args.action) != 2:
+            raise ValueError(
+                f"Action '{args.action[0]}' requires a target "
+                "(forecast or forecastset)."
+            )
 
-    if args.action[0] in ["stage", "run", "report", "export"]:
-        assert args.working_directory is not None
-        assert os.path.isdir(args.working_directory)
+        if args.action[1] not in {"forecast", "forecastset"}:
+            raise ValueError(
+                f"Unknown target '{args.action[1]}'. "
+                "Expected 'forecast' or 'forecastset'."
+            )
 
-    if args.action[0] in ["export", "import"]:
-        assert args.database_hostname is not None
-        assert args.database_name is not None
-        assert args.database_username is not None
-        assert args.database_port is not None
-        assert args.database_password is not None
+    #
+    # kill / ps
+    #
 
-    # not valid bc there is a default value
-    # if args.output_directory is not None:
-    #     assert os.path.isdir(args.output_directory)
-    #     assert args.action[0] in ['parameterize','run','report','export']
+    if args.action[0] in {"kill", "ps"}:
+        for attr in (
+            "database_hostname",
+            "database_name",
+            "database_username",
+            "database_port",
+            "database_password",
+        ):
+            if getattr(args, attr) is not None:
+                raise ValueError(
+                    f"--{attr.replace('_', '-')} cannot be supplied with "
+                    f"'{args.action[0]}'."
+                )
 
-    # parameterize and reparameterize require start and end date
-    if args.action[0] in ["stage"]:
-        assert args.start_date is not None
-        assert args.end_date is not None
-        
-        ### TODO why would stage need this? i dont think it does
-        # assert (
-        #     args.id is not None
-        # )  # the string literal 'None' is a valid option for database
+    #
+    # working directory
+    #
 
-    # the label arg is only valid when used with parameterize and reparameterize
-    if args.label != '':
-        assert args.action[0] in ["stage"]
+    if args.action[0] in {"stage", "run", "report", "export"}:
+        if args.working_directory is None:
+            raise ValueError(
+                f"Action '{args.action[0]}' requires --working-directory."
+            )
 
-    assert os.path.isdir(args.log_directory)  # check log_directory exists
-    assert os.access(args.log_directory, os.W_OK)  # check log_directory is writable
+        if not os.path.isdir(args.working_directory):
+            raise ValueError(
+                f"Working directory does not exist: {args.working_directory}"
+            )
 
-    if args.approximate:
-        assert args.action[0] == "run"
+    #
+    # database
+    #
 
-    if args.overwrite:
-        assert args.action[0] == "run"
+    if args.action[0] in {"export", "import"}:
+        required = (
+            "database_hostname",
+            "database_name",
+            "database_username",
+            "database_port",
+            "database_password",
+        )
+
+        for attr in required:
+            if getattr(args, attr) is None:
+                raise ValueError(
+                    f"Action '{args.action[0]}' requires "
+                    f"--{attr.replace('_', '-')}."
+                )
+
+    #
+    # stage
+    #
+
+    if args.action[0] == "stage":
+        if args.start_date is None:
+            raise ValueError("'stage' requires --start-date.")
+
+        if args.end_date is None:
+            raise ValueError("'stage' requires --end-date.")
+
+    #
+    # label
+    #
+
+    if args.label is not None:
+        if args.action[0] != "stage":
+            raise ValueError(
+                "--label may only be used with the 'stage' action."
+            )
+
+    #
+    # log directory
+    #
+
+    if not os.path.isdir(args.log_directory):
+        raise ValueError(
+            f"Log directory does not exist: {args.log_directory}"
+        )
+
+    if not os.access(args.log_directory, os.W_OK):
+        raise ValueError(
+            f"Log directory is not writable: {args.log_directory}"
+        )
+
+    #
+    # flags
+    #
+
+    if args.approximate and args.action[0] != "run":
+        raise ValueError(
+            "--approximate may only be used with the 'run' action."
+        )
+
+    if args.overwrite and args.action[0] != "run":
+        raise ValueError(
+            "--overwrite may only be used with the 'run' action."
+        )
 
     if args.id is not None:
         assert args.action[0] in [
@@ -314,39 +386,6 @@ def run(args):
         # args.end_date = args.end_date.replace("-", "")
         # datetime.datetime.strptime(args.end_date, "%Y%m%d")
 
-    ### TODO this checking seems no longer needed now that we merged config and args upstream
-    # this would happen if neither filename nor database was passed explicitly
-    # in that case, we check loaded config for db details
-    # if there are no db details, then error, because there is no input to process
-    # if args.database_hostname is None:
-    #     try:
-    #         args.database_hostname = args["database_hostname"]
-    #     except Exception as e:
-    #         raise ValueError("db hostname not specified on cmd line or in config")
-
-    # if args.database_name is None:
-    #     try:
-    #         args.database_name = args["database_name"]
-    #     except Exception as e:
-    #         raise ValueError("db name not specified on cmd line or in config")
-
-    # if args.database_username is None:
-    #     try:
-    #         args.database_username = args["database_username"]
-    #     except Exception as e:
-    #         raise ValueError("db username not specified on cmd line or in config")
-
-    # if args.database_port is None:
-    #     try:
-    #         args.database_port = args["database_port"]
-    #     except Exception as e:
-    #         raise ValueError("db port not specified on cmd line or in config")
-
-    # if args.database_password is None:
-    #     try:
-    #         args.database_password = args["database_password"]
-    #     except Exception as e:
-    #         raise ValueError("db password not specified on cmd line or in config")
 
     if args.source == "database" or args.source == "both":
         # try to connect
@@ -548,7 +587,6 @@ def run(args):
                 print("No data to show.")
             else:
                 print(both_forecast_details.to_string())
-
         if args.action[0] == "inspect":
             # todo args.filename could be a path
             if args.filename.startswith("ForecastSet") and args.filename.endswith(
@@ -608,32 +646,23 @@ def run(args):
             and args.source == "file"
         ):
 
-            forecast_found = False
-            for f in os.listdir(args.working_directory):
-                if (
-                    f.startswith("Forecast")
-                    and not f.startswith("ForecastSet")
-                    and f.endswith(".json")
-                    and str(args.id) in f
-                ):
-                    forecast_found = True
-                    # print('Starting forecast '+str(args.id))
-                    E = ExpenseForecast.initialize_from_json_file(
-                        os.path.join(args.working_directory, f)
-                    )  # let this throw an exception if needed
-                    if args.label:
-                        E.forecast_name = args.label
-                    if args.approximate:
-                        E.runForecastApproximate()
-                    else:
-                        E.runForecast()
-                    E.appendSummaryLines()
-                    E.writeToJSONFile(args.working_directory)
-                    F = ForecastHandler()
-                    F.generateHTMLReport(E)
-                    break  # bc only running a single forecast
-            if not forecast_found:
-                print("Forecast " + str(args.id) + " not found")
+            if not os.path.exists(args.ifilename):
+                raise ValueError("Error: "+str(args.ifilename) + " not found ; Forecast initial conditions json file not found")
+            # print('Starting forecast '+str(args.id))
+            E_IO = ExpenseForecastInitialConditions.load_json_file(
+                args.ifilename
+            )  # let this throw an exception if needed
+            # TODO these should be uncommented eventually
+            # if args.label:
+            #     E.forecast_name = args.label
+            # if args.approximate:
+            #     E.runForecastApproximate()
+            # else:
+            #     E.runForecast()
+            R = ForecastHandler().runForecast(E_IO, MilestoneSet())
+            R.write_json_file(args.ofilename)
+            # if not forecast_found:
+            #     print("\033[31m\033[0m")
         elif (
             args.action[0] == "run"
             and args.action[1] == "forecastset"
@@ -1322,7 +1351,7 @@ def run(args):
 
 def build_parser():
     parser = argparse.ArgumentParser(
-        description="Runs a Forecast or ForecastSet and displays a progress bar.",
+        description="Runs a Forecast or ForecastSet and displays a progress bar.\r\ne.g. ef run forecast --ifilename initial_conditions.json --ofilename forecast_result.json",
         epilog="As an alternative to the commandline, params can be placed in a file, one per line, and specified on the commandline like '%(prog)s @params.conf'.",
         fromfile_prefix_chars="@",
     )
@@ -1427,14 +1456,20 @@ def build_parser():
     parser.add_argument(
         "--source",
         required=False,
-        default="both",
+        default="file",
         help="both, file or database.",
         action="store",
     )
     parser.add_argument(
-        "--filename",
+        "--ifilename",
         required=False,
         help="A JSON path that contains the initial conditions for the forecast.",
+        action="store",
+    )
+    parser.add_argument(
+        "--ofilename",
+        required=False,
+        help="A JSON path that the forecast result object will be written to.",
         action="store",
     )
 

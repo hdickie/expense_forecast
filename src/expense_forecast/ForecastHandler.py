@@ -223,6 +223,7 @@ class ForecastHandler:
         log_in_color(
             logger, "white", "info", "Finished Forecast " + str(IO.unique_id)
         )
+        #TODO make this conditional on a --print flag
         log_in_color(logger, "white", "info", cls.forecast_df.to_string())
         # if play_notification_sound:
         #     notification_sounds.play_notification_sound()
@@ -2825,15 +2826,15 @@ class ForecastHandler:
         # log_in_color(logger, 'white', 'debug', forecast_df.to_string(), log_stack_depth)
 
         log_stack_depth -= 1
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            str(d)
-            + " EXIT _executeTransactionsForDay p="
-            + str(priority_level),
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     str(d)
+        #     + " EXIT _executeTransactionsForDay p="
+        #     + str(priority_level),
+        #     log_stack_depth,
+        # )
         return [forecast_df, confirmed_df, deferred_df, skipped_df]
 
     # @profile
@@ -6934,18 +6935,18 @@ class ForecastHandler:
         progress_bar=None,
         include_debug_columns=False
     ):
-        log_in_color(
-            logger,
-            "white",
-            "info",
-            "ENTER _assessPotentialOptimizations",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "info",
+        #     "ENTER _assessPotentialOptimizations",
+        #     log_stack_depth,
+        # )
         log_stack_depth += 1
 
-        log_in_color(
-            logger, "white", "info", forecast_df.to_string(), log_stack_depth
-        )
+        # log_in_color(
+        #     logger, "white", "info", forecast_df.to_string(), log_stack_depth
+        # )
 
         all_days = forecast_df.Date
 
@@ -6961,7 +6962,7 @@ class ForecastHandler:
         last_iteration_ts = None  # this is here to remove a warning
 
         if not raise__satisfice_failed_exception:
-            log_in_color(logger, "green", "info", "Beginning Optimization.")
+            log_in_color(logger, "green", "debug", "Beginning Optimization.")
             # log_in_color(logger, 'white', 'info', forecast_df.to_string())
             last_iteration_ts = datetime.datetime.now()
 
@@ -7035,13 +7036,13 @@ class ForecastHandler:
                 except Exception as e:
                     # log_in_color(logger, 'magenta', 'debug', forecast_df.to_string(), log_stack_depth)
                     log_stack_depth -= 1
-                    log_in_color(
-                        logger,
-                        "white",
-                        "debug",
-                        "EXIT _assessPotentialOptimizations",
-                        log_stack_depth,
-                    )
+                    # log_in_color(
+                    #     logger,
+                    #     "white",
+                    #     "debug",
+                    #     "EXIT _assessPotentialOptimizations",
+                    #     log_stack_depth,
+                    # )
                     raise e
 
                 # log_in_color(logger, 'green', 'info', 'forecast_df after eTFD ('+str(date_string)+'):', log_stack_depth)
@@ -7090,13 +7091,13 @@ class ForecastHandler:
         # log_in_color(logger, 'magenta', 'debug', forecast_df.to_string(), log_stack_depth)
 
         log_stack_depth -= 1
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            "EXIT _assessPotentialOptimizations",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     "EXIT _assessPotentialOptimizations",
+        #     log_stack_depth,
+        # )
         return forecast_df, skipped_df, confirmed_df, deferred_df
 
     @classmethod
@@ -7287,7 +7288,7 @@ class ForecastHandler:
         progress_bar=None,
         include_debug_columns=False
     ):
-        log_in_color(logger, "white", "info", "ENTER _satisfice", log_stack_depth)
+        # log_in_color(logger, "white", "info", "ENTER _satisfice", log_stack_depth)
         log_stack_depth += 1
 
         all_days = list_of_date_strings  # Rename for clarity
@@ -7303,7 +7304,7 @@ class ForecastHandler:
             # Skip the first day, considered as final
             if d == start_date:
                 continue
-            log_in_color(logger, "white", "info", 'satisfice TOP :: '+d.strftime('%Y-%m-%d'), log_stack_depth)
+            # log_in_color(logger, "white", "info", 'satisfice TOP :: '+d.strftime('%Y-%m-%d'), log_stack_depth)
 
             try:
                 if not (forecast_df.Date == d).any():
@@ -7314,8 +7315,9 @@ class ForecastHandler:
                     log_string = f"1 {d}"
 
                 if not confirmed_df.empty:
-                    log_in_color(logger, 'magenta', 'debug', 'satisfice confirmed_df:', log_stack_depth)
-                    log_in_color(logger, 'magenta', 'debug', confirmed_df.to_string(), log_stack_depth)
+                    pass
+                    # log_in_color(logger, 'magenta', 'debug', 'satisfice confirmed_df:', log_stack_depth)
+                    # log_in_color(logger, 'magenta', 'debug', confirmed_df.to_string(), log_stack_depth)
 
                 forecast_df.loc[forecast_df.Date == d] = (
                     cls._processCreditCardBillingDayForDay(
@@ -7410,7 +7412,7 @@ class ForecastHandler:
                 account_set = cls._sync_account_set_w_forecast_day(
                     account_set=account_set, forecast_df=forecast_df, d=d, log_stack_depth=log_stack_depth)
                 
-                log_in_color(logger, "white", "info", 'satisfice BOTTOM :: '+d.strftime('%Y-%m-%d'), log_stack_depth)
+                # log_in_color(logger, "white", "info", 'satisfice BOTTOM :: '+d.strftime('%Y-%m-%d'), log_stack_depth)
 
             except AccountBoundaryError as e:
                 error_message = str(e.args)
@@ -7444,9 +7446,9 @@ class ForecastHandler:
                     )
 
                     log_stack_depth -= 1
-                    log_in_color(
-                        logger, "white", "info", "EXIT _satisfice", log_stack_depth
-                    )
+                    # log_in_color(
+                    #     logger, "white", "info", "EXIT _satisfice", log_stack_depth
+                    # )
                     return forecast_df
                 else:
                     raise e
@@ -7459,11 +7461,11 @@ class ForecastHandler:
             if "INCOME" in forecast_df.at[f_i, "Memo Directives"]:
                 next_income_date = forecast_df.at[f_i, "Date"]
 
-        log_in_color(
-            logger, "white", "info", forecast_df.to_string(), log_stack_depth
-        )
+        # log_in_color(
+        #     logger, "white", "info", forecast_df.to_string(), log_stack_depth
+        # )
         log_stack_depth -= 1
-        log_in_color(logger, "white", "info", "EXIT _satisfice", log_stack_depth)
+        # log_in_color(logger, "white", "info", "EXIT _satisfice", log_stack_depth)
         return forecast_df  # _satisfice_success = True
 
     # @profile
@@ -7482,16 +7484,16 @@ class ForecastHandler:
         progress_bar=None,
         include_debug_columns=False
     ):
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            "ENTER _computeOptimalForecast "
-            + str(start_date)
-            + " -> "
-            + str(end_date),
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     "ENTER _computeOptimalForecast "
+        #     + str(start_date)
+        #     + " -> "
+        #     + str(end_date),
+        #     log_stack_depth,
+        # )
         log_stack_depth += 1
 
         start_date = cls._normalize_date_value(start_date)
@@ -7532,7 +7534,7 @@ class ForecastHandler:
         forecast_df = cls._getInitialForecastRow(start_date=start_date, account_set=account_set, include_debug_columns=include_debug_columns)
 
         # Attempt to _satisfice (execute priority 1 transactions for each day)
-        log_in_color(logger, 'magenta', 'debug', confirmed_df.to_string(), log_stack_depth)
+        # log_in_color(logger, 'magenta', 'debug', confirmed_df.to_string(), log_stack_depth)
         _satisfice_df = cls._satisfice(start_date,
             end_date,
             all_days,
@@ -7555,8 +7557,9 @@ class ForecastHandler:
         if _satisfice_success:
             # Log success message when _satisfice completes successfully at the top level
             if not raise__satisfice_failed_exception:
-                log_in_color(logger, "white", "debug", "Satisfice succeeded.")
-                log_in_color(logger, "white", "debug", _satisfice_df.to_string())
+                pass
+                # log_in_color(logger, "white", "debug", "Satisfice succeeded.")
+                # log_in_color(logger, "white", "debug", _satisfice_df.to_string())
 
             # Not sure if this try block is needed
             try:
@@ -7581,13 +7584,13 @@ class ForecastHandler:
 
             except Exception as e:
                 log_stack_depth -= 1
-                log_in_color(
-                    logger,
-                    "white",
-                    "debug",
-                    "EXIT _computeOptimalForecast",
-                    log_stack_depth,
-                )
+                # log_in_color(
+                #     logger,
+                #     "white",
+                #     "debug",
+                #     "EXIT _computeOptimalForecast",
+                #     log_stack_depth,
+                # )
                 raise e
         else:
             # Handle _satisfice failure: clean up unprocessed transactions
@@ -7606,13 +7609,13 @@ class ForecastHandler:
         log_stack_depth -= 1
 
         # Return the forecast and updated DataFrames
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            "EXIT _computeOptimalForecast",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     "EXIT _computeOptimalForecast",
+        #     log_stack_depth,
+        # )
         return [forecast_df, skipped_df, confirmed_df, deferred_df]
 
     # def to_json(cls):
@@ -8115,29 +8118,29 @@ class ForecastHandler:
 
     @classmethod
     def evaluateAccountMilestone(cls, account_name, min_balance, max_balance, log_stack_depth):
-        log_in_color(
-            logger,
-            "yellow",
-            "debug",
-            "ENTER evaluateAccountMilestone("
-            + str(account_name)
-            + ","
-            + str(min_balance)
-            + ","
-            + str(max_balance)
-            + ")",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "yellow",
+        #     "debug",
+        #     "ENTER evaluateAccountMilestone("
+        #     + str(account_name)
+        #     + ","
+        #     + str(min_balance)
+        #     + ","
+        #     + str(max_balance)
+        #     + ")",
+        #     log_stack_depth,
+        # )
         log_stack_depth += 1
         account_info = cls.initial_account_set.getAccounts()
         account_base_names = [a.split(":")[0] for a in account_info.Name]
         row_sel_vec = [a == account_name for a in account_base_names]
 
         relevant_account_info_rows_df = account_info[row_sel_vec]
-        log_in_color(logger, "yellow", "debug", "relevant_account_info_rows_df:")
-        log_in_color(
-            logger, "yellow", "debug", relevant_account_info_rows_df.to_string()
-        )
+        # log_in_color(logger, "yellow", "debug", "relevant_account_info_rows_df:")
+        # log_in_color(
+        #     logger, "yellow", "debug", relevant_account_info_rows_df.to_string()
+        # )
 
         # this df should be either 1 or 2 rows, but have same account type either way
         try:
@@ -8163,23 +8166,23 @@ class ForecastHandler:
                 ) and not found_a_valid_success_date:
                     found_a_valid_success_date = True
                     success_date = row.Date
-                    log_in_color(
-                        logger,
-                        "yellow",
-                        "debug",
-                        "success_date:" + str(success_date),
-                        log_stack_depth,
-                    )
+                    # log_in_color(
+                    #     logger,
+                    #     "yellow",
+                    #     "debug",
+                    #     "success_date:" + str(success_date),
+                    #     log_stack_depth,
+                    # )
                 elif (min_balance > current_value) | (current_value > max_balance):
                     found_a_valid_success_date = False
                     success_date = "None"
-                    log_in_color(
-                        logger,
-                        "yellow",
-                        "debug",
-                        "success_date:None",
-                        log_stack_depth,
-                    )
+                    # log_in_color(
+                    #     logger,
+                    #     "yellow",
+                    #     "debug",
+                    #     "success_date:None",
+                    #     log_stack_depth,
+                    # )
 
         elif relevant_account_info_rows_df.shape[0] == 2:  # case for credit and loan
             curr_stmt_bal_acct_name = relevant_account_info_rows_df.iloc[0, 0]
@@ -8214,23 +8217,23 @@ class ForecastHandler:
                 ) and not found_a_valid_success_date:
                     found_a_valid_success_date = True
                     success_date = row.Date
-                    log_in_color(
-                        logger,
-                        "yellow",
-                        "debug",
-                        "success_date:" + str(success_date),
-                        log_stack_depth,
-                    )
+                    # log_in_color(
+                    #     logger,
+                    #     "yellow",
+                    #     "debug",
+                    #     "success_date:" + str(success_date),
+                    #     log_stack_depth,
+                    # )
                 elif (min_balance > current_value) | (current_value > max_balance):
                     found_a_valid_success_date = False
                     success_date = "None"
-                    log_in_color(
-                        logger,
-                        "yellow",
-                        "debug",
-                        "success_date:None",
-                        log_stack_depth,
-                    )
+                    # log_in_color(
+                    #     logger,
+                    #     "yellow",
+                    #     "debug",
+                    #     "success_date:None",
+                    #     log_stack_depth,
+                    # )
 
         # Summary lines
         elif account_name in (
@@ -8256,23 +8259,23 @@ class ForecastHandler:
                 ) and not found_a_valid_success_date:
                     found_a_valid_success_date = True
                     success_date = row.Date
-                    log_in_color(
-                        logger,
-                        "yellow",
-                        "debug",
-                        "success_date:" + str(success_date),
-                        log_stack_depth,
-                    )
+                    # log_in_color(
+                    #     logger,
+                    #     "yellow",
+                    #     "debug",
+                    #     "success_date:" + str(success_date),
+                    #     log_stack_depth,
+                    # )
                 elif (min_balance > current_value) | (current_value > max_balance):
                     found_a_valid_success_date = False
                     success_date = "None"
-                    log_in_color(
-                        logger,
-                        "yellow",
-                        "debug",
-                        "success_date:None",
-                        log_stack_depth,
-                    )
+                    # log_in_color(
+                    #     logger,
+                    #     "yellow",
+                    #     "debug",
+                    #     "success_date:None",
+                    #     log_stack_depth,
+                    # )
         else:
             raise ValueError(
                 "undefined edge case in ExpenseForecast::evaulateAccountMilestone" ""
@@ -8303,66 +8306,66 @@ class ForecastHandler:
         #     else:
         #         break
         log_stack_depth -= 1
-        log_in_color(
-            logger,
-            "yellow",
-            "debug",
-            "EXIT evaluateAccountMilestone("
-            + str(account_name)
-            + ","
-            + str(min_balance)
-            + ","
-            + str(max_balance)
-            + ") "
-            + str(success_date),
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "yellow",
+        #     "debug",
+        #     "EXIT evaluateAccountMilestone("
+        #     + str(account_name)
+        #     + ","
+        #     + str(min_balance)
+        #     + ","
+        #     + str(max_balance)
+        #     + ") "
+        #     + str(success_date),
+        #     log_stack_depth,
+        # )
         return success_date
 
     @classmethod
     def evaulateMemoMilestone(cls, memo_regex, log_stack_depth):
-        log_in_color(
-            logger,
-            "yellow",
-            "debug",
-            "ENTER evaluateMemoMilestone(" + str(memo_regex) + ")",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "yellow",
+        #     "debug",
+        #     "ENTER evaluateMemoMilestone(" + str(memo_regex) + ")",
+        #     log_stack_depth,
+        # )
         log_stack_depth += 1
         for forecast_index, forecast_row in cls.forecast_df.iterrows():
             m = re.search(memo_regex, forecast_row.Memo)
             if m is not None:
                 log_stack_depth -= 1
-                log_in_color(
-                    logger,
-                    "yellow",
-                    "debug",
-                    "EXIT evaluateMemoMilestone(" + str(memo_regex) + ")",
-                    log_stack_depth,
-                )
+                # log_in_color(
+                #     logger,
+                #     "yellow",
+                #     "debug",
+                #     "EXIT evaluateMemoMilestone(" + str(memo_regex) + ")",
+                #     log_stack_depth,
+                # )
                 return forecast_row.Date
 
         log_stack_depth -= 1
-        log_in_color(
-            logger,
-            "yellow",
-            "debug",
-            "EXIT evaluateMemoMilestone(" + str(memo_regex) + ")",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "yellow",
+        #     "debug",
+        #     "EXIT evaluateMemoMilestone(" + str(memo_regex) + ")",
+        #     log_stack_depth,
+        # )
         return "None"
 
     @classmethod
     def evaluateCompositeMilestone(
         cls, list_of_account_milestones, list_of_memo_milestones, log_stack_depth
     ):
-        log_in_color(
-            logger,
-            "yellow",
-            "debug",
-            "ENTER evaluateCompositeMilestone()",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "yellow",
+        #     "debug",
+        #     "ENTER evaluateCompositeMilestone()",
+        #     log_stack_depth,
+        # )
         log_stack_depth += 1
         # list_of_account_milestones is lists of 3-tuples that are (string,float,float) for parameters
 
@@ -8384,13 +8387,13 @@ class ForecastHandler:
                 am_result is None
             ):  # disqualified immediately because success requires ALL
                 log_stack_depth -= 1
-                log_in_color(
-                    logger,
-                    "yellow",
-                    "debug",
-                    "EXIT evaluateCompositeMilestone() None",
-                    log_stack_depth,
-                )
+                # log_in_color(
+                #     logger,
+                #     "yellow",
+                #     "debug",
+                #     "EXIT evaluateCompositeMilestone() None",
+                #     log_stack_depth,
+                # )
                 return None
             account_milestone_dates.append(am_result)
 
@@ -8401,24 +8404,24 @@ class ForecastHandler:
                 mm_result is None
             ):  # disqualified immediately because success requires ALL
                 log_stack_depth -= 1
-                log_in_color(
-                    logger,
-                    "yellow",
-                    "debug",
-                    "EXIT evaluateCompositeMilestone() None",
-                    log_stack_depth,
-                )
+                # log_in_color(
+                #     logger,
+                #     "yellow",
+                #     "debug",
+                #     "EXIT evaluateCompositeMilestone() None",
+                #     log_stack_depth,
+                # )
                 return None
             memo_milestone_dates.append(mm_result)
 
         result_date = max(account_milestone_dates + memo_milestone_dates)
-        log_in_color(
-            logger,
-            "yellow",
-            "debug",
-            "EXIT evaluateCompositeMilestone() " + str(result_date),
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "yellow",
+        #     "debug",
+        #     "EXIT evaluateCompositeMilestone() " + str(result_date),
+        #     log_stack_depth,
+        # )
         log_stack_depth -= 1
         return result_date
 
@@ -8776,35 +8779,35 @@ class ForecastHandler:
         cc_row_delta = 0
         loan_row_delta = 0
 
-        log_in_color(
-            logger, "magenta", "debug", "Forecast Pre-Validation", log_stack_depth
-        )
-        log_in_color(
-            logger,
-            "magenta",
-            "debug",
-            forecast_df.to_string(),
-            log_stack_depth,
-        )
-        log_in_color(
-            logger, "magenta", "debug", "Validation Delta Values", log_stack_depth
-        )
-        log_data_header_string = (
-            "Date".rjust(10)
-            + " "
-            + "Check".rjust(10)
-            + " "
-            + "CC".rjust(10)
-            + " "
-            + "Loan".rjust(10)
-            + " "
-            + "Net +".rjust(10)
-            + " "
-            + "Net -".rjust(10)
-        )
-        log_in_color(
-            logger, "magenta", "debug", log_data_header_string, log_stack_depth
-        )
+        # log_in_color(
+        #     logger, "magenta", "debug", "Forecast Pre-Validation", log_stack_depth
+        # )
+        # log_in_color(
+        #     logger,
+        #     "magenta",
+        #     "debug",
+        #     forecast_df.to_string(),
+        #     log_stack_depth,
+        # )
+        # log_in_color(
+        #     logger, "magenta", "debug", "Validation Delta Values", log_stack_depth
+        # )
+        # log_data_header_string = (
+        #     "Date".rjust(10)
+        #     + " "
+        #     + "Check".rjust(10)
+        #     + " "
+        #     + "CC".rjust(10)
+        #     + " "
+        #     + "Loan".rjust(10)
+        #     + " "
+        #     + "Net +".rjust(10)
+        #     + " "
+        #     + "Net -".rjust(10)
+        # )
+        # log_in_color(
+        #     logger, "magenta", "debug", log_data_header_string, log_stack_depth
+        # )
 
         fail_flag = False
         for f_i, row in forecast_df.iterrows():
@@ -8868,7 +8871,7 @@ class ForecastHandler:
                 + " "
                 + str(net_loss).rjust(10)
             )
-            log_in_color(logger, "magenta", "debug", log_string, log_stack_depth)
+            # log_in_color(logger, "magenta", "debug", log_string, log_stack_depth)
             # if round(check_row_delta - (cc_row_delta + loan_row_delta),2) < 0:
             if check_row_delta - (cc_row_delta + loan_row_delta) < 0:
                 try:

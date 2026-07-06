@@ -466,7 +466,7 @@ class ExpenseForecastInitialConditions:
     def loadJSON(cls, json_or_path):
         # logger.debug("ENTER ExpenseForecastInitialConditions.loadJSON")
         json_string_candidate = str(json_or_path).strip()
-        logger.debug(f"json_string_candidate: {json_string_candidate}")
+        # logger.debug(f"json_string_candidate: {json_string_candidate}")
         if isinstance(json_or_path, (str, Path)) and not json_string_candidate.startswith(("{", "[")):
             candidate_path = Path(json_or_path)
             json_string = candidate_path.read_text()
@@ -474,7 +474,7 @@ class ExpenseForecastInitialConditions:
             json_string = str(json_or_path)
 
         data = json.loads(json_string)
-        logger.debug(f"Loaded JSON data: {str(data)}")
+        # logger.debug(f"Loaded JSON data: {str(data)}")
         return cls.initialize_from_dict(data)
 
     @classmethod
