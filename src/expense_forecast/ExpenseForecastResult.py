@@ -30,17 +30,18 @@ class ExpenseForecastResult:
             )
         return dataframe
 
-    @staticmethod
-    def _object_to_json_data(obj):
-        if obj is None:
-            return None
-        return json.loads(jsonpickle.encode(obj))
-
-    @staticmethod
-    def _object_from_json_data(data):
-        if data is None:
-            return None
-        return jsonpickle.decode(json.dumps(data))
+    ### commented out bc I believe _object is not a good name and therefore this did not get used
+    # @staticmethod
+    # def _object_to_json_data(obj):
+    #     if obj is None:
+    #         return None
+    #     return json.loads(jsonpickle.encode(obj))
+    #
+    # @staticmethod
+    # def _object_from_json_data(data):
+    #     if data is None:
+    #         return None
+    #     return jsonpickle.decode(json.dumps(data))
 
     def __eq__(self, other):
         raise NotImplementedError #todo
@@ -55,7 +56,7 @@ class ExpenseForecastResult:
 
     def __init__(self, initial_conditions: ExpenseForecastInitialConditions, forecast_df, **kwargs):
 
-        allowed_kwargs = ['confirmed_df', 'deferred_df', 'skipped_df', 'milestone_set', 'milestone_results']
+        allowed_kwargs = ['confirmed_df', 'deferred_df', 'skipped_df', 'milestone_set', 'milestone_results', 'approximate_flag']
         for key in kwargs:
             if key not in allowed_kwargs:
                 raise TypeError(f"Unexpected keyword argument '{key}'")
@@ -70,7 +71,6 @@ class ExpenseForecastResult:
         # this is an internal method, so we don't validate here. Validate only at entry points
 
         self.initial_conditions = initial_conditions
-        self.unique_id = initial_conditions.unique_id
         self.forecast_df = forecast_df
 
         self.confirmed_df = kwargs.get('confirmed_df', None)
@@ -82,6 +82,9 @@ class ExpenseForecastResult:
         self.milestone_set = kwargs.get('milestone_set', None)
 
         self.milestone_results = kwargs.get('milestone_results', None)
+
+        self.approximate_flag = kwargs.get('approximate_flag', False)
+        self.unique_id = initial_conditions.unique_id + "_A"
 
     def __str__(self):
         raise NotImplementedError #todo

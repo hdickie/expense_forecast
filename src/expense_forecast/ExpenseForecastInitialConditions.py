@@ -178,8 +178,7 @@ class ExpenseForecastInitialConditions:
         end_date: date,
         account_set,
         budget_set,
-        memo_rule_set,
-        approximate_flag: bool = False,
+        memo_rule_set
     ) -> str:
 
         if end_date < start_date:
@@ -195,7 +194,6 @@ class ExpenseForecastInitialConditions:
         payload: dict[str, Any] = {
             "start_date": start_date.isoformat(),
             "end_date": end_date.isoformat(),
-            "approximate_flag": approximate_flag,
             "accounts": _stable_df_payload(accounts_df),
             "budget_items": _stable_df_payload(budget_df),
             "memo_rules": _stable_df_payload(memo_rules_df),
@@ -216,9 +214,6 @@ class ExpenseForecastInitialConditions:
             f"{num_distinct_priority}_"
             f"{digest}"
         )
-
-        if approximate_flag:
-            unique_id += "_A"
 
         return unique_id
 
@@ -243,7 +238,6 @@ class ExpenseForecastInitialConditions:
                           'milestone_set', 
                           'forecast_name',
                           'forecast_set_name',
-                          'approximate_flag',
                           'raise_exceptions',
                           #'milestone_results'
                           ]
@@ -270,8 +264,7 @@ class ExpenseForecastInitialConditions:
             end_date=end_date,
             account_set=account_set,
             budget_set=budget_set,
-            memo_rule_set=memo_rule_set,
-            approximate_flag=False #TODO this should not be hard coded
+            memo_rule_set=memo_rule_set
         )
 
 
@@ -281,8 +274,6 @@ class ExpenseForecastInitialConditions:
         self.forecast_name = kwargs.get('forecast_name', None)
 
         self.forecast_set_name = kwargs.get('forecast_set_name', None)
-
-        self.approximate_flag = kwargs.get('approximate_flag', False)
 
         raise_exceptions = kwargs.get('raise_exceptions', False)
 
@@ -425,8 +416,7 @@ class ExpenseForecastInitialConditions:
             end_date=self.end_date,
             account_set=self.initial_account_set,
             budget_set=self.initial_budget_set,
-            memo_rule_set=self.initial_memo_rule_set,
-            approximate_flag=self.approximate_flag)
+            memo_rule_set=self.initial_memo_rule_set)
 
         single_forecast_run_log_file_name = "Forecast_" + str(self.unique_id) + ".log"
         log_in_color(
@@ -519,16 +509,7 @@ class ExpenseForecastInitialConditions:
         raise NotImplementedError
 
     def to_json_string(self):
-        data = {
-            "unique_id": self.unique_id,
-            # "forecast_df": self._dataframe_to_json_data(self.forecast_df),
-            # "confirmed_df": self._dataframe_to_json_data(self.confirmed_df),
-            # "deferred_df": self._dataframe_to_json_data(self.deferred_df),
-            # "skipped_df": self._dataframe_to_json_data(self.skipped_df),
-            "milestone_set": self._object_to_json_data(self.milestone_set),
-            # "milestone_results": self._object_to_json_data(self.milestone_results),
-        }
-        return json.dumps(data, indent=4)
+        return json.dumps(self.to_dict(), indent=4)
 
     def to_json(self):
         return self.to_json_string()
