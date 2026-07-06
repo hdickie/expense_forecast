@@ -2833,9 +2833,9 @@ class ForecastHandler:
                 account_set=account_set, forecast_df=forecast_df, d=d, log_stack_depth=log_stack_depth
             )
 
-        if not relevant_confirmed_df.empty:
-            log_in_color(logger, 'magenta', 'debug', 'relevant_confirmed_df:', log_stack_depth)
-            log_in_color(logger, 'magenta', 'debug', relevant_confirmed_df.to_string(), log_stack_depth)
+        # if not relevant_confirmed_df.empty:
+        #     log_in_color(logger, 'magenta', 'debug', 'relevant_confirmed_df:', log_stack_depth)
+        #     log_in_color(logger, 'magenta', 'debug', relevant_confirmed_df.to_string(), log_stack_depth)
 
         try:
             # Process confirmed transactions

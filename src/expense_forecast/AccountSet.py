@@ -4,6 +4,7 @@ from .CreditCardBillingState import CreditCardBillingState
 from .LoanBillingState import LoanBillingState
 from datetime import date, datetime, timedelta
 from decimal import Decimal
+import math
 import pandas as pd
 import copy
 from expense_forecast.log_methods import setup_logger
@@ -18,6 +19,7 @@ from .generate_date_sequence import generate_date_sequence
 logger = logging.getLogger(__name__)
 
 ROUNDING_ERROR_TOLERANCE = 0.0000000001
+MONEY_BOUNDARY_TOLERANCE = Decimal("0.005")
 
 
 class AccountBoundaryError(ValueError):
@@ -497,12 +499,44 @@ class AccountSet:
 
     @staticmethod
     def _validate_account_balance_bounds(account, proposed_balance, role):
-        if not account.min_balance <= proposed_balance <= account.max_balance:
+        proposed_balance_decimal = Decimal(str(proposed_balance))
+        min_balance_decimal = Decimal(str(account.min_balance))
+        max_balance_is_infinite = math.isinf(float(account.max_balance))
+        max_balance_decimal = (
+            None
+            if max_balance_is_infinite
+            else Decimal(str(account.max_balance))
+        )
+
+        if proposed_balance_decimal < min_balance_decimal:
+            if min_balance_decimal - proposed_balance_decimal <= MONEY_BOUNDARY_TOLERANCE:
+                return (
+                    min_balance_decimal
+                    if isinstance(proposed_balance, Decimal)
+                    else float(min_balance_decimal)
+                )
             raise AccountBoundaryError(
                 f"transaction violated {role} boundaries:\n"
                 f"{role}:\n{account}\n"
                 f"Proposed balance: {proposed_balance}"
             )
+        if (
+            max_balance_decimal is not None
+            and proposed_balance_decimal > max_balance_decimal
+        ):
+            if proposed_balance_decimal - max_balance_decimal <= MONEY_BOUNDARY_TOLERANCE:
+                return (
+                    max_balance_decimal
+                    if isinstance(proposed_balance, Decimal)
+                    else float(max_balance_decimal)
+                )
+            raise AccountBoundaryError(
+                f"transaction violated {role} boundaries:\n"
+                f"{role}:\n{account}\n"
+                f"Proposed balance: {proposed_balance}"
+            )
+
+        return proposed_balance
 
     @staticmethod
     def _sync_debt_account_from_billing_state(account):
@@ -546,10 +580,11 @@ class AccountSet:
         account.billing_state.current_statement_balance -= current_statement_payment
         payment_remaining -= current_statement_payment
 
-        if payment_remaining > Decimal(str(ROUNDING_ERROR_TOLERANCE)):
+        if payment_remaining > MONEY_BOUNDARY_TOLERANCE:
             raise ValueError(
                 f"Payment amount {amount} exceeds credit balance for '{account.name}'"
             )
+        payment_remaining = Decimal("0")
 
         if not minimum_payment_flag:
             account.billing_state.billing_cycle_payment_balance += amount
@@ -562,15 +597,19 @@ class AccountSet:
         interest_payment, principal_payment = account.billing_state.apply_payment(amount)
         payment_remaining = amount - interest_payment - principal_payment
 
-        if payment_remaining > ROUNDING_ERROR_TOLERANCE:
+        if payment_remaining > MONEY_BOUNDARY_TOLERANCE:
             raise ValueError(
                 f"Payment amount {amount} exceeds loan balance for '{account.name}'"
             )
+        payment_remaining = Decimal("0")
 
         if not minimum_payment_flag:
             account.billing_state.billing_cycle_payment_balance += amount
         AccountSet._sync_debt_account_from_billing_state(account)
-        assert starting_balance - account.billing_state.balance == amount
+        assert (
+            abs(starting_balance - account.billing_state.balance - amount)
+            <= MONEY_BOUNDARY_TOLERANCE
+        )
 
     @staticmethod
     def is_billing_date(account, current_date):
@@ -756,7 +795,7 @@ class AccountSet:
                     proposed_balance = self._money(account_from.balance) - amount
                 else:
                     proposed_balance = account_from.balance - amount
-                self._validate_account_balance_bounds(
+                proposed_balance = self._validate_account_balance_bounds(
                     account_from, proposed_balance, "Account_From"
                 )
                 account_from.balance = proposed_balance
@@ -764,7 +803,7 @@ class AccountSet:
                 proposed_balance = (
                     self._money(account_from.balance) + self._money(amount)
                 )
-                self._validate_account_balance_bounds(
+                proposed_balance = self._validate_account_balance_bounds(
                     account_from, proposed_balance, "Account_From"
                 )
                 self._increase_debt_balance(account_from, amount)
@@ -779,7 +818,7 @@ class AccountSet:
                     proposed_balance = self._money(account_to.balance) + amount
                 else:
                     proposed_balance = account_to.balance + amount
-                self._validate_account_balance_bounds(
+                proposed_balance = self._validate_account_balance_bounds(
                     account_to, proposed_balance, "Account_To"
                 )
                 account_to.balance = proposed_balance
@@ -787,7 +826,7 @@ class AccountSet:
                 proposed_balance = (
                     self._money(account_to.balance) - self._money(amount)
                 )
-                self._validate_account_balance_bounds(
+                proposed_balance = self._validate_account_balance_bounds(
                     account_to, proposed_balance, "Account_To"
                 )
                 self._decrease_debt_balance(account_to, amount, minimum_payment_flag)

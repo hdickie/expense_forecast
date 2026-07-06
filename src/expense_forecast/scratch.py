@@ -19,10 +19,19 @@ if __name__ == '__main__':
     F = ForecastHandler()
     
     start_date = date(2026,7,4)
-    end_date = start_date + datetime.timedelta(days=365)
+    end_date = start_date + datetime.timedelta(days=180)
 
     income_start_date = date(2026,8,22)
     paycheck_amount = 22.77 * 80 * 0.75 # assume 25% tax at a minimum
+
+    start_nursing_school_stop_working_full_time_date = date(2028,2,1)
+    nursing_school_end_date = date(2029,12,15)
+    begin_rn_job_date = date(2030,2,1)
+
+    # if dad pays for my nursing school, how far do i get w no job at the beginning
+    end_date = begin_rn_job_date
+
+    # end_date = start_date + datetime.timedelta(days=180)
 
     A.createAccount(name='Checking',balance=5897.80,
                     min_balance=0,max_balance=float('Inf'),
@@ -140,18 +149,37 @@ if __name__ == '__main__':
                     cadence='once',amount=2377.50,memo='extra cc payment 2',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     
+    # B.addBudgetItem(start_date=date(2026,11,1), end_date=date(2026,11,1), priority=1,
+    #                 cadence='once',amount=2709.27,memo='citi payment 1',income_flag=False, 
+    #                 deferrable=False, partial_payment_allowed=False)
+    
+    # B.addBudgetItem(start_date=date(2026,11,15), end_date=date(2026,11,15), priority=1,
+    #                 cadence='once',amount=1010.0,memo='citi payment 2',income_flag=False, 
+    #                 deferrable=False, partial_payment_allowed=False)
+    
+    # 1010.14 11/13
+    
     #delete the subtracted penny to cause error
     B.addBudgetItem(start_date=date(2026,11,1), end_date=date(2026,11,1), priority=1,
-                    cadence='monthly',amount=1533.47 -0.01,memo='extra cc payment 3',income_flag=False, 
+                    cadence='monthly',amount=1533.47,memo='extra cc payment 3',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
+    
+    # B.addBudgetItem(start_date=date(2026,12,1), end_date=end_date, priority=1,
+    #                 cadence='monthly',amount=1150,memo='extra cc payment cyclical',income_flag=False, 
+    #                 deferrable=False, partial_payment_allowed=False)
+
+    # approx cc cycle balance 1170
 
     # 9/1 ADDTL CC PAYMENT (Chase -$6621.33)
     # 10/1 payment $2377.50
     # 11/1 1533.47
 
-    B.addBudgetItem(start_date=income_start_date, end_date=end_date, priority=1,
+    B.addBudgetItem(start_date=income_start_date, end_date=start_nursing_school_stop_working_full_time_date, priority=1,
                     cadence='semiweekly',amount=paycheck_amount,memo='CNA Income',income_flag=True, 
                     deferrable=False, partial_payment_allowed=False)
+    
+
+
     M.addMemoRule(memo_regex='.*expense.*',
                   account_from='Chase',
                   account_to=None,
@@ -168,6 +196,10 @@ if __name__ == '__main__':
                   account_from='Checking',
                   account_to='Chase',
                   transaction_priority=2)
+    M.addMemoRule(memo_regex='citi payment',
+                  account_from='Checking',
+                  account_to='Citi',
+                  transaction_priority=1)
     
     MS = MilestoneSet()
     
