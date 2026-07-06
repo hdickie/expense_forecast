@@ -1078,11 +1078,70 @@ class TestForecastHandler:
 
         # TODO assert final values, and shape of final data frames
 
-# Next Task
-# Second priority, after that test is green: fix ExpenseForecastResult.initialize_from_dict. 
-# It currently calls cls(unique_id=..., forecast_df=...), but the constructor requires 
-# IO: ExpenseForecastInitialConditions as the first positional argument, 
-# not a unique_id kwarg. That means JSON load is probably broken or untested right now.
+    def test_initial_conditions_round_trip_preserves_forecast_result(self):
+        start_date = date(2026, 6, 1)
+        end_date = date(2026, 6, 5)
+
+        A = AccountSet()
+        A.createCheckingAccount(
+            name="Checking",
+            balance=1000,
+            min_balance=0,
+            max_balance=float("inf"),
+            primary_checking_ind=True,
+        )
+
+        B = BudgetSet()
+        B.addBudgetItem(
+            start_date=date(2026, 6, 2),
+            end_date=date(2026, 6, 2),
+            priority=1,
+            cadence="once",
+            amount=100,
+            memo="test expense",
+        )
+
+        M = MemoRuleSet()
+        M.addMemoRule(
+            memo_regex="test expense",
+            account_from="Checking",
+            account_to=None,
+            transaction_priority=1,
+        )
+
+        MS = MilestoneSet()
+
+        original_io = ExpenseForecastInitialConditions(
+            start_date=start_date,
+            end_date=end_date,
+            account_set=A,
+            budget_set=B,
+            memo_rule_set=M,
+            milestone_set=MS,
+        )
+
+        rebuilt_io = ExpenseForecastInitialConditions.initialize_from_dict(
+            original_io.to_dict()
+        )
+
+        original_result = ForecastHandler().runForecast(
+            original_io,
+            MS,
+            include_debug_columns=False,
+        )
+
+        rebuilt_result = ForecastHandler().runForecast(
+            rebuilt_io,
+            MS,
+            include_debug_columns=False,
+        )
+
+        pd.testing.assert_frame_equal(
+            original_result.forecast_df,
+            rebuilt_result.forecast_df,
+        )
+
+
 
 
 # Tests to write (some of these may belong in stubs up above)

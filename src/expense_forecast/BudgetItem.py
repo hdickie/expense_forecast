@@ -71,12 +71,16 @@ class BudgetItem:
         assert self.income_flag == bool(self.income_flag)
 
         if 'deferrable' in kwargs:
-            assert kwargs['deferrable'] == bool(kwargs['deferrable'])
+            if kwargs['deferrable']:
+                if kwargs['deferrable'] != bool(kwargs['deferrable']):
+                    raise ValueError('Deferrable field not castable to bool: '+str(kwargs['deferrable']))
         self.deferrable = kwargs.get('deferrable', False)
 
 
         if 'partial_payment_allowed' in kwargs:
-            assert kwargs['partial_payment_allowed'] == bool(kwargs['partial_payment_allowed'])
+            if kwargs['partial_payment_allowed']:
+                if kwargs['partial_payment_allowed'] != bool(kwargs['partial_payment_allowed']):
+                    raise ValueError('partial_payment_allowed field not castable to bool: '+str(kwargs['partial_payment_allowed']))
         self.partial_payment_allowed = kwargs.get('partial_payment_allowed',False)
 
 
