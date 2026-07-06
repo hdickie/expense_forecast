@@ -15,6 +15,8 @@ from expense_forecast.ForecastHandler import ForecastHandler
 from expense_forecast.MemoMilestone import MemoMilestone
 from expense_forecast.MemoRule import MemoRule
 
+from datetime import date
+
 pd.options.mode.chained_assignment = (
     None  # apparently this warning can throw false positives???
 )
@@ -536,12 +538,11 @@ class TestExpenseForecastUnit:
         return R 
 
 
-
-    @pytest.mark.skip(reason="fails")
+    @pytest.mark.unit
     def test_multiple_matching_memo_rule_regex(self):
 
-        start_date = "20000101"
-        end_date = "20000103"
+        start_date = date(2000,1,1)
+        end_date = date(2000,1,3)
 
         account_set = AccountSet([])
         budget_set = BudgetSet([])
@@ -562,7 +563,7 @@ class TestExpenseForecastUnit:
             min_balance=0,
             max_balance=20000,
             account_type="credit",
-            billing_start_date=datetime.datetime.strptime("20000102", "%Y%m%d"),
+            billing_start_date=date(2000,1,2),
             apr=0.05,
             interest_cadence="monthly",
             minimum_payment=40,
@@ -572,8 +573,8 @@ class TestExpenseForecastUnit:
         )
 
         budget_set.addBudgetItem(
-            start_date="20000102",
-            end_date="20000102",
+            start_date=date(2000,1,2),
+            end_date=date(2000,1,2),
             priority=2,
             cadence="once",
             amount=0,
@@ -599,12 +600,12 @@ class TestExpenseForecastUnit:
             transaction_priority=2,
         )
 
-        milestone_set = MilestoneSet([], [], [])
+        milestone_set = MilestoneSet()
 
         with pytest.raises(ValueError):
             ExpenseForecastInitialConditions(
-                datetime.datetime.strptime(start_date, "%Y%m%d").date(),
-                datetime.datetime.strptime(end_date, "%Y%m%d").date(),
+                start_date,
+                end_date,
                 account_set,
                 budget_set,
                 memo_rule_set,
@@ -629,7 +630,7 @@ class TestExpenseForecastUnit:
         #                                                  expected_result_df,
         #                                                  test_description)
 
-    @pytest.mark.skip
+    @pytest.mark.skip(reason="__str__ for ExpenseForecast. Not sure this needs a programmatic test bc __str__ is meant for human readability.")
     def test_str(self):
         start_date = "20000101"
         end_date = "20000103"

@@ -86,9 +86,10 @@ class BudgetItem:
 
         # Additional validations
         if 'income_flag' in kwargs:
-            assert self.priority == 1
-            assert not self.deferrable
-            assert not self.partial_payment_allowed
+            if kwargs['income_flag']:
+                assert self.priority == 1
+                assert not self.deferrable
+                assert not self.partial_payment_allowed
 
         if self.priority == 1:
             assert not self.deferrable
