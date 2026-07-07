@@ -1,3 +1,4 @@
+from __future__ import annotations
 from .BudgetItem import BudgetItem
 import pandas as pd
 import datetime
@@ -5,6 +6,7 @@ from . import log_methods
 import jsonpickle
 from .generate_date_sequence import generate_date_sequence
 import logging
+
 
 # logger = setup_logger('BudgetSet', './log/BudgetSet.log', level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -218,6 +220,8 @@ class BudgetSet:
     def to_json(self):
         return jsonpickle.encode(self, indent=4)
 
+    def union(self, budget_set: BudgetSet):
+        raise NotImplementedError
 
 if __name__ == "__main__":
     import doctest

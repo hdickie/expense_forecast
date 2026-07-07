@@ -1,6 +1,6 @@
 from expense_forecast.AccountSet import AccountBoundaryError, AccountSet
 from expense_forecast.BudgetSet import BudgetSet
-from expense_forecast.ForecastSet import ForecastSet
+from expense_forecast.ForecastSetInitialConditions import ForecastSet
 from expense_forecast.MemoRuleSet import MemoRuleSet 
 from expense_forecast.MilestoneSet import MilestoneSet 
 from expense_forecast.ExpenseForecastInitialConditions import ExpenseForecastInitialConditions 
@@ -10500,3 +10500,6 @@ class ForecastHandler:
             "Finished writing single forecast report to " + str(html_output_path),
         )
         return html_output_path
+
+    def show_plan():
+        raise NotImplementedError

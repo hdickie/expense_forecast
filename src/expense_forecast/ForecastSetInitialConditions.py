@@ -2,20 +2,19 @@ import pandas as pd
 
 import re
 import copy
-from .BudgetItem import BudgetItem
 from .BudgetSet import BudgetSet
-import jsonpickle
 import logging
 import json
-# from .ExpenseForecastInitialConditions import ExpenseForecastInitialConditions
-# from . import ForecastRunner
-from . import log_methods
+from pathlib import Path
+from .ExpenseForecastInitialConditions import ExpenseForecastInitialConditions
+from expense_forecast.ScenarioSpace import ScenarioSpace
+from .ExpenseForecastResult import ExpenseForecastResult
+from .MilestoneSet import MilestoneSet
+from .log_methods import log_in_color
 import os
 
 # logger = setup_logger('ForecastSet', './log/ForecastSet.log', level=logging.WARNING)
 # logger = logging.getLogger(__name__)
-import random
-import math
 from sqlalchemy import create_engine
 import hashlib
 import psycopg2
@@ -30,118 +29,16 @@ import datetime
 #     )
 # except KeyError:
 
-#TODO i just commented this out instead of fixing it
-logger = None
-# logger = log_methods.setup_logger(
-#     __name__, __name__ + "_" + thread_id + ".log", level=logging.INFO
-# )
-
+logger = logging.getLogger(__name__)
 
 def initialize_from_json_string(json_string):
-    data = json.loads(json_string)
-
-    return initialize_from_dict(data)
-
+    return ForecastSet.initialize_from_json_string(json_string)
 
 def initialize_from_dict(data):
-    # print(data['py/object']) #ForecastSet
-    # print('--------------------')
-    base_forecast = ExpenseForecast.initialize_from_dict(data["base_forecast"])
-
-    # print('--------------------')
-    # print(data['core_budget_set'])
-
-    core_budget_set = BudgetSet([])
-    for BudgetItem__dict in data["core_budget_set"]["budget_items"]:
-        # BudgetItem__dict = BudgetItem__dict[0]
-        sd_YYYYMMDD = BudgetItem__dict["start_date_YYYYMMDD"]
-        ed_YYYYMMDD = BudgetItem__dict["end_date_YYYYMMDD"]
-
-        core_budget_set.addBudgetItem(
-            start_date_YYYYMMDD=sd_YYYYMMDD,
-            end_date_YYYYMMDD=ed_YYYYMMDD,
-            priority=BudgetItem__dict["priority"],
-            cadence=BudgetItem__dict["cadence"],
-            amount=BudgetItem__dict["amount"],
-            memo=BudgetItem__dict["memo"],
-            deferrable=BudgetItem__dict["deferrable"],
-            partial_payment_allowed=BudgetItem__dict["partial_payment_allowed"],
-        )
-
-    # print('--------------------')
-    # print(data['option_budget_set'])
-    option_budget_set = BudgetSet([])
-    for BudgetItem__dict in data["option_budget_set"]["budget_items"]:
-        # BudgetItem__dict = BudgetItem__dict[0]
-        sd_YYYYMMDD = BudgetItem__dict["start_date_YYYYMMDD"]
-        ed_YYYYMMDD = BudgetItem__dict["end_date_YYYYMMDD"]
-
-        option_budget_set.addBudgetItem(
-            start_date_YYYYMMDD=sd_YYYYMMDD,
-            end_date_YYYYMMDD=ed_YYYYMMDD,
-            priority=BudgetItem__dict["priority"],
-            cadence=BudgetItem__dict["cadence"],
-            amount=BudgetItem__dict["amount"],
-            memo=BudgetItem__dict["memo"],
-            deferrable=BudgetItem__dict["deferrable"],
-            partial_payment_allowed=BudgetItem__dict["partial_payment_allowed"],
-        )
-    # print('--------------------')
-    # print(data['forecast_set_name']) #Test Forecast Name
-    forecast_set_name = data["forecast_set_name"]
-    # print('--------------------')
-    # print(data['forecast_name_to_budget_item_set__dict'])
-    forecast_name_to_budget_item_set__dict = {}
-    for forecast_name, budget_item_set_dict in data[
-        "forecast_name_to_budget_item_set__dict"
-    ].items():
-
-        # print(forecast_name)
-        B = BudgetSet([])
-        for BudgetItem__dict in budget_item_set_dict["budget_items"]:
-            # BudgetItem__dict = BudgetItem__dict[0]
-            sd_YYYYMMDD = BudgetItem__dict["start_date_YYYYMMDD"]
-            ed_YYYYMMDD = BudgetItem__dict["end_date_YYYYMMDD"]
-
-            B.addBudgetItem(
-                start_date_YYYYMMDD=sd_YYYYMMDD,
-                end_date_YYYYMMDD=ed_YYYYMMDD,
-                priority=BudgetItem__dict["priority"],
-                cadence=BudgetItem__dict["cadence"],
-                amount=BudgetItem__dict["amount"],
-                memo=BudgetItem__dict["memo"],
-                deferrable=BudgetItem__dict["deferrable"],
-                partial_payment_allowed=BudgetItem__dict["partial_payment_allowed"],
-            )
-        forecast_name_to_budget_item_set__dict[forecast_name] = B
-
-    # print('--------------------')
-    # print(data['initialized_forecasts'])
-    initialized_forecasts = {}
-    # print('Loading initialized_forecasts')
-    for k, v in data["initialized_forecasts"].items():
-        # print(k)
-        # print(v)
-        initialized_forecasts[k] = ExpenseForecast.initialize_from_dict(v)
-
-    id_to_name = data["id_to_name"]
-    # print('--------------------')
-    # print(data['id_to_name']) #good as is
-
-    S = ForecastSet(base_forecast, option_budget_set, forecast_set_name)
-    S.forecast_name_to_budget_item_set__dict = forecast_name_to_budget_item_set__dict
-    S.initialized_forecasts = initialized_forecasts
-    S.id_to_name = id_to_name
-
-    return S
-
+    return ForecastSet.initialize_from_dict(data)
 
 def initialize_from_json_file(path_to_json):
-    with open(path_to_json) as json_data:
-        data = json.load(json_data)
-
-    return initialize_from_dict(data)
-
+    return ForecastSet.initialize_from_json_file(path_to_json)
 
 def initialize_forecast_set_from_database(
     set_id,
@@ -251,59 +148,129 @@ def initialize_forecast_set_from_database(
     # print('ForecastSet::initialize_forecast_set_from_database unique_id = ' + S.unique_id)
     return S
 
-
 # new id format: e.g. 042424_90_####_1_A.json
 # April 24, 2024 90 days, scenario #1, approximate
 # new id format: e.g. 042424_90_####_0.json (0 is always base forecast or forecast doesnt belong to set)
 # April 24, 2024 90 days
-class ForecastSet:
+class ForecastSetInitialConditions:
 
-    # todo need to add initialized_forecasts as a param and also input validation
+    @staticmethod
+    def _stable_hash(values):
+        return str(
+            int(hashlib.sha1(str(sorted(values)).encode("utf-8")).hexdigest(), 16)
+            % 1000
+        ).rjust(4, "0")
+
+    @staticmethod
+    def _scenario_id_parts(base_forecast):
+        return [
+            base_forecast.unique_id.split("_")[0],
+            base_forecast.unique_id.split("_")[1],
+            base_forecast.unique_id.split("_")[2],
+        ]
+
+    @classmethod
+    def _load_initial_conditions(cls, data):
+        if isinstance(data, ExpenseForecastInitialConditions):
+            return data
+        return ExpenseForecastInitialConditions.initialize_from_dict(data)
+
+    @classmethod
+    def _load_result(cls, data):
+        if isinstance(data, ExpenseForecastResult):
+            return data
+        return ExpenseForecastResult.initialize_from_dict(data)
+
+    @classmethod
+    def _load_budget_set(cls, data):
+        if isinstance(data, BudgetSet):
+            return data
+        if data is None:
+            return BudgetSet()
+        return ExpenseForecastInitialConditions._budget_set_from_dict(data)
+
+    @classmethod
+    def initialize_from_json_string(cls, json_string):
+        return cls.initialize_from_dict(json.loads(json_string))
+
+    @classmethod
+    def initialize_from_json_file(cls, path_to_json):
+        return cls.initialize_from_dict(json.loads(Path(path_to_json).read_text()))
+
+    @classmethod
+    def initialize_from_dict(cls, data):
+        base_forecast = cls._load_initial_conditions(data["base_forecast"])
+        option_budget_set = cls._load_budget_set(data.get("option_budget_set"))
+        initialized_forecasts = {
+            forecast_id: cls._load_initial_conditions(forecast_data)
+            for forecast_id, forecast_data in data.get("initialized_forecasts", {}).items()
+        }
+        forecast_results = {
+            forecast_id: cls._load_result(result_data)
+            for forecast_id, result_data in data.get("forecast_results", {}).items()
+        }
+
+        forecast_set = cls(
+            base_forecast=base_forecast,
+            option_budget_set=option_budget_set,
+            initialized_forecasts=initialized_forecasts,
+            forecast_set_name=data.get("forecast_set_name", ""),
+        )
+        forecast_set.forecast_results = forecast_results
+        forecast_set.id_to_name.update(data.get("id_to_name", {}))
+        forecast_set.unique_id = data.get("unique_id", forecast_set.unique_id)
+        return forecast_set
+
+    def _validate_initial_conditions_and_scenario_space_are_compatible(self, 
+                                                                                     initial_conditions: ExpenseForecastInitialConditions, 
+                                                                                     scenario_space: ScenarioSpace):
+        
+        raise NotImplementedError
+
     def __init__(
         self,
-        base_forecast,
-        option_budget_set,
-        initialized_forecasts=None,
+        E_IO: ExpenseForecastInitialConditions,
+        scenario_space: ScenarioSpace,
         forecast_set_name="",
     ):
 
-        if initialized_forecasts is None:
-            initialized_forecasts = {}
+        self._validate_initial_conditions_and_scenario_space_are_compatible(E_IO, 
+                                                                            scenario_space)
+        self.scenario_space = scenario_space
+        self.initial_conditions = E_IO
+
 
         base_forecast.forecast_name = "Core"
         self.base_forecast = base_forecast
 
         self.core_budget_set = base_forecast.initial_budget_set
-        self.option_budget_set = option_budget_set
+        self.option_budget_set = option_budget_set or BudgetSet()
 
         intersection = pd.merge(
             self.core_budget_set.getBudgetItems(),
-            option_budget_set.getBudgetItems(),
+            self.option_budget_set.getBudgetItems(),
             how="inner",
         )
         if not intersection.empty:
             raise ValueError("overlap detected in Core and Option Budgetsets")
 
-        self.option_budget_set = option_budget_set
         self.forecast_set_name = forecast_set_name
 
         # keys are forecast_name
         # self.forecast_name_to_budget_item_set__dict = {}
         self.initialized_forecasts = initialized_forecasts
+        self.forecast_results = {}
         self.id_to_name = {}
         self.id_to_name[base_forecast.unique_id] = "Core"
+        for forecast_id, forecast in self.initialized_forecasts.items():
+            forecast_name = forecast.forecast_name or forecast_id
+            self.id_to_name[forecast_id] = forecast_name
 
         # apparently this is not correct
         # self.initialized_forecasts[base_forecast.unique_id] = base_forecast
 
-        id_sd = self.base_forecast.unique_id.split("_")[0]
-        id_num_days = self.base_forecast.unique_id.split("_")[1]
-        id_distinct_p = self.base_forecast.unique_id.split("_")[2]
-        keys_list = list(self.initialized_forecasts.keys())
-        keys_list.sort()  # this has to be stable for the hash to be the same every time
-        id_set_hash = str(
-            int(hashlib.sha1(str(keys_list).encode("utf-8")).hexdigest(), 16) % 1000
-        ).rjust(4, "0")
+        id_sd, id_num_days, id_distinct_p = self._scenario_id_parts(self.base_forecast)
+        id_set_hash = self._stable_hash(list(self.initialized_forecasts.keys()))
         self.unique_id = (
             "S"
             + str(id_sd)
@@ -541,33 +508,26 @@ class ForecastSet:
     def to_excel(self):
         raise NotImplementedError
 
+    def to_dict(self):
+        return {
+            "unique_id": self.unique_id,
+            "forecast_set_name": self.forecast_set_name,
+            "id_to_name": self.id_to_name,
+            "base_forecast": self.base_forecast.to_dict(),
+            "core_budget_set": self.core_budget_set.to_dict(),
+            "option_budget_set": self.option_budget_set.to_dict(),
+            "initialized_forecasts": {
+                forecast_id: forecast.to_dict()
+                for forecast_id, forecast in self.initialized_forecasts.items()
+            },
+            "forecast_results": {
+                forecast_id: result.to_dict()
+                for forecast_id, result in self.forecast_results.items()
+            },
+        }
+
     def to_json(self):
-
-        json_string = "{\n"
-        json_string += '"forecast_set_name":"' + self.forecast_set_name + '",\n'
-        json_string += '"unique_id":"' + self.unique_id + '",\n'
-        json_string += '"id_to_name":' + json.dumps(self.id_to_name, indent=4) + ",\n"
-        json_string += '"base_forecast":' + self.base_forecast.to_json() + ",\n"
-        json_string += '"core_budget_set": ' + self.core_budget_set.to_json() + ",\n"
-        json_string += (
-            '"option_budget_set": ' + self.option_budget_set.to_json() + ",\n"
-        )
-        json_string += '"initialized_forecasts": {'
-
-        not_last_forecast = True
-        index = 0
-        for unique_id, E in self.initialized_forecasts.items():
-            json_string += '"' + unique_id + '":\n' + E.to_json()
-            if index == (len(self.initialized_forecasts) - 1):
-                not_last_forecast = False
-            if not_last_forecast:
-                json_string += ",\n"
-            index = index + 1
-        json_string += "\n}"  # closes i_f
-        json_string += "\n}"  # closes entire string
-        # print(json_string)
-        json_string = json.dumps(json.loads(json_string), indent=4)
-        return json_string
+        return json.dumps(self.to_dict(), indent=4)
 
     # def initialize_forecasts(self):
     #     new_id_to_name = {}
@@ -600,12 +560,21 @@ class ForecastSet:
         return self.id_to_name
 
     def get_id_to_forecast_map(self):
-        return self.initialized_forecasts
+        return {
+            self.base_forecast.unique_id: self.base_forecast,
+            **self.initialized_forecasts,
+        }
+
+    def get_id_to_result_map(self):
+        return self.forecast_results
 
     def get_forecast_name_to_forecast_map(self):
         name_to_forecast_map = {}
         for id, forecast_name in self.id_to_name.items():
-            name_to_forecast_map[forecast_name] = self.initialized_forecasts[id]
+            if id == self.base_forecast.unique_id:
+                name_to_forecast_map[forecast_name] = self.base_forecast
+            elif id in self.initialized_forecasts:
+                name_to_forecast_map[forecast_name] = self.initialized_forecasts[id]
         return name_to_forecast_map
 
     def addChoiceToAllForecasts(
@@ -618,7 +587,7 @@ class ForecastSet:
 
         if len(self.initialized_forecasts) == 0:
             # log_in_color(logger, 'white', 'info', 'i_f empty, setting i_f[core] = b_f')
-            self.initialized_forecasts["Core"] = self.base_forecast
+            self.initialized_forecasts[self.base_forecast.unique_id] = self.base_forecast
 
         new_dict_of_scenarios = {}
         choice_index = 0
@@ -628,7 +597,7 @@ class ForecastSet:
             # log_in_color(logger, 'white', 'info', 'choice_name ' + str(choice_name))
 
             for E_id, E in self.initialized_forecasts.items():
-                s_key = E.forecast_name
+                s_key = E.forecast_name or self.id_to_name.get(E_id, E_id)
                 s_value = E.initial_budget_set
                 # for s_key, s_value in self.forecast_name_to_budget_item_set__dict.items():
                 # log_in_color(logger, 'white', 'info', 's_key ' + str(s_key))
@@ -657,20 +626,18 @@ class ForecastSet:
         #     log_in_color(logger, 'white', 'info', 'k:' + str(k))
         #     log_in_color(logger, 'white', 'info', 'v:' + str(v.getBudgetItems().to_string()))
 
-        new_id_to_name = {}
-        new_id_to_name[self.base_forecast.unique_id] = "Core"
+        new_id_to_name = {self.base_forecast.unique_id: "Core"}
         new_initialized_forecasts = {}
         # for E_id, E in self.initialized_forecasts.items():
         for forecast_name, budget_set in new_dict_of_scenarios.items():
             # for s_key, s_value in self.forecast_name_to_budget_item_set__dict.items():
             # print('Initializing '+forecast_name)
-            new_E = ExpenseForecast(
+            new_E = ExpenseForecastInitialConditions(
+                start_date=self.base_forecast.start_date,
+                end_date=self.base_forecast.end_date,
                 account_set=self.base_forecast.initial_account_set,
                 budget_set=budget_set,
                 memo_rule_set=self.base_forecast.initial_memo_rule_set,
-                start_date_YYYYMMDD=self.base_forecast.start_date_YYYYMMDD,
-                end_date_YYYYMMDD=self.base_forecast.end_date_YYYYMMDD,
-                milestone_set=self.base_forecast.milestone_set,
                 forecast_set_name=self.forecast_set_name,
                 forecast_name=forecast_name,
             )
@@ -678,15 +645,14 @@ class ForecastSet:
             new_initialized_forecasts[new_E.unique_id] = new_E
         self.id_to_name = new_id_to_name
         self.initialized_forecasts = new_initialized_forecasts
+        self.forecast_results = {
+            forecast_id: result
+            for forecast_id, result in self.forecast_results.items()
+            if forecast_id in self.id_to_name
+        }
 
-        id_sd = self.base_forecast.unique_id.split("_")[0]
-        id_num_days = self.base_forecast.unique_id.split("_")[1]
-        id_distinct_p = self.base_forecast.unique_id.split("_")[2]
-        keys_list = list(self.initialized_forecasts.keys())
-        keys_list.sort()  # this has to be stable for the hash to be the same every time
-        id_set_hash = str(
-            int(hashlib.sha1(str(keys_list).encode("utf-8")).hexdigest(), 16) % 1000
-        ).rjust(4, "0")
+        id_sd, id_num_days, id_distinct_p = self._scenario_id_parts(self.base_forecast)
+        id_set_hash = self._stable_hash(list(self.initialized_forecasts.keys()))
         self.unique_id = (
             "S"
             + str(id_sd)
@@ -711,58 +677,85 @@ class ForecastSet:
         return_string += self.option_budget_set.getBudgetItems().to_string() + "\n"
         return_string += "------------------------------------------------------------------------------------------------\n"
         return_string += "Initialized Forecasts:\n"
-        return_string += "id              sd       ed       Complete  Forecast Name\n"
-        for k, v in self.initialized_forecasts.items():
-            completed_flag = v.forecast_df is not None
+        return_string += "id              sd          ed          Complete  Forecast Name\n"
+        for k, v in self.get_id_to_forecast_map().items():
+            completed_flag = k in self.forecast_results
             return_string += (
                 str(k)
                 + " "
-                + v.start_date_YYYYMMDD
+                + v.start_date.isoformat()
                 + " "
-                + v.end_date_YYYYMMDD
+                + v.end_date.isoformat()
                 + " "
                 + str(completed_flag)
                 + "    "
             )
-            return_string += str(v.forecast_name)
+            return_string += str(v.forecast_name or self.id_to_name.get(k, k))
             return_string += " \n"
         return_string += "------------------------------------------------------------------------------------------------\n"
 
         return return_string
 
     def renameForecast(self, old_label, new_label):
-        try:
-            self.forecast_name_to_budget_item_set__dict[new_label] = (
-                self.forecast_name_to_budget_item_set__dict[old_label]
-            )
-            del self.forecast_name_to_budget_item_set__dict[old_label]
-        except KeyError as e:
+        matching_ids = [
+            forecast_id
+            for forecast_id, forecast_name in self.id_to_name.items()
+            if forecast_name == old_label
+        ]
+        if not matching_ids:
             raise ValueError("Forecast Name not found")
 
+        for forecast_id in matching_ids:
+            self.id_to_name[forecast_id] = new_label
+            if forecast_id == self.base_forecast.unique_id:
+                self.base_forecast.forecast_name = new_label
+            elif forecast_id in self.initialized_forecasts:
+                self.initialized_forecasts[forecast_id].forecast_name = new_label
+
     def update_date_range(self, start_date_YYYYMMDD, end_date_YYYYMMDD):
+        start_date = (
+            start_date_YYYYMMDD
+            if isinstance(start_date_YYYYMMDD, datetime.date)
+            else datetime.datetime.strptime(str(start_date_YYYYMMDD), "%Y%m%d").date()
+        )
+        end_date = (
+            end_date_YYYYMMDD
+            if isinstance(end_date_YYYYMMDD, datetime.date)
+            else datetime.datetime.strptime(str(end_date_YYYYMMDD), "%Y%m%d").date()
+        )
 
-        # this updates the unique_id of the base_forecast
-        self.base_forecast.update_date_range(start_date_YYYYMMDD, end_date_YYYYMMDD)
+        def rebuild(old_forecast):
+            return ExpenseForecastInitialConditions(
+                start_date=start_date,
+                end_date=end_date,
+                account_set=old_forecast.initial_account_set,
+                budget_set=old_forecast.initial_budget_set,
+                memo_rule_set=old_forecast.initial_memo_rule_set,
+                forecast_set_name=old_forecast.forecast_set_name,
+                forecast_name=old_forecast.forecast_name,
+            )
 
-        new_initialized_forecasts = self.initialized_forecasts.copy()
-        for E_key, E in self.initialized_forecasts.copy().items():
-            del new_initialized_forecasts[E_key]
-            old_id = E.unique_id
-            E.update_date_range(start_date_YYYYMMDD, end_date_YYYYMMDD)
-            new_id = E.unique_id
-            new_initialized_forecasts[new_id] = E
+        old_id_to_name = self.id_to_name.copy()
+        self.base_forecast = rebuild(self.base_forecast)
+        self.core_budget_set = self.base_forecast.initial_budget_set
+
+        new_initialized_forecasts = {}
+        new_id_to_name = {self.base_forecast.unique_id: "Core"}
+        for old_id, old_forecast in self.initialized_forecasts.items():
+            new_forecast = rebuild(old_forecast)
+            new_initialized_forecasts[new_forecast.unique_id] = new_forecast
+            new_id_to_name[new_forecast.unique_id] = old_id_to_name.get(
+                old_id, new_forecast.forecast_name or new_forecast.unique_id
+            )
+
         self.initialized_forecasts = new_initialized_forecasts
+        self.id_to_name = new_id_to_name
+        self.forecast_results = {}
 
         # forecast id structure e.g. 240331_41_####
         # same for set, but add S and hash the hashes
-        id_sd = self.base_forecast.unique_id.split("_")[0]
-        id_num_days = self.base_forecast.unique_id.split("_")[1]
-        id_distinct_p = self.base_forecast.unique_id.split("_")[2]
-        keys_list = list(self.initialized_forecasts.keys())
-        keys_list.sort()  # this has to be stable for the hash to be the same every time
-        id_set_hash = str(
-            int(hashlib.sha1(str(keys_list).encode("utf-8")).hexdigest(), 16) % 1000
-        ).rjust(4, "0")
+        id_sd, id_num_days, id_distinct_p = self._scenario_id_parts(self.base_forecast)
+        id_set_hash = self._stable_hash(list(self.initialized_forecasts.keys()))
         self.unique_id = (
             "S"
             + str(id_sd)
@@ -775,45 +768,51 @@ class ForecastSet:
         )
 
     def writeToJSONFile(self, output_dir="./"):
-        print("ENTER writeToJSONFile")
+        output_path = Path(output_dir)
+        if output_path.suffix:
+            target_path = output_path
+        else:
+            target_path = output_path / f"ForecastSet_{self.unique_id}.json"
+        target_path.parent.mkdir(parents=True, exist_ok=True)
         log_in_color(
             logger,
             "green",
             "info",
-            "Writing to " + str(output_dir) + "ForecastSet_" + self.unique_id + ".json",
+            "Writing to " + str(target_path),
         )
-        print(
-            "Writing to " + str(output_dir) + "ForecastSet_" + self.unique_id + ".json"
-        )
-        with open(
-            str(output_dir) + "ForecastSet_" + self.unique_id + ".json", "w"
-        ) as f:
-            print("about to write forecast set")
-            f.write(self.to_json())
+        target_path.write_text(self.to_json())
+        return True
 
-    def runAllForecasts(self, log_level="WARNING"):
-        # print('runAllForecasts')
-        R = ForecastRunner.ForecastRunner(lock_directory="./lock/")
-        for unique_id, E in self.initialized_forecasts.items():
+    def runAllForecasts(self, log_level="WARNING", include_debug_columns=False, include_core=True):
+        from .ForecastHandler import ForecastHandler
+
+        forecasts_to_run = self.get_id_to_forecast_map() if include_core else self.initialized_forecasts
+        for unique_id, initial_conditions in forecasts_to_run.items():
             log_in_color(
                 logger,
                 "green",
                 "info",
                 "ForecastSet::runAllForecasts - start " + unique_id,
             )
-            R.start_forecast(E, log_level)
-        R.waitAll()
-        self.initialized_forecasts = R.forecasts
+            milestone_set = getattr(initial_conditions, "milestone_set", MilestoneSet())
+            self.forecast_results[unique_id] = ForecastHandler().runForecast(
+                initial_conditions,
+                milestone_set,
+                include_debug_columns=include_debug_columns,
+            )
+        return self.forecast_results
 
     def runAllForecastsApproximate(self):
-        R = ForecastRunner.ForecastRunner(lock_directory=".")
-        for unique_id, E in self.initialized_forecasts.items():
-            log_in_color(
-                logger,
-                "green",
-                "info",
-                "ForecastSet::runAllForecastsApproximate - start " + unique_id,
-            )
-            R.start_forecast_approximate(E)
-        R.waitAll()
-        self.initialized_forecasts = R.forecasts
+        return self.runAllForecasts()
+
+    def generateHTMLReports(self, output_dir="./"):
+        from .ForecastHandler import ForecastHandler
+
+        output_path = Path(output_dir)
+        output_path.mkdir(parents=True, exist_ok=True)
+        handler = ForecastHandler()
+        for forecast_id, result in self.forecast_results.items():
+            handler.generateHTMLReport(result, output_path)
+
+    def runForecastSet(self, *args, **kwargs):
+        return self.runAllForecasts(*args, **kwargs)
