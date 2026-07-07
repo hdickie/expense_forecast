@@ -10501,5 +10501,5 @@ class ForecastHandler:
         )
         return html_output_path
 
-    def show_plan():
+    def show_plan(self, forecast_set: ForecastSet):
         raise NotImplementedError

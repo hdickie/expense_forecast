@@ -1,0 +1,39 @@
+services:
+  webserver:
+    container_name: expense-forecast-php
+    hostname: expense-forecast-php
+    build:
+      context: .
+      dockerfile: app/php/php-server/Dockerfile
+    restart: always
+    environment:
+      EF_DB_HOST: host.docker.internal
+      EF_DB_PORT: "5433"
+      EF_DB_NAME: postgres
+      EF_DB_USER: virtuoso_user
+      EF_DB_PASSWORD: virtuoso_password
+      EF_DB_SUPERUSER: postgres
+      EF_DB_SUPERUSER_PASSWORD: postgres
+    volumes:
+      - ./app/php/site-contents:/var/www/html
+      - ./src:/var/www/html/src
+      - ./app/runtime/data:/var/www/html/data
+      - ./app/runtime/log:/var/www/html/log
+    ports:
+      - "8003:80"
+    depends_on:
+      - postgres
+
+  postgres:
+    container_name: expense-forecast-postgres
+    hostname: expense-forecast-postgres
+    image: postgres:16.0
+    restart: always
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - ./app/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql

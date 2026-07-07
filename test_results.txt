@@ -479,9 +479,7 @@ test_description = 'test_cc_interest_accrued_reaches_0'
             append_expected_values=True,
             return_type="dataframe",
         )
-    
-        # print(f.T.to_string()) #TODO log_in_color
-    
+
         try:
             # log_in_color(
             #     logger, "white", "debug", "###################################"
