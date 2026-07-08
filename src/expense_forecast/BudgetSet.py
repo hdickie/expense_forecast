@@ -220,8 +220,11 @@ class BudgetSet:
     def to_json(self):
         return jsonpickle.encode(self, indent=4)
 
-    def union(self, budget_set: BudgetSet):
-        raise NotImplementedError
+    def __add__(self, other: BudgetSet):
+        if not isinstance(other, BudgetSet):
+            return NotImplemented
+
+        return BudgetSet(self.budget_items + other.budget_items)
 
 if __name__ == "__main__":
     import doctest

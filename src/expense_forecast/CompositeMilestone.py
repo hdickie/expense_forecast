@@ -26,6 +26,10 @@ class CompositeMilestone:
 
     @staticmethod
     def _validate_memo_milestones(memo_milestones):
+
+        if not memo_milestones:
+            return
+
         memo_milestone_required_attributes = ['milestone_name', 'memo_regex', 'to_json']
 
         for memo_milestone in memo_milestones:

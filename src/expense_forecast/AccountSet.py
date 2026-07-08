@@ -274,7 +274,8 @@ class AccountSet:
 
         allowed_kwargs = ['billing_start_date', 'interest_type', 'apr', 'interest_cadence', 'minimum_payment',
                           'previous_statement_balance', 'current_statement_balance', 'principal_balance',
-                          'interest_balance', 'end_of_previous_cycle_balance', 'primary_checking_ind']
+                          'interest_balance', 'billing_cycle_payment_balance',
+                          'end_of_previous_cycle_balance', 'primary_checking_ind']
         for key in kwargs:
             if key not in allowed_kwargs:
                 raise TypeError(f"Unexpected keyword argument '{key}'")
@@ -287,7 +288,7 @@ class AccountSet:
         checking_required_kwargs = ['primary_checking_ind']
         credit_required_kwargs = ['billing_start_date', 'apr', 'interest_cadence', 'minimum_payment', 'previous_statement_balance', 'current_statement_balance', 'end_of_previous_cycle_balance']
         loan_required_kwargs = ['billing_start_date', 'apr', 'interest_cadence', 'minimum_payment', 'principal_balance',
-                          'interest_balance', 'end_of_previous_cycle_balance']
+                          'interest_balance', 'billing_cycle_payment_balance']
 
         # todo i don't know what I want for this
         # investment_required_kwargs = ['billing_start_date', 'interest_type', 'apr', 'interest_cadence', 'minimum_payment',
@@ -348,7 +349,7 @@ class AccountSet:
                                    billing_start_date=kwargs['billing_start_date'],
                                    apr=kwargs['apr'],
                                    minimum_payment=kwargs['minimum_payment'],
-                                   end_of_previous_cycle_balance=kwargs['end_of_previous_cycle_balance'])
+                                   billing_cycle_payment_balance=kwargs['billing_cycle_payment_balance'])
 
         # todo I don't know what I want for this
         # elif account_type == 'investment':
@@ -367,7 +368,6 @@ class AccountSet:
                     "principal balance",
                     "interest",
                     "loan billing cycle payment bal",
-                    "loan end of prev cycle bal",
                 ]
             )
         ]
@@ -407,15 +407,13 @@ class AccountSet:
             self.primary_checking_account_name = name
 
     def createLoanAccount(self, name, principal_balance, interest_balance, min_balance, max_balance, billing_start_date,
-                          apr, minimum_payment, end_of_previous_cycle_balance,):
+                          apr, minimum_payment, billing_cycle_payment_balance=0,):
 
         principal_balance = self._money(principal_balance)
         interest_balance = self._money(interest_balance)
         minimum_payment = self._money(minimum_payment)
         apr = self._money(apr)
-        end_of_previous_cycle_balance = self._money(end_of_previous_cycle_balance)
-
-        billing_cycle_payment_balance = end_of_previous_cycle_balance - principal_balance
+        billing_cycle_payment_balance = self._money(billing_cycle_payment_balance)
         assert billing_cycle_payment_balance >= 0
 
         balance = principal_balance + interest_balance
@@ -702,9 +700,6 @@ class AccountSet:
             columns[
                 f"{account.name}: Loan Billing Cycle Payment Bal"
             ] = AccountSet._forecast_value(billing_state.billing_cycle_payment_balance)
-            columns[f"{account.name}: Loan End of Prev Cycle Bal"] = AccountSet._forecast_value(
-                billing_state.principal_balance
-            )
 
         return columns
 
@@ -764,7 +759,9 @@ class AccountSet:
             return
 
         if Account_To == "ALL_LOANS":
-            for single_account_loan_payment in self.allocate_additional_loan_payments(Amount):
+            for single_account_loan_payment in self.allocate_additional_loan_payments(
+                Amount, account_from=Account_From
+            ):
                 self.executeTransaction(
                     single_account_loan_payment[0],
                     single_account_loan_payment[1],
@@ -791,10 +788,9 @@ class AccountSet:
 
         if account_from is not None:
             if account_from.account_type == "checking":
-                if isinstance(amount, Decimal):
-                    proposed_balance = self._money(account_from.balance) - amount
-                else:
-                    proposed_balance = account_from.balance - amount
+                proposed_balance = self._money(account_from.balance) - self._money(
+                    amount
+                )
                 proposed_balance = self._validate_account_balance_bounds(
                     account_from, proposed_balance, "Account_From"
                 )
@@ -814,10 +810,9 @@ class AccountSet:
 
         if account_to is not None:
             if account_to.account_type == "checking":
-                if isinstance(amount, Decimal):
-                    proposed_balance = self._money(account_to.balance) + amount
-                else:
-                    proposed_balance = account_to.balance + amount
+                proposed_balance = self._money(account_to.balance) + self._money(
+                    amount
+                )
                 proposed_balance = self._validate_account_balance_bounds(
                     account_to, proposed_balance, "Account_To"
                 )
@@ -848,315 +843,110 @@ class AccountSet:
             + ")",
         )
 
-    #TODO come back to this when unit tests are fixed
-    def allocate_additional_loan_payments(self, amount):
-        # print('ENTER allocate_additional_loan_payments: '+str(amount))
+    def allocate_additional_loan_payments(self, amount, account_from=None):
+        amount = self._money(abs(amount))
+        if amount == 0:
+            return []
 
-        og_amount = amount
+        checking_acct_name = account_from or self.getPrimaryCheckingAccountName()
+        checking_account = self._get_account_by_name(checking_acct_name)
+        if checking_account is None or checking_account.account_type != "checking":
+            raise ValueError("ALL_LOANS payments require a checking source account")
 
-        check_sel_vec = [x for x in (self.getAccounts().Account_Type == "checking")]
-        # checking_acct_name = self.getAccounts()[row_sel_vec].Name[0] #we use this waaay later during executeTransaction
-        checking_acct_name = self.getPrimaryCheckingAccountName()
-        if self.getAccounts()[check_sel_vec].Balance.iat[0] < amount:
-            log_in_color(
-                logger,
-                "green",
-                "debug",
-                "input amount is greater than available balance. Reducing amount.",
-            )
-            amount = self.getAccounts().loc[check_sel_vec, :].Balance.iat[0]
-
-        date_string_YYYYMMDD = "20000101"  # this method needs to be refactored
+        amount = min(amount, self._money(checking_account.balance))
+        if amount == 0:
+            return []
 
         account_set = copy.deepcopy(self)
+        payment_dict = {}
 
-        A = account_set.getAccounts()
-        principal_accts_df = A[A.Account_Type == "principal balance"]
-
-        principal_accts_df["Marginal Interest Amount"] = (
-            principal_accts_df.Balance * principal_accts_df.APR
-        )
-        principal_accts_df["Marginal Interest Rank"] = principal_accts_df[
-            "Marginal Interest Amount"
-        ].rank(method="dense", ascending=False)
-
-        number_of_phase_space_regions = max(
-            principal_accts_df["Marginal Interest Rank"]
-        )
-        # log_in_color(logger,'yellow', 'debug','Explanation of the loan payment algorithm:')
-        # log_in_color(logger,'yellow', 'debug', 'FACT 1: The optimal loan payment pays the loan with the highest marginal interest first.')
-        # log_in_color(logger,'yellow', 'debug','FACT 2: If two loans have different balances and APRs, but will accrue the same amount of additional interest the next day, then it is at this point that we begin to split our next dollar between the two loans in proportion to the APR.')
-        # log_in_color(logger,'yellow', 'debug','We would know that our allocation is optimal when the marginal interest for both loans stays the same.')
-        # log_in_color(logger,'yellow', 'debug','Then we will reach a point where we are splitting our next dollar between two loans, then three... (assuming there are this many loans)')
-        # log_in_color(logger,'yellow', 'debug','This algorithm finds these points to allocate payment.')
-        # log_in_color(logger,'yellow', 'debug', 'If you plot this on a graph, the behavior changes when a new loan joins the group that is being paid proportionally. The space between these points is referred to as a phase space region.')
-        # log_in_color(logger,'yellow', 'debug',
-        #              'The following table shows the order in which loans will be paid. Marginal Interest Rank 1 will be paid until the Marginal Interest Amount is equal to the account with Marginal Interest Rank 2, etc.')
-        # print(principal_accts_df.loc[:,('Name','Balance','Marginal Interest Amount','Marginal Interest Rank')].to_string())
-
-        # log_in_color(logger,'yellow', 'debug', 'number_of_phase_space_regions:'+str(number_of_phase_space_regions))
-        # print('number_of_phase_space_regions:'+str(number_of_phase_space_regions))
-
-        all_account_names__1 = [x.split(":") for x in principal_accts_df.Name]
-        all_account_names__2 = [
-            name for sublist in all_account_names__1 for name in sublist
-        ]
-        all_account_names = set(all_account_names__2) - set([" Principal Balance"])
-
-        payment_amounts__BudgetSet = BudgetSet([])
-        payment_amount_tuple_list = []
-
-        # print('number_of_phase_space_regions:'+str(number_of_phase_space_regions))
-        for i in range(0, int(number_of_phase_space_regions)):
-            # print('Phase space region index........: ' + str(i))
-            # print('remaining amount to be allocated: '+str(amount))
-
-            if amount == 0:
+        while amount > MONEY_BOUNDARY_TOLERANCE:
+            loan_accounts = [
+                account
+                for account in account_set.accounts
+                if account.account_type == "loan"
+                and account.billing_state.balance > MONEY_BOUNDARY_TOLERANCE
+            ]
+            if not loan_accounts:
                 break
 
-            log_in_color(
-                logger, "yellow", "debug", "Phase space region index: " + str(i)
-            )
-
-            A = account_set.getAccounts()
-            # print('A:\n')
-            # print(A.to_string())
-
-            principal_accts_df = A[A.Account_Type == "principal balance"]
-            interest_accts_df = A[A.Account_Type == "interest"]
-
-            total_amount_per_loan = {}
-            for acct_name in all_account_names:
-                principal_amt = principal_accts_df.iloc[
-                    [acct_name in pa_element for pa_element in principal_accts_df.Name],
-                    :,
-                ].Balance.iloc[0]
-                interest_amt = interest_accts_df.iloc[
-                    [acct_name in pa_element for pa_element in interest_accts_df.Name],
-                    :,
-                ].Balance.iloc[0]
-
-                total_amount_per_loan[acct_name] = principal_amt + interest_amt
-
-            # print('total_amount_per_loan:'+str(total_amount_per_loan))
-            # Let P0 be initial principal
-            # Let M0 be initial marginal_interest
-            # Let R be vector of APRs
-            # then, P0 * R = M0
-
-            # Assume the case where there are 2 loans
-            # The principal balances at the beginning of the next phase space region corresponds to
-            # P1 * R = M1
-            # where both entries in M1 are the same, and correspond to the lower of the two marginal interest amounts
-            # therefore, we calculate the maximum amount we are able to pay until the payment strategy must change as
-            # P1 = M1 * R^-1
-            # this is equivalent to taking the next desired state of marginal interest amounts and right multiplying by a vector of the reciprocal rates
-
-            # P = np.matrix(principal_accts_df.Balance)
-            P = np.array(principal_accts_df.Balance)
-            P = P[:, None]
-
-            # r = np.matrix(principal_accts_df.APR)
-            r = np.array(principal_accts_df.APR)
-            r = r[:, None]
-
-            # reciprocal_rates = []
-            # for i in range(0, P.shape[1]):
-            #    reciprocal_rates.append(1 / r[0, i])
-            # reciprocal_rates = np.matrix(reciprocal_rates)\
-
-            # print('P_dot_r:')
-            # print(np.matrix(P_dot_r))
-
-            marginal_interest_amounts = np.diag(
-                P.dot(r.T)
-            )  # this represents marginal interest
-            # marginal_interest_amounts__list = []
-            # for i in range(0, P.shape[1]):
-            #    marginal_interest_amounts__list.append(round(P_dot_r[i, i], 2))
-            # print(marginal_interest_amounts__list)
-            # marginal_interest_amounts__matrix = np.matrix(marginal_interest_amounts__list)
-            # print('marginal_interest_amounts__matrix:')
-            # print(marginal_interest_amounts__matrix)
-
-            marginal_interest_amounts_df = pd.DataFrame(marginal_interest_amounts)
-            marginal_interest_amounts_df.columns = ["Marginal Interest Amount"]
-            marginal_interest_amounts_df["Marginal Interest Rank"] = (
-                marginal_interest_amounts_df["Marginal Interest Amount"].rank(
-                    method="dense", ascending=False
-                )
-            )
-            # print('marginal_interest_amounts_df:')
-            # print(marginal_interest_amounts_df)
-
-            try:
-                next_lowest_marginal_interest_amount = marginal_interest_amounts_df[
-                    marginal_interest_amounts_df["Marginal Interest Rank"] == 2
-                ].iloc[0, 0]
-            except Exception as e:
-                next_lowest_marginal_interest_amount = 0
-            # print('next_lowest_marginal_interest_amount:')
-            # print(next_lowest_marginal_interest_amount)
-            marginal_interest_amounts_df__c = pd.DataFrame(
-                marginal_interest_amounts_df, copy=True
-            )
-
-            # print('marginal_interest_amounts_df__c[marginal_interest_amounts_df__c[Marginal Interest Rank] == 1]')
-            # print(marginal_interest_amounts_df__c['Marginal Interest Rank'] == 1)
-            # print(marginal_interest_amounts_df__c[marginal_interest_amounts_df__c['Marginal Interest Rank'] == 1])
-            # print(marginal_interest_amounts_df__c[marginal_interest_amounts_df__c['Marginal Interest Rank'] == 1]['Marginal Interest Amount'])
-
-            marginal_interest_amounts_df__c.loc[
-                marginal_interest_amounts_df__c["Marginal Interest Rank"] == 1,
-                marginal_interest_amounts_df__c.columns == "Marginal Interest Amount",
-            ] = next_lowest_marginal_interest_amount
-            next_step_marginal_interest_vector = np.array(
-                marginal_interest_amounts_df__c["Marginal Interest Amount"]
-            )  # this corresponds to the M1 vector
-            next_step_marginal_interest_vector = next_step_marginal_interest_vector[
-                :, None
+            marginal_interest_amounts = [
+                loan.billing_state.principal_balance * loan.apr
+                for loan in loan_accounts
             ]
-            # print('next_step_marginal_interest_vector:\n')
-            # print(next_step_marginal_interest_vector)
+            highest_marginal_interest = max(marginal_interest_amounts)
 
-            current_principal_balance_state = P
-            # print('current_state:' + str(current_state))
-            # print('total_amount_per_loan:'+str(total_amount_per_loan))
-
-            # print('current_state:\n'+str(current_state))
-
-            # print('next_step_marginal_interest_vector:')
-            # rint(next_step_marginal_interest_vector)
-
-            reciprocal_rates = 1 / r
-
-            # print('reciprocal_rates:')
-            # print(reciprocal_rates)
-
-            next_principal_balance_state = np.diag(
-                next_step_marginal_interest_vector.dot(reciprocal_rates.T)
-            )  # this corresponds to the P1 vector, and tells us how much we can pay before our strategy must change
-
-            # print('current_principal_balance_state:\n' + str(current_principal_balance_state))
-            # print('next_principal_balance_state:\n' + str(next_principal_balance_state))
-
-            principal_balance_delta = (
-                current_principal_balance_state.T - next_principal_balance_state
-            ).T
-            # print('principal_balance_delta:')
-            # print(principal_balance_delta)
-
-            # log_in_color(logger, 'blue', 'debug', 'principal_balance_delta:')
-            # log_in_color(logger, 'blue', 'debug', str(principal_balance_delta))
-
-            payment_amounts = []
-            for i in range(0, principal_balance_delta.shape[0]):
-
-                # if we pay at all, then we add the interest as well.
-                current_loan_interest = np.array(
-                    interest_accts_df.iloc[i, :].Balance
-                )  # this is a 1 x 1 array
-
-                proposed_payment_on_principal = principal_balance_delta
-
-                # todo, currently, if the final payment includes interest, then the total gets distributed across multiple loans and does not go to interest first # https://github.com/hdickie/expense_forecast/issues/14
-                if proposed_payment_on_principal[i][0] > 0:
-                    loop__amount = (
-                        proposed_payment_on_principal[i][0] + current_loan_interest
-                    )
-                else:
-                    loop__amount = 0
-                payment_amounts.append(loop__amount)
-            # print('payment_amounts:'+str(payment_amounts))
-
-            total_interest_on_loans_w_non_0_payment = 0
-            for i in range(0, len(payment_amounts)):
-                if principal_balance_delta[i] > 0:
-                    total_interest_on_loans_w_non_0_payment += interest_accts_df.iloc[
-                        i, :
-                    ].Balance
-            # print('total_interest_on_loans_w_non_0_payment:'+str(total_interest_on_loans_w_non_0_payment))
-
-            if amount <= sum(payment_amounts):
-                payment_amounts = [
-                    a * (amount) / sum(payment_amounts) for a in payment_amounts
+            if highest_marginal_interest <= MONEY_BOUNDARY_TOLERANCE:
+                target_loans = loan_accounts
+                proposed_payment_by_name = {
+                    loan.name: min(loan.billing_state.balance, amount)
+                    for loan in target_loans
+                }
+            else:
+                lower_marginal_interest_amounts = [
+                    marginal_interest_amount
+                    for marginal_interest_amount in marginal_interest_amounts
+                    if highest_marginal_interest - marginal_interest_amount
+                    > MONEY_BOUNDARY_TOLERANCE
                 ]
-            # print('payment_amounts:' + str(payment_amounts))
-            # print('amount -> remaining_amount:')
-            # print(str(amount) + ' -> ' + str(amount - sum(payment_amounts)))
-            amount = amount - sum(payment_amounts)
+                next_marginal_interest = (
+                    max(lower_marginal_interest_amounts)
+                    if lower_marginal_interest_amounts
+                    else Decimal("0")
+                )
 
-            for i in range(0, principal_balance_delta.shape[0]):
-                loop__to_name = principal_accts_df.Name.iloc[i].split(":")[0]
-                loop__amount = payment_amounts[i]
+                proposed_payment_by_name = {}
+                for loan, marginal_interest_amount in zip(
+                    loan_accounts, marginal_interest_amounts
+                ):
+                    if (
+                        highest_marginal_interest - marginal_interest_amount
+                        > MONEY_BOUNDARY_TOLERANCE
+                    ):
+                        proposed_payment_by_name[loan.name] = Decimal("0")
+                        continue
 
-                # print( str( loop__amount ) + ' ' + loop__to_name )
+                    target_principal_balance = next_marginal_interest / loan.apr
+                    principal_payment = (
+                        loan.billing_state.principal_balance
+                        - target_principal_balance
+                    )
+                    principal_payment = max(Decimal("0"), principal_payment)
+                    proposed_payment_by_name[loan.name] = min(
+                        loan.billing_state.balance,
+                        loan.billing_state.interest_balance + principal_payment,
+                    )
 
-                if loop__amount == 0:
+            total_proposed_payment = sum(proposed_payment_by_name.values(), Decimal("0"))
+            if total_proposed_payment <= MONEY_BOUNDARY_TOLERANCE:
+                break
+
+            if amount < total_proposed_payment:
+                proposed_payment_by_name = {
+                    loan_name: proposed_payment * amount / total_proposed_payment
+                    for loan_name, proposed_payment in proposed_payment_by_name.items()
+                }
+                total_proposed_payment = amount
+
+            for loan_name, proposed_payment in proposed_payment_by_name.items():
+                if proposed_payment <= MONEY_BOUNDARY_TOLERANCE:
                     continue
-
                 account_set.executeTransaction(
                     Account_From=checking_acct_name,
-                    Account_To=loop__to_name,
-                    Amount=loop__amount,
+                    Account_To=loan_name,
+                    Amount=proposed_payment,
                 )
-                # payment_amounts__BudgetSet.addBudgetItem(date_string_YYYYMMDD, date_string_YYYYMMDD, 7, 'once', round(loop__amount,2), loop__to_name,False,partial_payment_allowed=False)
-                payment_amount_tuple_list.append((loop__to_name, loop__amount))
-        # print('payment_amount_tuple_list:'+str(payment_amount_tuple_list))
+                payment_dict[loan_name] = (
+                    payment_dict.get(loan_name, Decimal("0")) + proposed_payment
+                )
 
-        unique_payment_amount_tuple_dict = {}
-        for tp in payment_amount_tuple_list:
-            if tp[0] not in unique_payment_amount_tuple_dict:
-                unique_payment_amount_tuple_dict[tp[0]] = tp[1]
-            else:
-                unique_payment_amount_tuple_dict[tp[0]] += tp[1]
-        # print('unique_payment_amount_tuple_dict:' + str(unique_payment_amount_tuple_dict))
+            amount -= total_proposed_payment
 
-        for key, value in unique_payment_amount_tuple_dict.items():
-            payment_amounts__BudgetSet.addBudgetItem(
-                date_string_YYYYMMDD,
-                date_string_YYYYMMDD,
-                7,
-                "once",
-                value,
-                key,
-                False,
-                partial_payment_allowed=False,
-            )
-
-        # consolidate payments
-        B = payment_amounts__BudgetSet.getBudgetItems()
-        # print('B:')
-        # print(B.to_string())
-        payment_dict = {}
-        for index, row in B.iterrows():
-            # print('row:')
-            # print(row)
-
-            if row.Memo in payment_dict.keys():
-                payment_dict[row.Memo] = payment_dict[row.Memo] + row.Amount
-            else:
-                payment_dict[row.Memo] = row.Amount
-        # print('payment_dict:'+str(payment_dict))
-
-        final_txns = []
-        for key in payment_dict.keys():
-            final_txns.append([checking_acct_name, key, payment_dict[key]])
-            # final_budget_items.append(BudgetItem(date_string_YYYYMMDD, date_string_YYYYMMDD, 7, 'once', payment_dict[key], False, key, ))
-        # print('final_txns:'+str(final_txns))
-
-        running_total = 0
-        for t in final_txns:
-            running_total += t[2]
-        # print(str(running_total)+' ?= '+str(og_amount))
-        assert running_total == og_amount
-
-        # log_in_color(logger,'green', 'debug', 'final_txns:')
-        # log_in_color(logger,'green', 'debug', final_txns)
-        # log_in_color(logger,'blue', 'debug', 'EXIT allocate_additional_loan_payments(amount='+str(amount)+')')
-        # print(final_txns)
-        # print('EXIT allocate_additional_loan_payments')
-        return final_txns
+        return [
+            [checking_acct_name, loan_name, payment_amount]
+            for loan_name, payment_amount in payment_dict.items()
+            if payment_amount > MONEY_BOUNDARY_TOLERANCE
+        ]
 
     # TODO include_debug_columns is not a needed parameter here
     def getAccounts(self, include_debug_columns=False):
@@ -1249,10 +1039,6 @@ class AccountSet:
                         ),
                         "Billing_Cycle_Payment_Balance": self._dict_value(
                             billing_state.billing_cycle_payment_balance
-                        ),
-                        "End_Of_Previous_Cycle_Balance": self._dict_value(
-                            billing_state.principal_balance
-                            + billing_state.billing_cycle_payment_balance
                         ),
                     }
                 )

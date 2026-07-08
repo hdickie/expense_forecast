@@ -345,7 +345,7 @@ class TestForecastHandler:
             billing_start_date=date(2030,1,3),
             apr=0.07, 
             minimum_payment=212.00, 
-            end_of_previous_cycle_balance=15_000
+            billing_cycle_payment_balance=0,
         )
 
         MS = MilestoneSet()
@@ -368,7 +368,6 @@ class TestForecastHandler:
                 "Loan: Principal Balance": [15000.0],
                 "Loan: Interest": [500.0],
                 "Loan: Loan Billing Cycle Payment Bal": [0.0],
-                "Loan: Loan End of Prev Cycle Bal": [15000.0],
                 "Marginal Interest": [0.0],
                 "Net Gain": [0.0],
                 "Net Loss": [0.0],
@@ -395,7 +394,6 @@ class TestForecastHandler:
             "Loan: Principal Balance",
             "Loan: Interest",
             "Loan: Loan Billing Cycle Payment Bal",
-            "Loan: Loan End of Prev Cycle Bal",
             "Marginal Interest",
             "Net Gain",
             "Net Loss",
@@ -421,7 +419,7 @@ class TestForecastHandler:
         )
 
         assert R__debug_true.forecast_df.shape[0] == 5
-        assert R__debug_true.forecast_df.shape[1] == 17
+        assert R__debug_true.forecast_df.shape[1] == 16
 
         pd.testing.assert_frame_equal(
             R__debug_true.forecast_df.tail(1),
@@ -810,7 +808,7 @@ class TestForecastHandler:
             billing_start_date=date(2026,6,3),
             apr=0.07305,
             minimum_payment=minimum_payment,
-            end_of_previous_cycle_balance=principal_balance,
+            billing_cycle_payment_balance=0,
         )
 
         if payment_date is not None:
@@ -856,6 +854,83 @@ class TestForecastHandler:
             expected_final,
         )
 
+    @pytest.mark.integration
+    def test_ForecastHandler__all_loans_budget_payment(self):
+        start_date = date(2026,6,1)
+        end_date = date(2026,6,3)
+
+        A = AccountSet()
+        B = BudgetSet()
+        M = MemoRuleSet()
+        MS = MilestoneSet()
+
+        A.createCheckingAccount(
+            name="Checking",
+            balance=1000.0,
+            min_balance=0,
+            max_balance=float("inf"),
+            primary_checking_ind=True,
+        )
+        A.createLoanAccount(
+            name="Loan A",
+            principal_balance=1000.0,
+            interest_balance=10.0,
+            min_balance=0,
+            max_balance=2000.0,
+            billing_start_date=date(2026,6,1),
+            apr=0.1,
+            minimum_payment=40.0,
+            billing_cycle_payment_balance=0,
+        )
+        A.createLoanAccount(
+            name="Loan B",
+            principal_balance=1000.0,
+            interest_balance=10.0,
+            min_balance=0,
+            max_balance=2000.0,
+            billing_start_date=date(2026,6,1),
+            apr=0.05,
+            minimum_payment=40.0,
+            billing_cycle_payment_balance=0,
+        )
+
+        B.addBudgetItem(
+            start_date=date(2026,6,2),
+            end_date=date(2026,6,2),
+            priority=1,
+            cadence="once",
+            amount=100.0,
+            memo="extra loan payment",
+            income_flag=False,
+            deferrable=False,
+            partial_payment_allowed=False,
+        )
+        M.addMemoRule(
+            memo_regex="extra loan payment",
+            account_from="Checking",
+            account_to="ALL_LOANS",
+            transaction_priority=1,
+        )
+
+        R = ForecastHandler().runForecast(
+            ExpenseForecastInitialConditions(
+                start_date=start_date,
+                end_date=end_date,
+                account_set=A,
+                budget_set=B,
+                memo_rule_set=M,
+                milestone_set=MS,
+            ),
+            MS,
+            include_debug_columns=True,
+        )
+
+        payment_day = R.forecast_df[R.forecast_df.Date == date(2026,6,2)].iloc[0]
+        assert payment_day["Checking"] == pytest.approx(900.0)
+        assert payment_day["Loan A"] == pytest.approx(910.27, abs=0.01)
+        assert payment_day["Loan B"] == pytest.approx(1010.14, abs=0.01)
+        assert "ADDTL LOAN PAYMENT (Loan A -$100.00)" in payment_day["Memo Directives"]
+
     def _loan_expected_rows_with_placeholders(self):
         expected_billing_date_state = pd.DataFrame(
             {
@@ -865,7 +940,6 @@ class TestForecastHandler:
                 "Loan: Principal Balance": [None],
                 "Loan: Interest": [None],
                 "Loan: Loan Billing Cycle Payment Bal": [None],
-                "Loan: Loan End of Prev Cycle Bal": [None],
                 "Marginal Interest": [None],
                 "Net Gain": [0.0],
                 "Net Loss": [None],
@@ -888,7 +962,6 @@ class TestForecastHandler:
                 "Loan: Principal Balance": [None],
                 "Loan: Interest": [None],
                 "Loan: Loan Billing Cycle Payment Bal": [None],
-                "Loan: Loan End of Prev Cycle Bal": [None],
                 "Marginal Interest": [0.0],
                 "Net Gain": [0.0],
                 "Net Loss": [0.0],
@@ -914,19 +987,31 @@ class TestForecastHandler:
         principal_balance,
         interest_balance,
         billing_cycle_payment_balance,
-        loan_end_of_previous_cycle_balance,
         marginal_interest,
         memo_directives,
+        final_loan=None,
+        final_principal_balance=None,
+        final_interest_balance=None,
+        final_marginal_interest=0.0,
+        final_net_loss=0.0,
+        final_memo_directives="",
     ):
+        final_loan = loan if final_loan is None else final_loan
+        final_principal_balance = (
+            principal_balance
+            if final_principal_balance is None
+            else final_principal_balance
+        )
+        final_interest_balance = (
+            interest_balance if final_interest_balance is None else final_interest_balance
+        )
+
         expected_billing_date_state["Checking"] = checking
         expected_billing_date_state["Loan"] = loan
         expected_billing_date_state["Loan: Principal Balance"] = principal_balance
         expected_billing_date_state["Loan: Interest"] = interest_balance
         expected_billing_date_state["Loan: Loan Billing Cycle Payment Bal"] = (
             billing_cycle_payment_balance
-        )
-        expected_billing_date_state["Loan: Loan End of Prev Cycle Bal"] = (
-            loan_end_of_previous_cycle_balance
         )
         expected_billing_date_state["Marginal Interest"] = marginal_interest
         expected_billing_date_state["Net Gain"] = 0.0
@@ -939,23 +1024,20 @@ class TestForecastHandler:
         expected_billing_date_state["Memo"] = ""
 
         expected_final["Checking"] = checking
-        expected_final["Loan"] = loan
-        expected_final["Loan: Principal Balance"] = principal_balance
-        expected_final["Loan: Interest"] = interest_balance
+        expected_final["Loan"] = final_loan
+        expected_final["Loan: Principal Balance"] = final_principal_balance
+        expected_final["Loan: Interest"] = final_interest_balance
         expected_final["Loan: Loan Billing Cycle Payment Bal"] = (
             billing_cycle_payment_balance
         )
-        expected_final["Loan: Loan End of Prev Cycle Bal"] = (
-            loan_end_of_previous_cycle_balance
-        )
-        expected_final["Marginal Interest"] = 0.0
+        expected_final["Marginal Interest"] = final_marginal_interest
         expected_final["Net Gain"] = 0.0
-        expected_final["Net Loss"] = 0.0
-        expected_final["Net Worth"] = checking - loan
-        expected_final["Loan Total"] = loan
+        expected_final["Net Loss"] = final_net_loss
+        expected_final["Net Worth"] = checking - final_loan
+        expected_final["Loan Total"] = final_loan
         expected_final["CC Debt Total"] = 0.0
         expected_final["Liquid Total"] = checking
-        expected_final["Memo Directives"] = ""
+        expected_final["Memo Directives"] = final_memo_directives
         expected_final["Memo"] = ""
 
     @pytest.mark.integration
@@ -1300,14 +1382,85 @@ class TestForecastHandler:
             principal_balance=960.2,
             interest_balance=0.0,
             billing_cycle_payment_balance=0.0,
-            loan_end_of_previous_cycle_balance=960.2,
             marginal_interest=0.2,
             memo_directives="LOAN INTEREST (Loan: Interest +$0.20); LOAN MIN PAYMENT (Loan: Interest -$0.20); LOAN MIN PAYMENT (Loan: Principal Balance -$39.80); LOAN MIN PAYMENT (Checking -$40.00)",
+            final_loan=960.58,
+            final_principal_balance=960.2,
+            final_interest_balance=0.38,
+            final_marginal_interest=0.19,
+            final_net_loss=0.19,
+            final_memo_directives="LOAN INTEREST (Loan: Interest +$0.19)",
         )
         self._run_checking_and_loan_min_payment_case(
             expected_billing_date_state=expected_billing_date_state,
             expected_final=expected_final,
         )
+
+    @pytest.mark.integration
+    def test_ForecastHandler__checking_and_loan__daily_interest_accrues_after_billing_start(self):
+        start_date = date(2026,6,1)
+        end_date = date(2026,6,2)
+
+        A = AccountSet()
+        B = BudgetSet()
+        M = MemoRuleSet()
+        MS = MilestoneSet()
+
+        A.createCheckingAccount(
+            name="Checking",
+            balance=1000,
+            min_balance=0,
+            max_balance=float("inf"),
+            primary_checking_ind=True,
+        )
+        A.createLoanAccount(
+            name="Loan",
+            principal_balance=1000,
+            interest_balance=0,
+            min_balance=0,
+            max_balance=25_000,
+            billing_start_date=date(2026,6,1),
+            apr=0.36525,
+            minimum_payment=0,
+            billing_cycle_payment_balance=0,
+        )
+
+        result = ForecastHandler().runForecast(
+            ExpenseForecastInitialConditions(
+                start_date=start_date,
+                end_date=end_date,
+                account_set=A,
+                budget_set=B,
+                memo_rule_set=M,
+                milestone_set=MS,
+            ),
+            MS,
+            include_debug_columns=True,
+        )
+
+        expected_final = pd.DataFrame(
+            {
+                "Date": [date(2026,6,2)],
+                "Checking": [1000.0],
+                "Loan": [1001.0],
+                "Loan: Principal Balance": [1000.0],
+                "Loan: Interest": [1.0],
+                "Loan: Loan Billing Cycle Payment Bal": [0.0],
+                "Marginal Interest": [1.0],
+                "Net Gain": [0.0],
+                "Net Loss": [1.0],
+                "Net Worth": [-1.0],
+                "Loan Total": [1001.0],
+                "CC Debt Total": [0.0],
+                "Liquid Total": [1000.0],
+                "Next Income Date": [""],
+                "Memo Directives": ["LOAN INTEREST (Loan: Interest +$1.00)"],
+                "Memo": [""],
+            },
+            index=[1],
+        )
+
+        pd.testing.assert_frame_equal(result.forecast_df.tail(1), expected_final)
     
     #TODO manual review
     @pytest.mark.integration
@@ -1321,9 +1474,14 @@ class TestForecastHandler:
             principal_balance=960.2,
             interest_balance=0.0,
             billing_cycle_payment_balance=20.0,
-            loan_end_of_previous_cycle_balance=960.2,
             marginal_interest=0.2,
             memo_directives="LOAN INTEREST (Loan: Interest +$0.20); LOAN MIN PAYMENT (Loan: Interest -$0.20); LOAN MIN PAYMENT (Loan: Principal Balance -$19.80); LOAN MIN PAYMENT (Checking -$20.00)",
+            final_loan=960.58,
+            final_principal_balance=960.2,
+            final_interest_balance=0.38,
+            final_marginal_interest=0.19,
+            final_net_loss=0.19,
+            final_memo_directives="LOAN INTEREST (Loan: Interest +$0.19)",
         )
         self._run_checking_and_loan_min_payment_case(
             expected_billing_date_state=expected_billing_date_state,
@@ -1344,9 +1502,14 @@ class TestForecastHandler:
             principal_balance=960.0,
             interest_balance=0.19,
             billing_cycle_payment_balance=40.0,
-            loan_end_of_previous_cycle_balance=960.0,
             marginal_interest=0.19,
             memo_directives="LOAN INTEREST (Loan: Interest +$0.19)",
+            final_loan=960.58,
+            final_principal_balance=960.0,
+            final_interest_balance=0.58,
+            final_marginal_interest=0.19,
+            final_net_loss=0.19,
+            final_memo_directives="LOAN INTEREST (Loan: Interest +$0.19)",
         )
         self._run_checking_and_loan_min_payment_case(
             expected_billing_date_state=expected_billing_date_state,
@@ -1367,9 +1530,14 @@ class TestForecastHandler:
             principal_balance=940.0,
             interest_balance=0.19,
             billing_cycle_payment_balance=60.0,
-            loan_end_of_previous_cycle_balance=940.0,
             marginal_interest=0.19,
             memo_directives="LOAN INTEREST (Loan: Interest +$0.19)",
+            final_loan=940.56,
+            final_principal_balance=940.0,
+            final_interest_balance=0.56,
+            final_marginal_interest=0.19,
+            final_net_loss=0.19,
+            final_memo_directives="LOAN INTEREST (Loan: Interest +$0.19)",
         )
         self._run_checking_and_loan_min_payment_case(
             expected_billing_date_state=expected_billing_date_state,
@@ -1390,9 +1558,14 @@ class TestForecastHandler:
             principal_balance=940.2,
             interest_balance=0.0,
             billing_cycle_payment_balance=20.0,
-            loan_end_of_previous_cycle_balance=940.2,
             marginal_interest=0.2,
             memo_directives="LOAN INTEREST (Loan: Interest +$0.20); LOAN MIN PAYMENT (Loan: Interest -$0.20); LOAN MIN PAYMENT (Loan: Principal Balance -$39.80); LOAN MIN PAYMENT (Checking -$40.00)",
+            final_loan=940.58,
+            final_principal_balance=940.2,
+            final_interest_balance=0.38,
+            final_marginal_interest=0.19,
+            final_net_loss=0.19,
+            final_memo_directives="LOAN INTEREST (Loan: Interest +$0.19)",
         )
         self._run_checking_and_loan_min_payment_case(
             expected_billing_date_state=expected_billing_date_state,
@@ -1413,9 +1586,14 @@ class TestForecastHandler:
             principal_balance=920.2,
             interest_balance=0.0,
             billing_cycle_payment_balance=40.0,
-            loan_end_of_previous_cycle_balance=920.2,
             marginal_interest=0.2,
             memo_directives="LOAN INTEREST (Loan: Interest +$0.20); LOAN MIN PAYMENT (Loan: Interest -$0.20); LOAN MIN PAYMENT (Loan: Principal Balance -$39.80); LOAN MIN PAYMENT (Checking -$40.00)",
+            final_loan=920.57,
+            final_principal_balance=920.2,
+            final_interest_balance=0.37,
+            final_marginal_interest=0.18,
+            final_net_loss=0.18,
+            final_memo_directives="LOAN INTEREST (Loan: Interest +$0.18)",
         )
         self._run_checking_and_loan_min_payment_case(
             expected_billing_date_state=expected_billing_date_state,
@@ -1436,9 +1614,14 @@ class TestForecastHandler:
             principal_balance=900.2,
             interest_balance=0.0,
             billing_cycle_payment_balance=60.0,
-            loan_end_of_previous_cycle_balance=900.2,
             marginal_interest=0.2,
             memo_directives="LOAN INTEREST (Loan: Interest +$0.20); LOAN MIN PAYMENT (Loan: Interest -$0.20); LOAN MIN PAYMENT (Loan: Principal Balance -$39.80); LOAN MIN PAYMENT (Checking -$40.00)",
+            final_loan=900.56,
+            final_principal_balance=900.2,
+            final_interest_balance=0.36,
+            final_marginal_interest=0.18,
+            final_net_loss=0.18,
+            final_memo_directives="LOAN INTEREST (Loan: Interest +$0.18)",
         )
         self._run_checking_and_loan_min_payment_case(
             expected_billing_date_state=expected_billing_date_state,

@@ -1,6 +1,6 @@
 from expense_forecast.AccountSet import AccountBoundaryError, AccountSet
 from expense_forecast.BudgetSet import BudgetSet
-from expense_forecast.ForecastSetInitialConditions import ForecastSet
+from expense_forecast.ForecastSetInitialConditions import ForecastSetInitialConditions
 from expense_forecast.MemoRuleSet import MemoRuleSet 
 from expense_forecast.MilestoneSet import MilestoneSet 
 from expense_forecast.ExpenseForecastInitialConditions import ExpenseForecastInitialConditions 
@@ -255,7 +255,7 @@ class ForecastHandler:
             logger, "white", "info", "Finished Forecast " + str(IO.unique_id)
         )
         #TODO make this conditional on a --print flag
-        log_in_color(logger, "white", "info", cls.forecast_df.to_string())
+        # log_in_color(logger, "white", "info", cls.forecast_df.to_string())
         # if play_notification_sound:
         #     notification_sounds.play_notification_sound()
 
@@ -3038,7 +3038,7 @@ class ForecastHandler:
             if current_date == billing_start_date:
                 dseq.append(current_date)
 
-            if current_date not in dseq:
+            if current_date not in set(dseq):
                 continue
 
             interest_accrued = billing_state.accrue_interest()
@@ -6081,9 +6081,9 @@ class ForecastHandler:
         Updates the amount in a memo line with a new amount.
         Returns the updated memo line.
         """
-        log_in_color(
-            logger, "white", "debug", " ENTER _update_memo_amount", log_stack_depth
-        )
+        # log_in_color(
+        #     logger, "white", "debug", " ENTER _update_memo_amount", log_stack_depth
+        # )
         log_stack_depth += 1
 
         #  r'(\-$' + f'{new_amount:.2f}' + ')'
@@ -6097,32 +6097,32 @@ class ForecastHandler:
         new_memo_line = re.sub(str(og_amount), str(new_amount), str(memo_line))
 
         # if memo_line != new_memo_line:
-        log_in_color(
-            logger,
-            "cyan",
-            "debug",
-            "memo_line: " + str(memo_line),
-            log_stack_depth,
-        )
-        log_in_color(
-            logger,
-            "cyan",
-            "debug",
-            str(og_amount) + " -> " + str(new_amount),
-            log_stack_depth,
-        )
-        log_in_color(
-            logger,
-            "cyan",
-            "debug",
-            "new_memo_line: " + str(new_memo_line),
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "cyan",
+        #     "debug",
+        #     "memo_line: " + str(memo_line),
+        #     log_stack_depth,
+        # )
+        # log_in_color(
+        #     logger,
+        #     "cyan",
+        #     "debug",
+        #     str(og_amount) + " -> " + str(new_amount),
+        #     log_stack_depth,
+        # )
+        # log_in_color(
+        #     logger,
+        #     "cyan",
+        #     "debug",
+        #     "new_memo_line: " + str(new_memo_line),
+        #     log_stack_depth,
+        # )
 
         log_stack_depth -= 1
-        log_in_color(
-            logger, "white", "debug", " EXIT _update_memo_amount", log_stack_depth
-        )
+        # log_in_color(
+        #     logger, "white", "debug", " EXIT _update_memo_amount", log_stack_depth
+        # )
         return new_memo_line
 
     # @profile
@@ -6290,9 +6290,6 @@ class ForecastHandler:
                 billing_dates__dict[
                     f"{account.name}: Loan Billing Cycle Payment Bal"
                 ] = account_specific_bd
-                billing_dates__dict[
-                    f"{account.name}: Loan End of Prev Cycle Bal"
-                ] = account_specific_bd
 
         # Mapping of account type combinations to processing functions
         account_type_combinations = {
@@ -6367,8 +6364,6 @@ class ForecastHandler:
                     account_type = "interest"
                 elif ": Loan Billing Cycle Payment Bal" in column_name:
                     account_type = "loan billing cycle payment bal"
-                elif ": Loan End of Prev Cycle Bal" in column_name:
-                    account_type = "loan end of prev cycle bal"
 
                 before_balance = before_balances.get(column_name, base_row["Balance"])
                 after_balance = post_txn_row[column_name]
@@ -7473,19 +7468,6 @@ class ForecastHandler:
 
                 # log_in_color(logger, 'white', 'debug', 'SET '+str(eopc_aname)+' = '+str(new_bal), log_stack_depth)
                 current_forecast_row_df[eopc_aname] = new_bal
-            elif account_row.Account_Type == "loan end of prev cycle bal":
-                pbal_aname = account_row.Name.split(":")[0] + ": Principal Balance"
-                # interest_aname = account_row.Name.split(':')[0] + ': Interest'
-                eopc_aname = (
-                    account_row.Name.split(":")[0] + ": Loan End of Prev Cycle Bal"
-                )
-
-                new_bal = previous_row_df[pbal_aname].iat[
-                    0
-                ]  # + previous_row_df[interest_aname].iat[0]
-                # log_in_color(logger, 'white', 'debug', 'SET ' + str(eopc_aname) + ' = ' + str(new_bal), log_stack_depth)
-                current_forecast_row_df[eopc_aname] = new_bal
-
         # log_in_color(logger, 'white', 'debug', 'returning this row:', log_stack_depth)
         # log_in_color(logger, 'white', 'debug', current_forecast_row_df.to_string(), log_stack_depth)
 
@@ -7657,20 +7639,20 @@ class ForecastHandler:
                     log_in_color(
                         logger, "cyan", "error", error_message, log_stack_depth
                     )
-                    log_in_color(
-                        logger,
-                        "cyan",
-                        "error",
-                        "State at failure:",
-                        log_stack_depth,
-                    )
-                    log_in_color(
-                        logger,
-                        "cyan",
-                        "error",
-                        forecast_df.to_string(),
-                        log_stack_depth,
-                    )
+                    # log_in_color(
+                    #     logger,
+                    #     "cyan",
+                    #     "error",
+                    #     "State at failure:",
+                    #     log_stack_depth,
+                    # )
+                    # log_in_color(
+                    #     logger,
+                    #     "cyan",
+                    #     "error",
+                    #     forecast_df.to_string(),
+                    #     log_stack_depth,
+                    # )
 
                     log_stack_depth -= 1
                     # log_in_color(
@@ -8344,7 +8326,9 @@ class ForecastHandler:
     #     return return_df
 
     @classmethod
-    def evaluateAccountMilestone(cls, account_name, min_balance, max_balance, log_stack_depth):
+    def evaluateAccountMilestone(
+        cls, forecast_df, account_name, min_balance, max_balance, log_stack_depth
+    ):
         # log_in_color(
         #     logger,
         #     "yellow",
@@ -8377,11 +8361,11 @@ class ForecastHandler:
 
         if relevant_account_info_rows_df.shape[0] == 1:  # case for checking and savings
             col_sel_vec = (
-                cls.forecast_df.columns
+                forecast_df.columns
                 == relevant_account_info_rows_df.head(1)["Name"].iat[0]
             )
             col_sel_vec[0] = True
-            relevant_time_series_df = cls.forecast_df.iloc[:, col_sel_vec]
+            relevant_time_series_df = forecast_df.iloc[:, col_sel_vec]
 
             # a valid success date stays valid until the end
             found_a_valid_success_date = False
@@ -8420,16 +8404,16 @@ class ForecastHandler:
             # log_in_color(logger, 'yellow', 'debug', 'prev_stmt_bal_acct_name:')
             # log_in_color(logger, 'yellow', 'debug', prev_stmt_bal_acct_name)
 
-            col_sel_vec = cls.forecast_df.columns == curr_stmt_bal_acct_name
+            col_sel_vec = forecast_df.columns == curr_stmt_bal_acct_name
             col_sel_vec = col_sel_vec | (
-                cls.forecast_df.columns == prev_stmt_bal_acct_name
+                forecast_df.columns == prev_stmt_bal_acct_name
             )
             col_sel_vec[0] = True  # Date
 
             # log_in_color(logger, 'yellow', 'debug', 'col_sel_vec:')
             # log_in_color(logger, 'yellow', 'debug', col_sel_vec)
 
-            relevant_time_series_df = cls.forecast_df.iloc[:, col_sel_vec]
+            relevant_time_series_df = forecast_df.iloc[:, col_sel_vec]
 
             # a valid success date stays valid until the end
             found_a_valid_success_date = False
@@ -8472,9 +8456,9 @@ class ForecastHandler:
             "CC Debt Total",
             "Liquid Total",
         ):
-            col_sel_vec = cls.forecast_df.columns == account_name
+            col_sel_vec = forecast_df.columns == account_name
             col_sel_vec[0] = True
-            relevant_time_series_df = cls.forecast_df.iloc[:, col_sel_vec]
+            relevant_time_series_df = forecast_df.iloc[:, col_sel_vec]
 
             # a valid success date stays valid until the end
             found_a_valid_success_date = False
@@ -8550,7 +8534,7 @@ class ForecastHandler:
         return success_date
 
     @classmethod
-    def evaulateMemoMilestone(cls, memo_regex, log_stack_depth):
+    def evaulateMemoMilestone(cls, forecast_df, memo_regex, log_stack_depth):
         # log_in_color(
         #     logger,
         #     "yellow",
@@ -8559,7 +8543,7 @@ class ForecastHandler:
         #     log_stack_depth,
         # )
         log_stack_depth += 1
-        for forecast_index, forecast_row in cls.forecast_df.iterrows():
+        for forecast_index, forecast_row in forecast_df.iterrows():
             m = re.search(memo_regex, forecast_row.Memo)
             if m is not None:
                 log_stack_depth -= 1
@@ -8584,7 +8568,11 @@ class ForecastHandler:
 
     @classmethod
     def evaluateCompositeMilestone(
-        cls, list_of_account_milestones, list_of_memo_milestones, log_stack_depth
+        cls,
+        forecast_df,
+        list_of_account_milestones,
+        list_of_memo_milestones,
+        log_stack_depth,
     ):
         # log_in_color(
         #     logger,
@@ -8598,14 +8586,22 @@ class ForecastHandler:
 
         # todo composite milestones may contain some milestones that arent listed in the composite #https://github.com/hdickie/expense_forecast/issues/22
 
-        num_of_acct_milestones = len(list_of_account_milestones)
-        num_of_memo_milestones = len(list_of_memo_milestones)
+        if list_of_account_milestones:
+            num_of_acct_milestones = len(list_of_account_milestones)
+        else:
+            num_of_acct_milestones = 0
+
+        if list_of_memo_milestones:
+            num_of_memo_milestones = len(list_of_memo_milestones)
+        else:
+            num_of_memo_milestones = 0
         account_milestone_dates = []
         memo_milestone_dates = []
 
         for i in range(0, num_of_acct_milestones):
             account_milestone = list_of_account_milestones[i]
             am_result = cls.evaluateAccountMilestone(
+                forecast_df,
                 account_milestone.account_name,
                 account_milestone.min_balance,
                 account_milestone.max_balance, log_stack_depth=log_stack_depth
@@ -8626,7 +8622,9 @@ class ForecastHandler:
 
         for i in range(0, num_of_memo_milestones):
             memo_milestone = list_of_memo_milestones[i]
-            mm_result = cls.evaulateMemoMilestone(memo_milestone.memo_regex, log_stack_depth=log_stack_depth)
+            mm_result = cls.evaulateMemoMilestone(
+                forecast_df, memo_milestone.memo_regex, log_stack_depth=log_stack_depth
+            )
             if (
                 mm_result is None
             ):  # disqualified immediately because success requires ALL
@@ -8659,7 +8657,11 @@ class ForecastHandler:
         if milestone_set.account_milestones:
             for a_m in milestone_set.account_milestones:
                 res = cls.evaluateAccountMilestone(
-                    a_m.account_name, a_m.min_balance, a_m.max_balance, log_stack_depth=log_stack_depth
+                    forecast_df,
+                    a_m.account_name,
+                    a_m.min_balance,
+                    a_m.max_balance,
+                    log_stack_depth=log_stack_depth,
                 )
                 account_milestone_results[a_m.milestone_name] = res
             account_milestone_results = account_milestone_results
@@ -8667,7 +8669,9 @@ class ForecastHandler:
         memo_milestone_results = {}
         if milestone_set.memo_milestones:
             for m_m in milestone_set.memo_milestones:
-                res = cls.evaulateMemoMilestone(m_m.memo_regex, log_stack_depth=log_stack_depth)
+                res = cls.evaulateMemoMilestone(
+                    forecast_df, m_m.memo_regex, log_stack_depth=log_stack_depth
+                )
                 memo_milestone_results[m_m.milestone_name] = res
             memo_milestone_results = memo_milestone_results
 
@@ -8675,7 +8679,10 @@ class ForecastHandler:
         if milestone_set.composite_milestones:
             for c_m in milestone_set.composite_milestones:
                 res = cls.evaluateCompositeMilestone(
-                    c_m.account_milestones, c_m.memo_milestones, log_stack_depth=log_stack_depth
+                    forecast_df,
+                    c_m.account_milestones,
+                    c_m.memo_milestones,
+                    log_stack_depth=log_stack_depth,
                 )
                 composite_milestone_results[c_m.milestone_name] = res
             composite_milestone_results = composite_milestone_results
@@ -9319,6 +9326,13 @@ class ForecastHandler:
         milestone_results = getattr(expense_forecast, "milestone_results", None)
         if isinstance(milestone_results, dict):
             result_data = milestone_results.get(result_type, {})
+        elif isinstance(milestone_results, (list, tuple)):
+            result_index_by_type = {"Account": 0, "Memo": 1, "Composite": 2}
+            result_index = result_index_by_type.get(result_type)
+            if result_index is not None and len(milestone_results) > result_index:
+                result_data = milestone_results[result_index]
+            else:
+                result_data = {}
         else:
             result_data = getattr(expense_forecast, f"{result_type.lower()}_milestone_results", {})
 
@@ -10501,5 +10515,5 @@ class ForecastHandler:
         )
         return html_output_path
 
-    def show_plan(self, forecast_set: ForecastSet):
+    def show_plan(self, forecast_set: ForecastSetInitialConditions):
         raise NotImplementedError

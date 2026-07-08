@@ -202,7 +202,7 @@ def non_trivial_loan(name, pbal, interest, apr):
         minimum_payment=50,
         principal_balance=pbal,
         interest_balance=interest,
-        end_of_previous_cycle_balance=pbal,
+        billing_cycle_payment_balance=0,
     )
 
     return A.accounts

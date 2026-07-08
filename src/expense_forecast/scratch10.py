@@ -41,7 +41,6 @@ def non_trivial_loan(name, pbal, interest, apr):
         principal_balance=pbal,
         interest_balance=interest,
         billing_cycle_payment_balance=0,
-        end_of_previous_cycle_balance=pbal,
     )
 
     return A.accounts
@@ -203,15 +202,12 @@ if __name__ == "__main__":
                     503.11 + 50.27,
                     503.11 + 50.27,
                 ],
-                "Loan A: Loan End of Prev Cycle Bal": [1000, 1000, 1000],
                 "Loan B: Principal Balance": [1000, 1000, 1000],
                 "Loan B: Interest": [100, 43.52, 43.66],
                 "Loan B: Loan Billing Cycle Payment Bal": [0, 6.62, 6.62],
-                "Loan B: Loan End of Prev Cycle Bal": [1000, 1000, 1000],
                 "Loan C: Principal Balance": [1000, 1000, 1000],
                 "Loan C: Interest": [100, 50.03, 50.06],
                 "Loan C: Loan Billing Cycle Payment Bal": [0, 0, 0],
-                "Loan C: Loan End of Prev Cycle Bal": [1000, 1000, 1000],
                 "Marginal Interest": [0, 0.44, 0.31],
                 "Net Gain": [0, 0, 0],
                 "Net Loss": [0, 0.44, 0.31],

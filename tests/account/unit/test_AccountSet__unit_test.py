@@ -85,7 +85,7 @@ def compound_loan_A():
         minimum_payment=50,
         principal_balance=1000,
         interest_balance=100,
-        end_of_previous_cycle_balance=1000,
+        billing_cycle_payment_balance=0,
     )
     return A.accounts
 
@@ -105,7 +105,7 @@ def compound_loan_A_no_interest():
         minimum_payment=50,
         principal_balance=1000,
         interest_balance=0,
-        end_of_previous_cycle_balance=1000,
+        billing_cycle_payment_balance=0,
     )
     return A.accounts
 
@@ -125,7 +125,7 @@ def compound_loan_B():
         minimum_payment=50,
         principal_balance=1500,
         interest_balance=100,
-        end_of_previous_cycle_balance=1500,
+        billing_cycle_payment_balance=0,
     )
     return A.accounts
 
@@ -145,7 +145,7 @@ def compound_loan_B_no_interest():
         minimum_payment=50,
         principal_balance=1500,
         interest_balance=0,
-        end_of_previous_cycle_balance=1500,
+        billing_cycle_payment_balance=0,
     )
     return A.accounts
 
@@ -165,7 +165,7 @@ def compound_loan_C():
         minimum_payment=50,
         principal_balance=2500,
         interest_balance=100,
-        end_of_previous_cycle_balance=2500,
+        billing_cycle_payment_balance=0,
     )
     return A.accounts
 
@@ -185,7 +185,7 @@ def compound_loan_C_no_interest():
         minimum_payment=50,
         principal_balance=2500,
         interest_balance=0,
-        end_of_previous_cycle_balance=2500,
+        billing_cycle_payment_balance=0,
     )
     return A.accounts
 
@@ -404,7 +404,7 @@ class TestAccountSet:
             billing_start_date=date(2023, 3, 3),
             apr=0.067,
             minimum_payment=223.19,
-            end_of_previous_cycle_balance=900,
+            billing_cycle_payment_balance=0,
         )
         return account_set
 
@@ -503,6 +503,135 @@ class TestAccountSet:
         assert result_vector == expected_result_vector
 
     @pytest.mark.unit
+    def test_allocate_additional_loan_payments_uses_refactored_loan_accounts(self):
+        test_account_set = AccountSet([])
+        test_account_set.createCheckingAccount(
+            "test checking",
+            balance=1000.0,
+            min_balance=0.0,
+            max_balance=float("inf"),
+            primary_checking_ind=True,
+        )
+        test_account_set.createLoanAccount(
+            "higher marginal interest loan",
+            principal_balance=1000.0,
+            interest_balance=10.0,
+            min_balance=0,
+            max_balance=2000.0,
+            billing_start_date=date(2026, 1, 1),
+            apr=0.1,
+            minimum_payment=40.0,
+        )
+        test_account_set.createLoanAccount(
+            "lower marginal interest loan",
+            principal_balance=1000.0,
+            interest_balance=10.0,
+            min_balance=0,
+            max_balance=2000.0,
+            billing_start_date=date(2026, 1, 1),
+            apr=0.05,
+            minimum_payment=40.0,
+        )
+
+        result = test_account_set.allocate_additional_loan_payments(
+            100.0, account_from="test checking"
+        )
+
+        assert result == [
+            ["test checking", "higher marginal interest loan", Decimal("100.0")]
+        ]
+
+    @pytest.mark.unit
+    def test_execute_transaction_all_loans_uses_refactored_loan_accounts(self):
+        test_account_set = AccountSet([])
+        test_account_set.createCheckingAccount(
+            "test checking",
+            balance=1000.0,
+            min_balance=0.0,
+            max_balance=float("inf"),
+            primary_checking_ind=True,
+        )
+        test_account_set.createLoanAccount(
+            "higher marginal interest loan",
+            principal_balance=1000.0,
+            interest_balance=10.0,
+            min_balance=0,
+            max_balance=2000.0,
+            billing_start_date=date(2026, 1, 1),
+            apr=0.1,
+            minimum_payment=40.0,
+        )
+        test_account_set.createLoanAccount(
+            "lower marginal interest loan",
+            principal_balance=1000.0,
+            interest_balance=10.0,
+            min_balance=0,
+            max_balance=2000.0,
+            billing_start_date=date(2026, 1, 1),
+            apr=0.05,
+            minimum_payment=40.0,
+        )
+
+        test_account_set.executeTransaction(
+            Account_From="test checking",
+            Account_To="ALL_LOANS",
+            Amount=100.0,
+        )
+
+        result = test_account_set.getAccounts().set_index("Name")
+        assert result.loc["test checking", "Balance"] == Decimal("900.0")
+        assert (
+            result.loc["higher marginal interest loan", "Balance"]
+            == Decimal("910.0")
+        )
+        assert (
+            result.loc["lower marginal interest loan", "Balance"]
+            == Decimal("1010.0")
+        )
+
+    @pytest.mark.unit
+    def test_allocate_additional_loan_payments_treats_near_equal_marginal_interest_as_tied(self):
+        test_account_set = AccountSet([])
+        test_account_set.createCheckingAccount(
+            "test checking",
+            balance=10000.0,
+            min_balance=0.0,
+            max_balance=float("inf"),
+            primary_checking_ind=True,
+        )
+        test_account_set.createLoanAccount(
+            "barely higher loan",
+            principal_balance=3540.710620300949,
+            interest_balance=12.48,
+            min_balance=0,
+            max_balance=10000.0,
+            billing_start_date=date(2030, 12, 1),
+            apr=0.0429,
+            minimum_payment=40.0,
+        )
+        test_account_set.createLoanAccount(
+            "effectively tied loan",
+            principal_balance=1518.9648561091071,
+            interest_balance=12.48,
+            min_balance=0,
+            max_balance=10000.0,
+            billing_start_date=date(2030, 12, 1),
+            apr=0.1,
+            minimum_payment=40.0,
+        )
+
+        result = test_account_set.allocate_additional_loan_payments(
+            5500.0, account_from="test checking"
+        )
+
+        allocated_amount = sum(payment[2] for payment in result)
+        assert allocated_amount == pytest.approx(Decimal("5084.64"), abs=0.01)
+        assert {payment[1] for payment in result} == {
+            "barely higher loan",
+            "effectively tied loan",
+        }
+
+    @pytest.mark.unit
     @pytest.mark.parametrize(
         "name,balance,min_balance,max_balance,account_type,kwargs",
         [
@@ -518,7 +647,7 @@ class TestAccountSet:
                     "interest_cadence": "monthly",
                     "minimum_payment": 50,
                     "interest_balance": 100,
-                    "end_of_previous_cycle_balance": 100,
+                    "billing_cycle_payment_balance": 0,
                 },
             ),
             (
@@ -533,7 +662,7 @@ class TestAccountSet:
                     "interest_cadence": "monthly",
                     "minimum_payment": 50,
                     "principal_balance": 100,
-                    "end_of_previous_cycle_balance": 100,
+                    "billing_cycle_payment_balance": 0,
                 },
             ),
             (
@@ -563,7 +692,7 @@ class TestAccountSet:
                     "minimum_payment": 50,
                     "principal_balance": 100,
                     "interest_balance": 100,
-                    "end_of_previous_cycle_balance": 100,
+                    "billing_cycle_payment_balance": 0,
                 },
             ),
             # ( #this looks like valid input to me

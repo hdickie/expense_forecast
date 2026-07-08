@@ -114,6 +114,14 @@ class ExpenseForecastInitialConditions:
                         )
                     )
             elif account_type == "loan":
+                billing_cycle_payment_balance = account_row.get(
+                    "Billing_Cycle_Payment_Balance"
+                )
+                if billing_cycle_payment_balance is None:
+                    billing_cycle_payment_balance = (
+                        account_row["End_Of_Previous_Cycle_Balance"]
+                        - account_row["Principal_Balance"]
+                    )
                 account_set.createLoanAccount(
                     name=account_row["Name"],
                     principal_balance=account_row["Principal_Balance"],
@@ -125,9 +133,7 @@ class ExpenseForecastInitialConditions:
                     ),
                     apr=account_row["APR"],
                     minimum_payment=account_row["Minimum_Payment"],
-                    end_of_previous_cycle_balance=account_row[
-                        "End_Of_Previous_Cycle_Balance"
-                    ],
+                    billing_cycle_payment_balance=billing_cycle_payment_balance,
                 )
             else:
                 raise NotImplementedError(

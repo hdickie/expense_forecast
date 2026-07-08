@@ -55,3 +55,39 @@ This project is licensed under the GNU General Public License v3.0. See the [lic
 
 ### Notes to self
 Run tests: python3 -m pytest
+
+What This UI Is  
+The UI is a PHP/Apache app.  
+Apache serves PHP pages from:  
+[app/php/site-contents](/Users/hume/CodeProjects/Github/expense_forecast/app/php/site-contents)  
+Main entry points:  
+Login page: [index.php](/Users/hume/CodeProjects/Github/expense_forecast/app/php/site-contents/index.php)  
+Register page: [register.php](/Users/hume/CodeProjects/Github/expense_forecast/app/php/site-contents/register.php)  
+Main app page: [expense_forecast.php](/Users/hume/CodeProjects/Github/expense_forecast/app/php/site-contents/expense_forecast.php)  
+Form handlers: [php_script/](/Users/hume/CodeProjects/Github/expense_forecast/app/php/site-contents/php_script)  
+There is no active Jinja/template rendering flow here. There is a tiny FastAPI stub in [src/expense_forecast/main.py](/Users/hume/CodeProjects/Github/expense_forecast/src/expense_forecast/main.py), but it only returns {"message": "Hello World"} and is not used by compose.yaml.  
+How The App Works  
+The big page is [expense_forecast.php](/Users/hume/CodeProjects/Github/expense_forecast/app/php/site-contents/expense_forecast.php). It renders HTML directly with embedded PHP and JS.  
+UI edits go mostly here:
+Layout/forms/tabs/views: [expense_forecast.php](/Users/hume/CodeProjects/Github/expense_forecast/app/php/site-contents/expense_forecast.php)  
+Styling: [css/expense_forecast.css](/Users/hume/CodeProjects/Github/expense_forecast/app/php/site-contents/css/expense_forecast.css) and [css/style.css](/Users/hume/CodeProjects/Github/expense_forecast/app/php/site-contents/css/style.css)  
+Plot behavior: [drawExpenseForecastPlot.js](/Users/hume/CodeProjects/Github/expense_forecast/app/php/site-contents/script/drawExpenseForecastPlot.js) and [drawCompareExpenseForecastPlot.js](/Users/hume/CodeProjects/Github/expense_forecast/app/php/site-contents/script/drawCompareExpenseForecastPlot.js)  
+DB/form actions: [php_script/](/Users/hume/CodeProjects/Github/expense_forecast/app/php/site-contents/php_script)  
+Forms POST to PHP scripts. Those scripts update Postgres or run Python CLI commands like:  
+python3 /var/www/html/src/expense_forecast/ef_cli.py ...  
+The Python writes artifacts into /var/www/html/data, which maps to:  
+[app/runtime/data](/Users/hume/CodeProjects/Github/expense_forecast/app/runtime/data)  
+Then PHP/JS reads those generated CSV/JSON/image/report files.  
+Registration  
+Register is probably not fully healthy yet.  
+Path:  
+[register.php](/Users/hume/CodeProjects/Github/expense_forecast/app/php/site-contents/register.php) posts to  
+[create_user_account.php](/Users/hume/CodeProjects/Github/expense_forecast/app/php/site-contents/php_script/create_user_account.php)  
+That inserts into public.users  
+Then it includes [prepare_database_for_new_expense_forecast_user.php](/Users/hume/CodeProjects/Github/expense_forecast/app/php/site-contents/php_script/prepare_database_for_new_expense_forecast_user.php), which creates per-user DB tables.  
+Likely issues:  
+It tries to send email with mail(...), which probably won’t work locally.  
+The registration page has stale JS calling saveToLocalStorage(store.getState()), but store does not appear defined there.  
+Feedback cookie cleanup is wrong: it reads account_registration_feedback but clears login_feedback.  
+The DB/user/table setup is fragile and may fail silently because most pg_query(...) calls don’t check errors.  
+So: the pathway exists, but I would not trust it until we do a focused registration repair pass.  

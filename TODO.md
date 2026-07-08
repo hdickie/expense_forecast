@@ -2,9 +2,36 @@
 
 ## Notes
 
-Write free-form notes here. Everything above the generated marker is preserved.
+Migration notes from Codex:  
+Add ignored runtime dirs and app folder structure.  
+Copy Docker/PHP/init SQL files, excluding generated artifacts and old Python source.  
+Update compose.yaml paths and Dockerfile dependency install.  
+Add shared PHP config for DB/env values.  
+Start containers and fix first-order startup issues.  
+Exercise login/register and basic table editing.  
+Exercise ef_cli through the UI.  
+Patch schema/model mismatches as they appear.  
+Add a short docs/app.md with how to run it.  
+Retire expense_forecast_app.  
+  
+Playwright test cases:  
+Create a new Forecast.  
+Edit transactions.  
+Run the forecast.  
+Verify the report loads.  
+Create a ForecastSet.  
+Compare multiple scenarios.  
+Export a report.  
+Confirm no JavaScript errors occurred.  
 
+My Suggested First UI Refactor
+I would start with the New Forecast view only:
+Convert it into a left-to-right or top-to-bottom setup flow.
+Keep the existing PHP handlers for now.
+Replace repeated form sections with editable tables.
+Add a review panel before stage/run.
 
+A refactor of the loan allocaiton algorthm now overallocates by a few pennies in certain cases where marginal interest for multiple loans are very close together
 
 <!-- TODO:GENERATED:START -->
 ## Generated TODOs

@@ -250,33 +250,35 @@ class MilestoneSet:
 
         if self.composite_milestones:
             for cm in self.composite_milestones:
-                for am in cm.account_milestones:
-                    composite_milestone_df = pd.concat(
-                        [
-                            composite_milestone_df,
-                            pd.DataFrame(
-                                {
-                                    "Composite_Milestone_Name": [cm.milestone_name],
-                                    "Milestone_Type": ["Account"],
-                                    "Milestone_Name": [am.milestone_name],
-                                }
-                            ),
-                        ]
-                    )
+                if cm.account_milestones:
+                    for am in cm.account_milestones:
+                        composite_milestone_df = pd.concat(
+                            [
+                                composite_milestone_df,
+                                pd.DataFrame(
+                                    {
+                                        "Composite_Milestone_Name": [cm.milestone_name],
+                                        "Milestone_Type": ["Account"],
+                                        "Milestone_Name": [am.milestone_name],
+                                    }
+                                ),
+                            ]
+                        )
 
-                for mm in cm.memo_milestones:
-                    composite_milestone_df = pd.concat(
-                        [
-                            composite_milestone_df,
-                            pd.DataFrame(
-                                {
-                                    "Composite_Milestone_Name": [cm.milestone_name],
-                                    "Milestone_Type": ["Memo"],
-                                    "Milestone_Name": [mm.milestone_name],
-                                }
-                            ),
-                        ]
-                    )
+                if cm.memo_milestones:
+                    for mm in cm.memo_milestones:
+                        composite_milestone_df = pd.concat(
+                            [
+                                composite_milestone_df,
+                                pd.DataFrame(
+                                    {
+                                        "Composite_Milestone_Name": [cm.milestone_name],
+                                        "Milestone_Type": ["Memo"],
+                                        "Milestone_Name": [mm.milestone_name],
+                                    }
+                                ),
+                            ]
+                        )
             composite_milestone_df.reset_index(drop=True, inplace=True)
         return composite_milestone_df
 

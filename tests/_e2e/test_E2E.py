@@ -203,8 +203,8 @@ class TestE2E:
                             max_balance=20_000,
                             billing_start_date=date(2026,6,3),
                             minimum_payment=10, #TODO not sure
-                            end_of_previous_cycle_balance=3484.34 + 124.33,
-                            apr=0.0466) #TODO end_of_previous_cycle_balance shouldn't exist...
+                            billing_cycle_payment_balance=0,
+                            apr=0.0466)
         
         A.createLoanAccount(name="Loan B", 
                             principal_balance=4519.90, 
@@ -213,8 +213,8 @@ class TestE2E:
                             max_balance=20_000,
                             billing_start_date=date(2026,6,3),
                             minimum_payment=10, #TODO not sure
-                            end_of_previous_cycle_balance=4519.90 + 67.01,
-                            apr=0.0429) #TODO end_of_previous_cycle_balance shouldn't exist...
+                            billing_cycle_payment_balance=0,
+                            apr=0.0429)
         
         A.createLoanAccount(name="Loan C", 
                                 principal_balance=1969.58, 
@@ -223,8 +223,8 @@ class TestE2E:
                                 max_balance=20_000,
                                 billing_start_date=date(2026,6,3),
                                 minimum_payment=10, #TODO not sure
-                                end_of_previous_cycle_balance=1969.58 + 63.28,
-                                apr=0.0429) #TODO end_of_previous_cycle_balance shouldn't exist...
+                                billing_cycle_payment_balance=0,
+                                apr=0.0429)
         
         A.createLoanAccount(name="Loan D", 
                                 principal_balance=4506.0, 
@@ -233,8 +233,8 @@ class TestE2E:
                                 max_balance=20_000,
                                 billing_start_date=date(2026,6,3),
                                 minimum_payment=10, #TODO not sure
-                                end_of_previous_cycle_balance=4506.0 + 52.79,
-                                apr=0.0376) #TODO end_of_previous_cycle_balance shouldn't exist...
+                                billing_cycle_payment_balance=0,
+                                apr=0.0376)
         
         A.createLoanAccount(name="Loan E", 
                                 principal_balance=1855.69, 
@@ -243,8 +243,8 @@ class TestE2E:
                                 max_balance=20_000,
                                 billing_start_date=date(2026,6,3),
                                 minimum_payment=10, #TODO not sure
-                                end_of_previous_cycle_balance=1855.69 + 50.18,
-                                apr=0.0376) #TODO end_of_previous_cycle_balance shouldn't exist...
+                                billing_cycle_payment_balance=0,
+                                apr=0.0376)
 
         B.addBudgetItem(start_date=start_date, end_date=end_date, priority=1,
                         cadence='daily',amount=10,memo='food expense',income_flag=False, 
