@@ -33,6 +33,11 @@ Add a review panel before stage/run.
 
 A refactor of the loan allocaiton algorthm now overallocates by a few pennies in certain cases where marginal interest for multiple loans are very close together
 
+Human Tasks
+
+LLM Tasks
+
+
 <!-- TODO:GENERATED:START -->
 ## Generated TODOs
 

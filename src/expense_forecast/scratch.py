@@ -5,6 +5,8 @@ from expense_forecast.ForecastSetInitialConditions import ForecastSetInitialCond
 from expense_forecast.AccountSet import AccountSet
 from expense_forecast.BudgetSet import BudgetSet
 
+from expense_forecast.MilestoneTriggeredForecastTransition import MilestoneTriggeredForecastTransition
+
 from expense_forecast.MemoRuleSet import MemoRuleSet
 from expense_forecast.ForecastHandler import ForecastHandler
 from expense_forecast.MilestoneSet import MilestoneSet
@@ -471,7 +473,7 @@ def get_hypothetical_A_at_start_of_RN_life():
 
 def get_hypothetical_A_at_start_of_net_0_life():
     A = AccountSet()
-    A.createAccount(name='Checking',balance=5000.0,
+    A.createAccount(name='Checking',balance=0,
                     min_balance=0,max_balance=float('Inf'),
                     account_type='checking',
                     primary_checking_ind=True)
@@ -722,24 +724,55 @@ if __name__ == '__main__':
 
         #pushed it out 6 months
         start_date = date(2032, 1, 1)
-        end_date = date(2035, 1, 1)
+        end_date = start_date + datetime.timedelta(days=365)
 
         A = get_hypothetical_A_at_start_of_net_0_life()
         
         B_base = get_B_invariant(20, 80)
         B_retirement_saving = BudgetSet() # TODO
 
+        B_income = BudgetSet()
+        B_income.addBudgetItem( start_date, 
+                                end_date,
+                                1, 'semiweekly', 2900*(1.05**2), 'RN income 3rd Year', True)
+        
+        B_keep_cc_payed_off = BudgetSet()
+        B_keep_cc_payed_off.addBudgetItem(start_date=date(2030,2,1), end_date=end_date, priority=1,
+                    cadence='monthly',amount=1400,memo='extra cc payment cyclical',income_flag=False, 
+                    deferrable=False, partial_payment_allowed=False)
 
-        M = get_post_net_worth_0_M()
+        B = B_base + B_retirement_saving + B_income + B_keep_cc_payed_off
+
+        # M = get_post_net_worth_0_M()
+        M = getComprehensiveMemoRules()
+
+        MS = MilestoneSet()
+
+        IO = ExpenseForecastInitialConditions(start_date, end_date, A, B, M)
+
+        F = ForecastHandler()
+
+        milestone_name_to_budget_swap_set = {} #TODO
+
+        fork_set = MilestoneTriggeredForecastTransition(milestone_name_to_budget_swap_set)
+        R = F.runForecastWithForks(IO, MS, fork_set, include_debug_columns=True)
+        # R = F.runForecast(IO, MS, include_debug_columns=True)
+        # R.writeToJSONFile(str(R.unique_id)+'.json')
+        # F.generateHTMLReport(R)
 
 
         ### Lifestyle Options
         # 1. Stay in Los Angeles in Current Car
         # 2. Get room in Los Angeles 1500
         # 3. Get room in Los Angeles 2200
+        ScenarioDimension(name='Lifestyle', choices={
+            'Stay in Los Angeles in Current Car': BudgetSet(),
+            'Get room in Los Angeles 1500': BudgetSet(),
+            'Get room in Los Angeles 2200': BudgetSet(),
+        })
 
         ### Dimensions
-        # Personal trainer or not
+        # Personal trainer or not ; lets call it $1000 / mo bc lazy
         # Save for retirements or not 
 
         ### Goal Options
@@ -748,6 +781,15 @@ if __name__ == '__main__':
         # Save up to sojourn to spain, become travel nurse, sojourn a few times and then move to spain for a year
         # Put all my extra money into retirement
         
+        # TODO in order to do these, I need to be able to stop mid way at a milestone and start a new forecsast
+        # starting from there, with A, B, M
 
         # TODO MS
 
+
+        # TODO ForecastStateSnapshot
+        # TODO MilestoneTriggeredForecastTransition
+
+    elif action == 'test approximate case':
+
+        raise NotImplementedError

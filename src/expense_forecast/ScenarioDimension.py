@@ -23,7 +23,7 @@ class ScenarioDimension:
         if name is None:
             raise ValueError("Name for ScenarioDimension cannot be None")
         
-        if name != "":
+        if name.strip() == "":
             raise ValueError("Name for ScenarioDimension cannot be empty string")
         
         self.choices = {}
@@ -32,7 +32,7 @@ class ScenarioDimension:
                 if choice_name is None:
                     raise ValueError("choice_name for ScenarioDimension cannot be None")
                 
-                if choice_name != "":
+                if choice_name == "":
                     raise ValueError("choice_name for ScenarioDimension cannot be empty string")
                 
                 # TOOD enforce something about budgetSet

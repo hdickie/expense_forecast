@@ -226,6 +226,39 @@ class BudgetSet:
 
         return BudgetSet(self.budget_items + other.budget_items)
 
+    @staticmethod
+    def _budget_item_key(budget_item):
+        return (
+            budget_item.start_date,
+            budget_item.end_date,
+            budget_item.priority,
+            budget_item.cadence,
+            budget_item.amount,
+            budget_item.memo,
+            budget_item.income_flag,
+            budget_item.deferrable,
+            budget_item.partial_payment_allowed,
+        )
+
+    def __sub__(self, other: BudgetSet):
+        if not isinstance(other, BudgetSet):
+            return NotImplemented
+
+        remaining_items = list(self.budget_items)
+        for item_to_remove in other.budget_items:
+            item_to_remove_key = self._budget_item_key(item_to_remove)
+            for index, candidate_item in enumerate(remaining_items):
+                if self._budget_item_key(candidate_item) == item_to_remove_key:
+                    remaining_items.pop(index)
+                    break
+            else:
+                raise ValueError(
+                    "Cannot subtract BudgetSet; item was not present: "
+                    + str(item_to_remove)
+                )
+
+        return BudgetSet(remaining_items)
+
 if __name__ == "__main__":
     import doctest
 

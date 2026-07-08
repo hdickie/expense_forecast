@@ -5,6 +5,8 @@ from expense_forecast.MemoRuleSet import MemoRuleSet
 from expense_forecast.MilestoneSet import MilestoneSet 
 from expense_forecast.ExpenseForecastInitialConditions import ExpenseForecastInitialConditions 
 from expense_forecast.ExpenseForecastResult import ExpenseForecastResult 
+from expense_forecast.MilestoneTriggeredForecastTransition import MilestoneTriggeredForecastTransition
+
 import hashlib
 import hashlib
 import json
@@ -10517,3 +10519,316 @@ class ForecastHandler:
 
     def show_plan(self, forecast_set: ForecastSetInitialConditions):
         raise NotImplementedError
+
+    @classmethod
+    def runForecastWithForks(cls,
+                             IO,
+                             MS,
+                             fork_set: MilestoneTriggeredForecastTransition,
+                             include_debug_columns=False,
+                             log_stack_depth=0):
+
+        # Order of fork options introduces instability, so fork options are processed in order
+        summary_columns = {
+            "Marginal Interest",
+            "Net Gain",
+            "Net Loss",
+            "Net Worth",
+            "Loan Total",
+            "CC Debt Total",
+        }
+
+        def strip_summary_columns(forecast_df):
+            return forecast_df.drop(
+                columns=[
+                    column
+                    for column in summary_columns
+                    if column in forecast_df.columns
+                ],
+                errors="ignore",
+            )
+
+        def flatten_milestone_results(milestone_results):
+            flattened_results = {}
+            if milestone_results is None:
+                return flattened_results
+
+            if isinstance(milestone_results, dict):
+                return milestone_results
+
+            for result_group in milestone_results:
+                if result_group is None:
+                    continue
+                flattened_results.update(result_group)
+            return flattened_results
+
+        def append_date_slice(destination_df, source_df, start_date, end_date):
+            if source_df is None:
+                return destination_df
+
+            source_df = strip_summary_columns(source_df)
+            if source_df.empty:
+                return destination_df
+
+            source_dates = source_df["Date"].apply(cls._normalize_date_value)
+            slice_sel_vec = (source_dates >= start_date) & (source_dates <= end_date)
+            slice_df = source_df.loc[slice_sel_vec, :].copy()
+
+            if destination_df is None:
+                destination_df = source_df.head(0).copy()
+
+            if slice_df.empty:
+                return destination_df
+
+            return pd.concat([destination_df, slice_df], ignore_index=True)
+
+        def account_set_at_forecast_row(account_set, forecast_row):
+            account_set = copy.deepcopy(account_set)
+
+            for account in account_set.accounts:
+                if account.name not in forecast_row.index:
+                    continue
+
+                account.balance = AccountSet._money(forecast_row[account.name])
+
+                if account.account_type == "checking":
+                    account.billing_state.balance = account.balance
+                elif account.account_type == "credit":
+                    billing_state = account.billing_state
+                    billing_state.current_statement_balance = AccountSet._money(
+                        forecast_row[f"{account.name}: Curr Stmt Bal"]
+                    )
+                    billing_state.previous_statement_balance = AccountSet._money(
+                        forecast_row[f"{account.name}: Prev Stmt Bal"]
+                    )
+                    billing_state.billing_cycle_payment_balance = AccountSet._money(
+                        forecast_row[
+                            f"{account.name}: Credit Billing Cycle Payment Bal"
+                        ]
+                    )
+                    billing_state.end_of_previous_cycle_balance = AccountSet._money(
+                        forecast_row[f"{account.name}: Credit End of Prev Cycle Bal"]
+                    )
+                    AccountSet._sync_debt_account_from_billing_state(account)
+                elif account.account_type == "loan":
+                    billing_state = account.billing_state
+                    billing_state.principal_balance = AccountSet._money(
+                        forecast_row[f"{account.name}: Principal Balance"]
+                    )
+                    billing_state.interest_balance = AccountSet._money(
+                        forecast_row[f"{account.name}: Interest"]
+                    )
+                    billing_state.billing_cycle_payment_balance = AccountSet._money(
+                        forecast_row[f"{account.name}: Loan Billing Cycle Payment Bal"]
+                    )
+                    AccountSet._sync_debt_account_from_billing_state(account)
+
+            return account_set
+
+        def next_initial_conditions(current_IO, next_start_date, next_account_set, next_budget_set):
+            kwargs = {}
+            if getattr(current_IO, "forecast_name", None) is not None:
+                kwargs["forecast_name"] = current_IO.forecast_name
+            if getattr(current_IO, "forecast_set_name", None) is not None:
+                kwargs["forecast_set_name"] = current_IO.forecast_set_name
+
+            return ExpenseForecastInitialConditions(
+                start_date=next_start_date,
+                end_date=current_IO.end_date,
+                account_set=next_account_set,
+                budget_set=next_budget_set,
+                memo_rule_set=current_IO.initial_memo_rule_set,
+                log_stack_depth=log_stack_depth,
+                **kwargs,
+            )
+
+        def assert_no_conflicting_duplicate_dates(forecast_df):
+            if forecast_df is None or forecast_df.empty:
+                return
+
+            duplicate_date_df = forecast_df[
+                forecast_df.duplicated(subset=["Date"], keep=False)
+            ]
+            if duplicate_date_df.empty:
+                return
+
+            for duplicate_date, date_group_df in duplicate_date_df.groupby("Date"):
+                unique_rows_df = date_group_df.drop_duplicates()
+                if unique_rows_df.shape[0] > 1:
+                    raise ValueError(
+                        "Conflicting duplicate forecast rows found for date "
+                        + str(duplicate_date)
+                    )
+
+        original_IO = copy.deepcopy(IO)
+        current_IO = copy.deepcopy(IO)
+
+        nth_pass = cls.runForecast(current_IO, MS, include_debug_columns=True)
+        forecast_df_slices_to_keep_df = strip_summary_columns(nth_pass.forecast_df).head(0).copy()
+        confirmed_to_keep_df = nth_pass.confirmed_df.head(0).copy()
+        deferred_to_keep_df = nth_pass.deferred_df.head(0).copy()
+        skipped_to_keep_df = nth_pass.skipped_df.head(0).copy()
+
+        slice_start_date = current_IO.start_date
+        for fork_milestone_name, swap_sets in fork_set.milestone_name_to_budget_swap_set.items():
+            flattened_milestone_results = flatten_milestone_results(
+                nth_pass.milestone_results
+            )
+            milestone_date = flattened_milestone_results.get(fork_milestone_name)
+            if milestone_date is None:
+                continue
+
+            milestone_date = cls._normalize_date_value(milestone_date)
+            if milestone_date < slice_start_date:
+                continue
+
+            forecast_df_slices_to_keep_df = append_date_slice(
+                forecast_df_slices_to_keep_df,
+                nth_pass.forecast_df,
+                slice_start_date,
+                milestone_date,
+            )
+            confirmed_to_keep_df = append_date_slice(
+                confirmed_to_keep_df,
+                nth_pass.confirmed_df,
+                slice_start_date,
+                milestone_date,
+            )
+            deferred_to_keep_df = append_date_slice(
+                deferred_to_keep_df,
+                nth_pass.deferred_df,
+                slice_start_date,
+                milestone_date,
+            )
+            skipped_to_keep_df = append_date_slice(
+                skipped_to_keep_df,
+                nth_pass.skipped_df,
+                slice_start_date,
+                milestone_date,
+            )
+
+            kept_forecast_rows = forecast_df_slices_to_keep_df[
+                forecast_df_slices_to_keep_df["Date"].apply(cls._normalize_date_value)
+                == milestone_date
+            ]
+            if kept_forecast_rows.empty:
+                raise ValueError(
+                    "Could not sync fork state because no forecast row was kept for "
+                    + str(milestone_date)
+                )
+
+            next_start_date = milestone_date + datetime.timedelta(days=1)
+            if next_start_date >= current_IO.end_date:
+                slice_start_date = next_start_date
+                break
+
+            next_account_set = account_set_at_forecast_row(
+                current_IO.initial_account_set,
+                kept_forecast_rows.tail(1).iloc[0],
+            )
+            next_budget_set = current_IO.initial_budget_set - swap_sets[0] + swap_sets[1]
+            current_IO = next_initial_conditions(
+                current_IO,
+                next_start_date,
+                next_account_set,
+                next_budget_set,
+            )
+            slice_start_date = current_IO.start_date
+            nth_pass = cls.runForecast(current_IO, MS, include_debug_columns=True)
+
+        if slice_start_date <= current_IO.end_date:
+            forecast_df_slices_to_keep_df = append_date_slice(
+                forecast_df_slices_to_keep_df,
+                nth_pass.forecast_df,
+                slice_start_date,
+                current_IO.end_date,
+            )
+            confirmed_to_keep_df = append_date_slice(
+                confirmed_to_keep_df,
+                nth_pass.confirmed_df,
+                slice_start_date,
+                current_IO.end_date,
+            )
+            deferred_to_keep_df = append_date_slice(
+                deferred_to_keep_df,
+                nth_pass.deferred_df,
+                slice_start_date,
+                current_IO.end_date,
+            )
+            skipped_to_keep_df = append_date_slice(
+                skipped_to_keep_df,
+                nth_pass.skipped_df,
+                slice_start_date,
+                current_IO.end_date,
+            )
+
+        forecast_slices_to_keep = forecast_df_slices_to_keep_df.reset_index(drop=True)
+        assert_no_conflicting_duplicate_dates(forecast_slices_to_keep)
+        forecast_slices_to_keep = forecast_slices_to_keep.drop_duplicates(
+            subset=["Date"], keep="first"
+        ).reset_index(drop=True)
+
+        result_kwargs = {
+            "confirmed_df": confirmed_to_keep_df,
+            "deferred_df": deferred_to_keep_df,
+            "skipped_df": skipped_to_keep_df,
+            "milestone_set": MS,
+            "milestone_results": cls.evaluateMilestones(
+                forecast_slices_to_keep,
+                MS,
+                log_stack_depth=log_stack_depth,
+            ),
+        }
+
+
+        R = ExpenseForecastResult(original_IO, forecast_slices_to_keep, **result_kwargs)
+
+        # Round all values in Memo and Memo Directives
+        # (I think I can round other columns as needed w display.precision without changing the data)
+        for index, row in R.forecast_df.iterrows():
+            new_memo_lines = []
+            for m in row["Memo"].split(";"):
+                if m.strip() == "":
+                    continue
+                match = re.search(r".*\$(.*)\)", m)
+                if match is None:
+                    raise ValueError(f"Could not parse amount from memo: {m}")
+
+                og_amt = float(match.group(1))
+                new_amount = f"{og_amt:.2f}"
+                # log_in_color(logger, 'white', 'debug', '(case 29) _update_memo_amount')
+                new_m = cls._update_memo_amount(m, new_amount=new_amount, log_stack_depth=log_stack_depth).strip()
+                new_memo_lines.append(new_m)
+
+            new_md_lines = []
+            for md in row["Memo Directives"].split(";"):
+                if md.strip() == "":
+                    continue
+                try:
+                    match = re.search(r".*\$(.*)\)", md)
+                    if match is None:
+                        raise ValueError("Regex did not match")
+                    og_amt = float(match.group(1))
+                except Exception:
+                    print("Offending memo directive:", md)
+                    raise
+
+                new_amount = f"{og_amt:.2f}"
+                # log_in_color(logger, 'white', 'debug', '(case 30) _update_memo_amount')
+                new_md = cls._update_memo_amount(md, new_amount=new_amount, log_stack_depth=log_stack_depth).strip()
+                new_md_lines.append(new_md)
+
+            R.forecast_df.loc[index, "Memo"] = "; ".join(new_memo_lines)
+            R.forecast_df.loc[index, "Memo Directives"] = "; ".join(new_md_lines)
+
+        # cls.forecast_df = forecast_df
+        # cls.skipped_df = skipped_df
+        # cls.confirmed_df = confirmed_df
+        # cls.deferred_df = deferred_df
+
+        cls.end_ts = datetime.datetime.now()
+        R.forecast_df = cls._appendSummaryLines(IO.initial_account_set, R.forecast_df, log_stack_depth=log_stack_depth)
+        R.forecast_df = cls._roundForecastOutput(R.forecast_df, decimals=2)
+        R.milestone_results = cls.evaluateMilestones(R.forecast_df, R.milestone_set, log_stack_depth=log_stack_depth)
+
+        return R
