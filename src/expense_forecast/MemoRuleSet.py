@@ -1,3 +1,17 @@
+"""
+Summary
+-------
+
+Description
+-----------
+
+Contract
+--------
+
+@interface-report: show
+"""
+
+
 from .MemoRule import MemoRule
 import pandas as pd
 import re
@@ -26,9 +40,47 @@ logger = logging.getLogger(__name__)
 #     return M
 
 
+#TODO manual review of MemoRuleSet docstring
 class MemoRuleSet:
 
+    """
+    Summary
+    -------
+
+    Description
+    -----------
+
+    Contract
+    --------
+
+    @interface-report: show
+    """
+    #TODO manual review of MemoRuleSet.__init__ docstring
     def __init__(self, memo_rules__list=None):
+        """
+        TODO one-line description of MemoRuleSet.__init__.
+
+        TODO multi-line description of MemoRuleSet.__init__.
+        TODO explain how MemoRuleSet.__init__ participates in this module.
+        TODO document important state, validation, or serialization behavior.
+
+        Parameters
+        ----------
+        memo_rules__list : object
+            TODO one-line description of MemoRuleSet.__init__.memo_rules__list.
+
+        Returns
+        -------
+        None
+            TODO one-line description of return value of MemoRuleSet.__init__.
+
+        Contract
+        --------
+        - #TODO contract lines for MemoRuleSet.__init__.
+        - #TODO document exceptions, mutations, and precision assumptions for MemoRuleSet.__init__.
+
+        @interface-report: show
+        """
         self.memo_rules = []
         self.memoized_rule_matches = {} #not possible to input this bc this is a memory optimization
         if memo_rules__list is None:
@@ -54,14 +106,92 @@ class MemoRuleSet:
                 assert required_attr in non_builtin_attr
             self.memo_rules.append(memo_rule)
 
+    #TODO manual review of MemoRuleSet.__str__ docstring
     def __str__(self):
+        """
+        TODO one-line description of MemoRuleSet.__str__.
+
+        TODO multi-line description of MemoRuleSet.__str__.
+        TODO explain how MemoRuleSet.__str__ participates in this module.
+        TODO document important state, validation, or serialization behavior.
+
+        Parameters
+        ----------
+        None
+            TODO confirm that MemoRuleSet.__str__ takes no parameters beyond self/cls.
+
+        Returns
+        -------
+        str
+            TODO one-line description of return value of MemoRuleSet.__str__.
+
+        Contract
+        --------
+        - #TODO contract lines for MemoRuleSet.__str__.
+        - #TODO document exceptions, mutations, and precision assumptions for MemoRuleSet.__str__.
+
+        @interface-report: show
+        """
         return self.getMemoRules().to_string() #TODO implement MemoRuleSet::__str__
 
+    #TODO manual review of MemoRuleSet.__repr__ docstring
     def __repr__(self):
+        """
+        TODO one-line description of MemoRuleSet.__repr__.
+
+        TODO multi-line description of MemoRuleSet.__repr__.
+        TODO explain how MemoRuleSet.__repr__ participates in this module.
+        TODO document important state, validation, or serialization behavior.
+
+        Parameters
+        ----------
+        None
+            TODO confirm that MemoRuleSet.__repr__ takes no parameters beyond self/cls.
+
+        Returns
+        -------
+        str
+            TODO one-line description of return value of MemoRuleSet.__repr__.
+
+        Contract
+        --------
+        - #TODO contract lines for MemoRuleSet.__repr__.
+        - #TODO document exceptions, mutations, and precision assumptions for MemoRuleSet.__repr__.
+
+        @interface-report: show
+        """
         return str(self) #TODO implement MemoRuleSet::__repr__
 
+    #TODO manual review of MemoRuleSet.findMatchingMemoRule docstring
     def findMatchingMemoRule(self, txn_memo, transaction_priority):
         # log_in_color(logger, "yellow", "debug", "ENTER findMatchingMemoRule")
+        """
+        TODO one-line description of MemoRuleSet.findMatchingMemoRule.
+
+        TODO multi-line description of MemoRuleSet.findMatchingMemoRule.
+        TODO explain how MemoRuleSet.findMatchingMemoRule participates in this module.
+        TODO document important state, validation, or serialization behavior.
+
+        Parameters
+        ----------
+        txn_memo : object
+            TODO one-line description of MemoRuleSet.findMatchingMemoRule.txn_memo.
+
+        transaction_priority : object
+            TODO one-line description of MemoRuleSet.findMatchingMemoRule.transaction_priority.
+
+        Returns
+        -------
+        object
+            TODO one-line description of return value of MemoRuleSet.findMatchingMemoRule.
+
+        Contract
+        --------
+        - #TODO contract lines for MemoRuleSet.findMatchingMemoRule.
+        - #TODO document exceptions, mutations, and precision assumptions for MemoRuleSet.findMatchingMemoRule.
+
+        @interface-report: show
+        """
         if (txn_memo, transaction_priority) in self.memoized_rule_matches:
             return self.memoized_rule_matches[(txn_memo, transaction_priority)]
 
@@ -101,8 +231,42 @@ class MemoRuleSet:
         # log_in_color(logger, "yellow", "debug", "EXIT findMatchingMemoRule")
         return self.memoized_rule_matches[(txn_memo, transaction_priority)]
 
+    #TODO manual review of MemoRuleSet.addMemoRule docstring
     def addMemoRule(self, memo_regex, account_from, account_to, transaction_priority):
 
+        """
+        TODO one-line description of MemoRuleSet.addMemoRule.
+
+        TODO multi-line description of MemoRuleSet.addMemoRule.
+        TODO explain how MemoRuleSet.addMemoRule participates in this module.
+        TODO document important state, validation, or serialization behavior.
+
+        Parameters
+        ----------
+        memo_regex : str
+            TODO one-line description of MemoRuleSet.addMemoRule.memo_regex.
+
+        account_from : object
+            TODO one-line description of MemoRuleSet.addMemoRule.account_from.
+
+        account_to : object
+            TODO one-line description of MemoRuleSet.addMemoRule.account_to.
+
+        transaction_priority : object
+            TODO one-line description of MemoRuleSet.addMemoRule.transaction_priority.
+
+        Returns
+        -------
+        object
+            TODO one-line description of return value of MemoRuleSet.addMemoRule.
+
+        Contract
+        --------
+        - #TODO contract lines for MemoRuleSet.addMemoRule.
+        - #TODO document exceptions, mutations, and precision assumptions for MemoRuleSet.addMemoRule.
+
+        @interface-report: show
+        """
         current_memo_rules_df = self.getMemoRules()
         memo_rules_of_same_priority_df = current_memo_rules_df[
             current_memo_rules_df.Transaction_Priority == transaction_priority
@@ -118,7 +282,32 @@ class MemoRuleSet:
         )
         self.memo_rules.append(memo_rule)
 
+    #TODO manual review of MemoRuleSet.getMemoRules docstring
     def getMemoRules(self):
+        """
+        TODO one-line description of MemoRuleSet.getMemoRules.
+
+        TODO multi-line description of MemoRuleSet.getMemoRules.
+        TODO explain how MemoRuleSet.getMemoRules participates in this module.
+        TODO document important state, validation, or serialization behavior.
+
+        Parameters
+        ----------
+        None
+            TODO confirm that MemoRuleSet.getMemoRules takes no parameters beyond self/cls.
+
+        Returns
+        -------
+        pd.DataFrame
+            TODO one-line description of return value of MemoRuleSet.getMemoRules.
+
+        Contract
+        --------
+        - #TODO contract lines for MemoRuleSet.getMemoRules.
+        - #TODO document exceptions, mutations, and precision assumptions for MemoRuleSet.getMemoRules.
+
+        @interface-report: show
+        """
         all_memo_rules_df = pd.DataFrame(
             {
                 "Memo_Regex": [],
@@ -143,7 +332,32 @@ class MemoRuleSet:
         all_memo_rules_df.reset_index(drop=True, inplace=True)
         return all_memo_rules_df
 
+    #TODO manual review of MemoRuleSet.to_dict docstring
     def to_dict(self):
+        """
+        TODO one-line description of MemoRuleSet.to_dict.
+
+        TODO multi-line description of MemoRuleSet.to_dict.
+        TODO explain how MemoRuleSet.to_dict participates in this module.
+        TODO document important state, validation, or serialization behavior.
+
+        Parameters
+        ----------
+        None
+            TODO confirm that MemoRuleSet.to_dict takes no parameters beyond self/cls.
+
+        Returns
+        -------
+        dict
+            TODO one-line description of return value of MemoRuleSet.to_dict.
+
+        Contract
+        --------
+        - #TODO contract lines for MemoRuleSet.to_dict.
+        - #TODO document exceptions, mutations, and precision assumptions for MemoRuleSet.to_dict.
+
+        @interface-report: show
+        """
         return {
             "memo_rules": [
                 {
@@ -156,7 +370,32 @@ class MemoRuleSet:
             ]
         }
 
+    #TODO manual review of MemoRuleSet.to_json docstring
     def to_json(self):
+        """
+        TODO one-line description of MemoRuleSet.to_json.
+
+        TODO multi-line description of MemoRuleSet.to_json.
+        TODO explain how MemoRuleSet.to_json participates in this module.
+        TODO document important state, validation, or serialization behavior.
+
+        Parameters
+        ----------
+        None
+            TODO confirm that MemoRuleSet.to_json takes no parameters beyond self/cls.
+
+        Returns
+        -------
+        str
+            TODO one-line description of return value of MemoRuleSet.to_json.
+
+        Contract
+        --------
+        - #TODO contract lines for MemoRuleSet.to_json.
+        - #TODO document exceptions, mutations, and precision assumptions for MemoRuleSet.to_json.
+
+        @interface-report: show
+        """
         return jsonpickle.encode(self, indent=4)
 
 

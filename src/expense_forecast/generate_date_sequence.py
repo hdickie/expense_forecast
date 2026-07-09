@@ -1,10 +1,54 @@
+"""
+Summary
+-------
+
+Description
+-----------
+
+Contract
+--------
+
+@interface-report: show
+"""
+
+
 import pandas as pd
 import datetime
 
 
+#TODO manual review of generate_date_sequence.generate_date_sequence docstring
 def generate_date_sequence(start_date, num_days, cadence):
-    """A wrapper for pd.date_range intended to make code easier to read."""
 
+    """
+    TODO one-line description of generate_date_sequence.generate_date_sequence.
+
+    TODO multi-line description of generate_date_sequence.generate_date_sequence.
+    TODO explain how generate_date_sequence.generate_date_sequence participates in this module.
+    TODO document important state, validation, or serialization behavior.
+
+    Parameters
+    ----------
+    start_date : date
+        TODO one-line description of generate_date_sequence.generate_date_sequence.start_date.
+
+    num_days : int
+        TODO one-line description of generate_date_sequence.generate_date_sequence.num_days.
+
+    cadence : str
+        TODO one-line description of generate_date_sequence.generate_date_sequence.cadence.
+
+    Returns
+    -------
+    pd.Series | list[date]
+        TODO one-line description of return value of generate_date_sequence.generate_date_sequence.
+
+    Contract
+    --------
+    - #TODO contract lines for generate_date_sequence.generate_date_sequence.
+    - #TODO document exceptions, mutations, and precision assumptions for generate_date_sequence.generate_date_sequence.
+
+    @interface-report: show
+    """
     end_date = start_date + datetime.timedelta(days=num_days)
 
     if num_days == 0:

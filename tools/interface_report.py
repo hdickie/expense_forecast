@@ -22,6 +22,14 @@ INTERESTING_METHODS = {
 }
 
 
+def has_interface_report_tag(
+    node: ast.AST,
+    tag: str,
+) -> bool:
+    docstring = ast.get_docstring(node) or ""
+    return f"@interface-report: {tag}" in docstring
+
+
 def function_raises_not_implemented(fn: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
     for node in ast.walk(fn):
         if isinstance(node, ast.Raise):
@@ -49,6 +57,8 @@ def get_classes_from_file(path: Path) -> list[dict]:
 
         for item in node.body:
             if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                if has_interface_report_tag(item, "ignore"):
+                    continue
                 methods[item.name] = {
                     "line": item.lineno,
                     "stub": function_raises_not_implemented(item),
@@ -114,7 +124,8 @@ def find_probable_tests_for_class(class_name: str, all_tests: list[dict]) -> lis
     return matches
 
 hard_coded_status_symbol_overrides = {
-# ('Account', '__add__'):'OK',
+# ('Account', '__add__'):'✅', # ❌ # ⬛
+('Account', '__add__'):'⬛',
 }
 
 def status_symbol(class_info: dict, method_name: str) -> str:

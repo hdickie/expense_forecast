@@ -1,3 +1,17 @@
+"""
+Summary
+-------
+
+Description
+-----------
+
+Contract
+--------
+
+@interface-report: show
+"""
+
+
 import logging
 from colorama import init as colorama_init
 from colorama import Fore
@@ -31,7 +45,38 @@ RESET_COLOR = f"{Style.RESET_ALL}"
 #         sys.stdout = self.old_stdout
 #         sys.stderr = self.old_stderr
 
+#TODO manual review of log_methods.setup_logger docstring
 def setup_logger(logger_name, log_file, level=logging.DEBUG):
+    """
+    TODO one-line description of log_methods.setup_logger.
+
+    TODO multi-line description of log_methods.setup_logger.
+    TODO explain how log_methods.setup_logger participates in this module.
+    TODO document important state, validation, or serialization behavior.
+
+    Parameters
+    ----------
+    logger_name : object
+        TODO one-line description of log_methods.setup_logger.logger_name.
+
+    log_file : object
+        TODO one-line description of log_methods.setup_logger.log_file.
+
+    level : object
+        TODO one-line description of log_methods.setup_logger.level.
+
+    Returns
+    -------
+    object
+        TODO one-line description of return value of log_methods.setup_logger.
+
+    Contract
+    --------
+    - #TODO contract lines for log_methods.setup_logger.
+    - #TODO document exceptions, mutations, and precision assumptions for log_methods.setup_logger.
+
+    @interface-report: show
+    """
     logger_object = logging.getLogger(logger_name)
     formatter = logging.Formatter("%(asctime)s - %(levelname)-8s - %(message)s")
     fileHandler = logging.FileHandler(log_file, mode="w")
@@ -52,9 +97,49 @@ def setup_logger(logger_name, log_file, level=logging.DEBUG):
 # col_logger = logging.getLogger('root')
 
 
+#TODO manual review of log_methods.log_in_color_with_breadcrumbs docstring
 def log_in_color_with_breadcrumbs(
     logger, color, level, msg, stack_depth=0, color_stack=[]
 ):
+    """
+    TODO one-line description of log_methods.log_in_color_with_breadcrumbs.
+
+    TODO multi-line description of log_methods.log_in_color_with_breadcrumbs.
+    TODO explain how log_methods.log_in_color_with_breadcrumbs participates in this module.
+    TODO document important state, validation, or serialization behavior.
+
+    Parameters
+    ----------
+    logger : object
+        TODO one-line description of log_methods.log_in_color_with_breadcrumbs.logger.
+
+    color : object
+        TODO one-line description of log_methods.log_in_color_with_breadcrumbs.color.
+
+    level : object
+        TODO one-line description of log_methods.log_in_color_with_breadcrumbs.level.
+
+    msg : object
+        TODO one-line description of log_methods.log_in_color_with_breadcrumbs.msg.
+
+    stack_depth : object
+        TODO one-line description of log_methods.log_in_color_with_breadcrumbs.stack_depth.
+
+    color_stack : object
+        TODO one-line description of log_methods.log_in_color_with_breadcrumbs.color_stack.
+
+    Returns
+    -------
+    object
+        TODO one-line description of return value of log_methods.log_in_color_with_breadcrumbs.
+
+    Contract
+    --------
+    - #TODO contract lines for log_methods.log_in_color_with_breadcrumbs.
+    - #TODO document exceptions, mutations, and precision assumptions for log_methods.log_in_color_with_breadcrumbs.
+
+    @interface-report: show
+    """
     left_prefix = " "
 
     if len(color_stack) > 0:
@@ -162,7 +247,44 @@ def log_in_color_with_breadcrumbs(
             print(line)
 
 
+#TODO manual review of log_methods.log_in_color docstring
 def log_in_color(logger, color, level, msg, stack_depth=0):
+    """
+    TODO one-line description of log_methods.log_in_color.
+
+    TODO multi-line description of log_methods.log_in_color.
+    TODO explain how log_methods.log_in_color participates in this module.
+    TODO document important state, validation, or serialization behavior.
+
+    Parameters
+    ----------
+    logger : object
+        TODO one-line description of log_methods.log_in_color.logger.
+
+    color : object
+        TODO one-line description of log_methods.log_in_color.color.
+
+    level : object
+        TODO one-line description of log_methods.log_in_color.level.
+
+    msg : object
+        TODO one-line description of log_methods.log_in_color.msg.
+
+    stack_depth : object
+        TODO one-line description of log_methods.log_in_color.stack_depth.
+
+    Returns
+    -------
+    object
+        TODO one-line description of return value of log_methods.log_in_color.
+
+    Contract
+    --------
+    - #TODO contract lines for log_methods.log_in_color.
+    - #TODO document exceptions, mutations, and precision assumptions for log_methods.log_in_color.
+
+    @interface-report: show
+    """
     left_prefix = str(stack_depth)
     left_prefix = left_prefix.ljust(stack_depth * 4, " ") + " "
     level = level.lower()
@@ -198,7 +320,38 @@ def log_in_color(logger, color, level, msg, stack_depth=0):
             print(line)
 
 
+#TODO manual review of log_methods.display_test_result docstring
 def display_test_result(logger, test_name, df1):
+    """
+    TODO one-line description of log_methods.display_test_result.
+
+    TODO multi-line description of log_methods.display_test_result.
+    TODO explain how log_methods.display_test_result participates in this module.
+    TODO document important state, validation, or serialization behavior.
+
+    Parameters
+    ----------
+    logger : object
+        TODO one-line description of log_methods.display_test_result.logger.
+
+    test_name : object
+        TODO one-line description of log_methods.display_test_result.test_name.
+
+    df1 : object
+        TODO one-line description of log_methods.display_test_result.df1.
+
+    Returns
+    -------
+    object
+        TODO one-line description of return value of log_methods.display_test_result.
+
+    Contract
+    --------
+    - #TODO contract lines for log_methods.display_test_result.
+    - #TODO document exceptions, mutations, and precision assumptions for log_methods.display_test_result.
+
+    @interface-report: show
+    """
     display_width = max([len(x) for x in df1.T.to_string().split("\n")])
     # display_width = 120
     left_prefix = "# "

@@ -1,3 +1,17 @@
+"""
+Summary
+-------
+
+Description
+-----------
+
+Contract
+--------
+
+@interface-report: show
+"""
+
+
 
 import pandas as pd
 from expense_forecast.ExpenseForecastInitialConditions import ExpenseForecastInitialConditions
@@ -13,17 +27,55 @@ fileHandler = logging.FileHandler(__name__ + ".log", mode="w")
 fileHandler.setFormatter(formatter)
 streamHandler = logging.StreamHandler()
 streamHandler.setFormatter(formatter)
-logger.setLevel(logging.DEBUG) 
+logger.setLevel(logging.DEBUG)
 logger.handlers.clear()
 logger.addHandler(fileHandler)
 logger.addHandler(streamHandler)
 logger.propagate = False
 
+#TODO manual review of SimulationStepper docstring
 class SimulationStepper:
 
+    """
+    Summary
+    -------
+
+    Description
+    -----------
+
+    Contract
+    --------
+
+    @interface-report: show
+    """
     ROUNDING_ERROR_TOLERANCE = 0.0000000001
 
+    #TODO manual review of SimulationStepper.__init__ docstring
     def __init__(self):
+        """
+        TODO one-line description of SimulationStepper.__init__.
+
+        TODO multi-line description of SimulationStepper.__init__.
+        TODO explain how SimulationStepper.__init__ participates in this module.
+        TODO document important state, validation, or serialization behavior.
+
+        Parameters
+        ----------
+        None
+            TODO confirm that SimulationStepper.__init__ takes no parameters beyond self/cls.
+
+        Returns
+        -------
+        None
+            TODO one-line description of return value of SimulationStepper.__init__.
+
+        Contract
+        --------
+        - #TODO contract lines for SimulationStepper.__init__.
+        - #TODO document exceptions, mutations, and precision assumptions for SimulationStepper.__init__.
+
+        @interface-report: show
+        """
         pass
 
     # @staticmethod
@@ -52,5 +104,5 @@ class SimulationStepper:
     #     # return result
     #     raise NotImplementedError
 
-    
-    
+
+

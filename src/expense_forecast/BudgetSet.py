@@ -1,3 +1,17 @@
+"""
+Summary
+-------
+
+Description
+-----------
+
+Contract
+--------
+
+@interface-report: show
+"""
+
+
 from __future__ import annotations
 from .BudgetItem import BudgetItem
 import pandas as pd
@@ -38,9 +52,47 @@ logger = logging.getLogger(__name__)
 #     raise NotImplementedError
 
 
+#TODO manual review of BudgetSet docstring
 class BudgetSet:
 
+    """
+    Summary
+    -------
+
+    Description
+    -----------
+
+    Contract
+    --------
+
+    @interface-report: show
+    """
+    #TODO manual review of BudgetSet.__init__ docstring
     def __init__(self, budget_items__list=None):
+        """
+        TODO one-line description of BudgetSet.__init__.
+
+        TODO multi-line description of BudgetSet.__init__.
+        TODO explain how BudgetSet.__init__ participates in this module.
+        TODO document important state, validation, or serialization behavior.
+
+        Parameters
+        ----------
+        budget_items__list : object
+            TODO one-line description of BudgetSet.__init__.budget_items__list.
+
+        Returns
+        -------
+        None
+            TODO one-line description of return value of BudgetSet.__init__.
+
+        Contract
+        --------
+        - #TODO contract lines for BudgetSet.__init__.
+        - #TODO document exceptions, mutations, and precision assumptions for BudgetSet.__init__.
+
+        @interface-report: show
+        """
         self.budget_items__list = []
         self.budget_items = []
 
@@ -79,11 +131,61 @@ class BudgetSet:
             self.budget_items__list.append(budget_item)
             self.budget_items.append(budget_item)
 
+    #TODO manual review of BudgetSet.__str__ docstring
     def __str__(self):
+        """
+        TODO one-line description of BudgetSet.__str__.
+
+        TODO multi-line description of BudgetSet.__str__.
+        TODO explain how BudgetSet.__str__ participates in this module.
+        TODO document important state, validation, or serialization behavior.
+
+        Parameters
+        ----------
+        None
+            TODO confirm that BudgetSet.__str__ takes no parameters beyond self/cls.
+
+        Returns
+        -------
+        str
+            TODO one-line description of return value of BudgetSet.__str__.
+
+        Contract
+        --------
+        - #TODO contract lines for BudgetSet.__str__.
+        - #TODO document exceptions, mutations, and precision assumptions for BudgetSet.__str__.
+
+        @interface-report: show
+        """
         return self.getBudgetItems().to_string()
 
+    #TODO manual review of BudgetSet.getBudgetItems docstring
     def getBudgetItems(self):
 
+        """
+        TODO one-line description of BudgetSet.getBudgetItems.
+
+        TODO multi-line description of BudgetSet.getBudgetItems.
+        TODO explain how BudgetSet.getBudgetItems participates in this module.
+        TODO document important state, validation, or serialization behavior.
+
+        Parameters
+        ----------
+        None
+            TODO confirm that BudgetSet.getBudgetItems takes no parameters beyond self/cls.
+
+        Returns
+        -------
+        pd.DataFrame
+            TODO one-line description of return value of BudgetSet.getBudgetItems.
+
+        Contract
+        --------
+        - #TODO contract lines for BudgetSet.getBudgetItems.
+        - #TODO document exceptions, mutations, and precision assumptions for BudgetSet.getBudgetItems.
+
+        @interface-report: show
+        """
         all_budget_items_df = pd.DataFrame(
             {
                 "Start_Date": [],
@@ -124,8 +226,33 @@ class BudgetSet:
         all_budget_items_df.reset_index(drop=True, inplace=True)
         return all_budget_items_df
 
+    #TODO manual review of BudgetSet.getBudgetSchedule docstring
     def getBudgetSchedule(self):
 
+        """
+        TODO one-line description of BudgetSet.getBudgetSchedule.
+
+        TODO multi-line description of BudgetSet.getBudgetSchedule.
+        TODO explain how BudgetSet.getBudgetSchedule participates in this module.
+        TODO document important state, validation, or serialization behavior.
+
+        Parameters
+        ----------
+        None
+            TODO confirm that BudgetSet.getBudgetSchedule takes no parameters beyond self/cls.
+
+        Returns
+        -------
+        pd.DataFrame
+            TODO one-line description of return value of BudgetSet.getBudgetSchedule.
+
+        Contract
+        --------
+        - #TODO contract lines for BudgetSet.getBudgetSchedule.
+        - #TODO document exceptions, mutations, and precision assumptions for BudgetSet.getBudgetSchedule.
+
+        @interface-report: show
+        """
         budget_schedule_rows = []
         for budget_item in self.budget_items:
             relative_num_days = (budget_item.end_date - budget_item.start_date).days
@@ -172,7 +299,53 @@ class BudgetSet:
 
         return current_budget_schedule
 
+    #TODO manual review of BudgetSet.addBudgetItem docstring
     def addBudgetItem(self, start_date, end_date, priority, cadence, amount, memo, income_flag = False, **kwargs):
+        """
+        TODO one-line description of BudgetSet.addBudgetItem.
+
+        TODO multi-line description of BudgetSet.addBudgetItem.
+        TODO explain how BudgetSet.addBudgetItem participates in this module.
+        TODO document important state, validation, or serialization behavior.
+
+        Parameters
+        ----------
+        start_date : date
+            TODO one-line description of BudgetSet.addBudgetItem.start_date.
+
+        end_date : date
+            TODO one-line description of BudgetSet.addBudgetItem.end_date.
+
+        priority : int
+            TODO one-line description of BudgetSet.addBudgetItem.priority.
+
+        cadence : str
+            TODO one-line description of BudgetSet.addBudgetItem.cadence.
+
+        amount : float
+            TODO one-line description of BudgetSet.addBudgetItem.amount.
+
+        memo : str
+            TODO one-line description of BudgetSet.addBudgetItem.memo.
+
+        income_flag : bool
+            TODO one-line description of BudgetSet.addBudgetItem.income_flag.
+
+        **kwargs : dict
+            TODO one-line description of BudgetSet.addBudgetItem.kwargs.
+
+        Returns
+        -------
+        object
+            TODO one-line description of return value of BudgetSet.addBudgetItem.
+
+        Contract
+        --------
+        - #TODO contract lines for BudgetSet.addBudgetItem.
+        - #TODO document exceptions, mutations, and precision assumptions for BudgetSet.addBudgetItem.
+
+        @interface-report: show
+        """
         budget_item = BudgetItem(
             start_date,
             end_date,
@@ -199,7 +372,32 @@ class BudgetSet:
         # Append the budget item
         self.budget_items.append(budget_item)
 
+    #TODO manual review of BudgetSet.to_dict docstring
     def to_dict(self):
+        """
+        TODO one-line description of BudgetSet.to_dict.
+
+        TODO multi-line description of BudgetSet.to_dict.
+        TODO explain how BudgetSet.to_dict participates in this module.
+        TODO document important state, validation, or serialization behavior.
+
+        Parameters
+        ----------
+        None
+            TODO confirm that BudgetSet.to_dict takes no parameters beyond self/cls.
+
+        Returns
+        -------
+        dict
+            TODO one-line description of return value of BudgetSet.to_dict.
+
+        Contract
+        --------
+        - #TODO contract lines for BudgetSet.to_dict.
+        - #TODO document exceptions, mutations, and precision assumptions for BudgetSet.to_dict.
+
+        @interface-report: show
+        """
         return {
             "budget_items": [
                 {
@@ -217,17 +415,92 @@ class BudgetSet:
             ]
         }
 
+    #TODO manual review of BudgetSet.to_json docstring
     def to_json(self):
+        """
+        TODO one-line description of BudgetSet.to_json.
+
+        TODO multi-line description of BudgetSet.to_json.
+        TODO explain how BudgetSet.to_json participates in this module.
+        TODO document important state, validation, or serialization behavior.
+
+        Parameters
+        ----------
+        None
+            TODO confirm that BudgetSet.to_json takes no parameters beyond self/cls.
+
+        Returns
+        -------
+        str
+            TODO one-line description of return value of BudgetSet.to_json.
+
+        Contract
+        --------
+        - #TODO contract lines for BudgetSet.to_json.
+        - #TODO document exceptions, mutations, and precision assumptions for BudgetSet.to_json.
+
+        @interface-report: show
+        """
         return jsonpickle.encode(self, indent=4)
 
+    #TODO manual review of BudgetSet.__add__ docstring
     def __add__(self, other: BudgetSet):
+        """
+        TODO one-line description of BudgetSet.__add__.
+
+        TODO multi-line description of BudgetSet.__add__.
+        TODO explain how BudgetSet.__add__ participates in this module.
+        TODO document important state, validation, or serialization behavior.
+
+        Parameters
+        ----------
+        other : object
+            TODO one-line description of BudgetSet.__add__.other.
+
+        Returns
+        -------
+        object
+            TODO one-line description of return value of BudgetSet.__add__.
+
+        Contract
+        --------
+        - #TODO contract lines for BudgetSet.__add__.
+        - #TODO document exceptions, mutations, and precision assumptions for BudgetSet.__add__.
+
+        @interface-report: show
+        """
         if not isinstance(other, BudgetSet):
             return NotImplemented
 
         return BudgetSet(self.budget_items + other.budget_items)
 
+    #TODO manual review of BudgetSet._budget_item_key docstring
     @staticmethod
     def _budget_item_key(budget_item):
+        """
+        TODO one-line description of BudgetSet._budget_item_key.
+
+        TODO multi-line description of BudgetSet._budget_item_key.
+        TODO explain how BudgetSet._budget_item_key participates in this module.
+        TODO document important state, validation, or serialization behavior.
+
+        Parameters
+        ----------
+        budget_item : object
+            TODO one-line description of BudgetSet._budget_item_key.budget_item.
+
+        Returns
+        -------
+        object
+            TODO one-line description of return value of BudgetSet._budget_item_key.
+
+        Contract
+        --------
+        - #TODO contract lines for BudgetSet._budget_item_key.
+        - #TODO document exceptions, mutations, and precision assumptions for BudgetSet._budget_item_key.
+
+        @interface-report: show
+        """
         return (
             budget_item.start_date,
             budget_item.end_date,
@@ -240,7 +513,32 @@ class BudgetSet:
             budget_item.partial_payment_allowed,
         )
 
+    #TODO manual review of BudgetSet.__sub__ docstring
     def __sub__(self, other: BudgetSet):
+        """
+        TODO one-line description of BudgetSet.__sub__.
+
+        TODO multi-line description of BudgetSet.__sub__.
+        TODO explain how BudgetSet.__sub__ participates in this module.
+        TODO document important state, validation, or serialization behavior.
+
+        Parameters
+        ----------
+        other : object
+            TODO one-line description of BudgetSet.__sub__.other.
+
+        Returns
+        -------
+        object
+            TODO one-line description of return value of BudgetSet.__sub__.
+
+        Contract
+        --------
+        - #TODO contract lines for BudgetSet.__sub__.
+        - #TODO document exceptions, mutations, and precision assumptions for BudgetSet.__sub__.
+
+        @interface-report: show
+        """
         if not isinstance(other, BudgetSet):
             return NotImplemented
 

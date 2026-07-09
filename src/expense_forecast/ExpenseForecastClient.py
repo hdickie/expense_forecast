@@ -1,7 +1,59 @@
+"""
+Summary
+-------
 
+Description
+-----------
+
+Contract
+--------
+
+@interface-report: show
+"""
+
+
+
+#TODO manual review of ExpenseForecastClient docstring
 class ExpenseForecastClient:
 
+    """
+    Summary
+    -------
+
+    Description
+    -----------
+
+    Contract
+    --------
+
+    @interface-report: show
+    """
+    #TODO manual review of ExpenseForecastClient.__init__ docstring
     def __init__(self):
+        """
+        TODO one-line description of ExpenseForecastClient.__init__.
+
+        TODO multi-line description of ExpenseForecastClient.__init__.
+        TODO explain how ExpenseForecastClient.__init__ participates in this module.
+        TODO document important state, validation, or serialization behavior.
+
+        Parameters
+        ----------
+        None
+            TODO confirm that ExpenseForecastClient.__init__ takes no parameters beyond self/cls.
+
+        Returns
+        -------
+        None
+            TODO one-line description of return value of ExpenseForecastClient.__init__.
+
+        Contract
+        --------
+        - #TODO contract lines for ExpenseForecastClient.__init__.
+        - #TODO document exceptions, mutations, and precision assumptions for ExpenseForecastClient.__init__.
+
+        @interface-report: show
+        """
         pass
 
     # "Your API almost always has to send a response body. But clients don't necessarily

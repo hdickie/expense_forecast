@@ -1,3 +1,17 @@
+"""
+Summary
+-------
+
+Description
+-----------
+
+Contract
+--------
+
+@interface-report: show
+"""
+
+
 # import pandas as pd
 
 # import re
@@ -221,10 +235,10 @@
 #         forecast_set.unique_id = data.get("unique_id", forecast_set.unique_id)
 #         return forecast_set
 
-#     def _validate_initial_conditions_and_scenario_space_are_compatible(self, 
-#                                                                                      initial_conditions: ExpenseForecastInitialConditions, 
+#     def _validate_initial_conditions_and_scenario_space_are_compatible(self,
+#                                                                                      initial_conditions: ExpenseForecastInitialConditions,
 #                                                                                      scenario_space: ScenarioSpace):
-        
+
 #         raise NotImplementedError
 
 #     def __init__(
@@ -234,7 +248,7 @@
 #         forecast_set_name="",
 #     ):
 
-#         self._validate_initial_conditions_and_scenario_space_are_compatible(E_IO, 
+#         self._validate_initial_conditions_and_scenario_space_are_compatible(E_IO,
 #                                                                             scenario_space)
 #         self.scenario_space = scenario_space
 #         self.initial_conditions = E_IO

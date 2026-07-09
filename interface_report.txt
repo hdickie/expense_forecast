@@ -2,7 +2,7 @@
 CLASS / METHOD MATRIX
 ========================================================================================================================
 Class                                   	File                                                             	__add__   	__eq__    	__hash__  	__ne__    	__repr__  	__str__   	__sub__   	from_dict 	from_json 	to_dict   	to_json   	Probable tests
-Account                                 	src/expense_forecast/Account.py                                  	OK        	—         	—         	—         	—         	OK        	—         	—         	—         	—         	OK        	33
+Account                                 	src/expense_forecast/Account.py                                  	✅         	—         	—         	—         	—         	OK        	—         	—         	—         	—         	OK        	33
 AccountMilestone                        	src/expense_forecast/AccountMilestone.py                         	—         	—         	—         	—         	—         	OK        	—         	—         	—         	—         	OK        	5
 AccountBoundaryError                    	src/expense_forecast/AccountSet.py                               	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	0
 AccountSet                              	src/expense_forecast/AccountSet.py                               	—         	—         	—         	—         	—         	OK        	—         	—         	—         	OK        	OK        	11

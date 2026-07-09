@@ -1,4 +1,18 @@
 #!/usr/bin/env python
+"""
+Summary
+-------
+
+Description
+-----------
+
+Contract
+--------
+
+@interface-report: show
+"""
+
+
 # Thanks to opie4624 from Github:  https://gist.github.com/opie4624/3896526
 import os
 import datetime
@@ -35,17 +49,92 @@ logger.propagate = False
 
 # asserts that config has reasonable values and is internally consistent
 # agnostic of (and before) action
+#TODO manual review of ef_cli.validate_config docstring
 def validate_config(args):
 
+    """
+    TODO one-line description of ef_cli.validate_config.
+
+    TODO multi-line description of ef_cli.validate_config.
+    TODO explain how ef_cli.validate_config participates in this module.
+    TODO document important state, validation, or serialization behavior.
+
+    Parameters
+    ----------
+    args : list
+        TODO one-line description of ef_cli.validate_config.args.
+
+    Returns
+    -------
+    None
+        TODO one-line description of return value of ef_cli.validate_config.
+
+    Contract
+    --------
+    - #TODO contract lines for ef_cli.validate_config.
+    - #TODO document exceptions, mutations, and precision assumptions for ef_cli.validate_config.
+
+    @interface-report: show
+    """
     return NotImplementedError
 
 # asserts that args has reasonable values and is internally consistent
 # in the context of the specific action
+#TODO manual review of ef_cli.validate_args docstring
 def validate_args(args):
 
+    """
+    TODO one-line description of ef_cli.validate_args.
+
+    TODO multi-line description of ef_cli.validate_args.
+    TODO explain how ef_cli.validate_args participates in this module.
+    TODO document important state, validation, or serialization behavior.
+
+    Parameters
+    ----------
+    args : list
+        TODO one-line description of ef_cli.validate_args.args.
+
+    Returns
+    -------
+    None
+        TODO one-line description of return value of ef_cli.validate_args.
+
+    Contract
+    --------
+    - #TODO contract lines for ef_cli.validate_args.
+    - #TODO document exceptions, mutations, and precision assumptions for ef_cli.validate_args.
+
+    @interface-report: show
+    """
     return NotImplementedError
 
+#TODO manual review of ef_cli.scrape_dir_for_forecast_details docstring
 def scrape_dir_for_forecast_details(target_directory):
+    """
+    TODO one-line description of ef_cli.scrape_dir_for_forecast_details.
+
+    TODO multi-line description of ef_cli.scrape_dir_for_forecast_details.
+    TODO explain how ef_cli.scrape_dir_for_forecast_details participates in this module.
+    TODO document important state, validation, or serialization behavior.
+
+    Parameters
+    ----------
+    target_directory : object
+        TODO one-line description of ef_cli.scrape_dir_for_forecast_details.target_directory.
+
+    Returns
+    -------
+    object
+        TODO one-line description of return value of ef_cli.scrape_dir_for_forecast_details.
+
+    Contract
+    --------
+    - #TODO contract lines for ef_cli.scrape_dir_for_forecast_details.
+    - #TODO document exceptions, mutations, and precision assumptions for ef_cli.scrape_dir_for_forecast_details.
+
+    @interface-report: show
+    """
     return_df = pd.DataFrame(
         [],
         columns=[
@@ -169,20 +258,45 @@ def scrape_dir_for_forecast_details(target_directory):
     return return_df
 
 # Gather our code in a main() function
+#TODO manual review of ef_cli.run docstring
 def run(args):
     # logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
+    """
+    TODO one-line description of ef_cli.run.
+
+    TODO multi-line description of ef_cli.run.
+    TODO explain how ef_cli.run participates in this module.
+    TODO document important state, validation, or serialization behavior.
+
+    Parameters
+    ----------
+    args : list
+        TODO one-line description of ef_cli.run.args.
+
+    Returns
+    -------
+    object
+        TODO one-line description of return value of ef_cli.run.
+
+    Contract
+    --------
+    - #TODO contract lines for ef_cli.run.
+    - #TODO document exceptions, mutations, and precision assumptions for ef_cli.run.
+
+    @interface-report: show
+    """
     os.environ["EF_LOG_DIR"] = args.log_directory
-    
+
     validate_config(args)
 
     logging.debug("Running ef_cli with args:")
     logging.debug(args)
     validate_args(args)
-    
+
     F = ForecastHandler()
 
-    
-    
+
+
 
     # print('ARGS:')
     # print(args)
@@ -1102,7 +1216,7 @@ def run(args):
             and args.action[1] == "forecastset"
             and args.source == "database"
         ):
-            
+
             # todo the logic in this block assumes the forecast is run, bc even if it did we don't plan on using it
             # while this would most often produce expected results, it may not be strictly true (there may be cached data)
             # if there is cached data there COULD be unexpected results. I haven't thought it all the way through
@@ -1358,7 +1472,32 @@ def run(args):
 # ef_cli export
 # ef_cli import
 
+#TODO manual review of ef_cli.build_parser docstring
 def build_parser():
+    """
+    TODO one-line description of ef_cli.build_parser.
+
+    TODO multi-line description of ef_cli.build_parser.
+    TODO explain how ef_cli.build_parser participates in this module.
+    TODO document important state, validation, or serialization behavior.
+
+    Parameters
+    ----------
+    None
+        TODO confirm that ef_cli.build_parser takes no parameters beyond self/cls.
+
+    Returns
+    -------
+    object
+        TODO one-line description of return value of ef_cli.build_parser.
+
+    Contract
+    --------
+    - #TODO contract lines for ef_cli.build_parser.
+    - #TODO document exceptions, mutations, and precision assumptions for ef_cli.build_parser.
+
+    @interface-report: show
+    """
     parser = argparse.ArgumentParser(
         description="Runs a Forecast or ForecastSet and displays a progress bar.\r\ne.g. ef run forecast --ifile initial_conditions.json --ofile forecast_result.json",
         epilog="As an alternative to the commandline, params can be placed in a file, one per line, and specified on the commandline like '%(prog)s @params.conf'.",
@@ -1484,7 +1623,32 @@ def build_parser():
 
     return parser
 
+#TODO manual review of ef_cli.main docstring
 def main():
+    """
+    TODO one-line description of ef_cli.main.
+
+    TODO multi-line description of ef_cli.main.
+    TODO explain how ef_cli.main participates in this module.
+    TODO document important state, validation, or serialization behavior.
+
+    Parameters
+    ----------
+    None
+        TODO confirm that ef_cli.main takes no parameters beyond self/cls.
+
+    Returns
+    -------
+    int
+        TODO one-line description of return value of ef_cli.main.
+
+    Contract
+    --------
+    - #TODO contract lines for ef_cli.main.
+    - #TODO document exceptions, mutations, and precision assumptions for ef_cli.main.
+
+    @interface-report: show
+    """
     parser = build_parser()
 
     args = parser.parse_args()
