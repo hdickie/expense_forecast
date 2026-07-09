@@ -755,7 +755,10 @@ if __name__ == '__main__':
         milestone_name_to_budget_swap_set = {} #TODO
 
         fork_set = MilestoneTriggeredForecastTransition(milestone_name_to_budget_swap_set)
-        R = F.runForecastWithForks(IO, MS, fork_set, include_debug_columns=True)
+
+        # TODO this method is just for development, eventually runForecast will implement this
+        R = F.runForecastWithMilestoneConditionalSwaps(IO, MS, 
+                                                       include_debug_columns=True)
         # R = F.runForecast(IO, MS, include_debug_columns=True)
         # R.writeToJSONFile(str(R.unique_id)+'.json')
         # F.generateHTMLReport(R)

@@ -235,11 +235,13 @@ class ExpenseForecastInitialConditions:
 
     # todo confirm that I don't need __getstate__, __setstate__. I think pickle can compress data frames and I might not want that
     
-    def _validate_start_and_end_dates(self, start_date, end_date):
+    @classmethod
+    def _validate_start_and_end_dates(cls, start_date, end_date):
         assert start_date != end_date
         assert start_date < end_date
 
-    def _validate_account_budget_memo_rule_intersection(self, account_set: AccountSet, 
+    @classmethod
+    def _validate_account_budget_memo_rule_intersection(cls, account_set: AccountSet, 
                                                         budget_item_set: BudgetSet, 
                                                         memo_rule_set: MemoRuleSet):
         accounts_df = account_set.getAccounts()
@@ -318,7 +320,8 @@ class ExpenseForecastInitialConditions:
             log_in_color(logger, "red", "error", error_text)
             raise ValueError(error_text)
         
-    def _preprocess_budget_items(self, start_date, end_date, budget_set):
+    @classmethod
+    def _preprocess_budget_items(cls, start_date, end_date, budget_set):
         first_proposed_df = budget_set.getBudgetSchedule()
         if not first_proposed_df.empty:
             first_proposed_df = first_proposed_df.copy()
@@ -356,16 +359,41 @@ class ExpenseForecastInitialConditions:
 
         return confirmed_df, proposed_df, deferred_df, skipped_df
 
-    def __init__(self, start_date: date, end_date: date, 
-                account_set: AccountSet, 
+    @classmethod
+    def _validate_swap_set_milestone_set_intersection(cls, 
+                                                      milestone_set,
+                                                      account_set_swap_set,
+                                                      budget_set_swap_set,
+                                                      memo_rule_set_swap_set):
+        
+        if not milestone_set and not account_set_swap_set and not budget_set_swap_set and not budget_set_swap_set:
+            return #nothing to validate
+            
+
+        if account_set_swap_set:
+            raise NotImplementedError # TODO implement account_set_swap_set validation
+        
+        if budget_set_swap_set:
+            raise NotImplementedError # TODO implement budget_set_swap_set validation
+        
+        if memo_rule_set_swap_set:
+            raise NotImplementedError # TODO implement memo_rule_set_swap_set validation
+
+    def __init__(self, 
+                 start_date: date, 
+                 end_date: date, 
+                 account_set: AccountSet, 
                  budget_set: BudgetSet, 
                  memo_rule_set: MemoRuleSet, 
-                 log_stack_depth=0,
+                 log_stack_depth=0, #TODO IO::init.log_stack_depth be a kwarg instead of a param w default?
                  **kwargs):
 
         allowed_kwargs = ['forecast_name',
                           'forecast_set_name',
-                          'milestone_set'
+                          'milestone_set',
+                          'milestone_conditional_account_set_swap_set',
+                          'milestone_conditional_budget_set_swap_set'
+                          'milestone_conditional_memo_rule_set_swap_set'
                           ]
         for key in kwargs:
             if key not in allowed_kwargs:
@@ -401,11 +429,17 @@ class ExpenseForecastInitialConditions:
         self.initial_skipped_df = skipped_df
         self.initial_confirmed_df = confirmed_df
 
+        self._validate_swap_set_milestone_set_intersection(kwargs.get('milestone_set', None),
+                                                           kwargs.get('account_set_swap_set', None),
+                                                          kwargs.get('budget_set_swap_set', None),
+                                                          kwargs.get('memo_rule_set_swap_set', None)
+                                                          )
+
     def __str__(self):
-        raise NotImplementedError #todo
+        raise NotImplementedError #TODO implement IO::__str__
 
     def __repr__(self):
-        raise NotImplementedError #todo
+        raise NotImplementedError  #TODO implement IO::__repr__
 
     # Class methods for loading data
     @classmethod
@@ -431,6 +465,7 @@ class ExpenseForecastInitialConditions:
         # logger.debug(f"Loaded JSON data: {str(data)}")
         return cls.initialize_from_dict(data)
 
+    # TODO fix pylance type warning for IO::initialize_from_dict
     @classmethod
     def initialize_from_dict(cls, data: dict):
         return cls(

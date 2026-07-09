@@ -36,7 +36,7 @@ A refactor of the loan allocaiton algorthm now overallocates by a few pennies in
 Human Tasks
 
 LLM Tasks
-
+ - Refactor BudgetSet to be LineItemSet and BudgetSet to be LineItem
 
 <!-- TODO:GENERATED:START -->
 ## Generated TODOs

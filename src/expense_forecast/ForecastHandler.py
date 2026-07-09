@@ -10521,7 +10521,7 @@ class ForecastHandler:
         raise NotImplementedError
 
     @classmethod
-    def runForecastWithForks(cls,
+    def runForecastWithMilestoneConditionalSwaps(cls,
                              IO,
                              MS,
                              fork_set: MilestoneTriggeredForecastTransition,
