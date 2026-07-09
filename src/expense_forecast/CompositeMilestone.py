@@ -57,7 +57,7 @@ class CompositeMilestone:
         self.memo_milestones = memo_milestones
         CompositeMilestone._validate_memo_milestones(self.memo_milestones)
 
-        #TODO validate unique names
+        #TODO validate unique names and add test
 
 
 

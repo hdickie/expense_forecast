@@ -21,9 +21,7 @@ class BudgetItem:
             )
         if cadence == 'once':
             assert start_date == end_date
-        # todo maybe warnings if interval is shorted than cadence?
-        # also maybe call cadence interval instead??
-        # also maybe allow integer intervals??
+        # TODO add warnings if interval is shorter than cadence and create test
 
     @staticmethod
     def _validate_priority(priority):

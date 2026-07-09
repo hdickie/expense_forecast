@@ -177,7 +177,6 @@ class ExpenseForecastInitialConditions:
             )
         return memo_rule_set
     
-    #TODO stepsize will be added to this eventually
     @staticmethod
     def compute_forecast_id(
         start_date: date,
@@ -225,20 +224,20 @@ class ExpenseForecastInitialConditions:
 
 
     def __eq__(self, other):
-        raise NotImplementedError #todo
+        raise NotImplementedError #TODO DEFER implement IO::__eq__
 
     def __ne__(self, other):
-        raise NotImplementedError #todo
+        raise NotImplementedError #TODO DEFER implement IO::__ne__
 
     def __hash__(self):
-        raise NotImplementedError #todo
+        raise NotImplementedError #TODO DEFER implement IO::__hash__ ; unclear on the purpose of this ?
 
-    # todo confirm that I don't need __getstate__, __setstate__. I think pickle can compress data frames and I might not want that
-    
     @classmethod
     def _validate_start_and_end_dates(cls, start_date, end_date):
-        assert start_date != end_date
-        assert start_date < end_date
+        if start_date == end_date:
+            raise ValueError(f"start_date must not equal end date. start = {start_date} end = {end_date}")
+        if start_date > end_date:
+            raise ValueError(f"start_date must be before end date. start = {start_date} end = {end_date}")
 
     @classmethod
     def _validate_account_budget_memo_rule_intersection(cls, account_set: AccountSet, 
@@ -436,10 +435,10 @@ class ExpenseForecastInitialConditions:
                                                           )
 
     def __str__(self):
-        raise NotImplementedError #TODO implement IO::__str__
+        raise NotImplementedError #TODO DEFER implement IO::__str__
 
     def __repr__(self):
-        raise NotImplementedError  #TODO implement IO::__repr__
+        raise NotImplementedError  #TODO DEFER implement IO::__repr__
 
     # Class methods for loading data
     @classmethod

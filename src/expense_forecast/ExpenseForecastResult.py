@@ -44,15 +44,13 @@ class ExpenseForecastResult:
         return jsonpickle.decode(json.dumps(data))
 
     def __eq__(self, other):
-        raise NotImplementedError #todo
+        raise NotImplementedError #TOOD DEFER implement ExpenseForecastResult __eq__
 
     def __ne__(self, other):
-        raise NotImplementedError #todo
+        raise NotImplementedError #TODO DEFER implement ExpenseForecastResult __ne__
 
     def __hash__(self):
-        raise NotImplementedError #todo
-
-    # todo confirm that I don't need __getstate__, __setstate__. I think pickle can compress data frames and I might not want that
+        raise NotImplementedError #TODO DEFER implement ExpenseForecastResult __hash__ ; unclear on the purpose of this- LLM-generated
 
     def __init__(self, initial_conditions: ExpenseForecastInitialConditions, forecast_df, **kwargs):
 
@@ -90,10 +88,10 @@ class ExpenseForecastResult:
             self.unique_id = initial_conditions.unique_id
             
     def __str__(self):
-        raise NotImplementedError #todo
+        raise NotImplementedError #TODO DEFER implement R::__str__
 
     def __repr__(self):
-        raise NotImplementedError #todo
+        raise NotImplementedError #TODO DEFER implement R::__repr__
 
     # Class methods for loading data
     @classmethod

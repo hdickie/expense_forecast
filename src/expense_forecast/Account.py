@@ -9,9 +9,10 @@ from .CheckingBillingState import CheckingBillingState
 
 class Account:
 
+    # TODO this seems not to use billing_state appropriately
     @staticmethod
     def _validate_balances(min_balance, balance, max_balance, billing_state):
-        #TODO validate that billing_state is consistent with balance, min_balance, max_balance
+        #validate that billing_state is consistent with balance, min_balance, max_balance ; was this added by an LLM? I don't recognize it and it not being used it worrying to me
         if min_balance > balance:
             raise ValueError(
                 f"Account.balance ({balance}) cannot be less than min_balance ({min_balance})"
@@ -66,7 +67,7 @@ class Account:
             "loan",
             "savings",
         ]
-        if account_type in account_types_that_require_interest_cadence and interest_cadence not in ['daily','monthly']: #todo more strict
+        if account_type in account_types_that_require_interest_cadence and interest_cadence not in ['daily','monthly']:
             raise ValueError(
                 f"Account.interest_cadence should be daily or monthly for account_type '{account_type}'"
             )

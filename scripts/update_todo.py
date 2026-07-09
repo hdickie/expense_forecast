@@ -12,6 +12,8 @@ from urllib.parse import quote
 START_MARKER = "<!-- TODO:GENERATED:START -->"
 END_MARKER = "<!-- TODO:GENERATED:END -->"
 TODO_RE = re.compile(r"\btodo\b(?:\s*:|\s+-|\s+)?", re.IGNORECASE)
+TODO_DEFER_RE = re.compile(r"\btodo\s+defer\b", re.IGNORECASE)
+TODO_OPTIMIZATION_RE = re.compile(r"\btodo\s+optimization\b", re.IGNORECASE)
 
 DEFAULT_PREAMBLE = """# TODO
 
@@ -68,6 +70,14 @@ class Todo:
     line_number: int
 
 
+def todo_bucket(todo: Todo) -> str:
+    if TODO_OPTIMIZATION_RE.search(todo.text):
+        return "optimization"
+    if TODO_DEFER_RE.search(todo.text):
+        return "defer"
+    return "regular"
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Update TODO.md from TODO comments in repository text files."
@@ -121,6 +131,20 @@ def scan_todos(root: Path) -> list[Todo]:
 
 
 def render_generated_block(todos: list[Todo]) -> str:
+    grouped_todos = {
+        "regular": [],
+        "defer": [],
+        "optimization": [],
+    }
+    for todo in todos:
+        grouped_todos[todo_bucket(todo)].append(todo)
+
+    section_order = [
+        ("regular", "TODO"),
+        ("defer", "TODO DEFER"),
+        ("optimization", "TODO OPTIMIZATION"),
+    ]
+
     lines = [
         START_MARKER,
         "## Generated TODOs",
@@ -132,11 +156,22 @@ def render_generated_block(todos: list[Todo]) -> str:
 
     if todos:
         width = max(len(todo.text) for todo in todos)
-        for todo in todos:
-            text = escape(f"{todo.text:<{width}}")
-            href = escape(f"{quote(todo.path, safe='/')}#L{todo.line_number}", quote=True)
-            label = escape(f"{todo.path}:{todo.line_number}")
-            lines.append(f'{text} - <a href="{href}">{label}</a>')
+        first_section = True
+        for bucket, heading in section_order:
+            bucket_todos = grouped_todos[bucket]
+            if not bucket_todos:
+                continue
+
+            if not first_section:
+                lines.append("")
+            first_section = False
+            lines.append(f"{heading}:")
+
+            for todo in bucket_todos:
+                text = escape(f"{todo.text:<{width}}")
+                href = escape(f"{quote(todo.path, safe='/')}#L{todo.line_number}", quote=True)
+                label = escape(f"{todo.path}:{todo.line_number}")
+                lines.append(f'{text} - <a href="{href}">{label}</a>')
     else:
         lines.append("(none)")
 

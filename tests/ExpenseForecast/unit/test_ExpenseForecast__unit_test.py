@@ -229,11 +229,11 @@ def credit_bsd12_w_eopc_acct_list(
     return A.accounts
 
 
-class TestExpenseForecastUnit:
+class TestExpenseForecastInitialConditionsUnit:
 
     @pytest.mark.unit
     @pytest.mark.parametrize(
-        "account_set,budget_set,memo_rule_set,start_date,end_date,milestone_set",
+        "account_set,budget_set,memo_rule_set,start_date,end_date",
         [
             (
                 AccountSet(checking_acct_list(10)),
@@ -243,7 +243,6 @@ class TestExpenseForecastUnit:
                 MemoRuleSet(match_p1_test_txn_checking_memo_rule_list()),
                 "19991231",
                 "20000101",
-                MilestoneSet(),
             )
             # (AccountSet([]),
             #  BudgetSet([]),
@@ -254,14 +253,13 @@ class TestExpenseForecastUnit:
             #  ),
         ],
     )
-    def test_ExpenseForecast_Constructor__valid_inputs(
+    def test_ExpenseForecastInitialConditions_Constructor__valid_inputs(
         self,
         account_set,
         budget_set,
         memo_rule_set,
         start_date,
         end_date,
-        milestone_set,
     ):
         ExpenseForecastInitialConditions(
             datetime.datetime.strptime(start_date, "%Y%m%d").date(),
@@ -273,7 +271,7 @@ class TestExpenseForecastUnit:
 
     @pytest.mark.unit
     @pytest.mark.parametrize(
-        "account_set,budget_set,memo_rule_set,start_date,end_date,milestone_set,expected_exception",
+        "account_set,budget_set,memo_rule_set,start_date,end_date,expected_exception",
         [
             (
                 AccountSet([]),
@@ -281,7 +279,6 @@ class TestExpenseForecastUnit:
                 MemoRuleSet([]),
                 "incorrect date format",
                 "20000103",
-                MilestoneSet(),
                 ValueError,
             ),  # malformed start date
             (
@@ -290,7 +287,6 @@ class TestExpenseForecastUnit:
                 MemoRuleSet([]),
                 "20000101",
                 "incorrect date format",
-                MilestoneSet(),
                 ValueError,
             ),  # malformed end date
             (
@@ -299,7 +295,6 @@ class TestExpenseForecastUnit:
                 MemoRuleSet([]),
                 "20000101",
                 "19991231",
-                MilestoneSet(),
                 ValueError,
             ),  # end date before start date
             (
@@ -308,7 +303,6 @@ class TestExpenseForecastUnit:
                 MemoRuleSet([]),
                 "19991231",
                 "20000101",
-                MilestoneSet(),
                 ValueError,
             ),  # empty account_set
             (
@@ -319,7 +313,6 @@ class TestExpenseForecastUnit:
                 MemoRuleSet([]),
                 "19991231",
                 "20000101",
-                MilestoneSet(),
                 ValueError,
             ),  # A budget memo x priority element does not have a matching regex in memo rule set
             (
@@ -330,7 +323,6 @@ class TestExpenseForecastUnit:
                 MemoRuleSet(match_p1_test_txn_credit_memo_rule_list()),
                 "19991231",
                 "20000101",
-                MilestoneSet(),
                 ValueError,
             ),  # A memo rule has an account that does not exist in AccountSet
             # (AccountSet([]),
@@ -346,14 +338,13 @@ class TestExpenseForecastUnit:
             #  ),
         ],
     )
-    def test_ExpenseForecast_Constructor__invalid_inputs(
+    def test_ExpenseForecastInitialConditions_Constructor__invalid_inputs(
         self,
         account_set,
         budget_set,
         memo_rule_set,
         start_date,
         end_date,
-        milestone_set,
         expected_exception,
     ):
         with pytest.raises(expected_exception):
@@ -363,7 +354,6 @@ class TestExpenseForecastUnit:
                 account_set,
                 budget_set,
                 memo_rule_set,
-                raise_exceptions=True,
             )
 
     def compute_forecast_and_actual_vs_expected(
@@ -384,7 +374,6 @@ class TestExpenseForecastUnit:
             account_set,
             budget_set,
             memo_rule_set,
-            raise_exceptions=False,
         )
         F = ForecastHandler()
         R = F.runForecast(IO, milestone_set, include_debug_columns=True)
@@ -609,7 +598,6 @@ class TestExpenseForecastUnit:
                 account_set,
                 budget_set,
                 memo_rule_set,
-                raise_exceptions=True,
             )
 
         # expected_result_df = pd.DataFrame({
@@ -630,7 +618,7 @@ class TestExpenseForecastUnit:
         #                                                  expected_result_df,
         #                                                  test_description)
 
-    @pytest.mark.skip(reason="__str__ for ExpenseForecast. Not sure this needs a programmatic test bc __str__ is meant for human readability.")
+    @pytest.mark.skip(reason="__str__ for ExpenseForecastInitialConditions. Not sure this needs a programmatic test bc __str__ is meant for human readability.")
     def test_str(self):
         start_date = "20000101"
         end_date = "20000103"
@@ -750,4 +738,3 @@ class TestExpenseForecastUnit:
             original.initial_memo_rule_set.getMemoRules(),
         )
 
-        assert restored.initial_milestone_set == original.initial_milestone_set

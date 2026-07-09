@@ -20,6 +20,8 @@ from expense_forecast.ScenarioSpace import ScenarioSpace
 import datetime
 from datetime import date
 
+import inspect
+
 def get_B_invariant(food_daily_amount, gas_semiweekly_amount):
     B_invariant = BudgetSet()
 
@@ -120,7 +122,7 @@ def get_IRL_current_A():
                         min_balance=0,
                         max_balance=20_000,
                         billing_start_date=date(2026,6,3),
-                        minimum_payment=40, #TODO not sure
+                        minimum_payment=40,
                         billing_cycle_payment_balance=0,
                         apr=0.0466)
     A.createLoanAccount(name="Loan B", 
@@ -129,7 +131,7 @@ def get_IRL_current_A():
                         min_balance=0,
                         max_balance=20_000,
                         billing_start_date=date(2026,6,3),
-                        minimum_payment=40, #TODO not sure
+                        minimum_payment=40, 
                         billing_cycle_payment_balance=0,
                         apr=0.0429)
     A.createLoanAccount(name="Loan C", 
@@ -138,7 +140,7 @@ def get_IRL_current_A():
                             min_balance=0,
                             max_balance=20_000,
                             billing_start_date=date(2026,6,3),
-                            minimum_payment=40, #TODO not sure
+                            minimum_payment=40, 
                             billing_cycle_payment_balance=0,
                             apr=0.0429)
     A.createLoanAccount(name="Loan D", 
@@ -147,7 +149,7 @@ def get_IRL_current_A():
                             min_balance=0,
                             max_balance=20_000,
                             billing_start_date=date(2026,6,3),
-                            minimum_payment=40, #TODO not sure
+                            minimum_payment=40, 
                             billing_cycle_payment_balance=0,
                             apr=0.0376)
     A.createLoanAccount(name="Loan E", 
@@ -156,7 +158,7 @@ def get_IRL_current_A():
                             min_balance=0,
                             max_balance=20_000,
                             billing_start_date=date(2026,6,3),
-                            minimum_payment=40, #TODO not sure
+                            minimum_payment=40, 
                             billing_cycle_payment_balance=0,
                             apr=0.0376)
     return A
@@ -511,7 +513,9 @@ if __name__ == '__main__':
 
     # action = 'near term'
     # action = 'start of RN life'
-    action = 'net worth 0 after 18 months of RN car life'
+    # action = 'net worth 0 after 18 months of RN car life'
+
+    action = 'inspect'
 
     if action == 'near term':
 
@@ -607,7 +611,6 @@ if __name__ == '__main__':
         B = B_invariant + RN_income + B_keep_cc_payed_off + B_loan_payments
         IO = ExpenseForecastInitialConditions(start_date, end_date, A, B, M)
 
-        #TODO this is a good next test
         composite_milestone = CompositeMilestone('All OG Loans Paid Off',
                                 [
                                     AccountMilestone('Loan A Paid Off','Loan A', 0, 0),
@@ -795,4 +798,11 @@ if __name__ == '__main__':
 
     elif action == 'test approximate case':
 
+
         raise NotImplementedError
+    
+    elif action == 'inspect':
+        pass
+        # TODO list the classes
+        # for name, member in inspect.getmembers(Account, inspect.isfunction):
+        #     print(name)

@@ -8,7 +8,7 @@ import argparse
 import logging
 from .ExpenseForecastInitialConditions import ExpenseForecastInitialConditions
 from .ExpenseForecastResult import ExpenseForecastResult
-from .ForecastSetInitialConditions import ForecastSet
+# from .ForecastSetInitialConditions import ForecastSet
 from .log_methods import log_in_color
 import pandas as pd
 import psycopg2

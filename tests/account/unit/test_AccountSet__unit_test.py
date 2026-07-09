@@ -1715,6 +1715,8 @@ class TestAccountSet:
             except Exception as e:
                 raise e
 
+# TODO implement a test case to try and create multiple loans with the same name
+
 
 # Migration notes:
 # - Migrated active coverage from old__test_AccountSet__unit_test.py into the newer

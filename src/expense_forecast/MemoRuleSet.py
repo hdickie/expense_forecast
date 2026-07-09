@@ -55,10 +55,10 @@ class MemoRuleSet:
             self.memo_rules.append(memo_rule)
 
     def __str__(self):
-        return self.getMemoRules().to_string()
+        return self.getMemoRules().to_string() #TODO implement MemoRuleSet::__str__
 
     def __repr__(self):
-        return str(self) #todo
+        return str(self) #TODO implement MemoRuleSet::__repr__
 
     def findMatchingMemoRule(self, txn_memo, transaction_priority):
         # log_in_color(logger, "yellow", "debug", "ENTER findMatchingMemoRule")
@@ -100,9 +100,6 @@ class MemoRuleSet:
         #
         # log_in_color(logger, "yellow", "debug", "EXIT findMatchingMemoRule")
         return self.memoized_rule_matches[(txn_memo, transaction_priority)]
-
-    def fromExcel(self):
-        raise NotImplementedError #todo
 
     def addMemoRule(self, memo_regex, account_from, account_to, transaction_priority):
 

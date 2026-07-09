@@ -60,112 +60,6 @@ class AccountSet:
             return value
         return value
 
-    # TODO I am not sure if I need this
-    # @staticmethod
-    # def initialize_from_dataframe(accounts_df):
-    #     # print('ENTER AccountSet initialize_from_dataframe')
-    #     A = AccountSet([])
-    #     try:
-    #         expect_curr_stmt_bal = False
-    #         expect_prev_stmt_bal = False
-    #         expect_principal_bal = False
-    #         expect_interest_bal = False
-    #         for index, row in accounts_df.iterrows():
-    #             row = pd.DataFrame(row).T
-    #
-    #             accountname = row.account_name.iat[0].split(":")[0]
-    #             balance = row.balance.iat[0]
-    #             min_balance = row.min_balance.iat[0]
-    #             max_balance = row.max_balance.iat[0]
-    #             primary_checking_ind = row.primary_checking_ind.iat[0]
-    #
-    #             account_type = row.account_type.iat[0]
-    #             if account_type == "curr stmt bal" and not expect_prev_stmt_bal:
-    #                 current_statement_balance = row.balance.iat[0]
-    #                 expect_prev_stmt_bal = True
-    #             elif account_type == "prev stmt bal" and not expect_curr_stmt_bal:
-    #                 previous_statement_balance = row.balance.iat[0]
-    #                 billing_start_date_yyyymmdd = row.billing_start_date_yyyymmdd.iat[0]
-    #                 apr = row.apr.iat[0]
-    #                 minimum_payment = row.minimum_payment.iat[0]
-    #                 expect_curr_stmt_bal = True
-    #             elif account_type == "principal balance" and not expect_interest_bal:
-    #                 billing_start_date_yyyymmdd = row.billing_start_date_yyyymmdd.iat[0]
-    #                 apr = row.apr.iat[0]
-    #                 minimum_payment = row.minimum_payment.iat[0]
-    #                 principal_balance = row.balance.iat[0]
-    #                 expect_interest_bal = True
-    #             elif account_type == "interest" and not expect_principal_bal:
-    #                 interest_balance = row.balance.iat[0]
-    #                 expect_principal_bal = True
-    #
-    #             if account_type == "curr stmt bal" and expect_curr_stmt_bal:
-    #                 current_statement_balance = row.balance.iat[0]
-    #                 A.createCreditCardAccount(
-    #                     accountname,
-    #                     current_statement_balance,
-    #                     previous_statement_balance,
-    #                     min_balance,
-    #                     max_balance,
-    #                     billing_start_date_yyyymmdd,
-    #                     apr,
-    #                     minimum_payment,
-    #                 )
-    #                 expect_prev_stmt_bal = False
-    #             elif account_type == "prev stmt bal" and expect_prev_stmt_bal:
-    #                 A.createCreditCardAccount(
-    #                     accountname,
-    #                     current_statement_balance,
-    #                     previous_statement_balance,
-    #                     min_balance,
-    #                     max_balance,
-    #                     billing_start_date_yyyymmdd,
-    #                     apr,
-    #                     minimum_payment,
-    #                 )
-    #                 expect_curr_stmt_bal = False
-    #             elif account_type == "principal balance" and expect_principal_bal:
-    #                 principal_balance = row.balance.iat[0]
-    #                 A.createLoanAccount(
-    #                     accountname,
-    #                     principal_balance,
-    #                     interest_balance,
-    #                     min_balance,
-    #                     max_balance,
-    #                     billing_start_date_yyyymmdd,
-    #                     apr,
-    #                     minimum_payment,
-    #                 )
-    #                 expect_interest_bal = False
-    #             elif account_type == "interest" and expect_interest_bal:
-    #                 A.createLoanAccount(
-    #                     accountname,
-    #                     principal_balance,
-    #                     interest_balance,
-    #                     min_balance,
-    #                     max_balance,
-    #                     billing_start_date_yyyymmdd,
-    #                     apr,
-    #                     minimum_payment,
-    #                 )
-    #                 expect_principal_bal = False
-    #
-    #             if account_type.lower() == "checking":
-    #                 A.createCheckingAccount(
-    #                     accountname, balance, min_balance, max_balance, primary_checking_ind
-    #                 )
-    #             elif account_type.lower() == "investment":
-    #                 A.createInvestmentAccount(
-    #                     accountname, row.balance, row.min_balance, row.max_balance, row.apr
-    #                 )
-    #     except Exception as e:
-    #         print(e.args)
-    #         raise e
-    #     # print(A.getAccounts().to_string())
-    #     # print('EXIT AccountSet initialize_from_dataframe')
-    #     return A
-
-    # TODO this might belong somewhere else, not sure
     @staticmethod
     def determineMinPaymentAmount(
             advance_payment_amount,
@@ -210,10 +104,10 @@ class AccountSet:
         # print('FINAL ANSWER: '+str(amount_due))
         return amount_due
 
-    def isSufficientToBeginForecast(self):
-        accounts_df = self.getAccounts()
-        AccountSet._validate_one_and_only_one_primary_checking_account(accounts_df)
-        raise NotImplementedError # todo more strict checking #https://github.com/hdickie/expense_forecast/issues/18
+    ### I think this never got used
+    # def isSufficientToBeginForecast(self):
+    #     accounts_df = self.getAccounts()
+    #     AccountSet._validate_one_and_only_one_primary_checking_account(accounts_df)
 
     @staticmethod
     def _validate_one_and_only_one_primary_checking_account(accounts_df):
@@ -242,7 +136,7 @@ class AccountSet:
             return
         
         accounts_df = self.getAccounts()
-        #TODO set primary_checking_account_name
+        #TODO set primary_checking_account_name ; unclear if this is still being used after Codex-powered refactors
         AccountSet._validate_unique_names(accounts_df)
 
     def __str__(self):
@@ -290,7 +184,7 @@ class AccountSet:
         loan_required_kwargs = ['billing_start_date', 'apr', 'interest_cadence', 'minimum_payment', 'principal_balance',
                           'interest_balance', 'billing_cycle_payment_balance']
 
-        # todo i don't know what I want for this
+        # TODO DEFER implement required kwargs in createAccount for investment case
         # investment_required_kwargs = ['billing_start_date', 'interest_type', 'apr', 'interest_cadence', 'minimum_payment',
         #                   'previous_statement_balance', 'current_statement_balance', 'principal_balance',
         #                   'interest_balance', 'end_of_previous_cycle_balance']
@@ -351,7 +245,7 @@ class AccountSet:
                                    minimum_payment=kwargs['minimum_payment'],
                                    billing_cycle_payment_balance=kwargs['billing_cycle_payment_balance'])
 
-        # todo I don't know what I want for this
+        # TODO DEFER implement createAccount branch for investment case
         # elif account_type == 'investment':
         #     assert balance == kwargs['current_statement_balance'] + kwargs['previous_statement_balance']
         #     self.createInvestmentAccount(name,
@@ -467,8 +361,8 @@ class AccountSet:
         )
         self.accounts.append(account)
 
+    # TODO DEFER implement createInvestmentAccount
     # def createInvestmentAccount(self, name, balance, apr):
-    #     #todo
     #     account = Account(
     #         name=name,
     #         balance=balance,
@@ -947,9 +841,8 @@ class AccountSet:
             for loan_name, payment_amount in payment_dict.items()
             if payment_amount > MONEY_BOUNDARY_TOLERANCE
         ]
-
-    # TODO include_debug_columns is not a needed parameter here
-    def getAccounts(self, include_debug_columns=False):
+    
+    def getAccounts(self):
         columns = [
             "Name",
             "Balance",
@@ -1060,5 +953,3 @@ if __name__ == "__main__":
     import doctest
 
     doctest.testmod()
-
-# todo known bug- i was able to create multiple loan accounts with the same name #https://github.com/hdickie/expense_forecast/issues/15

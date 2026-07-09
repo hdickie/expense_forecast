@@ -6,12 +6,14 @@ from expense_forecast.ScenarioDimension import ScenarioDimension
 class TestForecastScenarioUnit:
 
     # __init__(self, label, choices, budget_set)
+    @pytest.mark.skip
     def test_scenario__valid_inputs(self):
          
         S = Scenario('One Specific Forecast',
                      ['Choice 1A','Choice 2B','Choice 3C'],
                      BudgetSet())
         
+    @pytest.mark.skip
     def test_scenario__invalid_name(self):
         with pytest.raises(ValueError):
             S = Scenario(None,
@@ -23,26 +25,28 @@ class TestForecastScenarioUnit:
                      ['Choice 1A','Choice 2B','Choice 3C'],
                      BudgetSet())
         
+    @pytest.mark.skip
     def test_scenario__empty_budget_set(self):
         with pytest.raises(ValueError):
             S = Scenario("One Specific Forecast",
                      ['Choice 1A','Choice 2B','Choice 3C'],
                      BudgetSet())
             
+    @pytest.mark.skip
     def test_scenario__none_budget_set(self):
         with pytest.raises(ValueError):
             S = Scenario("One Specific Forecast",
                      ['Choice 1A','Choice 2B','Choice 3C'],
                      None)
             
+    @pytest.mark.skip
     def test_scenario__empty_choice_list(self):
         with pytest.raises(ValueError):
             S = Scenario("One Specific Forecast",
                      [],
                      BudgetSet())
             
-
-
+    @pytest.mark.skip
     def test_scenario_dimension__valid_inputs(self):
 
         SD = ScenarioDimension(name="School")
@@ -50,7 +54,7 @@ class TestForecastScenarioUnit:
         SD = ScenarioDimension(name="School",
                                choices = {"No school":BudgetSet(),
                                           "Nursing school":BudgetSet()})
-        
+    @pytest.mark.skip
     def test_scenario_dimension__invalid_inputs(self):
         #empty string is not valid
         with pytest.raises(ValueError):

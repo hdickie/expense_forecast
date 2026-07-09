@@ -49,6 +49,9 @@ class TestE2E:
 
 
     def test_cli_runs_simple_forecast(self):
+
+        #TODO tests have dependency on expense_forecast.conf
+
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             initial_conditions_path = temp_path / "initial_conditions.json"
@@ -60,8 +63,7 @@ class TestE2E:
             simple_forecast_initial_conditions(initial_conditions_path)
             config_path.write_text("[default]\n")
 
-            result = subprocess.run(
-                [
+            cmd = [
                     "python3",
                     "-m",
                     "expense_forecast.ef_cli",
@@ -72,7 +74,12 @@ class TestE2E:
                     "--ifile",
                     initial_conditions_path,
                     "--ofile",
-                    forecast_result_path],
+                    forecast_result_path]
+            
+            print(' '.join([ str(c) for c in cmd]))
+
+            result = subprocess.run(
+                cmd,
                 cwd=temp_path,
                 capture_output=True,
                 text=True,

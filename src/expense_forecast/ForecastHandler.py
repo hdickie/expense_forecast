@@ -1,11 +1,10 @@
 from expense_forecast.AccountSet import AccountBoundaryError, AccountSet
 from expense_forecast.BudgetSet import BudgetSet
-from expense_forecast.ForecastSetInitialConditions import ForecastSetInitialConditions
+# from expense_forecast.ForecastSetInitialConditions import ForecastSetInitialConditions
 from expense_forecast.MemoRuleSet import MemoRuleSet 
 from expense_forecast.MilestoneSet import MilestoneSet 
 from expense_forecast.ExpenseForecastInitialConditions import ExpenseForecastInitialConditions 
 from expense_forecast.ExpenseForecastResult import ExpenseForecastResult 
-from expense_forecast.MilestoneTriggeredForecastTransition import MilestoneTriggeredForecastTransition
 
 import hashlib
 import hashlib
@@ -185,7 +184,7 @@ class ForecastHandler:
                 proposed_df=pd.DataFrame(IO.initial_proposed_df, copy=True),
                 deferred_df=pd.DataFrame(IO.initial_deferred_df, copy=True),
                 skipped_df=pd.DataFrame(IO.initial_skipped_df, copy=True),
-                account_set=copy.deepcopy(IO.initial_account_set), #TODO copy may not be needed here?
+                account_set=copy.deepcopy(IO.initial_account_set), #TODO OPTIMIZATION copy may not be needed here?
                 memo_rule_set=copy.deepcopy(IO.initial_memo_rule_set), 
                 log_stack_depth=log_stack_depth,
                 raise__satisfice_failed_exception=False,
@@ -261,8 +260,6 @@ class ForecastHandler:
         # if play_notification_sound:
         #     notification_sounds.play_notification_sound()
 
-        # cls.forecast_df.to_csv('./out//Forecast_' + cls.unique_id + '.csv') #this is only the forecast not the whole ExpenseForecast object
-        # cls.writeToJSONFile() #this is the whole ExpenseForecast object #todo this should accept a path parameter
         return R
 
     
@@ -1085,7 +1082,7 @@ class ForecastHandler:
 
         # If no minimum payment on the current date, find the next billing date
 
-        # todo this is wrong
+        # todo unclear if this is still wrong ; pylance type warning
         next_billing_date = generate_date_sequence(
             d, 32, cadence="monthly"
         ).iloc[-1]
@@ -1230,7 +1227,7 @@ class ForecastHandler:
         Parameters:
         - account_set: AccountSet object representing the current state of accounts.
         - forecast_df: DataFrame containing the forecasted financial data.
-        - date: String representing the current date in 'YYYYMMDD' format. #TODO old
+        - date: String representing the current date in 'YYYYMMDD' format.
         - memo_set: MemoSet object containing memo rules.
         - confirmed_df: DataFrame of confirmed transactions.
         - relevant_proposed_df: DataFrame of proposed transactions for the current date.
@@ -1471,7 +1468,6 @@ class ForecastHandler:
 
                 # Update the account balances in the forecast DataFrame for the current date
                 # this seems redundant here, but chat gpt did this and i dont suspect it for now
-                # good method actually, would like to use it in a refactor #todo
                 cls._update_forecast_balances(
                     forecast_df=forecast_df,
                     account_set=account_set,
@@ -1618,7 +1614,6 @@ class ForecastHandler:
                 min(post_next_payment_inclusive_df[memo_rule_row.Account_From]),
             )
         else:
-            # so lazy lol. This should be refactored #todo
             amount_in_question = cls._getMinimumFutureAvailableBalances(
                 account_set=account_set, forecast_df=forecast_df, d=d, log_stack_depth=log_stack_depth
             )[memo_rule_row.Account_From]
@@ -2063,7 +2058,6 @@ class ForecastHandler:
     #                 ).strftime("%Y%m%d")
 
     #             proposed_row_df.Date = next_income_date
-    #             # todo what if there are no future income rows
 
     #             new_deferred_df = pd.concat(
     #                 [new_deferred_df, pd.DataFrame(proposed_row_df).T]
@@ -2292,8 +2286,6 @@ class ForecastHandler:
     #             deferred_row_df.Date = next_income_date
     #             # print('new deferred row')
     #             # print(deferred_row_df.to_string())
-
-    #             # todo what is no future income date
 
     #             new_deferred_df = pd.concat(
     #                 [new_deferred_df, pd.DataFrame(deferred_row_df).T]
@@ -3870,7 +3862,7 @@ class ForecastHandler:
             ):  # day after ext billing date
                 eopc_delta = og_curr_stmt_delta
 
-            elif date_iat in cc_billing_dates:  # todo update this branch
+            elif date_iat in cc_billing_dates:
                 # Handle other billing dates
 
                 # Ensure we have a valid previous_prev_stmt_bal
@@ -4058,8 +4050,6 @@ class ForecastHandler:
                     + previous_stmt_delta
                 )
 
-            elif False:  # day after non-next billing date
-                pass  # todo update eopc_delta
             else:
                 # No adjustments needed
                 pass
@@ -4220,7 +4210,6 @@ class ForecastHandler:
                 old_eopc = future_rows_only_df.at[f_i, eopc_account_name]
                 eopc_delta += updated_eopc - old_eopc
 
-            # todo left off here, copy pasted from prev only method
             elif date_iat in cc_billing_dates and previous_prev_stmt_bal != 0:
                 # log_in_color(logger, 'white', 'debug', str(date_iat) + ' (Not Next) Billing Date and previous_prev_stmt_bal != 0', log_stack_depth)
                 # Handle other billing dates after payment has been made
@@ -6690,8 +6679,7 @@ class ForecastHandler:
 
                     if acct_name not in reported_acct_deltas:
                         if "Loan" in acct_name:
-                            continue  # todo shouldn't need to do this
-
+                            continue
                         if "-$" in md:
                             memo_balance = -abs(memo_balance)
                         elif "+$" in md:
@@ -6754,8 +6742,7 @@ class ForecastHandler:
 
                     if acct_name not in reported_acct_deltas:
                         if "Loan" in acct_name:
-                            continue  # todo shouldn't need to do this
-
+                            continue 
                         if "-$" in m:
                             memo_balance = -abs(memo_balance)
                         else:
@@ -6947,7 +6934,6 @@ class ForecastHandler:
                             )
                         raise ValueError(exception_string)
 
-            # todo very slow to do this
             index_of_first_future_day = list(forecast_df.Date).index(
                 future_rows_only_df.head(1).Date.iat[0]
             )
@@ -7077,7 +7063,6 @@ class ForecastHandler:
     #)
     #             )
 
-    #             # todo idk if this is necessary
     #             account_set = cls._sync_account_set_w_forecast_day(
     #                 account_set, forecast_df=forecast_df, d=d_string
     #)
@@ -7085,7 +7070,6 @@ class ForecastHandler:
     #             # todo maybe this could be moved down? not sure
     #             account_set_before_p2_plus_txn = copy.deepcopy(account_set)
 
-    #             # todo not sure if this is necessary
     #             account_set = cls._sync_account_set_w_forecast_day(
     #                 account_set, forecast_df=forecast_df, d=d_string
     #)
@@ -7223,15 +7207,12 @@ class ForecastHandler:
                     )
                 )
 
-                # todo idk if this is necessary
                 account_set = cls._sync_account_set_w_forecast_day(
                     account_set=account_set, forecast_df=forecast_df, d=d, log_stack_depth=log_stack_depth
                 )
 
-                # todo maybe this could be moved down? not sure
                 account_set_before_p2_plus_txn = copy.deepcopy(account_set)
 
-                # todo not sure if this is necessary
                 account_set = cls._sync_account_set_w_forecast_day(
                     account_set=account_set, forecast_df=forecast_df, d=d, log_stack_depth=log_stack_depth
                 )
@@ -7829,148 +7810,6 @@ class ForecastHandler:
         # )
         return [forecast_df, skipped_df, confirmed_df, deferred_df]
 
-    # def to_json(cls):
-    #     """
-    #     Returns a JSON string representing the ExpenseForecast object.
-
-    #     #todo ExpenseForecast.to_json() say what the columns are
-
-    #     :return:
-    #     """
-
-    #     # return jsonpickle.encode(cls, indent=4)
-
-    #     JSON_string = "{\n"
-
-    #     unique_id_string = '"unique_id":"' + cls.unique_id + '",\n'
-
-    #     # if cls.start_ts is not None:
-    #     # if hasattr(cls,'start_ts'):
-    #     if cls.start_ts is not None:
-    #         start_ts_string = '"start_ts":"' + str(cls.start_ts) + '",\n'
-    #         end_ts_string = '"end_ts":"' + str(cls.end_ts) + '",\n'
-    #     else:
-    #         start_ts_string = '"start_ts":"None",\n'
-    #         end_ts_string = '"end_ts":"None",\n'
-
-    #     start_date_string = '"start_date":' + cls.start_date + ",\n"
-    #     end_date_string = '"end_date":' + cls.end_date + ",\n"
-
-    #     memo_rule_set_string = (
-    #         '"initial_memo_rule_set":' + cls.initial_memo_rule_set.to_json() + ","
-    #     )
-    #     initial_account_set_string = (
-    #         '"initial_account_set":' + cls.initial_account_set.to_json() + ","
-    #     )
-    #     initial_budget_set_string = (
-    #         '"initial_budget_set":' + cls.initial_budget_set.to_json() + ","
-    #     )
-
-    #     if cls.start_ts is None:
-    #         forecast_df_string = '"forecast_df":"None",\n'
-    #         skipped_df_string = '"skipped_df":"None",\n'
-    #         confirmed_df_string = '"confirmed_df":"None",\n'
-    #         deferred_df_string = '"deferred_df":"None",\n'
-    #     else:
-    #         tmp__forecast_df = cls.forecast_df.copy()
-    #         tmp__skipped_df = cls.skipped_df.copy()
-    #         tmp__confirmed_df = cls.confirmed_df.copy()
-    #         tmp__deferred_df = cls.deferred_df.copy()
-
-    #         # standardize decimal points
-
-    #         # todo every value should have a decimal
-    #         for i in range(1, len(tmp__forecast_df.columns) - 2):
-    #             column_name = tmp__forecast_df.columns[i]
-    #             tmp__forecast_df[column_name] = [
-    #                 "{:.2f}".format(v) for v in tmp__forecast_df[column_name]
-    #             ]
-
-    #         tmp__forecast_df["Date"] = tmp__forecast_df["Date"].astype(str)
-    #         if tmp__skipped_df.shape[0] > 0:
-    #             tmp__skipped_df["Date"] = tmp__skipped_df["Date"].astype(str)
-    #         tmp__confirmed_df["Date"] = tmp__confirmed_df["Date"].astype(str)
-    #         if tmp__deferred_df.shape[0] > 0:
-    #             tmp__deferred_df["Date"] = tmp__deferred_df["Date"].astype(str)
-
-    #         normalized_forecast_df_JSON_string = tmp__forecast_df.to_json(
-    #             orient="records", date_format="iso"
-    #         )
-    #         normalized_skipped_df_JSON_string = tmp__skipped_df.to_json(
-    #             orient="records", date_format="iso"
-    #         )
-    #         normalized_confirmed_df_JSON_string = tmp__confirmed_df.to_json(
-    #             orient="records", date_format="iso"
-    #         )
-    #         normalized_deferred_df_JSON_string = tmp__deferred_df.to_json(
-    #             orient="records", date_format="iso"
-    #         )
-
-    #         forecast_df_string = (
-    #             '"forecast_df":' + normalized_forecast_df_JSON_string + ",\n"
-    #         )
-    #         skipped_df_string = (
-    #             '"skipped_df":' + normalized_skipped_df_JSON_string + ",\n"
-    #         )
-    #         confirmed_df_string = (
-    #             '"confirmed_df":' + normalized_confirmed_df_JSON_string + ",\n"
-    #         )
-    #         deferred_df_string = (
-    #             '"deferred_df":' + normalized_deferred_df_JSON_string + ",\n"
-    #         )
-
-    #     JSON_string += unique_id_string
-    #     JSON_string += '"forecast_set_name":"' + cls.forecast_set_name + '",\n'
-    #     JSON_string += '"forecast_name":"' + cls.forecast_name + '",\n'
-
-    #     JSON_string += start_ts_string
-    #     JSON_string += end_ts_string
-
-    #     JSON_string += start_date_string
-    #     JSON_string += end_date_string
-    #     JSON_string += memo_rule_set_string
-    #     JSON_string += initial_account_set_string
-    #     JSON_string += initial_budget_set_string
-
-    #     JSON_string += forecast_df_string
-    #     JSON_string += skipped_df_string
-    #     JSON_string += confirmed_df_string
-    #     JSON_string += deferred_df_string
-
-    #     account_milestone_string = jsonpickle.encode(
-    #         cls.account_milestone_results, indent=4, unpicklable=False, make_refs=False
-    #     )
-
-    #     memo_milestone_string = jsonpickle.encode(
-    #         cls.memo_milestone_results, indent=4, unpicklable=False, make_refs=False
-    #     )
-
-    #     composite_milestone_string = jsonpickle.encode(
-    #         cls.composite_milestone_results,
-    #         indent=4,
-    #         unpicklable=False,
-    #         make_refs=False,
-    #     )
-
-    #     JSON_string += '"milestone_set":' + cls.milestone_set.to_json()
-
-    #     JSON_string += ",\n"
-    #     JSON_string += '"account_milestone_results":' + account_milestone_string + ",\n"
-    #     JSON_string += '"memo_milestone_results":' + memo_milestone_string + ",\n"
-    #     JSON_string += '"composite_milestone_results":' + composite_milestone_string
-
-    #     JSON_string += "}"
-
-    #     # to pretty print
-    #     JSON_string = json.dumps(json.loads(JSON_string), indent=4)
-
-    #     return JSON_string
-
-    # def to_html(cls):
-    #     # todo consider adding commas to long numbers
-    #     # res = ('{:,}'.format(test_num))
-    #     return cls.forecast_df.to_html()
-
     @classmethod
     def compute_forecast_difference(
         cls,
@@ -8150,155 +7989,6 @@ class ForecastHandler:
         return_df = return_df.reindex(sorted(return_df.columns), axis=1)
 
         return return_df
-# 
-    # def to_excel(cls, output_dir):
-
-    #     # first page, run parameters
-    #     summary_df = cls.getSummaryPageForExcelLandingPageDF()
-    #     account_set_df = cls.initial_account_set.getAccounts()
-    #     budget_set_df = cls.initial_budget_set.getBudgetItems()
-    #     memo_rule_set_df = cls.initial_memo_rule_set.getMemoRules()
-    #     choose_one_set_df = pd.DataFrame()  # todo
-    #     account_milestones_df = cls.milestone_set.getAccountMilestonesDF()
-    #     memo_milestones_df = cls.milestone_set.getMemoMilestonesDF()
-    #     composite_milestones_df = cls.milestone_set.getCompositeMilestonesDF()
-    #     milestone_results_df = cls.getMilestoneResultsDF()
-
-    #     with pd.ExcelWriter(
-    #         output_dir + "/Forecast_" + cls.unique_id + ".xlsx", engine="xlsxwriter"
-    #     ) as writer:
-    #         summary_df.to_excel(writer, sheet_name="Summary", index=False)
-    #         for column in summary_df:
-    #             column_length = max(
-    #                 summary_df[column].astype(str).map(len).max(), len(column)
-    #             )
-    #             col_idx = summary_df.columns.get_loc(column)
-    #             writer.sheets["Summary"].set_column(col_idx, col_idx, column_length)
-
-    #         account_set_df.to_excel(writer, sheet_name="AccountSet", index=False)
-    #         for column in account_set_df:
-    #             column_length = max(
-    #                 account_set_df[column].astype(str).map(len).max(), len(column)
-    #             )
-    #             col_idx = account_set_df.columns.get_loc(column)
-    #             writer.sheets["AccountSet"].set_column(col_idx, col_idx, column_length)
-
-    #         budget_set_df.to_excel(writer, sheet_name="BudgetSet", index=False)
-    #         for column in budget_set_df:
-    #             column_length = max(
-    #                 budget_set_df[column].astype(str).map(len).max(), len(column)
-    #             )
-    #             col_idx = budget_set_df.columns.get_loc(column)
-    #             writer.sheets["BudgetSet"].set_column(col_idx, col_idx, column_length)
-
-    #         memo_rule_set_df.to_excel(writer, sheet_name="MemoRuleSet", index=False)
-    #         for column in memo_rule_set_df:
-    #             column_length = max(
-    #                 memo_rule_set_df[column].astype(str).map(len).max(), len(column)
-    #             )
-    #             col_idx = memo_rule_set_df.columns.get_loc(column)
-    #             writer.sheets["MemoRuleSet"].set_column(col_idx, col_idx, column_length)
-
-    #         choose_one_set_df.to_excel(writer, sheet_name="ChooseOneSet", index=False)
-    #         for column in choose_one_set_df:
-    #             column_length = max(
-    #                 choose_one_set_df[column].astype(str).map(len).max(), len(column)
-    #             )
-    #             col_idx = choose_one_set_df.columns.get_loc(column)
-    #             writer.sheets["ChooseOneSet"].set_column(
-    #                 col_idx, col_idx, column_length
-    #             )
-
-    #         account_milestones_df.to_excel(
-    #             writer, sheet_name="AccountMilestones", index=False
-    #         )
-    #         for column in account_milestones_df:
-    #             column_length = max(
-    #                 account_milestones_df[column].astype(str).map(len).max(),
-    #                 len(column),
-    #             )
-    #             col_idx = account_milestones_df.columns.get_loc(column)
-    #             writer.sheets["AccountMilestones"].set_column(
-    #                 col_idx, col_idx, column_length
-    #             )
-
-    #         memo_milestones_df.to_excel(
-    #             writer, sheet_name="MemoMilestones", index=False
-    #         )
-    #         for column in memo_milestones_df:
-    #             column_length = max(
-    #                 memo_milestones_df[column].astype(str).map(len).max(), len(column)
-    #             )
-    #             col_idx = memo_milestones_df.columns.get_loc(column)
-    #             writer.sheets["MemoMilestones"].set_column(
-    #                 col_idx, col_idx, column_length
-    #             )
-
-    #         composite_milestones_df.to_excel(
-    #             writer, sheet_name="CompositeMilestones", index=False
-    #         )
-    #         for column in composite_milestones_df:
-    #             column_length = max(
-    #                 composite_milestones_df[column].astype(str).map(len).max(),
-    #                 len(column),
-    #             )
-    #             col_idx = composite_milestones_df.columns.get_loc(column)
-    #             writer.sheets["CompositeMilestones"].set_column(
-    #                 col_idx, col_idx, column_length
-    #             )
-
-    #         if hasattr(cls, "forecast_df"):
-    #             cls.forecast_df.to_excel(writer, sheet_name="Forecast", index=False)
-    #             for column in cls.forecast_df:
-    #                 column_length = max(
-    #                     cls.forecast_df[column].astype(str).map(len).max(), len(column)
-    #                 )
-    #                 col_idx = cls.forecast_df.columns.get_loc(column)
-    #                 writer.sheets["Forecast"].set_column(
-    #                     col_idx, col_idx, column_length
-    #                 )
-
-    #             cls.skipped_df.to_excel(writer, sheet_name="Skipped", index=False)
-    #             for column in cls.skipped_df:
-    #                 column_length = max(
-    #                     cls.skipped_df[column].astype(str).map(len).max(), len(column)
-    #                 )
-    #                 col_idx = cls.skipped_df.columns.get_loc(column)
-    #                 writer.sheets["Skipped"].set_column(col_idx, col_idx, column_length)
-
-    #             cls.confirmed_df.to_excel(writer, sheet_name="Confirmed", index=False)
-    #             for column in cls.confirmed_df:
-    #                 column_length = max(
-    #                     cls.confirmed_df[column].astype(str).map(len).max(),
-    #                     len(column),
-    #                 )
-    #                 col_idx = cls.confirmed_df.columns.get_loc(column)
-    #                 writer.sheets["Confirmed"].set_column(
-    #                     col_idx, col_idx, column_length
-    #                 )
-
-    #             cls.deferred_df.to_excel(writer, sheet_name="Deferred", index=False)
-    #             for column in cls.deferred_df:
-    #                 column_length = max(
-    #                     cls.deferred_df[column].astype(str).map(len).max(), len(column)
-    #                 )
-    #                 col_idx = cls.deferred_df.columns.get_loc(column)
-    #                 writer.sheets["Deferred"].set_column(
-    #                     col_idx, col_idx, column_length
-    #                 )
-
-    #             milestone_results_df.to_excel(
-    #                 writer, sheet_name="Milestone Results", index=False
-    #             )
-    #             for column in milestone_results_df:
-    #                 column_length = max(
-    #                     milestone_results_df[column].astype(str).map(len).max(),
-    #                     len(column),
-    #                 )
-    #                 col_idx = milestone_results_df.columns.get_loc(column)
-    #                 writer.sheets["Milestone Results"].set_column(
-    #                     col_idx, col_idx, column_length
-    #                 )
 
     # def getSummaryPageForExcelLandingPageDF(cls):
 
@@ -10517,14 +10207,13 @@ class ForecastHandler:
         )
         return html_output_path
 
-    def show_plan(self, forecast_set: ForecastSetInitialConditions):
-        raise NotImplementedError
+    # def show_plan(self, forecast_set: ForecastSetInitialConditions):
+    #     raise NotImplementedError
 
     @classmethod
     def runForecastWithMilestoneConditionalSwaps(cls,
                              IO,
                              MS,
-                             fork_set: MilestoneTriggeredForecastTransition,
                              include_debug_columns=False,
                              log_stack_depth=0):
 

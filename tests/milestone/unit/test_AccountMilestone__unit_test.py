@@ -30,7 +30,7 @@ class TestAccountMilestoneMethods:
             is not None
         )
 
-    # TODO 
+    # TODO implement test_MilestoneSet_AccountMilestone_summary_column
     @pytest.mark.unit
     def test_MilestoneSet_AccountMilestone_summary_column(self):
         pass
