@@ -37,6 +37,7 @@ A refactor of the loan allocaiton algorthm now overallocates by a few pennies in
 - Add forecast_name to IO constructor and all downstream touche
 - tests for approximate case
 - IOSet ???? what is this for
+- runForecast is making a folder .json and filling root w artifacts
 
 ## LLM Tasks
  - Refactor BudgetSet to be LineItemSet and BudgetSet to be LineItem
