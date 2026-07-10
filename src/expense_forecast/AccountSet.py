@@ -11,7 +11,7 @@ from expense_forecast.log_methods import setup_logger
 from .log_methods import log_in_color
 import logging
 import numpy as np
-from .LineItemSet import BudgetSet  # this could be refactored out, and should be in terms of independent dependencies and clear organization, but it works
+from .LineItemSet import LineItemSet  # this could be refactored out, and should be in terms of independent dependencies and clear organization, but it works
 import jsonpickle
 from .generate_date_sequence import generate_date_sequence
 
@@ -186,44 +186,6 @@ class AccountSet:
         """
         return self.getAccounts().to_string()
 
-    #TODO manual review of AccountSet.getPrimaryCheckingAccountName docstring
-    def getPrimaryCheckingAccountName(self):
-        """
-        TODO one-line description of getPrimaryCheckingAccountName.
-
-        TODO multi-line description of getPrimaryCheckingAccountName.
-        TODO explain how AccountSet.getPrimaryCheckingAccountName participates in account
-        TODO state management, forecasting, validation, or serialization.
-
-        Parameters
-        ----------
-        None
-            TODO confirm that getPrimaryCheckingAccountName takes no parameters beyond self/cls.
-
-        Returns
-        -------
-        str | None
-            TODO one-line description of return value of getPrimaryCheckingAccountName.
-
-        Contract
-        --------
-        - #TODO contract lines for getPrimaryCheckingAccountName.
-        - #TODO document exceptions, mutations, and precision assumptions for getPrimaryCheckingAccountName.
-
-        @interface-report: show
-        """
-        if self.primary_checking_account_name is None:
-            primary_checking_accounts = [
-                account.name
-                for account in self.accounts
-                if account.account_type == "checking"
-                and account.primary_checking_ind is True
-            ]
-            if len(primary_checking_accounts) == 1:
-                self.primary_checking_account_name = primary_checking_accounts[0]
-        return self.primary_checking_account_name
-
-
 
     #TODO manual review of AccountSet.createAccount docstring
     def createAccount(
@@ -236,28 +198,34 @@ class AccountSet:
             **kwargs
     ):
         """
-        TODO one-line description of createAccount.
+        Create and register a new Account.
 
-        TODO multi-line description of createAccount.
-        TODO explain how AccountSet.createAccount participates in account
-        TODO state management, forecasting, validation, or serialization.
+        Construct a new Account from the supplied configuration and add it to this
+        AccountSet.
+
+        This method centralizes account creation so that AccountSet can enforce 
+        account uniqueness. Callers should prefer this method over manually 
+        constructing and inserting Account instances, though that is permitted.
+
+        The created Account is validated before being incorporated into the
+        AccountSet.
 
         Parameters
         ----------
         name : str
-            TODO one-line description of createAccount.name.
+            Name of account.
 
         balance : float
-            TODO one-line description of createAccount.balance.
+            Balance of account. Credit and Loan types use non-negative numbers.
 
         min_balance : float
-            TODO one-line description of createAccount.min_balance.
+            Minimum legal balance of account. Infinity not allowed.
 
         max_balance : float
-            TODO one-line description of createAccount.max_balance.
+            Maximum legal balance of account. Infinity is allowed.
 
         account_type : str
-            TODO one-line description of createAccount.account_type.
+            One of: checking, credit, loan. Case-insensitive.
 
         **kwargs : dict
             TODO one-line description of createAccount.kwargs.
@@ -265,12 +233,6 @@ class AccountSet:
         Returns
         -------
         None
-            TODO one-line description of return value of createAccount.
-
-        Contract
-        --------
-        - #TODO contract lines for createAccount.
-        - #TODO document exceptions, mutations, and precision assumptions for createAccount.
 
         @interface-report: show
         """
@@ -1406,7 +1368,7 @@ class AccountSet:
         if amount == 0:
             return []
 
-        checking_acct_name = account_from or self.getPrimaryCheckingAccountName()
+        checking_acct_name = account_from or self.primary_checking_account_name
         checking_account = self._get_account_by_name(checking_acct_name)
         if checking_account is None or checking_account.account_type != "checking":
             raise ValueError("ALL_LOANS payments require a checking source account")

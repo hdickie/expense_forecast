@@ -2,14 +2,14 @@ import unittest, pytest
 
 from expense_forecast.AccountMilestone import AccountMilestone
 from expense_forecast.AccountSet import AccountSet
-from expense_forecast.LineItemSet import BudgetSet
+from expense_forecast.LineItemSet import LineItemSet
 from expense_forecast.MemoRuleSet import MemoRuleSet
 from expense_forecast.ExpenseForecastInitialConditions import ExpenseForecastInitialConditions
 from expense_forecast.ExpenseForecastResult import ExpenseForecastResult
 import pandas as pd, numpy as np
 import datetime, logging
 import tempfile
-from expense_forecast.LineItem import BudgetItem
+from expense_forecast.LineItem import LineItem
 from expense_forecast.CompositeMilestone import CompositeMilestone
 from expense_forecast.ForecastHandler import ForecastHandler
 from expense_forecast.MemoMilestone import MemoMilestone
@@ -23,7 +23,7 @@ pd.options.mode.chained_assignment = (
 from expense_forecast.MilestoneSet import MilestoneSet
 from expense_forecast.log_methods import log_in_color
 from expense_forecast.Account import Account
-from expense_forecast.LineItemSet import BudgetSet
+from expense_forecast.LineItemSet import LineItemSet
 from expense_forecast.MemoRuleSet import MemoRuleSet
 import copy
 
@@ -157,7 +157,7 @@ def txn_budget_item_once_list(
 ):
 
     return [
-        BudgetItem(
+        LineItem(
             datetime.datetime.strptime("20000102",'%Y%m%d'),
             datetime.datetime.strptime("20000102",'%Y%m%d'),
             priority,
@@ -237,7 +237,7 @@ class TestExpenseForecastInitialConditionsUnit:
         [
             (
                 AccountSet(checking_acct_list(10)),
-                BudgetSet(
+                LineItemSet(
                     txn_budget_item_once_list(10, 1, "test txn")
                 ),
                 MemoRuleSet(match_p1_test_txn_checking_memo_rule_list()),
@@ -245,7 +245,7 @@ class TestExpenseForecastInitialConditionsUnit:
                 "20000101",
             )
             # (AccountSet([]),
-            #  BudgetSet([]),
+            #  LineItemSet([]),
             #  MemoRuleSet([]),
             #  start_date,
             #  end_date,
@@ -275,7 +275,7 @@ class TestExpenseForecastInitialConditionsUnit:
         [
             (
                 AccountSet([]),
-                BudgetSet([]),
+                LineItemSet([]),
                 MemoRuleSet([]),
                 "incorrect date format",
                 "20000103",
@@ -283,7 +283,7 @@ class TestExpenseForecastInitialConditionsUnit:
             ),  # malformed start date
             (
                 AccountSet([]),
-                BudgetSet([]),
+                LineItemSet([]),
                 MemoRuleSet([]),
                 "20000101",
                 "incorrect date format",
@@ -291,7 +291,7 @@ class TestExpenseForecastInitialConditionsUnit:
             ),  # malformed end date
             (
                 AccountSet([]),
-                BudgetSet([]),
+                LineItemSet([]),
                 MemoRuleSet([]),
                 "20000101",
                 "19991231",
@@ -299,7 +299,7 @@ class TestExpenseForecastInitialConditionsUnit:
             ),  # end date before start date
             (
                 AccountSet([]),
-                BudgetSet([]),
+                LineItemSet([]),
                 MemoRuleSet([]),
                 "19991231",
                 "20000101",
@@ -307,7 +307,7 @@ class TestExpenseForecastInitialConditionsUnit:
             ),  # empty account_set
             (
                 AccountSet(checking_acct_list(10)),
-                BudgetSet(
+                LineItemSet(
                     txn_budget_item_once_list(10, 1, "test txn", )
                 ),
                 MemoRuleSet([]),
@@ -317,7 +317,7 @@ class TestExpenseForecastInitialConditionsUnit:
             ),  # A budget memo x priority element does not have a matching regex in memo rule set
             (
                 AccountSet(checking_acct_list(10)),
-                BudgetSet(
+                LineItemSet(
                     txn_budget_item_once_list(10, 1, "test txn", )
                 ),
                 MemoRuleSet(match_p1_test_txn_credit_memo_rule_list()),
@@ -326,7 +326,7 @@ class TestExpenseForecastInitialConditionsUnit:
                 ValueError,
             ),  # A memo rule has an account that does not exist in AccountSet
             # (AccountSet([]),
-            #  BudgetSet([]),
+            #  LineItemSet([]),
             #  MemoRuleSet([]),
             #  'start_date',
             #  'end_date',
@@ -534,7 +534,7 @@ class TestExpenseForecastInitialConditionsUnit:
         end_date = date(2000,1,3)
 
         account_set = AccountSet([])
-        budget_set = BudgetSet([])
+        budget_set = LineItemSet([])
         memo_rule_set = MemoRuleSet([])
 
         account_set.createAccount(
@@ -561,7 +561,7 @@ class TestExpenseForecastInitialConditionsUnit:
             end_of_previous_cycle_balance=0,
         )
 
-        budget_set.addBudgetItem(
+        budget_set.addLineItem(
             start_date=date(2000,1,2),
             end_date=date(2000,1,2),
             priority=2,
@@ -624,7 +624,7 @@ class TestExpenseForecastInitialConditionsUnit:
         end_date = "20000103"
 
         account_set = AccountSet([])
-        budget_set = BudgetSet([])
+        budget_set = LineItemSet([])
         memo_rule_set = MemoRuleSet([])
 
         account_set.createAccount(
@@ -651,7 +651,7 @@ class TestExpenseForecastInitialConditionsUnit:
             end_of_previous_cycle_balance=0,
         )
 
-        budget_set.addBudgetItem(
+        budget_set.addLineItem(
             start_date="20000101",
             end_date="20000103",
             priority=1,
@@ -711,7 +711,7 @@ class TestExpenseForecastInitialConditionsUnit:
             start_date=datetime.date(2026, 1, 1),
             end_date=datetime.date(2026, 1, 31),
             account_set=AccountSet(checking_acct_list(1000)),
-            budget_set=BudgetSet([]),
+            budget_set=LineItemSet([]),
             memo_rule_set=MemoRuleSet([]),
             milestone_set=MilestoneSet(),
         )
@@ -729,8 +729,8 @@ class TestExpenseForecastInitialConditionsUnit:
         )
 
         pd.testing.assert_frame_equal(
-            restored.initial_budget_set.getBudgetItems(),
-            original.initial_budget_set.getBudgetItems(),
+            restored.initial_budget_set.getLineItems(),
+            original.initial_budget_set.getLineItems(),
         )
 
         pd.testing.assert_frame_equal(

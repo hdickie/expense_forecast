@@ -13,7 +13,7 @@ Contract
 
 
 from expense_forecast.AccountSet import AccountBoundaryError, AccountSet
-from expense_forecast.LineItemSet import BudgetSet
+from expense_forecast.LineItemSet import LineItemSet
 # from expense_forecast.ForecastSetInitialConditions import ForecastSetInitialConditions
 from expense_forecast.MemoRuleSet import MemoRuleSet
 from expense_forecast.MilestoneSet import MilestoneSet
@@ -79,31 +79,11 @@ pd.set_option("display.precision", 2)
 ROUNDING_ERROR_TOLERANCE = (
     0.0000000001  # 10 places? overkill but I want to see if it works
 )
-#TODO manual review of ForecastHandler._stable_df_payload docstring
+#TODO #Codex-write-doctstring-OK
 def _stable_df_payload(df):
     """
-    TODO one-line description of ForecastHandler._stable_df_payload.
 
-    TODO multi-line description of ForecastHandler._stable_df_payload.
-    TODO explain how ForecastHandler._stable_df_payload participates in this module.
-    TODO document important state, validation, or serialization behavior.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        TODO one-line description of ForecastHandler._stable_df_payload.df.
-
-    Returns
-    -------
-    object
-        TODO one-line description of return value of ForecastHandler._stable_df_payload.
-
-    Contract
-    --------
-    - #TODO contract lines for ForecastHandler._stable_df_payload.
-    - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._stable_df_payload.
-
-    @interface-report: show
+    @interface-report: ignore
     """
     return (
         df.sort_index(axis=1)
@@ -113,27 +93,6 @@ def _stable_df_payload(df):
 
 #TODO manual review of ForecastHandler docstring
 class ForecastHandler:
-    # def __init__(cls):
-    #     cls.forecast_set = None
-    #     cls.account_set = None
-    #     cls.budget_set = None
-    #     cls.memo_rule_set = None
-    #     cls.milestone_set = None
-
-    # def load_forecast_set(cls, forecast_set: ForecastSet):
-    #     cls.forecast_set = forecast_set
-
-    # def load_account_set(cls, account_set: AccountSet):
-    #     cls.account_set = account_set
-
-    # def load_budget_set(cls, budget_set: BudgetSet):
-    #     cls.budget_set = budget_set
-
-    # def load_memo_rule_set(cls, memo_rule_set: MemoRuleSet):
-    #     cls.memo_rule_set = memo_rule_set
-
-    # def load_milestone_set(cls, milestone_set: MilestoneSet):
-    #     cls.milestone_set = milestone_set
 
     """
     Summary
@@ -147,32 +106,12 @@ class ForecastHandler:
 
     @interface-report: show
     """
-    #TODO manual review of ForecastHandler._normalize_date_value docstring
+    #Codex-write-doctstring-OK
     @staticmethod
     def _normalize_date_value(value):
         """
-        TODO one-line description of ForecastHandler._normalize_date_value.
-
-        TODO multi-line description of ForecastHandler._normalize_date_value.
-        TODO explain how ForecastHandler._normalize_date_value participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        value : object
-            TODO one-line description of ForecastHandler._normalize_date_value.value.
-
-        Returns
-        -------
-        object
-            TODO one-line description of return value of ForecastHandler._normalize_date_value.
-
-        Contract
-        --------
-        - #TODO contract lines for ForecastHandler._normalize_date_value.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._normalize_date_value.
-
-        @interface-report: show
+        
+        @interface-report: ignore
         """
         if pd.isnull(value):
             return value
@@ -195,94 +134,28 @@ class ForecastHandler:
                     pass
         return value
 
-    #TODO manual review of ForecastHandler._normalize_dataframe_date_column docstring
+    #Codex-write-doctstring-OK
     @classmethod
     def _normalize_dataframe_date_column(cls, dataframe):
         """
-        TODO one-line description of ForecastHandler._normalize_dataframe_date_column.
-
-        TODO multi-line description of ForecastHandler._normalize_dataframe_date_column.
-        TODO explain how ForecastHandler._normalize_dataframe_date_column participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        dataframe : object
-            TODO one-line description of ForecastHandler._normalize_dataframe_date_column.dataframe.
-
-        Returns
-        -------
-        object
-            TODO one-line description of return value of ForecastHandler._normalize_dataframe_date_column.
-
-        Contract
-        --------
-        - #TODO contract lines for ForecastHandler._normalize_dataframe_date_column.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._normalize_dataframe_date_column.
-
-        @interface-report: show
+        @interface-report: ignore
         """
         if "Date" in dataframe.columns:
             dataframe["Date"] = dataframe["Date"].apply(cls._normalize_date_value)
         return dataframe
 
-    #TODO manual review of ForecastHandler._is_empty_account_endpoint docstring
+    #Codex-write-doctstring-OK
     @staticmethod
     def _is_empty_account_endpoint(value):
         """
-        TODO one-line description of ForecastHandler._is_empty_account_endpoint.
-
-        TODO multi-line description of ForecastHandler._is_empty_account_endpoint.
-        TODO explain how ForecastHandler._is_empty_account_endpoint participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        value : object
-            TODO one-line description of ForecastHandler._is_empty_account_endpoint.value.
-
-        Returns
-        -------
-        object
-            TODO one-line description of return value of ForecastHandler._is_empty_account_endpoint.
-
-        Contract
-        --------
-        - #TODO contract lines for ForecastHandler._is_empty_account_endpoint.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._is_empty_account_endpoint.
-
-        @interface-report: show
+        @interface-report: ignore
         """
         return value is None or value == "None"
 
-    #TODO manual review of ForecastHandler._roundForecastOutput docstring
+    #Codex-write-doctstring-OK
     @staticmethod
     def _roundForecastOutput(forecast_df, decimals=2):
         """
-        TODO one-line description of ForecastHandler._roundForecastOutput.
-
-        TODO multi-line description of ForecastHandler._roundForecastOutput.
-        TODO explain how ForecastHandler._roundForecastOutput participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        forecast_df : object
-            TODO one-line description of ForecastHandler._roundForecastOutput.forecast_df.
-
-        decimals : object
-            TODO one-line description of ForecastHandler._roundForecastOutput.decimals.
-
-        Returns
-        -------
-        object
-            TODO one-line description of return value of ForecastHandler._roundForecastOutput.
-
-        Contract
-        --------
-        - #TODO contract lines for ForecastHandler._roundForecastOutput.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._roundForecastOutput.
-
         @interface-report: show
         """
         forecast_df = forecast_df.copy()
@@ -426,7 +299,7 @@ class ForecastHandler:
         forecast_df = cls._appendSummaryLines(IO.initial_account_set, forecast_df, log_stack_depth=log_stack_depth)
         forecast_df = cls._roundForecastOutput(forecast_df, decimals=2)
         cls.forecast_df = forecast_df
-        milestone_results = cls.evaluateMilestones(forecast_df, milestone_set, log_stack_depth=log_stack_depth)
+        milestone_results = MilestoneSet.evaluateMilestones(forecast_df, milestone_set, log_stack_depth=log_stack_depth)
 
         result_kwargs = {
             "confirmed_df": confirmed_df,
@@ -451,65 +324,11 @@ class ForecastHandler:
 
 
 
-    # todo this could probably have a better name
-    # def writeToJSONFile(cls, output_dir="./"):
-
-    #     # cls.forecast_df.to_csv('./Forecast__'+run_ts+'.csv')
-    #     log_in_color(
-    #         logger,
-    #         "green",
-    #         "info",
-    #         "Writing to " + str(output_dir) + "/Forecast_" + cls.unique_id + ".json",
-    #     )
-    #     print("Writing to " + str(output_dir) + "/Forecast_" + cls.unique_id + ".json")
-    #     # cls.forecast_df.to_csv('./Forecast__' + run_ts + '.json')
-
-    #     # cls.forecast_df.index = cls.forecast_df['Date']
-    #     if hasattr(cls, "forecast_df"):
-    #         file_name = "ForecastResult_" + cls.unique_id + ".json"
-    #     else:
-    #         file_name = "Forecast_" + cls.unique_id + ".json"
-
-    #     f = open(str(output_dir) + file_name, "w")
-    #     f.write(cls.to_json())
-    #     f.close()
-
-    #     # write all_data.csv  # cls.forecast_df.iloc[:,0:(cls.forecast_df.shape[1]-1)].to_csv('all_data.csv',index=False)
-
-    #     # cls.forecast_df.to_csv('out.csv', index=False)
-
-    #TODO manual review of ForecastHandler._getInitialForecastRow docstring
+    #Codex-write-doctstring-OK
     @classmethod
     def _getInitialForecastRow(cls, start_date, account_set, include_debug_columns=False):
         # print('ENTER _getInitialForecastRow')
         """
-        TODO one-line description of ForecastHandler._getInitialForecastRow.
-
-        TODO multi-line description of ForecastHandler._getInitialForecastRow.
-        TODO explain how ForecastHandler._getInitialForecastRow participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        start_date : date
-            TODO one-line description of ForecastHandler._getInitialForecastRow.start_date.
-
-        account_set : object
-            TODO one-line description of ForecastHandler._getInitialForecastRow.account_set.
-
-        include_debug_columns : bool
-            TODO one-line description of ForecastHandler._getInitialForecastRow.include_debug_columns.
-
-        Returns
-        -------
-        object
-            TODO one-line description of return value of ForecastHandler._getInitialForecastRow.
-
-        Contract
-        --------
-        - #TODO contract lines for ForecastHandler._getInitialForecastRow.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._getInitialForecastRow.
-
         @interface-report: show
         """
         min_sched_date = start_date
@@ -536,42 +355,12 @@ class ForecastHandler:
 
         return forecast_row_df
 
-    #TODO manual review of ForecastHandler._project_account_set_to_forecast_row docstring
+    #Codex-write-doctstring-OK
     @classmethod
     def _project_account_set_to_forecast_row(
         cls, forecast_df, account_set, d, include_debug_columns=False
     ):
         """
-        TODO one-line description of ForecastHandler._project_account_set_to_forecast_row.
-
-        TODO multi-line description of ForecastHandler._project_account_set_to_forecast_row.
-        TODO explain how ForecastHandler._project_account_set_to_forecast_row participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        forecast_df : object
-            TODO one-line description of ForecastHandler._project_account_set_to_forecast_row.forecast_df.
-
-        account_set : object
-            TODO one-line description of ForecastHandler._project_account_set_to_forecast_row.account_set.
-
-        d : object
-            TODO one-line description of ForecastHandler._project_account_set_to_forecast_row.d.
-
-        include_debug_columns : bool
-            TODO one-line description of ForecastHandler._project_account_set_to_forecast_row.include_debug_columns.
-
-        Returns
-        -------
-        object
-            TODO one-line description of return value of ForecastHandler._project_account_set_to_forecast_row.
-
-        Contract
-        --------
-        - #TODO contract lines for ForecastHandler._project_account_set_to_forecast_row.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._project_account_set_to_forecast_row.
-
         @interface-report: show
         """
         row_sel_vec = forecast_df["Date"] == d
@@ -585,38 +374,10 @@ class ForecastHandler:
 
         return forecast_df
 
-    #TODO manual review of ForecastHandler._addANewDayToTheForecast docstring
+    #Codex-write-doctstring-OK
     @classmethod
     def _addANewDayToTheForecast(cls, forecast_df, d):
-        # dates_as_datetime_dtype = [datetime.datetime.strptime(d, '%Y%m%d') for d in forecast_df.Date]
-        # prev_date_as_datetime_dtype = (datetime.datetime.strptime(date, '%Y%m%d') - datetime.timedelta(days=1))
-        # sel_vec = [d == prev_date_as_datetime_dtype for d in dates_as_datetime_dtype]
-        # new_row_df = copy.deepcopy(forecast_df.loc[sel_vec])
         """
-        TODO one-line description of ForecastHandler._addANewDayToTheForecast.
-
-        TODO multi-line description of ForecastHandler._addANewDayToTheForecast.
-        TODO explain how ForecastHandler._addANewDayToTheForecast participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        forecast_df : object
-            TODO one-line description of ForecastHandler._addANewDayToTheForecast.forecast_df.
-
-        d : object
-            TODO one-line description of ForecastHandler._addANewDayToTheForecast.d.
-
-        Returns
-        -------
-        object
-            TODO one-line description of return value of ForecastHandler._addANewDayToTheForecast.
-
-        Contract
-        --------
-        - #TODO contract lines for ForecastHandler._addANewDayToTheForecast.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._addANewDayToTheForecast.
-
         @interface-report: show
         """
         new_row_df = copy.deepcopy(forecast_df.tail(1))
@@ -627,6 +388,8 @@ class ForecastHandler:
         forecast_df.reset_index(drop=True, inplace=True)
         return forecast_df
 
+    #TODO "toPreventErrors" makes me think this shouldnt be a method at all
+    # is an inline sort not sufficient ? 
     #TODO manual review of ForecastHandler._sortTxnsToPreventErrors docstring
     @classmethod
     def _sortTxnsToPreventErrors(
@@ -721,33 +484,34 @@ class ForecastHandler:
         log_stack_depth -= 1
         return sorted_confirmed_df
 
+    # TODO Isn't there a flag for this now?
     #TODO manual review of ForecastHandler._checkIfTxnIsIncome docstring
     @classmethod
     def _checkIfTxnIsIncome(cls, confirmed_row, log_stack_depth):
         """
-        TODO one-line description of ForecastHandler._checkIfTxnIsIncome.
+        TODO DEFER one-line description of ForecastHandler._checkIfTxnIsIncome.
 
-        TODO multi-line description of ForecastHandler._checkIfTxnIsIncome.
-        TODO explain how ForecastHandler._checkIfTxnIsIncome participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        TODO DEFER  multi-line description of ForecastHandler._checkIfTxnIsIncome.
+        TODO DEFER  explain how ForecastHandler._checkIfTxnIsIncome participates in this module.
+        TODO DEFER  document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         confirmed_row : object
-            TODO one-line description of ForecastHandler._checkIfTxnIsIncome.confirmed_row.
+            TODO DEFER  one-line description of ForecastHandler._checkIfTxnIsIncome.confirmed_row.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._checkIfTxnIsIncome.log_stack_depth.
+            TODO DEFER  one-line description of ForecastHandler._checkIfTxnIsIncome.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._checkIfTxnIsIncome.
+            TODO DEFER  one-line description of return value of ForecastHandler._checkIfTxnIsIncome.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._checkIfTxnIsIncome.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._checkIfTxnIsIncome.
+        - #TODO DEFER  contract lines for ForecastHandler._checkIfTxnIsIncome.
+        - #TODO DEFER  document exceptions, mutations, and precision assumptions for ForecastHandler._checkIfTxnIsIncome.
 
         @interface-report: show
         """
@@ -759,7 +523,7 @@ class ForecastHandler:
 
         return income_flag
 
-    #TODO manual review of ForecastHandler._updateBalancesAndMemo docstring
+    #Codex-write-doctstring-OK
     @classmethod
     def _updateBalancesAndMemo(
         cls, forecast_df, account_set, confirmed_row, memo_rule, d, log_stack_depth
@@ -1368,36 +1132,11 @@ class ForecastHandler:
         # )
         return forecast_df
 
-    # todo I have seen similar methods so I think that maybe this can be refactored
-    #TODO manual review of ForecastHandler._extract_interest_accrued_amount docstring
+    #Codex-write-doctstring-OK
     @classmethod
     def _extract_interest_accrued_amount(cls, account_basename, memo_directives):
         """
-        TODO one-line description of ForecastHandler._extract_interest_accrued_amount.
-
-        TODO multi-line description of ForecastHandler._extract_interest_accrued_amount.
-        TODO explain how ForecastHandler._extract_interest_accrued_amount participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        account_basename : object
-            TODO one-line description of ForecastHandler._extract_interest_accrued_amount.account_basename.
-
-        memo_directives : object
-            TODO one-line description of ForecastHandler._extract_interest_accrued_amount.memo_directives.
-
-        Returns
-        -------
-        object
-            TODO one-line description of return value of ForecastHandler._extract_interest_accrued_amount.
-
-        Contract
-        --------
-        - #TODO contract lines for ForecastHandler._extract_interest_accrued_amount.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._extract_interest_accrued_amount.
-
-        @interface-report: show
+        @interface-report: false
         """
         for md in memo_directives.split(";"):
             match = re.search(r"CC INTEREST \((.*):(.*)\+\$(.*)\)", md)
@@ -1417,46 +1156,13 @@ class ForecastHandler:
         )
 
     # @profile
-    #TODO manual review of ForecastHandler._getTotalPrepaidInCreditCardBillingCycle docstring
+    #Codex-write-doctstring-OK
     @classmethod
     def _getTotalPrepaidInCreditCardBillingCycle(
         cls, account_name, account_set, forecast_df, d, log_stack_depth
     ):
         """
-        TODO one-line description of ForecastHandler._getTotalPrepaidInCreditCardBillingCycle.
-
-        TODO multi-line description of ForecastHandler._getTotalPrepaidInCreditCardBillingCycle.
-        TODO explain how ForecastHandler._getTotalPrepaidInCreditCardBillingCycle participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        account_name : str
-            TODO one-line description of ForecastHandler._getTotalPrepaidInCreditCardBillingCycle.account_name.
-
-        account_set : object
-            TODO one-line description of ForecastHandler._getTotalPrepaidInCreditCardBillingCycle.account_set.
-
-        forecast_df : object
-            TODO one-line description of ForecastHandler._getTotalPrepaidInCreditCardBillingCycle.forecast_df.
-
-        d : object
-            TODO one-line description of ForecastHandler._getTotalPrepaidInCreditCardBillingCycle.d.
-
-        log_stack_depth : int
-            TODO one-line description of ForecastHandler._getTotalPrepaidInCreditCardBillingCycle.log_stack_depth.
-
-        Returns
-        -------
-        object
-            TODO one-line description of return value of ForecastHandler._getTotalPrepaidInCreditCardBillingCycle.
-
-        Contract
-        --------
-        - #TODO contract lines for ForecastHandler._getTotalPrepaidInCreditCardBillingCycle.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._getTotalPrepaidInCreditCardBillingCycle.
-
-        @interface-report: show
+        @interface-report: false
         """
         log_in_color(
             logger,
@@ -1557,47 +1263,15 @@ class ForecastHandler:
         )
         return total_prepaid_amount
 
-    # @profile
-    #TODO manual review of ForecastHandler._getFutureMinPaymentAmount docstring
+    # TODO look closer at F._getFutureMinPaymentAmount. I think it may be valid 
+    # that billing_state is not used,
+    # but perhaps next_min_payment_amount could be added to billing_state?
     @classmethod
     def _getFutureMinPaymentAmount(
         cls, account_name, account_set, forecast_df, d, log_stack_depth
     ):
         """
-        TODO one-line description of ForecastHandler._getFutureMinPaymentAmount.
-
-        TODO multi-line description of ForecastHandler._getFutureMinPaymentAmount.
-        TODO explain how ForecastHandler._getFutureMinPaymentAmount participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        account_name : str
-            TODO one-line description of ForecastHandler._getFutureMinPaymentAmount.account_name.
-
-        account_set : object
-            TODO one-line description of ForecastHandler._getFutureMinPaymentAmount.account_set.
-
-        forecast_df : object
-            TODO one-line description of ForecastHandler._getFutureMinPaymentAmount.forecast_df.
-
-        d : object
-            TODO one-line description of ForecastHandler._getFutureMinPaymentAmount.d.
-
-        log_stack_depth : int
-            TODO one-line description of ForecastHandler._getFutureMinPaymentAmount.log_stack_depth.
-
-        Returns
-        -------
-        object
-            TODO one-line description of return value of ForecastHandler._getFutureMinPaymentAmount.
-
-        Contract
-        --------
-        - #TODO contract lines for ForecastHandler._getFutureMinPaymentAmount.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._getFutureMinPaymentAmount.
-
-        @interface-report: show
+        @interface-report: false
         """
         log_in_color(
             logger,
@@ -1725,7 +1399,7 @@ class ForecastHandler:
         return min_payment_amount
 
     # @profile
-    #TODO manual review of ForecastHandler._extract_min_payment_amount docstring
+    #Codex-write-doctstring-OK
     @classmethod
     def _extract_min_payment_amount(cls, memo_directives, base_account_name, log_stack_depth):
         """
@@ -2288,8 +1962,7 @@ class ForecastHandler:
         )
         return amount_in_question
 
-    # @profile
-    #TODO manual review of ForecastHandler._calculate_reduced_amount docstring
+    # TODO make the name of this more clear, and then have codex write the docstring
     @classmethod
     def _calculate_reduced_amount(
         cls,
@@ -2494,38 +2167,11 @@ class ForecastHandler:
         return reduced_amount
 
     # @profile
-    #TODO manual review of ForecastHandler._find_next_income_date docstring
+    #Codex-write-doctstring-OK
     @classmethod
     def _find_next_income_date(cls, forecast_df, d, log_stack_depth):
         """
-        TODO one-line description of ForecastHandler._find_next_income_date.
-
-        TODO multi-line description of ForecastHandler._find_next_income_date.
-        TODO explain how ForecastHandler._find_next_income_date participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        forecast_df : object
-            TODO one-line description of ForecastHandler._find_next_income_date.forecast_df.
-
-        d : object
-            TODO one-line description of ForecastHandler._find_next_income_date.d.
-
-        log_stack_depth : int
-            TODO one-line description of ForecastHandler._find_next_income_date.log_stack_depth.
-
-        Returns
-        -------
-        object
-            TODO one-line description of return value of ForecastHandler._find_next_income_date.
-
-        Contract
-        --------
-        - #TODO contract lines for ForecastHandler._find_next_income_date.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._find_next_income_date.
-
-        @interface-report: show
+        @interface-report: ignore
         """
         current_date = d
 
@@ -2544,8 +2190,6 @@ class ForecastHandler:
             next_income_date = (cls.end_date + pd.Timedelta(days=1))
 
         return next_income_date
-
-    # @profile
     #TODO manual review of ForecastHandler._update_forecast_with_hypothetical docstring
     @classmethod
     def _update_forecast_with_hypothetical(
@@ -2600,43 +2244,12 @@ class ForecastHandler:
 
         return updated_forecast
 
-    # @profile
-    #TODO manual review of ForecastHandler._update_forecast_balances docstring
+    #Codex-write-doctstring-OK
     @classmethod
     def _update_forecast_balances(cls, forecast_df, account_set, d, log_stack_depth):
         # Update each account balance in the forecast
         """
-        TODO one-line description of ForecastHandler._update_forecast_balances.
-
-        TODO multi-line description of ForecastHandler._update_forecast_balances.
-        TODO explain how ForecastHandler._update_forecast_balances participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        forecast_df : object
-            TODO one-line description of ForecastHandler._update_forecast_balances.forecast_df.
-
-        account_set : object
-            TODO one-line description of ForecastHandler._update_forecast_balances.account_set.
-
-        d : object
-            TODO one-line description of ForecastHandler._update_forecast_balances.d.
-
-        log_stack_depth : int
-            TODO one-line description of ForecastHandler._update_forecast_balances.log_stack_depth.
-
-        Returns
-        -------
-        object
-            TODO one-line description of return value of ForecastHandler._update_forecast_balances.
-
-        Contract
-        --------
-        - #TODO contract lines for ForecastHandler._update_forecast_balances.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._update_forecast_balances.
-
-        @interface-report: show
+        @interface-report: ignore
         """
         for index, account_row in account_set.getAccounts().iterrows():
             account_name = account_row["Name"]
@@ -3972,17 +3585,7 @@ class ForecastHandler:
         # )
         return current_forecast_row_df
 
-    # a design flaw this has is that if a cc min payment is made in advance, but that payment is past the end of the forecast,
-    # the payment will show up as extra instead of advance
-    # in order to fix this, the executeTransaction function would need to be able to look forward, which is a design weakness
-    # i hate more than this "extra instead of advance for last payment in forecast" problem
-    # Note that this is not really a problem because the only difference is what the payment is called, not the amount or date
-    # .... on second thought ... we may be able to add an explicit check for this
-    # BIG WOOPS - this method is only called on P1, before any additional payments.
-    # I think this needs to be its own method :(
-    # Just Kidding... leaving these comments in case I get stuck in this thought loop again: this code is recursive, all
-    # txns are tested in sub forecasts as p1 before they are approved, therefore this logic is fine
-    # @profile
+    #TODO forecast_df is not referenced in this method body and idk if it should be
     #TODO manual review of ForecastHandler._executeCreditCardMinimumPayments docstring
     @classmethod
     def _executeCreditCardMinimumPayments(
@@ -4034,8 +3637,6 @@ class ForecastHandler:
         # log_in_color(logger, 'white', 'debug','BEFORE forecast_df:', log_stack_depth)
         # log_in_color(logger, 'white', 'debug', forecast_df.to_string(), log_stack_depth)
 
-        primary_checking_account_name = account_set.getPrimaryCheckingAccountName()
-
         # Loop through real credit accounts; synthetic credit summary rows are
         # projected from CreditCardBillingState and are not payment sources.
         for account in account_set.accounts:
@@ -4051,7 +3652,7 @@ class ForecastHandler:
                 continue
 
             account_set.executeTransaction(
-                Account_From=primary_checking_account_name,
+                Account_From=account_set.primary_checking_account_name,
                 Account_To=account.name,
                 Amount=total_payment_due,
                 minimum_payment_flag=True,
@@ -4066,7 +3667,7 @@ class ForecastHandler:
 
             memo_parts = [
                 f"CC MIN PAYMENT ({account.name}: Prev Stmt Bal -${total_payment_due})",
-                f"CC MIN PAYMENT ({primary_checking_account_name} -${total_payment_due})",
+                f"CC MIN PAYMENT ({account_set.primary_checking_account_name} -${total_payment_due})",
             ]
             md_split_semicolon = (
                 current_forecast_row_df["Memo Directives"].iat[0].split(";")
@@ -4146,7 +3747,7 @@ class ForecastHandler:
         # log_in_color(logger, 'white', 'debug','before current_forecast_row_df:', log_stack_depth)
         # log_in_color(logger, 'white', 'debug', current_forecast_row_df.to_string(), log_stack_depth)
 
-        primary_checking_account_name = account_set.getPrimaryCheckingAccountName()
+        primary_checking_account_name = account_set.primary_checking_account_name
 
         current_date = current_forecast_row_df.Date.iloc[0]
         for account in account_set.accounts:
@@ -4241,8 +3842,7 @@ class ForecastHandler:
 
         return current_forecast_row_df
 
-    # @profile
-    #TODO manual review of ForecastHandler._getMinimumFutureAvailableBalances docstring
+    #Codex-write-doctstring-OK
     @classmethod
     def _getMinimumFutureAvailableBalances(
         cls, account_set, forecast_df, d, log_stack_depth
@@ -4393,7 +3993,7 @@ class ForecastHandler:
         )
         return future_available_balances
 
-    # @profile
+    # TODO is there a different method with a similar purpose somewhere?
     #TODO manual review of ForecastHandler._sync_account_set_w_forecast_day docstring
     @classmethod
     def _sync_account_set_w_forecast_day(cls, account_set, forecast_df, d, log_stack_depth):
@@ -4527,7 +4127,7 @@ class ForecastHandler:
         # log_in_color(logger, 'white', 'debug', str(d)+' EXIT _sync_account_set_w_forecast_day', log_stack_depth)
         return account_set
 
-    #TODO manual review of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row docstring
+    #Codex-write-doctstring-OK
     @classmethod
     def _apply_credit_billing_state_delta_to_forecast_row(
         cls,
@@ -4645,7 +4245,7 @@ class ForecastHandler:
 
         return forecast_df
 
-    #TODO manual review of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row docstring
+    #Codex-write-doctstring-OK
     @classmethod
     def _apply_loan_billing_state_delta_to_forecast_row(
         cls,
@@ -4754,7 +4354,7 @@ class ForecastHandler:
         return forecast_df
 
     # @profile
-    #TODO manual review of ForecastHandler._propagate_credit_txn_curr_only docstring
+    #Codex-write-doctstring-OK
     @classmethod
     def _propagate_credit_txn_curr_only(
         cls,
@@ -4827,7 +4427,7 @@ class ForecastHandler:
 
         # Extract relevant account names
         checking_account_name = (
-            account_set_before_p2_plus_txn.getPrimaryCheckingAccountName()
+            account_set_before_p2_plus_txn.primary_checking_account_name
         )
         curr_stmt_bal_account_name = relevant_account_info_df[
             relevant_account_info_df.Account_Type == "credit curr stmt bal"
@@ -5119,7 +4719,7 @@ class ForecastHandler:
 
     # affects checking as well
     # @profile
-    #TODO manual review of ForecastHandler._propagate_credit_payment_curr_only docstring
+    #Codex-write-doctstring-OK
     @classmethod
     def _propagate_credit_payment_curr_only(
         cls,
@@ -5452,7 +5052,7 @@ class ForecastHandler:
         return future_rows_only_df
 
     # @profile
-    #TODO manual review of ForecastHandler._propagate_credit_payment_prev_only docstring
+    #Codex-write-doctstring-OK
     @classmethod
     def _propagate_credit_payment_prev_only(
         cls,
@@ -5912,7 +5512,7 @@ class ForecastHandler:
         return future_rows_only_df
 
     # @profile
-    #TODO manual review of ForecastHandler._propagate_loan_payment_interest_only docstring
+    #Codex-write-doctstring-OK
     @classmethod
     def _propagate_loan_payment_interest_only(
         cls,
@@ -6173,7 +5773,7 @@ class ForecastHandler:
         return future_rows_only_df
 
     # @profile
-    #TODO manual review of ForecastHandler._propagate_loan_payment_pbal_only docstring
+    #Codex-write-doctstring-OK
     @classmethod
     def _propagate_loan_payment_pbal_only(
         cls,
@@ -6425,7 +6025,7 @@ class ForecastHandler:
         return future_rows_only_df
 
     # @profile
-    #TODO manual review of ForecastHandler._propagate_loan_payment_pbal_interest docstring
+    #Codex-write-doctstring-OK
     @classmethod
     def _propagate_loan_payment_pbal_interest(
         cls,
@@ -6756,7 +6356,7 @@ class ForecastHandler:
         return future_rows_only_df
 
     # @profile
-    #TODO manual review of ForecastHandler._propagate_credit_payment_prev_curr docstring
+    #Codex-write-doctstring-OK
     @classmethod
     def _propagate_credit_payment_prev_curr(
         cls,
@@ -7304,7 +6904,7 @@ class ForecastHandler:
         return future_rows_only_df
 
     # @profile
-    #TODO manual review of ForecastHandler._parse_memo_amount docstring
+    #Codex-write-doctstring-OK
     @classmethod
     def _parse_memo_amount(cls, memo_line, log_stack_depth):
         """
@@ -7346,7 +6946,7 @@ class ForecastHandler:
         return float(memo_amount)
 
     # @profile
-    #TODO manual review of ForecastHandler._update_memo_amount docstring
+    #Codex-write-doctstring-OK
     @classmethod
     def _update_memo_amount(cls, memo_line, new_amount, log_stack_depth):
         # log_in_color(
@@ -8300,8 +7900,8 @@ class ForecastHandler:
         )
         return forecast_df
 
-    # @profile
-    #TODO manual review of ForecastHandler._updateProposedTransactionsBasedOnOtherSets docstring
+    # TODO potentially rename this. Update? in what way?
+    #Codex-write-doctstring-OK
     @classmethod
     def _updateProposedTransactionsBasedOnOtherSets(
         cls, confirmed_df, proposed_df, deferred_df, skipped_df, log_stack_depth
@@ -8736,7 +8336,7 @@ class ForecastHandler:
         # )
         return forecast_df, skipped_df, confirmed_df, deferred_df
 
-    #TODO manual review of ForecastHandler._cleanUpAfterFailedSatisfice docstring
+    #Codex-write-doctstring-OK
     @classmethod
     def _cleanUpAfterFailedSatisfice(
         cls, end_date, confirmed_df, proposed_df, deferred_df, skipped_df, log_stack_depth
@@ -9423,6 +9023,7 @@ class ForecastHandler:
         # )
         return [forecast_df, skipped_df, confirmed_df, deferred_df]
 
+    # TODO compute_forecast_difference needs revision
     #TODO manual review of ForecastHandler.compute_forecast_difference docstring
     @classmethod
     def compute_forecast_difference(
@@ -9654,529 +9255,6 @@ class ForecastHandler:
         return_df = return_df.reindex(sorted(return_df.columns), axis=1)
 
         return return_df
-
-    # def getSummaryPageForExcelLandingPageDF(cls):
-
-    #     if hasattr(cls, "forecast_df"):
-    #         return_df = pd.DataFrame(
-    #             {
-    #                 "start_date": [cls.start_date],
-    #                 "end_date": [cls.end_date],
-    #                 "unique_id": [cls.unique_id],
-    #                 "start_ts": [cls.start_ts],
-    #                 "end_ts": [cls.end_ts],
-    #             }
-    #         ).T
-    #     else:
-    #         return_df = pd.DataFrame(
-    #             {
-    #                 "start_date": [cls.start_date],
-    #                 "end_date": [cls.end_date],
-    #                 "unique_id": [cls.unique_id],
-    #                 "start_ts": [None],
-    #                 "end_ts": [None],
-    #             }
-    #         ).T
-
-    #     return_df.reset_index(inplace=True)
-    #     return_df = return_df.rename(columns={"index": "Field", 0: "Value"})
-    #     return return_df
-
-    #TODO manual review of ForecastHandler.evaluateAccountMilestone docstring
-    @classmethod
-    def evaluateAccountMilestone(
-        cls, forecast_df, account_name, min_balance, max_balance, log_stack_depth
-    ):
-        # log_in_color(
-        #     logger,
-        #     "yellow",
-        #     "debug",
-        #     "ENTER evaluateAccountMilestone("
-        #     + str(account_name)
-        #     + ","
-        #     + str(min_balance)
-        #     + ","
-        #     + str(max_balance)
-        #     + ")",
-        #     log_stack_depth,
-        # )
-        """
-        TODO one-line description of ForecastHandler.evaluateAccountMilestone.
-
-        TODO multi-line description of ForecastHandler.evaluateAccountMilestone.
-        TODO explain how ForecastHandler.evaluateAccountMilestone participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        forecast_df : object
-            TODO one-line description of ForecastHandler.evaluateAccountMilestone.forecast_df.
-
-        account_name : str
-            TODO one-line description of ForecastHandler.evaluateAccountMilestone.account_name.
-
-        min_balance : float
-            TODO one-line description of ForecastHandler.evaluateAccountMilestone.min_balance.
-
-        max_balance : float
-            TODO one-line description of ForecastHandler.evaluateAccountMilestone.max_balance.
-
-        log_stack_depth : int
-            TODO one-line description of ForecastHandler.evaluateAccountMilestone.log_stack_depth.
-
-        Returns
-        -------
-        object
-            TODO one-line description of return value of ForecastHandler.evaluateAccountMilestone.
-
-        Contract
-        --------
-        - #TODO contract lines for ForecastHandler.evaluateAccountMilestone.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler.evaluateAccountMilestone.
-
-        @interface-report: show
-        """
-        log_stack_depth += 1
-        account_info = cls.initial_account_set.getAccounts()
-        account_base_names = [a.split(":")[0] for a in account_info.Name]
-        row_sel_vec = [a == account_name for a in account_base_names]
-
-        relevant_account_info_rows_df = account_info[row_sel_vec]
-        # log_in_color(logger, "yellow", "debug", "relevant_account_info_rows_df:")
-        # log_in_color(
-        #     logger, "yellow", "debug", relevant_account_info_rows_df.to_string()
-        # )
-
-        # this df should be either 1 or 2 rows, but have same account type either way
-        try:
-            assert relevant_account_info_rows_df.Name.unique().shape[0] == 1
-        except Exception as e:
-            print(e)
-
-        if relevant_account_info_rows_df.shape[0] == 1:  # case for checking and savings
-            col_sel_vec = (
-                forecast_df.columns
-                == relevant_account_info_rows_df.head(1)["Name"].iat[0]
-            )
-            col_sel_vec[0] = True
-            relevant_time_series_df = forecast_df.iloc[:, col_sel_vec]
-
-            # a valid success date stays valid until the end
-            found_a_valid_success_date = False
-            success_date = "None"
-            for index, row in relevant_time_series_df.iterrows():
-                current_value = relevant_time_series_df.iloc[index, 1]
-                if (
-                    (min_balance <= current_value) & (current_value <= max_balance)
-                ) and not found_a_valid_success_date:
-                    found_a_valid_success_date = True
-                    success_date = row.Date
-                    # log_in_color(
-                    #     logger,
-                    #     "yellow",
-                    #     "debug",
-                    #     "success_date:" + str(success_date),
-                    #     log_stack_depth,
-                    # )
-                elif (min_balance > current_value) | (current_value > max_balance):
-                    found_a_valid_success_date = False
-                    success_date = "None"
-                    # log_in_color(
-                    #     logger,
-                    #     "yellow",
-                    #     "debug",
-                    #     "success_date:None",
-                    #     log_stack_depth,
-                    # )
-
-        elif relevant_account_info_rows_df.shape[0] == 2:  # case for credit and loan
-            curr_stmt_bal_acct_name = relevant_account_info_rows_df.iloc[0, 0]
-            prev_stmt_bal_acct_name = relevant_account_info_rows_df.iloc[1, 0]
-
-            # log_in_color(logger, 'yellow', 'debug', 'curr_stmt_bal_acct_name:')
-            # log_in_color(logger, 'yellow', 'debug', curr_stmt_bal_acct_name)
-            # log_in_color(logger, 'yellow', 'debug', 'prev_stmt_bal_acct_name:')
-            # log_in_color(logger, 'yellow', 'debug', prev_stmt_bal_acct_name)
-
-            col_sel_vec = forecast_df.columns == curr_stmt_bal_acct_name
-            col_sel_vec = col_sel_vec | (
-                forecast_df.columns == prev_stmt_bal_acct_name
-            )
-            col_sel_vec[0] = True  # Date
-
-            # log_in_color(logger, 'yellow', 'debug', 'col_sel_vec:')
-            # log_in_color(logger, 'yellow', 'debug', col_sel_vec)
-
-            relevant_time_series_df = forecast_df.iloc[:, col_sel_vec]
-
-            # a valid success date stays valid until the end
-            found_a_valid_success_date = False
-            success_date = "None"
-            for index, row in relevant_time_series_df.iterrows():
-                current_value = (
-                    relevant_time_series_df.iloc[index, 1]
-                    + relevant_time_series_df.iloc[index, 2]
-                )
-                if (
-                    (min_balance <= current_value) & (current_value <= max_balance)
-                ) and not found_a_valid_success_date:
-                    found_a_valid_success_date = True
-                    success_date = row.Date
-                    # log_in_color(
-                    #     logger,
-                    #     "yellow",
-                    #     "debug",
-                    #     "success_date:" + str(success_date),
-                    #     log_stack_depth,
-                    # )
-                elif (min_balance > current_value) | (current_value > max_balance):
-                    found_a_valid_success_date = False
-                    success_date = "None"
-                    # log_in_color(
-                    #     logger,
-                    #     "yellow",
-                    #     "debug",
-                    #     "success_date:None",
-                    #     log_stack_depth,
-                    # )
-
-        # Summary lines
-        elif account_name in (
-            "Marginal Interest",
-            "Net Gain",
-            "Net Loss",
-            "Net Worth",
-            "Loan Total",
-            "CC Debt Total",
-            "Liquid Total",
-        ):
-            col_sel_vec = forecast_df.columns == account_name
-            col_sel_vec[0] = True
-            relevant_time_series_df = forecast_df.iloc[:, col_sel_vec]
-
-            # a valid success date stays valid until the end
-            found_a_valid_success_date = False
-            success_date = "None"
-            for index, row in relevant_time_series_df.iterrows():
-                current_value = relevant_time_series_df.iloc[index, 1]
-                if (
-                    (min_balance <= current_value) & (current_value <= max_balance)
-                ) and not found_a_valid_success_date:
-                    found_a_valid_success_date = True
-                    success_date = row.Date
-                    # log_in_color(
-                    #     logger,
-                    #     "yellow",
-                    #     "debug",
-                    #     "success_date:" + str(success_date),
-                    #     log_stack_depth,
-                    # )
-                elif (min_balance > current_value) | (current_value > max_balance):
-                    found_a_valid_success_date = False
-                    success_date = "None"
-                    # log_in_color(
-                    #     logger,
-                    #     "yellow",
-                    #     "debug",
-                    #     "success_date:None",
-                    #     log_stack_depth,
-                    # )
-        else:
-            raise ValueError(
-                "undefined edge case in ExpenseForecast::evaulateAccountMilestone" ""
-            )
-
-        # log_in_color(logger, 'yellow', 'debug', 'relevant_time_series_df:')
-        # log_in_color(logger, 'yellow', 'debug', relevant_time_series_df.to_string())
-        #
-        # log_in_color(logger, 'yellow', 'debug', 'last_value:')
-        # log_in_color(logger, 'yellow', 'debug', last_value)
-
-        #
-        # #if the last day of the forecast does not satisfy account bounds, then none of the days of the forecast qualify
-        # if not (( min_balance <= last_value ) & ( last_value <= max_balance )):
-        #     log_in_color(logger,'yellow', 'debug','EXIT evaluateAccountMilestone(' + str(account_name) + ',' + str(min_balance) + ',' + str(max_balance) + ') None')
-        #     return None
-        #
-        # #if the code reaches this point, then the milestone was for sure reached.
-        # #We can find the first day that qualifies my reverseing the sequence and returning the day before the first day that doesnt qualify
-        # relevant_time_series_df = relevant_time_series_df.loc[::-1]
-        # last_qualifying_date = relevant_time_series_df.head(1).Date.iat[0]
-        # for index, row in relevant_time_series_df.iterrows():
-        #     # print('row:')
-        #     # print(row)
-        #     # print(row.iloc[1])
-        #     if (( min_balance <= row.iloc[1] ) & ( row.iloc[1] <= max_balance )):
-        #         last_qualifying_date = row.Date.iat[0]
-        #     else:
-        #         break
-        log_stack_depth -= 1
-        # log_in_color(
-        #     logger,
-        #     "yellow",
-        #     "debug",
-        #     "EXIT evaluateAccountMilestone("
-        #     + str(account_name)
-        #     + ","
-        #     + str(min_balance)
-        #     + ","
-        #     + str(max_balance)
-        #     + ") "
-        #     + str(success_date),
-        #     log_stack_depth,
-        # )
-        return success_date
-
-    #TODO manual review of ForecastHandler.evaulateMemoMilestone docstring
-    @classmethod
-    def evaulateMemoMilestone(cls, forecast_df, memo_regex, log_stack_depth):
-        # log_in_color(
-        #     logger,
-        #     "yellow",
-        #     "debug",
-        #     "ENTER evaluateMemoMilestone(" + str(memo_regex) + ")",
-        #     log_stack_depth,
-        # )
-        """
-        TODO one-line description of ForecastHandler.evaulateMemoMilestone.
-
-        TODO multi-line description of ForecastHandler.evaulateMemoMilestone.
-        TODO explain how ForecastHandler.evaulateMemoMilestone participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        forecast_df : object
-            TODO one-line description of ForecastHandler.evaulateMemoMilestone.forecast_df.
-
-        memo_regex : str
-            TODO one-line description of ForecastHandler.evaulateMemoMilestone.memo_regex.
-
-        log_stack_depth : int
-            TODO one-line description of ForecastHandler.evaulateMemoMilestone.log_stack_depth.
-
-        Returns
-        -------
-        object
-            TODO one-line description of return value of ForecastHandler.evaulateMemoMilestone.
-
-        Contract
-        --------
-        - #TODO contract lines for ForecastHandler.evaulateMemoMilestone.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler.evaulateMemoMilestone.
-
-        @interface-report: show
-        """
-        log_stack_depth += 1
-        for forecast_index, forecast_row in forecast_df.iterrows():
-            m = re.search(memo_regex, forecast_row.Memo)
-            if m is not None:
-                log_stack_depth -= 1
-                # log_in_color(
-                #     logger,
-                #     "yellow",
-                #     "debug",
-                #     "EXIT evaluateMemoMilestone(" + str(memo_regex) + ")",
-                #     log_stack_depth,
-                # )
-                return forecast_row.Date
-
-        log_stack_depth -= 1
-        # log_in_color(
-        #     logger,
-        #     "yellow",
-        #     "debug",
-        #     "EXIT evaluateMemoMilestone(" + str(memo_regex) + ")",
-        #     log_stack_depth,
-        # )
-        return "None"
-
-    #TODO manual review of ForecastHandler.evaluateCompositeMilestone docstring
-    @classmethod
-    def evaluateCompositeMilestone(
-        cls,
-        forecast_df,
-        list_of_account_milestones,
-        list_of_memo_milestones,
-        log_stack_depth,
-    ):
-        # log_in_color(
-        #     logger,
-        #     "yellow",
-        #     "debug",
-        #     "ENTER evaluateCompositeMilestone()",
-        #     log_stack_depth,
-        # )
-        """
-        TODO one-line description of ForecastHandler.evaluateCompositeMilestone.
-
-        TODO multi-line description of ForecastHandler.evaluateCompositeMilestone.
-        TODO explain how ForecastHandler.evaluateCompositeMilestone participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        forecast_df : object
-            TODO one-line description of ForecastHandler.evaluateCompositeMilestone.forecast_df.
-
-        list_of_account_milestones : object
-            TODO one-line description of ForecastHandler.evaluateCompositeMilestone.list_of_account_milestones.
-
-        list_of_memo_milestones : object
-            TODO one-line description of ForecastHandler.evaluateCompositeMilestone.list_of_memo_milestones.
-
-        log_stack_depth : int
-            TODO one-line description of ForecastHandler.evaluateCompositeMilestone.log_stack_depth.
-
-        Returns
-        -------
-        object
-            TODO one-line description of return value of ForecastHandler.evaluateCompositeMilestone.
-
-        Contract
-        --------
-        - #TODO contract lines for ForecastHandler.evaluateCompositeMilestone.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler.evaluateCompositeMilestone.
-
-        @interface-report: show
-        """
-        log_stack_depth += 1
-        # list_of_account_milestones is lists of 3-tuples that are (string,float,float) for parameters
-
-        # todo composite milestones may contain some milestones that arent listed in the composite #https://github.com/hdickie/expense_forecast/issues/22
-
-        if list_of_account_milestones:
-            num_of_acct_milestones = len(list_of_account_milestones)
-        else:
-            num_of_acct_milestones = 0
-
-        if list_of_memo_milestones:
-            num_of_memo_milestones = len(list_of_memo_milestones)
-        else:
-            num_of_memo_milestones = 0
-        account_milestone_dates = []
-        memo_milestone_dates = []
-
-        for i in range(0, num_of_acct_milestones):
-            account_milestone = list_of_account_milestones[i]
-            am_result = cls.evaluateAccountMilestone(
-                forecast_df,
-                account_milestone.account_name,
-                account_milestone.min_balance,
-                account_milestone.max_balance, log_stack_depth=log_stack_depth
-            )
-            if (
-                am_result is None
-            ):  # disqualified immediately because success requires ALL
-                log_stack_depth -= 1
-                # log_in_color(
-                #     logger,
-                #     "yellow",
-                #     "debug",
-                #     "EXIT evaluateCompositeMilestone() None",
-                #     log_stack_depth,
-                # )
-                return None
-            account_milestone_dates.append(am_result)
-
-        for i in range(0, num_of_memo_milestones):
-            memo_milestone = list_of_memo_milestones[i]
-            mm_result = cls.evaulateMemoMilestone(
-                forecast_df, memo_milestone.memo_regex, log_stack_depth=log_stack_depth
-            )
-            if (
-                mm_result is None
-            ):  # disqualified immediately because success requires ALL
-                log_stack_depth -= 1
-                # log_in_color(
-                #     logger,
-                #     "yellow",
-                #     "debug",
-                #     "EXIT evaluateCompositeMilestone() None",
-                #     log_stack_depth,
-                # )
-                return None
-            memo_milestone_dates.append(mm_result)
-
-        result_date = max(account_milestone_dates + memo_milestone_dates)
-        # log_in_color(
-        #     logger,
-        #     "yellow",
-        #     "debug",
-        #     "EXIT evaluateCompositeMilestone() " + str(result_date),
-        #     log_stack_depth,
-        # )
-        log_stack_depth -= 1
-        return result_date
-
-    #TODO manual review of ForecastHandler.evaluateMilestones docstring
-    @classmethod
-    def evaluateMilestones(cls, forecast_df, milestone_set, log_stack_depth):
-
-        """
-        TODO one-line description of ForecastHandler.evaluateMilestones.
-
-        TODO multi-line description of ForecastHandler.evaluateMilestones.
-        TODO explain how ForecastHandler.evaluateMilestones participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        forecast_df : object
-            TODO one-line description of ForecastHandler.evaluateMilestones.forecast_df.
-
-        milestone_set : object
-            TODO one-line description of ForecastHandler.evaluateMilestones.milestone_set.
-
-        log_stack_depth : int
-            TODO one-line description of ForecastHandler.evaluateMilestones.log_stack_depth.
-
-        Returns
-        -------
-        object
-            TODO one-line description of return value of ForecastHandler.evaluateMilestones.
-
-        Contract
-        --------
-        - #TODO contract lines for ForecastHandler.evaluateMilestones.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler.evaluateMilestones.
-
-        @interface-report: show
-        """
-        account_milestone_results = {}
-        if milestone_set.account_milestones:
-            for a_m in milestone_set.account_milestones:
-                res = cls.evaluateAccountMilestone(
-                    forecast_df,
-                    a_m.account_name,
-                    a_m.min_balance,
-                    a_m.max_balance,
-                    log_stack_depth=log_stack_depth,
-                )
-                account_milestone_results[a_m.milestone_name] = res
-            account_milestone_results = account_milestone_results
-
-        memo_milestone_results = {}
-        if milestone_set.memo_milestones:
-            for m_m in milestone_set.memo_milestones:
-                res = cls.evaulateMemoMilestone(
-                    forecast_df, m_m.memo_regex, log_stack_depth=log_stack_depth
-                )
-                memo_milestone_results[m_m.milestone_name] = res
-            memo_milestone_results = memo_milestone_results
-
-        composite_milestone_results = {}
-        if milestone_set.composite_milestones:
-            for c_m in milestone_set.composite_milestones:
-                res = cls.evaluateCompositeMilestone(
-                    forecast_df,
-                    c_m.account_milestones,
-                    c_m.memo_milestones,
-                    log_stack_depth=log_stack_depth,
-                )
-                composite_milestone_results[c_m.milestone_name] = res
-            composite_milestone_results = composite_milestone_results
-        return [account_milestone_results, memo_milestone_results, composite_milestone_results] #TODO list is not the best type for this
 
 
     #TODO manual review of ForecastHandler._appendSummaryLines docstring
@@ -11814,7 +10892,7 @@ class ForecastHandler:
 
         income_memos = []
         expense_memos = []
-        for _, row in budget_set.getBudgetItems().iterrows():
+        for _, row in budget_set.getLineItems().iterrows():
             matching_memo_rule_set = memo_rule_set.findMatchingMemoRule(
                 row.Memo, row.Priority
             )
@@ -12039,7 +11117,7 @@ class ForecastHandler:
         budget_set_text = (
             """
         These transactions are considered for analysis:"""
-            + (budget_set.getBudgetItems().to_html() if budget_set is not None else "")
+            + (budget_set.getLineItems().to_html() if budget_set is not None else "")
             + """
         """
         )
@@ -13007,7 +12085,7 @@ class ForecastHandler:
             "deferred_df": deferred_to_keep_df,
             "skipped_df": skipped_to_keep_df,
             "milestone_set": MS,
-            "milestone_results": cls.evaluateMilestones(
+            "milestone_results": MilestoneSet.evaluateMilestones(
                 forecast_slices_to_keep,
                 MS,
                 log_stack_depth=log_stack_depth,
@@ -13063,6 +12141,6 @@ class ForecastHandler:
         cls.end_ts = datetime.datetime.now()
         R.forecast_df = cls._appendSummaryLines(IO.initial_account_set, R.forecast_df, log_stack_depth=log_stack_depth)
         R.forecast_df = cls._roundForecastOutput(R.forecast_df, decimals=2)
-        R.milestone_results = cls.evaluateMilestones(R.forecast_df, R.milestone_set, log_stack_depth=log_stack_depth)
+        R.milestone_results = MilestoneSet.evaluateMilestones(R.forecast_df, R.milestone_set, log_stack_depth=log_stack_depth)
 
         return R

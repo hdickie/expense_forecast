@@ -1,10 +1,10 @@
 import pytest
 from datetime import date
 
-from expense_forecast.LineItem import BudgetItem
+from expense_forecast.LineItem import LineItem
 
 
-class TestBudgetItemMethods:
+class TestLineItemMethods:
 
     @pytest.mark.unit
     @pytest.mark.parametrize(
@@ -21,7 +21,7 @@ class TestBudgetItemMethods:
             (date(2000, 1, 1), date(2000, 1, 1), 1, "daily", 10, "test memo", False, False),
         ],
     )
-    def test_BudgetItem_Constructor__valid_inputs(
+    def test_LineItem_Constructor__valid_inputs(
         self,
         start_date,
         end_date,
@@ -32,7 +32,7 @@ class TestBudgetItemMethods:
         deferrable,
         partial_payment_allowed,
     ):
-        BudgetItem(
+        LineItem(
             start_date,
             end_date,
             priority,
@@ -156,7 +156,7 @@ class TestBudgetItemMethods:
             ),  # partial_payment_allowed must be false for p1
         ],
     )
-    def test_BudgetItem_Constructor__invalid_inputs(
+    def test_LineItem_Constructor__invalid_inputs(
         self,
         start_date,
         end_date,
@@ -169,7 +169,7 @@ class TestBudgetItemMethods:
         income_flag,
     ):
         with pytest.raises(Exception):
-            BudgetItem(
+            LineItem(
                 start_date,
                 end_date,
                 priority,
@@ -182,8 +182,8 @@ class TestBudgetItemMethods:
             )
 
     @pytest.mark.unit
-    def test_budget_item_to_dict(self):
-        valid_budget_item = BudgetItem(
+    def test_line_item_to_dict(self):
+        valid_line_item = LineItem(
             start_date=date(2000,1,2),
             end_date=date(2000,1,2),
             priority=1,
@@ -194,7 +194,7 @@ class TestBudgetItemMethods:
             partial_payment_allowed=False
         )
 
-        assert valid_budget_item.to_dict() == {
+        assert valid_line_item.to_dict() == {
             "Start_Date": "20000102",
             "End_Date": "20000102",
             "Priority": 1,

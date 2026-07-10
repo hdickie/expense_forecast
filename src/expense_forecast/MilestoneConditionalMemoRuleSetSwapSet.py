@@ -13,7 +13,7 @@ Contract
 
 
 
-#TODO manual review of MilestoneConditionalMemoRuleSetSwapSet docstring
+#TODO DEFER manual review of MilestoneConditionalMemoRuleSetSwapSet docstring
 class MilestoneConditionalMemoRuleSetSwapSet:
 
     """
@@ -28,29 +28,29 @@ class MilestoneConditionalMemoRuleSetSwapSet:
 
     @interface-report: show
     """
-    #TODO manual review of MilestoneConditionalMemoRuleSetSwapSet.__init__ docstring
+    #TODO DEFER manual review of MilestoneConditionalMemoRuleSetSwapSet.__init__ docstring
     def __init__(self):
         """
-        TODO one-line description of MilestoneConditionalMemoRuleSetSwapSet.__init__.
+        TODO DEFER one-line description of MilestoneConditionalMemoRuleSetSwapSet.__init__.
 
-        TODO multi-line description of MilestoneConditionalMemoRuleSetSwapSet.__init__.
-        TODO explain how MilestoneConditionalMemoRuleSetSwapSet.__init__ participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        TODO DEFER multi-line description of MilestoneConditionalMemoRuleSetSwapSet.__init__.
+        TODO DEFER explain how MilestoneConditionalMemoRuleSetSwapSet.__init__ participates in this module.
+        TODO DEFER document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         None
-            TODO confirm that MilestoneConditionalMemoRuleSetSwapSet.__init__ takes no parameters beyond self/cls.
+            TODO DEFER confirm that MilestoneConditionalMemoRuleSetSwapSet.__init__ takes no parameters beyond self/cls.
 
         Returns
         -------
         None
-            TODO one-line description of return value of MilestoneConditionalMemoRuleSetSwapSet.__init__.
+            TODO DEFER one-line description of return value of MilestoneConditionalMemoRuleSetSwapSet.__init__.
 
         Contract
         --------
-        - #TODO contract lines for MilestoneConditionalMemoRuleSetSwapSet.__init__.
-        - #TODO document exceptions, mutations, and precision assumptions for MilestoneConditionalMemoRuleSetSwapSet.__init__.
+        - #TODO DEFER contract lines for MilestoneConditionalMemoRuleSetSwapSet.__init__.
+        - #TODO DEFER document exceptions, mutations, and precision assumptions for MilestoneConditionalMemoRuleSetSwapSet.__init__.
 
         @interface-report: show
         """

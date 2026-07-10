@@ -1,201 +1,87 @@
-"""
-Summary
--------
-
-Description
------------
-
-Contract
---------
-
-@interface-report: show
-"""
-
-
 import pandas as pd
 import datetime
-import jsonpickle
 import json
 
 #TODO manual review of LineItem docstring
 class LineItem:
-
     """
-    Summary
-    -------
+    Represents a single financial event within a forecast.
 
-    Description
-    -----------
+    A LineItem describes one transaction or adjustment that may affect the
+    financial state of a forecast. Examples include one-time or recurring
+    transactions, not including transactions which occur due to account 
+    rules alone such as credit card or loan interest.
 
-    Contract
-    --------
+    A LineItem defines what financial event is intended to occur and the
+    information required to evaluate, schedule, and apply that event during
+    forecast execution. Collections of LineItems are organized and managed
+    by higher-level components such as BudgetSets and MemoRuleSets.
 
-    @interface-report: show
+    Responsibilities
+    ----------------
+    - Describe a single financial event.
+    - Store the data required to evaluate and apply the event.
+    - Support serialization and deserialization.
+    - Participate in forecast execution and scenario evaluation.
+
+    Invariants
+    ----------
+    - A LineItem represents exactly one (potentially recurring) 
+      financial event.
+    - The represented event is internally consistent and valid.
+    - Serialization preserves the semantic meaning of the event.
+    - Equivalent LineItems compare as equal regardless of incidental
+      implementation details.
+
+    Notes
+    -----
+    LineItem is a domain object. It describes *what* financial event should
+    occur. By specificying priority = 1, the *when* it will ultimately be 
+    applied may be enforced. For priority > 1, the *whether* a transaction
+    occurred may be manipulated using the partial_payment_allowed and 
+    deferrable flags. Beyond that, scheduling, prioritization, optimization, 
+    and execution are the responsibility of higher-level forecasting 
+    components.
     """
-    #TODO manual review of LineItem._validate_start_and_end_date docstring
     @staticmethod
     def _validate_start_and_end_date(start_date, end_date):
-        """
-        TODO one-line description of LineItem._validate_start_and_end_date.
 
-        TODO multi-line description of LineItem._validate_start_and_end_date.
-        TODO explain how LineItem._validate_start_and_end_date participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        start_date : date
-            TODO one-line description of LineItem._validate_start_and_end_date.start_date.
-
-        end_date : date
-            TODO one-line description of LineItem._validate_start_and_end_date.end_date.
-
-        Returns
-        -------
-        None
-            TODO one-line description of return value of LineItem._validate_start_and_end_date.
-
-        Contract
-        --------
-        - #TODO contract lines for LineItem._validate_start_and_end_date.
-        - #TODO document exceptions, mutations, and precision assumptions for LineItem._validate_start_and_end_date.
-
-        @interface-report: show
-        """
+        # TODO DEFER change from AssertionError to ValueError with error message including the illegal values
         assert isinstance(start_date, datetime.date)
         assert isinstance(end_date, datetime.date)
         assert start_date <= end_date
 
-    #TODO manual review of LineItem._validate_interval docstring
     @staticmethod
     def _validate_interval(interval, start_date, end_date):
-        """
-        TODO one-line description of LineItem._validate_interval.
-
-        TODO multi-line description of LineItem._validate_interval.
-        TODO explain how LineItem._validate_interval participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        interval : str
-            TODO one-line description of LineItem._validate_interval.interval.
-
-        start_date : date
-            TODO one-line description of LineItem._validate_interval.start_date.
-
-        end_date : date
-            TODO one-line description of LineItem._validate_interval.end_date.
-
-        Returns
-        -------
-        None
-            TODO one-line description of return value of LineItem._validate_interval.
-
-        Contract
-        --------
-        - #TODO contract lines for LineItem._validate_interval.
-        - #TODO document exceptions, mutations, and precision assumptions for LineItem._validate_interval.
-
-        @interface-report: show
-        """
+        
         allowed_intervals = ['once','daily','weekly','semiweekly','monthly','quarterly','anually']
         if not interval in allowed_intervals:
             raise ValueError(
                 f"Invalid interval: {interval!r}. "
                 f"Allowed values are: {sorted(allowed_intervals)}"
             )
+        
+        # TODO DEFER change from AssertionError to ValueError with error message including the illegal values
         if interval == 'once':
             assert start_date == end_date
         # TODO add warnings if interval is shorter than interval and create test
 
-    #TODO manual review of LineItem._validate_priority docstring
     @staticmethod
     def _validate_priority(priority):
-        """
-        TODO one-line description of LineItem._validate_priority.
-
-        TODO multi-line description of LineItem._validate_priority.
-        TODO explain how LineItem._validate_priority participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        priority : int
-            TODO one-line description of LineItem._validate_priority.priority.
-
-        Returns
-        -------
-        None
-            TODO one-line description of return value of LineItem._validate_priority.
-
-        Contract
-        --------
-        - #TODO contract lines for LineItem._validate_priority.
-        - #TODO document exceptions, mutations, and precision assumptions for LineItem._validate_priority.
-
-        @interface-report: show
-        """
+        # TODO DEFER change from AssertionError to ValueError with error message including the illegal values
         assert priority == int(priority)
         assert priority >= 1
 
-    #TODO manual review of LineItem._validate_amount docstring
     @staticmethod
     def _validate_amount(amount):
-        """
-        TODO one-line description of LineItem._validate_amount.
-
-        TODO multi-line description of LineItem._validate_amount.
-        TODO explain how LineItem._validate_amount participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        amount : float
-            TODO one-line description of LineItem._validate_amount.amount.
-
-        Returns
-        -------
-        None
-            TODO one-line description of return value of LineItem._validate_amount.
-
-        Contract
-        --------
-        - #TODO contract lines for LineItem._validate_amount.
-        - #TODO document exceptions, mutations, and precision assumptions for LineItem._validate_amount.
-
-        @interface-report: show
-        """
+        # TODO DEFER change from AssertionError to ValueError with error message including the illegal values
         assert amount == float(amount)
         assert amount >= 0
 
-    #TODO manual review of LineItem._validate_memo docstring
     @staticmethod
     def _validate_memo(memo):
-        """
-        TODO one-line description of LineItem._validate_memo.
 
-        TODO multi-line description of LineItem._validate_memo.
-        TODO explain how LineItem._validate_memo participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        memo : str
-            TODO one-line description of LineItem._validate_memo.memo.
-
-        Returns
-        -------
-        None
-            TODO one-line description of return value of LineItem._validate_memo.
-
-        Contract
-        --------
-        - #TODO contract lines for LineItem._validate_memo.
-        - #TODO document exceptions, mutations, and precision assumptions for LineItem._validate_memo.
-
-        @interface-report: show
-        """
+        # TODO DEFER change from AssertionError to ValueError with error message including the illegal values
         assert memo == str(memo)
         assert len(memo.strip()) > 0
         assert ';' not in memo
@@ -286,6 +172,7 @@ class LineItem:
         self.partial_payment_allowed = kwargs.get('partial_payment_allowed',False)
 
 
+        # TODO DEFER change from AssertionError to ValueError with error message including the illegal values
         # Additional validations
         if 'income_flag' in kwargs:
             if kwargs['income_flag']:
@@ -303,32 +190,7 @@ class LineItem:
         if self.partial_payment_allowed:
             assert not self.priority == 1
 
-    #TODO manual review of LineItem.to_dict docstring
     def to_dict(self):
-        """
-        TODO one-line description of LineItem.to_dict.
-
-        TODO multi-line description of LineItem.to_dict.
-        TODO explain how LineItem.to_dict participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        None
-            TODO confirm that LineItem.to_dict takes no parameters beyond self/cls.
-
-        Returns
-        -------
-        dict
-            TODO one-line description of return value of LineItem.to_dict.
-
-        Contract
-        --------
-        - #TODO contract lines for LineItem.to_dict.
-        - #TODO document exceptions, mutations, and precision assumptions for LineItem.to_dict.
-
-        @interface-report: show
-        """
         return {
             "Start_Date": self.start_date.strftime("%Y%m%d"),
             "End_Date": self.end_date.strftime("%Y%m%d"),
@@ -340,95 +202,20 @@ class LineItem:
             "Partial_Payment_Allowed": self.partial_payment_allowed,
         }
 
-    #TODO manual review of LineItem.to_dataframe docstring
     def to_dataframe(self):
         """
-        TODO one-line description of LineItem.to_dataframe.
-
-        TODO multi-line description of LineItem.to_dataframe.
-        TODO explain how LineItem.to_dataframe participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        None
-            TODO confirm that LineItem.to_dataframe takes no parameters beyond self/cls.
-
-        Returns
-        -------
-        pd.DataFrame
-            TODO one-line description of return value of LineItem.to_dataframe.
-
-        Contract
-        --------
-        - #TODO contract lines for LineItem.to_dataframe.
-        - #TODO document exceptions, mutations, and precision assumptions for LineItem.to_dataframe.
-
         @interface-report: show
         """
         return pd.DataFrame([self.to_dict()])
 
-    #TODO manual review of LineItem.to_json docstring
     def to_json(self):
         """
-        TODO one-line description of LineItem.to_json.
-
-        TODO multi-line description of LineItem.to_json.
-        TODO explain how LineItem.to_json participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        None
-            TODO confirm that LineItem.to_json takes no parameters beyond self/cls.
-
-        Returns
-        -------
-        str
-            TODO one-line description of return value of LineItem.to_json.
-
-        Contract
-        --------
-        - #TODO contract lines for LineItem.to_json.
-        - #TODO document exceptions, mutations, and precision assumptions for LineItem.to_json.
-
         @interface-report: show
         """
         return json.dumps(self.to_dict(), indent=4)
 
-    #TODO manual review of LineItem.__str__ docstring
     def __str__(self):
         """
-        TODO one-line description of LineItem.__str__.
-
-        TODO multi-line description of LineItem.__str__.
-        TODO explain how LineItem.__str__ participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        None
-            TODO confirm that LineItem.__str__ takes no parameters beyond self/cls.
-
-        Returns
-        -------
-        str
-            TODO one-line description of return value of LineItem.__str__.
-
-        Contract
-        --------
-        - #TODO contract lines for LineItem.__str__.
-        - #TODO document exceptions, mutations, and precision assumptions for LineItem.__str__.
-
         @interface-report: show
         """
         return self.to_dataframe().to_string(index=False)
-
-
-BudgetItem = LineItem
-
-
-if __name__ == "__main__":
-    import doctest
-
-    doctest.testmod()

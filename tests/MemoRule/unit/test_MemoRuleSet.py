@@ -1,7 +1,7 @@
 import pytest
 from datetime import date
 
-from expense_forecast.LineItemSet import BudgetSet
+from expense_forecast.LineItemSet import LineItemSet
 from expense_forecast.MemoRuleSet import MemoRuleSet
 from expense_forecast.MemoRule import MemoRule
 
@@ -30,8 +30,8 @@ def match_all_and_income_memo_rule_set():
 
 
 def income_budget_item():
-    B = BudgetSet([])
-    B.addBudgetItem(
+    B = LineItemSet([])
+    B.addLineItem(
         date(2000, 1, 1),
         date(2000, 1, 1),
         1,
@@ -45,8 +45,8 @@ def income_budget_item():
 
 
 def txn_budget_item():
-    B = BudgetSet([])
-    B.addBudgetItem(
+    B = LineItemSet([])
+    B.addLineItem(
         date(2000, 1, 1),
         date(2000, 1, 1),
         1,
@@ -139,14 +139,14 @@ class TestMemoRuleSetMethods:
         B_T = txn_budget_item()
 
         with pytest.raises(Exception):
-            M_E.findMatchingMemoRule(B_I.budget_items[0].memo, 1)  # no match found
+            M_E.findMatchingMemoRule(B_I.line_items[0].memo, 1)  # no match found
 
         with pytest.raises(Exception):
-            M_AI.findMatchingMemoRule(B_I.budget_items[0].memo, 1)  # multiple matches
+            M_AI.findMatchingMemoRule(B_I.line_items[0].memo, 1)  # multiple matches
 
         with pytest.raises(Exception):
             M_I.findMatchingMemoRule(
-                B_T.budget_items[0].memo, 1
+                B_T.line_items[0].memo, 1
             )  # non-trivial non-match
 
-        M_A.findMatchingMemoRule(B_I.budget_items[0].memo, 1)
+        M_A.findMatchingMemoRule(B_I.line_items[0].memo, 1)

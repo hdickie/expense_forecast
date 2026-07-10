@@ -1,7 +1,7 @@
 import pytest
 
 from expense_forecast.AccountSet import AccountSet
-from expense_forecast.LineItemSet import BudgetSet
+from expense_forecast.LineItemSet import LineItemSet
 from expense_forecast.MemoRuleSet import MemoRuleSet
 from expense_forecast.MilestoneSet import MilestoneSet
 from expense_forecast.ForecastHandler import ForecastHandler
@@ -22,8 +22,8 @@ def get_test_E_IO():
     A = AccountSet()
     A.createCheckingAccount('Checking',1200,0,10_000,True)
 
-    B = BudgetSet()
-    B.addBudgetItem(start_date, end_date, 1, 'daily', 300, 'Test Txn', False)
+    B = LineItemSet()
+    B.addLineItem(start_date, end_date, 1, 'daily', 300, 'Test Txn', False)
 
     M = MemoRuleSet()
     M.addMemoRule('.*','Checking',None,1)

@@ -1,12 +1,12 @@
 import pytest
 from datetime import date
 
-from expense_forecast.LineItem import BudgetItem
-from expense_forecast.LineItemSet import BudgetSet
+from expense_forecast.LineItem import LineItem
+from expense_forecast.LineItemSet import LineItemSet
 from expense_forecast.generate_date_sequence import generate_date_sequence
 
-def example_budget_item():
-    return BudgetItem(
+def example_line_item():
+    return LineItem(
         start_date=date(2000, 1, 1),
         end_date=date(2000, 1, 1),
         priority=1,
@@ -17,16 +17,16 @@ def example_budget_item():
     )
 
 
-class TestBudgetSetMethods:
+class TestLineItemSetMethods:
 
     @pytest.mark.parametrize(
-        "budget_items__list",
+        "line_items__list",
         [
-            ([example_budget_item()]),
+            ([example_line_item()]),
         ],
     )
-    def test_BudgetSet_Constructor(self, budget_items__list):
-        BudgetSet(budget_items__list)
+    def test_LineItemSet_Constructor(self, line_items__list):
+        LineItemSet(line_items__list)
 
     @pytest.mark.parametrize(
         "start_date,end_date,priority,interval,amount,memo,deferrable,partial_payment_allowed",
@@ -34,7 +34,7 @@ class TestBudgetSetMethods:
             ([date(2000, 1, 1), date(2000, 1, 1), 1, "daily", 10, "test memo", False, False]),
         ],
     )
-    def test_addBudgetItem(
+    def test_addLineItem(
         self,
         start_date,
         end_date,
@@ -45,8 +45,8 @@ class TestBudgetSetMethods:
         deferrable,
         partial_payment_allowed,
     ):
-        test_budget_set = BudgetSet([])
-        test_budget_set.addBudgetItem(
+        test_line_item_set = LineItemSet([])
+        test_line_item_set.addLineItem(
             start_date=date(2000, 1, 1),
             end_date=date(2000, 1, 1),
             priority=1,
@@ -57,10 +57,10 @@ class TestBudgetSetMethods:
             partial_payment_allowed=False,
         )
 
-    def test_getBudgetItems(self):
-        test_budget_set = BudgetSet([])
+    def test_getLineItems(self):
+        test_line_item_set = LineItemSet([])
 
-        test_budget_set.addBudgetItem(
+        test_line_item_set.addLineItem(
             start_date=date(2000, 1, 1),
             end_date=date(2000, 1, 1),
             priority=1,
@@ -70,12 +70,12 @@ class TestBudgetSetMethods:
             memo="test",
             partial_payment_allowed=False,
         )
-        test_df = test_budget_set.getBudgetItems()
+        test_df = test_line_item_set.getLineItems()
         assert test_df is not None
 
-    def test_getBudgetSchedule(self):
-        test_budget_set = BudgetSet([])
-        test_budget_set.addBudgetItem(
+    def test_getLineItemSchedule(self):
+        test_line_item_set = LineItemSet([])
+        test_line_item_set.addLineItem(
             start_date=date(2022, 1, 1),
             end_date=date(2023, 1, 1),
             priority=1,
@@ -85,7 +85,7 @@ class TestBudgetSetMethods:
             partial_payment_allowed=False,
             memo="test 0",
         )
-        test_budget_set.addBudgetItem(
+        test_line_item_set.addLineItem(
             start_date=date(2023, 1, 1),
             end_date=date(2023, 1, 1),
             priority=1,
@@ -95,7 +95,7 @@ class TestBudgetSetMethods:
             partial_payment_allowed=False,
             memo="test 1",
         )
-        test_budget_set.addBudgetItem(
+        test_line_item_set.addLineItem(
             start_date=date(2022, 1, 1),
             end_date=date(2023, 1, 1),
             priority=1,
@@ -105,7 +105,7 @@ class TestBudgetSetMethods:
             partial_payment_allowed=False,
             memo="test 2",
         )
-        test_budget_set.addBudgetItem(
+        test_line_item_set.addLineItem(
             start_date=date(2022, 1, 1),
             end_date=date(2023, 1, 1),
             priority=1,
@@ -115,7 +115,7 @@ class TestBudgetSetMethods:
             partial_payment_allowed=False,
             memo="test 3",
         )
-        test_budget_set.addBudgetItem(
+        test_line_item_set.addLineItem(
             start_date=date(2022, 1, 1),
             end_date=date(2023, 1, 1),
             priority=1,
@@ -125,7 +125,7 @@ class TestBudgetSetMethods:
             partial_payment_allowed=False,
             memo="test 4",
         )
-        test_budget_set.addBudgetItem(
+        test_line_item_set.addLineItem(
             start_date=date(2022, 1, 1),
             end_date=date(2023, 1, 1),
             priority=1,
@@ -135,7 +135,7 @@ class TestBudgetSetMethods:
             partial_payment_allowed=False,
             memo="test 5",
         )
-        test_budget_set.addBudgetItem(
+        test_line_item_set.addLineItem(
             start_date=date(2022, 1, 1),
             end_date=date(2023, 1, 1),
             priority=1,
@@ -145,14 +145,14 @@ class TestBudgetSetMethods:
             partial_payment_allowed=False,
             memo="test 6",
         )
-        test_df = test_budget_set.getBudgetSchedule()
+        test_df = test_line_item_set.getLineItemSchedule()
 
     def test_str(self):
-        test_budget_set = BudgetSet([])
-        budgetset_str = str(test_budget_set)
-        assert budgetset_str is not None
+        test_line_item_set = LineItemSet([])
+        line_item_set_str = str(test_line_item_set)
+        assert line_item_set_str is not None
 
-        test_budget_set.addBudgetItem(
+        test_line_item_set.addLineItem(
             start_date=date(2022, 1, 1),
             end_date=date(2022, 1, 1),
             priority=1,
@@ -163,13 +163,13 @@ class TestBudgetSetMethods:
             partial_payment_allowed=False,
             # ,throw_exceptions=False
         )
-        budgetset_str = str(test_budget_set)
-        assert budgetset_str is not None
+        line_item_set_str = str(test_line_item_set)
+        assert line_item_set_str is not None
 
-    def test_duplicate_budget_items_not_allowed(self):
-        test_budget_set = BudgetSet([])
+    def test_duplicate_line_items_not_allowed(self):
+        test_line_item_set = LineItemSet([])
         with pytest.raises(ValueError):
-            test_budget_set.addBudgetItem(
+            test_line_item_set.addLineItem(
                 start_date=date(2022, 1, 1),
                 end_date=date(2022, 1, 1),
                 priority=1,
@@ -180,7 +180,7 @@ class TestBudgetSetMethods:
                 partial_payment_allowed=False,
                 # ,throw_exceptions=False
             )
-            test_budget_set.addBudgetItem(
+            test_line_item_set.addLineItem(
                 start_date=date(2022, 1, 1),
                 end_date=date(2022, 1, 1),
                 priority=1,

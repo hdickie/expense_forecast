@@ -16,7 +16,7 @@ Contract
 
 
 
-#TODO manual review of ExpenseForecastServer docstring
+#TODO DEFER manual review of ExpenseForecastServer docstring
 class ExpenseForecastServer:
 
     """
@@ -31,29 +31,28 @@ class ExpenseForecastServer:
 
     @interface-report: show
     """
-    #TODO manual review of ExpenseForecastServer.__init__ docstring
+    #TODO DEFER manual review of ExpenseForecastServer.__init__ docstring
     def __init__(self):
         """
-        TODO one-line description of ExpenseForecastServer.__init__.
+        TODO DEFER one-line description of ExpenseForecastServer.__init__.
 
-        TODO multi-line description of ExpenseForecastServer.__init__.
-        TODO explain how ExpenseForecastServer.__init__ participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        TODO DEFER multi-line description of ExpenseForecastServer.__init__.
+        TODO DEFER explain how ExpenseForecastServer.__init__ participates in this module.
+        TODO DEFER document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         None
-            TODO confirm that ExpenseForecastServer.__init__ takes no parameters beyond self/cls.
+            TODO DEFER confirm that ExpenseForecastServer.__init__ takes no parameters beyond self/cls.
 
         Returns
         -------
         None
-            TODO one-line description of return value of ExpenseForecastServer.__init__.
 
         Contract
         --------
-        - #TODO contract lines for ExpenseForecastServer.__init__.
-        - #TODO document exceptions, mutations, and precision assumptions for ExpenseForecastServer.__init__.
+        - #TODO DEFER contract lines for ExpenseForecastServer.__init__.
+        - #TODO DEFER document exceptions, mutations, and precision assumptions for ExpenseForecastServer.__init__.
 
         @interface-report: show
         """

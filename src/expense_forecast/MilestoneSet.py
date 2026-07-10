@@ -80,6 +80,34 @@ class MilestoneSet:
 
     @interface-report: show
     """
+    @staticmethod
+    def _account_milestone_value_series(forecast_df, account_name):
+        if account_name in forecast_df.columns:
+            return forecast_df[account_name]
+
+        account_component_groups = [
+            [
+                f"{account_name}: Curr Stmt Bal",
+                f"{account_name}: Prev Stmt Bal",
+            ],
+            [
+                f"{account_name}: Principal Balance",
+                f"{account_name}: Interest",
+            ],
+        ]
+        for component_columns in account_component_groups:
+            if all(column_name in forecast_df.columns for column_name in component_columns):
+                return (
+                    forecast_df[component_columns]
+                    .apply(pd.to_numeric, errors="coerce")
+                    .sum(axis=1, min_count=1)
+                )
+
+        raise ValueError(
+            "Could not find forecast columns for account milestone account_name "
+            + repr(account_name)
+        )
+
     #TODO manual review of MilestoneSet._validate_unique_account_milestones docstring
     @staticmethod
     def _validate_unique_account_milestones(account_milestones):
@@ -680,3 +708,382 @@ class MilestoneSet:
                         )
             composite_milestone_df.reset_index(drop=True, inplace=True)
         return composite_milestone_df
+
+
+    # TODO evaluateAccountMilestone does not seem like it belongs on F
+    #TODO manual review of ForecastHandler.evaluateAccountMilestone docstring
+    @classmethod
+    def evaluateAccountMilestone(
+        cls, forecast_df, account_name, min_balance, max_balance, log_stack_depth
+    ):
+        # log_in_color(
+        #     logger,
+        #     "yellow",
+        #     "debug",
+        #     "ENTER evaluateAccountMilestone("
+        #     + str(account_name)
+        #     + ","
+        #     + str(min_balance)
+        #     + ","
+        #     + str(max_balance)
+        #     + ")",
+        #     log_stack_depth,
+        # )
+        """
+        TODO one-line description of ForecastHandler.evaluateAccountMilestone.
+
+        TODO multi-line description of ForecastHandler.evaluateAccountMilestone.
+        TODO explain how ForecastHandler.evaluateAccountMilestone participates in this module.
+        TODO document important state, validation, or serialization behavior.
+
+        Parameters
+        ----------
+        forecast_df : object
+            TODO one-line description of ForecastHandler.evaluateAccountMilestone.forecast_df.
+
+        account_name : str
+            TODO one-line description of ForecastHandler.evaluateAccountMilestone.account_name.
+
+        min_balance : float
+            TODO one-line description of ForecastHandler.evaluateAccountMilestone.min_balance.
+
+        max_balance : float
+            TODO one-line description of ForecastHandler.evaluateAccountMilestone.max_balance.
+
+        log_stack_depth : int
+            TODO one-line description of ForecastHandler.evaluateAccountMilestone.log_stack_depth.
+
+        Returns
+        -------
+        object
+            TODO one-line description of return value of ForecastHandler.evaluateAccountMilestone.
+
+        Contract
+        --------
+        - #TODO contract lines for ForecastHandler.evaluateAccountMilestone.
+        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler.evaluateAccountMilestone.
+
+        @interface-report: show
+        """
+        log_stack_depth += 1
+        value_series = cls._account_milestone_value_series(forecast_df, account_name)
+
+        # A valid success date stays valid until the end.
+        found_a_valid_success_date = False
+        success_date = "None"
+        for row_index, row in forecast_df.iterrows():
+            current_value = value_series.loc[row_index]
+            if (
+                (min_balance <= current_value) & (current_value <= max_balance)
+            ) and not found_a_valid_success_date:
+                found_a_valid_success_date = True
+                success_date = row.Date
+                # log_in_color(
+                #     logger,
+                #     "yellow",
+                #     "debug",
+                #     "success_date:" + str(success_date),
+                #     log_stack_depth,
+                # )
+            elif (min_balance > current_value) | (current_value > max_balance):
+                found_a_valid_success_date = False
+                success_date = "None"
+                # log_in_color(
+                #     logger,
+                #     "yellow",
+                #     "debug",
+                #     "success_date:None",
+                #     log_stack_depth,
+                # )
+
+        # log_in_color(logger, 'yellow', 'debug', 'relevant_time_series_df:')
+        # log_in_color(logger, 'yellow', 'debug', relevant_time_series_df.to_string())
+        #
+        # log_in_color(logger, 'yellow', 'debug', 'last_value:')
+        # log_in_color(logger, 'yellow', 'debug', last_value)
+
+        #
+        # #if the last day of the forecast does not satisfy account bounds, then none of the days of the forecast qualify
+        # if not (( min_balance <= last_value ) & ( last_value <= max_balance )):
+        #     log_in_color(logger,'yellow', 'debug','EXIT evaluateAccountMilestone(' + str(account_name) + ',' + str(min_balance) + ',' + str(max_balance) + ') None')
+        #     return None
+        #
+        # #if the code reaches this point, then the milestone was for sure reached.
+        # #We can find the first day that qualifies my reverseing the sequence and returning the day before the first day that doesnt qualify
+        # relevant_time_series_df = relevant_time_series_df.loc[::-1]
+        # last_qualifying_date = relevant_time_series_df.head(1).Date.iat[0]
+        # for index, row in relevant_time_series_df.iterrows():
+        #     # print('row:')
+        #     # print(row)
+        #     # print(row.iloc[1])
+        #     if (( min_balance <= row.iloc[1] ) & ( row.iloc[1] <= max_balance )):
+        #         last_qualifying_date = row.Date.iat[0]
+        #     else:
+        #         break
+        log_stack_depth -= 1
+        # log_in_color(
+        #     logger,
+        #     "yellow",
+        #     "debug",
+        #     "EXIT evaluateAccountMilestone("
+        #     + str(account_name)
+        #     + ","
+        #     + str(min_balance)
+        #     + ","
+        #     + str(max_balance)
+        #     + ") "
+        #     + str(success_date),
+        #     log_stack_depth,
+        # )
+        return success_date
+
+    #TODO manual review of MilestoneSet.evaulateMemoMilestone docstring
+    @classmethod
+    def evaulateMemoMilestone(cls, forecast_df, memo_regex, log_stack_depth):
+        # log_in_color(
+        #     logger,
+        #     "yellow",
+        #     "debug",
+        #     "ENTER evaluateMemoMilestone(" + str(memo_regex) + ")",
+        #     log_stack_depth,
+        # )
+        """
+        TODO one-line description of ForecastHandler.evaulateMemoMilestone.
+
+        TODO multi-line description of ForecastHandler.evaulateMemoMilestone.
+        TODO explain how ForecastHandler.evaulateMemoMilestone participates in this module.
+        TODO document important state, validation, or serialization behavior.
+
+        Parameters
+        ----------
+        forecast_df : object
+            TODO one-line description of ForecastHandler.evaulateMemoMilestone.forecast_df.
+
+        memo_regex : str
+            TODO one-line description of ForecastHandler.evaulateMemoMilestone.memo_regex.
+
+        log_stack_depth : int
+            TODO one-line description of ForecastHandler.evaulateMemoMilestone.log_stack_depth.
+
+        Returns
+        -------
+        object
+            TODO one-line description of return value of ForecastHandler.evaulateMemoMilestone.
+
+        Contract
+        --------
+        - #TODO contract lines for ForecastHandler.evaulateMemoMilestone.
+        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler.evaulateMemoMilestone.
+
+        @interface-report: show
+        """
+        log_stack_depth += 1
+        for forecast_index, forecast_row in forecast_df.iterrows():
+            m = re.search(memo_regex, forecast_row.Memo)
+            if m is not None:
+                log_stack_depth -= 1
+                # log_in_color(
+                #     logger,
+                #     "yellow",
+                #     "debug",
+                #     "EXIT evaluateMemoMilestone(" + str(memo_regex) + ")",
+                #     log_stack_depth,
+                # )
+                return forecast_row.Date
+
+        log_stack_depth -= 1
+        # log_in_color(
+        #     logger,
+        #     "yellow",
+        #     "debug",
+        #     "EXIT evaluateMemoMilestone(" + str(memo_regex) + ")",
+        #     log_stack_depth,
+        # )
+        return "None"
+
+    #TODO manual review of MilestoneSet.evaluateCompositeMilestone docstring
+    @classmethod
+    def evaluateCompositeMilestone(
+        cls,
+        forecast_df,
+        list_of_account_milestones,
+        list_of_memo_milestones,
+        log_stack_depth,
+    ):
+        # log_in_color(
+        #     logger,
+        #     "yellow",
+        #     "debug",
+        #     "ENTER evaluateCompositeMilestone()",
+        #     log_stack_depth,
+        # )
+        """
+        TODO one-line description of ForecastHandler.evaluateCompositeMilestone.
+
+        TODO multi-line description of ForecastHandler.evaluateCompositeMilestone.
+        TODO explain how ForecastHandler.evaluateCompositeMilestone participates in this module.
+        TODO document important state, validation, or serialization behavior.
+
+        Parameters
+        ----------
+        forecast_df : object
+            TODO one-line description of ForecastHandler.evaluateCompositeMilestone.forecast_df.
+
+        list_of_account_milestones : object
+            TODO one-line description of ForecastHandler.evaluateCompositeMilestone.list_of_account_milestones.
+
+        list_of_memo_milestones : object
+            TODO one-line description of ForecastHandler.evaluateCompositeMilestone.list_of_memo_milestones.
+
+        log_stack_depth : int
+            TODO one-line description of ForecastHandler.evaluateCompositeMilestone.log_stack_depth.
+
+        Returns
+        -------
+        object
+            TODO one-line description of return value of ForecastHandler.evaluateCompositeMilestone.
+
+        Contract
+        --------
+        - #TODO contract lines for ForecastHandler.evaluateCompositeMilestone.
+        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler.evaluateCompositeMilestone.
+
+        @interface-report: show
+        """
+        log_stack_depth += 1
+        # list_of_account_milestones is lists of 3-tuples that are (string,float,float) for parameters
+
+        # todo composite milestones may contain some milestones that arent listed in the composite #https://github.com/hdickie/expense_forecast/issues/22
+
+        if list_of_account_milestones:
+            num_of_acct_milestones = len(list_of_account_milestones)
+        else:
+            num_of_acct_milestones = 0
+
+        if list_of_memo_milestones:
+            num_of_memo_milestones = len(list_of_memo_milestones)
+        else:
+            num_of_memo_milestones = 0
+        account_milestone_dates = []
+        memo_milestone_dates = []
+
+        for i in range(0, num_of_acct_milestones):
+            account_milestone = list_of_account_milestones[i]
+            am_result = cls.evaluateAccountMilestone(
+                forecast_df,
+                account_milestone.account_name,
+                account_milestone.min_balance,
+                account_milestone.max_balance, log_stack_depth=log_stack_depth
+            )
+            if (
+                am_result is None
+            ):  # disqualified immediately because success requires ALL
+                log_stack_depth -= 1
+                # log_in_color(
+                #     logger,
+                #     "yellow",
+                #     "debug",
+                #     "EXIT evaluateCompositeMilestone() None",
+                #     log_stack_depth,
+                # )
+                return None
+            account_milestone_dates.append(am_result)
+
+        for i in range(0, num_of_memo_milestones):
+            memo_milestone = list_of_memo_milestones[i]
+            mm_result = cls.evaulateMemoMilestone(
+                forecast_df, memo_milestone.memo_regex, log_stack_depth=log_stack_depth
+            )
+            if (
+                mm_result is None
+            ):  # disqualified immediately because success requires ALL
+                log_stack_depth -= 1
+                # log_in_color(
+                #     logger,
+                #     "yellow",
+                #     "debug",
+                #     "EXIT evaluateCompositeMilestone() None",
+                #     log_stack_depth,
+                # )
+                return None
+            memo_milestone_dates.append(mm_result)
+
+        result_date = max(account_milestone_dates + memo_milestone_dates)
+        # log_in_color(
+        #     logger,
+        #     "yellow",
+        #     "debug",
+        #     "EXIT evaluateCompositeMilestone() " + str(result_date),
+        #     log_stack_depth,
+        # )
+        log_stack_depth -= 1
+        return result_date
+
+    #TODO manual review of MilestoneSet.evaluateMilestones docstring
+    @classmethod
+    def evaluateMilestones(cls, forecast_df, milestone_set, log_stack_depth):
+
+        """
+        TODO one-line description of ForecastHandler.evaluateMilestones.
+
+        TODO multi-line description of ForecastHandler.evaluateMilestones.
+        TODO explain how ForecastHandler.evaluateMilestones participates in this module.
+        TODO document important state, validation, or serialization behavior.
+
+        Parameters
+        ----------
+        forecast_df : object
+            TODO one-line description of ForecastHandler.evaluateMilestones.forecast_df.
+
+        milestone_set : object
+            TODO one-line description of ForecastHandler.evaluateMilestones.milestone_set.
+
+        log_stack_depth : int
+            TODO one-line description of ForecastHandler.evaluateMilestones.log_stack_depth.
+
+        Returns
+        -------
+        object
+            TODO one-line description of return value of ForecastHandler.evaluateMilestones.
+
+        Contract
+        --------
+        - #TODO contract lines for ForecastHandler.evaluateMilestones.
+        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler.evaluateMilestones.
+
+        @interface-report: show
+        """
+        account_milestone_results = {}
+        if milestone_set.account_milestones:
+            for a_m in milestone_set.account_milestones:
+                res = cls.evaluateAccountMilestone(
+                    forecast_df,
+                    a_m.account_name,
+                    a_m.min_balance,
+                    a_m.max_balance,
+                    log_stack_depth=log_stack_depth,
+                )
+                account_milestone_results[a_m.milestone_name] = res
+            account_milestone_results = account_milestone_results
+
+        memo_milestone_results = {}
+        if milestone_set.memo_milestones:
+            for m_m in milestone_set.memo_milestones:
+                res = cls.evaulateMemoMilestone(
+                    forecast_df, m_m.memo_regex, log_stack_depth=log_stack_depth
+                )
+                memo_milestone_results[m_m.milestone_name] = res
+            memo_milestone_results = memo_milestone_results
+
+        composite_milestone_results = {}
+        if milestone_set.composite_milestones:
+            for c_m in milestone_set.composite_milestones:
+                res = cls.evaluateCompositeMilestone(
+                    forecast_df,
+                    c_m.account_milestones,
+                    c_m.memo_milestones,
+                    log_stack_depth=log_stack_depth,
+                )
+                composite_milestone_results[c_m.milestone_name] = res
+            composite_milestone_results = composite_milestone_results
+        return [account_milestone_results, memo_milestone_results, composite_milestone_results] #TODO list is not the best type for this

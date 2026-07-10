@@ -25,47 +25,38 @@ import logging
 # logger = setup_logger('LineItemSet', './log/LineItemSet.log', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-#
-# def initialize_from_dataframe(budget_set_df):
-#     B = LineItemSet([])
-#     try:
-#         for index, row in budget_set_df.iterrows():
-#             sd = str(row.start_date).replace("-", "")
-#             ed = str(row.end_date).replace("-", "")
-#             B.addLineItem(
-#                 sd,
-#                 ed,
-#                 row.priority,
-#                 row.interval.replace("-", "").lower(),
-#                 row.amount,
-#                 row.memo,
-#                 row.deferrable,
-#                 row.partial_payment_allowed,
-#             )
-#     except Exception as e:
-#         print(e.args)
-#         raise e
-#     return B
-#
-#
-# def initialize_from_json_string(json_string):
-#     raise NotImplementedError
 
-
-#TODO manual review of LineItemSet docstring
 class LineItemSet:
-
     """
-    Summary
-    -------
+    Represents a collection of LineItems.
 
-    Description
-    -----------
+    A LineItemSet groups multiple LineItems into a single logical unit that
+    can be manipulated, evaluated, serialized, and applied as a whole.
+    Individual LineItems describe financial events, while a LineItemSet
+    defines the complete collection of events.
 
-    Contract
-    --------
+    Responsibilities
+    ----------------
+    - Store and manage a collection of LineItems.
+    - Preserve collection invariants.
+    - Provide lookup, iteration, and collection operations.
+    - Support serialization and deserialization.
+    - Define equality and collection semantics.
 
-    @interface-report: show
+    Invariants
+    ----------
+    - Every contained object is a valid LineItem.
+    - Collection operations preserve the validity of the set.
+    - Serialization preserves the semantic meaning of the collection.
+    - Equivalent collections compare as equal regardless of incidental
+      implementation details.
+
+    Notes
+    -----
+    LineItemSet provides collection behavior but does not determine the
+    business purpose of its contents. Specialized subclasses or consumers,
+    such as BudgetSet and MemoRuleSet, define how the contained LineItems
+    are interpreted and used by the forecasting engine.
     """
     #TODO manual review of LineItemSet.__init__ docstring
     def __init__(self, line_items__list=None):
@@ -133,30 +124,8 @@ class LineItemSet:
             self.line_items__list.append(line_item)
             self.line_items.append(line_item)
 
-    #TODO manual review of LineItemSet.__str__ docstring
     def __str__(self):
         """
-        TODO one-line description of LineItemSet.__str__.
-
-        TODO multi-line description of LineItemSet.__str__.
-        TODO explain how LineItemSet.__str__ participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        None
-            TODO confirm that LineItemSet.__str__ takes no parameters beyond self/cls.
-
-        Returns
-        -------
-        str
-            TODO one-line description of return value of LineItemSet.__str__.
-
-        Contract
-        --------
-        - #TODO contract lines for LineItemSet.__str__.
-        - #TODO document exceptions, mutations, and precision assumptions for LineItemSet.__str__.
-
         @interface-report: show
         """
         return self.getLineItems().to_string()
@@ -417,57 +386,15 @@ class LineItemSet:
             ]
         }
 
-    #TODO manual review of LineItemSet.to_json docstring
     def to_json(self):
         """
-        TODO one-line description of LineItemSet.to_json.
-
-        TODO multi-line description of LineItemSet.to_json.
-        TODO explain how LineItemSet.to_json participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        None
-            TODO confirm that LineItemSet.to_json takes no parameters beyond self/cls.
-
-        Returns
-        -------
-        str
-            TODO one-line description of return value of LineItemSet.to_json.
-
-        Contract
-        --------
-        - #TODO contract lines for LineItemSet.to_json.
-        - #TODO document exceptions, mutations, and precision assumptions for LineItemSet.to_json.
-
         @interface-report: show
         """
         return jsonpickle.encode(self, indent=4)
 
-    #TODO manual review of LineItemSet.__add__ docstring
     def __add__(self, other: LineItemSet):
         """
-        TODO one-line description of LineItemSet.__add__.
-
-        TODO multi-line description of LineItemSet.__add__.
-        TODO explain how LineItemSet.__add__ participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        other : object
-            TODO one-line description of LineItemSet.__add__.other.
-
-        Returns
-        -------
-        object
-            TODO one-line description of return value of LineItemSet.__add__.
-
-        Contract
-        --------
-        - #TODO contract lines for LineItemSet.__add__.
-        - #TODO document exceptions, mutations, and precision assumptions for LineItemSet.__add__.
+        Set union.
 
         @interface-report: show
         """
@@ -476,32 +403,32 @@ class LineItemSet:
 
         return LineItemSet(self.line_items + other.line_items)
 
-    #TODO manual review of LineItemSet._line_item_key docstring
+    #Codex-write-doctstring-OK
     @staticmethod
     def _line_item_key(line_item):
         """
-        TODO one-line description of LineItemSet._line_item_key.
+        TODO DEFER one-line description of LineItemSet._line_item_key.
 
-        TODO multi-line description of LineItemSet._line_item_key.
-        TODO explain how LineItemSet._line_item_key participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        TODO DEFER multi-line description of LineItemSet._line_item_key.
+        TODO DEFER explain how LineItemSet._line_item_key participates in this module.
+        TODO DEFER document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         line_item : object
-            TODO one-line description of LineItemSet._line_item_key.line_item.
+            TODO DEFER one-line description of LineItemSet._line_item_key.line_item.
 
         Returns
         -------
         object
-            TODO one-line description of return value of LineItemSet._line_item_key.
+            TODO DEFER one-line description of return value of LineItemSet._line_item_key.
 
         Contract
         --------
-        - #TODO contract lines for LineItemSet._line_item_key.
-        - #TODO document exceptions, mutations, and precision assumptions for LineItemSet._line_item_key.
+        - #TODO DEFER contract lines for LineItemSet._line_item_key.
+        - #TODO DEFER document exceptions, mutations, and precision assumptions for LineItemSet._line_item_key.
 
-        @interface-report: show
+        @interface-report: ignore
         """
         return (
             line_item.start_date,
@@ -515,29 +442,9 @@ class LineItemSet:
             line_item.partial_payment_allowed,
         )
 
-    #TODO manual review of LineItemSet.__sub__ docstring
     def __sub__(self, other: LineItemSet):
         """
-        TODO one-line description of LineItemSet.__sub__.
-
-        TODO multi-line description of LineItemSet.__sub__.
-        TODO explain how LineItemSet.__sub__ participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        other : object
-            TODO one-line description of LineItemSet.__sub__.other.
-
-        Returns
-        -------
-        object
-            TODO one-line description of return value of LineItemSet.__sub__.
-
-        Contract
-        --------
-        - #TODO contract lines for LineItemSet.__sub__.
-        - #TODO document exceptions, mutations, and precision assumptions for LineItemSet.__sub__.
+        Set subtraction.
 
         @interface-report: show
         """
@@ -558,32 +465,3 @@ class LineItemSet:
                 )
 
         return LineItemSet(remaining_items)
-
-    def getBudgetItems(self):
-        """Compatibility wrapper for callers that still use BudgetSet naming."""
-        return self.getLineItems()
-
-    def getBudgetSchedule(self):
-        """Compatibility wrapper for callers that still use BudgetSet naming."""
-        return self.getLineItemSchedule()
-
-    def addBudgetItem(self, start_date, end_date, priority, interval, amount, memo, income_flag = False, **kwargs):
-        """Compatibility wrapper for callers that still use BudgetSet naming."""
-        return self.addLineItem(
-            start_date,
-            end_date,
-            priority,
-            interval,
-            amount,
-            memo,
-            income_flag=income_flag,
-            **kwargs,
-        )
-
-
-BudgetSet = LineItemSet
-
-if __name__ == "__main__":
-    import doctest
-
-    doctest.testmod()

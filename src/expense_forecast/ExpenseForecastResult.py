@@ -21,7 +21,7 @@ import pandas as pd
 import jsonpickle
 from datetime import date
 from expense_forecast.AccountSet import AccountSet
-from expense_forecast.LineItemSet import BudgetSet
+from expense_forecast.LineItemSet import LineItemSet
 from expense_forecast.MemoRuleSet import MemoRuleSet
 
 

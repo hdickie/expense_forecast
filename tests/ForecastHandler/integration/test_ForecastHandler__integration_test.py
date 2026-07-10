@@ -1,7 +1,7 @@
 import pytest
 from datetime import date
 from expense_forecast.AccountSet import AccountSet
-from expense_forecast.LineItemSet import BudgetSet
+from expense_forecast.LineItemSet import LineItemSet
 from expense_forecast.MemoRuleSet import MemoRuleSet
 from expense_forecast.MilestoneSet import MilestoneSet
 from expense_forecast.ExpenseForecastInitialConditions import ExpenseForecastInitialConditions
@@ -19,7 +19,7 @@ class TestForecastHandler:
         end_date = date(2026,6,10)
         
         A = AccountSet()
-        B = BudgetSet()
+        B = LineItemSet()
         M = MemoRuleSet()
         MS = MilestoneSet()
 
@@ -151,7 +151,7 @@ class TestForecastHandler:
         end_date = date(2026,6,5)
         
         A = AccountSet()
-        B = BudgetSet()
+        B = LineItemSet()
         M = MemoRuleSet()
         MS = MilestoneSet()
 
@@ -324,7 +324,7 @@ class TestForecastHandler:
         end_date = date(2026,6,5)
         
         A = AccountSet()
-        B = BudgetSet()
+        B = LineItemSet()
         M = MemoRuleSet()
         MS = MilestoneSet()
 
@@ -495,7 +495,7 @@ class TestForecastHandler:
         end_date = date(2026,6,5)
         
         A = AccountSet()
-        B = BudgetSet()
+        B = LineItemSet()
         M = MemoRuleSet()
         MS = MilestoneSet()
 
@@ -605,7 +605,7 @@ class TestForecastHandler:
         end_date = date(2026,6,5)
 
         A = AccountSet()
-        B = BudgetSet()
+        B = LineItemSet()
         M = MemoRuleSet()
         MS = MilestoneSet()
 
@@ -630,7 +630,7 @@ class TestForecastHandler:
         )
 
         if payment_date is not None:
-            B.addBudgetItem(
+            B.addLineItem(
                 start_date=payment_date,
                 end_date=payment_date,
                 priority=1,
@@ -787,7 +787,7 @@ class TestForecastHandler:
         end_date = date(2026,6,5)
 
         A = AccountSet()
-        B = BudgetSet()
+        B = LineItemSet()
         M = MemoRuleSet()
         MS = MilestoneSet()
 
@@ -812,7 +812,7 @@ class TestForecastHandler:
         )
 
         if payment_date is not None:
-            B.addBudgetItem(
+            B.addLineItem(
                 start_date=payment_date,
                 end_date=payment_date,
                 priority=1,
@@ -860,7 +860,7 @@ class TestForecastHandler:
         end_date = date(2026,6,3)
 
         A = AccountSet()
-        B = BudgetSet()
+        B = LineItemSet()
         M = MemoRuleSet()
         MS = MilestoneSet()
 
@@ -894,7 +894,7 @@ class TestForecastHandler:
             billing_cycle_payment_balance=0,
         )
 
-        B.addBudgetItem(
+        B.addLineItem(
             start_date=date(2026,6,2),
             end_date=date(2026,6,2),
             priority=1,
@@ -1402,7 +1402,7 @@ class TestForecastHandler:
         end_date = date(2026,6,2)
 
         A = AccountSet()
-        B = BudgetSet()
+        B = LineItemSet()
         M = MemoRuleSet()
         MS = MilestoneSet()
 
@@ -1639,7 +1639,7 @@ class TestForecastHandler:
     #     end_date = date(2026,6,10)
         
     #     A = AccountSet()
-    #     B = BudgetSet()
+    #     B = LineItemSet()
     #     M = MemoRuleSet()
     #     MS = MilestoneSet()
 
@@ -1677,7 +1677,7 @@ class TestForecastHandler:
 
     #     # TODO Savings / Investment Account
 
-    #     B.addBudgetItem(
+    #     B.addLineItem(
     #         start_date=start_date,
     #         end_date=end_date,
     #         priority=1,
@@ -1861,7 +1861,7 @@ class TestForecastHandler:
     #     end_date = "20000104"
 
     #     account_set = AccountSet([])
-    #     budget_set = BudgetSet([])
+    #     budget_set = LineItemSet([])
     #     memo_rule_set = MemoRuleSet([])
 
     #     account_set.createAccount(
@@ -1873,7 +1873,7 @@ class TestForecastHandler:
     #         primary_checking_ind=True,
     #     )
 
-    #     budget_set.addBudgetItem(
+    #     budget_set.addLineItem(
     #         start_date="20000101",
     #         end_date="20000104",
     #         priority=1,
@@ -1927,9 +1927,9 @@ class TestForecastHandler:
     #             AccountSet(
     #                 checking_acct_list(10) + credit_acct_list(0, 0, 0.05)
     #             ),
-    #             BudgetSet(
+    #             LineItemSet(
     #                 [
-    #                     BudgetItem(
+    #                     LineItem(
     #                         datetime.datetime.strptime("20000102",'%Y%m%d'),
     #                         datetime.datetime.strptime("20000102",'%Y%m%d'),
     #                         1, "once", 10, "test txn"
@@ -1998,9 +1998,9 @@ class TestForecastHandler:
     #             AccountSet(
     #                 checking_acct_list(10) + credit_acct_list(0, 0, 0.05)
     #             ),
-    #             BudgetSet(
+    #             LineItemSet(
     #                 [
-    #                     BudgetItem(
+    #                     LineItem(
     #                         datetime.datetime.strptime("20000102",'%Y%m%d'), datetime.datetime.strptime("20000102",'%Y%m%d'), 1, "once", 10, "memo milestone"
     #                     )
     #                 ]
@@ -2066,9 +2066,9 @@ class TestForecastHandler:
     #             AccountSet(
     #                 checking_acct_list(10) + credit_acct_list(0, 0, 0.05)
     #             ),
-    #             BudgetSet(
+    #             LineItemSet(
     #                 [
-    #                     BudgetItem(
+    #                     LineItem(
     #                         datetime.datetime.strptime("20000102",'%Y%m%d'), datetime.datetime.strptime("20000102",'%Y%m%d'), 1, "once", 10, "memo milestone"
     #                     )
     #                 ]
@@ -2165,16 +2165,16 @@ class TestForecastHandler:
     #         (
     #             "test_next_income_date",
     #             AccountSet(checking_acct_list(1000)),
-    #             BudgetSet(
+    #             LineItemSet(
     #                 [
-    #                     BudgetItem(datetime.datetime.strptime("20000102","%Y%m%d"),datetime.datetime.strptime("20000102","%Y%m%d"),
+    #                     LineItem(datetime.datetime.strptime("20000102","%Y%m%d"),datetime.datetime.strptime("20000102","%Y%m%d"),
     #                         1,
     #                         "once",
     #                         100,
     #                         "income 1",
 
     #                     ),
-    #                     BudgetItem(datetime.datetime.strptime("20000104","%Y%m%d"),datetime.datetime.strptime("20000104","%Y%m%d"),
+    #                     LineItem(datetime.datetime.strptime("20000104","%Y%m%d"),datetime.datetime.strptime("20000104","%Y%m%d"),
     #                         1,
     #                         "once",
     #                         100,

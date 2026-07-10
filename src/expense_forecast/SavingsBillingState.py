@@ -19,7 +19,7 @@ from datetime import date
 from decimal import Decimal
 
 
-#TODO manual review of SavingsBillingState docstring
+#TODO DEFER manual review of SavingsBillingState docstring
 @dataclass
 class SavingsBillingState:
     """
@@ -41,7 +41,7 @@ class SavingsBillingState:
     minimum_payment: Decimal
     apr: Decimal
 
-    #TODO manual review of SavingsBillingState.__init__ docstring
+    #TODO DEFER manual review of SavingsBillingState.__init__ docstring
     def __init__(self, billing_cycle_start_date: date, previous_statement_balance: Decimal,
                   current_statement_balance: Decimal, billing_cycle_payment_balance: Decimal,
                   minimum_payment: Decimal,
@@ -50,47 +50,46 @@ class SavingsBillingState:
                   apr: Decimal
                   ):
         """
-        TODO one-line description of SavingsBillingState.__init__.
+        TODO DEFER one-line description of SavingsBillingState.__init__.
 
-        TODO multi-line description of SavingsBillingState.__init__.
-        TODO explain how SavingsBillingState.__init__ participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        TODO DEFER multi-line description of SavingsBillingState.__init__.
+        TODO DEFER explain how SavingsBillingState.__init__ participates in this module.
+        TODO DEFER document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         billing_cycle_start_date : object
-            TODO one-line description of SavingsBillingState.__init__.billing_cycle_start_date.
+            TODO DEFER one-line description of SavingsBillingState.__init__.billing_cycle_start_date.
 
         previous_statement_balance : object
-            TODO one-line description of SavingsBillingState.__init__.previous_statement_balance.
+            TODO DEFER one-line description of SavingsBillingState.__init__.previous_statement_balance.
 
         current_statement_balance : object
-            TODO one-line description of SavingsBillingState.__init__.current_statement_balance.
+            TODO DEFER one-line description of SavingsBillingState.__init__.current_statement_balance.
 
         billing_cycle_payment_balance : object
-            TODO one-line description of SavingsBillingState.__init__.billing_cycle_payment_balance.
+            TODO DEFER one-line description of SavingsBillingState.__init__.billing_cycle_payment_balance.
 
         minimum_payment : float
-            TODO one-line description of SavingsBillingState.__init__.minimum_payment.
+            TODO DEFER one-line description of SavingsBillingState.__init__.minimum_payment.
 
         interest_type : object
-            TODO one-line description of SavingsBillingState.__init__.interest_type.
+            TODO DEFER one-line description of SavingsBillingState.__init__.interest_type.
 
         interest_interval : object
-            TODO one-line description of SavingsBillingState.__init__.interest_interval.
+            TODO DEFER one-line description of SavingsBillingState.__init__.interest_interval.
 
         apr : float
-            TODO one-line description of SavingsBillingState.__init__.apr.
+            TODO DEFER one-line description of SavingsBillingState.__init__.apr.
 
         Returns
         -------
         None
-            TODO one-line description of return value of SavingsBillingState.__init__.
 
         Contract
         --------
-        - #TODO contract lines for SavingsBillingState.__init__.
-        - #TODO document exceptions, mutations, and precision assumptions for SavingsBillingState.__init__.
+        - #TODO DEFER contract lines for SavingsBillingState.__init__.
+        - #TODO DEFER document exceptions, mutations, and precision assumptions for SavingsBillingState.__init__.
 
         @interface-report: show
         """

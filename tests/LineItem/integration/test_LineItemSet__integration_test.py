@@ -1,54 +1,54 @@
 import pytest
 
 
-class TestBudgetSetIntegration:
+class TestLineItemSetIntegration:
     pass
     # @pytest.mark.integration
     # @pytest.mark.skip(reason="not yet implemented")
-    # def test_BudgetSet_to_json(self):
+    # def test_LineItemSet_to_json(self):
     #     pass
 
     # @pytest.mark.integration
     # @pytest.mark.skip(reason="not yet implemented")
-    # def test_BudgetSet_from_json(self):
+    # def test_LineItemSet_from_json(self):
     #     pass
 
     # @pytest.mark.integration
     # @pytest.mark.skip(reason="not yet implemented")
-    # def test_BudgetSet_to_excel(self):
+    # def test_LineItemSet_to_excel(self):
     #     pass
 
     # @pytest.mark.integration
     # @pytest.mark.skip(reason="not yet implemented")
-    # def test_BudgetSet_from_excel(self):
+    # def test_LineItemSet_from_excel(self):
     #     pass
 
     # @pytest.mark.integration
     # @pytest.mark.skip(reason="not yet implemented")
-    # def test_BudgetSet_to_database(self):
+    # def test_LineItemSet_to_database(self):
     #     pass
 
     # @pytest.mark.integration
     # @pytest.mark.skip(reason="not yet implemented")
-    # def test_BudgetSet_from_database(self):
+    # def test_LineItemSet_from_database(self):
     #     pass
 
     # @pytest.mark.integration
     # @pytest.mark.skip(reason="not yet implemented")
-    # def test_BudgetSet_to_csv(self):
+    # def test_LineItemSet_to_csv(self):
     #     pass
 
     # @pytest.mark.integration
     # @pytest.mark.skip(reason="not yet implemented")
-    # def test_BudgetSet_from_csv(self):
+    # def test_LineItemSet_from_csv(self):
     #     pass
 
     # @pytest.mark.integration
     # @pytest.mark.skip(reason="not yet implemented")
-    # def test_BudgetSet_log_output(self):
+    # def test_LineItemSet_log_output(self):
     #     pass
 
     # @pytest.mark.integration
     # @pytest.mark.skip(reason="not yet implemented")
-    # def test_BudgetSet_interactions_w_API_Client_object(self):
+    # def test_LineItemSet_interactions_w_API_Client_object(self):
     #     pass

@@ -25,7 +25,7 @@ import logging
 import copy
 from expense_forecast.log_methods import log_in_color
 from expense_forecast.AccountSet import AccountSet
-from expense_forecast.LineItemSet import BudgetSet
+from expense_forecast.LineItemSet import LineItemSet
 from expense_forecast.MemoRuleSet import MemoRuleSet
 from expense_forecast.MilestoneSet import MilestoneSet
 
@@ -374,9 +374,9 @@ class ExpenseForecastInitialConditions:
         if "budget_items" not in data:
             return cls._object_from_json_data(data)
 
-        budget_set = BudgetSet()
+        budget_set = LineItemSet()
         for budget_item in data["budget_items"]:
-            budget_set.addBudgetItem(
+            budget_set.addLineItem(
                 start_date=cls._date_from_dict_value(budget_item["Start_Date"]),
                 end_date=cls._date_from_dict_value(budget_item["End_Date"]),
                 priority=budget_item["Priority"],
@@ -479,7 +479,7 @@ class ExpenseForecastInitialConditions:
             raise ValueError("end_date must be on or after start_date")
 
         accounts_df = account_set.getAccounts()
-        budget_df = budget_set.getBudgetItems()
+        budget_df = budget_set.getLineItems()
         memo_rules_df = memo_rule_set.getMemoRules()
 
         num_days = (end_date - start_date).days
@@ -634,7 +634,7 @@ class ExpenseForecastInitialConditions:
     #TODO manual review of ExpenseForecastInitialConditions._validate_account_budget_memo_rule_intersection docstring
     @classmethod
     def _validate_account_budget_memo_rule_intersection(cls, account_set: AccountSet,
-                                                        budget_item_set: BudgetSet,
+                                                        budget_item_set: LineItemSet,
                                                         memo_rule_set: MemoRuleSet):
         """
         TODO one-line description of ExpenseForecastInitialConditions._validate_account_budget_memo_rule_intersection.
@@ -667,7 +667,7 @@ class ExpenseForecastInitialConditions:
         @interface-report: show
         """
         accounts_df = account_set.getAccounts()
-        budget_df = budget_item_set.getBudgetItems()
+        budget_df = budget_item_set.getLineItems()
         memo_df = memo_rule_set.getMemoRules()
 
         error_ind = False
@@ -775,7 +775,7 @@ class ExpenseForecastInitialConditions:
 
         @interface-report: show
         """
-        first_proposed_df = budget_set.getBudgetSchedule()
+        first_proposed_df = budget_set.getLineItemSchedule()
         if not first_proposed_df.empty:
             first_proposed_df = first_proposed_df.copy()
             first_proposed_df["Date"] = pd.to_datetime(first_proposed_df["Date"]).dt.date
@@ -871,7 +871,7 @@ class ExpenseForecastInitialConditions:
                  start_date: date,
                  end_date: date,
                  account_set: AccountSet,
-                 budget_set: BudgetSet,
+                 budget_set: LineItemSet,
                  memo_rule_set: MemoRuleSet,
                  log_stack_depth=0, #TODO IO::init.log_stack_depth be a kwarg instead of a param w default?
                  **kwargs):

@@ -15,7 +15,7 @@ Contract
 #ScenarioSpace.py
 from expense_forecast.MemoRuleSet import MemoRuleSet
 from expense_forecast.ScenarioDimension import ScenarioDimension
-from expense_forecast.LineItemSet import BudgetSet
+from expense_forecast.LineItemSet import LineItemSet
 import pandas as pd
 
 #TODO manual review of ScenarioSpace docstring
@@ -35,7 +35,7 @@ class ScenarioSpace:
     """
     #TODO manual review of ScenarioSpace._validate_memo_rule_set_and_scenario_dimensions_are_compatible docstring
     def _validate_memo_rule_set_and_scenario_dimensions_are_compatible(self,
-                                                                        invariant_transactions:BudgetSet,
+                                                                        invariant_transactions:LineItemSet,
                                                                         scenario_dimensions: dict[str, ScenarioDimension],
                                                                         memo_rule_set: MemoRuleSet
                                                                   ):
@@ -139,7 +139,7 @@ class ScenarioSpace:
 
 
 
-
+    # TODO I think I want to move away from data frame operations?
     #TODO manual review of ScenarioSpace.getScenariosDF docstring
     def getScenariosDF(self):
         """
@@ -187,7 +187,7 @@ class ScenarioSpace:
 
     #TODO manual review of ScenarioSpace.__init__ docstring
     def __init__(self,
-                 invariant_transactions: BudgetSet,
+                 invariant_transactions: LineItemSet,
                  scenario_dimensions: dict[str, ScenarioDimension],
                  memo_rule_set: MemoRuleSet):
 
@@ -224,7 +224,7 @@ class ScenarioSpace:
         self.scenario_dimensions = {}
         self.dimension_indices = {} #input is dict, in choice string we need to know order and have it be stable
         self.dimension_names = [] #inverse of above
-        self.scenarios = {} # str -> BudgetSet (concat choice labels -> union budgetset)
+        self.scenarios = {} # str -> LineItemSet (concat choice labels -> union budgetset)
 
         self._validate_memo_rule_set_and_scenario_dimensions_are_compatible(invariant_transactions, scenario_dimensions, memo_rule_set)
         self.invariant_transactions = invariant_transactions

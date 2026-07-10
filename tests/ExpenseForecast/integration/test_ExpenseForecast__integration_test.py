@@ -1,7 +1,7 @@
 import pytest
 from datetime import date
 from expense_forecast.AccountSet import AccountSet
-from expense_forecast.LineItemSet import BudgetSet
+from expense_forecast.LineItemSet import LineItemSet
 from expense_forecast.MemoRuleSet import MemoRuleSet
 from expense_forecast.MilestoneSet import MilestoneSet
 from expense_forecast.ExpenseForecastInitialConditions import ExpenseForecastInitialConditions
@@ -26,8 +26,8 @@ class TestExpenseForecastIntegration:
             primary_checking_ind=True,
         )
 
-        B = BudgetSet()
-        B.addBudgetItem(
+        B = LineItemSet()
+        B.addLineItem(
             start_date=date(2026, 6, 2),
             end_date=date(2026, 6, 2),
             priority=1,
@@ -90,8 +90,8 @@ class TestExpenseForecastIntegration:
             primary_checking_ind=True,
         )
 
-        B = BudgetSet()
-        B.addBudgetItem(
+        B = LineItemSet()
+        B.addLineItem(
             start_date=date(2026, 6, 2),
             end_date=date(2026, 6, 2),
             priority=1,

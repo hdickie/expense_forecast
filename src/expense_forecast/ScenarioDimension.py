@@ -27,7 +27,7 @@ Contract
 #     baseline: ForecastDefinition
 #     scenarios: list[Scenario]
 
-from expense_forecast.LineItemSet import BudgetSet
+from expense_forecast.LineItemSet import LineItemSet
 
 
 #TODO manual review of ScenarioDimension docstring
@@ -45,33 +45,32 @@ class ScenarioDimension:
 
     @interface-report: show
     """
-    #TODO manual review of ScenarioDimension.__init__ docstring
-    def __init__(self, name, choices: dict[str, BudgetSet]):
+    #TODO DEFER manual review of ScenarioDimension.__init__ docstring
+    def __init__(self, name, choices: dict[str, LineItemSet]):
 
         """
-        TODO one-line description of ScenarioDimension.__init__.
+        TODO DEFER one-line description of ScenarioDimension.__init__.
 
-        TODO multi-line description of ScenarioDimension.__init__.
-        TODO explain how ScenarioDimension.__init__ participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        TODO DEFER multi-line description of ScenarioDimension.__init__.
+        TODO DEFER explain how ScenarioDimension.__init__ participates in this module.
+        TODO DEFER document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         name : str
-            TODO one-line description of ScenarioDimension.__init__.name.
+            TODO DEFER one-line description of ScenarioDimension.__init__.name.
 
         choices : object
-            TODO one-line description of ScenarioDimension.__init__.choices.
+            TODO DEFER one-line description of ScenarioDimension.__init__.choices.
 
         Returns
         -------
         None
-            TODO one-line description of return value of ScenarioDimension.__init__.
 
         Contract
         --------
-        - #TODO contract lines for ScenarioDimension.__init__.
-        - #TODO document exceptions, mutations, and precision assumptions for ScenarioDimension.__init__.
+        - #TODO DEFER contract lines for ScenarioDimension.__init__.
+        - #TODO DEFER document exceptions, mutations, and precision assumptions for ScenarioDimension.__init__.
 
         @interface-report: show
         """
@@ -94,7 +93,7 @@ class ScenarioDimension:
                 # TODO add to self.choices
 
     #TODO manual review of ScenarioDimension.addChoice docstring
-    def addChoice(self, label: str, budget_set: BudgetSet):
+    def addChoice(self, label: str, budget_set: LineItemSet):
         """
         TODO one-line description of ScenarioDimension.addChoice.
 
@@ -131,4 +130,4 @@ class ScenarioDimension:
         # TOOD enforce something about budgetSet
         self.choices[label] = budget_set
 
-    # TODO conceivably I would need dropChoice, but not rn so tabling it for now
+    # TODO DEFER conceivably I would need dropChoice, but not rn so tabling it for now

@@ -1,17 +1,3 @@
-"""
-Summary
--------
-
-Description
------------
-
-Contract
---------
-
-@interface-report: show
-"""
-
-
 
 
 from dataclasses import dataclass
@@ -127,88 +113,50 @@ class LoanBillingState:
         assert apr >= 0
         self.apr = apr
 
-    #TODO manual review of LoanBillingState.balance docstring
+    #TODO this should be loan_balance
     @property
     def balance(self) -> Decimal:
         """
-        TODO one-line description of LoanBillingState.balance.
-
-        TODO multi-line description of LoanBillingState.balance.
-        TODO explain how LoanBillingState.balance participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        None
-            TODO confirm that LoanBillingState.balance takes no parameters beyond self/cls.
-
-        Returns
-        -------
-        object
-            TODO one-line description of return value of LoanBillingState.balance.
-
-        Contract
-        --------
-        - #TODO contract lines for LoanBillingState.balance.
-        - #TODO document exceptions, mutations, and precision assumptions for LoanBillingState.balance.
-
         @interface-report: show
         """
         return self.principal_balance + self.interest_balance
 
-    #TODO manual review of LoanBillingState.previous_statement_balance docstring
     @property
     def previous_statement_balance(self) -> Decimal:
         """
-        TODO one-line description of LoanBillingState.previous_statement_balance.
+        Return the loan principal balance from the previous statement.
 
-        TODO multi-line description of LoanBillingState.previous_statement_balance.
-        TODO explain how LoanBillingState.previous_statement_balance participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        None
-            TODO confirm that LoanBillingState.previous_statement_balance takes no parameters beyond self/cls.
+        This property is an alias for ``principal_balance`` kept for callers
+        that initialize or report loan billing state in statement-balance
+        terms.
 
         Returns
         -------
-        object
-            TODO one-line description of return value of LoanBillingState.previous_statement_balance.
-
-        Contract
-        --------
-        - #TODO contract lines for LoanBillingState.previous_statement_balance.
-        - #TODO document exceptions, mutations, and precision assumptions for LoanBillingState.previous_statement_balance.
+        Decimal
+            Current principal balance.
 
         @interface-report: show
         """
         return self.principal_balance
 
-    #TODO manual review of LoanBillingState.previous_statement_balance docstring
     @previous_statement_balance.setter
     def previous_statement_balance(self, value: Decimal):
         """
-        TODO one-line description of LoanBillingState.previous_statement_balance.
+        Set the loan principal balance from a previous statement balance.
 
-        TODO multi-line description of LoanBillingState.previous_statement_balance.
-        TODO explain how LoanBillingState.previous_statement_balance participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        Assigning this property updates ``principal_balance`` directly. The
+        value must be nonnegative, matching the validation applied during
+        construction.
 
         Parameters
         ----------
-        value : object
-            TODO one-line description of LoanBillingState.previous_statement_balance.value.
-
-        Returns
-        -------
-        object
-            TODO one-line description of return value of LoanBillingState.previous_statement_balance.
+        value : Decimal
+            Nonnegative statement principal balance.
 
         Contract
         --------
-        - #TODO contract lines for LoanBillingState.previous_statement_balance.
-        - #TODO document exceptions, mutations, and precision assumptions for LoanBillingState.previous_statement_balance.
+        - Mutates ``principal_balance``.
+        - Raises ``AssertionError`` when ``value`` is negative.
 
         @interface-report: show
         """

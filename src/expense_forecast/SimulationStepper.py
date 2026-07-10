@@ -33,7 +33,7 @@ logger.addHandler(fileHandler)
 logger.addHandler(streamHandler)
 logger.propagate = False
 
-#TODO manual review of SimulationStepper docstring
+#TODO DEFER manual review of SimulationStepper docstring
 class SimulationStepper:
 
     """
@@ -50,33 +50,33 @@ class SimulationStepper:
     """
     ROUNDING_ERROR_TOLERANCE = 0.0000000001
 
-    #TODO manual review of SimulationStepper.__init__ docstring
+    #TODO DEFER manual review of SimulationStepper.__init__ docstring
     def __init__(self):
         """
-        TODO one-line description of SimulationStepper.__init__.
+        TODO DEFER one-line description of SimulationStepper.__init__.
 
-        TODO multi-line description of SimulationStepper.__init__.
-        TODO explain how SimulationStepper.__init__ participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        TODO DEFER multi-line description of SimulationStepper.__init__.
+        TODO DEFER explain how SimulationStepper.__init__ participates in this module.
+        TODO DEFER document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         None
-            TODO confirm that SimulationStepper.__init__ takes no parameters beyond self/cls.
+            TODO DEFER confirm that SimulationStepper.__init__ takes no parameters beyond self/cls.
 
         Returns
         -------
         None
-            TODO one-line description of return value of SimulationStepper.__init__.
+            TODO DEFER one-line description of return value of SimulationStepper.__init__.
 
         Contract
         --------
-        - #TODO contract lines for SimulationStepper.__init__.
-        - #TODO document exceptions, mutations, and precision assumptions for SimulationStepper.__init__.
+        - #TODO DEFER contract lines for SimulationStepper.__init__.
+        - #TODO DEFER document exceptions, mutations, and precision assumptions for SimulationStepper.__init__.
 
         @interface-report: show
         """
-        pass
+        raise NotImplementedError
 
     # @staticmethod
     # def step(initial_conditions: ExpenseForecastInitialConditions) -> ExpenseForecastResult:
