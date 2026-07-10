@@ -44,76 +44,59 @@ class AccountMilestone:
     has been reached. The actions that occur after a milestone is achieved
     are defined elsewhere by the forecasting engine.
     """
-    #TODO manual review of AccountMilestone.__init__ docstring
-    def __init__(self, Milestone_Name, Account_Name, Min_Balance, Max_Balance):
+    def __init__(self, 
+                 Milestone_Name: str, 
+                 Account_Name: str, 
+                 Min_Balance: float, 
+                 Max_Balance: float):
         """
-        TODO one-line description of AccountMilestone.__init__.
+        Initialize an AccountMilestone.
 
-        TODO multi-line description of AccountMilestone.__init__.
-        TODO explain how AccountMilestone.__init__ participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        Construct a milestone by defining the boundaries the balance for the 
+        specified account must stay in. The supplied arguments completely 
+        describe the milestone's evaluation criteria.
 
         Parameters
         ----------
-        Milestone_Name : object
-            TODO one-line description of AccountMilestone.__init__.Milestone_Name.
+        Milestone_Name : str
 
-        Account_Name : object
-            TODO one-line description of AccountMilestone.__init__.Account_Name.
+        Account_Name : str
 
-        Min_Balance : object
-            TODO one-line description of AccountMilestone.__init__.Min_Balance.
+        Min_Balance : float
 
-        Max_Balance : object
-            TODO one-line description of AccountMilestone.__init__.Max_Balance.
+        Max_Balance : float
 
         Returns
         -------
         None
-            TODO one-line description of return value of AccountMilestone.__init__.
-
-        Contract
-        --------
-        - #TODO contract lines for AccountMilestone.__init__.
-        - #TODO document exceptions, mutations, and precision assumptions for AccountMilestone.__init__.
 
         @interface-report: show
         """
-        self.milestone_name = Milestone_Name
-        assert self.milestone_name is not None
 
+        # TODO DEFER extract validator methods
+        if Milestone_Name is None:
+            raise ValueError("Milestone_Name in AccountMilestone() must not be None")
+        self.milestone_name = Milestone_Name
+
+        if Milestone_Name is None:
+            raise ValueError("Account_Name in AccountMilestone() must not be None")
         self.account_name = Account_Name
-        assert self.account_name is not None
-        assert ';' not in self.account_name
+        
+        if Milestone_Name is None:
+            raise ValueError("Account_Name in AccountMilestone() must not be None")
+        
+        if ';' in self.account_name:
+            raise ValueError("Account_Name must not contain ';' in AccountMilestone() ")
+
+        if Min_Balance > Max_Balance:
+            raise ValueError(f"Min_Balance ({Min_Balance}) must must be <= Max_Balance ({Max_Balance}) in AccountMilestone() ")
 
         self.min_balance = float(Min_Balance)
         self.max_balance = float(Max_Balance)
 
-        assert Min_Balance <= Max_Balance
-
-    #TODO manual review of AccountMilestone.__str__ docstring
     def __str__(self):
         """
-        TODO one-line description of AccountMilestone.__str__.
-
-        TODO multi-line description of AccountMilestone.__str__.
-        TODO explain how AccountMilestone.__str__ participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        None
-            TODO confirm that AccountMilestone.__str__ takes no parameters beyond self/cls.
-
-        Returns
-        -------
-        str
-            TODO one-line description of return value of AccountMilestone.__str__.
-
-        Contract
-        --------
-        - #TODO contract lines for AccountMilestone.__str__.
-        - #TODO document exceptions, mutations, and precision assumptions for AccountMilestone.__str__.
+        Returns human-readable representation of AccountMilestone.
 
         @interface-report: show
         """
@@ -126,29 +109,9 @@ class AccountMilestone:
             }
         ).to_string()
 
-    #TODO manual review of AccountMilestone.to_json docstring
     def to_json(self):
         """
-        TODO one-line description of AccountMilestone.to_json.
-
-        TODO multi-line description of AccountMilestone.to_json.
-        TODO explain how AccountMilestone.to_json participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        None
-            TODO confirm that AccountMilestone.to_json takes no parameters beyond self/cls.
-
-        Returns
-        -------
-        str
-            TODO one-line description of return value of AccountMilestone.to_json.
-
-        Contract
-        --------
-        - #TODO contract lines for AccountMilestone.to_json.
-        - #TODO document exceptions, mutations, and precision assumptions for AccountMilestone.to_json.
+        Returns json string.
 
         @interface-report: show
         """

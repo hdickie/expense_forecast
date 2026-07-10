@@ -4036,292 +4036,55 @@ class ForecastHandler:
 
         primary_checking_account_name = account_set.getPrimaryCheckingAccountName()
 
-        # Loop through accounts to process credit card minimum payments
-        for account_index, account_row in account_set.getAccounts().iterrows():
-            if account_row.Account_Type == "credit":
-                account = account_set.accounts[account_index]
-                current_date = current_forecast_row_df.Date.iloc[0]
-
-                if not AccountSet.is_billing_date(account, current_date):
-                    continue
-
-                total_payment_due = account.billing_state.remaining_minimum_payment_due()
-                if total_payment_due <= 0:
-                    continue
-
-                account_set.executeTransaction(
-                    Account_From=primary_checking_account_name,
-                    Account_To=account.name,
-                    Amount=total_payment_due,
-                    minimum_payment_flag=True,
-                )
-
-                projected_balances = account_set.getForecastAccountBalances(
-                    include_debug_columns=True
-                )
-                for column_name, value in projected_balances.items():
-                    if column_name in current_forecast_row_df.columns:
-                        current_forecast_row_df.loc[:, column_name] = value
-
-                memo_parts = [
-                    f"CC MIN PAYMENT ({account.name}: Prev Stmt Bal -${total_payment_due})",
-                    f"CC MIN PAYMENT ({primary_checking_account_name} -${total_payment_due})",
-                ]
-                md_split_semicolon = (
-                    current_forecast_row_df["Memo Directives"].iat[0].split(";")
-                )
-                md_split_semicolon = [md for md in md_split_semicolon if md]
-                md_split_semicolon += memo_parts
-                current_forecast_row_df.loc[:, "Memo Directives"] = "; ".join(
-                    md_split_semicolon
-                )
-                continue
-
-            if account_row.Account_Type != "credit prev stmt bal":
-                continue
-
-            # Skip accounts without a billing start date
-            billing_start_date = account_row.Billing_Start_Date
-            if pd.isnull(billing_start_date) or billing_start_date == "None":
+        # Loop through real credit accounts; synthetic credit summary rows are
+        # projected from CreditCardBillingState and are not payment sources.
+        for account in account_set.accounts:
+            if account.account_type != "credit":
                 continue
 
             current_date = current_forecast_row_df.Date.iloc[0]
-
-            billing_start_datetime = billing_start_date
-            num_days = (current_date - billing_start_datetime).days
-
-            # Generate billing days
-            if num_days >= 0:
-                billing_days = set(
-                    generate_date_sequence(billing_start_date, num_days, "monthly")
-                )
-            else:
-                billing_days = set()
-
-            if current_date == billing_start_date:
-                billing_days.add(current_date)
-
-            # print('billing_start_date:'+str(billing_start_date))
-            # print('current_date_str:'+str(current_date_str))
-            # print('billing_days:'+str(billing_days))
-            if current_date not in billing_days:
+            if not AccountSet.is_billing_date(account, current_date):
                 continue
 
-            # this will be the correct replacement once bcp is tracked properly
-            advance_payment_amount = current_forecast_row_df[
-                account_row.Name.split(":")[0] + ": Credit Billing Cycle Payment Bal"
-            ].iat[0]
-
-            # THIS IS OLD PREPAID LOGIC
-            # advance_payment_amount = cls._getTotalPrepaidInCreditCardBillingCycle(
-            #     account_row.Name, account_set=account_set, forecast_df=forecast_df, d=current_date_str
-            #)
-
-            # Determine the earliest billing date within the forecast range
-            first_day_of_forecast = forecast_df.Date.iloc[0]
-
-            relevant_billing_days = [
-                d
-                for d in billing_days
-                if d > first_day_of_forecast
-            ]
-
-            if not relevant_billing_days:
-                continue
-
-            # earliest_billing_date_within_forecast_range = min(relevant_billing_days)
-            # if current_date_str == earliest_billing_date_within_forecast_range:
-            #     # First billing date in forecast range
-            #     current_prev_stmt_balance = forecast_df.iloc[0][account_row.Name]
-            #     prev_prev_stmt_balance = current_prev_stmt_balance
-            #     current_curr_stmt_balance = account_set.getAccounts().iloc[account_index - 1]['Balance']
-            # else:
-            #     # Get previous billing cycle data
-            #     left_check_bound = current_date - datetime.timedelta(days=35)
-            #     forecast_dates = forecast_df['Date'].apply(lambda d: datetime.datetime.strptime(d, '%Y%m%d'))
-            #     check_region = forecast_df[
-            #         (forecast_dates > left_check_bound) & (forecast_dates <= current_date)
-            #         ]
-
-            # THIS IS OLD PREV PREV BALANCE LOGIC
-            # previous_min_payment_dates = check_region['Memo Directives'].str.contains('CC MIN PAYMENT')
-            # if previous_min_payment_dates.any():
-            #     prev_prev_stmt_balance = check_region.loc[previous_min_payment_dates, account_row.Name].iat[0]
-            # else:
-            #     prev_prev_stmt_balance = 0
-            prev_prev_aname = (
-                account_row.Name.split(":")[0] + ": Credit End of Prev Cycle Bal"
-            )
-            prev_prev_stmt_bal = current_forecast_row_df[prev_prev_aname].iat[0]
-
-            current_prev_stmt_balance = account_row.Balance
-            current_curr_stmt_balance = account_set.getAccounts().iloc[
-                account_index - 1
-            ]["Balance"]
-
-            # print(str(current_date_str)+' prev_prev_stmt_balance: '+str(prev_prev_stmt_balance))
-
-            # Calculate interest and principal to be charged
-            interest_rate_monthly = account_row.APR / 12
-            # interest_accrued_this_cycle = round(prev_prev_stmt_balance * interest_rate_monthly, 2)
-            interest_accrued_this_cycle = prev_prev_stmt_bal * interest_rate_monthly
-            principal_due_this_cycle = (
-                prev_prev_stmt_bal * 0.01
-            )  # if prev_prev and prev dont match, that implies a payment
-
-            # Update account balances and memo directives
-            if interest_accrued_this_cycle > 0:
-                account_set.accounts[
-                    account_index
-                ].balance += interest_accrued_this_cycle
-                new_prev_stmt_bal = (
-                    current_prev_stmt_balance + interest_accrued_this_cycle
-                )
-                # interest_md_text = f'CC INTEREST ({account_row.Name} +${interest_accrued_this_cycle:.2f})'
-                interest_md_text = (
-                    f"CC INTEREST ({account_row.Name} +${interest_accrued_this_cycle})"
-                )
-                md_split_semicolon = (
-                    current_forecast_row_df["Memo Directives"].iat[0].split(";")
-                )
-                md_split_semicolon = [md for md in md_split_semicolon if md]
-                md_split_semicolon.append(interest_md_text)
-                current_forecast_row_df["Memo Directives"] = "; ".join(
-                    md_split_semicolon
-                )
-            else:
-                new_prev_stmt_bal = current_prev_stmt_balance
-
-            curr_stmt_balance = account_set.accounts[
-                account_index - 1
-            ].balance  # get curr_stmt_bal
-            account_set.accounts[
-                account_index
-            ].balance += curr_stmt_balance  # add curr to prev
-            # account_set.accounts[account_index].balance = round(account_set.accounts[account_index].balance, 2) #round prev
-            account_set.accounts[account_index].balance = account_set.accounts[
-                account_index
-            ].balance
-            account_set.accounts[account_index - 1].balance = 0  # set curr to 0
-            # current_forecast_row_df[account_row.Name] = round(account_set.accounts[account_index].balance, 2) #update prev on forecast and round
-            current_forecast_row_df[account_row.Name] = account_set.accounts[
-                account_index
-            ].balance
-            current_forecast_row_df[account_set.accounts[account_index - 1].name] = (
-                0  # set curr on forecast to 0
-            )
-
-            cycle_payment_bal_aname = (
-                account_row.Name.split(":")[0] + ": Credit Billing Cycle Payment Bal"
-            )
-            current_forecast_row_df[cycle_payment_bal_aname] = 0
-
-            # print('advance_payment_amount:' + str(advance_payment_amount))
-            # print('interest_accrued_this_cycle:' + str(interest_accrued_this_cycle))
-
-            total_owed_before_accrual = account_set.accounts[account_index].balance
-            min_payment = AccountSet.determineMinPaymentAmount(
-                advance_payment_amount,
-                interest_accrued_this_cycle,
-                principal_due_this_cycle,
-                total_owed_before_accrual,
-                account_row.Minimum_Payment,
-            )
-
-            # print('min_payment:'+str(min_payment))
-            # print('current_forecast_row_df:')
-            # print(str(current_forecast_row_df.to_string()))
-
-            total_payment_due = min_payment  # - advance_payment_amount, now accounted for in determineMinPaymentAmount
+            total_payment_due = account.billing_state.remaining_minimum_payment_due()
             if total_payment_due <= 0:
-                payment_toward_prev = 0
-                payment_toward_curr = 0
-            else:
-                if current_prev_stmt_balance >= total_payment_due:
-                    payment_toward_prev = total_payment_due
-                    payment_toward_curr = 0
-                else:
-                    payment_toward_prev = current_prev_stmt_balance
-                    payment_toward_curr = total_payment_due - payment_toward_prev
+                continue
 
-            total_payment = payment_toward_prev + payment_toward_curr
-            if total_payment > 0:
-                account_set.executeTransaction(
-                    Account_From=primary_checking_account_name,
-                    Account_To=account_row.Name.split(":")[0],
-                    Amount=total_payment,
-                    minimum_payment_flag=True,
-                )
+            account_set.executeTransaction(
+                Account_From=primary_checking_account_name,
+                Account_To=account.name,
+                Amount=total_payment_due,
+                minimum_payment_flag=True,
+            )
 
-                curr_aname = account_row.Name.split(":")[0] + ": Curr Stmt Bal"
-                prev_aname = account_row.Name.split(":")[0] + ": Prev Stmt Bal"
-                # current_forecast_row_df[curr_aname] = round(account_set.accounts[account_index - 1].balance, 2)
-                # current_forecast_row_df[prev_aname] = round(account_set.accounts[account_index].balance, 2)
-                current_forecast_row_df[curr_aname] = account_set.accounts[
-                    account_index - 1
-                ].balance
-                current_forecast_row_df[prev_aname] = account_set.accounts[
-                    account_index
-                ].balance
-                check_acct_index = list(account_set.getAccounts().Name).index(
-                    primary_checking_account_name
-                )
-                # current_forecast_row_df[primary_checking_account_name] = round(account_set.accounts[check_acct_index].balance, 2)
-                current_forecast_row_df[primary_checking_account_name] = (
-                    account_set.accounts[check_acct_index].balance
-                )
+            projected_balances = account_set.getForecastAccountBalances(
+                include_debug_columns=True
+            )
+            for column_name, value in projected_balances.items():
+                if column_name in current_forecast_row_df.columns:
+                    current_forecast_row_df.loc[:, column_name] = value
 
-                memo_parts = []
-                if payment_toward_prev > 0:
-                    memo_parts.append(
-                        # f'CC MIN PAYMENT ({account_row.Name.split(":")[0]}: Prev Stmt Bal -${payment_toward_prev:.2f})'
-                        f'CC MIN PAYMENT ({account_row.Name.split(":")[0]}: Prev Stmt Bal -${payment_toward_prev})'
-                    )
-                if payment_toward_curr > 0:
-                    memo_parts.append(
-                        # f'CC MIN PAYMENT ({account_row.Name.split(":")[0]}: Curr Stmt Bal -${payment_toward_curr:.2f})'
-                        f'CC MIN PAYMENT ({account_row.Name.split(":")[0]}: Curr Stmt Bal -${payment_toward_curr})'
-                    )
-                if total_payment > 0:
-                    memo_parts.append(
-                        # f'CC MIN PAYMENT ({primary_checking_account_name} -${total_payment:.2f})'
-                        f"CC MIN PAYMENT ({primary_checking_account_name} -${total_payment})"
-                    )
-
-                md_split_semicolon = (
-                    current_forecast_row_df["Memo Directives"].iat[0].split(";")
-                )
-                md_split_semicolon = [md for md in md_split_semicolon if md]
-                md_split_semicolon += memo_parts
-                # md_split_semicolon.append(interest_md_text)
-                current_forecast_row_df["Memo Directives"] = "; ".join(
-                    md_split_semicolon
-                )
-            elif (
-                "CC MIN PAYMENT" in current_forecast_row_df["Memo Directives"]
-                or advance_payment_amount > 0
-            ):
-
-                new_prev_memo = f'CC MIN PAYMENT ALREADY MADE ({account_row.Name.split(":")[0]}: Prev Stmt Bal -$0.00)'
-                new_check_memo = f"CC MIN PAYMENT ALREADY MADE ({primary_checking_account_name} -$0.00)"
-                md_split_semicolon = (
-                    current_forecast_row_df["Memo Directives"].iat[0].split(";")
-                )
-                md_split_semicolon = [md for md in md_split_semicolon if md]
-                md_split_semicolon.append(new_prev_memo)
-                md_split_semicolon.append(new_check_memo)
-                current_forecast_row_df["Memo Directives"] = "; ".join(
-                    md_split_semicolon
-                )
-            # else:  there was no min payment, and one is not necessary now
-
-            # Clean up memo directives
-            memo_directives = [
-                md.strip()
-                for md in current_forecast_row_df["Memo Directives"].iat[0].split(";")
-                if md.strip()
+            memo_parts = [
+                f"CC MIN PAYMENT ({account.name}: Prev Stmt Bal -${total_payment_due})",
+                f"CC MIN PAYMENT ({primary_checking_account_name} -${total_payment_due})",
             ]
-            current_forecast_row_df["Memo Directives"] = "; ".join(memo_directives)
+            md_split_semicolon = (
+                current_forecast_row_df["Memo Directives"].iat[0].split(";")
+            )
+            md_split_semicolon = [md for md in md_split_semicolon if md]
+            md_split_semicolon += memo_parts
+            current_forecast_row_df.loc[:, "Memo Directives"] = "; ".join(
+                md_split_semicolon
+            )
+
+        memo_directives = [
+            md.strip()
+            for md in current_forecast_row_df["Memo Directives"].iat[0].split(";")
+            if md.strip()
+        ]
+        current_forecast_row_df.loc[:, "Memo Directives"] = "; ".join(
+            memo_directives
+        )
 
         log_stack_depth -= 1
         # print('current_forecast_row_df:')
@@ -4764,6 +4527,232 @@ class ForecastHandler:
         # log_in_color(logger, 'white', 'debug', str(d)+' EXIT _sync_account_set_w_forecast_day', log_stack_depth)
         return account_set
 
+    #TODO manual review of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row docstring
+    @classmethod
+    def _apply_credit_billing_state_delta_to_forecast_row(
+        cls,
+        forecast_df,
+        row_index,
+        account_set,
+        credit_account_name,
+        checking_account_name=None,
+        checking_delta=0,
+        current_statement_delta=0,
+        previous_statement_delta=0,
+        billing_cycle_payment_delta=0,
+        end_of_previous_cycle_delta=0,
+    ):
+        """
+        TODO one-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.
+
+        TODO multi-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.
+        TODO explain how ForecastHandler._apply_credit_billing_state_delta_to_forecast_row participates in this module.
+        TODO document important state, validation, or serialization behavior.
+
+        Parameters
+        ----------
+        forecast_df : object
+            TODO one-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.forecast_df.
+
+        row_index : object
+            TODO one-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.row_index.
+
+        account_set : object
+            TODO one-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.account_set.
+
+        credit_account_name : str
+            TODO one-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.credit_account_name.
+
+        checking_account_name : object
+            TODO one-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.checking_account_name.
+
+        checking_delta : float
+            TODO one-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.checking_delta.
+
+        current_statement_delta : float
+            TODO one-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.current_statement_delta.
+
+        previous_statement_delta : float
+            TODO one-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.previous_statement_delta.
+
+        billing_cycle_payment_delta : float
+            TODO one-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.billing_cycle_payment_delta.
+
+        end_of_previous_cycle_delta : float
+            TODO one-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.end_of_previous_cycle_delta.
+
+        Returns
+        -------
+        object
+            TODO one-line description of return value of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.
+
+        Contract
+        --------
+        - #TODO contract lines for ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.
+        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.
+
+        @interface-report: show
+        """
+        credit_account = next(
+            account
+            for account in account_set.accounts
+            if account.name == credit_account_name and account.account_type == "credit"
+        )
+        billing_state = credit_account.billing_state
+
+        current_statement_column = f"{credit_account.name}: Curr Stmt Bal"
+        previous_statement_column = f"{credit_account.name}: Prev Stmt Bal"
+        billing_cycle_payment_column = (
+            f"{credit_account.name}: Credit Billing Cycle Payment Bal"
+        )
+        end_of_previous_cycle_column = (
+            f"{credit_account.name}: Credit End of Prev Cycle Bal"
+        )
+
+        billing_state.current_statement_balance = AccountSet._money(
+            forecast_df.at[row_index, current_statement_column]
+        ) + AccountSet._money(current_statement_delta)
+        billing_state.previous_statement_balance = AccountSet._money(
+            forecast_df.at[row_index, previous_statement_column]
+        ) + AccountSet._money(previous_statement_delta)
+        billing_state.billing_cycle_payment_balance = AccountSet._money(
+            forecast_df.at[row_index, billing_cycle_payment_column]
+        ) + AccountSet._money(billing_cycle_payment_delta)
+        billing_state.end_of_previous_cycle_balance = AccountSet._money(
+            forecast_df.at[row_index, end_of_previous_cycle_column]
+        ) + AccountSet._money(end_of_previous_cycle_delta)
+
+        AccountSet._sync_debt_account_from_billing_state(credit_account)
+        projected_columns = AccountSet.getForecastColumnsForAccount(credit_account)
+        for column_name, value in projected_columns.items():
+            if column_name in forecast_df.columns:
+                forecast_df.at[row_index, column_name] = value
+
+        if checking_account_name is not None:
+            checking_account = next(
+                account
+                for account in account_set.accounts
+                if account.name == checking_account_name
+            )
+            checking_account.balance = AccountSet._money(
+                forecast_df.at[row_index, checking_account_name]
+            ) + AccountSet._money(checking_delta)
+            if getattr(checking_account, "billing_state", None) is not None:
+                checking_account.billing_state.balance = checking_account.balance
+            forecast_df.at[row_index, checking_account_name] = (
+                AccountSet._forecast_value(checking_account.balance)
+            )
+
+        return forecast_df
+
+    #TODO manual review of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row docstring
+    @classmethod
+    def _apply_loan_billing_state_delta_to_forecast_row(
+        cls,
+        forecast_df,
+        row_index,
+        account_set,
+        loan_account_name,
+        checking_account_name=None,
+        checking_delta=0,
+        principal_delta=0,
+        interest_delta=0,
+        billing_cycle_payment_delta=0,
+    ):
+        """
+        TODO one-line description of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.
+
+        TODO multi-line description of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.
+        TODO explain how ForecastHandler._apply_loan_billing_state_delta_to_forecast_row participates in this module.
+        TODO document important state, validation, or serialization behavior.
+
+        Parameters
+        ----------
+        forecast_df : object
+            TODO one-line description of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.forecast_df.
+
+        row_index : object
+            TODO one-line description of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.row_index.
+
+        account_set : object
+            TODO one-line description of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.account_set.
+
+        loan_account_name : str
+            TODO one-line description of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.loan_account_name.
+
+        checking_account_name : object
+            TODO one-line description of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.checking_account_name.
+
+        checking_delta : float
+            TODO one-line description of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.checking_delta.
+
+        principal_delta : float
+            TODO one-line description of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.principal_delta.
+
+        interest_delta : float
+            TODO one-line description of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.interest_delta.
+
+        billing_cycle_payment_delta : float
+            TODO one-line description of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.billing_cycle_payment_delta.
+
+        Returns
+        -------
+        object
+            TODO one-line description of return value of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.
+
+        Contract
+        --------
+        - #TODO contract lines for ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.
+        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.
+
+        @interface-report: show
+        """
+        loan_account = next(
+            account
+            for account in account_set.accounts
+            if account.name == loan_account_name and account.account_type == "loan"
+        )
+        billing_state = loan_account.billing_state
+
+        principal_column = f"{loan_account.name}: Principal Balance"
+        interest_column = f"{loan_account.name}: Interest"
+        billing_cycle_payment_column = (
+            f"{loan_account.name}: Loan Billing Cycle Payment Bal"
+        )
+
+        billing_state.principal_balance = AccountSet._money(
+            forecast_df.at[row_index, principal_column]
+        ) + AccountSet._money(principal_delta)
+        billing_state.interest_balance = AccountSet._money(
+            forecast_df.at[row_index, interest_column]
+        ) + AccountSet._money(interest_delta)
+        billing_state.billing_cycle_payment_balance = AccountSet._money(
+            forecast_df.at[row_index, billing_cycle_payment_column]
+        ) + AccountSet._money(billing_cycle_payment_delta)
+
+        AccountSet._sync_debt_account_from_billing_state(loan_account)
+        projected_columns = AccountSet.getForecastColumnsForAccount(loan_account)
+        for column_name, value in projected_columns.items():
+            if column_name in forecast_df.columns:
+                forecast_df.at[row_index, column_name] = value
+
+        if checking_account_name is not None:
+            checking_account = next(
+                account
+                for account in account_set.accounts
+                if account.name == checking_account_name
+            )
+            checking_account.balance = AccountSet._money(
+                forecast_df.at[row_index, checking_account_name]
+            ) + AccountSet._money(checking_delta)
+            if getattr(checking_account, "billing_state", None) is not None:
+                checking_account.billing_state.balance = checking_account.balance
+            forecast_df.at[row_index, checking_account_name] = (
+                AccountSet._forecast_value(checking_account.balance)
+            )
+
+        return forecast_df
+
     # @profile
     #TODO manual review of ForecastHandler._propagate_credit_txn_curr_only docstring
     @classmethod
@@ -5098,14 +5087,17 @@ class ForecastHandler:
                 # No adjustments needed
                 pass
 
-            # Update balances
-            future_rows_only_df.at[f_i, checking_account_name] += checking_delta
-            future_rows_only_df.at[f_i, credit_basename] += previous_stmt_delta
-            future_rows_only_df.at[
-                f_i, prev_stmt_bal_account_name
-            ] += previous_stmt_delta
-            future_rows_only_df.at[f_i, curr_stmt_bal_account_name] += curr_stmt_delta
-            future_rows_only_df.at[f_i, eopc_account_name] += eopc_delta
+            cls._apply_credit_billing_state_delta_to_forecast_row(
+                forecast_df=future_rows_only_df,
+                row_index=f_i,
+                account_set=account_set_before_p2_plus_txn,
+                credit_account_name=credit_basename,
+                checking_account_name=checking_account_name,
+                checking_delta=checking_delta,
+                current_statement_delta=curr_stmt_delta,
+                previous_statement_delta=previous_stmt_delta,
+                end_of_previous_cycle_delta=eopc_delta,
+            )
 
             # Clean and update memo directives
             if md_to_keep != []:
@@ -5260,10 +5252,14 @@ class ForecastHandler:
             date_iat = f_row["Date"]
             md_to_keep = []
 
-            # We need this value before updating other columns
-            future_rows_only_df.at[
-                f_i, current_cycle_payment_account_name
-            ] += billing_cycle_payment_delta
+            cls._apply_credit_billing_state_delta_to_forecast_row(
+                forecast_df=future_rows_only_df,
+                row_index=f_i,
+                account_set=account_set_before_p2_plus_txn,
+                credit_account_name=credit_basename,
+                billing_cycle_payment_delta=billing_cycle_payment_delta,
+            )
+            f_row = future_rows_only_df.loc[f_i]
 
             if date_iat == next_billing_date:
                 # At the next billing date, process memo directives
@@ -5408,12 +5404,17 @@ class ForecastHandler:
                     else:
                         md_to_keep.append(md)
 
-            # Update balances
-            future_rows_only_df.at[f_i, checking_account_name] += checking_delta
-            future_rows_only_df.at[f_i, curr_stmt_bal_account_name] += curr_stmt_delta
-            # future_rows_only_df.at[f_i, current_cycle_payment_account_name] += billing_cycle_payment_delta
-            future_rows_only_df.at[f_i, prev_stmt_bal_account_name] += prev_stmt_delta
-            future_rows_only_df.at[f_i, eopc_account_name] += eopc_delta
+            cls._apply_credit_billing_state_delta_to_forecast_row(
+                forecast_df=future_rows_only_df,
+                row_index=f_i,
+                account_set=account_set_before_p2_plus_txn,
+                credit_account_name=credit_basename,
+                checking_account_name=checking_account_name,
+                checking_delta=checking_delta,
+                current_statement_delta=curr_stmt_delta,
+                previous_statement_delta=prev_stmt_delta,
+                end_of_previous_cycle_delta=eopc_delta,
+            )
 
             # future_rows_only_df.at[f_i, checking_account_name] = round(future_rows_only_df.at[f_i, checking_account_name],2)
             # future_rows_only_df.at[f_i, curr_stmt_bal_account_name] = round(future_rows_only_df.at[f_i, curr_stmt_bal_account_name],2)
@@ -5605,8 +5606,14 @@ class ForecastHandler:
             date_iat = f_row["Date"]
             md_to_keep = []
 
-            # We need this value before updating other columns
-            future_rows_only_df.at[f_i, bcp_account_name] += billing_cycle_payment_delta
+            cls._apply_credit_billing_state_delta_to_forecast_row(
+                forecast_df=future_rows_only_df,
+                row_index=f_i,
+                account_set=account_set_before_p2_plus_txn,
+                credit_account_name=credit_basename,
+                billing_cycle_payment_delta=billing_cycle_payment_delta,
+            )
+            f_row = future_rows_only_df.loc[f_i]
 
             if f_i == 0:
                 previous_prev_stmt_bal = f_row[prev_stmt_bal_account_name]
@@ -5862,14 +5869,16 @@ class ForecastHandler:
 
             # log_in_color(logger, 'white', 'debug', str(date_iat)+' '+str(prev_stmt_bal_account_name)+' += '+str(previous_stmt_delta), log_stack_depth)
 
-            # Update balances
-            future_rows_only_df.at[f_i, checking_account_name] += checking_delta
-            future_rows_only_df.at[f_i, credit_basename] += previous_stmt_delta
-            future_rows_only_df.at[
-                f_i, prev_stmt_bal_account_name
-            ] += previous_stmt_delta
-
-            future_rows_only_df.at[f_i, eopc_account_name] += eopc_delta
+            cls._apply_credit_billing_state_delta_to_forecast_row(
+                forecast_df=future_rows_only_df,
+                row_index=f_i,
+                account_set=account_set_before_p2_plus_txn,
+                credit_account_name=credit_basename,
+                checking_account_name=checking_account_name,
+                checking_delta=checking_delta,
+                previous_statement_delta=previous_stmt_delta,
+                end_of_previous_cycle_delta=eopc_delta,
+            )
 
             # log_in_color(logger, 'cyan', 'debug', str(date_iat) + ' ' + checking_account_name + ' = ' + str(future_rows_only_df.at[f_i, checking_account_name]), log_stack_depth)
             # log_in_color(logger, 'cyan', 'debug', str(date_iat) + ' ' + prev_stmt_bal_account_name + ' = ' + str(future_rows_only_df.at[f_i, prev_stmt_bal_account_name]), log_stack_depth)
@@ -5983,10 +5992,11 @@ class ForecastHandler:
         interest_account_name = relevant_account_info_df[
             relevant_account_info_df.Account_Type == "interest"
         ].Name.iat[0]
+        loan_account_name = interest_account_name.split(":")[0]
         # Construct the principal balance account name based on the interest account name
-        pbal_account_name = interest_account_name.split(":")[0] + ": Principal Balance"
+        pbal_account_name = loan_account_name + ": Principal Balance"
         billing_cycle_payment_balance_account_name = (
-            interest_account_name.split(":")[0] + ": Loan Billing Cycle Payment Bal"
+            loan_account_name + ": Loan Billing Cycle Payment Bal"
         )
 
         # Get the APR for the principal balance account
@@ -6114,42 +6124,37 @@ class ForecastHandler:
                 # No adjustments needed for other dates
                 pass
 
-            # Apply daily interest accrual
+            interest_delta_to_apply = 0
             if int(date_iat) >= int(min(loan_billing_dates)):
                 if f_i == 0:
-                    # Set interest to the value after the transaction
-
-                    # this is the OG line, but I think this keeps the OG index so this fails
-                    # future_rows_only_df.at[f_i, interest_account_name] = post_txn_row_df.at[0, interest_account_name]
-                    # instead of reindexing (bc expensive) lets try this:
-                    future_rows_only_df.at[f_i, interest_account_name] = (
-                        post_txn_row_df.head(1)[interest_account_name].iat[0]
-                    )
+                    base_interest_balance = post_txn_row_df.head(1)[
+                        interest_account_name
+                    ].iat[0]
                 else:
-                    # Set interest equal to the previous day's interest
-                    future_rows_only_df.at[f_i, interest_account_name] = (
+                    base_interest_balance = (
                         future_rows_only_df.at[f_i - 1, interest_account_name]
                     )
 
-                # Calculate interest accrued on this day
                 pbal_balance = future_rows_only_df.at[f_i, pbal_account_name]
                 interest_accrued = pbal_balance * (apr / 365.25)
-
-                future_rows_only_df.at[f_i, interest_account_name] += interest_accrued
-                # future_rows_only_df.at[f_i, interest_account_name] = round(future_rows_only_df.at[f_i, interest_account_name],2)
-                future_rows_only_df.at[f_i, interest_account_name] = (
-                    future_rows_only_df.at[f_i, interest_account_name]
+                target_interest_balance = base_interest_balance + interest_accrued
+                interest_delta_to_apply = (
+                    target_interest_balance
+                    - future_rows_only_df.at[f_i, interest_account_name]
                 )
 
                 interest_delta = 0.0  # Reset interest delta to prevent accumulation
 
-            # Update balances
-            future_rows_only_df.at[f_i, checking_account_name] += checking_delta
-
-            # print(str(date_iat)+' SET '+str(billing_cycle_payment_balance_account_name)+' += '+str(billing_cycle_payment_delta)+' = '+str(future_rows_only_df.at[f_i, billing_cycle_payment_balance_account_name] + billing_cycle_payment_delta))
-            future_rows_only_df.at[
-                f_i, billing_cycle_payment_balance_account_name
-            ] += billing_cycle_payment_delta
+            cls._apply_loan_billing_state_delta_to_forecast_row(
+                forecast_df=future_rows_only_df,
+                row_index=f_i,
+                account_set=account_set_before_p2_plus_txn,
+                loan_account_name=loan_account_name,
+                checking_account_name=checking_account_name,
+                checking_delta=checking_delta,
+                interest_delta=interest_delta_to_apply,
+                billing_cycle_payment_delta=billing_cycle_payment_delta,
+            )
 
             # Clean and update memo directives
             md_to_keep = [md for md in md_to_keep if md]
@@ -6246,10 +6251,11 @@ class ForecastHandler:
         pbal_account_name = relevant_account_info_df[
             relevant_account_info_df.Account_Type == "principal balance"
         ].Name.iat[0]
+        loan_account_name = pbal_account_name.split(":")[0]
         # Construct the interest account name based on the principal balance account name
-        interest_account_name = pbal_account_name.split(":")[0] + ": Interest"
+        interest_account_name = loan_account_name + ": Interest"
         billing_cycle_payment_account_name = (
-            pbal_account_name.split(":")[0] + ": Loan Billing Cycle Payment Bal"
+            loan_account_name + ": Loan Billing Cycle Payment Bal"
         )
 
         # Get the APR for the principal balance account
@@ -6371,30 +6377,38 @@ class ForecastHandler:
                 # No adjustments needed for other dates
                 pass
 
-            # Update balances
-            future_rows_only_df.at[f_i, checking_account_name] += checking_delta
-            future_rows_only_df.at[f_i, pbal_account_name] += pbal_delta
-            future_rows_only_df.at[
-                f_i, billing_cycle_payment_account_name
-            ] += billing_cycle_payment_delta
-
-            # Apply daily interest accrual
+            interest_delta_to_apply = 0
             if int(date_iat) >= int(min(loan_billing_dates)):
+                principal_balance_after_delta = (
+                    future_rows_only_df.at[f_i, pbal_account_name] + pbal_delta
+                )
                 if f_i == 0:
-                    # Set interest to the value after the transaction
-                    future_rows_only_df.at[f_i, interest_account_name] = (
-                        post_txn_row_df.at[0, interest_account_name]
-                    )
+                    base_interest_balance = post_txn_row_df.at[
+                        0, interest_account_name
+                    ]
                 else:
-                    # Set interest equal to the previous day's interest
-                    future_rows_only_df.at[f_i, interest_account_name] = (
+                    base_interest_balance = (
                         future_rows_only_df.at[f_i - 1, interest_account_name]
                     )
 
-                # Calculate interest accrued on this day
-                pbal_balance = future_rows_only_df.at[f_i, pbal_account_name]
-                interest_accrued = pbal_balance * (apr / 365.25)
-                future_rows_only_df.at[f_i, interest_account_name] += interest_accrued
+                interest_accrued = principal_balance_after_delta * (apr / 365.25)
+                target_interest_balance = base_interest_balance + interest_accrued
+                interest_delta_to_apply = (
+                    target_interest_balance
+                    - future_rows_only_df.at[f_i, interest_account_name]
+                )
+
+            cls._apply_loan_billing_state_delta_to_forecast_row(
+                forecast_df=future_rows_only_df,
+                row_index=f_i,
+                account_set=account_set_before_p2_plus_txn,
+                loan_account_name=loan_account_name,
+                checking_account_name=checking_account_name,
+                checking_delta=checking_delta,
+                principal_delta=pbal_delta,
+                interest_delta=interest_delta_to_apply,
+                billing_cycle_payment_delta=billing_cycle_payment_delta,
+            )
 
             # Clean and update memo directives
             md_to_keep = [md for md in md_to_keep if md]
@@ -6500,6 +6514,7 @@ class ForecastHandler:
         pbal_account_name = relevant_account_info_df[
             relevant_account_info_df.Account_Type == "principal balance"
         ].Name.iat[0]
+        loan_account_name = pbal_account_name.split(":")[0]
         interest_account_name = relevant_account_info_df[
             relevant_account_info_df.Account_Type == "interest"
         ].Name.iat[0]
@@ -6682,44 +6697,39 @@ class ForecastHandler:
                 # No adjustments needed for other dates
                 pass
 
-            # Update balances
-            print(
-                str(checking_account_name)
-                + " "
-                + str(future_rows_only_df.at[f_i, checking_account_name])
-                + " += "
-                + str(checking_delta)
-                + " = "
-                + str(
-                    future_rows_only_df.at[f_i, checking_account_name] + checking_delta
-                )
-            )
-            future_rows_only_df.at[f_i, checking_account_name] += checking_delta
-            future_rows_only_df.at[f_i, pbal_account_name] += pbal_delta
-            future_rows_only_df.at[
-                f_i, billing_cycle_payment_balance_account_name
-            ] += billing_cycle_payment_delta
-
-            # Apply daily interest accrual
+            interest_delta_to_apply = 0
             if date_iat >= min(loan_billing_dates):
+                principal_balance_after_delta = (
+                    future_rows_only_df.at[f_i, pbal_account_name] + pbal_delta
+                )
                 if f_i == 0:
-                    # Set interest to the value after the transaction
-                    # future_rows_only_df.at[f_i, interest_account_name] = post_txn_row_df.at[0, interest_account_name]
-                    future_rows_only_df.at[f_i, interest_account_name] = (
-                        post_txn_row_df.head(1)[interest_account_name].iat[0]
-                    )
+                    base_interest_balance = post_txn_row_df.head(1)[
+                        interest_account_name
+                    ].iat[0]
                 else:
-                    # Set interest equal to the previous day's interest
-                    future_rows_only_df.at[f_i, interest_account_name] = (
+                    base_interest_balance = (
                         future_rows_only_df.at[f_i - 1, interest_account_name]
                     )
 
-                # Calculate interest accrued on this day
-                pbal_balance = future_rows_only_df.at[f_i, pbal_account_name]
-                interest_accrued = pbal_balance * (apr / 365.25)
-                future_rows_only_df.at[f_i, interest_account_name] += interest_accrued
-                # future_rows_only_df.at[f_i, interest_account_name] = round(future_rows_only_df.at[f_i, interest_account_name],2)
+                interest_accrued = principal_balance_after_delta * (apr / 365.25)
+                target_interest_balance = base_interest_balance + interest_accrued
+                interest_delta_to_apply = (
+                    target_interest_balance
+                    - future_rows_only_df.at[f_i, interest_account_name]
+                )
                 interest_delta = 0.0  # Reset interest delta to prevent accumulation
+
+            cls._apply_loan_billing_state_delta_to_forecast_row(
+                forecast_df=future_rows_only_df,
+                row_index=f_i,
+                account_set=account_set_before_p2_plus_txn,
+                loan_account_name=loan_account_name,
+                checking_account_name=checking_account_name,
+                checking_delta=checking_delta,
+                principal_delta=pbal_delta,
+                interest_delta=interest_delta_to_apply,
+                billing_cycle_payment_delta=billing_cycle_payment_delta,
+            )
 
             # Clean and update memo directives
             md_to_keep = [md for md in md_to_keep if md]
@@ -6882,10 +6892,14 @@ class ForecastHandler:
             date_iat = f_row["Date"]
             md_to_keep = []
 
-            # We need this value before updating other columns
-            future_rows_only_df.at[
-                f_i, billing_cycle_payment_account_name
-            ] += billing_cycle_payment_delta
+            cls._apply_credit_billing_state_delta_to_forecast_row(
+                forecast_df=future_rows_only_df,
+                row_index=f_i,
+                account_set=account_set_before_p2_plus_txn,
+                credit_account_name=credit_basename,
+                billing_cycle_payment_delta=billing_cycle_payment_delta,
+            )
+            f_row = future_rows_only_df.loc[f_i]
 
             if date_iat == next_billing_date:
                 # Handle next billing date
@@ -7241,17 +7255,17 @@ class ForecastHandler:
                 # No adjustments needed
                 pass
 
-            # Update balances
-            future_rows_only_df.at[f_i, checking_account_name] += checking_delta
-            future_rows_only_df.at[
-                f_i, credit_basename
-            ] += previous_stmt_delta + curr_stmt_delta
-            future_rows_only_df.at[
-                f_i, prev_stmt_bal_account_name
-            ] += previous_stmt_delta
-            future_rows_only_df.at[f_i, curr_stmt_bal_account_name] += curr_stmt_delta
-            # future_rows_only_df.at[f_i, billing_cycle_payment_account_name] += billing_cycle_payment_delta
-            future_rows_only_df.at[f_i, eopc_account_name] += eopc_delta
+            cls._apply_credit_billing_state_delta_to_forecast_row(
+                forecast_df=future_rows_only_df,
+                row_index=f_i,
+                account_set=account_set_before_p2_plus_txn,
+                credit_account_name=credit_basename,
+                checking_account_name=checking_account_name,
+                checking_delta=checking_delta,
+                current_statement_delta=curr_stmt_delta,
+                previous_statement_delta=previous_stmt_delta,
+                end_of_previous_cycle_delta=eopc_delta,
+            )
 
             # future_rows_only_df.at[f_i, checking_account_name] = round(future_rows_only_df.at[f_i, checking_account_name],2)
             # future_rows_only_df.at[f_i, prev_stmt_bal_account_name] = round(future_rows_only_df.at[f_i, prev_stmt_bal_account_name],2)
@@ -9093,6 +9107,32 @@ class ForecastHandler:
                 account_set = cls._sync_account_set_w_forecast_day(
                     account_set=account_set, forecast_df=forecast_df, d=d, log_stack_depth=log_stack_depth)
 
+                # log_in_color(logger, 'green', 'info', 'BEFORE cc min payment', log_stack_depth)
+                # log_in_color(logger, 'green', 'info', forecast_df.to_string(), log_stack_depth)
+
+                forecast_df.loc[forecast_df.Date == d] = (
+                    cls._updateEndOfPrevCycleBal(
+                        forecast_df=forecast_df,
+                        account_set=account_set,
+                        current_forecast_row_df=forecast_df[forecast_df.Date == d], log_stack_depth=log_stack_depth
+                    )
+                )
+
+                account_set = cls._sync_account_set_w_forecast_day(
+                    account_set=account_set, forecast_df=forecast_df, d=d, log_stack_depth=log_stack_depth)
+
+                # Execute credit card minimum payments before same-day transactions.
+                forecast_df.loc[forecast_df.Date == d] = (
+                    cls._executeCreditCardMinimumPayments(
+                        forecast_df=forecast_df,
+                        account_set=account_set,
+                        current_forecast_row_df=forecast_df[forecast_df.Date == d], log_stack_depth=log_stack_depth
+                    )
+                )
+
+                # log_in_color(logger, 'green', 'info', 'AFTER cc min payment', log_stack_depth)
+                # log_in_color(logger, 'green', 'info', forecast_df.to_string(), log_stack_depth)
+
                 # Execute transactions for the day, priority 1 (non-negotiable)
                 forecast_df, confirmed_df, deferred_df, skipped_df = (
                     cls._executeTransactionsForDay(
@@ -9114,37 +9154,6 @@ class ForecastHandler:
                         priority_level=1, log_stack_depth=log_stack_depth
                     )
                 )
-
-                # Sync account set after transactions
-                account_set = cls._sync_account_set_w_forecast_day(
-                    account_set=account_set, forecast_df=forecast_df, d=d, log_stack_depth=log_stack_depth
-                )
-
-                # log_in_color(logger, 'green', 'info', 'BEFORE cc min payment', log_stack_depth)
-                # log_in_color(logger, 'green', 'info', forecast_df.to_string(), log_stack_depth)
-
-                forecast_df.loc[forecast_df.Date == d] = (
-                    cls._updateEndOfPrevCycleBal(
-                        forecast_df=forecast_df,
-                        account_set=account_set,
-                        current_forecast_row_df=forecast_df[forecast_df.Date == d], log_stack_depth=log_stack_depth
-                    )
-                )
-
-                account_set = cls._sync_account_set_w_forecast_day(
-                    account_set=account_set, forecast_df=forecast_df, d=d, log_stack_depth=log_stack_depth)
-
-                # Execute credit card minimum payments
-                forecast_df.loc[forecast_df.Date == d] = (
-                    cls._executeCreditCardMinimumPayments(
-                        forecast_df=forecast_df,
-                        account_set=account_set,
-                        current_forecast_row_df=forecast_df[forecast_df.Date == d], log_stack_depth=log_stack_depth
-                    )
-                )
-
-                # log_in_color(logger, 'green', 'info', 'AFTER cc min payment', log_stack_depth)
-                # log_in_color(logger, 'green', 'info', forecast_df.to_string(), log_stack_depth)
 
                 # Final sync for the day
                 account_set = cls._sync_account_set_w_forecast_day(

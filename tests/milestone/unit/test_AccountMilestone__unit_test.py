@@ -11,12 +11,12 @@ class TestAccountMilestoneMethods:
 
     @pytest.mark.unit
     def test_AccountMilestone_constructor__invalid_inputs(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             AccountMilestone(
                 "Milestone_Name", "Account_Name", "X", 100
             )
 
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             AccountMilestone("Milestone_Name", "Account_Name", 0, "X")
 
     @pytest.mark.unit

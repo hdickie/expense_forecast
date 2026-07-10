@@ -111,36 +111,8 @@ class Account:
                 f"Account.apr should be None for account_type '{account_type}'"
             )
 
-    #TODO manual review of Account._validate_interest_interval docstring
     @staticmethod
     def _validate_interest_interval(account_type, interest_interval):
-        """
-        TODO one-line description of Account._validate_interest_interval.
-
-        TODO multi-line description of Account._validate_interest_interval.
-        TODO explain how Account._validate_interest_interval participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        account_type : object
-            TODO one-line description of Account._validate_interest_interval.account_type.
-
-        interest_interval : object
-            TODO one-line description of Account._validate_interest_interval.interest_interval.
-
-        Returns
-        -------
-        None
-            TODO one-line description of return value of Account._validate_interest_interval.
-
-        Contract
-        --------
-        - #TODO contract lines for Account._validate_interest_interval.
-        - #TODO document exceptions, mutations, and precision assumptions for Account._validate_interest_interval.
-
-        @interface-report: show
-        """
         account_types_that_require_interest_interval = [
             "credit",
             "loan",
@@ -155,36 +127,8 @@ class Account:
                 f"Account.interest_interval should be None for account_type '{account_type}'"
             )
 
-    #TODO manual review of Account._validate_interest_type docstring
     @staticmethod
     def _validate_interest_type(account_type, interest_type):
-        """
-        TODO one-line description of Account._validate_interest_type.
-
-        TODO multi-line description of Account._validate_interest_type.
-        TODO explain how Account._validate_interest_type participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        account_type : object
-            TODO one-line description of Account._validate_interest_type.account_type.
-
-        interest_type : object
-            TODO one-line description of Account._validate_interest_type.interest_type.
-
-        Returns
-        -------
-        None
-            TODO one-line description of return value of Account._validate_interest_type.
-
-        Contract
-        --------
-        - #TODO contract lines for Account._validate_interest_type.
-        - #TODO document exceptions, mutations, and precision assumptions for Account._validate_interest_type.
-
-        @interface-report: show
-        """
         if account_type in ["loan", "credit", "savings"] and interest_type is None:
             raise ValueError(
                 f"Account.interest_type is required for account_type '{account_type}'"
@@ -198,37 +142,8 @@ class Account:
                 f"Account.interest_type should be None for account_type '{account_type}'"
             )
 
-
-    #TODO manual review of Account._validate_primary_checking_ind docstring
     @staticmethod
     def _validate_primary_checking_ind(account_type, primary_checking_ind):
-        """
-        TODO one-line description of Account._validate_primary_checking_ind.
-
-        TODO multi-line description of Account._validate_primary_checking_ind.
-        TODO explain how Account._validate_primary_checking_ind participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        account_type : object
-            TODO one-line description of Account._validate_primary_checking_ind.account_type.
-
-        primary_checking_ind : object
-            TODO one-line description of Account._validate_primary_checking_ind.primary_checking_ind.
-
-        Returns
-        -------
-        None
-            TODO one-line description of return value of Account._validate_primary_checking_ind.
-
-        Contract
-        --------
-        - #TODO contract lines for Account._validate_primary_checking_ind.
-        - #TODO document exceptions, mutations, and precision assumptions for Account._validate_primary_checking_ind.
-
-        @interface-report: show
-        """
         if account_type != 'checking' and primary_checking_ind is not None:
             raise ValueError(
                 f"Account.primary_checking_ind should be None for account_type '{account_type}'"
@@ -240,36 +155,8 @@ class Account:
         elif account_type == 'checking' and primary_checking_ind is not None:
             assert isinstance(primary_checking_ind,bool)
 
-    #TODO manual review of Account._validate_billing_state docstring
     @staticmethod
     def _validate_billing_state(account_type, billing_state):
-        """
-        TODO one-line description of Account._validate_billing_state.
-
-        TODO multi-line description of Account._validate_billing_state.
-        TODO explain how Account._validate_billing_state participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        account_type : object
-            TODO one-line description of Account._validate_billing_state.account_type.
-
-        billing_state : object
-            TODO one-line description of Account._validate_billing_state.billing_state.
-
-        Returns
-        -------
-        None
-            TODO one-line description of return value of Account._validate_billing_state.
-
-        Contract
-        --------
-        - #TODO contract lines for Account._validate_billing_state.
-        - #TODO document exceptions, mutations, and precision assumptions for Account._validate_billing_state.
-
-        @interface-report: show
-        """
         if account_type == "credit":
             assert isinstance(billing_state, CreditCardBillingState)
         elif account_type == "loan":
@@ -283,58 +170,68 @@ class Account:
                 f"Account.billing_state should not be None"
             )
 
-    #TODO manual review of Account.__init__ docstring
-    def __init__(self, name, balance, min_balance, max_balance, account_type, **kwargs):
+    @staticmethod
+    def _validate_account_name(account_name):
+        assert ';' not in account_name
+        # TODO DEFER enforce max length
+
+    def __init__(self, 
+                 name: str, 
+                 balance: float, 
+                 min_balance: float, 
+                 max_balance: float, 
+                 account_type: str, 
+                 billing_state: CheckingBillingState | CreditCardBillingState | LoanBillingState):
         # checking, credit, principal balance, interest, investment
         # parameters are expected to be correctly typed. wont cast but will error
 
         """
-        TODO one-line description of Account.__init__.
+        Initialize an Account.
 
-        TODO multi-line description of Account.__init__.
-        TODO explain how Account.__init__ participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        Create a new Account from its identifying information and current state.
+        The constructor establishes the immutable characteristics of the account
+        (e.g., identifier, account type, and configuration) together with the
+        mutable state required for forecasting.
+
+        Billing-related state is provided through the BillingState abstraction
+        rather than individual billing parameters. This ensures there is a single
+        authoritative representation of the account's billing status and avoids
+        ambiguous construction semantics.
+
+        The constructor performs any validation necessary to establish the class
+        invariants. Once successfully constructed, the Account should represent a
+        self-consistent financial entity that can participate in forecast
+        execution, serialization, comparison, and state transitions.
 
         Parameters
         ----------
         name : str
-            TODO one-line description of Account.__init__.name.
+            Name of account.
 
         balance : float
-            TODO one-line description of Account.__init__.balance.
+            Balance of account. Credit and Loan types use non-negative numbers.
 
         min_balance : float
-            TODO one-line description of Account.__init__.min_balance.
+            Minimum legal balance of account. Infinity not allowed.
 
         max_balance : float
-            TODO one-line description of Account.__init__.max_balance.
+            Maximum legal balance of account. Infinity is allowed.
 
-        account_type : object
-            TODO one-line description of Account.__init__.account_type.
+        account_type : str
+            One of: checking, credit, loan. Case-insensitive.
 
-        **kwargs : dict
-            TODO one-line description of Account.__init__.kwargs.
+        billing_state: CheckingBillingState | CreditCardBillingState | LoanBillingState 
+            A billing state object appropriate for the type of account.
 
         Returns
         -------
         None
-            TODO one-line description of return value of Account.__init__.
-
-        Contract
-        --------
-        - #TODO contract lines for Account.__init__.
-        - #TODO document exceptions, mutations, and precision assumptions for Account.__init__.
 
         @interface-report: show
         """
-        allowed_kwargs = ['billing_start_date', 'interest_type',  'interest_interval', 'apr',
-                          'primary_checking_ind', 'billing_state']
-        for key in kwargs:
-            if key not in allowed_kwargs:
-                raise TypeError(f"Unexpected keyword argument '{key}'")
 
         self.name = name
-        # self._validate_account_name(account_type, self.name)
+        self._validate_account_name(self.name) 
 
         self.balance = balance
         self.min_balance = min_balance
@@ -343,7 +240,7 @@ class Account:
         self.account_type = account_type
         self._validate_account_type(self.account_type)
 
-        self.billing_state = kwargs.get('billing_state', None)
+        self.billing_state = billing_state
         self._validate_billing_state(self.account_type, self.billing_state)
         self._validate_balances(self.min_balance, self.balance, self.max_balance, self.billing_state)
 
@@ -354,57 +251,18 @@ class Account:
         self.minimum_payment = getattr(self.billing_state, "minimum_payment", None)
         self.primary_checking_ind = getattr(self.billing_state, "is_primary", None)
 
-    #TODO manual review of Account.to_json docstring
+
     def to_json(self):
         """
-        TODO one-line description of Account.to_json.
-
-        TODO multi-line description of Account.to_json.
-        TODO explain how Account.to_json participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        None
-            TODO confirm that Account.to_json takes no parameters beyond self/cls.
-
-        Returns
-        -------
-        str
-            TODO one-line description of return value of Account.to_json.
-
-        Contract
-        --------
-        - #TODO contract lines for Account.to_json.
-        - #TODO document exceptions, mutations, and precision assumptions for Account.to_json.
+        Returns json string.
 
         @interface-report: show
         """
         return jsonpickle.encode(self, indent=4)
 
-    #TODO manual review of Account.__str__ docstring
     def __str__(self):
         """
-        TODO one-line description of Account.__str__.
-
-        TODO multi-line description of Account.__str__.
-        TODO explain how Account.__str__ participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        None
-            TODO confirm that Account.__str__ takes no parameters beyond self/cls.
-
-        Returns
-        -------
-        str
-            TODO one-line description of return value of Account.__str__.
-
-        Contract
-        --------
-        - #TODO contract lines for Account.__str__.
-        - #TODO document exceptions, mutations, and precision assumptions for Account.__str__.
+        Returns human-readable string represensation of Account.
 
         @interface-report: show
         """
@@ -423,10 +281,3 @@ class Account:
                 "Primary_Checking_Ind": [self.primary_checking_ind],
             }
         ).to_string()
-
-
-# written in one line so that test coverage can reach 100%
-if __name__ == "__main__":
-    import doctest
-
-    doctest.testmod()

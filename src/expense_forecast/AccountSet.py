@@ -74,10 +74,12 @@ class AccountSet:
     class
     """
 
+    ROUNDING_ERROR_TOLERANCE = 0.0000000001
+
     @staticmethod
     def _money(value):
         """
-        TODO one-line description of _money. #Codex-write-doctstring-OK
+        TODO DEFER one-line description of _money. #Codex-write-doctstring-OK
 
         @interface-report: ignore
         """
@@ -86,7 +88,7 @@ class AccountSet:
     @staticmethod
     def _dict_value(value):
         """
-        TODO one-line description of _dict_value. #Codex-write-doctstring-OK
+        TODO DEFER one-line description of _dict_value. #Codex-write-doctstring-OK
 
         @interface-report: ignore
         """
@@ -99,7 +101,7 @@ class AccountSet:
     @staticmethod
     def _forecast_value(value):
         """
-        TODO one-line description of _forecast_value. #Codex-write-doctstring-OK
+        TODO DEFER one-line description of _forecast_value. #Codex-write-doctstring-OK
 
         @interface-report: ignore
         """
@@ -107,14 +109,9 @@ class AccountSet:
             return float(value)
         return value
 
-
-    ROUNDING_ERROR_TOLERANCE = 0.0000000001
-
     @staticmethod
     def _normalize_billing_start_date(value):
         """
-        TODO one-line description of _normalize_billing_start_date. #Codex-write-doctstring-OK
-
         @interface-report: ignore
         """
         if pd.isnull(value):
@@ -127,118 +124,11 @@ class AccountSet:
             return value
         return value
 
-    #TODO manual review of AccountSet.determineMinPaymentAmount docstring
-    @staticmethod
-    def determineMinPaymentAmount(
-            advance_payment_amount,
-            interest_accrued_this_cycle,
-            principal_due_this_cycle,
-            total_balance,
-            min_payment,
-    ):
-        """
-        TODO one-line description of determineMinPaymentAmount.
-
-        TODO multi-line description of determineMinPaymentAmount.
-        TODO explain how AccountSet.determineMinPaymentAmount participates in account
-        TODO state management, forecasting, validation, or serialization.
-
-        Parameters
-        ----------
-        advance_payment_amount : float
-            TODO one-line description of determineMinPaymentAmount.advance_payment_amount.
-
-        interest_accrued_this_cycle : float
-            TODO one-line description of determineMinPaymentAmount.interest_accrued_this_cycle.
-
-        principal_due_this_cycle : float
-            TODO one-line description of determineMinPaymentAmount.principal_due_this_cycle.
-
-        total_balance : float
-            TODO one-line description of determineMinPaymentAmount.total_balance.
-
-        min_payment : float
-            TODO one-line description of determineMinPaymentAmount.min_payment.
-
-        Returns
-        -------
-        float
-            TODO one-line description of return value of determineMinPaymentAmount.
-
-        Contract
-        --------
-        - #TODO contract lines for determineMinPaymentAmount.
-        - #TODO document exceptions, mutations, and precision assumptions for determineMinPaymentAmount.
-
-        @interface-report: show
-        """
-        # log_in_color(logger, 'white', 'debug', 'ENTER determineMinPaymentAmount', self.log_stack_depth)
-        # self.log_stack_depth += 1
-        # print(f"determineMinPaymentAmount({advance_payment_amount}, {interest_accrued_this_cycle}, {principal_due_this_cycle}, {total_balance}, {min_payment})")
-
-        Advance = advance_payment_amount
-        Interest = interest_accrued_this_cycle
-        Principal = principal_due_this_cycle
-        Total = total_balance
-        Minimum = min_payment
-
-        amount_due = 0 #setting this 0 instead of None to make type checker happy
-
-        if Advance > Total:
-            Advance = Total
-
-        M_prime = max(0, Minimum - Advance)
-        P_prime = max(0, Principal - Advance)
-        T_prime = Total - Advance
-
-        Sum_1 = P_prime + Interest
-
-        if Interest + Principal == 0:
-            return 0
-
-        if Sum_1 >= M_prime:
-            return Sum_1
-
-        if Sum_1 < M_prime and Total >= M_prime:
-            return M_prime
-
-        if Sum_1 < M_prime and T_prime < M_prime:
-            return T_prime
-
-        # print('FINAL ANSWER: '+str(amount_due))
-        return amount_due
-
-    ### I think this never got used
-    # def isSufficientToBeginForecast(self):
-    #     accounts_df = self.getAccounts()
-    #     AccountSet._validate_one_and_only_one_primary_checking_account(accounts_df)
-
-    #TODO manual review of AccountSet._validate_one_and_only_one_primary_checking_account docstring
+    #TODO this doesn't seem like it should take a df as input
     @staticmethod
     def _validate_one_and_only_one_primary_checking_account(accounts_df):
         """
-        TODO one-line description of _validate_one_and_only_one_primary_checking_account.
-
-        TODO multi-line description of _validate_one_and_only_one_primary_checking_account.
-        TODO explain how AccountSet._validate_one_and_only_one_primary_checking_account participates in account
-        TODO state management, forecasting, validation, or serialization.
-
-        Parameters
-        ----------
-        accounts_df : pd.DataFrame
-            TODO one-line description of _validate_one_and_only_one_primary_checking_account.accounts_df.
-
-        Returns
-        -------
-        None
-            TODO one-line description of return value of _validate_one_and_only_one_primary_checking_account.
-
-        Contract
-        --------
-        - #TODO contract lines for _validate_one_and_only_one_primary_checking_account.
-        - #TODO document exceptions, mutations, and precision assumptions for _validate_one_and_only_one_primary_checking_account.
-
-        @interface-report: show
+        @interface-report: ignore
         """
         checking_accounts_df = accounts_df[accounts_df.Account_Type == "checking"]
         primary_checking_accounts_df = checking_accounts_df[
@@ -248,39 +138,28 @@ class AccountSet:
         if primary_checking_accounts_df.shape[0] != 1:
             raise ValueError("AccountSet must have one and only one primary checking account")
 
+    #TODO this doesn't seem like it should take a df as input
     @staticmethod
     def _validate_unique_names(accounts_df):
         """
-        TODO one-line description of _validate_unique_names. #Codex-write-doctstring-OK
-
         @interface-report: ignore
         """
-        # TODO write a descriptive value error instead of assertion error
-        assert len(accounts_df.Name) == len(set(accounts_df.Name)) #Account Names must be unique
+        if len(accounts_df.Name) != len(set(accounts_df.Name)):
+            # TODO identify duplicated account name and include it in error message
+            raise ValueError("Account names must be unique within AccountSet")
 
-    #TODO manual review of AccountSet.__init__ docstring
     def __init__(self, accounts_list=None):
         """
-        TODO one-line description of __init__.
-
-        TODO multi-line description of __init__.
-        TODO explain how AccountSet.__init__ participates in account
-        TODO state management, forecasting, validation, or serialization.
+        Initialize an AccountSet, optionally accepting a list of Account objects
+        to initialize as non-empty.
 
         Parameters
         ----------
         accounts_list : list[Account] | None
-            TODO one-line description of __init__.accounts_list.
 
         Returns
         -------
         None
-            TODO one-line description of return value of __init__.
-
-        Contract
-        --------
-        - #TODO contract lines for __init__.
-        - #TODO document exceptions, mutations, and precision assumptions for __init__.
 
         @interface-report: show
         """
@@ -301,7 +180,7 @@ class AccountSet:
 
     def __str__(self):
         """
-        TODO one-line description of __str__. #Codex-write-doctstring-OK
+        TODO DEFER one-line description of __str__. #Codex-write-doctstring-OK
 
         @interface-report: show
         """
