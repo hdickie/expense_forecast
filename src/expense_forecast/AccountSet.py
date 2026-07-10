@@ -1,35 +1,3 @@
-# TODO manual review of AccountSet module docstring
-"""
-Core account state abstractions.
-
-This module defines the AccountSet type and related functionality used
-throughout the expense forecast engine.
-
-The forecast engine models financial state as a sequence of immutable
-snapshots. Each snapshot is represented by an AccountSet, which contains
-the balances and metadata for every account participating in the forecast
-at a particular instant in simulated time.
-
-AccountSets are intentionally domain-oriented rather than persistence-
-oriented. They provide operations for querying, serialization,
-comparison, arithmetic, and copying while remaining independent of user
-interfaces, storage backends, and forecasting algorithms.
-
-Other components of the system, including budget rules, memo rules,
-forecast execution, milestone transitions, optimization routines, and UI
-presentation, consume and produce AccountSets without depending on their
-internal representation.
-
-Design Goals
-------------
-- Represent financial state as a single coherent object.
-- Provide deterministic behavior suitable for forecasting.
-- Support serialization for persistence and reproducibility.
-- Support arithmetic and comparison operations where semantically valid.
-- Keep business semantics separate from presentation concerns.
-- Minimize coupling to storage and framework code.
-"""
-
 from .Account import Account
 from .CheckingBillingState import CheckingBillingState
 from .CreditCardBillingState import CreditCardBillingState
@@ -58,7 +26,6 @@ class AccountBoundaryError(ValueError):
     pass
 
 
-#TODO manual review of AccountSet class docstring
 class AccountSet:
     """
     Represents the complete financial state of a forecast at a single
@@ -66,8 +33,8 @@ class AccountSet:
 
     An AccountSet is the primary state object manipulated by the forecast
     engine. It contains every account that participates in a scenario,
-    including cash accounts, debts, investments, and any other supported
-    account types.
+    including cash accounts, credit card debt, loan debt and
+    (planned for future release) investments.
 
     Rather than reasoning about individual balances in isolation, most
     forecasting operations transform one AccountSet into another. This
@@ -87,9 +54,9 @@ class AccountSet:
     ----------
     - Every account identifier is unique.
     - Every contained account is valid.
-    - Account ordering has no semantic meaning unless explicitly stated.
-    - Equivalent financial states compare as equal regardless of
-      implementation details that do not affect forecasting.
+    - Account ordering has no semantic meaning.
+    - Equivalent financial states compare as equal based on balances 
+    alone.
 
     Relationships
     -------------
@@ -102,68 +69,26 @@ class AccountSet:
     -----
     This class models domain concepts rather than persistence concerns.
     JSON serialization, database storage, and UI rendering are supported
-    by the class but are not its primary purpose.
-
-    Future versions may extend AccountSet with additional account
-    metadata, derived values, or cached computations while preserving
-    its public interface and semantic behavior.
+    by the class but are not its primary purpose. 
+    TODO DEFER i think IO / should probably be pulled out into another 
+    class
     """
 
-    #TODO manual review of AccountSet._money docstring
     @staticmethod
     def _money(value):
         """
-        TODO one-line description of _money.
+        TODO one-line description of _money. #Codex-write-doctstring-OK
 
-        TODO multi-line description of _money.
-        TODO explain how AccountSet._money participates in account
-        TODO state management, forecasting, validation, or serialization.
-
-        Parameters
-        ----------
-        value : object
-            TODO one-line description of _money.value.
-
-        Returns
-        -------
-        Decimal
-            TODO one-line description of return value of _money.
-
-        Contract
-        --------
-        - #TODO contract lines for _money.
-        - #TODO document exceptions, mutations, and precision assumptions for _money.
-
-        @interface-report: show
+        @interface-report: ignore
         """
         return Decimal(str(value))
 
-    #TODO manual review of AccountSet._dict_value docstring
     @staticmethod
     def _dict_value(value):
         """
-        TODO one-line description of _dict_value.
+        TODO one-line description of _dict_value. #Codex-write-doctstring-OK
 
-        TODO multi-line description of _dict_value.
-        TODO explain how AccountSet._dict_value participates in account
-        TODO state management, forecasting, validation, or serialization.
-
-        Parameters
-        ----------
-        value : object
-            TODO one-line description of _dict_value.value.
-
-        Returns
-        -------
-        object
-            TODO one-line description of return value of _dict_value.
-
-        Contract
-        --------
-        - #TODO contract lines for _dict_value.
-        - #TODO document exceptions, mutations, and precision assumptions for _dict_value.
-
-        @interface-report: show
+        @interface-report: ignore
         """
         if isinstance(value, Decimal):
             return float(value)
@@ -171,32 +96,12 @@ class AccountSet:
             return value.isoformat()
         return value
 
-    #TODO manual review of AccountSet._forecast_value docstring
     @staticmethod
     def _forecast_value(value):
         """
-        TODO one-line description of _forecast_value.
+        TODO one-line description of _forecast_value. #Codex-write-doctstring-OK
 
-        TODO multi-line description of _forecast_value.
-        TODO explain how AccountSet._forecast_value participates in account
-        TODO state management, forecasting, validation, or serialization.
-
-        Parameters
-        ----------
-        value : object
-            TODO one-line description of _forecast_value.value.
-
-        Returns
-        -------
-        object
-            TODO one-line description of return value of _forecast_value.
-
-        Contract
-        --------
-        - #TODO contract lines for _forecast_value.
-        - #TODO document exceptions, mutations, and precision assumptions for _forecast_value.
-
-        @interface-report: show
+        @interface-report: ignore
         """
         if isinstance(value, Decimal):
             return float(value)
@@ -205,32 +110,12 @@ class AccountSet:
 
     ROUNDING_ERROR_TOLERANCE = 0.0000000001
 
-    #TODO manual review of AccountSet._normalize_billing_start_date docstring
     @staticmethod
     def _normalize_billing_start_date(value):
         """
-        TODO one-line description of _normalize_billing_start_date.
+        TODO one-line description of _normalize_billing_start_date. #Codex-write-doctstring-OK
 
-        TODO multi-line description of _normalize_billing_start_date.
-        TODO explain how AccountSet._normalize_billing_start_date participates in account
-        TODO state management, forecasting, validation, or serialization.
-
-        Parameters
-        ----------
-        value : object
-            TODO one-line description of _normalize_billing_start_date.value.
-
-        Returns
-        -------
-        date | None
-            TODO one-line description of return value of _normalize_billing_start_date.
-
-        Contract
-        --------
-        - #TODO contract lines for _normalize_billing_start_date.
-        - #TODO document exceptions, mutations, and precision assumptions for _normalize_billing_start_date.
-
-        @interface-report: show
+        @interface-report: ignore
         """
         if pd.isnull(value):
             return None
@@ -363,33 +248,14 @@ class AccountSet:
         if primary_checking_accounts_df.shape[0] != 1:
             raise ValueError("AccountSet must have one and only one primary checking account")
 
-    #TODO manual review of AccountSet._validate_unique_names docstring
     @staticmethod
     def _validate_unique_names(accounts_df):
         """
-        TODO one-line description of _validate_unique_names.
+        TODO one-line description of _validate_unique_names. #Codex-write-doctstring-OK
 
-        TODO multi-line description of _validate_unique_names.
-        TODO explain how AccountSet._validate_unique_names participates in account
-        TODO state management, forecasting, validation, or serialization.
-
-        Parameters
-        ----------
-        accounts_df : pd.DataFrame
-            TODO one-line description of _validate_unique_names.accounts_df.
-
-        Returns
-        -------
-        None
-            TODO one-line description of return value of _validate_unique_names.
-
-        Contract
-        --------
-        - #TODO contract lines for _validate_unique_names.
-        - #TODO document exceptions, mutations, and precision assumptions for _validate_unique_names.
-
-        @interface-report: show
+        @interface-report: ignore
         """
+        # TODO write a descriptive value error instead of assertion error
         assert len(accounts_df.Name) == len(set(accounts_df.Name)) #Account Names must be unique
 
     #TODO manual review of AccountSet.__init__ docstring
@@ -433,29 +299,9 @@ class AccountSet:
         #TODO set primary_checking_account_name ; unclear if this is still being used after Codex-powered refactors
         AccountSet._validate_unique_names(accounts_df)
 
-    #TODO manual review of AccountSet.__str__ docstring
     def __str__(self):
         """
-        TODO one-line description of __str__.
-
-        TODO multi-line description of __str__.
-        TODO explain how AccountSet.__str__ participates in account
-        TODO state management, forecasting, validation, or serialization.
-
-        Parameters
-        ----------
-        None
-            TODO confirm that __str__ takes no parameters beyond self/cls.
-
-        Returns
-        -------
-        str
-            TODO one-line description of return value of __str__.
-
-        Contract
-        --------
-        - #TODO contract lines for __str__.
-        - #TODO document exceptions, mutations, and precision assumptions for __str__.
+        TODO one-line description of __str__. #Codex-write-doctstring-OK
 
         @interface-report: show
         """

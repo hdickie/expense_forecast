@@ -1,17 +1,3 @@
-"""
-Summary
--------
-
-Description
------------
-
-Contract
---------
-
-@interface-report: show
-"""
-
-
 import datetime
 import pandas as pd
 import jsonpickle
@@ -23,6 +9,39 @@ from .CheckingBillingState import CheckingBillingState
 
 #TODO manual review of Account docstring
 class Account:
+    """
+    Represents a single financial account.
+
+    An Account models the current state of a single financial instrument,
+    asset, or liability. Examples include checking accounts, savings
+    accounts, credit cards, loans, investment accounts.
+
+    An Account encapsulates the data and behavior specific to one financial
+    entity. Collections of Accounts are managed by AccountSet, which
+    represents the complete financial state of a forecast.
+
+    Responsibilities
+    ----------------
+    - Store the state of a single financial account.
+    - Provide account-specific calculations and behaviors.
+    - Support serialization and deserialization.
+    - Define equality and arithmetic semantics where appropriate.
+    - Maintain invariants required by the forecasting engine.
+
+    Invariants
+    ----------
+    - The account identifier uniquely identifies the account within an
+      AccountSet.
+    - The account's state is internally consistent.
+    - Operations preserve the validity of the account.
+
+    Notes
+    -----
+    Account represents domain state rather than presentation or persistence.
+    It may be serialized to support storage and interchange, but its primary
+    purpose is to model a financial account and participate in forecast
+    calculations.
+    """
 
     # TODO this seems not to use billing_state appropriately
     """

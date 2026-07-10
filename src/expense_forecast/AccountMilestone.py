@@ -1,34 +1,48 @@
-"""
-Summary
--------
-
-Description
------------
-
-Contract
---------
-
-@interface-report: show
-"""
-
-
 import pandas as pd
 import jsonpickle
 
 
-#TODO manual review of AccountMilestone docstring
 class AccountMilestone:
     """
-    Summary
-    -------
+    Represents a financial condition which is satisfied by account balance
+    for one account staying within bounds from the milestone date to the
+    end of the forecast.
 
-    Description
-    -----------
+    An AccountMilestone evaluates one account value against a user-defined 
+    range of balances. When the condition becomes true, the milestone
+    is considered achieved and may trigger changes to forecast behavior.
 
-    Contract
+    AccountMilestones are intended to describe meaningful financial events
+    rather than specific dates. Examples include paying off a loan,
+    reaching a savings goal, accumulating a target investment balance, or
+    reducing a credit card below a specified threshold.
+
+    Responsibilities
+    ----------------
+    - Describe a financial milestone.
+    - Evaluate whether the milestone has been achieved.
+    - Expose milestone state to the forecasting engine.
+    - Support serialization and deserialization.
+
+    Examples
     --------
+    - Credit card balance reaches $0.
+    - Emergency fund exceeds $15,000.
+    - Investment portfolio reaches $500,000.
+    - Student loan principal falls below $10,000.
 
-    @interface-report: show
+    Invariants
+    ----------
+    - A milestone represents a declarative condition rather than an action.
+    - Evaluation depends only on the forecast state supplied to it.
+    - Identical financial states always produce identical evaluation
+      results.
+
+    Notes
+    -----
+    AccountMilestone determines *when* a significant financial condition
+    has been reached. The actions that occur after a milestone is achieved
+    are defined elsewhere by the forecasting engine.
     """
     #TODO manual review of AccountMilestone.__init__ docstring
     def __init__(self, Milestone_Name, Account_Name, Min_Balance, Max_Balance):
