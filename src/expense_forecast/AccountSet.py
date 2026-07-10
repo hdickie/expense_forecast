@@ -11,7 +11,7 @@ from expense_forecast.log_methods import setup_logger
 from .log_methods import log_in_color
 import logging
 import numpy as np
-from .BudgetSet import BudgetSet  # this could be refactored out, and should be in terms of independent dependencies and clear organization, but it works
+from .LineItemSet import BudgetSet  # this could be refactored out, and should be in terms of independent dependencies and clear organization, but it works
 import jsonpickle
 from .generate_date_sequence import generate_date_sequence
 

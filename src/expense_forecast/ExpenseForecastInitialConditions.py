@@ -25,7 +25,7 @@ import logging
 import copy
 from expense_forecast.log_methods import log_in_color
 from expense_forecast.AccountSet import AccountSet
-from expense_forecast.BudgetSet import BudgetSet
+from expense_forecast.LineItemSet import BudgetSet
 from expense_forecast.MemoRuleSet import MemoRuleSet
 from expense_forecast.MilestoneSet import MilestoneSet
 

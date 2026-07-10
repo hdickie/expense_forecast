@@ -1,7 +1,7 @@
 import pytest
 
 from expense_forecast.AccountSet import AccountSet
-from expense_forecast.BudgetSet import BudgetSet
+from expense_forecast.LineItemSet import BudgetSet
 from expense_forecast.MemoRuleSet import MemoRuleSet
 from expense_forecast.MilestoneSet import MilestoneSet
 from expense_forecast.ForecastHandler import ForecastHandler

@@ -1,7 +1,7 @@
 import pytest
 from datetime import date
 
-from expense_forecast.BudgetSet import BudgetSet
+from expense_forecast.LineItemSet import BudgetSet
 from expense_forecast.MemoRuleSet import MemoRuleSet
 from expense_forecast.MemoRule import MemoRule
 

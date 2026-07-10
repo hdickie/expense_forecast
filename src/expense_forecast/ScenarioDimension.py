@@ -27,7 +27,7 @@ Contract
 #     baseline: ForecastDefinition
 #     scenarios: list[Scenario]
 
-from expense_forecast.BudgetSet import BudgetSet
+from expense_forecast.LineItemSet import BudgetSet
 
 
 #TODO manual review of ScenarioDimension docstring

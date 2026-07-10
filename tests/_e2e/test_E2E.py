@@ -7,7 +7,7 @@ from pathlib import Path
 import tempfile
 
 from expense_forecast.AccountSet import AccountSet
-from expense_forecast.BudgetSet import BudgetSet
+from expense_forecast.LineItemSet import BudgetSet
 from expense_forecast.ExpenseForecastInitialConditions import ExpenseForecastInitialConditions
 from expense_forecast.SimulationStepper import SimulationStepper
 from expense_forecast.ExpenseForecastResult import ExpenseForecastResult

@@ -15,7 +15,7 @@ Contract
 #ScenarioSpace.py
 from expense_forecast.MemoRuleSet import MemoRuleSet
 from expense_forecast.ScenarioDimension import ScenarioDimension
-from expense_forecast.BudgetSet import BudgetSet
+from expense_forecast.LineItemSet import BudgetSet
 import pandas as pd
 
 #TODO manual review of ScenarioSpace docstring

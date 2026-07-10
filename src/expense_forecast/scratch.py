@@ -3,7 +3,7 @@
 from expense_forecast.ExpenseForecastInitialConditions import ExpenseForecastInitialConditions
 from expense_forecast.ForecastSetInitialConditions import ForecastSetInitialConditions
 from expense_forecast.AccountSet import AccountSet
-from expense_forecast.BudgetSet import BudgetSet
+from expense_forecast.LineItemSet import BudgetSet
 
 from expense_forecast.MilestoneTriggeredForecastTransition import MilestoneTriggeredForecastTransition
 

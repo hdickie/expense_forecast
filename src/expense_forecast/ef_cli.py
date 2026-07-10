@@ -27,7 +27,7 @@ from .log_methods import log_in_color
 import pandas as pd
 import psycopg2
 from .AccountSet import AccountSet
-from .BudgetSet import BudgetSet
+from .LineItemSet import BudgetSet
 from .MemoRuleSet import MemoRuleSet
 from .MilestoneSet import MilestoneSet
 import pandas as pd

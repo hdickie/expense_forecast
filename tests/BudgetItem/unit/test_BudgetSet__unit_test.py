@@ -1,8 +1,8 @@
 import pytest
 from datetime import date
 
-from expense_forecast.BudgetItem import BudgetItem
-from expense_forecast.BudgetSet import BudgetSet
+from expense_forecast.LineItem import BudgetItem
+from expense_forecast.LineItemSet import BudgetSet
 from expense_forecast.generate_date_sequence import generate_date_sequence
 
 def example_budget_item():

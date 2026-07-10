@@ -2,7 +2,7 @@
 CLASS / METHOD MATRIX
 ========================================================================================================================
 Class                                   	File                                                             	__add__   	__eq__    	__hash__  	__ne__    	__repr__  	__str__   	__sub__   	from_dict 	from_json 	to_dict   	to_json   	Probable tests
-Account                                 	src/expense_forecast/Account.py                                  	✅         	—         	—         	—         	—         	OK        	—         	—         	—         	—         	OK        	33
+Account                                 	src/expense_forecast/Account.py                                  	⬛         	—         	—         	—         	—         	OK        	—         	—         	—         	—         	OK        	33
 AccountMilestone                        	src/expense_forecast/AccountMilestone.py                         	—         	—         	—         	—         	—         	OK        	—         	—         	—         	—         	OK        	5
 AccountBoundaryError                    	src/expense_forecast/AccountSet.py                               	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	0
 AccountSet                              	src/expense_forecast/AccountSet.py                               	—         	—         	—         	—         	—         	OK        	—         	—         	—         	OK        	OK        	11
@@ -152,49 +152,49 @@ tests/milestone/unit/test_MemoMilestone__unit_test.py:15  TestMemoMilestoneMetho
 
 STUB METHODS
 ========================================================================================================================
-src/expense_forecast/AccountSet.py:617  AccountSet.executeTransaction
-src/expense_forecast/CreditCardBillingState.py:88  CreditCardBillingState.interest_accrued_this_cycle
-src/expense_forecast/ExpenseForecastInitialConditions.py:226  ExpenseForecastInitialConditions.__eq__
-src/expense_forecast/ExpenseForecastInitialConditions.py:232  ExpenseForecastInitialConditions.__hash__
-src/expense_forecast/ExpenseForecastInitialConditions.py:229  ExpenseForecastInitialConditions.__ne__
-src/expense_forecast/ExpenseForecastInitialConditions.py:440  ExpenseForecastInitialConditions.__repr__
-src/expense_forecast/ExpenseForecastInitialConditions.py:437  ExpenseForecastInitialConditions.__str__
-src/expense_forecast/ExpenseForecastInitialConditions.py:70  ExpenseForecastInitialConditions._account_set_from_dict
-src/expense_forecast/ExpenseForecastInitialConditions.py:362  ExpenseForecastInitialConditions._validate_swap_set_milestone_set_intersection
-src/expense_forecast/ExpenseForecastInitialConditions.py:445  ExpenseForecastInitialConditions.load_csv_file
-src/expense_forecast/ExpenseForecastInitialConditions.py:482  ExpenseForecastInitialConditions.load_database_tables
-src/expense_forecast/ExpenseForecastInitialConditions.py:486  ExpenseForecastInitialConditions.load_excel_file
-src/expense_forecast/ExpenseForecastInitialConditions.py:490  ExpenseForecastInitialConditions.load_pickle_file
-src/expense_forecast/ExpenseForecastInitialConditions.py:449  ExpenseForecastInitialConditions.load_xml_file
-src/expense_forecast/ExpenseForecastInitialConditions.py:494  ExpenseForecastInitialConditions.to_csv_string
-src/expense_forecast/ExpenseForecastInitialConditions.py:497  ExpenseForecastInitialConditions.to_xml_string
-src/expense_forecast/ExpenseForecastInitialConditions.py:504  ExpenseForecastInitialConditions.write_csv_file
-src/expense_forecast/ExpenseForecastInitialConditions.py:523  ExpenseForecastInitialConditions.write_database_tables
-src/expense_forecast/ExpenseForecastInitialConditions.py:526  ExpenseForecastInitialConditions.write_excel_file
-src/expense_forecast/ExpenseForecastInitialConditions.py:529  ExpenseForecastInitialConditions.write_pickle_file
-src/expense_forecast/ExpenseForecastInitialConditions.py:507  ExpenseForecastInitialConditions.write_xml_file
-src/expense_forecast/ExpenseForecastResult.py:46  ExpenseForecastResult.__eq__
-src/expense_forecast/ExpenseForecastResult.py:52  ExpenseForecastResult.__hash__
-src/expense_forecast/ExpenseForecastResult.py:49  ExpenseForecastResult.__ne__
-src/expense_forecast/ExpenseForecastResult.py:93  ExpenseForecastResult.__repr__
-src/expense_forecast/ExpenseForecastResult.py:90  ExpenseForecastResult.__str__
-src/expense_forecast/ExpenseForecastResult.py:98  ExpenseForecastResult.load_csv_file
-src/expense_forecast/ExpenseForecastResult.py:154  ExpenseForecastResult.load_database_tables
-src/expense_forecast/ExpenseForecastResult.py:158  ExpenseForecastResult.load_excel_file
-src/expense_forecast/ExpenseForecastResult.py:162  ExpenseForecastResult.load_pickle_file
-src/expense_forecast/ExpenseForecastResult.py:102  ExpenseForecastResult.load_xml_file
-src/expense_forecast/ExpenseForecastResult.py:166  ExpenseForecastResult.to_csv_string
-src/expense_forecast/ExpenseForecastResult.py:169  ExpenseForecastResult.to_xml_string
-src/expense_forecast/ExpenseForecastResult.py:192  ExpenseForecastResult.write_csv_file
-src/expense_forecast/ExpenseForecastResult.py:211  ExpenseForecastResult.write_database_tables
-src/expense_forecast/ExpenseForecastResult.py:214  ExpenseForecastResult.write_excel_file
-src/expense_forecast/ExpenseForecastResult.py:217  ExpenseForecastResult.write_pickle_file
-src/expense_forecast/ExpenseForecastResult.py:195  ExpenseForecastResult.write_xml_file
-src/expense_forecast/ForecastHandler.py:1634  ForecastHandler._calculate_reduced_amount
-src/expense_forecast/MilestoneConditionalAccountSetSwap.py:4  MilestoneConditionalAccountSetSwap.__init__
-src/expense_forecast/MilestoneConditionalAccountSetSwapSet.py:4  MilestoneConditionalAccountSetSwap.__init__
-src/expense_forecast/MilestoneConditionalBudgetSetSwapSet.py:5  MilestoneConditionalBudgetSetSwapSet.__init__
-src/expense_forecast/MilestoneConditionalMemoRuleSetSwap.py:4  MilestoneConditionalMemoRuleSetSwap.__init__
-src/expense_forecast/MilestoneConditionalMemoRuleSetSwapSet.py:4  MilestoneConditionalMemoRuleSetSwapSet.__init__
-src/expense_forecast/SavingsBillingState.py:42  SavingsBillingState.calculate_next_minimum_payment
-src/expense_forecast/ScenarioSpace.py:9  ScenarioSpace._validate_memo_rule_set_and_scenario_dimensions_are_compatible
+src/expense_forecast/AccountSet.py:1355  AccountSet.executeTransaction
+src/expense_forecast/CreditCardBillingState.py:196  CreditCardBillingState.interest_accrued_this_cycle
+src/expense_forecast/ExpenseForecastInitialConditions.py:516  ExpenseForecastInitialConditions.__eq__
+src/expense_forecast/ExpenseForecastInitialConditions.py:572  ExpenseForecastInitialConditions.__hash__
+src/expense_forecast/ExpenseForecastInitialConditions.py:544  ExpenseForecastInitialConditions.__ne__
+src/expense_forecast/ExpenseForecastInitialConditions.py:997  ExpenseForecastInitialConditions.__repr__
+src/expense_forecast/ExpenseForecastInitialConditions.py:969  ExpenseForecastInitialConditions.__str__
+src/expense_forecast/ExpenseForecastInitialConditions.py:248  ExpenseForecastInitialConditions._account_set_from_dict
+src/expense_forecast/ExpenseForecastInitialConditions.py:817  ExpenseForecastInitialConditions._validate_swap_set_milestone_set_intersection
+src/expense_forecast/ExpenseForecastInitialConditions.py:1027  ExpenseForecastInitialConditions.load_csv_file
+src/expense_forecast/ExpenseForecastInitialConditions.py:1164  ExpenseForecastInitialConditions.load_database_tables
+src/expense_forecast/ExpenseForecastInitialConditions.py:1193  ExpenseForecastInitialConditions.load_excel_file
+src/expense_forecast/ExpenseForecastInitialConditions.py:1222  ExpenseForecastInitialConditions.load_pickle_file
+src/expense_forecast/ExpenseForecastInitialConditions.py:1056  ExpenseForecastInitialConditions.load_xml_file
+src/expense_forecast/ExpenseForecastInitialConditions.py:1251  ExpenseForecastInitialConditions.to_csv_string
+src/expense_forecast/ExpenseForecastInitialConditions.py:1279  ExpenseForecastInitialConditions.to_xml_string
+src/expense_forecast/ExpenseForecastInitialConditions.py:1336  ExpenseForecastInitialConditions.write_csv_file
+src/expense_forecast/ExpenseForecastInitialConditions.py:1480  ExpenseForecastInitialConditions.write_database_tables
+src/expense_forecast/ExpenseForecastInitialConditions.py:1508  ExpenseForecastInitialConditions.write_excel_file
+src/expense_forecast/ExpenseForecastInitialConditions.py:1536  ExpenseForecastInitialConditions.write_pickle_file
+src/expense_forecast/ExpenseForecastInitialConditions.py:1364  ExpenseForecastInitialConditions.write_xml_file
+src/expense_forecast/ExpenseForecastResult.py:174  ExpenseForecastResult.__eq__
+src/expense_forecast/ExpenseForecastResult.py:230  ExpenseForecastResult.__hash__
+src/expense_forecast/ExpenseForecastResult.py:202  ExpenseForecastResult.__ne__
+src/expense_forecast/ExpenseForecastResult.py:352  ExpenseForecastResult.__repr__
+src/expense_forecast/ExpenseForecastResult.py:324  ExpenseForecastResult.__str__
+src/expense_forecast/ExpenseForecastResult.py:382  ExpenseForecastResult.load_csv_file
+src/expense_forecast/ExpenseForecastResult.py:613  ExpenseForecastResult.load_database_tables
+src/expense_forecast/ExpenseForecastResult.py:642  ExpenseForecastResult.load_excel_file
+src/expense_forecast/ExpenseForecastResult.py:671  ExpenseForecastResult.load_pickle_file
+src/expense_forecast/ExpenseForecastResult.py:411  ExpenseForecastResult.load_xml_file
+src/expense_forecast/ExpenseForecastResult.py:700  ExpenseForecastResult.to_csv_string
+src/expense_forecast/ExpenseForecastResult.py:728  ExpenseForecastResult.to_xml_string
+src/expense_forecast/ExpenseForecastResult.py:851  ExpenseForecastResult.write_csv_file
+src/expense_forecast/ExpenseForecastResult.py:995  ExpenseForecastResult.write_database_tables
+src/expense_forecast/ExpenseForecastResult.py:1023  ExpenseForecastResult.write_excel_file
+src/expense_forecast/ExpenseForecastResult.py:1051  ExpenseForecastResult.write_pickle_file
+src/expense_forecast/ExpenseForecastResult.py:879  ExpenseForecastResult.write_xml_file
+src/expense_forecast/ForecastHandler.py:2294  ForecastHandler._calculate_reduced_amount
+src/expense_forecast/MilestoneConditionalAccountSetSwap.py:32  MilestoneConditionalAccountSetSwap.__init__
+src/expense_forecast/MilestoneConditionalAccountSetSwapSet.py:32  MilestoneConditionalAccountSetSwap.__init__
+src/expense_forecast/MilestoneConditionalBudgetSetSwapSet.py:33  MilestoneConditionalBudgetSetSwapSet.__init__
+src/expense_forecast/MilestoneConditionalMemoRuleSetSwap.py:32  MilestoneConditionalMemoRuleSetSwap.__init__
+src/expense_forecast/MilestoneConditionalMemoRuleSetSwapSet.py:32  MilestoneConditionalMemoRuleSetSwapSet.__init__
+src/expense_forecast/SavingsBillingState.py:116  SavingsBillingState.calculate_next_minimum_payment
+src/expense_forecast/ScenarioSpace.py:37  ScenarioSpace._validate_memo_rule_set_and_scenario_dimensions_are_compatible

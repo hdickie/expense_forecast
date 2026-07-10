@@ -2,14 +2,14 @@ import unittest, pytest
 
 from expense_forecast.AccountMilestone import AccountMilestone
 from expense_forecast.AccountSet import AccountSet
-from expense_forecast.BudgetSet import BudgetSet
+from expense_forecast.LineItemSet import BudgetSet
 from expense_forecast.MemoRuleSet import MemoRuleSet
 from expense_forecast.ExpenseForecastInitialConditions import ExpenseForecastInitialConditions
 from expense_forecast.ExpenseForecastResult import ExpenseForecastResult
 import pandas as pd, numpy as np
 import datetime, logging
 import tempfile
-from expense_forecast.BudgetItem import BudgetItem
+from expense_forecast.LineItem import BudgetItem
 from expense_forecast.CompositeMilestone import CompositeMilestone
 from expense_forecast.ForecastHandler import ForecastHandler
 from expense_forecast.MemoMilestone import MemoMilestone
@@ -23,7 +23,7 @@ pd.options.mode.chained_assignment = (
 from expense_forecast.MilestoneSet import MilestoneSet
 from expense_forecast.log_methods import log_in_color
 from expense_forecast.Account import Account
-from expense_forecast.BudgetSet import BudgetSet
+from expense_forecast.LineItemSet import BudgetSet
 from expense_forecast.MemoRuleSet import MemoRuleSet
 import copy
 

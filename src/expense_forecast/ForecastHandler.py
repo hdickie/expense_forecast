@@ -13,7 +13,7 @@ Contract
 
 
 from expense_forecast.AccountSet import AccountBoundaryError, AccountSet
-from expense_forecast.BudgetSet import BudgetSet
+from expense_forecast.LineItemSet import BudgetSet
 # from expense_forecast.ForecastSetInitialConditions import ForecastSetInitialConditions
 from expense_forecast.MemoRuleSet import MemoRuleSet
 from expense_forecast.MilestoneSet import MilestoneSet

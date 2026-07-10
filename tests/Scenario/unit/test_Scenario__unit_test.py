@@ -1,6 +1,6 @@
 import pytest
 from expense_forecast.Scenario import Scenario
-from expense_forecast.BudgetSet import BudgetSet
+from expense_forecast.LineItemSet import BudgetSet
 from expense_forecast.ScenarioDimension import ScenarioDimension
 
 class TestForecastScenarioUnit:

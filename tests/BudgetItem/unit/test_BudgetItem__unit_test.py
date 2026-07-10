@@ -1,7 +1,7 @@
 import pytest
 from datetime import date
 
-from expense_forecast.BudgetItem import BudgetItem
+from expense_forecast.LineItem import BudgetItem
 
 
 class TestBudgetItemMethods:

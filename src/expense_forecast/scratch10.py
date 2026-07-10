@@ -1,11 +1,11 @@
 from .AccountSet import AccountSet
 from .ExpenseForecast import ExpenseForecast
 import pandas as pd
-from .BudgetItem import BudgetItem
+from .LineItem import BudgetItem
 from .MemoRule import MemoRule
 from .MilestoneSet import MilestoneSet
 from .Account import Account
-from .BudgetSet import BudgetSet
+from .LineItemSet import BudgetSet
 from .MemoRuleSet import MemoRuleSet
 
 from datetime import date
