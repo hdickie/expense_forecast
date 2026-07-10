@@ -1125,7 +1125,7 @@ def run(args):
                 + account_set_table_name
                 + " Select '"
                 + E.unique_id
-                + "', account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_cadence, minimum_payment, primary_checking_ind from "
+                + "', account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_interval, minimum_payment, primary_checking_ind from "
                 + temporary_account_set_table_name
             )
             cursor.execute(A_insert_q)
@@ -1142,7 +1142,7 @@ def run(args):
                 + budget_set_table_name
                 + " Select '"
                 + E.unique_id
-                + '\', memo, priority, start_date, end_date,  cadence, amount, "deferrable", partial_payment_allowed from '
+                + '\', memo, priority, start_date, end_date,  interval, amount, "deferrable", partial_payment_allowed from '
                 + temporary_budget_set_table_name
             )
             cursor.execute(B_insert_q)
@@ -1423,14 +1423,14 @@ def run(args):
             #         else:
             #             min_payment = str(row.Minimum_Payment)
             #
-            #         insert_account_row_q = "INSERT INTO " + account_set_table_name + " (forecast_id, account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_cadence, minimum_payment, primary_checking_ind) VALUES "
-            #         insert_account_row_q += "('"+str(E.unique_id)+"', '"+str(row.Name)+"', "+str(row.Balance)+", "+str(row.Min_Balance)+", "+str(row.Max_Balance)+", '"+str(row.Account_Type)+"', "+str(bsd)+", "+apr+", '"+str(row.Interest_Cadence)+"', "+min_payment+", '"+str(row.Primary_Checking_Ind)+"')"
+            #         insert_account_row_q = "INSERT INTO " + account_set_table_name + " (forecast_id, account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_interval, minimum_payment, primary_checking_ind) VALUES "
+            #         insert_account_row_q += "('"+str(E.unique_id)+"', '"+str(row.Name)+"', "+str(row.Balance)+", "+str(row.Min_Balance)+", "+str(row.Max_Balance)+", '"+str(row.Account_Type)+"', "+str(bsd)+", "+apr+", '"+str(row.Interest_interval)+"', "+min_payment+", '"+str(row.Primary_Checking_Ind)+"')"
             #         cursor.execute(insert_account_row_q)
             #
             #     cursor.execute("DELETE FROM " + budget_set_table_name + " WHERE forecast_id = \'" + str(E.unique_id) + "\'")
             #     for index, row in E.initial_budget_set.getBudgetItems().iterrows():
-            #         insert_budget_item_row_q = "INSERT INTO " + budget_set_table_name + " (forecast_id, memo, priority, start_date, end_date, cadence, amount, \"deferrable\", partial_payment_allowed) VALUES "
-            #         insert_budget_item_row_q += "('"+str(E.unique_id)+"','"+str(row.Memo)+"',"+str(row.Priority)+",'"+str(row.Start_Date)+"','"+str(row.End_Date)+"','"+str(row.Cadence)+"',"+str(row.Amount)+",'"+str(row.Deferrable)+"','"+str(row.Partial_Payment_Allowed)+"')"
+            #         insert_budget_item_row_q = "INSERT INTO " + budget_set_table_name + " (forecast_id, memo, priority, start_date, end_date, interval, amount, \"deferrable\", partial_payment_allowed) VALUES "
+            #         insert_budget_item_row_q += "('"+str(E.unique_id)+"','"+str(row.Memo)+"',"+str(row.Priority)+",'"+str(row.Start_Date)+"','"+str(row.End_Date)+"','"+str(row.interval)+"',"+str(row.Amount)+",'"+str(row.Deferrable)+"','"+str(row.Partial_Payment_Allowed)+"')"
             #         cursor.execute(insert_budget_item_row_q)
             #
             #     cursor.execute("DELETE FROM " + memo_rule_set_table_name + " WHERE forecast_id = \'" + str(E.unique_id) + "\'")

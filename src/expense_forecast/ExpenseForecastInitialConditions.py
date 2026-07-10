@@ -380,7 +380,7 @@ class ExpenseForecastInitialConditions:
                 start_date=cls._date_from_dict_value(budget_item["Start_Date"]),
                 end_date=cls._date_from_dict_value(budget_item["End_Date"]),
                 priority=budget_item["Priority"],
-                cadence=budget_item["Cadence"],
+                interval=budget_item["interval"],
                 amount=budget_item["Amount"],
                 memo=budget_item["Memo"],
                 income_flag=budget_item.get("Income_Flag", False),

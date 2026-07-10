@@ -7,7 +7,6 @@ from .LoanBillingState import LoanBillingState
 from .SavingsBillingState import SavingsBillingState
 from .CheckingBillingState import CheckingBillingState
 
-#TODO manual review of Account docstring
 class Account:
     """
     Represents a single financial account.
@@ -42,54 +41,23 @@ class Account:
     purpose is to model a financial account and participate in forecast
     calculations.
     """
-
-    # TODO this seems not to use billing_state appropriately
-    """
-    Summary
-    -------
-
-    Description
-    -----------
-
-    Contract
-    --------
-
-    @interface-report: show
-    """
-    #TODO manual review of Account._validate_balances docstring
+    
     @staticmethod
     def _validate_balances(min_balance, balance, max_balance, billing_state):
-        #validate that billing_state is consistent with balance, min_balance, max_balance ; was this added by an LLM? I don't recognize it and it not being used it worrying to me
         """
-        TODO one-line description of Account._validate_balances.
-
-        TODO multi-line description of Account._validate_balances.
-        TODO explain how Account._validate_balances participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        Validate that billing_state is consistent with balance, min_balance, 
+        max_balance, and that balances bounds are consistent with each other.
 
         Parameters
         ----------
         min_balance : float
-            TODO one-line description of Account._validate_balances.min_balance.
 
         balance : float
-            TODO one-line description of Account._validate_balances.balance.
 
         max_balance : float
-            TODO one-line description of Account._validate_balances.max_balance.
 
         billing_state : object
-            TODO one-line description of Account._validate_balances.billing_state.
-
-        Returns
-        -------
-        None
-            TODO one-line description of return value of Account._validate_balances.
-
-        Contract
-        --------
-        - #TODO contract lines for Account._validate_balances.
-        - #TODO document exceptions, mutations, and precision assumptions for Account._validate_balances.
+            One of: CheckingBillingState, CreditCardBillingState, LoanBillingState.
 
         @interface-report: show
         """
@@ -108,33 +76,10 @@ class Account:
                 f"Account.max_balance ({max_balance}) cannot be less than min_balance ({min_balance})"
             )
 
-    #TODO manual review of Account._validate_account_type docstring
+        # TODO DEFER validate sync with billing_state
+
     @staticmethod
     def _validate_account_type(account_type):
-        """
-        TODO one-line description of Account._validate_account_type.
-
-        TODO multi-line description of Account._validate_account_type.
-        TODO explain how Account._validate_account_type participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        account_type : object
-            TODO one-line description of Account._validate_account_type.account_type.
-
-        Returns
-        -------
-        None
-            TODO one-line description of return value of Account._validate_account_type.
-
-        Contract
-        --------
-        - #TODO contract lines for Account._validate_account_type.
-        - #TODO document exceptions, mutations, and precision assumptions for Account._validate_account_type.
-
-        @interface-report: show
-        """
         valid_account_types = [
             "checking",
             "credit",
@@ -147,36 +92,9 @@ class Account:
                 f"Invalid account_type: {account_type}. Must be one of {', '.join(valid_account_types)}"
             )
 
-    #TODO manual review of Account._validate_apr docstring
     @staticmethod
     def _validate_apr(account_type, apr):
-        """
-        TODO one-line description of Account._validate_apr.
-
-        TODO multi-line description of Account._validate_apr.
-        TODO explain how Account._validate_apr participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        account_type : object
-            TODO one-line description of Account._validate_apr.account_type.
-
-        apr : float
-            TODO one-line description of Account._validate_apr.apr.
-
-        Returns
-        -------
-        None
-            TODO one-line description of return value of Account._validate_apr.
-
-        Contract
-        --------
-        - #TODO contract lines for Account._validate_apr.
-        - #TODO document exceptions, mutations, and precision assumptions for Account._validate_apr.
-
-        @interface-report: show
-        """
+        
         account_types_that_require_apr = [
             "credit",
             "loan",
@@ -193,48 +111,48 @@ class Account:
                 f"Account.apr should be None for account_type '{account_type}'"
             )
 
-    #TODO manual review of Account._validate_interest_cadence docstring
+    #TODO manual review of Account._validate_interest_interval docstring
     @staticmethod
-    def _validate_interest_cadence(account_type, interest_cadence):
+    def _validate_interest_interval(account_type, interest_interval):
         """
-        TODO one-line description of Account._validate_interest_cadence.
+        TODO one-line description of Account._validate_interest_interval.
 
-        TODO multi-line description of Account._validate_interest_cadence.
-        TODO explain how Account._validate_interest_cadence participates in this module.
+        TODO multi-line description of Account._validate_interest_interval.
+        TODO explain how Account._validate_interest_interval participates in this module.
         TODO document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         account_type : object
-            TODO one-line description of Account._validate_interest_cadence.account_type.
+            TODO one-line description of Account._validate_interest_interval.account_type.
 
-        interest_cadence : object
-            TODO one-line description of Account._validate_interest_cadence.interest_cadence.
+        interest_interval : object
+            TODO one-line description of Account._validate_interest_interval.interest_interval.
 
         Returns
         -------
         None
-            TODO one-line description of return value of Account._validate_interest_cadence.
+            TODO one-line description of return value of Account._validate_interest_interval.
 
         Contract
         --------
-        - #TODO contract lines for Account._validate_interest_cadence.
-        - #TODO document exceptions, mutations, and precision assumptions for Account._validate_interest_cadence.
+        - #TODO contract lines for Account._validate_interest_interval.
+        - #TODO document exceptions, mutations, and precision assumptions for Account._validate_interest_interval.
 
         @interface-report: show
         """
-        account_types_that_require_interest_cadence = [
+        account_types_that_require_interest_interval = [
             "credit",
             "loan",
             "savings",
         ]
-        if account_type in account_types_that_require_interest_cadence and interest_cadence not in ['daily','monthly']:
+        if account_type in account_types_that_require_interest_interval and interest_interval not in ['daily','monthly']:
             raise ValueError(
-                f"Account.interest_cadence should be daily or monthly for account_type '{account_type}'"
+                f"Account.interest_interval should be daily or monthly for account_type '{account_type}'"
             )
-        elif account_type not in account_types_that_require_interest_cadence and interest_cadence is not None:
+        elif account_type not in account_types_that_require_interest_interval and interest_interval is not None:
             raise ValueError(
-                f"Account.interest_cadence should be None for account_type '{account_type}'"
+                f"Account.interest_interval should be None for account_type '{account_type}'"
             )
 
     #TODO manual review of Account._validate_interest_type docstring
@@ -409,7 +327,7 @@ class Account:
 
         @interface-report: show
         """
-        allowed_kwargs = ['billing_start_date', 'interest_type',  'interest_cadence', 'apr',
+        allowed_kwargs = ['billing_start_date', 'interest_type',  'interest_interval', 'apr',
                           'primary_checking_ind', 'billing_state']
         for key in kwargs:
             if key not in allowed_kwargs:
@@ -432,7 +350,7 @@ class Account:
         self.billing_start_date = getattr(self.billing_state, "billing_cycle_start_date", None)
         self.interest_type = getattr(self.billing_state, "interest_type", None)
         self.apr = getattr(self.billing_state, "apr", None)
-        self.interest_cadence = getattr(self.billing_state, "interest_cadence", None)
+        self.interest_interval = getattr(self.billing_state, "interest_interval", None)
         self.minimum_payment = getattr(self.billing_state, "minimum_payment", None)
         self.primary_checking_ind = getattr(self.billing_state, "is_primary", None)
 
@@ -500,7 +418,7 @@ class Account:
                 "Billing_Start_Date": [self.billing_start_date],
                 "Interest_Type": [self.interest_type],
                 "APR": [self.apr],
-                "Interest_Cadence": [self.interest_cadence],
+                "Interest_interval": [self.interest_interval],
                 "Minimum_Payment": [self.minimum_payment],
                 "Primary_Checking_Ind": [self.primary_checking_ind],
             }

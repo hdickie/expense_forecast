@@ -1652,7 +1652,7 @@ class ForecastHandler:
 
         # todo unclear if this is still wrong ; pylance type warning
         next_billing_date = generate_date_sequence(
-            d, 32, cadence="monthly"
+            d, 32, interval="monthly"
         ).iloc[-1]
 
         current_date = d
@@ -3912,8 +3912,8 @@ class ForecastHandler:
                 continue
 
             billing_state = account.billing_state
-            interest_cadence = getattr(billing_state, "interest_cadence", None)
-            if interest_cadence is None:
+            interest_interval = getattr(billing_state, "interest_interval", None)
+            if interest_interval is None:
                 continue
 
             billing_start_date = billing_state.billing_cycle_start_date
@@ -3927,7 +3927,7 @@ class ForecastHandler:
             dseq = generate_date_sequence(
                 start_date=billing_start_date,
                 num_days=num_days,
-                cadence=interest_cadence,
+                interval=interest_interval,
             )
             if current_date == billing_start_date:
                 dseq.append(current_date)
@@ -7545,8 +7545,8 @@ class ForecastHandler:
         # Generate interest accrual dates
         interest_accrual_dates__list_of_lists = []
         for _, a_row in A_df.iterrows():
-            interest_cadence = a_row["Interest_Cadence"]
-            if pd.isnull(interest_cadence) or interest_cadence == "None":
+            interest_interval = a_row["Interest_interval"]
+            if pd.isnull(interest_interval) or interest_interval == "None":
                 interest_accrual_dates__list_of_lists.append([])
                 continue
 
@@ -7554,7 +7554,7 @@ class ForecastHandler:
             end_date = end_date
             num_days = (end_date - start_date).days
             account_specific_iad = generate_date_sequence(
-                a_row["Billing_Start_Date"], num_days, interest_cadence
+                a_row["Billing_Start_Date"], num_days, interest_interval
             )
             interest_accrual_dates__list_of_lists.append(account_specific_iad)
 
@@ -7694,7 +7694,7 @@ class ForecastHandler:
                         "Billing_Start_Date": base_row["Billing_Start_Date"],
                         "Interest_Type": base_row["Interest_Type"],
                         "APR": base_row["APR"],
-                        "Interest_Cadence": base_row["Interest_Cadence"],
+                        "Interest_interval": base_row["Interest_interval"],
                         "Minimum_Payment": base_row["Minimum_Payment"],
                         "Primary_Checking_Ind": base_row["Primary_Checking_Ind"],
                         "Delta": delta,

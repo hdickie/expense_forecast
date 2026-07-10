@@ -26,7 +26,7 @@ if ( isset($_POST["accounttype"]) ) {
 		$billing_start_date_yyyymmdd = '(CAST(null AS date))';
 		$current_statement_balance = 'NULL';
 		$interest_balance = 'NULL';
-		$interest_cadence = 'NULL';
+		$interest_interval = 'NULL';
 		$minimum_payment = 'NULL';
 		$previous_statement_balance = 'NULL';
 
@@ -44,7 +44,7 @@ if ( isset($_POST["accounttype"]) ) {
 		$billing_start_date_yyyymmdd = "'".$_POST['creditbillingstartdate']."'";
 		$current_statement_balance = $_POST['balance'] - $_POST['previousstatementbalancecredit'];
 		$interest_balance = 'NULL';
-		$interest_cadence = $_POST['creditinterestcadence'];
+		$interest_interval = $_POST['creditinterestinterval'];
 		$minimum_payment = $_POST['creditminpayment'];
 		$previous_statement_balance = $_POST['previousstatementbalancecredit'];
 		$primary_checking_ind = 'NULL';
@@ -55,7 +55,7 @@ if ( isset($_POST["accounttype"]) ) {
 		$billing_start_date_yyyymmdd = "'".$_POST['loanbillingstartdate']."'";
 		$current_statement_balance = 'NULL';
 		$interest_balance = $_POST['interestbalance'];
-		$interest_cadence = $_POST['loaninterestcadence'];
+		$interest_interval = $_POST['loaninterestinterval'];
 		$minimum_payment = $_POST['loanminpayment'];
 		$previous_statement_balance = 'NULL';
 		$primary_checking_ind = 'NULL';
@@ -66,7 +66,7 @@ if ( isset($_POST["accounttype"]) ) {
 		$billing_start_date_yyyymmdd = "'".$_POST['investmentbillingstartdate']."'";
 		$current_statement_balance = 'NULL';
 		$interest_balance = 'NULL';
-		$interest_cadence = $_POST['investmentinterestcadence'];
+		$interest_interval = $_POST['investmentinterestinterval'];
 		$minimum_payment = 'NULL';
 		$previous_statement_balance = 'NULL';
 		$primary_checking_ind = 'NULL';
@@ -79,31 +79,31 @@ if ( isset($_POST["accounttype"]) ) {
 
 	if ( ! $error_ind ){
 		if ( $_POST["accounttype"] == 'Checking' ){
-			$insert_statement = "INSERT INTO prod.ef_account_set_".$username_according_to_server."_temporary (account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_cadence, minimum_payment, primary_checking_ind) Select '".$account_name."',".$balance.",".$min_balance.",".$max_balance.",'Checking',NULL,NULL,NULL,NULL,".$primary_checking_ind;
+			$insert_statement = "INSERT INTO prod.ef_account_set_".$username_according_to_server."_temporary (account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_interval, minimum_payment, primary_checking_ind) Select '".$account_name."',".$balance.",".$min_balance.",".$max_balance.",'Checking',NULL,NULL,NULL,NULL,".$primary_checking_ind;
 			//echo '<br>'.$insert_statement.'<br>';
 			$query_obj = pg_query($dbconn, $insert_statement);
 		}
 
 		if ( $_POST["accounttype"] == 'Credit' ){
 			$account_type = 'curr stmt bal';
-			$insert_statement = "INSERT INTO prod.ef_account_set_".$username_according_to_server."_temporary ( account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_cadence, minimum_payment, primary_checking_ind) Select '".$account_name.": Curr Stmt Bal',".$current_statement_balance.",".$min_balance.",".$max_balance.",'".$account_type."',".$POSTGRES_NULL_DATE.",NULL,NULL,NULL,NULL";
+			$insert_statement = "INSERT INTO prod.ef_account_set_".$username_according_to_server."_temporary ( account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_interval, minimum_payment, primary_checking_ind) Select '".$account_name.": Curr Stmt Bal',".$current_statement_balance.",".$min_balance.",".$max_balance.",'".$account_type."',".$POSTGRES_NULL_DATE.",NULL,NULL,NULL,NULL";
 			//echo '<br>'.$insert_statement.'<br>';
 			$query_obj = pg_query($dbconn, $insert_statement);
 
 			$account_type = 'prev stmt bal';
-			$insert_statement = "INSERT INTO prod.ef_account_set_".$username_according_to_server."_temporary ( account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_cadence, minimum_payment, primary_checking_ind) Select '".$account_name.": Prev Stmt Bal',".$previous_statement_balance.",".$min_balance.",".$max_balance.",'".$account_type."',".$billing_start_date_yyyymmdd.",".$apr.",'".$interest_cadence."',".$minimum_payment.",".$primary_checking_ind;
+			$insert_statement = "INSERT INTO prod.ef_account_set_".$username_according_to_server."_temporary ( account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_interval, minimum_payment, primary_checking_ind) Select '".$account_name.": Prev Stmt Bal',".$previous_statement_balance.",".$min_balance.",".$max_balance.",'".$account_type."',".$billing_start_date_yyyymmdd.",".$apr.",'".$interest_interval."',".$minimum_payment.",".$primary_checking_ind;
 			//echo '<br>'.$insert_statement.'<br>';
 			$query_obj = pg_query($dbconn, $insert_statement);
 		}
 
 		if ( $_POST["accounttype"] == 'Loan' ){
 			$account_type = 'principal balance';
-			$insert_statement = "INSERT INTO prod.ef_account_set_".$username_according_to_server."_temporary ( account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_cadence, minimum_payment, primary_checking_ind) Select '".$account_name.": Principal Balance',".$principal_balance.",".$min_balance.",".$max_balance.",'".$account_type."',".$billing_start_date_yyyymmdd.",".$apr.",'".$interest_cadence."',".$minimum_payment.",NULL";
+			$insert_statement = "INSERT INTO prod.ef_account_set_".$username_according_to_server."_temporary ( account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_interval, minimum_payment, primary_checking_ind) Select '".$account_name.": Principal Balance',".$principal_balance.",".$min_balance.",".$max_balance.",'".$account_type."',".$billing_start_date_yyyymmdd.",".$apr.",'".$interest_interval."',".$minimum_payment.",NULL";
 			//echo '<br>'.$insert_statement.'<br>';
 			$query_obj = pg_query($dbconn, $insert_statement);
 
 			$account_type = 'interest';
-			$insert_statement = "INSERT INTO prod.ef_account_set_".$username_according_to_server."_temporary ( account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_cadence, minimum_payment, primary_checking_ind) Select '".$account_name.": Interest',".$interest_balance.",".$min_balance.",".$max_balance.",'".$account_type."',".$POSTGRES_NULL_DATE.",NULL,NULL,NULL,NULL";
+			$insert_statement = "INSERT INTO prod.ef_account_set_".$username_according_to_server."_temporary ( account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_interval, minimum_payment, primary_checking_ind) Select '".$account_name.": Interest',".$interest_balance.",".$min_balance.",".$max_balance.",'".$account_type."',".$POSTGRES_NULL_DATE.",NULL,NULL,NULL,NULL";
 			//echo '<br>'.$insert_statement.'<br>';
 			$query_obj = pg_query($dbconn, $insert_statement);
 		}

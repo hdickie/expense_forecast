@@ -254,35 +254,35 @@ class TestE2E:
                                 apr=0.0376)
 
         B.addBudgetItem(start_date=start_date, end_date=end_date, priority=1,
-                        cadence='daily',amount=10,memo='food expense',income_flag=False, 
+                        interval='daily',amount=10,memo='food expense',income_flag=False, 
                         deferrable=False, partial_payment_allowed=False)
         B.addBudgetItem(start_date=start_date, end_date=end_date, priority=1,
-                        cadence='semiweekly',amount=80,memo='gas expense',income_flag=False, 
+                        interval='semiweekly',amount=80,memo='gas expense',income_flag=False, 
                         deferrable=False, partial_payment_allowed=False)
         B.addBudgetItem(start_date=start_date, end_date=end_date, priority=1,
-                        cadence='monthly',amount=287.68,memo='phone expense',income_flag=False, 
+                        interval='monthly',amount=287.68,memo='phone expense',income_flag=False, 
                         deferrable=False, partial_payment_allowed=False)
         B.addBudgetItem(start_date=start_date, end_date=end_date, priority=1,
-                        cadence='monthly',amount=10,memo='hulu expense',income_flag=False, 
+                        interval='monthly',amount=10,memo='hulu expense',income_flag=False, 
                         deferrable=False, partial_payment_allowed=False)
         B.addBudgetItem(start_date=date(2026,7,2), end_date=end_date, priority=1,
-                        cadence='monthly',amount=14,memo='paramount plus expense',income_flag=False, 
+                        interval='monthly',amount=14,memo='paramount plus expense',income_flag=False, 
                         deferrable=False, partial_payment_allowed=False)
         B.addBudgetItem(start_date=date(2026,6,26), end_date=end_date, priority=1,
-                        cadence='monthly',amount=9,memo='netflix expense',income_flag=False, 
+                        interval='monthly',amount=9,memo='netflix expense',income_flag=False, 
                         deferrable=False, partial_payment_allowed=False)
         B.addBudgetItem(start_date=start_date, end_date=end_date, priority=1,
-                        cadence='monthly',amount=100,memo='car insurance expense',income_flag=False, 
+                        interval='monthly',amount=100,memo='car insurance expense',income_flag=False, 
                         deferrable=False, partial_payment_allowed=False)
         B.addBudgetItem(start_date=date(2026,7,3), end_date=end_date, priority=1,
-                        cadence='monthly',amount=149,memo='storage expense',income_flag=False, 
+                        interval='monthly',amount=149,memo='storage expense',income_flag=False, 
                         deferrable=False, partial_payment_allowed=False)
         B.addBudgetItem(start_date=date(2026,6,6), end_date=end_date, priority=1,
-                        cadence='monthly',amount=129,memo='joyous expense',income_flag=False, 
+                        interval='monthly',amount=129,memo='joyous expense',income_flag=False, 
                         deferrable=False, partial_payment_allowed=False)
         
         B.addBudgetItem(start_date=date(2026,9,1), end_date=end_date, priority=2,
-                        cadence='monthly',amount=10_000,memo='extra cc payment',income_flag=False, 
+                        interval='monthly',amount=10_000,memo='extra cc payment',income_flag=False, 
                         deferrable=False, partial_payment_allowed=True)
         # phone
         # hulu
@@ -290,7 +290,7 @@ class TestE2E:
         # storage
 
         B.addBudgetItem(start_date=income_start_date, end_date=end_date, priority=1,
-                        cadence='semiweekly',amount=paycheck_amount,memo='CNA Income',income_flag=True, 
+                        interval='semiweekly',amount=paycheck_amount,memo='CNA Income',income_flag=True, 
                         deferrable=False, partial_payment_allowed=False)
         M.addMemoRule(memo_regex='.*expense.*',
                     account_from='Chase',

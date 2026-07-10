@@ -17,7 +17,7 @@ $error_ind = False;
 // ["budgetitempriority"]=> string(1) "1" 
 // ["budgetitemstartdate"]=> string(10) "2024-03-07" 
 // ["budgetitemenddate"]=> string(10) "2024-03-28" 
-// ["budgetitemcadence"]=> string(5) "Daily" 
+// ["budgetiteminterval"]=> string(5) "Daily" 
 // ["budgetitemamount"]=> string(2) "10" 
 // ["budgetitemdeferrableyes"]=> string(3) "Yes" 
 // ["budgetitempartialpaymentallowedyes"]=> string(3) "Yes"
@@ -49,7 +49,7 @@ if ( isset($_POST["optionalbudgetitem"]) ){
 
 
 
-$insert_statement = "INSERT INTO ".$target_table_name." (start_date, end_date, priority, cadence, amount, memo, \"deferrable\", partial_payment_allowed) Select '".$_POST["budgetitemstartdate"]."','".$budget_item_end_date."',".$_POST["budgetitempriority"].",'".$_POST["budgetitemcadence"]."',".$_POST["budgetitemamount"].",'".$_POST["budgetitemmemo"]."',".$deferrable.",".$partial_payment_allowed;
+$insert_statement = "INSERT INTO ".$target_table_name." (start_date, end_date, priority, interval, amount, memo, \"deferrable\", partial_payment_allowed) Select '".$_POST["budgetitemstartdate"]."','".$budget_item_end_date."',".$_POST["budgetitempriority"].",'".$_POST["budgetiteminterval"]."',".$_POST["budgetitemamount"].",'".$_POST["budgetitemmemo"]."',".$deferrable.",".$partial_payment_allowed;
 //echo '<br>'.$insert_statement.'<br>';		
 $query_obj = pg_query($dbconn, $insert_statement);
 

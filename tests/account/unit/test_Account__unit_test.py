@@ -25,7 +25,7 @@ def credit_billing_state(
     minimum_payment=50,
     billing_cycle_start_date=date(2000, 1, 1),
     interest_type="compound",
-    interest_cadence="monthly",
+    interest_interval="monthly",
     apr=0.25,
 ):
     return CreditCardBillingState(
@@ -35,7 +35,7 @@ def credit_billing_state(
         billing_cycle_payment_balance=Decimal(str(billing_cycle_payment_balance)),
         minimum_payment=Decimal(str(minimum_payment)),
         interest_type=interest_type,
-        interest_cadence=interest_cadence,
+        interest_interval=interest_interval,
         apr=Decimal(str(apr)),
     )
 
@@ -47,7 +47,7 @@ def loan_billing_state(
     minimum_payment=50,
     billing_cycle_start_date=date(2000, 1, 1),
     interest_type="simple",
-    interest_cadence="daily",
+    interest_interval="daily",
     apr=0.25,
 ):
     return LoanBillingState(
@@ -57,7 +57,7 @@ def loan_billing_state(
         billing_cycle_payment_balance=Decimal(str(billing_cycle_payment_balance)),
         minimum_payment=Decimal(str(minimum_payment)),
         interest_type=interest_type,
-        interest_cadence=interest_cadence,
+        interest_interval=interest_interval,
         apr=Decimal(str(apr)),
     )
 
@@ -69,7 +69,7 @@ def savings_billing_state(
     minimum_payment=0,
     billing_cycle_start_date=date(2000, 1, 1),
     interest_type="compound",
-    interest_cadence="daily",
+    interest_interval="daily",
     apr=0.01,
 ):
     return SavingsBillingState(
@@ -79,7 +79,7 @@ def savings_billing_state(
         billing_cycle_payment_balance=Decimal(str(billing_cycle_payment_balance)),
         minimum_payment=Decimal(str(minimum_payment)),
         interest_type=interest_type,
-        interest_cadence=interest_cadence,
+        interest_interval=interest_interval,
         apr=Decimal(str(apr)),
     )
 
@@ -250,7 +250,7 @@ class TestAccount:
 
     @pytest.mark.unit
     @pytest.mark.parametrize(
-        "account_type,interest_cadence",
+        "account_type,interest_interval",
         [
             ("credit", "monthly"),
             ("credit", "daily"),
@@ -260,12 +260,12 @@ class TestAccount:
             ("checking", None),
         ],
     )
-    def test_validate_interest_cadence__expect_success(self, account_type, interest_cadence):
-        Account._validate_interest_cadence(account_type, interest_cadence)
+    def test_validate_interest_interval__expect_success(self, account_type, interest_interval):
+        Account._validate_interest_interval(account_type, interest_interval)
 
     @pytest.mark.unit
     @pytest.mark.parametrize(
-        "account_type,interest_cadence",
+        "account_type,interest_interval",
         [
             ("credit", None),
             ("credit", "weekly"),
@@ -274,9 +274,9 @@ class TestAccount:
             ("checking", "daily"),
         ],
     )
-    def test_validate_interest_cadence__expect_fail(self, account_type, interest_cadence):
+    def test_validate_interest_interval__expect_fail(self, account_type, interest_interval):
         with pytest.raises(Exception):
-            Account._validate_interest_cadence(account_type, interest_cadence)
+            Account._validate_interest_interval(account_type, interest_interval)
 
     @pytest.mark.unit
     @pytest.mark.parametrize(

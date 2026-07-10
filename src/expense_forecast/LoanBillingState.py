@@ -44,7 +44,7 @@ class LoanBillingState:
     def __init__(self, billing_cycle_start_date: date,
                   minimum_payment: Decimal,
                   interest_type: str,
-                  interest_cadence: str,
+                  interest_interval: str,
                   apr: Decimal,
                   principal_balance: Decimal = None,
                   interest_balance: Decimal = None,
@@ -70,8 +70,8 @@ class LoanBillingState:
         interest_type : object
             TODO one-line description of LoanBillingState.__init__.interest_type.
 
-        interest_cadence : object
-            TODO one-line description of LoanBillingState.__init__.interest_cadence.
+        interest_interval : object
+            TODO one-line description of LoanBillingState.__init__.interest_interval.
 
         apr : float
             TODO one-line description of LoanBillingState.__init__.apr.
@@ -120,9 +120,9 @@ class LoanBillingState:
         self.minimum_payment = minimum_payment
 
         assert interest_type == "simple"
-        assert interest_cadence in ["daily", "monthly", "quarterly", "annually"]
+        assert interest_interval in ["daily", "monthly", "quarterly", "annually"]
         self.interest_type = interest_type
-        self.interest_cadence = interest_cadence
+        self.interest_interval = interest_interval
 
         assert apr >= 0
         self.apr = apr
@@ -301,15 +301,15 @@ class LoanBillingState:
 
         @interface-report: show
         """
-        if self.interest_cadence == "daily":
+        if self.interest_interval == "daily":
             return self.principal_balance * self.apr / Decimal("365.25")
-        if self.interest_cadence == "monthly":
+        if self.interest_interval == "monthly":
             return self.principal_balance * self.apr / Decimal("12")
-        if self.interest_cadence == "quarterly":
+        if self.interest_interval == "quarterly":
             return self.principal_balance * self.apr / Decimal("4")
-        if self.interest_cadence == "annually":
+        if self.interest_interval == "annually":
             return self.principal_balance * self.apr
-        raise ValueError(f"Unsupported loan interest cadence: {self.interest_cadence}")
+        raise ValueError(f"Unsupported loan interest interval: {self.interest_interval}")
 
     #TODO manual review of LoanBillingState.accrue_interest docstring
     def accrue_interest(self) -> Decimal:

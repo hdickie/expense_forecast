@@ -8,11 +8,11 @@ class TestBudgetItemMethods:
 
     @pytest.mark.unit
     @pytest.mark.parametrize(
-        "start_date,end_date,priority,cadence,amount,memo,deferrable,partial_payment_allowed",
+        "start_date,end_date,priority,interval,amount,memo,deferrable,partial_payment_allowed",
         # (start_date,
         # end_date,
         # priority,
-        # cadence,
+        # interval,
         # amount,
         # memo,
         # deferrable,
@@ -26,7 +26,7 @@ class TestBudgetItemMethods:
         start_date,
         end_date,
         priority,
-        cadence,
+        interval,
         amount,
         memo,
         deferrable,
@@ -36,7 +36,7 @@ class TestBudgetItemMethods:
             start_date,
             end_date,
             priority,
-            cadence,
+            interval,
             amount,
             memo,
             deferrable=deferrable,
@@ -45,11 +45,11 @@ class TestBudgetItemMethods:
 
     @pytest.mark.unit
     @pytest.mark.parametrize(
-        "start_date,end_date,priority,cadence,amount,memo,deferrable,partial_payment_allowed,income_flag",
+        "start_date,end_date,priority,interval,amount,memo,deferrable,partial_payment_allowed,income_flag",
         # (start_date,
         # end_date,
         # priority,
-        # cadence,
+        # interval,
         # amount,
         # memo,
         # deferrable,
@@ -120,7 +120,7 @@ class TestBudgetItemMethods:
                 False,
                 False,
                 False,
-            ),  # illegal cadence value
+            ),  # illegal interval value
             (
                 date(2000, 1, 1),
                 date(2000, 1, 1),
@@ -161,7 +161,7 @@ class TestBudgetItemMethods:
         start_date,
         end_date,
         priority,
-        cadence,
+        interval,
         amount,
         memo,
         deferrable,
@@ -173,7 +173,7 @@ class TestBudgetItemMethods:
                 start_date,
                 end_date,
                 priority,
-                cadence,
+                interval,
                 amount,
                 memo,
                 deferrable=deferrable,
@@ -187,7 +187,7 @@ class TestBudgetItemMethods:
             start_date=date(2000,1,2),
             end_date=date(2000,1,2),
             priority=1,
-            cadence="once",
+            interval="once",
             amount=50,
             memo="rent",
             deferrable=False,
@@ -198,7 +198,7 @@ class TestBudgetItemMethods:
             "Start_Date": "20000102",
             "End_Date": "20000102",
             "Priority": 1,
-            "Cadence": "once",
+            "interval": "once",
             "Amount": 50.0,
             "Memo": "rent",
             "Deferrable": False,

@@ -26,31 +26,31 @@ def get_B_invariant(food_daily_amount, gas_semiweekly_amount):
     B_invariant = BudgetSet()
 
     B_invariant.addBudgetItem(start_date=start_date, end_date=end_date, priority=1,
-                    cadence='daily',amount=food_daily_amount,memo='food expense',income_flag=False, 
+                    interval='daily',amount=food_daily_amount,memo='food expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     B_invariant.addBudgetItem(start_date=start_date, end_date=end_date, priority=1,
-                    cadence='semiweekly',amount=gas_semiweekly_amount,memo='gas expense',income_flag=False, 
+                    interval='semiweekly',amount=gas_semiweekly_amount,memo='gas expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     B_invariant.addBudgetItem(start_date=start_date, end_date=end_date, priority=1,
-                    cadence='monthly',amount=287.68,memo='phone expense',income_flag=False, 
+                    interval='monthly',amount=287.68,memo='phone expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     B_invariant.addBudgetItem(start_date=start_date, end_date=end_date, priority=1,
-                    cadence='monthly',amount=10,memo='hulu expense',income_flag=False, 
+                    interval='monthly',amount=10,memo='hulu expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     B_invariant.addBudgetItem(start_date=date(2026,7,2), end_date=end_date, priority=1,
-                    cadence='monthly',amount=14,memo='paramount plus expense',income_flag=False, 
+                    interval='monthly',amount=14,memo='paramount plus expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     B_invariant.addBudgetItem(start_date=date(2026,6,26), end_date=end_date, priority=1,
-                    cadence='monthly',amount=9,memo='netflix expense',income_flag=False, 
+                    interval='monthly',amount=9,memo='netflix expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     B_invariant.addBudgetItem(start_date=start_date, end_date=end_date, priority=1,
-                    cadence='monthly',amount=100,memo='car insurance expense',income_flag=False, 
+                    interval='monthly',amount=100,memo='car insurance expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     B_invariant.addBudgetItem(start_date=date(2026,7,3), end_date=end_date, priority=1,
-                    cadence='monthly',amount=149,memo='storage expense',income_flag=False, 
+                    interval='monthly',amount=149,memo='storage expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     B_invariant.addBudgetItem(start_date=date(2026,6,6), end_date=end_date, priority=1,
-                    cadence='monthly',amount=129,memo='joyous expense',income_flag=False, 
+                    interval='monthly',amount=129,memo='joyous expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     
     return B_invariant
@@ -60,31 +60,31 @@ def get_B_invariant_post_RN_life():
     B_invariant = BudgetSet()
 
     B_invariant.addBudgetItem(start_date=start_date, end_date=end_date, priority=1,
-                    cadence='daily',amount=20,memo='food expense',income_flag=False, 
+                    interval='daily',amount=20,memo='food expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     B_invariant.addBudgetItem(start_date=start_date, end_date=end_date, priority=1,
-                    cadence='semiweekly',amount=80,memo='gas expense',income_flag=False, 
+                    interval='semiweekly',amount=80,memo='gas expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     B_invariant.addBudgetItem(start_date=start_date, end_date=end_date, priority=1,
-                    cadence='monthly',amount=287.68,memo='phone expense',income_flag=False, 
+                    interval='monthly',amount=287.68,memo='phone expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     B_invariant.addBudgetItem(start_date=start_date, end_date=end_date, priority=1,
-                    cadence='monthly',amount=10,memo='hulu expense',income_flag=False, 
+                    interval='monthly',amount=10,memo='hulu expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     B_invariant.addBudgetItem(start_date=date(2026,7,2), end_date=end_date, priority=1,
-                    cadence='monthly',amount=14,memo='paramount plus expense',income_flag=False, 
+                    interval='monthly',amount=14,memo='paramount plus expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     B_invariant.addBudgetItem(start_date=date(2026,6,26), end_date=end_date, priority=1,
-                    cadence='monthly',amount=9,memo='netflix expense',income_flag=False, 
+                    interval='monthly',amount=9,memo='netflix expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     B_invariant.addBudgetItem(start_date=start_date, end_date=end_date, priority=1,
-                    cadence='monthly',amount=100,memo='car insurance expense',income_flag=False, 
+                    interval='monthly',amount=100,memo='car insurance expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     B_invariant.addBudgetItem(start_date=date(2026,7,3), end_date=end_date, priority=1,
-                    cadence='monthly',amount=149,memo='storage expense',income_flag=False, 
+                    interval='monthly',amount=149,memo='storage expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     B_invariant.addBudgetItem(start_date=date(2026,6,6), end_date=end_date, priority=1,
-                    cadence='monthly',amount=129,memo='joyous expense',income_flag=False, 
+                    interval='monthly',amount=129,memo='joyous expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     return B_invariant
 
@@ -195,45 +195,45 @@ def getHardCodedCreditCardPayments(user_vars):
 
     
     B_keep_cc_payed_off.addBudgetItem(start_date=date(2026,9,1), end_date=date(2026,9,1), priority=1,
-                    cadence='once',amount=5000.0,memo='extra cc payment 1',income_flag=False, 
+                    interval='once',amount=5000.0,memo='extra cc payment 1',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     
     B_keep_cc_payed_off.addBudgetItem(start_date=date(2026,10,1), end_date=date(2026,10,1), priority=1,
-                    cadence='once',amount=3000.0,memo='extra cc payment 2',income_flag=False, 
+                    interval='once',amount=3000.0,memo='extra cc payment 2',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     
     # 11/1 2588.23 	
     
     B_keep_cc_payed_off.addBudgetItem(start_date=date(2026,11,1), end_date=date(2026,11,1), priority=1,
-                    cadence='once',amount=3450.00,memo='extra cc payment 3',income_flag=False, 
+                    interval='once',amount=3450.00,memo='extra cc payment 3',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     
     B_keep_cc_payed_off.addBudgetItem(start_date=date(2026,12,1), end_date=date(2026,12,1), priority=1,
-                    cadence='once',amount=1500.0,memo='citi payment 1',income_flag=False, 
+                    interval='once',amount=1500.0,memo='citi payment 1',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     
     B_keep_cc_payed_off.addBudgetItem(start_date=date(2027,1,1), end_date=date(2027,1,1), priority=1,
-                    cadence='once',amount=1400.0,memo='citi payment 2',income_flag=False, 
+                    interval='once',amount=1400.0,memo='citi payment 2',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     
     B_keep_cc_payed_off.addBudgetItem(start_date=date(2027,2,1), end_date=date(2027,2,1), priority=1,
-                    cadence='once',amount=730.0,memo='citi payment 3',income_flag=False, 
+                    interval='once',amount=730.0,memo='citi payment 3',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     
     # B.addBudgetItem(start_date=date(2026,11,15), end_date=date(2026,11,15), priority=1,
-    #                 cadence='once',amount=1010.0,memo='citi payment 2',income_flag=False, 
+    #                 interval='once',amount=1010.0,memo='citi payment 2',income_flag=False, 
     #                 deferrable=False, partial_payment_allowed=False)
     
     # 1010.14 11/13
     
     # B_keep_cc_payed_off.addBudgetItem(start_date=date(2026,11,1), end_date=date(2026,11,1), priority=1,
-    #                 cadence='monthly',amount=1533.47,memo='extra cc payment 3',income_flag=False, 
+    #                 interval='monthly',amount=1533.47,memo='extra cc payment 3',income_flag=False, 
     #                 deferrable=False, partial_payment_allowed=False)
     
     
     
     # B_keep_cc_payed_off.addBudgetItem(start_date=date(2026,12,1), end_date=end_date, priority=1,
-    #                 cadence='monthly',amount=1500,memo='extra cc payment cyclical',income_flag=False, 
+    #                 interval='monthly',amount=1500,memo='extra cc payment cyclical',income_flag=False, 
     #                 deferrable=False, partial_payment_allowed=False)
 
     # approx cc cycle balance 1170
@@ -540,7 +540,7 @@ if __name__ == '__main__':
         B_CNA.addBudgetItem(start_date=user_vars["CNA_first_paycheck_date"], 
                                       end_date=user_vars["start_nursing_school_stop_working_full_time_date"], 
                                       priority=1,
-                    cadence='semiweekly',amount=user_vars["CNA_paycheck_amount"],
+                    interval='semiweekly',amount=user_vars["CNA_paycheck_amount"],
                     memo='CNA Income Eugene',income_flag=True, 
                     deferrable=False, partial_payment_allowed=False)
         
@@ -548,7 +548,7 @@ if __name__ == '__main__':
         B_CNA.addBudgetItem(start_date=user_vars["start_nursing_school_stop_working_full_time_date"] + datetime.timedelta(days=30), 
                                       end_date=user_vars["nursing_school_end_date"], 
                                       priority=1,
-                    cadence='semiweekly',
+                    interval='semiweekly',
                     amount=user_vars["CNA_paycheck_one_shift_amount"] ,
                     memo='CNA Income Los Angeles',income_flag=True, 
                     deferrable=False, partial_payment_allowed=False)
@@ -599,13 +599,13 @@ if __name__ == '__main__':
 
         B_keep_cc_payed_off = BudgetSet()
         B_keep_cc_payed_off.addBudgetItem(start_date=date(2030,2,1), end_date=end_date, priority=1,
-                    cadence='monthly',amount=1400,memo='extra cc payment cyclical',income_flag=False, 
+                    interval='monthly',amount=1400,memo='extra cc payment cyclical',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
         
         B_loan_payments = BudgetSet()
         B_loan_payments.addBudgetItem(start_date=start_date + datetime.timedelta(days=90), 
                                       end_date=end_date, 
-                                      priority=1, cadence="monthly", amount=4_200,
+                                      priority=1, interval="monthly", amount=4_200,
                                       memo='all loan payment')
 
         B = B_invariant + RN_income + B_keep_cc_payed_off + B_loan_payments
@@ -741,7 +741,7 @@ if __name__ == '__main__':
         
         B_keep_cc_payed_off = BudgetSet()
         B_keep_cc_payed_off.addBudgetItem(start_date=date(2030,2,1), end_date=end_date, priority=1,
-                    cadence='monthly',amount=1400,memo='extra cc payment cyclical',income_flag=False, 
+                    interval='monthly',amount=1400,memo='extra cc payment cyclical',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
 
         B = B_base + B_retirement_saving + B_income + B_keep_cc_payed_off

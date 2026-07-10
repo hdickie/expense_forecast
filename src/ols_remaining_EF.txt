@@ -404,7 +404,7 @@ logger = setup_logger(__name__, "./" + __name__ + ".log", level=logging.DEBUG)
 #     billing_start_date = None
 #     interest_type = None
 #     apr = None
-#     interest_cadence = None
+#     interest_interval = None
 #     minimum_payment = None
 #     previous_statement_balance = None
 #     current_statement_balance = None
@@ -435,7 +435,7 @@ logger = setup_logger(__name__, "./" + __name__ + ".log", level=logging.DEBUG)
 #             and not expect_prev_bal_acct
 #         ):
 #             previous_statement_balance = row.Balance
-#             interest_cadence = row.Interest_Cadence
+#             interest_interval = row.Interest_interval
 #             minimum_payment = row.Minimum_Payment
 #             billing_start_date = str(int(row.Billing_Start_Date))
 #             interest_type = row.Interest_Type
@@ -454,7 +454,7 @@ logger = setup_logger(__name__, "./" + __name__ + ".log", level=logging.DEBUG)
 #             and not expect_principal_bal_acct
 #         ):
 #             principal_balance = row.Balance
-#             interest_cadence = row.Interest_Cadence
+#             interest_interval = row.Interest_interval
 #             minimum_payment = row.Minimum_Payment
 #             billing_start_date = str(int(row.Billing_Start_Date))
 #             interest_type = row.Interest_Type
@@ -473,7 +473,7 @@ logger = setup_logger(__name__, "./" + __name__ + ".log", level=logging.DEBUG)
 #                 billing_start_date_YYYYMMDD=billing_start_date,
 #                 interest_type=interest_type,
 #                 apr=apr,
-#                 interest_cadence=interest_cadence,
+#                 interest_interval=interest_interval,
 #                 minimum_payment=minimum_payment,
 #                 previous_statement_balance=previous_statement_balance,
 #                 current_statement_balance=current_statement_balance,
@@ -490,7 +490,7 @@ logger = setup_logger(__name__, "./" + __name__ + ".log", level=logging.DEBUG)
 #                 billing_start_date_YYYYMMDD=str(int(row.Billing_Start_Date)),
 #                 interest_type=row.Interest_Type,
 #                 apr=row.APR,
-#                 interest_cadence=row.Interest_Cadence,
+#                 interest_interval=row.Interest_interval,
 #                 minimum_payment=row.Minimum_Payment,
 #                 previous_statement_balance=row.Balance,
 #                 current_statement_balance=current_statement_balance,
@@ -508,7 +508,7 @@ logger = setup_logger(__name__, "./" + __name__ + ".log", level=logging.DEBUG)
 #                 billing_start_date_YYYYMMDD=billing_start_date,
 #                 interest_type=interest_type,
 #                 apr=apr,
-#                 interest_cadence=interest_cadence,
+#                 interest_interval=interest_interval,
 #                 minimum_payment=minimum_payment,
 #                 previous_statement_balance=None,
 #                 current_statement_balance=None,
@@ -530,7 +530,7 @@ logger = setup_logger(__name__, "./" + __name__ + ".log", level=logging.DEBUG)
 #                 billing_start_date_YYYYMMDD=str(int(row.Billing_Start_Date)),
 #                 interest_type=row.Interest_Type,
 #                 apr=row.APR,
-#                 interest_cadence=row.Interest_Cadence,
+#                 interest_interval=row.Interest_interval,
 #                 minimum_payment=row.Minimum_Payment,
 #                 previous_statement_balance=None,
 #                 current_statement_balance=None,
@@ -545,7 +545,7 @@ logger = setup_logger(__name__, "./" + __name__ + ".log", level=logging.DEBUG)
 #             row.Start_Date,
 #             row.End_Date,
 #             row.Priority,
-#             row.Cadence,
+#             row.interval,
 #             row.Amount,
 #             row.Memo,
 #             row.Deferrable,
@@ -711,7 +711,7 @@ logger = setup_logger(__name__, "./" + __name__ + ".log", level=logging.DEBUG)
 #     loan_billing_start_date = None
 #     loan_interest_type = None
 #     loan_apr = None
-#     loan_interest_cadence = None
+#     loan_interest_interval = None
 #     loan_min_payment = None
 #
 #     for Account__dict in initial_account_set["accounts"]:
@@ -750,7 +750,7 @@ logger = setup_logger(__name__, "./" + __name__ + ".log", level=logging.DEBUG)
 #             loan_apr = Account__dict["apr"]
 #             loan_billing_start_date = Account__dict["billing_start_date_YYYYMMDD"]
 #             loan_min_payment = Account__dict["minimum_payment"]
-#             loan_interest_cadence = Account__dict["interest_cadence"]
+#             loan_interest_interval = Account__dict["interest_interval"]
 #             loan_interest_type = Account__dict["interest_type"]
 #
 #         elif Account__dict["account_type"].lower() == "interest":
@@ -783,7 +783,7 @@ logger = setup_logger(__name__, "./" + __name__ + ".log", level=logging.DEBUG)
 #             start_date_YYYYMMDD=sd_YYYYMMDD,
 #             end_date_YYYYMMDD=ed_YYYYMMDD,
 #             priority=BudgetItem__dict["priority"],
-#             cadence=BudgetItem__dict["cadence"],
+#             interval=BudgetItem__dict["interval"],
 #             amount=BudgetItem__dict["amount"],
 #             memo=BudgetItem__dict["memo"],
 #             deferrable=BudgetItem__dict["deferrable"],
@@ -1057,7 +1057,7 @@ class ExpenseForecast:
     #         insert_account_row_q = (
     #             "INSERT INTO "
     #             + account_set_table_name
-    #             + " (forecast_id, account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_cadence, minimum_payment, primary_checking_ind) VALUES "
+    #             + " (forecast_id, account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_interval, minimum_payment, primary_checking_ind) VALUES "
     #         )
     #         insert_account_row_q += (
     #             "('"
@@ -1077,7 +1077,7 @@ class ExpenseForecast:
     #             + ", "
     #             + apr
     #             + ", '"
-    #             + str(row.Interest_Cadence)
+    #             + str(row.Interest_interval)
     #             + "', "
     #             + min_payment
     #             + ", '"
@@ -1098,7 +1098,7 @@ class ExpenseForecast:
     #         insert_budget_item_row_q = (
     #             "INSERT INTO "
     #             + budget_set_table_name
-    #             + ' (forecast_id, memo, priority, start_date, end_date, cadence, amount, "deferrable", partial_payment_allowed) VALUES '
+    #             + ' (forecast_id, memo, priority, start_date, end_date, interval, amount, "deferrable", partial_payment_allowed) VALUES '
     #         )
     #         insert_budget_item_row_q += (
     #             "('"
@@ -1112,7 +1112,7 @@ class ExpenseForecast:
     #             + "','"
     #             + str(row.End_Date)
     #             + "','"
-    #             + str(row.Cadence)
+    #             + str(row.interval)
     #             + "',"
     #             + str(row.Amount)
     #             + ",'"
@@ -1391,8 +1391,8 @@ class ExpenseForecast:
     #         # cursor.execute("TRUNCATE prod.ef_account_set_"+username+"_temporary")
     #         # cursor.execute("TRUNCATE prod.ef_budget_item_set_" + username+"_temporary")
     #         # cursor.execute("TRUNCATE prod.ef_memo_rule_set_" + username+"_temporary")
-    #         # cursor.execute("INSERT INTO prod.ef_account_set_"+username+" Select '"+self.unique_id+"', account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_cadence, minimum_payment, primary_checking_ind from prod.ef_account_set_"+username+"_temporary")
-    #         # cursor.execute("INSERT INTO prod.ef_budget_item_set_"+username+" Select '" + self.unique_id + "', memo, priority, start_date, end_date,  cadence, amount, \"deferrable\", partial_payment_allowed from prod.ef_budget_item_set_"+username+"_temporary")
+    #         # cursor.execute("INSERT INTO prod.ef_account_set_"+username+" Select '"+self.unique_id+"', account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_interval, minimum_payment, primary_checking_ind from prod.ef_account_set_"+username+"_temporary")
+    #         # cursor.execute("INSERT INTO prod.ef_budget_item_set_"+username+" Select '" + self.unique_id + "', memo, priority, start_date, end_date,  interval, amount, \"deferrable\", partial_payment_allowed from prod.ef_budget_item_set_"+username+"_temporary")
     #         # cursor.execute("INSERT INTO prod.ef_memo_rule_set_"+username+" Select '" + self.unique_id + "', memo_regex, account_from, account_to, priority from prod.ef_memo_rule_set_"+username+"_temporary")
     #
     #         if overwrite:

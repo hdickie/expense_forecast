@@ -46,7 +46,7 @@ class SavingsBillingState:
                   current_statement_balance: Decimal, billing_cycle_payment_balance: Decimal,
                   minimum_payment: Decimal,
                   interest_type: str,
-                  interest_cadence: str,
+                  interest_interval: str,
                   apr: Decimal
                   ):
         """
@@ -76,8 +76,8 @@ class SavingsBillingState:
         interest_type : object
             TODO one-line description of SavingsBillingState.__init__.interest_type.
 
-        interest_cadence : object
-            TODO one-line description of SavingsBillingState.__init__.interest_cadence.
+        interest_interval : object
+            TODO one-line description of SavingsBillingState.__init__.interest_interval.
 
         apr : float
             TODO one-line description of SavingsBillingState.__init__.apr.
@@ -105,9 +105,9 @@ class SavingsBillingState:
         self.minimum_payment = minimum_payment
 
         assert interest_type in ["simple", "compound"]
-        assert interest_cadence in ["daily", "monthly", "quarterly", "annually"]
+        assert interest_interval in ["daily", "monthly", "quarterly", "annually"]
         self.interest_type = interest_type
-        self.interest_cadence = interest_cadence
+        self.interest_interval = interest_interval
 
         assert apr >= 0
         self.apr = apr
@@ -235,6 +235,6 @@ class SavingsBillingState:
             billing_cycle_payment_balance=Decimal("0"),
             minimum_payment=self.calculate_next_minimum_payment(),
             interest_type=self.interest_type,
-            interest_cadence=self.interest_cadence,
+            interest_interval=self.interest_interval,
             apr=self.apr
         )

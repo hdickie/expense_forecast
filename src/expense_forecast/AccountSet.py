@@ -396,7 +396,7 @@ class AccountSet:
         @interface-report: show
         """
 
-        allowed_kwargs = ['billing_start_date', 'interest_type', 'apr', 'interest_cadence', 'minimum_payment',
+        allowed_kwargs = ['billing_start_date', 'interest_type', 'apr', 'interest_interval', 'minimum_payment',
                           'previous_statement_balance', 'current_statement_balance', 'principal_balance',
                           'interest_balance', 'billing_cycle_payment_balance',
                           'end_of_previous_cycle_balance', 'primary_checking_ind']
@@ -410,12 +410,12 @@ class AccountSet:
 
         #assert groups are all present
         checking_required_kwargs = ['primary_checking_ind']
-        credit_required_kwargs = ['billing_start_date', 'apr', 'interest_cadence', 'minimum_payment', 'previous_statement_balance', 'current_statement_balance', 'end_of_previous_cycle_balance']
-        loan_required_kwargs = ['billing_start_date', 'apr', 'interest_cadence', 'minimum_payment', 'principal_balance',
+        credit_required_kwargs = ['billing_start_date', 'apr', 'interest_interval', 'minimum_payment', 'previous_statement_balance', 'current_statement_balance', 'end_of_previous_cycle_balance']
+        loan_required_kwargs = ['billing_start_date', 'apr', 'interest_interval', 'minimum_payment', 'principal_balance',
                           'interest_balance', 'billing_cycle_payment_balance']
 
         # TODO DEFER implement required kwargs in createAccount for investment case
-        # investment_required_kwargs = ['billing_start_date', 'interest_type', 'apr', 'interest_cadence', 'minimum_payment',
+        # investment_required_kwargs = ['billing_start_date', 'interest_type', 'apr', 'interest_interval', 'minimum_payment',
         #                   'previous_statement_balance', 'current_statement_balance', 'principal_balance',
         #                   'interest_balance', 'end_of_previous_cycle_balance']
 
@@ -634,7 +634,7 @@ class AccountSet:
             billing_cycle_payment_balance=billing_cycle_payment_balance,
             minimum_payment=minimum_payment,
             interest_type="simple",
-            interest_cadence="daily",
+            interest_interval="daily",
             apr=apr,
         )
 
@@ -711,7 +711,7 @@ class AccountSet:
             billing_cycle_payment_balance=billing_cycle_payment_balance,
             minimum_payment=minimum_payment,
             interest_type="compound",
-            interest_cadence="monthly",
+            interest_interval="monthly",
             apr=apr,
             end_of_previous_cycle_balance=end_of_previous_cycle_balance,
         )
@@ -1107,7 +1107,7 @@ class AccountSet:
             generate_date_sequence(
                 start_date=billing_start_date,
                 num_days=num_days,
-                cadence="monthly",
+                interval="monthly",
             )
         )
         billing_days.add(billing_start_date)
@@ -1662,7 +1662,7 @@ class AccountSet:
             "Billing_Start_Date",
             "Interest_Type",
             "APR",
-            "Interest_Cadence",
+            "Interest_interval",
             "Minimum_Payment",
             "Primary_Checking_Ind",
         ]
@@ -1680,7 +1680,7 @@ class AccountSet:
                     ),
                     "Interest_Type": account.interest_type,
                     "APR": account.apr,
-                    "Interest_Cadence": account.interest_cadence,
+                    "Interest_interval": account.interest_interval,
                     "Minimum_Payment": account.minimum_payment,
                     "Primary_Checking_Ind": account.primary_checking_ind,
                 }
@@ -1727,7 +1727,7 @@ class AccountSet:
                     ),
                     "Interest_Type": account.interest_type,
                     "APR": self._dict_value(account.apr),
-                    "Interest_Cadence": account.interest_cadence,
+                    "Interest_interval": account.interest_interval,
                     "Minimum_Payment": self._dict_value(account.minimum_payment),
                     "Primary_Checking_Ind": account.primary_checking_ind,
             }

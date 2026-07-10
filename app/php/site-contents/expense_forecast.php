@@ -372,7 +372,7 @@ if ( isset($_COOKIE['forecastidtoload']) ) {
 // var account_type = parent_tr.querySelector('.account_type').innerHTML;
 // var billing_start_date_yyyymmdd = parent_tr.querySelector('.billing_start_date_yyyymmdd').innerHTML;
 // var apr = parent_tr.querySelector('.apr').innerHTML;
-// var interest_cadence = parent_tr.querySelector('.interest_cadence').innerHTML;
+// var interest_interval = parent_tr.querySelector('.interest_interval').innerHTML;
 // var minimum_payment = parent_tr.querySelector('.minimum_payment').innerHTML;
 // var primary_checking_ind = parent_tr.querySelector('.primary_checking_ind').innerHTML;
 
@@ -384,7 +384,7 @@ if ( isset($_COOKIE['forecastidtoload']) ) {
 // row_details['account_type'] = account_type;
 // row_details['billing_start_date_yyyymmdd'] = billing_start_date_yyyymmdd;
 // row_details['apr'] = apr;
-// row_details['interest_cadence'] = interest_cadence;
+// row_details['interest_interval'] = interest_interval;
 // row_details['minimum_payment'] = minimum_payment;
 // row_details['primary_checking_ind'] = primary_checking_ind;
 
@@ -661,13 +661,13 @@ if ( isset($_COOKIE['forecastidtoload']) ) {
           <legend>Investment</legend>
           <label for="investmentapr">APR:</label>
           <input type="text" id="investmentapr" name="investmentapr"><br>
-          <label for="investmentinterestcadence">Interest Cadence:</label><br>
-          <input type="radio" id="investmentinterestcadence" name="investmentinterestcadence" value="None" class="Investment accountspecificparameter">
-          <label for="investmentinterestcadencenone">None</label><br>
-          <input type="radio" id="investmentinterestcadencedaily" name="investmentinterestcadence" value="Daily" class="Investment accountspecificparameter">
-          <label for="investmentinterestcadencedaily">Daily</label><br>
-          <input type="radio" id="investmentaccountinterestcadencemonthly" name="investmentinterestcadence" value="Monthly" class="Investment accountspecificparameter">
-          <label for="investmentaccountinterestcadencemonthly">Monthly</label><br>
+          <label for="investmentinterestinterval">Interest interval:</label><br>
+          <input type="radio" id="investmentinterestinterval" name="investmentinterestinterval" value="None" class="Investment accountspecificparameter">
+          <label for="investmentinterestintervalnone">None</label><br>
+          <input type="radio" id="investmentinterestintervaldaily" name="investmentinterestinterval" value="Daily" class="Investment accountspecificparameter">
+          <label for="investmentinterestintervaldaily">Daily</label><br>
+          <input type="radio" id="investmentaccountinterestintervalmonthly" name="investmentinterestinterval" value="Monthly" class="Investment accountspecificparameter">
+          <label for="investmentaccountinterestintervalmonthly">Monthly</label><br>
 
           <label for="investmentbillingstartdate">Billing Start Date:</label>
           <input type="date" id="investmentbillingstartdate" name="investmentbillingstartdate"><br>
@@ -683,13 +683,13 @@ if ( isset($_COOKIE['forecastidtoload']) ) {
           <input type="text" id="creditapr" name="creditapr"><br>
           <label for="creditminpayment">Min Payment:</label>
           <input type="creditminpayment" id="creditminpayment" name="creditminpayment"><br>
-          <label for="creditinterestcadence">Interest Cadence:</label><br>
-          <input type="radio" id="creditinterestcadencenone" name="creditinterestcadence" value="None">
-          <label for="creditinterestcadencenone">None</label><br>
-          <input type="radio" id="creditinterestcadencedaily" name="creditinterestcadence" value="Daily">
-          <label for="creditinterestcadencedaily">Daily</label><br>
-          <input type="radio" id="creditinterestcadencemonthly" name="creditinterestcadence" value="Monthly">
-          <label for="creditinterestcadencemonthly">Monthly</label><br>
+          <label for="creditinterestinterval">Interest interval:</label><br>
+          <input type="radio" id="creditinterestintervalnone" name="creditinterestinterval" value="None">
+          <label for="creditinterestintervalnone">None</label><br>
+          <input type="radio" id="creditinterestintervaldaily" name="creditinterestinterval" value="Daily">
+          <label for="creditinterestintervaldaily">Daily</label><br>
+          <input type="radio" id="creditinterestintervalmonthly" name="creditinterestinterval" value="Monthly">
+          <label for="creditinterestintervalmonthly">Monthly</label><br>
 
           <label for="creditbillingstartdate">Billing Start Date:</label>
           <input type="date" id="creditbillingstartdate" name="creditbillingstartdate"><br>
@@ -704,13 +704,13 @@ if ( isset($_COOKIE['forecastidtoload']) ) {
           <input type="text" id="loanapr" name="loanapr"><br>
           <label for="loanminpayment">Min Payment:</label>
           <input type="loanminpayment" id="loanminpayment" name="loanminpayment"><br>
-          <label for="loaninterestcadence">Interest Cadence:</label><br>
-          <input type="radio" id="loaninterestcadencenone" name="loaninterestcadence" value="None">
-          <label for="loaninterestcadencenone">None</label><br>
-          <input type="radio" id="loaninterestcadencedaily" name="loaninterestcadence" value="Daily">
-          <label for="loaninterestcadencedaily">Daily</label><br>
-          <input type="radio" id="loaninterestcadencemonthly" name="loaninterestcadence" value="Monthly">
-          <label for="loaninterestcadencemonthly">Monthly</label><br>
+          <label for="loaninterestinterval">Interest interval:</label><br>
+          <input type="radio" id="loaninterestintervalnone" name="loaninterestinterval" value="None">
+          <label for="loaninterestintervalnone">None</label><br>
+          <input type="radio" id="loaninterestintervaldaily" name="loaninterestinterval" value="Daily">
+          <label for="loaninterestintervaldaily">Daily</label><br>
+          <input type="radio" id="loaninterestintervalmonthly" name="loaninterestinterval" value="Monthly">
+          <label for="loaninterestintervalmonthly">Monthly</label><br>
 
           <label for="loanbillingstartdate">Billing Start Date:</label>
           <input type="date" id="loanbillingstartdate" name="loanbillingstartdate"><br>
@@ -743,19 +743,19 @@ if ( isset($_COOKIE['forecastidtoload']) ) {
         <label for="budgetitemenddate">End Date:</label>
         <input type="date" id="budgetitemenddate" name="budgetitemenddate" required><br>
 
-        <label for="budgetitemcadence">Cadence:</label><br>
-        <input type="radio" id="budgetitemcadenceonce" name="budgetitemcadence" value="Once" required>
-        <label for="budgetitemcadencedaily">Once</label><br>
-        <input type="radio" id="budgetitemcadencedaily" name="budgetitemcadence" value="Daily">
-        <label for="budgetitemcadencedaily">Daily</label><br>
-        <input type="radio" id="budgetitemcadenceweekly" name="budgetitemcadence" value="Weekly">
-        <label for="budgetitemcadenceweekly">Weekly</label><br>
-        <input type="radio" id="budgetitemcadencesemiweekly" name="budgetitemcadence" value="Semi-weekly">
-        <label for="budgetitemcadencesemiweekly">Semi-weekly</label><br>
-        <input type="radio" id="budgetitemcadencemonthly" name="budgetitemcadence" value="Monthly">
-        <label for="budgetitemcadencemonthly">Monthly</label><br>
-        <input type="radio" id="budgetitemcadenceyearly" name="budgetitemcadence" value="Yearly">
-        <label for="budgetitemcadenceyearly">Yearly</label><br>
+        <label for="budgetiteminterval">interval:</label><br>
+        <input type="radio" id="budgetitemintervalonce" name="budgetiteminterval" value="Once" required>
+        <label for="budgetitemintervaldaily">Once</label><br>
+        <input type="radio" id="budgetitemintervaldaily" name="budgetiteminterval" value="Daily">
+        <label for="budgetitemintervaldaily">Daily</label><br>
+        <input type="radio" id="budgetitemintervalweekly" name="budgetiteminterval" value="Weekly">
+        <label for="budgetitemintervalweekly">Weekly</label><br>
+        <input type="radio" id="budgetitemintervalsemiweekly" name="budgetiteminterval" value="Semi-weekly">
+        <label for="budgetitemintervalsemiweekly">Semi-weekly</label><br>
+        <input type="radio" id="budgetitemintervalmonthly" name="budgetiteminterval" value="Monthly">
+        <label for="budgetitemintervalmonthly">Monthly</label><br>
+        <input type="radio" id="budgetitemintervalyearly" name="budgetiteminterval" value="Yearly">
+        <label for="budgetitemintervalyearly">Yearly</label><br>
         <label for="budgetitemamount">Amount:</label>
         <input type="text" id="budgetitemamount" name="budgetitemamount" required><br>
 
@@ -1305,7 +1305,7 @@ if ( isset($_COOKIE['forecastidtoload']) ) {
             echo '<th>Start_Date</th>';
             echo '<th>End_Date</th>';
             echo '<th>Priority</th>';
-            echo '<th>Cadence</th>';
+            echo '<th>interval</th>';
             echo '<th>Amount</th>';
             echo '<th>Memo</th>';
             echo '<th>Deferrable</th>';
@@ -1320,7 +1320,7 @@ if ( isset($_COOKIE['forecastidtoload']) ) {
               <td class="start_date">'. $array['start_date'].'</td>
               <td class="end_date">'. $array['end_date'].'</td>
               <td class="priority">'. $array['priority'].'</td>
-              <td class="cadence">'. $array['cadence'].'</td>
+              <td class="interval">'. $array['interval'].'</td>
               <td class="amount">'. $array['amount'].'</td>
               <td class="memo">'. $array['memo'].'</td>
               <td class="deferrable">'. $array['deferrable'].'</td>
@@ -1347,7 +1347,7 @@ if ( isset($_COOKIE['forecastidtoload']) ) {
             echo '<th>Start_Date</th>';
             echo '<th>End_Date</th>';
             echo '<th>Priority</th>';
-            echo '<th>Cadence</th>';
+            echo '<th>interval</th>';
             echo '<th>Amount</th>';
             echo '<th>Memo</th>';
             echo '<th>Deferrable</th>';
@@ -1362,7 +1362,7 @@ if ( isset($_COOKIE['forecastidtoload']) ) {
               <td class="start_date">'. $array['start_date'].'</td>
               <td class="end_date">'. $array['end_date'].'</td>
               <td class="priority">'. $array['priority'].'</td>
-              <td class="cadence">'. $array['cadence'].'</td>
+              <td class="interval">'. $array['interval'].'</td>
               <td class="amount">'. $array['amount'].'</td>
               <td class="memo">'. $array['memo'].'</td>
               <td class="deferrable">'. $array['deferrable'].'</td>
@@ -1427,7 +1427,7 @@ if ( isset($_COOKIE['forecastidtoload']) ) {
            echo '<th>Account_Type</th>';
            echo '<th>Billing_Start_Date</th>';
            echo '<th>APR</th>';
-           echo '<th>Interest_Cadence</th>';
+           echo '<th>Interest_interval</th>';
            echo '<th>Minimum_Payment</th>';
            echo '<th>Primary_Checking_Ind</th>';
            echo '</tr>';
@@ -1444,7 +1444,7 @@ if ( isset($_COOKIE['forecastidtoload']) ) {
             <td><span class="account_type">'. $array['account_type'].'</span></td>
             <td><span class="billing_start_date_yyyymmdd">'. $array['billing_start_date_yyyymmdd'].'</span></td>
             <td><span class="apr">'. $array['apr'].'</span></td>
-            <td><span class="interest_cadence">'. $array['interest_cadence'].'</span></td>
+            <td><span class="interest_interval">'. $array['interest_interval'].'</span></td>
             <td><span class="minimum_payment">'. $array['minimum_payment'].'</span></td>
             <td><span class="primary_checking_ind">'. $array['primary_checking_ind'].'</span></td>
 
@@ -1924,19 +1924,19 @@ if ( isset($_COOKIE['forecastidtoload']) ) {
         $("#previousstatementbalancecredit").attr('required', '');
         $("#creditapr").attr('required', '');
         $("#creditminpayment").attr('required', '');
-        $("#creditinterestcadence").attr('required', '');
+        $("#creditinterestinterval").attr('required', '');
         $("#creditbillingstartdate").attr('required', '');
-        $("#creditinterestcadencemonthly").attr('required', '');
+        $("#creditinterestintervalmonthly").attr('required', '');
 
 
         $("#interestbalance").removeAttr('required', '');
         $("#loanapr").removeAttr('required', '');
         $("#loanminpayment").removeAttr('required', '');
-        $("#loaninterestcadence").removeAttr('required', '');
+        $("#loaninterestinterval").removeAttr('required', '');
         $("#loanbillingstartdate").removeAttr('required', '');
 
         $("#investmentapr").removeAttr('required', '');
-        $("#investmentinterestcadence").removeAttr('required', '');
+        $("#investmentinterestinterval").removeAttr('required', '');
         $("#investmentbillingstartdate").removeAttr('required', '');
       }
       else if($(this).val() == 'Loan') {
@@ -1944,40 +1944,40 @@ if ( isset($_COOKIE['forecastidtoload']) ) {
         $("#interestbalance").attr('required', '');
         $("#loanapr").attr('required', '');
         $("#loanminpayment").attr('required', '');
-        $("#loaninterestcadence").attr('required', '');
+        $("#loaninterestinterval").attr('required', '');
         $("#loanbillingstartdate").attr('required', '');
 
         $("#previousstatementbalancecredit").removeAttr('required', '');
         $("#creditapr").removeAttr('required', '');
         $("#creditminpayment").removeAttr('required', '');
-        $("#creditinterestcadence").removeAttr('required', '');
+        $("#creditinterestinterval").removeAttr('required', '');
         $("#creditbillingstartdate").removeAttr('required', '');
 
         $("#investmentapr").removeAttr('required', '');
-        $("#investmentinterestcadence").removeAttr('required', '');
+        $("#investmentinterestinterval").removeAttr('required', '');
         $("#investmentbillingstartdate").removeAttr('required', '');
 
-        $("#creditinterestcadencemonthly").removeAttr('required', '');
+        $("#creditinterestintervalmonthly").removeAttr('required', '');
       }       
       else if($(this).val() == 'Investment') {
 
         $("#investmentapr").attr('required', '');
-        $("#investmentinterestcadence").attr('required', '');
+        $("#investmentinterestinterval").attr('required', '');
         $("#investmentbillingstartdate").attr('required', '');
 
         $("#previousstatementbalancecredit").removeAttr('required', '');
         $("#creditapr").removeAttr('required', '');
         $("#creditminpayment").removeAttr('required', '');
-        $("#creditinterestcadence").removeAttr('required', '');
+        $("#creditinterestinterval").removeAttr('required', '');
         $("#creditbillingstartdate").removeAttr('required', '');
 
         $("#interestbalance").removeAttr('required', '');
         $("#loanapr").removeAttr('required', '');
         $("#loanminpayment").removeAttr('required', '');
-        $("#loaninterestcadence").removeAttr('required', '');
+        $("#loaninterestinterval").removeAttr('required', '');
         $("#loanbillingstartdate").removeAttr('required', '');
 
-        $("#creditinterestcadencemonthly").removeAttr('required', '');
+        $("#creditinterestintervalmonthly").removeAttr('required', '');
 
       } 
 

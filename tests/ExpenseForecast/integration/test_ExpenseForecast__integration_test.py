@@ -31,7 +31,7 @@ class TestExpenseForecastIntegration:
             start_date=date(2026, 6, 2),
             end_date=date(2026, 6, 2),
             priority=1,
-            cadence="once",
+            interval="once",
             amount=100,
             memo="test expense",
         )
@@ -95,7 +95,7 @@ class TestExpenseForecastIntegration:
             start_date=date(2026, 6, 2),
             end_date=date(2026, 6, 2),
             priority=1,
-            cadence="once",
+            interval="once",
             amount=100,
             memo="test expense",
         )

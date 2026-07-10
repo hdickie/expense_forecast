@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 #                 sd,
 #                 ed,
 #                 row.priority,
-#                 row.cadence.replace("-", "").lower(),
+#                 row.interval.replace("-", "").lower(),
 #                 row.amount,
 #                 row.memo,
 #                 row.deferrable,
@@ -105,7 +105,7 @@ class LineItemSet:
             "start_date",
             "end_date",
             "priority",
-            "cadence",
+            "interval",
             "amount",
             "memo",
         ]
@@ -193,7 +193,7 @@ class LineItemSet:
                 "Start_Date": [],
                 "End_Date": [],
                 "Priority": [],
-                "Cadence": [],
+                "interval": [],
                 "Amount": [],
                 "Memo": [],
                 "Income_Flag": [],
@@ -208,7 +208,7 @@ class LineItemSet:
                     "Start_Date": [line_item.start_date],
                     "End_Date": [line_item.end_date],
                     "Priority": [line_item.priority],
-                    "Cadence": [line_item.cadence],
+                    "interval": [line_item.interval],
                     "Amount": [line_item.amount],
                     "Memo": [line_item.memo],
                     "Income_Flag": [line_item.income_flag],
@@ -259,7 +259,7 @@ class LineItemSet:
         for line_item in self.line_items:
             relative_num_days = (line_item.end_date - line_item.start_date).days
             relevant_date_sequence = generate_date_sequence(
-                line_item.start_date, relative_num_days, line_item.cadence
+                line_item.start_date, relative_num_days, line_item.interval
             )
 
             for scheduled_date in relevant_date_sequence:
@@ -302,7 +302,7 @@ class LineItemSet:
         return current_budget_schedule
 
     #TODO manual review of LineItemSet.addLineItem docstring
-    def addLineItem(self, start_date, end_date, priority, cadence, amount, memo, income_flag = False, **kwargs):
+    def addLineItem(self, start_date, end_date, priority, interval, amount, memo, income_flag = False, **kwargs):
         """
         TODO one-line description of LineItemSet.addLineItem.
 
@@ -321,8 +321,8 @@ class LineItemSet:
         priority : int
             TODO one-line description of LineItemSet.addLineItem.priority.
 
-        cadence : str
-            TODO one-line description of LineItemSet.addLineItem.cadence.
+        interval : str
+            TODO one-line description of LineItemSet.addLineItem.interval.
 
         amount : float
             TODO one-line description of LineItemSet.addLineItem.amount.
@@ -352,7 +352,7 @@ class LineItemSet:
             start_date,
             end_date,
             priority,
-            cadence,
+            interval,
             amount,
             memo,
             income_flag=income_flag,
@@ -406,7 +406,7 @@ class LineItemSet:
                     "Start_Date": line_item.start_date.isoformat(),
                     "End_Date": line_item.end_date.isoformat(),
                     "Priority": line_item.priority,
-                    "Cadence": line_item.cadence,
+                    "interval": line_item.interval,
                     "Amount": line_item.amount,
                     "Memo": line_item.memo,
                     "Income_Flag": line_item.income_flag,
@@ -507,7 +507,7 @@ class LineItemSet:
             line_item.start_date,
             line_item.end_date,
             line_item.priority,
-            line_item.cadence,
+            line_item.interval,
             line_item.amount,
             line_item.memo,
             line_item.income_flag,
@@ -567,13 +567,13 @@ class LineItemSet:
         """Compatibility wrapper for callers that still use BudgetSet naming."""
         return self.getLineItemSchedule()
 
-    def addBudgetItem(self, start_date, end_date, priority, cadence, amount, memo, income_flag = False, **kwargs):
+    def addBudgetItem(self, start_date, end_date, priority, interval, amount, memo, income_flag = False, **kwargs):
         """Compatibility wrapper for callers that still use BudgetSet naming."""
         return self.addLineItem(
             start_date,
             end_date,
             priority,
-            cadence,
+            interval,
             amount,
             memo,
             income_flag=income_flag,

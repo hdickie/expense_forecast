@@ -1855,7 +1855,7 @@
 
         # todo this is wrong
         next_billing_date_str = generate_date_sequence(
-            date_YYYYMMDD, 32, cadence="monthly"
+            date_YYYYMMDD, 32, interval="monthly"
         )[-1]
         next_billing_date = datetime.datetime.strptime(next_billing_date_str, "%Y%m%d")
 
@@ -3712,9 +3712,9 @@
             if account_row["Account_Type"] == "credit prev stmt bal":
                 continue
 
-            # Get the interest cadence and type
-            if account_row.get("Interest_Cadence", "") is not None:
-                interest_cadence = account_row.get("Interest_Cadence", "").lower()
+            # Get the interest interval and type
+            if account_row.get("Interest_interval", "") is not None:
+                interest_interval = account_row.get("Interest_interval", "").lower()
             else:
                 continue
 
@@ -3725,8 +3725,8 @@
 
             # log_in_color(logger, 'white', 'debug', 'Did not skip '+account_row.Name, self.log_stack_depth)
 
-            # # Skip if interest cadence or type is not defined
-            # if not interest_cadence or interest_cadence == 'none' or not interest_type:
+            # # Skip if interest interval or type is not defined
+            # if not interest_interval or interest_interval == 'none' or not interest_type:
             #     continue
 
             # Calculate the number of days since the billing start date
@@ -3740,12 +3740,12 @@
             if num_days < 0:
                 continue
 
-            # Generate date sequence based on billing start date and interest cadence
+            # Generate date sequence based on billing start date and interest interval
             # Assume generate_date_sequence is a function that returns a set of dates
             dseq = generate_date_sequence(
                 start_date_YYYYMMDD=billing_start_date,
                 num_days=num_days,
-                cadence=interest_cadence,
+                interval=interest_interval,
             )
 
             # Include billing start date if current date matches
@@ -3757,9 +3757,9 @@
                 apr = account_row["APR"]
                 balance = account_row["Balance"]
 
-                # Calculate interest based on type and cadence
+                # Calculate interest based on type and interval
                 if interest_type == "compound":
-                    if interest_cadence == "monthly":
+                    if interest_interval == "monthly":
                         # Compound interest, monthly accrual
                         interest_accrued = balance * (apr / 12)
                         # Update account balance
@@ -3772,12 +3772,12 @@
                         #     account_set.accounts[account_index].balance += prev_stmt_balance
                         #     account_set.accounts[prev_account_index].balance = 0
                     else:
-                        # Other compound interest cadences not implemented
+                        # Other compound interest intervals not implemented
                         raise NotImplementedError(
-                            f"Compound interest with '{interest_cadence}' cadence is not implemented."
+                            f"Compound interest with '{interest_interval}' interval is not implemented."
                         )
                 elif interest_type == "simple":
-                    if interest_cadence == "daily":
+                    if interest_interval == "daily":
                         # Simple interest, daily accrual
                         interest_accrued = balance * (apr / 365.25)
 
@@ -3793,9 +3793,9 @@
                         # if abs(account_set.accounts[interest_account_index].balance) < 0.01:
                         #     account_set.accounts[interest_account_index].balance = 0.0
                     else:
-                        # Other simple interest cadences not implemented
+                        # Other simple interest intervals not implemented
                         raise NotImplementedError(
-                            f"Simple interest with '{interest_cadence}' cadence is not implemented."
+                            f"Simple interest with '{interest_interval}' interval is not implemented."
                         )
                 else:
                     raise ValueError(
@@ -6907,8 +6907,8 @@
         # Generate interest accrual dates
         interest_accrual_dates__list_of_lists = []
         for _, a_row in A_df.iterrows():
-            interest_cadence = a_row["Interest_Cadence"]
-            if pd.isnull(interest_cadence) or interest_cadence == "None":
+            interest_interval = a_row["Interest_interval"]
+            if pd.isnull(interest_interval) or interest_interval == "None":
                 interest_accrual_dates__list_of_lists.append([])
                 continue
 
@@ -6916,7 +6916,7 @@
             end_date = pd.to_datetime(self.end_date_YYYYMMDD, format="%Y%m%d")
             num_days = (end_date - start_date).days
             account_specific_iad = generate_date_sequence(
-                a_row["Billing_Start_Date"], num_days, interest_cadence
+                a_row["Billing_Start_Date"], num_days, interest_interval
             )
             interest_accrual_dates__list_of_lists.append(account_specific_iad)
 

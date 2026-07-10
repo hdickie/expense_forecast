@@ -48,7 +48,7 @@ class CreditCardBillingState:
                   current_statement_balance: Decimal, billing_cycle_payment_balance: Decimal,
                   minimum_payment: Decimal,
                   interest_type: str,
-                  interest_cadence: str,
+                  interest_interval: str,
                   apr: Decimal,
                   end_of_previous_cycle_balance: Decimal = None,
                   minimum_payment_floor: Decimal = None,
@@ -81,8 +81,8 @@ class CreditCardBillingState:
         interest_type : object
             TODO one-line description of CreditCardBillingState.__init__.interest_type.
 
-        interest_cadence : object
-            TODO one-line description of CreditCardBillingState.__init__.interest_cadence.
+        interest_interval : object
+            TODO one-line description of CreditCardBillingState.__init__.interest_interval.
 
         apr : float
             TODO one-line description of CreditCardBillingState.__init__.apr.
@@ -140,9 +140,9 @@ class CreditCardBillingState:
         self.minimum_payment_credit_balance = minimum_payment_credit_balance
 
         assert interest_type in ["simple", "compound"]
-        assert interest_cadence in ["daily", "monthly", "quarterly", "annually"]
+        assert interest_interval in ["daily", "monthly", "quarterly", "annually"]
         self.interest_type = interest_type
-        self.interest_cadence = interest_cadence
+        self.interest_interval = interest_interval
 
         assert apr >= 0
         self.apr = apr
@@ -218,9 +218,9 @@ class CreditCardBillingState:
 
         @interface-report: show
         """
-        if self.interest_cadence != "monthly":
+        if self.interest_interval != "monthly":
             raise NotImplementedError(
-                f"Credit card interest cadence '{self.interest_cadence}' is not implemented."
+                f"Credit card interest interval '{self.interest_interval}' is not implemented."
             )
         if self.interest_type != "compound":
             raise NotImplementedError(
@@ -340,7 +340,7 @@ class CreditCardBillingState:
             end_of_previous_cycle_balance=end_of_previous_cycle_balance,
             minimum_payment=next_minimum_payment,
             interest_type=self.interest_type,
-            interest_cadence=self.interest_cadence,
+            interest_interval=self.interest_interval,
             apr=self.apr,
             minimum_payment_floor=self.minimum_payment_floor,
             minimum_payment_credit_balance=advance_payment_credit,

@@ -9,10 +9,10 @@ $username = pg_fetch_row($query_obj)[0];
 
 
 pg_query($dbconn, "TRUNCATE prod.ef_account_set_".$username."_temporary");
-pg_query($dbconn, "INSERT INTO prod.ef_account_set_".$username."_temporary Select account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_cadence, minimum_payment, primary_checking_ind from prod.ef_account_set_".$username." where forecast_id = '".$_POST["forecastidtoload"]."'");
+pg_query($dbconn, "INSERT INTO prod.ef_account_set_".$username."_temporary Select account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_interval, minimum_payment, primary_checking_ind from prod.ef_account_set_".$username." where forecast_id = '".$_POST["forecastidtoload"]."'");
  
 pg_query($dbconn, "TRUNCATE prod.ef_budget_item_set_".$username."_temporary");
-pg_query($dbconn, "INSERT INTO prod.ef_budget_item_set_".$username."_temporary Select memo, priority, start_date, end_date, cadence, amount, \"deferrable\", partial_payment_allowed from prod.ef_budget_item_set_".$username." where forecast_id = '".$_POST["forecastidtoload"]."'");
+pg_query($dbconn, "INSERT INTO prod.ef_budget_item_set_".$username."_temporary Select memo, priority, start_date, end_date, interval, amount, \"deferrable\", partial_payment_allowed from prod.ef_budget_item_set_".$username." where forecast_id = '".$_POST["forecastidtoload"]."'");
 
 pg_query($dbconn, "TRUNCATE prod.ef_memo_rule_set_".$username."_temporary");
 pg_query($dbconn, "INSERT INTO prod.ef_memo_rule_set_".$username."_temporary Select memo_regex, account_from, account_to, priority from prod.ef_memo_rule_set_".$username." where forecast_id = '".$_POST["forecastidtoload"]."'");

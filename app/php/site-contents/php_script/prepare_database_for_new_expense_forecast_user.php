@@ -20,7 +20,7 @@ create table prod.ef_account_set_".$_POST["username"]." (
 	account_type text,
 	billing_start_date_yyyymmdd date,
 	apr float,
-	interest_cadence text,
+	interest_interval text,
 	minimum_payment float,
 	primary_checking_ind bool
 )";
@@ -32,7 +32,7 @@ create table prod.ef_budget_item_set_".$_POST["username"]." (
 	priority int,
 	start_date date,
 	end_date date,
-	cadence text,
+	interval text,
 	amount float,
 	\"deferrable\" bool,
 	partial_payment_allowed bool
@@ -45,7 +45,7 @@ create table prod.ef_optional_budget_item_set_".$_POST["username"]." (
 	priority int,
 	start_date date,
 	end_date date,
-	cadence text,
+	interval text,
 	amount float,
 	\"deferrable\" bool,
 	partial_payment_allowed bool
@@ -95,7 +95,7 @@ create table prod.ef_account_set_".$_POST["username"]."_temporary (
 	account_type text,
 	billing_start_date_yyyymmdd date,
 	apr float,
-	interest_cadence text,
+	interest_interval text,
 	minimum_payment float,
 	primary_checking_ind bool
 )";
@@ -106,7 +106,7 @@ create table prod.ef_budget_item_set_".$_POST["username"]."_temporary (
 	priority int,
 	start_date date,
 	end_date date,
-	cadence text,
+	interval text,
 	amount float,
 	\"deferrable\" bool,
 	partial_payment_allowed bool
@@ -118,7 +118,7 @@ create table prod.ef_budget_item_set_optional_".$_POST["username"]."_temporary (
 	priority int,
 	start_date date,
 	end_date date,
-	cadence text,
+	interval text,
 	amount float,
 	\"deferrable\" bool,
 	partial_payment_allowed bool

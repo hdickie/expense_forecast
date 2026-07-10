@@ -66,48 +66,48 @@ class LineItem:
         assert isinstance(end_date, datetime.date)
         assert start_date <= end_date
 
-    #TODO manual review of LineItem._validate_cadence docstring
+    #TODO manual review of LineItem._validate_interval docstring
     @staticmethod
-    def _validate_cadence(cadence, start_date, end_date):
+    def _validate_interval(interval, start_date, end_date):
         """
-        TODO one-line description of LineItem._validate_cadence.
+        TODO one-line description of LineItem._validate_interval.
 
-        TODO multi-line description of LineItem._validate_cadence.
-        TODO explain how LineItem._validate_cadence participates in this module.
+        TODO multi-line description of LineItem._validate_interval.
+        TODO explain how LineItem._validate_interval participates in this module.
         TODO document important state, validation, or serialization behavior.
 
         Parameters
         ----------
-        cadence : str
-            TODO one-line description of LineItem._validate_cadence.cadence.
+        interval : str
+            TODO one-line description of LineItem._validate_interval.interval.
 
         start_date : date
-            TODO one-line description of LineItem._validate_cadence.start_date.
+            TODO one-line description of LineItem._validate_interval.start_date.
 
         end_date : date
-            TODO one-line description of LineItem._validate_cadence.end_date.
+            TODO one-line description of LineItem._validate_interval.end_date.
 
         Returns
         -------
         None
-            TODO one-line description of return value of LineItem._validate_cadence.
+            TODO one-line description of return value of LineItem._validate_interval.
 
         Contract
         --------
-        - #TODO contract lines for LineItem._validate_cadence.
-        - #TODO document exceptions, mutations, and precision assumptions for LineItem._validate_cadence.
+        - #TODO contract lines for LineItem._validate_interval.
+        - #TODO document exceptions, mutations, and precision assumptions for LineItem._validate_interval.
 
         @interface-report: show
         """
-        allowed_cadences = ['once','daily','weekly','semiweekly','monthly','quarterly','anually']
-        if not cadence in allowed_cadences:
+        allowed_intervals = ['once','daily','weekly','semiweekly','monthly','quarterly','anually']
+        if not interval in allowed_intervals:
             raise ValueError(
-                f"Invalid cadence: {cadence!r}. "
-                f"Allowed values are: {sorted(allowed_cadences)}"
+                f"Invalid interval: {interval!r}. "
+                f"Allowed values are: {sorted(allowed_intervals)}"
             )
-        if cadence == 'once':
+        if interval == 'once':
             assert start_date == end_date
-        # TODO add warnings if interval is shorter than cadence and create test
+        # TODO add warnings if interval is shorter than interval and create test
 
     #TODO manual review of LineItem._validate_priority docstring
     @staticmethod
@@ -201,7 +201,7 @@ class LineItem:
         assert ';' not in memo
 
     #TODO manual review of LineItem.__init__ docstring
-    def __init__(self, start_date, end_date, priority, cadence, amount, memo, **kwargs):
+    def __init__(self, start_date, end_date, priority, interval, amount, memo, **kwargs):
 
         """
         TODO one-line description of LineItem.__init__.
@@ -221,8 +221,8 @@ class LineItem:
         priority : int
             TODO one-line description of LineItem.__init__.priority.
 
-        cadence : str
-            TODO one-line description of LineItem.__init__.cadence.
+        interval : str
+            TODO one-line description of LineItem.__init__.interval.
 
         amount : float
             TODO one-line description of LineItem.__init__.amount.
@@ -254,8 +254,8 @@ class LineItem:
         self.end_date = end_date
         LineItem._validate_start_and_end_date(self.start_date, self.end_date)
 
-        self.cadence = cadence
-        LineItem._validate_cadence(self.cadence, self.start_date, self.end_date)
+        self.interval = interval
+        LineItem._validate_interval(self.interval, self.start_date, self.end_date)
 
         self.priority = priority
         LineItem._validate_priority(self.priority)
@@ -333,7 +333,7 @@ class LineItem:
             "Start_Date": self.start_date.strftime("%Y%m%d"),
             "End_Date": self.end_date.strftime("%Y%m%d"),
             "Priority": self.priority,
-            "Cadence": self.cadence,
+            "interval": self.interval,
             "Amount": self.amount,
             "Memo": self.memo,
             "Deferrable": self.deferrable,

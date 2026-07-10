@@ -48,7 +48,7 @@ create table public.passwords (
 -- prev_stmt_bal float,
 -- apr float,
 -- min_payment float,
--- interest_cadence text,
+-- interest_interval text,
 -- billing_start_date date,
 -- forecast_id int
 -- );
@@ -59,7 +59,7 @@ create table public.passwords (
 -- min_balance float,
 -- max_balance float,
 -- apr float,
--- interest_cadence text,
+-- interest_interval text,
 -- billing_start_date date,
 -- forecast_id int
 -- );
@@ -72,7 +72,7 @@ create table public.passwords (
 -- interest_balance float,
 -- apr float,
 -- min_payment float,
--- interest_cadence text,
+-- interest_interval text,
 -- billing_start_date date,
 -- forecast_id int
 -- );
