@@ -665,6 +665,21 @@ class TestForecastHandler:
 
         assert R.forecast_df.shape[0] == 5
 
+        if payment_date == date(2026, 6, 3):
+            additional_payment_directives = (
+                f"ADDTL CC PAYMENT (Credit -${payment_amount:.2f})"
+            )
+            existing_directives = expected_billing_date_state.loc[
+                expected_billing_date_state.index[0], "Memo Directives"
+            ]
+            expected_billing_date_state.loc[
+                expected_billing_date_state.index[0], "Memo Directives"
+            ] = (
+                f"{existing_directives}; {additional_payment_directives}"
+                if existing_directives
+                else additional_payment_directives
+            )
+
         pd.testing.assert_frame_equal(
             R.forecast_df.iloc[[2]],
             expected_billing_date_state,
@@ -2809,6 +2824,88 @@ class TestForecastHandler:
         assert payment_row["Low APR Loan: Interest"] == round(float(low_interest), 2)
 
     @pytest.mark.integration
+    def test_ForecastHandler__runApproximate__all_loans_uses_executed_amount_after_payoff(self):
+        start_date, end_date = date(2026, 6, 1), date(2026, 6, 20)
+        accounts = self._approximate_checking()
+        accounts.createLoanAccount(
+            name="Small Loan",
+            principal_balance=100,
+            interest_balance=0,
+            min_balance=0,
+            max_balance=1000,
+            billing_start_date=start_date,
+            apr=0,
+            minimum_payment=0,
+            billing_cycle_payment_balance=0,
+        )
+        budget, memo_rules = LineItemSet(), MemoRuleSet()
+        budget.addLineItem(
+            start_date=date(2026, 6, 15), end_date=date(2026, 6, 16),
+            priority=1, interval="daily", amount=4200,
+            memo="all loan payment", income_flag=False,
+            deferrable=False, partial_payment_allowed=False,
+        )
+        memo_rules.addMemoRule(
+            memo_regex="all loan payment", account_from="Checking",
+            account_to="ALL_LOANS", transaction_priority=1,
+        )
+
+        result = self._run_approximate(
+            start_date, end_date, accounts, budget, memo_rules
+        )
+        final_row = result.forecast_df.iloc[-1]
+
+        assert final_row["Checking"] == 900
+        assert final_row["Small Loan"] == 0
+        assert final_row["Small Loan: Loan Billing Cycle Payment Bal"] == 0
+        assert final_row["Memo"] == "all loan payment (Checking -$100.00)"
+
+    @pytest.mark.integration
+    def test_ForecastHandler__runApproximate__loan_cycle_payments_reset_monthly(self):
+        start_date, end_date = date(2026, 5, 30), date(2026, 7, 1)
+        accounts = self._approximate_checking(balance=20_000)
+        for name, apr in (("Loan A", 0.2), ("Loan B", 0.1)):
+            accounts.createLoanAccount(
+                name=name,
+                principal_balance=10_000,
+                interest_balance=0,
+                min_balance=0,
+                max_balance=20_000,
+                billing_start_date=start_date,
+                apr=apr,
+                minimum_payment=0,
+                billing_cycle_payment_balance=0,
+            )
+        budget, memo_rules = LineItemSet(), MemoRuleSet()
+        budget.addLineItem(
+            start_date=date(2026, 6, 1), end_date=end_date,
+            priority=1, interval="monthly", amount=4200,
+            memo="all loan payment", income_flag=False,
+            deferrable=False, partial_payment_allowed=False,
+        )
+        memo_rules.addMemoRule(
+            memo_regex="all loan payment", account_from="Checking",
+            account_to="ALL_LOANS", transaction_priority=1,
+        )
+
+        result = self._run_approximate(
+            start_date, end_date, accounts, budget, memo_rules
+        )
+        cycle_columns = [
+            column for column in result.forecast_df.columns
+            if "Loan Billing Cycle Payment Bal" in column
+        ]
+        june_row = result.forecast_df.loc[
+            result.forecast_df.Date == date(2026, 6, 1)
+        ].iloc[0]
+        july_row = result.forecast_df.loc[
+            result.forecast_df.Date == date(2026, 7, 1)
+        ].iloc[0]
+
+        assert june_row[cycle_columns].sum() == pytest.approx(4200)
+        assert july_row[cycle_columns].sum() == pytest.approx(4200)
+
+    @pytest.mark.integration
     def test_ForecastHandler__runApproximate__unknown_account_still_raises(self):
         start_date, end_date = date(2026, 6, 1), date(2026, 6, 20)
         accounts = self._approximate_checking()
@@ -2856,6 +2953,133 @@ class TestForecastHandler:
         assert "executing txn" not in log_output
         assert "Finished Approximate Forecast" in log_output
 
+    @pytest.mark.integration
+    def test_ForecastHandler__investment_returns__exact_and_approximate(self):
+        start_date, end_date = date(2026, 6, 1), date(2026, 6, 5)
+        accounts = self._approximate_checking()
+        accounts.createInvestmentAccount(
+            name="Brokerage",
+            balance=1000,
+            billing_start_date=date(2026, 6, 2),
+            apr=0.1,
+        )
+        io = self._approximate_io(start_date, end_date, accounts)
+
+        exact = ForecastHandler().runForecast(
+            io, MilestoneSet(), include_debug_columns=True
+        )
+        approximate = ForecastHandler().runForecastApproximate(
+            io, MilestoneSet(), include_debug_columns=True
+        )
+
+        expected_balance = Decimal("1000") * (
+            Decimal("1") + Decimal("0.1") / Decimal("365.25")
+        ) ** 4
+        expected_rounded = round(float(expected_balance), 2)
+        assert exact.forecast_df.iloc[-1]["Brokerage"] == expected_rounded
+        assert approximate.forecast_df.iloc[-1]["Brokerage"] == expected_rounded
+        assert exact.forecast_df.iloc[-1]["Net Worth"] == 1000 + expected_rounded
+        assert approximate.forecast_df.iloc[-1]["Net Worth"] == 1000 + expected_rounded
+        assert sum(
+            "INVESTMENT RETURN" in directives
+            for directives in exact.forecast_df["Memo Directives"]
+        ) == 4
+        assert sum(
+            "INVESTMENT RETURN" in directives
+            for directives in approximate.forecast_df["Memo Directives"]
+        ) == 1
+
+    @pytest.mark.integration
+    def test_ForecastHandler__investment_contribution_preserves_exact_approximate_parity(self):
+        start_date, end_date = date(2026, 6, 1), date(2026, 6, 5)
+        accounts = self._approximate_checking()
+        accounts.createInvestmentAccount(
+            name="Brokerage",
+            balance=1000,
+            billing_start_date=start_date,
+            apr=0.1,
+        )
+        budget, memo_rules = LineItemSet(), MemoRuleSet()
+        budget.addLineItem(
+            start_date=date(2026, 6, 3), end_date=date(2026, 6, 3),
+            priority=1, interval="once", amount=100, memo="invest",
+            income_flag=False, deferrable=False, partial_payment_allowed=False,
+        )
+        memo_rules.addMemoRule(
+            memo_regex="invest", account_from="Checking", account_to="Brokerage",
+            transaction_priority=1,
+        )
+        io = self._approximate_io(
+            start_date, end_date, accounts, budget, memo_rules
+        )
+
+        exact = ForecastHandler().runForecast(
+            io, MilestoneSet(), include_debug_columns=True
+        )
+        approximate = ForecastHandler().runForecastApproximate(
+            io, MilestoneSet(), include_debug_columns=True
+        )
+
+        daily_factor = Decimal("1") + Decimal("0.1") / Decimal("365.25")
+        expected_balance = (
+            Decimal("1000") * daily_factor ** 2 + Decimal("100")
+        ) * daily_factor ** 2
+        assert exact.forecast_df.iloc[-1]["Checking"] == 900
+        assert approximate.forecast_df.iloc[-1]["Checking"] == 900
+        assert exact.forecast_df.iloc[-1]["Brokerage"] == round(
+            float(expected_balance), 2
+        )
+        assert approximate.forecast_df.iloc[-1]["Brokerage"] == round(
+            float(expected_balance), 2
+        )
+        for result in (exact, approximate):
+            assert result.forecast_df["Net Loss"].sum() == 0
+            assert result.forecast_df["Net Gain"].sum() > 0
+            assert any(
+                "INVESTMENT CONTRIBUTION (Brokerage +$100" in directives
+                for directives in result.forecast_df["Memo Directives"]
+            )
+
+    @pytest.mark.integration
+    def test_ForecastHandler__investment_withdrawal_is_net_neutral(self):
+        start_date, end_date = date(2026, 6, 1), date(2026, 6, 3)
+        accounts = self._approximate_checking()
+        accounts.createInvestmentAccount(
+            name="Brokerage", balance=1000,
+            billing_start_date=start_date, apr=0,
+        )
+        budget, memo_rules = LineItemSet(), MemoRuleSet()
+        budget.addLineItem(
+            start_date=date(2026, 6, 2), end_date=date(2026, 6, 2),
+            priority=1, interval="once", amount=100, memo="withdraw",
+            income_flag=False, deferrable=False, partial_payment_allowed=False,
+        )
+        memo_rules.addMemoRule(
+            memo_regex="withdraw", account_from="Brokerage", account_to="Checking",
+            transaction_priority=1,
+        )
+        io = self._approximate_io(
+            start_date, end_date, accounts, budget, memo_rules
+        )
+
+        exact = ForecastHandler().runForecast(
+            io, MilestoneSet(), include_debug_columns=True
+        )
+        approximate = ForecastHandler().runForecastApproximate(
+            io, MilestoneSet(), include_debug_columns=True
+        )
+
+        for result in (exact, approximate):
+            final_row = result.forecast_df.iloc[-1]
+            assert final_row["Checking"] == 1100
+            assert final_row["Brokerage"] == 900
+            assert result.forecast_df["Net Gain"].sum() == 0
+            assert result.forecast_df["Net Loss"].sum() == 0
+            assert any(
+                "INVESTMENT WITHDRAWAL (Checking +$100" in directives
+                for directives in result.forecast_df["Memo Directives"]
+            )
+
     # dates should be: start_date, 6/1, 7/1, 8/1, end_date
     # this test is similar but simpler than the loan case, since (I am pretty sure )
     # interest should not be reduced by advance payment within 1 month
@@ -2879,6 +3103,11 @@ class TestForecastHandler:
         ]
         july_memo = result.forecast_df.loc[result.forecast_df.Date == date(2026, 7, 1), "Memo"].iat[0]
         assert "extra credit payment (Checking -$100.00)" in july_memo
+        july_directives = result.forecast_df.loc[
+            result.forecast_df.Date == date(2026, 7, 1), "Memo Directives"
+        ].iat[0]
+        assert "ADDTL CC PAYMENT (Credit -$100)" in july_directives
+        assert "ADDTL CC PAYMENT (Checking" not in july_directives
         # The advance payment lowers the statement balance used for interest and
         # satisfies the first approximate minimum payment through payment credit.
         credit_balance = Decimal("1000") - Decimal("100")
@@ -2887,6 +3116,74 @@ class TestForecastHandler:
             credit_balance += credit_balance * Decimal("0.25") / Decimal("12")
             credit_balance -= Decimal("40")
         assert result.forecast_df.iloc[-1]["Credit"] == round(float(credit_balance), 2)
+
+    @pytest.mark.integration
+    def test_ForecastHandler__p1_credit_payment_adds_directives(self):
+        start_date, end_date = date(2026, 6, 1), date(2026, 6, 2)
+        accounts = self._approximate_checking()
+        accounts.createCreditCardAccount(
+            name="Credit", current_statement_balance=0,
+            previous_statement_balance=500, min_balance=0, max_balance=5000,
+            billing_start_date=date(2026, 7, 1), apr=0.2,
+            minimum_payment=40, end_of_previous_cycle_balance=500,
+        )
+        budget, memo_rules = LineItemSet(), MemoRuleSet()
+        budget.addLineItem(
+            start_date=end_date, end_date=end_date, priority=1,
+            interval="once", amount=100, memo="credit payment",
+            income_flag=False, deferrable=False, partial_payment_allowed=False,
+        )
+        memo_rules.addMemoRule(
+            memo_regex="credit payment", account_from="Checking",
+            account_to="Credit", transaction_priority=1,
+        )
+
+        result = ForecastHandler().runForecast(
+            self._approximate_io(
+                start_date, end_date, accounts, budget, memo_rules
+            ),
+            MilestoneSet(),
+            include_debug_columns=True,
+        )
+        directives = result.forecast_df.iloc[-1]["Memo Directives"]
+        assert "ADDTL CC PAYMENT (Credit -$100" in directives
+        assert "ADDTL CC PAYMENT (Checking" not in directives
+
+    @pytest.mark.integration
+    def test_ForecastHandler__p2_partial_credit_payment_uses_reduced_amount(self):
+        start_date, end_date = date(2026, 6, 1), date(2026, 6, 2)
+        accounts = self._approximate_checking(balance=300)
+        accounts.createCreditCardAccount(
+            name="Credit", current_statement_balance=0,
+            previous_statement_balance=1000, min_balance=0, max_balance=5000,
+            billing_start_date=date(2026, 7, 1), apr=0.2,
+            minimum_payment=40, end_of_previous_cycle_balance=1000,
+        )
+        budget, memo_rules = LineItemSet(), MemoRuleSet()
+        budget.addLineItem(
+            start_date=end_date, end_date=end_date, priority=2,
+            interval="once", amount=500, memo="extra credit payment",
+            income_flag=False, deferrable=False, partial_payment_allowed=True,
+        )
+        memo_rules.addMemoRule(
+            memo_regex="extra credit payment", account_from="Checking",
+            account_to="Credit", transaction_priority=2,
+        )
+
+        result = ForecastHandler().runForecast(
+            self._approximate_io(
+                start_date, end_date, accounts, budget, memo_rules
+            ),
+            MilestoneSet(),
+            include_debug_columns=True,
+        )
+
+        final_row = result.forecast_df.iloc[-1]
+        assert final_row["Checking"] == 0
+        assert final_row["Credit"] == 700
+        assert result.confirmed_df.iloc[-1]["Amount"] == pytest.approx(300)
+        assert "ADDTL CC PAYMENT (Credit -$300" in final_row["Memo Directives"]
+        assert "ADDTL CC PAYMENT (Checking" not in final_row["Memo Directives"]
 
     # dates should be: start_date, 6/1, 7/1, 8/1, end_date
     # this test should include 1 p2 transactions at each grain: daily, weekly, semiweekly, monthly

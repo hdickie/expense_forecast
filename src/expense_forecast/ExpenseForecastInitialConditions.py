@@ -337,6 +337,15 @@ class ExpenseForecastInitialConditions:
                     minimum_payment=account_row["Minimum_Payment"],
                     billing_cycle_payment_balance=billing_cycle_payment_balance,
                 )
+            elif account_type == "investment":
+                account_set.createInvestmentAccount(
+                    name=account_row["Name"],
+                    balance=account_row["Balance"],
+                    billing_start_date=cls._date_from_dict_value(
+                        account_row["Billing_Start_Date"]
+                    ),
+                    apr=account_row["APR"],
+                )
             else:
                 raise NotImplementedError(
                     f"Cannot initialize account_type from dict: {account_type}"

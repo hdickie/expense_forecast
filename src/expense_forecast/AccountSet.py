@@ -2,6 +2,8 @@ from .Account import Account
 from .CheckingBillingState import CheckingBillingState
 from .CreditCardBillingState import CreditCardBillingState
 from .LoanBillingState import LoanBillingState
+from .InvestmentBillingState import InvestmentBillingState
+
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 import math
@@ -291,7 +293,7 @@ class AccountSet:
             if key not in allowed_kwargs:
                 raise TypeError(f"Unexpected keyword argument '{key}'")
 
-        allowed_account_types = ['checking', 'credit', 'loan', 'savings']
+        allowed_account_types = ['checking', 'credit', 'loan', 'investment']
         if not account_type in allowed_account_types:
             raise ValueError(f"Unexpected account type: ({account_type})")
 
@@ -302,9 +304,7 @@ class AccountSet:
                           'interest_balance', 'billing_cycle_payment_balance']
 
         # TODO DEFER implement required kwargs in createAccount for investment case
-        # investment_required_kwargs = ['billing_start_date', 'interest_type', 'apr', 'interest_interval', 'minimum_payment',
-        #                   'previous_statement_balance', 'current_statement_balance', 'principal_balance',
-        #                   'interest_balance', 'end_of_previous_cycle_balance']
+        investment_required_kwargs = ['billing_start_date', 'apr']
 
 
         if min_balance > balance:
@@ -361,37 +361,38 @@ class AccountSet:
                                    apr=kwargs['apr'],
                                    minimum_payment=kwargs['minimum_payment'],
                                    billing_cycle_payment_balance=kwargs['billing_cycle_payment_balance'])
-
-        # TODO DEFER implement createAccount branch for investment case
-        # elif account_type == 'investment':
-        #     assert balance == kwargs['current_statement_balance'] + kwargs['previous_statement_balance']
-        #     self.createInvestmentAccount(name,
-        #                                  current_statement_balance=kwargs['current_statement_balance'],
-        #                                  previous_statement_balance=kwargs['previous_statement_balance'],
-        #                                  billing_start_date=kwargs['billing_start_date'],
-        #                                  apr=kwargs['apr'],
-        #                                  end_of_previous_cycle_balance=kwargs['end_of_previous_cycle_balance'])
+        elif account_type == 'investment':
+            missing = [
+                kwarg for kwarg in investment_required_kwargs
+                if kwarg not in kwargs
+            ]
+            if missing:
+                raise ValueError(f"Missing required kwargs: {', '.join(missing)}")
+            self.createInvestmentAccount(name,
+                                         balance=balance,
+                                         billing_start_date=kwargs['billing_start_date'],
+                                         apr=kwargs['apr'])
 
         accounts_df = self.getAccounts()
-        loan_account_rows_df = accounts_df[
-            accounts_df.Account_Type.isin(
-                [
-                    "principal balance",
-                    "interest",
-                    "loan billing cycle payment bal",
-                ]
-            )
-        ]
-        credit_account_rows_df = accounts_df[
-            accounts_df.Account_Type.isin(
-                [
-                    "credit prev stmt bal",
-                    "credit curr stmt bal",
-                    "credit billing cycle payment bal",
-                    "credit end of prev cycle bal",
-                ]
-            )
-        ]
+        # loan_account_rows_df = accounts_df[
+        #     accounts_df.Account_Type.isin(
+        #         [
+        #             "principal balance",
+        #             "interest",
+        #             "loan billing cycle payment bal",
+        #         ]
+        #     )
+        # ]
+        # credit_account_rows_df = accounts_df[
+        #     accounts_df.Account_Type.isin(
+        #         [
+        #             "credit prev stmt bal",
+        #             "credit curr stmt bal",
+        #             "credit billing cycle payment bal",
+        #             "credit end of prev cycle bal",
+        #         ]
+        #     )
+        # ]
 
         AccountSet._validate_unique_names(accounts_df)
 
@@ -487,15 +488,23 @@ class AccountSet:
         )
         self.accounts.append(account)
 
-    # TODO DEFER implement createInvestmentAccount
-    # def createInvestmentAccount(self, name, balance, apr):
-    #     account = Account(
-    #         name=name,
-    #         balance=balance,
-    #         account_type="investment",
-    #         apr=apr,
-    #     )
-    #     self.accounts.append(account)
+    def createInvestmentAccount(self, name, balance, billing_start_date, apr):
+
+        billing_state = InvestmentBillingState(
+            balance = balance,
+            billing_start_date = billing_start_date,
+            expected_apr = apr
+        )
+
+        account = Account(
+            min_balance=0,
+            max_balance=float('Inf'),
+            name=name,
+            balance=balance,
+            account_type="investment",
+            billing_state=billing_state
+        )
+        self.accounts.append(account)
 
 
     #Codex-write-doctstring-OK
@@ -651,6 +660,10 @@ class AccountSet:
 
         if not minimum_payment_flag:
             account.billing_state.billing_cycle_payment_balance += amount
+        if account.billing_state.balance <= MONEY_BOUNDARY_TOLERANCE:
+            account.billing_state.principal_balance = Decimal("0")
+            account.billing_state.interest_balance = Decimal("0")
+            account.billing_state.billing_cycle_payment_balance = Decimal("0")
         AccountSet._sync_debt_account_from_billing_state(account)
         assert (
             abs(starting_balance - account.billing_state.balance - amount)
@@ -910,16 +923,20 @@ class AccountSet:
             return
 
         if Account_To == "ALL_LOANS":
-            for single_account_loan_payment in self.allocate_additional_loan_payments(
+            allocated_payments = self.allocate_additional_loan_payments(
                 Amount, account_from=Account_From
-            ):
+            )
+            for single_account_loan_payment in allocated_payments:
                 self.executeTransaction(
                     single_account_loan_payment[0],
                     single_account_loan_payment[1],
                     single_account_loan_payment[2],
                     income_flag=False,
                 )
-            return
+            return sum(
+                (self._money(payment[2]) for payment in allocated_payments),
+                Decimal("0"),
+            )
 
         amount = abs(Amount)
         account_from = self._get_account_by_name(Account_From)
@@ -938,7 +955,7 @@ class AccountSet:
             )
 
         if account_from is not None:
-            if account_from.account_type == "checking":
+            if account_from.account_type in ["checking", "investment"]:
                 proposed_balance = self._money(account_from.balance) - self._money(
                     amount
                 )
@@ -946,6 +963,7 @@ class AccountSet:
                     account_from, proposed_balance, "Account_From"
                 )
                 account_from.balance = proposed_balance
+                account_from.billing_state.balance = proposed_balance
             elif account_from.account_type in ["credit", "loan"]:
                 proposed_balance = (
                     self._money(account_from.balance) + self._money(amount)
@@ -960,7 +978,7 @@ class AccountSet:
                 )
 
         if account_to is not None:
-            if account_to.account_type == "checking":
+            if account_to.account_type in ["checking", "investment"]:
                 proposed_balance = self._money(account_to.balance) + self._money(
                     amount
                 )
@@ -968,6 +986,7 @@ class AccountSet:
                     account_to, proposed_balance, "Account_To"
                 )
                 account_to.balance = proposed_balance
+                account_to.billing_state.balance = proposed_balance
             elif account_to.account_type in ["credit", "loan"]:
                 proposed_balance = (
                     self._money(account_to.balance) - self._money(amount)

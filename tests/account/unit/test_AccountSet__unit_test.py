@@ -1696,6 +1696,26 @@ class TestAccountSet:
 # TODO implement a test case to try and create multiple loans with the same name
 
 
+@pytest.mark.unit
+def test_AccountSet__createAccount__investment():
+    accounts = AccountSet()
+    accounts.createAccount(
+        name="Brokerage",
+        balance=1000,
+        min_balance=0,
+        max_balance=float("inf"),
+        account_type="investment",
+        billing_start_date=date(2026, 6, 1),
+        apr=0.07,
+    )
+
+    investment = accounts.accounts[0]
+    assert investment.account_type == "investment"
+    assert investment.balance == 1000
+    assert investment.billing_state.balance == Decimal("1000")
+    assert investment.billing_state.apr == Decimal("0.07")
+
+
 # Migration notes:
 # - Migrated active coverage from old__test_AccountSet__unit_test.py into the newer
 #   package-import/direct-class style used by test_Account__unit_test.py.

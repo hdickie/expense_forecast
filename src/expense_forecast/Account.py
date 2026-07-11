@@ -4,7 +4,7 @@ import jsonpickle
 
 from .CreditCardBillingState import CreditCardBillingState
 from .LoanBillingState import LoanBillingState
-from .SavingsBillingState import SavingsBillingState
+from .InvestmentBillingState import InvestmentBillingState
 from .CheckingBillingState import CheckingBillingState
 
 class Account:
@@ -12,7 +12,7 @@ class Account:
     Represents a single financial account.
 
     An Account models the current state of a single financial instrument,
-    asset, or liability. Examples include checking accounts, savings
+    asset, or liability. Examples include checking accounts, investment
     accounts, credit cards, loans, investment accounts.
 
     An Account encapsulates the data and behavior specific to one financial
@@ -83,8 +83,8 @@ class Account:
         valid_account_types = [
             "checking",
             "credit",
-            "savings",
-            "loan"
+            "investment",
+            "loan",
         ]
         assert account_type == account_type.lower()
         if account_type not in valid_account_types:
@@ -98,7 +98,7 @@ class Account:
         account_types_that_require_apr = [
             "credit",
             "loan",
-            "savings",
+            "investment",
         ]
         if account_type in account_types_that_require_apr and apr is not None:
             assert apr >= 0
@@ -116,7 +116,6 @@ class Account:
         account_types_that_require_interest_interval = [
             "credit",
             "loan",
-            "savings",
         ]
         if account_type in account_types_that_require_interest_interval and interest_interval not in ['daily','monthly']:
             raise ValueError(
@@ -129,15 +128,15 @@ class Account:
 
     @staticmethod
     def _validate_interest_type(account_type, interest_type):
-        if account_type in ["loan", "credit", "savings"] and interest_type is None:
+        if account_type in ["loan", "credit"] and interest_type is None:
             raise ValueError(
                 f"Account.interest_type is required for account_type '{account_type}'"
             )
-        elif account_type in ["loan", "credit", "savings"] and interest_type not in ["simple", "compound"]:
+        elif account_type in ["loan", "credit"] and interest_type not in ["simple", "compound"]:
             raise ValueError(
                 f"Account.interest_type should be simple or compound for account_type '{account_type}'"
             )
-        elif account_type in ["checking"] and interest_type is not None:
+        elif account_type not in ["loan", "credit"] and interest_type is not None:
             raise ValueError(
                 f"Account.interest_type should be None for account_type '{account_type}'"
             )
@@ -161,8 +160,8 @@ class Account:
             assert isinstance(billing_state, CreditCardBillingState)
         elif account_type == "loan":
             assert isinstance(billing_state, LoanBillingState)
-        elif account_type == "savings":
-            assert isinstance(billing_state, SavingsBillingState)
+        elif account_type == "investment":
+            assert isinstance(billing_state, InvestmentBillingState)
         elif account_type == "checking":
             assert isinstance(billing_state, CheckingBillingState)
         else:
@@ -181,7 +180,7 @@ class Account:
                  min_balance: float, 
                  max_balance: float, 
                  account_type: str, 
-                 billing_state: CheckingBillingState | CreditCardBillingState | LoanBillingState):
+                 billing_state: CheckingBillingState | CreditCardBillingState | LoanBillingState | InvestmentBillingState):
         # checking, credit, principal balance, interest, investment
         # parameters are expected to be correctly typed. wont cast but will error
 

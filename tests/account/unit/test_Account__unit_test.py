@@ -8,7 +8,7 @@ from expense_forecast.Account import Account
 from expense_forecast.CheckingBillingState import CheckingBillingState
 from expense_forecast.CreditCardBillingState import CreditCardBillingState
 from expense_forecast.LoanBillingState import LoanBillingState
-from expense_forecast.SavingsBillingState import SavingsBillingState
+from expense_forecast.InvestmentBillingState import InvestmentBillingState
 
 
 def checking_billing_state(balance=0, is_primary=True):
@@ -62,25 +62,15 @@ def loan_billing_state(
     )
 
 
-def savings_billing_state(
-    previous_statement_balance=0,
-    current_statement_balance=0,
-    billing_cycle_payment_balance=0,
-    minimum_payment=0,
+def investment_billing_state(
+    balance=100,
     billing_cycle_start_date=date(2000, 1, 1),
-    interest_type="compound",
-    interest_interval="daily",
     apr=0.01,
 ):
-    return SavingsBillingState(
-        billing_cycle_start_date=billing_cycle_start_date,
-        previous_statement_balance=Decimal(str(previous_statement_balance)),
-        current_statement_balance=Decimal(str(current_statement_balance)),
-        billing_cycle_payment_balance=Decimal(str(billing_cycle_payment_balance)),
-        minimum_payment=Decimal(str(minimum_payment)),
-        interest_type=interest_type,
-        interest_interval=interest_interval,
-        apr=Decimal(str(apr)),
+    return InvestmentBillingState(
+        balance=Decimal(str(balance)),
+        billing_start_date=billing_cycle_start_date,
+        expected_apr=Decimal(str(apr)),
     )
 
 
@@ -93,7 +83,7 @@ class TestAccount:
             ("checking", 0, 0, 100, "checking", checking_billing_state()),
             ("credit", 500, 0, 5000, "credit", credit_billing_state(200, 300)),
             ("loan", 900, 0, 5000, "loan", loan_billing_state(800, 900)),
-            ("savings", 100, 0, 5000, "savings", savings_billing_state(100, 100)),
+            ("investment", 100, 0, 5000, "investment", investment_billing_state()),
         ],
     )
     def test_Account_constructor_valid_inputs(
@@ -203,7 +193,7 @@ class TestAccount:
             Account._validate_balances(min_balance, balance, max_balance, None)
 
     @pytest.mark.unit
-    @pytest.mark.parametrize("account_type", ["checking", "credit", "loan", "savings"])
+    @pytest.mark.parametrize("account_type", ["checking", "credit", "loan", "investment"])
     def test_validate_account_type__expect_success(self, account_type):
         Account._validate_account_type(account_type)
 
@@ -223,7 +213,7 @@ class TestAccount:
             ("credit", 0),
             ("credit", 0.25),
             ("loan", 0.25),
-            ("savings", 0.01),
+            ("investment", 0.01),
             ("checking", None),
         ],
     )
@@ -236,7 +226,7 @@ class TestAccount:
         [
             ("credit", None),
             ("loan", None),
-            ("savings", None),
+            ("investment", None),
             ("credit", -0.25),
             ("loan", -0.25),
             ("credit", "X"),
@@ -256,7 +246,7 @@ class TestAccount:
             ("credit", "daily"),
             ("loan", "daily"),
             ("loan", "monthly"),
-            ("savings", "daily"),
+            ("investment", None),
             ("checking", None),
         ],
     )
@@ -285,8 +275,7 @@ class TestAccount:
             ("credit", "compound"),
             ("loan", "simple"),
             ("loan", "compound"),
-            ("savings", "simple"),
-            ("savings", "compound"),
+            ("investment", None),
             ("checking", None),
         ],
     )
@@ -300,8 +289,8 @@ class TestAccount:
             ("credit", None),
             ("loan", None),
             ("loan", "shmimple"),
-            ("savings", None),
-            ("savings", "shmimple"),
+            ("investment", "simple"),
+            ("investment", "shmimple"),
             ("checking", "simple"),
         ],
     )
@@ -316,7 +305,7 @@ class TestAccount:
             ("checking", checking_billing_state()),
             ("credit", credit_billing_state()),
             ("loan", loan_billing_state()),
-            ("savings", savings_billing_state()),
+            ("investment", investment_billing_state()),
         ],
     )
     def test_validate_billing_state__expect_success(self, account_type, billing_state):
@@ -330,7 +319,7 @@ class TestAccount:
             ("checking", credit_billing_state()),
             ("credit", checking_billing_state()),
             ("loan", credit_billing_state()),
-            ("savings", loan_billing_state()),
+            ("investment", loan_billing_state()),
         ],
     )
     def test_validate_billing_state__expect_fail(self, account_type, billing_state):
@@ -345,7 +334,7 @@ class TestAccount:
             ("checking", False),
             ("credit", None),
             ("loan", None),
-            ("savings", None),
+            ("investment", None),
         ],
     )
     def test_validate_primary_checking_ind__expect_success(
@@ -361,7 +350,7 @@ class TestAccount:
             ("checking", "True"),
             ("credit", False),
             ("loan", False),
-            ("savings", False),
+            ("investment", False),
         ],
     )
     def test_validate_primary_checking_ind__expect_fail(

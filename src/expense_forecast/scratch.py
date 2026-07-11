@@ -756,7 +756,7 @@ if __name__ == '__main__':
 
         milestone_name_to_budget_swap_set = {} #TODO
 
-        fork_set = MilestoneTriggeredForecastTransition(milestone_name_to_budget_swap_set)
+        # fork_set = MilestoneTriggeredLineItemSetSwapSet(milestone_name_to_budget_swap_set)
 
         # TODO this method is just for development, eventually runForecast will implement this
         R = F.runForecastWithMilestoneConditionalSwaps(IO, MS, 
@@ -799,11 +799,18 @@ if __name__ == '__main__':
 
 
         start_date = date(2030,1,1)
-        end_date = start_date + datetime.timedelta(days=365 * 2)
+        # end_date = date(2031,10,1)
+        end_date = date(2038,5,1)
+        # end_date = start_date + datetime.timedelta(days=365 * 10)
 
         A = get_hypothetical_A_at_start_of_RN_life()
+        A.createInvestmentAccount(name='Generic Investment',
+                                  balance=0,
+                                  billing_start_date=start_date, 
+                                  apr=0.07)
         B_invariant = get_B_invariant_post_RN_life()
         M = getComprehensiveMemoRules() 
+        M.addMemoRule('Invest','Checking','Generic Investment',1)
         
         RN_income = LineItemSet()
         RN_income.addLineItem( start_date + datetime.timedelta(days=30), 
@@ -811,12 +818,12 @@ if __name__ == '__main__':
                                 1, 'semiweekly', 2900, 'RN income 1st Year', True)
         # 5% raise after first year
         RN_income.addLineItem( start_date + datetime.timedelta(days=30 + 365), 
-                                start_date + datetime.timedelta(days=30 + 365*2), #end date
+                                end_date, #end date
                                 1, 'semiweekly', 2900*1.05, 'RN income 2nd Year', True)
 
         B_keep_cc_payed_off = LineItemSet()
         B_keep_cc_payed_off.addLineItem(start_date=date(2030,2,1), end_date=end_date, priority=1,
-                    interval='monthly',amount=1400,memo='extra cc payment cyclical',income_flag=False, 
+                    interval='monthly',amount=1469,memo='extra cc payment cyclical',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
         
         B_loan_payments = LineItemSet()
@@ -825,7 +832,12 @@ if __name__ == '__main__':
                                       priority=1, interval="monthly", amount=4_200,
                                       memo='all loan payment')
 
-        B = B_invariant + RN_income + B_keep_cc_payed_off + B_loan_payments
+        B_investment = LineItemSet()
+        B_investment.addLineItem(start_date=start_date + datetime.timedelta(days=365*2), 
+                                      end_date=end_date, 
+                                      priority=1, interval="monthly", amount=4_200,
+                                      memo='Invest')
+        B = B_invariant + RN_income + B_keep_cc_payed_off + B_loan_payments + B_investment
         IO = ExpenseForecastInitialConditions(start_date, end_date, A, B, M)
 
         composite_milestone = CompositeMilestone('All OG Loans Paid Off',
@@ -886,3 +898,21 @@ if __name__ == '__main__':
         # TODO list the classes
         # for name, member in inspect.getmembers(Account, inspect.isfunction):
         #     print(name)
+
+    elif action == 'test milestone conditional swaps':
+        pass
+
+    elif action == 'retirement':
+        pass
+
+        # retirement at 55
+        # retirement at 57
+        # retirement at 60
+        # semi-retirement at 50
+        # Coast FIRE (working part time)
+        # retiring in California
+        # retiring in Portugal
+        # retiring in Spain
+        # retiring with one paid-off home
+        # retiring with rental income
+        # delaying Social Security versus claiming early

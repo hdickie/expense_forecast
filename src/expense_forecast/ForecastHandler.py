@@ -12,7 +12,11 @@ Contract
 """
 
 
-from expense_forecast.AccountSet import AccountBoundaryError, AccountSet
+from expense_forecast.AccountSet import (
+    AccountBoundaryError,
+    AccountSet,
+    MONEY_BOUNDARY_TOLERANCE,
+)
 from expense_forecast.LineItemSet import LineItemSet
 # from expense_forecast.ForecastSetInitialConditions import ForecastSetInitialConditions
 from expense_forecast.MemoRuleSet import MemoRuleSet
@@ -30,6 +34,7 @@ import datetime
 import os
 import tempfile
 from pathlib import Path
+from dateutil.relativedelta import relativedelta
 from expense_forecast.log_methods import log_in_color
 import logging
 import tqdm
@@ -311,6 +316,8 @@ class ForecastHandler:
             result_kwargs["milestone_results"] = milestone_results
 
         R = ExpenseForecastResult(IO, forecast_df, **result_kwargs)
+        R.start_ts = cls.start_ts
+        R.end_ts = cls.end_ts
         log_in_color(
             logger, "white", "info", "Finished Forecast " + str(IO.unique_id)
         )
@@ -342,6 +349,24 @@ class ForecastHandler:
         count_text = f" x{count}" if count > 1 else ""
         return f"{memo}{count_text} ({endpoint} {sign}${amount:.2f})"
 
+    @staticmethod
+    def _investment_transfer_directive(
+        account_set, account_from, account_to, amount
+    ):
+        if account_to == "ALL_LOANS":
+            return None
+        account_from_obj = account_set._get_account_by_name(account_from)
+        account_to_obj = account_set._get_account_by_name(account_to)
+        if account_to_obj is not None and account_to_obj.account_type == "investment":
+            return f"INVESTMENT CONTRIBUTION ({account_to_obj.name} +${amount})"
+        if (
+            account_from_obj is not None
+            and account_from_obj.account_type == "investment"
+            and account_to_obj is not None
+        ):
+            return f"INVESTMENT WITHDRAWAL ({account_to_obj.name} +${amount})"
+        return None
+
     @classmethod
     def runForecastApproximate(
         cls,
@@ -356,6 +381,7 @@ class ForecastHandler:
         interest is calculated over exact elapsed-day spans between meaningful
         events rather than by iterating over every day.
         """
+        start_ts = datetime.datetime.now()
         log_in_color(
             logger, "white", "info", "Starting Approximate Forecast " + str(IO.unique_id)
         )
@@ -377,10 +403,17 @@ class ForecastHandler:
         rows.append(initial_row)
 
         loan_interest_cursor = {}
+        investment_return_cursor = {}
         for account in account_set.accounts:
             if account.account_type == "loan":
                 loan_interest_cursor[account.name] = max(
                     IO.start_date, account.billing_state.billing_cycle_start_date
+                )
+            elif account.account_type == "investment":
+                investment_return_cursor[account.name] = max(
+                    IO.start_date,
+                    account.billing_state.billing_cycle_start_date
+                    - datetime.timedelta(days=1),
                 )
 
         def sync(account):
@@ -401,10 +434,26 @@ class ForecastHandler:
                     f"LOAN INTEREST ({account.name}: Interest +${interest:.2f})"
                 )
 
+        def accrue_investment_to(account, event_date, directives):
+            cursor = investment_return_cursor[account.name]
+            if event_date <= cursor:
+                return
+            growth = account.billing_state.accrue_return((event_date - cursor).days)
+            investment_return_cursor[account.name] = event_date
+            account.balance = account.billing_state.balance
+            if growth:
+                directives.append(
+                    f"INVESTMENT RETURN ({account.name} +${growth:.2f})"
+                )
+
         previous_output_date = output_dates[0]
         for output_index, output_date in enumerate(output_dates[1:], start=1):
             directives = []
             memo_groups = {}
+            if output_date.day == 1:
+                for account in account_set.accounts:
+                    if account.account_type == "loan":
+                        account.billing_state.billing_cycle_payment_balance = Decimal("0")
             if schedule.empty:
                 interval_schedule = schedule
             else:
@@ -417,6 +466,16 @@ class ForecastHandler:
                 rule = memo_rule_set.findMatchingMemoRule(txn["Memo"], txn["Priority"])
                 account_from = rule.account_from
                 account_to = rule.account_to
+                investment_endpoints = {
+                    endpoint for endpoint in (account_from, account_to)
+                    if endpoint not in [None, "", "None", "ALL_LOANS"]
+                }
+                for endpoint in investment_endpoints:
+                    endpoint_account = account_set._get_account_by_name(endpoint)
+                    if endpoint_account.account_type == "investment":
+                        accrue_investment_to(
+                            endpoint_account, txn["Date"], directives
+                        )
                 if account_to == "ALL_LOANS":
                     for account in account_set.accounts:
                         if account.account_type == "loan":
@@ -426,17 +485,38 @@ class ForecastHandler:
                     if debt_target is not None and debt_target.account_type == "loan":
                         accrue_loan_to(debt_target, txn["Date"], directives)
 
-                account_set.executeTransaction(
+                executed_amount = account_set.executeTransaction(
                     account_from,
                     account_to,
                     txn["Amount"],
                     income_flag=bool(txn["Income_Flag"]),
                 )
+                if account_to != "ALL_LOANS":
+                    executed_amount = Decimal(str(txn["Amount"]))
+                if executed_amount <= MONEY_BOUNDARY_TOLERANCE:
+                    continue
+                investment_transfer_directive = cls._investment_transfer_directive(
+                    account_set, account_from, account_to, executed_amount
+                )
+                if investment_transfer_directive is not None:
+                    directives.append(investment_transfer_directive)
+                account_to_obj = (
+                    None
+                    if account_to == "ALL_LOANS"
+                    else account_set._get_account_by_name(account_to)
+                )
+                if account_to_obj is not None and account_to_obj.account_type == "credit":
+                    directives.append(
+                        f"ADDTL CC PAYMENT ({account_to} -${executed_amount})"
+                    )
                 key = (txn["Memo"], account_from, account_to)
                 count, total = memo_groups.get(key, (0, Decimal("0")))
-                memo_groups[key] = (count + 1, total + Decimal(str(txn["Amount"])))
+                memo_groups[key] = (count + 1, total + executed_amount)
 
             for account in account_set.accounts:
+                if account.account_type == "investment":
+                    accrue_investment_to(account, output_date, directives)
+                    continue
                 billing_start = getattr(account.billing_state, "billing_cycle_start_date", None)
                 if account.account_type not in ["loan", "credit"] or output_date < billing_start:
                     continue
@@ -518,6 +598,8 @@ class ForecastHandler:
             result_kwargs["milestone_set"] = milestone_set
             result_kwargs["milestone_results"] = milestone_results
         result = ExpenseForecastResult(IO, forecast_df, **result_kwargs)
+        result.start_ts = start_ts
+        result.end_ts = datetime.datetime.now()
         log_in_color(
             logger, "white", "info", "Finished Approximate Forecast " + str(IO.unique_id)
         )
@@ -777,8 +859,25 @@ class ForecastHandler:
         # Select the row corresponding to the given date
         row_sel_vec = forecast_df["Date"] == d
 
+        investment_transfer_directive = cls._investment_transfer_directive(
+            account_set,
+            memo_rule.account_from,
+            memo_rule.account_to,
+            confirmed_row.Amount,
+        )
+        if investment_transfer_directive is not None:
+            forecast_df.loc[
+                row_sel_vec, "Memo"
+            ] += f"; {confirmed_row.Memo} ({memo_rule.account_from} -${confirmed_row.Amount}) "
+            forecast_df.loc[
+                row_sel_vec, "Memo Directives"
+            ] += f"; {investment_transfer_directive} "
+
         # Memo handling when Account_To is not 'ALL_LOANS'
-        if memo_rule.account_to != "ALL_LOANS":
+        if (
+            memo_rule.account_to != "ALL_LOANS"
+            and investment_transfer_directive is None
+        ):
             if not cls._is_empty_account_endpoint(memo_rule.account_from):
                 # Only update the Memo column if Account_To is 'None'
                 if cls._is_empty_account_endpoint(memo_rule.account_to):
@@ -837,7 +936,11 @@ class ForecastHandler:
                 delta = current_balance - relevant_balance
 
                 # Handle income
-                if account_row["Account_Type"] == "checking" and delta < 0:
+                if (
+                    account_row["Account_Type"] == "checking"
+                    and delta < 0
+                    and cls._is_empty_account_endpoint(memo_rule.account_from)
+                ):
                     # forecast_df.loc[row_sel_vec, 'Memo Directives'] += f"; INCOME ({memo_rule_row.Account_To} +${-1*delta:.2f}) "
                     forecast_df.loc[
                         row_sel_vec, "Memo Directives"
@@ -864,9 +967,9 @@ class ForecastHandler:
 
                 # Handle additional credit card payments
                 if (
-                    account_row.Account_Type.lower()
-                    in ["credit curr stmt bal", "credit prev stmt bal"]
+                    account_row.Account_Type.lower() == "credit"
                     and account_row.Name.split(":")[0] != memo_rule.account_from
+                    and delta > 0
                 ):
                     # print('Updating MD w/ addtl cc payment')
                     # print(confirmed_row.to_string())
@@ -877,9 +980,6 @@ class ForecastHandler:
                         continue
                     # forecast_df.loc[row_sel_vec, 'Memo Directives'] += f"; ADDTL CC PAYMENT ({memo_rule_row.Account_From} -${delta:.2f}) "
                     # forecast_df.loc[row_sel_vec, 'Memo Directives'] += f"; ADDTL CC PAYMENT ({account_row.Name} -${delta:.2f}) "
-                    forecast_df.loc[
-                        row_sel_vec, "Memo Directives"
-                    ] += f"; ADDTL CC PAYMENT ({memo_rule.account_from} -${delta}) "
                     forecast_df.loc[
                         row_sel_vec, "Memo Directives"
                     ] += f"; ADDTL CC PAYMENT ({account_row.Name} -${delta}) "
@@ -971,9 +1071,6 @@ class ForecastHandler:
         account_to_type = account_type_by_name.get(account_to)
 
         if account_to_type == "credit":
-            forecast_df.loc[
-                row_sel_vec, "Memo Directives"
-            ] += f"; ADDTL CC PAYMENT ({account_from} -${amount}) "
             forecast_df.loc[
                 row_sel_vec, "Memo Directives"
             ] += f"; ADDTL CC PAYMENT ({account_to} -${amount}) "
@@ -3787,6 +3884,43 @@ class ForecastHandler:
         # )
         return current_forecast_row_df
 
+    @classmethod
+    def _calculateInvestmentReturnsForDay(
+        cls, account_set, current_forecast_row_df, log_stack_depth
+    ):
+        """Accrue one day of compound growth for active investments."""
+        current_date = current_forecast_row_df["Date"].iat[0]
+        directives = [
+            item.strip()
+            for item in current_forecast_row_df["Memo Directives"].iat[0].split(";")
+            if item.strip()
+        ]
+
+        for account in account_set.accounts:
+            if account.account_type != "investment":
+                continue
+            billing_start_date = account.billing_state.billing_cycle_start_date
+            if isinstance(billing_start_date, datetime.datetime):
+                billing_start_date = billing_start_date.date()
+            if current_date < billing_start_date:
+                continue
+
+            growth = account.billing_state.accrue_return()
+            account.balance = account.billing_state.balance
+            if growth:
+                directives.append(
+                    f"INVESTMENT RETURN ({account.name} +${growth})"
+                )
+
+        current_forecast_row_df.loc[:, "Memo Directives"] = "; ".join(directives)
+        projected_balances = account_set.getForecastAccountBalances(
+            include_debug_columns=True
+        )
+        for column_name, value in projected_balances.items():
+            if column_name in current_forecast_row_df.columns:
+                current_forecast_row_df.loc[:, column_name] = value
+        return current_forecast_row_df
+
     #TODO forecast_df is not referenced in this method body and idk if it should be
     #TODO manual review of ForecastHandler._executeCreditCardMinimumPayments docstring
     @classmethod
@@ -4265,7 +4399,9 @@ class ForecastHandler:
             account = account_set.accounts[account_index - 1]
             account.balance = relevant_balance
 
-            if account.account_type == "credit":
+            if account.account_type == "investment":
+                account.billing_state.balance = Decimal(str(relevant_balance))
+            elif account.account_type == "credit":
                 billing_state = account.billing_state
                 curr_column = f"{account.name}: Curr Stmt Bal"
                 prev_column = f"{account.name}: Prev Stmt Bal"
@@ -8899,6 +9035,22 @@ class ForecastHandler:
                     account_set=account_set, forecast_df=forecast_df, d=d, log_stack_depth=log_stack_depth
                 )
 
+                # Compound active investments before same-day transactions.
+                forecast_df.loc[forecast_df.Date == d] = (
+                    cls._calculateInvestmentReturnsForDay(
+                        account_set=account_set,
+                        current_forecast_row_df=forecast_df[forecast_df.Date == d],
+                        log_stack_depth=log_stack_depth,
+                    )
+                )
+
+                account_set = cls._sync_account_set_w_forecast_day(
+                    account_set=account_set,
+                    forecast_df=forecast_df,
+                    d=d,
+                    log_stack_depth=log_stack_depth,
+                )
+
                 # Execute loan minimum payments before same-day loan payments.
                 forecast_df.loc[forecast_df.Date == d] = (
                     cls._executeLoanMinimumPayments(
@@ -9502,10 +9654,11 @@ class ForecastHandler:
             ["credit", "credit prev stmt bal", "credit curr stmt bal"]
         )
         checking_sel_vec = account_info.Account_Type == "checking"
+        investment_sel_vec = account_info.Account_Type == "investment"
 
         loan_acct_info = account_info.loc[loan_acct_sel_vec, :]
         credit_acct_info = account_info.loc[cc_acct_sel_vec, :]
-        # savings_acct_info = account_info[account_info.Account_Type.lower() == 'savings', :]
+        investment_acct_info = account_info.loc[investment_sel_vec, :]
 
         def summary_numeric_series(column_name):
             return pd.to_numeric(forecast_df.loc[:, column_name], errors="coerce").fillna(0.0)
@@ -9520,8 +9673,8 @@ class ForecastHandler:
         for credit_account_index, credit_account_row in credit_acct_info.iterrows():
             NetWorth = NetWorth - summary_numeric_series(credit_account_row.Name)
 
-        # for savings_account_index, savings_account_row in savings_acct_info.iterrows():
-        #     NetWorth += cls.forecast_df[:,cls.forecast_df.columns == savings_account_row.Name]
+        for _, investment_account_row in investment_acct_info.iterrows():
+            NetWorth = NetWorth + summary_numeric_series(investment_account_row.Name)
 
         LoanTotal = summary_numeric_series("Checking") - summary_numeric_series("Checking")
         for loan_account_index, loan_account_row in loan_acct_info.iterrows():
@@ -9780,7 +9933,15 @@ class ForecastHandler:
                 )
 
                 line_item_value = float(line_item_value_string)
-                if "INCOME" in memo_line_item:
+                if any(
+                    directive_type in memo_line_item
+                    for directive_type in (
+                        "INCOME",
+                        "INVESTMENT RETURN",
+                        "INVESTMENT CONTRIBUTION",
+                        "INVESTMENT WITHDRAWAL",
+                    )
+                ):
                     forecast_df.loc[index, "Net Gain"] += abs(line_item_value)
                     # print(str(cls.forecast_df.loc[index, 'Date']) + ' Net Gain += ' + str( abs(line_item_value)) + ' ' + str(memo_line_item) + ' = ' + str( cls.forecast_df.loc[index, 'Net Gain']))
                 else:
@@ -10097,6 +10258,21 @@ class ForecastHandler:
         @interface-report: show
         """
         return str(f"${float(value):,}")
+
+    @classmethod
+    def _report_forecast_duration(cls, start_value, end_value):
+        start_datetime = cls._report_date_to_datetime(start_value)
+        end_datetime = cls._report_date_to_datetime(end_value)
+        total_days = max(0, (end_datetime.date() - start_datetime.date()).days)
+        parts = relativedelta(end_datetime.date(), start_datetime.date())
+
+        def label(value, singular):
+            return f"{value} {singular if value == 1 else singular + 's'}"
+
+        duration_text = ", ".join(
+            [label(parts.years, "year"), label(parts.months, "month"), label(parts.days, "day")]
+        )
+        return total_days, f"{duration_text} ({total_days:,} days total)"
 
     #TODO manual review of ForecastHandler._report_date_label docstring
     def _report_date_label(self, value):
@@ -10615,11 +10791,11 @@ class ForecastHandler:
         ax = plt.subplot(111)
         box = ax.get_position()
         ax.set_position(
-            [box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9]
+            [box.x0, box.y0 + box.height * 0.2, box.width, box.height * 0.8]
         )
         ax.legend(
             loc="upper center",
-            bbox_to_anchor=(0.5, -0.05),
+            bbox_to_anchor=(0.5, -0.18),
             fancybox=True,
             shadow=True,
             ncol=4,
@@ -10749,7 +10925,7 @@ class ForecastHandler:
         self,
         expense_forecast,
         output_path,
-        line_color_cycle_list=["blue", "orange", "green"],
+        line_color_cycle_list=["blue", "orange", "green", "purple"],
         linestyle="solid",
     ):
         """
@@ -10804,8 +10980,28 @@ class ForecastHandler:
                 linestyle=linestyle,
             )
 
+        account_set = self._report_account_set(expense_forecast)
+        if account_set is not None:
+            investment_names = account_set.getAccounts().loc[
+                lambda accounts: accounts.Account_Type == "investment", "Name"
+            ].tolist()
+            investment_names = [
+                name for name in investment_names
+                if name in expense_forecast.forecast_df.columns
+            ]
+            if investment_names:
+                investment_total = expense_forecast.forecast_df[
+                    investment_names
+                ].sum(axis=1)
+                plt.plot(
+                    x_values,
+                    investment_total,
+                    label="Investment Total " + str(expense_forecast.unique_id),
+                    linestyle=linestyle,
+                )
+
         self._decorate_report_plot(expense_forecast)
-        plt.savefig(output_path)
+        plt.savefig(output_path, bbox_inches="tight")
         matplotlib.pyplot.close()
 
     #TODO manual review of ForecastHandler.plotNetGainLoss docstring
@@ -10865,7 +11061,7 @@ class ForecastHandler:
             )
 
         self._decorate_report_plot(expense_forecast)
-        plt.savefig(output_path)
+        plt.savefig(output_path, bbox_inches="tight")
         matplotlib.pyplot.close()
 
     #TODO manual review of ForecastHandler.plotNetWorth docstring
@@ -10925,7 +11121,7 @@ class ForecastHandler:
         bottom, top = plt.ylim()
         plt.ylim(bottom, top * 1.1 if top else 1)
         self._decorate_report_plot(expense_forecast)
-        plt.savefig(output_path)
+        plt.savefig(output_path, bbox_inches="tight")
         matplotlib.pyplot.close()
 
     #TODO manual review of ForecastHandler.plotAll docstring
@@ -11052,7 +11248,7 @@ class ForecastHandler:
         )
 
         self._decorate_report_plot(expense_forecast)
-        plt.savefig(output_path)
+        plt.savefig(output_path, bbox_inches="tight")
         matplotlib.pyplot.close()
 
     #TODO manual review of ForecastHandler.plotSankeyDiagram docstring
@@ -11272,15 +11468,23 @@ class ForecastHandler:
 
         start_ts = getattr(E, "start_ts", None)
         end_ts = getattr(E, "end_ts", None)
-        if start_ts is None:
-            start_ts__datetime = datetime.datetime.now()
-        else:
+        if start_ts is not None and end_ts is not None:
             start_ts__datetime = self._report_date_to_datetime(start_ts)
-        if end_ts is None:
-            end_ts__datetime = start_ts__datetime
-        else:
             end_ts__datetime = self._report_date_to_datetime(end_ts)
-        simulation_time_elapsed = end_ts__datetime - start_ts__datetime
+            simulation_seconds = max(
+                0, (end_ts__datetime - start_ts__datetime).total_seconds()
+            )
+            runtime_text = (
+                "This forecast started at "
+                + str(start_ts__datetime)
+                + ", took "
+                + f"{simulation_seconds:,.3f} seconds"
+                + " to complete, and finished at "
+                + str(end_ts__datetime)
+                + "."
+            )
+        else:
+            runtime_text = "Runtime timing was not recorded for this forecast."
 
         if parent_report_path is not None:
             parent_report_text = (
@@ -11291,27 +11495,24 @@ class ForecastHandler:
         else:
             parent_report_text = ""
 
-        summary_text = (
-            """
-        This forecast started at """
-            + str(start_ts__datetime)
-            + """, took """
-            + str(simulation_time_elapsed)
-            + """ to complete, and finished at """
-            + str(end_ts__datetime)
-            + """.
-        """
-        )
+        summary_text = runtime_text
 
         account_set = self._report_account_set(E)
         budget_set = self._report_budget_set(E)
         memo_rule_set = self._report_memo_rule_set(E)
         milestone_set = self._report_milestone_set(E)
 
+        accounts_table = account_set.getAccounts().copy() if account_set is not None else None
         account_text = (
             """
         The initial conditions and account boundaries are defined as:"""
-            + (account_set.getAccounts().to_html() if account_set is not None else "")
+            + (
+                accounts_table.to_html(
+                    formatters={"Balance": lambda value: f"{float(value):,.2f}"}
+                )
+                if accounts_table is not None
+                else ""
+            )
             + """
         """
         )
@@ -11324,10 +11525,15 @@ class ForecastHandler:
         """
         )
 
+        memo_rules_table = memo_rule_set.getMemoRules().copy() if memo_rule_set is not None else None
+        if memo_rules_table is not None and "Transaction_Priority" in memo_rules_table:
+            memo_rules_table["Transaction_Priority"] = (
+                memo_rules_table["Transaction_Priority"].astype(int)
+            )
         memo_rule_text = (
             """
         These decision rules are used:"""
-            + (memo_rule_set.getMemoRules().to_html() if memo_rule_set is not None else "")
+            + (memo_rules_table.to_html() if memo_rules_table is not None else "")
             + """
         """
         )
@@ -11359,8 +11565,11 @@ class ForecastHandler:
         initial_networth = round(E.forecast_df.head(1)["Net Worth"].iat[0], 2)
         final_networth = round(E.forecast_df.tail(1)["Net Worth"].iat[0], 2)
         networth_delta = round(final_networth - initial_networth, 2)
-        num_days = E.forecast_df.shape[0]
-        avg_networth_change = round(networth_delta / float(num_days), 2)
+        num_days, forecast_duration_text = self._report_forecast_duration(
+            self._report_start_date(E), self._report_end_date(E)
+        )
+        averaging_days = max(1, num_days)
+        avg_networth_change = round(networth_delta / float(averaging_days), 2)
         rose_or_fell = "rose" if networth_delta >= 0 else "fell"
 
         networth_text = (
@@ -11372,8 +11581,8 @@ class ForecastHandler:
             + """ to """
             + self._report_amount(final_networth)
             + """ over """
-            + str(f"{float(num_days):,.0f}")
-            + """ days, averaging """
+            + forecast_duration_text
+            + """, averaging """
             + self._report_amount(avg_networth_change)
             + """ per day.
         """
@@ -11389,9 +11598,29 @@ class ForecastHandler:
         final_liquid_total = round(E.forecast_df.tail(1)["Liquid Total"].iat[0], 2)
         liquid_delta = round(final_liquid_total - initial_liquid_total, 2)
 
-        avg_loan_delta = round(loan_delta / num_days, 2)
-        avg_cc_debt_delta = round(cc_debt_delta / num_days, 2)
-        avg_liquid_delta = round(liquid_delta / num_days, 2)
+        avg_loan_delta = round(loan_delta / averaging_days, 2)
+        avg_cc_debt_delta = round(cc_debt_delta / averaging_days, 2)
+        avg_liquid_delta = round(liquid_delta / averaging_days, 2)
+
+        investment_names = []
+        if accounts_table is not None:
+            investment_names = accounts_table.loc[
+                accounts_table.Account_Type == "investment", "Name"
+            ].tolist()
+        investment_names = [
+            name for name in investment_names if name in E.forecast_df.columns
+        ]
+        investment_total = (
+            E.forecast_df[investment_names].sum(axis=1)
+            if investment_names
+            else pd.Series(0.0, index=E.forecast_df.index)
+        )
+        initial_investment_total = round(investment_total.iloc[0], 2)
+        final_investment_total = round(investment_total.iloc[-1], 2)
+        investment_delta = round(
+            final_investment_total - initial_investment_total, 2
+        )
+        avg_investment_delta = round(investment_delta / averaging_days, 2)
 
         account_type_text = (
             """
@@ -11402,8 +11631,8 @@ class ForecastHandler:
             + """ to """
             + self._report_amount(final_loan_total)
             + """ over """
-            + str(f"{float(num_days):,.0f}")
-            + """ days, averaging """
+            + forecast_duration_text
+            + """, averaging """
             + self._report_amount(avg_loan_delta)
             + """ per day.
         <br><br>
@@ -11414,8 +11643,8 @@ class ForecastHandler:
             + """ to """
             + self._report_amount(final_cc_debt_total)
             + """ over """
-            + str(f"{float(num_days):,.0f}")
-            + """ days, averaging """
+            + forecast_duration_text
+            + """, averaging """
             + self._report_amount(avg_cc_debt_delta)
             + """ per day.
         <br><br>
@@ -11426,24 +11655,36 @@ class ForecastHandler:
             + """ to """
             + self._report_amount(final_liquid_total)
             + """ over """
-            + str(f"{float(num_days):,.0f}")
-            + """ days, averaging """
+            + forecast_duration_text
+            + """, averaging """
             + self._report_amount(avg_liquid_delta)
+            + """ per day.
+        <br><br>
+        Investments began at """
+            + self._report_amount(initial_investment_total)
+            + """ and """
+            + ("rose" if investment_delta >= 0 else "fell")
+            + """ to """
+            + self._report_amount(final_investment_total)
+            + """ over """
+            + forecast_duration_text
+            + """, averaging """
+            + self._report_amount(avg_investment_delta)
             + """ per day.
         """
         )
 
         total_gain = round(sum(E.forecast_df["Net Gain"]), 2)
-        avg_daily_gain = round(total_gain / num_days, 2)
+        avg_daily_gain = round(total_gain / averaging_days, 2)
         total_loss = round(sum(E.forecast_df["Net Loss"]), 2)
-        avg_daily_loss = round(total_loss / num_days, 2)
+        avg_daily_loss = round(total_loss / averaging_days, 2)
 
         net_gain_loss_text = (
             "Total gain was "
             + self._report_amount(total_gain)
             + " over "
-            + str(num_days)
-            + " days, averaging "
+            + forecast_duration_text
+            + ", averaging "
             + self._report_amount(avg_daily_gain)
             + " per day.<br><br>"
         )
@@ -11451,21 +11692,21 @@ class ForecastHandler:
             "Total loss was "
             + str(f"-${float(total_loss):,}")
             + " over "
-            + str(num_days)
-            + " days, averaging "
+            + forecast_duration_text
+            + ", averaging "
             + str(f"-${float(avg_daily_loss):,}")
             + " per day."
         )
 
         total_interest_accrued = round(sum(E.forecast_df["Marginal Interest"]), 2)
-        avg_interest_accrued = round(total_interest_accrued / num_days, 2)
+        avg_interest_accrued = round(total_interest_accrued / averaging_days, 2)
 
         interest_text = (
             "Total interest accrued was "
             + self._report_amount(total_interest_accrued)
             + " over "
-            + str(num_days)
-            + " days, averaging "
+            + forecast_duration_text
+            + ", averaging "
             + self._report_amount(avg_interest_accrued)
             + " per day.<br>"
         )
@@ -12106,6 +12347,8 @@ class ForecastHandler:
                 account.balance = AccountSet._money(forecast_row[account.name])
 
                 if account.account_type == "checking":
+                    account.billing_state.balance = account.balance
+                elif account.account_type == "investment":
                     account.billing_state.balance = account.balance
                 elif account.account_type == "credit":
                     billing_state = account.billing_state

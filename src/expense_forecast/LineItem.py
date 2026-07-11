@@ -49,6 +49,8 @@ class LineItem:
         # TODO DEFER change from AssertionError to ValueError with error message including the illegal values
         assert isinstance(start_date, datetime.date)
         assert isinstance(end_date, datetime.date)
+        if start_date > end_date:
+            raise ValueError(f"start_date ({start_date}) must be before end_date ({end_date})")
         assert start_date <= end_date
 
     @staticmethod

@@ -37,14 +37,12 @@ A refactor of the loan allocaiton algorthm now overallocates by a few pennies in
 - when docstrings are done, review once more to decide what belong in module / class / __init__
 
 ## LLM Tasks
- - Refactor BudgetSet to be LineItemSet and BudgetSet to be LineItem
- - Refactor BudgetItem "interval" to "interval"
+ - Net Loss is still too high, I think because additional credit card payments and the memo directives- something is wrong there
  - Update docstrings
  - Infinity not allowed on account min balance but it IS allowed on account max balance.
  - #Codex-write-doctstring-OK
  - "TODO DEFER change from AssertionError to ValueError with error message including the illegal values"
  - use Decimal instead of float everywhere
-
  - in _propagate_credit_txn_curr_only I see account name manipulation via splitting on ':' and that is a sign to me
  that old behavior has not been fully removed
 
