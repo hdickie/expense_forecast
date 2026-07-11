@@ -1,12 +1,15 @@
 import pytest
 from datetime import date
+from decimal import Decimal
 from expense_forecast.AccountSet import AccountSet
 from expense_forecast.LineItemSet import LineItemSet
 from expense_forecast.MemoRuleSet import MemoRuleSet
 from expense_forecast.MilestoneSet import MilestoneSet
 from expense_forecast.ExpenseForecastInitialConditions import ExpenseForecastInitialConditions
 from expense_forecast.ExpenseForecastResult import ExpenseForecastResult
-from expense_forecast.ForecastHandler import ForecastHandler
+from expense_forecast.ForecastHandler import ForecastHandler, logger as forecast_logger
+import logging
+import datetime
 
 import pandas as pd
 
@@ -1848,10 +1851,1068 @@ class TestForecastHandler:
 
 
 
+    """Copy-pasted approximate forecast templates retained for historical context.
+
+    # without an interval, have the forecast be each day at the first of the month
+    def test_ForecastHandler__runApproximate__no_activity__less_than_1_month__not_include_1st(self):
+        start_date = date(2026,6,5)
+        end_date = date(2026,6,10)
+
+        A = AccountSet()
+        B = LineItemSet()
+        M = MemoRuleSet()
+        MS = MilestoneSet()
+
+        checking_balance = 1000
+
+        expected_billing_date_state = None #TODO
+        expected_final = None #TODO
+
+        A.createCheckingAccount(
+            name="Checking",
+            balance=checking_balance,
+            min_balance=0,
+            max_balance=float("inf"),
+            primary_checking_ind=True,
+        )
+
+        E_IO = ExpenseForecastInitialConditions(
+            start_date=start_date,
+            end_date=end_date,
+            account_set=A,
+            budget_set=B,
+            memo_rule_set=M,
+            milestone_set=MS,
+        )
+
+        R = ForecastHandler().runForecastApproximate(E_IO, MS, include_debug_columns=True)
+
+        assert R.forecast_df.shape[0] == 5
+
+        pd.testing.assert_frame_equal(
+            R.forecast_df.iloc[[2]],
+            expected_billing_date_state,
+        )
+
+        pd.testing.assert_frame_equal(
+            R.forecast_df.tail(1),
+            expected_final,
+        )
+
+    def test_ForecastHandler__runApproximate__no_activity__less_than_1_month__include_1st(self):
+            start_date = date(2026,5,30)
+            end_date = date(2026,6,2)
+
+            A = AccountSet()
+            B = LineItemSet()
+            M = MemoRuleSet()
+            MS = MilestoneSet()
+
+            checking_balance = 1000
+
+            expected_billing_date_state = None #TODO
+            expected_final = None #TODO
+
+            A.createCheckingAccount(
+                name="Checking",
+                balance=checking_balance,
+                min_balance=0,
+                max_balance=float("inf"),
+                primary_checking_ind=True,
+            )
+
+            E_IO = ExpenseForecastInitialConditions(
+                start_date=start_date,
+                end_date=end_date,
+                account_set=A,
+                budget_set=B,
+                memo_rule_set=M,
+                milestone_set=MS,
+            )
+
+            R = ForecastHandler().runForecastApproximate(E_IO, MS, include_debug_columns=True)
+
+            assert R.forecast_df.shape[0] == 5
+
+            pd.testing.assert_frame_equal(
+                R.forecast_df.iloc[[2]],
+                expected_billing_date_state,
+            )
+
+            pd.testing.assert_frame_equal(
+                R.forecast_df.tail(1),
+                expected_final,
+            )
+
+    def test_ForecastHandler__runApproximate__no_activity__6_weeks(self):
+            start_date = date(2026,6,1)
+            end_date = date(2026,7,15)
+
+            A = AccountSet()
+            B = LineItemSet()
+            M = MemoRuleSet()
+            MS = MilestoneSet()
+
+            checking_balance = 1000
+
+            expected_billing_date_state = None #TODO
+            expected_final = None #TODO
+
+            A.createCheckingAccount(
+                name="Checking",
+                balance=checking_balance,
+                min_balance=0,
+                max_balance=float("inf"),
+                primary_checking_ind=True,
+            )
+
+            E_IO = ExpenseForecastInitialConditions(
+                start_date=start_date,
+                end_date=end_date,
+                account_set=A,
+                budget_set=B,
+                memo_rule_set=M,
+                milestone_set=MS,
+            )
+
+            R = ForecastHandler().runForecastApproximate(E_IO, MS, include_debug_columns=True)
+
+            assert R.forecast_df.shape[0] == 5
+
+            pd.testing.assert_frame_equal(
+                R.forecast_df.iloc[[2]],
+                expected_billing_date_state,
+            )
+
+            pd.testing.assert_frame_equal(
+                R.forecast_df.tail(1),
+                expected_final,
+            )
+
+    def test_ForecastHandler__runApproximate__no_activity__6_months(self):
+            start_date = date(2026,6,1)
+            end_date = start_date + datetime.timedelta(days=180)
+
+            A = AccountSet()
+            B = LineItemSet()
+            M = MemoRuleSet()
+            MS = MilestoneSet()
+
+            checking_balance = 1000
+
+            expected_billing_date_state = None #TODO
+            expected_final = None #TODO
+
+            A.createCheckingAccount(
+                name="Checking",
+                balance=checking_balance,
+                min_balance=0,
+                max_balance=float("inf"),
+                primary_checking_ind=True,
+            )
+
+            E_IO = ExpenseForecastInitialConditions(
+                start_date=start_date,
+                end_date=end_date,
+                account_set=A,
+                budget_set=B,
+                memo_rule_set=M,
+                milestone_set=MS,
+            )
+
+            R = ForecastHandler().runForecastApproximate(E_IO, MS, include_debug_columns=True)
+
+            assert R.forecast_df.shape[0] == 5
+
+            pd.testing.assert_frame_equal(
+                R.forecast_df.iloc[[2]],
+                expected_billing_date_state,
+            )
+
+            pd.testing.assert_frame_equal(
+                R.forecast_df.tail(1),
+                expected_final,
+            )
+
+
+    # TODO test_ForecastHandler__runApproximate__min_cc_payments__90_days
+    def test_ForecastHandler__runApproximate__min_cc_payments__90_days(self):
+            start_date = date(2026,6,1)
+            end_date = start_date + datetime.timedelta(days=90)
+
+            A = AccountSet()
+            B = LineItemSet()
+            M = MemoRuleSet()
+            MS = MilestoneSet()
+
+            checking_balance = 1000
+            principal_balance = 1000
+            minimum_payment = 40
+
+            # payment_date, payment_amount
+            # expected_billing_date_state, expected_final
+
+            A.createCheckingAccount(
+                name="Checking",
+                balance=checking_balance,
+                min_balance=0,
+                max_balance=float("inf"),
+                primary_checking_ind=True,
+            )
+
+            A.createLoanAccount(
+                name="Loan",
+                principal_balance=principal_balance,
+                interest_balance=0.0,
+                min_balance=0,
+                max_balance=25_000,
+                billing_start_date=date(2026,6,3),
+                apr=0.07305,
+                minimum_payment=minimum_payment,
+                billing_cycle_payment_balance=0,
+            )
+
+            if payment_date is not None:
+                B.addLineItem(
+                    start_date=payment_date,
+                    end_date=payment_date,
+                    priority=1,
+                    interval="once",
+                    amount=payment_amount,
+                    memo="loan payment",
+                    income_flag=False,
+                    deferrable=False,
+                    partial_payment_allowed=False,
+                )
+
+                M.addMemoRule(
+                    memo_regex="loan payment",
+                    account_from="Checking",
+                    account_to="Loan",
+                    transaction_priority=1,
+                )
+
+            E_IO = ExpenseForecastInitialConditions(
+                start_date=start_date,
+                end_date=end_date,
+                account_set=A,
+                budget_set=B,
+                memo_rule_set=M,
+                milestone_set=MS,
+            )
+
+            R = ForecastHandler().runForecast(E_IO, MS, include_debug_columns=True)
+
+            assert R.forecast_df.shape[0] == 5
+
+            pd.testing.assert_frame_equal(
+                R.forecast_df.iloc[[2]],
+                expected_billing_date_state,
+            )
+
+            pd.testing.assert_frame_equal(
+                R.forecast_df.tail(1),
+                expected_final,
+            )
+
+    # TODO test_ForecastHandler__runApproximate__min_loan_payments__90_days
+    def test_ForecastHandler__runApproximate__min_loan_payments__90_days(self):
+            start_date = date(2026,6,1)
+            end_date = start_date + datetime.timedelta(days=90)
+
+            A = AccountSet()
+            B = LineItemSet()
+            M = MemoRuleSet()
+            MS = MilestoneSet()
+
+            checking_balance = 1000
+            principal_balance = 1000
+            minimum_payment = 40
+
+            # payment_date, payment_amount
+            # expected_billing_date_state, expected_final
+
+            A.createCheckingAccount(
+                name="Checking",
+                balance=checking_balance,
+                min_balance=0,
+                max_balance=float("inf"),
+                primary_checking_ind=True,
+            )
+
+            A.createLoanAccount(
+                name="Loan",
+                principal_balance=principal_balance,
+                interest_balance=0.0,
+                min_balance=0,
+                max_balance=25_000,
+                billing_start_date=date(2026,6,3),
+                apr=0.07305,
+                minimum_payment=minimum_payment,
+                billing_cycle_payment_balance=0,
+            )
+
+            if payment_date is not None:
+                B.addLineItem(
+                    start_date=payment_date,
+                    end_date=payment_date,
+                    priority=1,
+                    interval="once",
+                    amount=payment_amount,
+                    memo="loan payment",
+                    income_flag=False,
+                    deferrable=False,
+                    partial_payment_allowed=False,
+                )
+
+                M.addMemoRule(
+                    memo_regex="loan payment",
+                    account_from="Checking",
+                    account_to="Loan",
+                    transaction_priority=1,
+                )
+
+            E_IO = ExpenseForecastInitialConditions(
+                start_date=start_date,
+                end_date=end_date,
+                account_set=A,
+                budget_set=B,
+                memo_rule_set=M,
+                milestone_set=MS,
+            )
+
+            R = ForecastHandler().runForecast(E_IO, MS, include_debug_columns=True)
+
+            assert R.forecast_df.shape[0] == 5
+
+            pd.testing.assert_frame_equal(
+                R.forecast_df.iloc[[2]],
+                expected_billing_date_state,
+            )
+
+            pd.testing.assert_frame_equal(
+                R.forecast_df.tail(1),
+                expected_final,
+            )
+
+    # TODO test_ForecastHandler__runApproximate__min_loan_and_cc_payments__90_days
+    def test_ForecastHandler__runApproximate__min_loan_and_cc_payments__90_days(self):
+            start_date = date(2026,6,1)
+            end_date = start_date + datetime.timedelta(days=90)
+
+            A = AccountSet()
+            B = LineItemSet()
+            M = MemoRuleSet()
+            MS = MilestoneSet()
+
+            checking_balance = 1000
+            principal_balance = 1000
+            minimum_payment = 40
+
+            # payment_date, payment_amount
+            # expected_billing_date_state, expected_final
+
+            A.createCheckingAccount(
+                name="Checking",
+                balance=checking_balance,
+                min_balance=0,
+                max_balance=float("inf"),
+                primary_checking_ind=True,
+            )
+
+            A.createLoanAccount(
+                name="Loan",
+                principal_balance=principal_balance,
+                interest_balance=0.0,
+                min_balance=0,
+                max_balance=25_000,
+                billing_start_date=date(2026,6,3),
+                apr=0.07305,
+                minimum_payment=minimum_payment,
+                billing_cycle_payment_balance=0,
+            )
+
+            if payment_date is not None:
+                B.addLineItem(
+                    start_date=payment_date,
+                    end_date=payment_date,
+                    priority=1,
+                    interval="once",
+                    amount=payment_amount,
+                    memo="loan payment",
+                    income_flag=False,
+                    deferrable=False,
+                    partial_payment_allowed=False,
+                )
+
+                M.addMemoRule(
+                    memo_regex="loan payment",
+                    account_from="Checking",
+                    account_to="Loan",
+                    transaction_priority=1,
+                )
+
+            E_IO = ExpenseForecastInitialConditions(
+                start_date=start_date,
+                end_date=end_date,
+                account_set=A,
+                budget_set=B,
+                memo_rule_set=M,
+                milestone_set=MS,
+            )
+
+            R = ForecastHandler().runForecast(E_IO, MS, include_debug_columns=True)
+
+            assert R.forecast_df.shape[0] == 5
+
+            pd.testing.assert_frame_equal(
+                R.forecast_df.iloc[[2]],
+                expected_billing_date_state,
+            )
+
+            pd.testing.assert_frame_equal(
+                R.forecast_df.tail(1),
+                expected_final,
+            )
+
+    # TODO test_ForecastHandler__runApproximate__advance_loan_payments__90_days
+    def test_ForecastHandler__runApproximate__advance_loan_payments__90_days(self):
+            start_date = date(2026,6,1)
+            end_date = start_date + datetime.timedelta(days=90)
+
+            A = AccountSet()
+            B = LineItemSet()
+            M = MemoRuleSet()
+            MS = MilestoneSet()
+
+            checking_balance = 1000
+            principal_balance = 1000
+            minimum_payment = 40
+
+            # payment_date, payment_amount
+            # expected_billing_date_state, expected_final
+
+            A.createCheckingAccount(
+                name="Checking",
+                balance=checking_balance,
+                min_balance=0,
+                max_balance=float("inf"),
+                primary_checking_ind=True,
+            )
+
+            A.createLoanAccount(
+                name="Loan",
+                principal_balance=principal_balance,
+                interest_balance=0.0,
+                min_balance=0,
+                max_balance=25_000,
+                billing_start_date=date(2026,6,3),
+                apr=0.07305,
+                minimum_payment=minimum_payment,
+                billing_cycle_payment_balance=0,
+            )
+
+            if payment_date is not None:
+                B.addLineItem(
+                    start_date=payment_date,
+                    end_date=payment_date,
+                    priority=1,
+                    interval="once",
+                    amount=payment_amount,
+                    memo="loan payment",
+                    income_flag=False,
+                    deferrable=False,
+                    partial_payment_allowed=False,
+                )
+
+                M.addMemoRule(
+                    memo_regex="loan payment",
+                    account_from="Checking",
+                    account_to="Loan",
+                    transaction_priority=1,
+                )
+
+            E_IO = ExpenseForecastInitialConditions(
+                start_date=start_date,
+                end_date=end_date,
+                account_set=A,
+                budget_set=B,
+                memo_rule_set=M,
+                milestone_set=MS,
+            )
+
+            R = ForecastHandler().runForecast(E_IO, MS, include_debug_columns=True)
+
+            assert R.forecast_df.shape[0] == 5
+
+            pd.testing.assert_frame_equal(
+                R.forecast_df.iloc[[2]],
+                expected_billing_date_state,
+            )
+
+            pd.testing.assert_frame_equal(
+                R.forecast_df.tail(1),
+                expected_final,
+            )
+
+    # TODO test_ForecastHandler__runApproximate__advance_cc_payments__90_days
+    def test_ForecastHandler__runApproximate__advance_cc_payments__90_days(self):
+            start_date = date(2026,6,1)
+            end_date = start_date + datetime.timedelta(days=90)
+
+            A = AccountSet()
+            B = LineItemSet()
+            M = MemoRuleSet()
+            MS = MilestoneSet()
+
+            checking_balance = 1000
+            principal_balance = 1000
+            minimum_payment = 40
+
+            # payment_date, payment_amount
+            # expected_billing_date_state, expected_final
+
+            A.createCheckingAccount(
+                name="Checking",
+                balance=checking_balance,
+                min_balance=0,
+                max_balance=float("inf"),
+                primary_checking_ind=True,
+            )
+
+            A.createLoanAccount(
+                name="Loan",
+                principal_balance=principal_balance,
+                interest_balance=0.0,
+                min_balance=0,
+                max_balance=25_000,
+                billing_start_date=date(2026,6,3),
+                apr=0.07305,
+                minimum_payment=minimum_payment,
+                billing_cycle_payment_balance=0,
+            )
+
+            if payment_date is not None:
+                B.addLineItem(
+                    start_date=payment_date,
+                    end_date=payment_date,
+                    priority=1,
+                    interval="once",
+                    amount=payment_amount,
+                    memo="loan payment",
+                    income_flag=False,
+                    deferrable=False,
+                    partial_payment_allowed=False,
+                )
+
+                M.addMemoRule(
+                    memo_regex="loan payment",
+                    account_from="Checking",
+                    account_to="Loan",
+                    transaction_priority=1,
+                )
+
+            E_IO = ExpenseForecastInitialConditions(
+                start_date=start_date,
+                end_date=end_date,
+                account_set=A,
+                budget_set=B,
+                memo_rule_set=M,
+                milestone_set=MS,
+            )
+
+            R = ForecastHandler().runForecast(E_IO, MS, include_debug_columns=True)
+
+            assert R.forecast_df.shape[0] == 5
+
+            pd.testing.assert_frame_equal(
+                R.forecast_df.iloc[[2]],
+                expected_billing_date_state,
+            )
+
+            pd.testing.assert_frame_equal(
+                R.forecast_df.tail(1),
+                expected_final,
+            )
+
+    # TODO test_ForecastHandler__runApproximate__p2_transactions
+    def test_ForecastHandler__runApproximate__p2_transactions(self):
+            start_date = date(2026,6,1)
+            end_date = start_date + datetime.timedelta(days=90)
+
+            A = AccountSet()
+            B = LineItemSet()
+            M = MemoRuleSet()
+            MS = MilestoneSet()
+
+            checking_balance = 1000
+            principal_balance = 1000
+            minimum_payment = 40
+
+            # payment_date, payment_amount
+            # expected_billing_date_state, expected_final
+
+            A.createCheckingAccount(
+                name="Checking",
+                balance=checking_balance,
+                min_balance=0,
+                max_balance=float("inf"),
+                primary_checking_ind=True,
+            )
+
+            A.createLoanAccount(
+                name="Loan",
+                principal_balance=principal_balance,
+                interest_balance=0.0,
+                min_balance=0,
+                max_balance=25_000,
+                billing_start_date=date(2026,6,3),
+                apr=0.07305,
+                minimum_payment=minimum_payment,
+                billing_cycle_payment_balance=0,
+            )
+
+            if payment_date is not None:
+                B.addLineItem(
+                    start_date=payment_date,
+                    end_date=payment_date,
+                    priority=1,
+                    interval="once",
+                    amount=payment_amount,
+                    memo="loan payment",
+                    income_flag=False,
+                    deferrable=False,
+                    partial_payment_allowed=False,
+                )
+
+                M.addMemoRule(
+                    memo_regex="loan payment",
+                    account_from="Checking",
+                    account_to="Loan",
+                    transaction_priority=1,
+                )
+
+            E_IO = ExpenseForecastInitialConditions(
+                start_date=start_date,
+                end_date=end_date,
+                account_set=A,
+                budget_set=B,
+                memo_rule_set=M,
+                milestone_set=MS,
+            )
+
+            R = ForecastHandler().runForecast(E_IO, MS, include_debug_columns=True)
+
+            assert R.forecast_df.shape[0] == 5
+
+            pd.testing.assert_frame_equal(
+                R.forecast_df.iloc[[2]],
+                expected_billing_date_state,
+            )
+
+            pd.testing.assert_frame_equal(
+                R.forecast_df.tail(1),
+                expected_final,
+            )
+
+
+
+    """
+
+    @staticmethod
+    def _approximate_io(start_date, end_date, accounts, budget=None, memo_rules=None):
+        return ExpenseForecastInitialConditions(
+            start_date=start_date,
+            end_date=end_date,
+            account_set=accounts,
+            budget_set=budget or LineItemSet(),
+            memo_rule_set=memo_rules or MemoRuleSet(),
+            milestone_set=MilestoneSet(),
+        )
+
+    @staticmethod
+    def _approximate_checking(balance=1000):
+        accounts = AccountSet()
+        accounts.createCheckingAccount(
+            name="Checking", balance=balance, min_balance=0,
+            max_balance=float("inf"), primary_checking_ind=True,
+        )
+        return accounts
+
+    def _run_approximate(self, start_date, end_date, accounts, budget=None, memo_rules=None):
+        result = ForecastHandler().runForecastApproximate(
+            self._approximate_io(start_date, end_date, accounts, budget, memo_rules),
+            MilestoneSet(),
+            include_debug_columns=True,
+        )
+        assert isinstance(result, ExpenseForecastResult)
+        assert isinstance(result.forecast_df, pd.DataFrame)
+        return result
+
+    @staticmethod
+    def _add_approximate_credit_card(accounts):
+        accounts.createCreditCardAccount(
+            name="Credit", current_statement_balance=0,
+            previous_statement_balance=1000, min_balance=0, max_balance=25_000,
+            billing_start_date=date(2026, 6, 3), apr=0.25, minimum_payment=40,
+            end_of_previous_cycle_balance=1000,
+        )
+
+    @staticmethod
+    def _add_approximate_loan(accounts):
+        accounts.createLoanAccount(
+            name="Loan", principal_balance=1000, interest_balance=0,
+            min_balance=0, max_balance=25_000,
+            billing_start_date=date(2026, 6, 3), apr=0.1, minimum_payment=40,
+            billing_cycle_payment_balance=0,
+        )
+
+    @staticmethod
+    def _add_approximate_payment(budget, memo_rules, account_to, memo):
+        budget.addLineItem(
+            start_date=date(2026, 6, 15), end_date=date(2026, 6, 15),
+            priority=1, interval="once", amount=100, memo=memo,
+            income_flag=False, deferrable=False, partial_payment_allowed=False,
+        )
+        memo_rules.addMemoRule(
+            memo_regex=memo, account_from="Checking", account_to=account_to,
+            transaction_priority=1,
+        )
+
+    @pytest.mark.integration
+    def test_ForecastHandler__runApproximate__no_activity__less_than_1_month__not_include_1st(self):
+        start_date, end_date = date(2026, 6, 5), date(2026, 6, 10)
+        result = self._run_approximate(start_date, end_date, self._approximate_checking())
+        assert result.forecast_df["Date"].tolist() == [start_date, end_date]
+        assert result.forecast_df["Checking"].tolist() == [1000.0, 1000.0]
+
+    @pytest.mark.integration
+    def test_ForecastHandler__runApproximate__no_activity__less_than_1_month__include_1st(self):
+        start_date, end_date = date(2026, 5, 30), date(2026, 6, 2)
+        result = self._run_approximate(
+            start_date, end_date, self._approximate_checking()
+        )
+        assert result.forecast_df["Date"].tolist() == [start_date, date(2026, 6, 1), end_date]
+        assert result.forecast_df["Checking"].tolist() == [1000.0, 1000.0, 1000.0]
+
+    @pytest.mark.integration
+    def test_ForecastHandler__runApproximate__no_activity__6_weeks(self):
+        start_date, end_date = date(2026, 5, 30), date(2026, 7, 15)
+        result = self._run_approximate(
+            start_date, end_date, self._approximate_checking()
+        )
+        assert result.forecast_df["Date"].tolist() == [start_date, date(2026, 6, 1), date(2026, 7, 1), end_date]
+        assert result.forecast_df["Checking"].tolist() == [1000.0, 1000.0, 1000.0, 1000.0]
 
 
 
 
+
+    # Expected Data:
+    # Date      Checking        Prev
+    # 5/30      1000            1000
+    # 6/1       1000            1000
+    # 7/1       960             960 + interest from 1st payment
+    # 8/1       920             920 + interest from 1st payment + interest from 2nd payment
+    # 8/28      880             880 + interest from 1st payment + interest from 2nd payment + interest from 3rd payment
+    @pytest.mark.integration
+    def test_ForecastHandler__runApproximate__min_cc_payments__90_days(self):
+        start_date = date(2026, 5, 30)
+        end_date = start_date + datetime.timedelta(days=90)
+        accounts = self._approximate_checking()
+        self._add_approximate_credit_card(accounts)
+        result = self._run_approximate(start_date, end_date, accounts)
+        assert result.forecast_df["Date"].tolist() == [
+            start_date, date(2026, 6, 1), date(2026, 7, 1),
+            date(2026, 8, 1), end_date,
+        ]
+        directives = result.forecast_df["Memo Directives"].tolist()
+        assert sum("Credit" in directive for directive in directives) == 3
+        assert result.forecast_df.iloc[-1]["Checking"] == 1000 - (40 * 3)
+        balance = Decimal("1000")
+        for _ in range(3):
+            balance += balance * Decimal("0.25") / Decimal("12")
+            balance -= Decimal("40")
+        assert result.forecast_df.iloc[-1]["Credit"] == round(float(balance), 2)
+
+    # Expected Data:
+    # (column names are different i forget what to call them atm)
+    # Date      Checking        Loan Principal      Loan Interest
+    # 5/30      1000            1000                0
+    # 6/1       1000            1000                0
+    # 7/1       960             960
+    # 8/1       920             920
+    # 8/28      880             880
+
+    # The first billing date is 6/3, but the next approximate forecast date is 7/1
+    # Start at the current forecast date.
+    # Accrue interest for the number of days until the billing/payment date.
+    #    Note that in this case, the first billing date was 6/3, not 6/1, so this check should account for this.
+    #    However, for the following payment on 8/1, the full previous month should count toward interest accrual.
+    #    Furthermore, months are not all the same length, and this should be accounted for.
+    # Apply the payment to interest first, then principal.
+    #
+    # I think the cleanest rule is: monthly grain controls output dates, not necessarily every internal state-change date.
+    # You do not need to simulate every day. You can advance directly 
+    # between a small number of meaningful dates using interval arithmetic:
+
+    @pytest.mark.integration
+    def test_ForecastHandler__runApproximate__min_loan_payments__90_days(self):
+        start_date = date(2026, 5, 30)
+        end_date = start_date + datetime.timedelta(days=90)
+        accounts = self._approximate_checking()
+        self._add_approximate_loan(accounts)
+        result = self._run_approximate(start_date, end_date, accounts)
+        assert result.forecast_df["Date"].tolist() == [
+            start_date, date(2026, 6, 1), date(2026, 7, 1),
+            date(2026, 8, 1), end_date,
+        ]
+        directives = result.forecast_df["Memo Directives"].tolist()
+        assert sum("Loan" in directive for directive in directives) == 3
+        assert result.forecast_df.iloc[-1]["Checking"] == 1000 - (40 * 3)
+        principal, interest = Decimal("1000"), Decimal("0")
+        for elapsed_days in (28, 31, 27):
+            interest += principal * Decimal("0.1") * elapsed_days / Decimal("365.25")
+            payment = Decimal("40")
+            interest_payment = min(payment, interest)
+            interest -= interest_payment
+            principal -= payment - interest_payment
+        assert result.forecast_df.iloc[-1]["Loan: Principal Balance"] == round(float(principal), 2)
+        assert result.forecast_df.iloc[-1]["Loan: Interest"] == round(float(interest), 2)
+
+    #dates should be: start_date, 6/1, 7/1, 8/1, end_date
+    # the values from this should be the same as the previous cases, but both are present in this output
+    # with Checking being accordingly lower
+    @pytest.mark.integration
+    def test_ForecastHandler__runApproximate__min_loan_and_cc_payments__90_days(self):
+        start_date = date(2026, 5, 30)
+        end_date = start_date + datetime.timedelta(days=90)
+
+        accounts = self._approximate_checking()
+        self._add_approximate_loan(accounts)
+        self._add_approximate_credit_card(accounts)
+        result = self._run_approximate(start_date, end_date, accounts)
+        assert result.forecast_df["Date"].tolist() == [
+            start_date, date(2026, 6, 1), date(2026, 7, 1),
+            date(2026, 8, 1), end_date,
+        ]
+        directives = result.forecast_df["Memo Directives"].tolist()
+        assert sum("Loan" in directive for directive in directives) == 3
+        assert sum("Credit" in directive for directive in directives) == 3
+        assert result.forecast_df.iloc[-1]["Checking"] == 1000 - ((40 * 3) * 2)
+        credit_balance = Decimal("1000")
+        for _ in range(3):
+            credit_balance += credit_balance * Decimal("0.25") / Decimal("12")
+            credit_balance -= Decimal("40")
+        loan_principal, loan_interest = Decimal("1000"), Decimal("0")
+        for elapsed_days in (28, 31, 27):
+            loan_interest += loan_principal * Decimal("0.1") * elapsed_days / Decimal("365.25")
+            interest_payment = min(Decimal("40"), loan_interest)
+            loan_interest -= interest_payment
+            loan_principal -= Decimal("40") - interest_payment
+        assert result.forecast_df.iloc[-1]["Credit"] == round(float(credit_balance), 2)
+        assert result.forecast_df.iloc[-1]["Loan: Principal Balance"] == round(float(loan_principal), 2)
+        assert result.forecast_df.iloc[-1]["Loan: Interest"] == round(float(loan_interest), 2)
+
+
+
+
+    # Expected Data:
+    # (column names are different i forget what to call them atm)
+    # Date      Checking        Loan Principal      Loan Interest
+    # 5/30      1000            1000                0
+    # 6/1       1000            1000                0
+    # 7/1       960             960
+    # 8/1       920             920
+    # 8/28      880             880
+    #
+    # Note that the advance payment takes place on 6/15 for 100
+    # In order for this test case to pass, an additional intervals in the interest calculation
+    # must be added. It may be necessary to splti this test into 3 separate cases:
+    # 1. the current interest is not completely paid by the additional payment
+    # 2. the current interest is exactly paid by the additional payment
+    # 3. the current interest is overpaid by the additional payment, and thus reduces
+    #    reduces the principal as well
+    @pytest.mark.integration
+    def test_ForecastHandler__runApproximate__advance_loan_payments__90_days(self):
+        start_date = date(2026, 5, 30)
+        end_date = start_date + datetime.timedelta(days=90)
+
+        accounts = self._approximate_checking()
+        self._add_approximate_loan(accounts) #billing start date is 6/3
+        budget, memo_rules = LineItemSet(), MemoRuleSet()
+        self._add_approximate_payment(budget, memo_rules, "Loan", "extra loan payment") #payment date is 6/15
+        result = self._run_approximate(
+            start_date, end_date, accounts, budget, memo_rules
+        )
+        assert result.forecast_df["Date"].tolist() == [
+            start_date, date(2026, 6, 1), date(2026, 7, 1),
+            date(2026, 8, 1), end_date,
+        ]
+        july_memo = result.forecast_df.loc[result.forecast_df.Date == date(2026, 7, 1), "Memo"].iat[0]
+        assert "extra loan payment (Checking -$100.00)" in july_memo
+        principal, interest = Decimal("1000"), Decimal("0")
+        interest += principal * Decimal("0.1") * Decimal("12") / Decimal("365.25")
+        interest_payment = min(Decimal("100"), interest)
+        interest -= interest_payment
+        principal -= Decimal("100") - interest_payment
+        for elapsed_days in (16, 31, 27):
+            interest += principal * Decimal("0.1") * elapsed_days / Decimal("365.25")
+            interest_payment = min(Decimal("40"), interest)
+            interest -= interest_payment
+            principal -= Decimal("40") - interest_payment
+        assert result.forecast_df.iloc[-1]["Loan: Principal Balance"] == round(float(principal), 2)
+        assert result.forecast_df.iloc[-1]["Loan: Interest"] == round(float(interest), 2)
+
+    @pytest.mark.integration
+    def test_ForecastHandler__runApproximate__all_loans_payment(self):
+        start_date = date(2026, 5, 30)
+        end_date = date(2026, 6, 20)
+        accounts = self._approximate_checking()
+        for name, apr in (("High APR Loan", 0.2), ("Low APR Loan", 0.1)):
+            accounts.createLoanAccount(
+                name=name,
+                principal_balance=1000,
+                interest_balance=0,
+                min_balance=0,
+                max_balance=25_000,
+                billing_start_date=date(2026, 6, 3),
+                apr=apr,
+                minimum_payment=0,
+                billing_cycle_payment_balance=0,
+            )
+
+        budget, memo_rules = LineItemSet(), MemoRuleSet()
+        self._add_approximate_payment(
+            budget, memo_rules, "ALL_LOANS", "extra loan payment"
+        )
+
+        result = self._run_approximate(
+            start_date, end_date, accounts, budget, memo_rules
+        )
+
+        payment_row = result.forecast_df.iloc[-1]
+        high_interest = Decimal("1000") * Decimal("0.2") * Decimal("12") / Decimal("365.25")
+        high_principal = Decimal("900") + high_interest
+        post_payment_high_interest = (
+            high_principal * Decimal("0.2") * Decimal("5") / Decimal("365.25")
+        )
+        low_interest = Decimal("1000") * Decimal("0.1") * Decimal("17") / Decimal("365.25")
+        assert payment_row["Checking"] == 900
+        assert payment_row["High APR Loan: Principal Balance"] == round(
+            float(high_principal), 2
+        )
+        assert payment_row["High APR Loan: Interest"] == round(
+            float(post_payment_high_interest), 2
+        )
+        assert payment_row["Low APR Loan: Principal Balance"] == 1000
+        assert payment_row["Low APR Loan: Interest"] == round(float(low_interest), 2)
+
+    @pytest.mark.integration
+    def test_ForecastHandler__runApproximate__unknown_account_still_raises(self):
+        start_date, end_date = date(2026, 6, 1), date(2026, 6, 20)
+        accounts = self._approximate_checking()
+        budget, memo_rules = LineItemSet(), MemoRuleSet()
+        self._add_approximate_payment(
+            budget, memo_rules, "NOT_AN_ACCOUNT", "invalid payment"
+        )
+
+        with pytest.raises(ValueError):
+            self._run_approximate(
+                start_date, end_date, accounts, budget, memo_rules
+            )
+
+    @pytest.mark.integration
+    def test_ForecastHandler__runApproximate__logs_processing(self, caplog, monkeypatch):
+        start_date, end_date = date(2026, 6, 1), date(2026, 6, 20)
+        accounts = self._approximate_checking()
+        budget, memo_rules = LineItemSet(), MemoRuleSet()
+        budget.addLineItem(
+            start_date=date(2026, 6, 15), end_date=date(2026, 6, 16),
+            priority=1, interval="daily", amount=100, memo="logged expense",
+            income_flag=False, deferrable=False, partial_payment_allowed=False,
+        )
+        memo_rules.addMemoRule(
+            memo_regex="logged expense", account_from="Checking", account_to=None,
+            transaction_priority=1,
+        )
+
+        monkeypatch.setattr(forecast_logger, "propagate", True)
+        with caplog.at_level(logging.DEBUG, logger=forecast_logger.name):
+            io = self._approximate_io(
+                start_date, end_date, accounts, budget, memo_rules
+            )
+            ForecastHandler().runForecastApproximate(
+                io, MilestoneSet(), include_debug_columns=True
+            )
+
+        log_output = "\n".join(record.getMessage() for record in caplog.records)
+        assert "Starting Approximate Forecast" in log_output
+        assert (
+            "2026-06-20 processing binned memo "
+            "'logged expense x2 (Checking -$200.00)'"
+            in log_output
+        )
+        assert "executing txn" not in log_output
+        assert "Finished Approximate Forecast" in log_output
+
+    # dates should be: start_date, 6/1, 7/1, 8/1, end_date
+    # this test is similar but simpler than the loan case, since (I am pretty sure )
+    # interest should not be reduced by advance payment within 1 month
+    # and hence the monthly grain should sufficiently expose the change in balance
+    # for the calculation
+    @pytest.mark.integration
+    def test_ForecastHandler__runApproximate__advance_cc_payments__90_days(self):
+        start_date = date(2026, 5, 30)
+        end_date = start_date + datetime.timedelta(days=90)
+
+        accounts = self._approximate_checking()
+        self._add_approximate_credit_card(accounts)
+        budget, memo_rules = LineItemSet(), MemoRuleSet()
+        self._add_approximate_payment(budget, memo_rules, "Credit", "extra credit payment")
+        result = self._run_approximate(
+            start_date, end_date, accounts, budget, memo_rules
+        )
+        assert result.forecast_df["Date"].tolist() == [
+            start_date, date(2026, 6, 1), date(2026, 7, 1),
+            date(2026, 8, 1), end_date,
+        ]
+        july_memo = result.forecast_df.loc[result.forecast_df.Date == date(2026, 7, 1), "Memo"].iat[0]
+        assert "extra credit payment (Checking -$100.00)" in july_memo
+        # The advance payment lowers the statement balance used for interest and
+        # satisfies the first approximate minimum payment through payment credit.
+        credit_balance = Decimal("1000") - Decimal("100")
+        credit_balance += credit_balance * Decimal("0.25") / Decimal("12")
+        for _ in range(2):
+            credit_balance += credit_balance * Decimal("0.25") / Decimal("12")
+            credit_balance -= Decimal("40")
+        assert result.forecast_df.iloc[-1]["Credit"] == round(float(credit_balance), 2)
+
+    # dates should be: start_date, 6/1, 7/1, 8/1, end_date
+    # this test should include 1 p2 transactions at each grain: daily, weekly, semiweekly, monthly
+    # and test that the memo is binned xN appropriately
+    @pytest.mark.integration
+    def test_ForecastHandler__runApproximate__p2_transactions(self):
+        start_date = date(2026, 5, 30)
+        end_date = start_date + datetime.timedelta(days=90)
+        
+        start_date, end_date = date(2026, 6, 1), date(2026, 7, 1)
+        budget, memo_rules = LineItemSet(), MemoRuleSet()
+        budget.addLineItem(
+            start_date=start_date, end_date=end_date, priority=2,
+            interval="daily", amount=10, memo="food", income_flag=False,
+            deferrable=False, partial_payment_allowed=False,
+        )
+        memo_rules.addMemoRule(
+            memo_regex="food", account_from="Checking", account_to=None,
+            transaction_priority=2,
+        )
+        result = self._run_approximate(
+            start_date, end_date, self._approximate_checking(), budget, memo_rules
+        )
+        assert result.forecast_df["Date"].tolist() == [start_date, end_date]
+        assert result.forecast_df.iloc[-1]["Checking"] == 690.0
+        assert result.forecast_df.iloc[-1]["Memo"] == "food x31 (Checking -$310.00)"
 
     # @pytest.mark.skip
     # def test_forecast_longer_than_satisfice(self):

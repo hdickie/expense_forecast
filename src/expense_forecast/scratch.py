@@ -1,11 +1,10 @@
 #scratch.py
 
 from expense_forecast.ExpenseForecastInitialConditions import ExpenseForecastInitialConditions
-from expense_forecast.ForecastSetInitialConditions import ForecastSetInitialConditions
+# from expense_forecast.ForecastSetInitialConditions import ForecastSetInitialConditions
 from expense_forecast.AccountSet import AccountSet
-from expense_forecast.LineItemSet import BudgetSet
+from expense_forecast.LineItemSet import LineItemSet
 
-from expense_forecast.MilestoneTriggeredForecastTransition import MilestoneTriggeredForecastTransition
 
 from expense_forecast.MemoRuleSet import MemoRuleSet
 from expense_forecast.ForecastHandler import ForecastHandler
@@ -23,33 +22,33 @@ from datetime import date
 import inspect
 
 def get_B_invariant(food_daily_amount, gas_semiweekly_amount):
-    B_invariant = BudgetSet()
+    B_invariant = LineItemSet()
 
-    B_invariant.addBudgetItem(start_date=start_date, end_date=end_date, priority=1,
+    B_invariant.addLineItem(start_date=start_date, end_date=end_date, priority=1,
                     interval='daily',amount=food_daily_amount,memo='food expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
-    B_invariant.addBudgetItem(start_date=start_date, end_date=end_date, priority=1,
+    B_invariant.addLineItem(start_date=start_date, end_date=end_date, priority=1,
                     interval='semiweekly',amount=gas_semiweekly_amount,memo='gas expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
-    B_invariant.addBudgetItem(start_date=start_date, end_date=end_date, priority=1,
+    B_invariant.addLineItem(start_date=start_date, end_date=end_date, priority=1,
                     interval='monthly',amount=287.68,memo='phone expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
-    B_invariant.addBudgetItem(start_date=start_date, end_date=end_date, priority=1,
+    B_invariant.addLineItem(start_date=start_date, end_date=end_date, priority=1,
                     interval='monthly',amount=10,memo='hulu expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
-    B_invariant.addBudgetItem(start_date=date(2026,7,2), end_date=end_date, priority=1,
+    B_invariant.addLineItem(start_date=date(2026,7,2), end_date=end_date, priority=1,
                     interval='monthly',amount=14,memo='paramount plus expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
-    B_invariant.addBudgetItem(start_date=date(2026,6,26), end_date=end_date, priority=1,
+    B_invariant.addLineItem(start_date=date(2026,6,26), end_date=end_date, priority=1,
                     interval='monthly',amount=9,memo='netflix expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
-    B_invariant.addBudgetItem(start_date=start_date, end_date=end_date, priority=1,
+    B_invariant.addLineItem(start_date=start_date, end_date=end_date, priority=1,
                     interval='monthly',amount=100,memo='car insurance expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
-    B_invariant.addBudgetItem(start_date=date(2026,7,3), end_date=end_date, priority=1,
+    B_invariant.addLineItem(start_date=date(2026,7,3), end_date=end_date, priority=1,
                     interval='monthly',amount=149,memo='storage expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
-    B_invariant.addBudgetItem(start_date=date(2026,6,6), end_date=end_date, priority=1,
+    B_invariant.addLineItem(start_date=date(2026,6,6), end_date=end_date, priority=1,
                     interval='monthly',amount=129,memo='joyous expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     
@@ -57,33 +56,33 @@ def get_B_invariant(food_daily_amount, gas_semiweekly_amount):
 
 # same as before, but food and gas are probably different
 def get_B_invariant_post_RN_life():
-    B_invariant = BudgetSet()
+    B_invariant = LineItemSet()
 
-    B_invariant.addBudgetItem(start_date=start_date, end_date=end_date, priority=1,
+    B_invariant.addLineItem(start_date=start_date, end_date=end_date, priority=1,
                     interval='daily',amount=20,memo='food expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
-    B_invariant.addBudgetItem(start_date=start_date, end_date=end_date, priority=1,
+    B_invariant.addLineItem(start_date=start_date, end_date=end_date, priority=1,
                     interval='semiweekly',amount=80,memo='gas expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
-    B_invariant.addBudgetItem(start_date=start_date, end_date=end_date, priority=1,
+    B_invariant.addLineItem(start_date=start_date, end_date=end_date, priority=1,
                     interval='monthly',amount=287.68,memo='phone expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
-    B_invariant.addBudgetItem(start_date=start_date, end_date=end_date, priority=1,
+    B_invariant.addLineItem(start_date=start_date, end_date=end_date, priority=1,
                     interval='monthly',amount=10,memo='hulu expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
-    B_invariant.addBudgetItem(start_date=date(2026,7,2), end_date=end_date, priority=1,
+    B_invariant.addLineItem(start_date=date(2026,7,2), end_date=end_date, priority=1,
                     interval='monthly',amount=14,memo='paramount plus expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
-    B_invariant.addBudgetItem(start_date=date(2026,6,26), end_date=end_date, priority=1,
+    B_invariant.addLineItem(start_date=date(2026,6,26), end_date=end_date, priority=1,
                     interval='monthly',amount=9,memo='netflix expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
-    B_invariant.addBudgetItem(start_date=start_date, end_date=end_date, priority=1,
+    B_invariant.addLineItem(start_date=start_date, end_date=end_date, priority=1,
                     interval='monthly',amount=100,memo='car insurance expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
-    B_invariant.addBudgetItem(start_date=date(2026,7,3), end_date=end_date, priority=1,
+    B_invariant.addLineItem(start_date=date(2026,7,3), end_date=end_date, priority=1,
                     interval='monthly',amount=149,memo='storage expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
-    B_invariant.addBudgetItem(start_date=date(2026,6,6), end_date=end_date, priority=1,
+    B_invariant.addLineItem(start_date=date(2026,6,6), end_date=end_date, priority=1,
                     interval='monthly',amount=129,memo='joyous expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     return B_invariant
@@ -191,48 +190,48 @@ def getComprehensiveMemoRules():
 
 def getHardCodedCreditCardPayments(user_vars):
 
-    B_keep_cc_payed_off = BudgetSet()
+    B_keep_cc_payed_off = LineItemSet()
 
     
-    B_keep_cc_payed_off.addBudgetItem(start_date=date(2026,9,1), end_date=date(2026,9,1), priority=1,
+    B_keep_cc_payed_off.addLineItem(start_date=date(2026,9,1), end_date=date(2026,9,1), priority=1,
                     interval='once',amount=5000.0,memo='extra cc payment 1',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     
-    B_keep_cc_payed_off.addBudgetItem(start_date=date(2026,10,1), end_date=date(2026,10,1), priority=1,
+    B_keep_cc_payed_off.addLineItem(start_date=date(2026,10,1), end_date=date(2026,10,1), priority=1,
                     interval='once',amount=3000.0,memo='extra cc payment 2',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     
     # 11/1 2588.23 	
     
-    B_keep_cc_payed_off.addBudgetItem(start_date=date(2026,11,1), end_date=date(2026,11,1), priority=1,
+    B_keep_cc_payed_off.addLineItem(start_date=date(2026,11,1), end_date=date(2026,11,1), priority=1,
                     interval='once',amount=3450.00,memo='extra cc payment 3',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     
-    B_keep_cc_payed_off.addBudgetItem(start_date=date(2026,12,1), end_date=date(2026,12,1), priority=1,
+    B_keep_cc_payed_off.addLineItem(start_date=date(2026,12,1), end_date=date(2026,12,1), priority=1,
                     interval='once',amount=1500.0,memo='citi payment 1',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     
-    B_keep_cc_payed_off.addBudgetItem(start_date=date(2027,1,1), end_date=date(2027,1,1), priority=1,
+    B_keep_cc_payed_off.addLineItem(start_date=date(2027,1,1), end_date=date(2027,1,1), priority=1,
                     interval='once',amount=1400.0,memo='citi payment 2',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     
-    B_keep_cc_payed_off.addBudgetItem(start_date=date(2027,2,1), end_date=date(2027,2,1), priority=1,
+    B_keep_cc_payed_off.addLineItem(start_date=date(2027,2,1), end_date=date(2027,2,1), priority=1,
                     interval='once',amount=730.0,memo='citi payment 3',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     
-    # B.addBudgetItem(start_date=date(2026,11,15), end_date=date(2026,11,15), priority=1,
+    # B.addLineItem(start_date=date(2026,11,15), end_date=date(2026,11,15), priority=1,
     #                 interval='once',amount=1010.0,memo='citi payment 2',income_flag=False, 
     #                 deferrable=False, partial_payment_allowed=False)
     
     # 1010.14 11/13
     
-    # B_keep_cc_payed_off.addBudgetItem(start_date=date(2026,11,1), end_date=date(2026,11,1), priority=1,
+    # B_keep_cc_payed_off.addLineItem(start_date=date(2026,11,1), end_date=date(2026,11,1), priority=1,
     #                 interval='monthly',amount=1533.47,memo='extra cc payment 3',income_flag=False, 
     #                 deferrable=False, partial_payment_allowed=False)
     
     
     
-    # B_keep_cc_payed_off.addBudgetItem(start_date=date(2026,12,1), end_date=end_date, priority=1,
+    # B_keep_cc_payed_off.addLineItem(start_date=date(2026,12,1), end_date=end_date, priority=1,
     #                 interval='monthly',amount=1500,memo='extra cc payment cyclical',income_flag=False, 
     #                 deferrable=False, partial_payment_allowed=False)
 
@@ -514,8 +513,8 @@ if __name__ == '__main__':
     # action = 'near term'
     # action = 'start of RN life'
     # action = 'net worth 0 after 18 months of RN car life'
-
-    action = 'inspect'
+    action = 'test approximate case'
+    # action = 'inspect'
 
     if action == 'near term':
 
@@ -533,11 +532,11 @@ if __name__ == '__main__':
         B_keep_cc_payed_off = getHardCodedCreditCardPayments(user_vars)
 
         # Housing
-        B_live_in_car = BudgetSet() #TODO maybe increase cost of gas ?
+        B_live_in_car = LineItemSet() #TODO maybe increase cost of gas ?
 
         # Work
-        B_CNA = BudgetSet()
-        B_CNA.addBudgetItem(start_date=user_vars["CNA_first_paycheck_date"], 
+        B_CNA = LineItemSet()
+        B_CNA.addLineItem(start_date=user_vars["CNA_first_paycheck_date"], 
                                       end_date=user_vars["start_nursing_school_stop_working_full_time_date"], 
                                       priority=1,
                     interval='semiweekly',amount=user_vars["CNA_paycheck_amount"],
@@ -545,7 +544,7 @@ if __name__ == '__main__':
                     deferrable=False, partial_payment_allowed=False)
         
         #assume a 30 day gap i nemployment at least
-        B_CNA.addBudgetItem(start_date=user_vars["start_nursing_school_stop_working_full_time_date"] + datetime.timedelta(days=30), 
+        B_CNA.addLineItem(start_date=user_vars["start_nursing_school_stop_working_full_time_date"] + datetime.timedelta(days=30), 
                                       end_date=user_vars["nursing_school_end_date"], 
                                       priority=1,
                     interval='semiweekly',
@@ -588,22 +587,22 @@ if __name__ == '__main__':
         B_invariant = get_B_invariant_post_RN_life()
         M = getComprehensiveMemoRules() 
         
-        RN_income = BudgetSet()
-        RN_income.addBudgetItem( start_date + datetime.timedelta(days=30), 
+        RN_income = LineItemSet()
+        RN_income.addLineItem( start_date + datetime.timedelta(days=30), 
                                 start_date + datetime.timedelta(days=30 + 365), #end date
                                 1, 'semiweekly', 2900, 'RN income 1st Year', True)
         # 5% raise after first year
-        RN_income.addBudgetItem( start_date + datetime.timedelta(days=30 + 365), 
+        RN_income.addLineItem( start_date + datetime.timedelta(days=30 + 365), 
                                 start_date + datetime.timedelta(days=30 + 365*2), #end date
                                 1, 'semiweekly', 2900*1.05, 'RN income 2nd Year', True)
 
-        B_keep_cc_payed_off = BudgetSet()
-        B_keep_cc_payed_off.addBudgetItem(start_date=date(2030,2,1), end_date=end_date, priority=1,
+        B_keep_cc_payed_off = LineItemSet()
+        B_keep_cc_payed_off.addLineItem(start_date=date(2030,2,1), end_date=end_date, priority=1,
                     interval='monthly',amount=1400,memo='extra cc payment cyclical',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
         
-        B_loan_payments = BudgetSet()
-        B_loan_payments.addBudgetItem(start_date=start_date + datetime.timedelta(days=90), 
+        B_loan_payments = LineItemSet()
+        B_loan_payments.addLineItem(start_date=start_date + datetime.timedelta(days=90), 
                                       end_date=end_date, 
                                       priority=1, interval="monthly", amount=4_200,
                                       memo='all loan payment')
@@ -668,16 +667,16 @@ if __name__ == '__main__':
 
         ### 5/9/31 net worth 0
 
-        ### def __init__(self, name, choices=dict[str, BudgetSet])
+        ### def __init__(self, name, choices=dict[str, LineItemSet])
 
         ### Dimensions
         # CC Payments
         # this could be invariant just partial payment allowed
 
         # Housing
-        # B_live_in_car = BudgetSet() #TODO maybe increase cost of gas ?
-        # B_1500_rent = BudgetSet() #TODO 
-        # B_2200_rent = BudgetSet() #TODO 
+        # B_live_in_car = LineItemSet() #TODO maybe increase cost of gas ?
+        # B_1500_rent = LineItemSet() #TODO 
+        # B_2200_rent = LineItemSet() #TODO 
         # # ...
         # # live in boat!!! #TODO
         # # move to spain in 3 years #TODO
@@ -690,11 +689,11 @@ if __name__ == '__main__':
         # })
 
         # # Work
-        # RN_employment_not_travel = BudgetSet() #TODO
-        # RN_employment_travel_after_1_year = BudgetSet() #TODO
-        # RN_employment_travel_after_2_years = BudgetSet() #TODO
-        # RN_employment_travel_after_3_years = BudgetSet() #TODO
-        # RN_employment_travel_after_4_years = BudgetSet() #TODO
+        # RN_employment_not_travel = LineItemSet() #TODO
+        # RN_employment_travel_after_1_year = LineItemSet() #TODO
+        # RN_employment_travel_after_2_years = LineItemSet() #TODO
+        # RN_employment_travel_after_3_years = LineItemSet() #TODO
+        # RN_employment_travel_after_4_years = LineItemSet() #TODO
         # # work in spain #TODO
 
         # work = ScenarioDimension("Work", {
@@ -732,15 +731,15 @@ if __name__ == '__main__':
         A = get_hypothetical_A_at_start_of_net_0_life()
         
         B_base = get_B_invariant(20, 80)
-        B_retirement_saving = BudgetSet() # TODO
+        B_retirement_saving = LineItemSet() # TODO
 
-        B_income = BudgetSet()
-        B_income.addBudgetItem( start_date, 
+        B_income = LineItemSet()
+        B_income.addLineItem( start_date, 
                                 end_date,
                                 1, 'semiweekly', 2900*(1.05**2), 'RN income 3rd Year', True)
         
-        B_keep_cc_payed_off = BudgetSet()
-        B_keep_cc_payed_off.addBudgetItem(start_date=date(2030,2,1), end_date=end_date, priority=1,
+        B_keep_cc_payed_off = LineItemSet()
+        B_keep_cc_payed_off.addLineItem(start_date=date(2030,2,1), end_date=end_date, priority=1,
                     interval='monthly',amount=1400,memo='extra cc payment cyclical',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
 
@@ -772,9 +771,9 @@ if __name__ == '__main__':
         # 2. Get room in Los Angeles 1500
         # 3. Get room in Los Angeles 2200
         ScenarioDimension(name='Lifestyle', choices={
-            'Stay in Los Angeles in Current Car': BudgetSet(),
-            'Get room in Los Angeles 1500': BudgetSet(),
-            'Get room in Los Angeles 2200': BudgetSet(),
+            'Stay in Los Angeles in Current Car': LineItemSet(),
+            'Get room in Los Angeles 1500': LineItemSet(),
+            'Get room in Los Angeles 2200': LineItemSet(),
         })
 
         ### Dimensions
@@ -799,7 +798,88 @@ if __name__ == '__main__':
     elif action == 'test approximate case':
 
 
-        raise NotImplementedError
+        start_date = date(2030,1,1)
+        end_date = start_date + datetime.timedelta(days=365 * 2)
+
+        A = get_hypothetical_A_at_start_of_RN_life()
+        B_invariant = get_B_invariant_post_RN_life()
+        M = getComprehensiveMemoRules() 
+        
+        RN_income = LineItemSet()
+        RN_income.addLineItem( start_date + datetime.timedelta(days=30), 
+                                start_date + datetime.timedelta(days=30 + 365), #end date
+                                1, 'semiweekly', 2900, 'RN income 1st Year', True)
+        # 5% raise after first year
+        RN_income.addLineItem( start_date + datetime.timedelta(days=30 + 365), 
+                                start_date + datetime.timedelta(days=30 + 365*2), #end date
+                                1, 'semiweekly', 2900*1.05, 'RN income 2nd Year', True)
+
+        B_keep_cc_payed_off = LineItemSet()
+        B_keep_cc_payed_off.addLineItem(start_date=date(2030,2,1), end_date=end_date, priority=1,
+                    interval='monthly',amount=1400,memo='extra cc payment cyclical',income_flag=False, 
+                    deferrable=False, partial_payment_allowed=False)
+        
+        B_loan_payments = LineItemSet()
+        B_loan_payments.addLineItem(start_date=start_date + datetime.timedelta(days=90), 
+                                      end_date=end_date, 
+                                      priority=1, interval="monthly", amount=4_200,
+                                      memo='all loan payment')
+
+        B = B_invariant + RN_income + B_keep_cc_payed_off + B_loan_payments
+        IO = ExpenseForecastInitialConditions(start_date, end_date, A, B, M)
+
+        composite_milestone = CompositeMilestone('All OG Loans Paid Off',
+                                [
+                                    AccountMilestone('Loan A Paid Off','Loan A', 0, 0),
+                                    AccountMilestone('Loan B Paid Off','Loan B', 0, 0),
+                                    AccountMilestone('Loan C Paid Off','Loan C', 0, 0),
+                                    AccountMilestone('Loan D Paid Off','Loan D', 0, 0),
+                                    AccountMilestone('Loan E Paid Off','Loan E', 0, 0),
+                                 ],
+                                None)
+
+        MS = MilestoneSet(account_milestones=[
+                            AccountMilestone('All Loans Paid Off','Loan Total',0,0),
+                            AccountMilestone('Loan A Paid Off','Loan A', 0, 0),
+                            AccountMilestone('Loan B Paid Off','Loan B', 0, 0),
+                            AccountMilestone('Loan C Paid Off','Loan C', 0, 0),
+                            AccountMilestone('Loan D Paid Off','Loan D', 0, 0),
+                            AccountMilestone('Loan E Paid Off','Loan E', 0, 0),
+
+                            AccountMilestone('Subsidized FAFSA Disbursement 1 Paid Off',
+                                             'Subsidized FAFSA Disbursement 1', 0, 0),
+                            AccountMilestone('Subsidized FAFSA Disbursement 2 Paid Off',
+                                             'Subsidized FAFSA Disbursement 2', 0, 0),
+                            AccountMilestone('Subsidized FAFSA Disbursement 3 Paid Off',
+                                             'Subsidized FAFSA Disbursement 3', 0, 0),
+                            AccountMilestone('Subsidized FAFSA Disbursement 4 Paid Off',
+                                             'Subsidized FAFSA Disbursement 4', 0, 0),
+
+                            AccountMilestone('Unsubsidized FAFSA Disbursement 1 Paid Off',
+                                             'Unsubsidized FAFSA Disbursement 1', 0, 0),
+                            AccountMilestone('Unsubsidized FAFSA Disbursement 2 Paid Off',
+                                             'Unsubsidized FAFSA Disbursement 2', 0, 0),
+                            AccountMilestone('Unsubsidized FAFSA Disbursement 3 Paid Off',
+                                             'Unsubsidized FAFSA Disbursement 3', 0, 0),
+                            AccountMilestone('Unsubsidized FAFSA Disbursement 4 Paid Off',
+                                             'Unsubsidized FAFSA Disbursement 4', 0, 0),
+
+                            AccountMilestone('Private Disbursement 1 Paid Off',
+                                             'Private Disbursement 1', 0, 0),
+                            AccountMilestone('Private Disbursement 2 Paid Off',
+                                             'Private Disbursement 2', 0, 0),
+                            AccountMilestone('Private Disbursement 3 Paid Off',
+                                             'Private Disbursement 3', 0, 0),
+                            AccountMilestone('Private Disbursement 4 Paid Off',
+                                             'Private Disbursement 4', 0, 0),
+                            
+                            ],
+                          composite_milestones=[composite_milestone])
+
+        F = ForecastHandler()
+        R = F.runForecastApproximate(IO, MS, include_debug_columns=True)
+        R.writeToJSONFile(str(R.unique_id)+'.json')
+        F.generateHTMLReport(R)
     
     elif action == 'inspect':
         pass

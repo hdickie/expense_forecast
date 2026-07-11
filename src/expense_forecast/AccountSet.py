@@ -124,7 +124,7 @@ class AccountSet:
             return value
         return value
 
-    #TODO this doesn't seem like it should take a df as input
+    #TODO DEFER this doesn't seem like it should take a df as input
     @staticmethod
     def _validate_one_and_only_one_primary_checking_account(accounts_df):
         """
@@ -138,14 +138,14 @@ class AccountSet:
         if primary_checking_accounts_df.shape[0] != 1:
             raise ValueError("AccountSet must have one and only one primary checking account")
 
-    #TODO this doesn't seem like it should take a df as input
+    #TODO DEFER this doesn't seem like it should take a df as input
     @staticmethod
     def _validate_unique_names(accounts_df):
         """
         @interface-report: ignore
         """
         if len(accounts_df.Name) != len(set(accounts_df.Name)):
-            # TODO identify duplicated account name and include it in error message
+            # TODO DEFER identify duplicated account name and include it in error message
             raise ValueError("Account names must be unique within AccountSet")
 
     def __init__(self, accounts_list=None):
@@ -175,7 +175,7 @@ class AccountSet:
             return
 
         accounts_df = self.getAccounts()
-        #TODO set primary_checking_account_name ; unclear if this is still being used after Codex-powered refactors
+        #TODO set primary_checking_account_name when creating AccountSet from a list of accounts
         AccountSet._validate_unique_names(accounts_df)
 
     def __str__(self):
@@ -186,8 +186,6 @@ class AccountSet:
         """
         return self.getAccounts().to_string()
 
-
-    #TODO manual review of AccountSet.createAccount docstring
     def createAccount(
         self,
         name,
@@ -198,10 +196,7 @@ class AccountSet:
             **kwargs
     ):
         """
-        Create and register a new Account.
-
-        Construct a new Account from the supplied configuration and add it to this
-        AccountSet.
+        Create a new Account and add it to this AccountSet.
 
         This method centralizes account creation so that AccountSet can enforce 
         account uniqueness. Callers should prefer this method over manually 
@@ -209,6 +204,19 @@ class AccountSet:
 
         The created Account is validated before being incorporated into the
         AccountSet.
+
+        These are the valid combinations of kwargs:
+        checking - primary_checking_ind
+        credit - billing_start_date, minimum_payment, 
+                previous_statement_balance = 0, 
+                current_statement_balance = 0, 
+                billing_cycle_payment_balance = 0, 
+                end_of_previous_cycle_balance = 0
+        loan -  billing_start_date, interest_type, 
+                interest_interval, minimum_payment, 
+                principal_balance = 0,
+                interest_balance = 0, 
+                billing_cycle_payment_balance = 0
 
         Parameters
         ----------
@@ -228,11 +236,49 @@ class AccountSet:
             One of: checking, credit, loan. Case-insensitive.
 
         **kwargs : dict
-            TODO one-line description of createAccount.kwargs.
+            Additional keyword arguments.
 
-        Returns
-        -------
-        None
+            billing_start_date : date
+                First date of billing cycles and interest accruals.
+
+            interest_type : str
+                One of 'simple', 'compound'. Either for loans, credit must be 'compound'.
+
+            apr : Decimal
+
+            interest_interval : str
+                One of 'daily', 'monthly'.
+
+            minimum_payment : Decimal
+
+            previous_statement_balance : Decimal
+                For credit cards, represents the interest-accruing balance.
+
+            current_statement_balance : Decimal
+                For credit cards, represents spend within the current 
+                cycle that is not yet accruing interest. Each billing
+                cycle, current_statement_balance is rolled into 
+                previous_statement_balance.
+
+            principal_balance : Decimal
+                For loans, represents the interest-accruing balance.
+
+            interest_balance : Decimal
+                For loans, represents the interest, which is paid first
+                before payments are applied to the princiapal.
+                
+            billing_cycle_payment_balance : Decimal
+                For accounts with billing cycles, payments made before
+                the due date count as advance payment.
+
+            end_of_previous_cycle_balance : Decimal
+                For credit cards, if a credit card is paid off, interest
+                is still due on previous_statement_balance at the end
+                of the payment cycle, which is calculated using this.
+
+            primary_checking_ind : bool
+                For checking accounts, indicates if this account is the
+                primary liquid account.     
 
         @interface-report: show
         """
@@ -349,44 +395,9 @@ class AccountSet:
 
         AccountSet._validate_unique_names(accounts_df)
 
-
-    #TODO manual review of AccountSet.createCheckingAccount docstring
     def createCheckingAccount(self, name, balance, min_balance, max_balance, primary_checking_ind):
         """
-        TODO one-line description of createCheckingAccount.
-
-        TODO multi-line description of createCheckingAccount.
-        TODO explain how AccountSet.createCheckingAccount participates in account
-        TODO state management, forecasting, validation, or serialization.
-
-        Parameters
-        ----------
-        name : str
-            TODO one-line description of createCheckingAccount.name.
-
-        balance : float
-            TODO one-line description of createCheckingAccount.balance.
-
-        min_balance : float
-            TODO one-line description of createCheckingAccount.min_balance.
-
-        max_balance : float
-            TODO one-line description of createCheckingAccount.max_balance.
-
-        primary_checking_ind : bool
-            TODO one-line description of createCheckingAccount.primary_checking_ind.
-
-        Returns
-        -------
-        None
-            TODO one-line description of return value of createCheckingAccount.
-
-        Contract
-        --------
-        - #TODO contract lines for createCheckingAccount.
-        - #TODO document exceptions, mutations, and precision assumptions for createCheckingAccount.
-
-        @interface-report: show
+        @interface-report: ignore
         """
         billing_state = CheckingBillingState(
             balance=balance,
@@ -408,55 +419,10 @@ class AccountSet:
             AccountSet._validate_one_and_only_one_primary_checking_account(accounts_df)
             self.primary_checking_account_name = name
 
-    #TODO manual review of AccountSet.createLoanAccount docstring
+
     def createLoanAccount(self, name, principal_balance, interest_balance, min_balance, max_balance, billing_start_date,
                           apr, minimum_payment, billing_cycle_payment_balance=0,):
         """
-        TODO one-line description of createLoanAccount.
-
-        TODO multi-line description of createLoanAccount.
-        TODO explain how AccountSet.createLoanAccount participates in account
-        TODO state management, forecasting, validation, or serialization.
-
-        Parameters
-        ----------
-        name : str
-            TODO one-line description of createLoanAccount.name.
-
-        principal_balance : float
-            TODO one-line description of createLoanAccount.principal_balance.
-
-        interest_balance : float
-            TODO one-line description of createLoanAccount.interest_balance.
-
-        min_balance : float
-            TODO one-line description of createLoanAccount.min_balance.
-
-        max_balance : float
-            TODO one-line description of createLoanAccount.max_balance.
-
-        billing_start_date : date
-            TODO one-line description of createLoanAccount.billing_start_date.
-
-        apr : float
-            TODO one-line description of createLoanAccount.apr.
-
-        minimum_payment : float
-            TODO one-line description of createLoanAccount.minimum_payment.
-
-        billing_cycle_payment_balance : float
-            TODO one-line description of createLoanAccount.billing_cycle_payment_balance.
-
-        Returns
-        -------
-        None
-            TODO one-line description of return value of createLoanAccount.
-
-        Contract
-        --------
-        - #TODO contract lines for createLoanAccount.
-        - #TODO document exceptions, mutations, and precision assumptions for createLoanAccount.
-
         @interface-report: show
         """
 
@@ -489,55 +455,9 @@ class AccountSet:
         )
         self.accounts.append(account)
 
-    #TODO manual review of AccountSet.createCreditCardAccount docstring
     def createCreditCardAccount(self, name, current_statement_balance, previous_statement_balance, min_balance, max_balance,
                                 billing_start_date, apr, minimum_payment, end_of_previous_cycle_balance):
         """
-        TODO one-line description of createCreditCardAccount.
-
-        TODO multi-line description of createCreditCardAccount.
-        TODO explain how AccountSet.createCreditCardAccount participates in account
-        TODO state management, forecasting, validation, or serialization.
-
-        Parameters
-        ----------
-        name : str
-            TODO one-line description of createCreditCardAccount.name.
-
-        current_statement_balance : float
-            TODO one-line description of createCreditCardAccount.current_statement_balance.
-
-        previous_statement_balance : float
-            TODO one-line description of createCreditCardAccount.previous_statement_balance.
-
-        min_balance : float
-            TODO one-line description of createCreditCardAccount.min_balance.
-
-        max_balance : float
-            TODO one-line description of createCreditCardAccount.max_balance.
-
-        billing_start_date : date
-            TODO one-line description of createCreditCardAccount.billing_start_date.
-
-        apr : float
-            TODO one-line description of createCreditCardAccount.apr.
-
-        minimum_payment : float
-            TODO one-line description of createCreditCardAccount.minimum_payment.
-
-        end_of_previous_cycle_balance : float
-            TODO one-line description of createCreditCardAccount.end_of_previous_cycle_balance.
-
-        Returns
-        -------
-        None
-            TODO one-line description of return value of createCreditCardAccount.
-
-        Contract
-        --------
-        - #TODO contract lines for createCreditCardAccount.
-        - #TODO document exceptions, mutations, and precision assumptions for createCreditCardAccount.
-
         @interface-report: show
         """
 
@@ -578,60 +498,18 @@ class AccountSet:
     #     self.accounts.append(account)
 
 
-    #TODO manual review of AccountSet.getBalances docstring
+    #Codex-write-doctstring-OK
     def getBalances(self):
         """
-        TODO one-line description of getBalances.
-
-        TODO multi-line description of getBalances.
-        TODO explain how AccountSet.getBalances participates in account
-        TODO state management, forecasting, validation, or serialization.
-
-        Parameters
-        ----------
-        None
-            TODO confirm that getBalances takes no parameters beyond self/cls.
-
-        Returns
-        -------
-        dict
-            TODO one-line description of return value of getBalances.
-
-        Contract
-        --------
-        - #TODO contract lines for getBalances.
-        - #TODO document exceptions, mutations, and precision assumptions for getBalances.
-
         @interface-report: show
         """
         balances_dict = {account.name: account.balance for account in self.accounts}
         return balances_dict
 
-    #TODO manual review of AccountSet._get_account_by_name docstring
+    #Codex-write-doctstring-OK
     def _get_account_by_name(self, account_name):
         """
-        TODO one-line description of _get_account_by_name.
-
-        TODO multi-line description of _get_account_by_name.
-        TODO explain how AccountSet._get_account_by_name participates in account
-        TODO state management, forecasting, validation, or serialization.
-
-        Parameters
-        ----------
-        account_name : str | None
-            TODO one-line description of _get_account_by_name.account_name.
-
-        Returns
-        -------
-        Account | None
-            TODO one-line description of return value of _get_account_by_name.
-
-        Contract
-        --------
-        - #TODO contract lines for _get_account_by_name.
-        - #TODO document exceptions, mutations, and precision assumptions for _get_account_by_name.
-
-        @interface-report: show
+        @interface-report: ignore
         """
         if account_name in [None, "", "None"]:
             return None
@@ -645,37 +523,10 @@ class AccountSet:
             )
         return matching_accounts[0]
 
-    #TODO manual review of AccountSet._validate_account_balance_bounds docstring
+    #Codex-write-doctstring-OK
     @staticmethod
     def _validate_account_balance_bounds(account, proposed_balance, role):
         """
-        TODO one-line description of _validate_account_balance_bounds.
-
-        TODO multi-line description of _validate_account_balance_bounds.
-        TODO explain how AccountSet._validate_account_balance_bounds participates in account
-        TODO state management, forecasting, validation, or serialization.
-
-        Parameters
-        ----------
-        account : Account
-            TODO one-line description of _validate_account_balance_bounds.account.
-
-        proposed_balance : float
-            TODO one-line description of _validate_account_balance_bounds.proposed_balance.
-
-        role : str
-            TODO one-line description of _validate_account_balance_bounds.role.
-
-        Returns
-        -------
-        Decimal | float
-            TODO one-line description of return value of _validate_account_balance_bounds.
-
-        Contract
-        --------
-        - #TODO contract lines for _validate_account_balance_bounds.
-        - #TODO document exceptions, mutations, and precision assumptions for _validate_account_balance_bounds.
-
         @interface-report: show
         """
         proposed_balance_decimal = Decimal(str(proposed_balance))
@@ -717,31 +568,10 @@ class AccountSet:
 
         return proposed_balance
 
-    #TODO manual review of AccountSet._sync_debt_account_from_billing_state docstring
+    #Codex-write-doctstring-OK
     @staticmethod
     def _sync_debt_account_from_billing_state(account):
         """
-        TODO one-line description of _sync_debt_account_from_billing_state.
-
-        TODO multi-line description of _sync_debt_account_from_billing_state.
-        TODO explain how AccountSet._sync_debt_account_from_billing_state participates in account
-        TODO state management, forecasting, validation, or serialization.
-
-        Parameters
-        ----------
-        account : Account
-            TODO one-line description of _sync_debt_account_from_billing_state.account.
-
-        Returns
-        -------
-        None
-            TODO one-line description of return value of _sync_debt_account_from_billing_state.
-
-        Contract
-        --------
-        - #TODO contract lines for _sync_debt_account_from_billing_state.
-        - #TODO document exceptions, mutations, and precision assumptions for _sync_debt_account_from_billing_state.
-
         @interface-report: show
         """
         if account.account_type not in ["credit", "loan"]:
@@ -755,34 +585,10 @@ class AccountSet:
         elif account.account_type == "loan":
             account.balance = account.billing_state.balance
 
-    #TODO manual review of AccountSet._increase_debt_balance docstring
+    #Codex-write-doctstring-OK
     @staticmethod
     def _increase_debt_balance(account, amount):
         """
-        TODO one-line description of _increase_debt_balance.
-
-        TODO multi-line description of _increase_debt_balance.
-        TODO explain how AccountSet._increase_debt_balance participates in account
-        TODO state management, forecasting, validation, or serialization.
-
-        Parameters
-        ----------
-        account : Account
-            TODO one-line description of _increase_debt_balance.account.
-
-        amount : float
-            TODO one-line description of _increase_debt_balance.amount.
-
-        Returns
-        -------
-        None
-            TODO one-line description of return value of _increase_debt_balance.
-
-        Contract
-        --------
-        - #TODO contract lines for _increase_debt_balance.
-        - #TODO document exceptions, mutations, and precision assumptions for _increase_debt_balance.
-
         @interface-report: show
         """
         amount = AccountSet._money(amount)
@@ -794,37 +600,10 @@ class AccountSet:
             raise ValueError(f"Account '{account.name}' is not a debt account")
         AccountSet._sync_debt_account_from_billing_state(account)
 
-    #TODO manual review of AccountSet._decrease_credit_balance docstring
+    #Codex-write-doctstring-OK
     @staticmethod
     def _decrease_credit_balance(account, amount, minimum_payment_flag):
         """
-        TODO one-line description of _decrease_credit_balance.
-
-        TODO multi-line description of _decrease_credit_balance.
-        TODO explain how AccountSet._decrease_credit_balance participates in account
-        TODO state management, forecasting, validation, or serialization.
-
-        Parameters
-        ----------
-        account : Account
-            TODO one-line description of _decrease_credit_balance.account.
-
-        amount : float
-            TODO one-line description of _decrease_credit_balance.amount.
-
-        minimum_payment_flag : bool
-            TODO one-line description of _decrease_credit_balance.minimum_payment_flag.
-
-        Returns
-        -------
-        None
-            TODO one-line description of return value of _decrease_credit_balance.
-
-        Contract
-        --------
-        - #TODO contract lines for _decrease_credit_balance.
-        - #TODO document exceptions, mutations, and precision assumptions for _decrease_credit_balance.
-
         @interface-report: show
         """
         amount = AccountSet._money(amount)
@@ -853,37 +632,10 @@ class AccountSet:
             account.billing_state.billing_cycle_payment_balance += amount
         AccountSet._sync_debt_account_from_billing_state(account)
 
-    #TODO manual review of AccountSet._decrease_loan_balance docstring
+    #Codex-write-doctstring-OK
     @staticmethod
     def _decrease_loan_balance(account, amount, minimum_payment_flag):
         """
-        TODO one-line description of _decrease_loan_balance.
-
-        TODO multi-line description of _decrease_loan_balance.
-        TODO explain how AccountSet._decrease_loan_balance participates in account
-        TODO state management, forecasting, validation, or serialization.
-
-        Parameters
-        ----------
-        account : Account
-            TODO one-line description of _decrease_loan_balance.account.
-
-        amount : float
-            TODO one-line description of _decrease_loan_balance.amount.
-
-        minimum_payment_flag : bool
-            TODO one-line description of _decrease_loan_balance.minimum_payment_flag.
-
-        Returns
-        -------
-        None
-            TODO one-line description of return value of _decrease_loan_balance.
-
-        Contract
-        --------
-        - #TODO contract lines for _decrease_loan_balance.
-        - #TODO document exceptions, mutations, and precision assumptions for _decrease_loan_balance.
-
         @interface-report: show
         """
         amount = AccountSet._money(amount)
@@ -905,34 +657,10 @@ class AccountSet:
             <= MONEY_BOUNDARY_TOLERANCE
         )
 
-    #TODO manual review of AccountSet.is_billing_date docstring
+    #Codex-write-doctstring-OK
     @staticmethod
     def is_billing_date(account, current_date):
         """
-        TODO one-line description of is_billing_date.
-
-        TODO multi-line description of is_billing_date.
-        TODO explain how AccountSet.is_billing_date participates in account
-        TODO state management, forecasting, validation, or serialization.
-
-        Parameters
-        ----------
-        account : Account
-            TODO one-line description of is_billing_date.account.
-
-        current_date : date
-            TODO one-line description of is_billing_date.current_date.
-
-        Returns
-        -------
-        bool
-            TODO one-line description of return value of is_billing_date.
-
-        Contract
-        --------
-        - #TODO contract lines for is_billing_date.
-        - #TODO document exceptions, mutations, and precision assumptions for is_billing_date.
-
         @interface-report: show
         """
         billing_start_date = account.billing_state.billing_cycle_start_date
@@ -1002,30 +730,9 @@ class AccountSet:
 
         return interest_directives
 
-    #TODO manual review of AccountSet.updateCreditCardEndOfPreviousCycleBalances docstring
+    #Codex-write-doctstring-OK
     def updateCreditCardEndOfPreviousCycleBalances(self, current_date):
         """
-        TODO one-line description of updateCreditCardEndOfPreviousCycleBalances.
-
-        TODO multi-line description of updateCreditCardEndOfPreviousCycleBalances.
-        TODO explain how AccountSet.updateCreditCardEndOfPreviousCycleBalances participates in account
-        TODO state management, forecasting, validation, or serialization.
-
-        Parameters
-        ----------
-        current_date : date
-            TODO one-line description of updateCreditCardEndOfPreviousCycleBalances.current_date.
-
-        Returns
-        -------
-        None
-            TODO one-line description of return value of updateCreditCardEndOfPreviousCycleBalances.
-
-        Contract
-        --------
-        - #TODO contract lines for updateCreditCardEndOfPreviousCycleBalances.
-        - #TODO document exceptions, mutations, and precision assumptions for updateCreditCardEndOfPreviousCycleBalances.
-
         @interface-report: show
         """
         for account in self.accounts:
@@ -1102,30 +809,9 @@ class AccountSet:
 
         return columns
 
-    #TODO manual review of AccountSet.getForecastAccountBalances docstring
+    #Codex-write-doctstring-OK
     def getForecastAccountBalances(self, include_debug_columns=False):
         """
-        TODO one-line description of getForecastAccountBalances.
-
-        TODO multi-line description of getForecastAccountBalances.
-        TODO explain how AccountSet.getForecastAccountBalances participates in account
-        TODO state management, forecasting, validation, or serialization.
-
-        Parameters
-        ----------
-        include_debug_columns : bool
-            TODO one-line description of getForecastAccountBalances.include_debug_columns.
-
-        Returns
-        -------
-        dict
-            TODO one-line description of return value of getForecastAccountBalances.
-
-        Contract
-        --------
-        - #TODO contract lines for getForecastAccountBalances.
-        - #TODO document exceptions, mutations, and precision assumptions for getForecastAccountBalances.
-
         @interface-report: show
         """
         balances = {}
@@ -1135,37 +821,10 @@ class AccountSet:
                 balances.update(self.getForecastColumnsForAccount(account))
         return balances
 
-    #TODO manual review of AccountSet._decrease_debt_balance docstring
+    #Codex-write-doctstring-OK
     @staticmethod
     def _decrease_debt_balance(account, amount, minimum_payment_flag):
         """
-        TODO one-line description of _decrease_debt_balance.
-
-        TODO multi-line description of _decrease_debt_balance.
-        TODO explain how AccountSet._decrease_debt_balance participates in account
-        TODO state management, forecasting, validation, or serialization.
-
-        Parameters
-        ----------
-        account : Account
-            TODO one-line description of _decrease_debt_balance.account.
-
-        amount : float
-            TODO one-line description of _decrease_debt_balance.amount.
-
-        minimum_payment_flag : bool
-            TODO one-line description of _decrease_debt_balance.minimum_payment_flag.
-
-        Returns
-        -------
-        None
-            TODO one-line description of return value of _decrease_debt_balance.
-
-        Contract
-        --------
-        - #TODO contract lines for _decrease_debt_balance.
-        - #TODO document exceptions, mutations, and precision assumptions for _decrease_debt_balance.
-
         @interface-report: show
         """
         if account.account_type == "credit":
@@ -1335,33 +994,9 @@ class AccountSet:
             + ")",
         )
 
-    #TODO manual review of AccountSet.allocate_additional_loan_payments docstring
+    #Codex-write-doctstring-OK
     def allocate_additional_loan_payments(self, amount, account_from=None):
         """
-        TODO one-line description of allocate_additional_loan_payments.
-
-        TODO multi-line description of allocate_additional_loan_payments.
-        TODO explain how AccountSet.allocate_additional_loan_payments participates in account
-        TODO state management, forecasting, validation, or serialization.
-
-        Parameters
-        ----------
-        amount : float
-            TODO one-line description of allocate_additional_loan_payments.amount.
-
-        account_from : str | None
-            TODO one-line description of allocate_additional_loan_payments.account_from.
-
-        Returns
-        -------
-        list[list]
-            TODO one-line description of return value of allocate_additional_loan_payments.
-
-        Contract
-        --------
-        - #TODO contract lines for allocate_additional_loan_payments.
-        - #TODO document exceptions, mutations, and precision assumptions for allocate_additional_loan_payments.
-
         @interface-report: show
         """
         amount = self._money(abs(amount))
@@ -1529,30 +1164,8 @@ class AccountSet:
 
         return pd.DataFrame(account_rows, columns=columns)
 
-    #TODO manual review of AccountSet.to_dict docstring
     def to_dict(self):
         """
-        TODO one-line description of to_dict.
-
-        TODO multi-line description of to_dict.
-        TODO explain how AccountSet.to_dict participates in account
-        TODO state management, forecasting, validation, or serialization.
-
-        Parameters
-        ----------
-        None
-            TODO confirm that to_dict takes no parameters beyond self/cls.
-
-        Returns
-        -------
-        dict
-            TODO one-line description of return value of to_dict.
-
-        Contract
-        --------
-        - #TODO contract lines for to_dict.
-        - #TODO document exceptions, mutations, and precision assumptions for to_dict.
-
         @interface-report: show
         """
         account_rows = []
@@ -1616,37 +1229,8 @@ class AccountSet:
 
         return {"accounts": account_rows}
 
-    #TODO manual review of AccountSet.to_json docstring
     def to_json(self):
         """
-        TODO one-line description of to_json.
-
-        TODO multi-line description of to_json.
-        TODO explain how AccountSet.to_json participates in account
-        TODO state management, forecasting, validation, or serialization.
-
-        Parameters
-        ----------
-        None
-            TODO confirm that to_json takes no parameters beyond self/cls.
-
-        Returns
-        -------
-        str
-            TODO one-line description of return value of to_json.
-
-        Contract
-        --------
-        - #TODO contract lines for to_json.
-        - #TODO document exceptions, mutations, and precision assumptions for to_json.
-
         @interface-report: show
         """
         return jsonpickle.encode(self, indent=4)
-
-
-# written in one line so that test coverage can reach 100%
-if __name__ == "__main__":
-    import doctest
-
-    doctest.testmod()

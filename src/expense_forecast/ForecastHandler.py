@@ -321,6 +321,208 @@ class ForecastHandler:
 
         return R
 
+    @staticmethod
+    def _approximate_output_dates(start_date, end_date):
+        """Return start/end plus month boundaries without expanding daily rows."""
+        dates = [start_date]
+        cursor = date(start_date.year, start_date.month, 1)
+        if cursor <= start_date:
+            cursor = (cursor.replace(day=28) + datetime.timedelta(days=4)).replace(day=1)
+        while cursor < end_date:
+            dates.append(cursor)
+            cursor = (cursor.replace(day=28) + datetime.timedelta(days=4)).replace(day=1)
+        if end_date != dates[-1]:
+            dates.append(end_date)
+        return dates
+
+    @staticmethod
+    def _approximate_memo_line(memo, count, account_from, account_to, amount):
+        endpoint = account_from if account_from not in [None, "", "None"] else account_to
+        sign = "-" if account_from not in [None, "", "None"] else "+"
+        count_text = f" x{count}" if count > 1 else ""
+        return f"{memo}{count_text} ({endpoint} {sign}${amount:.2f})"
+
+    @classmethod
+    def runForecastApproximate(
+        cls,
+        IO: ExpenseForecastInitialConditions,
+        milestone_set: MilestoneSet,
+        include_debug_columns=False,
+    ) -> ExpenseForecastResult:
+        """Run an event-based, monthly-grain approximation of a forecast.
+
+        Output rows occur only at the forecast endpoints and intervening firsts
+        of the month.  Transactions are grouped into those rows, while loan
+        interest is calculated over exact elapsed-day spans between meaningful
+        events rather than by iterating over every day.
+        """
+        log_in_color(
+            logger, "white", "info", "Starting Approximate Forecast " + str(IO.unique_id)
+        )
+        account_set = copy.deepcopy(IO.initial_account_set)
+        memo_rule_set = copy.deepcopy(IO.initial_memo_rule_set)
+        output_dates = cls._approximate_output_dates(IO.start_date, IO.end_date)
+        schedule = IO.initial_budget_set.getLineItemSchedule().copy()
+        if not schedule.empty:
+            schedule["Date"] = schedule["Date"].apply(cls._normalize_date_value)
+
+        rows = []
+        initial_row = {
+            "Date": output_dates[0],
+            **account_set.getForecastAccountBalances(include_debug_columns),
+            "Next Income Date": "",
+            "Memo Directives": "",
+            "Memo": "",
+        }
+        rows.append(initial_row)
+
+        loan_interest_cursor = {}
+        for account in account_set.accounts:
+            if account.account_type == "loan":
+                loan_interest_cursor[account.name] = max(
+                    IO.start_date, account.billing_state.billing_cycle_start_date
+                )
+
+        def sync(account):
+            account_set._sync_debt_account_from_billing_state(account)
+
+        def accrue_loan_to(account, event_date, directives):
+            cursor = loan_interest_cursor[account.name]
+            if event_date <= cursor:
+                return
+            days = (event_date - cursor).days
+            state = account.billing_state
+            interest = state.principal_balance * state.apr * Decimal(days) / Decimal("365.25")
+            state.interest_balance += interest
+            loan_interest_cursor[account.name] = event_date
+            sync(account)
+            if interest:
+                directives.append(
+                    f"LOAN INTEREST ({account.name}: Interest +${interest:.2f})"
+                )
+
+        previous_output_date = output_dates[0]
+        for output_index, output_date in enumerate(output_dates[1:], start=1):
+            directives = []
+            memo_groups = {}
+            if schedule.empty:
+                interval_schedule = schedule
+            else:
+                lower_bound = schedule["Date"] >= previous_output_date if output_index == 1 else schedule["Date"] > previous_output_date
+                interval_schedule = schedule[
+                    lower_bound & (schedule["Date"] <= output_date)
+                ].sort_values(["Date", "Priority"])
+
+            for _, txn in interval_schedule.iterrows():
+                rule = memo_rule_set.findMatchingMemoRule(txn["Memo"], txn["Priority"])
+                account_from = rule.account_from
+                account_to = rule.account_to
+                if account_to == "ALL_LOANS":
+                    for account in account_set.accounts:
+                        if account.account_type == "loan":
+                            accrue_loan_to(account, txn["Date"], directives)
+                else:
+                    debt_target = account_set._get_account_by_name(account_to)
+                    if debt_target is not None and debt_target.account_type == "loan":
+                        accrue_loan_to(debt_target, txn["Date"], directives)
+
+                account_set.executeTransaction(
+                    account_from,
+                    account_to,
+                    txn["Amount"],
+                    income_flag=bool(txn["Income_Flag"]),
+                )
+                key = (txn["Memo"], account_from, account_to)
+                count, total = memo_groups.get(key, (0, Decimal("0")))
+                memo_groups[key] = (count + 1, total + Decimal(str(txn["Amount"])))
+
+            for account in account_set.accounts:
+                billing_start = getattr(account.billing_state, "billing_cycle_start_date", None)
+                if account.account_type not in ["loan", "credit"] or output_date < billing_start:
+                    continue
+
+                checking = next(
+                    a for a in account_set.accounts
+                    if a.account_type == "checking" and a.primary_checking_ind
+                )
+                if account.account_type == "loan":
+                    accrue_loan_to(account, output_date, directives)
+                    payment = min(
+                        account.billing_state.minimum_payment,
+                        account.billing_state.balance,
+                        checking.balance - checking.min_balance,
+                    )
+                else:
+                    interest = account.billing_state.interest_accrued_this_cycle()
+                    if interest:
+                        directives.append(
+                            f"CC INTEREST ({account.name}: Prev Stmt Bal +${interest:.2f})"
+                        )
+                    account.billing_state = account.billing_state.roll_cycle(output_date)
+                    sync(account)
+                    payment = min(
+                        account.billing_state.remaining_minimum_payment_due(),
+                        account.balance,
+                        checking.balance - checking.min_balance,
+                    )
+
+                if payment > 0:
+                    account_set.executeTransaction(
+                        checking.name,
+                        account.name,
+                        payment,
+                        minimum_payment_flag=True,
+                    )
+                    directives.append(
+                        f"MINIMUM PAYMENT ({checking.name} -${payment:.2f})"
+                    )
+                    directives.append(
+                        f"MINIMUM PAYMENT ({account.name} +${payment:.2f})"
+                    )
+
+            memo_lines = [
+                cls._approximate_memo_line(memo, count, account_from, account_to, total)
+                for (memo, account_from, account_to), (count, total) in memo_groups.items()
+            ]
+            for memo_line in memo_lines:
+                log_in_color(
+                    logger,
+                    "white",
+                    "debug",
+                    f"{output_date} processing binned memo '{memo_line}'",
+                )
+            rows.append(
+                {
+                    "Date": output_date,
+                    **account_set.getForecastAccountBalances(include_debug_columns),
+                    "Next Income Date": "",
+                    "Memo Directives": "; ".join(directives),
+                    "Memo": "; ".join(memo_lines),
+                }
+            )
+            previous_output_date = output_date
+
+        forecast_df = pd.DataFrame(rows)
+        forecast_df = cls._appendSummaryLines(IO.initial_account_set, forecast_df, log_stack_depth=0)
+        forecast_df = cls._roundForecastOutput(forecast_df, decimals=2)
+        milestone_results = MilestoneSet.evaluateMilestones(
+            forecast_df, milestone_set, log_stack_depth=0
+        )
+        result_kwargs = {
+            "confirmed_df": IO.initial_confirmed_df,
+            "deferred_df": IO.initial_deferred_df,
+            "skipped_df": IO.initial_skipped_df,
+            "approximate_flag": True,
+        }
+        if milestone_set:
+            result_kwargs["milestone_set"] = milestone_set
+            result_kwargs["milestone_results"] = milestone_results
+        result = ExpenseForecastResult(IO, forecast_df, **result_kwargs)
+        log_in_color(
+            logger, "white", "info", "Finished Approximate Forecast " + str(IO.unique_id)
+        )
+        return result
+
 
 
 
