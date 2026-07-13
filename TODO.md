@@ -37,7 +37,7 @@ A refactor of the loan allocaiton algorthm now overallocates by a few pennies in
 - when docstrings are done, review once more to decide what belong in module / class / __init__
 
 ## LLM Tasks
- - Net Loss is still too high, I think because additional credit card payments and the memo directives- something is wrong there
+ - Net Loss is still too high, I think because additional credit card payments and the memo directives- something is wrong there. the dynamic strings are wrong too ; let's add an assertion in appendSummaryLines to check for this
  - Update docstrings
  - Infinity not allowed on account min balance but it IS allowed on account max balance.
  - #Codex-write-doctstring-OK

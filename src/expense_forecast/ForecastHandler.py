@@ -12,6 +12,15 @@ Contract
 """
 
 
+from __future__ import annotations
+
+from html import escape
+from typing import Any
+
+import pandas as pd
+
+
+
 from expense_forecast.AccountSet import (
     AccountBoundaryError,
     AccountSet,
@@ -11424,820 +11433,2171 @@ class ForecastHandler:
         fig.write_image(output_path)
 
     #TODO manual review of ForecastHandler.generateHTMLReport docstring
-    def generateHTMLReport(self, E, output_dir="./", parent_report_path=None):
+    # def generateHTMLReport(self, E, output_dir="./", parent_report_path=None):
+    #     """
+    #     TODO one-line description of ForecastHandler.generateHTMLReport.
+
+    #     TODO multi-line description of ForecastHandler.generateHTMLReport.
+    #     TODO explain how ForecastHandler.generateHTMLReport participates in this module.
+    #     TODO document important state, validation, or serialization behavior.
+
+    #     Parameters
+    #     ----------
+    #     E : object
+    #         TODO one-line description of ForecastHandler.generateHTMLReport.E.
+
+    #     output_dir : object
+    #         TODO one-line description of ForecastHandler.generateHTMLReport.output_dir.
+
+    #     parent_report_path : object
+    #         TODO one-line description of ForecastHandler.generateHTMLReport.parent_report_path.
+
+    #     Returns
+    #     -------
+    #     object
+    #         TODO one-line description of return value of ForecastHandler.generateHTMLReport.
+
+    #     Contract
+    #     --------
+    #     - #TODO contract lines for ForecastHandler.generateHTMLReport.
+    #     - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler.generateHTMLReport.
+
+    #     @interface-report: show
+    #     """
+    #     start_date = self._report_date_label(self._report_start_date(E))
+    #     end_date = self._report_date_label(self._report_end_date(E))
+
+    #     forecast_failed = (
+    #         self._report_date_to_datetime(E.forecast_df.tail(1).Date.iat[0]).date()
+    #         != self._report_date_to_datetime(self._report_end_date(E)).date()
+    #     )
+
+    #     report_id = E.unique_id
+    #     output_file_name = "Forecast_" + str(report_id)
+
+    #     start_ts = getattr(E, "start_ts", None)
+    #     end_ts = getattr(E, "end_ts", None)
+    #     if start_ts is not None and end_ts is not None:
+    #         start_ts__datetime = self._report_date_to_datetime(start_ts)
+    #         end_ts__datetime = self._report_date_to_datetime(end_ts)
+    #         simulation_seconds = max(
+    #             0, (end_ts__datetime - start_ts__datetime).total_seconds()
+    #         )
+    #         runtime_text = (
+    #             "This forecast started at "
+    #             + str(start_ts__datetime)
+    #             + ", took "
+    #             + f"{simulation_seconds:,.3f} seconds"
+    #             + " to complete, and finished at "
+    #             + str(end_ts__datetime)
+    #             + "."
+    #         )
+    #     else:
+    #         runtime_text = "Runtime timing was not recorded for this forecast."
+
+    #     if parent_report_path is not None:
+    #         parent_report_text = (
+    #             """This report was generated alongside some others. See <a href=\""""
+    #             + parent_report_path
+    #             + """\">this page</a> for information about related forecasts."""
+    #         )
+    #     else:
+    #         parent_report_text = ""
+
+    #     summary_text = runtime_text
+
+    #     account_set = self._report_account_set(E)
+    #     budget_set = self._report_budget_set(E)
+    #     memo_rule_set = self._report_memo_rule_set(E)
+    #     milestone_set = self._report_milestone_set(E)
+
+    #     accounts_table = account_set.getAccounts().copy() if account_set is not None else None
+    #     account_text = (
+    #         """
+    #     The initial conditions and account boundaries are defined as:"""
+    #         + (
+    #             accounts_table.to_html(
+    #                 formatters={"Balance": lambda value: f"{float(value):,.2f}"}
+    #             )
+    #             if accounts_table is not None
+    #             else ""
+    #         )
+    #         + """
+    #     """
+    #     )
+
+    #     budget_set_text = (
+    #         """
+    #     These transactions are considered for analysis:"""
+    #         + (budget_set.getLineItems().to_html() if budget_set is not None else "")
+    #         + """
+    #     """
+    #     )
+
+    #     memo_rules_table = memo_rule_set.getMemoRules().copy() if memo_rule_set is not None else None
+    #     if memo_rules_table is not None and "Transaction_Priority" in memo_rules_table:
+    #         memo_rules_table["Transaction_Priority"] = (
+    #             memo_rules_table["Transaction_Priority"].astype(int)
+    #         )
+    #     memo_rule_text = (
+    #         """
+    #     These decision rules are used:"""
+    #         + (memo_rules_table.to_html() if memo_rules_table is not None else "")
+    #         + """
+    #     """
+    #     )
+
+    #     account_milestone_text = (
+    #         """
+    #     These account milestones are defined:"""
+    #         + self._report_milestone_table(milestone_set, "getAccountMilestonesDF").to_html()
+    #         + """
+    #     """
+    #     )
+
+    #     memo_milestone_text = (
+    #         """
+    #     These memo milestones are defined:"""
+    #         + self._report_milestone_table(milestone_set, "getMemoMilestonesDF").to_html()
+    #         + """
+    #     """
+    #     )
+
+    #     composite_milestone_text = (
+    #         """
+    #     These composite milestones are defined:"""
+    #         + self._report_milestone_table(milestone_set, "getCompositeMilestonesDF").to_html()
+    #         + """
+    #     """
+    #     )
+
+    #     initial_networth = round(E.forecast_df.head(1)["Net Worth"].iat[0], 2)
+    #     final_networth = round(E.forecast_df.tail(1)["Net Worth"].iat[0], 2)
+    #     networth_delta = round(final_networth - initial_networth, 2)
+    #     num_days, forecast_duration_text = self._report_forecast_duration(
+    #         self._report_start_date(E), self._report_end_date(E)
+    #     )
+    #     averaging_days = max(1, num_days)
+    #     avg_networth_change = round(networth_delta / float(averaging_days), 2)
+    #     rose_or_fell = "rose" if networth_delta >= 0 else "fell"
+
+    #     networth_text = (
+    #         """
+    #     Net Worth began at """
+    #         + self._report_amount(initial_networth)
+    #         + """ and """
+    #         + rose_or_fell
+    #         + """ to """
+    #         + self._report_amount(final_networth)
+    #         + """ over """
+    #         + forecast_duration_text
+    #         + """, averaging """
+    #         + self._report_amount(avg_networth_change)
+    #         + """ per day.
+    #     """
+    #     )
+
+    #     initial_loan_total = round(E.forecast_df.head(1)["Loan Total"].iat[0], 2)
+    #     final_loan_total = round(E.forecast_df.tail(1)["Loan Total"].iat[0], 2)
+    #     loan_delta = round(final_loan_total - initial_loan_total, 2)
+    #     initial_cc_debt_total = round(E.forecast_df.head(1)["CC Debt Total"].iat[0], 2)
+    #     final_cc_debt_total = round(E.forecast_df.tail(1)["CC Debt Total"].iat[0], 2)
+    #     cc_debt_delta = round(final_cc_debt_total - initial_cc_debt_total, 2)
+    #     initial_liquid_total = round(E.forecast_df.head(1)["Liquid Total"].iat[0], 2)
+    #     final_liquid_total = round(E.forecast_df.tail(1)["Liquid Total"].iat[0], 2)
+    #     liquid_delta = round(final_liquid_total - initial_liquid_total, 2)
+
+    #     avg_loan_delta = round(loan_delta / averaging_days, 2)
+    #     avg_cc_debt_delta = round(cc_debt_delta / averaging_days, 2)
+    #     avg_liquid_delta = round(liquid_delta / averaging_days, 2)
+
+    #     investment_names = []
+    #     if accounts_table is not None:
+    #         investment_names = accounts_table.loc[
+    #             accounts_table.Account_Type == "investment", "Name"
+    #         ].tolist()
+    #     investment_names = [
+    #         name for name in investment_names if name in E.forecast_df.columns
+    #     ]
+    #     investment_total = (
+    #         E.forecast_df[investment_names].sum(axis=1)
+    #         if investment_names
+    #         else pd.Series(0.0, index=E.forecast_df.index)
+    #     )
+    #     initial_investment_total = round(investment_total.iloc[0], 2)
+    #     final_investment_total = round(investment_total.iloc[-1], 2)
+    #     investment_delta = round(
+    #         final_investment_total - initial_investment_total, 2
+    #     )
+    #     avg_investment_delta = round(investment_delta / averaging_days, 2)
+
+    #     account_type_text = (
+    #         """
+    #     Loan debt began at """
+    #         + self._report_amount(initial_loan_total)
+    #         + """ and """
+    #         + ("rose" if avg_loan_delta >= 0 else "fell")
+    #         + """ to """
+    #         + self._report_amount(final_loan_total)
+    #         + """ over """
+    #         + forecast_duration_text
+    #         + """, averaging """
+    #         + self._report_amount(avg_loan_delta)
+    #         + """ per day.
+    #     <br><br>
+    #     Credit card debt began at """
+    #         + self._report_amount(initial_cc_debt_total)
+    #         + """ and """
+    #         + ("rose" if avg_cc_debt_delta >= 0 else "fell")
+    #         + """ to """
+    #         + self._report_amount(final_cc_debt_total)
+    #         + """ over """
+    #         + forecast_duration_text
+    #         + """, averaging """
+    #         + self._report_amount(avg_cc_debt_delta)
+    #         + """ per day.
+    #     <br><br>
+    #     Liquid cash began at """
+    #         + self._report_amount(initial_liquid_total)
+    #         + """ and """
+    #         + ("rose" if avg_liquid_delta >= 0 else "fell")
+    #         + """ to """
+    #         + self._report_amount(final_liquid_total)
+    #         + """ over """
+    #         + forecast_duration_text
+    #         + """, averaging """
+    #         + self._report_amount(avg_liquid_delta)
+    #         + """ per day.
+    #     <br><br>
+    #     Investments began at """
+    #         + self._report_amount(initial_investment_total)
+    #         + """ and """
+    #         + ("rose" if investment_delta >= 0 else "fell")
+    #         + """ to """
+    #         + self._report_amount(final_investment_total)
+    #         + """ over """
+    #         + forecast_duration_text
+    #         + """, averaging """
+    #         + self._report_amount(avg_investment_delta)
+    #         + """ per day.
+    #     """
+    #     )
+
+    #     total_gain = round(sum(E.forecast_df["Net Gain"]), 2)
+    #     avg_daily_gain = round(total_gain / averaging_days, 2)
+    #     total_loss = round(sum(E.forecast_df["Net Loss"]), 2)
+    #     avg_daily_loss = round(total_loss / averaging_days, 2)
+
+    #     net_gain_loss_text = (
+    #         "Total gain was "
+    #         + self._report_amount(total_gain)
+    #         + " over "
+    #         + forecast_duration_text
+    #         + ", averaging "
+    #         + self._report_amount(avg_daily_gain)
+    #         + " per day.<br><br>"
+    #     )
+    #     net_gain_loss_text += (
+    #         "Total loss was "
+    #         + str(f"-${float(total_loss):,}")
+    #         + " over "
+    #         + forecast_duration_text
+    #         + ", averaging "
+    #         + str(f"-${float(avg_daily_loss):,}")
+    #         + " per day."
+    #     )
+
+    #     total_interest_accrued = round(sum(E.forecast_df["Marginal Interest"]), 2)
+    #     avg_interest_accrued = round(total_interest_accrued / averaging_days, 2)
+
+    #     interest_text = (
+    #         "Total interest accrued was "
+    #         + self._report_amount(total_interest_accrued)
+    #         + " over "
+    #         + forecast_duration_text
+    #         + ", averaging "
+    #         + self._report_amount(avg_interest_accrued)
+    #         + " per day.<br>"
+    #     )
+    #     interest_text += "This plot shows the new interest by day, not the total interest at a given time."
+
+    #     cc_interest_sel_vec = [
+    #         "cc interest" in str(m).lower() for m in E.forecast_df.Memo
+    #     ]
+    #     interest_rows_df = E.forecast_df.loc[cc_interest_sel_vec]
+    #     interest_table_to_display_df = pd.DataFrame(interest_rows_df["Date"])
+    #     interest_table_to_display_df["Total CC Interest"] = 0.0
+    #     for index, row in interest_rows_df.iterrows():
+    #         memo_line = str(row.Memo)
+    #         memo_line_items = memo_line.split(";")
+    #         for memo_line_item in memo_line_items:
+    #             memo_line_item = memo_line_item.strip()
+    #             if "cc interest" not in memo_line_item.lower():
+    #                 continue
+
+    #             value_match = re.search(
+    #                 "\\(([A-Za-z0-9_ :]*) ([-+]?\\$.*)\\)$", memo_line_item
+    #             )
+    #             if value_match is None:
+    #                 continue
+    #             line_item_value_string = value_match.group(2)
+    #             line_item_value_string = (
+    #                 line_item_value_string.replace("(", "")
+    #                 .replace(")", "")
+    #                 .replace("$", "")
+    #             )
+    #             line_item_value = float(line_item_value_string)
+    #             interest_table_to_display_df.loc[
+    #                 index, "Total CC Interest"
+    #             ] += line_item_value
+    #     interest_table_html = interest_table_to_display_df.to_html()
+
+    #     am_result_df = self._report_milestone_results_df(E, "Account")
+    #     mm_result_df = self._report_milestone_results_df(E, "Memo")
+    #     cm_result_df = self._report_milestone_results_df(E, "Composite")
+
+    #     end_date_datetime = self._report_date_to_datetime(self._report_end_date(E))
+    #     achieved_am_count = (
+    #         am_result_df[am_result_df.Date < end_date_datetime].shape[0]
+    #         if "Date" in am_result_df.columns
+    #         else 0
+    #     )
+    #     achieved_mm_count = (
+    #         mm_result_df[mm_result_df.Date < end_date_datetime].shape[0]
+    #         if "Date" in mm_result_df.columns
+    #         else 0
+    #     )
+    #     achieved_cm_count = (
+    #         cm_result_df[cm_result_df.Date < end_date_datetime].shape[0]
+    #         if "Date" in cm_result_df.columns
+    #         else 0
+    #     )
+    #     total_milestone_count = (
+    #         am_result_df.shape[0] + mm_result_df.shape[0] + cm_result_df.shape[0]
+    #     )
+    #     achieved_milestone_count = (
+    #         achieved_am_count + achieved_mm_count + achieved_cm_count
+    #     )
+
+    #     milestone_text = (
+    #         str(total_milestone_count)
+    #         + " milestones were defined, and "
+    #         + str(achieved_milestone_count)
+    #         + " were achieved before the end of the forecast.<br>"
+    #     )
+    #     milestone_text += "Note that unachieved milestones are displayed on the last day of the forecast."
+
+    #     transaction_schedule_text = "Transactions are displayed below."
+    #     confirmed_df = self._report_confirmed_df(E)
+    #     if "Priority" in confirmed_df.columns:
+    #         p2_plus_txns_html_table = confirmed_df[confirmed_df.Priority >= 2].to_html()
+    #     else:
+    #         p2_plus_txns_html_table = confirmed_df.to_html()
+
+    #     payment_rows = []
+    #     account_type_by_name = {}
+    #     if account_set is not None:
+    #         account_type_by_name = dict(
+    #             zip(account_set.getAccounts()["Name"], account_set.getAccounts()["Account_Type"])
+    #         )
+    #     if (
+    #         memo_rule_set is not None
+    #         and "Priority" in confirmed_df.columns
+    #         and "Memo" in confirmed_df.columns
+    #     ):
+    #         for _, confirmed_row in confirmed_df[confirmed_df.Priority >= 2].iterrows():
+    #             memo_rule = memo_rule_set.findMatchingMemoRule(
+    #                 confirmed_row.Memo, confirmed_row.Priority
+    #             )
+    #             account_to_type = account_type_by_name.get(memo_rule.account_to)
+    #             if account_to_type == "credit":
+    #                 payment_rows.append(
+    #                     {
+    #                         "Payment Type": "Credit Card",
+    #                         "Date": confirmed_row.Date,
+    #                         "Memo": confirmed_row.Memo,
+    #                         "Amount": confirmed_row.Amount,
+    #                     }
+    #                 )
+    #             elif account_to_type == "loan" or memo_rule.account_to == "ALL_LOANS":
+    #                 payment_rows.append(
+    #                     {
+    #                         "Payment Type": "Loan",
+    #                         "Date": confirmed_row.Date,
+    #                         "Memo": confirmed_row.Memo,
+    #                         "Amount": confirmed_row.Amount,
+    #                     }
+    #                 )
+
+    #     for _, row in E.forecast_df.iterrows():
+    #         memo_line_items = str(row.Memo).split(";") + str(row["Memo Directives"]).split(";")
+    #         for memo_line_item in memo_line_items:
+    #             memo_line_item_lower = memo_line_item.lower()
+    #             if (
+    #                 "loan min payment" in memo_line_item_lower
+    #                 or "additional loan payment" in memo_line_item_lower
+    #                 or "addtl loan payment" in memo_line_item_lower
+    #             ):
+    #                 payment_rows.append(
+    #                     {"Payment Type": "Loan", "Date": row.Date, "Memo": memo_line_item}
+    #                 )
+    #             elif (
+    #                 "cc min payment" in memo_line_item_lower
+    #                 or "additional cc payment" in memo_line_item_lower
+    #                 or "addtl cc payment" in memo_line_item_lower
+    #                 or "cc interest" in memo_line_item_lower
+    #             ):
+    #                 payment_rows.append(
+    #                     {"Payment Type": "Credit Card", "Date": row.Date, "Memo": memo_line_item}
+    #                 )
+
+    #     payments_df = pd.DataFrame(payment_rows)
+    #     cc_payments_html_table = payments_df[
+    #         payments_df.get("Payment Type", pd.Series(dtype=str)) == "Credit Card"
+    #     ].to_html()
+    #     loan_payment_html_table = payments_df[
+    #         payments_df.get("Payment Type", pd.Series(dtype=str)) == "Loan"
+    #     ].to_html()
+
+    #     all_plot_page_text = ""
+    #     sankey_text = ""
+
+    #     output_target = Path(output_dir)
+    #     if output_target.suffix:
+    #         html_output_path = output_target
+    #         image_output_dir = output_target.parent
+    #     else:
+    #         image_output_dir = output_target
+    #         html_output_path = image_output_dir / (output_file_name + ".html")
+
+    #     image_output_dir.mkdir(parents=True, exist_ok=True)
+    #     networth_line_plot_path = report_id + "_networth_line_plot.png"
+    #     net_gain_loss_line_plot_path = report_id + "_net_gain_loss_line_plot.png"
+    #     accounttype_line_plot_path = report_id + "_accounttype_line_plot.png"
+    #     marginal_interest_line_plot_path = (
+    #         report_id + "_marginal_interest_line_plot.png"
+    #     )
+    #     milestone_scatter_plot_path = report_id + "_milestone_scatter_plot.png"
+    #     all_line_plot_path = report_id + "_all_line_plot.png"
+    #     sankey_path = report_id + "_sankey.jpg"
+
+    #     self.plotAll(E, image_output_dir / all_line_plot_path)
+    #     self.plotNetWorth(E, image_output_dir / networth_line_plot_path)
+    #     self.plotAccountTypeTotals(E, image_output_dir / accounttype_line_plot_path)
+    #     self.plotMarginalInterest(E, image_output_dir / marginal_interest_line_plot_path)
+    #     self.plotNetGainLoss(E, image_output_dir / net_gain_loss_line_plot_path)
+    #     self.plotMilestoneDates(E, image_output_dir / milestone_scatter_plot_path)
+    #     try:
+    #         self.plotSankeyDiagram(E, image_output_dir / sankey_path)
+    #     except Exception as exc:
+    #         sankey_text = "Sankey diagram generation failed: " + str(exc)
+    #         sankey_path = ""
+
+    #     left_fail_style_tag = ""
+    #     right_fail_style_tag = ""
+    #     fail_message = ""
+    #     if forecast_failed:
+    #         left_fail_style_tag = '<font color ="red">'
+    #         right_fail_style_tag = "</font>"
+    #         fail_message = "This forecast failed to reach the end. The results may not reflect the effect of non-essential transactions accurately."
+
+    #     html_body = (
+    #         """
+    #     <!DOCTYPE html>
+    #     <html>
+    #     <head>
+    #     <meta name="viewport" content="width=device-width, initial-scale=1">
+    #     <title>Expense Forecast Report #"""
+    #         + str(report_id)
+    #         + """</title>
+    #     <style>
+    #     :root {
+    #       color-scheme: dark;
+    #       --bg: #0b1120;
+    #       --panel: #111827;
+    #       --panel-soft: #172033;
+    #       --panel-strong: #1e293b;
+    #       --border: #334155;
+    #       --border-soft: #243244;
+    #       --text: #e5e7eb;
+    #       --text-muted: #a8b3c7;
+    #       --accent: #38bdf8;
+    #       --accent-strong: #2563eb;
+    #       --accent-soft: #0f3a5c;
+    #       --danger: #fb7185;
+    #     }
+    #     html {
+    #       background: var(--bg);
+    #     }
+    #     body {
+    #       max-width: 1180px;
+    #       margin: 0 auto;
+    #       padding: 40px 32px 64px;
+    #       background: var(--bg);
+    #       color: var(--text);
+    #       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    #       line-height: 1.5;
+    #       text-align: left;
+    #     }
+    #     h1, h3, h4 {
+    #       color: #f8fafc;
+    #     }
+    #     h1 {
+    #       margin-top: 0;
+    #       letter-spacing: 0;
+    #     }
+    #     h3 {
+    #       margin-top: 0;
+    #     }
+    #     p {
+    #       color: var(--text-muted);
+    #     }
+    #     a {
+    #       color: var(--accent);
+    #     }
+    #     .tab {
+    #       display: flex;
+    #       flex-wrap: wrap;
+    #       gap: 6px;
+    #       margin-top: 28px;
+    #       padding: 8px;
+    #       border: 1px solid var(--border);
+    #       border-radius: 8px 8px 0 0;
+    #       background-color: var(--panel);
+    #     }
+    #     .tab button {
+    #       background-color: var(--panel-strong);
+    #       color: var(--text-muted);
+    #       border: 1px solid transparent;
+    #       border-radius: 6px;
+    #       outline: none;
+    #       cursor: pointer;
+    #       padding: 12px 14px;
+    #       transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+    #     }
+    #     .tab button:hover {
+    #       background-color: var(--accent-soft);
+    #       border-color: #1d4ed8;
+    #       color: #f8fafc;
+    #     }
+    #     .tab button.active {
+    #       background-color: var(--accent-strong);
+    #       border-color: #60a5fa;
+    #       color: #ffffff;
+    #     }
+    #     .tabcontent {
+    #       display: none;
+    #       padding: 24px;
+    #       border: 1px solid var(--border);
+    #       border-top: none;
+    #       border-radius: 0 0 8px 8px;
+    #       background: var(--panel);
+    #       box-shadow: 0 18px 60px rgba(0, 0, 0, 0.25);
+    #       overflow-x: auto;
+    #     }
+    #     table {
+    #       border-collapse: collapse;
+    #       margin: 14px 0 24px;
+    #       max-width: 100%;
+    #       color: var(--text);
+    #       background: var(--panel-soft);
+    #       font-size: 0.92rem;
+    #     }
+    #     th, td {
+    #       border: 1px solid var(--border-soft);
+    #       padding: 7px 10px;
+    #       white-space: nowrap;
+    #     }
+    #     th {
+    #       background: var(--panel-strong);
+    #       color: #f8fafc;
+    #       font-weight: 600;
+    #     }
+    #     tr:nth-child(even) td {
+    #       background: rgba(148, 163, 184, 0.06);
+    #     }
+    #     img {
+    #       max-width: 100%;
+    #       height: auto;
+    #       margin: 14px 0 24px;
+    #       border: 1px solid var(--border);
+    #       border-radius: 6px;
+    #       background: #f8fafc;
+    #     }
+    #     font[color="red"] {
+    #       color: var(--danger);
+    #     }
+    #     </style>
+    #     </head>
+    #     <body>
+    #     <h1>"""
+    #         + left_fail_style_tag
+    #         + """Expense Forecast Report #"""
+    #         + str(report_id)
+    #         + right_fail_style_tag
+    #         + """</h1>
+    #     <p>"""
+    #         + start_date
+    #         + """ to """
+    #         + end_date
+    #         + " "
+    #         + left_fail_style_tag
+    #         + fail_message
+    #         + right_fail_style_tag
+    #         + " "
+    #         + parent_report_text
+    #         + """</p>
+
+    #     <div class="tab">
+    #       <button class="tablinks active" onclick="openTab(event, 'ForecastParameters')">Forecast Parameters</button>
+    #       <button class="tablinks" onclick="openTab(event, 'NetWorth')">Net Worth</button>
+    #       <button class="tablinks" onclick="openTab(event, 'NetGainLoss')">Net Gain & Loss</button>
+    #       <button class="tablinks" onclick="openTab(event, 'AccountType')">Account Type</button>
+    #       <button class="tablinks" onclick="openTab(event, 'Interest')">Interest</button>
+    #       <button class="tablinks" onclick="openTab(event, 'Milestones')">Milestones</button>
+    #       <button class="tablinks" onclick="openTab(event, 'All')">All</button>
+    #       <button class="tablinks" onclick="openTab(event, 'TransactionSchedule')">Transaction Schedule</button>
+    #       <button class="tablinks" onclick="openTab(event, 'Sankey')">Sankey</button>
+    #       <button class="tablinks" onclick="openTab(event, 'Forecast Results')">Forecast Results</button>
+    #     </div>
+
+    #     <div id="ForecastParameters" class="tabcontent">
+    #       <h3>Forecast Parameters</h3>
+    #       <p>"""
+    #         + summary_text
+    #         + """</p>
+    #       <h3>Accounts</h3>
+    #       <p>"""
+    #         + account_text
+    #         + """</p>
+    #       <h3>Budget Items</h3>
+    #       <p>"""
+    #         + budget_set_text
+    #         + """</p>
+    #       <h3>Memo Rules</h3>
+    #       <p>"""
+    #         + memo_rule_text
+    #         + """</p>
+    #       <h3>Account Milestones</h3>
+    #       <p>"""
+    #         + account_milestone_text
+    #         + """</p>
+    #       <h3>Memo Milestones</h3>
+    #       <p>"""
+    #         + memo_milestone_text
+    #         + """</p>
+    #       <h3>Composite Milestones</h3>
+    #       <p>"""
+    #         + composite_milestone_text
+    #         + """</p>
+    #     </div>
+
+    #     <div id="NetWorth" class="tabcontent">
+    #       <h3>Net Worth</h3>
+    #       <p>"""
+    #         + networth_text
+    #         + """</p>
+    #       <img src=\""""
+    #         + networth_line_plot_path
+    #         + """\">
+    #     </div>
+
+    #     <div id="NetGainLoss" class="tabcontent">
+    #       <h3>Net Gain & Loss</h3>
+    #       <p>"""
+    #         + net_gain_loss_text
+    #         + """</p>
+    #       <img src=\""""
+    #         + net_gain_loss_line_plot_path
+    #         + """\">
+    #     </div>
+
+    #     <div id="AccountType" class="tabcontent">
+    #       <h3>Account Type</h3>
+    #       <p>"""
+    #         + account_type_text
+    #         + """</p>
+    #       <img src=\""""
+    #         + accounttype_line_plot_path
+    #         + """\">
+    #     </div>
+
+    #     <div id="Interest" class="tabcontent">
+    #       <h3>Interest</h3>
+    #       <p>"""
+    #         + interest_text
+    #         + """</p>
+    #       <img src=\""""
+    #         + marginal_interest_line_plot_path
+    #         + """\">
+    #       """
+    #         + interest_table_html
+    #         + """
+    #     </div>
+
+    #     <div id="Milestones" class="tabcontent">
+    #       <h3>Milestones</h3>
+    #       <p>"""
+    #         + milestone_text
+    #         + """</p>
+    #       <img src=\""""
+    #         + milestone_scatter_plot_path
+    #         + """\">
+    #       <h4>Account Milestones</h4>
+    #       """
+    #         + am_result_df.to_html()
+    #         + """ <br>
+    #       <h4>Memo Milestones</h4>
+    #       """
+    #         + mm_result_df.to_html()
+    #         + """ <br>
+    #       <h4>Composite Milestones</h4>
+    #       """
+    #         + cm_result_df.to_html()
+    #         + """ <br>
+    #     </div>
+
+    #     <div id="All" class="tabcontent">
+    #       <h3>All</h3>
+    #       <p>"""
+    #         + all_plot_page_text
+    #         + """</p>
+    #       <img src=\""""
+    #         + all_line_plot_path
+    #         + """\">
+    #     </div>
+
+    #     <div id="TransactionSchedule" class="tabcontent">
+    #       <h3>Transaction Schedule</h3>
+    #       <p>"""
+    #         + transaction_schedule_text
+    #         + """</p><br>
+    #       Non-essential transactions: <br>
+    #       <p>"""
+    #         + p2_plus_txns_html_table
+    #         + """</p><br><br>
+    #       Credit Card Payments: <br>
+    #       <p>"""
+    #         + cc_payments_html_table
+    #         + """</p><br><br>
+    #       Loan Payments: <br>
+    #       <p>"""
+    #         + loan_payment_html_table
+    #         + """</p><br><br>
+    #       All Transactions: <br>
+    #       """
+    #         + confirmed_df.to_html()
+    #         + """
+    #     </div>
+
+    #     <div id="Sankey" class="tabcontent">
+    #       <h3>Sankey</h3>
+    #       <p>"""
+    #         + sankey_text
+    #         + """</p>
+    #       <img src=\""""
+    #         + sankey_path
+    #         + """\">
+    #     </div>
+
+    #     <div id="Forecast Results" class="tabcontent">
+    #       <h3>Forecast Results</h3>
+    #       <p>"""
+    #         + summary_text
+    #         + """</p>
+    #       <p>The visualized data are below:</p>
+    #       <h4>Forecast #"""
+    #         + str(E.unique_id)
+    #         + """:</h4>
+    #       """
+    #         + E.forecast_df.to_html()
+    #         + """
+    #     </div>
+
+    #     <br>
+
+    #     <script>
+    #     function openTab(evt, tabName) {
+    #       var i, tabcontent, tablinks;
+    #       tabcontent = document.getElementsByClassName("tabcontent");
+    #       for (i = 0; i < tabcontent.length; i++) {
+    #         tabcontent[i].style.display = "none";
+    #       }
+    #       tablinks = document.getElementsByClassName("tablinks");
+    #       for (i = 0; i < tablinks.length; i++) {
+    #         tablinks[i].className = tablinks[i].className.replace(" active", "");
+    #       }
+    #       document.getElementById(tabName).style.display = "block";
+    #       evt.currentTarget.className += " active";
+    #     }
+    #     document.getElementById("ForecastParameters").style.display = "block";
+    #     </script>
+
+    #     </body>
+    #     </html>
+    #     """
+    #     )
+
+    #     with open(html_output_path, "w") as f:
+    #         f.write(html_body)
+    #     log_in_color(
+    #         logger,
+    #         "green",
+    #         "info",
+    #         "Finished writing single forecast report to " + str(html_output_path),
+    #     )
+    #     return html_output_path
+
+
+    def generateHTMLreport(self, E: ExpenseForecastResult) -> str:
         """
-        TODO one-line description of ForecastHandler.generateHTMLReport.
+        Generate a self-contained HTML report for one ExpenseForecastResult.
 
-        TODO multi-line description of ForecastHandler.generateHTMLReport.
-        TODO explain how ForecastHandler.generateHTMLReport participates in this module.
-        TODO document important state, validation, or serialization behavior.
-
-        Parameters
-        ----------
-        E : object
-            TODO one-line description of ForecastHandler.generateHTMLReport.E.
-
-        output_dir : object
-            TODO one-line description of ForecastHandler.generateHTMLReport.output_dir.
-
-        parent_report_path : object
-            TODO one-line description of ForecastHandler.generateHTMLReport.parent_report_path.
-
-        Returns
-        -------
-        object
-            TODO one-line description of return value of ForecastHandler.generateHTMLReport.
-
-        Contract
-        --------
-        - #TODO contract lines for ForecastHandler.generateHTMLReport.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler.generateHTMLReport.
-
-        @interface-report: show
+        This method assumes scalar values and pandas DataFrames are available as
+        attributes on E. Adapt scalar_value() and dataframe_value() if E exposes
+        report data through another interface.
         """
-        start_date = self._report_date_label(self._report_start_date(E))
-        end_date = self._report_date_label(self._report_end_date(E))
 
-        forecast_failed = (
-            self._report_date_to_datetime(E.forecast_df.tail(1).Date.iat[0]).date()
-            != self._report_date_to_datetime(self._report_end_date(E)).date()
-        )
+        scenario_name = ''
+        unique_id = ''
+        date_range = ''
 
-        report_id = E.unique_id
-        output_file_name = "Forecast_" + str(report_id)
+        parameters_page_text_above_plots = ''
+        parameters_page_text_below_plots = ''
 
-        start_ts = getattr(E, "start_ts", None)
-        end_ts = getattr(E, "end_ts", None)
-        if start_ts is not None and end_ts is not None:
-            start_ts__datetime = self._report_date_to_datetime(start_ts)
-            end_ts__datetime = self._report_date_to_datetime(end_ts)
-            simulation_seconds = max(
-                0, (end_ts__datetime - start_ts__datetime).total_seconds()
-            )
-            runtime_text = (
-                "This forecast started at "
-                + str(start_ts__datetime)
-                + ", took "
-                + f"{simulation_seconds:,.3f} seconds"
-                + " to complete, and finished at "
-                + str(end_ts__datetime)
-                + "."
-            )
-        else:
-            runtime_text = "Runtime timing was not recorded for this forecast."
+        net_worth_page_text_above_plots = ''
+        net_worth_page_text_below_plots = ''
 
-        if parent_report_path is not None:
-            parent_report_text = (
-                """This report was generated alongside some others. See <a href=\""""
-                + parent_report_path
-                + """\">this page</a> for information about related forecasts."""
-            )
-        else:
-            parent_report_text = ""
+        net_gain_and_loss_page_text_above_plots = ''
+        net_gain_and_loss_page_text_below_plots = ''
 
-        summary_text = runtime_text
+        account_type_page_text_above_plots = ''
+        account_type_page_text_below_plots = ''
 
-        account_set = self._report_account_set(E)
-        budget_set = self._report_budget_set(E)
-        memo_rule_set = self._report_memo_rule_set(E)
-        milestone_set = self._report_milestone_set(E)
+        interest_page_text_above_plots = ''
+        interest_page_text_below_plots = ''
 
-        accounts_table = account_set.getAccounts().copy() if account_set is not None else None
-        account_text = (
+        milestones_page_text_above_plots = ''
+        milestones_page_text_below_plots = ''
+
+        sankey_page_text_above_plots = ''
+        sankey_page_text_below_plots = ''
+
+        all_page_text_above_plots = ''
+        all_page_text_below_plots = ''
+
+        transaction_schedule_page_text_above_plots = ''
+        transaction_schedule_page_text_below_plots = ''
+
+        last_day_page_text_above_plots = ''
+        last_day_page_text_below_plots = ''
+
+        def scalar_value(name: str, default: str = "") -> str:
             """
-        The initial conditions and account boundaries are defined as:"""
-            + (
-                accounts_table.to_html(
-                    formatters={"Balance": lambda value: f"{float(value):,.2f}"}
+            Return an escaped scalar report value.
+
+            Examples
+            --------
+            $scenario_name
+                scalar_value("scenario_name")
+
+            $net_worth_page_text_above_plots
+                scalar_value("net_worth_page_text_above_plots")
+            """
+            value: Any = getattr(E, name, default)
+
+            if value is None:
+                return ""
+
+            return escape(str(value))
+
+        def dataframe_value(name: str) -> pd.DataFrame | None:
+            """
+            Return a DataFrame stored on E, or None when unavailable.
+            """
+            value: Any = getattr(E, name, None)
+
+            if isinstance(value, pd.DataFrame):
+                return value
+
+            return None
+
+        def render_table(
+            name: str,
+            *,
+            empty_message: str = "No data available.",
+        ) -> str:
+            """
+            Render a named DataFrame using the shared report-table CSS classes.
+            """
+            dataframe = dataframe_value(name)
+
+            if dataframe is None or dataframe.empty:
+                return (
+                    '<div class="report-table-empty">'
+                    f"{escape(empty_message)}"
+                    "</div>"
                 )
-                if accounts_table is not None
-                else ""
+
+            return dataframe.to_html(
+                index=False,
+                border=0,
+                classes=[
+                    "report-table",
+                    f"report-table-{name.replace('_', '-')}",
+                ],
+                justify="left",
+                escape=True,
             )
-            + """
-        """
-        )
 
-        budget_set_text = (
+        def render_table_card(
+            title: str,
+            dataframe_name: str,
+            *,
+            section_class: str = "",
+        ) -> str:
             """
-        These transactions are considered for analysis:"""
-            + (budget_set.getLineItems().to_html() if budget_set is not None else "")
-            + """
-        """
-        )
-
-        memo_rules_table = memo_rule_set.getMemoRules().copy() if memo_rule_set is not None else None
-        if memo_rules_table is not None and "Transaction_Priority" in memo_rules_table:
-            memo_rules_table["Transaction_Priority"] = (
-                memo_rules_table["Transaction_Priority"].astype(int)
-            )
-        memo_rule_text = (
+            Render one titled table card.
             """
-        These decision rules are used:"""
-            + (memo_rules_table.to_html() if memo_rules_table is not None else "")
-            + """
-        """
-        )
+            additional_class = f" {section_class}" if section_class else ""
 
-        account_milestone_text = (
+            return f"""
+                <section class="table-card{additional_class}">
+                    <h2 class="table-card-title">{escape(title)}</h2>
+                    <div class="table-scroll-container">
+                        {render_table(dataframe_name)}
+                    </div>
+                </section>
             """
-        These account milestones are defined:"""
-            + self._report_milestone_table(milestone_set, "getAccountMilestonesDF").to_html()
-            + """
-        """
-        )
 
-        memo_milestone_text = (
+        def render_named_table_section(
+            title: str,
+            dataframe_name: str,
+        ) -> str:
             """
-        These memo milestones are defined:"""
-            + self._report_milestone_table(milestone_set, "getMemoMilestonesDF").to_html()
-            + """
-        """
-        )
-
-        composite_milestone_text = (
+            Render a named subsection inside a detailed report page.
             """
-        These composite milestones are defined:"""
-            + self._report_milestone_table(milestone_set, "getCompositeMilestonesDF").to_html()
-            + """
-        """
-        )
+            return f"""
+                <section class="detailed-table-section">
+                    <h3 class="detailed-table-section-title">
+                        {escape(title)}
+                    </h3>
 
-        initial_networth = round(E.forecast_df.head(1)["Net Worth"].iat[0], 2)
-        final_networth = round(E.forecast_df.tail(1)["Net Worth"].iat[0], 2)
-        networth_delta = round(final_networth - initial_networth, 2)
-        num_days, forecast_duration_text = self._report_forecast_duration(
-            self._report_start_date(E), self._report_end_date(E)
-        )
-        averaging_days = max(1, num_days)
-        avg_networth_change = round(networth_delta / float(averaging_days), 2)
-        rose_or_fell = "rose" if networth_delta >= 0 else "fell"
-
-        networth_text = (
+                    <div class="table-scroll-container">
+                        {render_table(dataframe_name)}
+                    </div>
+                </section>
             """
-        Net Worth began at """
-            + self._report_amount(initial_networth)
-            + """ and """
-            + rose_or_fell
-            + """ to """
-            + self._report_amount(final_networth)
-            + """ over """
-            + forecast_duration_text
-            + """, averaging """
-            + self._report_amount(avg_networth_change)
-            + """ per day.
-        """
-        )
 
-        initial_loan_total = round(E.forecast_df.head(1)["Loan Total"].iat[0], 2)
-        final_loan_total = round(E.forecast_df.tail(1)["Loan Total"].iat[0], 2)
-        loan_delta = round(final_loan_total - initial_loan_total, 2)
-        initial_cc_debt_total = round(E.forecast_df.head(1)["CC Debt Total"].iat[0], 2)
-        final_cc_debt_total = round(E.forecast_df.tail(1)["CC Debt Total"].iat[0], 2)
-        cc_debt_delta = round(final_cc_debt_total - initial_cc_debt_total, 2)
-        initial_liquid_total = round(E.forecast_df.head(1)["Liquid Total"].iat[0], 2)
-        final_liquid_total = round(E.forecast_df.tail(1)["Liquid Total"].iat[0], 2)
-        liquid_delta = round(final_liquid_total - initial_liquid_total, 2)
-
-        avg_loan_delta = round(loan_delta / averaging_days, 2)
-        avg_cc_debt_delta = round(cc_debt_delta / averaging_days, 2)
-        avg_liquid_delta = round(liquid_delta / averaging_days, 2)
-
-        investment_names = []
-        if accounts_table is not None:
-            investment_names = accounts_table.loc[
-                accounts_table.Account_Type == "investment", "Name"
-            ].tolist()
-        investment_names = [
-            name for name in investment_names if name in E.forecast_df.columns
-        ]
-        investment_total = (
-            E.forecast_df[investment_names].sum(axis=1)
-            if investment_names
-            else pd.Series(0.0, index=E.forecast_df.index)
-        )
-        initial_investment_total = round(investment_total.iloc[0], 2)
-        final_investment_total = round(investment_total.iloc[-1], 2)
-        investment_delta = round(
-            final_investment_total - initial_investment_total, 2
-        )
-        avg_investment_delta = round(investment_delta / averaging_days, 2)
-
-        account_type_text = (
+        def render_detailed_page(
+            page_id: str,
+            page_title: str,
+            primary_table_name: str | None = None,
+            additional_sections: str = "",
+        ) -> str:
             """
-        Loan debt began at """
-            + self._report_amount(initial_loan_total)
-            + """ and """
-            + ("rose" if avg_loan_delta >= 0 else "fell")
-            + """ to """
-            + self._report_amount(final_loan_total)
-            + """ over """
-            + forecast_duration_text
-            + """, averaging """
-            + self._report_amount(avg_loan_delta)
-            + """ per day.
-        <br><br>
-        Credit card debt began at """
-            + self._report_amount(initial_cc_debt_total)
-            + """ and """
-            + ("rose" if avg_cc_debt_delta >= 0 else "fell")
-            + """ to """
-            + self._report_amount(final_cc_debt_total)
-            + """ over """
-            + forecast_duration_text
-            + """, averaging """
-            + self._report_amount(avg_cc_debt_delta)
-            + """ per day.
-        <br><br>
-        Liquid cash began at """
-            + self._report_amount(initial_liquid_total)
-            + """ and """
-            + ("rose" if avg_liquid_delta >= 0 else "fell")
-            + """ to """
-            + self._report_amount(final_liquid_total)
-            + """ over """
-            + forecast_duration_text
-            + """, averaging """
-            + self._report_amount(avg_liquid_delta)
-            + """ per day.
-        <br><br>
-        Investments began at """
-            + self._report_amount(initial_investment_total)
-            + """ and """
-            + ("rose" if investment_delta >= 0 else "fell")
-            + """ to """
-            + self._report_amount(final_investment_total)
-            + """ over """
-            + forecast_duration_text
-            + """, averaging """
-            + self._report_amount(avg_investment_delta)
-            + """ per day.
-        """
-        )
-
-        total_gain = round(sum(E.forecast_df["Net Gain"]), 2)
-        avg_daily_gain = round(total_gain / averaging_days, 2)
-        total_loss = round(sum(E.forecast_df["Net Loss"]), 2)
-        avg_daily_loss = round(total_loss / averaging_days, 2)
-
-        net_gain_loss_text = (
-            "Total gain was "
-            + self._report_amount(total_gain)
-            + " over "
-            + forecast_duration_text
-            + ", averaging "
-            + self._report_amount(avg_daily_gain)
-            + " per day.<br><br>"
-        )
-        net_gain_loss_text += (
-            "Total loss was "
-            + str(f"-${float(total_loss):,}")
-            + " over "
-            + forecast_duration_text
-            + ", averaging "
-            + str(f"-${float(avg_daily_loss):,}")
-            + " per day."
-        )
-
-        total_interest_accrued = round(sum(E.forecast_df["Marginal Interest"]), 2)
-        avg_interest_accrued = round(total_interest_accrued / averaging_days, 2)
-
-        interest_text = (
-            "Total interest accrued was "
-            + self._report_amount(total_interest_accrued)
-            + " over "
-            + forecast_duration_text
-            + ", averaging "
-            + self._report_amount(avg_interest_accrued)
-            + " per day.<br>"
-        )
-        interest_text += "This plot shows the new interest by day, not the total interest at a given time."
-
-        cc_interest_sel_vec = [
-            "cc interest" in str(m).lower() for m in E.forecast_df.Memo
-        ]
-        interest_rows_df = E.forecast_df.loc[cc_interest_sel_vec]
-        interest_table_to_display_df = pd.DataFrame(interest_rows_df["Date"])
-        interest_table_to_display_df["Total CC Interest"] = 0.0
-        for index, row in interest_rows_df.iterrows():
-            memo_line = str(row.Memo)
-            memo_line_items = memo_line.split(";")
-            for memo_line_item in memo_line_items:
-                memo_line_item = memo_line_item.strip()
-                if "cc interest" not in memo_line_item.lower():
-                    continue
-
-                value_match = re.search(
-                    "\\(([A-Za-z0-9_ :]*) ([-+]?\\$.*)\\)$", memo_line_item
-                )
-                if value_match is None:
-                    continue
-                line_item_value_string = value_match.group(2)
-                line_item_value_string = (
-                    line_item_value_string.replace("(", "")
-                    .replace(")", "")
-                    .replace("$", "")
-                )
-                line_item_value = float(line_item_value_string)
-                interest_table_to_display_df.loc[
-                    index, "Total CC Interest"
-                ] += line_item_value
-        interest_table_html = interest_table_to_display_df.to_html()
-
-        am_result_df = self._report_milestone_results_df(E, "Account")
-        mm_result_df = self._report_milestone_results_df(E, "Memo")
-        cm_result_df = self._report_milestone_results_df(E, "Composite")
-
-        end_date_datetime = self._report_date_to_datetime(self._report_end_date(E))
-        achieved_am_count = (
-            am_result_df[am_result_df.Date < end_date_datetime].shape[0]
-            if "Date" in am_result_df.columns
-            else 0
-        )
-        achieved_mm_count = (
-            mm_result_df[mm_result_df.Date < end_date_datetime].shape[0]
-            if "Date" in mm_result_df.columns
-            else 0
-        )
-        achieved_cm_count = (
-            cm_result_df[cm_result_df.Date < end_date_datetime].shape[0]
-            if "Date" in cm_result_df.columns
-            else 0
-        )
-        total_milestone_count = (
-            am_result_df.shape[0] + mm_result_df.shape[0] + cm_result_df.shape[0]
-        )
-        achieved_milestone_count = (
-            achieved_am_count + achieved_mm_count + achieved_cm_count
-        )
-
-        milestone_text = (
-            str(total_milestone_count)
-            + " milestones were defined, and "
-            + str(achieved_milestone_count)
-            + " were achieved before the end of the forecast.<br>"
-        )
-        milestone_text += "Note that unachieved milestones are displayed on the last day of the forecast."
-
-        transaction_schedule_text = "Transactions are displayed below."
-        confirmed_df = self._report_confirmed_df(E)
-        if "Priority" in confirmed_df.columns:
-            p2_plus_txns_html_table = confirmed_df[confirmed_df.Priority >= 2].to_html()
-        else:
-            p2_plus_txns_html_table = confirmed_df.to_html()
-
-        payment_rows = []
-        account_type_by_name = {}
-        if account_set is not None:
-            account_type_by_name = dict(
-                zip(account_set.getAccounts()["Name"], account_set.getAccounts()["Account_Type"])
-            )
-        if (
-            memo_rule_set is not None
-            and "Priority" in confirmed_df.columns
-            and "Memo" in confirmed_df.columns
-        ):
-            for _, confirmed_row in confirmed_df[confirmed_df.Priority >= 2].iterrows():
-                memo_rule = memo_rule_set.findMatchingMemoRule(
-                    confirmed_row.Memo, confirmed_row.Priority
-                )
-                account_to_type = account_type_by_name.get(memo_rule.account_to)
-                if account_to_type == "credit":
-                    payment_rows.append(
-                        {
-                            "Payment Type": "Credit Card",
-                            "Date": confirmed_row.Date,
-                            "Memo": confirmed_row.Memo,
-                            "Amount": confirmed_row.Amount,
-                        }
-                    )
-                elif account_to_type == "loan" or memo_rule.account_to == "ALL_LOANS":
-                    payment_rows.append(
-                        {
-                            "Payment Type": "Loan",
-                            "Date": confirmed_row.Date,
-                            "Memo": confirmed_row.Memo,
-                            "Amount": confirmed_row.Amount,
-                        }
-                    )
-
-        for _, row in E.forecast_df.iterrows():
-            memo_line_items = str(row.Memo).split(";") + str(row["Memo Directives"]).split(";")
-            for memo_line_item in memo_line_items:
-                memo_line_item_lower = memo_line_item.lower()
-                if (
-                    "loan min payment" in memo_line_item_lower
-                    or "additional loan payment" in memo_line_item_lower
-                    or "addtl loan payment" in memo_line_item_lower
-                ):
-                    payment_rows.append(
-                        {"Payment Type": "Loan", "Date": row.Date, "Memo": memo_line_item}
-                    )
-                elif (
-                    "cc min payment" in memo_line_item_lower
-                    or "additional cc payment" in memo_line_item_lower
-                    or "addtl cc payment" in memo_line_item_lower
-                    or "cc interest" in memo_line_item_lower
-                ):
-                    payment_rows.append(
-                        {"Payment Type": "Credit Card", "Date": row.Date, "Memo": memo_line_item}
-                    )
-
-        payments_df = pd.DataFrame(payment_rows)
-        cc_payments_html_table = payments_df[
-            payments_df.get("Payment Type", pd.Series(dtype=str)) == "Credit Card"
-        ].to_html()
-        loan_payment_html_table = payments_df[
-            payments_df.get("Payment Type", pd.Series(dtype=str)) == "Loan"
-        ].to_html()
-
-        all_plot_page_text = ""
-        sankey_text = ""
-
-        output_target = Path(output_dir)
-        if output_target.suffix:
-            html_output_path = output_target
-            image_output_dir = output_target.parent
-        else:
-            image_output_dir = output_target
-            html_output_path = image_output_dir / (output_file_name + ".html")
-
-        image_output_dir.mkdir(parents=True, exist_ok=True)
-        networth_line_plot_path = report_id + "_networth_line_plot.png"
-        net_gain_loss_line_plot_path = report_id + "_net_gain_loss_line_plot.png"
-        accounttype_line_plot_path = report_id + "_accounttype_line_plot.png"
-        marginal_interest_line_plot_path = (
-            report_id + "_marginal_interest_line_plot.png"
-        )
-        milestone_scatter_plot_path = report_id + "_milestone_scatter_plot.png"
-        all_line_plot_path = report_id + "_all_line_plot.png"
-        sankey_path = report_id + "_sankey.jpg"
-
-        self.plotAll(E, image_output_dir / all_line_plot_path)
-        self.plotNetWorth(E, image_output_dir / networth_line_plot_path)
-        self.plotAccountTypeTotals(E, image_output_dir / accounttype_line_plot_path)
-        self.plotMarginalInterest(E, image_output_dir / marginal_interest_line_plot_path)
-        self.plotNetGainLoss(E, image_output_dir / net_gain_loss_line_plot_path)
-        self.plotMilestoneDates(E, image_output_dir / milestone_scatter_plot_path)
-        try:
-            self.plotSankeyDiagram(E, image_output_dir / sankey_path)
-        except Exception as exc:
-            sankey_text = "Sankey diagram generation failed: " + str(exc)
-            sankey_path = ""
-
-        left_fail_style_tag = ""
-        right_fail_style_tag = ""
-        fail_message = ""
-        if forecast_failed:
-            left_fail_style_tag = '<font color ="red">'
-            right_fail_style_tag = "</font>"
-            fail_message = "This forecast failed to reach the end. The results may not reflect the effect of non-essential transactions accurately."
-
-        html_body = (
+            Render one detailed-view navbar page.
             """
-        <!DOCTYPE html>
-        <html>
+            active_class = " is-active" if page_id == "parameters" else ""
+
+            primary_table_html = ""
+
+            if primary_table_name is not None:
+                primary_table_html = f"""
+                    <section class="detailed-primary-table">
+                        <div class="table-scroll-container">
+                            {render_table(primary_table_name)}
+                        </div>
+                    </section>
+                """
+
+            return f"""
+                <section
+                    id="detail-page-{escape(page_id)}"
+                    class="detail-page{active_class}"
+                    data-detail-page="{escape(page_id)}"
+                    aria-labelledby="detail-tab-{escape(page_id)}"
+                >
+                    <header class="detail-page-header">
+                        <h2 class="detail-page-title">
+                            {escape(page_title)}
+                        </h2>
+                    </header>
+
+                    <div class="detail-page-text detail-page-text-above">
+                        {scalar_value(f"{page_id}_page_text_above_plots")}
+                    </div>
+
+                    <div
+                        id="{escape(page_id)}-plots"
+                        class="detail-page-plots"
+                        data-plot-page="{escape(page_id)}"
+                    >
+                        <!--
+                        D3 plots for this page will be inserted here.
+                        -->
+                    </div>
+
+                    <div class="detail-page-text detail-page-text-below">
+                        {scalar_value(f"{page_id}_page_text_below_plots")}
+                    </div>
+
+                    {primary_table_html}
+
+                    <div class="detailed-additional-sections">
+                        {additional_sections}
+                    </div>
+                </section>
+            """
+
+        parameters_sections = "".join(
+            [
+                render_named_table_section(
+                    "Account Set",
+                    "account_set",
+                ),
+                render_named_table_section(
+                    "Line Items",
+                    "line_items",
+                ),
+                render_named_table_section(
+                    "Memo Rules",
+                    "memo_rules",
+                ),
+                render_named_table_section(
+                    "Composite Milestones",
+                    "composite_milestones",
+                ),
+                render_named_table_section(
+                    "Account Milestones",
+                    "account_milestones",
+                ),
+                render_named_table_section(
+                    "Memo Milestones",
+                    "memo_milestones",
+                ),
+            ]
+        )
+
+        transaction_schedule_sections = "".join(
+            [
+                render_named_table_section(
+                    "Non-Essential Transactions",
+                    "non_essential_transactions",
+                ),
+                render_named_table_section(
+                    "Credit Card Payments",
+                    "credit_card_payments",
+                ),
+                render_named_table_section(
+                    "Loan Payments",
+                    "loan_payments",
+                ),
+                render_named_table_section(
+                    "All Transactions",
+                    "all_transactions",
+                ),
+            ]
+        )
+
+        detailed_pages = "".join(
+            [
+                render_detailed_page(
+                    "parameters",
+                    "Parameters",
+                    "parameters",
+                    parameters_sections,
+                ),
+                render_detailed_page(
+                    "net_worth",
+                    "Net Worth",
+                    "net_worth",
+                ),
+                render_detailed_page(
+                    "net_gain_and_loss",
+                    "Net Gain & Loss",
+                    "net_gain_and_loss",
+                ),
+                render_detailed_page(
+                    "account_type",
+                    "Account Type",
+                    "account_type",
+                ),
+                render_detailed_page(
+                    "interest",
+                    "Interest",
+                    "interest",
+                ),
+                render_detailed_page(
+                    "milestones",
+                    "Milestones",
+                    "milestones",
+                ),
+                render_detailed_page(
+                    "sankey",
+                    "Sankey",
+                    "sankey",
+                ),
+                render_detailed_page(
+                    "all",
+                    "All",
+                    "all",
+                ),
+                render_detailed_page(
+                    "transaction_schedule",
+                    "Transaction Schedule",
+                    "transaction_schedule",
+                    transaction_schedule_sections,
+                ),
+                render_detailed_page(
+                    "last_day",
+                    "Last Day",
+                    "last_day",
+                ),
+            ]
+        )
+
+        html = f"""<!DOCTYPE html>
+        <html lang="en">
         <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Expense Forecast Report #"""
-            + str(report_id)
-            + """</title>
-        <style>
-        :root {
-          color-scheme: dark;
-          --bg: #0b1120;
-          --panel: #111827;
-          --panel-soft: #172033;
-          --panel-strong: #1e293b;
-          --border: #334155;
-          --border-soft: #243244;
-          --text: #e5e7eb;
-          --text-muted: #a8b3c7;
-          --accent: #38bdf8;
-          --accent-strong: #2563eb;
-          --accent-soft: #0f3a5c;
-          --danger: #fb7185;
-        }
-        html {
-          background: var(--bg);
-        }
-        body {
-          max-width: 1180px;
-          margin: 0 auto;
-          padding: 40px 32px 64px;
-          background: var(--bg);
-          color: var(--text);
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-          line-height: 1.5;
-          text-align: left;
-        }
-        h1, h3, h4 {
-          color: #f8fafc;
-        }
-        h1 {
-          margin-top: 0;
-          letter-spacing: 0;
-        }
-        h3 {
-          margin-top: 0;
-        }
-        p {
-          color: var(--text-muted);
-        }
-        a {
-          color: var(--accent);
-        }
-        .tab {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 6px;
-          margin-top: 28px;
-          padding: 8px;
-          border: 1px solid var(--border);
-          border-radius: 8px 8px 0 0;
-          background-color: var(--panel);
-        }
-        .tab button {
-          background-color: var(--panel-strong);
-          color: var(--text-muted);
-          border: 1px solid transparent;
-          border-radius: 6px;
-          outline: none;
-          cursor: pointer;
-          padding: 12px 14px;
-          transition: background-color 0.2s, border-color 0.2s, color 0.2s;
-        }
-        .tab button:hover {
-          background-color: var(--accent-soft);
-          border-color: #1d4ed8;
-          color: #f8fafc;
-        }
-        .tab button.active {
-          background-color: var(--accent-strong);
-          border-color: #60a5fa;
-          color: #ffffff;
-        }
-        .tabcontent {
-          display: none;
-          padding: 24px;
-          border: 1px solid var(--border);
-          border-top: none;
-          border-radius: 0 0 8px 8px;
-          background: var(--panel);
-          box-shadow: 0 18px 60px rgba(0, 0, 0, 0.25);
-          overflow-x: auto;
-        }
-        table {
-          border-collapse: collapse;
-          margin: 14px 0 24px;
-          max-width: 100%;
-          color: var(--text);
-          background: var(--panel-soft);
-          font-size: 0.92rem;
-        }
-        th, td {
-          border: 1px solid var(--border-soft);
-          padding: 7px 10px;
-          white-space: nowrap;
-        }
-        th {
-          background: var(--panel-strong);
-          color: #f8fafc;
-          font-weight: 600;
-        }
-        tr:nth-child(even) td {
-          background: rgba(148, 163, 184, 0.06);
-        }
-        img {
-          max-width: 100%;
-          height: auto;
-          margin: 14px 0 24px;
-          border: 1px solid var(--border);
-          border-radius: 6px;
-          background: #f8fafc;
-        }
-        font[color="red"] {
-          color: var(--danger);
-        }
-        </style>
+            <meta charset="UTF-8">
+
+            <meta
+                name="viewport"
+                content="width=device-width, initial-scale=1.0"
+            >
+
+            <title>
+                {scalar_value("scenario_name", "Expense Forecast Report")}
+            </title>
+
+            <!--
+            ========================================================================
+            REPORT DESIGN VARIABLES
+
+            Change these variables to adjust the report's typography, colors,
+            spacing, table density, content width, and other repeated design values.
+            ========================================================================
+            -->
+            <style>
+                :root {{
+                    /* Typography */
+                    --report-font-family:
+                        Inter,
+                        ui-sans-serif,
+                        system-ui,
+                        -apple-system,
+                        BlinkMacSystemFont,
+                        "Segoe UI",
+                        sans-serif;
+
+                    --report-monospace-font-family:
+                        "SFMono-Regular",
+                        Consolas,
+                        "Liberation Mono",
+                        monospace;
+
+                    --report-title-font-size: 2rem;
+                    --report-subtitle-font-size: 0.92rem;
+                    --report-date-range-font-size: 0.78rem;
+                    --report-body-font-size: 0.95rem;
+                    --report-small-font-size: 0.78rem;
+
+                    /* Colors */
+                    --report-page-background: #f7f7f5;
+                    --report-surface-color: #ffffff;
+                    --report-text-color: #1d1d1f;
+                    --report-muted-text-color: #77777d;
+                    --report-border-color: #dedee2;
+                    --report-soft-border-color: #ececef;
+                    --report-hover-color: #f2f2f3;
+                    --report-selected-color: #e8e8eb;
+                    --report-accent-color: #315c72;
+                    --report-accent-text-color: #ffffff;
+
+                    /* Page layout */
+                    --report-page-max-width: 1500px;
+                    --report-page-side-padding: clamp(24px, 4vw, 72px);
+                    --report-page-top-padding: 42px;
+                    --report-section-gap: 34px;
+
+                    /*
+                    Header width is deliberately symmetrical.
+
+                    The left scenario block occupies one column. A comparison report
+                    can place the second scenario block in the matching right column
+                    without shifting the page's visual center.
+                    */
+                    --report-header-side-column-width: minmax(220px, 1fr);
+                    --report-header-center-column-width: minmax(180px, 1.15fr);
+
+                    /* Hero chart */
+                    --hero-chart-height: clamp(390px, 47vh, 650px);
+                    --hero-chart-max-width: 1240px;
+                    --hero-chart-background: transparent;
+
+                    /* Buttons */
+                    --view-toggle-height: 38px;
+                    --view-toggle-horizontal-padding: 22px;
+                    --view-toggle-border-radius: 999px;
+
+                    /* Summary table layout */
+                    --summary-table-column-gap: 26px;
+                    --summary-table-row-gap: 28px;
+
+                    /*
+                    TABLE DENSITY CONTROL
+
+                    Increase these values for a more spacious table.
+                    Decrease them for a denser table.
+                    */
+                    --report-table-cell-padding-vertical: 11px;
+                    --report-table-cell-padding-horizontal: 14px;
+                    --report-table-row-line-height: 1.4;
+
+                    --report-table-card-padding: 20px;
+                    --report-table-card-border-radius: 10px;
+                    --report-table-card-min-height: 120px;
+
+                    /* Detailed view */
+                    --detail-navbar-height: 48px;
+                    --detail-content-max-width: 1240px;
+                    --detail-section-spacing: 38px;
+                }}
+
+                * {{
+                    box-sizing: border-box;
+                }}
+
+                html {{
+                    background: var(--report-page-background);
+                    color: var(--report-text-color);
+                    font-family: var(--report-font-family);
+                }}
+
+                body {{
+                    min-width: 320px;
+                    margin: 0;
+                    background: var(--report-page-background);
+                    color: var(--report-text-color);
+                    font-size: var(--report-body-font-size);
+                }}
+
+                button,
+                input,
+                select,
+                textarea {{
+                    font: inherit;
+                }}
+
+                button {{
+                    color: inherit;
+                }}
+
+                .report-page {{
+                    width: min(
+                        100%,
+                        calc(
+                            var(--report-page-max-width) +
+                            2 * var(--report-page-side-padding)
+                        )
+                    );
+                    min-height: 100vh;
+                    margin: 0 auto;
+                    padding:
+                        var(--report-page-top-padding)
+                        var(--report-page-side-padding)
+                        72px;
+                }}
+
+                /*
+                ====================================================================
+                REPORT HEADER
+                ====================================================================
+                */
+
+                .report-header {{
+                    display: grid;
+                    grid-template-columns:
+                        var(--report-header-side-column-width)
+                        var(--report-header-center-column-width)
+                        var(--report-header-side-column-width);
+                    align-items: start;
+                    width: 100%;
+                    margin-bottom: 18px;
+                }}
+
+                .scenario-identity {{
+                    min-width: 0;
+                }}
+
+                .scenario-identity-left {{
+                    grid-column: 1;
+                    justify-self: start;
+                    text-align: left;
+                }}
+
+                /*
+                Reserved for future comparison reports.
+
+                Add a second .scenario-identity element with this class. Because the
+                header uses symmetrical side columns, it will mirror the first
+                scenario without changing the central page layout.
+                */
+                .scenario-identity-right {{
+                    grid-column: 3;
+                    justify-self: end;
+                    text-align: right;
+                }}
+
+                .scenario-name {{
+                    margin: 0;
+                    font-size: var(--report-title-font-size);
+                    font-weight: 650;
+                    line-height: 1.12;
+                    letter-spacing: -0.025em;
+                }}
+
+                .scenario-unique-id {{
+                    margin: 7px 0 0;
+                    font-family: var(--report-monospace-font-family);
+                    font-size: var(--report-subtitle-font-size);
+                    font-weight: 500;
+                    line-height: 1.25;
+                    letter-spacing: 0.015em;
+                    white-space: nowrap;
+                }}
+
+                .scenario-date-range {{
+                    margin: 6px 0 0;
+                    color: var(--report-muted-text-color);
+                    font-size: var(--report-date-range-font-size);
+                    font-weight: 450;
+                    line-height: 1.3;
+                }}
+
+                /*
+                ====================================================================
+                HERO CHART
+                ====================================================================
+                */
+
+                .hero-section {{
+                    width: 100%;
+                }}
+
+                .hero-chart-container {{
+                    display: flex;
+                    align-items: stretch;
+                    justify-content: center;
+                    width: min(100%, var(--hero-chart-max-width));
+                    height: var(--hero-chart-height);
+                    margin: 0 auto;
+                    background: var(--hero-chart-background);
+                }}
+
+                .hero-chart {{
+                    display: block;
+                    width: 100%;
+                    height: 100%;
+                    overflow: visible;
+                }}
+
+                .hero-chart-placeholder {{
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 100%;
+                    min-height: 100%;
+                    border-bottom: 1px solid var(--report-soft-border-color);
+                    color: var(--report-muted-text-color);
+                    font-size: var(--report-small-font-size);
+                    letter-spacing: 0.04em;
+                    text-transform: uppercase;
+                }}
+
+                /*
+                ====================================================================
+                SUMMARY / DETAILED VIEW TOGGLE
+                ====================================================================
+                */
+
+                .view-toggle-row {{
+                    display: flex;
+                    justify-content: center;
+                    width: 100%;
+                    margin: 18px 0 var(--report-section-gap);
+                }}
+
+                .view-toggle-button {{
+                    min-height: var(--view-toggle-height);
+                    padding:
+                        0
+                        var(--view-toggle-horizontal-padding);
+                    border: 1px solid var(--report-border-color);
+                    border-radius: var(--view-toggle-border-radius);
+                    background: var(--report-surface-color);
+                    cursor: pointer;
+                    transition:
+                        background-color 150ms ease,
+                        border-color 150ms ease,
+                        transform 150ms ease;
+                }}
+
+                .view-toggle-button:hover {{
+                    border-color: var(--report-muted-text-color);
+                    background: var(--report-hover-color);
+                }}
+
+                .view-toggle-button:active {{
+                    transform: translateY(1px);
+                }}
+
+                .view-toggle-button:focus-visible,
+                .detail-nav-button:focus-visible {{
+                    outline: 3px solid color-mix(
+                        in srgb,
+                        var(--report-accent-color) 32%,
+                        transparent
+                    );
+                    outline-offset: 3px;
+                }}
+
+                /*
+                ====================================================================
+                SUMMARY TABLE GRID
+                ====================================================================
+                */
+
+                .summary-view {{
+                    display: block;
+                }}
+
+                .summary-view[hidden],
+                .detailed-view[hidden] {{
+                    display: none;
+                }}
+
+                .summary-table-row {{
+                    display: grid;
+                    align-items: stretch;
+                    gap:
+                        var(--summary-table-row-gap)
+                        var(--summary-table-column-gap);
+                    width: 100%;
+                }}
+
+                .summary-table-row-primary {{
+                    grid-template-columns: repeat(3, minmax(0, 1fr));
+                }}
+
+                .summary-table-row-secondary {{
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                    max-width: calc(
+                        (
+                            2 * (
+                                100% - 2 * var(--summary-table-column-gap)
+                            )
+                        ) / 3 + var(--summary-table-column-gap)
+                    );
+                    margin-top: var(--summary-table-row-gap);
+                }}
+
+                /*
+                Each table card stretches to the height of the tallest card in its
+                grid row. This creates the requested aligned 1 × 3 rectangle.
+                */
+                .table-card {{
+                    display: flex;
+                    flex-direction: column;
+                    min-width: 0;
+                    min-height: var(--report-table-card-min-height);
+                    padding: var(--report-table-card-padding);
+                    border: 1px solid var(--report-soft-border-color);
+                    border-radius: var(--report-table-card-border-radius);
+                    background: var(--report-surface-color);
+                }}
+
+                .table-card-title {{
+                    margin: 0 0 16px;
+                    font-size: 0.94rem;
+                    font-weight: 650;
+                    line-height: 1.25;
+                    letter-spacing: -0.01em;
+                }}
+
+                .table-scroll-container {{
+                    width: 100%;
+                    min-width: 0;
+                    overflow-x: auto;
+                }}
+
+                /*
+                ====================================================================
+                SHARED TABLE STYLING
+                ====================================================================
+
+                The primary table-density variables are defined in :root:
+                    --report-table-cell-padding-vertical
+                    --report-table-cell-padding-horizontal
+                    --report-table-row-line-height
+                */
+
+                .report-table {{
+                    width: 100%;
+                    border-collapse: collapse;
+                    border-spacing: 0;
+                    font-size: 0.86rem;
+                    line-height: var(--report-table-row-line-height);
+                }}
+
+                .report-table thead th {{
+                    padding:
+                        var(--report-table-cell-padding-vertical)
+                        var(--report-table-cell-padding-horizontal);
+                    border-bottom: 1px solid var(--report-border-color);
+                    color: var(--report-muted-text-color);
+                    font-size: 0.74rem;
+                    font-weight: 650;
+                    letter-spacing: 0.035em;
+                    text-align: left;
+                    text-transform: uppercase;
+                    vertical-align: bottom;
+                    white-space: nowrap;
+                }}
+
+                .report-table tbody td {{
+                    padding:
+                        var(--report-table-cell-padding-vertical)
+                        var(--report-table-cell-padding-horizontal);
+                    border-bottom: 1px solid var(--report-soft-border-color);
+                    text-align: left;
+                    vertical-align: top;
+                }}
+
+                .report-table tbody tr:last-child td {{
+                    border-bottom: 0;
+                }}
+
+                .report-table tbody tr:hover {{
+                    background: var(--report-hover-color);
+                }}
+
+                .report-table-empty {{
+                    display: flex;
+                    align-items: center;
+                    min-height: 58px;
+                    color: var(--report-muted-text-color);
+                    font-size: var(--report-small-font-size);
+                }}
+
+                /*
+                ====================================================================
+                DETAILED VIEW
+                ====================================================================
+                */
+
+                .detailed-view {{
+                    width: 100%;
+                }}
+
+                .detail-navbar-container {{
+                    position: sticky;
+                    top: 0;
+                    z-index: 10;
+                    width: 100%;
+                    margin-bottom: var(--detail-section-spacing);
+                    padding: 8px 0;
+                    background:
+                        color-mix(
+                            in srgb,
+                            var(--report-page-background) 94%,
+                            transparent
+                        );
+                    backdrop-filter: blur(10px);
+                }}
+
+                .detail-navbar {{
+                    display: flex;
+                    align-items: center;
+                    width: 100%;
+                    min-height: var(--detail-navbar-height);
+                    overflow-x: auto;
+                    border-bottom: 1px solid var(--report-border-color);
+                    scrollbar-width: thin;
+                }}
+
+                .detail-nav-button {{
+                    flex: 0 0 auto;
+                    min-height: var(--detail-navbar-height);
+                    padding: 0 15px;
+                    border: 0;
+                    border-bottom: 2px solid transparent;
+                    background: transparent;
+                    color: var(--report-muted-text-color);
+                    cursor: pointer;
+                    font-size: 0.83rem;
+                    font-weight: 550;
+                    white-space: nowrap;
+                }}
+
+                .detail-nav-button:hover {{
+                    color: var(--report-text-color);
+                    background: var(--report-hover-color);
+                }}
+
+                .detail-nav-button.is-active {{
+                    border-bottom-color: var(--report-accent-color);
+                    color: var(--report-text-color);
+                }}
+
+                .detail-content {{
+                    width: min(100%, var(--detail-content-max-width));
+                    margin: 0 auto;
+                }}
+
+                .detail-page {{
+                    display: none;
+                    width: 100%;
+                }}
+
+                .detail-page.is-active {{
+                    display: block;
+                }}
+
+                .detail-page-header {{
+                    margin-bottom: 22px;
+                }}
+
+                .detail-page-title {{
+                    margin: 0;
+                    font-size: 1.55rem;
+                    font-weight: 650;
+                    letter-spacing: -0.02em;
+                }}
+
+                .detail-page-text {{
+                    max-width: 940px;
+                    line-height: 1.65;
+                }}
+
+                .detail-page-text:empty {{
+                    display: none;
+                }}
+
+                .detail-page-text-above {{
+                    margin-bottom: 26px;
+                }}
+
+                .detail-page-text-below {{
+                    margin-top: 26px;
+                }}
+
+                .detail-page-plots {{
+                    width: 100%;
+                    min-height: 320px;
+                    border-bottom: 1px solid var(--report-soft-border-color);
+                }}
+
+                .detailed-primary-table {{
+                    margin-top: var(--detail-section-spacing);
+                }}
+
+                .detailed-additional-sections {{
+                    display: grid;
+                    grid-template-columns: minmax(0, 1fr);
+                    gap: var(--detail-section-spacing);
+                    margin-top: var(--detail-section-spacing);
+                }}
+
+                .detailed-table-section {{
+                    min-width: 0;
+                    padding-top: 4px;
+                }}
+
+                .detailed-table-section-title {{
+                    margin: 0 0 14px;
+                    font-size: 1rem;
+                    font-weight: 650;
+                    letter-spacing: -0.01em;
+                }}
+
+                /*
+                ====================================================================
+                RESPONSIVE LAYOUT
+                ====================================================================
+                */
+
+                @media (max-width: 1050px) {{
+                    .summary-table-row-primary {{
+                        grid-template-columns: repeat(2, minmax(0, 1fr));
+                    }}
+
+                    .summary-table-row-primary .table-card:last-child {{
+                        grid-column: 1 / -1;
+                    }}
+
+                    .summary-table-row-secondary {{
+                        max-width: none;
+                    }}
+                }}
+
+                @media (max-width: 760px) {{
+                    :root {{
+                        --report-page-side-padding: 18px;
+                        --report-page-top-padding: 26px;
+                        --hero-chart-height: 380px;
+                    }}
+
+                    .report-header {{
+                        grid-template-columns: 1fr;
+                        gap: 20px;
+                    }}
+
+                    .scenario-identity-left,
+                    .scenario-identity-right {{
+                        grid-column: 1;
+                        justify-self: start;
+                        text-align: left;
+                    }}
+
+                    .summary-table-row-primary,
+                    .summary-table-row-secondary {{
+                        grid-template-columns: minmax(0, 1fr);
+                        max-width: none;
+                    }}
+
+                    .summary-table-row-primary .table-card:last-child {{
+                        grid-column: auto;
+                    }}
+
+                    .report-table {{
+                        min-width: 540px;
+                    }}
+                }}
+
+                @media (prefers-reduced-motion: reduce) {{
+                    *,
+                    *::before,
+                    *::after {{
+                        scroll-behavior: auto !important;
+                        transition-duration: 0.01ms !important;
+                        animation-duration: 0.01ms !important;
+                        animation-iteration-count: 1 !important;
+                    }}
+                }}
+            </style>
         </head>
+
         <body>
-        <h1>"""
-            + left_fail_style_tag
-            + """Expense Forecast Report #"""
-            + str(report_id)
-            + right_fail_style_tag
-            + """</h1>
-        <p>"""
-            + start_date
-            + """ to """
-            + end_date
-            + " "
-            + left_fail_style_tag
-            + fail_message
-            + right_fail_style_tag
-            + " "
-            + parent_report_text
-            + """</p>
+            <main class="report-page">
+                <header class="report-header">
+                    <section class="scenario-identity scenario-identity-left">
+                        <h1 class="scenario-name">
+                            {scalar_value("scenario_name", "Unnamed Scenario")}
+                        </h1>
 
-        <div class="tab">
-          <button class="tablinks active" onclick="openTab(event, 'ForecastParameters')">Forecast Parameters</button>
-          <button class="tablinks" onclick="openTab(event, 'NetWorth')">Net Worth</button>
-          <button class="tablinks" onclick="openTab(event, 'NetGainLoss')">Net Gain & Loss</button>
-          <button class="tablinks" onclick="openTab(event, 'AccountType')">Account Type</button>
-          <button class="tablinks" onclick="openTab(event, 'Interest')">Interest</button>
-          <button class="tablinks" onclick="openTab(event, 'Milestones')">Milestones</button>
-          <button class="tablinks" onclick="openTab(event, 'All')">All</button>
-          <button class="tablinks" onclick="openTab(event, 'TransactionSchedule')">Transaction Schedule</button>
-          <button class="tablinks" onclick="openTab(event, 'Sankey')">Sankey</button>
-          <button class="tablinks" onclick="openTab(event, 'Forecast Results')">Forecast Results</button>
-        </div>
+                        <p class="scenario-unique-id">
+                            {scalar_value("unique_id")}
+                        </p>
 
-        <div id="ForecastParameters" class="tabcontent">
-          <h3>Forecast Parameters</h3>
-          <p>"""
-            + summary_text
-            + """</p>
-          <h3>Accounts</h3>
-          <p>"""
-            + account_text
-            + """</p>
-          <h3>Budget Items</h3>
-          <p>"""
-            + budget_set_text
-            + """</p>
-          <h3>Memo Rules</h3>
-          <p>"""
-            + memo_rule_text
-            + """</p>
-          <h3>Account Milestones</h3>
-          <p>"""
-            + account_milestone_text
-            + """</p>
-          <h3>Memo Milestones</h3>
-          <p>"""
-            + memo_milestone_text
-            + """</p>
-          <h3>Composite Milestones</h3>
-          <p>"""
-            + composite_milestone_text
-            + """</p>
-        </div>
+                        <p class="scenario-date-range">
+                            {scalar_value("date_range")}
+                        </p>
+                    </section>
 
-        <div id="NetWorth" class="tabcontent">
-          <h3>Net Worth</h3>
-          <p>"""
-            + networth_text
-            + """</p>
-          <img src=\""""
-            + networth_line_plot_path
-            + """\">
-        </div>
+                    <!--
+                    Future comparison-report identity:
 
-        <div id="NetGainLoss" class="tabcontent">
-          <h3>Net Gain & Loss</h3>
-          <p>"""
-            + net_gain_loss_text
-            + """</p>
-          <img src=\""""
-            + net_gain_loss_line_plot_path
-            + """\">
-        </div>
+                    <section class="scenario-identity scenario-identity-right">
+                        <h1 class="scenario-name">
+                            comparison scenario name
+                        </h1>
 
-        <div id="AccountType" class="tabcontent">
-          <h3>Account Type</h3>
-          <p>"""
-            + account_type_text
-            + """</p>
-          <img src=\""""
-            + accounttype_line_plot_path
-            + """\">
-        </div>
+                        <p class="scenario-unique-id">
+                            comparison unique ID
+                        </p>
 
-        <div id="Interest" class="tabcontent">
-          <h3>Interest</h3>
-          <p>"""
-            + interest_text
-            + """</p>
-          <img src=\""""
-            + marginal_interest_line_plot_path
-            + """\">
-          """
-            + interest_table_html
-            + """
-        </div>
+                        <p class="scenario-date-range">
+                            comparison date range
+                        </p>
+                    </section>
+                    -->
+                </header>
 
-        <div id="Milestones" class="tabcontent">
-          <h3>Milestones</h3>
-          <p>"""
-            + milestone_text
-            + """</p>
-          <img src=\""""
-            + milestone_scatter_plot_path
-            + """\">
-          <h4>Account Milestones</h4>
-          """
-            + am_result_df.to_html()
-            + """ <br>
-          <h4>Memo Milestones</h4>
-          """
-            + mm_result_df.to_html()
-            + """ <br>
-          <h4>Composite Milestones</h4>
-          """
-            + cm_result_df.to_html()
-            + """ <br>
-        </div>
+                <section class="hero-section">
+                    <div
+                        id="hero-chart-container"
+                        class="hero-chart-container"
+                    >
+                        <!--
+                        Replace this placeholder with the D3-created SVG.
 
-        <div id="All" class="tabcontent">
-          <h3>All</h3>
-          <p>"""
-            + all_plot_page_text
-            + """</p>
-          <img src=\""""
-            + all_line_plot_path
-            + """\">
-        </div>
+                        Suggested final element:
 
-        <div id="TransactionSchedule" class="tabcontent">
-          <h3>Transaction Schedule</h3>
-          <p>"""
-            + transaction_schedule_text
-            + """</p><br>
-          Non-essential transactions: <br>
-          <p>"""
-            + p2_plus_txns_html_table
-            + """</p><br><br>
-          Credit Card Payments: <br>
-          <p>"""
-            + cc_payments_html_table
-            + """</p><br><br>
-          Loan Payments: <br>
-          <p>"""
-            + loan_payment_html_table
-            + """</p><br><br>
-          All Transactions: <br>
-          """
-            + confirmed_df.to_html()
-            + """
-        </div>
+                        <svg
+                            id="hero-chart"
+                            class="hero-chart"
+                            role="img"
+                            aria-label="Forecast account time series"
+                        ></svg>
+                        -->
 
-        <div id="Sankey" class="tabcontent">
-          <h3>Sankey</h3>
-          <p>"""
-            + sankey_text
-            + """</p>
-          <img src=\""""
-            + sankey_path
-            + """\">
-        </div>
+                        <div class="hero-chart-placeholder">
+                            Hero chart
+                        </div>
+                    </div>
+                </section>
 
-        <div id="Forecast Results" class="tabcontent">
-          <h3>Forecast Results</h3>
-          <p>"""
-            + summary_text
-            + """</p>
-          <p>The visualized data are below:</p>
-          <h4>Forecast #"""
-            + str(E.unique_id)
-            + """:</h4>
-          """
-            + E.forecast_df.to_html()
-            + """
-        </div>
+                <div class="view-toggle-row">
+                    <button
+                        id="view-toggle-button"
+                        class="view-toggle-button"
+                        type="button"
+                        aria-controls="summary-view detailed-view"
+                        aria-expanded="false"
+                    >
+                        Detailed View
+                    </button>
+                </div>
 
-        <br>
+                <!--
+                ====================================================================
+                SUMMARY VIEW
+                ====================================================================
+                -->
 
-        <script>
-        function openTab(evt, tabName) {
-          var i, tabcontent, tablinks;
-          tabcontent = document.getElementsByClassName("tabcontent");
-          for (i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = "none";
-          }
-          tablinks = document.getElementsByClassName("tablinks");
-          for (i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(" active", "");
-          }
-          document.getElementById(tabName).style.display = "block";
-          evt.currentTarget.className += " active";
-        }
-        document.getElementById("ForecastParameters").style.display = "block";
-        </script>
+                <section
+                    id="summary-view"
+                    class="summary-view"
+                    aria-label="Forecast summary"
+                >
+                    <div
+                        class="
+                            summary-table-row
+                            summary-table-row-primary
+                        "
+                    >
+                        {render_table_card(
+                            "Final Account Balances",
+                            "final_account_balances",
+                        )}
 
+                        {render_table_card(
+                            "Notable Transactions",
+                            "notable_transactions",
+                        )}
+
+                        {render_table_card(
+                            "Margin Metrics",
+                            "margin_metrics",
+                        )}
+                    </div>
+
+                    <div
+                        class="
+                            summary-table-row
+                            summary-table-row-secondary
+                        "
+                    >
+                        {render_table_card(
+                            "Milestone Dates",
+                            "milestone_dates",
+                        )}
+
+                        {render_table_card(
+                            "Forecast Metadata",
+                            "forecast_metadata",
+                        )}
+                    </div>
+                </section>
+
+                <!--
+                ====================================================================
+                DETAILED VIEW
+                ====================================================================
+                -->
+
+                <section
+                    id="detailed-view"
+                    class="detailed-view"
+                    aria-label="Detailed forecast report"
+                    hidden
+                >
+                    <div class="detail-navbar-container">
+                        <nav
+                            class="detail-navbar"
+                            aria-label="Detailed report sections"
+                            role="tablist"
+                        >
+                            <button
+                                id="detail-tab-parameters"
+                                class="detail-nav-button is-active"
+                                type="button"
+                                role="tab"
+                                aria-selected="true"
+                                aria-controls="detail-page-parameters"
+                                data-detail-target="parameters"
+                            >
+                                Parameters
+                            </button>
+
+                            <button
+                                id="detail-tab-net_worth"
+                                class="detail-nav-button"
+                                type="button"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="detail-page-net_worth"
+                                data-detail-target="net_worth"
+                            >
+                                Net Worth
+                            </button>
+
+                            <button
+                                id="detail-tab-net_gain_and_loss"
+                                class="detail-nav-button"
+                                type="button"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="detail-page-net_gain_and_loss"
+                                data-detail-target="net_gain_and_loss"
+                            >
+                                Net Gain &amp; Loss
+                            </button>
+
+                            <button
+                                id="detail-tab-account_type"
+                                class="detail-nav-button"
+                                type="button"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="detail-page-account_type"
+                                data-detail-target="account_type"
+                            >
+                                Account Type
+                            </button>
+
+                            <button
+                                id="detail-tab-interest"
+                                class="detail-nav-button"
+                                type="button"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="detail-page-interest"
+                                data-detail-target="interest"
+                            >
+                                Interest
+                            </button>
+
+                            <button
+                                id="detail-tab-milestones"
+                                class="detail-nav-button"
+                                type="button"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="detail-page-milestones"
+                                data-detail-target="milestones"
+                            >
+                                Milestones
+                            </button>
+
+                            <button
+                                id="detail-tab-sankey"
+                                class="detail-nav-button"
+                                type="button"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="detail-page-sankey"
+                                data-detail-target="sankey"
+                            >
+                                Sankey
+                            </button>
+
+                            <button
+                                id="detail-tab-all"
+                                class="detail-nav-button"
+                                type="button"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="detail-page-all"
+                                data-detail-target="all"
+                            >
+                                All
+                            </button>
+
+                            <button
+                                id="detail-tab-transaction_schedule"
+                                class="detail-nav-button"
+                                type="button"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="detail-page-transaction_schedule"
+                                data-detail-target="transaction_schedule"
+                            >
+                                Transaction Schedule
+                            </button>
+
+                            <button
+                                id="detail-tab-last_day"
+                                class="detail-nav-button"
+                                type="button"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="detail-page-last_day"
+                                data-detail-target="last_day"
+                            >
+                                Last Day
+                            </button>
+                        </nav>
+                    </div>
+
+                    <div class="detail-content">
+                        {detailed_pages}
+                    </div>
+                </section>
+            </main>
+
+            <script>
+                (() => {{
+                    "use strict";
+
+                    const summaryView =
+                        document.getElementById("summary-view");
+
+                    const detailedView =
+                        document.getElementById("detailed-view");
+
+                    const viewToggleButton =
+                        document.getElementById("view-toggle-button");
+
+                    const detailNavButtons = Array.from(
+                        document.querySelectorAll(
+                            "[data-detail-target]"
+                        )
+                    );
+
+                    const detailPages = Array.from(
+                        document.querySelectorAll(
+                            "[data-detail-page]"
+                        )
+                    );
+
+                    let showingDetailedView = false;
+
+                    function setDetailedViewVisibility(showDetailed) {{
+                        showingDetailedView = showDetailed;
+
+                        summaryView.hidden = showDetailed;
+                        detailedView.hidden = !showDetailed;
+
+                        viewToggleButton.textContent =
+                            showDetailed
+                                ? "Summary"
+                                : "Detailed View";
+
+                        viewToggleButton.setAttribute(
+                            "aria-expanded",
+                            String(showDetailed)
+                        );
+                    }}
+
+                    function activateDetailPage(pageName) {{
+                        detailNavButtons.forEach((button) => {{
+                            const isActive =
+                                button.dataset.detailTarget === pageName;
+
+                            button.classList.toggle(
+                                "is-active",
+                                isActive
+                            );
+
+                            button.setAttribute(
+                                "aria-selected",
+                                String(isActive)
+                            );
+
+                            button.tabIndex = isActive ? 0 : -1;
+                        }});
+
+                        detailPages.forEach((page) => {{
+                            const isActive =
+                                page.dataset.detailPage === pageName;
+
+                            page.classList.toggle(
+                                "is-active",
+                                isActive
+                            );
+                        }});
+                    }}
+
+                    viewToggleButton.addEventListener(
+                        "click",
+                        () => {{
+                            setDetailedViewVisibility(
+                                !showingDetailedView
+                            );
+                        }}
+                    );
+
+                    detailNavButtons.forEach((button, index) => {{
+                        button.addEventListener("click", () => {{
+                            activateDetailPage(
+                                button.dataset.detailTarget
+                            );
+                        }});
+
+                        button.addEventListener(
+                            "keydown",
+                            (event) => {{
+                                if (
+                                    event.key !== "ArrowLeft" &&
+                                    event.key !== "ArrowRight"
+                                ) {{
+                                    return;
+                                }}
+
+                                event.preventDefault();
+
+                                const direction =
+                                    event.key === "ArrowRight"
+                                        ? 1
+                                        : -1;
+
+                                const nextIndex =
+                                    (
+                                        index +
+                                        direction +
+                                        detailNavButtons.length
+                                    ) % detailNavButtons.length;
+
+                                const nextButton =
+                                    detailNavButtons[nextIndex];
+
+                                activateDetailPage(
+                                    nextButton.dataset.detailTarget
+                                );
+
+                                nextButton.focus();
+                            }}
+                        );
+                    }});
+
+                    /*
+                    Initial page state:
+                        - Summary is visible.
+                        - Detailed view is hidden.
+                        - Parameters is the selected detailed page.
+                    */
+                    activateDetailPage("parameters");
+                    setDetailedViewVisibility(false);
+                }})();
+            </script>
         </body>
         </html>
         """
-        )
 
-        with open(html_output_path, "w") as f:
-            f.write(html_body)
-        log_in_color(
-            logger,
-            "green",
-            "info",
-            "Finished writing single forecast report to " + str(html_output_path),
-        )
-        return html_output_path
+        return html
 
     # def show_plan(self, forecast_set: ForecastSetInitialConditions):
     #     raise NotImplementedError

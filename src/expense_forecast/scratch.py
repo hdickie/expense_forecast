@@ -508,13 +508,23 @@ def get_post_net_worth_0_M():
 
     return M
 
+def fuck_off_to_spain(start_date : date, end_date : date) -> LineItemSet:
+
+    L = LineItemSet()
+
+    return L
+
 if __name__ == '__main__':
 
     # action = 'near term'
     # action = 'start of RN life'
     # action = 'net worth 0 after 18 months of RN car life'
-    action = 'test approximate case'
+    # action = 'test approximate case'
     # action = 'inspect'
+
+    # action = 'I just won the lottery'
+
+    action = 'example single forecast report'
 
     if action == 'near term':
 
@@ -522,7 +532,7 @@ if __name__ == '__main__':
         end_date = start_date + datetime.timedelta(days=365*2)
 
         A = get_IRL_current_A() #TODO this could take kwargs
-        B_invariant = get_B_invariant()
+        B_invariant = get_B_invariant(15, 80)
         M = getComprehensiveMemoRules() 
 
         user_vars = getUserVars()
@@ -891,7 +901,12 @@ if __name__ == '__main__':
         F = ForecastHandler()
         R = F.runForecastApproximate(IO, MS, include_debug_columns=True)
         R.writeToJSONFile(str(R.unique_id)+'.json')
-        F.generateHTMLReport(R)
+        
+        R.writeToJSONFile(str(R.unique_id)+'.json')
+        html_report = F.generateHTMLreport(R)
+
+        with open('test_report.html', "w") as f:
+            f.write(html_report)
     
     elif action == 'inspect':
         pass
@@ -912,7 +927,149 @@ if __name__ == '__main__':
         # Coast FIRE (working part time)
         # retiring in California
         # retiring in Portugal
-        # retiring in Spain
+        # retiring in Spain ; how often can I fly home ???
         # retiring with one paid-off home
         # retiring with rental income
         # delaying Social Security versus claiming early
+
+    elif action == 'I just won the lottery':
+
+        start_date = date(2026,7,4)
+        end_date = start_date + datetime.timedelta(days=365*1)
+
+
+        # I just won 2.5 million dollars
+
+        A = AccountSet()
+        A.createAccount(name='Checking',balance=2_500_000 - 3871.98 - 6566.49 - 20_000, #overestimate loans bc i won the lottery who cares
+                        min_balance=0,max_balance=float('Inf'),
+                        account_type='checking',
+                        primary_checking_ind=True)
+        
+        B_invariant = get_B_invariant(food_daily_amount=50, gas_semiweekly_amount=80)
+        M = MemoRuleSet() 
+        M.addMemoRule(memo_regex='.*',
+                account_from='Checking',
+                account_to=None,
+                transaction_priority=1)
+
+        # Transactions
+        # Take my car to the mechanic and have them fix the doors, come back for it in a week
+        
+        # implement multiply for LineItemSets ?
+        B_all_of_us_fuck_off_to_spain_for_a_week = fuck_off_to_spain()
+
+        
+
+        # Housing
+        # Rent 3 bed / 1 ba sf apartment haight ashbury $6k/month
+        #     bedroom / gym / office / sewing room
+        # use a milestone triggered budget set swap to stop paying for storage, and start paying this rent
+
+        # Work
+        # Not working!!!
+
+        B = B_invariant
+
+        IO = ExpenseForecastInitialConditions(start_date, end_date, A, B, M)
+
+        MS = MilestoneSet()
+
+        F = ForecastHandler()
+        R = F.runForecastApproximate(IO, MS, include_debug_columns=True)
+        R.writeToJSONFile(str(R.unique_id)+'.json')
+        F.generateHTMLReport(R)
+
+ 
+
+        start_date = date(2026,7,4)
+        end_date = start_date + datetime.timedelta(days=365*1)
+
+
+        # I just won 2.5 million dollars
+
+        A = AccountSet()
+        A.createAccount(name='Chase',balance=2_500_000 - 3871.98 - 6566.49 - 20_000, #overestimate loans bc i won the lottery who cares
+                        min_balance=0,max_balance=float('Inf'),
+                        account_type='checking',
+                        primary_checking_ind=True)
+        A.createAccount(name='Savings',balance=274.69 + 50.52,
+                        min_balance=0,max_balance=float('Inf'),
+                        account_type='checking',
+                        primary_checking_ind=False)
+        
+        B_invariant = get_B_invariant(food_daily_amount=50, gas_semiweekly_amount=100)
+        M = MemoRuleSet() 
+        M.addMemoRule(memo_regex='.*',
+                account_from='Chase',
+                account_to=None,
+                transaction_priority=1)
+
+        # Housing
+
+        # Work
+
+        B = B_invariant
+
+        IO = ExpenseForecastInitialConditions(start_date, end_date, A, B, M)
+
+        MS = MilestoneSet()
+
+        F = ForecastHandler()
+        R = F.runForecastApproximate(IO, MS, include_debug_columns=True)
+        R.writeToJSONFile(str(R.unique_id)+'.json')
+        html_report = F.generateHTMLreport(R)
+
+        with open('test_report.html', "w") as f:
+            f.write(html_report)
+
+    elif action == 'example single forecast report':
+        
+        start_date = date(2026,7,4)
+        end_date = start_date + datetime.timedelta(days=90)
+
+        A = get_IRL_current_A() #TODO this could take kwargs
+        B_invariant = get_B_invariant(15, 80)
+        M = getComprehensiveMemoRules() 
+
+        user_vars = getUserVars()
+
+        ### Dimensions
+        # CC Payments
+        B_keep_cc_payed_off = getHardCodedCreditCardPayments(user_vars)
+
+        # Housing
+        B_live_in_car = LineItemSet() #TODO maybe increase cost of gas ?
+
+        # Work
+        B_CNA = LineItemSet()
+        B_CNA.addLineItem(start_date=user_vars["CNA_first_paycheck_date"], 
+                                      end_date=user_vars["start_nursing_school_stop_working_full_time_date"], 
+                                      priority=1,
+                    interval='semiweekly',amount=user_vars["CNA_paycheck_amount"],
+                    memo='CNA income Eugene',income_flag=True, 
+                    deferrable=False, partial_payment_allowed=False)
+        
+        #assume a 30 day gap i nemployment at least
+        B_CNA.addLineItem(start_date=user_vars["start_nursing_school_stop_working_full_time_date"] + datetime.timedelta(days=30), 
+                                      end_date=user_vars["nursing_school_end_date"], 
+                                      priority=1,
+                    interval='semiweekly',
+                    amount=user_vars["CNA_paycheck_one_shift_amount"] ,
+                    memo='CNA income Los Angeles',income_flag=True, 
+                    deferrable=False, partial_payment_allowed=False)
+
+        B = B_invariant + B_keep_cc_payed_off + B_live_in_car + B_CNA
+
+        IO = ExpenseForecastInitialConditions(start_date, end_date, A, B, M)
+
+        MS = MilestoneSet()
+
+        F = ForecastHandler()
+        R = F.runForecast(IO, MS, include_debug_columns=True)
+        R.writeToJSONFile(str(R.unique_id)+'.json')
+        
+        html_report = F.generateHTMLreport(R)
+
+        with open('test_report.html', "w") as f:
+            f.write(html_report)
