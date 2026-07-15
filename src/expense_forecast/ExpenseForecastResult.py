@@ -19,6 +19,7 @@ from pathlib import Path
 from expense_forecast.ExpenseForecastInitialConditions import ExpenseForecastInitialConditions
 import pandas as pd
 import jsonpickle
+import datetime
 from datetime import date
 from expense_forecast.AccountSet import AccountSet
 from expense_forecast.LineItemSet import LineItemSet
@@ -287,7 +288,7 @@ class ExpenseForecastResult:
 
         @interface-report: show
         """
-        allowed_kwargs = ['confirmed_df', 'deferred_df', 'skipped_df', 'milestone_set', 'milestone_results', 'approximate_flag']
+        allowed_kwargs = ['confirmed_df', 'deferred_df', 'skipped_df', 'milestone_set', 'milestone_results', 'approximate_flag', 'policy_results']
         for key in kwargs:
             if key not in allowed_kwargs:
                 raise TypeError(f"Unexpected keyword argument '{key}'")
@@ -313,6 +314,8 @@ class ExpenseForecastResult:
         self.milestone_set = kwargs.get('milestone_set', None)
 
         self.milestone_results = kwargs.get('milestone_results', None)
+
+        self.policy_results = kwargs.get('policy_results', {})
 
         self.approximate_flag = kwargs.get('approximate_flag', False)
         if self.approximate_flag:
@@ -601,6 +604,10 @@ class ExpenseForecastResult:
             "confirmed_df": cls._dataframe_from_json_data(data.get("confirmed_df")),
             "deferred_df": cls._dataframe_from_json_data(data.get("deferred_df")),
             "skipped_df": cls._dataframe_from_json_data(data.get("skipped_df")),
+            "policy_results": cls._object_from_json_data(
+                data.get("policy_results")
+            ) or {},
+            "approximate_flag": data.get("approximate_flag", False),
         }
         if milestone_set is not None or milestone_results is not None:
             optional_kwargs["milestone_set"] = milestone_set
@@ -609,6 +616,12 @@ class ExpenseForecastResult:
         return cls(
             initial_conditions=initial_conditions,
             forecast_df=cls._dataframe_from_json_data(data["forecast_df"]),
+            start_ts=datetime.datetime.fromisoformat(data["start_ts"])
+            if data.get("start_ts")
+            else datetime.datetime.now(),
+            end_ts=datetime.datetime.fromisoformat(data["end_ts"])
+            if data.get("end_ts")
+            else datetime.datetime.now(),
             **optional_kwargs,
         )
 
@@ -819,6 +832,10 @@ class ExpenseForecastResult:
             "skipped_df": self._dataframe_to_json_data(self.skipped_df),
             "milestone_set": self._object_to_json_data(self.milestone_set),
             "milestone_results": self._object_to_json_data(self.milestone_results),
+            "policy_results": self._object_to_json_data(self.policy_results),
+            "start_ts": self.start_ts.isoformat(),
+            "end_ts": self.end_ts.isoformat(),
+            "approximate_flag": self.approximate_flag,
         }
         return data
 
@@ -962,6 +979,18 @@ class ExpenseForecastResult:
         @interface-report: show
         """
         target_path = Path(path_to_json)
+        if target_path.is_dir():
+            # Older releases treated the supplied path as a directory and put
+            # Forecast_<id>.json inside it. Preserve that legacy output while
+            # freeing the exact path for the file the caller requested.
+            legacy_path = target_path.with_name(target_path.name + ".legacy")
+            suffix = 1
+            while legacy_path.exists():
+                legacy_path = target_path.with_name(
+                    f"{target_path.name}.legacy.{suffix}"
+                )
+                suffix += 1
+            target_path.rename(legacy_path)
         target_path.parent.mkdir(parents=True, exist_ok=True)
         target_path.write_text(self.to_json_string())
         return True

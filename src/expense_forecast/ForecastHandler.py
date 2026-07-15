@@ -32,6 +32,8 @@ from expense_forecast.MemoRuleSet import MemoRuleSet
 from expense_forecast.MilestoneSet import MilestoneSet
 from expense_forecast.ExpenseForecastInitialConditions import ExpenseForecastInitialConditions
 from expense_forecast.ExpenseForecastResult import ExpenseForecastResult
+from expense_forecast.ForecastPolicySet import ForecastPolicySet
+from expense_forecast.MinimumCheckingBalancePolicy import MinimumCheckingBalancePolicy
 
 import hashlib
 import hashlib
@@ -40,6 +42,7 @@ from datetime import date
 from decimal import Decimal
 from typing import Any
 import datetime
+import calendar
 from time import perf_counter
 import os
 import tempfile
@@ -66,6 +69,14 @@ import pandas as pd
 import re
 import copy
 from expense_forecast.generate_date_sequence import generate_date_sequence
+from expense_forecast.SurplusDebtPaymentPolicy import SurplusDebtPaymentPolicy
+from expense_forecast.InvestmentPolicies import (
+    FixedMonthlyInvestmentPolicy,
+    IncomePercentageInvestmentPolicy,
+    PeriodicInvestmentContributionCapPolicy,
+    SurplusInvestmentPolicy,
+)
+from expense_forecast.ForecastPolicy import ForecastPolicyError
 from matplotlib.pyplot import figure
 
 try:
@@ -194,6 +205,10 @@ class ForecastHandler:
         include_debug_columns=False,
     ) -> ExpenseForecastResult:
         milestone_set = milestone_set or getattr(IO, "milestone_set", MilestoneSet())
+        if getattr(IO, "policy_set", None):
+            return cls._runForecastWithPolicies(
+                IO, milestone_set, include_debug_columns, approximate=False
+            )
         transitions = getattr(IO, "transitions", None)
         if transitions:
             return cls._runForecastWithScenarioTransitions(
@@ -380,7 +395,7 @@ class ForecastHandler:
     def _investment_transfer_directive(
         account_set, account_from, account_to, amount
     ):
-        if account_to == "ALL_LOANS":
+        if str(account_to).startswith("ALL_"):
             return None
         account_from_obj = account_set._get_account_by_name(account_from)
         account_to_obj = account_set._get_account_by_name(account_to)
@@ -402,6 +417,10 @@ class ForecastHandler:
         include_debug_columns=False,
     ) -> ExpenseForecastResult:
         milestone_set = milestone_set or getattr(IO, "milestone_set", MilestoneSet())
+        if getattr(IO, "policy_set", None):
+            return cls._runForecastWithPolicies(
+                IO, milestone_set, include_debug_columns, approximate=True
+            )
         transitions = getattr(IO, "transitions", None)
         if transitions:
             return cls._runForecastWithScenarioTransitions(
@@ -437,6 +456,15 @@ class ForecastHandler:
         memo_rule_set = copy.deepcopy(IO.initial_memo_rule_set)
         output_dates = cls._approximate_output_dates(IO.start_date, IO.end_date)
         schedule = IO.initial_budget_set.getLineItemSchedule().copy()
+        policy_activation_date = getattr(IO, "_policy_activation_date", None)
+        if policy_activation_date is not None and not schedule.empty:
+            schedule_dates = schedule["Date"].apply(cls._normalize_date_value)
+            schedule = schedule.loc[
+                ~(
+                    ((schedule["Priority"] == 1) & (schedule_dates <= policy_activation_date))
+                    | ((schedule["Priority"] > 1) & (schedule_dates < policy_activation_date))
+                )
+            ].copy()
         if not schedule.empty:
             schedule["Date"] = schedule["Date"].apply(cls._normalize_date_value)
             exclude_schedule_through = getattr(
@@ -628,7 +656,7 @@ class ForecastHandler:
                 account_to = rule.account_to
                 investment_endpoints = {
                     endpoint for endpoint in (account_from, account_to)
-                    if endpoint not in [None, "", "None", "ALL_LOANS"]
+                    if endpoint not in [None, "", "None"] and not str(endpoint).startswith("ALL_")
                 }
                 for endpoint in investment_endpoints:
                     endpoint_account = account_set._get_account_by_name(endpoint)
@@ -636,7 +664,7 @@ class ForecastHandler:
                         accrue_investment_to(
                             endpoint_account, txn["Date"], directives
                         )
-                if account_to == "ALL_LOANS":
+                if str(account_to).startswith("ALL_LOANS"):
                     for account in account_set.accounts:
                         if account.account_type == "loan":
                             accrue_loan_to(account, txn["Date"], directives)
@@ -715,7 +743,7 @@ class ForecastHandler:
                     directives.append(investment_transfer_directive)
                 account_to_obj = (
                     None
-                    if account_to == "ALL_LOANS"
+                    if str(account_to).startswith("ALL_")
                     else account_set._get_account_by_name(account_to)
                 )
                 if account_to_obj is not None and account_to_obj.account_type == "credit":
@@ -1031,8 +1059,14 @@ class ForecastHandler:
 
         @interface-report: show
         """
-        m_income = re.search(r"income", confirmed_row.Memo)
-        income_flag = m_income is not None
+        # Scheduled transactions carry an explicit flag.  Memo inspection is
+        # retained only for legacy callers that construct confirmed rows by
+        # hand without the column.
+        if "Income_Flag" in confirmed_row.index and not pd.isna(confirmed_row["Income_Flag"]):
+            income_flag = bool(confirmed_row["Income_Flag"])
+        else:
+            m_income = re.search(r"income", str(confirmed_row.Memo), re.IGNORECASE)
+            income_flag = m_income is not None
         # if m_income is not None:
         #     log_in_color(logger, 'yellow', 'debug',
         #                  'transaction flagged as income: ' + m_income.group(0), 3)
@@ -1107,7 +1141,7 @@ class ForecastHandler:
 
         # Memo handling when Account_To is not 'ALL_LOANS'
         if (
-            memo_rule.account_to != "ALL_LOANS"
+            not str(memo_rule.account_to).startswith("ALL_")
             and investment_transfer_directive is None
         ):
             if not cls._is_empty_account_endpoint(memo_rule.account_from):
@@ -1180,7 +1214,7 @@ class ForecastHandler:
 
                 # Handle additional loan payments
                 if (
-                    memo_rule.account_to == "ALL_LOANS"
+                    str(memo_rule.account_to).startswith("ALL_LOANS")
                     and account_row.Name.split(":")[0] != memo_rule.account_from
                 ):
 
@@ -1306,7 +1340,7 @@ class ForecastHandler:
             forecast_df.loc[
                 row_sel_vec, "Memo Directives"
             ] += f"; ADDTL CC PAYMENT ({account_to} -${amount}) "
-        elif account_to_type == "loan" or account_to == "ALL_LOANS":
+        elif account_to_type == "loan" or str(account_to).startswith("ALL_LOANS"):
             forecast_df.loc[
                 row_sel_vec, "Memo Directives"
             ] += f"; ADDTL LOAN PAYMENT ({account_from} -${amount}) "
@@ -8074,6 +8108,23 @@ class ForecastHandler:
                     )
 
                 else:
+                    # Investment transfers do not alter debt billing state.  The
+                    # optimization path can therefore propagate their account
+                    # deltas directly; subsequent daily investment-return
+                    # processing continues from the adjusted balances.
+                    if (
+                        account_types_set.issubset({"checking", "investment"})
+                        or account_types_set.issubset({"checking", "loan"})
+                        or account_types_set.issubset({"checking", "credit"})
+                    ):
+                        for _, delta_row in accounts_with_base_name_and_delta.iterrows():
+                            account_name = delta_row["Name"]
+                            delta = delta_row["Delta"]
+                            if account_name in future_rows_only_df.columns:
+                                future_rows_only_df[account_name] = (
+                                    future_rows_only_df[account_name] + float(delta)
+                                )
+                        continue
                     log_stack_depth -= 1
                     # log_in_color(
                     #     logger,
@@ -8083,7 +8134,10 @@ class ForecastHandler:
                     #     + " EXIT _propagateOptimizationTransactionsIntoTheFuture",
                     #     log_stack_depth,
                     # )
-                    raise ValueError("Undefined case in process_transactions")
+                    raise ValueError(
+                        "Undefined account-type combination in transaction propagation: "
+                        f"{sorted(account_types_set)}"
+                    )
 
         if not future_rows_only_df.empty:
 
@@ -12612,10 +12666,10 @@ class ForecastHandler:
 
     @staticmethod
     def get_last_row_first_row_delta(df: pd.DataFrame, column_name: str) -> Decimal:
-        return Decimal(
-            df[column_name].iat[-1]
-            - df[column_name].iat[0]
-        )
+        # Decimal does not accept NumPy scalar types directly.
+        return Decimal(str(
+            df[column_name].iat[-1] - df[column_name].iat[0]
+        ))
 
     @staticmethod
     def get_time_elapsed_string(start_ts, end_ts):
@@ -12802,16 +12856,25 @@ class ForecastHandler:
         credit_transaction_indices = []
         loan_transaction_indices = []
         for transaction_index, transaction in transaction_schedule.iterrows():
-            memo_rule = initial_memo_rule_set.findMatchingMemoRule(
-                transaction["Memo"],
-                transaction["Priority"],
-            )
+            try:
+                memo_rule = initial_memo_rule_set.findMatchingMemoRule(
+                    transaction["Memo"],
+                    transaction["Priority"],
+                )
+            except ValueError:
+                # Policy-generated transfers are intentionally absent from the
+                # caller's configured MemoRuleSet. They remain visible in the
+                # complete transaction table, but cannot be classified using
+                # the original rules here.
+                if str(transaction["Memo"]).startswith("POLICY "):
+                    continue
+                raise
             destination_type = account_types.get(memo_rule.account_to)
             if destination_type == "credit":
                 credit_transaction_indices.append(transaction_index)
             elif (
                 destination_type == "loan"
-                or memo_rule.account_to == "ALL_LOANS"
+                or str(memo_rule.account_to).startswith("ALL_LOANS")
             ):
                 loan_transaction_indices.append(transaction_index)
 
@@ -14689,6 +14752,20 @@ class ForecastHandler:
 
         return html
 
+    @classmethod
+    def generateHTMLReport(cls, E: ExpenseForecastResult, output_path=None):
+        """Compatibility wrapper that optionally writes the generated report."""
+        html = cls.generateHTMLreport(E)
+        if output_path is None:
+            target_path = Path(f"Forecast_{E.unique_id}.html")
+        else:
+            target_path = Path(output_path)
+            if target_path.suffix.lower() not in {".html", ".htm"}:
+                target_path = target_path / f"Forecast_{E.unique_id}.html"
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        target_path.write_text(html)
+        return str(target_path)
+
     # def show_plan(self, forecast_set: ForecastSetInitialConditions):
     #     raise NotImplementedError
 
@@ -14740,6 +14817,512 @@ class ForecastHandler:
                 )
                 AccountSet._sync_debt_account_from_billing_state(account)
         return account_set
+
+    @classmethod
+    def _materialize_cash_allocation_policies(cls, IO):
+        """Translate executable policies into ordinary prioritized transactions."""
+        policies = copy.deepcopy(IO.policy_set)
+        budget = copy.deepcopy(IO.initial_budget_set)
+        rules = copy.deepcopy(IO.initial_memo_rule_set)
+        schedule = IO.initial_budget_set.getLineItemSchedule()
+        primary_checking = next(
+            (
+                account for account in IO.initial_account_set.accounts
+                if account.account_type == "checking" and account.primary_checking_ind
+            ),
+            None,
+        )
+        if primary_checking is None:
+            return IO
+
+        generated = False
+        generated_contributions = []
+        caps = [
+            policy for policy in policies.policies
+            if isinstance(policy, PeriodicInvestmentContributionCapPolicy)
+        ]
+
+        def period_key(day, period):
+            return (day.year, day.month) if period == "month" else (day.year,)
+
+        explicit_contributions = []
+        if not schedule.empty:
+            for _, row in schedule.iterrows():
+                try:
+                    rule = rules.findMatchingMemoRule(row["Memo"], row["Priority"])
+                except Exception:
+                    continue
+                target = rule.account_to
+                account = next(
+                    (a for a in IO.initial_account_set.accounts if a.name == target),
+                    None,
+                )
+                if (
+                    account is not None and account.account_type == "investment"
+                    and rule.account_from == primary_checking.name
+                ):
+                    explicit_contributions.append(
+                        (cls._normalize_date_value(row["Date"]), int(row["Priority"]),
+                         target, float(row["Amount"]))
+                    )
+
+        def add_once(policy, day, amount, account_from, account_to, suffix):
+            nonlocal generated
+            requested = float(amount)
+            policy._requested = getattr(policy, "_requested", 0.0) + requested
+            capped = 0.0
+            applicable_caps = [
+                cap for cap in caps
+                if cap.account_name == account_to and cap.priority < policy.priority
+            ]
+            if applicable_caps:
+                allowances = []
+                for cap in applicable_caps:
+                    key = period_key(day, cap.period)
+                    used = sum(
+                        value for contribution_day, contribution_priority, target, value
+                        in explicit_contributions
+                        if target == account_to and contribution_priority < policy.priority
+                        and period_key(contribution_day, cap.period) == key
+                    ) + sum(
+                        value for contribution_day, contribution_priority, target, value
+                        in generated_contributions
+                        if target == account_to and contribution_priority < policy.priority
+                        and period_key(contribution_day, cap.period) == key
+                    )
+                    allowances.append(max(0.0, float(cap.limit) - used))
+                amount = min(requested, min(allowances))
+                capped = requested - amount
+                policy._capped = getattr(policy, "_capped", 0.0) + capped
+            if float(amount) <= 0:
+                return
+            memo = f"POLICY {policy.policy_key} {suffix} {day.isoformat()}"
+            budget.addLineItem(
+                start_date=day,
+                end_date=day,
+                priority=policy.priority,
+                interval="once",
+                amount=float(amount),
+                memo=memo,
+                income_flag=False,
+                deferrable=False,
+                partial_payment_allowed=True,
+            )
+            rules.addMemoRule(memo, account_from, account_to, policy.priority)
+            if account_to and any(
+                account.name == account_to and account.account_type == "investment"
+                for account in IO.initial_account_set.accounts
+            ):
+                generated_contributions.append(
+                    (day, policy.priority, account_to, float(amount))
+                )
+            generated = True
+
+        for policy in sorted(policies.policies, key=lambda candidate: candidate.priority):
+            if isinstance(policy, FixedMonthlyInvestmentPolicy):
+                cursor = date(IO.start_date.year, IO.start_date.month, 1)
+                while cursor <= IO.end_date:
+                    day_number = min(
+                        policy.day,
+                        calendar.monthrange(cursor.year, cursor.month)[1],
+                    )
+                    contribution_date = cursor.replace(day=day_number)
+                    if IO.start_date <= contribution_date <= IO.end_date:
+                        add_once(
+                            policy, contribution_date, policy.amount,
+                            primary_checking.name, policy.account_name, "fixed",
+                        )
+                    cursor = (cursor.replace(day=28) + datetime.timedelta(days=4)).replace(day=1)
+            elif isinstance(policy, IncomePercentageInvestmentPolicy):
+                if schedule.empty:
+                    continue
+                eligible = schedule.loc[
+                    schedule["Income_Flag"].astype(bool)
+                    & (schedule["Priority"] < policy.priority)
+                ].copy()
+                if eligible.empty:
+                    continue
+                eligible["Date"] = eligible["Date"].apply(cls._normalize_date_value)
+                for income_date, rows in eligible.groupby("Date"):
+                    add_once(
+                        policy,
+                        income_date,
+                        rows["Amount"].sum() * policy.percentage,
+                        primary_checking.name,
+                        policy.account_name,
+                        "percentage contribution",
+                    )
+            elif isinstance(policy, SurplusInvestmentPolicy):
+                for contribution_date in generate_date_sequence(
+                    IO.start_date, (IO.end_date - IO.start_date).days, "daily"
+                ):
+                    add_once(
+                        policy, contribution_date, 10**15,
+                        f"CHECKING_ABOVE:{policy.checking_threshold}",
+                        policy.account_name, "surplus",
+                    )
+            elif isinstance(policy, SurplusDebtPaymentPolicy):
+                destination = (
+                    "ALL_LOANS" if policy.debt_type == "loan"
+                    else "ALL_CREDIT_CARDS"
+                )
+                if policy.strategy == "snowball":
+                    destination += "_SNOWBALL"
+                for payment_date in generate_date_sequence(
+                    IO.start_date, (IO.end_date - IO.start_date).days, "daily"
+                ):
+                    add_once(
+                        policy, payment_date, 10**15,
+                        primary_checking.name, destination, "surplus",
+                    )
+
+        if not generated:
+            return IO
+        rebuilt = ExpenseForecastInitialConditions(
+            start_date=IO.start_date,
+            end_date=IO.end_date,
+            account_set=IO.initial_account_set,
+            budget_set=budget,
+            memo_rule_set=rules,
+            milestone_set=IO.milestone_set,
+            transitions=IO.transitions,
+            policy_set=ForecastPolicySet(),
+        )
+        rebuilt.policy_set = policies
+        rebuilt.unique_id = IO.unique_id
+        return rebuilt
+
+    @classmethod
+    def _summarize_cash_policy_results(cls, policy_set, result):
+        summaries = {}
+        confirmed = result.confirmed_df
+        for policy in policy_set.policies:
+            summary = {
+                "priority": policy.priority,
+                "status": "completed",
+                "requested": 0.0,
+                "executed": 0.0,
+                "capped": 0.0,
+                "missed": 0,
+                "debt_paid": 0.0,
+            }
+            summary["requested"] = float(getattr(policy, "_requested", 0.0))
+            summary["capped"] = float(getattr(policy, "_capped", 0.0))
+            if confirmed is not None and not confirmed.empty:
+                matches = confirmed["Memo"].astype(str).str.startswith(
+                    f"POLICY {policy.policy_key} "
+                )
+                executed = pd.to_numeric(
+                    confirmed.loc[matches, "Amount"], errors="coerce"
+                ).sum()
+                summary["executed"] = float(executed)
+                if isinstance(policy, SurplusDebtPaymentPolicy):
+                    summary["debt_paid"] = float(executed)
+            expected = max(0.0, summary["requested"] - summary["capped"])
+            if isinstance(
+                policy, (FixedMonthlyInvestmentPolicy, IncomePercentageInvestmentPolicy)
+            ) and summary["executed"] + float(ROUNDING_ERROR_TOLERANCE) < expected:
+                shortfall = expected - summary["executed"]
+                summary["status"] = "unmet"
+                summary["missed"] = 1
+                message = (
+                    f"Policy {policy.policy_key} was short by ${shortfall:.2f}"
+                )
+                if policy.on_unmet == "fail":
+                    raise ForecastPolicyError(message)
+                logger.warning(message)
+            elif summary["capped"] > 0:
+                summary["status"] = "capped"
+            summaries[policy.policy_key] = summary
+        return summaries
+
+    @classmethod
+    def _runForecastWithPolicies(
+        cls, IO, milestone_set, include_debug_columns=False, approximate=False
+    ):
+        """Apply configured forecast policies without changing public runners."""
+        configured_IO = copy.deepcopy(IO)
+        IO = cls._materialize_cash_allocation_policies(copy.deepcopy(IO))
+        policy = IO.policy_set.get(MinimumCheckingBalancePolicy)
+
+        if policy is None:
+            policy_set = copy.deepcopy(IO.policy_set)
+            result = run_io = copy.deepcopy(IO)
+            run_io.policy_set = ForecastPolicySet()
+            runner = cls.runForecastApproximate if approximate else cls.runForecast
+            result = runner(
+                run_io, milestone_set, include_debug_columns=include_debug_columns
+            )
+            result.initial_conditions = configured_IO
+            result.policy_results = cls._summarize_cash_policy_results(
+                policy_set, result
+            )
+            return result
+
+        original_IO = configured_IO
+        primary_checking = [
+            account
+            for account in IO.initial_account_set.accounts
+            if account.account_type == "checking"
+            and account.primary_checking_ind
+        ]
+        if len(primary_checking) != 1:
+            raise ValueError(
+                "MinimumCheckingBalancePolicy requires exactly one primary checking account"
+            )
+        checking = primary_checking[0]
+        target = float(policy.target)
+
+        def run_without_policy(io, use_approximate):
+            io.policy_set = ForecastPolicySet()
+            runner = cls.runForecastApproximate if use_approximate else cls.runForecast
+            return runner(
+                io,
+                milestone_set,
+                include_debug_columns=True,
+            )
+
+        if checking.min_balance >= target:
+            result = run_without_policy(copy.deepcopy(IO), approximate)
+            result.initial_conditions = original_IO
+            result.unique_id = original_IO.unique_id + ("_A" if approximate else "")
+            result.policy_results = cls._summarize_cash_policy_results(
+                IO.policy_set, result
+            )
+            result.policy_results[policy.policy_name] = {
+                    "status": "already_enforced",
+                    "account_name": checking.name,
+                    "target": policy.target,
+                    "activation_date": IO.start_date,
+                }
+            return result
+
+        def priority_one_io(source_io):
+            result = copy.deepcopy(source_io)
+            result.policy_set = ForecastPolicySet()
+            result.initial_proposed_df = result.initial_proposed_df.loc[
+                result.initial_proposed_df["Priority"] < policy.priority
+            ].copy()
+            result.initial_deferred_df = result.initial_deferred_df.head(0).copy()
+            result.initial_skipped_df = result.initial_skipped_df.head(0).copy()
+            result.initial_budget_set = LineItemSet(
+                [
+                    copy.deepcopy(item)
+                    for item in source_io.initial_budget_set.line_items
+                    if item.priority < policy.priority
+                ],
+                scenario_selections=source_io.initial_budget_set.scenario_selections,
+                scenario_dimensions={
+                    dimension_name: {
+                        choice_name: LineItemSet(
+                            [
+                                copy.deepcopy(item)
+                                for item in choice.line_items
+                                if item.priority < policy.priority
+                            ]
+                        )
+                        for choice_name, choice in choices.items()
+                    }
+                    for dimension_name, choices in source_io.initial_budget_set.scenario_dimensions.items()
+                },
+            )
+            return result
+
+        exact_discovery = run_without_policy(priority_one_io(IO), False)
+        discovery_dates = exact_discovery.forecast_df["Date"].apply(
+            cls._normalize_date_value
+        )
+        balances = pd.to_numeric(
+            exact_discovery.forecast_df[checking.name], errors="coerce"
+        )
+        suffix_minimum = balances.iloc[::-1].cummin().iloc[::-1]
+        qualifying = exact_discovery.forecast_df.loc[
+            suffix_minimum >= float(target)
+        ]
+
+        policy_result = {
+            "status": "not_achieved",
+            "account_name": checking.name,
+            "target": policy.target,
+            "activation_date": None,
+        }
+        proposed = IO.initial_proposed_df.copy()
+        if qualifying.empty:
+            logger.warning(
+                "Primary checking never established the requested stable minimum of %s",
+                target,
+            )
+            if policy.on_unmet == "fail":
+                raise ForecastPolicyError(
+                    "Minimum checking balance policy never established its reserve"
+                )
+            deferrable = proposed["Deferrable"].astype(bool) if not proposed.empty else []
+            exact_discovery.deferred_df = proposed.loc[deferrable].copy()
+            exact_discovery.skipped_df = proposed.loc[
+                ~deferrable if len(proposed) else []
+            ].copy()
+            exact_discovery.initial_conditions = original_IO
+            exact_discovery.unique_id = original_IO.unique_id
+            exact_discovery.policy_results = cls._summarize_cash_policy_results(
+                IO.policy_set, exact_discovery
+            )
+            exact_discovery.policy_results[policy.policy_name] = policy_result
+            if approximate:
+                approximate_result = run_without_policy(priority_one_io(IO), True)
+                approximate_result.deferred_df = exact_discovery.deferred_df
+                approximate_result.skipped_df = exact_discovery.skipped_df
+                approximate_result.initial_conditions = original_IO
+                approximate_result.unique_id = original_IO.unique_id + "_A"
+                approximate_result.policy_results = cls._summarize_cash_policy_results(
+                    IO.policy_set, approximate_result
+                )
+                approximate_result.policy_results[policy.policy_name] = policy_result
+                return approximate_result
+            return exact_discovery
+
+        activation_row = qualifying.iloc[0]
+        activation_date = cls._normalize_date_value(activation_row["Date"])
+        policy_result.update(status="activated", activation_date=activation_date)
+
+        activation_accounts = cls._account_set_from_forecast_row(
+            IO.initial_account_set, activation_row
+        )
+        activation_checking = next(
+            account
+            for account in activation_accounts.accounts
+            if account.account_type == "checking" and account.primary_checking_ind
+        )
+        activation_checking.min_balance = target
+
+        flattened_milestones = cls._flatten_milestone_results(
+            exact_discovery.milestone_results
+        )
+        current_budget = copy.deepcopy(IO.initial_budget_set)
+        remaining_transitions = []
+        for transition in IO.transitions.transitions:
+            achieved = flattened_milestones.get(transition.milestone)
+            achieved = None if achieved is None else cls._normalize_date_value(achieved)
+            if achieved is not None and achieved <= activation_date:
+                for dimension_name, choice_name in transition.changes.items():
+                    current_budget = current_budget.replace_scenario_choice(
+                        dimension_name, choice_name
+                    )
+            else:
+                remaining_transitions.append(copy.deepcopy(transition))
+
+        from expense_forecast.ConditionalScenarioTransitionSet import (
+            ConditionalScenarioTransitionSet,
+        )
+
+        tail_IO = ExpenseForecastInitialConditions(
+            # The optimizer intentionally does not process P2 on its first row
+            # because it needs a preceding state for propagation. Seed one
+            # internal row and discard it when stitching the public result.
+            start_date=activation_date - datetime.timedelta(days=1),
+            end_date=IO.end_date,
+            account_set=activation_accounts,
+            budget_set=current_budget,
+            memo_rule_set=IO.initial_memo_rule_set,
+            milestone_set=milestone_set,
+            transitions=ConditionalScenarioTransitionSet(remaining_transitions),
+            policy_set=ForecastPolicySet(),
+        )
+        tail_confirmed_dates = tail_IO.initial_confirmed_df["Date"].apply(
+            cls._normalize_date_value
+        )
+        tail_IO.initial_confirmed_df = tail_IO.initial_confirmed_df.loc[
+            tail_confirmed_dates > activation_date
+        ].copy()
+
+        proposed_dates = proposed["Date"].apply(cls._normalize_date_value)
+        higher_priority = proposed["Priority"] > policy.priority
+        earlier = proposed_dates < activation_date
+        earlier_deferrable = (
+            earlier & higher_priority & proposed["Deferrable"].astype(bool)
+        )
+        tail_eligible = (
+            ((proposed["Priority"] < policy.priority) & (proposed_dates > activation_date))
+            | (higher_priority & ~earlier)
+            | earlier_deferrable
+        )
+        tail_proposed = proposed.loc[tail_eligible].copy()
+        tail_proposed.loc[earlier_deferrable, "Date"] = activation_date
+        tail_IO.initial_proposed_df = tail_proposed
+        tail_IO._policy_activation_date = activation_date
+        if approximate:
+            tail_IO.initial_deferred_df = proposed.loc[earlier_deferrable].copy()
+            tail_IO.initial_deferred_df.loc[:, "Date"] = activation_date
+        pre_activation_skipped = proposed.loc[
+            earlier & higher_priority & ~proposed["Deferrable"].astype(bool)
+        ].copy()
+
+        tail_result = run_without_policy(tail_IO, approximate)
+        display_discovery = (
+            run_without_policy(priority_one_io(IO), True)
+            if approximate
+            else exact_discovery
+        )
+        summary_columns = {
+            "Marginal Interest", "Net Gain", "Net Loss", "Net Worth",
+            "Loan Total", "CC Debt Total", "Liquid Total", "Investment Total",
+        }
+        pre_forecast = display_discovery.forecast_df.drop(
+            columns=list(summary_columns), errors="ignore"
+        )
+        pre_forecast = pre_forecast.loc[
+            pre_forecast["Date"].apply(cls._normalize_date_value) < activation_date
+        ]
+        tail_forecast = tail_result.forecast_df.drop(
+            columns=list(summary_columns), errors="ignore"
+        )
+        forecast_df = pd.concat([pre_forecast, tail_forecast], ignore_index=True)
+        forecast_df = cls._appendSummaryLines(
+            original_IO.initial_account_set, forecast_df, log_stack_depth=0
+        )
+        forecast_df = cls._roundForecastOutput(forecast_df, decimals=2)
+
+        def through(frame, boundary):
+            if frame is None or frame.empty:
+                return frame
+            return frame.loc[
+                frame["Date"].apply(cls._normalize_date_value) <= boundary
+            ].copy()
+
+        confirmed_parts = [through(exact_discovery.confirmed_df, activation_date)]
+        if tail_result.confirmed_df is not None:
+            confirmed_parts.append(tail_result.confirmed_df)
+        skipped_parts = [pre_activation_skipped]
+        if tail_result.skipped_df is not None:
+            skipped_parts.append(tail_result.skipped_df)
+        result = ExpenseForecastResult(
+            original_IO,
+            forecast_df,
+            exact_discovery.start_ts,
+            tail_result.end_ts,
+            confirmed_df=pd.concat(confirmed_parts, ignore_index=True),
+            deferred_df=tail_result.deferred_df,
+            skipped_df=pd.concat(skipped_parts, ignore_index=True),
+            milestone_set=milestone_set,
+            milestone_results=MilestoneSet.evaluateMilestones(
+                forecast_df, milestone_set, log_stack_depth=0
+            ),
+            approximate_flag=approximate,
+            policy_results={
+                **cls._summarize_cash_policy_results(IO.policy_set, tail_result),
+                policy.policy_name: policy_result,
+            },
+        )
+        if not include_debug_columns:
+            debug_columns = set()
+            for account in original_IO.initial_account_set.accounts:
+                debug_columns.update(
+                    set(original_IO.initial_account_set.getForecastColumnsForAccount(account))
+                    - {account.name}
+                )
+            result.forecast_df = result.forecast_df.drop(
+                columns=list(debug_columns), errors="ignore"
+            )
+        return result
 
     @classmethod
     def _runForecastWithScenarioTransitions(

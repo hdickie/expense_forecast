@@ -520,7 +520,9 @@ class AccountSet:
         """
         @interface-report: ignore
         """
-        if account_name in [None, "", "None"]:
+        if str(account_name).startswith("CHECKING_ABOVE:"):
+            return self._get_account_by_name(self.primary_checking_account_name)
+        if account_name in [None, "", "None"] or str(account_name).startswith("ALL_"):
             return None
 
         matching_accounts = [
@@ -855,6 +857,7 @@ class AccountSet:
         Amount,
         income_flag=False,
         minimum_payment_flag=False,
+        allocation_strategy="avalanche",
     ):
         """
         TODO one-line description of executeTransaction.
@@ -922,9 +925,22 @@ class AccountSet:
             )
             return
 
-        if Account_To == "ALL_LOANS":
+        if str(Account_From).startswith("CHECKING_ABOVE:"):
+            threshold = self._money(str(Account_From).split(":", 1)[1])
+            checking = self._get_account_by_name(self.primary_checking_account_name)
+            Amount = min(
+                self._money(abs(Amount)),
+                max(Decimal("0"), self._money(checking.balance) - threshold),
+            )
+            Account_From = checking.name
+            if Amount <= MONEY_BOUNDARY_TOLERANCE:
+                return Decimal("0")
+
+        if Account_To in {"ALL_LOANS", "ALL_LOANS_SNOWBALL"}:
+            if Account_To.endswith("SNOWBALL"):
+                allocation_strategy = "snowball"
             allocated_payments = self.allocate_additional_loan_payments(
-                Amount, account_from=Account_From
+                Amount, account_from=Account_From, strategy=allocation_strategy
             )
             for single_account_loan_payment in allocated_payments:
                 self.executeTransaction(
@@ -933,6 +949,19 @@ class AccountSet:
                     single_account_loan_payment[2],
                     income_flag=False,
                 )
+            return sum(
+                (self._money(payment[2]) for payment in allocated_payments),
+                Decimal("0"),
+            )
+
+        if Account_To in {"ALL_CREDIT_CARDS", "ALL_CREDIT_CARDS_SNOWBALL"}:
+            if Account_To.endswith("SNOWBALL"):
+                allocation_strategy = "snowball"
+            allocated_payments = self.allocate_additional_credit_card_payments(
+                Amount, account_from=Account_From, strategy=allocation_strategy
+            )
+            for source, destination, payment_amount in allocated_payments:
+                self.executeTransaction(source, destination, payment_amount)
             return sum(
                 (self._money(payment[2]) for payment in allocated_payments),
                 Decimal("0"),
@@ -951,7 +980,9 @@ class AccountSet:
             or account_to.account_type != "checking"
         ):
             raise ValueError(
-                "income_flag was True but did not refer to a checking account or referred to multiple accounts"
+                "income_flag was True but did not refer to a checking account or "
+                f"referred to multiple accounts (from={Account_From!r}, "
+                f"to={Account_To!r}, to_type={getattr(account_to, 'account_type', None)!r})"
             )
 
         if account_from is not None:
@@ -1014,51 +1045,63 @@ class AccountSet:
         )
 
     #Codex-write-doctstring-OK
-    def allocate_additional_loan_payments(self, amount, account_from=None):
-        """
-        @interface-report: show
-        """
+    def _allocate_additional_debt_payments(
+        self, amount, debt_type, account_from=None, strategy="avalanche"
+    ):
+        if strategy not in {"avalanche", "snowball"}:
+            raise ValueError("strategy must be 'avalanche' or 'snowball'")
         amount = self._money(abs(amount))
         if amount == 0:
             return []
+        checking_name = account_from or self.primary_checking_account_name
+        checking = self._get_account_by_name(checking_name)
+        if checking is None or checking.account_type != "checking":
+            raise ValueError("aggregate debt payments require a checking source account")
+        amount = min(
+            amount,
+            self._money(checking.balance) - self._money(checking.min_balance),
+        )
+        debts = [
+            account for account in self.accounts
+            if account.account_type == debt_type
+            and account.billing_state.balance > MONEY_BOUNDARY_TOLERANCE
+        ]
+        declaration_order = {id(account): index for index, account in enumerate(self.accounts)}
+        if strategy == "avalanche":
+            debts.sort(key=lambda account: (-account.apr, declaration_order[id(account)]))
+        else:
+            debts.sort(
+                key=lambda account: (
+                    account.billing_state.balance,
+                    declaration_order[id(account)],
+                )
+            )
+        payments = []
+        for debt in debts:
+            if amount <= MONEY_BOUNDARY_TOLERANCE:
+                break
+            payment = min(amount, self._money(debt.billing_state.balance))
+            if payment > MONEY_BOUNDARY_TOLERANCE:
+                payments.append([checking_name, debt.name, payment])
+                amount -= payment
+        return payments
 
-        checking_acct_name = account_from or self.primary_checking_account_name
-        checking_account = self._get_account_by_name(checking_acct_name)
-        if checking_account is None or checking_account.account_type != "checking":
-            raise ValueError("ALL_LOANS payments require a checking source account")
-
-        amount = min(amount, self._money(checking_account.balance))
-        if amount == 0:
-            return []
-
-        loan_accounts = sorted(
-            (
-                account
-                for account in self.accounts
-                if account.account_type == "loan"
-                and account.billing_state.balance > MONEY_BOUNDARY_TOLERANCE
-            ),
-            key=lambda loan: loan.apr,
-            reverse=True,
+    def allocate_additional_loan_payments(
+        self, amount, account_from=None, strategy="avalanche"
+    ):
+        """
+        @interface-report: show
+        """
+        return self._allocate_additional_debt_payments(
+            amount, "loan", account_from, strategy
         )
 
-        allocated_payments = []
-        remaining_amount = amount
-        for loan in loan_accounts:
-            if remaining_amount <= MONEY_BOUNDARY_TOLERANCE:
-                break
-            payment_amount = min(
-                remaining_amount,
-                self._money(loan.billing_state.balance),
-            )
-            if payment_amount <= MONEY_BOUNDARY_TOLERANCE:
-                continue
-            allocated_payments.append(
-                [checking_acct_name, loan.name, payment_amount]
-            )
-            remaining_amount -= payment_amount
-
-        return allocated_payments
+    def allocate_additional_credit_card_payments(
+        self, amount, account_from=None, strategy="avalanche"
+    ):
+        return self._allocate_additional_debt_payments(
+            amount, "credit", account_from, strategy
+        )
 
     #TODO manual review of AccountSet.getAccounts docstring
     def getAccounts(self):

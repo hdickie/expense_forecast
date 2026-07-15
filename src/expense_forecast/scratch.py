@@ -18,6 +18,13 @@ from expense_forecast.CompositeMilestone import CompositeMilestone
 
 from expense_forecast.ScenarioDimension import ScenarioDimension
 from expense_forecast.ScenarioSpace import ScenarioSpace
+from expense_forecast.ForecastPolicySet import ForecastPolicySet
+from expense_forecast.MinimumCheckingBalancePolicy import MinimumCheckingBalancePolicy
+from expense_forecast.SurplusDebtPaymentPolicy import SurplusDebtPaymentPolicy
+from expense_forecast.FixedMonthlyInvestmentPolicy import FixedMonthlyInvestmentPolicy
+from expense_forecast.IncomePercentageInvestmentPolicy import IncomePercentageInvestmentPolicy
+from expense_forecast.SurplusInvestmentPolicy import SurplusInvestmentPolicy
+from expense_forecast.PeriodicInvestmentContributionCapPolicy import PeriodicInvestmentContributionCapPolicy
 
 import datetime
 from datetime import date
@@ -524,6 +531,7 @@ if __name__ == '__main__':
     # action = 'net worth 0 after 18 months of RN car life'
     # action = 'test approximate case'
     action = 'test milestone conditional swaps'
+    # action = 'prioritized policies'
     # action = 'inspect'
 
     # action = 'I just won the lottery'
@@ -1089,6 +1097,135 @@ if __name__ == '__main__':
 
         with open('test_report.html', "w") as f:
             f.write(html_report)
+
+    elif action == 'prioritized policies':
+        # Policies and LineItems share one priority sequence. Policy priorities
+        # must be unique and cannot collide with a reachable LineItem priority.
+        start_date = date(2026, 8, 1)
+        end_date = date(2026, 8, 31)
+
+        accounts = AccountSet()
+        accounts.createCheckingAccount(
+            name='Checking',
+            balance=5_000,
+            min_balance=2_000,
+            max_balance=float('inf'),
+            primary_checking_ind=True,
+        )
+        accounts.createInvestmentAccount(
+            name='Brokerage',
+            balance=0,
+            billing_start_date=start_date,
+            apr=0.07,
+        )
+        accounts.createLoanAccount(
+            name='Small Student Loan',
+            principal_balance=1_200,
+            interest_balance=0,
+            min_balance=0,
+            max_balance=5_000,
+            billing_start_date=start_date,
+            minimum_payment=0,
+            billing_cycle_payment_balance=0,
+            apr=0.04,
+        )
+        accounts.createLoanAccount(
+            name='Large Student Loan',
+            principal_balance=8_000,
+            interest_balance=0,
+            min_balance=0,
+            max_balance=10_000,
+            billing_start_date=start_date,
+            minimum_payment=0,
+            billing_cycle_payment_balance=0,
+            apr=0.08,
+        )
+
+        budget = LineItemSet()
+        budget.addLineItem(
+            start_date=start_date,
+            end_date=end_date,
+            priority=1,
+            interval='weekly',
+            amount=1_000,
+            memo='policy demo income',
+            income_flag=True,
+            deferrable=False,
+            partial_payment_allowed=False,
+        )
+        budget.addLineItem(
+            start_date=start_date,
+            end_date=end_date,
+            priority=1,
+            interval='monthly',
+            amount=1_500,
+            memo='policy demo essential expense',
+            income_flag=False,
+            deferrable=False,
+            partial_payment_allowed=False,
+        )
+
+        memo_rules = MemoRuleSet()
+        memo_rules.addMemoRule(
+            memo_regex='policy demo income',
+            account_from=None,
+            account_to='Checking',
+            transaction_priority=1,
+        )
+        memo_rules.addMemoRule(
+            memo_regex='policy demo essential expense',
+            account_from='Checking',
+            account_to=None,
+            transaction_priority=1,
+        )
+
+        policies = ForecastPolicySet(
+            MinimumCheckingBalancePolicy(
+                target=2_000, priority=2, on_unmet='warn'
+            ),
+            PeriodicInvestmentContributionCapPolicy(
+                account_name='Brokerage', limit=1_000,
+                period='month', priority=3, on_unmet='warn',
+            ),
+            FixedMonthlyInvestmentPolicy(
+                account_name='Brokerage', amount=300, day=15,
+                priority=4, on_unmet='warn',
+            ),
+            IncomePercentageInvestmentPolicy(
+                account_name='Brokerage', percentage=0.10,
+                priority=5, on_unmet='warn',
+            ),
+            SurplusInvestmentPolicy(
+                account_name='Brokerage', checking_threshold=3_000,
+                priority=6, on_unmet='warn',
+            ),
+            SurplusDebtPaymentPolicy(
+                debt_type='loan', strategy='snowball',
+                priority=7, on_unmet='warn',
+            ),
+        )
+
+        initial_conditions = ExpenseForecastInitialConditions(
+            start_date=start_date,
+            end_date=end_date,
+            account_set=accounts,
+            budget_set=budget,
+            memo_rule_set=memo_rules,
+            policy_set=policies,
+        )
+        result = ForecastHandler.runForecastApproximate(initial_conditions)
+
+        print('Policy results:')
+        for policy_key, policy_result in result.policy_results.items():
+            print(f'  {policy_key}: {policy_result}')
+        print(result.forecast_df[
+            ['Date', 'Checking', 'Brokerage', 'Loan Total', 'Memo']
+        ].to_string(index=False))
+
+        result.writeToJSONFile(f'{result.unique_id}.json')
+        ForecastHandler.generateHTMLReport(
+            result, f'Forecast_{result.unique_id}.html'
+        )
 
     elif action == 'retirement':
         pass

@@ -11,6 +11,8 @@ from expense_forecast.LineItemSet import LineItemSet
 from expense_forecast.MemoMilestone import MemoMilestone
 from expense_forecast.MemoRuleSet import MemoRuleSet
 from expense_forecast.MilestoneSet import MilestoneSet
+from expense_forecast.ForecastPolicySet import ForecastPolicySet
+from expense_forecast.MinimumCheckingBalancePolicy import MinimumCheckingBalancePolicy
 from expense_forecast.ScenarioDimension import ScenarioDimension
 
 
@@ -30,7 +32,7 @@ def _line_item_set(day, amount, memo, income=False):
     return result
 
 
-def _initial_conditions(approximate=False):
+def _initial_conditions(approximate=False, reserve_target=None):
     start = date(2026, 7, 1)
     trigger_day = date(2026, 7, 15) if approximate else date(2026, 7, 2)
     expense_day = date(2026, 8, 15) if approximate else date(2026, 7, 4)
@@ -60,6 +62,11 @@ def _initial_conditions(approximate=False):
             "Get job as RN", {"Food": "Average"}
         )
     )
+    kwargs = {}
+    if reserve_target is not None:
+        kwargs["policy_set"] = ForecastPolicySet(
+            MinimumCheckingBalancePolicy(reserve_target, priority=2)
+        )
     return ExpenseForecastInitialConditions(
         start,
         end,
@@ -68,6 +75,7 @@ def _initial_conditions(approximate=False):
         rules,
         milestone_set=milestones,
         transitions=transitions,
+        **kwargs,
     )
 
 
@@ -100,3 +108,14 @@ def test_transition_initial_conditions_round_trip_preserves_scenario_metadata():
     assert rebuilt.initial_budget_set.scenario_selections == {"Food": "Very Low"}
     assert rebuilt.transitions.transitions[0].milestone == "Get job as RN"
     assert float(ForecastHandler.runForecast(rebuilt).forecast_df.iloc[-1]["Checking"]) == 180.0
+
+
+@pytest.mark.integration
+def test_minimum_checking_policy_composes_with_scenario_transition():
+    result = ForecastHandler.runForecast(
+        _initial_conditions(reserve_target=150)
+    )
+
+    assert result.policy_results["minimum_checking_balance"]["status"] == "activated"
+    assert "Average Food" in "; ".join(result.confirmed_df["Memo"])
+    assert float(result.forecast_df.iloc[-1]["Checking"]) >= 150

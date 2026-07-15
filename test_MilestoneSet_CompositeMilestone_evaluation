@@ -1,0 +1,298 @@
+{
+    "unique_id": "000101_4_1_6faf93bd35",
+    "initial_conditions": {
+        "unique_id": "000101_4_1_6faf93bd35",
+        "start_date": "2000-01-01",
+        "end_date": "2000-01-05",
+        "account_set": {
+            "accounts": [
+                {
+                    "Name": "Checking",
+                    "Balance": 1200,
+                    "Min_Balance": 0,
+                    "Max_Balance": 10000,
+                    "Account_Type": "checking",
+                    "Billing_Start_Date": null,
+                    "Interest_Type": null,
+                    "APR": null,
+                    "Interest_interval": null,
+                    "Minimum_Payment": null,
+                    "Primary_Checking_Ind": true
+                }
+            ]
+        },
+        "budget_set": {
+            "budget_items": [
+                {
+                    "Start_Date": "2000-01-01",
+                    "End_Date": "2000-01-05",
+                    "Priority": 1,
+                    "interval": "daily",
+                    "Amount": 300,
+                    "Memo": "Test Txn",
+                    "Income_Flag": false,
+                    "Deferrable": null,
+                    "Partial_Payment_Allowed": null
+                }
+            ]
+        },
+        "memo_rule_set": {
+            "memo_rules": [
+                {
+                    "Memo_Regex": ".*",
+                    "Account_From": "Checking",
+                    "Account_To": null,
+                    "Transaction_Priority": 1
+                }
+            ]
+        },
+        "milestone_set": {
+            "py/object": "expense_forecast.MilestoneSet.MilestoneSet",
+            "account_milestones": [],
+            "memo_milestones": [],
+            "composite_milestones": []
+        },
+        "transitions": {
+            "py/object": "expense_forecast.ConditionalScenarioTransitionSet.ConditionalScenarioTransitionSet",
+            "transitions": []
+        },
+        "policy_set": {
+            "py/object": "expense_forecast.ForecastPolicySet.ForecastPolicySet",
+            "policies": []
+        }
+    },
+    "forecast_df": {
+        "columns": [
+            "Date",
+            "Checking",
+            "Marginal Interest",
+            "Net Gain",
+            "Net Loss",
+            "Net Worth",
+            "Loan Total",
+            "CC Debt Total",
+            "Liquid Total",
+            "Next Income Date",
+            "Memo Directives",
+            "Memo"
+        ],
+        "index": [
+            0,
+            1,
+            2,
+            3,
+            4
+        ],
+        "data": [
+            [
+                "2000-01-01T00:00:00.000",
+                1200.0,
+                0.0,
+                0.0,
+                0.0,
+                1200.0,
+                0.0,
+                0.0,
+                1200.0,
+                "",
+                "",
+                ""
+            ],
+            [
+                "2000-01-02T00:00:00.000",
+                900.0,
+                0.0,
+                0.0,
+                300.0,
+                900.0,
+                0.0,
+                0.0,
+                900.0,
+                "",
+                "",
+                "Test Txn (Checking -$300.00)"
+            ],
+            [
+                "2000-01-03T00:00:00.000",
+                600.0,
+                0.0,
+                0.0,
+                300.0,
+                600.0,
+                0.0,
+                0.0,
+                600.0,
+                "",
+                "",
+                "Test Txn (Checking -$300.00)"
+            ],
+            [
+                "2000-01-04T00:00:00.000",
+                300.0,
+                0.0,
+                0.0,
+                300.0,
+                300.0,
+                0.0,
+                0.0,
+                300.0,
+                "",
+                "",
+                "Test Txn (Checking -$300.00)"
+            ],
+            [
+                "2000-01-05T00:00:00.000",
+                0.0,
+                0.0,
+                0.0,
+                300.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                "",
+                "",
+                "Test Txn (Checking -$300.00)"
+            ]
+        ]
+    },
+    "confirmed_df": {
+        "columns": [
+            "Date",
+            "Priority",
+            "Amount",
+            "Memo",
+            "Income_Flag",
+            "Deferrable",
+            "Partial_Payment_Allowed"
+        ],
+        "index": [
+            0,
+            1,
+            2,
+            3,
+            4
+        ],
+        "data": [
+            [
+                "2000-01-01T00:00:00.000",
+                1,
+                300,
+                "Test Txn",
+                false,
+                null,
+                null
+            ],
+            [
+                "2000-01-02T00:00:00.000",
+                1,
+                300,
+                "Test Txn",
+                false,
+                null,
+                null
+            ],
+            [
+                "2000-01-03T00:00:00.000",
+                1,
+                300,
+                "Test Txn",
+                false,
+                null,
+                null
+            ],
+            [
+                "2000-01-04T00:00:00.000",
+                1,
+                300,
+                "Test Txn",
+                false,
+                null,
+                null
+            ],
+            [
+                "2000-01-05T00:00:00.000",
+                1,
+                300,
+                "Test Txn",
+                false,
+                null,
+                null
+            ]
+        ]
+    },
+    "deferred_df": {
+        "columns": [
+            "Date",
+            "Priority",
+            "Amount",
+            "Memo",
+            "Income_Flag",
+            "Deferrable",
+            "Partial_Payment_Allowed"
+        ],
+        "index": [],
+        "data": []
+    },
+    "skipped_df": {
+        "columns": [
+            "Date",
+            "Priority",
+            "Amount",
+            "Memo",
+            "Income_Flag",
+            "Deferrable",
+            "Partial_Payment_Allowed"
+        ],
+        "index": [],
+        "data": []
+    },
+    "milestone_set": {
+        "py/object": "expense_forecast.MilestoneSet.MilestoneSet",
+        "account_milestones": [],
+        "memo_milestones": [],
+        "composite_milestones": [
+            {
+                "py/object": "expense_forecast.CompositeMilestone.CompositeMilestone",
+                "milestone_name": "Composite Milestone",
+                "account_milestones": [
+                    {
+                        "py/object": "expense_forecast.AccountMilestone.AccountMilestone",
+                        "milestone_name": "Account Milestone",
+                        "account_name": "Checking",
+                        "min_balance": 0.0,
+                        "max_balance": 0.0
+                    }
+                ],
+                "memo_milestones": [
+                    {
+                        "py/object": "expense_forecast.MemoMilestone.MemoMilestone",
+                        "milestone_name": "Memo Milestone",
+                        "memo_regex": "Test Txn"
+                    }
+                ]
+            }
+        ]
+    },
+    "milestone_results": [
+        {},
+        {},
+        {
+            "Composite Milestone": {
+                "py/object": "datetime.date",
+                "__reduce__": [
+                    {
+                        "py/type": "datetime.date"
+                    },
+                    [
+                        "B9ABBQ=="
+                    ]
+                ]
+            }
+        }
+    ],
+    "policy_results": {},
+    "start_ts": "2026-07-15T04:51:25.948601",
+    "end_ts": "2026-07-15T04:51:26.076893",
+    "approximate_flag": false
+}

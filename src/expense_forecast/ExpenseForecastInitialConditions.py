@@ -31,6 +31,7 @@ from expense_forecast.MilestoneSet import MilestoneSet
 from expense_forecast.ConditionalScenarioTransitionSet import (
     ConditionalScenarioTransitionSet,
 )
+from expense_forecast.ForecastPolicySet import ForecastPolicySet
 
 logger = logging.getLogger(__name__)
 formatter = logging.Formatter("%(asctime)s - %(levelname)-8s - %(message)s")
@@ -736,9 +737,12 @@ class ExpenseForecastInitialConditions:
 
             for a in distinct_account_names__from_memo["Name"].tolist():
                 A_names = A_names.union({a})
-            A_names = A_names - {
-                "ALL_LOANS", None
-            }  # if we have a memo rule for ALL_LOANS, we don't want that to be checked against the list of account names
+            A_names = {
+                name for name in A_names
+                if name is not None and not str(name).startswith("ALL_LOANS")
+                and not str(name).startswith("ALL_CREDIT_CARDS")
+                and not str(name).startswith("CHECKING_ABOVE:")
+            }
 
             A2 = {""}
             for a in distinct_base_account_names__from_acct["Name"].tolist():
@@ -950,6 +954,7 @@ class ExpenseForecastInitialConditions:
             'forecast_set_name',
             'milestone_set',
             'transitions',
+            'policy_set',
         ]
         for key in kwargs:
             if key not in allowed_kwargs:
@@ -974,6 +979,10 @@ class ExpenseForecastInitialConditions:
         if not isinstance(self.transitions, ConditionalScenarioTransitionSet):
             raise TypeError("transitions must be a ConditionalScenarioTransitionSet")
         self.transitions.validate(self.milestone_set, self.initial_budget_set)
+        self.policy_set = copy.deepcopy(kwargs.get('policy_set') or ForecastPolicySet())
+        if not isinstance(self.policy_set, ForecastPolicySet):
+            raise TypeError("policy_set must be a ForecastPolicySet")
+        self.policy_set.validate(self.initial_account_set, self.initial_budget_set)
 
         self.unique_id = ExpenseForecastInitialConditions.compute_forecast_id(
             start_date=self.start_date,
@@ -981,6 +990,13 @@ class ExpenseForecastInitialConditions:
             account_set=self.initial_account_set,
             budget_set=self.initial_budget_set,
             memo_rule_set=self.initial_memo_rule_set)
+        if self.policy_set:
+            policy_json = json.dumps(
+                self._object_to_json_data(self.policy_set), sort_keys=True
+            )
+            self.unique_id += "_" + hashlib.sha256(
+                policy_json.encode("utf-8")
+            ).hexdigest()[:10]
 
         # GPT doesn't like that ExpenseForecastInitialConditions is owning this logic
         # and that data frame manipulation is occuring inside __init__ here,
@@ -1188,6 +1204,9 @@ class ExpenseForecastInitialConditions:
             transitions=cls._object_from_json_data(
                 data.get("transitions")
             ) or ConditionalScenarioTransitionSet(),
+            policy_set=cls._object_from_json_data(
+                data.get("policy_set")
+            ) or ForecastPolicySet(),
         ) #TODO forecast name
 
     #TODO manual review of ExpenseForecastInitialConditions.load_database_tables docstring
@@ -1626,4 +1645,5 @@ class ExpenseForecastInitialConditions:
             "memo_rule_set": self.initial_memo_rule_set.to_dict(),
             "milestone_set": self._object_to_json_data(self.milestone_set),
             "transitions": self._object_to_json_data(self.transitions),
+            "policy_set": self._object_to_json_data(self.policy_set),
         }
