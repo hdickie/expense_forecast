@@ -196,6 +196,63 @@ class TestLineItemSetMethods:
         )
         test_df = test_line_item_set.getLineItemSchedule()
 
+    def test_getIncomeExpenseSchedule_aggregates_by_date(self):
+        line_items = LineItemSet([])
+        line_items.addLineItem(
+            start_date=date(2026, 1, 1), end_date=date(2026, 1, 2),
+            priority=1, interval="daily", amount=25, memo="food",
+            income_flag=False, deferrable=False,
+            partial_payment_allowed=False,
+        )
+        line_items.addLineItem(
+            start_date=date(2026, 1, 2), end_date=date(2026, 1, 2),
+            priority=1, interval="once", amount=100, memo="income",
+            income_flag=True, deferrable=False,
+            partial_payment_allowed=False,
+        )
+
+        result = line_items.getIncomeExpenseSchedule()
+
+        assert result.columns.tolist() == ["Date", "Expense", "Income"]
+        assert result.to_dict(orient="records") == [
+            {"Date": date(2026, 1, 1), "Expense": 25, "Income": 0},
+            {"Date": date(2026, 1, 2), "Expense": 25, "Income": 100},
+        ]
+
+    def test_getIncomeExpenseSchedule_empty_set(self):
+        result = LineItemSet().getIncomeExpenseSchedule()
+
+        assert result.empty
+        assert result.columns.tolist() == ["Date", "Expense", "Income"]
+
+    def test_getIncomeExpenseScheduleBinned_uses_month_first(self):
+        line_items = LineItemSet([])
+        line_items.addLineItem(
+            start_date=date(2026, 1, 31), end_date=date(2026, 2, 2),
+            priority=1, interval="daily", amount=10, memo="expense",
+            income_flag=False, deferrable=False,
+            partial_payment_allowed=False,
+        )
+        line_items.addLineItem(
+            start_date=date(2026, 2, 15), end_date=date(2026, 2, 15),
+            priority=1, interval="once", amount=100, memo="income",
+            income_flag=True, deferrable=False,
+            partial_payment_allowed=False,
+        )
+
+        result = line_items.getIncomeExpenseScheduleBinned()
+
+        assert result.to_dict(orient="records") == [
+            {"Date": date(2026, 1, 1), "Expense": 10, "Income": 0},
+            {"Date": date(2026, 2, 1), "Expense": 20, "Income": 100},
+        ]
+
+    def test_getIncomeExpenseScheduleBinned_empty_set(self):
+        result = LineItemSet().getIncomeExpenseScheduleBinned()
+
+        assert result.empty
+        assert result.columns.tolist() == ["Date", "Expense", "Income"]
+
     def test_str(self):
         test_line_item_set = LineItemSet([])
         line_item_set_str = str(test_line_item_set)

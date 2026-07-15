@@ -522,6 +522,8 @@ class AccountSet:
         """
         if str(account_name).startswith("CHECKING_ABOVE:"):
             return self._get_account_by_name(self.primary_checking_account_name)
+        if str(account_name).startswith("CURRENT_STATEMENT_BALANCE:"):
+            return self._get_account_by_name(str(account_name).split(":", 1)[1])
         if account_name in [None, "", "None"] or str(account_name).startswith("ALL_"):
             return None
 
@@ -556,11 +558,15 @@ class AccountSet:
                     if isinstance(proposed_balance, Decimal)
                     else float(min_balance_decimal)
                 )
-            raise AccountBoundaryError(
+            error = AccountBoundaryError(
                 f"transaction violated {role} boundaries:\n"
                 f"{role}:\n{account}\n"
                 f"Proposed balance: {proposed_balance}"
             )
+            error.boundary_shortfall = min_balance_decimal - proposed_balance_decimal
+            error.account_name = account.name
+            error.role = role
+            raise error
         if (
             max_balance_decimal is not None
             and proposed_balance_decimal > max_balance_decimal
@@ -571,11 +577,15 @@ class AccountSet:
                     if isinstance(proposed_balance, Decimal)
                     else float(max_balance_decimal)
                 )
-            raise AccountBoundaryError(
+            error = AccountBoundaryError(
                 f"transaction violated {role} boundaries:\n"
                 f"{role}:\n{account}\n"
                 f"Proposed balance: {proposed_balance}"
             )
+            error.boundary_shortfall = proposed_balance_decimal - max_balance_decimal
+            error.account_name = account.name
+            error.role = role
+            raise error
 
         return proposed_balance
 
@@ -634,9 +644,13 @@ class AccountSet:
         payment_remaining -= current_statement_payment
 
         if payment_remaining > MONEY_BOUNDARY_TOLERANCE:
-            raise ValueError(
+            error = AccountBoundaryError(
                 f"Payment amount {amount} exceeds credit balance for '{account.name}'"
             )
+            error.boundary_shortfall = payment_remaining
+            error.account_name = account.name
+            error.role = "account_to"
+            raise error
         payment_remaining = Decimal("0")
 
         if not minimum_payment_flag:
@@ -655,9 +669,13 @@ class AccountSet:
         payment_remaining = amount - interest_payment - principal_payment
 
         if payment_remaining > MONEY_BOUNDARY_TOLERANCE:
-            raise ValueError(
+            error = AccountBoundaryError(
                 f"Payment amount {amount} exceeds loan balance for '{account.name}'"
             )
+            error.boundary_shortfall = payment_remaining
+            error.account_name = account.name
+            error.role = "account_to"
+            raise error
         payment_remaining = Decimal("0")
 
         if not minimum_payment_flag:
@@ -909,7 +927,6 @@ class AccountSet:
             + str(minimum_payment_flag)
             + ")",
         )
-
         if Amount == 0:
             log_in_color(
                 logger,
@@ -933,6 +950,28 @@ class AccountSet:
                 max(Decimal("0"), self._money(checking.balance) - threshold),
             )
             Account_From = checking.name
+            if Amount <= MONEY_BOUNDARY_TOLERANCE:
+                return Decimal("0")
+
+        if str(Account_To).startswith("CURRENT_STATEMENT_BALANCE:"):
+            card_name = str(Account_To).split(":", 1)[1]
+            card = self._get_account_by_name(card_name)
+            if card is None or card.account_type != "credit":
+                raise ValueError(
+                    f"Current-statement payment requires credit card {card_name!r}"
+                )
+            checking = self._get_account_by_name(Account_From)
+            available_cash = (
+                self._money(checking.balance) - self._money(checking.min_balance)
+                if checking is not None and checking.account_type == "checking"
+                else self._money(abs(Amount))
+            )
+            Amount = min(
+                self._money(abs(Amount)),
+                self._money(card.billing_state.current_statement_balance),
+                max(Decimal("0"), available_cash),
+            )
+            Account_To = card_name
             if Amount <= MONEY_BOUNDARY_TOLERANCE:
                 return Decimal("0")
 
@@ -1043,6 +1082,7 @@ class AccountSet:
             + str(Amount)
             + ")",
         )
+        return self._money(amount)
 
     #Codex-write-doctstring-OK
     def _allocate_additional_debt_payments(
@@ -1061,10 +1101,19 @@ class AccountSet:
             amount,
             self._money(checking.balance) - self._money(checking.min_balance),
         )
+        def outstanding_balance(account):
+            # Preserve the loan allocator's billing-state semantics. Credit
+            # cards split debt across current/previous-cycle fields and have no
+            # billing_state.balance, so their synchronized Account.balance is
+            # the corresponding aggregate.
+            if account.account_type == "loan":
+                return self._money(account.billing_state.balance)
+            return self._money(account.balance)
+
         debts = [
             account for account in self.accounts
             if account.account_type == debt_type
-            and account.billing_state.balance > MONEY_BOUNDARY_TOLERANCE
+            and outstanding_balance(account) > MONEY_BOUNDARY_TOLERANCE
         ]
         declaration_order = {id(account): index for index, account in enumerate(self.accounts)}
         if strategy == "avalanche":
@@ -1072,7 +1121,7 @@ class AccountSet:
         else:
             debts.sort(
                 key=lambda account: (
-                    account.billing_state.balance,
+                    outstanding_balance(account),
                     declaration_order[id(account)],
                 )
             )
@@ -1080,7 +1129,7 @@ class AccountSet:
         for debt in debts:
             if amount <= MONEY_BOUNDARY_TOLERANCE:
                 break
-            payment = min(amount, self._money(debt.billing_state.balance))
+            payment = min(amount, outstanding_balance(debt))
             if payment > MONEY_BOUNDARY_TOLERANCE:
                 payments.append([checking_name, debt.name, payment])
                 amount -= payment

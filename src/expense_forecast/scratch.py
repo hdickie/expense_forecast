@@ -21,6 +21,9 @@ from expense_forecast.ScenarioSpace import ScenarioSpace
 from expense_forecast.ForecastPolicySet import ForecastPolicySet
 from expense_forecast.MinimumCheckingBalancePolicy import MinimumCheckingBalancePolicy
 from expense_forecast.SurplusDebtPaymentPolicy import SurplusDebtPaymentPolicy
+from expense_forecast.CurrentStatementBalancePaymentPolicy import (
+    CurrentStatementBalancePaymentPolicy,
+)
 from expense_forecast.FixedMonthlyInvestmentPolicy import FixedMonthlyInvestmentPolicy
 from expense_forecast.IncomePercentageInvestmentPolicy import IncomePercentageInvestmentPolicy
 from expense_forecast.SurplusInvestmentPolicy import SurplusInvestmentPolicy
@@ -31,7 +34,7 @@ from datetime import date
 
 import inspect
 
-def get_B_invariant():
+def get_B_invariant(start_date, end_date):
     B_invariant = LineItemSet()
 
     # B_invariant.addLineItem(start_date=start_date, end_date=end_date, priority=1,
@@ -46,19 +49,19 @@ def get_B_invariant():
     B_invariant.addLineItem(start_date=start_date, end_date=end_date, priority=1,
                     interval='monthly',amount=10,memo='hulu expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
-    B_invariant.addLineItem(start_date=date(2026,7,2), end_date=end_date, priority=1,
+    B_invariant.addLineItem(start_date=start_date, end_date=end_date, priority=1,
                     interval='monthly',amount=14,memo='paramount plus expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
-    B_invariant.addLineItem(start_date=date(2026,6,26), end_date=end_date, priority=1,
+    B_invariant.addLineItem(start_date=start_date, end_date=end_date, priority=1,
                     interval='monthly',amount=9,memo='netflix expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     B_invariant.addLineItem(start_date=start_date, end_date=end_date, priority=1,
                     interval='monthly',amount=100,memo='car insurance expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
-    B_invariant.addLineItem(start_date=date(2026,7,3), end_date=end_date, priority=1,
+    B_invariant.addLineItem(start_date=start_date, end_date=end_date, priority=1,
                     interval='monthly',amount=149,memo='storage expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
-    B_invariant.addLineItem(start_date=date(2026,6,6), end_date=end_date, priority=1,
+    B_invariant.addLineItem(start_date=start_date, end_date=end_date, priority=1,
                     interval='monthly',amount=129,memo='joyous expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     
@@ -530,8 +533,8 @@ if __name__ == '__main__':
     # action = 'start of RN life'
     # action = 'net worth 0 after 18 months of RN car life'
     # action = 'test approximate case'
-    action = 'test milestone conditional swaps'
-    # action = 'prioritized policies'
+    # action = 'test milestone conditional swaps'
+    action = 'prioritized policies'
     # action = 'inspect'
 
     # action = 'I just won the lottery'
@@ -1102,106 +1105,245 @@ if __name__ == '__main__':
         # Policies and LineItems share one priority sequence. Policy priorities
         # must be unique and cannot collide with a reachable LineItem priority.
         start_date = date(2026, 8, 1)
-        end_date = date(2026, 8, 31)
+        # end_date = start_date + datetime.timedelta(days=180)
+        nursing_school_start_date = date(2027, 2, 1)
 
-        accounts = AccountSet()
-        accounts.createCheckingAccount(
-            name='Checking',
-            balance=5_000,
-            min_balance=2_000,
-            max_balance=float('inf'),
-            primary_checking_ind=True,
-        )
-        accounts.createInvestmentAccount(
-            name='Brokerage',
-            balance=0,
-            billing_start_date=start_date,
-            apr=0.07,
-        )
-        accounts.createLoanAccount(
-            name='Small Student Loan',
-            principal_balance=1_200,
-            interest_balance=0,
-            min_balance=0,
-            max_balance=5_000,
-            billing_start_date=start_date,
-            minimum_payment=0,
-            billing_cycle_payment_balance=0,
-            apr=0.04,
-        )
-        accounts.createLoanAccount(
-            name='Large Student Loan',
-            principal_balance=8_000,
-            interest_balance=0,
-            min_balance=0,
-            max_balance=10_000,
-            billing_start_date=start_date,
-            minimum_payment=0,
-            billing_cycle_payment_balance=0,
-            apr=0.08,
-        )
 
-        budget = LineItemSet()
-        budget.addLineItem(
+        start_summer_break_1 = date(2027,5,13)
+        end_summer_break_1 = date(2027,7,9)
+        start_winter_break_1 = date(2027,12,16)
+        end_winter_break_1 = date(2028,1,7)
+        start_summer_break_2 = date(2028,5,5)
+        end_summer_break_2 = date(2028,6,30)
+
+        graduation = date(2028,12,1)
+
+        end_date = graduation
+        # end_date = date(2029,8,1)
+
+        accounts = get_IRL_current_A()
+        food_very_low = LineItemSet()
+        food_very_low.addLineItem(
             start_date=start_date,
             end_date=end_date,
             priority=1,
-            interval='weekly',
-            amount=1_000,
-            memo='policy demo income',
+            interval='daily',
+            amount=10,
+            memo='very low food expense',
+            deferrable=False,
+            partial_payment_allowed=False,
+        )
+        food_average = LineItemSet()
+        food_average.addLineItem(
+            start_date=start_date,
+            end_date=end_date,
+            priority=1,
+            interval='daily',
+            amount=20,
+            memo='average food expense',
+            deferrable=False,
+            partial_payment_allowed=False,
+        )
+        food = ScenarioDimension(
+            name='Food',
+            choices={
+                'Very Low': food_very_low, #10
+                'Average': food_average, #20
+            },
+        )
+
+        #TODO i assumed y3 and y4 are just 5% raises from prev
+        unemployed = LineItemSet()
+        full_time_cna_eugene_income = LineItemSet()
+        full_time_cna_eugene_income.addLineItem(
+            start_date=start_date,
+            end_date=end_date,
+            priority=1,
+            interval='semiweekly',
+            amount=22.77 * 80 * 0.75, # assume 25% tax at a minimum
+            memo='Ful-Time CNA income Eugene',
             income_flag=True,
             deferrable=False,
             partial_payment_allowed=False,
         )
-        budget.addLineItem(
+        part_time_cna_los_angeles_income = LineItemSet()
+        part_time_cna_los_angeles_income.addLineItem(
             start_date=start_date,
             end_date=end_date,
             priority=1,
-            interval='monthly',
-            amount=1_500,
-            memo='policy demo essential expense',
-            income_flag=False,
+            interval='semiweekly',
+            amount=20 * 24 * 0.75, #lower wages in LA, 1 12hr shift per week
+            memo='Part-Time CNA income Los Angeles',
+            income_flag=True,
             deferrable=False,
             partial_payment_allowed=False,
         )
+        full_time_cna_los_angeles_income = LineItemSet()
+        full_time_cna_los_angeles_income.addLineItem(
+            start_date=start_date,
+            end_date=end_date,
+            priority=1,
+            interval='semiweekly',
+            amount=80 * 24 * 0.75, #lower wages in LA, 1 12hr shift per week
+            memo='Full-Time CNA income Los Angeles',
+            income_flag=True,
+            deferrable=False,
+            partial_payment_allowed=False,
+        )
+        rn_income_y1 = LineItemSet()
+        rn_income_y1.addLineItem(
+            start_date=start_date,
+            end_date=end_date,
+            priority=1,
+            interval='semiweekly',
+            amount=2900,
+            memo='RN Year 1 income',
+            income_flag=True,
+            deferrable=False,
+            partial_payment_allowed=False,
+        )
+        rn_income_y2 = LineItemSet()
+        rn_income_y2.addLineItem(
+            start_date=start_date,
+            end_date=end_date,
+            priority=1,
+            interval='semiweekly',
+            amount=2900*1.05,
+            memo='RN Year 2 income',
+            income_flag=True,
+            deferrable=False,
+            partial_payment_allowed=False,
+        )
+        rn_income_y3 = LineItemSet()
+        rn_income_y3.addLineItem(
+            start_date=start_date,
+            end_date=end_date,
+            priority=1,
+            interval='semiweekly',
+            amount=2900*(1.05**2),
+            memo='RN Year 3 income',
+            income_flag=True,
+            deferrable=False,
+            partial_payment_allowed=False,
+        )
+        rn_income_y4 = LineItemSet()
+        rn_income_y4.addLineItem(
+            start_date=start_date,
+            end_date=end_date,
+            priority=1,
+            interval='semiweekly',
+            amount=2900*(1.05**3),
+            memo='RN Year 4 income',
+            income_flag=True,
+            deferrable=False,
+            partial_payment_allowed=False,
+        )
+        income = ScenarioDimension(
+            name='Income',
+            choices={
+                'Unemployed': unemployed,
+                'Part Time CNA Los Angeles': part_time_cna_los_angeles_income,
+                'Full Time CNA Los Angeles': full_time_cna_los_angeles_income,
+                'Full Time CNA Eugene': full_time_cna_eugene_income,
+                'RN Year 1': rn_income_y1,
+                'RN Year 2': rn_income_y2,
+                'RN Year 3': rn_income_y3,
+                'RN Year 4': rn_income_y4,
+            },
+        )
 
-        memo_rules = MemoRuleSet()
-        memo_rules.addMemoRule(
-            memo_regex='policy demo income',
-            account_from=None,
-            account_to='Checking',
-            transaction_priority=1,
+        # Spring 2028	            Jan 18 to May 12
+        # Summer break (8 weeks)	May 13 to July 9
+        # Fall 2028	                July 10 to Dec 15
+        # Winter break (3 weeks)	Dec 16 to Jan 7
+        # Spring 2029	            Jan 8 to May 4
+        # Summer break (8 weeks)	May 5 to June 30
+        # Fall 2029	                July 1 to Dec 7
+        # Graduation	            December 2029
+
+
+        # The composed LineItemSet remembers both active dimension choices.
+        lifestyle = food.select('Average') + income.choice_for_date_range(
+            "Unemployed",
+            start_date,
+            date(2026, 8, 22),
+        ) + income.choice_for_date_range(
+            "Full Time CNA Eugene",
+            date(2026, 8, 22),
+            nursing_school_start_date,
+        ) + income.choice_for_date_range(
+            "Part Time CNA Los Angeles",
+            nursing_school_start_date + datetime.timedelta(days=14),
+            start_summer_break_1,
+        ) + income.choice_for_date_range( #these dont have +2 weeks bc i want to bias conversative
+            "Full Time CNA Los Angeles",
+            start_summer_break_1,
+            end_summer_break_1,
+        ) + income.choice_for_date_range(
+            "Part Time CNA Los Angeles",
+            end_summer_break_1 + datetime.timedelta(days=14),
+            start_winter_break_1,
+        ) + income.choice_for_date_range(
+            "Full Time CNA Los Angeles",
+            start_winter_break_1,
+            end_winter_break_1,
+        ) + income.choice_for_date_range(
+            "Part Time CNA Los Angeles",
+            end_winter_break_1 + datetime.timedelta(days=14),
+            start_summer_break_2,
+        ) + income.choice_for_date_range(
+            "Full Time CNA Los Angeles",
+            start_summer_break_2,
+            end_summer_break_2,
+        ) + income.choice_for_date_range(
+            "Part Time CNA Los Angeles",
+            end_summer_break_2 + datetime.timedelta(days=14),
+            end_date,
         )
-        memo_rules.addMemoRule(
-            memo_regex='policy demo essential expense',
-            account_from='Checking',
-            account_to=None,
-            transaction_priority=1,
-        )
+
+
+        lifestyle = lifestyle + get_B_invariant(start_date, end_date)
+        memo_rules = getComprehensiveMemoRules()
+        # memo_rules = MemoRuleSet()
+        # memo_rules.addMemoRule(
+        #     memo_regex='policy demo income',
+        #     account_from=None,
+        #     account_to='Checking',
+        #     transaction_priority=1,
+        # )
+        # memo_rules.addMemoRule(
+        #     memo_regex='policy demo essential expense',
+        #     account_from='Checking',
+        #     account_to=None,
+        #     transaction_priority=1,
+        # )
 
         policies = ForecastPolicySet(
+            CurrentStatementBalancePaymentPolicy(
+                account_name='Chase', priority=1, on_unmet='warn'
+            ),
             MinimumCheckingBalancePolicy(
                 target=2_000, priority=2, on_unmet='warn'
             ),
-            PeriodicInvestmentContributionCapPolicy(
-                account_name='Brokerage', limit=1_000,
-                period='month', priority=3, on_unmet='warn',
-            ),
-            FixedMonthlyInvestmentPolicy(
-                account_name='Brokerage', amount=300, day=15,
-                priority=4, on_unmet='warn',
-            ),
-            IncomePercentageInvestmentPolicy(
-                account_name='Brokerage', percentage=0.10,
-                priority=5, on_unmet='warn',
-            ),
-            SurplusInvestmentPolicy(
-                account_name='Brokerage', checking_threshold=3_000,
-                priority=6, on_unmet='warn',
-            ),
+            # PeriodicInvestmentContributionCapPolicy(
+            #     account_name='Brokerage', limit=1_000,
+            #     period='month', priority=3, on_unmet='warn',
+            # ),
+            # FixedMonthlyInvestmentPolicy(
+            #     account_name='Brokerage', amount=300, day=15,
+            #     priority=4, on_unmet='warn',
+            # ),
+            # IncomePercentageInvestmentPolicy(
+            #     account_name='Brokerage', percentage=0.10,
+            #     priority=5, on_unmet='warn',
+            # ),
+            # SurplusInvestmentPolicy(
+            #     account_name='Brokerage', checking_threshold=3_000,
+            #     priority=3, on_unmet='warn',
+            # ),
             SurplusDebtPaymentPolicy(
-                debt_type='loan', strategy='snowball',
-                priority=7, on_unmet='warn',
+                debt_type='credit', strategy='avalanche',
+                priority=4, on_unmet='warn',
             ),
         )
 
@@ -1209,18 +1351,19 @@ if __name__ == '__main__':
             start_date=start_date,
             end_date=end_date,
             account_set=accounts,
-            budget_set=budget,
+            budget_set=lifestyle,
             memo_rule_set=memo_rules,
             policy_set=policies,
+            forecast_name='I can pay for Nursing School working part-time during school and full-time during breaks!'
         )
         result = ForecastHandler.runForecastApproximate(initial_conditions)
 
-        print('Policy results:')
-        for policy_key, policy_result in result.policy_results.items():
-            print(f'  {policy_key}: {policy_result}')
-        print(result.forecast_df[
-            ['Date', 'Checking', 'Brokerage', 'Loan Total', 'Memo']
-        ].to_string(index=False))
+        # print('Policy results:')
+        # for policy_key, policy_result in result.policy_results.items():
+        #     print(f'  {policy_key}: {policy_result}')
+        # print(result.forecast_df[
+        #     ['Date', 'Checking', 'Brokerage', 'Loan Total', 'Memo']
+        # ].to_string(index=False))
 
         result.writeToJSONFile(f'{result.unique_id}.json')
         ForecastHandler.generateHTMLReport(

@@ -35,6 +35,7 @@ A refactor of the loan allocaiton algorthm now overallocates by a few pennies in
 - i think min and max balance fields should belong to the billing state classes
 - review constructor docstring and remove Returns section
 - when docstrings are done, review once more to decide what belong in module / class / __init__
+- project global replace of budget_Set to line_item_set
 
 ## LLM Tasks
  - Net Loss is still too high, I think because additional credit card payments and the memo directives- something is wrong there. the dynamic strings are wrong too ; let's add an assertion in appendSummaryLines to check for this

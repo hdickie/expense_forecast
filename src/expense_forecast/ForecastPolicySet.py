@@ -4,6 +4,9 @@ from expense_forecast.MinimumCheckingBalancePolicy import (
     MinimumCheckingBalancePolicy,
 )
 from expense_forecast.SurplusDebtPaymentPolicy import SurplusDebtPaymentPolicy
+from expense_forecast.CurrentStatementBalancePaymentPolicy import (
+    CurrentStatementBalancePaymentPolicy,
+)
 from expense_forecast.InvestmentPolicies import (
     FixedMonthlyInvestmentPolicy,
     IncomePercentageInvestmentPolicy,
@@ -22,6 +25,7 @@ class ForecastPolicySet:
         IncomePercentageInvestmentPolicy,
         SurplusInvestmentPolicy,
         PeriodicInvestmentContributionCapPolicy,
+        CurrentStatementBalancePaymentPolicy,
     )
 
     def __init__(self, *policies):
@@ -29,16 +33,12 @@ class ForecastPolicySet:
             policies = tuple(policies[0])
         self.policies = []
         observed_keys = set()
-        observed_priorities = set()
         for policy in policies:
             if not isinstance(policy, self.supported_types):
                 raise TypeError(f"Unsupported forecast policy: {type(policy).__name__}")
             if policy.policy_key in observed_keys:
                 raise ValueError(f"Duplicate forecast policy key: {policy.policy_key}")
-            if policy.priority in observed_priorities:
-                raise ValueError(f"Duplicate forecast policy priority: {policy.priority}")
             observed_keys.add(policy.policy_key)
-            observed_priorities.add(policy.priority)
             self.policies.append(policy)
 
     def __bool__(self):
@@ -51,22 +51,17 @@ class ForecastPolicySet:
         )
 
     def validate(self, account_set, budget_set):
-        line_item_priorities = {item.priority for item in budget_set.line_items}
-        for choices in budget_set.scenario_dimensions.values():
-            for choice in choices.values():
-                line_item_priorities.update(item.priority for item in choice.line_items)
-        collisions = sorted(
-            {policy.priority for policy in self.policies} & line_item_priorities
-        )
-        if collisions:
-            raise ValueError(
-                "Forecast policy priorities collide with LineItem priorities: "
-                + ", ".join(map(str, collisions))
-            )
-
         accounts_by_name = {account.name: account for account in account_set.accounts}
         reserve = self.get(MinimumCheckingBalancePolicy)
         for policy in self.policies:
+            if isinstance(policy, CurrentStatementBalancePaymentPolicy):
+                account = accounts_by_name.get(policy.account_name)
+                if account is None or account.account_type != "credit":
+                    raise ValueError(
+                        f"Policy {policy.policy_key!r} requires credit-card account "
+                        f"{policy.account_name!r}"
+                    )
+                continue
             account_name = getattr(policy, "account_name", None)
             if account_name is not None:
                 account = accounts_by_name.get(account_name)

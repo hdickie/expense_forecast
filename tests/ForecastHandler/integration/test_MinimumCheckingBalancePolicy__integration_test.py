@@ -122,8 +122,11 @@ def test_policy_runs_in_approximate_mode():
     result = ForecastHandler.runForecastApproximate(conditions)
 
     assert result.approximate_flag is True
-    assert result.policy_results["minimum_checking_balance"]["activation_date"] == date(2026, 7, 2)
-    assert float(result.forecast_df.iloc[-1]["Checking"]) == 600
+    # Approximate reserve discovery activates at the emitted event/bin boundary,
+    # not at the exact underlying transaction date.
+    assert result.policy_results["minimum_checking_balance"]["activation_date"] == date(2026, 7, 5)
+    assert float(result.forecast_df.iloc[-1]["Checking"]) == 1000
+    assert result.skipped_df["Memo"].tolist() == ["optional"]
 
 
 @pytest.mark.integration

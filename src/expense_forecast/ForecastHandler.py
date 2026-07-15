@@ -70,6 +70,9 @@ import re
 import copy
 from expense_forecast.generate_date_sequence import generate_date_sequence
 from expense_forecast.SurplusDebtPaymentPolicy import SurplusDebtPaymentPolicy
+from expense_forecast.CurrentStatementBalancePaymentPolicy import (
+    CurrentStatementBalancePaymentPolicy,
+)
 from expense_forecast.InvestmentPolicies import (
     FixedMonthlyInvestmentPolicy,
     IncomePercentageInvestmentPolicy,
@@ -449,9 +452,11 @@ class ForecastHandler:
         events rather than by iterating over every day.
         """
         start_ts = datetime.datetime.now()
-        log_in_color(
-            logger, "white", "info", "Starting Approximate Forecast " + str(IO.unique_id)
-        )
+        feasibility_only = getattr(IO, "_feasibility_only", False)
+        if not feasibility_only:
+            log_in_color(
+                logger, "white", "info", "Starting Approximate Forecast " + str(IO.unique_id)
+            )
         account_set = copy.deepcopy(IO.initial_account_set)
         memo_rule_set = copy.deepcopy(IO.initial_memo_rule_set)
         output_dates = cls._approximate_output_dates(IO.start_date, IO.end_date)
@@ -479,6 +484,35 @@ class ForecastHandler:
                 ].copy()
 
         transaction_columns = list(schedule.columns)
+        current_statement_policy_cards = {
+            str(memo).split(
+                "POLICY current_statement_balance_payment:", 1
+            )[1].split(" ", 1)[0]
+            for memo in schedule.get("Memo", pd.Series(dtype=str)).astype(str)
+            if str(memo).startswith(
+                "POLICY current_statement_balance_payment:"
+            )
+        }
+        policy_declaration_order = getattr(
+            IO,
+            "_policy_declaration_order",
+            {
+                policy.policy_key: index
+                for index, policy in enumerate(IO.policy_set.policies)
+            },
+        )
+
+        def policy_order_for_memo(memo):
+            memo = str(memo)
+            if not memo.startswith("POLICY "):
+                return None
+            return next(
+                (
+                    order for key, order in policy_declaration_order.items()
+                    if memo.startswith(f"POLICY {key} ")
+                ),
+                len(policy_declaration_order),
+            )
         confirmed_records = []
         skipped_records = []
         pending_deferred_records = []
@@ -553,8 +587,40 @@ class ForecastHandler:
                     f"INVESTMENT RETURN ({account.name} +${growth:.2f})"
                 )
 
-        def attempt_transaction(base_account_set, txn, amount):
-            """Execute against a copy and return the copy only when valid."""
+        def future_lower_priorities_are_feasible(candidate_account_set, txn):
+            """Recursively validate a policy candidate against its suffix."""
+            memo = str(txn["Memo"])
+            if not memo.startswith("POLICY ") or txn["Date"] >= IO.end_date:
+                return True, None
+            lower_priority_budget = LineItemSet(
+                [
+                    copy.deepcopy(item)
+                    for item in IO.initial_budget_set.line_items
+                    if item.priority < int(txn["Priority"])
+                ]
+            )
+            if not lower_priority_budget.line_items:
+                return True, None
+            feasibility_io = ExpenseForecastInitialConditions(
+                start_date=txn["Date"],
+                end_date=IO.end_date,
+                account_set=candidate_account_set,
+                budget_set=lower_priority_budget,
+                memo_rule_set=IO.initial_memo_rule_set,
+                policy_set=ForecastPolicySet(),
+            )
+            feasibility_io._exclude_schedule_through = txn["Date"]
+            feasibility_io._feasibility_only = True
+            try:
+                cls._runForecastApproximateOnce(
+                    feasibility_io, MilestoneSet(), include_debug_columns=True
+                )
+            except AccountBoundaryError as error:
+                return False, error
+            return True, None
+
+        def attempt_current_transaction(base_account_set, txn, amount):
+            """Execute against a copy without evaluating the future suffix."""
             candidate_account_set = copy.deepcopy(base_account_set)
             try:
                 executed = candidate_account_set.executeTransaction(
@@ -569,6 +635,20 @@ class ForecastHandler:
                 executed = Decimal(str(amount))
             return candidate_account_set, Decimal(str(executed))
 
+        def attempt_transaction(base_account_set, txn, amount):
+            """Execute against a copy and recursively validate the suffix."""
+            candidate_account_set, executed = attempt_current_transaction(
+                base_account_set, txn, amount
+            )
+            if candidate_account_set is None:
+                return None, Decimal("0")
+            feasible, _ = future_lower_priorities_are_feasible(
+                candidate_account_set, txn
+            )
+            if not feasible:
+                return None, Decimal("0")
+            return candidate_account_set, executed
+
         def maximum_partial_transaction(base_account_set, txn):
             """Find the largest currently valid amount without mutating state."""
             requested_amount = Decimal(str(txn["Amount"]))
@@ -581,7 +661,7 @@ class ForecastHandler:
                 if high - low <= MONEY_BOUNDARY_TOLERANCE:
                     break
                 candidate_amount = (low + high) / Decimal("2")
-                candidate_account_set, executed_amount = attempt_transaction(
+                candidate_account_set, executed_amount = attempt_current_transaction(
                     base_account_set,
                     txn,
                     candidate_amount,
@@ -593,7 +673,33 @@ class ForecastHandler:
                 best_account_set = candidate_account_set
                 best_executed_amount = executed_amount
 
-            return best_account_set, best_executed_amount
+            if best_account_set is None:
+                return None, Decimal("0")
+
+            # Preserve recursive future feasibility without performing a full
+            # suffix run on every binary-search step. A boundary violation is
+            # linear in the policy transfer amount, so reduce by its reported
+            # shortfall and recheck the suffix.
+            for _ in range(8):
+                feasible, error = future_lower_priorities_are_feasible(
+                    best_account_set, txn
+                )
+                if feasible:
+                    return best_account_set, best_executed_amount
+                reduction = getattr(error, "boundary_shortfall", None)
+                if reduction is None or reduction <= MONEY_BOUNDARY_TOLERANCE:
+                    return None, Decimal("0")
+                revised_amount = max(
+                    Decimal("0"), best_executed_amount - Decimal(str(reduction))
+                )
+                if revised_amount <= MONEY_BOUNDARY_TOLERANCE:
+                    return None, Decimal("0")
+                best_account_set, best_executed_amount = attempt_current_transaction(
+                    base_account_set, txn, revised_amount
+                )
+                if best_account_set is None:
+                    return None, Decimal("0")
+            return None, Decimal("0")
 
         def next_income_date_after(transaction_date):
             return next(
@@ -640,9 +746,12 @@ class ForecastHandler:
             interval_transactions.extend(due_deferred)
 
             def approximate_transaction_sort_key(transaction):
+                policy_order = policy_order_for_memo(transaction["Memo"])
                 return (
                     transaction["Date"],
                     transaction["Priority"],
+                    1 if policy_order is not None else 0,
+                    policy_order if policy_order is not None else -1,
                     0 if bool(transaction["Income_Flag"]) else 1,
                     -float(transaction["Amount"]),
                     str(transaction["Memo"]),
@@ -718,19 +827,73 @@ class ForecastHandler:
                             }
                         )
                     else:
-                        # Preserve mandatory priority-one behavior and its
-                        # detailed AccountBoundaryError message.
-                        account_set.executeTransaction(
-                            account_from,
-                            account_to,
-                            txn["Amount"],
-                            income_flag=bool(txn["Income_Flag"]),
-                        )
+                        try:
+                            account_set.executeTransaction(
+                                account_from,
+                                account_to,
+                                txn["Amount"],
+                                income_flag=bool(txn["Income_Flag"]),
+                            )
+                        except AccountBoundaryError as error:
+                            contextual_error = AccountBoundaryError(
+                                "Approximate mandatory transaction failed "
+                                f"during the execution pass: date={txn['Date']}, "
+                                f"priority={txn['Priority']}, memo={txn['Memo']!r}, "
+                                f"amount={txn['Amount']}, from={account_from!r}, "
+                                f"to={account_to!r}.\n{error}"
+                            )
+                            contextual_error.boundary_shortfall = getattr(
+                                error, "boundary_shortfall", None
+                            )
+                            contextual_error.account_name = getattr(
+                                error, "account_name", None
+                            )
+                            contextual_error.role = getattr(error, "role", None)
+                            raise contextual_error from error
                     continue
 
                 account_set = candidate_account_set
                 if executed_amount <= MONEY_BOUNDARY_TOLERANCE:
                     continue
+
+                if str(txn["Memo"]).startswith(
+                    "POLICY current_statement_balance_payment:"
+                ):
+                    card_name = str(txn["Memo"]).split(
+                        "POLICY current_statement_balance_payment:", 1
+                    )[1].split(" ", 1)[0]
+                    card = account_set._get_account_by_name(card_name)
+                    interest = card.billing_state.interest_accrued_this_cycle()
+                    if interest:
+                        directives.append(
+                            f"CC INTEREST ({card.name}: Prev Stmt Bal +${interest:.2f})"
+                        )
+                    card.billing_state = card.billing_state.roll_cycle(
+                        txn["Date"] + datetime.timedelta(days=1)
+                    )
+                    sync(card)
+                    checking = account_set._get_account_by_name(
+                        account_set.primary_checking_account_name
+                    )
+                    minimum_payment = min(
+                        card.billing_state.remaining_minimum_payment_due(),
+                        card.balance,
+                        Decimal(str(checking.balance))
+                        - Decimal(str(checking.min_balance)),
+                    )
+                    if minimum_payment > 0:
+                        account_set.executeTransaction(
+                            checking.name,
+                            card.name,
+                            minimum_payment,
+                            minimum_payment_flag=True,
+                        )
+                        directives.append(
+                            f"MINIMUM PAYMENT ({checking.name} -${minimum_payment:.2f})"
+                        )
+                        directives.append(
+                            f"MINIMUM PAYMENT ({card.name} +${minimum_payment:.2f})"
+                        )
                 confirmed_transaction = {
                     column: txn.get(column) for column in transaction_columns
                 }
@@ -761,6 +924,11 @@ class ForecastHandler:
                 billing_start = getattr(account.billing_state, "billing_cycle_start_date", None)
                 if account.account_type not in ["loan", "credit"] or output_date < billing_start:
                     continue
+                if (
+                    account.account_type == "credit"
+                    and account.name in current_statement_policy_cards
+                ):
+                    continue
 
                 checking = next(
                     a for a in account_set.accounts
@@ -771,7 +939,8 @@ class ForecastHandler:
                     payment = min(
                         account.billing_state.minimum_payment,
                         account.billing_state.balance,
-                        checking.balance - checking.min_balance,
+                        Decimal(str(checking.balance))
+                        - Decimal(str(checking.min_balance)),
                     )
                 else:
                     interest = account.billing_state.interest_accrued_this_cycle()
@@ -784,7 +953,8 @@ class ForecastHandler:
                     payment = min(
                         account.billing_state.remaining_minimum_payment_due(),
                         account.balance,
-                        checking.balance - checking.min_balance,
+                        Decimal(str(checking.balance))
+                        - Decimal(str(checking.min_balance)),
                     )
 
                 if payment > 0:
@@ -805,13 +975,14 @@ class ForecastHandler:
                 cls._approximate_memo_line(memo, count, account_from, account_to, total)
                 for (memo, account_from, account_to), (count, total) in memo_groups.items()
             ]
-            for memo_line in memo_lines:
-                log_in_color(
-                    logger,
-                    "white",
-                    "debug",
-                    f"{output_date} processing binned memo '{memo_line}'",
-                )
+            if not feasibility_only:
+                for memo_line in memo_lines:
+                    log_in_color(
+                        logger,
+                        "white",
+                        "debug",
+                        f"{output_date} processing binned memo '{memo_line}'",
+                    )
             rows.append(
                 {
                     "Date": output_date,
@@ -860,9 +1031,10 @@ class ForecastHandler:
             result_kwargs["milestone_set"] = milestone_set
             result_kwargs["milestone_results"] = milestone_results
         result = ExpenseForecastResult(IO, forecast_df, start_ts, end_ts = datetime.datetime.now(), **result_kwargs)
-        log_in_color(
-            logger, "white", "info", "Finished Approximate Forecast " + str(IO.unique_id)
-        )
+        if not feasibility_only:
+            log_in_color(
+                logger, "white", "info", "Finished Approximate Forecast " + str(IO.unique_id)
+            )
         return result
 
 
@@ -1142,6 +1314,9 @@ class ForecastHandler:
         # Memo handling when Account_To is not 'ALL_LOANS'
         if (
             not str(memo_rule.account_to).startswith("ALL_")
+            and not str(memo_rule.account_to).startswith(
+                "CURRENT_STATEMENT_BALANCE:"
+            )
             and investment_transfer_directive is None
         ):
             if not cls._is_empty_account_endpoint(memo_rule.account_from):
@@ -1174,6 +1349,14 @@ class ForecastHandler:
                 forecast_df.loc[
                     row_sel_vec, "Memo"
                 ] += f"; {confirmed_row.Memo} ({memo_rule.account_to} +${confirmed_row.Amount}) "
+
+        if str(memo_rule.account_to).startswith(
+            "CURRENT_STATEMENT_BALANCE:"
+        ):
+            forecast_df.loc[row_sel_vec, "Memo"] += (
+                f"; {confirmed_row.Memo} "
+                f"({memo_rule.account_from} -${confirmed_row.Amount}) "
+            )
 
         # Iterate over accounts to update balances and directives
         # log_in_color(logger, 'white', 'debug',''.ljust(45) + ' current_balance , new_balance', log_stack_depth)
@@ -1607,8 +1790,9 @@ class ForecastHandler:
             #     log_stack_depth,
             # )
 
-            # Return None to indicate that the transaction is not permitted
-            return None
+            # Preserve the boundary shortfall so partial-payment callers can
+            # reduce the candidate and recursively test the suffix again.
+            return e
 
     # @profile
     #TODO manual review of ForecastHandler._processConfirmedTransactions docstring
@@ -1672,6 +1856,26 @@ class ForecastHandler:
             memo_rule = memo_set.findMatchingMemoRule(
                 confirmed_row.Memo, confirmed_row.Priority
             )
+
+            if str(memo_rule.account_to).startswith(
+                "CURRENT_STATEMENT_BALANCE:"
+            ):
+                card_name = str(memo_rule.account_to).split(":", 1)[1]
+                card = account_set._get_account_by_name(card_name)
+                checking = account_set._get_account_by_name(
+                    memo_rule.account_from
+                )
+                confirmed_row.Amount = min(
+                    AccountSet._money(confirmed_row.Amount),
+                    AccountSet._money(
+                        card.billing_state.current_statement_balance
+                    ),
+                    max(
+                        Decimal("0"),
+                        AccountSet._money(checking.balance)
+                        - AccountSet._money(checking.min_balance),
+                    ),
+                )
 
             income_flag = cls._checkIfTxnIsIncome(confirmed_row=confirmed_row, log_stack_depth=log_stack_depth)
 
@@ -2269,11 +2473,14 @@ class ForecastHandler:
                     log_stack_depth,
                 )
 
-                # Attempt the transaction with the reduced amount if it's greater than zero
-                if reduced_amount > 0:
+                # Re-test the recursively forecast suffix after each boundary-
+                # informed reduction. This handles constraints on either the
+                # source (future cash needs) or destination (future debt
+                # payments), rather than relying only on today's balances.
+                for _ in range(8):
+                    if reduced_amount <= MONEY_BOUNDARY_TOLERANCE:
+                        break
                     proposed_row["Amount"] = reduced_amount
-
-                    # local_scope_confirmed_df = pd.concat([new_confirmed_df, local_scope_og_confirmed_df])
                     result = cls._attemptTransaction(end_date=end_date,
                         forecast_df=forecast_df,
                         account_set=copy.deepcopy(account_set),
@@ -2283,8 +2490,23 @@ class ForecastHandler:
                         log_stack_depth=log_stack_depth,
                         include_debug_columns=include_debug_columns,
                     )
-
                     transaction_permitted = isinstance(result, pd.DataFrame)
+                    if transaction_permitted:
+                        break
+                    shortfall = getattr(result, "boundary_shortfall", None)
+                    if shortfall is None or shortfall <= MONEY_BOUNDARY_TOLERANCE:
+                        break
+                    reduced_amount = max(
+                        Decimal("0"),
+                        Decimal(str(reduced_amount)) - Decimal(str(shortfall)),
+                    )
+                    logger.info(
+                        "%s recursive suffix rejected the partial transaction; "
+                        "reducing it by %s to %s.",
+                        d, shortfall, reduced_amount,
+                    )
+
+                if reduced_amount > 0:
 
                     if transaction_permitted:
                         log_in_color(
@@ -2722,12 +2944,66 @@ class ForecastHandler:
         # log_in_color(logger, 'magenta', 'debug', 'destination_accounts: ' , log_stack_depth)
         # log_in_color(logger, 'magenta', 'debug', str(destination_accounts.to_string()), log_stack_depth)
 
-        if dest_account_type == "credit":
-            dest_bound = destination_accounts["Balance"].sum()
+        def future_debt_capacity(account_name):
+            """Return debt that can be paid now without overpaying it later."""
+            account = next(
+                (a for a in account_set.accounts if a.name == account_name), None
+            )
+            if account is None or account_name not in forecast_df.columns:
+                return Decimal("0")
+            future_rows = forecast_df.loc[forecast_df["Date"] >= d, account_name]
+            if future_rows.empty:
+                future_balance = Decimal(str(account.balance))
+            else:
+                future_balance = min(
+                    Decimal(str(value)) for value in future_rows.dropna().tolist()
+                )
+            capacity = max(
+                Decimal("0"),
+                future_balance - Decimal(str(account.min_balance)),
+            )
+            # Exact forecast balance columns are captured before the billing-
+            # cycle minimum payment on some boundary rows. Reserve that known
+            # future reduction explicitly so it is not also consumed by an
+            # optional payment today.
+            if account.account_type == "credit":
+                future_minimum = cls._getFutureMinPaymentAmount(
+                    account_name=account_name,
+                    account_set=account_set,
+                    forecast_df=forecast_df,
+                    d=d,
+                    log_stack_depth=log_stack_depth,
+                )
+                capacity = max(
+                    Decimal("0"), capacity - Decimal(str(future_minimum))
+                )
+            return capacity
+
+        destination_name = memo_rule_row["Account_To"]
+        if destination_name in {"ALL_CREDIT_CARDS", "ALL_CREDIT_CARDS_SNOWBALL"}:
+            dest_bound = sum(
+                (
+                    future_debt_capacity(account.name)
+                    for account in account_set.accounts
+                    if account.account_type == "credit"
+                ),
+                Decimal("0"),
+            )
+        elif destination_name in {"ALL_LOANS", "ALL_LOANS_SNOWBALL"}:
+            dest_bound = sum(
+                (
+                    future_debt_capacity(account.name)
+                    for account in account_set.accounts
+                    if account.account_type == "loan"
+                ),
+                Decimal("0"),
+            )
+        elif dest_account_type == "credit":
+            dest_bound = future_debt_capacity(destination_name)
         elif dest_account_type == "checking":
             raise NotImplementedError
         elif dest_account_type == "loan":
-            raise NotImplementedError
+            dest_bound = future_debt_capacity(destination_name)
         elif dest_account_type == "none":
             dest_bound = float("inf")
         else:
@@ -9739,6 +10015,16 @@ class ForecastHandler:
             try:
 
                 # Assess potential optimizations across all transaction levels
+                optimization_started_at = perf_counter()
+                if not raise__satisfice_failed_exception:
+                    optional_count = int((proposed_df["Priority"] > 1).sum())
+                    logger.info(
+                        "Optimization pass: evaluating %s optional transaction(s) "
+                        "over %s day(s). Future-safety simulations may make this "
+                        "phase quiet for a while.",
+                        optional_count,
+                        len(all_days),
+                    )
                 forecast_df, skipped_df, confirmed_df, deferred_df = (
                     cls._assessPotentialOptimizations(
                         end_date=end_date,
@@ -9755,6 +10041,11 @@ class ForecastHandler:
                         include_debug_columns=include_debug_columns
                     )
                 )
+                if not raise__satisfice_failed_exception:
+                    logger.info(
+                        "Optimization pass finished in %.2f seconds.",
+                        perf_counter() - optimization_started_at,
+                    )
 
             except Exception as e:
                 log_stack_depth -= 1
@@ -12721,10 +13012,13 @@ class ForecastHandler:
         net_gain_and_loss_page_text_above_plots = '' 
         net_gain_and_loss_page_text_below_plots = ''
 
-        liquid_delta_sent = cls.get_delta_explanation_sentence('Liquid Total', net_worth_delta, length_of_forecast_in_days)
-        cc_delta_sent = cls.get_delta_explanation_sentence('CC Debt Total', net_worth_delta, length_of_forecast_in_days)
-        loan_delta_sent = cls.get_delta_explanation_sentence('Loan Total', net_worth_delta, length_of_forecast_in_days)
-        report_scalars['account_type_page_text_above_plots'] = liquid_delta_sent + '\r\n' + cc_delta_sent + '\r\n' + loan_delta_sent + '\r\n'
+        liquid_delta = cls.get_last_row_first_row_delta(E.forecast_df, 'Liquid Total')
+        cc_debt_delta = cls.get_last_row_first_row_delta(E.forecast_df, 'CC Debt Total')
+        loan_total_delta = cls.get_last_row_first_row_delta(E.forecast_df, 'Loan Total')
+        liquid_delta_sent = cls.get_delta_explanation_sentence('Liquid Total', liquid_delta, length_of_forecast_in_days)
+        cc_delta_sent = cls.get_delta_explanation_sentence('CC Debt Total', cc_debt_delta, length_of_forecast_in_days)
+        loan_delta_sent = cls.get_delta_explanation_sentence('Loan Total', loan_total_delta, length_of_forecast_in_days)
+        report_scalars['account_type_page_text_above_plots'] = liquid_delta_sent + '<br>' + cc_delta_sent + '<br>' + loan_delta_sent + '<br>' #TODO idk how to encode whitespace
         account_type_page_text_below_plots = ''
 
         interest_page_text_above_plots = '' #TODO for detailed view interest page abobe plot text: in dyanmic sentence, state the average value, dont include start and end values
@@ -12843,6 +13137,16 @@ class ForecastHandler:
             ).reset_index(drop=True)
 
         report_data_frames["all_transactions"] = transaction_schedule.copy()
+        income_mask = (
+            transaction_schedule["Income_Flag"].map(
+                lambda value: False if pd.isna(value) else bool(value)
+            )
+            if "Income_Flag" in transaction_schedule.columns
+            else pd.Series(False, index=transaction_schedule.index)
+        )
+        report_data_frames["income_transactions"] = transaction_schedule.loc[
+            income_mask
+        ].reset_index(drop=True)
         report_data_frames["non_essential_transactions"] = transaction_schedule.loc[
             transaction_schedule["Priority"].gt(1)
         ].reset_index(drop=True)
@@ -12855,18 +13159,26 @@ class ForecastHandler:
         )
         credit_transaction_indices = []
         loan_transaction_indices = []
+        policy_loan_transaction_indices = set()
         for transaction_index, transaction in transaction_schedule.iterrows():
+            memo = str(transaction["Memo"])
             try:
                 memo_rule = initial_memo_rule_set.findMatchingMemoRule(
-                    transaction["Memo"],
+                    memo,
                     transaction["Priority"],
                 )
             except ValueError:
-                # Policy-generated transfers are intentionally absent from the
-                # caller's configured MemoRuleSet. They remain visible in the
-                # complete transaction table, but cannot be classified using
-                # the original rules here.
-                if str(transaction["Memo"]).startswith("POLICY "):
+                # Policy transfers are generated internally and therefore do
+                # not exist in the caller's original MemoRuleSet. Their stable
+                # policy keys still provide unambiguous report classification.
+                if memo.startswith("POLICY surplus_debt_payment:credit "):
+                    credit_transaction_indices.append(transaction_index)
+                    continue
+                if memo.startswith("POLICY surplus_debt_payment:loan "):
+                    loan_transaction_indices.append(transaction_index)
+                    policy_loan_transaction_indices.add(transaction_index)
+                    continue
+                if memo.startswith("POLICY "):
                     continue
                 raise
             destination_type = account_types.get(memo_rule.account_to)
@@ -12884,6 +13196,16 @@ class ForecastHandler:
         loan_payment_rows = []
         for transaction_index in loan_transaction_indices:
             transaction = transaction_schedule.loc[transaction_index]
+            if transaction_index in policy_loan_transaction_indices:
+                loan_payment_rows.append(
+                    {
+                        "Date": transaction["Date"],
+                        "Account": "ALL_LOANS",
+                        "Payment Type": "Policy",
+                        "Amount": float(transaction["Amount"]),
+                    }
+                )
+                continue
             memo_rule = initial_memo_rule_set.findMatchingMemoRule(
                 transaction["Memo"],
                 transaction["Priority"],
@@ -13248,6 +13570,10 @@ class ForecastHandler:
 
         transaction_schedule_sections = "".join(
             [
+                render_table_card(
+                    "Income",
+                    "income_transactions",
+                ),
                 render_table_card(
                     "Non-Essential Transactions",
                     "non_essential_transactions",
@@ -13742,6 +14068,21 @@ class ForecastHandler:
                     font-weight: 650;
                     line-height: 1.12;
                     letter-spacing: -0.025em;
+                }}
+
+                /*
+                The identity metadata stays in the narrow left header column,
+                but the primary forecast name may use the full report content
+                width. It therefore wraps only when it reaches the page's
+                right content edge instead of the first grid-column boundary.
+                */
+                .scenario-identity-left .scenario-name {{
+                    width: min(
+                        var(--report-page-max-width),
+                        calc(100vw - 2 * var(--report-page-side-padding))
+                    );
+                    max-width: none;
+                    white-space: normal;
                 }}
 
                 .scenario-unique-id {{
@@ -14819,7 +15160,7 @@ class ForecastHandler:
         return account_set
 
     @classmethod
-    def _materialize_cash_allocation_policies(cls, IO):
+    def _materialize_cash_allocation_policies(cls, IO, approximate=False):
         """Translate executable policies into ordinary prioritized transactions."""
         policies = copy.deepcopy(IO.policy_set)
         budget = copy.deepcopy(IO.initial_budget_set)
@@ -14836,6 +15177,13 @@ class ForecastHandler:
             return IO
 
         generated = False
+        surplus_occurrence_dates = (
+            cls._approximate_output_dates(IO.start_date, IO.end_date)[1:]
+            if approximate
+            else generate_date_sequence(
+                IO.start_date, (IO.end_date - IO.start_date).days, "daily"
+            )
+        )
         generated_contributions = []
         caps = [
             policy for policy in policies.policies
@@ -14906,7 +15254,9 @@ class ForecastHandler:
                 memo=memo,
                 income_flag=False,
                 deferrable=False,
-                partial_payment_allowed=True,
+                # Priority-one LineItems are rigid in the legacy engine.
+                # Policy endpoints perform their own feasible-amount capping.
+                partial_payment_allowed=policy.priority != 1,
             )
             rules.addMemoRule(memo, account_from, account_to, policy.priority)
             if account_to and any(
@@ -14919,7 +15269,31 @@ class ForecastHandler:
             generated = True
 
         for policy in sorted(policies.policies, key=lambda candidate: candidate.priority):
-            if isinstance(policy, FixedMonthlyInvestmentPolicy):
+            if isinstance(policy, CurrentStatementBalancePaymentPolicy):
+                card = next(
+                    account for account in IO.initial_account_set.accounts
+                    if account.name == policy.account_name
+                )
+                first_billing_date = cls._normalize_date_value(
+                    card.billing_state.billing_cycle_start_date
+                )
+                billing_dates = generate_date_sequence(
+                    first_billing_date,
+                    max(0, (IO.end_date + datetime.timedelta(days=1) - first_billing_date).days),
+                    "monthly",
+                )
+                for billing_date in billing_dates:
+                    close_date = cls._normalize_date_value(billing_date) - datetime.timedelta(days=1)
+                    if IO.start_date <= close_date <= IO.end_date:
+                        add_once(
+                            policy,
+                            close_date,
+                            10**15,
+                            primary_checking.name,
+                            f"CURRENT_STATEMENT_BALANCE:{policy.account_name}",
+                            "current cycle charges",
+                        )
+            elif isinstance(policy, FixedMonthlyInvestmentPolicy):
                 cursor = date(IO.start_date.year, IO.start_date.month, 1)
                 while cursor <= IO.end_date:
                     day_number = min(
@@ -14953,9 +15327,7 @@ class ForecastHandler:
                         "percentage contribution",
                     )
             elif isinstance(policy, SurplusInvestmentPolicy):
-                for contribution_date in generate_date_sequence(
-                    IO.start_date, (IO.end_date - IO.start_date).days, "daily"
-                ):
+                for contribution_date in surplus_occurrence_dates:
                     add_once(
                         policy, contribution_date, 10**15,
                         f"CHECKING_ABOVE:{policy.checking_threshold}",
@@ -14968,9 +15340,7 @@ class ForecastHandler:
                 )
                 if policy.strategy == "snowball":
                     destination += "_SNOWBALL"
-                for payment_date in generate_date_sequence(
-                    IO.start_date, (IO.end_date - IO.start_date).days, "daily"
-                ):
+                for payment_date in surplus_occurrence_dates:
                     add_once(
                         policy, payment_date, 10**15,
                         primary_checking.name, destination, "surplus",
@@ -14989,6 +15359,10 @@ class ForecastHandler:
             policy_set=ForecastPolicySet(),
         )
         rebuilt.policy_set = policies
+        rebuilt._policy_declaration_order = {
+            policy.policy_key: index
+            for index, policy in enumerate(policies.policies)
+        }
         rebuilt.unique_id = IO.unique_id
         return rebuilt
 
@@ -14997,6 +15371,35 @@ class ForecastHandler:
         summaries = {}
         confirmed = result.confirmed_df
         for policy in policy_set.policies:
+            if (
+                isinstance(policy, CurrentStatementBalancePaymentPolicy)
+                and confirmed is not None
+                and not confirmed.empty
+            ):
+                policy_rows = confirmed["Memo"].astype(str).str.startswith(
+                    f"POLICY {policy.policy_key} "
+                )
+                normalized_forecast_dates = result.forecast_df["Date"].apply(
+                    cls._normalize_date_value
+                )
+                for row_index in confirmed.index[policy_rows]:
+                    memo = str(confirmed.at[row_index, "Memo"])
+                    transaction_date = cls._normalize_date_value(
+                        confirmed.at[row_index, "Date"]
+                    )
+                    forecast_rows = result.forecast_df.loc[
+                        normalized_forecast_dates == transaction_date
+                    ]
+                    if forecast_rows.empty:
+                        continue
+                    amount_match = re.search(
+                        re.escape(memo) + r" \([^)]* -\$([0-9.]+)\)",
+                        str(forecast_rows.iloc[0]["Memo"]),
+                    )
+                    if amount_match:
+                        confirmed.at[row_index, "Amount"] = float(
+                            amount_match.group(1)
+                        )
             summary = {
                 "priority": policy.priority,
                 "status": "completed",
@@ -15018,6 +15421,10 @@ class ForecastHandler:
                 summary["executed"] = float(executed)
                 if isinstance(policy, SurplusDebtPaymentPolicy):
                     summary["debt_paid"] = float(executed)
+            if isinstance(policy, CurrentStatementBalancePaymentPolicy):
+                # The requested amount is resolved dynamically from billing
+                # state, so materialization's sentinel is not meaningful.
+                summary["requested"] = summary["executed"]
             expected = max(0.0, summary["requested"] - summary["capped"])
             if isinstance(
                 policy, (FixedMonthlyInvestmentPolicy, IncomePercentageInvestmentPolicy)
@@ -15042,7 +15449,9 @@ class ForecastHandler:
     ):
         """Apply configured forecast policies without changing public runners."""
         configured_IO = copy.deepcopy(IO)
-        IO = cls._materialize_cash_allocation_policies(copy.deepcopy(IO))
+        IO = cls._materialize_cash_allocation_policies(
+            copy.deepcopy(IO), approximate=approximate
+        )
         policy = IO.policy_set.get(MinimumCheckingBalancePolicy)
 
         if policy is None:
@@ -15100,16 +15509,42 @@ class ForecastHandler:
         def priority_one_io(source_io):
             result = copy.deepcopy(source_io)
             result.policy_set = ForecastPolicySet()
-            result.initial_proposed_df = result.initial_proposed_df.loc[
-                result.initial_proposed_df["Priority"] < policy.priority
-            ].copy()
+            policy_order = getattr(source_io, "_policy_declaration_order", {})
+            reserve_order = policy_order.get(policy.policy_key, -1)
+
+            def precedes_reserve(priority, memo):
+                if int(priority) < policy.priority:
+                    return True
+                if int(priority) > policy.priority:
+                    return False
+                memo = str(memo)
+                if not memo.startswith("POLICY "):
+                    return True
+                candidate_order = next(
+                    (
+                        order for key, order in policy_order.items()
+                        if memo.startswith(f"POLICY {key} ")
+                    ),
+                    len(policy_order),
+                )
+                return candidate_order < reserve_order
+
+            if not result.initial_proposed_df.empty:
+                result.initial_proposed_df = result.initial_proposed_df.loc[
+                    result.initial_proposed_df.apply(
+                        lambda row: precedes_reserve(
+                            row["Priority"], row["Memo"]
+                        ),
+                        axis=1,
+                    )
+                ].copy()
             result.initial_deferred_df = result.initial_deferred_df.head(0).copy()
             result.initial_skipped_df = result.initial_skipped_df.head(0).copy()
             result.initial_budget_set = LineItemSet(
                 [
                     copy.deepcopy(item)
                     for item in source_io.initial_budget_set.line_items
-                    if item.priority < policy.priority
+                    if precedes_reserve(item.priority, item.memo)
                 ],
                 scenario_selections=source_io.initial_budget_set.scenario_selections,
                 scenario_dimensions={
@@ -15118,7 +15553,7 @@ class ForecastHandler:
                             [
                                 copy.deepcopy(item)
                                 for item in choice.line_items
-                                if item.priority < policy.priority
+                                if precedes_reserve(item.priority, item.memo)
                             ]
                         )
                         for choice_name, choice in choices.items()
@@ -15128,7 +15563,24 @@ class ForecastHandler:
             )
             return result
 
-        exact_discovery = run_without_policy(priority_one_io(IO), False)
+        discovery_started_at = perf_counter()
+        logger.info(
+            "Minimum-checking policy discovery: running an %s forecast of "
+            "priorities below P%s to find the earliest permanently stable "
+            "$%.2f reserve.%s",
+            "approximate" if approximate else "exact",
+            policy.priority,
+            target,
+            " Discovery uses approximate event/binned granularity."
+            if approximate
+            else " Transaction messages in this phase are daily and unbinned.",
+        )
+        exact_discovery = run_without_policy(priority_one_io(IO), approximate)
+        logger.info(
+            "Minimum-checking policy discovery finished in %.2f seconds; "
+            "evaluating the stable balance crossing.",
+            perf_counter() - discovery_started_at,
+        )
         discovery_dates = exact_discovery.forecast_df["Date"].apply(
             cls._normalize_date_value
         )
@@ -15168,21 +15620,21 @@ class ForecastHandler:
             )
             exact_discovery.policy_results[policy.policy_name] = policy_result
             if approximate:
-                approximate_result = run_without_policy(priority_one_io(IO), True)
-                approximate_result.deferred_df = exact_discovery.deferred_df
-                approximate_result.skipped_df = exact_discovery.skipped_df
-                approximate_result.initial_conditions = original_IO
-                approximate_result.unique_id = original_IO.unique_id + "_A"
-                approximate_result.policy_results = cls._summarize_cash_policy_results(
-                    IO.policy_set, approximate_result
-                )
-                approximate_result.policy_results[policy.policy_name] = policy_result
-                return approximate_result
+                exact_discovery.unique_id = original_IO.unique_id + "_A"
             return exact_discovery
 
         activation_row = qualifying.iloc[0]
         activation_date = cls._normalize_date_value(activation_row["Date"])
         policy_result.update(status="activated", activation_date=activation_date)
+        logger.info(
+            "Minimum-checking reserve activates on %s. Running the %s forecast "
+            "from that boundary with a $%.2f checking floor.%s",
+            activation_date,
+            "approximate" if approximate else "exact",
+            target,
+            " Approximate transaction messages are binned into summary dates."
+            if approximate else "",
+        )
 
         activation_accounts = cls._account_set_from_forecast_row(
             IO.initial_account_set, activation_row
@@ -15256,12 +15708,16 @@ class ForecastHandler:
             earlier & higher_priority & ~proposed["Deferrable"].astype(bool)
         ].copy()
 
+        tail_started_at = perf_counter()
         tail_result = run_without_policy(tail_IO, approximate)
-        display_discovery = (
-            run_without_policy(priority_one_io(IO), True)
-            if approximate
-            else exact_discovery
+        logger.info(
+            "Post-activation %s forecast finished in %.2f seconds.",
+            "approximate" if approximate else "exact",
+            perf_counter() - tail_started_at,
         )
+        # Discovery already uses the requested execution mode, so its prefix
+        # can be stitched directly without a redundant presentation pass.
+        display_discovery = exact_discovery
         summary_columns = {
             "Marginal Interest", "Net Gain", "Net Loss", "Net Worth",
             "Loan Total", "CC Debt Total", "Liquid Total", "Investment Total",

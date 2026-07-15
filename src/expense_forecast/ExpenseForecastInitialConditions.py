@@ -742,6 +742,7 @@ class ExpenseForecastInitialConditions:
                 if name is not None and not str(name).startswith("ALL_LOANS")
                 and not str(name).startswith("ALL_CREDIT_CARDS")
                 and not str(name).startswith("CHECKING_ABOVE:")
+                and not str(name).startswith("CURRENT_STATEMENT_BALANCE:")
             }
 
             A2 = {""}

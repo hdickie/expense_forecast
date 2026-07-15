@@ -292,6 +292,50 @@ class LineItemSet:
 
         return current_budget_schedule
 
+    def getIncomeExpenseSchedule(self):
+        """Return daily scheduled income and expense totals.
+
+        Each scheduled occurrence is classified using its ``Income_Flag``.
+        Multiple occurrences on the same date are summed, and dates containing
+        only income or only expenses receive zero in the other column.
+        """
+        schedule = self.getLineItemSchedule()
+        result_columns = ["Date", "Expense", "Income"]
+        if schedule.empty:
+            return pd.DataFrame(columns=result_columns)
+
+        summarized = schedule[["Date", "Amount", "Income_Flag"]].copy()
+        income_mask = summarized["Income_Flag"].map(bool)
+        summarized["Expense"] = summarized["Amount"].where(~income_mask, 0)
+        summarized["Income"] = summarized["Amount"].where(income_mask, 0)
+        result = (
+            summarized.groupby("Date", as_index=False, sort=True)[
+                ["Expense", "Income"]
+            ]
+            .sum()
+            .loc[:, result_columns]
+        )
+        return result
+
+    def getIncomeExpenseScheduleBinned(self):
+        """Return income and expense totals binned to each month's first day."""
+        schedule = self.getIncomeExpenseSchedule()
+        result_columns = ["Date", "Expense", "Income"]
+        if schedule.empty:
+            return pd.DataFrame(columns=result_columns)
+
+        binned = schedule.copy()
+        binned["Date"] = binned["Date"].map(
+            lambda value: datetime.date(value.year, value.month, 1)
+        )
+        return (
+            binned.groupby("Date", as_index=False, sort=True)[
+                ["Expense", "Income"]
+            ]
+            .sum()
+            .loc[:, result_columns]
+        )
+
     #TODO manual review of LineItemSet.addLineItem docstring
     def addLineItem(self, start_date, end_date, priority, interval, amount, memo, income_flag = False, **kwargs):
         """
