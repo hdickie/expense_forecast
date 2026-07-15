@@ -57,7 +57,7 @@ def _initial_conditions(approximate=False):
     )
     transitions = ConditionalScenarioTransitionSet(
         ConditionalScenarioTransition(
-            "Get job as RN", {food: "Average"}
+            "Get job as RN", {"Food": "Average"}
         )
     )
     return ExpenseForecastInitialConditions(

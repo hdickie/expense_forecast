@@ -934,7 +934,7 @@ class MilestoneSet:
         #     "EXIT evaluateMemoMilestone(" + str(memo_regex) + ")",
         #     log_stack_depth,
         # )
-        return "None"
+        return None
 
     #TODO manual review of MilestoneSet.evaluateCompositeMilestone docstring
     @classmethod

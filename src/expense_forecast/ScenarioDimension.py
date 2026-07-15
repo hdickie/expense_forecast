@@ -28,8 +28,13 @@ Contract
 #     scenarios: list[Scenario]
 
 import copy
+import datetime
+import logging
 
 from expense_forecast.LineItemSet import LineItemSet
+
+
+logger = logging.getLogger(__name__)
 
 
 #TODO manual review of ScenarioDimension docstring
@@ -154,5 +159,56 @@ class ScenarioDimension:
             scenario_selections={self.name: choice_name},
             scenario_dimensions={self.name: self.choices},
         )
+
+    def choice_for_date_range(
+        self,
+        choice_name: str,
+        start_date: datetime.date,
+        end_date: datetime.date,
+    ) -> LineItemSet:
+        """Return a choice template scheduled within an inclusive date range.
+
+        Recurring line items receive the requested start and end dates. Fixed
+        ``once`` items retain their original date when it is within the range;
+        otherwise they are omitted with a warning. The returned set deliberately
+        has no active scenario metadata, allowing dated choices from the same
+        dimension to be combined. This method assigns dates only and does not
+        calculate amounts such as annual raises.
+        """
+        if choice_name not in self.choices:
+            raise ValueError(
+                f"Unknown choice {choice_name!r} for ScenarioDimension {self.name!r}"
+            )
+        if not isinstance(start_date, datetime.date):
+            raise TypeError("start_date must be a datetime.date")
+        if not isinstance(end_date, datetime.date):
+            raise TypeError("end_date must be a datetime.date")
+        if start_date > end_date:
+            raise ValueError("start_date must be on or before end_date")
+
+        scheduled_items = []
+        for line_item in copy.deepcopy(self.choices[choice_name].line_items):
+            if line_item.interval == "once":
+                if start_date <= line_item.start_date <= end_date:
+                    scheduled_items.append(line_item)
+                else:
+                    logger.warning(
+                        "Dropping one-time line item %r dated %s from "
+                        "ScenarioDimension %r choice %r because it is outside "
+                        "the requested range %s to %s",
+                        line_item.memo,
+                        line_item.start_date,
+                        self.name,
+                        choice_name,
+                        start_date,
+                        end_date,
+                    )
+                continue
+
+            line_item.start_date = start_date
+            line_item.end_date = end_date
+            scheduled_items.append(line_item)
+
+        return LineItemSet(scheduled_items)
 
     # TODO DEFER conceivably I would need dropChoice, but not rn so tabling it for now

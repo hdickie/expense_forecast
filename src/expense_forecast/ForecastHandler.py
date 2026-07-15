@@ -439,6 +439,16 @@ class ForecastHandler:
         schedule = IO.initial_budget_set.getLineItemSchedule().copy()
         if not schedule.empty:
             schedule["Date"] = schedule["Date"].apply(cls._normalize_date_value)
+            exclude_schedule_through = getattr(
+                IO, "_exclude_schedule_through", None
+            )
+            if exclude_schedule_through is not None:
+                exclude_schedule_through = cls._normalize_date_value(
+                    exclude_schedule_through
+                )
+                schedule = schedule.loc[
+                    schedule["Date"] > exclude_schedule_through
+                ].copy()
 
         transaction_columns = list(schedule.columns)
         confirmed_records = []
@@ -12631,7 +12641,8 @@ class ForecastHandler:
 
         return ""
 
-    def generateHTMLreport(self, E: ExpenseForecastResult) -> str:
+    @classmethod
+    def generateHTMLreport(cls, E: ExpenseForecastResult) -> str:
         """
         Generate a self-contained HTML report for one ExpenseForecastResult.
 
@@ -12648,17 +12659,17 @@ class ForecastHandler:
 
         length_of_forecast_in_days = (E.initial_conditions.end_date - E.initial_conditions.start_date).days
 
-        net_worth_delta = self.get_last_row_first_row_delta(E.forecast_df, 'Net Worth')
+        net_worth_delta = cls.get_last_row_first_row_delta(E.forecast_df, 'Net Worth')
 
-        report_scalars['net_worth_page_text_above_plots']= self.get_delta_explanation_sentence('Net Worth', net_worth_delta, length_of_forecast_in_days)
+        report_scalars['net_worth_page_text_above_plots']= cls.get_delta_explanation_sentence('Net Worth', net_worth_delta, length_of_forecast_in_days)
         report_scalars['net_worth_page_text_below_plots'] = ''
 
         net_gain_and_loss_page_text_above_plots = '' 
         net_gain_and_loss_page_text_below_plots = ''
 
-        liquid_delta_sent = self.get_delta_explanation_sentence('Liquid Total', net_worth_delta, length_of_forecast_in_days)
-        cc_delta_sent = self.get_delta_explanation_sentence('CC Debt Total', net_worth_delta, length_of_forecast_in_days)
-        loan_delta_sent = self.get_delta_explanation_sentence('Loan Total', net_worth_delta, length_of_forecast_in_days)
+        liquid_delta_sent = cls.get_delta_explanation_sentence('Liquid Total', net_worth_delta, length_of_forecast_in_days)
+        cc_delta_sent = cls.get_delta_explanation_sentence('CC Debt Total', net_worth_delta, length_of_forecast_in_days)
+        loan_delta_sent = cls.get_delta_explanation_sentence('Loan Total', net_worth_delta, length_of_forecast_in_days)
         report_scalars['account_type_page_text_above_plots'] = liquid_delta_sent + '\r\n' + cc_delta_sent + '\r\n' + loan_delta_sent + '\r\n'
         account_type_page_text_below_plots = ''
 
@@ -12891,7 +12902,7 @@ class ForecastHandler:
         
         
         forecast_metadata = pd.DataFrame({
-            'Start':[E.start_ts], 'End':[E.end_ts], 'Elapsed':[self.get_time_elapsed_string(E.start_ts, E.end_ts)]
+            'Start':[E.start_ts], 'End':[E.end_ts], 'Elapsed':[cls.get_time_elapsed_string(E.start_ts, E.end_ts)]
         }).T
         forecast_metadata['Stat'] = ['Start', 'End', 'Elapsed']
         forecast_metadata = forecast_metadata.rename(columns={forecast_metadata.columns[0]: "Value"}).loc[:, ["Stat", "Value"]]
@@ -13363,7 +13374,7 @@ class ForecastHandler:
                 line_items_dataframe["interval"].eq("once"), "Memo"
             ]
         )
-        confirmed_transactions = self._report_confirmed_df(E)
+        confirmed_transactions = cls()._report_confirmed_df(E)
         highlighted_transactions_dataframe = confirmed_transactions.loc[
             confirmed_transactions["Memo"].isin(once_memos)
             | confirmed_transactions["Priority"].gt(1),
@@ -14863,6 +14874,7 @@ class ForecastHandler:
                 **io_kwargs,
             )
             if approximate:
+                current_IO._exclude_schedule_through = next_date
                 for attr in ("initial_confirmed_df", "initial_proposed_df"):
                     frame = getattr(current_IO, attr)
                     if not frame.empty:

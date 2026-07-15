@@ -9,6 +9,9 @@ from expense_forecast.LineItemSet import LineItemSet
 from expense_forecast.MemoRuleSet import MemoRuleSet
 from expense_forecast.ForecastHandler import ForecastHandler
 from expense_forecast.MilestoneSet import MilestoneSet
+from expense_forecast.MemoMilestone import MemoMilestone
+from expense_forecast.ConditionalScenarioTransition import ConditionalScenarioTransition
+from expense_forecast.ConditionalScenarioTransitionSet import ConditionalScenarioTransitionSet
 
 from expense_forecast.AccountMilestone import AccountMilestone
 from expense_forecast.CompositeMilestone import CompositeMilestone
@@ -21,14 +24,14 @@ from datetime import date
 
 import inspect
 
-def get_B_invariant(food_daily_amount, gas_semiweekly_amount):
+def get_B_invariant():
     B_invariant = LineItemSet()
 
+    # B_invariant.addLineItem(start_date=start_date, end_date=end_date, priority=1,
+    #                 interval='daily',amount=food_daily_amount,memo='food expense',income_flag=False, 
+    #                 deferrable=False, partial_payment_allowed=False)
     B_invariant.addLineItem(start_date=start_date, end_date=end_date, priority=1,
-                    interval='daily',amount=food_daily_amount,memo='food expense',income_flag=False, 
-                    deferrable=False, partial_payment_allowed=False)
-    B_invariant.addLineItem(start_date=start_date, end_date=end_date, priority=1,
-                    interval='semiweekly',amount=gas_semiweekly_amount,memo='gas expense',income_flag=False, 
+                    interval='semiweekly',amount=60,memo='gas expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
     B_invariant.addLineItem(start_date=start_date, end_date=end_date, priority=1,
                     interval='monthly',amount=287.68,memo='phone expense',income_flag=False, 
@@ -516,10 +519,11 @@ def fuck_off_to_spain(start_date : date, end_date : date) -> LineItemSet:
 
 if __name__ == '__main__':
 
-    action = 'near term'
+    # action = 'near term'
     # action = 'start of RN life'
     # action = 'net worth 0 after 18 months of RN car life'
     # action = 'test approximate case'
+    action = 'test milestone conditional swaps'
     # action = 'inspect'
 
     # action = 'I just won the lottery'
@@ -928,7 +932,163 @@ if __name__ == '__main__':
         #     print(name)
 
     elif action == 'test milestone conditional swaps':
-        pass
+        start_date = date(2026, 7, 1)
+        end_date = date(2027, 2, 1)
+
+        accounts = get_IRL_current_A() #TODO this could take kwargs
+
+        memo_rules = getComprehensiveMemoRules() 
+
+        food_very_low = LineItemSet()
+        food_very_low.addLineItem(
+            start_date=start_date,
+            end_date=end_date,
+            priority=1,
+            interval='daily',
+            amount=10,
+            memo='very low food expense',
+            deferrable=False,
+            partial_payment_allowed=False,
+        )
+        food_average = LineItemSet()
+        food_average.addLineItem(
+            start_date=start_date,
+            end_date=end_date,
+            priority=1,
+            interval='daily',
+            amount=20,
+            memo='average food expense',
+            deferrable=False,
+            partial_payment_allowed=False,
+        )
+        food = ScenarioDimension(
+            name='Food',
+            choices={
+                'Very Low': food_very_low, #10
+                'Average': food_average, #20
+            },
+        )
+
+        #TODO i assumed y3 and y4 are just 5% raises from prev
+        unemployed = LineItemSet()
+        cna_income = LineItemSet()
+        cna_income.addLineItem(
+            start_date=start_date,
+            end_date=end_date,
+            priority=1,
+            interval='semiweekly',
+            amount=22.77 * 80 * 0.75, # assume 25% tax at a minimum
+            memo='CNA income',
+            income_flag=True,
+            deferrable=False,
+            partial_payment_allowed=False,
+        )
+        rn_income_y1 = LineItemSet()
+        rn_income_y1.addLineItem(
+            start_date=start_date,
+            end_date=end_date,
+            priority=1,
+            interval='semiweekly',
+            amount=2900,
+            memo='RN Year 1 income',
+            income_flag=True,
+            deferrable=False,
+            partial_payment_allowed=False,
+        )
+        rn_income_y2 = LineItemSet()
+        rn_income_y2.addLineItem(
+            start_date=start_date,
+            end_date=end_date,
+            priority=1,
+            interval='semiweekly',
+            amount=2900*1.05,
+            memo='RN Year 2 income',
+            income_flag=True,
+            deferrable=False,
+            partial_payment_allowed=False,
+        )
+        rn_income_y3 = LineItemSet()
+        rn_income_y3.addLineItem(
+            start_date=start_date,
+            end_date=end_date,
+            priority=1,
+            interval='semiweekly',
+            amount=2900*(1.05**2),
+            memo='RN Year 3 income',
+            income_flag=True,
+            deferrable=False,
+            partial_payment_allowed=False,
+        )
+        rn_income_y4 = LineItemSet()
+        rn_income_y4.addLineItem(
+            start_date=start_date,
+            end_date=end_date,
+            priority=1,
+            interval='semiweekly',
+            amount=2900*(1.05**3),
+            memo='RN Year 4 income',
+            income_flag=True,
+            deferrable=False,
+            partial_payment_allowed=False,
+        )
+        income = ScenarioDimension(
+            name='Income',
+            choices={
+                'Unemployed': unemployed,
+                'CNA': cna_income,
+                'RN Year 1': rn_income_y1,
+                'RN Year 2': rn_income_y2,
+                'RN Year 3': rn_income_y3,
+                'RN Year 4': rn_income_y4,
+            },
+        )
+
+        # The composed LineItemSet remembers both active dimension choices.
+        lifestyle = food.select('Very Low') + income.choice_for_date_range(
+            "Unemployed",
+            start_date,
+            date(2026, 8, 22),
+        ) + income.choice_for_date_range(
+            "CNA",
+            date(2026, 8, 22),
+            end_date,
+        )
+
+        milestones = MilestoneSet({
+            'Get job as RN': MemoMilestone(memo_regex=r'RN Year 1 income'),
+        })
+        transitions = ConditionalScenarioTransitionSet(
+            ConditionalScenarioTransition(
+                milestone='Get job as RN',
+                changes={
+                    'Food': 'Average',
+                },
+            )
+        )
+
+        initial_conditions = ExpenseForecastInitialConditions(
+            start_date=start_date,
+            end_date=end_date,
+            account_set=accounts,
+            budget_set=lifestyle,
+            memo_rule_set=memo_rules,
+            milestone_set=milestones,
+            transitions=transitions,
+        )
+
+        R = ForecastHandler.runForecastApproximate(initial_conditions)
+        print('Initial selections:', lifestyle.scenario_selections)
+        print('Milestones:', R.milestone_results)
+        print(R.forecast_df[['Date', 'Checking', 'Memo']].to_string(index=False))
+        # print('Confirmed transactions:')
+        # print(result.confirmed_df[['Date', 'Amount', 'Memo']].to_string(index=False))
+
+        R.writeToJSONFile(str(R.unique_id)+'.json')
+        
+        html_report = ForecastHandler.generateHTMLreport(R)
+
+        with open('test_report.html', "w") as f:
+            f.write(html_report)
 
     elif action == 'retirement':
         pass
@@ -1042,7 +1202,7 @@ if __name__ == '__main__':
         end_date = start_date + datetime.timedelta(days=90)
 
         A = get_IRL_current_A() #TODO this could take kwargs
-        B_invariant = get_B_invariant(15, 80)
+        B_invariant = get_B_invariant()
         M = getComprehensiveMemoRules() 
 
         user_vars = getUserVars()

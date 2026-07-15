@@ -967,7 +967,7 @@ class ExpenseForecastResult:
         return True
 
     #TODO manual review of ExpenseForecastResult.writeToJSONFile docstring
-    def writeToJSONFile(self, output_dir="./"):
+    def writeToJSONFile(self, output_path=None):
         """
         TODO one-line description of ExpenseForecastResult.writeToJSONFile.
 
@@ -977,8 +977,9 @@ class ExpenseForecastResult:
 
         Parameters
         ----------
-        output_dir : object
-            TODO one-line description of ExpenseForecastResult.writeToJSONFile.output_dir.
+        output_path : str | Path, optional
+            Exact path of the JSON file. If omitted, writes
+            ``Forecast_<unique_id>.json`` in the current directory.
 
         Returns
         -------
@@ -992,7 +993,8 @@ class ExpenseForecastResult:
 
         @interface-report: show
         """
-        output_path = Path(output_dir) / f"Forecast_{self.unique_id}.json"
+        if output_path is None:
+            output_path = Path(f"Forecast_{self.unique_id}.json")
         return self.dumpJSON(output_path)
 
     #TODO manual review of ExpenseForecastResult.write_database_tables docstring
