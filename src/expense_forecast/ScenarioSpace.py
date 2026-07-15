@@ -70,7 +70,22 @@ class ScenarioSpace:
 
         @interface-report: show
         """
-        raise NotImplementedError
+        if not isinstance(invariant_transactions, LineItemSet):
+            raise TypeError("invariant_transactions must be a LineItemSet")
+        if not isinstance(memo_rule_set, MemoRuleSet):
+            raise TypeError("memo_rule_set must be a MemoRuleSet")
+        if not isinstance(scenario_dimensions, dict):
+            raise TypeError("scenario_dimensions must be a mapping")
+        for dimension_name, dimension in scenario_dimensions.items():
+            if not isinstance(dimension, ScenarioDimension):
+                raise TypeError(
+                    f"Scenario dimension {dimension_name!r} is not a ScenarioDimension"
+                )
+            if dimension_name != dimension.name:
+                raise ValueError(
+                    f"Scenario dimension key {dimension_name!r} does not match "
+                    f"its name {dimension.name!r}"
+                )
 
     #TODO manual review of ScenarioSpace.addDimension docstring
     def addDimension(self, dimension_name, scenario_dimension: ScenarioDimension):
@@ -101,13 +116,10 @@ class ScenarioSpace:
 
         @interface-report: show
         """
-        partial_scenario_to_delete_afterward_keys = []
-
-        # I'm not actually sure I need this but it seems like a good thing to have
         self.scenario_dimensions[dimension_name] = scenario_dimension
-
-
-        for existing_scenario_name, existing_scenario_budget_set in self.scenarios.items():
+        existing_scenarios = list(self.scenarios.items())
+        new_scenarios = {}
+        for existing_scenario_name, existing_scenario_budget_set in existing_scenarios:
             for choice_name, choice_budget_set in scenario_dimension.choices.items():
 
                 if self.dimension_count > 0:
@@ -115,11 +127,10 @@ class ScenarioSpace:
                 else:
                     new_scenario_name = choice_name
 
-                new_scenario = existing_scenario_budget_set.union(choice_budget_set)
-                self.scenarios[new_scenario_name] = new_scenario
-                partial_scenario_to_delete_afterward_keys.append(existing_scenario_name)
-        for key in partial_scenario_to_delete_afterward_keys:
-            self.scenarios.pop(key)
+                new_scenarios[new_scenario_name] = (
+                    existing_scenario_budget_set + scenario_dimension.select(choice_name)
+                )
+        self.scenarios = new_scenarios
 
         self.dimension_indices[dimension_name] = self.dimension_count
         self.dimension_names.append(dimension_name)
@@ -235,7 +246,6 @@ class ScenarioSpace:
 
         for dimension_name, dimension_budget_set in scenario_dimensions.items():
             self.addDimension(dimension_name, dimension_budget_set)
-
 
 
 

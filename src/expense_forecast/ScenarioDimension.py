@@ -27,6 +27,8 @@ Contract
 #     baseline: ForecastDefinition
 #     scenarios: list[Scenario]
 
+import copy
+
 from expense_forecast.LineItemSet import LineItemSet
 
 
@@ -46,7 +48,7 @@ class ScenarioDimension:
     @interface-report: show
     """
     #TODO DEFER manual review of ScenarioDimension.__init__ docstring
-    def __init__(self, name, choices: dict[str, LineItemSet]):
+    def __init__(self, name, choices: dict[str, LineItemSet] = None):
 
         """
         TODO DEFER one-line description of ScenarioDimension.__init__.
@@ -80,17 +82,24 @@ class ScenarioDimension:
         if name.strip() == "":
             raise ValueError("Name for ScenarioDimension cannot be empty string")
 
+        self.name = name.strip()
         self.choices = {}
         if choices is not None:
             for choice_name, choice_budget_set in choices.items():
                 if choice_name is None:
                     raise ValueError("choice_name for ScenarioDimension cannot be None")
 
-                if choice_name == "":
+                if not isinstance(choice_name, str) or choice_name.strip() == "":
                     raise ValueError("choice_name for ScenarioDimension cannot be empty string")
-
-                # TOOD enforce something about budgetSet
-                # TODO add to self.choices
+                if not isinstance(choice_budget_set, LineItemSet):
+                    raise TypeError(
+                        "ScenarioDimension choices must be LineItemSet instances"
+                    )
+                if choice_budget_set.scenario_selections:
+                    raise ValueError(
+                        "ScenarioDimension choices cannot contain scenario selections"
+                    )
+                self.choices[choice_name] = copy.deepcopy(choice_budget_set)
 
     #TODO manual review of ScenarioDimension.addChoice docstring
     def addChoice(self, label: str, budget_set: LineItemSet):
@@ -124,10 +133,26 @@ class ScenarioDimension:
         if label is None:
             raise ValueError("label for ScenarioDimension::addChoice cannot be None")
 
-        if label != "":
+        if not isinstance(label, str) or label.strip() == "":
             raise ValueError("label for ScenarioDimensio::addChoice cannot be empty string")
+        if not isinstance(budget_set, LineItemSet):
+            raise TypeError("budget_set must be a LineItemSet")
+        if label in self.choices:
+            raise ValueError(f"Duplicate choice {label!r}")
+        if budget_set.scenario_selections:
+            raise ValueError("ScenarioDimension choices cannot contain scenario selections")
+        self.choices[label] = copy.deepcopy(budget_set)
 
-        # TOOD enforce something about budgetSet
-        self.choices[label] = budget_set
+    def select(self, choice_name: str) -> LineItemSet:
+        """Return the chosen line items with active scenario metadata."""
+        if choice_name not in self.choices:
+            raise ValueError(
+                f"Unknown choice {choice_name!r} for ScenarioDimension {self.name!r}"
+            )
+        return LineItemSet(
+            copy.deepcopy(self.choices[choice_name].line_items),
+            scenario_selections={self.name: choice_name},
+            scenario_dimensions={self.name: self.choices},
+        )
 
     # TODO DEFER conceivably I would need dropChoice, but not rn so tabling it for now

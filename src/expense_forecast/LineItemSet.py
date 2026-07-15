@@ -13,6 +13,7 @@ Contract
 
 
 from __future__ import annotations
+import copy
 from .LineItem import LineItem
 import pandas as pd
 import datetime
@@ -59,7 +60,12 @@ class LineItemSet:
     are interpreted and used by the forecasting engine.
     """
     #TODO manual review of LineItemSet.__init__ docstring
-    def __init__(self, line_items__list=None):
+    def __init__(
+        self,
+        line_items__list=None,
+        scenario_selections=None,
+        scenario_dimensions=None,
+    ):
         """
         TODO one-line description of LineItemSet.__init__.
 
@@ -88,6 +94,22 @@ class LineItemSet:
         self.line_items = []
         self.budget_items__list = self.line_items__list
         self.budget_items = self.line_items
+        self.scenario_selections = dict(scenario_selections or {})
+        self.scenario_dimensions = copy.deepcopy(scenario_dimensions or {})
+
+        if set(self.scenario_selections) - set(self.scenario_dimensions):
+            missing = sorted(set(self.scenario_selections) - set(self.scenario_dimensions))
+            raise ValueError(
+                "Scenario selections are missing dimension definitions: "
+                + ", ".join(missing)
+            )
+        for dimension_name, choice_name in self.scenario_selections.items():
+            choices = self.scenario_dimensions[dimension_name]
+            if choice_name not in choices:
+                raise ValueError(
+                    f"Unknown choice {choice_name!r} for ScenarioDimension "
+                    f"{dimension_name!r}"
+                )
 
         if line_items__list is None:
             return
@@ -369,7 +391,7 @@ class LineItemSet:
 
         @interface-report: show
         """
-        return {
+        result = {
             "budget_items": [
                 {
                     "Start_Date": line_item.start_date.isoformat(),
@@ -385,6 +407,16 @@ class LineItemSet:
                 for line_item in self.line_items
             ]
         }
+        if self.scenario_selections:
+            result["scenario_selections"] = dict(self.scenario_selections)
+            result["scenario_dimensions"] = {
+                dimension_name: {
+                    choice_name: choice_set.to_dict()
+                    for choice_name, choice_set in choices.items()
+                }
+                for dimension_name, choices in self.scenario_dimensions.items()
+            }
+        return result
 
     def to_json(self):
         """
@@ -401,7 +433,47 @@ class LineItemSet:
         if not isinstance(other, LineItemSet):
             return NotImplemented
 
-        return LineItemSet(self.line_items + other.line_items)
+        merged_selections = dict(self.scenario_selections)
+        for dimension_name, choice_name in other.scenario_selections.items():
+            existing_choice = merged_selections.get(dimension_name)
+            if existing_choice is not None and existing_choice != choice_name:
+                raise ValueError(
+                    "Cannot combine LineItemSets with conflicting selections for "
+                    f"ScenarioDimension {dimension_name!r}: "
+                    f"{existing_choice!r} and {choice_name!r}"
+                )
+            merged_selections[dimension_name] = choice_name
+
+        merged_dimensions = copy.deepcopy(self.scenario_dimensions)
+        for dimension_name, choices in other.scenario_dimensions.items():
+            if dimension_name in merged_dimensions:
+                existing_definition = {
+                    name: choice.to_dict()
+                    for name, choice in merged_dimensions[dimension_name].items()
+                }
+                incoming_definition = {
+                    name: choice.to_dict() for name, choice in choices.items()
+                }
+                if existing_definition != incoming_definition:
+                    raise ValueError(
+                        f"Conflicting definitions for ScenarioDimension {dimension_name!r}"
+                    )
+            else:
+                merged_dimensions[dimension_name] = copy.deepcopy(choices)
+
+        merged_items = list(self.line_items)
+        observed_keys = {self._line_item_key(item) for item in merged_items}
+        for item in other.line_items:
+            item_key = self._line_item_key(item)
+            if item_key not in observed_keys:
+                merged_items.append(item)
+                observed_keys.add(item_key)
+
+        return LineItemSet(
+            merged_items,
+            scenario_selections=merged_selections,
+            scenario_dimensions=merged_dimensions,
+        )
 
     #Codex-write-doctstring-OK
     @staticmethod
@@ -464,4 +536,65 @@ class LineItemSet:
                     + str(item_to_remove)
                 )
 
-        return LineItemSet(remaining_items)
+        remaining_selections = dict(self.scenario_selections)
+        remaining_dimensions = copy.deepcopy(self.scenario_dimensions)
+        for dimension_name, choice_name in other.scenario_selections.items():
+            if remaining_selections.get(dimension_name) != choice_name:
+                raise ValueError(
+                    f"Cannot subtract inactive scenario choice {dimension_name!r}: "
+                    f"{choice_name!r}"
+                )
+            remaining_selections.pop(dimension_name)
+            remaining_dimensions.pop(dimension_name, None)
+
+        return LineItemSet(
+            remaining_items,
+            scenario_selections=remaining_selections,
+            scenario_dimensions=remaining_dimensions,
+        )
+
+    def replace_scenario_choice(self, dimension_name, choice_name):
+        """Return a copy with one active scenario choice replaced."""
+        if dimension_name not in self.scenario_selections:
+            raise ValueError(
+                f"ScenarioDimension {dimension_name!r} has no active choice"
+            )
+        choices = self.scenario_dimensions[dimension_name]
+        if choice_name not in choices:
+            raise ValueError(
+                f"Unknown choice {choice_name!r} for ScenarioDimension "
+                f"{dimension_name!r}"
+            )
+        current_choice = self.scenario_selections[dimension_name]
+        if current_choice == choice_name:
+            return copy.deepcopy(self)
+
+        current_choice_set = choices[current_choice]
+        next_choice_set = choices[choice_name]
+        remaining_items = list(self.line_items)
+        for item_to_remove in current_choice_set.line_items:
+            key = self._line_item_key(item_to_remove)
+            for index, candidate in enumerate(remaining_items):
+                if self._line_item_key(candidate) == key:
+                    remaining_items.pop(index)
+                    break
+            else:
+                raise ValueError(
+                    f"Active choice {dimension_name!r}: {current_choice!r} is "
+                    "missing one or more of its line items"
+                )
+
+        observed_keys = {self._line_item_key(item) for item in remaining_items}
+        for item in next_choice_set.line_items:
+            key = self._line_item_key(item)
+            if key not in observed_keys:
+                remaining_items.append(item)
+                observed_keys.add(key)
+
+        selections = dict(self.scenario_selections)
+        selections[dimension_name] = choice_name
+        return LineItemSet(
+            remaining_items,
+            scenario_selections=selections,
+            scenario_dimensions=self.scenario_dimensions,
+        )

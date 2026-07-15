@@ -28,6 +28,9 @@ from expense_forecast.AccountSet import AccountSet
 from expense_forecast.LineItemSet import LineItemSet
 from expense_forecast.MemoRuleSet import MemoRuleSet
 from expense_forecast.MilestoneSet import MilestoneSet
+from expense_forecast.ConditionalScenarioTransitionSet import (
+    ConditionalScenarioTransitionSet,
+)
 
 logger = logging.getLogger(__name__)
 formatter = logging.Formatter("%(asctime)s - %(levelname)-8s - %(message)s")
@@ -396,6 +399,18 @@ class ExpenseForecastInitialConditions:
                 deferrable=budget_item.get("Deferrable"),
                 partial_payment_allowed=budget_item.get("Partial_Payment_Allowed"),
             )
+        scenario_dimensions = {}
+        for dimension_name, choices_data in data.get("scenario_dimensions", {}).items():
+            scenario_dimensions[dimension_name] = {
+                choice_name: cls._budget_set_from_dict(choice_data)
+                for choice_name, choice_data in choices_data.items()
+            }
+        if data.get("scenario_selections"):
+            budget_set = LineItemSet(
+                budget_set.line_items,
+                scenario_selections=data["scenario_selections"],
+                scenario_dimensions=scenario_dimensions,
+            )
         return budget_set
 
     #TODO manual review of ExpenseForecastInitialConditions._memo_rule_set_from_dict docstring
@@ -499,6 +514,9 @@ class ExpenseForecastInitialConditions:
             "end_date": end_date.isoformat(),
             "accounts": _stable_df_payload(accounts_df),
             "budget_items": _stable_df_payload(budget_df),
+            "scenario_selections": dict(
+                getattr(budget_set, "scenario_selections", {})
+            ),
             "memo_rules": _stable_df_payload(memo_rules_df),
         }
 
@@ -927,13 +945,12 @@ class ExpenseForecastInitialConditions:
 
         @interface-report: show
         """
-        allowed_kwargs = ['forecast_name',
-                          'forecast_set_name',
-                          'milestone_set',
-                          'milestone_conditional_account_set_swap_set',
-                          'milestone_conditional_budget_set_swap_set'
-                          'milestone_conditional_memo_rule_set_swap_set'
-                          ]
+        allowed_kwargs = [
+            'forecast_name',
+            'forecast_set_name',
+            'milestone_set',
+            'transitions',
+        ]
         for key in kwargs:
             if key not in allowed_kwargs:
                 raise TypeError(f"Unexpected keyword argument '{key}'")
@@ -950,6 +967,13 @@ class ExpenseForecastInitialConditions:
         self.initial_account_set = copy.deepcopy(account_set)
         self.initial_budget_set = copy.deepcopy(budget_set)
         self.initial_memo_rule_set = copy.deepcopy(memo_rule_set)
+        self.milestone_set = copy.deepcopy(kwargs.get('milestone_set') or MilestoneSet())
+        self.transitions = copy.deepcopy(
+            kwargs.get('transitions') or ConditionalScenarioTransitionSet()
+        )
+        if not isinstance(self.transitions, ConditionalScenarioTransitionSet):
+            raise TypeError("transitions must be a ConditionalScenarioTransitionSet")
+        self.transitions.validate(self.milestone_set, self.initial_budget_set)
 
         self.unique_id = ExpenseForecastInitialConditions.compute_forecast_id(
             start_date=self.start_date,
@@ -968,11 +992,6 @@ class ExpenseForecastInitialConditions:
         self.initial_skipped_df = skipped_df
         self.initial_confirmed_df = confirmed_df
 
-        self._validate_swap_set_milestone_set_intersection(kwargs.get('milestone_set', None),
-                                                           kwargs.get('account_set_swap_set', None),
-                                                          kwargs.get('budget_set_swap_set', None),
-                                                          kwargs.get('memo_rule_set_swap_set', None)
-                                                          )
 
     #TODO manual review of ExpenseForecastInitialConditions.__str__ docstring
     def __str__(self):
@@ -1166,6 +1185,9 @@ class ExpenseForecastInitialConditions:
             milestone_set=cls._object_from_json_data(
                 data.get("milestone_set")
             ) or MilestoneSet(),
+            transitions=cls._object_from_json_data(
+                data.get("transitions")
+            ) or ConditionalScenarioTransitionSet(),
         ) #TODO forecast name
 
     #TODO manual review of ExpenseForecastInitialConditions.load_database_tables docstring
@@ -1601,5 +1623,7 @@ class ExpenseForecastInitialConditions:
             "end_date": self.end_date.isoformat(),
             "account_set": self.initial_account_set.to_dict(),
             "budget_set": self.initial_budget_set.to_dict(),
-            "memo_rule_set": self.initial_memo_rule_set.to_dict()
+            "memo_rule_set": self.initial_memo_rule_set.to_dict(),
+            "milestone_set": self._object_to_json_data(self.milestone_set),
+            "transitions": self._object_to_json_data(self.transitions),
         }

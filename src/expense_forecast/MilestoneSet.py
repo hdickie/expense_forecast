@@ -279,7 +279,7 @@ class MilestoneSet:
             raise ValueError("Duplicate Milestone Name detected. First Offender: "+str(first_offender))
 
     #TODO manual review of MilestoneSet.__init__ docstring
-    def __init__( self, **kwargs ):
+    def __init__(self, milestones=None, **kwargs):
 
         """
         TODO one-line description of MilestoneSet.__init__.
@@ -310,14 +310,49 @@ class MilestoneSet:
             if key not in allowed_kwargs:
                 raise TypeError(f"Unexpected keyword argument '{key}'")
 
-        self.account_milestones = kwargs.get('account_milestones',None)
-        self.memo_milestones = kwargs.get('memo_milestones', None)
-        self.composite_milestones = kwargs.get('composite_milestones', None)
+        self.account_milestones = list(kwargs.get('account_milestones') or [])
+        self.memo_milestones = list(kwargs.get('memo_milestones') or [])
+        self.composite_milestones = list(kwargs.get('composite_milestones') or [])
+
+        if milestones is not None:
+            if not isinstance(milestones, dict):
+                raise TypeError("MilestoneSet positional input must be a mapping")
+            for milestone_name, milestone in milestones.items():
+                if not isinstance(milestone_name, str) or not milestone_name.strip():
+                    raise ValueError("Milestone names must be non-empty strings")
+                existing_name = getattr(milestone, "milestone_name", None)
+                if existing_name not in (None, milestone_name):
+                    raise ValueError(
+                        f"Milestone mapping name {milestone_name!r} conflicts with "
+                        f"object name {existing_name!r}"
+                    )
+                milestone.milestone_name = milestone_name
+                if isinstance(milestone, AccountMilestone):
+                    self.account_milestones.append(milestone)
+                elif isinstance(milestone, MemoMilestone):
+                    self.memo_milestones.append(milestone)
+                elif isinstance(milestone, CompositeMilestone):
+                    self.composite_milestones.append(milestone)
+                else:
+                    raise TypeError(
+                        f"Unsupported milestone type: {type(milestone).__name__}"
+                    )
 
         self._validate_unique_milestone_names(self.account_milestones, self.memo_milestones, self.composite_milestones)
         self._validate_unique_account_milestones(self.account_milestones)
         self._validate_unique_memo_milestones(self.memo_milestones)
         self._validate_unique_composite_milestones(self.composite_milestones)
+
+    @property
+    def milestone_names(self):
+        return {
+            milestone.milestone_name
+            for milestone in (
+                self.account_milestones
+                + self.memo_milestones
+                + self.composite_milestones
+            )
+        }
 
 
     #TODO manual review of MilestoneSet.__eq__ docstring

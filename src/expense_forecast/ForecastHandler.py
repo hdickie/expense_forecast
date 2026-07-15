@@ -125,7 +125,7 @@ class ForecastHandler:
     @staticmethod
     def _normalize_date_value(value):
         """
-        
+
         @interface-report: ignore
         """
         if pd.isnull(value):
@@ -186,9 +186,28 @@ class ForecastHandler:
 
         return forecast_df
 
+    @classmethod
+    def runForecast(
+        cls,
+        IO: ExpenseForecastInitialConditions,
+        milestone_set: MilestoneSet = None,
+        include_debug_columns=False,
+    ) -> ExpenseForecastResult:
+        milestone_set = milestone_set or getattr(IO, "milestone_set", MilestoneSet())
+        transitions = getattr(IO, "transitions", None)
+        if transitions:
+            return cls._runForecastWithScenarioTransitions(
+                IO,
+                milestone_set,
+                transitions,
+                include_debug_columns=include_debug_columns,
+                approximate=False,
+            )
+        return cls._runForecastOnce(IO, milestone_set, include_debug_columns)
+
     #TODO manual review of ForecastHandler.runForecast docstring
     @classmethod
-    def runForecast(cls,
+    def _runForecastOnce(cls,
                     IO: ExpenseForecastInitialConditions,
                     milestone_set: MilestoneSet,
                     include_debug_columns = False
@@ -377,6 +396,27 @@ class ForecastHandler:
 
     @classmethod
     def runForecastApproximate(
+        cls,
+        IO: ExpenseForecastInitialConditions,
+        milestone_set: MilestoneSet = None,
+        include_debug_columns=False,
+    ) -> ExpenseForecastResult:
+        milestone_set = milestone_set or getattr(IO, "milestone_set", MilestoneSet())
+        transitions = getattr(IO, "transitions", None)
+        if transitions:
+            return cls._runForecastWithScenarioTransitions(
+                IO,
+                milestone_set,
+                transitions,
+                include_debug_columns=include_debug_columns,
+                approximate=True,
+            )
+        return cls._runForecastApproximateOnce(
+            IO, milestone_set, include_debug_columns
+        )
+
+    @classmethod
+    def _runForecastApproximateOnce(
         cls,
         IO: ExpenseForecastInitialConditions,
         milestone_set: MilestoneSet,
@@ -12578,6 +12618,19 @@ class ForecastHandler:
         # TODO handle plural of minute(s) and second(s) in get_time_elapsed_string i just don't want to do it rn 
         return f"{mins} minute and {secs} seconds"
 
+    def generateComparisonReport(self, E: ExpenseForecastResult) -> str:
+        """
+        Generate a self-contained HTML report for one ExpenseForecastResult.
+
+        This method assumes scalar values and pandas DataFrames are available as
+        attributes on E. Adapt scalar_value() and dataframe_value() if E exposes
+        report data through another interface.
+        """
+
+
+
+        return ""
+
     def generateHTMLreport(self, E: ExpenseForecastResult) -> str:
         """
         Generate a self-contained HTML report for one ExpenseForecastResult.
@@ -14628,6 +14681,244 @@ class ForecastHandler:
     # def show_plan(self, forecast_set: ForecastSetInitialConditions):
     #     raise NotImplementedError
 
+    @staticmethod
+    def _flatten_milestone_results(milestone_results):
+        if milestone_results is None:
+            return {}
+        if isinstance(milestone_results, dict):
+            return dict(milestone_results)
+        flattened = {}
+        for result_group in milestone_results:
+            if result_group:
+                flattened.update(result_group)
+        return flattened
+
+    @classmethod
+    def _account_set_from_forecast_row(cls, account_set, forecast_row):
+        account_set = copy.deepcopy(account_set)
+        for account in account_set.accounts:
+            if account.name in forecast_row.index:
+                account.balance = AccountSet._money(forecast_row[account.name])
+            if account.account_type in {"checking", "investment"}:
+                account.billing_state.balance = account.balance
+            elif account.account_type == "credit":
+                state = account.billing_state
+                state.current_statement_balance = AccountSet._money(
+                    forecast_row[f"{account.name}: Curr Stmt Bal"]
+                )
+                state.previous_statement_balance = AccountSet._money(
+                    forecast_row[f"{account.name}: Prev Stmt Bal"]
+                )
+                state.billing_cycle_payment_balance = AccountSet._money(
+                    forecast_row[f"{account.name}: Credit Billing Cycle Payment Bal"]
+                )
+                state.end_of_previous_cycle_balance = AccountSet._money(
+                    forecast_row[f"{account.name}: Credit End of Prev Cycle Bal"]
+                )
+                AccountSet._sync_debt_account_from_billing_state(account)
+            elif account.account_type == "loan":
+                state = account.billing_state
+                state.principal_balance = AccountSet._money(
+                    forecast_row[f"{account.name}: Principal Balance"]
+                )
+                state.interest_balance = AccountSet._money(
+                    forecast_row[f"{account.name}: Interest"]
+                )
+                state.billing_cycle_payment_balance = AccountSet._money(
+                    forecast_row[f"{account.name}: Loan Billing Cycle Payment Bal"]
+                )
+                AccountSet._sync_debt_account_from_billing_state(account)
+        return account_set
+
+    @classmethod
+    def _runForecastWithScenarioTransitions(
+        cls,
+        IO,
+        milestone_set,
+        transitions,
+        include_debug_columns=False,
+        approximate=False,
+    ):
+        """Run and stitch forecast segments separated by milestone transitions."""
+        transitions.validate(milestone_set, IO.initial_budget_set)
+        original_IO = copy.deepcopy(IO)
+        current_IO = copy.deepcopy(IO)
+        current_budget = copy.deepcopy(IO.initial_budget_set)
+        fired_milestones = set()
+        forecast_parts = []
+        transaction_parts = {name: [] for name in ("confirmed_df", "deferred_df", "skipped_df")}
+        boundary_date = None
+
+        summary_columns = {
+            "Marginal Interest", "Net Gain", "Net Loss", "Net Worth",
+            "Loan Total", "CC Debt Total", "Liquid Total", "Investment Total",
+        }
+
+        while True:
+            runner = (
+                cls._runForecastApproximateOnce
+                if approximate
+                else cls._runForecastOnce
+            )
+            # Transition boundaries need the full debt billing state even when
+            # the caller does not want those columns in the final result.
+            segment = runner(current_IO, milestone_set, True)
+            milestone_dates = cls._flatten_milestone_results(segment.milestone_results)
+            candidates = []
+            for declaration_index, transition in enumerate(transitions.transitions):
+                if transition.milestone in fired_milestones:
+                    continue
+                achieved_date = milestone_dates.get(transition.milestone)
+                if achieved_date is None:
+                    continue
+                achieved_date = cls._normalize_date_value(achieved_date)
+                candidates.append((achieved_date, declaration_index, transition))
+
+            segment_forecast = segment.forecast_df.drop(
+                columns=[c for c in summary_columns if c in segment.forecast_df.columns],
+                errors="ignore",
+            ).copy()
+            segment_dates = segment_forecast["Date"].apply(cls._normalize_date_value)
+            if boundary_date is not None:
+                segment_forecast = segment_forecast.loc[segment_dates > boundary_date].copy()
+                segment_dates = segment_forecast["Date"].apply(cls._normalize_date_value)
+
+            if not candidates:
+                forecast_parts.append(segment_forecast)
+                for name in transaction_parts:
+                    frame = getattr(segment, name)
+                    if frame is not None and not frame.empty:
+                        dates = frame["Date"].apply(cls._normalize_date_value)
+                        if boundary_date is not None:
+                            frame = frame.loc[dates > boundary_date]
+                        transaction_parts[name].append(frame.copy())
+                break
+
+            next_date = min(candidate[0] for candidate in candidates)
+            same_boundary = [
+                candidate for candidate in candidates if candidate[0] == next_date
+            ]
+            same_boundary.sort(key=lambda candidate: candidate[1])
+            forecast_parts.append(segment_forecast.loc[segment_dates <= next_date].copy())
+            for name in transaction_parts:
+                frame = getattr(segment, name)
+                if frame is None or frame.empty:
+                    continue
+                dates = frame["Date"].apply(cls._normalize_date_value)
+                lower = dates > boundary_date if boundary_date is not None else True
+                transaction_parts[name].append(frame.loc[lower & (dates <= next_date)].copy())
+
+            committed_rows = segment.forecast_df.loc[
+                segment.forecast_df["Date"].apply(cls._normalize_date_value) == next_date
+            ]
+            if committed_rows.empty:
+                raise ValueError(
+                    f"No forecast row exists for transition boundary {next_date}"
+                )
+
+            changed_at_boundary = {}
+            for _, _, transition in same_boundary:
+                fired_milestones.add(transition.milestone)
+                for dimension_name, choice_name in transition.changes.items():
+                    previous_write = changed_at_boundary.get(dimension_name)
+                    if previous_write is not None and previous_write != choice_name:
+                        logger.warning(
+                            "Multiple transitions changed ScenarioDimension %r on %s; "
+                            "%r was superseded by %r",
+                            dimension_name,
+                            next_date,
+                            previous_write,
+                            choice_name,
+                        )
+                    current_budget = current_budget.replace_scenario_choice(
+                        dimension_name, choice_name
+                    )
+                    changed_at_boundary[dimension_name] = choice_name
+
+            if next_date >= current_IO.end_date:
+                break
+            next_start = (
+                next_date
+                if approximate
+                else next_date + datetime.timedelta(days=1)
+            )
+            next_accounts = cls._account_set_from_forecast_row(
+                current_IO.initial_account_set,
+                committed_rows.tail(1).iloc[0],
+            )
+            io_kwargs = {
+                "milestone_set": milestone_set,
+                "transitions": type(transitions)(),
+            }
+            if getattr(original_IO, "forecast_name", None) is not None:
+                io_kwargs["forecast_name"] = original_IO.forecast_name
+            if getattr(original_IO, "forecast_set_name", None) is not None:
+                io_kwargs["forecast_set_name"] = original_IO.forecast_set_name
+            current_IO = ExpenseForecastInitialConditions(
+                start_date=next_start,
+                end_date=original_IO.end_date,
+                account_set=next_accounts,
+                budget_set=current_budget,
+                memo_rule_set=original_IO.initial_memo_rule_set,
+                **io_kwargs,
+            )
+            if approximate:
+                for attr in ("initial_confirmed_df", "initial_proposed_df"):
+                    frame = getattr(current_IO, attr)
+                    if not frame.empty:
+                        setattr(
+                            current_IO,
+                            attr,
+                            frame.loc[
+                                frame["Date"].apply(cls._normalize_date_value) > next_date
+                            ].copy(),
+                        )
+            boundary_date = next_date
+
+        forecast_df = pd.concat(forecast_parts, ignore_index=True)
+        if forecast_df["Date"].apply(cls._normalize_date_value).duplicated().any():
+            raise ValueError("Conditional forecast produced duplicate dates")
+        if not include_debug_columns:
+            debug_columns = set()
+            for account in original_IO.initial_account_set.accounts:
+                debug_columns.update(
+                    set(
+                        original_IO.initial_account_set
+                        .getForecastColumnsForAccount(account)
+                    )
+                    - {account.name}
+                )
+            forecast_df = forecast_df.drop(
+                columns=[c for c in debug_columns if c in forecast_df.columns],
+                errors="ignore",
+            )
+        forecast_df = cls._appendSummaryLines(
+            original_IO.initial_account_set, forecast_df, log_stack_depth=0
+        )
+        forecast_df = cls._roundForecastOutput(forecast_df, decimals=2)
+        result_frames = {}
+        for name, parts in transaction_parts.items():
+            result_frames[name] = (
+                pd.concat(parts, ignore_index=True)
+                if parts
+                else pd.DataFrame()
+            )
+        result = ExpenseForecastResult(
+            original_IO,
+            forecast_df,
+            getattr(cls, "start_ts", datetime.datetime.now()),
+            datetime.datetime.now(),
+            confirmed_df=result_frames["confirmed_df"],
+            deferred_df=result_frames["deferred_df"],
+            skipped_df=result_frames["skipped_df"],
+            milestone_set=milestone_set,
+            milestone_results=MilestoneSet.evaluateMilestones(
+                forecast_df, milestone_set, log_stack_depth=0
+            ),
+            approximate_flag=approximate,
+        )
+        return result
+
     #TODO manual review of ForecastHandler.runForecastWithMilestoneConditionalSwaps docstring
     @classmethod
     def runForecastWithMilestoneConditionalSwaps(cls,
@@ -14635,6 +14926,13 @@ class ForecastHandler:
                              MS,
                              include_debug_columns=False,
                              log_stack_depth=0):
+
+        logger.warning(
+            "runForecastWithMilestoneConditionalSwaps is deprecated; "
+            "store ConditionalScenarioTransitionSet on initial conditions and "
+            "call runForecast instead"
+        )
+        return cls.runForecast(IO, MS, include_debug_columns=include_debug_columns)
 
         # Order of fork options introduces instability, so fork options are processed in order
         """

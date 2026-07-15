@@ -8,9 +8,14 @@ import jsonpickle
 #TODO manual review of MemoMilestone docstring
 class MemoMilestone:
 
-    def __init__(self, 
-                 Milestone_Name: str, 
-                 Memo_Regex: str):
+    def __init__(
+        self,
+        Milestone_Name: str = None,
+        Memo_Regex: str = None,
+        *,
+        milestone_name: str = None,
+        memo_regex: str = None,
+    ):
 
         """
         Initialize a MemoMilestone.
@@ -30,14 +35,23 @@ class MemoMilestone:
         """
         #TODO DEFER change from AssertionError to ValueError with error message including the illegal values
 
+        if milestone_name is not None:
+            if Milestone_Name is not None:
+                raise TypeError("Specify only one milestone name")
+            Milestone_Name = milestone_name
+        if memo_regex is not None:
+            if Memo_Regex is not None:
+                raise TypeError("Specify only one memo regex")
+            Memo_Regex = memo_regex
+
         self.milestone_name = Milestone_Name
-        assert self.milestone_name is not None
 
         self.memo_regex = Memo_Regex
-        assert self.memo_regex is not None
+        if self.memo_regex is None:
+            raise ValueError("memo_regex cannot be None")
 
         try:
-            re.search(Memo_Regex, "")
+            re.search(self.memo_regex, "")
         except Exception as e:
             raise e #Not valid regex
 

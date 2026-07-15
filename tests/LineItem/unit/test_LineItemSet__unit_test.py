@@ -4,6 +4,7 @@ from datetime import date
 from expense_forecast.LineItem import LineItem
 from expense_forecast.LineItemSet import LineItemSet
 from expense_forecast.generate_date_sequence import generate_date_sequence
+from expense_forecast.ScenarioDimension import ScenarioDimension
 
 def example_line_item():
     return LineItem(
@@ -18,6 +19,54 @@ def example_line_item():
 
 
 class TestLineItemSetMethods:
+
+    def test_union_is_idempotent_and_preserves_scenario_selection(self):
+        choice = LineItemSet([example_line_item()])
+        food = ScenarioDimension("Food", {"Very Low": choice})
+
+        selected = food.select("Very Low")
+        result = selected + selected
+
+        assert len(result.line_items) == 1
+        assert result.scenario_selections == {"Food": "Very Low"}
+
+    def test_union_rejects_conflicting_choices_for_same_dimension(self):
+        low = LineItemSet([example_line_item()])
+        average_item = LineItem(
+            start_date=date(2000, 1, 2),
+            end_date=date(2000, 1, 2),
+            priority=1,
+            interval="once",
+            amount=20,
+            deferrable=False,
+            memo="average",
+        )
+        food = ScenarioDimension(
+            "Food", {"Very Low": low, "Average": LineItemSet([average_item])}
+        )
+
+        with pytest.raises(ValueError, match="conflicting selections"):
+            food.select("Very Low") + food.select("Average")
+
+    def test_replace_scenario_choice_swaps_line_items_and_metadata(self):
+        low = LineItemSet([example_line_item()])
+        average_item = LineItem(
+            start_date=date(2000, 1, 2),
+            end_date=date(2000, 1, 2),
+            priority=1,
+            interval="once",
+            amount=20,
+            deferrable=False,
+            memo="average",
+        )
+        food = ScenarioDimension(
+            "Food", {"Very Low": low, "Average": LineItemSet([average_item])}
+        )
+
+        result = food.select("Very Low").replace_scenario_choice("Food", "Average")
+
+        assert result.scenario_selections == {"Food": "Average"}
+        assert [item.memo for item in result.line_items] == ["average"]
 
     @pytest.mark.parametrize(
         "line_items__list",
