@@ -40,6 +40,7 @@ from datetime import date
 from decimal import Decimal
 from typing import Any
 import datetime
+from time import perf_counter
 import os
 import tempfile
 from pathlib import Path
@@ -224,7 +225,7 @@ class ForecastHandler:
         @interface-report: show
         """
         log_stack_depth = 0
-        cls.start_ts = datetime.datetime.now()
+        cls.start_ts = datetime.datetime.now() #TODO does F need start_ts ?
         cls.initial_account_set = IO.initial_account_set
         cls.initial_budget_set = IO.initial_budget_set
         cls.initial_memo_rule_set = IO.initial_memo_rule_set
@@ -324,9 +325,7 @@ class ForecastHandler:
             result_kwargs["milestone_set"] = milestone_set
             result_kwargs["milestone_results"] = milestone_results
 
-        R = ExpenseForecastResult(IO, forecast_df, **result_kwargs)
-        R.start_ts = cls.start_ts
-        R.end_ts = cls.end_ts
+        R = ExpenseForecastResult(IO, forecast_df,  cls.start_ts, cls.end_ts, **result_kwargs)
         log_in_color(
             logger, "white", "info", "Finished Forecast " + str(IO.unique_id)
         )
@@ -401,6 +400,27 @@ class ForecastHandler:
         if not schedule.empty:
             schedule["Date"] = schedule["Date"].apply(cls._normalize_date_value)
 
+        transaction_columns = list(schedule.columns)
+        confirmed_records = []
+        skipped_records = []
+        pending_deferred_records = []
+        if isinstance(IO.initial_deferred_df, pd.DataFrame):
+            pending_deferred_records = IO.initial_deferred_df.to_dict(orient="records")
+        if isinstance(IO.initial_skipped_df, pd.DataFrame):
+            skipped_records = IO.initial_skipped_df.to_dict(orient="records")
+
+        income_dates = (
+            sorted(
+                set(
+                    schedule.loc[
+                        schedule["Income_Flag"].astype(bool), "Date"
+                    ].tolist()
+                )
+            )
+            if not schedule.empty
+            else []
+        )
+
         rows = []
         initial_row = {
             "Date": output_dates[0],
@@ -455,6 +475,58 @@ class ForecastHandler:
                     f"INVESTMENT RETURN ({account.name} +${growth:.2f})"
                 )
 
+        def attempt_transaction(base_account_set, txn, amount):
+            """Execute against a copy and return the copy only when valid."""
+            candidate_account_set = copy.deepcopy(base_account_set)
+            try:
+                executed = candidate_account_set.executeTransaction(
+                    txn["Account_From"],
+                    txn["Account_To"],
+                    amount,
+                    income_flag=bool(txn["Income_Flag"]),
+                )
+            except AccountBoundaryError:
+                return None, Decimal("0")
+            if executed is None:
+                executed = Decimal(str(amount))
+            return candidate_account_set, Decimal(str(executed))
+
+        def maximum_partial_transaction(base_account_set, txn):
+            """Find the largest currently valid amount without mutating state."""
+            requested_amount = Decimal(str(txn["Amount"]))
+            low = Decimal("0")
+            high = requested_amount
+            best_account_set = None
+            best_executed_amount = Decimal("0")
+
+            for _ in range(60):
+                if high - low <= MONEY_BOUNDARY_TOLERANCE:
+                    break
+                candidate_amount = (low + high) / Decimal("2")
+                candidate_account_set, executed_amount = attempt_transaction(
+                    base_account_set,
+                    txn,
+                    candidate_amount,
+                )
+                if candidate_account_set is None:
+                    high = candidate_amount
+                    continue
+                low = candidate_amount
+                best_account_set = candidate_account_set
+                best_executed_amount = executed_amount
+
+            return best_account_set, best_executed_amount
+
+        def next_income_date_after(transaction_date):
+            return next(
+                (
+                    income_date
+                    for income_date in income_dates
+                    if income_date > transaction_date
+                ),
+                None,
+            )
+
         previous_output_date = output_dates[0]
         for output_index, output_date in enumerate(output_dates[1:], start=1):
             directives = []
@@ -464,14 +536,43 @@ class ForecastHandler:
                     if account.account_type == "loan":
                         account.billing_state.billing_cycle_payment_balance = Decimal("0")
             if schedule.empty:
-                interval_schedule = schedule
+                interval_transactions = []
             else:
-                lower_bound = schedule["Date"] >= previous_output_date if output_index == 1 else schedule["Date"] > previous_output_date
-                interval_schedule = schedule[
+                lower_bound = (
+                    schedule["Date"] >= previous_output_date
+                    if output_index == 1
+                    else schedule["Date"] > previous_output_date
+                )
+                interval_transactions = schedule.loc[
                     lower_bound & (schedule["Date"] <= output_date)
-                ].sort_values(["Date", "Priority"])
+                ].to_dict(orient="records")
 
-            for _, txn in interval_schedule.iterrows():
+            due_deferred = []
+            still_pending = []
+            for deferred_transaction in pending_deferred_records:
+                deferred_date = cls._normalize_date_value(
+                    deferred_transaction["Date"]
+                )
+                deferred_transaction["Date"] = deferred_date
+                if deferred_date <= output_date:
+                    due_deferred.append(deferred_transaction)
+                else:
+                    still_pending.append(deferred_transaction)
+            pending_deferred_records = still_pending
+            interval_transactions.extend(due_deferred)
+
+            def approximate_transaction_sort_key(transaction):
+                return (
+                    transaction["Date"],
+                    transaction["Priority"],
+                    0 if bool(transaction["Income_Flag"]) else 1,
+                    -float(transaction["Amount"]),
+                    str(transaction["Memo"]),
+                )
+
+            while interval_transactions:
+                interval_transactions.sort(key=approximate_transaction_sort_key)
+                txn = interval_transactions.pop(0)
                 rule = memo_rule_set.findMatchingMemoRule(txn["Memo"], txn["Priority"])
                 account_from = rule.account_from
                 account_to = rule.account_to
@@ -494,16 +595,69 @@ class ForecastHandler:
                     if debt_target is not None and debt_target.account_type == "loan":
                         accrue_loan_to(debt_target, txn["Date"], directives)
 
-                executed_amount = account_set.executeTransaction(
-                    account_from,
-                    account_to,
+                executable_txn = {
+                    **txn,
+                    "Account_From": account_from,
+                    "Account_To": account_to,
+                }
+                candidate_account_set, executed_amount = attempt_transaction(
+                    account_set,
+                    executable_txn,
                     txn["Amount"],
-                    income_flag=bool(txn["Income_Flag"]),
                 )
-                if account_to != "ALL_LOANS":
-                    executed_amount = Decimal(str(txn["Amount"]))
+
+                if (
+                    candidate_account_set is None
+                    and bool(txn["Partial_Payment_Allowed"])
+                ):
+                    candidate_account_set, executed_amount = (
+                        maximum_partial_transaction(account_set, executable_txn)
+                    )
+
+                transaction_permitted = (
+                    candidate_account_set is not None
+                    and executed_amount > MONEY_BOUNDARY_TOLERANCE
+                )
+                if not transaction_permitted:
+                    if bool(txn["Deferrable"]):
+                        next_income_date = next_income_date_after(txn["Date"])
+                        deferred_transaction = {
+                            column: txn.get(column) for column in transaction_columns
+                        }
+                        if next_income_date is None or next_income_date > IO.end_date:
+                            skipped_records.append(deferred_transaction)
+                        else:
+                            deferred_transaction["Date"] = next_income_date
+                            if next_income_date <= output_date:
+                                interval_transactions.append(deferred_transaction)
+                            else:
+                                pending_deferred_records.append(deferred_transaction)
+                    elif int(txn["Priority"]) > 1:
+                        skipped_records.append(
+                            {
+                                column: txn.get(column)
+                                for column in transaction_columns
+                            }
+                        )
+                    else:
+                        # Preserve mandatory priority-one behavior and its
+                        # detailed AccountBoundaryError message.
+                        account_set.executeTransaction(
+                            account_from,
+                            account_to,
+                            txn["Amount"],
+                            income_flag=bool(txn["Income_Flag"]),
+                        )
+                    continue
+
+                account_set = candidate_account_set
                 if executed_amount <= MONEY_BOUNDARY_TOLERANCE:
                     continue
+                confirmed_transaction = {
+                    column: txn.get(column) for column in transaction_columns
+                }
+                confirmed_transaction["Amount"] = executed_amount
+                confirmed_records.append(confirmed_transaction)
                 investment_transfer_directive = cls._investment_transfer_directive(
                     account_set, account_from, account_to, executed_amount
                 )
@@ -597,18 +751,37 @@ class ForecastHandler:
         milestone_results = MilestoneSet.evaluateMilestones(
             forecast_df, milestone_set, log_stack_depth=0
         )
+        transaction_result_columns = transaction_columns or [
+            "Date",
+            "Priority",
+            "Amount",
+            "Memo",
+            "Income_Flag",
+            "Deferrable",
+            "Partial_Payment_Allowed",
+        ]
+        confirmed_df = pd.DataFrame(
+            confirmed_records,
+            columns=transaction_result_columns,
+        )
+        deferred_df = pd.DataFrame(
+            pending_deferred_records,
+            columns=transaction_result_columns,
+        )
+        skipped_df = pd.DataFrame(
+            skipped_records,
+            columns=transaction_result_columns,
+        )
         result_kwargs = {
-            "confirmed_df": IO.initial_confirmed_df,
-            "deferred_df": IO.initial_deferred_df,
-            "skipped_df": IO.initial_skipped_df,
+            "confirmed_df": confirmed_df,
+            "deferred_df": deferred_df,
+            "skipped_df": skipped_df,
             "approximate_flag": True,
         }
         if milestone_set:
             result_kwargs["milestone_set"] = milestone_set
             result_kwargs["milestone_results"] = milestone_results
-        result = ExpenseForecastResult(IO, forecast_df, **result_kwargs)
-        result.start_ts = start_ts
-        result.end_ts = datetime.datetime.now()
+        result = ExpenseForecastResult(IO, forecast_df, start_ts, end_ts = datetime.datetime.now(), **result_kwargs)
         log_in_color(
             logger, "white", "info", "Finished Approximate Forecast " + str(IO.unique_id)
         )
@@ -1238,14 +1411,15 @@ class ForecastHandler:
 
         @interface-report: show
         """
-        log_in_color(
-            logger,
-            "white",
-            "info",
-            str(proposed_row_df.Date) + " ENTER _attemptTransaction",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "info",
+        #     str(proposed_row_df.Date) + " ENTER _attemptTransaction",
+        #     log_stack_depth,
+        # )
         log_stack_depth += 1
+        attempt_started_at = perf_counter()
 
         try:
             # Prepare the proposed transaction DataFrame
@@ -1284,7 +1458,6 @@ class ForecastHandler:
             synced_account_set = cls._sync_account_set_w_forecast_day(
                 account_set=account_set, forecast_df=forecast_df, d=previous_date, log_stack_depth=log_stack_depth)
 
-            # Compute the hypothetical future forecast starting from the previous date
             hypothetical_future_forecast = cls._computeOptimalForecast(
                 start_date=previous_date,
                 end_date=end_date,
@@ -1297,6 +1470,15 @@ class ForecastHandler:
                 log_stack_depth=log_stack_depth,
                 include_debug_columns=include_debug_columns,
             )[0]
+            simulation_elapsed = perf_counter() - attempt_started_at
+            # log_in_color(
+            #     logger,
+            #     "cyan",
+            #     "info",
+            #     f"{txn_date} _attemptTransaction future forecast updated in "
+            #     f"{simulation_elapsed:.2f} seconds",
+            #     log_stack_depth,
+            # )
 
             # Exclude the first row since it's considered final and not part of the new forecast
             hypothetical_future_forecast = hypothetical_future_forecast.iloc[1:].copy()
@@ -1310,27 +1492,36 @@ class ForecastHandler:
             )
 
             log_stack_depth -= 1
-            log_in_color(
-                logger,
-                "white",
-                "info",
-                str(proposed_row_df.Date) + " EXIT _attemptTransaction",
-                log_stack_depth,
-            )
+            # log_in_color(
+            #     logger,
+            #     "white",
+            #     "info",
+            #     str(proposed_row_df.Date) + " EXIT _attemptTransaction",
+            #     log_stack_depth,
+            # )
             return updated_forecast  # Transaction is permitted
 
         except AccountBoundaryError as e:
-            # Log the exception
-            log_in_color(logger, "red", "debug", str(e), log_stack_depth)
-
-            log_stack_depth -= 1
+            simulation_elapsed = perf_counter() - attempt_started_at
             log_in_color(
                 logger,
-                "white",
+                "cyan",
                 "info",
-                str(proposed_row_df.Date) + " EXIT _attemptTransaction",
+                f"{proposed_row_df['Date']} _attemptTransaction simulation "
+                f"rejected after {simulation_elapsed:.2f} seconds",
                 log_stack_depth,
             )
+            # Log the exception
+            # log_in_color(logger, "red", "debug", str(e), log_stack_depth)
+
+            log_stack_depth -= 1
+            # log_in_color(
+            #     logger,
+            #     "white",
+            #     "info",
+            #     str(proposed_row_df.Date) + " EXIT _attemptTransaction",
+            #     log_stack_depth,
+            # )
 
             # Return None to indicate that the transaction is not permitted
             return None
@@ -1417,13 +1608,13 @@ class ForecastHandler:
                 # log_in_color(logger, 'yellow', 'debug', account_set.getAccounts().to_string(), log_stack_depth)
             except Exception as e:
                 log_stack_depth -= 1
-                log_in_color(
-                    logger,
-                    "white",
-                    "debug",
-                    d.strftime('%Y-%m-%d') + " EXIT _processConfirmedTransactions",
-                    log_stack_depth,
-                )
+                # log_in_color(
+                #     logger,
+                #     "white",
+                #     "debug",
+                #     d.strftime('%Y-%m-%d') + " EXIT _processConfirmedTransactions",
+                #     log_stack_depth,
+                # )
                 raise e
 
             forecast_df = cls._updateBalancesAndMemo(
@@ -1472,13 +1663,13 @@ class ForecastHandler:
         """
         @interface-report: false
         """
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            str(d) + " ENTER _getTotalPrepaidInCreditCardBillingCycle",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     str(d) + " ENTER _getTotalPrepaidInCreditCardBillingCycle",
+        #     log_stack_depth,
+        # )
         log_stack_depth += 1
 
         # Extract the base account name (without sub-accounts)
@@ -1562,13 +1753,13 @@ class ForecastHandler:
         )
 
         log_stack_depth -= 1
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            str(d) + " EXIT _getTotalPrepaidInCreditCardBillingCycle",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     str(d) + " EXIT _getTotalPrepaidInCreditCardBillingCycle",
+        #     log_stack_depth,
+        # )
         return total_prepaid_amount
 
     # TODO look closer at F._getFutureMinPaymentAmount. I think it may be valid 
@@ -1581,13 +1772,13 @@ class ForecastHandler:
         """
         @interface-report: false
         """
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            str(d) + " ENTER _getFutureMinPaymentAmount",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     str(d) + " ENTER _getFutureMinPaymentAmount",
+        #     log_stack_depth,
+        # )
         log_stack_depth += 1
 
         # Extract the base account name (before any colons)
@@ -1621,13 +1812,13 @@ class ForecastHandler:
 
         if min_payment_amount > 0:
             log_stack_depth -= 1
-            log_in_color(
-                logger,
-                "white",
-                "debug",
-                str(d) + " EXIT _getFutureMinPaymentAmount",
-                log_stack_depth,
-            )
+            # log_in_color(
+            #     logger,
+            #     "white",
+            #     "debug",
+            #     str(d) + " EXIT _getFutureMinPaymentAmount",
+            #     log_stack_depth,
+            # )
             return min_payment_amount
 
         # If no minimum payment on the current date, find the next billing date
@@ -1651,20 +1842,20 @@ class ForecastHandler:
 
         if sum(future_min_payment_date_sel_vec) == 0:
             log_stack_depth -= 1
-            log_in_color(
-                logger,
-                "white",
-                "debug",
-                str(d) + " future min_payment_amount = 0",
-                log_stack_depth,
-            )
-            log_in_color(
-                logger,
-                "white",
-                "debug",
-                str(d) + " EXIT _getFutureMinPaymentAmount",
-                log_stack_depth,
-            )
+            # log_in_color(
+            #     logger,
+            #     "white",
+            #     "debug",
+            #     str(d) + " future min_payment_amount = 0",
+            #     log_stack_depth,
+            # )
+            # log_in_color(
+            #     logger,
+            #     "white",
+            #     "debug",
+            #     str(d) + " EXIT _getFutureMinPaymentAmount",
+            #     log_stack_depth,
+            # )
             return 0.0
 
         # Extract minimum payment amount from the memo directives on the next billing date
@@ -1674,36 +1865,36 @@ class ForecastHandler:
         min_payment_amount = cls._extract_min_payment_amount(
             memo_directives=memo_directives, base_account_name=base_account_name, log_stack_depth=log_stack_depth)
 
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            "next_billing_date:" + str(next_billing_date),
-            log_stack_depth,
-        )
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            "next bd memo_directives:" + str(memo_directives),
-            log_stack_depth,
-        )
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            "next bd min_payment_amount:" + str(min_payment_amount),
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     "next_billing_date:" + str(next_billing_date),
+        #     log_stack_depth,
+        # )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     "next bd memo_directives:" + str(memo_directives),
+        #     log_stack_depth,
+        # )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     "next bd min_payment_amount:" + str(min_payment_amount),
+        #     log_stack_depth,
+        # )
 
         log_stack_depth -= 1
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            str(d) + " EXIT _getFutureMinPaymentAmount",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     str(d) + " EXIT _getFutureMinPaymentAmount",
+        #     log_stack_depth,
+        # )
         return min_payment_amount
 
     # @profile
@@ -1740,13 +1931,13 @@ class ForecastHandler:
 
         @interface-report: show
         """
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            "ENTER _extract_min_payment_amount",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     "ENTER _extract_min_payment_amount",
+        #     log_stack_depth,
+        # )
         log_stack_depth += 1
 
         min_payment_amount = 0.0
@@ -1767,13 +1958,13 @@ class ForecastHandler:
                     amount = float(match.group(3))
                     min_payment_amount += amount
         log_stack_depth -= 1
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            "EXIT _extract_min_payment_amount",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     "EXIT _extract_min_payment_amount",
+        #     log_stack_depth,
+        # )
         return min_payment_amount
 
     # @profile
@@ -1941,10 +2132,10 @@ class ForecastHandler:
                     + str(proposed_row.Amount),
                     log_stack_depth,
                 )
-                log_in_color(logger, "green", "info", "Result: ", log_stack_depth)
-                log_in_color(
-                    logger, "green", "info", result.to_string(), log_stack_depth
-                )
+                # log_in_color(logger, "green", "info", "Result: ", log_stack_depth)
+                # log_in_color(
+                #     logger, "green", "info", result.to_string(), log_stack_depth
+                # )
 
                 # Transaction is permitted; update the hypothetical future forecast and account set
                 hypothetical_forecast = result
@@ -2012,10 +2203,32 @@ class ForecastHandler:
                     transaction_permitted = isinstance(result, pd.DataFrame)
 
                     if transaction_permitted:
+                        log_in_color(
+                            logger,
+                            "green",
+                            "info",
+                            str(d)
+                            + " _attemptTransaction REDUCED SUCCESS "
+                            + str(proposed_row.Memo)
+                            + " "
+                            + str(proposed_row.Amount),
+                            log_stack_depth,
+                        )
                         hypothetical_forecast = result
                         account_set = cls._sync_account_set_w_forecast_day(
                             account_set=account_set, forecast_df=forecast_df, d=d, log_stack_depth=log_stack_depth)
                     else:
+                        log_in_color(
+                            logger,
+                            "red",
+                            "info",
+                            str(d)
+                            + " _attemptTransaction REDUCED FAIL "
+                            + str(proposed_row.Memo)
+                            + " "
+                            + str(proposed_row.Amount),
+                            log_stack_depth,
+                        )
                         hypothetical_forecast = None
 
             # Handle deferrable transactions if not permitted
@@ -2102,15 +2315,15 @@ class ForecastHandler:
 
         # Decrement the log stack depth
         log_stack_depth -= 1
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            str(d)
-            + " EXIT _processProposedTransactions p == "
-            + str(priority_level),
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     str(d)
+        #     + " EXIT _processProposedTransactions p == "
+        #     + str(priority_level),
+        #     log_stack_depth,
+        # )
         return forecast_df, new_confirmed_df, new_deferred_df, new_skipped_df
 
     #TODO manual review of ForecastHandler._minimum_future_available_balances_as_if_a_cc_payment_did_not_happen docstring
@@ -2154,14 +2367,14 @@ class ForecastHandler:
 
         @interface-report: show
         """
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            str(d)
-            + " ENTER _minimum_future_available_balances_as_if_a_cc_payment_did_not_happen ",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     str(d)
+        #     + " ENTER _minimum_future_available_balances_as_if_a_cc_payment_did_not_happen ",
+        #     log_stack_depth,
+        # )
         log_stack_depth += 1
         # the reason this method exists is that making an advance minimum payment changes the minimum future available balances
         # in order to make the largest payment possible without going over,
@@ -2175,8 +2388,8 @@ class ForecastHandler:
             (left_check_bound <= forecast_dates) & (forecast_dates <= right_check_bound)
         ]
 
-        print("check_region:")
-        print(check_region.to_string())
+        # print("check_region:")
+        # print(check_region.to_string())
 
         credit_basename = str(memo_rule_row.Account_To.split(":")[0])
 
@@ -2225,30 +2438,30 @@ class ForecastHandler:
                 memo_rule_row.Account_From
             ] += next_min_payment_amount
 
-            log_in_color(
-                logger, "white", "debug", "pre_next_payment_df:", log_stack_depth
-            )
-            log_in_color(
-                logger,
-                "white",
-                "debug",
-                pre_next_payment_df.to_string(),
-                log_stack_depth,
-            )
-            log_in_color(
-                logger,
-                "white",
-                "debug",
-                "post_next_payment_inclusive_df:",
-                log_stack_depth,
-            )
-            log_in_color(
-                logger,
-                "white",
-                "debug",
-                post_next_payment_inclusive_df.to_string(),
-                log_stack_depth,
-            )
+            # log_in_color(
+            #     logger, "white", "debug", "pre_next_payment_df:", log_stack_depth
+            # )
+            # log_in_color(
+            #     logger,
+            #     "white",
+            #     "debug",
+            #     pre_next_payment_df.to_string(),
+            #     log_stack_depth,
+            # )
+            # log_in_color(
+            #     logger,
+            #     "white",
+            #     "debug",
+            #     "post_next_payment_inclusive_df:",
+            #     log_stack_depth,
+            # )
+            # log_in_color(
+            #     logger,
+            #     "white",
+            #     "debug",
+            #     post_next_payment_inclusive_df.to_string(),
+            #     log_stack_depth,
+            # )
 
             amount_in_question = min(
                 min(pre_next_payment_df[memo_rule_row.Account_From]),
@@ -2260,14 +2473,14 @@ class ForecastHandler:
             )[memo_rule_row.Account_From]
 
         log_stack_depth -= 1
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            str(d)
-            + " EXIT _minimum_future_available_balances_as_if_a_cc_payment_did_not_happen ",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     str(d)
+        #     + " EXIT _minimum_future_available_balances_as_if_a_cc_payment_did_not_happen ",
+        #     log_stack_depth,
+        # )
         return amount_in_question
 
     # TODO make the name of this more clear, and then have codex write the docstring
@@ -2319,13 +2532,13 @@ class ForecastHandler:
 
         @interface-report: show
         """
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            str(d) + " ENTER _calculate_reduced_amount",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     str(d) + " ENTER _calculate_reduced_amount",
+        #     log_stack_depth,
+        # )
         log_stack_depth += 1
 
         # Get the account types for the destination account
@@ -2442,36 +2655,36 @@ class ForecastHandler:
         # log_in_color(logger, 'magenta', 'debug', 'forecast_df: ' + str(forecast_df.to_string()), log_stack_depth)
 
         reduced_amount = min(source_bound, dest_bound)
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            "source_bound..: " + str(source_bound),
-            log_stack_depth,
-        )
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            "dest_bound....: " + str(dest_bound),
-            log_stack_depth,
-        )
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            "reduced_amount: " + str(reduced_amount),
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     "source_bound..: " + str(source_bound),
+        #     log_stack_depth,
+        # )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     "dest_bound....: " + str(dest_bound),
+        #     log_stack_depth,
+        # )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     "reduced_amount: " + str(reduced_amount),
+        #     log_stack_depth,
+        # )
 
         log_stack_depth -= 1
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            str(d) + " EXIT _calculate_reduced_amount",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     str(d) + " EXIT _calculate_reduced_amount",
+        #     log_stack_depth,
+        # )
         return reduced_amount
 
     # @profile
@@ -2564,6 +2777,8 @@ class ForecastHandler:
             balance = account_row["Balance"]
 
             if account_name in forecast_df.columns:
+                if isinstance(balance, Decimal) and forecast_df[account_name].dtype != object:
+                    forecast_df[account_name] = forecast_df[account_name].astype(object)
                 forecast_df.loc[forecast_df["Date"] == d, account_name] = (
                     balance
                 )
@@ -4225,13 +4440,13 @@ class ForecastHandler:
 
         @interface-report: show
         """
-        log_in_color(
-            logger,
-            "cyan",
-            "debug",
-            str(d) + " ENTER _getMinimumFutureAvailableBalances",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "cyan",
+        #     "debug",
+        #     str(d) + " ENTER _getMinimumFutureAvailableBalances",
+        #     log_stack_depth,
+        # )
         # Increment log stack depth (if used for logging)
         log_stack_depth += 1
 
@@ -4249,13 +4464,13 @@ class ForecastHandler:
         accounts_df = account_set.getAccounts()
         future_available_balances = {}
 
-        log_in_color(
-            logger,
-            "cyan",
-            "debug",
-            "accounts_df:" + str(accounts_df.to_string()),
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "cyan",
+        #     "debug",
+        #     "accounts_df:" + str(accounts_df.to_string()),
+        #     log_stack_depth,
+        # )
 
         for account_index, account_row in accounts_df.iterrows():
             full_account_name = account_row["Name"]
@@ -4293,13 +4508,13 @@ class ForecastHandler:
                     + current_and_future_forecast_df[curr_stmt_account_name]
                 )
 
-                log_in_color(
-                    logger,
-                    "cyan",
-                    "debug",
-                    "total_credit_balance: " + str(total_credit_balance),
-                    log_stack_depth,
-                )
+                # log_in_color(
+                #     logger,
+                #     "cyan",
+                #     "debug",
+                #     "total_credit_balance: " + str(total_credit_balance),
+                #     log_stack_depth,
+                # )
 
                 # Calculate the minimum total credit balance
                 min_total_credit_balance = total_credit_balance.min()
@@ -4311,31 +4526,31 @@ class ForecastHandler:
                 )
                 future_available_balances[account_name] = min_available_credit
 
-                log_in_color(
-                    logger,
-                    "cyan",
-                    "debug",
-                    "min_available_credit: " + str(min_available_credit),
-                    log_stack_depth,
-                )
+                # log_in_color(
+                #     logger,
+                #     "cyan",
+                #     "debug",
+                #     "min_available_credit: " + str(min_available_credit),
+                #     log_stack_depth,
+                # )
 
-        log_in_color(
-            logger,
-            "cyan",
-            "debug",
-            "future_available_balances: " + str(future_available_balances),
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "cyan",
+        #     "debug",
+        #     "future_available_balances: " + str(future_available_balances),
+        #     log_stack_depth,
+        # )
 
         # Decrement log stack depth
         log_stack_depth -= 1
-        log_in_color(
-            logger,
-            "cyan",
-            "debug",
-            str(d) + " EXIT _getMinimumFutureAvailableBalances",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "cyan",
+        #     "debug",
+        #     str(d) + " EXIT _getMinimumFutureAvailableBalances",
+        #     log_stack_depth,
+        # )
         return future_available_balances
 
     # TODO is there a different method with a similar purpose somewhere?
@@ -4929,15 +5144,15 @@ class ForecastHandler:
 
                 # adjusted_payment_amount = round(og_min_payment_amount - new_min_payment_amount, 2)
                 adjusted_payment_amount = og_min_payment_amount - new_min_payment_amount
-                log_in_color(
-                    logger,
-                    "cyan",
-                    "debug",
-                    str(date_iat)
-                    + " adjusted_payment_amount: "
-                    + str(adjusted_payment_amount),
-                    log_stack_depth,
-                )
+                # log_in_color(
+                #     logger,
+                #     "cyan",
+                #     "debug",
+                #     str(date_iat)
+                #     + " adjusted_payment_amount: "
+                #     + str(adjusted_payment_amount),
+                #     log_stack_depth,
+                # )
 
                 previous_stmt_delta += adjusted_payment_amount
                 checking_delta += adjusted_payment_amount
@@ -4947,77 +5162,77 @@ class ForecastHandler:
                 billing_cycle_payment_delta = 0  # redundant but cant hurt
 
                 # Adjust memos
-                log_in_color(logger, "white", "debug", "(case 1) _update_memo_amount")
-                new_check_memo = cls._update_memo_amount(
-                    og_check_memo, og_check_amount - adjusted_payment_amount, log_stack_depth=log_stack_depth
-                )
+                # log_in_color(logger, "white", "debug", "(case 1) _update_memo_amount")
+                # new_check_memo = cls._update_memo_amount(
+                #     og_check_memo, og_check_amount - adjusted_payment_amount, log_stack_depth=log_stack_depth
+                # )
                 if adjusted_payment_amount >= curr_prev_stmt_bal:
                     # Adjust curr and prev memos
                     if og_curr_amount > 0:
-                        log_in_color(
-                            logger, "white", "debug", "(case 2) _update_memo_amount"
-                        )
+                        # log_in_color(
+                        #     logger, "white", "debug", "(case 2) _update_memo_amount"
+                        # )
                         new_curr_memo = cls._update_memo_amount(
                             og_curr_memo, adjusted_payment_amount - curr_prev_stmt_bal, log_stack_depth=log_stack_depth
                         )
                     if og_prev_amount > 0:
-                        log_in_color(
-                            logger, "white", "debug", "(case 3) _update_memo_amount"
-                        )
+                        # log_in_color(
+                        #     logger, "white", "debug", "(case 3) _update_memo_amount"
+                        # )
                         new_prev_memo = cls._update_memo_amount(
                             og_prev_memo, curr_prev_stmt_bal, log_stack_depth=log_stack_depth
                         )
                 else:
                     if og_curr_amount > 0:
-                        log_in_color(
-                            logger, "white", "debug", "(case 4) _update_memo_amount"
-                        )
+                        # log_in_color(
+                        #     logger, "white", "debug", "(case 4) _update_memo_amount"
+                        # )
                         new_curr_memo = cls._update_memo_amount(og_curr_memo, 0.00, log_stack_depth=log_stack_depth)
                     if og_prev_amount > 0:
-                        log_in_color(
-                            logger, "white", "debug", "(case 5) _update_memo_amount"
-                        )
+                        # log_in_color(
+                        #     logger, "white", "debug", "(case 5) _update_memo_amount"
+                        # )
                         new_prev_memo = cls._update_memo_amount(
                             og_prev_memo, adjusted_payment_amount, log_stack_depth=log_stack_depth
                         )
-                log_in_color(logger, "white", "debug", "(case 6) _update_memo_amount")
+                # log_in_color(logger, "white", "debug", "(case 6) _update_memo_amount")
                 new_interest_memo = cls._update_memo_amount(
                     og_interest_memo, interest_to_be_charged, log_stack_depth=log_stack_depth
                 )
 
-                log_in_color(
-                    logger,
-                    "cyan",
-                    "debug",
-                    str(date_iat)
-                    + " updated check memo: "
-                    + str(og_check_memo)
-                    + " -> "
-                    + str(new_check_memo),
-                    log_stack_depth,
-                )
-                log_in_color(
-                    logger,
-                    "cyan",
-                    "debug",
-                    str(date_iat)
-                    + " updated curr memo: "
-                    + str(og_curr_memo)
-                    + " -> "
-                    + str(new_curr_memo),
-                    log_stack_depth,
-                )
-                log_in_color(
-                    logger,
-                    "cyan",
-                    "debug",
-                    str(date_iat)
-                    + " updated prev memo: "
-                    + str(og_prev_memo)
-                    + " -> "
-                    + str(new_prev_memo),
-                    log_stack_depth,
-                )
+                # log_in_color(
+                #     logger,
+                #     "cyan",
+                #     "debug",
+                #     str(date_iat)
+                #     + " updated check memo: "
+                #     + str(og_check_memo)
+                #     + " -> "
+                #     + str(new_check_memo),
+                #     log_stack_depth,
+                # )
+                # log_in_color(
+                #     logger,
+                #     "cyan",
+                #     "debug",
+                #     str(date_iat)
+                #     + " updated curr memo: "
+                #     + str(og_curr_memo)
+                #     + " -> "
+                #     + str(new_curr_memo),
+                #     log_stack_depth,
+                # )
+                # log_in_color(
+                #     logger,
+                #     "cyan",
+                #     "debug",
+                #     str(date_iat)
+                #     + " updated prev memo: "
+                #     + str(og_prev_memo)
+                #     + " -> "
+                #     + str(new_prev_memo),
+                #     log_stack_depth,
+                # )
 
                 # Update memo directives
                 md_to_keep.extend(
@@ -5128,13 +5343,13 @@ class ForecastHandler:
 
         @interface-report: show
         """
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            "ENTER _propagate_credit_payment_curr_only",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     "ENTER _propagate_credit_payment_curr_only",
+        #     log_stack_depth,
+        # )
         log_stack_depth += 1
 
         # Extract relevant account names
@@ -5197,7 +5412,7 @@ class ForecastHandler:
         # Iterate over future forecast rows
         for f_i, f_row in future_rows_only_df.iterrows():
             date_iat = f_row["Date"]
-            md_to_keep = []
+            md_to_keep = f_row["Memo Directives"].split(";")
 
             cls._apply_credit_billing_state_delta_to_forecast_row(
                 forecast_df=future_rows_only_df,
@@ -5228,13 +5443,17 @@ class ForecastHandler:
                         f_i - 1, prev_stmt_bal_account_name
                     ]
                 old_eopc = future_rows_only_df.at[f_i, eopc_account_name]
-                eopc_delta += updated_eopc - old_eopc
+                # This row starts a new billing cycle.  The propagated delta is
+                # relative to each row's original value, so replace the prior
+                # cycle's adjustment instead of accumulating it again.
+                eopc_delta = updated_eopc - old_eopc
 
             elif date_iat in cc_billing_dates and previous_prev_stmt_bal != 0:
                 # log_in_color(logger, 'white', 'debug', str(date_iat) + ' (Not Next) Billing Date and previous_prev_stmt_bal != 0', log_stack_depth)
                 # Handle other billing dates after payment has been made
 
                 # Parse memo directives
+                md_to_keep = []
                 for md in f_row["Memo Directives"].split(";"):
                     md = md.strip()
                     if not md:
@@ -5277,9 +5496,9 @@ class ForecastHandler:
                         checking_delta += og_min_payment_amount - new_min_payment_amount
 
                         # Update memo directive
-                        log_in_color(
-                            logger, "white", "debug", "(case 7) _update_memo_amount"
-                        )
+                        # log_in_color(
+                        #     logger, "white", "debug", "(case 7) _update_memo_amount"
+                        # )
                         new_md = cls._update_memo_amount(md, new_min_payment_amount, log_stack_depth=log_stack_depth)
                         md_to_keep.append(new_md)
 
@@ -5304,9 +5523,9 @@ class ForecastHandler:
                         prev_stmt_delta += interest_to_be_charged - og_interest_amount
 
                         # Update memo directive
-                        log_in_color(
-                            logger, "white", "debug", "(case 8) _update_memo_amount"
-                        )
+                        # log_in_color(
+                        #     logger, "white", "debug", "(case 8) _update_memo_amount"
+                        # )
                         new_md = cls._update_memo_amount(md, interest_to_be_charged, log_stack_depth=log_stack_depth)
                         md_to_keep.append(new_md)
 
@@ -5338,9 +5557,9 @@ class ForecastHandler:
                         #              log_stack_depth)
 
                         # Update memo directive
-                        log_in_color(
-                            logger, "white", "debug", "(case 9) _update_memo_amount"
-                        )
+                        # log_in_color(
+                        #     logger, "white", "debug", "(case 9) _update_memo_amount"
+                        # )
                         new_md = cls._update_memo_amount(md, new_min_payment_amount, log_stack_depth=log_stack_depth)
                         md_to_keep.append(new_md)
 
@@ -5380,22 +5599,22 @@ class ForecastHandler:
             # curr_stmt_delta = 0.0
             # previous_stmt_delta = 0.0
 
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            future_rows_only_df.to_string(),
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     future_rows_only_df.to_string(),
+        #     log_stack_depth,
+        # )
 
-        log_stack_depth -= 1
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            "EXIT _propagate_credit_payment_curr_only",
-            log_stack_depth,
-        )
+        # log_stack_depth -= 1
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     "EXIT _propagate_credit_payment_curr_only",
+        #     log_stack_depth,
+        # )
         return future_rows_only_df
 
     # @profile
@@ -5461,13 +5680,13 @@ class ForecastHandler:
 
         @interface-report: show
         """
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            str(d) + " ENTER _propagate_credit_payment_prev_only",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     str(d) + " ENTER _propagate_credit_payment_prev_only",
+        #     log_stack_depth,
+        # )
         log_stack_depth += 1
 
         # Extract relevant account names
@@ -5508,42 +5727,42 @@ class ForecastHandler:
         billing_cycle_payment_delta = account_deltas_list[bcp_account_index - 1]
         eopc_delta = 0
 
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            "relevant_account_info_df...: ",
-            log_stack_depth,
-        )
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            relevant_account_info_df.to_string(),
-            log_stack_depth,
-        )
-        # relevant_account_info_df
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            "previous_stmt_delta........: " + str(previous_stmt_delta),
-            log_stack_depth,
-        )
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            "checking_delta.............: " + str(checking_delta),
-            log_stack_depth,
-        )
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            "billing_cycle_payment_delta: " + str(billing_cycle_payment_delta),
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     "relevant_account_info_df...: ",
+        #     log_stack_depth,
+        # )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     relevant_account_info_df.to_string(),
+        #     log_stack_depth,
+        # )
+        # # relevant_account_info_df
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     "previous_stmt_delta........: " + str(previous_stmt_delta),
+        #     log_stack_depth,
+        # )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     "checking_delta.............: " + str(checking_delta),
+        #     log_stack_depth,
+        # )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     "billing_cycle_payment_delta: " + str(billing_cycle_payment_delta),
+        #     log_stack_depth,
+        # )
 
         # Initialize previous previous statement balance
         previous_prev_stmt_bal = 0.0
@@ -5571,13 +5790,13 @@ class ForecastHandler:
             # log_in_color(logger, 'white', 'debug', str(date_iat)+' previous_prev_stmt_bal: ' + str(previous_prev_stmt_bal), log_stack_depth)
 
             if date_iat == next_billing_date:
-                log_in_color(
-                    logger,
-                    "white",
-                    "debug",
-                    str(date_iat) + " Next Billing Date",
-                    log_stack_depth,
-                )
+                # log_in_color(
+                #     logger,
+                #     "white",
+                #     "debug",
+                #     str(date_iat) + " Next Billing Date",
+                #     log_stack_depth,
+                # )
                 # Handle next billing date (payment due date)
 
                 # Initialize memo variables
@@ -5606,33 +5825,33 @@ class ForecastHandler:
                 #     date_iat
                 # )
                 advance_payment_amount = f_row[bcp_account_name]
-                log_in_color(
-                    logger,
-                    "white",
-                    "debug",
-                    "advance_payment_amount: " + str(advance_payment_amount),
-                    log_stack_depth,
-                )
+                # log_in_color(
+                #     logger,
+                #     "white",
+                #     "debug",
+                #     "advance_payment_amount: " + str(advance_payment_amount),
+                #     log_stack_depth,
+                # )
 
                 # Get minimum payment amount
                 og_min_payment_amount = cls._parse_memo_amount(og_check_memo, log_stack_depth=log_stack_depth)
-                log_in_color(
-                    logger,
-                    "white",
-                    "debug",
-                    "og_min_payment_amount: " + str(og_min_payment_amount),
-                    log_stack_depth,
-                )
+                # log_in_color(
+                #     logger,
+                #     "white",
+                #     "debug",
+                #     "og_min_payment_amount: " + str(og_min_payment_amount),
+                #     log_stack_depth,
+                # )
 
                 # Adjust deltas
                 payment_to_apply = min(og_min_payment_amount, advance_payment_amount)
-                log_in_color(
-                    logger,
-                    "white",
-                    "debug",
-                    "payment_to_apply: " + str(og_min_payment_amount),
-                    log_stack_depth,
-                )
+                # log_in_color(
+                #     logger,
+                #     "white",
+                #     "debug",
+                #     "payment_to_apply: " + str(og_min_payment_amount),
+                #     log_stack_depth,
+                # )
 
                 previous_stmt_delta += payment_to_apply
                 checking_delta += payment_to_apply
@@ -5662,15 +5881,15 @@ class ForecastHandler:
                     remaining_payment = og_min_payment_amount - advance_payment_amount
                     # log_in_color(logger, 'white', 'debug', 'remaining_payment = og_min_payment_amount - advance_payment_amount', log_stack_depth)
                     # log_in_color(logger, 'white', 'debug', str(og_min_payment_amount - advance_payment_amount), log_stack_depth)
-                    log_in_color(
-                        logger, "white", "debug", "(case 12) _update_memo_amount"
-                    )
+                    # log_in_color(
+                    #     logger, "white", "debug", "(case 12) _update_memo_amount"
+                    # )
                     new_check_memo = cls._update_memo_amount(
                         og_check_memo, remaining_payment, log_stack_depth=log_stack_depth
                     )
-                    log_in_color(
-                        logger, "white", "debug", "(case 13) _update_memo_amount"
-                    )
+                    # log_in_color(
+                    #     logger, "white", "debug", "(case 13) _update_memo_amount"
+                    # )
                     new_prev_memo = cls._update_memo_amount(
                         og_prev_memo, remaining_payment, log_stack_depth=log_stack_depth
                     )
@@ -5686,7 +5905,10 @@ class ForecastHandler:
                         f_i - 1, prev_stmt_bal_account_name
                     ]
                 old_eopc = future_rows_only_df.at[f_i, eopc_account_name]
-                eopc_delta += updated_eopc - old_eopc
+                # This row starts a new billing cycle.  The propagated delta is
+                # relative to each row's original value, so replace the prior
+                # cycle's adjustment instead of accumulating it again.
+                eopc_delta = updated_eopc - old_eopc
 
             elif date_iat in cc_billing_dates and previous_prev_stmt_bal != 0:
                 # log_in_color(logger, 'white', 'debug', str(date_iat) + ' (Not Next) Billing Date and previous_prev_stmt_bal != 0', log_stack_depth)
@@ -5735,9 +5957,9 @@ class ForecastHandler:
                         checking_delta += og_min_payment_amount - new_min_payment_amount
 
                         # Update memo directive
-                        log_in_color(
-                            logger, "white", "debug", "(case 14) _update_memo_amount"
-                        )
+                        # log_in_color(
+                        #     logger, "white", "debug", "(case 14) _update_memo_amount"
+                        # )
                         new_md = cls._update_memo_amount(md, new_min_payment_amount, log_stack_depth=log_stack_depth)
                         md_to_keep.append(new_md)
 
@@ -5764,9 +5986,9 @@ class ForecastHandler:
                         )
 
                         # Update memo directive
-                        log_in_color(
-                            logger, "white", "debug", "(case 15) _update_memo_amount"
-                        )
+                        # log_in_color(
+                        #     logger, "white", "debug", "(case 15) _update_memo_amount"
+                        # )
                         new_md = cls._update_memo_amount(md, interest_to_be_charged, log_stack_depth=log_stack_depth)
                         md_to_keep.append(new_md)
 
@@ -5794,9 +6016,9 @@ class ForecastHandler:
                         #              log_stack_depth)
 
                         # Update memo directive
-                        log_in_color(
-                            logger, "white", "debug", "(case 16) _update_memo_amount"
-                        )
+                        # log_in_color(
+                        #     logger, "white", "debug", "(case 16) _update_memo_amount"
+                        # )
                         new_md = cls._update_memo_amount(md, new_min_payment_amount, log_stack_depth=log_stack_depth)
                         md_to_keep.append(new_md)
 
@@ -5838,24 +6060,24 @@ class ForecastHandler:
                     md_to_keep
                 ).strip()
 
-        log_in_color(
-            logger, "white", "debug", "future_rows_only_df:", log_stack_depth
-        )
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            future_rows_only_df.to_string(),
-            log_stack_depth,
-        )
-        log_stack_depth -= 1
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            str(d) + " EXIT _propagate_credit_payment_prev_only",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger, "white", "debug", "future_rows_only_df:", log_stack_depth
+        # )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     future_rows_only_df.to_string(),
+        #     log_stack_depth,
+        # )
+        # log_stack_depth -= 1
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     str(d) + " EXIT _propagate_credit_payment_prev_only",
+        #     log_stack_depth,
+        # )
         return future_rows_only_df
 
     # @profile
@@ -5921,13 +6143,13 @@ class ForecastHandler:
 
         @interface-report: show
         """
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            "ENTER _propagate_loan_payment_interest_only",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     "ENTER _propagate_loan_payment_interest_only",
+        #     log_stack_depth,
+        # )
         log_stack_depth += 1
         # log_in_color(logger, 'cyan', 'debug', 'BEFORE forecast_df', log_stack_depth)
         # log_in_color(logger, 'cyan', 'debug', forecast_df.to_string(), log_stack_depth)
@@ -6044,9 +6266,9 @@ class ForecastHandler:
                 if interest_balance <= interest_paid_amount:
                     new_interest_amount = interest_balance
                     og_interest_surplus = interest_paid_amount - interest_balance
-                    log_in_color(
-                        logger, "white", "debug", "(case 17) _update_memo_amount"
-                    )
+                    # log_in_color(
+                    #     logger, "white", "debug", "(case 17) _update_memo_amount"
+                    # )
                     new_interest_md = cls._update_memo_amount(
                         og_interest_md, new_interest_amount, log_stack_depth=log_stack_depth
                     )
@@ -6110,13 +6332,13 @@ class ForecastHandler:
         # log_in_color(logger, 'cyan', 'debug', 'future_rows_only_df', log_stack_depth)
         # log_in_color(logger, 'cyan', 'debug', future_rows_only_df.to_string(), log_stack_depth)
         log_stack_depth -= 1
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            "EXIT _propagate_loan_payment_interest_only",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     "EXIT _propagate_loan_payment_interest_only",
+        #     log_stack_depth,
+        # )
         return future_rows_only_df
 
     # @profile
@@ -6182,13 +6404,13 @@ class ForecastHandler:
 
         @interface-report: show
         """
-        log_in_color(
-            logger,
-            "cyan",
-            "debug",
-            "ENTER _propagate_loan_payment_pbal_only",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "cyan",
+        #     "debug",
+        #     "ENTER _propagate_loan_payment_pbal_only",
+        #     log_stack_depth,
+        # )
         log_stack_depth += 1
 
         # Extract relevant account names
@@ -6362,13 +6584,13 @@ class ForecastHandler:
             future_rows_only_df.at[f_i, "Memo Directives"] = ";".join(md_to_keep)
 
         log_stack_depth -= 1
-        log_in_color(
-            logger,
-            "cyan",
-            "debug",
-            "EXIT _propagate_loan_payment_pbal_only",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "cyan",
+        #     "debug",
+        #     "EXIT _propagate_loan_payment_pbal_only",
+        #     log_stack_depth,
+        # )
         return future_rows_only_df
 
     # @profile
@@ -6434,25 +6656,25 @@ class ForecastHandler:
 
         @interface-report: show
         """
-        log_in_color(
-            logger,
-            "cyan",
-            "debug",
-            "ENTER _propagate_loan_payment_pbal_interest",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "cyan",
+        #     "debug",
+        #     "ENTER _propagate_loan_payment_pbal_interest",
+        #     log_stack_depth,
+        # )
         log_stack_depth += 1
 
-        log_in_color(
-            logger, "white", "debug", "future_rows_only_df:", log_stack_depth
-        )
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            future_rows_only_df.to_string(),
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger, "white", "debug", "future_rows_only_df:", log_stack_depth
+        # )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     future_rows_only_df.to_string(),
+        #     log_stack_depth,
+        # )
 
         # Extract relevant account names
         checking_account_name = relevant_account_info_df[
@@ -6598,7 +6820,7 @@ class ForecastHandler:
                 else:
                     new_interest_amount = interest_paid_amount
                     og_interest_surplus = 0.0
-                log_in_color(logger, "white", "debug", "(case 18) _update_memo_amount")
+                # log_in_color(logger, "white", "debug", "(case 18) _update_memo_amount")
                 new_interest_md = cls._update_memo_amount(
                     og_interest_md, new_interest_amount, log_stack_depth=log_stack_depth
                 )
@@ -6682,24 +6904,24 @@ class ForecastHandler:
             md_to_keep = [md for md in md_to_keep if md]
             future_rows_only_df.at[f_i, "Memo Directives"] = ";".join(md_to_keep)
 
-        log_in_color(
-            logger, "white", "debug", "future_rows_only_df:", log_stack_depth
-        )
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            future_rows_only_df.to_string(),
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger, "white", "debug", "future_rows_only_df:", log_stack_depth
+        # )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     future_rows_only_df.to_string(),
+        #     log_stack_depth,
+        # )
         log_stack_depth -= 1
-        log_in_color(
-            logger,
-            "cyan",
-            "debug",
-            "EXIT _propagate_loan_payment_pbal_interest",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "cyan",
+        #     "debug",
+        #     "EXIT _propagate_loan_payment_pbal_interest",
+        #     log_stack_depth,
+        # )
         return future_rows_only_df
 
     # @profile
@@ -6765,13 +6987,13 @@ class ForecastHandler:
 
         @interface-report: show
         """
-        log_in_color(
-            logger,
-            "cyan",
-            "debug",
-            "ENTER _propagate_credit_payment_prev_curr",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "cyan",
+        #     "debug",
+        #     "ENTER _propagate_credit_payment_prev_curr",
+        #     log_stack_depth,
+        # )
         log_stack_depth += 1
 
         # Extract relevant account names
@@ -6801,10 +7023,7 @@ class ForecastHandler:
             next_billing_date = None
 
         day_after_billing_dates = [
-            (
-                d
-                + datetime.timedelta(days=1)
-            ).strftime("%Y%m%d")
+            (d + datetime.timedelta(days=1)).strftime("%Y%m%d")
             for d in future_billing_dates
         ]
 
@@ -6865,13 +7084,13 @@ class ForecastHandler:
                 new_check_memo = ""
 
                 # Parse memo directives
-                log_in_color(
-                    logger,
-                    "cyan",
-                    "debug",
-                    "Memo Directives: " + str(f_row["Memo Directives"]),
-                    log_stack_depth,
-                )
+                # log_in_color(
+                #     logger,
+                #     "cyan",
+                #     "debug",
+                #     "Memo Directives: " + str(f_row["Memo Directives"]),
+                #     log_stack_depth,
+                # )
                 for md in f_row["Memo Directives"].split(";"):
                     md = md.strip()
                     if not md:
@@ -6933,9 +7152,9 @@ class ForecastHandler:
                     remaining_payment = min_payment_amount - advance_payment_amount
                     if advance_payment_amount >= og_prev_amount:
                         # Advance payments cover previous statement balance and some of curr
-                        log_in_color(
-                            logger, "white", "debug", "(case 19) _update_memo_amount"
-                        )
+                        # log_in_color(
+                        #     logger, "white", "debug", "(case 19) _update_memo_amount"
+                        # )
                         new_prev_memo = cls._update_memo_amount(
                             og_prev_memo, 0.00, log_stack_depth=log_stack_depth
                         )  # todo this is where the error occurred
@@ -6943,28 +7162,28 @@ class ForecastHandler:
                             advance_payment_amount - og_prev_amount
                         )
                         if og_curr_amount > 0:
-                            log_in_color(
-                                logger,
-                                "white",
-                                "debug",
-                                "(case 20) _update_memo_amount",
-                            )
+                            # log_in_color(
+                            #     logger,
+                            #     "white",
+                            #     "debug",
+                            #     "(case 20) _update_memo_amount",
+                            # )
                             new_curr_memo = cls._update_memo_amount(
                                 og_curr_memo, curr_amount_remaining, log_stack_depth=log_stack_depth
                             )
                     else:
                         # Advance payments partially cover previous statement balance and none of curr (which there might not be any)
                         prev_amount_remaining = og_prev_amount - advance_payment_amount
-                        log_in_color(
-                            logger, "white", "debug", "(case 21) _update_memo_amount"
-                        )
+                        # log_in_color(
+                        #     logger, "white", "debug", "(case 21) _update_memo_amount"
+                        # )
                         new_prev_memo = cls._update_memo_amount(
                             og_prev_memo, prev_amount_remaining, log_stack_depth=log_stack_depth
                         )
                         new_curr_memo = og_curr_memo
-                    log_in_color(
-                        logger, "white", "debug", "(case 22) _update_memo_amount"
-                    )
+                    # log_in_color(
+                    #     logger, "white", "debug", "(case 22) _update_memo_amount"
+                    # )
                     new_check_memo = cls._update_memo_amount(
                         og_check_memo, og_check_amount - advance_payment_amount, log_stack_depth=log_stack_depth
                     )
@@ -7004,8 +7223,11 @@ class ForecastHandler:
                         f_i - 1, prev_stmt_bal_account_name
                     ]
                 old_eopc = future_rows_only_df.at[f_i, eopc_account_name]
-                print("eopc_delta += " + str(updated_eopc - old_eopc))
-                eopc_delta += updated_eopc - old_eopc
+                print("eopc_delta = " + str(updated_eopc - old_eopc))
+                # This row starts a new billing cycle.  The propagated delta is
+                # relative to each row's original value, so replace the prior
+                # cycle's adjustment instead of accumulating it again.
+                eopc_delta = updated_eopc - old_eopc
 
             elif date_iat in cc_billing_dates:
                 # Handle other billing dates
@@ -7094,15 +7316,15 @@ class ForecastHandler:
 
                 # adjusted_payment_amount = round(og_min_payment_amount - new_min_payment_amount, 2)
                 adjusted_payment_amount = og_min_payment_amount - new_min_payment_amount
-                log_in_color(
-                    logger,
-                    "cyan",
-                    "debug",
-                    str(date_iat)
-                    + " adjusted_payment_amount: "
-                    + str(adjusted_payment_amount),
-                    log_stack_depth,
-                )
+                # log_in_color(
+                #     logger,
+                #     "cyan",
+                #     "debug",
+                #     str(date_iat)
+                #     + " adjusted_payment_amount: "
+                #     + str(adjusted_payment_amount),
+                #     log_stack_depth,
+                # )
 
                 previous_stmt_delta += adjusted_payment_amount
                 checking_delta += adjusted_payment_amount
@@ -7112,23 +7334,23 @@ class ForecastHandler:
                 billing_cycle_payment_delta = 0  # redundant but cant hurt
 
                 # Adjust memos
-                log_in_color(logger, "white", "debug", "(case 23) _update_memo_amount")
+                # log_in_color(logger, "white", "debug", "(case 23) _update_memo_amount")
                 new_check_memo = cls._update_memo_amount(
                     og_check_memo, og_check_amount - adjusted_payment_amount, log_stack_depth=log_stack_depth
                 )
                 if adjusted_payment_amount >= curr_prev_stmt_bal:
                     # Adjust curr and prev memos
                     if og_curr_amount > 0:
-                        log_in_color(
-                            logger, "white", "debug", "(case 24) _update_memo_amount"
-                        )
+                        # log_in_color(
+                        #     logger, "white", "debug", "(case 24) _update_memo_amount"
+                        # )
                         new_curr_memo = cls._update_memo_amount(
                             og_curr_memo, adjusted_payment_amount - curr_prev_stmt_bal, log_stack_depth=log_stack_depth
                         )
                     if og_prev_amount > 0:
-                        log_in_color(
-                            logger, "white", "debug", "(case 25) _update_memo_amount"
-                        )
+                        # log_in_color(
+                        #     logger, "white", "debug", "(case 25) _update_memo_amount"
+                        # )
                         new_prev_memo = cls._update_memo_amount(
                             og_prev_memo, curr_prev_stmt_bal, log_stack_depth=log_stack_depth
                         )
@@ -7137,55 +7359,55 @@ class ForecastHandler:
                         # this parent logic branch is for cc payments, not cc expenses, therefore
                         # this specific branch should never happen bc adjust payment amount is always less than OG.
                         # if adjusted_payment_amount > curr_prev_stmt_bal, then so was OG, and therefore curr was 0
-                        log_in_color(
-                            logger, "white", "debug", "(case 26) _update_memo_amount"
-                        )
+                        # log_in_color(
+                        #     logger, "white", "debug", "(case 26) _update_memo_amount"
+                        # )
                         new_curr_memo = cls._update_memo_amount(og_curr_memo, 0.00, log_stack_depth=log_stack_depth)
                     if og_prev_amount > 0:
-                        log_in_color(
-                            logger, "white", "debug", "(case 27) _update_memo_amount"
-                        )
+                        # log_in_color(
+                        #     logger, "white", "debug", "(case 27) _update_memo_amount"
+                        # )
                         new_prev_memo = cls._update_memo_amount(
                             og_prev_memo, og_prev_amount - adjusted_payment_amount, log_stack_depth=log_stack_depth
                         )
-                log_in_color(logger, "white", "debug", "(case 28) _update_memo_amount")
+                # log_in_color(logger, "white", "debug", "(case 28) _update_memo_amount")
                 new_interest_memo = cls._update_memo_amount(
                     og_interest_memo, interest_to_be_charged, log_stack_depth=log_stack_depth
                 )
 
-                log_in_color(
-                    logger,
-                    "cyan",
-                    "debug",
-                    str(date_iat)
-                    + " updated check memo: "
-                    + str(og_check_memo)
-                    + " -> "
-                    + str(new_check_memo),
-                    log_stack_depth,
-                )
-                log_in_color(
-                    logger,
-                    "cyan",
-                    "debug",
-                    str(date_iat)
-                    + " updated curr memo: "
-                    + str(og_curr_memo)
-                    + " -> "
-                    + str(new_curr_memo),
-                    log_stack_depth,
-                )
-                log_in_color(
-                    logger,
-                    "cyan",
-                    "debug",
-                    str(date_iat)
-                    + " updated prev memo: "
-                    + str(og_prev_memo)
-                    + " -> "
-                    + str(new_prev_memo),
-                    log_stack_depth,
-                )
+                # log_in_color(
+                #     logger,
+                #     "cyan",
+                #     "debug",
+                #     str(date_iat)
+                #     + " updated check memo: "
+                #     + str(og_check_memo)
+                #     + " -> "
+                #     + str(new_check_memo),
+                #     log_stack_depth,
+                # )
+                # log_in_color(
+                #     logger,
+                #     "cyan",
+                #     "debug",
+                #     str(date_iat)
+                #     + " updated curr memo: "
+                #     + str(og_curr_memo)
+                #     + " -> "
+                #     + str(new_curr_memo),
+                #     log_stack_depth,
+                # )
+                # log_in_color(
+                #     logger,
+                #     "cyan",
+                #     "debug",
+                #     str(date_iat)
+                #     + " updated prev memo: "
+                #     + str(og_prev_memo)
+                #     + " -> "
+                #     + str(new_prev_memo),
+                #     log_stack_depth,
+                # )
 
                 # Update memo directives
                 md_to_keep.extend(
@@ -7224,13 +7446,13 @@ class ForecastHandler:
             # log_in_color(logger, 'white', 'debug', str(date_iat) + ' ' + str(curr_stmt_bal_account_name) + ' += ' + str(curr_stmt_delta), log_stack_depth)
             # log_in_color(logger, 'white', 'debug', str(date_iat) + ' ' + str(prev_stmt_bal_account_name) + ' += ' + str(previous_stmt_delta), log_stack_depth)
             # log_in_color(logger, 'white', 'debug', str(date_iat) + ' ' + str(billing_cycle_payment_account_name) + ' += ' + str(billing_cycle_payment_delta), log_stack_depth)
-            log_in_color(
-                logger,
-                "white",
-                "debug",
-                str(date_iat) + " " + str(eopc_account_name) + " += " + str(eopc_delta),
-                log_stack_depth,
-            )
+            # log_in_color(
+            #     logger,
+            #     "white",
+            #     "debug",
+            #     str(date_iat) + " " + str(eopc_account_name) + " += " + str(eopc_delta),
+            #     log_stack_depth,
+            # )
 
             # Clean and update memo directives
             if md_to_keep != []:
@@ -7241,13 +7463,13 @@ class ForecastHandler:
                 ).strip()
 
         log_stack_depth -= 1
-        log_in_color(
-            logger,
-            "cyan",
-            "debug",
-            "EXIT _propagate_credit_payment_prev_curr",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "cyan",
+        #     "debug",
+        #     "EXIT _propagate_credit_payment_prev_curr",
+        #     log_stack_depth,
+        # )
         return future_rows_only_df
 
     # @profile
@@ -7415,14 +7637,14 @@ class ForecastHandler:
 
         @interface-report: show
         """
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            str(date_string)
-            + " ENTER _propagateOptimizationTransactionsIntoTheFuture",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     str(date_string)
+        #     + " ENTER _propagateOptimizationTransactionsIntoTheFuture",
+        #     log_stack_depth,
+        # )
         log_stack_depth += 1
 
         account_set_after_p2_plus_txn = cls._sync_account_set_w_forecast_day(
@@ -7451,7 +7673,7 @@ class ForecastHandler:
         violations = account_deltas[is_account_type] > 0
 
         if violations.any():
-            log_in_color(
+            log_in_color( #TODO is log error message redundant if an exception is raised immediately after?
                 logger,
                 "red",
                 "error",
@@ -7466,28 +7688,28 @@ class ForecastHandler:
         account_delta_total = sum(Decimal(str(delta)) for delta in account_deltas_list)
 
         if account_delta_total == 0:
-            log_in_color(
-                logger,
-                "white",
-                "debug",
-                str(date_string) + " no changes to propagate",
-                log_stack_depth,
-            )
+            # log_in_color(
+            #     logger,
+            #     "white",
+            #     "debug",
+            #     str(date_string) + " no changes to propagate",
+            #     log_stack_depth,
+            # )
             log_stack_depth -= 1
-            log_in_color(
-                logger,
-                "white",
-                "debug",
-                str(date_string)
-                + " EXIT _propagateOptimizationTransactionsIntoTheFuture",
-                log_stack_depth,
-            )
-            return forecast_df
+        #     log_in_color(
+        #         logger,
+        #         "white",
+        #         "debug",
+        #         str(date_string)
+        #         + " EXIT _propagateOptimizationTransactionsIntoTheFuture",
+        #         log_stack_depth,
+        #     )
+        #     return forecast_df
 
-        log_in_color(logger, "cyan", "debug", "forecast_df:", log_stack_depth)
-        log_in_color(
-            logger, "cyan", "debug", forecast_df.to_string(), log_stack_depth
-        )
+        # log_in_color(logger, "cyan", "debug", "forecast_df:", log_stack_depth)
+        # log_in_color(
+        #     logger, "cyan", "debug", forecast_df.to_string(), log_stack_depth
+        # )
 
         # log_in_color(
         #     logger,
@@ -7694,17 +7916,17 @@ class ForecastHandler:
 
         if checking_in_txn and len(affected_account_base_names_sans_checking) == 0:
 
-            log_in_color(
-                logger,
-                "yellow",
-                "debug",
-                str(date_string)
-                + " before processing_function (checking case)",
-                log_stack_depth,
-            )
-            log_in_color(
-                logger, "yellow", "debug", forecast_df.to_string(), log_stack_depth
-            )
+            # log_in_color(
+            #     logger,
+            #     "yellow",
+            #     "debug",
+            #     str(date_string)
+            #     + " before processing_function (checking case)",
+            #     log_stack_depth,
+            # )
+            # log_in_color(
+            #     logger, "yellow", "debug", forecast_df.to_string(), log_stack_depth
+            # )
 
             # Only checking accounts are involved in the transaction
             # Update future balances for the checking accounts
@@ -7757,36 +7979,36 @@ class ForecastHandler:
                 account_types_set = frozenset(relevant_account_type_list)
                 processing_function = account_type_combinations.get(account_types_set)
 
-                log_in_color(
-                    logger,
-                    "cyan",
-                    "info",
-                    str(date_string)
-                    + " processing_function "
-                    + str(processing_function),
-                    log_stack_depth,
-                )
+                # log_in_color(
+                #     logger,
+                #     "cyan",
+                #     "info",
+                #     str(date_string)
+                #     + " processing_function "
+                #     + str(processing_function),
+                #     log_stack_depth,
+                # )
 
                 # print('account_types_set:')
                 # print(account_types_set)
 
                 if processing_function:
 
-                    log_in_color(
-                        logger,
-                        "yellow",
-                        "debug",
-                        str(date_string)
-                        + " future_rows_only_df before processing_function",
-                        log_stack_depth,
-                    )
-                    log_in_color(
-                        logger,
-                        "yellow",
-                        "debug",
-                        future_rows_only_df.to_string(),
-                        log_stack_depth,
-                    )
+                    # log_in_color(
+                    #     logger,
+                    #     "yellow",
+                    #     "debug",
+                    #     str(date_string)
+                    #     + " future_rows_only_df before processing_function",
+                    #     log_stack_depth,
+                    # )
+                    # log_in_color(
+                    #     logger,
+                    #     "yellow",
+                    #     "debug",
+                    #     future_rows_only_df.to_string(),
+                    #     log_stack_depth,
+                    # )
 
                     # Call the processing function
                     future_rows_only_df = processing_function(
@@ -7803,14 +8025,14 @@ class ForecastHandler:
 
                 else:
                     log_stack_depth -= 1
-                    log_in_color(
-                        logger,
-                        "white",
-                        "debug",
-                        str(date_string)
-                        + " EXIT _propagateOptimizationTransactionsIntoTheFuture",
-                        log_stack_depth,
-                    )
+                    # log_in_color(
+                    #     logger,
+                    #     "white",
+                    #     "debug",
+                    #     str(date_string)
+                    #     + " EXIT _propagateOptimizationTransactionsIntoTheFuture",
+                    #     log_stack_depth,
+                    # )
                     raise ValueError("Undefined case in process_transactions")
 
         if not future_rows_only_df.empty:
@@ -7839,14 +8061,14 @@ class ForecastHandler:
                     )
                     error_msg += future_rows_only_df.to_string()
                     log_stack_depth -= 1
-                    log_in_color(
-                        logger,
-                        "white",
-                        "debug",
-                        str(date_string)
-                        + " EXIT _propagateOptimizationTransactionsIntoTheFuture",
-                        log_stack_depth,
-                    )
+                    # log_in_color(
+                    #     logger,
+                    #     "white",
+                    #     "debug",
+                    #     str(date_string)
+                    #     + " EXIT _propagateOptimizationTransactionsIntoTheFuture",
+                    #     log_stack_depth,
+                    # )
                     raise ValueError(error_msg)
 
                 try:
@@ -7865,23 +8087,23 @@ class ForecastHandler:
                     )
                     error_msg += future_rows_only_df.to_string()
                     log_stack_depth -= 1
-                    log_in_color(
-                        logger,
-                        "white",
-                        "debug",
-                        str(date_string)
-                        + " EXIT _propagateOptimizationTransactionsIntoTheFuture",
-                        log_stack_depth,
-                    )
+                    # log_in_color(
+                    #     logger,
+                    #     "white",
+                    #     "debug",
+                    #     str(date_string)
+                    #     + " EXIT _propagateOptimizationTransactionsIntoTheFuture",
+                    #     log_stack_depth,
+                    # )
                     raise ValueError(error_msg)
 
             # If an error occurs here, it is because of systemic error in the algroithm
             # Not a valid rejection of a transactions
             # also check for rounding that caused real deltas to mismatch the memos!!!!
             for f_i, f_row in future_rows_only_df.iterrows():
-                log_in_color(
-                    logger, "white", "debug", "Date:" + str(f_row.Date), log_stack_depth
-                )
+                # log_in_color(
+                #     logger, "white", "debug", "Date:" + str(f_row.Date), log_stack_depth
+                # )
                 # we don't use index bc it won't be 1 and reindexing is expensive
                 current_row = f_row
                 current_date_string = f_row.Date
@@ -7891,47 +8113,47 @@ class ForecastHandler:
                 else:
                     previous_row = future_rows_only_df.loc[f_i - 1, :]
 
-                log_in_color(
-                    logger, "white", "debug", "previous_row:", log_stack_depth
-                )
-                if str(type(previous_row)) == "<class 'pandas.core.frame.DataFrame'>":
-                    log_in_color(
-                        logger,
-                        "white",
-                        "debug",
-                        previous_row.to_string(),
-                        log_stack_depth,
-                    )
-                else:
-                    # type is pandas.core.series.Series
-                    log_in_color(
-                        logger,
-                        "white",
-                        "debug",
-                        pd.DataFrame(previous_row).T.to_string(),
-                        log_stack_depth,
-                    )
+                # log_in_color(
+                #     logger, "white", "debug", "previous_row:", log_stack_depth
+                # )
+                # if str(type(previous_row)) == "<class 'pandas.core.frame.DataFrame'>":
+                #     log_in_color(
+                #         logger,
+                #         "white",
+                #         "debug",
+                #         previous_row.to_string(),
+                #         log_stack_depth,
+                #     )
+                # else:
+                #     # type is pandas.core.series.Series
+                #     log_in_color(
+                #         logger,
+                #         "white",
+                #         "debug",
+                #         pd.DataFrame(previous_row).T.to_string(),
+                #         log_stack_depth,
+                #     )
 
-                log_in_color(
-                    logger, "white", "debug", "current_row:", log_stack_depth
-                )
-                if str(type(current_row)) == "<class 'pandas.core.frame.DataFrame'>":
-                    log_in_color(
-                        logger,
-                        "white",
-                        "debug",
-                        current_row.to_string(),
-                        log_stack_depth,
-                    )
-                else:
-                    # type is pandas.core.series.Series
-                    log_in_color(
-                        logger,
-                        "white",
-                        "debug",
-                        pd.DataFrame(current_row).T.to_string(),
-                        log_stack_depth,
-                    )
+                # log_in_color(
+                #     logger, "white", "debug", "current_row:", log_stack_depth
+                # )
+                # if str(type(current_row)) == "<class 'pandas.core.frame.DataFrame'>":
+                #     log_in_color(
+                #         logger,
+                #         "white",
+                #         "debug",
+                #         current_row.to_string(),
+                #         log_stack_depth,
+                #     )
+                # else:
+                #     # type is pandas.core.series.Series
+                #     log_in_color(
+                #         logger,
+                #         "white",
+                #         "debug",
+                #         pd.DataFrame(current_row).T.to_string(),
+                #         log_stack_depth,
+                #     )
 
                 account_type_by_base_name = dict(
                     zip(
@@ -7947,9 +8169,9 @@ class ForecastHandler:
                     if "CC MIN PAYMENT ALREADY MADE" in md:
                         continue
 
-                    log_in_color(
-                        logger, "white", "debug", "md:" + str(md), log_stack_depth
-                    )
+                    # log_in_color(
+                    #     logger, "white", "debug", "md:" + str(md), log_stack_depth
+                    # )
 
                     txn_info = re.search(r"\((.*)\$(.*)\)", md)
                     if txn_info is None:
@@ -7972,16 +8194,16 @@ class ForecastHandler:
 
                         reported_acct_deltas[acct_name] = memo_balance
 
-                        log_in_color(
-                            logger,
-                            "white",
-                            "debug",
-                            "reported_acct_deltas["
-                            + str(acct_name)
-                            + "] = "
-                            + str(memo_balance),
-                            log_stack_depth,
-                        )
+                        # log_in_color(
+                        #     logger,
+                        #     "white",
+                        #     "debug",
+                        #     "reported_acct_deltas["
+                        #     + str(acct_name)
+                        #     + "] = "
+                        #     + str(memo_balance),
+                        #     log_stack_depth,
+                        # )
                     else:
                         if "-$" in md:
                             memo_balance = -abs(memo_balance)
@@ -7992,18 +8214,18 @@ class ForecastHandler:
 
                         reported_acct_deltas[acct_name] += memo_balance
 
-                        log_in_color(
-                            logger,
-                            "white",
-                            "debug",
-                            "reported_acct_deltas["
-                            + str(acct_name)
-                            + "] += "
-                            + str(memo_balance)
-                            + " = "
-                            + str(reported_acct_deltas[acct_name]),
-                            log_stack_depth,
-                        )
+                        # log_in_color(
+                        #     logger,
+                        #     "white",
+                        #     "debug",
+                        #     "reported_acct_deltas["
+                        #     + str(acct_name)
+                        #     + "] += "
+                        #     + str(memo_balance)
+                        #     + " = "
+                        #     + str(reported_acct_deltas[acct_name]),
+                        #     log_stack_depth,
+                        # )
 
                 for m in f_row["Memo"].split(";"):
                     if "income" in m.lower() or m.strip() == "":
@@ -8011,9 +8233,9 @@ class ForecastHandler:
                         # don't bully me i'll cum
                         continue
 
-                    log_in_color(
-                        logger, "white", "debug", "m:" + str(m), log_stack_depth
-                    )
+                    # log_in_color(
+                    #     logger, "white", "debug", "m:" + str(m), log_stack_depth
+                    # )
 
                     txn_info = re.search(r"\((.*).*\$(.*)\)", m)
                     if txn_info is None:
@@ -8033,16 +8255,16 @@ class ForecastHandler:
 
                         reported_acct_deltas[acct_name] = memo_balance
 
-                        log_in_color(
-                            logger,
-                            "white",
-                            "debug",
-                            "reported_acct_deltas["
-                            + str(acct_name)
-                            + "] = "
-                            + str(memo_balance),
-                            log_stack_depth,
-                        )
+                        # log_in_color(
+                        #     logger,
+                        #     "white",
+                        #     "debug",
+                        #     "reported_acct_deltas["
+                        #     + str(acct_name)
+                        #     + "] = "
+                        #     + str(memo_balance),
+                        #     log_stack_depth,
+                        # )
                     else:
                         if "-$" in m:
                             memo_balance = -abs(memo_balance)
@@ -8051,18 +8273,18 @@ class ForecastHandler:
 
                         reported_acct_deltas[acct_name] += memo_balance
 
-                        log_in_color(
-                            logger,
-                            "white",
-                            "debug",
-                            "reported_acct_deltas["
-                            + str(acct_name)
-                            + "] += "
-                            + str(memo_balance)
-                            + " = "
-                            + str(reported_acct_deltas[acct_name]),
-                            log_stack_depth,
-                        )
+                        # log_in_color(
+                        #     logger,
+                        #     "white",
+                        #     "debug",
+                        #     "reported_acct_deltas["
+                        #     + str(acct_name)
+                        #     + "] += "
+                        #     + str(memo_balance)
+                        #     + " = "
+                        #     + str(reported_acct_deltas[acct_name]),
+                        #     log_stack_depth,
+                        # )
 
                 observed_acct_deltas = {}
                 for cname in forecast_df.columns:
@@ -8083,39 +8305,43 @@ class ForecastHandler:
                         # Not sure why Loan wasnt sufficient to catch Dad but whatever its temporary anyway
                         continue
                     cname = base_cname
-                    current_delta = float(current_row[full_cname]) - float(
-                        previous_row[full_cname]
-                    )
+                    current_value = current_row[full_cname]
+                    previous_value = previous_row[full_cname]
+                    if isinstance(current_value, pd.Series):
+                        current_value = current_value.iloc[0]
+                    if isinstance(previous_value, pd.Series):
+                        previous_value = previous_value.iloc[0]
+                    current_delta = float(current_value) - float(previous_value)
                     if base_account_type in ("credit", "loan"):
                         current_delta *= -1
                     if cname not in observed_acct_deltas.keys():
                         if abs(current_delta) > ROUNDING_ERROR_TOLERANCE:
                             observed_acct_deltas[cname] = current_delta
-                            log_in_color(
-                                logger,
-                                "white",
-                                "debug",
-                                "observed_acct_deltas["
-                                + str(cname)
-                                + "] = "
-                                + str(current_delta),
-                                log_stack_depth,
-                            )
+                            # log_in_color(
+                            #     logger,
+                            #     "white",
+                            #     "debug",
+                            #     "observed_acct_deltas["
+                            #     + str(cname)
+                            #     + "] = "
+                            #     + str(current_delta),
+                            #     log_stack_depth,
+                            # )
                     else:
                         if abs(current_delta) > ROUNDING_ERROR_TOLERANCE:
                             observed_acct_deltas[cname] += current_delta
-                            log_in_color(
-                                logger,
-                                "white",
-                                "debug",
-                                "observed_acct_deltas["
-                                + str(cname)
-                                + "] += "
-                                + str(current_delta)
-                                + " = "
-                                + str(observed_acct_deltas[cname]),
-                                log_stack_depth,
-                            )
+                            # log_in_color(
+                            #     logger,
+                            #     "white",
+                            #     "debug",
+                            #     "observed_acct_deltas["
+                            #     + str(cname)
+                            #     + "] += "
+                            #     + str(current_delta)
+                            #     + " = "
+                            #     + str(observed_acct_deltas[cname]),
+                            #     log_stack_depth,
+                            # )
 
                 observed_acct_deltas_2 = {}
                 for k, v in observed_acct_deltas.items():
@@ -8137,34 +8363,34 @@ class ForecastHandler:
                 del reported_acct_deltas_2
 
                 if set(reported_acct_deltas.keys()) != set(observed_acct_deltas.keys()):
-                    log_in_color(
-                        logger,
-                        "white",
-                        "debug",
-                        "reported_acct_deltas.keys(): "
-                        + str(reported_acct_deltas.keys()),
-                        log_stack_depth,
-                    )
-                    log_in_color(
-                        logger,
-                        "white",
-                        "debug",
-                        "observed_acct_deltas.keys(): "
-                        + str(observed_acct_deltas.keys()),
-                        log_stack_depth,
-                    )
+                    # log_in_color(
+                    #     logger,
+                    #     "white",
+                    #     "debug",
+                    #     "reported_acct_deltas.keys(): "
+                    #     + str(reported_acct_deltas.keys()),
+                    #     log_stack_depth,
+                    # )
+                    # log_in_color(
+                    #     logger,
+                    #     "white",
+                    #     "debug",
+                    #     "observed_acct_deltas.keys(): "
+                    #     + str(observed_acct_deltas.keys()),
+                    #     log_stack_depth,
+                    # )
                     # print(pd.DataFrame(previous_row).T.to_string())
                     # print(pd.DataFrame(current_row).T.to_string())
-                    if f_i == 0:
-                        pass
-                    else:
-                        log_in_color(
-                            logger,
-                            "white",
-                            "debug",
-                            future_rows_only_df.loc[(f_i - 1, f_i), :].to_string(),
-                            log_stack_depth,
-                        )
+                    # if f_i == 0:
+                    #     pass
+                    # else:
+                        # log_in_color(
+                        #     logger,
+                        #     "white",
+                        #     "debug",
+                        #     future_rows_only_df.loc[(f_i - 1, f_i), :].to_string(),
+                        #     log_stack_depth,
+                        # )
                     raise ValueError(
                         "Observed delta column set mismatched reported delta column set"
                     )
@@ -8192,29 +8418,29 @@ class ForecastHandler:
                             + str(ROUNDING_ERROR_TOLERANCE)
                             + "\n"
                         )
-                        if f_i == 0:
-                            log_in_color(
-                                logger,
-                                "white",
-                                "debug",
-                                pd.DataFrame(previous_row).to_string(),
-                                log_stack_depth,
-                            )
-                            log_in_color(
-                                logger,
-                                "white",
-                                "debug",
-                                pd.DataFrame(current_row).T.to_string(),
-                                log_stack_depth,
-                            )
-                        else:
-                            log_in_color(
-                                logger,
-                                "white",
-                                "debug",
-                                future_rows_only_df.loc[(f_i - 1, f_i), :].to_string(),
-                                log_stack_depth,
-                            )
+                        # if f_i == 0:
+                        #     log_in_color(
+                        #         logger,
+                        #         "white",
+                        #         "debug",
+                        #         pd.DataFrame(previous_row).to_string(),
+                        #         log_stack_depth,
+                        #     )
+                        #     log_in_color(
+                        #         logger,
+                        #         "white",
+                        #         "debug",
+                        #         pd.DataFrame(current_row).T.to_string(),
+                        #         log_stack_depth,
+                        #     )
+                        # else:
+                        #     log_in_color(
+                        #         logger,
+                        #         "white",
+                        #         "debug",
+                        #         future_rows_only_df.loc[(f_i - 1, f_i), :].to_string(),
+                        #         log_stack_depth,
+                        #     )
                         raise ValueError(exception_string)
 
             index_of_first_future_day = list(forecast_df.Date).index(
@@ -8223,28 +8449,104 @@ class ForecastHandler:
             future_rows_only_df.index = (
                 future_rows_only_df.index + index_of_first_future_day
             )
+
+            affected_account_names = set(accounts_with_deltas["Name"])
+            pre_update_cycle_payments = {}
+            for account in account_set_before_p2_plus_txn.accounts:
+                if account.account_type != "credit":
+                    continue
+                payment_column = (
+                    f"{account.name}: Credit Billing Cycle Payment Bal"
+                )
+                if (
+                    payment_column in affected_account_names
+                    and payment_column in forecast_df.columns
+                ):
+                    pre_update_cycle_payments[payment_column] = forecast_df[
+                        payment_column
+                    ].copy()
+
             forecast_df.update(future_rows_only_df)
 
-        log_in_color(
-            logger,
-            "yellow",
-            "debug",
-            str(date_string) + " after processing_function",
-            log_stack_depth,
-        )
-        log_in_color(
-            logger, "yellow", "debug", forecast_df.to_string(), log_stack_depth
-        )
+            forecast_dates = pd.to_datetime(forecast_df["Date"])
+
+            # An additional credit payment belongs only to the billing cycle in
+            # which it occurs.  The legacy propagation helpers carry its cycle-
+            # payment delta through the entire remaining forecast, causing
+            # successive monthly payments to accumulate.  Restore the forecast
+            # that existed before this transaction beginning with the next
+            # billing date.
+            for account in account_set_before_p2_plus_txn.accounts:
+                if account.account_type != "credit":
+                    continue
+                payment_column = (
+                    f"{account.name}: Credit Billing Cycle Payment Bal"
+                )
+                if payment_column not in pre_update_cycle_payments:
+                    continue
+                billing_day = pd.Timestamp(
+                    account.billing_state.billing_cycle_start_date
+                ).day
+                later_billing_dates = forecast_dates[
+                    (forecast_dates > pd.Timestamp(date_string))
+                    & (forecast_dates.dt.day == billing_day)
+                ]
+                if later_billing_dates.empty:
+                    continue
+                restore_from = later_billing_dates.min()
+                restore_mask = forecast_dates >= restore_from
+                forecast_df.loc[restore_mask, payment_column] = (
+                    pre_update_cycle_payments[payment_column].loc[restore_mask]
+                )
+
+            # Recompute the derived end-of-previous-cycle balance across the
+            # whole forecast.  This must happen after restoring cycle payments,
+            # and must include boundaries before the current optimization date
+            # so a later transaction cannot reintroduce a stale value.
+            for account in account_set_before_p2_plus_txn.accounts:
+                if account.account_type != "credit":
+                    continue
+                prev_column = f"{account.name}: Prev Stmt Bal"
+                eopc_column = f"{account.name}: Credit End of Prev Cycle Bal"
+                if eopc_column not in forecast_df.columns:
+                    continue
+                billing_start = account.billing_state.billing_cycle_start_date
+                boundary_day = (
+                    pd.Timestamp(billing_start) + pd.Timedelta(days=1)
+                ).day
+                boundaries = sorted(
+                    forecast_dates[forecast_dates.dt.day == boundary_day].unique()
+                )
+                for boundary_index, boundary in enumerate(boundaries):
+                    prior_indices = forecast_df.index[forecast_dates < boundary]
+                    if len(prior_indices) == 0:
+                        continue
+                    new_eopc = forecast_df.at[prior_indices[-1], prev_column]
+                    cycle_mask = forecast_dates >= boundary
+                    if boundary_index + 1 < len(boundaries):
+                        cycle_mask &= forecast_dates < boundaries[boundary_index + 1]
+                    forecast_df.loc[cycle_mask, eopc_column] = new_eopc
+
+        # log_in_color(
+        #     logger,
+        #     "yellow",
+        #     "debug",
+        #     str(date_string) + " after processing_function",
+        #     log_stack_depth,
+        # )
+        # log_in_color(
+        #     logger, "yellow", "debug", forecast_df.to_string(), log_stack_depth
+        # )
 
         log_stack_depth -= 1
-        log_in_color(
-            logger,
-            "white",
-            "debug",
-            str(date_string)
-            + " EXIT _propagateOptimizationTransactionsIntoTheFuture",
-            log_stack_depth,
-        )
+        # log_in_color(
+        #     logger,
+        #     "white",
+        #     "debug",
+        #     str(date_string)
+        #     + " EXIT _propagateOptimizationTransactionsIntoTheFuture",
+        #     log_stack_depth,
+        # )
         return forecast_df
 
     # TODO potentially rename this. Update? in what way?
@@ -8727,7 +9029,7 @@ class ForecastHandler:
 
         @interface-report: show
         """
-        log_in_color(logger, 'red', 'debug', 'ENTER _cleanUpAfterFailedSatisfice', log_stack_depth)
+        # log_in_color(logger, 'red', 'debug', 'ENTER _cleanUpAfterFailedSatisfice', log_stack_depth)
         # this logic takes everything that was not executed and adds it to skipped_df
         not_confirmed_sel_vec = [
             (
@@ -10089,38 +10391,38 @@ class ForecastHandler:
                     )
                 except Exception as e:
                     # log_in_color(logger, 'red', 'debug', 'Validation FAIL -1*round(net_loss,2) == round((check_row_delta - (cc_row_delta + loan_row_delta)),2) was not TRUE', log_stack_depth)
-                    log_in_color(
-                        logger,
-                        "red",
-                        "debug",
-                        "Validation FAIL -1*net_loss == (check_row_delta - (cc_row_delta + loan_row_delta)) was not TRUE",
-                        log_stack_depth,
-                    )
-                    log_in_color(
-                        logger,
-                        "magenta",
-                        "debug",
-                        "Memo...........: " + str(memo),
-                        log_stack_depth,
-                    )
-                    log_in_color(
-                        logger,
-                        "magenta",
-                        "debug",
-                        "Md.............: " + str(md),
-                        log_stack_depth,
-                    )
-                    # log_in_color(logger, 'magenta', 'debug', str(-1*net_loss)+' != '+str( round((check_row_delta - (cc_row_delta + loan_row_delta)),2) ) , log_stack_depth)
-                    log_in_color(
-                        logger,
-                        "magenta",
-                        "debug",
-                        str(-1 * net_loss)
-                        + " != "
-                        + str((check_row_delta - (cc_row_delta + loan_row_delta))),
-                        log_stack_depth,
-                    )
-                    log_in_color(logger, "magenta", "debug", "", log_stack_depth)
+                    # log_in_color(
+                    #     logger,
+                    #     "red",
+                    #     "debug",
+                    #     "Validation FAIL -1*net_loss == (check_row_delta - (cc_row_delta + loan_row_delta)) was not TRUE",
+                    #     log_stack_depth,
+                    # )
+                    # log_in_color(
+                    #     logger,
+                    #     "magenta",
+                    #     "debug",
+                    #     "Memo...........: " + str(memo),
+                    #     log_stack_depth,
+                    # )
+                    # log_in_color(
+                    #     logger,
+                    #     "magenta",
+                    #     "debug",
+                    #     "Md.............: " + str(md),
+                    #     log_stack_depth,
+                    # )
+                    # # log_in_color(logger, 'magenta', 'debug', str(-1*net_loss)+' != '+str( round((check_row_delta - (cc_row_delta + loan_row_delta)),2) ) , log_stack_depth)
+                    # log_in_color(
+                    #     logger,
+                    #     "magenta",
+                    #     "debug",
+                    #     str(-1 * net_loss)
+                    #     + " != "
+                    #     + str((check_row_delta - (cc_row_delta + loan_row_delta))),
+                    #     log_stack_depth,
+                    # )
+                    # log_in_color(logger, "magenta", "debug", "", log_stack_depth)
 
                     fail_flag = True
 
@@ -10133,37 +10435,37 @@ class ForecastHandler:
                     )
                 except Exception as e:
                     # log_in_color(logger, 'red', 'debug', 'Validation FAIL round(net_gain,2) == round((check_row_delta - (cc_row_delta + loan_row_delta)),2) was not TRUE', log_stack_depth)
-                    log_in_color(
-                        logger,
-                        "red",
-                        "debug",
-                        "Validation FAIL net_gain == (check_row_delta - (cc_row_delta + loan_row_delta)) was not TRUE",
-                        log_stack_depth,
-                    )
-                    log_in_color(
-                        logger,
-                        "magenta",
-                        "debug",
-                        "Memo...........: " + str(memo),
-                        log_stack_depth,
-                    )
-                    log_in_color(
-                        logger,
-                        "magenta",
-                        "debug",
-                        "Md.............: " + str(md),
-                        log_stack_depth,
-                    )
-                    # log_in_color(logger, 'magenta', 'debug', str(net_gain)+' != '+str( round((check_row_delta - (cc_row_delta + loan_row_delta)),2) ) , log_stack_depth)
-                    log_in_color(
-                        logger,
-                        "magenta",
-                        "debug",
-                        str(net_gain)
-                        + " != "
-                        + str((check_row_delta - (cc_row_delta + loan_row_delta))),
-                        log_stack_depth,
-                    )
+                    # log_in_color(
+                    #     logger,
+                    #     "red",
+                    #     "debug",
+                    #     "Validation FAIL net_gain == (check_row_delta - (cc_row_delta + loan_row_delta)) was not TRUE",
+                    #     log_stack_depth,
+                    # )
+                    # log_in_color(
+                    #     logger,
+                    #     "magenta",
+                    #     "debug",
+                    #     "Memo...........: " + str(memo),
+                    #     log_stack_depth,
+                    # )
+                    # log_in_color(
+                    #     logger,
+                    #     "magenta",
+                    #     "debug",
+                    #     "Md.............: " + str(md),
+                    #     log_stack_depth,
+                    # )
+                    # # log_in_color(logger, 'magenta', 'debug', str(net_gain)+' != '+str( round((check_row_delta - (cc_row_delta + loan_row_delta)),2) ) , log_stack_depth)
+                    # log_in_color(
+                    #     logger,
+                    #     "magenta",
+                    #     "debug",
+                    #     str(net_gain)
+                    #     + " != "
+                    #     + str((check_row_delta - (cc_row_delta + loan_row_delta))),
+                    #     log_stack_depth,
+                    # )
 
                     fail_flag = True
 
@@ -12248,6 +12550,33 @@ class ForecastHandler:
     #     )
     #     return html_output_path
 
+    @staticmethod
+    def get_delta_explanation_sentence(column_name: str, delta: Decimal, length_of_forecast_in_days: int) -> str:
+        avg = delta / length_of_forecast_in_days
+        if delta > 0:
+            return f"{column_name} rose by ${delta:,.2f} over {length_of_forecast_in_days} days, averaging ${avg:,.2f} per day."
+        elif delta == 0:
+            return f"{column_name} did not change."
+        else:
+            return f"{column_name} fell by ${delta:,.2f} over {length_of_forecast_in_days} days, averaging ${avg:,.2f} per day."
+
+    @staticmethod
+    def get_last_row_first_row_delta(df: pd.DataFrame, column_name: str) -> Decimal:
+        return Decimal(
+            df[column_name].iat[-1]
+            - df[column_name].iat[0]
+        )
+
+    @staticmethod
+    def get_time_elapsed_string(start_ts, end_ts):
+        mins = int((end_ts - start_ts).seconds / 60)
+        secs = (end_ts - start_ts).seconds % 60
+        if mins + secs == 0:
+            mic = (end_ts - start_ts).microseconds
+            return f"{mic:,} microseconds"
+        
+        # TODO handle plural of minute(s) and second(s) in get_time_elapsed_string i just don't want to do it rn 
+        return f"{mins} minute and {secs} seconds"
 
     def generateHTMLreport(self, E: ExpenseForecastResult) -> str:
         """
@@ -12258,39 +12587,341 @@ class ForecastHandler:
         report data through another interface.
         """
 
-        scenario_name = ''
-        unique_id = ''
-        date_range = ''
+        report_scalars = {}
 
-        parameters_page_text_above_plots = ''
-        parameters_page_text_below_plots = ''
+        report_scalars['scenario_name'] = E.initial_conditions.forecast_name
+        report_scalars['unique_id'] = E.unique_id
+        report_scalars['date_range'] = str((E.initial_conditions.end_date - E.initial_conditions.start_date).days) + " days : " + E.initial_conditions.start_date.strftime('%Y-%m-%d') + ' to ' + E.initial_conditions.end_date.strftime('%Y-%m-%d')
 
-        net_worth_page_text_above_plots = ''
-        net_worth_page_text_below_plots = ''
+        length_of_forecast_in_days = (E.initial_conditions.end_date - E.initial_conditions.start_date).days
 
-        net_gain_and_loss_page_text_above_plots = ''
+        net_worth_delta = self.get_last_row_first_row_delta(E.forecast_df, 'Net Worth')
+
+        report_scalars['net_worth_page_text_above_plots']= self.get_delta_explanation_sentence('Net Worth', net_worth_delta, length_of_forecast_in_days)
+        report_scalars['net_worth_page_text_below_plots'] = ''
+
+        net_gain_and_loss_page_text_above_plots = '' 
         net_gain_and_loss_page_text_below_plots = ''
 
-        account_type_page_text_above_plots = ''
+        liquid_delta_sent = self.get_delta_explanation_sentence('Liquid Total', net_worth_delta, length_of_forecast_in_days)
+        cc_delta_sent = self.get_delta_explanation_sentence('CC Debt Total', net_worth_delta, length_of_forecast_in_days)
+        loan_delta_sent = self.get_delta_explanation_sentence('Loan Total', net_worth_delta, length_of_forecast_in_days)
+        report_scalars['account_type_page_text_above_plots'] = liquid_delta_sent + '\r\n' + cc_delta_sent + '\r\n' + loan_delta_sent + '\r\n'
         account_type_page_text_below_plots = ''
 
-        interest_page_text_above_plots = ''
+        interest_page_text_above_plots = '' #TODO for detailed view interest page abobe plot text: in dyanmic sentence, state the average value, dont include start and end values
         interest_page_text_below_plots = ''
-
-        milestones_page_text_above_plots = ''
-        milestones_page_text_below_plots = ''
-
+        
         sankey_page_text_above_plots = ''
         sankey_page_text_below_plots = ''
 
-        all_page_text_above_plots = ''
-        all_page_text_below_plots = ''
-
-        transaction_schedule_page_text_above_plots = ''
-        transaction_schedule_page_text_below_plots = ''
-
         last_day_page_text_above_plots = ''
         last_day_page_text_below_plots = ''
+
+        report_data_frames = {}
+        milestone_results = (
+            E.milestone_results[0]
+            | E.milestone_results[1]
+            | E.milestone_results[2]
+        )
+        forecast_start_date = pd.Timestamp(E.forecast_df["Date"].iloc[0])
+
+        def format_milestone_elapsed_time(date_achieved) -> str:
+            elapsed_days = (
+                pd.Timestamp(date_achieved).normalize()
+                - forecast_start_date.normalize()
+            ).days
+            if elapsed_days < 365:
+                unit = "day" if elapsed_days == 1 else "days"
+                return f"{elapsed_days} {unit}"
+            elapsed_years = elapsed_days / 365.25
+            return f"{elapsed_years:.1f} years"
+
+        report_data_frames["milestone_dates"] = pd.DataFrame(
+            [
+                {
+                    "Time": format_milestone_elapsed_time(date_achieved),
+                    "Milestone": milestone_name,
+                }
+                for milestone_name, date_achieved in sorted(
+                    milestone_results.items(),
+                    key=lambda item: pd.Timestamp(item[1])
+                    if pd.notna(item[1])
+                    else pd.Timestamp.max,
+                )
+                if pd.notna(date_achieved)
+            ],
+            columns=["Time", "Milestone"],
+        )
+
+        initial_conditions = E.initial_conditions
+        initial_account_set = initial_conditions.initial_account_set
+        initial_budget_set = initial_conditions.initial_budget_set
+        initial_memo_rule_set = initial_conditions.initial_memo_rule_set
+        milestone_set = E.milestone_set
+
+        report_data_frames["initial_account_set"] = initial_account_set.getAccounts()
+        report_data_frames["initial_line_item_set"] = initial_budget_set.getLineItems()
+        report_data_frames["initial_memo_rule_set"] = initial_memo_rule_set.getMemoRules()
+        report_data_frames["account_milestones"] = milestone_set.getAccountMilestonesDF()
+        report_data_frames["memo_milestones"] = milestone_set.getMemoMilestonesDF()
+        report_data_frames["composite_milestones"] = milestone_set.getCompositeMilestonesDF()
+        report_data_frames["forecast_output"] = E.forecast_df.copy()
+
+        credit_accounts = initial_account_set.getAccounts().loc[
+            lambda accounts: accounts["Account_Type"].eq("credit")
+        ]
+        total_credit_limit = pd.to_numeric(
+            credit_accounts["Max_Balance"], errors="coerce"
+        ).sum()
+        initial_cash_reserve = pd.to_numeric(
+            E.forecast_df["Liquid Total"], errors="coerce"
+        ).min()
+        initial_reserve_credit = total_credit_limit - pd.to_numeric(
+            E.forecast_df["CC Debt Total"], errors="coerce"
+        ).max()
+        final_cash_reserve = float(E.forecast_df["Liquid Total"].iloc[-1])
+        final_available_credit = total_credit_limit - float(
+            E.forecast_df["CC Debt Total"].iloc[-1]
+        )
+
+        def format_report_currency(value) -> str:
+            numeric_value = float(value)
+            if numeric_value < 0:
+                return f"-${abs(numeric_value):,.2f}"
+            return f"${numeric_value:,.2f}"
+
+        report_data_frames["margin_metrics"] = pd.DataFrame(
+            [
+                {
+                    "Metric": "Initial Cash Reserve",
+                    "Amount": format_report_currency(initial_cash_reserve),
+                },
+                {
+                    "Metric": "Initial Reserve Credit",
+                    "Amount": format_report_currency(initial_reserve_credit),
+                },
+                {
+                    "Metric": "Final Cash Reserve",
+                    "Amount": format_report_currency(final_cash_reserve),
+                },
+                {
+                    "Metric": "Final Available Credit",
+                    "Amount": format_report_currency(final_available_credit),
+                },
+            ],
+            columns=["Metric", "Amount"],
+        )
+
+        transaction_schedule = (
+            E.confirmed_df.copy()
+            if isinstance(E.confirmed_df, pd.DataFrame)
+            else initial_budget_set.getLineItemSchedule().iloc[0:0].copy()
+        )
+        if not transaction_schedule.empty:
+            transaction_schedule = transaction_schedule.sort_values(
+                ["Date", "Priority", "Memo"],
+                kind="stable",
+            ).reset_index(drop=True)
+
+        report_data_frames["all_transactions"] = transaction_schedule.copy()
+        report_data_frames["non_essential_transactions"] = transaction_schedule.loc[
+            transaction_schedule["Priority"].gt(1)
+        ].reset_index(drop=True)
+
+        account_types = dict(
+            zip(
+                initial_account_set.getAccounts()["Name"],
+                initial_account_set.getAccounts()["Account_Type"],
+            )
+        )
+        credit_transaction_indices = []
+        loan_transaction_indices = []
+        for transaction_index, transaction in transaction_schedule.iterrows():
+            memo_rule = initial_memo_rule_set.findMatchingMemoRule(
+                transaction["Memo"],
+                transaction["Priority"],
+            )
+            destination_type = account_types.get(memo_rule.account_to)
+            if destination_type == "credit":
+                credit_transaction_indices.append(transaction_index)
+            elif (
+                destination_type == "loan"
+                or memo_rule.account_to == "ALL_LOANS"
+            ):
+                loan_transaction_indices.append(transaction_index)
+
+        report_data_frames["credit_card_payments"] = transaction_schedule.loc[
+            credit_transaction_indices
+        ].reset_index(drop=True)
+        loan_payment_rows = []
+        for transaction_index in loan_transaction_indices:
+            transaction = transaction_schedule.loc[transaction_index]
+            memo_rule = initial_memo_rule_set.findMatchingMemoRule(
+                transaction["Memo"],
+                transaction["Priority"],
+            )
+            loan_payment_rows.append(
+                {
+                    "Date": transaction["Date"],
+                    "Account": memo_rule.account_to,
+                    "Payment Type": "Scheduled",
+                    "Amount": float(transaction["Amount"]),
+                }
+            )
+
+        loan_minimum_payment_pattern = re.compile(
+            r"^LOAN MIN PAYMENT \("
+            r"(?P<Account>[^:]+):\s*"
+            r"(?:Interest|Principal Balance)\s*"
+            r"-\$(?P<Amount>[\d,]+(?:\.\d+)?)\)$"
+        )
+        minimum_payment_components = []
+        for _, forecast_row in E.forecast_df.iterrows():
+            for directive in str(forecast_row["Memo Directives"]).split(";"):
+                match = loan_minimum_payment_pattern.match(directive.strip())
+                if match is None:
+                    continue
+                minimum_payment_components.append(
+                    {
+                        "Date": forecast_row["Date"],
+                        "Account": match.group("Account").strip(),
+                        "Amount": float(
+                            match.group("Amount").replace(",", "")
+                        ),
+                    }
+                )
+
+        if minimum_payment_components:
+            minimum_payments = (
+                pd.DataFrame(minimum_payment_components)
+                .groupby(["Date", "Account"], as_index=False, sort=True)["Amount"]
+                .sum()
+            )
+            minimum_payments["Payment Type"] = "Minimum"
+            loan_payment_rows.extend(
+                minimum_payments[
+                    ["Date", "Account", "Payment Type", "Amount"]
+                ].to_dict(orient="records")
+            )
+
+        report_data_frames["loan_payments"] = (
+            pd.DataFrame(
+                loan_payment_rows,
+                columns=["Date", "Account", "Payment Type", "Amount"],
+            )
+            .sort_values(["Date", "Account", "Payment Type"], kind="stable")
+            .reset_index(drop=True)
+        )
+
+        credit_card_interest_rows = []
+        credit_card_interest_pattern = re.compile(
+            r"^CC INTEREST \((?P<Account>[^:]+):.*?\+\$(?P<Amount>[\d,]+(?:\.\d+)?)\)$"
+        )
+        for _, forecast_row in E.forecast_df.iterrows():
+            for directive in str(forecast_row["Memo Directives"]).split(";"):
+                match = credit_card_interest_pattern.match(directive.strip())
+                if match is None:
+                    continue
+                credit_card_interest_rows.append(
+                    {
+                        "Date": forecast_row["Date"],
+                        "Account": match.group("Account").strip(),
+                        "Amount": float(match.group("Amount").replace(",", "")),
+                    }
+                )
+
+        report_data_frames["credit_card_interest_payments"] = pd.DataFrame(
+            credit_card_interest_rows,
+            columns=["Date", "Account", "Amount"],
+        )
+        
+        
+        forecast_metadata = pd.DataFrame({
+            'Start':[E.start_ts], 'End':[E.end_ts], 'Elapsed':[self.get_time_elapsed_string(E.start_ts, E.end_ts)]
+        }).T
+        forecast_metadata['Stat'] = ['Start', 'End', 'Elapsed']
+        forecast_metadata = forecast_metadata.rename(columns={forecast_metadata.columns[0]: "Value"}).loc[:, ["Stat", "Value"]]
+        
+        report_data_frames['forecast_metadata'] = forecast_metadata
+
+        last_day = E.forecast_df.tail(1).T
+        summary_rows = [
+            row
+            for row in last_day.index
+            if not (
+                row.startswith("Date")
+                or row.startswith("Memo")
+                or row.startswith("Memo Directive")
+                or row.startswith("Next Income Date")
+                or row.startswith("Marginal Interest")
+                or row.startswith("Net Gain")
+                or row.startswith("Net Loss")
+                or ':' in row #TODO change HTML report logic to filter out sub accounts without checking for : in name
+            )
+        ]
+        final_account_balances = (
+            last_day
+            .loc[summary_rows]
+            .reset_index(names="Account")
+            .rename(columns={last_day.columns[0]: "Balance"})
+        )
+        report_data_frames["final_account_balances"] = final_account_balances
+
+        # Build one chart point per achievement date and account-balance value.
+        # Milestones sharing both are combined into one tooltip; milestones on
+        # the same date with different balances remain separate points.
+        account_milestones_by_name = {
+            milestone.milestone_name: milestone
+            for milestone in (getattr(E.milestone_set, "account_milestones", None) or [])
+        }
+        account_milestone_results = (
+            E.milestone_results[0]
+            if isinstance(E.milestone_results, (list, tuple)) and E.milestone_results
+            else {}
+        )
+        forecast_dates = pd.to_datetime(E.forecast_df["Date"]).dt.normalize()
+        milestones_by_point: dict[tuple[str, float], list[dict[str, Any]]] = {}
+
+        for milestone_name, achieved_date in account_milestone_results.items():
+            if achieved_date in (None, "None"):
+                continue
+
+            milestone = account_milestones_by_name.get(milestone_name)
+            if milestone is None or milestone.account_name not in E.forecast_df.columns:
+                continue
+
+            normalized_date = pd.Timestamp(achieved_date).normalize()
+            matching_rows = E.forecast_df.loc[forecast_dates == normalized_date]
+            if matching_rows.empty:
+                continue
+
+            balance = matching_rows[milestone.account_name].iloc[0]
+            if pd.isna(balance):
+                continue
+
+            date_key = normalized_date.strftime("%Y-%m-%d")
+            balance_value = float(balance)
+            milestones_by_point.setdefault((date_key, balance_value), []).append({
+                "name": str(milestone_name),
+                "account": str(milestone.account_name),
+                "balance": balance_value,
+            })
+
+        account_milestone_achieved_dates = pd.DataFrame([
+            {
+                "Date": achieved_date,
+                "Amount": balance,
+                "Milestones": milestones,
+            }
+            for (achieved_date, balance), milestones
+            in sorted(milestones_by_point.items())
+        ], columns=["Date", "Amount", "Milestones"])
+        report_data_frames["account_milestone_achieved_dates"] = (
+            account_milestone_achieved_dates
+        )
+
+        
 
         def scalar_value(name: str, default: str = "") -> str:
             """
@@ -12304,7 +12935,7 @@ class ForecastHandler:
             $net_worth_page_text_above_plots
                 scalar_value("net_worth_page_text_above_plots")
             """
-            value: Any = getattr(E, name, default)
+            value: Any = report_scalars.get(name, default)
 
             if value is None:
                 return ""
@@ -12315,13 +12946,14 @@ class ForecastHandler:
             """
             Return a DataFrame stored on E, or None when unavailable.
             """
-            value: Any = getattr(E, name, None)
+            value: Any = report_data_frames.get(name) #TODO return type should be pd.DataFrame not sure how to express that
 
             if isinstance(value, pd.DataFrame):
                 return value
 
             return None
 
+        # TODO add an optional parameter to F.render_table to indicate which columns should be money format
         def render_table(
             name: str,
             *,
@@ -12370,30 +13002,12 @@ class ForecastHandler:
                 </section>
             """
 
-        def render_named_table_section(
-            title: str,
-            dataframe_name: str,
-        ) -> str:
-            """
-            Render a named subsection inside a detailed report page.
-            """
-            return f"""
-                <section class="detailed-table-section">
-                    <h3 class="detailed-table-section-title">
-                        {escape(title)}
-                    </h3>
-
-                    <div class="table-scroll-container">
-                        {render_table(dataframe_name)}
-                    </div>
-                </section>
-            """
-
         def render_detailed_page(
             page_id: str,
             page_title: str,
             primary_table_name: str | None = None,
             additional_sections: str = "",
+            show_plot: bool = True,
         ) -> str:
             """
             Render one detailed-view navbar page.
@@ -12409,6 +13023,40 @@ class ForecastHandler:
                             {render_table(primary_table_name)}
                         </div>
                     </section>
+                """
+
+            plot_html = ""
+            if show_plot:
+                line_chart_html = ""
+                if page_id in {
+                    "net_worth",
+                    "net_gain_and_loss",
+                    "account_type",
+                    "interest",
+                }:
+                    line_chart_html = f"""
+                        <div class="detail-line-chart-container">
+                            <svg
+                                id="{escape(page_id)}-chart"
+                                class="hero-chart detail-line-chart"
+                                role="img"
+                                aria-label="{escape(page_title)} line chart"
+                            ></svg>
+                            <div
+                                id="{escape(page_id)}-chart-tooltip"
+                                class="hero-chart-tooltip"
+                                hidden
+                            ></div>
+                        </div>
+                    """
+                plot_html = f"""
+                    <div
+                        id="{escape(page_id)}-plots"
+                        class="detail-page-plots"
+                        data-plot-page="{escape(page_id)}"
+                    >
+                        {line_chart_html}
+                    </div>
                 """
 
             return f"""
@@ -12428,15 +13076,7 @@ class ForecastHandler:
                         {scalar_value(f"{page_id}_page_text_above_plots")}
                     </div>
 
-                    <div
-                        id="{escape(page_id)}-plots"
-                        class="detail-page-plots"
-                        data-plot-page="{escape(page_id)}"
-                    >
-                        <!--
-                        D3 plots for this page will be inserted here.
-                        -->
-                    </div>
+                    {plot_html}
 
                     <div class="detail-page-text detail-page-text-below">
                         {scalar_value(f"{page_id}_page_text_below_plots")}
@@ -12452,27 +13092,27 @@ class ForecastHandler:
 
         parameters_sections = "".join(
             [
-                render_named_table_section(
+                render_table_card(
                     "Account Set",
-                    "account_set",
+                    "initial_account_set",
                 ),
-                render_named_table_section(
+                render_table_card(
                     "Line Items",
-                    "line_items",
+                    "initial_line_item_set",
                 ),
-                render_named_table_section(
+                render_table_card(
                     "Memo Rules",
-                    "memo_rules",
+                    "initial_memo_rule_set",
                 ),
-                render_named_table_section(
+                render_table_card(
                     "Composite Milestones",
                     "composite_milestones",
                 ),
-                render_named_table_section(
+                render_table_card(
                     "Account Milestones",
                     "account_milestones",
                 ),
-                render_named_table_section(
+                render_table_card(
                     "Memo Milestones",
                     "memo_milestones",
                 ),
@@ -12481,19 +13121,23 @@ class ForecastHandler:
 
         transaction_schedule_sections = "".join(
             [
-                render_named_table_section(
+                render_table_card(
                     "Non-Essential Transactions",
                     "non_essential_transactions",
                 ),
-                render_named_table_section(
+                render_table_card(
                     "Credit Card Payments",
                     "credit_card_payments",
                 ),
-                render_named_table_section(
+                render_table_card(
+                    "Credit Card Interest Payments",
+                    "credit_card_interest_payments",
+                ),
+                render_table_card(
                     "Loan Payments",
                     "loan_payments",
                 ),
-                render_named_table_section(
+                render_table_card(
                     "All Transactions",
                     "all_transactions",
                 ),
@@ -12505,8 +13149,17 @@ class ForecastHandler:
                 render_detailed_page(
                     "parameters",
                     "Parameters",
-                    "parameters",
-                    parameters_sections,
+                    additional_sections=parameters_sections,
+                    show_plot=False,
+                ),
+                render_detailed_page(
+                    "output_data",
+                    "Output Data",
+                    additional_sections=render_table_card(
+                        "Forecast Output",
+                        "forecast_output",
+                    ),
+                    show_plot=False,
                 ),
                 render_detailed_page(
                     "net_worth",
@@ -12546,8 +13199,8 @@ class ForecastHandler:
                 render_detailed_page(
                     "transaction_schedule",
                     "Transaction Schedule",
-                    "transaction_schedule",
-                    transaction_schedule_sections,
+                    additional_sections=transaction_schedule_sections,
+                    show_plot=False,
                 ),
                 render_detailed_page(
                     "last_day",
@@ -12556,6 +13209,212 @@ class ForecastHandler:
                 ),
             ]
         )
+
+        ### JS Plots
+
+        def dataframe_to_chart_records(
+            dataframe: pd.DataFrame | None,
+            date_column: str = "Date",
+        ) -> list[dict[str, Any]]:
+            """
+            Convert a DataFrame into JSON-safe records for D3.
+
+            Date values are serialized as ISO-formatted strings. Missing values become
+            null in the resulting JSON.
+            """
+            if dataframe is None or dataframe.empty:
+                return []
+
+            chart_dataframe = dataframe.copy()
+
+            if date_column in chart_dataframe.columns:
+                chart_dataframe[date_column] = pd.to_datetime(
+                    chart_dataframe[date_column]
+                ).dt.strftime("%Y-%m-%d")
+
+            chart_dataframe = chart_dataframe.astype(object).where(
+                pd.notna(chart_dataframe),
+                None,
+            )
+
+            return chart_dataframe.to_dict(orient="records")
+
+        hero_chart_options = {
+            "date_column": "Date",
+            "primary_series": "Checking",
+
+            "line_animation_ms": 1800,
+            "respect_reduced_motion": False,
+
+            "line_styles": {
+                "Checking": {
+                    "color": "#2f7d4a",
+                    "width": 3.5,
+                },
+                "Savings": {
+                    "color": "#8a8a8f",
+                    "width": 2,
+                },
+                "Credit Card": {
+                    "color": "#b65a5a",
+                    "width": 2,
+                },
+            },
+
+            "default_line_color": "#7a7a80",
+            "default_line_width": 2,
+
+            "today_color": "#2878d0",
+            "transaction_color": "#929298",
+
+            "line_animation_ms": 1800,
+            "transaction_delay_ms": 150,
+            "transaction_stagger_ms": 130,
+
+            "currency_symbol": "$",
+        }
+
+
+        # hero_chart_dataframe = report_data_frames.get("hero_chart")
+        # report_data_frames["hero_chart"] = pd.DataFrame( #example
+        
+        hero_chart_dataframe = E.forecast_df.loc[:, ["Date", "Checking"]]
+        
+        # hero_chart_dataframe = pd.DataFrame(
+        #     {
+        #         "Date": [
+        #             "2026-07-01",
+        #             "2026-07-15",
+        #             "2026-08-01",
+        #             "2026-09-01",
+        #         ],
+        #         "Checking": [
+        #             4200,
+        #             3800,
+        #             5100,
+        #             4600,
+        #         ],
+        #         "Savings": [
+        #             9000,
+        #             9200,
+        #             9400,
+        #             9600,
+        #         ],
+        #     }
+        # )
+
+
+        line_items_dataframe = E.initial_conditions.initial_budget_set.getLineItems()
+        once_memos = set(
+            line_items_dataframe.loc[
+                line_items_dataframe["interval"].eq("once"), "Memo"
+            ]
+        )
+        confirmed_transactions = self._report_confirmed_df(E)
+        highlighted_transactions_dataframe = confirmed_transactions.loc[
+            confirmed_transactions["Memo"].isin(once_memos)
+            | confirmed_transactions["Priority"].gt(1),
+            ["Date", "Amount", "Memo"],
+        ].reset_index(drop=True)
+
+        date_column = hero_chart_options.get("date_column", "Date")
+
+        hero_chart_payload = {
+            "series_data": dataframe_to_chart_records(
+                hero_chart_dataframe,
+                date_column=date_column,
+            ),
+            "highlighted_transactions": dataframe_to_chart_records(
+                highlighted_transactions_dataframe,
+                date_column="Date",
+            ),
+            "account_milestone_achieved_dates": dataframe_to_chart_records(
+                dataframe_value("account_milestone_achieved_dates"),
+                date_column="Date",
+            ),
+            "options": hero_chart_options,
+        }
+
+        hero_chart_json = json.dumps(
+            hero_chart_payload,
+            ensure_ascii=False,
+            default=str,
+        ).replace("</", "<\\/")
+
+        account_type_columns = [
+            column
+            for column in ["Liquid Total", "CC Debt Total", "Loan Total"]
+            if column in E.forecast_df.columns
+        ]
+        account_type_dataframe = E.forecast_df.loc[
+            :, ["Date", *account_type_columns]
+        ].copy()
+        investment_names = initial_account_set.getAccounts().loc[
+            lambda accounts: accounts["Account_Type"].eq("investment"),
+            "Name",
+        ].tolist()
+        investment_names = [
+            name for name in investment_names if name in E.forecast_df.columns
+        ]
+        if investment_names:
+            account_type_dataframe["Investment Total"] = E.forecast_df[
+                investment_names
+            ].sum(axis=1)
+
+        net_gain_loss_dataframe = E.forecast_df.loc[
+            :, ["Date", "Net Gain", "Net Loss"]
+        ].copy()
+        net_gain_loss_dataframe["Net Loss"] = -net_gain_loss_dataframe[
+            "Net Loss"
+        ].abs()
+
+        detail_chart_payload = {
+            "net_worth": {
+                "series_data": dataframe_to_chart_records(
+                    E.forecast_df.loc[:, ["Date", "Net Worth"]]
+                ),
+                "options": {
+                    "line_styles": {"Net Worth": {"color": "#2878d0"}},
+                },
+            },
+            "net_gain_and_loss": {
+                "series_data": dataframe_to_chart_records(net_gain_loss_dataframe),
+                "options": {
+                    "symmetric_zero": True,
+                    "absolute_tooltip_series": ["Net Loss"],
+                    "line_styles": {
+                        "Net Gain": {"color": "#268a51"},
+                        "Net Loss": {"color": "#c94747"},
+                    },
+                },
+            },
+            "account_type": {
+                "series_data": dataframe_to_chart_records(account_type_dataframe),
+                "options": {
+                    "line_styles": {
+                        "Liquid Total": {"color": "#2878d0"},
+                        "CC Debt Total": {"color": "#c94747"},
+                        "Loan Total": {"color": "#a05a9c"},
+                        "Investment Total": {"color": "#268a51"},
+                    },
+                },
+            },
+            "interest": {
+                "series_data": dataframe_to_chart_records(
+                    E.forecast_df.loc[:, ["Date", "Marginal Interest"]]
+                ),
+                "options": {
+                    "line_styles": {
+                        "Marginal Interest": {"color": "#c47a24"},
+                    },
+                },
+            },
+        }
+        detail_chart_json = json.dumps(
+            detail_chart_payload,
+            ensure_ascii=False,
+            default=str,
+        ).replace("</", "<\\/")
 
         html = f"""<!DOCTYPE html>
         <html lang="en">
@@ -12787,6 +13646,7 @@ class ForecastHandler:
                 }}
 
                 .hero-chart-container {{
+                    position: relative;
                     display: flex;
                     align-items: stretch;
                     justify-content: center;
@@ -12983,6 +13843,26 @@ class ForecastHandler:
                     background: var(--report-hover-color);
                 }}
 
+                /*
+                Keep the raw forecast output compact vertically. The final two
+                columns are Memo Directives and Memo, which are intentionally
+                wide and horizontally scrollable instead of wrapping.
+                */
+                .report-table-forecast-output th,
+                .report-table-forecast-output td {{
+                    white-space: nowrap;
+                }}
+
+                .report-table-forecast-output th:nth-last-child(2),
+                .report-table-forecast-output td:nth-last-child(2) {{
+                    min-width: 1200px;
+                }}
+
+                .report-table-forecast-output th:last-child,
+                .report-table-forecast-output td:last-child {{
+                    min-width: 720px;
+                }}
+
                 .report-table-empty {{
                     display: flex;
                     align-items: center;
@@ -13025,6 +13905,7 @@ class ForecastHandler:
                     overflow-x: auto;
                     border-bottom: 1px solid var(--report-border-color);
                     scrollbar-width: thin;
+                    justify-content: center;
                 }}
 
                 .detail-nav-button {{
@@ -13097,6 +13978,17 @@ class ForecastHandler:
                     width: 100%;
                     min-height: 320px;
                     border-bottom: 1px solid var(--report-soft-border-color);
+                }}
+
+                .detail-line-chart-container {{
+                    position: relative;
+                    width: 100%;
+                    height: clamp(390px, 47vh, 650px);
+                }}
+
+                .detail-line-chart {{
+                    width: 100%;
+                    height: 100%;
                 }}
 
                 .detailed-primary-table {{
@@ -13186,6 +14078,107 @@ class ForecastHandler:
                         animation-iteration-count: 1 !important;
                     }}
                 }}
+
+                /*
+                Added for Hero Chart
+                */
+
+                .hero-axis {{
+                    color: var(--report-muted-text-color);
+                    font-family: var(--report-font-family);
+                    font-size: 0.76rem;
+                }}
+
+                .hero-axis path,
+                .hero-axis line {{
+                    stroke: var(--report-border-color);
+                }}
+
+                .hero-grid line {{
+                    stroke: var(--report-soft-border-color);
+                    stroke-dasharray: 2 4;
+                }}
+
+                .hero-grid path {{
+                    display: none;
+                }}
+
+                .hero-series-line {{
+                    fill: none;
+                    stroke-linecap: round;
+                    stroke-linejoin: round;
+                }}
+
+                .hero-today-guide {{
+                    stroke: var(--report-border-color);
+                    stroke-width: 1;
+                    stroke-dasharray: 3 5;
+                }}
+
+                .hero-today-dot {{
+                    cursor: pointer;
+                    transform-box: fill-box;
+                    transform-origin: center;
+                    animation: hero-today-pulse 2.8s ease-in-out infinite;
+                }}
+
+                .hero-transaction-dot {{
+                    cursor: pointer;
+                }}
+
+                .hero-milestone-dot {{
+                    cursor: pointer;
+                }}
+
+                .hero-chart-tooltip {{
+                    position: absolute;
+                    z-index: 20;
+                    min-width: 150px;
+                    max-width: 260px;
+                    padding: 10px 12px;
+                    border: 1px solid var(--report-border-color);
+                    border-radius: 8px;
+                    background: var(--report-surface-color);
+                    box-shadow: 0 8px 24px rgb(0 0 0 / 10%);
+                    color: var(--report-text-color);
+                    font-size: 0.78rem;
+                    line-height: 1.5;
+                    pointer-events: none;
+                }}
+
+                .hero-chart-tooltip-row {{
+                    display: flex;
+                    justify-content: space-between;
+                    gap: 18px;
+                }}
+
+                .hero-chart-tooltip-label {{
+                    color: var(--report-muted-text-color);
+                }}
+
+                .hero-chart-tooltip-value {{
+                    font-weight: 600;
+                    text-align: right;
+                }}
+
+                @keyframes hero-today-pulse {{
+                    0%,
+                    100% {{
+                        transform: scale(1);
+                        opacity: 1;
+                    }}
+
+                    50% {{
+                        transform: scale(1.45);
+                        opacity: 0.62;
+                    }}
+                }}
+
+                @media (prefers-reduced-motion: reduce) {{
+                    .hero-today-dot {{
+                        animation: none;
+                    }}
+                }}
             </style>
         </head>
 
@@ -13225,30 +14218,6 @@ class ForecastHandler:
                     -->
                 </header>
 
-                <section class="hero-section">
-                    <div
-                        id="hero-chart-container"
-                        class="hero-chart-container"
-                    >
-                        <!--
-                        Replace this placeholder with the D3-created SVG.
-
-                        Suggested final element:
-
-                        <svg
-                            id="hero-chart"
-                            class="hero-chart"
-                            role="img"
-                            aria-label="Forecast account time series"
-                        ></svg>
-                        -->
-
-                        <div class="hero-chart-placeholder">
-                            Hero chart
-                        </div>
-                    </div>
-                </section>
-
                 <div class="view-toggle-row">
                     <button
                         id="view-toggle-button"
@@ -13260,6 +14229,28 @@ class ForecastHandler:
                         Detailed View
                     </button>
                 </div>
+
+                <section class="hero-section">
+                    <div
+                        id="hero-chart-container"
+                        class="hero-chart-container"
+                    >
+                        
+                        <svg
+                            id="hero-chart"
+                            class="hero-chart"
+                            role="img"
+                            aria-label="Forecast account balances over time"
+                        ></svg>
+
+                        <div
+                            id="hero-chart-tooltip"
+                            class="hero-chart-tooltip"
+                            hidden
+                        ></div>
+
+                    </div>
+                </section>
 
                 <!--
                 ====================================================================
@@ -13284,14 +14275,15 @@ class ForecastHandler:
                         )}
 
                         {render_table_card(
-                            "Notable Transactions",
-                            "notable_transactions",
-                        )}
-
-                        {render_table_card(
                             "Margin Metrics",
                             "margin_metrics",
                         )}
+
+                        {render_table_card(
+                            "Milestones",
+                            "milestone_dates",
+                        )}
+
                     </div>
 
                     <div
@@ -13300,10 +14292,6 @@ class ForecastHandler:
                             summary-table-row-secondary
                         "
                     >
-                        {render_table_card(
-                            "Milestone Dates",
-                            "milestone_dates",
-                        )}
 
                         {render_table_card(
                             "Forecast Metadata",
@@ -13340,6 +14328,18 @@ class ForecastHandler:
                                 data-detail-target="parameters"
                             >
                                 Parameters
+                            </button>
+
+                            <button
+                                id="detail-tab-output_data"
+                                class="detail-nav-button"
+                                type="button"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="detail-page-output_data"
+                                data-detail-target="output_data"
+                            >
+                                Output Data
                             </button>
 
                             <button
@@ -13462,6 +14462,8 @@ class ForecastHandler:
                 (() => {{
                     "use strict";
 
+                    const heroSection = document.querySelector(".hero-section");
+
                     const summaryView =
                         document.getElementById("summary-view");
 
@@ -13485,21 +14487,29 @@ class ForecastHandler:
 
                     let showingDetailedView = false;
 
+                    
+
                     function setDetailedViewVisibility(showDetailed) {{
                         showingDetailedView = showDetailed;
 
                         summaryView.hidden = showDetailed;
                         detailedView.hidden = !showDetailed;
 
+                        setHeroPlotVisible(!showDetailed);
+
                         viewToggleButton.textContent =
                             showDetailed
-                                ? "Summary"
-                                : "Detailed View";
+                                ? "Show Summary View"
+                                : "Show Detailed View";
 
                         viewToggleButton.setAttribute(
                             "aria-expanded",
                             String(showDetailed)
                         );
+                    }}
+
+                    function setHeroPlotVisible(isVisible) {{
+                        heroSection.hidden = !isVisible;
                     }}
 
                     function activateDetailPage(pageName) {{
@@ -13593,6 +14603,22 @@ class ForecastHandler:
                     setDetailedViewVisibility(false);
                 }})();
             </script>
+
+            <script
+                id="hero-chart-data"
+                type="application/json"
+            >
+                {hero_chart_json}
+            </script>
+            <script
+                id="detail-chart-data"
+                type="application/json"
+            >
+                {detail_chart_json}
+            </script>
+            <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+            <script src="./hero_chart.js"></script>
+            <script src="./detail_charts.js"></script>
         </body>
         </html>
         """

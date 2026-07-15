@@ -104,7 +104,7 @@ def get_IRL_current_A():
                                 minimum_payment=40,
                                 end_of_previous_cycle_balance=3871.98,
                                 min_balance=0,
-                                max_balance=25_000,
+                                max_balance=4_000,
                                 apr=0.2149)
     A.createCreditCardAccount(name='Chase',
                                 current_statement_balance=0,
@@ -516,7 +516,7 @@ def fuck_off_to_spain(start_date : date, end_date : date) -> LineItemSet:
 
 if __name__ == '__main__':
 
-    # action = 'near term'
+    action = 'near term'
     # action = 'start of RN life'
     # action = 'net worth 0 after 18 months of RN car life'
     # action = 'test approximate case'
@@ -524,12 +524,12 @@ if __name__ == '__main__':
 
     # action = 'I just won the lottery'
 
-    action = 'example single forecast report'
+    # action = 'example single forecast report'
 
     if action == 'near term':
 
-        start_date = date(2026,7,4)
-        end_date = start_date + datetime.timedelta(days=365*2)
+        start_date = date(2026,7,14)
+        end_date = start_date + datetime.timedelta(days=180)
 
         A = get_IRL_current_A() #TODO this could take kwargs
         B_invariant = get_B_invariant(15, 80)
@@ -539,7 +539,11 @@ if __name__ == '__main__':
 
         ### Dimensions
         # CC Payments
-        B_keep_cc_payed_off = getHardCodedCreditCardPayments(user_vars)
+        # B_keep_cc_payed_off = getHardCodedCreditCardPayments(user_vars)
+        B_keep_cc_payed_off = LineItemSet()
+        B_keep_cc_payed_off.addLineItem(start_date=date(2026,9,1), end_date=end_date, priority=2,
+                    interval='monthly',amount=5000.0,memo='extra cc payment',income_flag=False, 
+                    deferrable=False, partial_payment_allowed=True)
 
         # Housing
         B_live_in_car = LineItemSet() #TODO maybe increase cost of gas ?
@@ -550,7 +554,7 @@ if __name__ == '__main__':
                                       end_date=user_vars["start_nursing_school_stop_working_full_time_date"], 
                                       priority=1,
                     interval='semiweekly',amount=user_vars["CNA_paycheck_amount"],
-                    memo='CNA Income Eugene',income_flag=True, 
+                    memo='CNA income Eugene',income_flag=True, 
                     deferrable=False, partial_payment_allowed=False)
         
         #assume a 30 day gap i nemployment at least
@@ -559,19 +563,23 @@ if __name__ == '__main__':
                                       priority=1,
                     interval='semiweekly',
                     amount=user_vars["CNA_paycheck_one_shift_amount"] ,
-                    memo='CNA Income Los Angeles',income_flag=True, 
+                    memo='CNA income Los Angeles',income_flag=True, 
                     deferrable=False, partial_payment_allowed=False)
 
         B = B_invariant + B_keep_cc_payed_off + B_live_in_car + B_CNA
 
-        IO = ExpenseForecastInitialConditions(start_date, end_date, A, B, M)
+        IO = ExpenseForecastInitialConditions(start_date, end_date, A, B, M, forecast_name='Current State')
 
         MS = MilestoneSet()
 
         F = ForecastHandler()
-        R = F.runForecast(IO, MS, include_debug_columns=True)
+        R = F.runForecastApproximate(IO, MS, include_debug_columns=True)
         R.writeToJSONFile(str(R.unique_id)+'.json')
-        F.generateHTMLReport(R)
+        html_report = F.generateHTMLreport(R)
+
+        with open('test_report.html', "w") as f:
+            f.write(html_report)
+
         
         # S = ScenarioSpace()
         # IO = ExpenseForecastInitialConditions(start_date, end_date, A,B,M)
@@ -618,7 +626,7 @@ if __name__ == '__main__':
                                       memo='all loan payment')
 
         B = B_invariant + RN_income + B_keep_cc_payed_off + B_loan_payments
-        IO = ExpenseForecastInitialConditions(start_date, end_date, A, B, M)
+        IO = ExpenseForecastInitialConditions(start_date, end_date, A, B, M, forecast_name = 'First Two Years of RN Life Still in My Car')
 
         composite_milestone = CompositeMilestone('All OG Loans Paid Off',
                                 [
@@ -669,9 +677,14 @@ if __name__ == '__main__':
                           composite_milestones=[composite_milestone])
 
         F = ForecastHandler()
-        R = F.runForecast(IO, MS, include_debug_columns=True)
+        R = F.runForecastApproximate(IO, MS, include_debug_columns=True)
         R.writeToJSONFile(str(R.unique_id)+'.json')
-        F.generateHTMLReport(R)
+        # F.generateHTMLReport(R)
+
+        html_report = F.generateHTMLreport(R)
+
+        with open('test_report.html', "w") as f:
+            f.write(html_report)
 
         user_vars = getUserVars()
 

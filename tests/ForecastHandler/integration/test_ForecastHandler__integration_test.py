@@ -2954,6 +2954,89 @@ class TestForecastHandler:
         assert "Finished Approximate Forecast" in log_output
 
     @pytest.mark.integration
+    def test_ForecastHandler__runApproximate__uses_reduced_partial_payment(self):
+        start_date, end_date = date(2026, 6, 1), date(2026, 6, 20)
+        accounts = self._approximate_checking(balance=100)
+        budget, memo_rules = LineItemSet(), MemoRuleSet()
+        budget.addLineItem(
+            start_date=date(2026, 6, 2), end_date=date(2026, 6, 2),
+            priority=2, interval="once", amount=150, memo="optional expense",
+            income_flag=False, deferrable=False, partial_payment_allowed=True,
+        )
+        memo_rules.addMemoRule(
+            memo_regex="optional expense", account_from="Checking", account_to=None,
+            transaction_priority=2,
+        )
+
+        result = self._run_approximate(
+            start_date, end_date, accounts, budget, memo_rules
+        )
+
+        assert result.forecast_df.iloc[-1]["Checking"] == 0
+        assert len(result.confirmed_df) == 1
+        assert 99.99 <= float(result.confirmed_df.iloc[0]["Amount"]) <= 100.01
+        assert result.skipped_df.empty
+
+    @pytest.mark.integration
+    def test_ForecastHandler__runApproximate__defers_until_next_income(self):
+        start_date, end_date = date(2026, 6, 1), date(2026, 6, 20)
+        accounts = self._approximate_checking(balance=0)
+        budget, memo_rules = LineItemSet(), MemoRuleSet()
+        budget.addLineItem(
+            start_date=date(2026, 6, 2), end_date=date(2026, 6, 2),
+            priority=2, interval="once", amount=50, memo="deferrable expense",
+            income_flag=False, deferrable=True, partial_payment_allowed=False,
+        )
+        budget.addLineItem(
+            start_date=date(2026, 6, 10), end_date=date(2026, 6, 10),
+            priority=1, interval="once", amount=100, memo="paycheck income",
+            income_flag=True, deferrable=False, partial_payment_allowed=False,
+        )
+        memo_rules.addMemoRule(
+            memo_regex="deferrable expense", account_from="Checking", account_to=None,
+            transaction_priority=2,
+        )
+        memo_rules.addMemoRule(
+            memo_regex="paycheck income", account_from=None, account_to="Checking",
+            transaction_priority=1,
+        )
+
+        result = self._run_approximate(
+            start_date, end_date, accounts, budget, memo_rules
+        )
+
+        assert result.forecast_df.iloc[-1]["Checking"] == 50
+        deferred_expense = result.confirmed_df.loc[
+            result.confirmed_df["Memo"].eq("deferrable expense")
+        ].iloc[0]
+        assert deferred_expense["Date"] == date(2026, 6, 10)
+        assert result.deferred_df.empty
+        assert result.skipped_df.empty
+
+    @pytest.mark.integration
+    def test_ForecastHandler__runApproximate__skips_when_no_income_remains(self):
+        start_date, end_date = date(2026, 6, 1), date(2026, 6, 20)
+        accounts = self._approximate_checking(balance=0)
+        budget, memo_rules = LineItemSet(), MemoRuleSet()
+        budget.addLineItem(
+            start_date=date(2026, 6, 2), end_date=date(2026, 6, 2),
+            priority=2, interval="once", amount=50, memo="unfunded expense",
+            income_flag=False, deferrable=True, partial_payment_allowed=False,
+        )
+        memo_rules.addMemoRule(
+            memo_regex="unfunded expense", account_from="Checking", account_to=None,
+            transaction_priority=2,
+        )
+
+        result = self._run_approximate(
+            start_date, end_date, accounts, budget, memo_rules
+        )
+
+        assert result.confirmed_df.empty
+        assert result.deferred_df.empty
+        assert result.skipped_df["Memo"].tolist() == ["unfunded expense"]
+
+    @pytest.mark.integration
     def test_ForecastHandler__investment_returns__exact_and_approximate(self):
         start_date, end_date = date(2026, 6, 1), date(2026, 6, 5)
         accounts = self._approximate_checking()

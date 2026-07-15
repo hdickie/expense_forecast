@@ -1031,96 +1031,34 @@ class AccountSet:
         if amount == 0:
             return []
 
-        account_set = copy.deepcopy(self)
-        payment_dict = {}
-
-        while amount > MONEY_BOUNDARY_TOLERANCE:
-            loan_accounts = [
+        loan_accounts = sorted(
+            (
                 account
-                for account in account_set.accounts
+                for account in self.accounts
                 if account.account_type == "loan"
                 and account.billing_state.balance > MONEY_BOUNDARY_TOLERANCE
-            ]
-            if not loan_accounts:
+            ),
+            key=lambda loan: loan.apr,
+            reverse=True,
+        )
+
+        allocated_payments = []
+        remaining_amount = amount
+        for loan in loan_accounts:
+            if remaining_amount <= MONEY_BOUNDARY_TOLERANCE:
                 break
+            payment_amount = min(
+                remaining_amount,
+                self._money(loan.billing_state.balance),
+            )
+            if payment_amount <= MONEY_BOUNDARY_TOLERANCE:
+                continue
+            allocated_payments.append(
+                [checking_acct_name, loan.name, payment_amount]
+            )
+            remaining_amount -= payment_amount
 
-            marginal_interest_amounts = [
-                loan.billing_state.principal_balance * loan.apr
-                for loan in loan_accounts
-            ]
-            highest_marginal_interest = max(marginal_interest_amounts)
-
-            if highest_marginal_interest <= MONEY_BOUNDARY_TOLERANCE:
-                target_loans = loan_accounts
-                proposed_payment_by_name = {
-                    loan.name: min(loan.billing_state.balance, amount)
-                    for loan in target_loans
-                }
-            else:
-                lower_marginal_interest_amounts = [
-                    marginal_interest_amount
-                    for marginal_interest_amount in marginal_interest_amounts
-                    if highest_marginal_interest - marginal_interest_amount
-                    > MONEY_BOUNDARY_TOLERANCE
-                ]
-                next_marginal_interest = (
-                    max(lower_marginal_interest_amounts)
-                    if lower_marginal_interest_amounts
-                    else Decimal("0")
-                )
-
-                proposed_payment_by_name = {}
-                for loan, marginal_interest_amount in zip(
-                    loan_accounts, marginal_interest_amounts
-                ):
-                    if (
-                        highest_marginal_interest - marginal_interest_amount
-                        > MONEY_BOUNDARY_TOLERANCE
-                    ):
-                        proposed_payment_by_name[loan.name] = Decimal("0")
-                        continue
-
-                    target_principal_balance = next_marginal_interest / loan.apr
-                    principal_payment = (
-                        loan.billing_state.principal_balance
-                        - target_principal_balance
-                    )
-                    principal_payment = max(Decimal("0"), principal_payment)
-                    proposed_payment_by_name[loan.name] = min(
-                        loan.billing_state.balance,
-                        loan.billing_state.interest_balance + principal_payment,
-                    )
-
-            total_proposed_payment = sum(proposed_payment_by_name.values(), Decimal("0"))
-            if total_proposed_payment <= MONEY_BOUNDARY_TOLERANCE:
-                break
-
-            if amount < total_proposed_payment:
-                proposed_payment_by_name = {
-                    loan_name: proposed_payment * amount / total_proposed_payment
-                    for loan_name, proposed_payment in proposed_payment_by_name.items()
-                }
-                total_proposed_payment = amount
-
-            for loan_name, proposed_payment in proposed_payment_by_name.items():
-                if proposed_payment <= MONEY_BOUNDARY_TOLERANCE:
-                    continue
-                account_set.executeTransaction(
-                    Account_From=checking_acct_name,
-                    Account_To=loan_name,
-                    Amount=proposed_payment,
-                )
-                payment_dict[loan_name] = (
-                    payment_dict.get(loan_name, Decimal("0")) + proposed_payment
-                )
-
-            amount -= total_proposed_payment
-
-        return [
-            [checking_acct_name, loan_name, payment_amount]
-            for loan_name, payment_amount in payment_dict.items()
-            if payment_amount > MONEY_BOUNDARY_TOLERANCE
-        ]
+        return allocated_payments
 
     #TODO manual review of AccountSet.getAccounts docstring
     def getAccounts(self):

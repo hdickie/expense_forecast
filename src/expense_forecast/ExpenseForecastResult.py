@@ -255,7 +255,7 @@ class ExpenseForecastResult:
         raise NotImplementedError #TODO DEFER implement ExpenseForecastResult __hash__ ; unclear on the purpose of this- LLM-generated
 
     #TODO manual review of ExpenseForecastResult.__init__ docstring
-    def __init__(self, initial_conditions: ExpenseForecastInitialConditions, forecast_df, **kwargs):
+    def __init__(self, initial_conditions: ExpenseForecastInitialConditions, forecast_df, start_ts, end_ts, **kwargs):
 
         """
         TODO one-line description of ExpenseForecastResult.__init__.
@@ -319,6 +319,10 @@ class ExpenseForecastResult:
             self.unique_id = initial_conditions.unique_id + "_A"
         else:
             self.unique_id = initial_conditions.unique_id
+
+        # TODO validation and type checking to R start_ts and end_ts
+        self.start_ts = start_ts
+        self.end_ts = end_ts
 
     #TODO manual review of ExpenseForecastResult.__str__ docstring
     def __str__(self):
