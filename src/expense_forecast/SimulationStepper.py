@@ -1,3 +1,17 @@
+"""
+Summary
+-------
+
+Description
+-----------
+
+Contract
+--------
+
+@interface-report: show
+"""
+
+
 
 import pandas as pd
 from expense_forecast.ExpenseForecastInitialConditions import ExpenseForecastInitialConditions
@@ -13,18 +27,56 @@ fileHandler = logging.FileHandler(__name__ + ".log", mode="w")
 fileHandler.setFormatter(formatter)
 streamHandler = logging.StreamHandler()
 streamHandler.setFormatter(formatter)
-logger.setLevel(logging.DEBUG) 
+logger.setLevel(logging.DEBUG)
 logger.handlers.clear()
 logger.addHandler(fileHandler)
 logger.addHandler(streamHandler)
 logger.propagate = False
 
+#TODO DEFER manual review of SimulationStepper docstring
 class SimulationStepper:
 
+    """
+    Summary
+    -------
+
+    Description
+    -----------
+
+    Contract
+    --------
+
+    @interface-report: show
+    """
     ROUNDING_ERROR_TOLERANCE = 0.0000000001
 
+    #TODO DEFER manual review of SimulationStepper.__init__ docstring
     def __init__(self):
-        pass
+        """
+        TODO DEFER one-line description of SimulationStepper.__init__.
+
+        TODO DEFER multi-line description of SimulationStepper.__init__.
+        TODO DEFER explain how SimulationStepper.__init__ participates in this module.
+        TODO DEFER document important state, validation, or serialization behavior.
+
+        Parameters
+        ----------
+        None
+            TODO DEFER confirm that SimulationStepper.__init__ takes no parameters beyond self/cls.
+
+        Returns
+        -------
+        None
+            TODO DEFER one-line description of return value of SimulationStepper.__init__.
+
+        Contract
+        --------
+        - #TODO DEFER contract lines for SimulationStepper.__init__.
+        - #TODO DEFER document exceptions, mutations, and precision assumptions for SimulationStepper.__init__.
+
+        @interface-report: show
+        """
+        raise NotImplementedError
 
     # @staticmethod
     # def step(initial_conditions: ExpenseForecastInitialConditions) -> ExpenseForecastResult:
@@ -52,5 +104,5 @@ class SimulationStepper:
     #     # return result
     #     raise NotImplementedError
 
-    
-    
+
+

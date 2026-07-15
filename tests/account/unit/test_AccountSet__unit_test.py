@@ -33,7 +33,7 @@ def credit_billing_state(
     minimum_payment=50,
     billing_cycle_start_date=date(2000, 1, 1),
     interest_type="compound",
-    interest_cadence="monthly",
+    interest_interval="monthly",
     apr=0.01,
 ):
     return CreditCardBillingState(
@@ -43,7 +43,7 @@ def credit_billing_state(
         billing_cycle_payment_balance=Decimal(str(billing_cycle_payment_balance)),
         minimum_payment=Decimal(str(minimum_payment)),
         interest_type=interest_type,
-        interest_cadence=interest_cadence,
+        interest_interval=interest_interval,
         apr=Decimal(str(apr)),
     )
 
@@ -54,8 +54,8 @@ def loan_billing_state(
     billing_cycle_payment_balance=0,
     minimum_payment=50,
     billing_cycle_start_date=date(2000, 1, 1),
-    interest_type="compound",
-    interest_cadence="daily",
+    interest_type="simple",
+    interest_interval="daily",
     apr=0.01,
 ):
     return LoanBillingState(
@@ -65,7 +65,7 @@ def loan_billing_state(
         billing_cycle_payment_balance=Decimal(str(billing_cycle_payment_balance)),
         minimum_payment=Decimal(str(minimum_payment)),
         interest_type=interest_type,
-        interest_cadence=interest_cadence,
+        interest_interval=interest_interval,
         apr=Decimal(str(apr)),
     )
 
@@ -81,11 +81,11 @@ def compound_loan_A():
         billing_start_date=date(2024, 1, 1),
         interest_type="compound",
         apr=0.1,
-        interest_cadence="monthly",
+        interest_interval="monthly",
         minimum_payment=50,
         principal_balance=1000,
         interest_balance=100,
-        end_of_previous_cycle_balance=1000,
+        billing_cycle_payment_balance=0,
     )
     return A.accounts
 
@@ -101,11 +101,11 @@ def compound_loan_A_no_interest():
         billing_start_date=date(2024, 1, 1),
         interest_type="compound",
         apr=0.1,
-        interest_cadence="monthly",
+        interest_interval="monthly",
         minimum_payment=50,
         principal_balance=1000,
         interest_balance=0,
-        end_of_previous_cycle_balance=1000,
+        billing_cycle_payment_balance=0,
     )
     return A.accounts
 
@@ -121,11 +121,11 @@ def compound_loan_B():
         billing_start_date=date(2024, 1, 1),
         interest_type="compound",
         apr=0.01,
-        interest_cadence="monthly",
+        interest_interval="monthly",
         minimum_payment=50,
         principal_balance=1500,
         interest_balance=100,
-        end_of_previous_cycle_balance=1500,
+        billing_cycle_payment_balance=0,
     )
     return A.accounts
 
@@ -141,11 +141,11 @@ def compound_loan_B_no_interest():
         billing_start_date=date(2024, 1, 1),
         interest_type="compound",
         apr=0.01,
-        interest_cadence="monthly",
+        interest_interval="monthly",
         minimum_payment=50,
         principal_balance=1500,
         interest_balance=0,
-        end_of_previous_cycle_balance=1500,
+        billing_cycle_payment_balance=0,
     )
     return A.accounts
 
@@ -161,11 +161,11 @@ def compound_loan_C():
         billing_start_date=date(2024, 1, 1),
         interest_type="compound",
         apr=0.05,
-        interest_cadence="monthly",
+        interest_interval="monthly",
         minimum_payment=50,
         principal_balance=2500,
         interest_balance=100,
-        end_of_previous_cycle_balance=2500,
+        billing_cycle_payment_balance=0,
     )
     return A.accounts
 
@@ -181,11 +181,11 @@ def compound_loan_C_no_interest():
         billing_start_date=date(2024, 1, 1),
         interest_type="compound",
         apr=0.05,
-        interest_cadence="monthly",
+        interest_interval="monthly",
         minimum_payment=50,
         principal_balance=2500,
         interest_balance=0,
-        end_of_previous_cycle_balance=2500,
+        billing_cycle_payment_balance=0,
     )
     return A.accounts
 
@@ -213,7 +213,7 @@ def cc(curr_bal, prev_bal, apr, bsd):
         account_type="credit",
         billing_start_date=bsd,
         apr=apr,
-        interest_cadence="monthly",
+        interest_interval="monthly",
         minimum_payment=40,
         previous_statement_balance=prev_bal,
         current_statement_balance=curr_bal,
@@ -404,7 +404,7 @@ class TestAccountSet:
             billing_start_date=date(2023, 3, 3),
             apr=0.067,
             minimum_payment=223.19,
-            end_of_previous_cycle_balance=900,
+            billing_cycle_payment_balance=0,
         )
         return account_set
 
@@ -503,6 +503,174 @@ class TestAccountSet:
         assert result_vector == expected_result_vector
 
     @pytest.mark.unit
+    def test_allocate_additional_loan_payments_uses_highest_apr_first(self):
+        test_account_set = AccountSet([])
+        test_account_set.createCheckingAccount(
+            "test checking",
+            balance=1000.0,
+            min_balance=0.0,
+            max_balance=float("inf"),
+            primary_checking_ind=True,
+        )
+        test_account_set.createLoanAccount(
+            "higher apr loan",
+            principal_balance=1000.0,
+            interest_balance=10.0,
+            min_balance=0,
+            max_balance=2000.0,
+            billing_start_date=date(2026, 1, 1),
+            apr=0.1,
+            minimum_payment=40.0,
+        )
+        test_account_set.createLoanAccount(
+            "lower apr loan",
+            principal_balance=1000.0,
+            interest_balance=10.0,
+            min_balance=0,
+            max_balance=2000.0,
+            billing_start_date=date(2026, 1, 1),
+            apr=0.05,
+            minimum_payment=40.0,
+        )
+
+        result = test_account_set.allocate_additional_loan_payments(
+            100.0, account_from="test checking"
+        )
+
+        assert result == [
+            ["test checking", "higher apr loan", Decimal("100.0")]
+        ]
+
+    @pytest.mark.unit
+    def test_allocate_additional_loan_payments_ignores_balance_times_apr(self):
+        test_account_set = AccountSet([])
+        test_account_set.createCheckingAccount(
+            "test checking",
+            balance=1000.0,
+            min_balance=0.0,
+            max_balance=float("inf"),
+            primary_checking_ind=True,
+        )
+        test_account_set.createLoanAccount(
+            "large lower apr loan",
+            principal_balance=5000.0,
+            interest_balance=0.0,
+            min_balance=0,
+            max_balance=6000.0,
+            billing_start_date=date(2026, 1, 1),
+            apr=0.05,
+            minimum_payment=40.0,
+        )
+        test_account_set.createLoanAccount(
+            "small higher apr loan",
+            principal_balance=1000.0,
+            interest_balance=0.0,
+            min_balance=0,
+            max_balance=2000.0,
+            billing_start_date=date(2026, 1, 1),
+            apr=0.10,
+            minimum_payment=40.0,
+        )
+
+        result = test_account_set.allocate_additional_loan_payments(
+            100.0, account_from="test checking"
+        )
+
+        assert result == [
+            ["test checking", "small higher apr loan", Decimal("100.0")]
+        ]
+
+    @pytest.mark.unit
+    def test_execute_transaction_all_loans_uses_refactored_loan_accounts(self):
+        test_account_set = AccountSet([])
+        test_account_set.createCheckingAccount(
+            "test checking",
+            balance=1000.0,
+            min_balance=0.0,
+            max_balance=float("inf"),
+            primary_checking_ind=True,
+        )
+        test_account_set.createLoanAccount(
+            "higher apr loan",
+            principal_balance=1000.0,
+            interest_balance=10.0,
+            min_balance=0,
+            max_balance=2000.0,
+            billing_start_date=date(2026, 1, 1),
+            apr=0.1,
+            minimum_payment=40.0,
+        )
+        test_account_set.createLoanAccount(
+            "lower apr loan",
+            principal_balance=1000.0,
+            interest_balance=10.0,
+            min_balance=0,
+            max_balance=2000.0,
+            billing_start_date=date(2026, 1, 1),
+            apr=0.05,
+            minimum_payment=40.0,
+        )
+
+        test_account_set.executeTransaction(
+            Account_From="test checking",
+            Account_To="ALL_LOANS",
+            Amount=100.0,
+        )
+
+        result = test_account_set.getAccounts().set_index("Name")
+        assert result.loc["test checking", "Balance"] == Decimal("900.0")
+        assert (
+            result.loc["higher apr loan", "Balance"]
+            == Decimal("910.0")
+        )
+        assert (
+            result.loc["lower apr loan", "Balance"]
+            == Decimal("1010.0")
+        )
+
+    @pytest.mark.unit
+    def test_allocate_additional_loan_payments_exhausts_each_loan_in_apr_order(self):
+        test_account_set = AccountSet([])
+        test_account_set.createCheckingAccount(
+            "test checking",
+            balance=10000.0,
+            min_balance=0.0,
+            max_balance=float("inf"),
+            primary_checking_ind=True,
+        )
+        test_account_set.createLoanAccount(
+            "barely higher loan",
+            principal_balance=3540.710620300949,
+            interest_balance=12.48,
+            min_balance=0,
+            max_balance=10000.0,
+            billing_start_date=date(2030, 12, 1),
+            apr=0.0429,
+            minimum_payment=40.0,
+        )
+        test_account_set.createLoanAccount(
+            "effectively tied loan",
+            principal_balance=1518.9648561091071,
+            interest_balance=12.48,
+            min_balance=0,
+            max_balance=10000.0,
+            billing_start_date=date(2030, 12, 1),
+            apr=0.1,
+            minimum_payment=40.0,
+        )
+
+        result = test_account_set.allocate_additional_loan_payments(
+            5500.0, account_from="test checking"
+        )
+
+        allocated_amount = sum(payment[2] for payment in result)
+        assert allocated_amount == pytest.approx(Decimal("5084.64"), abs=0.01)
+        assert [payment[1] for payment in result] == [
+            "effectively tied loan",
+            "barely higher loan",
+        ]
+
+    @pytest.mark.unit
     @pytest.mark.parametrize(
         "name,balance,min_balance,max_balance,account_type,kwargs",
         [
@@ -515,10 +683,10 @@ class TestAccountSet:
                 {
                     "billing_start_date": date(2000, 1, 1),
                     "apr": 0.1,
-                    "interest_cadence": "monthly",
+                    "interest_interval": "monthly",
                     "minimum_payment": 50,
                     "interest_balance": 100,
-                    "end_of_previous_cycle_balance": 100,
+                    "billing_cycle_payment_balance": 0,
                 },
             ),
             (
@@ -530,10 +698,10 @@ class TestAccountSet:
                 {
                     "billing_start_date": date(2000, 1, 1),
                     "apr": 0.1,
-                    "interest_cadence": "monthly",
+                    "interest_interval": "monthly",
                     "minimum_payment": 50,
                     "principal_balance": 100,
-                    "end_of_previous_cycle_balance": 100,
+                    "billing_cycle_payment_balance": 0,
                 },
             ),
             (
@@ -545,7 +713,7 @@ class TestAccountSet:
                 {
                     "billing_start_date": date(2000, 1, 1),
                     "apr": 0.1,
-                    "interest_cadence": "monthly",
+                    "interest_interval": "monthly",
                     "minimum_payment": 50,
                     "end_of_previous_cycle_balance": 100,
                 },
@@ -559,11 +727,11 @@ class TestAccountSet:
                 {
                     "billing_start_date": date(2000, 1, 1),
                     "apr": 0.1,
-                    "interest_cadence": "monthly",
+                    "interest_interval": "monthly",
                     "minimum_payment": 50,
                     "principal_balance": 100,
                     "interest_balance": 100,
-                    "end_of_previous_cycle_balance": 100,
+                    "billing_cycle_payment_balance": 0,
                 },
             ),
             # ( #this looks like valid input to me
@@ -604,7 +772,7 @@ class TestAccountSet:
             "Billing_Start_Date",
             "Interest_Type",
             "APR",
-            "Interest_Cadence",
+            "Interest_interval",
             "Minimum_Payment",
             "Primary_Checking_Ind",
         ]
@@ -685,7 +853,7 @@ class TestAccountSet:
     #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type="compound",
     #                     apr=0.01,
-    #                     interest_cadence="monthly",
+    #                     interest_interval="monthly",
     #                     minimum_payment=50,
     #                 ),
     #                 Account(
@@ -697,7 +865,7 @@ class TestAccountSet:
     #                     billing_start_date=None,
     #                     interest_type=None,
     #                     apr=None,
-    #                     interest_cadence=None,
+    #                     interest_interval=None,
     #                     minimum_payment=None,
     #                 ),
     #                 Account(
@@ -709,7 +877,7 @@ class TestAccountSet:
     #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type=None,
     #                     apr=None,
-    #                     interest_cadence=None,
+    #                     interest_interval=None,
     #                     minimum_payment=None,
     #                 ),
     #             ],
@@ -726,7 +894,7 @@ class TestAccountSet:
     #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type=None,
     #                     apr=0.01,
-    #                     interest_cadence="monthly",
+    #                     interest_interval="monthly",
     #                     minimum_payment=50,
     #                 ),
     #                 Account(
@@ -738,7 +906,7 @@ class TestAccountSet:
     #                     billing_start_date=None,
     #                     interest_type=None,
     #                     apr=None,
-    #                     interest_cadence=None,
+    #                     interest_interval=None,
     #                     minimum_payment=None,
     #                 ),
     #                 Account(
@@ -750,7 +918,7 @@ class TestAccountSet:
     #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type=None,
     #                     apr=None,
-    #                     interest_cadence=None,
+    #                     interest_interval=None,
     #                     minimum_payment=None,
     #                 ),
     #             ],
@@ -767,7 +935,7 @@ class TestAccountSet:
     #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type=None,
     #                     apr=0.01,
-    #                     interest_cadence="monthly",
+    #                     interest_interval="monthly",
     #                     minimum_payment=50,
     #                 ),
     #                 Account(
@@ -779,7 +947,7 @@ class TestAccountSet:
     #                     billing_start_date=None,
     #                     interest_type=None,
     #                     apr=None,
-    #                     interest_cadence=None,
+    #                     interest_interval=None,
     #                     minimum_payment=None,
     #                 ),
     #                 Account(
@@ -791,7 +959,7 @@ class TestAccountSet:
     #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type=None,
     #                     apr=None,
-    #                     interest_cadence=None,
+    #                     interest_interval=None,
     #                     minimum_payment=None,
     #                 ),
     #             ],
@@ -808,7 +976,7 @@ class TestAccountSet:
     #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type="compound",
     #                     apr=0.01,
-    #                     interest_cadence="monthly",
+    #                     interest_interval="monthly",
     #                     minimum_payment=50,
     #                 ),
     #                 Account(
@@ -820,7 +988,7 @@ class TestAccountSet:
     #                     billing_start_date=None,
     #                     interest_type=None,
     #                     apr=None,
-    #                     interest_cadence=None,
+    #                     interest_interval=None,
     #                     minimum_payment=None,
     #                 ),
     #                 Account(
@@ -832,7 +1000,7 @@ class TestAccountSet:
     #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type=None,
     #                     apr=None,
-    #                     interest_cadence=None,
+    #                     interest_interval=None,
     #                     minimum_payment=None,
     #                 ),
     #             ],
@@ -849,7 +1017,7 @@ class TestAccountSet:
     #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type="compound",
     #                     apr=0.01,
-    #                     interest_cadence="monthly",
+    #                     interest_interval="monthly",
     #                     minimum_payment=50,
     #                 ),
     #                 Account(
@@ -861,7 +1029,7 @@ class TestAccountSet:
     #                     billing_start_date=None,
     #                     interest_type=None,
     #                     apr=None,
-    #                     interest_cadence=None,
+    #                     interest_interval=None,
     #                     minimum_payment=None,
     #                 ),
     #                 Account(
@@ -873,7 +1041,7 @@ class TestAccountSet:
     #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type=None,
     #                     apr=None,
-    #                     interest_cadence=None,
+    #                     interest_interval=None,
     #                     minimum_payment=None,
     #                 ),
     #             ],
@@ -890,7 +1058,7 @@ class TestAccountSet:
     #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type=None,
     #                     apr=0.01,
-    #                     interest_cadence="monthly",
+    #                     interest_interval="monthly",
     #                     minimum_payment=50,
     #                 ),
     #                 Account(
@@ -902,7 +1070,7 @@ class TestAccountSet:
     #                     billing_start_date=None,
     #                     interest_type=None,
     #                     apr=None,
-    #                     interest_cadence=None,
+    #                     interest_interval=None,
     #                     minimum_payment=None,
     #                 ),
     #                 Account(
@@ -914,7 +1082,7 @@ class TestAccountSet:
     #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type=None,
     #                     apr=None,
-    #                     interest_cadence=None,
+    #                     interest_interval=None,
     #                     minimum_payment=None,
     #                 ),
     #             ],
@@ -931,7 +1099,7 @@ class TestAccountSet:
     #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type="compound",
     #                     apr=0.01,
-    #                     interest_cadence="monthly",
+    #                     interest_interval="monthly",
     #                     minimum_payment=50,
     #                 ),
     #                 Account(
@@ -943,7 +1111,7 @@ class TestAccountSet:
     #                     billing_start_date=None,
     #                     interest_type=None,
     #                     apr=None,
-    #                     interest_cadence=None,
+    #                     interest_interval=None,
     #                     minimum_payment=None,
     #                 ),
     #                 Account(
@@ -955,7 +1123,7 @@ class TestAccountSet:
     #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type=None,
     #                     apr=None,
-    #                     interest_cadence=None,
+    #                     interest_interval=None,
     #                     minimum_payment=None,
     #                 ),
     #             ],
@@ -972,7 +1140,7 @@ class TestAccountSet:
     #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type=None,
     #                     apr=0.01,
-    #                     interest_cadence="monthly",
+    #                     interest_interval="monthly",
     #                     minimum_payment=50,
     #                 ),
     #                 Account(
@@ -984,7 +1152,7 @@ class TestAccountSet:
     #                     billing_start_date=None,
     #                     interest_type=None,
     #                     apr=None,
-    #                     interest_cadence=None,
+    #                     interest_interval=None,
     #                     minimum_payment=None,
     #                 ),
     #                 Account(
@@ -996,7 +1164,7 @@ class TestAccountSet:
     #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type=None,
     #                     apr=None,
-    #                     interest_cadence=None,
+    #                     interest_interval=None,
     #                     minimum_payment=None,
     #                 ),
     #             ],
@@ -1013,7 +1181,7 @@ class TestAccountSet:
     #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type=None,
     #                     apr=0.01,
-    #                     interest_cadence="monthly",
+    #                     interest_interval="monthly",
     #                     minimum_payment=50,
     #                 ),
     #                 Account(
@@ -1025,7 +1193,7 @@ class TestAccountSet:
     #                     billing_start_date=None,
     #                     interest_type=None,
     #                     apr=None,
-    #                     interest_cadence=None,
+    #                     interest_interval=None,
     #                     minimum_payment=None,
     #                 ),
     #                 Account(
@@ -1037,7 +1205,7 @@ class TestAccountSet:
     #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type=None,
     #                     apr=None,
-    #                     interest_cadence=None,
+    #                     interest_interval=None,
     #                     minimum_payment=None,
     #                 ),
     #             ],
@@ -1054,7 +1222,7 @@ class TestAccountSet:
     #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type="compound",
     #                     apr=0.01,
-    #                     interest_cadence="monthly",
+    #                     interest_interval="monthly",
     #                     minimum_payment=50,
     #                 )
     #             ],
@@ -1071,7 +1239,7 @@ class TestAccountSet:
     #                     billing_start_date=None,
     #                     interest_type=None,
     #                     apr=None,
-    #                     interest_cadence=None,
+    #                     interest_interval=None,
     #                     minimum_payment=None,
     #                 ),
     #                 Account(
@@ -1083,7 +1251,7 @@ class TestAccountSet:
     #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type=None,
     #                     apr=None,
-    #                     interest_cadence=None,
+    #                     interest_interval=None,
     #                     minimum_payment=None,
     #                 ),
     #             ],
@@ -1100,7 +1268,7 @@ class TestAccountSet:
     #                     billing_start_date=None,
     #                     interest_type=None,
     #                     apr=None,
-    #                     interest_cadence=None,
+    #                     interest_interval=None,
     #                     minimum_payment=None,
     #                 )
     #             ],
@@ -1117,7 +1285,7 @@ class TestAccountSet:
     #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type=None,
     #                     apr=0.01,
-    #                     interest_cadence="monthly",
+    #                     interest_interval="monthly",
     #                     minimum_payment=50,
     #                 )
     #             ],
@@ -1134,7 +1302,7 @@ class TestAccountSet:
     #                     billing_start_date=date(2000, 1, 1),
     #                     interest_type="compound",
     #                     apr=0.01,
-    #                     interest_cadence="monthly",
+    #                     interest_interval="monthly",
     #                     minimum_payment=50,
     #                 )
     #             ],
@@ -1151,7 +1319,7 @@ class TestAccountSet:
     #                     billing_start_date=None,
     #                     interest_type=None,
     #                     apr=None,
-    #                     interest_cadence=None,
+    #                     interest_interval=None,
     #                     minimum_payment=None,
     #                 )
     #             ],
@@ -1166,7 +1334,7 @@ class TestAccountSet:
     #         #     billing_start_date=None,
     #         #     interest_type=None,
     #         #     apr=None,
-    #         #     interest_cadence=None,
+    #         #     interest_interval=None,
     #         #     minimum_payment=None
     #         # )],
     #     ],
@@ -1282,7 +1450,7 @@ class TestAccountSet:
     #         billing_start_date=None,
     #         interest_type=None,
     #         apr=None,
-    #         interest_cadence=None,
+    #         interest_interval=None,
     #         minimum_payment=None,
     #         previous_statement_balance=None,
     #         principal_balance=None,
@@ -1301,7 +1469,7 @@ class TestAccountSet:
     #         billing_start_date="20000107",
     #         interest_type=None,
     #         apr=0.2479,
-    #         interest_cadence="monthly",
+    #         interest_interval="monthly",
     #         minimum_payment=20.0,
     #         previous_statement_balance=500.0,
     #         current_statement_balance=1000.0,
@@ -1321,7 +1489,7 @@ class TestAccountSet:
     #         billing_start_date="20230303",
     #         interest_type="simple",
     #         apr=0.067,
-    #         interest_cadence="daily",
+    #         interest_interval="daily",
     #         minimum_payment="223.19",
     #         previous_statement_balance=None,
     #         principal_balance=900.0,
@@ -1342,7 +1510,7 @@ class TestAccountSet:
 
     # @pytest.mark.unit
     # @pytest.mark.parametrize(
-    #     "name,balance,min_balance,max_balance,account_type,billing_start_date,interest_type,apr,interest_cadence,minimum_payment,previous_statement_balance,principal_balance,interest_balance,expected_exception",
+    #     "name,balance,min_balance,max_balance,account_type,billing_start_date,interest_type,apr,interest_interval,minimum_payment,previous_statement_balance,principal_balance,interest_balance,expected_exception",
     #     [
     #         (
     #             "test loan",
@@ -1416,7 +1584,7 @@ class TestAccountSet:
     #         #  billing_start_date,
     #         #  interest_type,
     #         #  apr,
-    #         #  interest_cadence,
+    #         #  interest_interval,
     #         #  minimum_payment,
     #         #  previous_statement_balance,
     #         #  principal_balance,
@@ -1434,7 +1602,7 @@ class TestAccountSet:
     #     billing_start_date,
     #     interest_type,
     #     apr,
-    #     interest_cadence,
+    #     interest_interval,
     #     minimum_payment,
     #     previous_statement_balance,
     #     principal_balance,
@@ -1453,7 +1621,7 @@ class TestAccountSet:
     #             billing_start_date,
     #             interest_type,
     #             apr,
-    #             interest_cadence,
+    #             interest_interval,
     #             minimum_payment,
     #             previous_statement_balance,
     #             principal_balance,
@@ -1500,7 +1668,7 @@ class TestAccountSet:
     #         billing_start_date="20220101",
     #         interest_type=None,
     #         apr=0.05,
-    #         interest_cadence="monthly",
+    #         interest_interval="monthly",
     #         minimum_payment=0,
     #         previous_statement_balance=0,
     #         current_statement_balance=0,
@@ -1520,7 +1688,7 @@ class TestAccountSet:
     #         billing_start_date="20220101",
     #         interest_type="simple",
     #         apr=0.03,
-    #         interest_cadence="daily",
+    #         interest_interval="daily",
     #         minimum_payment=1,
     #         previous_statement_balance=None,
     #         principal_balance=900,
@@ -1531,60 +1699,60 @@ class TestAccountSet:
     #
     #     str(test_str_account_set)
 
-    # These test cases were selected using math to ensure coverage of all cases.
-    # See the gist of explanation here:
-    # https://gist.github.com/hdickie/98e35458aac8a5cfd4cd7e268cf3bd55
-    @pytest.mark.unit
-    @pytest.mark.parametrize(
-        "test_name, advance_payment_amount, interest_accrued_this_cycle, principal_due_this_cycle, total_balance_post_accrual, min_payment, expected_result",
-        [
-            ("NZ_20210_0111", 100, 400, 100, 300, 200, 400),  # gpt helped
-            ("Z_02110_1001", 0, 200, 100, 100, 100, 300),  # gpt helped
-            # ("Z_42010_1110", 200, 300, 100, 300, 0, -1,),  # todo get rid of these or make them real
-            # ("NZ_23100_1001", 200, 200, 100, 300, 200, -1),
-            # ("NZ_11010_0100", 200, 100, 100, 200, 200, -1),
-            # ("Z_41100_1111", 300, 100, 200, 400, 0, -1),
-            # ("NZ_20200_0001", 100, 100, 100, 200, 100, -1),
-            # ("NZ_10010_0001", 100, 100, 100, 200, 100, -1),
-            # ("Z_03100_1011", 0, 200, 100, 300, 100, -1),
-            # ("NZ_01000_0010", 100, 100, 100, 200, 200, -1),
-        ],
+    # Deprecated with AccountSet.determineMinPaymentAmount. Minimum-payment
+    # behavior now belongs to CreditCardBillingState and forecast integration
+    # tests.
+    #
+    # # These test cases were selected using math to ensure coverage of all cases.
+    # # See the gist of explanation here:
+    # # https://gist.github.com/hdickie/98e35458aac8a5cfd4cd7e268cf3bd55
+    # @pytest.mark.unit
+    # @pytest.mark.parametrize(
+    #     "test_name, advance_payment_amount, interest_accrued_this_cycle, principal_due_this_cycle, total_balance_post_accrual, min_payment, expected_result",
+    #     [
+    #         ("NZ_20210_0111", 100, 400, 100, 300, 200, 400),
+    #         ("Z_02110_1001", 0, 200, 100, 100, 100, 300),
+    #     ],
+    # )
+    # def test_determineMinPaymentAmount(
+    #     self,
+    #     test_name,
+    #     advance_payment_amount,
+    #     interest_accrued_this_cycle,
+    #     principal_due_this_cycle,
+    #     total_balance_post_accrual,
+    #     min_payment,
+    #     expected_result,
+    # ):
+    #     assert float(expected_result) == AccountSet.determineMinPaymentAmount(
+    #         float(advance_payment_amount),
+    #         float(interest_accrued_this_cycle),
+    #         float(principal_due_this_cycle),
+    #         float(total_balance_post_accrual),
+    #         float(min_payment),
+    #     )
+
+# TODO implement a test case to try and create multiple loans with the same name
+
+
+@pytest.mark.unit
+def test_AccountSet__createAccount__investment():
+    accounts = AccountSet()
+    accounts.createAccount(
+        name="Brokerage",
+        balance=1000,
+        min_balance=0,
+        max_balance=float("inf"),
+        account_type="investment",
+        billing_start_date=date(2026, 6, 1),
+        apr=0.07,
     )
-    def test_determineMinPaymentAmount(
-        self,
-        test_name,
-        advance_payment_amount,
-        interest_accrued_this_cycle,
-        principal_due_this_cycle,
-        total_balance_post_accrual,
-        min_payment,
-        expected_result,
-    ):
-        if expected_result == -1:
-            pass
-        else:
-            try:
-                print(
-                    "test_name, advance_payment_amount, interest_accrued_this_cycle, principal_due_this_cycle, total_balance_post_accrual, min_payment, expected_result"
-                )
-                print(
-                    test_name,
-                    advance_payment_amount,
-                    interest_accrued_this_cycle,
-                    principal_due_this_cycle,
-                    total_balance_post_accrual,
-                    min_payment,
-                    expected_result,
-                )
-                assert float(expected_result) == AccountSet.determineMinPaymentAmount(
-                    float(advance_payment_amount),
-                    float(interest_accrued_this_cycle),
-                    float(principal_due_this_cycle),
-                    float(total_balance_post_accrual),
-                    float(min_payment),
-                )
-            except Exception as e:
-                raise e
+
+    investment = accounts.accounts[0]
+    assert investment.account_type == "investment"
+    assert investment.balance == 1000
+    assert investment.billing_state.balance == Decimal("1000")
+    assert investment.billing_state.apr == Decimal("0.07")
 
 
 # Migration notes:

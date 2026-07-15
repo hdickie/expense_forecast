@@ -1,0 +1,131 @@
+.tablinks {
+color: #FFBD33;
+font-size:16px;
+padding-left:15px
+}
+
+a:link {
+  color: #3458eb;
+  background-color: transparent;
+  text-decoration: none;
+}
+
+a:visited {
+  color: #8215e8;
+  background-color: transparent;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #15cce8;
+  background-color: transparent;
+  text-decoration: underline;
+}
+
+a:active {
+  color: yellow;
+  background-color: transparent;
+  text-decoration: underline;
+}
+
+body {
+font-family: Georgia, "Times New Roman", Times, Serif;
+background-color: #2d2e2d;
+padding:0;
+margin:0;
+color: #ffffff;
+}
+#container {
+	background-color:blue;
+	margin-left:15%; /* This will be overriden by mobile params bc parent doc calls screen.css after this file*/
+	margin-right:15%;
+}
+#header {
+width: 100%;	
+border-bottom: 5px solid black;
+}
+.title {
+float: left;
+width:100%;
+text-decoration: none;
+font-size:300%;
+margin-bottom:0;
+}
+.title a:hover {
+color: #772124;
+}
+.title a:visited { /* i want it to stay black even if you click on it */
+color: #000000;
+}
+#description {
+font-size:55%;
+float: left;
+
+margin-top:0;
+font-family: "Courier New";
+color: #737373;
+}
+#nav {
+float:right;
+margin-top:15px;
+}
+#content {
+margin: 0 auto;
+text-align: left;
+float:left;
+width:68%;
+}
+#sidebar {
+float: left;
+width: 30%;
+overflow-x: hidden; /* Disable horizontal scroll */
+}
+.clear {
+clear:left;
+}
+.sidebartitle {
+	border-bottom: 1px solid grey;
+	color:grey;
+	font-size:100%;
+	font-family:"Courier New";
+}
+#sidebar-image {
+	margin-top: 20px;
+}
+
+th {
+	text-align:left;
+}
+
+.photopost {
+	width:95%;
+}
+
+.post-header {
+	border-top: 2px solid grey;
+	border-bottom: 2px solid grey;
+	margin-bottom:5px;
+	width:95%;
+}
+
+.postdate {
+	float:right;
+	margin-top:5px;
+}
+
+.posttitle {
+	font-size: 1.5em;
+    margin-block-start: 0.83em;
+    margin-block-end: 0.83em;
+    margin-inline-start: 0px;
+    margin-inline-end: 0px;
+    font-weight: bold;
+	margin-top:5px;
+	margin-bottom:5px;
+}
+
+.postcontent {
+	margin-left: 10px;
+	margin-right: 10px;
+	margin-bottom: 20px;
+}

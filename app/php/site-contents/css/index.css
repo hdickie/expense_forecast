@@ -1,0 +1,21 @@
+body {
+/*		background-image: url("LOGIN_PAGE_BACKGROUND_IMAGE_PATH");*/
+background-image: url("../media/sphinx_of_black_quartz.png");
+background-color: black;
+background-size: 100%;
+background-repeat: no-repeat;
+display: flex;
+height:100vh;
+text-align:center;
+}
+
+#login_form {
+	align:center;
+	margin:auto;
+	background-color:grey;
+	padding:10px;
+}
+
+#loginbutton {
+	padding:4px;
+}

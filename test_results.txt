@@ -479,9 +479,7 @@ test_description = 'test_cc_interest_accrued_reaches_0'
             append_expected_values=True,
             return_type="dataframe",
         )
-    
-        # print(f.T.to_string()) #TODO log_in_color
-    
+
         try:
             # log_in_color(
             #     logger, "white", "debug", "###################################"
@@ -6614,13 +6612,13 @@ src/expense_forecast/ForecastHandler.py:1290: NameError
 2026-07-03 16:56:59,722 - DEBUG    - [37m5                    EXIT _computeOptimalForecast[0m
 2026-07-03 16:56:59,722 - DEBUG    - [31m5                    transaction violated Account_From boundaries:[0m
 2026-07-03 16:56:59,722 - DEBUG    - [31m5                    Account_From:[0m
-2026-07-03 16:56:59,722 - DEBUG    - [31m5                           Name  Balance  Min_Balance  Max_Balance Account_Type Billing_Start_Date Interest_Type   APR Interest_Cadence Minimum_Payment  Primary_Checking_Ind[0m
+2026-07-03 16:56:59,722 - DEBUG    - [31m5                           Name  Balance  Min_Balance  Max_Balance Account_Type Billing_Start_Date Interest_Type   APR Interest_interval Minimum_Payment  Primary_Checking_Ind[0m
 2026-07-03 16:56:59,722 - DEBUG    - [31m5                    0  Checking   1000.0            0       100000     checking               None          None  None             None            None                  True[0m
 2026-07-03 16:56:59,722 - DEBUG    - [31m5                    Proposed balance: -19000.0[0m
 2026-07-03 16:56:59,722 - INFO     - [37m4                2000-01-02 EXIT _attemptTransaction[0m
 2026-07-03 16:56:59,722 - INFO     - [31m4                2000-01-02 _attemptTransaction FAIL partial cc payment 20000[0m
 2026-07-03 16:56:59,722 - DEBUG    - [36m4                2000-01-02 ENTER _getMinimumFutureAvailableBalances[0m
-2026-07-03 16:56:59,725 - DEBUG    - [36m5                    accounts_df:       Name Balance  Min_Balance  Max_Balance Account_Type Billing_Start_Date Interest_Type   APR Interest_Cadence Minimum_Payment Primary_Checking_Ind[0m
+2026-07-03 16:56:59,725 - DEBUG    - [36m5                    accounts_df:       Name Balance  Min_Balance  Max_Balance Account_Type Billing_Start_Date Interest_Type   APR Interest_interval Minimum_Payment Primary_Checking_Ind[0m
 2026-07-03 16:56:59,725 - DEBUG    - [36m5                    0  Checking  1000.0            0       100000     checking               None          None  None             None            None                 True[0m
 2026-07-03 16:56:59,725 - DEBUG    - [36m5                    1    Credit  2000.0            0        20000       credit         2000-01-12      compound  0.05          monthly              40                 None[0m
 2026-07-03 16:56:59,727 - DEBUG    - [36m5                    future_available_balances: {'Checking': np.float64(1000.0)}[0m
@@ -7233,7 +7231,7 @@ self = <test_ExpenseForecast__unit_test.TestExpenseForecastUnit object at 0x2dad
             account_type="credit",
             billing_start_date=datetime.datetime.strptime("20000102", "%Y%m%d"),
             apr=0.05,
-            interest_cadence="monthly",
+            interest_interval="monthly",
             minimum_payment=40,
             previous_statement_balance=0,
             current_statement_balance=0,
@@ -7244,7 +7242,7 @@ self = <test_ExpenseForecast__unit_test.TestExpenseForecastUnit object at 0x2dad
             start_date="20000102",
             end_date="20000102",
             priority=2,
-            cadence="once",
+            interval="once",
             amount=0,
             memo="test memo"
         )
@@ -7294,7 +7292,7 @@ self = <test_ExpenseForecast__unit_test.TestExpenseForecastUnit object at 0x2dad
             account_type="credit",
             billing_start_date=datetime.datetime.strptime("20000102", "%Y%m%d"),
             apr=0.05,
-            interest_cadence="monthly",
+            interest_interval="monthly",
             minimum_payment=40,
             previous_statement_balance=0,
             current_statement_balance=0,
@@ -7305,7 +7303,7 @@ self = <test_ExpenseForecast__unit_test.TestExpenseForecastUnit object at 0x2dad
             start_date="20000101",
             end_date="20000103",
             priority=1,
-            cadence="daily",
+            interval="daily",
             amount=0,
             memo="dummy memo"
         )
@@ -7353,7 +7351,7 @@ self = <test_ExpenseForecast__unit_test.TestExpenseForecastUnit object at 0x2dad
             start_date="20000101",
             end_date="20000104",
             priority=1,
-            cadence="daily",
+            interval="daily",
             amount=50,
             memo="dummy memo",
         )
@@ -7621,7 +7619,7 @@ test account milestone did not match expected milestone date
 2026-07-03 16:57:00,780 - DEBUG    - [32m0 Validation SUCCESS[0m
 2026-07-03 16:57:00,789 - DEBUG    - [33m0 ENTER evaluateAccountMilestone(Checking,0.0,0.0)[0m
 2026-07-03 16:57:00,790 - DEBUG    - [33m0 relevant_account_info_rows_df:[0m
-2026-07-03 16:57:00,793 - DEBUG    - [33m0        Name  Balance  Min_Balance  Max_Balance Account_Type Billing_Start_Date Interest_Type   APR Interest_Cadence Minimum_Payment Primary_Checking_Ind[0m
+2026-07-03 16:57:00,793 - DEBUG    - [33m0        Name  Balance  Min_Balance  Max_Balance Account_Type Billing_Start_Date Interest_Type   APR Interest_interval Minimum_Payment Primary_Checking_Ind[0m
 2026-07-03 16:57:00,794 - DEBUG    - [33m0 0  Checking       10            0       100000     checking               None          None  None             None            None                 True[0m
 2026-07-03 16:57:00,795 - DEBUG    - [33m1    success_date:None[0m
 2026-07-03 16:57:00,796 - DEBUG    - [33m1    success_date:2000-01-02[0m
@@ -8157,7 +8155,7 @@ test composite milestone did not match expected milestone date
 2026-07-03 16:57:01,388 - DEBUG    - [32m0 Validation SUCCESS[0m
 2026-07-03 16:57:01,399 - DEBUG    - [33m0 ENTER evaluateAccountMilestone(Checking,0.0,0.0)[0m
 2026-07-03 16:57:01,401 - DEBUG    - [33m0 relevant_account_info_rows_df:[0m
-2026-07-03 16:57:01,403 - DEBUG    - [33m0        Name  Balance  Min_Balance  Max_Balance Account_Type Billing_Start_Date Interest_Type   APR Interest_Cadence Minimum_Payment Primary_Checking_Ind[0m
+2026-07-03 16:57:01,403 - DEBUG    - [33m0        Name  Balance  Min_Balance  Max_Balance Account_Type Billing_Start_Date Interest_Type   APR Interest_interval Minimum_Payment Primary_Checking_Ind[0m
 2026-07-03 16:57:01,403 - DEBUG    - [33m0 0  Checking       10            0       100000     checking               None          None  None             None            None                 True[0m
 2026-07-03 16:57:01,404 - DEBUG    - [33m1    success_date:None[0m
 2026-07-03 16:57:01,404 - DEBUG    - [33m1    success_date:2000-01-02[0m
@@ -8167,7 +8165,7 @@ test composite milestone did not match expected milestone date
 2026-07-03 16:57:01,405 - DEBUG    - [33m0 ENTER evaluateCompositeMilestone()[0m
 2026-07-03 16:57:01,405 - DEBUG    - [33m1    ENTER evaluateAccountMilestone(Checking,0.0,0.0)[0m
 2026-07-03 16:57:01,407 - DEBUG    - [33m0 relevant_account_info_rows_df:[0m
-2026-07-03 16:57:01,410 - DEBUG    - [33m0        Name  Balance  Min_Balance  Max_Balance Account_Type Billing_Start_Date Interest_Type   APR Interest_Cadence Minimum_Payment Primary_Checking_Ind[0m
+2026-07-03 16:57:01,410 - DEBUG    - [33m0        Name  Balance  Min_Balance  Max_Balance Account_Type Billing_Start_Date Interest_Type   APR Interest_interval Minimum_Payment Primary_Checking_Ind[0m
 2026-07-03 16:57:01,411 - DEBUG    - [33m0 0  Checking       10            0       100000     checking               None          None  None             None            None                 True[0m
 2026-07-03 16:57:01,412 - DEBUG    - [33m2        success_date:None[0m
 2026-07-03 16:57:01,412 - DEBUG    - [33m2        success_date:2000-01-02[0m
@@ -8207,7 +8205,7 @@ self = <test_E2E.TestE2E object at 0x2dad76d50>
             start_date=start_date,
             end_date=end_date,
             priority=1,
-            cadence="daily",
+            interval="daily",
             amount=10,
             memo="food",
             income_flag=False,
@@ -8255,7 +8253,7 @@ account_type = 'checking', kwargs = {'primary_checking_ind': True}
                 {
                     "billing_start_date": date(2000, 1, 1),
                     "apr": 0.1,
-                    "interest_cadence": "monthly",
+                    "interest_interval": "monthly",
                     "minimum_payment": 50,
                     "interest_balance": 100,
                     "end_of_previous_cycle_balance": 100,
@@ -8270,7 +8268,7 @@ account_type = 'checking', kwargs = {'primary_checking_ind': True}
                 {
                     "billing_start_date": date(2000, 1, 1),
                     "apr": 0.1,
-                    "interest_cadence": "monthly",
+                    "interest_interval": "monthly",
                     "minimum_payment": 50,
                     "principal_balance": 100,
                     "end_of_previous_cycle_balance": 100,
@@ -8285,7 +8283,7 @@ account_type = 'checking', kwargs = {'primary_checking_ind': True}
                 {
                     "billing_start_date": date(2000, 1, 1),
                     "apr": 0.1,
-                    "interest_cadence": "monthly",
+                    "interest_interval": "monthly",
                     "minimum_payment": 50,
                     "end_of_previous_cycle_balance": 100,
                 },
@@ -8299,7 +8297,7 @@ account_type = 'checking', kwargs = {'primary_checking_ind': True}
                 {
                     "billing_start_date": date(2000, 1, 1),
                     "apr": 0.1,
-                    "interest_cadence": "monthly",
+                    "interest_interval": "monthly",
                     "minimum_payment": 50,
                     "principal_balance": 100,
                     "interest_balance": 100,

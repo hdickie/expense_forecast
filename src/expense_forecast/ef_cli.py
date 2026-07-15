@@ -1,4 +1,18 @@
 #!/usr/bin/env python
+"""
+Summary
+-------
+
+Description
+-----------
+
+Contract
+--------
+
+@interface-report: show
+"""
+
+
 # Thanks to opie4624 from Github:  https://gist.github.com/opie4624/3896526
 import os
 import datetime
@@ -7,12 +21,13 @@ from time import sleep
 import argparse
 import logging
 from .ExpenseForecastInitialConditions import ExpenseForecastInitialConditions
-from .ForecastSet import ForecastSet
+from .ExpenseForecastResult import ExpenseForecastResult
+# from .ForecastSetInitialConditions import ForecastSet
 from .log_methods import log_in_color
 import pandas as pd
 import psycopg2
 from .AccountSet import AccountSet
-from .BudgetSet import BudgetSet
+from .LineItemSet import LineItemSet
 from .MemoRuleSet import MemoRuleSet
 from .MilestoneSet import MilestoneSet
 import pandas as pd
@@ -34,17 +49,92 @@ logger.propagate = False
 
 # asserts that config has reasonable values and is internally consistent
 # agnostic of (and before) action
+#TODO manual review of ef_cli.validate_config docstring
 def validate_config(args):
 
+    """
+    TODO one-line description of ef_cli.validate_config.
+
+    TODO multi-line description of ef_cli.validate_config.
+    TODO explain how ef_cli.validate_config participates in this module.
+    TODO document important state, validation, or serialization behavior.
+
+    Parameters
+    ----------
+    args : list
+        TODO one-line description of ef_cli.validate_config.args.
+
+    Returns
+    -------
+    None
+        TODO one-line description of return value of ef_cli.validate_config.
+
+    Contract
+    --------
+    - #TODO contract lines for ef_cli.validate_config.
+    - #TODO document exceptions, mutations, and precision assumptions for ef_cli.validate_config.
+
+    @interface-report: show
+    """
     return NotImplementedError
 
 # asserts that args has reasonable values and is internally consistent
 # in the context of the specific action
+#TODO manual review of ef_cli.validate_args docstring
 def validate_args(args):
 
+    """
+    TODO one-line description of ef_cli.validate_args.
+
+    TODO multi-line description of ef_cli.validate_args.
+    TODO explain how ef_cli.validate_args participates in this module.
+    TODO document important state, validation, or serialization behavior.
+
+    Parameters
+    ----------
+    args : list
+        TODO one-line description of ef_cli.validate_args.args.
+
+    Returns
+    -------
+    None
+        TODO one-line description of return value of ef_cli.validate_args.
+
+    Contract
+    --------
+    - #TODO contract lines for ef_cli.validate_args.
+    - #TODO document exceptions, mutations, and precision assumptions for ef_cli.validate_args.
+
+    @interface-report: show
+    """
     return NotImplementedError
 
+#TODO manual review of ef_cli.scrape_dir_for_forecast_details docstring
 def scrape_dir_for_forecast_details(target_directory):
+    """
+    TODO one-line description of ef_cli.scrape_dir_for_forecast_details.
+
+    TODO multi-line description of ef_cli.scrape_dir_for_forecast_details.
+    TODO explain how ef_cli.scrape_dir_for_forecast_details participates in this module.
+    TODO document important state, validation, or serialization behavior.
+
+    Parameters
+    ----------
+    target_directory : object
+        TODO one-line description of ef_cli.scrape_dir_for_forecast_details.target_directory.
+
+    Returns
+    -------
+    object
+        TODO one-line description of return value of ef_cli.scrape_dir_for_forecast_details.
+
+    Contract
+    --------
+    - #TODO contract lines for ef_cli.scrape_dir_for_forecast_details.
+    - #TODO document exceptions, mutations, and precision assumptions for ef_cli.scrape_dir_for_forecast_details.
+
+    @interface-report: show
+    """
     return_df = pd.DataFrame(
         [],
         columns=[
@@ -168,20 +258,45 @@ def scrape_dir_for_forecast_details(target_directory):
     return return_df
 
 # Gather our code in a main() function
+#TODO manual review of ef_cli.run docstring
 def run(args):
     # logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
+    """
+    TODO one-line description of ef_cli.run.
+
+    TODO multi-line description of ef_cli.run.
+    TODO explain how ef_cli.run participates in this module.
+    TODO document important state, validation, or serialization behavior.
+
+    Parameters
+    ----------
+    args : list
+        TODO one-line description of ef_cli.run.args.
+
+    Returns
+    -------
+    object
+        TODO one-line description of return value of ef_cli.run.
+
+    Contract
+    --------
+    - #TODO contract lines for ef_cli.run.
+    - #TODO document exceptions, mutations, and precision assumptions for ef_cli.run.
+
+    @interface-report: show
+    """
     os.environ["EF_LOG_DIR"] = args.log_directory
-    
+
     validate_config(args)
 
     logging.debug("Running ef_cli with args:")
     logging.debug(args)
     validate_args(args)
-    
+
     F = ForecastHandler()
 
-    
-    
+
+
 
     # print('ARGS:')
     # print(args)
@@ -225,8 +340,12 @@ def run(args):
     # At this point though, let's set a garbage value for debugging
     # this is technically deprecated but may have some debugging use so let's leep for now
 
-    assert len(args.action) <= 2
-    assert args.action[0] in [
+    if len(args.action) > 2:
+        raise ValueError(
+            f"Expected ACTION to contain one or two words, got {args.action!r}."
+        )
+
+    valid_actions = {
         "stage",
         "run",
         "list",
@@ -236,60 +355,128 @@ def run(args):
         "export",
         "import",
         "inspect",
-    ]
-    if args.action[0] in ["stage", "run", "kill", "report", "export", "import"]:
-        assert len(args.action) == 2
-        assert args.action[1] in ["forecast", "forecastset"]
+    }
 
-    # this is before config is loaded
-    if args.action[0] in ["kill", "ps"]:
-        assert args.database_hostname is None
-        assert args.database_name is None
-        assert args.database_username is None
-        assert args.database_port is None
-        assert args.database_password is None
+    if args.action[0] not in valid_actions:
+        raise ValueError(
+            f"Unknown action '{args.action[0]}'. "
+            f"Expected one of: {', '.join(sorted(valid_actions))}."
+        )
 
-    # if args.action[0] in ['parameterize']:
-    #     assert args.filename is not None
+    if args.action[0] in {"stage", "run", "kill", "report", "export", "import"}:
+        if len(args.action) != 2:
+            raise ValueError(
+                f"Action '{args.action[0]}' requires a target "
+                "(forecast or forecastset)."
+            )
 
-    if args.action[0] in ["stage", "run", "report", "export"]:
-        assert args.working_directory is not None
-        assert os.path.isdir(args.working_directory)
+        if args.action[1] not in {"forecast", "forecastset"}:
+            raise ValueError(
+                f"Unknown target '{args.action[1]}'. "
+                "Expected 'forecast' or 'forecastset'."
+            )
 
-    if args.action[0] in ["export", "import"]:
-        assert args.database_hostname is not None
-        assert args.database_name is not None
-        assert args.database_username is not None
-        assert args.database_port is not None
-        assert args.database_password is not None
+    #
+    # kill / ps
+    #
 
-    # not valid bc there is a default value
-    # if args.output_directory is not None:
-    #     assert os.path.isdir(args.output_directory)
-    #     assert args.action[0] in ['parameterize','run','report','export']
+    if args.action[0] in {"kill", "ps"}:
+        for attr in (
+            "database_hostname",
+            "database_name",
+            "database_username",
+            "database_port",
+            "database_password",
+        ):
+            if getattr(args, attr) is not None:
+                raise ValueError(
+                    f"--{attr.replace('_', '-')} cannot be supplied with "
+                    f"'{args.action[0]}'."
+                )
 
-    # parameterize and reparameterize require start and end date
-    if args.action[0] in ["stage"]:
-        assert args.start_date is not None
-        assert args.end_date is not None
-        
-        ### TODO why would stage need this? i dont think it does
-        # assert (
-        #     args.id is not None
-        # )  # the string literal 'None' is a valid option for database
+    #
+    # working directory
+    #
 
-    # the label arg is only valid when used with parameterize and reparameterize
-    if args.label != '':
-        assert args.action[0] in ["stage"]
+    # if args.action[0] in {"stage", "run", "report", "export"}:
+    #     if args.working_directory is None:
+    #         raise ValueError(
+    #             f"Action '{args.action[0]}' requires --working-directory."
+    #         )
 
-    assert os.path.isdir(args.log_directory)  # check log_directory exists
-    assert os.access(args.log_directory, os.W_OK)  # check log_directory is writable
+    #     if not os.path.isdir(args.working_directory):
+    #         raise ValueError(
+    #             f"Working directory does not exist: {args.working_directory}"
+    #         )
 
-    if args.approximate:
-        assert args.action[0] == "run"
+    #
+    # database
+    #
 
-    if args.overwrite:
-        assert args.action[0] == "run"
+    if args.action[0] in {"export", "import"}:
+        required = (
+            "database_hostname",
+            "database_name",
+            "database_username",
+            "database_port",
+            "database_password",
+        )
+
+        for attr in required:
+            if getattr(args, attr) is None:
+                raise ValueError(
+                    f"Action '{args.action[0]}' requires "
+                    f"--{attr.replace('_', '-')}."
+                )
+
+    #
+    # stage
+    #
+
+    if args.action[0] == "stage":
+        if args.start_date is None:
+            raise ValueError("'stage' requires --start-date.")
+
+        if args.end_date is None:
+            raise ValueError("'stage' requires --end-date.")
+
+    #
+    # label
+    #
+
+    if args.label is not None:
+        if args.label != "" and args.action[0] != "stage":
+            raise ValueError(
+                "--label may only be used with the 'stage' action."
+            )
+
+    #
+    # log directory
+    #
+
+    if not os.path.isdir(args.log_directory):
+        raise ValueError(
+            f"Log directory does not exist: {args.log_directory}"
+        )
+
+    if not os.access(args.log_directory, os.W_OK):
+        raise ValueError(
+            f"Log directory is not writable: {args.log_directory}"
+        )
+
+    #
+    # flags
+    #
+
+    if args.approximate and args.action[0] != "run":
+        raise ValueError(
+            "--approximate may only be used with the 'run' action."
+        )
+
+    if args.overwrite and args.action[0] != "run":
+        raise ValueError(
+            "--overwrite may only be used with the 'run' action."
+        )
 
     if args.id is not None:
         assert args.action[0] in [
@@ -314,39 +501,6 @@ def run(args):
         # args.end_date = args.end_date.replace("-", "")
         # datetime.datetime.strptime(args.end_date, "%Y%m%d")
 
-    ### TODO this checking seems no longer needed now that we merged config and args upstream
-    # this would happen if neither filename nor database was passed explicitly
-    # in that case, we check loaded config for db details
-    # if there are no db details, then error, because there is no input to process
-    # if args.database_hostname is None:
-    #     try:
-    #         args.database_hostname = args["database_hostname"]
-    #     except Exception as e:
-    #         raise ValueError("db hostname not specified on cmd line or in config")
-
-    # if args.database_name is None:
-    #     try:
-    #         args.database_name = args["database_name"]
-    #     except Exception as e:
-    #         raise ValueError("db name not specified on cmd line or in config")
-
-    # if args.database_username is None:
-    #     try:
-    #         args.database_username = args["database_username"]
-    #     except Exception as e:
-    #         raise ValueError("db username not specified on cmd line or in config")
-
-    # if args.database_port is None:
-    #     try:
-    #         args.database_port = args["database_port"]
-    #     except Exception as e:
-    #         raise ValueError("db port not specified on cmd line or in config")
-
-    # if args.database_password is None:
-    #     try:
-    #         args.database_password = args["database_password"]
-    #     except Exception as e:
-    #         raise ValueError("db password not specified on cmd line or in config")
 
     if args.source == "database" or args.source == "both":
         # try to connect
@@ -548,7 +702,6 @@ def run(args):
                 print("No data to show.")
             else:
                 print(both_forecast_details.to_string())
-
         if args.action[0] == "inspect":
             # todo args.filename could be a path
             if args.filename.startswith("ForecastSet") and args.filename.endswith(
@@ -608,32 +761,23 @@ def run(args):
             and args.source == "file"
         ):
 
-            forecast_found = False
-            for f in os.listdir(args.working_directory):
-                if (
-                    f.startswith("Forecast")
-                    and not f.startswith("ForecastSet")
-                    and f.endswith(".json")
-                    and str(args.id) in f
-                ):
-                    forecast_found = True
-                    # print('Starting forecast '+str(args.id))
-                    E = ExpenseForecast.initialize_from_json_file(
-                        os.path.join(args.working_directory, f)
-                    )  # let this throw an exception if needed
-                    if args.label:
-                        E.forecast_name = args.label
-                    if args.approximate:
-                        E.runForecastApproximate()
-                    else:
-                        E.runForecast()
-                    E.appendSummaryLines()
-                    E.writeToJSONFile(args.working_directory)
-                    F = ForecastHandler()
-                    F.generateHTMLReport(E)
-                    break  # bc only running a single forecast
-            if not forecast_found:
-                print("Forecast " + str(args.id) + " not found")
+            if not os.path.exists(args.ifile):
+                raise ValueError("Error: "+str(args.ifile) + " not found ; Forecast initial conditions json file not found")
+            # print('Starting forecast '+str(args.id))
+            E_IO = ExpenseForecastInitialConditions.load_json_file(
+                args.ifile
+            )  # let this throw an exception if needed
+            # TODO these should be uncommented eventually
+            # if args.label:
+            #     E.forecast_name = args.label
+            # if args.approximate:
+            #     E.runForecastApproximate()
+            # else:
+            #     E.runForecast()
+            R = ForecastHandler().runForecast(E_IO, MilestoneSet())
+            R.write_json_file(args.ofile)
+            # if not forecast_found:
+            #     print("\033[31m\033[0m")
         elif (
             args.action[0] == "run"
             and args.action[1] == "forecastset"
@@ -981,7 +1125,7 @@ def run(args):
                 + account_set_table_name
                 + " Select '"
                 + E.unique_id
-                + "', account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_cadence, minimum_payment, primary_checking_ind from "
+                + "', account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_interval, minimum_payment, primary_checking_ind from "
                 + temporary_account_set_table_name
             )
             cursor.execute(A_insert_q)
@@ -998,7 +1142,7 @@ def run(args):
                 + budget_set_table_name
                 + " Select '"
                 + E.unique_id
-                + '\', memo, priority, start_date, end_date,  cadence, amount, "deferrable", partial_payment_allowed from '
+                + '\', memo, priority, start_date, end_date,  interval, amount, "deferrable", partial_payment_allowed from '
                 + temporary_budget_set_table_name
             )
             cursor.execute(B_insert_q)
@@ -1072,6 +1216,7 @@ def run(args):
             and args.action[1] == "forecastset"
             and args.source == "database"
         ):
+
             # todo the logic in this block assumes the forecast is run, bc even if it did we don't plan on using it
             # while this would most often produce expected results, it may not be strictly true (there may be cached data)
             # if there is cached data there COULD be unexpected results. I haven't thought it all the way through
@@ -1214,7 +1359,7 @@ def run(args):
             option_budget_set_table_name = (
                 "prod.ef_budget_item_set_optional_" + args.username + "_temporary"
             )
-            option_budget_set = BudgetSet.initialize_from_dataframe(
+            option_budget_set = LineItemSet.initialize_from_dataframe(
                 pd.read_sql_query(
                     "select * from " + option_budget_set_table_name, con=engine
                 )
@@ -1278,14 +1423,14 @@ def run(args):
             #         else:
             #             min_payment = str(row.Minimum_Payment)
             #
-            #         insert_account_row_q = "INSERT INTO " + account_set_table_name + " (forecast_id, account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_cadence, minimum_payment, primary_checking_ind) VALUES "
-            #         insert_account_row_q += "('"+str(E.unique_id)+"', '"+str(row.Name)+"', "+str(row.Balance)+", "+str(row.Min_Balance)+", "+str(row.Max_Balance)+", '"+str(row.Account_Type)+"', "+str(bsd)+", "+apr+", '"+str(row.Interest_Cadence)+"', "+min_payment+", '"+str(row.Primary_Checking_Ind)+"')"
+            #         insert_account_row_q = "INSERT INTO " + account_set_table_name + " (forecast_id, account_name, balance, min_balance, max_balance, account_type, billing_start_date_yyyymmdd, apr, interest_interval, minimum_payment, primary_checking_ind) VALUES "
+            #         insert_account_row_q += "('"+str(E.unique_id)+"', '"+str(row.Name)+"', "+str(row.Balance)+", "+str(row.Min_Balance)+", "+str(row.Max_Balance)+", '"+str(row.Account_Type)+"', "+str(bsd)+", "+apr+", '"+str(row.Interest_interval)+"', "+min_payment+", '"+str(row.Primary_Checking_Ind)+"')"
             #         cursor.execute(insert_account_row_q)
             #
             #     cursor.execute("DELETE FROM " + budget_set_table_name + " WHERE forecast_id = \'" + str(E.unique_id) + "\'")
-            #     for index, row in E.initial_budget_set.getBudgetItems().iterrows():
-            #         insert_budget_item_row_q = "INSERT INTO " + budget_set_table_name + " (forecast_id, memo, priority, start_date, end_date, cadence, amount, \"deferrable\", partial_payment_allowed) VALUES "
-            #         insert_budget_item_row_q += "('"+str(E.unique_id)+"','"+str(row.Memo)+"',"+str(row.Priority)+",'"+str(row.Start_Date)+"','"+str(row.End_Date)+"','"+str(row.Cadence)+"',"+str(row.Amount)+",'"+str(row.Deferrable)+"','"+str(row.Partial_Payment_Allowed)+"')"
+            #     for index, row in E.initial_budget_set.getLineItems().iterrows():
+            #         insert_budget_item_row_q = "INSERT INTO " + budget_set_table_name + " (forecast_id, memo, priority, start_date, end_date, interval, amount, \"deferrable\", partial_payment_allowed) VALUES "
+            #         insert_budget_item_row_q += "('"+str(E.unique_id)+"','"+str(row.Memo)+"',"+str(row.Priority)+",'"+str(row.Start_Date)+"','"+str(row.End_Date)+"','"+str(row.interval)+"',"+str(row.Amount)+",'"+str(row.Deferrable)+"','"+str(row.Partial_Payment_Allowed)+"')"
             #         cursor.execute(insert_budget_item_row_q)
             #
             #     cursor.execute("DELETE FROM " + memo_rule_set_table_name + " WHERE forecast_id = \'" + str(E.unique_id) + "\'")
@@ -1304,7 +1449,14 @@ def run(args):
             #     forecast_name = S.id_to_name[E.unique_id]
             #     insert_stage_q = "INSERT INTO prod." + str(args.username) + "_staged_forecast_details Select '"+str(S.unique_id)+"','"+str(E.unique_id)+"','"+str(args.label)+"','"+str(forecast_name)+"','"+str(args.start_date)+"','"+str(args.end_date)+"'"
             #     cursor.execute(insert_stage_q)
-
+        elif (
+            args.action[0] == "report"
+            and args.action[1] == "forecast"
+            and args.source == "file"
+        ):
+            print(args)
+            R = ExpenseForecastResult.load_json_file(args.ifile)
+            ForecastHandler().generateHTMLReport(R, args.ofile)
 
 # ef_cli parameterize forecast
 # ef_cli reparameterize forecast
@@ -1320,9 +1472,34 @@ def run(args):
 # ef_cli export
 # ef_cli import
 
+#TODO manual review of ef_cli.build_parser docstring
 def build_parser():
+    """
+    TODO one-line description of ef_cli.build_parser.
+
+    TODO multi-line description of ef_cli.build_parser.
+    TODO explain how ef_cli.build_parser participates in this module.
+    TODO document important state, validation, or serialization behavior.
+
+    Parameters
+    ----------
+    None
+        TODO confirm that ef_cli.build_parser takes no parameters beyond self/cls.
+
+    Returns
+    -------
+    object
+        TODO one-line description of return value of ef_cli.build_parser.
+
+    Contract
+    --------
+    - #TODO contract lines for ef_cli.build_parser.
+    - #TODO document exceptions, mutations, and precision assumptions for ef_cli.build_parser.
+
+    @interface-report: show
+    """
     parser = argparse.ArgumentParser(
-        description="Runs a Forecast or ForecastSet and displays a progress bar.",
+        description="Runs a Forecast or ForecastSet and displays a progress bar.\r\ne.g. ef run forecast --ifile initial_conditions.json --ofile forecast_result.json",
         epilog="As an alternative to the commandline, params can be placed in a file, one per line, and specified on the commandline like '%(prog)s @params.conf'.",
         fromfile_prefix_chars="@",
     )
@@ -1427,20 +1604,51 @@ def build_parser():
     parser.add_argument(
         "--source",
         required=False,
-        default="both",
+        default="file",
         help="both, file or database.",
         action="store",
     )
     parser.add_argument(
-        "--filename",
+        "--ifile",
         required=False,
         help="A JSON path that contains the initial conditions for the forecast.",
+        action="store",
+    )
+    parser.add_argument(
+        "--ofile",
+        required=False,
+        help="A JSON path that the forecast result object will be written to.",
         action="store",
     )
 
     return parser
 
+#TODO manual review of ef_cli.main docstring
 def main():
+    """
+    TODO one-line description of ef_cli.main.
+
+    TODO multi-line description of ef_cli.main.
+    TODO explain how ef_cli.main participates in this module.
+    TODO document important state, validation, or serialization behavior.
+
+    Parameters
+    ----------
+    None
+        TODO confirm that ef_cli.main takes no parameters beyond self/cls.
+
+    Returns
+    -------
+    int
+        TODO one-line description of return value of ef_cli.main.
+
+    Contract
+    --------
+    - #TODO contract lines for ef_cli.main.
+    - #TODO document exceptions, mutations, and precision assumptions for ef_cli.main.
+
+    @interface-report: show
+    """
     parser = build_parser()
 
     args = parser.parse_args()

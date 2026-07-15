@@ -1,3 +1,5 @@
+
+
 import logging
 from colorama import init as colorama_init
 from colorama import Fore
@@ -32,6 +34,9 @@ RESET_COLOR = f"{Style.RESET_ALL}"
 #         sys.stderr = self.old_stderr
 
 def setup_logger(logger_name, log_file, level=logging.DEBUG):
+    """
+    @interface-report: ignore
+    """
     logger_object = logging.getLogger(logger_name)
     formatter = logging.Formatter("%(asctime)s - %(levelname)-8s - %(message)s")
     fileHandler = logging.FileHandler(log_file, mode="w")
@@ -55,6 +60,9 @@ def setup_logger(logger_name, log_file, level=logging.DEBUG):
 def log_in_color_with_breadcrumbs(
     logger, color, level, msg, stack_depth=0, color_stack=[]
 ):
+    """
+    @interface-report: ignore
+    """
     left_prefix = " "
 
     if len(color_stack) > 0:
@@ -163,6 +171,9 @@ def log_in_color_with_breadcrumbs(
 
 
 def log_in_color(logger, color, level, msg, stack_depth=0):
+    """
+    @interface-report: ignore
+    """
     left_prefix = str(stack_depth)
     left_prefix = left_prefix.ljust(stack_depth * 4, " ") + " "
     level = level.lower()
@@ -199,6 +210,9 @@ def log_in_color(logger, color, level, msg, stack_depth=0):
 
 
 def display_test_result(logger, test_name, df1):
+    """
+    @interface-report: ignore
+    """
     display_width = max([len(x) for x in df1.T.to_string().split("\n")])
     # display_width = 120
     left_prefix = "# "

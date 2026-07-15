@@ -1,0 +1,213 @@
+table, th, td {
+   border: 2px solid;
+ }
+
+ fieldset {
+  width: 320px;
+}
+
+legend {
+  padding: 5px 10px;
+}
+
+input {
+  margin: 5px;
+}
+
+#leftcolumn{
+  width:30%;
+
+  float:left;
+  clear:none;
+  padding-top:81px;
+  padding-left:2%;
+}
+
+#rightcolumn{
+  width:68%;
+  float:right;
+  clear:none;
+}
+
+ legend {
+  color: white;
+  padding: 5px 10px;
+}
+
+input {
+  margin: 5px;
+}
+
+.notyetimplemented {
+  color:red;
+}
+
+.leftcolumn{
+  width:30%;
+
+  float:left;
+  clear:none;
+  /* padding-top:81px; */
+}
+
+.rightcolumn{
+  width:68%;
+  float:right;
+  clear:none;
+}
+
+.interactmodebutton {
+  background-color:grey;
+  border: none;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  width:100%;
+  padding: 2px; 
+}
+
+
+.interactmodepanel {
+  /* padding: 15px 32px 15px 0px; */
+}
+
+.ui-slider {
+  width: 80%;
+}
+
+.date-range-display {
+  border: 0; 
+  color: #f6931f; 
+  font-weight: bold;
+}
+
+.Row {
+  display: table;
+  width: 100%; /*Optional*/
+  table-layout: fixed; /*Optional*/
+  padding:2px;
+}
+.Column {
+  display: table-cell;
+
+}
+.leftcolumn{
+  width:30%;
+
+  float:left;
+  clear:none;
+  /* padding-top:81px; */
+}
+
+.rightcolumn{
+  width:68%;
+  float:right;
+  clear:none;
+}
+
+#all-view-page-header-login-panel {
+  float:right;
+}
+
+#all-view-page-header-title-text {
+
+}
+
+body {
+  padding: 10px;
+}
+
+table, th, td {
+   border: 1px solid;
+   padding: 2px;
+ }
+
+
+.table {
+  display: table;
+  padding: 5px;
+  width: 80%;
+}
+.tr {
+  display: table-row;
+  padding: 5px;
+}
+.td {
+  display: table-cell; /* This is needed to keep the 3 x 2 layout */
+  padding: 5px;
+  border: #000000 solid 1px;
+  margin: 5px;
+}
+
+.account_row_delete_button {
+  color:red;
+}
+
+.budget_item_row_delete_button {
+  color:red;
+}
+
+.memo_rule_row_delete_button {
+  color:red;
+}
+
+.account_milestone_row_delete_button {
+  color:red;
+}
+
+.memo_milestone_row_delete_button {
+  color:red;
+}
+
+.composite_milestone_row_delete_button {
+  color:red;
+}
+
+.staged_forecast_row_delete_button {
+  color:red;
+}
+
+#page-title {
+  position: relative;
+}
+
+
+/**, *:before, *:after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+*/
+body {
+  font-family: 'Open Sans', sans-serif;
+}
+table {
+  border-radius: 0.25em;
+  border-collapse: collapse;
+  margin: 1em;
+}
+th {
+  color: #000000;
+  background: #E2B842;
+  font-size: 0.85em;
+  font-weight: 600;
+  padding: 0.5em 1em;
+  text-align: left;
+}
+td {
+  color: #fff;
+  font-weight: 400;
+  padding: 0.5em 0.5em;
+}
+.disabled td {
+  color: #4F5F64;
+}
+tbody tr {
+  transition: background 0.25s ease;
+}
+tbody tr:hover {
+  background: #014055;
+}
