@@ -37,7 +37,7 @@ from expense_forecast.LineItemSet import LineItemSet
 logger = logging.getLogger(__name__)
 
 
-#TODO manual review of ScenarioDimension docstring
+#TODO DOC manual review of ScenarioDimension docstring
 class ScenarioDimension:
 
     """
@@ -56,19 +56,19 @@ class ScenarioDimension:
     def __init__(self, name, choices: dict[str, LineItemSet] = None):
 
         """
-        TODO DEFER one-line description of ScenarioDimension.__init__.
+        #TODO DEFER one-line description of ScenarioDimension.__init__.
 
-        TODO DEFER multi-line description of ScenarioDimension.__init__.
-        TODO DEFER explain how ScenarioDimension.__init__ participates in this module.
-        TODO DEFER document important state, validation, or serialization behavior.
+        #TODO DEFER multi-line description of ScenarioDimension.__init__.
+        #TODO DEFER explain how ScenarioDimension.__init__ participates in this module.
+        #TODO DEFER document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         name : str
-            TODO DEFER one-line description of ScenarioDimension.__init__.name.
+            #TODO DEFER one-line description of ScenarioDimension.__init__.name.
 
         choices : object
-            TODO DEFER one-line description of ScenarioDimension.__init__.choices.
+            #TODO DEFER one-line description of ScenarioDimension.__init__.choices.
 
         Returns
         -------
@@ -106,32 +106,32 @@ class ScenarioDimension:
                     )
                 self.choices[choice_name] = copy.deepcopy(choice_budget_set)
 
-    #TODO manual review of ScenarioDimension.addChoice docstring
+    #TODO DOC manual review of ScenarioDimension.addChoice docstring
     def addChoice(self, label: str, budget_set: LineItemSet):
         """
-        TODO one-line description of ScenarioDimension.addChoice.
+        #TODO DOC one-line description of ScenarioDimension.addChoice.
 
-        TODO multi-line description of ScenarioDimension.addChoice.
-        TODO explain how ScenarioDimension.addChoice participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ScenarioDimension.addChoice.
+        #TODO DOC explain how ScenarioDimension.addChoice participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         label : str
-            TODO one-line description of ScenarioDimension.addChoice.label.
+            #TODO DOC one-line description of ScenarioDimension.addChoice.label.
 
         budget_set : object
-            TODO one-line description of ScenarioDimension.addChoice.budget_set.
+            #TODO DOC one-line description of ScenarioDimension.addChoice.budget_set.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ScenarioDimension.addChoice.
+            #TODO DOC one-line description of return value of ScenarioDimension.addChoice.
 
         Contract
         --------
-        - #TODO contract lines for ScenarioDimension.addChoice.
-        - #TODO document exceptions, mutations, and precision assumptions for ScenarioDimension.addChoice.
+        - #TODO DOC contract lines for ScenarioDimension.addChoice.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ScenarioDimension.addChoice.
 
         @interface-report: show
         """

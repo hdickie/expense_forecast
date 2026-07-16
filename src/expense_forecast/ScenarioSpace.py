@@ -18,7 +18,7 @@ from expense_forecast.ScenarioDimension import ScenarioDimension
 from expense_forecast.LineItemSet import LineItemSet
 import pandas as pd
 
-#TODO manual review of ScenarioSpace docstring
+#TODO DOC manual review of ScenarioSpace docstring
 class ScenarioSpace:
 
     """
@@ -33,7 +33,7 @@ class ScenarioSpace:
 
     @interface-report: show
     """
-    #TODO manual review of ScenarioSpace._validate_memo_rule_set_and_scenario_dimensions_are_compatible docstring
+    #TODO DOC manual review of ScenarioSpace._validate_memo_rule_set_and_scenario_dimensions_are_compatible docstring
     def _validate_memo_rule_set_and_scenario_dimensions_are_compatible(self,
                                                                         invariant_transactions:LineItemSet,
                                                                         scenario_dimensions: dict[str, ScenarioDimension],
@@ -41,32 +41,32 @@ class ScenarioSpace:
                                                                   ):
 
         """
-        TODO one-line description of ScenarioSpace._validate_memo_rule_set_and_scenario_dimensions_are_compatible.
+        #TODO DOC one-line description of ScenarioSpace._validate_memo_rule_set_and_scenario_dimensions_are_compatible.
 
-        TODO multi-line description of ScenarioSpace._validate_memo_rule_set_and_scenario_dimensions_are_compatible.
-        TODO explain how ScenarioSpace._validate_memo_rule_set_and_scenario_dimensions_are_compatible participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ScenarioSpace._validate_memo_rule_set_and_scenario_dimensions_are_compatible.
+        #TODO DOC explain how ScenarioSpace._validate_memo_rule_set_and_scenario_dimensions_are_compatible participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         invariant_transactions : object
-            TODO one-line description of ScenarioSpace._validate_memo_rule_set_and_scenario_dimensions_are_compatible.invariant_transactions.
+            #TODO DOC one-line description of ScenarioSpace._validate_memo_rule_set_and_scenario_dimensions_are_compatible.invariant_transactions.
 
         scenario_dimensions : object
-            TODO one-line description of ScenarioSpace._validate_memo_rule_set_and_scenario_dimensions_are_compatible.scenario_dimensions.
+            #TODO DOC one-line description of ScenarioSpace._validate_memo_rule_set_and_scenario_dimensions_are_compatible.scenario_dimensions.
 
         memo_rule_set : object
-            TODO one-line description of ScenarioSpace._validate_memo_rule_set_and_scenario_dimensions_are_compatible.memo_rule_set.
+            #TODO DOC one-line description of ScenarioSpace._validate_memo_rule_set_and_scenario_dimensions_are_compatible.memo_rule_set.
 
         Returns
         -------
         None
-            TODO one-line description of return value of ScenarioSpace._validate_memo_rule_set_and_scenario_dimensions_are_compatible.
+            #TODO DOC one-line description of return value of ScenarioSpace._validate_memo_rule_set_and_scenario_dimensions_are_compatible.
 
         Contract
         --------
-        - #TODO contract lines for ScenarioSpace._validate_memo_rule_set_and_scenario_dimensions_are_compatible.
-        - #TODO document exceptions, mutations, and precision assumptions for ScenarioSpace._validate_memo_rule_set_and_scenario_dimensions_are_compatible.
+        - #TODO DOC contract lines for ScenarioSpace._validate_memo_rule_set_and_scenario_dimensions_are_compatible.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ScenarioSpace._validate_memo_rule_set_and_scenario_dimensions_are_compatible.
 
         @interface-report: show
         """
@@ -87,32 +87,32 @@ class ScenarioSpace:
                     f"its name {dimension.name!r}"
                 )
 
-    #TODO manual review of ScenarioSpace.addDimension docstring
+    #TODO DOC manual review of ScenarioSpace.addDimension docstring
     def addDimension(self, dimension_name, scenario_dimension: ScenarioDimension):
         """
-        TODO one-line description of ScenarioSpace.addDimension.
+        #TODO DOC one-line description of ScenarioSpace.addDimension.
 
-        TODO multi-line description of ScenarioSpace.addDimension.
-        TODO explain how ScenarioSpace.addDimension participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ScenarioSpace.addDimension.
+        #TODO DOC explain how ScenarioSpace.addDimension participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         dimension_name : object
-            TODO one-line description of ScenarioSpace.addDimension.dimension_name.
+            #TODO DOC one-line description of ScenarioSpace.addDimension.dimension_name.
 
         scenario_dimension : object
-            TODO one-line description of ScenarioSpace.addDimension.scenario_dimension.
+            #TODO DOC one-line description of ScenarioSpace.addDimension.scenario_dimension.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ScenarioSpace.addDimension.
+            #TODO DOC one-line description of return value of ScenarioSpace.addDimension.
 
         Contract
         --------
-        - #TODO contract lines for ScenarioSpace.addDimension.
-        - #TODO document exceptions, mutations, and precision assumptions for ScenarioSpace.addDimension.
+        - #TODO DOC contract lines for ScenarioSpace.addDimension.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ScenarioSpace.addDimension.
 
         @interface-report: show
         """
@@ -151,29 +151,29 @@ class ScenarioSpace:
 
 
     # TODO I think I want to move away from data frame operations?
-    #TODO manual review of ScenarioSpace.getScenariosDF docstring
+    #TODO DOC manual review of ScenarioSpace.getScenariosDF docstring
     def getScenariosDF(self):
         """
-        TODO one-line description of ScenarioSpace.getScenariosDF.
+        #TODO DOC one-line description of ScenarioSpace.getScenariosDF.
 
-        TODO multi-line description of ScenarioSpace.getScenariosDF.
-        TODO explain how ScenarioSpace.getScenariosDF participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ScenarioSpace.getScenariosDF.
+        #TODO DOC explain how ScenarioSpace.getScenariosDF participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         None
-            TODO confirm that ScenarioSpace.getScenariosDF takes no parameters beyond self/cls.
+            #TODO DOC confirm that ScenarioSpace.getScenariosDF takes no parameters beyond self/cls.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ScenarioSpace.getScenariosDF.
+            #TODO DOC one-line description of return value of ScenarioSpace.getScenariosDF.
 
         Contract
         --------
-        - #TODO contract lines for ScenarioSpace.getScenariosDF.
-        - #TODO document exceptions, mutations, and precision assumptions for ScenarioSpace.getScenariosDF.
+        - #TODO DOC contract lines for ScenarioSpace.getScenariosDF.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ScenarioSpace.getScenariosDF.
 
         @interface-report: show
         """
@@ -196,39 +196,39 @@ class ScenarioSpace:
 
     #TODO a methos to add exceptions- like, only keep these combinations of labels or drop this specific one
 
-    #TODO manual review of ScenarioSpace.__init__ docstring
+    #TODO DOC manual review of ScenarioSpace.__init__ docstring
     def __init__(self,
                  invariant_transactions: LineItemSet,
                  scenario_dimensions: dict[str, ScenarioDimension],
                  memo_rule_set: MemoRuleSet):
 
         """
-        TODO one-line description of ScenarioSpace.__init__.
+        #TODO DOC one-line description of ScenarioSpace.__init__.
 
-        TODO multi-line description of ScenarioSpace.__init__.
-        TODO explain how ScenarioSpace.__init__ participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ScenarioSpace.__init__.
+        #TODO DOC explain how ScenarioSpace.__init__ participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         invariant_transactions : object
-            TODO one-line description of ScenarioSpace.__init__.invariant_transactions.
+            #TODO DOC one-line description of ScenarioSpace.__init__.invariant_transactions.
 
         scenario_dimensions : object
-            TODO one-line description of ScenarioSpace.__init__.scenario_dimensions.
+            #TODO DOC one-line description of ScenarioSpace.__init__.scenario_dimensions.
 
         memo_rule_set : object
-            TODO one-line description of ScenarioSpace.__init__.memo_rule_set.
+            #TODO DOC one-line description of ScenarioSpace.__init__.memo_rule_set.
 
         Returns
         -------
         None
-            TODO one-line description of return value of ScenarioSpace.__init__.
+            #TODO DOC one-line description of return value of ScenarioSpace.__init__.
 
         Contract
         --------
-        - #TODO contract lines for ScenarioSpace.__init__.
-        - #TODO document exceptions, mutations, and precision assumptions for ScenarioSpace.__init__.
+        - #TODO DOC contract lines for ScenarioSpace.__init__.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ScenarioSpace.__init__.
 
         @interface-report: show
         """

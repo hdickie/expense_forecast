@@ -34,16 +34,16 @@ class ExpenseForecastServer:
     #TODO DEFER manual review of ExpenseForecastServer.__init__ docstring
     def __init__(self):
         """
-        TODO DEFER one-line description of ExpenseForecastServer.__init__.
+        #TODO DEFER one-line description of ExpenseForecastServer.__init__.
 
-        TODO DEFER multi-line description of ExpenseForecastServer.__init__.
-        TODO DEFER explain how ExpenseForecastServer.__init__ participates in this module.
-        TODO DEFER document important state, validation, or serialization behavior.
+        #TODO DEFER multi-line description of ExpenseForecastServer.__init__.
+        #TODO DEFER explain how ExpenseForecastServer.__init__ participates in this module.
+        #TODO DEFER document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         None
-            TODO DEFER confirm that ExpenseForecastServer.__init__ takes no parameters beyond self/cls.
+            #TODO DEFER confirm that ExpenseForecastServer.__init__ takes no parameters beyond self/cls.
 
         Returns
         -------

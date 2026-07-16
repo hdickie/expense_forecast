@@ -590,7 +590,7 @@ if __name__ == '__main__':
         F = ForecastHandler()
         R = F.runForecastApproximate(IO, MS, include_debug_columns=True)
         R.writeToJSONFile(str(R.unique_id)+'.json')
-        html_report = F.generateHTMLreport(R)
+        html_report = F.generateHTMLReport(R, write_file=False)
 
         with open('test_report.html', "w") as f:
             f.write(html_report)
@@ -696,7 +696,7 @@ if __name__ == '__main__':
         R.writeToJSONFile(str(R.unique_id)+'.json')
         # F.generateHTMLReport(R)
 
-        html_report = F.generateHTMLreport(R)
+        html_report = F.generateHTMLReport(R, write_file=False)
 
         with open('test_report.html', "w") as f:
             f.write(html_report)
@@ -931,7 +931,7 @@ if __name__ == '__main__':
         R.writeToJSONFile(str(R.unique_id)+'.json')
         
         R.writeToJSONFile(str(R.unique_id)+'.json')
-        html_report = F.generateHTMLreport(R)
+        html_report = F.generateHTMLReport(R, write_file=False)
 
         with open('test_report.html', "w") as f:
             f.write(html_report)
@@ -1096,7 +1096,7 @@ if __name__ == '__main__':
 
         R.writeToJSONFile(str(R.unique_id)+'.json')
         
-        html_report = ForecastHandler.generateHTMLreport(R)
+        html_report = ForecastHandler.generateHTMLReport(R, write_file=False)
 
         with open('test_report.html', "w") as f:
             f.write(html_report)
@@ -1118,8 +1118,8 @@ if __name__ == '__main__':
 
         graduation = date(2028,12,1)
 
+        # end_date = date(2027,6,1)
         end_date = graduation
-        # end_date = date(2029,8,1)
 
         accounts = get_IRL_current_A()
         food_very_low = LineItemSet()
@@ -1298,7 +1298,23 @@ if __name__ == '__main__':
         ) + income.choice_for_date_range(
             "Part Time CNA Los Angeles",
             end_summer_break_2 + datetime.timedelta(days=14),
-            end_date,
+            graduation,
+        ) + income.choice_for_date_range(
+            "RN Year 1",
+            graduation + datetime.timedelta(days=90),
+            graduation + datetime.timedelta(days=90 + 365)
+        ) + income.choice_for_date_range(
+            "RN Year 2",
+            graduation + datetime.timedelta(days=90 + 365 + 14),
+            graduation + datetime.timedelta(days=90 + 365*2)
+        ) + income.choice_for_date_range(
+            "RN Year 3",
+            graduation + datetime.timedelta(days=90 + 365*2 + 14),
+            graduation + datetime.timedelta(days=90 + 365*3)
+        ) + income.choice_for_date_range(
+            "RN Year 4",
+            graduation + datetime.timedelta(days=90 + 365*3 + 14),
+            graduation + datetime.timedelta(days=90 + 365*4)
         )
 
 
@@ -1345,6 +1361,10 @@ if __name__ == '__main__':
                 debt_type='credit', strategy='avalanche',
                 priority=4, on_unmet='warn',
             ),
+            # SurplusDebtPaymentPolicy(
+            #     debt_type='loan', strategy='avalanche',
+            #     priority=5, on_unmet='warn',
+            # ),
         )
 
         initial_conditions = ExpenseForecastInitialConditions(
@@ -1471,7 +1491,7 @@ if __name__ == '__main__':
         F = ForecastHandler()
         R = F.runForecastApproximate(IO, MS, include_debug_columns=True)
         R.writeToJSONFile(str(R.unique_id)+'.json')
-        html_report = F.generateHTMLreport(R)
+        html_report = F.generateHTMLReport(R, write_file=False)
 
         with open('test_report.html', "w") as f:
             f.write(html_report)
@@ -1522,7 +1542,7 @@ if __name__ == '__main__':
         R = F.runForecast(IO, MS, include_debug_columns=True)
         R.writeToJSONFile(str(R.unique_id)+'.json')
         
-        html_report = F.generateHTMLreport(R)
+        html_report = F.generateHTMLReport(R, write_file=False)
 
         with open('test_report.html', "w") as f:
             f.write(html_report)

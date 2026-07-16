@@ -38,6 +38,7 @@ from expense_forecast.MinimumCheckingBalancePolicy import MinimumCheckingBalance
 import hashlib
 import hashlib
 import json
+from pprint import pformat
 from datetime import date
 from decimal import Decimal
 from typing import Any
@@ -48,7 +49,7 @@ import os
 import tempfile
 from pathlib import Path
 from dateutil.relativedelta import relativedelta
-from expense_forecast.log_methods import log_in_color
+from expense_forecast.log_methods import log_in_color, project_log_file
 import logging
 import tqdm
 
@@ -93,7 +94,7 @@ matplotlib.rcParams["savefig.facecolor"] = "#d1d5db"
 
 logger = logging.getLogger(__name__)
 formatter = logging.Formatter("%(asctime)s - %(levelname)-8s - %(message)s")
-fileHandler = logging.FileHandler(__name__ + ".log", mode="w")
+fileHandler = logging.FileHandler(project_log_file(__name__), mode="w")
 fileHandler.setFormatter(formatter)
 streamHandler = logging.StreamHandler()
 streamHandler.setFormatter(formatter)
@@ -120,7 +121,7 @@ def _stable_df_payload(df):
         .to_dict(orient="records")
     )
 
-#TODO manual review of ForecastHandler docstring
+#TODO DOC manual review of ForecastHandler docstring
 class ForecastHandler:
 
     """
@@ -223,7 +224,7 @@ class ForecastHandler:
             )
         return cls._runForecastOnce(IO, milestone_set, include_debug_columns)
 
-    #TODO manual review of ForecastHandler.runForecast docstring
+    #TODO DOC manual review of ForecastHandler.runForecast docstring
     @classmethod
     def _runForecastOnce(cls,
                     IO: ExpenseForecastInitialConditions,
@@ -232,32 +233,32 @@ class ForecastHandler:
                     ) -> ExpenseForecastResult:
         # print('Starting Forecast #'+str(cls.unique_id))
         """
-        TODO one-line description of ForecastHandler.runForecast.
+        #TODO DOC one-line description of ForecastHandler.runForecast.
 
-        TODO multi-line description of ForecastHandler.runForecast.
-        TODO explain how ForecastHandler.runForecast participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler.runForecast.
+        #TODO DOC explain how ForecastHandler.runForecast participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         IO : object
-            TODO one-line description of ForecastHandler.runForecast.IO.
+            #TODO DOC one-line description of ForecastHandler.runForecast.IO.
 
         milestone_set : object
-            TODO one-line description of ForecastHandler.runForecast.milestone_set.
+            #TODO DOC one-line description of ForecastHandler.runForecast.milestone_set.
 
         include_debug_columns : bool
-            TODO one-line description of ForecastHandler.runForecast.include_debug_columns.
+            #TODO DOC one-line description of ForecastHandler.runForecast.include_debug_columns.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler.runForecast.
+            #TODO DOC one-line description of return value of ForecastHandler.runForecast.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler.runForecast.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler.runForecast.
+        - #TODO DOC contract lines for ForecastHandler.runForecast.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler.runForecast.
 
         @interface-report: show
         """
@@ -331,7 +332,7 @@ class ForecastHandler:
                         raise ValueError("Regex did not match")
                     og_amt = float(match.group(1))
                 except Exception:
-                    print("Offending memo directive:", md)
+                    print("Offending memo directive:", md) #TODO should be a log instead of print
                     raise
 
                 new_amount = f"{og_amt:.2f}"
@@ -365,8 +366,8 @@ class ForecastHandler:
         R = ExpenseForecastResult(IO, forecast_df,  cls.start_ts, cls.end_ts, **result_kwargs)
         log_in_color(
             logger, "white", "info", "Finished Forecast " + str(IO.unique_id)
-        )
-        #TODO make this conditional on a --print flag
+        ) #TODO this line is part of verbose logging and should be parameter conditional
+
         # log_in_color(logger, "white", "info", cls.forecast_df.to_string())
         # if play_notification_sound:
         #     notification_sounds.play_notification_sound()
@@ -1106,41 +1107,41 @@ class ForecastHandler:
 
     #TODO "toPreventErrors" makes me think this shouldnt be a method at all
     # is an inline sort not sufficient ? 
-    #TODO manual review of ForecastHandler._sortTxnsToPreventErrors docstring
+    #TODO DOC manual review of ForecastHandler._sortTxnsToPreventErrors docstring
     @classmethod
     def _sortTxnsToPreventErrors(
         cls, relevant_confirmed_df, account_set, memo_set, log_stack_depth
     ):
         """
-        TODO one-line description of ForecastHandler._sortTxnsToPreventErrors.
+        #TODO DOC one-line description of ForecastHandler._sortTxnsToPreventErrors.
 
-        TODO multi-line description of ForecastHandler._sortTxnsToPreventErrors.
-        TODO explain how ForecastHandler._sortTxnsToPreventErrors participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._sortTxnsToPreventErrors.
+        #TODO DOC explain how ForecastHandler._sortTxnsToPreventErrors participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         relevant_confirmed_df : object
-            TODO one-line description of ForecastHandler._sortTxnsToPreventErrors.relevant_confirmed_df.
+            #TODO DOC one-line description of ForecastHandler._sortTxnsToPreventErrors.relevant_confirmed_df.
 
         account_set : object
-            TODO one-line description of ForecastHandler._sortTxnsToPreventErrors.account_set.
+            #TODO DOC one-line description of ForecastHandler._sortTxnsToPreventErrors.account_set.
 
         memo_set : object
-            TODO one-line description of ForecastHandler._sortTxnsToPreventErrors.memo_set.
+            #TODO DOC one-line description of ForecastHandler._sortTxnsToPreventErrors.memo_set.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._sortTxnsToPreventErrors.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._sortTxnsToPreventErrors.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._sortTxnsToPreventErrors.
+            #TODO DOC one-line description of return value of ForecastHandler._sortTxnsToPreventErrors.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._sortTxnsToPreventErrors.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._sortTxnsToPreventErrors.
+        - #TODO DOC contract lines for ForecastHandler._sortTxnsToPreventErrors.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._sortTxnsToPreventErrors.
 
         @interface-report: show
         """
@@ -1200,34 +1201,34 @@ class ForecastHandler:
         log_stack_depth -= 1
         return sorted_confirmed_df
 
-    # TODO Isn't there a flag for this now?
-    #TODO manual review of ForecastHandler._checkIfTxnIsIncome docstring
+    #TODO DEFER CODEX-OK Isn't there a flag for this now?
+    #TODO DOC manual review of ForecastHandler._checkIfTxnIsIncome docstring
     @classmethod
     def _checkIfTxnIsIncome(cls, confirmed_row, log_stack_depth):
         """
-        TODO DEFER one-line description of ForecastHandler._checkIfTxnIsIncome.
+        #TODO DEFER one-line description of ForecastHandler._checkIfTxnIsIncome.
 
-        TODO DEFER  multi-line description of ForecastHandler._checkIfTxnIsIncome.
-        TODO DEFER  explain how ForecastHandler._checkIfTxnIsIncome participates in this module.
-        TODO DEFER  document important state, validation, or serialization behavior.
+        #TODO DEFER multi-line description of ForecastHandler._checkIfTxnIsIncome.
+        #TODO DEFER explain how ForecastHandler._checkIfTxnIsIncome participates in this module.
+        #TODO DEFER document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         confirmed_row : object
-            TODO DEFER  one-line description of ForecastHandler._checkIfTxnIsIncome.confirmed_row.
+            #TODO DEFER one-line description of ForecastHandler._checkIfTxnIsIncome.confirmed_row.
 
         log_stack_depth : int
-            TODO DEFER  one-line description of ForecastHandler._checkIfTxnIsIncome.log_stack_depth.
+            #TODO DEFER one-line description of ForecastHandler._checkIfTxnIsIncome.log_stack_depth.
 
         Returns
         -------
         object
-            TODO DEFER  one-line description of return value of ForecastHandler._checkIfTxnIsIncome.
+            #TODO DEFER one-line description of return value of ForecastHandler._checkIfTxnIsIncome.
 
         Contract
         --------
-        - #TODO DEFER  contract lines for ForecastHandler._checkIfTxnIsIncome.
-        - #TODO DEFER  document exceptions, mutations, and precision assumptions for ForecastHandler._checkIfTxnIsIncome.
+        - #TODO DEFER contract lines for ForecastHandler._checkIfTxnIsIncome.
+        - #TODO DEFER document exceptions, mutations, and precision assumptions for ForecastHandler._checkIfTxnIsIncome.
 
         @interface-report: show
         """
@@ -1252,41 +1253,41 @@ class ForecastHandler:
     ):
         # log_in_color(logger,'white','debug','ENTER _updateBalancesAndMemo',log_stack_depth)
         """
-        TODO one-line description of ForecastHandler._updateBalancesAndMemo.
+        #TODO DOC one-line description of ForecastHandler._updateBalancesAndMemo.
 
-        TODO multi-line description of ForecastHandler._updateBalancesAndMemo.
-        TODO explain how ForecastHandler._updateBalancesAndMemo participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._updateBalancesAndMemo.
+        #TODO DOC explain how ForecastHandler._updateBalancesAndMemo participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         forecast_df : object
-            TODO one-line description of ForecastHandler._updateBalancesAndMemo.forecast_df.
+            #TODO DOC one-line description of ForecastHandler._updateBalancesAndMemo.forecast_df.
 
         account_set : object
-            TODO one-line description of ForecastHandler._updateBalancesAndMemo.account_set.
+            #TODO DOC one-line description of ForecastHandler._updateBalancesAndMemo.account_set.
 
         confirmed_row : object
-            TODO one-line description of ForecastHandler._updateBalancesAndMemo.confirmed_row.
+            #TODO DOC one-line description of ForecastHandler._updateBalancesAndMemo.confirmed_row.
 
         memo_rule : object
-            TODO one-line description of ForecastHandler._updateBalancesAndMemo.memo_rule.
+            #TODO DOC one-line description of ForecastHandler._updateBalancesAndMemo.memo_rule.
 
         d : object
-            TODO one-line description of ForecastHandler._updateBalancesAndMemo.d.
+            #TODO DOC one-line description of ForecastHandler._updateBalancesAndMemo.d.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._updateBalancesAndMemo.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._updateBalancesAndMemo.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._updateBalancesAndMemo.
+            #TODO DOC one-line description of return value of ForecastHandler._updateBalancesAndMemo.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._updateBalancesAndMemo.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._updateBalancesAndMemo.
+        - #TODO DOC contract lines for ForecastHandler._updateBalancesAndMemo.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._updateBalancesAndMemo.
 
         @interface-report: show
         """
@@ -1467,47 +1468,47 @@ class ForecastHandler:
         # log_in_color(logger, 'white', 'debug', 'EXIT _updateBalancesAndMemo', log_stack_depth)
         return forecast_df
 
-    #TODO manual review of ForecastHandler._annotateAcceptedProposedTransaction docstring
+    #TODO DOC manual review of ForecastHandler._annotateAcceptedProposedTransaction docstring
     @classmethod
     def _annotateAcceptedProposedTransaction(
         cls, forecast_df, proposed_row, memo_rule_row, d, account_set, log_stack_depth
     ):
         """
-        TODO one-line description of ForecastHandler._annotateAcceptedProposedTransaction.
+        #TODO DOC one-line description of ForecastHandler._annotateAcceptedProposedTransaction.
 
-        TODO multi-line description of ForecastHandler._annotateAcceptedProposedTransaction.
-        TODO explain how ForecastHandler._annotateAcceptedProposedTransaction participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._annotateAcceptedProposedTransaction.
+        #TODO DOC explain how ForecastHandler._annotateAcceptedProposedTransaction participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         forecast_df : object
-            TODO one-line description of ForecastHandler._annotateAcceptedProposedTransaction.forecast_df.
+            #TODO DOC one-line description of ForecastHandler._annotateAcceptedProposedTransaction.forecast_df.
 
         proposed_row : object
-            TODO one-line description of ForecastHandler._annotateAcceptedProposedTransaction.proposed_row.
+            #TODO DOC one-line description of ForecastHandler._annotateAcceptedProposedTransaction.proposed_row.
 
         memo_rule_row : object
-            TODO one-line description of ForecastHandler._annotateAcceptedProposedTransaction.memo_rule_row.
+            #TODO DOC one-line description of ForecastHandler._annotateAcceptedProposedTransaction.memo_rule_row.
 
         d : object
-            TODO one-line description of ForecastHandler._annotateAcceptedProposedTransaction.d.
+            #TODO DOC one-line description of ForecastHandler._annotateAcceptedProposedTransaction.d.
 
         account_set : object
-            TODO one-line description of ForecastHandler._annotateAcceptedProposedTransaction.account_set.
+            #TODO DOC one-line description of ForecastHandler._annotateAcceptedProposedTransaction.account_set.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._annotateAcceptedProposedTransaction.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._annotateAcceptedProposedTransaction.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._annotateAcceptedProposedTransaction.
+            #TODO DOC one-line description of return value of ForecastHandler._annotateAcceptedProposedTransaction.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._annotateAcceptedProposedTransaction.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._annotateAcceptedProposedTransaction.
+        - #TODO DOC contract lines for ForecastHandler._annotateAcceptedProposedTransaction.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._annotateAcceptedProposedTransaction.
 
         @interface-report: show
         """
@@ -1541,140 +1542,54 @@ class ForecastHandler:
         forecast_df.loc[row_sel_vec, "Memo Directives"] = ("; ".join(md_split)).strip()
         return forecast_df
 
-    # def _attemptTransactionApproximate(
-    #     cls, forecast_df, account_set, memo_set, confirmed_df, proposed_row_df
-    # ):
-    #     log_stack_depth += 1
-    #     try:
-    #         single_proposed_transaction_df = pd.DataFrame(
-    #             copy.deepcopy(proposed_row_df)
-    #         ).T
-    #         not_yet_validated_confirmed_df = copy.deepcopy(
-    #             pd.concat([confirmed_df, single_proposed_transaction_df])
-    #         )
-    #         empty_df = pd.DataFrame(
-    #             {
-    #                 "Date": [],
-    #                 "Priority": [],
-    #                 "Amount": [],
-    #                 "Memo": [],
-    #                 "Deferrable": [],
-    #                 "Partial_Payment_Allowed": [],
-    #             }
-    #         )
-
-    #         txn_date = proposed_row_df.Date
-    #         d_sel_vec = (
-    #             datetime.datetime.strptime(d, "%Y%m%d")
-    #             <= datetime.datetime.strptime(txn_date, "%Y%m%d")
-    #             for d in forecast_df.Date
-    #         )
-    #         previous_row_df = forecast_df.loc[d_sel_vec, :].tail(2).head(1)
-
-    #         previous_date = (
-    #             cls.start_date
-    #         )  # todo this optimization had to be removed bc of cc prepayment
-
-    #         hypothetical_future_state_of_forecast_future_rows_only = (
-    #             cls._computeOptimalForecastApproximate(
-    #                 start_date=previous_date,
-    #                 end_date=cls.end_date,
-    #                 confirmed_df=not_yet_validated_confirmed_df,
-    #                 proposed_df=empty_df,
-    #                 deferred_df=empty_df,
-    #                 skipped_df=empty_df,
-    #                 account_set=copy.deepcopy(
-    #                     cls._sync_account_set_w_forecast_day(
-    #                         account_set, forecast_df=forecast_df, d=previous_date
-    #)
-    #                 ),
-    #                 memo_rule_set=memo_set,
-    #             )[0]
-    #         )
-
-    #         # we started the sub-forecast on the previous date, bc that day is considered final
-    #         # therefore, we can drop it from the concat bc it is not new
-    #         hypothetical_future_state_of_forecast_future_rows_only = (
-    #             hypothetical_future_state_of_forecast_future_rows_only.iloc[1:, :]
-    #         )
-    #         date_array = [
-    #             datetime.datetime.strptime(d, "%Y%m%d") for d in forecast_df.Date
-    #         ]
-    #         row_sel_vec = [
-    #             d < datetime.datetime.strptime(txn_date, "%Y%m%d") for d in date_array
-    #         ]
-
-    #         past_confirmed_forecast_rows_df = forecast_df[row_sel_vec]
-
-    #         hypothetical_future_state_of_forecast = pd.concat(
-    #             [
-    #                 past_confirmed_forecast_rows_df,
-    #                 hypothetical_future_state_of_forecast_future_rows_only,
-    #             ]
-    #         )
-
-    #         log_stack_depth -= 1
-    #         return hypothetical_future_state_of_forecast  # transaction is permitted
-    #     except ValueError as e:
-    #         log_stack_depth -= (
-    #             5  # several decrements were skipped over by the exception
-    #         )
-
-    #         log_in_color(logger, "red", "debug", str(e), log_stack_depth)
-
-    #         if (
-    #             re.search(".*Account boundaries were violated.*", str(e.args)) is None
-    #         ):  # this is the only exception where we don't want to stop immediately
-    #             raise e
-
     # @profile
-    #TODO manual review of ForecastHandler._attemptTransaction docstring
+    #TODO DOC manual review of ForecastHandler._attemptTransaction docstring
     @classmethod
     def _attemptTransaction(
         cls, end_date, forecast_df, account_set, memo_set, confirmed_df, proposed_row_df, log_stack_depth, include_debug_columns=False
     ):
         """
-        TODO one-line description of ForecastHandler._attemptTransaction.
+        #TODO DOC one-line description of ForecastHandler._attemptTransaction.
 
-        TODO multi-line description of ForecastHandler._attemptTransaction.
-        TODO explain how ForecastHandler._attemptTransaction participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._attemptTransaction.
+        #TODO DOC explain how ForecastHandler._attemptTransaction participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         end_date : date
-            TODO one-line description of ForecastHandler._attemptTransaction.end_date.
+            #TODO DOC one-line description of ForecastHandler._attemptTransaction.end_date.
 
         forecast_df : object
-            TODO one-line description of ForecastHandler._attemptTransaction.forecast_df.
+            #TODO DOC one-line description of ForecastHandler._attemptTransaction.forecast_df.
 
         account_set : object
-            TODO one-line description of ForecastHandler._attemptTransaction.account_set.
+            #TODO DOC one-line description of ForecastHandler._attemptTransaction.account_set.
 
         memo_set : object
-            TODO one-line description of ForecastHandler._attemptTransaction.memo_set.
+            #TODO DOC one-line description of ForecastHandler._attemptTransaction.memo_set.
 
         confirmed_df : object
-            TODO one-line description of ForecastHandler._attemptTransaction.confirmed_df.
+            #TODO DOC one-line description of ForecastHandler._attemptTransaction.confirmed_df.
 
         proposed_row_df : object
-            TODO one-line description of ForecastHandler._attemptTransaction.proposed_row_df.
+            #TODO DOC one-line description of ForecastHandler._attemptTransaction.proposed_row_df.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._attemptTransaction.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._attemptTransaction.log_stack_depth.
 
         include_debug_columns : bool
-            TODO one-line description of ForecastHandler._attemptTransaction.include_debug_columns.
+            #TODO DOC one-line description of ForecastHandler._attemptTransaction.include_debug_columns.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._attemptTransaction.
+            #TODO DOC one-line description of return value of ForecastHandler._attemptTransaction.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._attemptTransaction.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._attemptTransaction.
+        - #TODO DOC contract lines for ForecastHandler._attemptTransaction.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._attemptTransaction.
 
         @interface-report: show
         """
@@ -1795,7 +1710,7 @@ class ForecastHandler:
             return e
 
     # @profile
-    #TODO manual review of ForecastHandler._processConfirmedTransactions docstring
+    #TODO DOC manual review of ForecastHandler._processConfirmedTransactions docstring
     @classmethod
     def _processConfirmedTransactions(
         cls, forecast_df, relevant_confirmed_df, memo_set, account_set, d, log_stack_depth
@@ -1808,41 +1723,41 @@ class ForecastHandler:
         #     log_stack_depth,
         # )
         """
-        TODO one-line description of ForecastHandler._processConfirmedTransactions.
+        #TODO DOC one-line description of ForecastHandler._processConfirmedTransactions.
 
-        TODO multi-line description of ForecastHandler._processConfirmedTransactions.
-        TODO explain how ForecastHandler._processConfirmedTransactions participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._processConfirmedTransactions.
+        #TODO DOC explain how ForecastHandler._processConfirmedTransactions participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         forecast_df : object
-            TODO one-line description of ForecastHandler._processConfirmedTransactions.forecast_df.
+            #TODO DOC one-line description of ForecastHandler._processConfirmedTransactions.forecast_df.
 
         relevant_confirmed_df : object
-            TODO one-line description of ForecastHandler._processConfirmedTransactions.relevant_confirmed_df.
+            #TODO DOC one-line description of ForecastHandler._processConfirmedTransactions.relevant_confirmed_df.
 
         memo_set : object
-            TODO one-line description of ForecastHandler._processConfirmedTransactions.memo_set.
+            #TODO DOC one-line description of ForecastHandler._processConfirmedTransactions.memo_set.
 
         account_set : object
-            TODO one-line description of ForecastHandler._processConfirmedTransactions.account_set.
+            #TODO DOC one-line description of ForecastHandler._processConfirmedTransactions.account_set.
 
         d : object
-            TODO one-line description of ForecastHandler._processConfirmedTransactions.d.
+            #TODO DOC one-line description of ForecastHandler._processConfirmedTransactions.d.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._processConfirmedTransactions.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._processConfirmedTransactions.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._processConfirmedTransactions.
+            #TODO DOC one-line description of return value of ForecastHandler._processConfirmedTransactions.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._processConfirmedTransactions.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._processConfirmedTransactions.
+        - #TODO DOC contract lines for ForecastHandler._processConfirmedTransactions.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._processConfirmedTransactions.
 
         @interface-report: show
         """
@@ -2050,9 +1965,6 @@ class ForecastHandler:
         # )
         return total_prepaid_amount
 
-    # TODO look closer at F._getFutureMinPaymentAmount. I think it may be valid 
-    # that billing_state is not used,
-    # but perhaps next_min_payment_amount could be added to billing_state?
     @classmethod
     def _getFutureMinPaymentAmount(
         cls, account_name, account_set, forecast_df, d, log_stack_depth
@@ -2190,32 +2102,32 @@ class ForecastHandler:
     @classmethod
     def _extract_min_payment_amount(cls, memo_directives, base_account_name, log_stack_depth):
         """
-        TODO one-line description of ForecastHandler._extract_min_payment_amount.
+        #TODO DOC one-line description of ForecastHandler._extract_min_payment_amount.
 
-        TODO multi-line description of ForecastHandler._extract_min_payment_amount.
-        TODO explain how ForecastHandler._extract_min_payment_amount participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._extract_min_payment_amount.
+        #TODO DOC explain how ForecastHandler._extract_min_payment_amount participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         memo_directives : object
-            TODO one-line description of ForecastHandler._extract_min_payment_amount.memo_directives.
+            #TODO DOC one-line description of ForecastHandler._extract_min_payment_amount.memo_directives.
 
         base_account_name : object
-            TODO one-line description of ForecastHandler._extract_min_payment_amount.base_account_name.
+            #TODO DOC one-line description of ForecastHandler._extract_min_payment_amount.base_account_name.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._extract_min_payment_amount.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._extract_min_payment_amount.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._extract_min_payment_amount.
+            #TODO DOC one-line description of return value of ForecastHandler._extract_min_payment_amount.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._extract_min_payment_amount.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._extract_min_payment_amount.
+        - #TODO DOC contract lines for ForecastHandler._extract_min_payment_amount.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._extract_min_payment_amount.
 
         @interface-report: show
         """
@@ -2256,7 +2168,7 @@ class ForecastHandler:
         return min_payment_amount
 
     # @profile
-    #TODO manual review of ForecastHandler._processProposedTransactions docstring
+    #TODO DOC manual review of ForecastHandler._processProposedTransactions docstring
     @classmethod
     def _processProposedTransactions(
         cls,
@@ -2282,53 +2194,53 @@ class ForecastHandler:
         # )
         # Increment the log stack depth
         """
-        TODO one-line description of ForecastHandler._processProposedTransactions.
+        #TODO DOC one-line description of ForecastHandler._processProposedTransactions.
 
-        TODO multi-line description of ForecastHandler._processProposedTransactions.
-        TODO explain how ForecastHandler._processProposedTransactions participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._processProposedTransactions.
+        #TODO DOC explain how ForecastHandler._processProposedTransactions participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         end_date : date
-            TODO one-line description of ForecastHandler._processProposedTransactions.end_date.
+            #TODO DOC one-line description of ForecastHandler._processProposedTransactions.end_date.
 
         account_set : object
-            TODO one-line description of ForecastHandler._processProposedTransactions.account_set.
+            #TODO DOC one-line description of ForecastHandler._processProposedTransactions.account_set.
 
         forecast_df : object
-            TODO one-line description of ForecastHandler._processProposedTransactions.forecast_df.
+            #TODO DOC one-line description of ForecastHandler._processProposedTransactions.forecast_df.
 
         d : object
-            TODO one-line description of ForecastHandler._processProposedTransactions.d.
+            #TODO DOC one-line description of ForecastHandler._processProposedTransactions.d.
 
         memo_set : object
-            TODO one-line description of ForecastHandler._processProposedTransactions.memo_set.
+            #TODO DOC one-line description of ForecastHandler._processProposedTransactions.memo_set.
 
         confirmed_df : object
-            TODO one-line description of ForecastHandler._processProposedTransactions.confirmed_df.
+            #TODO DOC one-line description of ForecastHandler._processProposedTransactions.confirmed_df.
 
         relevant_proposed_df : object
-            TODO one-line description of ForecastHandler._processProposedTransactions.relevant_proposed_df.
+            #TODO DOC one-line description of ForecastHandler._processProposedTransactions.relevant_proposed_df.
 
         priority_level : object
-            TODO one-line description of ForecastHandler._processProposedTransactions.priority_level.
+            #TODO DOC one-line description of ForecastHandler._processProposedTransactions.priority_level.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._processProposedTransactions.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._processProposedTransactions.log_stack_depth.
 
         include_debug_columns : bool
-            TODO one-line description of ForecastHandler._processProposedTransactions.include_debug_columns.
+            #TODO DOC one-line description of ForecastHandler._processProposedTransactions.include_debug_columns.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._processProposedTransactions.
+            #TODO DOC one-line description of return value of ForecastHandler._processProposedTransactions.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._processProposedTransactions.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._processProposedTransactions.
+        - #TODO DOC contract lines for ForecastHandler._processProposedTransactions.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._processProposedTransactions.
 
         @interface-report: show
         """
@@ -2632,44 +2544,44 @@ class ForecastHandler:
         # )
         return forecast_df, new_confirmed_df, new_deferred_df, new_skipped_df
 
-    #TODO manual review of ForecastHandler._minimum_future_available_balances_as_if_a_cc_payment_did_not_happen docstring
+    #TODO DOC manual review of ForecastHandler._minimum_future_available_balances_as_if_a_cc_payment_did_not_happen docstring
     @classmethod
     def _minimum_future_available_balances_as_if_a_cc_payment_did_not_happen(
         cls, account_set, memo_rule_row, forecast_df, d, log_stack_depth
     ):
         """
-        TODO one-line description of ForecastHandler._minimum_future_available_balances_as_if_a_cc_payment_did_not_happen.
+        #TODO DOC one-line description of ForecastHandler._minimum_future_available_balances_as_if_a_cc_payment_did_not_happen.
 
-        TODO multi-line description of ForecastHandler._minimum_future_available_balances_as_if_a_cc_payment_did_not_happen.
-        TODO explain how ForecastHandler._minimum_future_available_balances_as_if_a_cc_payment_did_not_happen participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._minimum_future_available_balances_as_if_a_cc_payment_did_not_happen.
+        #TODO DOC explain how ForecastHandler._minimum_future_available_balances_as_if_a_cc_payment_did_not_happen participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         account_set : object
-            TODO one-line description of ForecastHandler._minimum_future_available_balances_as_if_a_cc_payment_did_not_happen.account_set.
+            #TODO DOC one-line description of ForecastHandler._minimum_future_available_balances_as_if_a_cc_payment_did_not_happen.account_set.
 
         memo_rule_row : object
-            TODO one-line description of ForecastHandler._minimum_future_available_balances_as_if_a_cc_payment_did_not_happen.memo_rule_row.
+            #TODO DOC one-line description of ForecastHandler._minimum_future_available_balances_as_if_a_cc_payment_did_not_happen.memo_rule_row.
 
         forecast_df : object
-            TODO one-line description of ForecastHandler._minimum_future_available_balances_as_if_a_cc_payment_did_not_happen.forecast_df.
+            #TODO DOC one-line description of ForecastHandler._minimum_future_available_balances_as_if_a_cc_payment_did_not_happen.forecast_df.
 
         d : object
-            TODO one-line description of ForecastHandler._minimum_future_available_balances_as_if_a_cc_payment_did_not_happen.d.
+            #TODO DOC one-line description of ForecastHandler._minimum_future_available_balances_as_if_a_cc_payment_did_not_happen.d.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._minimum_future_available_balances_as_if_a_cc_payment_did_not_happen.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._minimum_future_available_balances_as_if_a_cc_payment_did_not_happen.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._minimum_future_available_balances_as_if_a_cc_payment_did_not_happen.
+            #TODO DOC one-line description of return value of ForecastHandler._minimum_future_available_balances_as_if_a_cc_payment_did_not_happen.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._minimum_future_available_balances_as_if_a_cc_payment_did_not_happen.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._minimum_future_available_balances_as_if_a_cc_payment_did_not_happen.
+        - #TODO DOC contract lines for ForecastHandler._minimum_future_available_balances_as_if_a_cc_payment_did_not_happen.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._minimum_future_available_balances_as_if_a_cc_payment_did_not_happen.
 
         @interface-report: show
         """
@@ -2789,7 +2701,7 @@ class ForecastHandler:
         # )
         return amount_in_question
 
-    # TODO make the name of this more clear, and then have codex write the docstring
+    #TODO DOC make the name of this more clear, and then have codex write the docstring
     @classmethod
     def _calculate_reduced_amount(
         cls,
@@ -2800,41 +2712,41 @@ class ForecastHandler:
         d, log_stack_depth
     ):
         """
-        TODO one-line description of ForecastHandler._calculate_reduced_amount.
+        #TODO DOC one-line description of ForecastHandler._calculate_reduced_amount.
 
-        TODO multi-line description of ForecastHandler._calculate_reduced_amount.
-        TODO explain how ForecastHandler._calculate_reduced_amount participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._calculate_reduced_amount.
+        #TODO DOC explain how ForecastHandler._calculate_reduced_amount participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         account_set : object
-            TODO one-line description of ForecastHandler._calculate_reduced_amount.account_set.
+            #TODO DOC one-line description of ForecastHandler._calculate_reduced_amount.account_set.
 
         memo_rule_row : object
-            TODO one-line description of ForecastHandler._calculate_reduced_amount.memo_rule_row.
+            #TODO DOC one-line description of ForecastHandler._calculate_reduced_amount.memo_rule_row.
 
         max_available_funds : object
-            TODO one-line description of ForecastHandler._calculate_reduced_amount.max_available_funds.
+            #TODO DOC one-line description of ForecastHandler._calculate_reduced_amount.max_available_funds.
 
         forecast_df : object
-            TODO one-line description of ForecastHandler._calculate_reduced_amount.forecast_df.
+            #TODO DOC one-line description of ForecastHandler._calculate_reduced_amount.forecast_df.
 
         d : object
-            TODO one-line description of ForecastHandler._calculate_reduced_amount.d.
+            #TODO DOC one-line description of ForecastHandler._calculate_reduced_amount.d.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._calculate_reduced_amount.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._calculate_reduced_amount.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._calculate_reduced_amount.
+            #TODO DOC one-line description of return value of ForecastHandler._calculate_reduced_amount.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._calculate_reduced_amount.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._calculate_reduced_amount.
+        - #TODO DOC contract lines for ForecastHandler._calculate_reduced_amount.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._calculate_reduced_amount.
 
         @interface-report: show
         """
@@ -3071,42 +2983,42 @@ class ForecastHandler:
             next_income_date = (cls.end_date + pd.Timedelta(days=1))
 
         return next_income_date
-    #TODO manual review of ForecastHandler._update_forecast_with_hypothetical docstring
+    #TODO DOC manual review of ForecastHandler._update_forecast_with_hypothetical docstring
     @classmethod
     def _update_forecast_with_hypothetical(
         cls, forecast_df, hypothetical_forecast, d, log_stack_depth
     ):
         # Split the forecast into past and future
         """
-        TODO one-line description of ForecastHandler._update_forecast_with_hypothetical.
+        #TODO DOC one-line description of ForecastHandler._update_forecast_with_hypothetical.
 
-        TODO multi-line description of ForecastHandler._update_forecast_with_hypothetical.
-        TODO explain how ForecastHandler._update_forecast_with_hypothetical participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._update_forecast_with_hypothetical.
+        #TODO DOC explain how ForecastHandler._update_forecast_with_hypothetical participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         forecast_df : object
-            TODO one-line description of ForecastHandler._update_forecast_with_hypothetical.forecast_df.
+            #TODO DOC one-line description of ForecastHandler._update_forecast_with_hypothetical.forecast_df.
 
         hypothetical_forecast : object
-            TODO one-line description of ForecastHandler._update_forecast_with_hypothetical.hypothetical_forecast.
+            #TODO DOC one-line description of ForecastHandler._update_forecast_with_hypothetical.hypothetical_forecast.
 
         d : object
-            TODO one-line description of ForecastHandler._update_forecast_with_hypothetical.d.
+            #TODO DOC one-line description of ForecastHandler._update_forecast_with_hypothetical.d.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._update_forecast_with_hypothetical.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._update_forecast_with_hypothetical.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._update_forecast_with_hypothetical.
+            #TODO DOC one-line description of return value of ForecastHandler._update_forecast_with_hypothetical.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._update_forecast_with_hypothetical.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._update_forecast_with_hypothetical.
+        - #TODO DOC contract lines for ForecastHandler._update_forecast_with_hypothetical.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._update_forecast_with_hypothetical.
 
         @interface-report: show
         """
@@ -3143,492 +3055,9 @@ class ForecastHandler:
                     balance
                 )
 
-    # def _processProposedTransactionsApproximate(
-    #     cls,
-    #     account_set,
-    #     forecast_df,
-    #     date,
-    #     memo_set,
-    #     confirmed_df,
-    #     relevant_proposed_df,
-    #     priority_level,
-    # ):
-    #     log_stack_depth += 1
-
-    #     new_deferred_df = relevant_proposed_df.head(0)  # to preserve schema
-    #     new_skipped_df = relevant_proposed_df.head(0)
-    #     new_confirmed_df = relevant_proposed_df.head(0)
-
-    #     if relevant_proposed_df.shape[0] == 0:
-    #         log_stack_depth -= 1
-    #         return forecast_df, new_confirmed_df, new_deferred_df, new_skipped_df
-
-    #     for proposed_item_index, proposed_row_df in relevant_proposed_df.iterrows():
-    #         # print('proposed txn:'+str(proposed_row_df.Date+' '+str(proposed_row_df.Amount)))
-    #         relevant_memo_rule_set = memo_set.findMatchingMemoRule(
-    #             proposed_row_df.Memo, proposed_row_df.Priority
-    #         )
-    #         memo_rule_row = relevant_memo_rule_set.getMemoRules().loc[0, :]
-
-    #         result_of_attempt = cls._attemptTransactionApproximate(
-    #             forecast_df,
-    #             copy.deepcopy(account_set),
-    #             memo_set,
-    #             confirmed_df,
-    #             proposed_row_df,
-    #         )
-    #         transaction_is_permitted = isinstance(result_of_attempt, pd.DataFrame)
-
-    #         if transaction_is_permitted:
-    #             hypothetical_future_state_of_forecast = result_of_attempt
-    #             account_set = cls._sync_account_set_w_forecast_day(
-    #                 account_set, forecast_df=forecast_df, d=d
-    #)
-    #         else:
-    #             hypothetical_future_state_of_forecast = None
-
-    #         if not transaction_is_permitted and proposed_row_df.Partial_Payment_Allowed:
-    #             min_fut_avl_bals = cls._getMinimumFutureAvailableBalances(
-    #                 account_set, forecast_df=forecast_df, d=d
-    #)
-    #             af_max = min_fut_avl_bals[memo_rule_row.Account_From]
-
-    #             account_basenames = [
-    #                 cname.split(":")[0] for cname in account_set.getAccounts().Name
-    #             ]
-    #             at_col_sel_vec = [
-    #                 a == memo_rule_row.Account_To for a in account_basenames
-    #             ]
-    #             at_type_list = list(
-    #                 account_set.getAccounts().loc[at_col_sel_vec, :].Account_Type
-    #             )
-
-    #             at_type = "none"
-    #             if len(at_type_list) == 2:
-    #                 if (
-    #                     "credit curr stmt bal" in at_type_list
-    #                     and "credit prev stmt bal" in at_type_list
-    #                 ):
-    #                     at_type = "credit"
-    #                 elif (
-    #                     "principal balance" in at_type_list
-    #                     and "interest" in at_type_list
-    #                 ):
-    #                     at_type = "loan"
-    #             elif len(at_type_list) == 1:
-    #                 if "checking" == at_type_list[0]:
-    #                     at_type = "checking"
-
-    #             # additional credit card payments
-    #             if at_type == "credit":
-    #                 account_base_names = [
-    #                     a.split(":")[0] for a in account_set.getAccounts().Name
-    #                 ]
-    #                 row_sel_vec = [
-    #                     a == memo_rule_row.Account_To for a in account_base_names
-    #                 ]
-
-    #                 relevant_account_rows_df = account_set.getAccounts()[row_sel_vec]
-    #                 at_max = sum(relevant_account_rows_df.Balance)
-
-    #                 future_min_payment = cls._getFutureMinPaymentAmount(
-    #                     memo_rule_row.Account_To,
-    #                     account_set,
-    #                     forecast_df,
-    #                     date,
-    #                 )
-    #                 if af_max >= future_min_payment and future_min_payment > 0:
-    #                     reduced_amt = min(af_max, at_max)  # + future_min_payment
-    #                 elif future_min_payment == 0:
-    #                     reduced_amt = min(af_max, at_max)
-    #                 else:
-    #                     reduced_amt = min(af_max, at_max)
-
-    #             elif (
-    #                 at_type == "checking" or at_type == "loan"
-    #             ):  # havent tested this for loan
-    #                 account_base_names = [
-    #                     a.split(":")[0] for a in account_set.getAccounts().Name
-    #                 ]
-    #                 row_sel_vec = [
-    #                     a == memo_rule_row.Account_To for a in account_base_names
-    #                 ]
-
-    #                 relevant_account_rows_df = account_set.getAccounts()[row_sel_vec]
-
-    #                 at_max = sum(relevant_account_rows_df.Balance)
-    #                 reduced_amt = min(af_max, at_max)
-    #             elif at_type == "none":
-    #                 reduced_amt = af_max
-    #             else:
-    #                 raise ValueError("at type error in _processProposedTransactions")
-
-    #             if reduced_amt == 0:
-    #                 pass
-    #             elif reduced_amt > 0:
-    #                 proposed_row_df.Amount = reduced_amt
-    #                 # print(proposed_row_df.Date+' re-attempt at reduced amt: '+str(reduced_amt))
-    #                 result_of_attempt = cls._attemptTransactionApproximate(
-    #                     forecast_df,
-    #                     copy.deepcopy(account_set),
-    #                     memo_set,
-    #                     confirmed_df,
-    #                     proposed_row_df,
-    #                 )
-    #                 transaction_is_permitted = isinstance(
-    #                     result_of_attempt, pd.DataFrame
-    #                 )
-
-    #                 if transaction_is_permitted:
-    #                     hypothetical_future_state_of_forecast = result_of_attempt
-    #                     account_set = cls._sync_account_set_w_forecast_day(
-    #                         account_set, forecast_df=forecast_df, d=d
-    #)
-    #                 else:
-    #                     hypothetical_future_state_of_forecast = None
-
-    #         if not transaction_is_permitted and proposed_row_df.Deferrable:
-    #             # look ahead for next income date
-    #             future_date_sel_vec = [
-    #                 datetime.datetime.strptime(d, "%Y%m%d")
-    #                 > datetime.datetime.strptime(date, "%Y%m%d")
-    #                 for d in forecast_df.Date
-    #             ]
-    #             income_date_sel_vec = ["income" in m for m in forecast_df.Memo]
-
-    #             sel_vec = []
-    #             for i in range(0, len(future_date_sel_vec)):
-    #                 sel_vec.append(future_date_sel_vec[i] and income_date_sel_vec[i])
-
-    #             next_income_row_df = forecast_df[sel_vec].head(1)
-    #             if next_income_row_df.shape[0] > 0:
-    #                 next_income_date = next_income_row_df["Date"].iat[0]
-    #             else:
-    #                 next_income_date = (
-    #                     datetime.datetime.strptime(cls.end_date, "%Y%m%d")
-    #                     + datetime.timedelta(days=1)
-    #                 ).strftime("%Y%m%d")
-
-    #             proposed_row_df.Date = next_income_date
-
-    #             new_deferred_df = pd.concat(
-    #                 [new_deferred_df, pd.DataFrame(proposed_row_df).T]
-    #             )
-
-    #             remaining_unproposed_transactions_df = relevant_proposed_df[
-    #                 ~relevant_proposed_df.index.isin(proposed_row_df.index)
-    #             ]
-    #             proposed_df = remaining_unproposed_transactions_df
-
-    #         elif not transaction_is_permitted and not proposed_row_df.Deferrable:
-    #             skipped_df = pd.concat(
-    #                 [new_skipped_df, pd.DataFrame(proposed_row_df).T]
-    #             )
-
-    #             remaining_unproposed_transactions_df = relevant_proposed_df[
-    #                 ~relevant_proposed_df.index.isin(proposed_row_df.index)
-    #             ]
-    #             proposed_df = remaining_unproposed_transactions_df
-
-    #         elif transaction_is_permitted:
-    #             if priority_level > 1:
-    #                 # print('process proposed case 3 sync')
-    #                 account_set = cls._sync_account_set_w_forecast_day(
-    #                     account_set, forecast_df=forecast_df, d=d
-    #)
-
-    #             account_set.executeTransaction(
-    #                 Account_From=memo_rule_row.Account_From,
-    #                 Account_To=memo_rule_row.Account_To,
-    #                 Amount=proposed_row_df.Amount,
-    #                 income_flag=False,
-    #             )
-
-    #             new_confirmed_df = pd.concat(
-    #                 [new_confirmed_df, pd.DataFrame(proposed_row_df).T]
-    #             )
-
-    #             remaining_unproposed_transactions_df = relevant_proposed_df[
-    #                 ~relevant_proposed_df.index.isin(proposed_row_df.index)
-    #             ]
-    #             relevant_proposed_df = remaining_unproposed_transactions_df
-
-    #             # forecast_df, skipped_df, confirmed_df, deferred_df
-    #             forecast_with_accurately_updated_future_rows = (
-    #                 hypothetical_future_state_of_forecast
-    #             )
-
-    #             forecast_rows_to_keep_df = forecast_df[
-    #                 [
-    #                     datetime.datetime.strptime(d, "%Y%m%d")
-    #                     < datetime.datetime.strptime(date, "%Y%m%d")
-    #                     for d in forecast_df.Date
-    #                 ]
-    #             ]
-
-    #             new_forecast_rows_df = forecast_with_accurately_updated_future_rows[
-    #                 [
-    #                     datetime.datetime.strptime(d, "%Y%m%d")
-    #                     >= datetime.datetime.strptime(date, "%Y%m%d")
-    #                     for d in forecast_with_accurately_updated_future_rows.Date
-    #                 ]
-    #             ]
-
-    #             forecast_df = pd.concat(
-    #                 [forecast_rows_to_keep_df, new_forecast_rows_df]
-    #             )
-    #             assert forecast_df.shape[0] == forecast_df.drop_duplicates().shape[0]
-    #             forecast_df.reset_index(drop=True, inplace=True)
-
-    #             row_sel_vec = [
-    #                 x
-    #                 for x in (
-    #                     forecast_df.Date
-    #                     == datetime.datetime.strptime(date, "%Y%m%d")
-    #                 )
-    #             ]
-    #             col_sel_vec = forecast_df.columns == "Memo"
-
-    #             for account_index, account_row in account_set.getAccounts().iterrows():
-    #                 if (account_index + 1) == account_set.getAccounts().shape[1]:
-    #                     break
-    #                 relevant_balance = account_set.getAccounts().iloc[account_index, 1]
-
-    #                 row_sel_vec = forecast_df.Date == datetime.datetime.strptime(
-    #                     date, "%Y%m%d"
-    #                 )
-    #                 col_sel_vec = forecast_df.columns == account_row.Name
-    #                 forecast_df.iloc[row_sel_vec, col_sel_vec] = relevant_balance
-
-    #         else:
-    #             raise ValueError(
-    #                 """This is an edge case that should not be possible
-    #                     transaction_is_permitted...............:"""
-    #                 + str(transaction_is_permitted)
-    #                 + """
-    #                     budget_item_row.Deferrable.............:"""
-    #                 + str(proposed_row_df.Deferrable)
-    #                 + """
-    #                     budget_item_row.Partial_Payment_Allowed:"""
-    #                 + str(proposed_row_df.Partial_Payment_Allowed)
-    #                 + """
-    #                     """
-    #             )
-
-    #     log_stack_depth -= 1
-    #     return forecast_df, new_confirmed_df, new_deferred_df, new_skipped_df
-
-    # account_set, forecast_df, date, memo_set,              ,    relevant_deferred_df,             priority_level, allow_partial_payments, allow_skip_and_defer
-    # def __processDeferredTransactionsApproximate(
-    #     cls,
-    #     account_set,
-    #     forecast_df,
-    #     date,
-    #     memo_set,
-    #     relevant_deferred_df,
-    #     priority_level,
-    #     confirmed_df,
-    # ):
-    #     log_in_color(
-    #         logger,
-    #         "green",
-    #         "debug",
-    #         "ENTER __processDeferredTransactionsApproximate( D:"
-    #         + str(relevant_deferred_df.shape[0])
-    #         + " )",
-    #         log_stack_depth,
-    #     )
-    #     log_stack_depth += 1
-
-    #     # new_confirmed_df = pd.DataFrame(
-    #     #    {'Date': [], 'Priority': [], 'Amount': [], 'Memo': [], 'Deferrable': [], 'Partial_Payment_Allowed': []})
-    #     # new_deferred_df = pd.DataFrame(
-    #     #    {'Date': [], 'Priority': [], 'Amount': [], 'Memo': [], 'Deferrable': [], 'Partial_Payment_Allowed': []})
-    #     new_confirmed_df = confirmed_df.head(0)  # to preserve schema
-    #     new_deferred_df = relevant_deferred_df.head(
-    #         0
-    #     )  # to preserve schema. same as above line btw
-
-    #     if relevant_deferred_df.shape[0] == 0:
-
-    #         log_stack_depth -= 1
-    #         # log_in_color(logger, 'green', 'debug', 'EXIT __processDeferredTransactionsApproximate()', log_stack_depth)
-    #         return forecast_df, new_confirmed_df, new_deferred_df
-
-    #     for deferred_item_index, deferred_row_df in relevant_deferred_df.iterrows():
-    #         if datetime.datetime.strptime(
-    #             deferred_row_df.Date, "%Y%m%d"
-    #         ) > datetime.datetime.strptime(cls.end_date, "%Y%m%d"):
-    #             continue
-
-    #         relevant_memo_rule_set = memo_set.findMatchingMemoRule(
-    #             deferred_row_df.Memo, deferred_row_df.Priority
-    #         )
-    #         memo_rule_row = relevant_memo_rule_set.getMemoRules().loc[0, :]
-
-    #         hypothetical_future_state_of_forecast = copy.deepcopy(forecast_df.head(0))
-
-    #         try:
-
-    #             not_yet_validated_confirmed_df = pd.concat(
-    #                 [confirmed_df, pd.DataFrame(deferred_row_df).T]
-    #             )
-    #             # not_yet_validated_confirmed_df = confirmed_df.append(deferred_row_df)
-
-    #             empty_df = pd.DataFrame(
-    #                 {
-    #                     "Date": [],
-    #                     "Priority": [],
-    #                     "Amount": [],
-    #                     "Memo": [],
-    #                     "Deferrable": [],
-    #                     "Partial_Payment_Allowed": [],
-    #                 }
-    #             )
-
-    #             hypothetical_future_state_of_forecast = (
-    #                 cls._computeOptimalForecastApproximate(
-    #                     start_date=cls.start_date,
-    #                     end_date=cls.end_date,
-    #                     confirmed_df=not_yet_validated_confirmed_df,
-    #                     proposed_df=empty_df,
-    #                     deferred_df=empty_df,
-    #                     skipped_df=empty_df,
-    #                     account_set=copy.deepcopy(
-    #                         cls._sync_account_set_w_forecast_day(
-    #                             account_set, forecast_df=forecast_df, d=cls.start_date
-    #)
-    #                     ),
-    #                     memo_rule_set=memo_set,
-    #                 )[0]
-    #             )
-
-    #             transaction_is_permitted = True
-    #         except ValueError as e:
-    #             log_in_color(
-    #                 logger,
-    #                 "red",
-    #                 "debug",
-    #                 "EXIT __processDeferredTransactionsApproximate()",
-    #                 log_stack_depth,
-    #             )
-    #             if (
-    #                 re.search(".*Account boundaries were violated.*", str(e.args))
-    #                 is None
-    #             ):  # this is the only exception where we don't want to stop immediately
-    #                 raise e
-
-    #             transaction_is_permitted = False
-
-    #         if not transaction_is_permitted and deferred_row_df.Deferrable:
-
-    #             # deferred_row_df.Date = (datetime.datetime.strptime(deferred_row_df.Date, '%Y%m%d') + datetime.timedelta(
-    #             #     days=1)).strftime('%Y%m%d')
-
-    #             # look ahead for next income date
-    #             future_date_sel_vec = (
-    #                 d > datetime.datetime.strptime(date, "%Y%m%d")
-    #                 for d in forecast_df.Date
-    #             )
-    #             income_date_sel_vec = ("income" in m for m in forecast_df.Memo)
-    #             next_income_date = forecast_df[
-    #                 future_date_sel_vec & income_date_sel_vec
-    #             ].head(1)["Date"]
-
-    #             deferred_row_df.Date = next_income_date
-    #             # print('new deferred row')
-    #             # print(deferred_row_df.to_string())
-
-    #             new_deferred_df = pd.concat(
-    #                 [new_deferred_df, pd.DataFrame(deferred_row_df).T]
-    #             )
-
-    #         elif transaction_is_permitted:
-
-    #             if priority_level > 1:
-    #                 account_set = cls._sync_account_set_w_forecast_day(
-    #                     account_set, forecast_df=forecast_df, d=d
-    #)
-
-    #             account_set.executeTransaction(
-    #                 Account_From=memo_rule_row.Account_From,
-    #                 Account_To=memo_rule_row.Account_To,
-    #                 Amount=deferred_row_df.Amount,
-    #                 income_flag=False,
-    #             )
-
-    #             new_confirmed_df = pd.concat(
-    #                 [new_confirmed_df, pd.DataFrame(deferred_row_df).T]
-    #             )
-
-    #             remaining_unproposed_deferred_transactions_df = relevant_deferred_df[
-    #                 ~relevant_deferred_df.index.isin(deferred_row_df.index)
-    #             ]
-    #             relevant_deferred_df = remaining_unproposed_deferred_transactions_df
-
-    #             # forecast_df, skipped_df, confirmed_df, deferred_df
-    #             forecast_with_accurately_updated_future_rows = (
-    #                 hypothetical_future_state_of_forecast
-    #             )
-
-    #             row_sel_vec = [
-    #                 datetime.datetime.strptime(d, "%Y%m%d")
-    #                 < datetime.datetime.strptime(date, "%Y%m%d")
-    #                 for d in forecast_df.Date
-    #             ]
-    #             forecast_rows_to_keep_df = forecast_df.loc[row_sel_vec, :]
-
-    #             row_sel_vec = [
-    #                 datetime.datetime.strptime(d, "%Y%m%d")
-    #                 >= datetime.datetime.strptime(date, "%Y%m%d")
-    #                 for d in forecast_with_accurately_updated_future_rows.Date
-    #             ]
-    #             new_forecast_rows_df = forecast_with_accurately_updated_future_rows.loc[
-    #                 row_sel_vec, :
-    #             ]
-
-    #             forecast_df = pd.concat(
-    #                 [forecast_rows_to_keep_df, new_forecast_rows_df]
-    #             )
-    #             assert forecast_df.shape[0] == forecast_df.drop_duplicates().shape[0]
-    #             forecast_df.reset_index(drop=True, inplace=True)
-
-    #             for account_index, account_row in account_set.getAccounts().iterrows():
-    #                 if (account_index + 1) == account_set.getAccounts().shape[1]:
-    #                     break
-    #                 relevant_balance = account_set.getAccounts().iloc[account_index, 1]
-
-    #                 row_sel_vec = forecast_df.Date == date
-    #                 col_sel_vec = forecast_df.columns == account_row.Name
-    #                 forecast_df.iloc[row_sel_vec, col_sel_vec] = relevant_balance
-    #         else:
-    #             raise ValueError(
-    #                 """This is an edge case that should not be possible
-    #                     transaction_is_permitted...............:"""
-    #                 + str(transaction_is_permitted)
-    #                 + """
-    #                     budget_item_row.Deferrable.............:"""
-    #                 + str(deferred_row_df.Deferrable)
-    #                 + """
-    #                     budget_item_row.Partial_Payment_Allowed:"""
-    #                 + str(deferred_row_df.Partial_Payment_Allowed)
-    #                 + """
-    #                     """
-    #             )
-
-    #     log_stack_depth -= 1
-    #     log_in_color(
-    #         logger,
-    #         "green",
-    #         "debug",
-    #         "EXIT __processDeferredTransactionsApproximate()",
-    #         log_stack_depth,
-    #     )
-    #     return forecast_df, new_confirmed_df, new_deferred_df
-
     # account_set, forecast_df, date, memo_set,              ,    relevant_deferred_df,             priority_level, allow_partial_payments, allow_skip_and_defer
     # @profile
-    #TODO manual review of ForecastHandler._processDeferredTransactions docstring
+    #TODO DOC manual review of ForecastHandler._processDeferredTransactions docstring
     @classmethod
     def _processDeferredTransactions(
         cls,
@@ -3645,53 +3074,53 @@ class ForecastHandler:
     ):
         # Increment log stack depth for logging purposes
         """
-        TODO one-line description of ForecastHandler._processDeferredTransactions.
+        #TODO DOC one-line description of ForecastHandler._processDeferredTransactions.
 
-        TODO multi-line description of ForecastHandler._processDeferredTransactions.
-        TODO explain how ForecastHandler._processDeferredTransactions participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._processDeferredTransactions.
+        #TODO DOC explain how ForecastHandler._processDeferredTransactions participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         start_date : date
-            TODO one-line description of ForecastHandler._processDeferredTransactions.start_date.
+            #TODO DOC one-line description of ForecastHandler._processDeferredTransactions.start_date.
 
         end_date : date
-            TODO one-line description of ForecastHandler._processDeferredTransactions.end_date.
+            #TODO DOC one-line description of ForecastHandler._processDeferredTransactions.end_date.
 
         account_set : object
-            TODO one-line description of ForecastHandler._processDeferredTransactions.account_set.
+            #TODO DOC one-line description of ForecastHandler._processDeferredTransactions.account_set.
 
         forecast_df : object
-            TODO one-line description of ForecastHandler._processDeferredTransactions.forecast_df.
+            #TODO DOC one-line description of ForecastHandler._processDeferredTransactions.forecast_df.
 
         d : object
-            TODO one-line description of ForecastHandler._processDeferredTransactions.d.
+            #TODO DOC one-line description of ForecastHandler._processDeferredTransactions.d.
 
         memo_set : object
-            TODO one-line description of ForecastHandler._processDeferredTransactions.memo_set.
+            #TODO DOC one-line description of ForecastHandler._processDeferredTransactions.memo_set.
 
         relevant_deferred_df : object
-            TODO one-line description of ForecastHandler._processDeferredTransactions.relevant_deferred_df.
+            #TODO DOC one-line description of ForecastHandler._processDeferredTransactions.relevant_deferred_df.
 
         priority_level : object
-            TODO one-line description of ForecastHandler._processDeferredTransactions.priority_level.
+            #TODO DOC one-line description of ForecastHandler._processDeferredTransactions.priority_level.
 
         confirmed_df : object
-            TODO one-line description of ForecastHandler._processDeferredTransactions.confirmed_df.
+            #TODO DOC one-line description of ForecastHandler._processDeferredTransactions.confirmed_df.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._processDeferredTransactions.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._processDeferredTransactions.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._processDeferredTransactions.
+            #TODO DOC one-line description of return value of ForecastHandler._processDeferredTransactions.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._processDeferredTransactions.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._processDeferredTransactions.
+        - #TODO DOC contract lines for ForecastHandler._processDeferredTransactions.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._processDeferredTransactions.
 
         @interface-report: show
         """
@@ -3837,185 +3266,8 @@ class ForecastHandler:
         # Return the updated forecast and DataFrames
         return forecast_df, confirmed_df, new_deferred_df
 
-    # def _executeTransactionsForDayApproximate(
-    #     cls,
-    #     account_set,
-    #     forecast_df,
-    #     date,
-    #     memo_set,
-    #     confirmed_df,
-    #     proposed_df,
-    #     deferred_df,
-    #     skipped_df,
-    #     priority_level,
-    # ):
-    #     """
-
-    #     I want this to be as generic as possible, with no memos or priority levels having dard coded behavior.
-    #     At least a little of this hard-coding does make implementation simpler though.
-    #     Therefore, let all income be priority level one, and be identified by the regex '.*income.*'
-
-
-    #     """
-
-    #     C0 = confirmed_df.shape[0]
-    #     P0 = proposed_df.shape[0]
-    #     D0 = deferred_df.shape[0]
-    #     S0 = skipped_df.shape[0]
-    #     T0 = C0 + P0 + D0 + S0
-
-    #     isP1 = priority_level == 1
-
-    #     relevant_proposed_df = copy.deepcopy(
-    #         proposed_df[
-    #             (proposed_df.Priority == priority_level)
-    #             & (proposed_df.Date == date)
-    #         ]
-    #     )
-    #     relevant_confirmed_df = copy.deepcopy(
-    #         confirmed_df[
-    #             (confirmed_df.Priority == priority_level)
-    #             & (confirmed_df.Date == date)
-    #         ]
-    #     )
-    #     relevant_deferred_df = copy.deepcopy(
-    #         deferred_df[
-    #             (deferred_df.Priority <= priority_level)
-    #             & (deferred_df.Date == date)
-    #         ]
-    #     )
-
-    #     F = "F:" + str(forecast_df.shape[0])
-    #     C = "C:" + str(relevant_confirmed_df.shape[0])
-    #     P = "P:" + str(relevant_proposed_df.shape[0])
-    #     D = "D:" + str(relevant_deferred_df.shape[0])
-    #     # log_in_color(logger, 'cyan', 'debug',
-    #     #              'ENTER _executeTransactionsForDayApproximate('+date+' ' + str(priority_level) + ' ' + F + ' ' + C + ' ' + P + ' ' + D + ' ) '+str(d),
-    #     #              log_stack_depth)
-    #     log_stack_depth += 1
-    #     # log_in_color(logger, 'cyan', 'debug', 'forecast_df:', log_stack_depth)
-    #     # log_in_color(logger, 'cyan', 'debug',forecast_df.to_string(),log_stack_depth)
-
-    #     if isP1:
-    #         assert relevant_proposed_df.empty
-
-    #     thereArePendingConfirmedTransactions = not relevant_confirmed_df.empty
-
-    #     date_sel_vec = [(d == date) for d in forecast_df.Date]
-    #     noMatchingDayInForecast = forecast_df.loc[date_sel_vec].empty
-    #     notPastEndOfForecast = date <= cls.end_date
-
-    #     if isP1 and noMatchingDayInForecast and notPastEndOfForecast:
-    #         forecast_df = cls._addANewDayToTheForecast(forecast_df=forecast_df, d=d)
-
-    #     if isP1 and thereArePendingConfirmedTransactions:
-    #         relevant_confirmed_df = cls._sortTxnsToPreventErrors(
-    #             relevant_confirmed_df, account_set=account_set, memo_set=memo_set
-    #)
-
-    #     if priority_level > 1:
-    #         account_set = cls._sync_account_set_w_forecast_day(
-    #             account_set, forecast_df=forecast_df, d=d
-    #)
-
-    #     # print('forecast_df:')
-    #     # print(forecast_df.to_string())
-
-    #     # log_in_color(logger,'green','debug','eTFD :: before processConfirmed',log_stack_depth)
-    #     # print('before _processConfirmedTransactions')
-    #     # print(account_set.getAccounts().to_string())
-    #     forecast_df = cls._processConfirmedTransactions(
-    #         forecast_df, relevant_confirmed_df=relevant_confirmed_df, memo_set=memo_set, account_set=account_set, d=d
-    #)
-    #     # print('after _processConfirmedTransactions')
-    #     # print(account_set.getAccounts().to_string())
-    #     # log_in_color(logger, 'green', 'debug', 'eTFD :: after processConfirmed', log_stack_depth)
-
-    #     if priority_level > 1:
-    #         # log_in_color(logger, 'green', 'debug', 'eTFD :: before processProposed', log_stack_depth)
-    #         forecast_df, new_confirmed_df, new_deferred_df, new_skipped_df = (
-    #             cls._processProposedTransactionsApproximate(
-    #                 account_set,
-    #                 forecast_df,
-    #                 date,
-    #                 memo_set,
-    #                 confirmed_df,
-    #                 relevant_proposed_df,
-    #                 priority_level,
-    #             )
-    #         )
-    #         # log_in_color(logger, 'green', 'debug', 'eTFD :: after processProposed', log_stack_depth)
-    #         #
-    #         # log_in_color(logger, 'white', 'debug', 'new_confirmed_df:', log_stack_depth)
-    #         # log_in_color(logger, 'white', 'debug', new_confirmed_df.to_string(), log_stack_depth)
-    #         #
-    #         # log_in_color(logger, 'white', 'debug', 'new_deferred_df:', log_stack_depth)
-    #         # log_in_color(logger, 'white', 'debug', new_deferred_df.to_string(), log_stack_depth)
-    #         #
-    #         # log_in_color(logger, 'white', 'debug', 'new_skipped_df:', log_stack_depth)
-    #         # log_in_color(logger, 'white', 'debug', new_skipped_df.to_string(), log_stack_depth)
-
-    #         confirmed_df = pd.concat([confirmed_df, new_confirmed_df])
-    #         confirmed_df.reset_index(drop=True, inplace=True)
-
-    #         deferred_df = pd.concat([deferred_df, new_deferred_df])
-    #         deferred_df.reset_index(drop=True, inplace=True)
-
-    #         skipped_df = pd.concat([skipped_df, new_skipped_df])
-    #         skipped_df.reset_index(drop=True, inplace=True)
-
-    #         # log_in_color(logger, 'white', 'debug','updated confirmed_df:',log_stack_depth)
-    #         # log_in_color(logger, 'white', 'debug',confirmed_df.to_string(),log_stack_depth)
-    #         #
-    #         # log_in_color(logger, 'white', 'debug','updated deferred_df:',log_stack_depth)
-    #         # log_in_color(logger, 'white', 'debug',deferred_df.to_string(),log_stack_depth)
-    #         #
-    #         # log_in_color(logger, 'white', 'debug','updated skipped_df:',log_stack_depth)
-    #         # log_in_color(logger, 'white', 'debug',skipped_df.to_string(),log_stack_depth)
-
-    #         if deferred_df.shape[0] > 0:
-    #             relevant_deferred_before_processing = pd.DataFrame(
-    #                 relevant_deferred_df, copy=True
-    #             )  # we need this to remove old txns if they stay deferred
-
-    #             # log_in_color(logger, 'green', 'debug', 'eTFD :: before processDeferred', log_stack_depth)
-    #             forecast_df, new_confirmed_df, new_deferred_df = (
-    #                 cls.__processDeferredTransactionsApproximate(
-    #                     account_set,
-    #                     forecast_df,
-    #                     date,
-    #                     memo_set,
-    #                     pd.DataFrame(relevant_deferred_df, copy=True),
-    #                     priority_level,
-    #                     confirmed_df,
-    #                 )
-    #             )
-    #             # log_in_color(logger, 'green', 'debug', 'eTFD :: after processDeferred', log_stack_depth)
-
-    #             confirmed_df = pd.concat([confirmed_df, new_confirmed_df])
-    #             confirmed_df.reset_index(drop=True, inplace=True)
-
-    #             p_LJ_c = pd.merge(
-    #                 proposed_df, confirmed_df, on=["Date", "Memo", "Priority"]
-    #             )
-
-    #             # deferred_df = deferred_df - relevant + new. index won't be the same as OG
-    #             # this is the inverse of how we selected the relevant rows
-    #             p_sel_vec = deferred_df.Priority > priority_level
-    #             # d_sel_vec = (deferred_df.Date != date)
-    #             d_sel_vec = [d != date for d in deferred_df.Date]
-    #             sel_vec = p_sel_vec | d_sel_vec
-    #             not_relevant_deferred_df = pd.DataFrame(deferred_df[sel_vec], copy=True)
-
-    #             deferred_df = pd.concat([not_relevant_deferred_df, new_deferred_df])
-    #             # deferred_df = not_relevant_deferred_df.append(new_deferred_df)
-    #             deferred_df.reset_index(drop=True, inplace=True)
-
-    #     log_stack_depth -= 1
-    #     return [forecast_df, confirmed_df, deferred_df, skipped_df]
-
     # @profile
-    #TODO manual review of ForecastHandler._executeTransactionsForDay docstring
+    #TODO DOC manual review of ForecastHandler._executeTransactionsForDay docstring
     @classmethod
     def _executeTransactionsForDay(
         cls,
@@ -4042,59 +3294,59 @@ class ForecastHandler:
         #     log_stack_depth,
         # )
         """
-        TODO one-line description of ForecastHandler._executeTransactionsForDay.
+        #TODO DOC one-line description of ForecastHandler._executeTransactionsForDay.
 
-        TODO multi-line description of ForecastHandler._executeTransactionsForDay.
-        TODO explain how ForecastHandler._executeTransactionsForDay participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._executeTransactionsForDay.
+        #TODO DOC explain how ForecastHandler._executeTransactionsForDay participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         end_date : date
-            TODO one-line description of ForecastHandler._executeTransactionsForDay.end_date.
+            #TODO DOC one-line description of ForecastHandler._executeTransactionsForDay.end_date.
 
         account_set : object
-            TODO one-line description of ForecastHandler._executeTransactionsForDay.account_set.
+            #TODO DOC one-line description of ForecastHandler._executeTransactionsForDay.account_set.
 
         forecast_df : object
-            TODO one-line description of ForecastHandler._executeTransactionsForDay.forecast_df.
+            #TODO DOC one-line description of ForecastHandler._executeTransactionsForDay.forecast_df.
 
         d : object
-            TODO one-line description of ForecastHandler._executeTransactionsForDay.d.
+            #TODO DOC one-line description of ForecastHandler._executeTransactionsForDay.d.
 
         memo_set : object
-            TODO one-line description of ForecastHandler._executeTransactionsForDay.memo_set.
+            #TODO DOC one-line description of ForecastHandler._executeTransactionsForDay.memo_set.
 
         confirmed_df : object
-            TODO one-line description of ForecastHandler._executeTransactionsForDay.confirmed_df.
+            #TODO DOC one-line description of ForecastHandler._executeTransactionsForDay.confirmed_df.
 
         proposed_df : object
-            TODO one-line description of ForecastHandler._executeTransactionsForDay.proposed_df.
+            #TODO DOC one-line description of ForecastHandler._executeTransactionsForDay.proposed_df.
 
         deferred_df : object
-            TODO one-line description of ForecastHandler._executeTransactionsForDay.deferred_df.
+            #TODO DOC one-line description of ForecastHandler._executeTransactionsForDay.deferred_df.
 
         skipped_df : object
-            TODO one-line description of ForecastHandler._executeTransactionsForDay.skipped_df.
+            #TODO DOC one-line description of ForecastHandler._executeTransactionsForDay.skipped_df.
 
         priority_level : object
-            TODO one-line description of ForecastHandler._executeTransactionsForDay.priority_level.
+            #TODO DOC one-line description of ForecastHandler._executeTransactionsForDay.priority_level.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._executeTransactionsForDay.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._executeTransactionsForDay.log_stack_depth.
 
         include_debug_columns : bool
-            TODO one-line description of ForecastHandler._executeTransactionsForDay.include_debug_columns.
+            #TODO DOC one-line description of ForecastHandler._executeTransactionsForDay.include_debug_columns.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._executeTransactionsForDay.
+            #TODO DOC one-line description of return value of ForecastHandler._executeTransactionsForDay.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._executeTransactionsForDay.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._executeTransactionsForDay.
+        - #TODO DOC contract lines for ForecastHandler._executeTransactionsForDay.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._executeTransactionsForDay.
 
         @interface-report: show
         """
@@ -4270,7 +3522,7 @@ class ForecastHandler:
         return [forecast_df, confirmed_df, deferred_df, skipped_df]
 
     # @profile
-    #TODO manual review of ForecastHandler._processCreditCardBillingDayForDay docstring
+    #TODO DOC manual review of ForecastHandler._processCreditCardBillingDayForDay docstring
     @classmethod
     def _processCreditCardBillingDayForDay(
         cls,
@@ -4287,32 +3539,32 @@ class ForecastHandler:
         #     log_stack_depth,
         # )
         """
-        TODO one-line description of ForecastHandler._processCreditCardBillingDayForDay.
+        #TODO DOC one-line description of ForecastHandler._processCreditCardBillingDayForDay.
 
-        TODO multi-line description of ForecastHandler._processCreditCardBillingDayForDay.
-        TODO explain how ForecastHandler._processCreditCardBillingDayForDay participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._processCreditCardBillingDayForDay.
+        #TODO DOC explain how ForecastHandler._processCreditCardBillingDayForDay participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         account_set : object
-            TODO one-line description of ForecastHandler._processCreditCardBillingDayForDay.account_set.
+            #TODO DOC one-line description of ForecastHandler._processCreditCardBillingDayForDay.account_set.
 
         current_forecast_row_df : object
-            TODO one-line description of ForecastHandler._processCreditCardBillingDayForDay.current_forecast_row_df.
+            #TODO DOC one-line description of ForecastHandler._processCreditCardBillingDayForDay.current_forecast_row_df.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._processCreditCardBillingDayForDay.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._processCreditCardBillingDayForDay.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._processCreditCardBillingDayForDay.
+            #TODO DOC one-line description of return value of ForecastHandler._processCreditCardBillingDayForDay.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._processCreditCardBillingDayForDay.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._processCreditCardBillingDayForDay.
+        - #TODO DOC contract lines for ForecastHandler._processCreditCardBillingDayForDay.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._processCreditCardBillingDayForDay.
 
         @interface-report: show
         """
@@ -4352,7 +3604,7 @@ class ForecastHandler:
         return current_forecast_row_df
 
     # @profile
-    #TODO manual review of ForecastHandler._calculateLoanInterestAccrualsForDay docstring
+    #TODO DOC manual review of ForecastHandler._calculateLoanInterestAccrualsForDay docstring
     @classmethod
     def _calculateLoanInterestAccrualsForDay(
         cls, account_set, current_forecast_row_df, log_stack_depth
@@ -4367,32 +3619,32 @@ class ForecastHandler:
         # )
         # Increment log stack depth for logging purposes
         """
-        TODO one-line description of ForecastHandler._calculateLoanInterestAccrualsForDay.
+        #TODO DOC one-line description of ForecastHandler._calculateLoanInterestAccrualsForDay.
 
-        TODO multi-line description of ForecastHandler._calculateLoanInterestAccrualsForDay.
-        TODO explain how ForecastHandler._calculateLoanInterestAccrualsForDay participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._calculateLoanInterestAccrualsForDay.
+        #TODO DOC explain how ForecastHandler._calculateLoanInterestAccrualsForDay participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         account_set : object
-            TODO one-line description of ForecastHandler._calculateLoanInterestAccrualsForDay.account_set.
+            #TODO DOC one-line description of ForecastHandler._calculateLoanInterestAccrualsForDay.account_set.
 
         current_forecast_row_df : object
-            TODO one-line description of ForecastHandler._calculateLoanInterestAccrualsForDay.current_forecast_row_df.
+            #TODO DOC one-line description of ForecastHandler._calculateLoanInterestAccrualsForDay.current_forecast_row_df.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._calculateLoanInterestAccrualsForDay.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._calculateLoanInterestAccrualsForDay.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._calculateLoanInterestAccrualsForDay.
+            #TODO DOC one-line description of return value of ForecastHandler._calculateLoanInterestAccrualsForDay.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._calculateLoanInterestAccrualsForDay.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._calculateLoanInterestAccrualsForDay.
+        - #TODO DOC contract lines for ForecastHandler._calculateLoanInterestAccrualsForDay.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._calculateLoanInterestAccrualsForDay.
 
         @interface-report: show
         """
@@ -4506,7 +3758,7 @@ class ForecastHandler:
         return current_forecast_row_df
 
     #TODO forecast_df is not referenced in this method body and idk if it should be
-    #TODO manual review of ForecastHandler._executeCreditCardMinimumPayments docstring
+    #TODO DOC manual review of ForecastHandler._executeCreditCardMinimumPayments docstring
     @classmethod
     def _executeCreditCardMinimumPayments(
         cls, forecast_df, account_set, current_forecast_row_df, log_stack_depth
@@ -4520,35 +3772,35 @@ class ForecastHandler:
         #     log_stack_depth,
         # )
         """
-        TODO one-line description of ForecastHandler._executeCreditCardMinimumPayments.
+        #TODO DOC one-line description of ForecastHandler._executeCreditCardMinimumPayments.
 
-        TODO multi-line description of ForecastHandler._executeCreditCardMinimumPayments.
-        TODO explain how ForecastHandler._executeCreditCardMinimumPayments participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._executeCreditCardMinimumPayments.
+        #TODO DOC explain how ForecastHandler._executeCreditCardMinimumPayments participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         forecast_df : object
-            TODO one-line description of ForecastHandler._executeCreditCardMinimumPayments.forecast_df.
+            #TODO DOC one-line description of ForecastHandler._executeCreditCardMinimumPayments.forecast_df.
 
         account_set : object
-            TODO one-line description of ForecastHandler._executeCreditCardMinimumPayments.account_set.
+            #TODO DOC one-line description of ForecastHandler._executeCreditCardMinimumPayments.account_set.
 
         current_forecast_row_df : object
-            TODO one-line description of ForecastHandler._executeCreditCardMinimumPayments.current_forecast_row_df.
+            #TODO DOC one-line description of ForecastHandler._executeCreditCardMinimumPayments.current_forecast_row_df.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._executeCreditCardMinimumPayments.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._executeCreditCardMinimumPayments.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._executeCreditCardMinimumPayments.
+            #TODO DOC one-line description of return value of ForecastHandler._executeCreditCardMinimumPayments.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._executeCreditCardMinimumPayments.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._executeCreditCardMinimumPayments.
+        - #TODO DOC contract lines for ForecastHandler._executeCreditCardMinimumPayments.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._executeCreditCardMinimumPayments.
 
         @interface-report: show
         """
@@ -4621,7 +3873,7 @@ class ForecastHandler:
         return current_forecast_row_df
 
     # @profile
-    #TODO manual review of ForecastHandler._executeLoanMinimumPayments docstring
+    #TODO DOC manual review of ForecastHandler._executeLoanMinimumPayments docstring
     @classmethod
     def _executeLoanMinimumPayments(cls, account_set, current_forecast_row_df, log_stack_depth):
         # log_in_color(
@@ -4633,32 +3885,32 @@ class ForecastHandler:
         #     log_stack_depth,
         # )
         """
-        TODO one-line description of ForecastHandler._executeLoanMinimumPayments.
+        #TODO DOC one-line description of ForecastHandler._executeLoanMinimumPayments.
 
-        TODO multi-line description of ForecastHandler._executeLoanMinimumPayments.
-        TODO explain how ForecastHandler._executeLoanMinimumPayments participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._executeLoanMinimumPayments.
+        #TODO DOC explain how ForecastHandler._executeLoanMinimumPayments participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         account_set : object
-            TODO one-line description of ForecastHandler._executeLoanMinimumPayments.account_set.
+            #TODO DOC one-line description of ForecastHandler._executeLoanMinimumPayments.account_set.
 
         current_forecast_row_df : object
-            TODO one-line description of ForecastHandler._executeLoanMinimumPayments.current_forecast_row_df.
+            #TODO DOC one-line description of ForecastHandler._executeLoanMinimumPayments.current_forecast_row_df.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._executeLoanMinimumPayments.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._executeLoanMinimumPayments.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._executeLoanMinimumPayments.
+            #TODO DOC one-line description of return value of ForecastHandler._executeLoanMinimumPayments.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._executeLoanMinimumPayments.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._executeLoanMinimumPayments.
+        - #TODO DOC contract lines for ForecastHandler._executeLoanMinimumPayments.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._executeLoanMinimumPayments.
 
         @interface-report: show
         """
@@ -4768,35 +4020,35 @@ class ForecastHandler:
         cls, account_set, forecast_df, d, log_stack_depth
     ):
         """
-        TODO one-line description of ForecastHandler._getMinimumFutureAvailableBalances.
+        #TODO DOC one-line description of ForecastHandler._getMinimumFutureAvailableBalances.
 
-        TODO multi-line description of ForecastHandler._getMinimumFutureAvailableBalances.
-        TODO explain how ForecastHandler._getMinimumFutureAvailableBalances participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._getMinimumFutureAvailableBalances.
+        #TODO DOC explain how ForecastHandler._getMinimumFutureAvailableBalances participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         account_set : object
-            TODO one-line description of ForecastHandler._getMinimumFutureAvailableBalances.account_set.
+            #TODO DOC one-line description of ForecastHandler._getMinimumFutureAvailableBalances.account_set.
 
         forecast_df : object
-            TODO one-line description of ForecastHandler._getMinimumFutureAvailableBalances.forecast_df.
+            #TODO DOC one-line description of ForecastHandler._getMinimumFutureAvailableBalances.forecast_df.
 
         d : object
-            TODO one-line description of ForecastHandler._getMinimumFutureAvailableBalances.d.
+            #TODO DOC one-line description of ForecastHandler._getMinimumFutureAvailableBalances.d.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._getMinimumFutureAvailableBalances.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._getMinimumFutureAvailableBalances.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._getMinimumFutureAvailableBalances.
+            #TODO DOC one-line description of return value of ForecastHandler._getMinimumFutureAvailableBalances.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._getMinimumFutureAvailableBalances.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._getMinimumFutureAvailableBalances.
+        - #TODO DOC contract lines for ForecastHandler._getMinimumFutureAvailableBalances.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._getMinimumFutureAvailableBalances.
 
         @interface-report: show
         """
@@ -4914,40 +4166,40 @@ class ForecastHandler:
         return future_available_balances
 
     # TODO is there a different method with a similar purpose somewhere?
-    #TODO manual review of ForecastHandler._sync_account_set_w_forecast_day docstring
+    #TODO DOC manual review of ForecastHandler._sync_account_set_w_forecast_day docstring
     @classmethod
     def _sync_account_set_w_forecast_day(cls, account_set, forecast_df, d, log_stack_depth):
         # log_in_color(logger, 'white', 'debug', str(d)+' ENTER _sync_account_set_w_forecast_day', log_stack_depth)
         """
-        TODO one-line description of ForecastHandler._sync_account_set_w_forecast_day.
+        #TODO DOC one-line description of ForecastHandler._sync_account_set_w_forecast_day.
 
-        TODO multi-line description of ForecastHandler._sync_account_set_w_forecast_day.
-        TODO explain how ForecastHandler._sync_account_set_w_forecast_day participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._sync_account_set_w_forecast_day.
+        #TODO DOC explain how ForecastHandler._sync_account_set_w_forecast_day participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         account_set : object
-            TODO one-line description of ForecastHandler._sync_account_set_w_forecast_day.account_set.
+            #TODO DOC one-line description of ForecastHandler._sync_account_set_w_forecast_day.account_set.
 
         forecast_df : object
-            TODO one-line description of ForecastHandler._sync_account_set_w_forecast_day.forecast_df.
+            #TODO DOC one-line description of ForecastHandler._sync_account_set_w_forecast_day.forecast_df.
 
         d : object
-            TODO one-line description of ForecastHandler._sync_account_set_w_forecast_day.d.
+            #TODO DOC one-line description of ForecastHandler._sync_account_set_w_forecast_day.d.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._sync_account_set_w_forecast_day.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._sync_account_set_w_forecast_day.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._sync_account_set_w_forecast_day.
+            #TODO DOC one-line description of return value of ForecastHandler._sync_account_set_w_forecast_day.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._sync_account_set_w_forecast_day.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._sync_account_set_w_forecast_day.
+        - #TODO DOC contract lines for ForecastHandler._sync_account_set_w_forecast_day.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._sync_account_set_w_forecast_day.
 
         @interface-report: show
         """
@@ -5065,53 +4317,53 @@ class ForecastHandler:
         end_of_previous_cycle_delta=0,
     ):
         """
-        TODO one-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.
+        #TODO DOC one-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.
 
-        TODO multi-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.
-        TODO explain how ForecastHandler._apply_credit_billing_state_delta_to_forecast_row participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.
+        #TODO DOC explain how ForecastHandler._apply_credit_billing_state_delta_to_forecast_row participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         forecast_df : object
-            TODO one-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.forecast_df.
+            #TODO DOC one-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.forecast_df.
 
         row_index : object
-            TODO one-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.row_index.
+            #TODO DOC one-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.row_index.
 
         account_set : object
-            TODO one-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.account_set.
+            #TODO DOC one-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.account_set.
 
         credit_account_name : str
-            TODO one-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.credit_account_name.
+            #TODO DOC one-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.credit_account_name.
 
         checking_account_name : object
-            TODO one-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.checking_account_name.
+            #TODO DOC one-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.checking_account_name.
 
         checking_delta : float
-            TODO one-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.checking_delta.
+            #TODO DOC one-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.checking_delta.
 
         current_statement_delta : float
-            TODO one-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.current_statement_delta.
+            #TODO DOC one-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.current_statement_delta.
 
         previous_statement_delta : float
-            TODO one-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.previous_statement_delta.
+            #TODO DOC one-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.previous_statement_delta.
 
         billing_cycle_payment_delta : float
-            TODO one-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.billing_cycle_payment_delta.
+            #TODO DOC one-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.billing_cycle_payment_delta.
 
         end_of_previous_cycle_delta : float
-            TODO one-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.end_of_previous_cycle_delta.
+            #TODO DOC one-line description of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.end_of_previous_cycle_delta.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.
+            #TODO DOC one-line description of return value of ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.
+        - #TODO DOC contract lines for ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._apply_credit_billing_state_delta_to_forecast_row.
 
         @interface-report: show
         """
@@ -5182,50 +4434,50 @@ class ForecastHandler:
         billing_cycle_payment_delta=0,
     ):
         """
-        TODO one-line description of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.
+        #TODO DOC one-line description of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.
 
-        TODO multi-line description of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.
-        TODO explain how ForecastHandler._apply_loan_billing_state_delta_to_forecast_row participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.
+        #TODO DOC explain how ForecastHandler._apply_loan_billing_state_delta_to_forecast_row participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         forecast_df : object
-            TODO one-line description of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.forecast_df.
+            #TODO DOC one-line description of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.forecast_df.
 
         row_index : object
-            TODO one-line description of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.row_index.
+            #TODO DOC one-line description of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.row_index.
 
         account_set : object
-            TODO one-line description of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.account_set.
+            #TODO DOC one-line description of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.account_set.
 
         loan_account_name : str
-            TODO one-line description of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.loan_account_name.
+            #TODO DOC one-line description of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.loan_account_name.
 
         checking_account_name : object
-            TODO one-line description of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.checking_account_name.
+            #TODO DOC one-line description of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.checking_account_name.
 
         checking_delta : float
-            TODO one-line description of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.checking_delta.
+            #TODO DOC one-line description of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.checking_delta.
 
         principal_delta : float
-            TODO one-line description of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.principal_delta.
+            #TODO DOC one-line description of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.principal_delta.
 
         interest_delta : float
-            TODO one-line description of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.interest_delta.
+            #TODO DOC one-line description of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.interest_delta.
 
         billing_cycle_payment_delta : float
-            TODO one-line description of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.billing_cycle_payment_delta.
+            #TODO DOC one-line description of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.billing_cycle_payment_delta.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.
+            #TODO DOC one-line description of return value of ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.
+        - #TODO DOC contract lines for ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._apply_loan_billing_state_delta_to_forecast_row.
 
         @interface-report: show
         """
@@ -5298,50 +4550,50 @@ class ForecastHandler:
         #     log_stack_depth,
         # )
         """
-        TODO one-line description of ForecastHandler._propagate_credit_txn_curr_only.
+        #TODO DOC one-line description of ForecastHandler._propagate_credit_txn_curr_only.
 
-        TODO multi-line description of ForecastHandler._propagate_credit_txn_curr_only.
-        TODO explain how ForecastHandler._propagate_credit_txn_curr_only participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._propagate_credit_txn_curr_only.
+        #TODO DOC explain how ForecastHandler._propagate_credit_txn_curr_only participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         relevant_account_info_df : object
-            TODO one-line description of ForecastHandler._propagate_credit_txn_curr_only.relevant_account_info_df.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_txn_curr_only.relevant_account_info_df.
 
         account_deltas_list : object
-            TODO one-line description of ForecastHandler._propagate_credit_txn_curr_only.account_deltas_list.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_txn_curr_only.account_deltas_list.
 
         future_rows_only_df : object
-            TODO one-line description of ForecastHandler._propagate_credit_txn_curr_only.future_rows_only_df.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_txn_curr_only.future_rows_only_df.
 
         forecast_df : object
-            TODO one-line description of ForecastHandler._propagate_credit_txn_curr_only.forecast_df.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_txn_curr_only.forecast_df.
 
         account_set_before_p2_plus_txn : object
-            TODO one-line description of ForecastHandler._propagate_credit_txn_curr_only.account_set_before_p2_plus_txn.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_txn_curr_only.account_set_before_p2_plus_txn.
 
         billing_dates_dict : object
-            TODO one-line description of ForecastHandler._propagate_credit_txn_curr_only.billing_dates_dict.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_txn_curr_only.billing_dates_dict.
 
         d : object
-            TODO one-line description of ForecastHandler._propagate_credit_txn_curr_only.d.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_txn_curr_only.d.
 
         post_txn_row_df : object
-            TODO one-line description of ForecastHandler._propagate_credit_txn_curr_only.post_txn_row_df.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_txn_curr_only.post_txn_row_df.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._propagate_credit_txn_curr_only.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_txn_curr_only.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._propagate_credit_txn_curr_only.
+            #TODO DOC one-line description of return value of ForecastHandler._propagate_credit_txn_curr_only.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._propagate_credit_txn_curr_only.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._propagate_credit_txn_curr_only.
+        - #TODO DOC contract lines for ForecastHandler._propagate_credit_txn_curr_only.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._propagate_credit_txn_curr_only.
 
         @interface-report: show
         """
@@ -5656,50 +4908,50 @@ class ForecastHandler:
         log_stack_depth
     ):
         """
-        TODO one-line description of ForecastHandler._propagate_credit_payment_curr_only.
+        #TODO DOC one-line description of ForecastHandler._propagate_credit_payment_curr_only.
 
-        TODO multi-line description of ForecastHandler._propagate_credit_payment_curr_only.
-        TODO explain how ForecastHandler._propagate_credit_payment_curr_only participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._propagate_credit_payment_curr_only.
+        #TODO DOC explain how ForecastHandler._propagate_credit_payment_curr_only participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         relevant_account_info_df : object
-            TODO one-line description of ForecastHandler._propagate_credit_payment_curr_only.relevant_account_info_df.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_payment_curr_only.relevant_account_info_df.
 
         account_deltas_list : object
-            TODO one-line description of ForecastHandler._propagate_credit_payment_curr_only.account_deltas_list.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_payment_curr_only.account_deltas_list.
 
         future_rows_only_df : object
-            TODO one-line description of ForecastHandler._propagate_credit_payment_curr_only.future_rows_only_df.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_payment_curr_only.future_rows_only_df.
 
         forecast_df : object
-            TODO one-line description of ForecastHandler._propagate_credit_payment_curr_only.forecast_df.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_payment_curr_only.forecast_df.
 
         account_set_before_p2_plus_txn : object
-            TODO one-line description of ForecastHandler._propagate_credit_payment_curr_only.account_set_before_p2_plus_txn.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_payment_curr_only.account_set_before_p2_plus_txn.
 
         billing_dates_dict : object
-            TODO one-line description of ForecastHandler._propagate_credit_payment_curr_only.billing_dates_dict.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_payment_curr_only.billing_dates_dict.
 
         d : object
-            TODO one-line description of ForecastHandler._propagate_credit_payment_curr_only.d.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_payment_curr_only.d.
 
         post_txn_row_df : object
-            TODO one-line description of ForecastHandler._propagate_credit_payment_curr_only.post_txn_row_df.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_payment_curr_only.post_txn_row_df.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._propagate_credit_payment_curr_only.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_payment_curr_only.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._propagate_credit_payment_curr_only.
+            #TODO DOC one-line description of return value of ForecastHandler._propagate_credit_payment_curr_only.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._propagate_credit_payment_curr_only.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._propagate_credit_payment_curr_only.
+        - #TODO DOC contract lines for ForecastHandler._propagate_credit_payment_curr_only.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._propagate_credit_payment_curr_only.
 
         @interface-report: show
         """
@@ -5993,50 +5245,50 @@ class ForecastHandler:
         log_stack_depth
     ):
         """
-        TODO one-line description of ForecastHandler._propagate_credit_payment_prev_only.
+        #TODO DOC one-line description of ForecastHandler._propagate_credit_payment_prev_only.
 
-        TODO multi-line description of ForecastHandler._propagate_credit_payment_prev_only.
-        TODO explain how ForecastHandler._propagate_credit_payment_prev_only participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._propagate_credit_payment_prev_only.
+        #TODO DOC explain how ForecastHandler._propagate_credit_payment_prev_only participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         relevant_account_info_df : object
-            TODO one-line description of ForecastHandler._propagate_credit_payment_prev_only.relevant_account_info_df.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_payment_prev_only.relevant_account_info_df.
 
         account_deltas_list : object
-            TODO one-line description of ForecastHandler._propagate_credit_payment_prev_only.account_deltas_list.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_payment_prev_only.account_deltas_list.
 
         future_rows_only_df : object
-            TODO one-line description of ForecastHandler._propagate_credit_payment_prev_only.future_rows_only_df.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_payment_prev_only.future_rows_only_df.
 
         forecast_df : object
-            TODO one-line description of ForecastHandler._propagate_credit_payment_prev_only.forecast_df.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_payment_prev_only.forecast_df.
 
         account_set_before_p2_plus_txn : object
-            TODO one-line description of ForecastHandler._propagate_credit_payment_prev_only.account_set_before_p2_plus_txn.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_payment_prev_only.account_set_before_p2_plus_txn.
 
         billing_dates_dict : object
-            TODO one-line description of ForecastHandler._propagate_credit_payment_prev_only.billing_dates_dict.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_payment_prev_only.billing_dates_dict.
 
         d : object
-            TODO one-line description of ForecastHandler._propagate_credit_payment_prev_only.d.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_payment_prev_only.d.
 
         post_txn_row_df : object
-            TODO one-line description of ForecastHandler._propagate_credit_payment_prev_only.post_txn_row_df.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_payment_prev_only.post_txn_row_df.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._propagate_credit_payment_prev_only.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_payment_prev_only.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._propagate_credit_payment_prev_only.
+            #TODO DOC one-line description of return value of ForecastHandler._propagate_credit_payment_prev_only.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._propagate_credit_payment_prev_only.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._propagate_credit_payment_prev_only.
+        - #TODO DOC contract lines for ForecastHandler._propagate_credit_payment_prev_only.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._propagate_credit_payment_prev_only.
 
         @interface-report: show
         """
@@ -6456,50 +5708,50 @@ class ForecastHandler:
         log_stack_depth
     ):
         """
-        TODO one-line description of ForecastHandler._propagate_loan_payment_interest_only.
+        #TODO DOC one-line description of ForecastHandler._propagate_loan_payment_interest_only.
 
-        TODO multi-line description of ForecastHandler._propagate_loan_payment_interest_only.
-        TODO explain how ForecastHandler._propagate_loan_payment_interest_only participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._propagate_loan_payment_interest_only.
+        #TODO DOC explain how ForecastHandler._propagate_loan_payment_interest_only participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         relevant_account_info_df : object
-            TODO one-line description of ForecastHandler._propagate_loan_payment_interest_only.relevant_account_info_df.
+            #TODO DOC one-line description of ForecastHandler._propagate_loan_payment_interest_only.relevant_account_info_df.
 
         account_deltas_list : object
-            TODO one-line description of ForecastHandler._propagate_loan_payment_interest_only.account_deltas_list.
+            #TODO DOC one-line description of ForecastHandler._propagate_loan_payment_interest_only.account_deltas_list.
 
         future_rows_only_df : object
-            TODO one-line description of ForecastHandler._propagate_loan_payment_interest_only.future_rows_only_df.
+            #TODO DOC one-line description of ForecastHandler._propagate_loan_payment_interest_only.future_rows_only_df.
 
         forecast_df : object
-            TODO one-line description of ForecastHandler._propagate_loan_payment_interest_only.forecast_df.
+            #TODO DOC one-line description of ForecastHandler._propagate_loan_payment_interest_only.forecast_df.
 
         account_set_before_p2_plus_txn : object
-            TODO one-line description of ForecastHandler._propagate_loan_payment_interest_only.account_set_before_p2_plus_txn.
+            #TODO DOC one-line description of ForecastHandler._propagate_loan_payment_interest_only.account_set_before_p2_plus_txn.
 
         billing_dates_dict : object
-            TODO one-line description of ForecastHandler._propagate_loan_payment_interest_only.billing_dates_dict.
+            #TODO DOC one-line description of ForecastHandler._propagate_loan_payment_interest_only.billing_dates_dict.
 
         date_string : object
-            TODO one-line description of ForecastHandler._propagate_loan_payment_interest_only.date_string.
+            #TODO DOC one-line description of ForecastHandler._propagate_loan_payment_interest_only.date_string.
 
         post_txn_row_df : object
-            TODO one-line description of ForecastHandler._propagate_loan_payment_interest_only.post_txn_row_df.
+            #TODO DOC one-line description of ForecastHandler._propagate_loan_payment_interest_only.post_txn_row_df.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._propagate_loan_payment_interest_only.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._propagate_loan_payment_interest_only.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._propagate_loan_payment_interest_only.
+            #TODO DOC one-line description of return value of ForecastHandler._propagate_loan_payment_interest_only.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._propagate_loan_payment_interest_only.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._propagate_loan_payment_interest_only.
+        - #TODO DOC contract lines for ForecastHandler._propagate_loan_payment_interest_only.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._propagate_loan_payment_interest_only.
 
         @interface-report: show
         """
@@ -6717,50 +5969,50 @@ class ForecastHandler:
         log_stack_depth
     ):
         """
-        TODO one-line description of ForecastHandler._propagate_loan_payment_pbal_only.
+        #TODO DOC one-line description of ForecastHandler._propagate_loan_payment_pbal_only.
 
-        TODO multi-line description of ForecastHandler._propagate_loan_payment_pbal_only.
-        TODO explain how ForecastHandler._propagate_loan_payment_pbal_only participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._propagate_loan_payment_pbal_only.
+        #TODO DOC explain how ForecastHandler._propagate_loan_payment_pbal_only participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         relevant_account_info_df : object
-            TODO one-line description of ForecastHandler._propagate_loan_payment_pbal_only.relevant_account_info_df.
+            #TODO DOC one-line description of ForecastHandler._propagate_loan_payment_pbal_only.relevant_account_info_df.
 
         account_deltas_list : object
-            TODO one-line description of ForecastHandler._propagate_loan_payment_pbal_only.account_deltas_list.
+            #TODO DOC one-line description of ForecastHandler._propagate_loan_payment_pbal_only.account_deltas_list.
 
         future_rows_only_df : object
-            TODO one-line description of ForecastHandler._propagate_loan_payment_pbal_only.future_rows_only_df.
+            #TODO DOC one-line description of ForecastHandler._propagate_loan_payment_pbal_only.future_rows_only_df.
 
         forecast_df : object
-            TODO one-line description of ForecastHandler._propagate_loan_payment_pbal_only.forecast_df.
+            #TODO DOC one-line description of ForecastHandler._propagate_loan_payment_pbal_only.forecast_df.
 
         account_set_before_p2_plus_txn : object
-            TODO one-line description of ForecastHandler._propagate_loan_payment_pbal_only.account_set_before_p2_plus_txn.
+            #TODO DOC one-line description of ForecastHandler._propagate_loan_payment_pbal_only.account_set_before_p2_plus_txn.
 
         billing_dates_dict : object
-            TODO one-line description of ForecastHandler._propagate_loan_payment_pbal_only.billing_dates_dict.
+            #TODO DOC one-line description of ForecastHandler._propagate_loan_payment_pbal_only.billing_dates_dict.
 
         date_string : object
-            TODO one-line description of ForecastHandler._propagate_loan_payment_pbal_only.date_string.
+            #TODO DOC one-line description of ForecastHandler._propagate_loan_payment_pbal_only.date_string.
 
         post_txn_row_df : object
-            TODO one-line description of ForecastHandler._propagate_loan_payment_pbal_only.post_txn_row_df.
+            #TODO DOC one-line description of ForecastHandler._propagate_loan_payment_pbal_only.post_txn_row_df.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._propagate_loan_payment_pbal_only.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._propagate_loan_payment_pbal_only.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._propagate_loan_payment_pbal_only.
+            #TODO DOC one-line description of return value of ForecastHandler._propagate_loan_payment_pbal_only.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._propagate_loan_payment_pbal_only.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._propagate_loan_payment_pbal_only.
+        - #TODO DOC contract lines for ForecastHandler._propagate_loan_payment_pbal_only.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._propagate_loan_payment_pbal_only.
 
         @interface-report: show
         """
@@ -6969,50 +6221,50 @@ class ForecastHandler:
         log_stack_depth
     ):
         """
-        TODO one-line description of ForecastHandler._propagate_loan_payment_pbal_interest.
+        #TODO DOC one-line description of ForecastHandler._propagate_loan_payment_pbal_interest.
 
-        TODO multi-line description of ForecastHandler._propagate_loan_payment_pbal_interest.
-        TODO explain how ForecastHandler._propagate_loan_payment_pbal_interest participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._propagate_loan_payment_pbal_interest.
+        #TODO DOC explain how ForecastHandler._propagate_loan_payment_pbal_interest participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         relevant_account_info_df : object
-            TODO one-line description of ForecastHandler._propagate_loan_payment_pbal_interest.relevant_account_info_df.
+            #TODO DOC one-line description of ForecastHandler._propagate_loan_payment_pbal_interest.relevant_account_info_df.
 
         account_deltas_list : object
-            TODO one-line description of ForecastHandler._propagate_loan_payment_pbal_interest.account_deltas_list.
+            #TODO DOC one-line description of ForecastHandler._propagate_loan_payment_pbal_interest.account_deltas_list.
 
         future_rows_only_df : object
-            TODO one-line description of ForecastHandler._propagate_loan_payment_pbal_interest.future_rows_only_df.
+            #TODO DOC one-line description of ForecastHandler._propagate_loan_payment_pbal_interest.future_rows_only_df.
 
         forecast_df : object
-            TODO one-line description of ForecastHandler._propagate_loan_payment_pbal_interest.forecast_df.
+            #TODO DOC one-line description of ForecastHandler._propagate_loan_payment_pbal_interest.forecast_df.
 
         account_set_before_p2_plus_txn : object
-            TODO one-line description of ForecastHandler._propagate_loan_payment_pbal_interest.account_set_before_p2_plus_txn.
+            #TODO DOC one-line description of ForecastHandler._propagate_loan_payment_pbal_interest.account_set_before_p2_plus_txn.
 
         billing_dates_dict : object
-            TODO one-line description of ForecastHandler._propagate_loan_payment_pbal_interest.billing_dates_dict.
+            #TODO DOC one-line description of ForecastHandler._propagate_loan_payment_pbal_interest.billing_dates_dict.
 
         date_string : object
-            TODO one-line description of ForecastHandler._propagate_loan_payment_pbal_interest.date_string.
+            #TODO DOC one-line description of ForecastHandler._propagate_loan_payment_pbal_interest.date_string.
 
         post_txn_row_df : object
-            TODO one-line description of ForecastHandler._propagate_loan_payment_pbal_interest.post_txn_row_df.
+            #TODO DOC one-line description of ForecastHandler._propagate_loan_payment_pbal_interest.post_txn_row_df.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._propagate_loan_payment_pbal_interest.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._propagate_loan_payment_pbal_interest.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._propagate_loan_payment_pbal_interest.
+            #TODO DOC one-line description of return value of ForecastHandler._propagate_loan_payment_pbal_interest.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._propagate_loan_payment_pbal_interest.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._propagate_loan_payment_pbal_interest.
+        - #TODO DOC contract lines for ForecastHandler._propagate_loan_payment_pbal_interest.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._propagate_loan_payment_pbal_interest.
 
         @interface-report: show
         """
@@ -7103,7 +6355,7 @@ class ForecastHandler:
         # Iterate over future forecast rows
         for f_i, f_row in future_rows_only_df.iterrows():
 
-            print(pd.DataFrame(f_row).T.to_string())
+            # print(pd.DataFrame(f_row).T.to_string())
 
             date_iat = f_row["Date"]
             md_to_keep = []
@@ -7300,50 +6552,50 @@ class ForecastHandler:
         log_stack_depth
     ):
         """
-        TODO one-line description of ForecastHandler._propagate_credit_payment_prev_curr.
+        #TODO DOC one-line description of ForecastHandler._propagate_credit_payment_prev_curr.
 
-        TODO multi-line description of ForecastHandler._propagate_credit_payment_prev_curr.
-        TODO explain how ForecastHandler._propagate_credit_payment_prev_curr participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._propagate_credit_payment_prev_curr.
+        #TODO DOC explain how ForecastHandler._propagate_credit_payment_prev_curr participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         relevant_account_info_df : object
-            TODO one-line description of ForecastHandler._propagate_credit_payment_prev_curr.relevant_account_info_df.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_payment_prev_curr.relevant_account_info_df.
 
         account_deltas_list : object
-            TODO one-line description of ForecastHandler._propagate_credit_payment_prev_curr.account_deltas_list.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_payment_prev_curr.account_deltas_list.
 
         future_rows_only_df : object
-            TODO one-line description of ForecastHandler._propagate_credit_payment_prev_curr.future_rows_only_df.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_payment_prev_curr.future_rows_only_df.
 
         forecast_df : object
-            TODO one-line description of ForecastHandler._propagate_credit_payment_prev_curr.forecast_df.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_payment_prev_curr.forecast_df.
 
         account_set_before_p2_plus_txn : object
-            TODO one-line description of ForecastHandler._propagate_credit_payment_prev_curr.account_set_before_p2_plus_txn.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_payment_prev_curr.account_set_before_p2_plus_txn.
 
         billing_dates_dict : object
-            TODO one-line description of ForecastHandler._propagate_credit_payment_prev_curr.billing_dates_dict.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_payment_prev_curr.billing_dates_dict.
 
         d : object
-            TODO one-line description of ForecastHandler._propagate_credit_payment_prev_curr.d.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_payment_prev_curr.d.
 
         post_txn_row_df : object
-            TODO one-line description of ForecastHandler._propagate_credit_payment_prev_curr.post_txn_row_df.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_payment_prev_curr.post_txn_row_df.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._propagate_credit_payment_prev_curr.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._propagate_credit_payment_prev_curr.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._propagate_credit_payment_prev_curr.
+            #TODO DOC one-line description of return value of ForecastHandler._propagate_credit_payment_prev_curr.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._propagate_credit_payment_prev_curr.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._propagate_credit_payment_prev_curr.
+        - #TODO DOC contract lines for ForecastHandler._propagate_credit_payment_prev_curr.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._propagate_credit_payment_prev_curr.
 
         @interface-report: show
         """
@@ -7575,7 +6827,7 @@ class ForecastHandler:
                 )
 
             elif date_iat in day_after_billing_dates:
-                print("DAY AFTER BILLING DATE")
+                # print("DAY AFTER BILLING DATE")
                 if f_i == 0:
                     updated_eopc = post_txn_row_df[prev_stmt_bal_account_name].iat[0]
                 else:
@@ -7583,7 +6835,7 @@ class ForecastHandler:
                         f_i - 1, prev_stmt_bal_account_name
                     ]
                 old_eopc = future_rows_only_df.at[f_i, eopc_account_name]
-                print("eopc_delta = " + str(updated_eopc - old_eopc))
+                # print("eopc_delta = " + str(updated_eopc - old_eopc))
                 # This row starts a new billing cycle.  The propagated delta is
                 # relative to each row's original value, so replace the prior
                 # cycle's adjustment instead of accumulating it again.
@@ -7837,29 +7089,29 @@ class ForecastHandler:
     @classmethod
     def _parse_memo_amount(cls, memo_line, log_stack_depth):
         """
-        TODO one-line description of ForecastHandler._parse_memo_amount.
+        #TODO DOC one-line description of ForecastHandler._parse_memo_amount.
 
-        TODO multi-line description of ForecastHandler._parse_memo_amount.
-        TODO explain how ForecastHandler._parse_memo_amount participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._parse_memo_amount.
+        #TODO DOC explain how ForecastHandler._parse_memo_amount participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         memo_line : object
-            TODO one-line description of ForecastHandler._parse_memo_amount.memo_line.
+            #TODO DOC one-line description of ForecastHandler._parse_memo_amount.memo_line.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._parse_memo_amount.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._parse_memo_amount.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._parse_memo_amount.
+            #TODO DOC one-line description of return value of ForecastHandler._parse_memo_amount.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._parse_memo_amount.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._parse_memo_amount.
+        - #TODO DOC contract lines for ForecastHandler._parse_memo_amount.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._parse_memo_amount.
 
         @interface-report: show
         """
@@ -7882,32 +7134,32 @@ class ForecastHandler:
         #     logger, "white", "debug", " ENTER _update_memo_amount", log_stack_depth
         # )
         """
-        TODO one-line description of ForecastHandler._update_memo_amount.
+        #TODO DOC one-line description of ForecastHandler._update_memo_amount.
 
-        TODO multi-line description of ForecastHandler._update_memo_amount.
-        TODO explain how ForecastHandler._update_memo_amount participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._update_memo_amount.
+        #TODO DOC explain how ForecastHandler._update_memo_amount participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         memo_line : object
-            TODO one-line description of ForecastHandler._update_memo_amount.memo_line.
+            #TODO DOC one-line description of ForecastHandler._update_memo_amount.memo_line.
 
         new_amount : object
-            TODO one-line description of ForecastHandler._update_memo_amount.new_amount.
+            #TODO DOC one-line description of ForecastHandler._update_memo_amount.new_amount.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._update_memo_amount.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._update_memo_amount.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._update_memo_amount.
+            #TODO DOC one-line description of return value of ForecastHandler._update_memo_amount.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._update_memo_amount.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._update_memo_amount.
+        - #TODO DOC contract lines for ForecastHandler._update_memo_amount.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._update_memo_amount.
 
         @interface-report: show
         """
@@ -7953,47 +7205,47 @@ class ForecastHandler:
         return new_memo_line
 
     # @profile
-    #TODO manual review of ForecastHandler._propagateOptimizationTransactionsIntoTheFuture docstring
+    #TODO DOC manual review of ForecastHandler._propagateOptimizationTransactionsIntoTheFuture docstring
     @classmethod
     def _propagateOptimizationTransactionsIntoTheFuture(
         cls, end_date, account_set_before_p2_plus_txn, forecast_df, date_string, log_stack_depth, include_debug_columns=False #TODO unsure if include_debug_columns belongs here
     ):
         """
-        TODO one-line description of ForecastHandler._propagateOptimizationTransactionsIntoTheFuture.
+        #TODO DOC one-line description of ForecastHandler._propagateOptimizationTransactionsIntoTheFuture.
 
-        TODO multi-line description of ForecastHandler._propagateOptimizationTransactionsIntoTheFuture.
-        TODO explain how ForecastHandler._propagateOptimizationTransactionsIntoTheFuture participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._propagateOptimizationTransactionsIntoTheFuture.
+        #TODO DOC explain how ForecastHandler._propagateOptimizationTransactionsIntoTheFuture participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         end_date : date
-            TODO one-line description of ForecastHandler._propagateOptimizationTransactionsIntoTheFuture.end_date.
+            #TODO DOC one-line description of ForecastHandler._propagateOptimizationTransactionsIntoTheFuture.end_date.
 
         account_set_before_p2_plus_txn : object
-            TODO one-line description of ForecastHandler._propagateOptimizationTransactionsIntoTheFuture.account_set_before_p2_plus_txn.
+            #TODO DOC one-line description of ForecastHandler._propagateOptimizationTransactionsIntoTheFuture.account_set_before_p2_plus_txn.
 
         forecast_df : object
-            TODO one-line description of ForecastHandler._propagateOptimizationTransactionsIntoTheFuture.forecast_df.
+            #TODO DOC one-line description of ForecastHandler._propagateOptimizationTransactionsIntoTheFuture.forecast_df.
 
         date_string : object
-            TODO one-line description of ForecastHandler._propagateOptimizationTransactionsIntoTheFuture.date_string.
+            #TODO DOC one-line description of ForecastHandler._propagateOptimizationTransactionsIntoTheFuture.date_string.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._propagateOptimizationTransactionsIntoTheFuture.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._propagateOptimizationTransactionsIntoTheFuture.log_stack_depth.
 
         include_debug_columns : bool
-            TODO one-line description of ForecastHandler._propagateOptimizationTransactionsIntoTheFuture.include_debug_columns.
+            #TODO DOC one-line description of ForecastHandler._propagateOptimizationTransactionsIntoTheFuture.include_debug_columns.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._propagateOptimizationTransactionsIntoTheFuture.
+            #TODO DOC one-line description of return value of ForecastHandler._propagateOptimizationTransactionsIntoTheFuture.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._propagateOptimizationTransactionsIntoTheFuture.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._propagateOptimizationTransactionsIntoTheFuture.
+        - #TODO DOC contract lines for ForecastHandler._propagateOptimizationTransactionsIntoTheFuture.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._propagateOptimizationTransactionsIntoTheFuture.
 
         @interface-report: show
         """
@@ -8937,38 +8189,38 @@ class ForecastHandler:
     ):
 
         """
-        TODO one-line description of ForecastHandler._updateProposedTransactionsBasedOnOtherSets.
+        #TODO DOC one-line description of ForecastHandler._updateProposedTransactionsBasedOnOtherSets.
 
-        TODO multi-line description of ForecastHandler._updateProposedTransactionsBasedOnOtherSets.
-        TODO explain how ForecastHandler._updateProposedTransactionsBasedOnOtherSets participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._updateProposedTransactionsBasedOnOtherSets.
+        #TODO DOC explain how ForecastHandler._updateProposedTransactionsBasedOnOtherSets participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         confirmed_df : object
-            TODO one-line description of ForecastHandler._updateProposedTransactionsBasedOnOtherSets.confirmed_df.
+            #TODO DOC one-line description of ForecastHandler._updateProposedTransactionsBasedOnOtherSets.confirmed_df.
 
         proposed_df : object
-            TODO one-line description of ForecastHandler._updateProposedTransactionsBasedOnOtherSets.proposed_df.
+            #TODO DOC one-line description of ForecastHandler._updateProposedTransactionsBasedOnOtherSets.proposed_df.
 
         deferred_df : object
-            TODO one-line description of ForecastHandler._updateProposedTransactionsBasedOnOtherSets.deferred_df.
+            #TODO DOC one-line description of ForecastHandler._updateProposedTransactionsBasedOnOtherSets.deferred_df.
 
         skipped_df : object
-            TODO one-line description of ForecastHandler._updateProposedTransactionsBasedOnOtherSets.skipped_df.
+            #TODO DOC one-line description of ForecastHandler._updateProposedTransactionsBasedOnOtherSets.skipped_df.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._updateProposedTransactionsBasedOnOtherSets.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._updateProposedTransactionsBasedOnOtherSets.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._updateProposedTransactionsBasedOnOtherSets.
+            #TODO DOC one-line description of return value of ForecastHandler._updateProposedTransactionsBasedOnOtherSets.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._updateProposedTransactionsBasedOnOtherSets.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._updateProposedTransactionsBasedOnOtherSets.
+        - #TODO DOC contract lines for ForecastHandler._updateProposedTransactionsBasedOnOtherSets.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._updateProposedTransactionsBasedOnOtherSets.
 
         @interface-report: show
         """
@@ -8990,146 +8242,8 @@ class ForecastHandler:
         # log_in_color(logger, 'cyan', 'debug', 'EXIT _updateProposedTransactionsBasedOnOtherSets',log_stack_depth)
         return remaining_unproposed_transactions_df
 
-    # def _assessPotentialOptimizationsApproximate(
-    #     cls,
-    #     forecast_df,
-    #     account_set,
-    #     memo_rule_set,
-    #     confirmed_df,
-    #     proposed_df,
-    #     deferred_df,
-    #     skipped_df,
-    #     raise__satisfice_failed_exception,
-    #     progress_bar=None,
-    #     log_stack_depth
-    # ):
-    #     F = "F:" + str(forecast_df.shape[0])
-    #     C = "C:" + str(confirmed_df.shape[0])
-    #     P = "P:" + str(proposed_df.shape[0])
-    #     D = "D:" + str(deferred_df.shape[0])
-    #     S = "S:" + str(skipped_df.shape[0])
-    #     # log_in_color(logger,'magenta','debug','ENTER _assessPotentialOptimizationsApproximate( '+F+' '+C+' '+P+' '+D+' '+S+' )',log_stack_depth)
-    #     log_stack_depth += 1
-    #     all_days = (
-    #         forecast_df.Date
-    #     )  # todo havent tested this, but forecast_df has been _satisficed so it has all the dates
-
-    #     # Schema is: Date, Priority, Amount, Memo, Deferrable, Partial_Payment_Allowed
-    #     full_budget_schedule_df = pd.concat(
-    #         [confirmed_df, proposed_df, deferred_df, skipped_df]
-    #     )
-    #     full_budget_schedule_df.reset_index(drop=True, inplace=True)
-
-    #     unique_priority_indices = full_budget_schedule_df.Priority.unique()
-    #     unique_priority_indices.sort()
-
-    #     last_iteration_ts = None  # this is here to remove a warning
-
-    #     if not raise__satisfice_failed_exception:
-    #         log_in_color(logger, "white", "debug", "Beginning Optimization.")
-    #         # log_in_color(logger, 'white', 'debug', cls.start_date + ' -> ' + cls.end_date)
-    #         # log_in_color(logger, 'white', 'debug', 'Priority Indices: ' + str(unique_priority_indices))
-    #         last_iteration_ts = datetime.datetime.now()
-
-    #     for priority_index in unique_priority_indices:
-
-    #         if priority_index == 1:
-    #             continue  # because this was handled by _satisfice
-
-    #         for date_string in all_days:
-    #             # print('date_string:'+str(date_string))
-    #             if date_string == forecast_df.head(1).Date.iat[0]:
-    #                 # if date_string == cls.start_date:
-    #                 continue  # first day is considered final
-
-    #             if not raise__satisfice_failed_exception:
-    #                 if progress_bar is not None:
-    #                     progress_bar.update(1)
-    #                     progress_bar.refresh()
-
-    #                 iteration_time_elapsed = datetime.datetime.now() - last_iteration_ts
-    #                 last_iteration_ts = datetime.datetime.now()
-    #                 log_string = (
-    #                     str(priority_index)
-    #                     + " "
-    #                     + "PLACEHOLDER 1"
-    #                 )
-    #                 log_string += "     " + str(iteration_time_elapsed)
-    #                 # log_in_color(logger, 'white', 'debug', log_string )
-
-    #             # log_in_color(logger, 'magenta', 'info', 'p' + str(priority_index) + ' ' + str(date_string),log_stack_depth)
-
-    #             remaining_unproposed_transactions_df = (
-    #                 cls._updateProposedTransactionsBasedOnOtherSets(
-    #                     confirmed_df, proposed_df=proposed_df, deferred_df=deferred_df, skipped_df=skipped_df
-    #)
-    #             )
-
-    #             account_set = cls._sync_account_set_w_forecast_day(
-    #                 account_set, forecast_df=forecast_df, d=d_string
-    #)
-
-    #             # todo maybe this could be moved down? not sure
-    #             account_set_before_p2_plus_txn = copy.deepcopy(account_set)
-
-    #             account_set = cls._sync_account_set_w_forecast_day(
-    #                 account_set, forecast_df=forecast_df, d=d_string
-    #)
-
-    #             # log_in_color(logger, 'yellow', 'debug','proposed_df before eTFD:')
-    #             # log_in_color(logger, 'yellow', 'debug', proposed_df.to_string())
-
-    #             forecast_df, confirmed_df, deferred_df, skipped_df = (
-    #                 cls._executeTransactionsForDayApproximate(
-    #                     account_set=account_set,
-    #                     forecast_df=forecast_df,
-    #                     d=d_string,
-    #                     memo_set=memo_rule_set,
-    #                     confirmed_df=confirmed_df,
-    #                     proposed_df=remaining_unproposed_transactions_df,
-    #                     deferred_df=deferred_df,
-    #                     skipped_df=skipped_df,
-    #                     priority_level=priority_index,
-    #                 )
-    #             )
-
-    #             # log_in_color(logger, 'yellow', 'debug', 'proposed after eTFD:')
-    #             # log_in_color(logger, 'yellow', 'debug', proposed_df.to_string())
-
-    #             account_set = cls._sync_account_set_w_forecast_day(
-    #                 account_set, forecast_df=forecast_df, d=d_string
-    #)
-
-    #             # this is necessary to make balance deltas propoagate only once
-    #             if raise__satisfice_failed_exception:
-
-    #                 # regarding why the input params are what they are here:
-    #                 # since the budget schedule does not have Account_From and Account_To, we infer which accounts were
-    #                 # affected by comparing the before and after, hence this method accepts the prior and current state
-    #                 # to modify forecast_df
-    #                 # Furthermore, additional loan payments affect the allocation of future minimum loan payments
-    #                 # so p1 minimumpayments, which aren't even BudgetItems as of 12/31/23.... must be edited
-    #                 # it kind of makes more sense to refactor and have credit card minimum payments and loan minimum
-    #                 # # payments as budget items....
-    #                 #
-    #                 # Doing that though creates a coupling between the AccountSet and BudgetSet classes that I don't like...
-    #                 # I only recently got the full detail of what happens into the Memo field, but I think that that is the answer
-    #                 # There will be information encoded in the Memo column that will not appear anywhere else
-    #                 #
-    #                 # print(forecast_df.to_string())
-    #                 forecast_df = cls._propagateOptimizationTransactionsIntoTheFuture(
-    #                     account_set_before_p2_plus_txn,
-    #                     forecast_df,
-    #                     date_string,
-    #                 )
-    #                 # print(forecast_df.to_string())
-
-    #     log_stack_depth -= 1
-    #     # log_in_color(logger, 'magenta', 'debug', 'EXIT _assessPotentialOptimizations() C:'+str(confirmed_df.shape[0])+' D:'+str(deferred_df.shape[0])+' S:'+str(skipped_df.shape[0]),log_stack_depth)
-    #     return forecast_df, skipped_df, confirmed_df, deferred_df
-
     # @profile
-    #TODO manual review of ForecastHandler._assessPotentialOptimizations docstring
+    #TODO DOC manual review of ForecastHandler._assessPotentialOptimizations docstring
     @classmethod
     def _assessPotentialOptimizations(
         cls,
@@ -9154,59 +8268,59 @@ class ForecastHandler:
         #     log_stack_depth,
         # )
         """
-        TODO one-line description of ForecastHandler._assessPotentialOptimizations.
+        #TODO DOC one-line description of ForecastHandler._assessPotentialOptimizations.
 
-        TODO multi-line description of ForecastHandler._assessPotentialOptimizations.
-        TODO explain how ForecastHandler._assessPotentialOptimizations participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._assessPotentialOptimizations.
+        #TODO DOC explain how ForecastHandler._assessPotentialOptimizations participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         end_date : date
-            TODO one-line description of ForecastHandler._assessPotentialOptimizations.end_date.
+            #TODO DOC one-line description of ForecastHandler._assessPotentialOptimizations.end_date.
 
         forecast_df : object
-            TODO one-line description of ForecastHandler._assessPotentialOptimizations.forecast_df.
+            #TODO DOC one-line description of ForecastHandler._assessPotentialOptimizations.forecast_df.
 
         account_set : object
-            TODO one-line description of ForecastHandler._assessPotentialOptimizations.account_set.
+            #TODO DOC one-line description of ForecastHandler._assessPotentialOptimizations.account_set.
 
         memo_rule_set : object
-            TODO one-line description of ForecastHandler._assessPotentialOptimizations.memo_rule_set.
+            #TODO DOC one-line description of ForecastHandler._assessPotentialOptimizations.memo_rule_set.
 
         confirmed_df : object
-            TODO one-line description of ForecastHandler._assessPotentialOptimizations.confirmed_df.
+            #TODO DOC one-line description of ForecastHandler._assessPotentialOptimizations.confirmed_df.
 
         proposed_df : object
-            TODO one-line description of ForecastHandler._assessPotentialOptimizations.proposed_df.
+            #TODO DOC one-line description of ForecastHandler._assessPotentialOptimizations.proposed_df.
 
         deferred_df : object
-            TODO one-line description of ForecastHandler._assessPotentialOptimizations.deferred_df.
+            #TODO DOC one-line description of ForecastHandler._assessPotentialOptimizations.deferred_df.
 
         skipped_df : object
-            TODO one-line description of ForecastHandler._assessPotentialOptimizations.skipped_df.
+            #TODO DOC one-line description of ForecastHandler._assessPotentialOptimizations.skipped_df.
 
         raise__satisfice_failed_exception : object
-            TODO one-line description of ForecastHandler._assessPotentialOptimizations.raise__satisfice_failed_exception.
+            #TODO DOC one-line description of ForecastHandler._assessPotentialOptimizations.raise__satisfice_failed_exception.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._assessPotentialOptimizations.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._assessPotentialOptimizations.log_stack_depth.
 
         progress_bar : object
-            TODO one-line description of ForecastHandler._assessPotentialOptimizations.progress_bar.
+            #TODO DOC one-line description of ForecastHandler._assessPotentialOptimizations.progress_bar.
 
         include_debug_columns : bool
-            TODO one-line description of ForecastHandler._assessPotentialOptimizations.include_debug_columns.
+            #TODO DOC one-line description of ForecastHandler._assessPotentialOptimizations.include_debug_columns.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._assessPotentialOptimizations.
+            #TODO DOC one-line description of return value of ForecastHandler._assessPotentialOptimizations.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._assessPotentialOptimizations.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._assessPotentialOptimizations.
+        - #TODO DOC contract lines for ForecastHandler._assessPotentialOptimizations.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._assessPotentialOptimizations.
 
         @interface-report: show
         """
@@ -9371,41 +8485,41 @@ class ForecastHandler:
         cls, end_date, confirmed_df, proposed_df, deferred_df, skipped_df, log_stack_depth
     ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """
-        TODO one-line description of ForecastHandler._cleanUpAfterFailedSatisfice.
+        #TODO DOC one-line description of ForecastHandler._cleanUpAfterFailedSatisfice.
 
-        TODO multi-line description of ForecastHandler._cleanUpAfterFailedSatisfice.
-        TODO explain how ForecastHandler._cleanUpAfterFailedSatisfice participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._cleanUpAfterFailedSatisfice.
+        #TODO DOC explain how ForecastHandler._cleanUpAfterFailedSatisfice participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         end_date : date
-            TODO one-line description of ForecastHandler._cleanUpAfterFailedSatisfice.end_date.
+            #TODO DOC one-line description of ForecastHandler._cleanUpAfterFailedSatisfice.end_date.
 
         confirmed_df : object
-            TODO one-line description of ForecastHandler._cleanUpAfterFailedSatisfice.confirmed_df.
+            #TODO DOC one-line description of ForecastHandler._cleanUpAfterFailedSatisfice.confirmed_df.
 
         proposed_df : object
-            TODO one-line description of ForecastHandler._cleanUpAfterFailedSatisfice.proposed_df.
+            #TODO DOC one-line description of ForecastHandler._cleanUpAfterFailedSatisfice.proposed_df.
 
         deferred_df : object
-            TODO one-line description of ForecastHandler._cleanUpAfterFailedSatisfice.deferred_df.
+            #TODO DOC one-line description of ForecastHandler._cleanUpAfterFailedSatisfice.deferred_df.
 
         skipped_df : object
-            TODO one-line description of ForecastHandler._cleanUpAfterFailedSatisfice.skipped_df.
+            #TODO DOC one-line description of ForecastHandler._cleanUpAfterFailedSatisfice.skipped_df.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._cleanUpAfterFailedSatisfice.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._cleanUpAfterFailedSatisfice.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._cleanUpAfterFailedSatisfice.
+            #TODO DOC one-line description of return value of ForecastHandler._cleanUpAfterFailedSatisfice.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._cleanUpAfterFailedSatisfice.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._cleanUpAfterFailedSatisfice.
+        - #TODO DOC contract lines for ForecastHandler._cleanUpAfterFailedSatisfice.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._cleanUpAfterFailedSatisfice.
 
         @interface-report: show
         """
@@ -9443,7 +8557,7 @@ class ForecastHandler:
 
         return confirmed_df, deferred_df, skipped_df
 
-    #TODO manual review of ForecastHandler._updateEndOfPrevCycleBal docstring
+    #TODO DOC manual review of ForecastHandler._updateEndOfPrevCycleBal docstring
     @classmethod
     def _updateEndOfPrevCycleBal(
         cls, forecast_df, account_set, current_forecast_row_df, log_stack_depth
@@ -9457,35 +8571,35 @@ class ForecastHandler:
         #     log_stack_depth,
         # )
         """
-        TODO one-line description of ForecastHandler._updateEndOfPrevCycleBal.
+        #TODO DOC one-line description of ForecastHandler._updateEndOfPrevCycleBal.
 
-        TODO multi-line description of ForecastHandler._updateEndOfPrevCycleBal.
-        TODO explain how ForecastHandler._updateEndOfPrevCycleBal participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._updateEndOfPrevCycleBal.
+        #TODO DOC explain how ForecastHandler._updateEndOfPrevCycleBal participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         forecast_df : object
-            TODO one-line description of ForecastHandler._updateEndOfPrevCycleBal.forecast_df.
+            #TODO DOC one-line description of ForecastHandler._updateEndOfPrevCycleBal.forecast_df.
 
         account_set : object
-            TODO one-line description of ForecastHandler._updateEndOfPrevCycleBal.account_set.
+            #TODO DOC one-line description of ForecastHandler._updateEndOfPrevCycleBal.account_set.
 
         current_forecast_row_df : object
-            TODO one-line description of ForecastHandler._updateEndOfPrevCycleBal.current_forecast_row_df.
+            #TODO DOC one-line description of ForecastHandler._updateEndOfPrevCycleBal.current_forecast_row_df.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._updateEndOfPrevCycleBal.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._updateEndOfPrevCycleBal.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._updateEndOfPrevCycleBal.
+            #TODO DOC one-line description of return value of ForecastHandler._updateEndOfPrevCycleBal.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._updateEndOfPrevCycleBal.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._updateEndOfPrevCycleBal.
+        - #TODO DOC contract lines for ForecastHandler._updateEndOfPrevCycleBal.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._updateEndOfPrevCycleBal.
 
         @interface-report: show
         """
@@ -9599,7 +8713,7 @@ class ForecastHandler:
         return current_forecast_row_df
 
     # @profile
-    #TODO manual review of ForecastHandler._satisfice docstring
+    #TODO DOC manual review of ForecastHandler._satisfice docstring
     @classmethod
     def _satisfice(
         cls,
@@ -9617,56 +8731,56 @@ class ForecastHandler:
     ):
         # log_in_color(logger, "white", "info", "ENTER _satisfice", log_stack_depth)
         """
-        TODO one-line description of ForecastHandler._satisfice.
+        #TODO DOC one-line description of ForecastHandler._satisfice.
 
-        TODO multi-line description of ForecastHandler._satisfice.
-        TODO explain how ForecastHandler._satisfice participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._satisfice.
+        #TODO DOC explain how ForecastHandler._satisfice participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         start_date : date
-            TODO one-line description of ForecastHandler._satisfice.start_date.
+            #TODO DOC one-line description of ForecastHandler._satisfice.start_date.
 
         end_date : date
-            TODO one-line description of ForecastHandler._satisfice.end_date.
+            #TODO DOC one-line description of ForecastHandler._satisfice.end_date.
 
         list_of_date_strings : object
-            TODO one-line description of ForecastHandler._satisfice.list_of_date_strings.
+            #TODO DOC one-line description of ForecastHandler._satisfice.list_of_date_strings.
 
         confirmed_df : object
-            TODO one-line description of ForecastHandler._satisfice.confirmed_df.
+            #TODO DOC one-line description of ForecastHandler._satisfice.confirmed_df.
 
         account_set : object
-            TODO one-line description of ForecastHandler._satisfice.account_set.
+            #TODO DOC one-line description of ForecastHandler._satisfice.account_set.
 
         memo_rule_set : object
-            TODO one-line description of ForecastHandler._satisfice.memo_rule_set.
+            #TODO DOC one-line description of ForecastHandler._satisfice.memo_rule_set.
 
         forecast_df : object
-            TODO one-line description of ForecastHandler._satisfice.forecast_df.
+            #TODO DOC one-line description of ForecastHandler._satisfice.forecast_df.
 
         raise__satisfice_failed_exception : object
-            TODO one-line description of ForecastHandler._satisfice.raise__satisfice_failed_exception.
+            #TODO DOC one-line description of ForecastHandler._satisfice.raise__satisfice_failed_exception.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._satisfice.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._satisfice.log_stack_depth.
 
         progress_bar : object
-            TODO one-line description of ForecastHandler._satisfice.progress_bar.
+            #TODO DOC one-line description of ForecastHandler._satisfice.progress_bar.
 
         include_debug_columns : bool
-            TODO one-line description of ForecastHandler._satisfice.include_debug_columns.
+            #TODO DOC one-line description of ForecastHandler._satisfice.include_debug_columns.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._satisfice.
+            #TODO DOC one-line description of return value of ForecastHandler._satisfice.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._satisfice.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._satisfice.
+        - #TODO DOC contract lines for ForecastHandler._satisfice.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._satisfice.
 
         @interface-report: show
         """
@@ -9861,7 +8975,7 @@ class ForecastHandler:
         return forecast_df  # _satisfice_success = True
 
     # @profile
-    #TODO manual review of ForecastHandler._computeOptimalForecast docstring
+    #TODO DOC manual review of ForecastHandler._computeOptimalForecast docstring
     @classmethod
     def _computeOptimalForecast(cls,
         start_date,
@@ -9888,59 +9002,59 @@ class ForecastHandler:
         #     log_stack_depth,
         # )
         """
-        TODO one-line description of ForecastHandler._computeOptimalForecast.
+        #TODO DOC one-line description of ForecastHandler._computeOptimalForecast.
 
-        TODO multi-line description of ForecastHandler._computeOptimalForecast.
-        TODO explain how ForecastHandler._computeOptimalForecast participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._computeOptimalForecast.
+        #TODO DOC explain how ForecastHandler._computeOptimalForecast participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         start_date : date
-            TODO one-line description of ForecastHandler._computeOptimalForecast.start_date.
+            #TODO DOC one-line description of ForecastHandler._computeOptimalForecast.start_date.
 
         end_date : date
-            TODO one-line description of ForecastHandler._computeOptimalForecast.end_date.
+            #TODO DOC one-line description of ForecastHandler._computeOptimalForecast.end_date.
 
         confirmed_df : object
-            TODO one-line description of ForecastHandler._computeOptimalForecast.confirmed_df.
+            #TODO DOC one-line description of ForecastHandler._computeOptimalForecast.confirmed_df.
 
         proposed_df : object
-            TODO one-line description of ForecastHandler._computeOptimalForecast.proposed_df.
+            #TODO DOC one-line description of ForecastHandler._computeOptimalForecast.proposed_df.
 
         deferred_df : object
-            TODO one-line description of ForecastHandler._computeOptimalForecast.deferred_df.
+            #TODO DOC one-line description of ForecastHandler._computeOptimalForecast.deferred_df.
 
         skipped_df : object
-            TODO one-line description of ForecastHandler._computeOptimalForecast.skipped_df.
+            #TODO DOC one-line description of ForecastHandler._computeOptimalForecast.skipped_df.
 
         account_set : object
-            TODO one-line description of ForecastHandler._computeOptimalForecast.account_set.
+            #TODO DOC one-line description of ForecastHandler._computeOptimalForecast.account_set.
 
         memo_rule_set : object
-            TODO one-line description of ForecastHandler._computeOptimalForecast.memo_rule_set.
+            #TODO DOC one-line description of ForecastHandler._computeOptimalForecast.memo_rule_set.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._computeOptimalForecast.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._computeOptimalForecast.log_stack_depth.
 
         raise__satisfice_failed_exception : object
-            TODO one-line description of ForecastHandler._computeOptimalForecast.raise__satisfice_failed_exception.
+            #TODO DOC one-line description of ForecastHandler._computeOptimalForecast.raise__satisfice_failed_exception.
 
         progress_bar : object
-            TODO one-line description of ForecastHandler._computeOptimalForecast.progress_bar.
+            #TODO DOC one-line description of ForecastHandler._computeOptimalForecast.progress_bar.
 
         include_debug_columns : bool
-            TODO one-line description of ForecastHandler._computeOptimalForecast.include_debug_columns.
+            #TODO DOC one-line description of ForecastHandler._computeOptimalForecast.include_debug_columns.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._computeOptimalForecast.
+            #TODO DOC one-line description of return value of ForecastHandler._computeOptimalForecast.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._computeOptimalForecast.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._computeOptimalForecast.
+        - #TODO DOC contract lines for ForecastHandler._computeOptimalForecast.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._computeOptimalForecast.
 
         @interface-report: show
         """
@@ -10084,7 +9198,7 @@ class ForecastHandler:
         return [forecast_df, skipped_df, confirmed_df, deferred_df]
 
     # TODO compute_forecast_difference needs revision
-    #TODO manual review of ForecastHandler.compute_forecast_difference docstring
+    #TODO DOC manual review of ForecastHandler.compute_forecast_difference docstring
     @classmethod
     def compute_forecast_difference(
         cls,
@@ -10107,53 +9221,53 @@ class ForecastHandler:
         # forecast2_df['Date'] = forecast_df.Date.apply(lambda x: datetime.datetime.strptime(x, '%Y%m%d'), 0)
 
         """
-        TODO one-line description of ForecastHandler.compute_forecast_difference.
+        #TODO DOC one-line description of ForecastHandler.compute_forecast_difference.
 
-        TODO multi-line description of ForecastHandler.compute_forecast_difference.
-        TODO explain how ForecastHandler.compute_forecast_difference participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler.compute_forecast_difference.
+        #TODO DOC explain how ForecastHandler.compute_forecast_difference participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         forecast_df : object
-            TODO one-line description of ForecastHandler.compute_forecast_difference.forecast_df.
+            #TODO DOC one-line description of ForecastHandler.compute_forecast_difference.forecast_df.
 
         forecast2_df : object
-            TODO one-line description of ForecastHandler.compute_forecast_difference.forecast2_df.
+            #TODO DOC one-line description of ForecastHandler.compute_forecast_difference.forecast2_df.
 
         label : str
-            TODO one-line description of ForecastHandler.compute_forecast_difference.label.
+            #TODO DOC one-line description of ForecastHandler.compute_forecast_difference.label.
 
         make_plots : object
-            TODO one-line description of ForecastHandler.compute_forecast_difference.make_plots.
+            #TODO DOC one-line description of ForecastHandler.compute_forecast_difference.make_plots.
 
         plot_directory : object
-            TODO one-line description of ForecastHandler.compute_forecast_difference.plot_directory.
+            #TODO DOC one-line description of ForecastHandler.compute_forecast_difference.plot_directory.
 
         return_type : object
-            TODO one-line description of ForecastHandler.compute_forecast_difference.return_type.
+            #TODO DOC one-line description of ForecastHandler.compute_forecast_difference.return_type.
 
         require_matching_columns : object
-            TODO one-line description of ForecastHandler.compute_forecast_difference.require_matching_columns.
+            #TODO DOC one-line description of ForecastHandler.compute_forecast_difference.require_matching_columns.
 
         require_matching_date_range : object
-            TODO one-line description of ForecastHandler.compute_forecast_difference.require_matching_date_range.
+            #TODO DOC one-line description of ForecastHandler.compute_forecast_difference.require_matching_date_range.
 
         append_expected_values : object
-            TODO one-line description of ForecastHandler.compute_forecast_difference.append_expected_values.
+            #TODO DOC one-line description of ForecastHandler.compute_forecast_difference.append_expected_values.
 
         diffs_only : object
-            TODO one-line description of ForecastHandler.compute_forecast_difference.diffs_only.
+            #TODO DOC one-line description of ForecastHandler.compute_forecast_difference.diffs_only.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler.compute_forecast_difference.
+            #TODO DOC one-line description of return value of ForecastHandler.compute_forecast_difference.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler.compute_forecast_difference.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler.compute_forecast_difference.
+        - #TODO DOC contract lines for ForecastHandler.compute_forecast_difference.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler.compute_forecast_difference.
 
         @interface-report: show
         """
@@ -10181,6 +9295,7 @@ class ForecastHandler:
                 assert forecast_df.shape[1] == forecast2_df.shape[1]
                 assert set(forecast_df.columns) == set(forecast2_df.columns)
             except Exception as e:
+                #TODO should be a log instead of print
                 print(
                     "ERROR: ATTEMPTED TO TAKE DIFF OF FORECASTS WITH DIFFERENT COLUMNS"
                 )
@@ -10317,37 +9432,37 @@ class ForecastHandler:
         return return_df
 
 
-    #TODO manual review of ForecastHandler._appendSummaryLines docstring
+    #TODO DOC manual review of ForecastHandler._appendSummaryLines docstring
     @classmethod
     def _appendSummaryLines(cls, initial_A, forecast_df, log_stack_depth):
 
         """
-        TODO one-line description of ForecastHandler._appendSummaryLines.
+        #TODO DOC one-line description of ForecastHandler._appendSummaryLines.
 
-        TODO multi-line description of ForecastHandler._appendSummaryLines.
-        TODO explain how ForecastHandler._appendSummaryLines participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._appendSummaryLines.
+        #TODO DOC explain how ForecastHandler._appendSummaryLines participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         initial_A : object
-            TODO one-line description of ForecastHandler._appendSummaryLines.initial_A.
+            #TODO DOC one-line description of ForecastHandler._appendSummaryLines.initial_A.
 
         forecast_df : object
-            TODO one-line description of ForecastHandler._appendSummaryLines.forecast_df.
+            #TODO DOC one-line description of ForecastHandler._appendSummaryLines.forecast_df.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler._appendSummaryLines.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler._appendSummaryLines.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._appendSummaryLines.
+            #TODO DOC one-line description of return value of ForecastHandler._appendSummaryLines.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._appendSummaryLines.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._appendSummaryLines.
+        - #TODO DOC contract lines for ForecastHandler._appendSummaryLines.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._appendSummaryLines.
 
         @interface-report: show
         """
@@ -10555,6 +9670,18 @@ class ForecastHandler:
                 if memo_line_item == "":
                     continue
 
+                # Policy-driven debt payments move value from checking to a
+                # liability account.  The liability-side entry is recorded in
+                # Memo Directives, so treating the checking-side entry as an
+                # expense would incorrectly report a net loss for a transfer.
+                if memo_line_item.startswith(
+                    (
+                        "POLICY current_statement_balance_payment:",
+                        "POLICY surplus_debt_payment:",
+                    )
+                ):
+                    continue
+
                 # handled in memo directive
                 # #loss was already taken to account when txn was first made, any paying debts is net 0
                 # if 'LOAN MIN PAYMENT' in memo_line_item or 'CC MIN PAYMENT' in memo_line_item or 'ADDTL CC PAYMENT' in memo_line_item:
@@ -10586,8 +9713,11 @@ class ForecastHandler:
                 # Moved to memo directive
                 line_item_value = float(line_item_value_string)
                 if "income" in memo_line_item.lower():
-                    # cls.forecast_df.loc[index,'Net Gain'] += abs(line_item_value)
-                    pass  # todo income needs to not be in memo. this is a known vulnerability bc of this right here #https://github.com/hdickie/expense_forecast/issues/19
+                    # Approximate forecasts retain scheduled income in Memo
+                    # rather than emitting an INCOME memo directive. Exact
+                    # forecasts include both, so only use Memo as a fallback.
+                    if "INCOME" not in row["Memo Directives"]:
+                        forecast_df.loc[index, "Net Gain"] += abs(line_item_value)
                 else:
                     # print(str(cls.forecast_df.loc[index, 'Date'])+' Net Loss before update '+str(cls.forecast_df.loc[index, 'Net Loss']) )
                     forecast_df.loc[index, "Net Loss"] += abs(line_item_value)
@@ -10892,30 +10022,30 @@ class ForecastHandler:
 
         return forecast_df
 
-    #TODO manual review of ForecastHandler._report_date_to_datetime docstring
+    #TODO DOC manual review of ForecastHandler._report_date_to_datetime docstring
     @staticmethod
     def _report_date_to_datetime(value):
         """
-        TODO one-line description of ForecastHandler._report_date_to_datetime.
+        #TODO DOC one-line description of ForecastHandler._report_date_to_datetime.
 
-        TODO multi-line description of ForecastHandler._report_date_to_datetime.
-        TODO explain how ForecastHandler._report_date_to_datetime participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._report_date_to_datetime.
+        #TODO DOC explain how ForecastHandler._report_date_to_datetime participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         value : object
-            TODO one-line description of ForecastHandler._report_date_to_datetime.value.
+            #TODO DOC one-line description of ForecastHandler._report_date_to_datetime.value.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._report_date_to_datetime.
+            #TODO DOC one-line description of return value of ForecastHandler._report_date_to_datetime.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._report_date_to_datetime.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._report_date_to_datetime.
+        - #TODO DOC contract lines for ForecastHandler._report_date_to_datetime.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._report_date_to_datetime.
 
         @interface-report: show
         """
@@ -10936,30 +10066,30 @@ class ForecastHandler:
                 pass
         return pd.to_datetime(value).to_pydatetime()
 
-    #TODO manual review of ForecastHandler._report_amount docstring
+    #TODO DOC manual review of ForecastHandler._report_amount docstring
     @staticmethod
     def _report_amount(value):
         """
-        TODO one-line description of ForecastHandler._report_amount.
+        #TODO DOC one-line description of ForecastHandler._report_amount.
 
-        TODO multi-line description of ForecastHandler._report_amount.
-        TODO explain how ForecastHandler._report_amount participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._report_amount.
+        #TODO DOC explain how ForecastHandler._report_amount participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         value : object
-            TODO one-line description of ForecastHandler._report_amount.value.
+            #TODO DOC one-line description of ForecastHandler._report_amount.value.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._report_amount.
+            #TODO DOC one-line description of return value of ForecastHandler._report_amount.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._report_amount.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._report_amount.
+        - #TODO DOC contract lines for ForecastHandler._report_amount.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._report_amount.
 
         @interface-report: show
         """
@@ -10980,85 +10110,85 @@ class ForecastHandler:
         )
         return total_days, f"{duration_text} ({total_days:,} days total)"
 
-    #TODO manual review of ForecastHandler._report_date_label docstring
+    #TODO DOC manual review of ForecastHandler._report_date_label docstring
     def _report_date_label(self, value):
         """
-        TODO one-line description of ForecastHandler._report_date_label.
+        #TODO DOC one-line description of ForecastHandler._report_date_label.
 
-        TODO multi-line description of ForecastHandler._report_date_label.
-        TODO explain how ForecastHandler._report_date_label participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._report_date_label.
+        #TODO DOC explain how ForecastHandler._report_date_label participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         value : object
-            TODO one-line description of ForecastHandler._report_date_label.value.
+            #TODO DOC one-line description of ForecastHandler._report_date_label.value.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._report_date_label.
+            #TODO DOC one-line description of return value of ForecastHandler._report_date_label.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._report_date_label.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._report_date_label.
+        - #TODO DOC contract lines for ForecastHandler._report_date_label.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._report_date_label.
 
         @interface-report: show
         """
         return self._report_date_to_datetime(value).strftime("%Y-%m-%d")
 
-    #TODO manual review of ForecastHandler._report_initial_conditions docstring
+    #TODO DOC manual review of ForecastHandler._report_initial_conditions docstring
     def _report_initial_conditions(self, expense_forecast):
         """
-        TODO one-line description of ForecastHandler._report_initial_conditions.
+        #TODO DOC one-line description of ForecastHandler._report_initial_conditions.
 
-        TODO multi-line description of ForecastHandler._report_initial_conditions.
-        TODO explain how ForecastHandler._report_initial_conditions participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._report_initial_conditions.
+        #TODO DOC explain how ForecastHandler._report_initial_conditions participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         expense_forecast : object
-            TODO one-line description of ForecastHandler._report_initial_conditions.expense_forecast.
+            #TODO DOC one-line description of ForecastHandler._report_initial_conditions.expense_forecast.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._report_initial_conditions.
+            #TODO DOC one-line description of return value of ForecastHandler._report_initial_conditions.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._report_initial_conditions.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._report_initial_conditions.
+        - #TODO DOC contract lines for ForecastHandler._report_initial_conditions.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._report_initial_conditions.
 
         @interface-report: show
         """
         return getattr(expense_forecast, "initial_conditions", expense_forecast)
 
-    #TODO manual review of ForecastHandler._report_start_date docstring
+    #TODO DOC manual review of ForecastHandler._report_start_date docstring
     def _report_start_date(self, expense_forecast):
         """
-        TODO one-line description of ForecastHandler._report_start_date.
+        #TODO DOC one-line description of ForecastHandler._report_start_date.
 
-        TODO multi-line description of ForecastHandler._report_start_date.
-        TODO explain how ForecastHandler._report_start_date participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._report_start_date.
+        #TODO DOC explain how ForecastHandler._report_start_date participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         expense_forecast : object
-            TODO one-line description of ForecastHandler._report_start_date.expense_forecast.
+            #TODO DOC one-line description of ForecastHandler._report_start_date.expense_forecast.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._report_start_date.
+            #TODO DOC one-line description of return value of ForecastHandler._report_start_date.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._report_start_date.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._report_start_date.
+        - #TODO DOC contract lines for ForecastHandler._report_start_date.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._report_start_date.
 
         @interface-report: show
         """
@@ -11069,29 +10199,29 @@ class ForecastHandler:
             getattr(initial_conditions, "start_date", None),
         )
 
-    #TODO manual review of ForecastHandler._report_end_date docstring
+    #TODO DOC manual review of ForecastHandler._report_end_date docstring
     def _report_end_date(self, expense_forecast):
         """
-        TODO one-line description of ForecastHandler._report_end_date.
+        #TODO DOC one-line description of ForecastHandler._report_end_date.
 
-        TODO multi-line description of ForecastHandler._report_end_date.
-        TODO explain how ForecastHandler._report_end_date participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._report_end_date.
+        #TODO DOC explain how ForecastHandler._report_end_date participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         expense_forecast : object
-            TODO one-line description of ForecastHandler._report_end_date.expense_forecast.
+            #TODO DOC one-line description of ForecastHandler._report_end_date.expense_forecast.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._report_end_date.
+            #TODO DOC one-line description of return value of ForecastHandler._report_end_date.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._report_end_date.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._report_end_date.
+        - #TODO DOC contract lines for ForecastHandler._report_end_date.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._report_end_date.
 
         @interface-report: show
         """
@@ -11102,29 +10232,29 @@ class ForecastHandler:
             getattr(initial_conditions, "end_date", None),
         )
 
-    #TODO manual review of ForecastHandler._report_forecast_name docstring
+    #TODO DOC manual review of ForecastHandler._report_forecast_name docstring
     def _report_forecast_name(self, expense_forecast):
         """
-        TODO one-line description of ForecastHandler._report_forecast_name.
+        #TODO DOC one-line description of ForecastHandler._report_forecast_name.
 
-        TODO multi-line description of ForecastHandler._report_forecast_name.
-        TODO explain how ForecastHandler._report_forecast_name participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._report_forecast_name.
+        #TODO DOC explain how ForecastHandler._report_forecast_name participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         expense_forecast : object
-            TODO one-line description of ForecastHandler._report_forecast_name.expense_forecast.
+            #TODO DOC one-line description of ForecastHandler._report_forecast_name.expense_forecast.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._report_forecast_name.
+            #TODO DOC one-line description of return value of ForecastHandler._report_forecast_name.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._report_forecast_name.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._report_forecast_name.
+        - #TODO DOC contract lines for ForecastHandler._report_forecast_name.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._report_forecast_name.
 
         @interface-report: show
         """
@@ -11135,29 +10265,29 @@ class ForecastHandler:
             or f"Forecast {expense_forecast.unique_id}"
         )
 
-    #TODO manual review of ForecastHandler._report_account_set docstring
+    #TODO DOC manual review of ForecastHandler._report_account_set docstring
     def _report_account_set(self, expense_forecast):
         """
-        TODO one-line description of ForecastHandler._report_account_set.
+        #TODO DOC one-line description of ForecastHandler._report_account_set.
 
-        TODO multi-line description of ForecastHandler._report_account_set.
-        TODO explain how ForecastHandler._report_account_set participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._report_account_set.
+        #TODO DOC explain how ForecastHandler._report_account_set participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         expense_forecast : object
-            TODO one-line description of ForecastHandler._report_account_set.expense_forecast.
+            #TODO DOC one-line description of ForecastHandler._report_account_set.expense_forecast.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._report_account_set.
+            #TODO DOC one-line description of return value of ForecastHandler._report_account_set.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._report_account_set.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._report_account_set.
+        - #TODO DOC contract lines for ForecastHandler._report_account_set.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._report_account_set.
 
         @interface-report: show
         """
@@ -11168,29 +10298,29 @@ class ForecastHandler:
             getattr(initial_conditions, "initial_account_set", None),
         )
 
-    #TODO manual review of ForecastHandler._report_budget_set docstring
+    #TODO DOC manual review of ForecastHandler._report_budget_set docstring
     def _report_budget_set(self, expense_forecast):
         """
-        TODO one-line description of ForecastHandler._report_budget_set.
+        #TODO DOC one-line description of ForecastHandler._report_budget_set.
 
-        TODO multi-line description of ForecastHandler._report_budget_set.
-        TODO explain how ForecastHandler._report_budget_set participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._report_budget_set.
+        #TODO DOC explain how ForecastHandler._report_budget_set participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         expense_forecast : object
-            TODO one-line description of ForecastHandler._report_budget_set.expense_forecast.
+            #TODO DOC one-line description of ForecastHandler._report_budget_set.expense_forecast.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._report_budget_set.
+            #TODO DOC one-line description of return value of ForecastHandler._report_budget_set.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._report_budget_set.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._report_budget_set.
+        - #TODO DOC contract lines for ForecastHandler._report_budget_set.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._report_budget_set.
 
         @interface-report: show
         """
@@ -11201,29 +10331,29 @@ class ForecastHandler:
             getattr(initial_conditions, "initial_budget_set", None),
         )
 
-    #TODO manual review of ForecastHandler._report_memo_rule_set docstring
+    #TODO DOC manual review of ForecastHandler._report_memo_rule_set docstring
     def _report_memo_rule_set(self, expense_forecast):
         """
-        TODO one-line description of ForecastHandler._report_memo_rule_set.
+        #TODO DOC one-line description of ForecastHandler._report_memo_rule_set.
 
-        TODO multi-line description of ForecastHandler._report_memo_rule_set.
-        TODO explain how ForecastHandler._report_memo_rule_set participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._report_memo_rule_set.
+        #TODO DOC explain how ForecastHandler._report_memo_rule_set participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         expense_forecast : object
-            TODO one-line description of ForecastHandler._report_memo_rule_set.expense_forecast.
+            #TODO DOC one-line description of ForecastHandler._report_memo_rule_set.expense_forecast.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._report_memo_rule_set.
+            #TODO DOC one-line description of return value of ForecastHandler._report_memo_rule_set.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._report_memo_rule_set.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._report_memo_rule_set.
+        - #TODO DOC contract lines for ForecastHandler._report_memo_rule_set.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._report_memo_rule_set.
 
         @interface-report: show
         """
@@ -11234,29 +10364,29 @@ class ForecastHandler:
             getattr(initial_conditions, "initial_memo_rule_set", None),
         )
 
-    #TODO manual review of ForecastHandler._report_milestone_set docstring
+    #TODO DOC manual review of ForecastHandler._report_milestone_set docstring
     def _report_milestone_set(self, expense_forecast):
         """
-        TODO one-line description of ForecastHandler._report_milestone_set.
+        #TODO DOC one-line description of ForecastHandler._report_milestone_set.
 
-        TODO multi-line description of ForecastHandler._report_milestone_set.
-        TODO explain how ForecastHandler._report_milestone_set participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._report_milestone_set.
+        #TODO DOC explain how ForecastHandler._report_milestone_set participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         expense_forecast : object
-            TODO one-line description of ForecastHandler._report_milestone_set.expense_forecast.
+            #TODO DOC one-line description of ForecastHandler._report_milestone_set.expense_forecast.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._report_milestone_set.
+            #TODO DOC one-line description of return value of ForecastHandler._report_milestone_set.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._report_milestone_set.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._report_milestone_set.
+        - #TODO DOC contract lines for ForecastHandler._report_milestone_set.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._report_milestone_set.
 
         @interface-report: show
         """
@@ -11267,61 +10397,61 @@ class ForecastHandler:
             getattr(initial_conditions, "milestone_set", None),
         )
 
-    #TODO manual review of ForecastHandler._empty_report_df docstring
+    #TODO DOC manual review of ForecastHandler._empty_report_df docstring
     @staticmethod
     def _empty_report_df():
         """
-        TODO one-line description of ForecastHandler._empty_report_df.
+        #TODO DOC one-line description of ForecastHandler._empty_report_df.
 
-        TODO multi-line description of ForecastHandler._empty_report_df.
-        TODO explain how ForecastHandler._empty_report_df participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._empty_report_df.
+        #TODO DOC explain how ForecastHandler._empty_report_df participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         None
-            TODO confirm that ForecastHandler._empty_report_df takes no parameters beyond self/cls.
+            #TODO DOC confirm that ForecastHandler._empty_report_df takes no parameters beyond self/cls.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._empty_report_df.
+            #TODO DOC one-line description of return value of ForecastHandler._empty_report_df.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._empty_report_df.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._empty_report_df.
+        - #TODO DOC contract lines for ForecastHandler._empty_report_df.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._empty_report_df.
 
         @interface-report: show
         """
         return pd.DataFrame()
 
-    #TODO manual review of ForecastHandler._report_milestone_table docstring
+    #TODO DOC manual review of ForecastHandler._report_milestone_table docstring
     def _report_milestone_table(self, milestone_set, method_name):
         """
-        TODO one-line description of ForecastHandler._report_milestone_table.
+        #TODO DOC one-line description of ForecastHandler._report_milestone_table.
 
-        TODO multi-line description of ForecastHandler._report_milestone_table.
-        TODO explain how ForecastHandler._report_milestone_table participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._report_milestone_table.
+        #TODO DOC explain how ForecastHandler._report_milestone_table participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         milestone_set : object
-            TODO one-line description of ForecastHandler._report_milestone_table.milestone_set.
+            #TODO DOC one-line description of ForecastHandler._report_milestone_table.milestone_set.
 
         method_name : object
-            TODO one-line description of ForecastHandler._report_milestone_table.method_name.
+            #TODO DOC one-line description of ForecastHandler._report_milestone_table.method_name.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._report_milestone_table.
+            #TODO DOC one-line description of return value of ForecastHandler._report_milestone_table.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._report_milestone_table.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._report_milestone_table.
+        - #TODO DOC contract lines for ForecastHandler._report_milestone_table.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._report_milestone_table.
 
         @interface-report: show
         """
@@ -11329,32 +10459,32 @@ class ForecastHandler:
             return self._empty_report_df()
         return getattr(milestone_set, method_name)()
 
-    #TODO manual review of ForecastHandler._report_milestone_results_df docstring
+    #TODO DOC manual review of ForecastHandler._report_milestone_results_df docstring
     def _report_milestone_results_df(self, expense_forecast, result_type):
         """
-        TODO one-line description of ForecastHandler._report_milestone_results_df.
+        #TODO DOC one-line description of ForecastHandler._report_milestone_results_df.
 
-        TODO multi-line description of ForecastHandler._report_milestone_results_df.
-        TODO explain how ForecastHandler._report_milestone_results_df participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._report_milestone_results_df.
+        #TODO DOC explain how ForecastHandler._report_milestone_results_df participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         expense_forecast : object
-            TODO one-line description of ForecastHandler._report_milestone_results_df.expense_forecast.
+            #TODO DOC one-line description of ForecastHandler._report_milestone_results_df.expense_forecast.
 
         result_type : object
-            TODO one-line description of ForecastHandler._report_milestone_results_df.result_type.
+            #TODO DOC one-line description of ForecastHandler._report_milestone_results_df.result_type.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._report_milestone_results_df.
+            #TODO DOC one-line description of return value of ForecastHandler._report_milestone_results_df.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._report_milestone_results_df.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._report_milestone_results_df.
+        - #TODO DOC contract lines for ForecastHandler._report_milestone_results_df.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._report_milestone_results_df.
 
         @interface-report: show
         """
@@ -11391,29 +10521,29 @@ class ForecastHandler:
             )
         return pd.DataFrame(rows)
 
-    #TODO manual review of ForecastHandler._report_confirmed_df docstring
+    #TODO DOC manual review of ForecastHandler._report_confirmed_df docstring
     def _report_confirmed_df(self, expense_forecast):
         """
-        TODO one-line description of ForecastHandler._report_confirmed_df.
+        #TODO DOC one-line description of ForecastHandler._report_confirmed_df.
 
-        TODO multi-line description of ForecastHandler._report_confirmed_df.
-        TODO explain how ForecastHandler._report_confirmed_df participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._report_confirmed_df.
+        #TODO DOC explain how ForecastHandler._report_confirmed_df participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         expense_forecast : object
-            TODO one-line description of ForecastHandler._report_confirmed_df.expense_forecast.
+            #TODO DOC one-line description of ForecastHandler._report_confirmed_df.expense_forecast.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._report_confirmed_df.
+            #TODO DOC one-line description of return value of ForecastHandler._report_confirmed_df.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._report_confirmed_df.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._report_confirmed_df.
+        - #TODO DOC contract lines for ForecastHandler._report_confirmed_df.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._report_confirmed_df.
 
         @interface-report: show
         """
@@ -11428,29 +10558,29 @@ class ForecastHandler:
 
         return pd.DataFrame(columns=["Date", "Priority", "Amount", "Memo"])
 
-    #TODO manual review of ForecastHandler._report_dates_for_plot docstring
+    #TODO DOC manual review of ForecastHandler._report_dates_for_plot docstring
     def _report_dates_for_plot(self, expense_forecast):
         """
-        TODO one-line description of ForecastHandler._report_dates_for_plot.
+        #TODO DOC one-line description of ForecastHandler._report_dates_for_plot.
 
-        TODO multi-line description of ForecastHandler._report_dates_for_plot.
-        TODO explain how ForecastHandler._report_dates_for_plot participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._report_dates_for_plot.
+        #TODO DOC explain how ForecastHandler._report_dates_for_plot participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         expense_forecast : object
-            TODO one-line description of ForecastHandler._report_dates_for_plot.expense_forecast.
+            #TODO DOC one-line description of ForecastHandler._report_dates_for_plot.expense_forecast.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._report_dates_for_plot.
+            #TODO DOC one-line description of return value of ForecastHandler._report_dates_for_plot.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._report_dates_for_plot.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._report_dates_for_plot.
+        - #TODO DOC contract lines for ForecastHandler._report_dates_for_plot.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._report_dates_for_plot.
 
         @interface-report: show
         """
@@ -11459,29 +10589,29 @@ class ForecastHandler:
             for d in expense_forecast.forecast_df["Date"]
         ]
 
-    #TODO manual review of ForecastHandler._decorate_report_plot docstring
+    #TODO DOC manual review of ForecastHandler._decorate_report_plot docstring
     def _decorate_report_plot(self, expense_forecast):
         """
-        TODO one-line description of ForecastHandler._decorate_report_plot.
+        #TODO DOC one-line description of ForecastHandler._decorate_report_plot.
 
-        TODO multi-line description of ForecastHandler._decorate_report_plot.
-        TODO explain how ForecastHandler._decorate_report_plot participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler._decorate_report_plot.
+        #TODO DOC explain how ForecastHandler._decorate_report_plot participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         expense_forecast : object
-            TODO one-line description of ForecastHandler._decorate_report_plot.expense_forecast.
+            #TODO DOC one-line description of ForecastHandler._decorate_report_plot.expense_forecast.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler._decorate_report_plot.
+            #TODO DOC one-line description of return value of ForecastHandler._decorate_report_plot.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler._decorate_report_plot.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler._decorate_report_plot.
+        - #TODO DOC contract lines for ForecastHandler._decorate_report_plot.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._decorate_report_plot.
 
         @interface-report: show
         """
@@ -11520,37 +10650,37 @@ class ForecastHandler:
         )
         plt.xticks(rotation=90)
 
-    #TODO manual review of ForecastHandler.plotMilestoneDates docstring
+    #TODO DOC manual review of ForecastHandler.plotMilestoneDates docstring
     def plotMilestoneDates(
         self, expense_forecast, output_path, plot_colors=["red", "blue", "purple"]
     ):
         """
-        TODO one-line description of ForecastHandler.plotMilestoneDates.
+        #TODO DOC one-line description of ForecastHandler.plotMilestoneDates.
 
-        TODO multi-line description of ForecastHandler.plotMilestoneDates.
-        TODO explain how ForecastHandler.plotMilestoneDates participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler.plotMilestoneDates.
+        #TODO DOC explain how ForecastHandler.plotMilestoneDates participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         expense_forecast : object
-            TODO one-line description of ForecastHandler.plotMilestoneDates.expense_forecast.
+            #TODO DOC one-line description of ForecastHandler.plotMilestoneDates.expense_forecast.
 
         output_path : object
-            TODO one-line description of ForecastHandler.plotMilestoneDates.output_path.
+            #TODO DOC one-line description of ForecastHandler.plotMilestoneDates.output_path.
 
         plot_colors : object
-            TODO one-line description of ForecastHandler.plotMilestoneDates.plot_colors.
+            #TODO DOC one-line description of ForecastHandler.plotMilestoneDates.plot_colors.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler.plotMilestoneDates.
+            #TODO DOC one-line description of return value of ForecastHandler.plotMilestoneDates.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler.plotMilestoneDates.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler.plotMilestoneDates.
+        - #TODO DOC contract lines for ForecastHandler.plotMilestoneDates.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler.plotMilestoneDates.
 
         @interface-report: show
         """
@@ -11626,7 +10756,7 @@ class ForecastHandler:
         plt.savefig(output_path)
         matplotlib.pyplot.close()
 
-    #TODO manual review of ForecastHandler.plotAccountTypeTotals docstring
+    #TODO DOC manual review of ForecastHandler.plotAccountTypeTotals docstring
     def plotAccountTypeTotals(
         self,
         expense_forecast,
@@ -11635,35 +10765,35 @@ class ForecastHandler:
         linestyle="solid",
     ):
         """
-        TODO one-line description of ForecastHandler.plotAccountTypeTotals.
+        #TODO DOC one-line description of ForecastHandler.plotAccountTypeTotals.
 
-        TODO multi-line description of ForecastHandler.plotAccountTypeTotals.
-        TODO explain how ForecastHandler.plotAccountTypeTotals participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler.plotAccountTypeTotals.
+        #TODO DOC explain how ForecastHandler.plotAccountTypeTotals participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         expense_forecast : object
-            TODO one-line description of ForecastHandler.plotAccountTypeTotals.expense_forecast.
+            #TODO DOC one-line description of ForecastHandler.plotAccountTypeTotals.expense_forecast.
 
         output_path : object
-            TODO one-line description of ForecastHandler.plotAccountTypeTotals.output_path.
+            #TODO DOC one-line description of ForecastHandler.plotAccountTypeTotals.output_path.
 
         line_color_cycle_list : object
-            TODO one-line description of ForecastHandler.plotAccountTypeTotals.line_color_cycle_list.
+            #TODO DOC one-line description of ForecastHandler.plotAccountTypeTotals.line_color_cycle_list.
 
         linestyle : object
-            TODO one-line description of ForecastHandler.plotAccountTypeTotals.linestyle.
+            #TODO DOC one-line description of ForecastHandler.plotAccountTypeTotals.linestyle.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler.plotAccountTypeTotals.
+            #TODO DOC one-line description of return value of ForecastHandler.plotAccountTypeTotals.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler.plotAccountTypeTotals.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler.plotAccountTypeTotals.
+        - #TODO DOC contract lines for ForecastHandler.plotAccountTypeTotals.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler.plotAccountTypeTotals.
 
         @interface-report: show
         """
@@ -11710,7 +10840,7 @@ class ForecastHandler:
         plt.savefig(output_path, bbox_inches="tight")
         matplotlib.pyplot.close()
 
-    #TODO manual review of ForecastHandler.plotNetGainLoss docstring
+    #TODO DOC manual review of ForecastHandler.plotNetGainLoss docstring
     def plotNetGainLoss(
         self,
         expense_forecast,
@@ -11719,35 +10849,35 @@ class ForecastHandler:
         linestyle="solid",
     ):
         """
-        TODO one-line description of ForecastHandler.plotNetGainLoss.
+        #TODO DOC one-line description of ForecastHandler.plotNetGainLoss.
 
-        TODO multi-line description of ForecastHandler.plotNetGainLoss.
-        TODO explain how ForecastHandler.plotNetGainLoss participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler.plotNetGainLoss.
+        #TODO DOC explain how ForecastHandler.plotNetGainLoss participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         expense_forecast : object
-            TODO one-line description of ForecastHandler.plotNetGainLoss.expense_forecast.
+            #TODO DOC one-line description of ForecastHandler.plotNetGainLoss.expense_forecast.
 
         output_path : object
-            TODO one-line description of ForecastHandler.plotNetGainLoss.output_path.
+            #TODO DOC one-line description of ForecastHandler.plotNetGainLoss.output_path.
 
         line_color_cycle_list : object
-            TODO one-line description of ForecastHandler.plotNetGainLoss.line_color_cycle_list.
+            #TODO DOC one-line description of ForecastHandler.plotNetGainLoss.line_color_cycle_list.
 
         linestyle : object
-            TODO one-line description of ForecastHandler.plotNetGainLoss.linestyle.
+            #TODO DOC one-line description of ForecastHandler.plotNetGainLoss.linestyle.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler.plotNetGainLoss.
+            #TODO DOC one-line description of return value of ForecastHandler.plotNetGainLoss.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler.plotNetGainLoss.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler.plotNetGainLoss.
+        - #TODO DOC contract lines for ForecastHandler.plotNetGainLoss.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler.plotNetGainLoss.
 
         @interface-report: show
         """
@@ -11770,7 +10900,7 @@ class ForecastHandler:
         plt.savefig(output_path, bbox_inches="tight")
         matplotlib.pyplot.close()
 
-    #TODO manual review of ForecastHandler.plotNetWorth docstring
+    #TODO DOC manual review of ForecastHandler.plotNetWorth docstring
     def plotNetWorth(
         self,
         expense_forecast,
@@ -11779,35 +10909,35 @@ class ForecastHandler:
         linestyle="solid",
     ):
         """
-        TODO one-line description of ForecastHandler.plotNetWorth.
+        #TODO DOC one-line description of ForecastHandler.plotNetWorth.
 
-        TODO multi-line description of ForecastHandler.plotNetWorth.
-        TODO explain how ForecastHandler.plotNetWorth participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler.plotNetWorth.
+        #TODO DOC explain how ForecastHandler.plotNetWorth participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         expense_forecast : object
-            TODO one-line description of ForecastHandler.plotNetWorth.expense_forecast.
+            #TODO DOC one-line description of ForecastHandler.plotNetWorth.expense_forecast.
 
         output_path : object
-            TODO one-line description of ForecastHandler.plotNetWorth.output_path.
+            #TODO DOC one-line description of ForecastHandler.plotNetWorth.output_path.
 
         line_color_cycle_list : object
-            TODO one-line description of ForecastHandler.plotNetWorth.line_color_cycle_list.
+            #TODO DOC one-line description of ForecastHandler.plotNetWorth.line_color_cycle_list.
 
         linestyle : object
-            TODO one-line description of ForecastHandler.plotNetWorth.linestyle.
+            #TODO DOC one-line description of ForecastHandler.plotNetWorth.linestyle.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler.plotNetWorth.
+            #TODO DOC one-line description of return value of ForecastHandler.plotNetWorth.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler.plotNetWorth.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler.plotNetWorth.
+        - #TODO DOC contract lines for ForecastHandler.plotNetWorth.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler.plotNetWorth.
 
         @interface-report: show
         """
@@ -11830,36 +10960,36 @@ class ForecastHandler:
         plt.savefig(output_path, bbox_inches="tight")
         matplotlib.pyplot.close()
 
-    #TODO manual review of ForecastHandler.plotAll docstring
+    #TODO DOC manual review of ForecastHandler.plotAll docstring
     def plotAll(
         self,
         expense_forecast,
         output_path,
     ):
         """
-        TODO one-line description of ForecastHandler.plotAll.
+        #TODO DOC one-line description of ForecastHandler.plotAll.
 
-        TODO multi-line description of ForecastHandler.plotAll.
-        TODO explain how ForecastHandler.plotAll participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler.plotAll.
+        #TODO DOC explain how ForecastHandler.plotAll participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         expense_forecast : object
-            TODO one-line description of ForecastHandler.plotAll.expense_forecast.
+            #TODO DOC one-line description of ForecastHandler.plotAll.expense_forecast.
 
         output_path : object
-            TODO one-line description of ForecastHandler.plotAll.output_path.
+            #TODO DOC one-line description of ForecastHandler.plotAll.output_path.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler.plotAll.
+            #TODO DOC one-line description of return value of ForecastHandler.plotAll.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler.plotAll.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler.plotAll.
+        - #TODO DOC contract lines for ForecastHandler.plotAll.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler.plotAll.
 
         @interface-report: show
         """
@@ -11909,35 +11039,35 @@ class ForecastHandler:
         plt.savefig(output_path)
         matplotlib.pyplot.close()
 
-    #TODO manual review of ForecastHandler.plotMarginalInterest docstring
+    #TODO DOC manual review of ForecastHandler.plotMarginalInterest docstring
     def plotMarginalInterest(self, expense_forecast, output_path, linestyle="solid"):
         """
-        TODO one-line description of ForecastHandler.plotMarginalInterest.
+        #TODO DOC one-line description of ForecastHandler.plotMarginalInterest.
 
-        TODO multi-line description of ForecastHandler.plotMarginalInterest.
-        TODO explain how ForecastHandler.plotMarginalInterest participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler.plotMarginalInterest.
+        #TODO DOC explain how ForecastHandler.plotMarginalInterest participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         expense_forecast : object
-            TODO one-line description of ForecastHandler.plotMarginalInterest.expense_forecast.
+            #TODO DOC one-line description of ForecastHandler.plotMarginalInterest.expense_forecast.
 
         output_path : object
-            TODO one-line description of ForecastHandler.plotMarginalInterest.output_path.
+            #TODO DOC one-line description of ForecastHandler.plotMarginalInterest.output_path.
 
         linestyle : object
-            TODO one-line description of ForecastHandler.plotMarginalInterest.linestyle.
+            #TODO DOC one-line description of ForecastHandler.plotMarginalInterest.linestyle.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler.plotMarginalInterest.
+            #TODO DOC one-line description of return value of ForecastHandler.plotMarginalInterest.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler.plotMarginalInterest.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler.plotMarginalInterest.
+        - #TODO DOC contract lines for ForecastHandler.plotMarginalInterest.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler.plotMarginalInterest.
 
         @interface-report: show
         """
@@ -11957,32 +11087,32 @@ class ForecastHandler:
         plt.savefig(output_path, bbox_inches="tight")
         matplotlib.pyplot.close()
 
-    #TODO manual review of ForecastHandler.plotSankeyDiagram docstring
+    #TODO DOC manual review of ForecastHandler.plotSankeyDiagram docstring
     def plotSankeyDiagram(self, expense_forecast, output_path):
         """
-        TODO one-line description of ForecastHandler.plotSankeyDiagram.
+        #TODO DOC one-line description of ForecastHandler.plotSankeyDiagram.
 
-        TODO multi-line description of ForecastHandler.plotSankeyDiagram.
-        TODO explain how ForecastHandler.plotSankeyDiagram participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler.plotSankeyDiagram.
+        #TODO DOC explain how ForecastHandler.plotSankeyDiagram participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         expense_forecast : object
-            TODO one-line description of ForecastHandler.plotSankeyDiagram.expense_forecast.
+            #TODO DOC one-line description of ForecastHandler.plotSankeyDiagram.expense_forecast.
 
         output_path : object
-            TODO one-line description of ForecastHandler.plotSankeyDiagram.output_path.
+            #TODO DOC one-line description of ForecastHandler.plotSankeyDiagram.output_path.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler.plotSankeyDiagram.
+            #TODO DOC one-line description of return value of ForecastHandler.plotSankeyDiagram.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler.plotSankeyDiagram.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler.plotSankeyDiagram.
+        - #TODO DOC contract lines for ForecastHandler.plotSankeyDiagram.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler.plotSankeyDiagram.
 
         @interface-report: show
         """
@@ -12129,822 +11259,6 @@ class ForecastHandler:
         fig.update_layout(title_text=self._report_forecast_name(expense_forecast), font_size=10)
         fig.write_image(output_path)
 
-    #TODO manual review of ForecastHandler.generateHTMLReport docstring
-    # def generateHTMLReport(self, E, output_dir="./", parent_report_path=None):
-    #     """
-    #     TODO one-line description of ForecastHandler.generateHTMLReport.
-
-    #     TODO multi-line description of ForecastHandler.generateHTMLReport.
-    #     TODO explain how ForecastHandler.generateHTMLReport participates in this module.
-    #     TODO document important state, validation, or serialization behavior.
-
-    #     Parameters
-    #     ----------
-    #     E : object
-    #         TODO one-line description of ForecastHandler.generateHTMLReport.E.
-
-    #     output_dir : object
-    #         TODO one-line description of ForecastHandler.generateHTMLReport.output_dir.
-
-    #     parent_report_path : object
-    #         TODO one-line description of ForecastHandler.generateHTMLReport.parent_report_path.
-
-    #     Returns
-    #     -------
-    #     object
-    #         TODO one-line description of return value of ForecastHandler.generateHTMLReport.
-
-    #     Contract
-    #     --------
-    #     - #TODO contract lines for ForecastHandler.generateHTMLReport.
-    #     - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler.generateHTMLReport.
-
-    #     @interface-report: show
-    #     """
-    #     start_date = self._report_date_label(self._report_start_date(E))
-    #     end_date = self._report_date_label(self._report_end_date(E))
-
-    #     forecast_failed = (
-    #         self._report_date_to_datetime(E.forecast_df.tail(1).Date.iat[0]).date()
-    #         != self._report_date_to_datetime(self._report_end_date(E)).date()
-    #     )
-
-    #     report_id = E.unique_id
-    #     output_file_name = "Forecast_" + str(report_id)
-
-    #     start_ts = getattr(E, "start_ts", None)
-    #     end_ts = getattr(E, "end_ts", None)
-    #     if start_ts is not None and end_ts is not None:
-    #         start_ts__datetime = self._report_date_to_datetime(start_ts)
-    #         end_ts__datetime = self._report_date_to_datetime(end_ts)
-    #         simulation_seconds = max(
-    #             0, (end_ts__datetime - start_ts__datetime).total_seconds()
-    #         )
-    #         runtime_text = (
-    #             "This forecast started at "
-    #             + str(start_ts__datetime)
-    #             + ", took "
-    #             + f"{simulation_seconds:,.3f} seconds"
-    #             + " to complete, and finished at "
-    #             + str(end_ts__datetime)
-    #             + "."
-    #         )
-    #     else:
-    #         runtime_text = "Runtime timing was not recorded for this forecast."
-
-    #     if parent_report_path is not None:
-    #         parent_report_text = (
-    #             """This report was generated alongside some others. See <a href=\""""
-    #             + parent_report_path
-    #             + """\">this page</a> for information about related forecasts."""
-    #         )
-    #     else:
-    #         parent_report_text = ""
-
-    #     summary_text = runtime_text
-
-    #     account_set = self._report_account_set(E)
-    #     budget_set = self._report_budget_set(E)
-    #     memo_rule_set = self._report_memo_rule_set(E)
-    #     milestone_set = self._report_milestone_set(E)
-
-    #     accounts_table = account_set.getAccounts().copy() if account_set is not None else None
-    #     account_text = (
-    #         """
-    #     The initial conditions and account boundaries are defined as:"""
-    #         + (
-    #             accounts_table.to_html(
-    #                 formatters={"Balance": lambda value: f"{float(value):,.2f}"}
-    #             )
-    #             if accounts_table is not None
-    #             else ""
-    #         )
-    #         + """
-    #     """
-    #     )
-
-    #     budget_set_text = (
-    #         """
-    #     These transactions are considered for analysis:"""
-    #         + (budget_set.getLineItems().to_html() if budget_set is not None else "")
-    #         + """
-    #     """
-    #     )
-
-    #     memo_rules_table = memo_rule_set.getMemoRules().copy() if memo_rule_set is not None else None
-    #     if memo_rules_table is not None and "Transaction_Priority" in memo_rules_table:
-    #         memo_rules_table["Transaction_Priority"] = (
-    #             memo_rules_table["Transaction_Priority"].astype(int)
-    #         )
-    #     memo_rule_text = (
-    #         """
-    #     These decision rules are used:"""
-    #         + (memo_rules_table.to_html() if memo_rules_table is not None else "")
-    #         + """
-    #     """
-    #     )
-
-    #     account_milestone_text = (
-    #         """
-    #     These account milestones are defined:"""
-    #         + self._report_milestone_table(milestone_set, "getAccountMilestonesDF").to_html()
-    #         + """
-    #     """
-    #     )
-
-    #     memo_milestone_text = (
-    #         """
-    #     These memo milestones are defined:"""
-    #         + self._report_milestone_table(milestone_set, "getMemoMilestonesDF").to_html()
-    #         + """
-    #     """
-    #     )
-
-    #     composite_milestone_text = (
-    #         """
-    #     These composite milestones are defined:"""
-    #         + self._report_milestone_table(milestone_set, "getCompositeMilestonesDF").to_html()
-    #         + """
-    #     """
-    #     )
-
-    #     initial_networth = round(E.forecast_df.head(1)["Net Worth"].iat[0], 2)
-    #     final_networth = round(E.forecast_df.tail(1)["Net Worth"].iat[0], 2)
-    #     networth_delta = round(final_networth - initial_networth, 2)
-    #     num_days, forecast_duration_text = self._report_forecast_duration(
-    #         self._report_start_date(E), self._report_end_date(E)
-    #     )
-    #     averaging_days = max(1, num_days)
-    #     avg_networth_change = round(networth_delta / float(averaging_days), 2)
-    #     rose_or_fell = "rose" if networth_delta >= 0 else "fell"
-
-    #     networth_text = (
-    #         """
-    #     Net Worth began at """
-    #         + self._report_amount(initial_networth)
-    #         + """ and """
-    #         + rose_or_fell
-    #         + """ to """
-    #         + self._report_amount(final_networth)
-    #         + """ over """
-    #         + forecast_duration_text
-    #         + """, averaging """
-    #         + self._report_amount(avg_networth_change)
-    #         + """ per day.
-    #     """
-    #     )
-
-    #     initial_loan_total = round(E.forecast_df.head(1)["Loan Total"].iat[0], 2)
-    #     final_loan_total = round(E.forecast_df.tail(1)["Loan Total"].iat[0], 2)
-    #     loan_delta = round(final_loan_total - initial_loan_total, 2)
-    #     initial_cc_debt_total = round(E.forecast_df.head(1)["CC Debt Total"].iat[0], 2)
-    #     final_cc_debt_total = round(E.forecast_df.tail(1)["CC Debt Total"].iat[0], 2)
-    #     cc_debt_delta = round(final_cc_debt_total - initial_cc_debt_total, 2)
-    #     initial_liquid_total = round(E.forecast_df.head(1)["Liquid Total"].iat[0], 2)
-    #     final_liquid_total = round(E.forecast_df.tail(1)["Liquid Total"].iat[0], 2)
-    #     liquid_delta = round(final_liquid_total - initial_liquid_total, 2)
-
-    #     avg_loan_delta = round(loan_delta / averaging_days, 2)
-    #     avg_cc_debt_delta = round(cc_debt_delta / averaging_days, 2)
-    #     avg_liquid_delta = round(liquid_delta / averaging_days, 2)
-
-    #     investment_names = []
-    #     if accounts_table is not None:
-    #         investment_names = accounts_table.loc[
-    #             accounts_table.Account_Type == "investment", "Name"
-    #         ].tolist()
-    #     investment_names = [
-    #         name for name in investment_names if name in E.forecast_df.columns
-    #     ]
-    #     investment_total = (
-    #         E.forecast_df[investment_names].sum(axis=1)
-    #         if investment_names
-    #         else pd.Series(0.0, index=E.forecast_df.index)
-    #     )
-    #     initial_investment_total = round(investment_total.iloc[0], 2)
-    #     final_investment_total = round(investment_total.iloc[-1], 2)
-    #     investment_delta = round(
-    #         final_investment_total - initial_investment_total, 2
-    #     )
-    #     avg_investment_delta = round(investment_delta / averaging_days, 2)
-
-    #     account_type_text = (
-    #         """
-    #     Loan debt began at """
-    #         + self._report_amount(initial_loan_total)
-    #         + """ and """
-    #         + ("rose" if avg_loan_delta >= 0 else "fell")
-    #         + """ to """
-    #         + self._report_amount(final_loan_total)
-    #         + """ over """
-    #         + forecast_duration_text
-    #         + """, averaging """
-    #         + self._report_amount(avg_loan_delta)
-    #         + """ per day.
-    #     <br><br>
-    #     Credit card debt began at """
-    #         + self._report_amount(initial_cc_debt_total)
-    #         + """ and """
-    #         + ("rose" if avg_cc_debt_delta >= 0 else "fell")
-    #         + """ to """
-    #         + self._report_amount(final_cc_debt_total)
-    #         + """ over """
-    #         + forecast_duration_text
-    #         + """, averaging """
-    #         + self._report_amount(avg_cc_debt_delta)
-    #         + """ per day.
-    #     <br><br>
-    #     Liquid cash began at """
-    #         + self._report_amount(initial_liquid_total)
-    #         + """ and """
-    #         + ("rose" if avg_liquid_delta >= 0 else "fell")
-    #         + """ to """
-    #         + self._report_amount(final_liquid_total)
-    #         + """ over """
-    #         + forecast_duration_text
-    #         + """, averaging """
-    #         + self._report_amount(avg_liquid_delta)
-    #         + """ per day.
-    #     <br><br>
-    #     Investments began at """
-    #         + self._report_amount(initial_investment_total)
-    #         + """ and """
-    #         + ("rose" if investment_delta >= 0 else "fell")
-    #         + """ to """
-    #         + self._report_amount(final_investment_total)
-    #         + """ over """
-    #         + forecast_duration_text
-    #         + """, averaging """
-    #         + self._report_amount(avg_investment_delta)
-    #         + """ per day.
-    #     """
-    #     )
-
-    #     total_gain = round(sum(E.forecast_df["Net Gain"]), 2)
-    #     avg_daily_gain = round(total_gain / averaging_days, 2)
-    #     total_loss = round(sum(E.forecast_df["Net Loss"]), 2)
-    #     avg_daily_loss = round(total_loss / averaging_days, 2)
-
-    #     net_gain_loss_text = (
-    #         "Total gain was "
-    #         + self._report_amount(total_gain)
-    #         + " over "
-    #         + forecast_duration_text
-    #         + ", averaging "
-    #         + self._report_amount(avg_daily_gain)
-    #         + " per day.<br><br>"
-    #     )
-    #     net_gain_loss_text += (
-    #         "Total loss was "
-    #         + str(f"-${float(total_loss):,}")
-    #         + " over "
-    #         + forecast_duration_text
-    #         + ", averaging "
-    #         + str(f"-${float(avg_daily_loss):,}")
-    #         + " per day."
-    #     )
-
-    #     total_interest_accrued = round(sum(E.forecast_df["Marginal Interest"]), 2)
-    #     avg_interest_accrued = round(total_interest_accrued / averaging_days, 2)
-
-    #     interest_text = (
-    #         "Total interest accrued was "
-    #         + self._report_amount(total_interest_accrued)
-    #         + " over "
-    #         + forecast_duration_text
-    #         + ", averaging "
-    #         + self._report_amount(avg_interest_accrued)
-    #         + " per day.<br>"
-    #     )
-    #     interest_text += "This plot shows the new interest by day, not the total interest at a given time."
-
-    #     cc_interest_sel_vec = [
-    #         "cc interest" in str(m).lower() for m in E.forecast_df.Memo
-    #     ]
-    #     interest_rows_df = E.forecast_df.loc[cc_interest_sel_vec]
-    #     interest_table_to_display_df = pd.DataFrame(interest_rows_df["Date"])
-    #     interest_table_to_display_df["Total CC Interest"] = 0.0
-    #     for index, row in interest_rows_df.iterrows():
-    #         memo_line = str(row.Memo)
-    #         memo_line_items = memo_line.split(";")
-    #         for memo_line_item in memo_line_items:
-    #             memo_line_item = memo_line_item.strip()
-    #             if "cc interest" not in memo_line_item.lower():
-    #                 continue
-
-    #             value_match = re.search(
-    #                 "\\(([A-Za-z0-9_ :]*) ([-+]?\\$.*)\\)$", memo_line_item
-    #             )
-    #             if value_match is None:
-    #                 continue
-    #             line_item_value_string = value_match.group(2)
-    #             line_item_value_string = (
-    #                 line_item_value_string.replace("(", "")
-    #                 .replace(")", "")
-    #                 .replace("$", "")
-    #             )
-    #             line_item_value = float(line_item_value_string)
-    #             interest_table_to_display_df.loc[
-    #                 index, "Total CC Interest"
-    #             ] += line_item_value
-    #     interest_table_html = interest_table_to_display_df.to_html()
-
-    #     am_result_df = self._report_milestone_results_df(E, "Account")
-    #     mm_result_df = self._report_milestone_results_df(E, "Memo")
-    #     cm_result_df = self._report_milestone_results_df(E, "Composite")
-
-    #     end_date_datetime = self._report_date_to_datetime(self._report_end_date(E))
-    #     achieved_am_count = (
-    #         am_result_df[am_result_df.Date < end_date_datetime].shape[0]
-    #         if "Date" in am_result_df.columns
-    #         else 0
-    #     )
-    #     achieved_mm_count = (
-    #         mm_result_df[mm_result_df.Date < end_date_datetime].shape[0]
-    #         if "Date" in mm_result_df.columns
-    #         else 0
-    #     )
-    #     achieved_cm_count = (
-    #         cm_result_df[cm_result_df.Date < end_date_datetime].shape[0]
-    #         if "Date" in cm_result_df.columns
-    #         else 0
-    #     )
-    #     total_milestone_count = (
-    #         am_result_df.shape[0] + mm_result_df.shape[0] + cm_result_df.shape[0]
-    #     )
-    #     achieved_milestone_count = (
-    #         achieved_am_count + achieved_mm_count + achieved_cm_count
-    #     )
-
-    #     milestone_text = (
-    #         str(total_milestone_count)
-    #         + " milestones were defined, and "
-    #         + str(achieved_milestone_count)
-    #         + " were achieved before the end of the forecast.<br>"
-    #     )
-    #     milestone_text += "Note that unachieved milestones are displayed on the last day of the forecast."
-
-    #     transaction_schedule_text = "Transactions are displayed below."
-    #     confirmed_df = self._report_confirmed_df(E)
-    #     if "Priority" in confirmed_df.columns:
-    #         p2_plus_txns_html_table = confirmed_df[confirmed_df.Priority >= 2].to_html()
-    #     else:
-    #         p2_plus_txns_html_table = confirmed_df.to_html()
-
-    #     payment_rows = []
-    #     account_type_by_name = {}
-    #     if account_set is not None:
-    #         account_type_by_name = dict(
-    #             zip(account_set.getAccounts()["Name"], account_set.getAccounts()["Account_Type"])
-    #         )
-    #     if (
-    #         memo_rule_set is not None
-    #         and "Priority" in confirmed_df.columns
-    #         and "Memo" in confirmed_df.columns
-    #     ):
-    #         for _, confirmed_row in confirmed_df[confirmed_df.Priority >= 2].iterrows():
-    #             memo_rule = memo_rule_set.findMatchingMemoRule(
-    #                 confirmed_row.Memo, confirmed_row.Priority
-    #             )
-    #             account_to_type = account_type_by_name.get(memo_rule.account_to)
-    #             if account_to_type == "credit":
-    #                 payment_rows.append(
-    #                     {
-    #                         "Payment Type": "Credit Card",
-    #                         "Date": confirmed_row.Date,
-    #                         "Memo": confirmed_row.Memo,
-    #                         "Amount": confirmed_row.Amount,
-    #                     }
-    #                 )
-    #             elif account_to_type == "loan" or memo_rule.account_to == "ALL_LOANS":
-    #                 payment_rows.append(
-    #                     {
-    #                         "Payment Type": "Loan",
-    #                         "Date": confirmed_row.Date,
-    #                         "Memo": confirmed_row.Memo,
-    #                         "Amount": confirmed_row.Amount,
-    #                     }
-    #                 )
-
-    #     for _, row in E.forecast_df.iterrows():
-    #         memo_line_items = str(row.Memo).split(";") + str(row["Memo Directives"]).split(";")
-    #         for memo_line_item in memo_line_items:
-    #             memo_line_item_lower = memo_line_item.lower()
-    #             if (
-    #                 "loan min payment" in memo_line_item_lower
-    #                 or "additional loan payment" in memo_line_item_lower
-    #                 or "addtl loan payment" in memo_line_item_lower
-    #             ):
-    #                 payment_rows.append(
-    #                     {"Payment Type": "Loan", "Date": row.Date, "Memo": memo_line_item}
-    #                 )
-    #             elif (
-    #                 "cc min payment" in memo_line_item_lower
-    #                 or "additional cc payment" in memo_line_item_lower
-    #                 or "addtl cc payment" in memo_line_item_lower
-    #                 or "cc interest" in memo_line_item_lower
-    #             ):
-    #                 payment_rows.append(
-    #                     {"Payment Type": "Credit Card", "Date": row.Date, "Memo": memo_line_item}
-    #                 )
-
-    #     payments_df = pd.DataFrame(payment_rows)
-    #     cc_payments_html_table = payments_df[
-    #         payments_df.get("Payment Type", pd.Series(dtype=str)) == "Credit Card"
-    #     ].to_html()
-    #     loan_payment_html_table = payments_df[
-    #         payments_df.get("Payment Type", pd.Series(dtype=str)) == "Loan"
-    #     ].to_html()
-
-    #     all_plot_page_text = ""
-    #     sankey_text = ""
-
-    #     output_target = Path(output_dir)
-    #     if output_target.suffix:
-    #         html_output_path = output_target
-    #         image_output_dir = output_target.parent
-    #     else:
-    #         image_output_dir = output_target
-    #         html_output_path = image_output_dir / (output_file_name + ".html")
-
-    #     image_output_dir.mkdir(parents=True, exist_ok=True)
-    #     networth_line_plot_path = report_id + "_networth_line_plot.png"
-    #     net_gain_loss_line_plot_path = report_id + "_net_gain_loss_line_plot.png"
-    #     accounttype_line_plot_path = report_id + "_accounttype_line_plot.png"
-    #     marginal_interest_line_plot_path = (
-    #         report_id + "_marginal_interest_line_plot.png"
-    #     )
-    #     milestone_scatter_plot_path = report_id + "_milestone_scatter_plot.png"
-    #     all_line_plot_path = report_id + "_all_line_plot.png"
-    #     sankey_path = report_id + "_sankey.jpg"
-
-    #     self.plotAll(E, image_output_dir / all_line_plot_path)
-    #     self.plotNetWorth(E, image_output_dir / networth_line_plot_path)
-    #     self.plotAccountTypeTotals(E, image_output_dir / accounttype_line_plot_path)
-    #     self.plotMarginalInterest(E, image_output_dir / marginal_interest_line_plot_path)
-    #     self.plotNetGainLoss(E, image_output_dir / net_gain_loss_line_plot_path)
-    #     self.plotMilestoneDates(E, image_output_dir / milestone_scatter_plot_path)
-    #     try:
-    #         self.plotSankeyDiagram(E, image_output_dir / sankey_path)
-    #     except Exception as exc:
-    #         sankey_text = "Sankey diagram generation failed: " + str(exc)
-    #         sankey_path = ""
-
-    #     left_fail_style_tag = ""
-    #     right_fail_style_tag = ""
-    #     fail_message = ""
-    #     if forecast_failed:
-    #         left_fail_style_tag = '<font color ="red">'
-    #         right_fail_style_tag = "</font>"
-    #         fail_message = "This forecast failed to reach the end. The results may not reflect the effect of non-essential transactions accurately."
-
-    #     html_body = (
-    #         """
-    #     <!DOCTYPE html>
-    #     <html>
-    #     <head>
-    #     <meta name="viewport" content="width=device-width, initial-scale=1">
-    #     <title>Expense Forecast Report #"""
-    #         + str(report_id)
-    #         + """</title>
-    #     <style>
-    #     :root {
-    #       color-scheme: dark;
-    #       --bg: #0b1120;
-    #       --panel: #111827;
-    #       --panel-soft: #172033;
-    #       --panel-strong: #1e293b;
-    #       --border: #334155;
-    #       --border-soft: #243244;
-    #       --text: #e5e7eb;
-    #       --text-muted: #a8b3c7;
-    #       --accent: #38bdf8;
-    #       --accent-strong: #2563eb;
-    #       --accent-soft: #0f3a5c;
-    #       --danger: #fb7185;
-    #     }
-    #     html {
-    #       background: var(--bg);
-    #     }
-    #     body {
-    #       max-width: 1180px;
-    #       margin: 0 auto;
-    #       padding: 40px 32px 64px;
-    #       background: var(--bg);
-    #       color: var(--text);
-    #       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    #       line-height: 1.5;
-    #       text-align: left;
-    #     }
-    #     h1, h3, h4 {
-    #       color: #f8fafc;
-    #     }
-    #     h1 {
-    #       margin-top: 0;
-    #       letter-spacing: 0;
-    #     }
-    #     h3 {
-    #       margin-top: 0;
-    #     }
-    #     p {
-    #       color: var(--text-muted);
-    #     }
-    #     a {
-    #       color: var(--accent);
-    #     }
-    #     .tab {
-    #       display: flex;
-    #       flex-wrap: wrap;
-    #       gap: 6px;
-    #       margin-top: 28px;
-    #       padding: 8px;
-    #       border: 1px solid var(--border);
-    #       border-radius: 8px 8px 0 0;
-    #       background-color: var(--panel);
-    #     }
-    #     .tab button {
-    #       background-color: var(--panel-strong);
-    #       color: var(--text-muted);
-    #       border: 1px solid transparent;
-    #       border-radius: 6px;
-    #       outline: none;
-    #       cursor: pointer;
-    #       padding: 12px 14px;
-    #       transition: background-color 0.2s, border-color 0.2s, color 0.2s;
-    #     }
-    #     .tab button:hover {
-    #       background-color: var(--accent-soft);
-    #       border-color: #1d4ed8;
-    #       color: #f8fafc;
-    #     }
-    #     .tab button.active {
-    #       background-color: var(--accent-strong);
-    #       border-color: #60a5fa;
-    #       color: #ffffff;
-    #     }
-    #     .tabcontent {
-    #       display: none;
-    #       padding: 24px;
-    #       border: 1px solid var(--border);
-    #       border-top: none;
-    #       border-radius: 0 0 8px 8px;
-    #       background: var(--panel);
-    #       box-shadow: 0 18px 60px rgba(0, 0, 0, 0.25);
-    #       overflow-x: auto;
-    #     }
-    #     table {
-    #       border-collapse: collapse;
-    #       margin: 14px 0 24px;
-    #       max-width: 100%;
-    #       color: var(--text);
-    #       background: var(--panel-soft);
-    #       font-size: 0.92rem;
-    #     }
-    #     th, td {
-    #       border: 1px solid var(--border-soft);
-    #       padding: 7px 10px;
-    #       white-space: nowrap;
-    #     }
-    #     th {
-    #       background: var(--panel-strong);
-    #       color: #f8fafc;
-    #       font-weight: 600;
-    #     }
-    #     tr:nth-child(even) td {
-    #       background: rgba(148, 163, 184, 0.06);
-    #     }
-    #     img {
-    #       max-width: 100%;
-    #       height: auto;
-    #       margin: 14px 0 24px;
-    #       border: 1px solid var(--border);
-    #       border-radius: 6px;
-    #       background: #f8fafc;
-    #     }
-    #     font[color="red"] {
-    #       color: var(--danger);
-    #     }
-    #     </style>
-    #     </head>
-    #     <body>
-    #     <h1>"""
-    #         + left_fail_style_tag
-    #         + """Expense Forecast Report #"""
-    #         + str(report_id)
-    #         + right_fail_style_tag
-    #         + """</h1>
-    #     <p>"""
-    #         + start_date
-    #         + """ to """
-    #         + end_date
-    #         + " "
-    #         + left_fail_style_tag
-    #         + fail_message
-    #         + right_fail_style_tag
-    #         + " "
-    #         + parent_report_text
-    #         + """</p>
-
-    #     <div class="tab">
-    #       <button class="tablinks active" onclick="openTab(event, 'ForecastParameters')">Forecast Parameters</button>
-    #       <button class="tablinks" onclick="openTab(event, 'NetWorth')">Net Worth</button>
-    #       <button class="tablinks" onclick="openTab(event, 'NetGainLoss')">Net Gain & Loss</button>
-    #       <button class="tablinks" onclick="openTab(event, 'AccountType')">Account Type</button>
-    #       <button class="tablinks" onclick="openTab(event, 'Interest')">Interest</button>
-    #       <button class="tablinks" onclick="openTab(event, 'Milestones')">Milestones</button>
-    #       <button class="tablinks" onclick="openTab(event, 'All')">All</button>
-    #       <button class="tablinks" onclick="openTab(event, 'TransactionSchedule')">Transaction Schedule</button>
-    #       <button class="tablinks" onclick="openTab(event, 'Sankey')">Sankey</button>
-    #       <button class="tablinks" onclick="openTab(event, 'Forecast Results')">Forecast Results</button>
-    #     </div>
-
-    #     <div id="ForecastParameters" class="tabcontent">
-    #       <h3>Forecast Parameters</h3>
-    #       <p>"""
-    #         + summary_text
-    #         + """</p>
-    #       <h3>Accounts</h3>
-    #       <p>"""
-    #         + account_text
-    #         + """</p>
-    #       <h3>Budget Items</h3>
-    #       <p>"""
-    #         + budget_set_text
-    #         + """</p>
-    #       <h3>Memo Rules</h3>
-    #       <p>"""
-    #         + memo_rule_text
-    #         + """</p>
-    #       <h3>Account Milestones</h3>
-    #       <p>"""
-    #         + account_milestone_text
-    #         + """</p>
-    #       <h3>Memo Milestones</h3>
-    #       <p>"""
-    #         + memo_milestone_text
-    #         + """</p>
-    #       <h3>Composite Milestones</h3>
-    #       <p>"""
-    #         + composite_milestone_text
-    #         + """</p>
-    #     </div>
-
-    #     <div id="NetWorth" class="tabcontent">
-    #       <h3>Net Worth</h3>
-    #       <p>"""
-    #         + networth_text
-    #         + """</p>
-    #       <img src=\""""
-    #         + networth_line_plot_path
-    #         + """\">
-    #     </div>
-
-    #     <div id="NetGainLoss" class="tabcontent">
-    #       <h3>Net Gain & Loss</h3>
-    #       <p>"""
-    #         + net_gain_loss_text
-    #         + """</p>
-    #       <img src=\""""
-    #         + net_gain_loss_line_plot_path
-    #         + """\">
-    #     </div>
-
-    #     <div id="AccountType" class="tabcontent">
-    #       <h3>Account Type</h3>
-    #       <p>"""
-    #         + account_type_text
-    #         + """</p>
-    #       <img src=\""""
-    #         + accounttype_line_plot_path
-    #         + """\">
-    #     </div>
-
-    #     <div id="Interest" class="tabcontent">
-    #       <h3>Interest</h3>
-    #       <p>"""
-    #         + interest_text
-    #         + """</p>
-    #       <img src=\""""
-    #         + marginal_interest_line_plot_path
-    #         + """\">
-    #       """
-    #         + interest_table_html
-    #         + """
-    #     </div>
-
-    #     <div id="Milestones" class="tabcontent">
-    #       <h3>Milestones</h3>
-    #       <p>"""
-    #         + milestone_text
-    #         + """</p>
-    #       <img src=\""""
-    #         + milestone_scatter_plot_path
-    #         + """\">
-    #       <h4>Account Milestones</h4>
-    #       """
-    #         + am_result_df.to_html()
-    #         + """ <br>
-    #       <h4>Memo Milestones</h4>
-    #       """
-    #         + mm_result_df.to_html()
-    #         + """ <br>
-    #       <h4>Composite Milestones</h4>
-    #       """
-    #         + cm_result_df.to_html()
-    #         + """ <br>
-    #     </div>
-
-    #     <div id="All" class="tabcontent">
-    #       <h3>All</h3>
-    #       <p>"""
-    #         + all_plot_page_text
-    #         + """</p>
-    #       <img src=\""""
-    #         + all_line_plot_path
-    #         + """\">
-    #     </div>
-
-    #     <div id="TransactionSchedule" class="tabcontent">
-    #       <h3>Transaction Schedule</h3>
-    #       <p>"""
-    #         + transaction_schedule_text
-    #         + """</p><br>
-    #       Non-essential transactions: <br>
-    #       <p>"""
-    #         + p2_plus_txns_html_table
-    #         + """</p><br><br>
-    #       Credit Card Payments: <br>
-    #       <p>"""
-    #         + cc_payments_html_table
-    #         + """</p><br><br>
-    #       Loan Payments: <br>
-    #       <p>"""
-    #         + loan_payment_html_table
-    #         + """</p><br><br>
-    #       All Transactions: <br>
-    #       """
-    #         + confirmed_df.to_html()
-    #         + """
-    #     </div>
-
-    #     <div id="Sankey" class="tabcontent">
-    #       <h3>Sankey</h3>
-    #       <p>"""
-    #         + sankey_text
-    #         + """</p>
-    #       <img src=\""""
-    #         + sankey_path
-    #         + """\">
-    #     </div>
-
-    #     <div id="Forecast Results" class="tabcontent">
-    #       <h3>Forecast Results</h3>
-    #       <p>"""
-    #         + summary_text
-    #         + """</p>
-    #       <p>The visualized data are below:</p>
-    #       <h4>Forecast #"""
-    #         + str(E.unique_id)
-    #         + """:</h4>
-    #       """
-    #         + E.forecast_df.to_html()
-    #         + """
-    #     </div>
-
-    #     <br>
-
-    #     <script>
-    #     function openTab(evt, tabName) {
-    #       var i, tabcontent, tablinks;
-    #       tabcontent = document.getElementsByClassName("tabcontent");
-    #       for (i = 0; i < tabcontent.length; i++) {
-    #         tabcontent[i].style.display = "none";
-    #       }
-    #       tablinks = document.getElementsByClassName("tablinks");
-    #       for (i = 0; i < tablinks.length; i++) {
-    #         tablinks[i].className = tablinks[i].className.replace(" active", "");
-    #       }
-    #       document.getElementById(tabName).style.display = "block";
-    #       evt.currentTarget.className += " active";
-    #     }
-    #     document.getElementById("ForecastParameters").style.display = "block";
-    #     </script>
-
-    #     </body>
-    #     </html>
-    #     """
-    #     )
-
-    #     with open(html_output_path, "w") as f:
-    #         f.write(html_body)
-    #     log_in_color(
-    #         logger,
-    #         "green",
-    #         "info",
-    #         "Finished writing single forecast report to " + str(html_output_path),
-    #     )
-    #     return html_output_path
-
     @staticmethod
     def get_delta_explanation_sentence(column_name: str, delta: Decimal, length_of_forecast_in_days: int) -> str:
         avg = delta / length_of_forecast_in_days
@@ -12987,13 +11301,18 @@ class ForecastHandler:
         return ""
 
     @classmethod
-    def generateHTMLreport(cls, E: ExpenseForecastResult) -> str:
+    def generateHTMLReport(
+        cls,
+        E: ExpenseForecastResult,
+        output_path=None,
+        write_file=True,
+    ) -> str:
         """
         Generate a self-contained HTML report for one ExpenseForecastResult.
 
-        This method assumes scalar values and pandas DataFrames are available as
-        attributes on E. Adapt scalar_value() and dataframe_value() if E exposes
-        report data through another interface.
+        By default, write the report to output_path (or a forecast-named file
+        in the current directory) and return its path. When write_file is
+        false, return the generated HTML without writing a file.
         """
 
         report_scalars = {}
@@ -13012,16 +11331,18 @@ class ForecastHandler:
         net_gain_and_loss_page_text_above_plots = '' 
         net_gain_and_loss_page_text_below_plots = ''
 
+
         liquid_delta = cls.get_last_row_first_row_delta(E.forecast_df, 'Liquid Total')
         cc_debt_delta = cls.get_last_row_first_row_delta(E.forecast_df, 'CC Debt Total')
         loan_total_delta = cls.get_last_row_first_row_delta(E.forecast_df, 'Loan Total')
         liquid_delta_sent = cls.get_delta_explanation_sentence('Liquid Total', liquid_delta, length_of_forecast_in_days)
         cc_delta_sent = cls.get_delta_explanation_sentence('CC Debt Total', cc_debt_delta, length_of_forecast_in_days)
         loan_delta_sent = cls.get_delta_explanation_sentence('Loan Total', loan_total_delta, length_of_forecast_in_days)
-        report_scalars['account_type_page_text_above_plots'] = liquid_delta_sent + '<br>' + cc_delta_sent + '<br>' + loan_delta_sent + '<br>' #TODO idk how to encode whitespace
+        report_scalars['account_type_page_text_above_plots'] = liquid_delta_sent + '\n' + cc_delta_sent + '\n' + loan_delta_sent
         account_type_page_text_below_plots = ''
 
-        interest_page_text_above_plots = '' #TODO for detailed view interest page abobe plot text: in dyanmic sentence, state the average value, dont include start and end values
+        total_interest_paid = sum(E.forecast_df['Marginal Interest'])
+        report_scalars['interest_page_text_above_plots']= f"A total of ${total_interest_paid:,.2f} is paid."
         interest_page_text_below_plots = ''
         
         sankey_page_text_above_plots = ''
@@ -13102,6 +11423,227 @@ class ForecastHandler:
             if numeric_value < 0:
                 return f"-${abs(numeric_value):,.2f}"
             return f"${numeric_value:,.2f}"
+
+        def format_policy_label(value) -> str:
+            return str(value).replace("_", " ").title()
+
+        def format_policy_percentage(value) -> str:
+            return f"{float(value) * 100:g}%"
+
+        policy_results = getattr(E, "policy_results", {}) or {}
+        configured_policies = list(
+            getattr(initial_conditions.policy_set, "policies", []) or []
+        )
+        ordered_policies = [
+            policy
+            for _, policy in sorted(
+                enumerate(configured_policies),
+                key=lambda item: (item[1].priority, item[0]),
+            )
+        ]
+
+        policy_type_specs = [
+            (
+                MinimumCheckingBalancePolicy,
+                "Minimum Checking Balance",
+                "minimum_checking_balance_policies",
+                [
+                    "Priority", "Applies To", "Target", "If Unmet",
+                    "Status", "Activation Date",
+                ],
+            ),
+            (
+                CurrentStatementBalancePaymentPolicy,
+                "Current Statement Balance Payment",
+                "current_statement_balance_payment_policies",
+                [
+                    "Priority", "Account", "Configuration", "If Unmet",
+                    "Status", "Requested", "Executed",
+                ],
+            ),
+            (
+                SurplusDebtPaymentPolicy,
+                "Surplus Debt Payment",
+                "surplus_debt_payment_policies",
+                [
+                    "Priority", "Debt Type", "Strategy", "If Unmet",
+                    "Status", "Debt Paid",
+                ],
+            ),
+            (
+                FixedMonthlyInvestmentPolicy,
+                "Fixed Monthly Investment",
+                "fixed_monthly_investment_policies",
+                [
+                    "Priority", "Account", "Amount", "Day", "If Unmet",
+                    "Status", "Requested", "Executed", "Capped", "Missed",
+                ],
+            ),
+            (
+                IncomePercentageInvestmentPolicy,
+                "Income Percentage Investment",
+                "income_percentage_investment_policies",
+                [
+                    "Priority", "Account", "Percentage", "If Unmet",
+                    "Status", "Requested", "Executed", "Capped", "Missed",
+                ],
+            ),
+            (
+                SurplusInvestmentPolicy,
+                "Surplus Investment",
+                "surplus_investment_policies",
+                [
+                    "Priority", "Account", "Checking Threshold", "If Unmet",
+                    "Status", "Executed",
+                ],
+            ),
+            (
+                PeriodicInvestmentContributionCapPolicy,
+                "Investment Contribution Cap",
+                "investment_contribution_cap_policies",
+                [
+                    "Priority", "Account", "Limit", "Period", "If Unmet",
+                    "Status",
+                ],
+            ),
+        ]
+
+        def policy_presentation(policy):
+            if isinstance(policy, MinimumCheckingBalancePolicy):
+                return (
+                    "Minimum Checking Balance",
+                    "Primary checking",
+                    f"Keep {format_report_currency(policy.target)} available",
+                )
+            if isinstance(policy, CurrentStatementBalancePaymentPolicy):
+                return (
+                    "Current Statement Balance Payment",
+                    policy.account_name,
+                    "Pay current-cycle charges before rollover",
+                )
+            if isinstance(policy, SurplusDebtPaymentPolicy):
+                applies_to = "Credit cards" if policy.debt_type == "credit" else "Loans"
+                return (
+                    "Surplus Debt Payment",
+                    applies_to,
+                    format_policy_label(policy.strategy),
+                )
+            if isinstance(policy, FixedMonthlyInvestmentPolicy):
+                return (
+                    "Fixed Monthly Investment",
+                    policy.account_name,
+                    f"{format_report_currency(policy.amount)} on day {policy.day}",
+                )
+            if isinstance(policy, IncomePercentageInvestmentPolicy):
+                return (
+                    "Income Percentage Investment",
+                    policy.account_name,
+                    f"Invest {format_policy_percentage(policy.percentage)} of income",
+                )
+            if isinstance(policy, SurplusInvestmentPolicy):
+                return (
+                    "Surplus Investment",
+                    policy.account_name,
+                    f"Invest checking above {format_report_currency(policy.checking_threshold)}",
+                )
+            return (
+                "Investment Contribution Cap",
+                policy.account_name,
+                f"{format_report_currency(policy.limit)} / {policy.period}",
+            )
+
+        report_data_frames["policies"] = pd.DataFrame(
+            [
+                {
+                    "Priority": policy.priority,
+                    "Policy": policy_presentation(policy)[0],
+                    "Applies To": policy_presentation(policy)[1],
+                    "Configuration": policy_presentation(policy)[2],
+                    "If Unmet": format_policy_label(policy.on_unmet),
+                }
+                for policy in ordered_policies
+            ],
+            columns=["Priority", "Policy", "Applies To", "Configuration", "If Unmet"],
+        )
+
+        def policy_detail_row(policy):
+            result = policy_results.get(policy.policy_key, {}) or {}
+            status = format_policy_label(result.get("status", "Not Run"))
+            common = {
+                "Priority": policy.priority,
+                "If Unmet": format_policy_label(policy.on_unmet),
+                "Status": status,
+            }
+            if isinstance(policy, MinimumCheckingBalancePolicy):
+                activation_date = result.get("activation_date")
+                return {
+                    **common,
+                    "Applies To": "Primary checking",
+                    "Target": format_report_currency(policy.target),
+                    "Activation Date": (
+                        cls._normalize_date_value(activation_date).isoformat()
+                        if activation_date not in (None, "None") else "—"
+                    ),
+                }
+            if isinstance(policy, CurrentStatementBalancePaymentPolicy):
+                return {
+                    **common,
+                    "Account": policy.account_name,
+                    "Configuration": "Pay current-cycle charges before rollover",
+                    "Requested": format_report_currency(result.get("requested", 0)),
+                    "Executed": format_report_currency(result.get("executed", 0)),
+                }
+            if isinstance(policy, SurplusDebtPaymentPolicy):
+                return {
+                    **common,
+                    "Debt Type": "Credit cards" if policy.debt_type == "credit" else "Loans",
+                    "Strategy": format_policy_label(policy.strategy),
+                    "Debt Paid": format_report_currency(result.get("debt_paid", 0)),
+                }
+            if isinstance(policy, FixedMonthlyInvestmentPolicy):
+                return {
+                    **common,
+                    "Account": policy.account_name,
+                    "Amount": format_report_currency(policy.amount),
+                    "Day": policy.day,
+                    "Requested": format_report_currency(result.get("requested", 0)),
+                    "Executed": format_report_currency(result.get("executed", 0)),
+                    "Capped": format_report_currency(result.get("capped", 0)),
+                    "Missed": int(result.get("missed", 0)),
+                }
+            if isinstance(policy, IncomePercentageInvestmentPolicy):
+                return {
+                    **common,
+                    "Account": policy.account_name,
+                    "Percentage": format_policy_percentage(policy.percentage),
+                    "Requested": format_report_currency(result.get("requested", 0)),
+                    "Executed": format_report_currency(result.get("executed", 0)),
+                    "Capped": format_report_currency(result.get("capped", 0)),
+                    "Missed": int(result.get("missed", 0)),
+                }
+            if isinstance(policy, SurplusInvestmentPolicy):
+                return {
+                    **common,
+                    "Account": policy.account_name,
+                    "Checking Threshold": format_report_currency(policy.checking_threshold),
+                    "Executed": format_report_currency(result.get("executed", 0)),
+                }
+            return {
+                **common,
+                "Account": policy.account_name,
+                "Limit": format_report_currency(policy.limit),
+                "Period": format_policy_label(policy.period),
+            }
+
+        for policy_type, _, dataframe_name, columns in policy_type_specs:
+            report_data_frames[dataframe_name] = pd.DataFrame(
+                [
+                    policy_detail_row(policy)
+                    for policy in ordered_policies
+                    if isinstance(policy, policy_type)
+                ],
+                columns=columns,
+            )
 
         report_data_frames["margin_metrics"] = pd.DataFrame(
             [
@@ -13295,6 +11837,65 @@ class ForecastHandler:
         report_data_frames['forecast_metadata'] = forecast_metadata
 
         last_day = E.forecast_df.tail(1).T
+        final_row = E.forecast_df.tail(1).copy()
+        account_names = [
+            account.name
+            for account in initial_account_set.accounts
+            if account.name in final_row.columns
+        ]
+        account_summary_columns = [
+            column
+            for column in (
+                "Liquid Total", "CC Debt Total", "Loan Total",
+                "Investment Total", "Net Worth",
+            )
+            if column in final_row.columns
+        ]
+        report_data_frames["last_day_account_type_summary"] = final_row.loc[
+            :, ["Date", *account_summary_columns]
+        ]
+        report_data_frames["last_day_accounts"] = final_row.loc[
+            :, ["Date", *account_names]
+        ]
+        final_forecast_row = E.forecast_df.iloc[-1]
+        try:
+            final_account_set = cls._account_set_from_forecast_row(
+                initial_account_set, final_forecast_row
+            )
+        except KeyError:
+            final_account_data = copy.deepcopy(initial_account_set.to_dict())
+            for account_row in final_account_data["accounts"]:
+                balance = final_forecast_row.get(account_row["Name"], account_row["Balance"])
+                account_row["Balance"] = balance
+                if account_row["Account_Type"] == "credit":
+                    account_row["Current_Statement_Balance"] = 0
+                    account_row["Previous_Statement_Balance"] = balance
+                    account_row["End_Of_Previous_Cycle_Balance"] = balance
+                    account_row["Billing_Cycle_Payment_Balance"] = 0
+                elif account_row["Account_Type"] == "loan":
+                    account_row["Principal_Balance"] = balance
+                    account_row["Interest_Balance"] = 0
+                    account_row["Billing_Cycle_Payment_Balance"] = 0
+            final_account_set = AccountSet.from_dict(final_account_data)
+        final_account_set_data = final_account_set.to_dict()
+        final_account_set_data["accounts"] = [
+            account
+            for account in final_account_set_data["accounts"]
+            if not (
+                account["Account_Type"] == "loan"
+                and abs(float(account["Balance"]))
+                <= float(ROUNDING_ERROR_TOLERANCE)
+            )
+        ]
+        final_account_dict_code = pformat(
+            final_account_set_data, sort_dicts=False, width=100
+        )
+        final_account_dict_code = re.sub(
+            r"(?<![\w'])inf(?![\w'])", "float('inf')", final_account_dict_code
+        )
+        final_account_set_code = (
+            "AccountSet.from_dict(" + final_account_dict_code + ")"
+        )
         summary_rows = [
             row
             for row in last_day.index
@@ -13436,6 +12037,7 @@ class ForecastHandler:
             dataframe_name: str,
             *,
             section_class: str = "",
+            empty_message: str = "No data available.",
         ) -> str:
             """
             Render one titled table card.
@@ -13446,7 +12048,7 @@ class ForecastHandler:
                 <section class="table-card{additional_class}">
                     <h2 class="table-card-title">{escape(title)}</h2>
                     <div class="table-scroll-container">
-                        {render_table(dataframe_name)}
+                        {render_table(dataframe_name, empty_message=empty_message)}
                     </div>
                 </section>
             """
@@ -13482,6 +12084,7 @@ class ForecastHandler:
                     "net_gain_and_loss",
                     "account_type",
                     "interest",
+                    "all",
                 }:
                     line_chart_html = f"""
                         <div class="detail-line-chart-container">
@@ -13498,6 +12101,16 @@ class ForecastHandler:
                             ></div>
                         </div>
                     """
+                elif page_id == "sankey":
+                    line_chart_html = """
+                        <div class="sankey-view-toggle" role="tablist" aria-label="Sankey grouping">
+                            <button class="sankey-toggle-button is-active" type="button" data-sankey-mode="transaction">Transaction</button>
+                            <button class="sankey-toggle-button" type="button" data-sankey-mode="account">Account</button>
+                        </div>
+                        <div class="detail-line-chart-container sankey-chart-container">
+                            <svg id="sankey-chart" class="hero-chart detail-line-chart" role="img" aria-label="Income flow Sankey diagram"></svg>
+                        </div>
+                    """
                 plot_html = f"""
                     <div
                         id="{escape(page_id)}-plots"
@@ -13508,8 +12121,7 @@ class ForecastHandler:
                     </div>
                 """
 
-            return f"""
-                <section
+            return f"""<section
                     id="detail-page-{escape(page_id)}"
                     class="detail-page{active_class}"
                     data-detail-page="{escape(page_id)}"
@@ -13520,24 +12132,14 @@ class ForecastHandler:
                             {escape(page_title)}
                         </h2>
                     </header>
-
-                    <div class="detail-page-text detail-page-text-above">
-                        {scalar_value(f"{page_id}_page_text_above_plots")}
-                    </div>
-
+                    <div class="detail-page-text detail-page-text-above">{scalar_value(f"{page_id}_page_text_above_plots")}</div>
                     {plot_html}
-
-                    <div class="detail-page-text detail-page-text-below">
-                        {scalar_value(f"{page_id}_page_text_below_plots")}
-                    </div>
-
+                    <div class="detail-page-text detail-page-text-below">{scalar_value(f"{page_id}_page_text_below_plots")}</div>
                     {primary_table_html}
-
                     <div class="detailed-additional-sections">
                         {additional_sections}
                     </div>
-                </section>
-            """
+                </section>"""
 
         parameters_sections = "".join(
             [
@@ -13553,19 +12155,46 @@ class ForecastHandler:
                     "Memo Rules",
                     "initial_memo_rule_set",
                 ),
+            ]
+        )
+
+        milestone_sections = "".join(
+            [
+                render_table_card("Achievement Dates", "milestone_dates"),
+                render_table_card("Composite Milestone Definitions", "composite_milestones"),
+                render_table_card("Account Milestone Definitions", "account_milestones"),
+                render_table_card("Memo Milestone Definitions", "memo_milestones"),
+            ]
+        )
+
+        last_day_sections = "".join(
+            [
                 render_table_card(
-                    "Composite Milestones",
-                    "composite_milestones",
+                    "Account Type Summary",
+                    "last_day_account_type_summary",
+                    section_class="last-day-table-card last-day-summary-card",
                 ),
                 render_table_card(
-                    "Account Milestones",
-                    "account_milestones",
+                    "Accounts",
+                    "last_day_accounts",
+                    section_class="last-day-table-card",
                 ),
-                render_table_card(
-                    "Memo Milestones",
-                    "memo_milestones",
+                (
+                    '<section class="table-card last-day-code-card">'
+                    '<h2 class="table-card-title">AccountSet Code</h2>'
+                    f'<pre><code>{escape(final_account_set_code)}</code></pre>'
+                    '</section>'
                 ),
             ]
+        )
+
+        policy_sections = "".join(
+            render_table_card(
+                title,
+                dataframe_name,
+                empty_message="No policies configured.",
+            )
+            for _, title, dataframe_name, _ in policy_type_specs
         )
 
         transaction_schedule_sections = "".join(
@@ -13606,6 +12235,12 @@ class ForecastHandler:
                     show_plot=False,
                 ),
                 render_detailed_page(
+                    "policies",
+                    "Policies",
+                    additional_sections=policy_sections,
+                    show_plot=False,
+                ),
+                render_detailed_page(
                     "output_data",
                     "Output Data",
                     additional_sections=render_table_card(
@@ -13637,7 +12272,8 @@ class ForecastHandler:
                 render_detailed_page(
                     "milestones",
                     "Milestones",
-                    "milestones",
+                    additional_sections=milestone_sections,
+                    show_plot=False,
                 ),
                 render_detailed_page(
                     "sankey",
@@ -13658,7 +12294,8 @@ class ForecastHandler:
                 render_detailed_page(
                     "last_day",
                     "Last Day",
-                    "last_day",
+                    additional_sections=last_day_sections,
+                    show_plot=False,
                 ),
             ]
         )
@@ -13814,6 +12451,16 @@ class ForecastHandler:
                 investment_names
             ].sum(axis=1)
 
+        all_chart_columns = list(dict.fromkeys([
+            *account_names,
+            "Net Worth",
+            *account_summary_columns,
+        ]))
+        all_chart_columns = [
+            column for column in all_chart_columns
+            if column != "Date" and column in E.forecast_df.columns
+        ]
+
         net_gain_loss_dataframe = E.forecast_df.loc[
             :, ["Date", "Net Gain", "Net Loss"]
         ].copy()
@@ -13862,9 +12509,262 @@ class ForecastHandler:
                     },
                 },
             },
+            "all": {
+                "series_data": dataframe_to_chart_records(
+                    E.forecast_df.loc[:, ["Date", *all_chart_columns]]
+                ),
+                "options": {},
+            },
         }
         detail_chart_json = json.dumps(
             detail_chart_payload,
+            ensure_ascii=False,
+            default=str,
+        ).replace("</", "<\\/")
+
+        def sankey_payload(group_by_account=False):
+            primary_checking_name = initial_account_set.primary_checking_account_name
+            if group_by_account:
+                account_types_by_name = {
+                    account.name: account.account_type
+                    for account in initial_account_set.accounts
+                }
+                edge_totals = {}
+                confirmed_debt_totals = {}
+
+                def clean_endpoint(value):
+                    if value is None or (not isinstance(value, str) and pd.isna(value)):
+                        return None
+                    value = str(value).strip()
+                    return None if value in {"", "None", "nan"} else value
+
+                def policy_endpoints(memo):
+                    policy = next(
+                        (
+                            candidate
+                            for candidate in configured_policies
+                            if memo.startswith(f"POLICY {candidate.policy_key} ")
+                        ),
+                        None,
+                    )
+                    if policy is None:
+                        return None, None
+                    account_to = getattr(policy, "account_name", None)
+                    if account_to is None and isinstance(policy, SurplusDebtPaymentPolicy):
+                        account_to = (
+                            "ALL_CREDIT" if policy.debt_type == "credit" else "ALL_LOANS"
+                        )
+                    return primary_checking_name, account_to
+
+                def add_edge(account_from, account_to, amount):
+                    amount = float(amount)
+                    if amount <= float(ROUNDING_ERROR_TOLERANCE):
+                        return
+                    source = clean_endpoint(account_from) or "Income"
+                    target = clean_endpoint(account_to) or "Spend"
+                    if source == target:
+                        return
+                    key = (source, target)
+                    edge_totals[key] = edge_totals.get(key, 0.0) + amount
+
+                for _, transaction in transaction_schedule.iterrows():
+                    amount = abs(float(transaction.get("Amount", 0) or 0))
+                    if amount <= float(ROUNDING_ERROR_TOLERANCE):
+                        continue
+                    memo = str(transaction.get("Memo", ""))
+                    endpoint_columns_present = (
+                        "Account_From" in transaction.index
+                        and "Account_To" in transaction.index
+                    )
+                    if endpoint_columns_present:
+                        account_from = clean_endpoint(transaction.get("Account_From"))
+                        account_to = clean_endpoint(transaction.get("Account_To"))
+                    else:
+                        account_from = account_to = None
+                        try:
+                            rule = initial_memo_rule_set.findMatchingMemoRule(
+                                memo,
+                                transaction.get("Priority", 1),
+                            )
+                            account_from, account_to = rule.account_from, rule.account_to
+                        except ValueError:
+                            account_from, account_to = policy_endpoints(memo)
+                            if account_from is None and bool(
+                                transaction.get("Income_Flag", False)
+                            ):
+                                account_to = primary_checking_name
+
+                    account_from = clean_endpoint(account_from)
+                    account_to = clean_endpoint(account_to)
+                    if account_to is not None and account_to.startswith("ALL_"):
+                        continue
+                    add_edge(account_from, account_to, amount)
+                    if account_types_by_name.get(account_to) in {"credit", "loan"}:
+                        confirmed_debt_totals[account_to] = (
+                            confirmed_debt_totals.get(account_to, 0.0) + amount
+                        )
+
+                minimum_totals = {}
+                additional_totals = {}
+                debt_names = {
+                    name
+                    for name, account_type in account_types_by_name.items()
+                    if account_type in {"credit", "loan"}
+                }
+
+                def directive_debt_name(endpoint_text):
+                    endpoint_parts = [
+                        part.strip() for part in str(endpoint_text).split(":")
+                    ]
+                    return next(
+                        (part for part in endpoint_parts if part in debt_names),
+                        None,
+                    )
+
+                for _, forecast_row in E.forecast_df.iterrows():
+                    row_date = cls._normalize_date_value(forecast_row["Date"])
+                    directives = str(forecast_row.get("Memo Directives", "")).split(";")
+                    for directive in (item.strip() for item in directives):
+                        match = re.match(
+                            r"^(CC|LOAN) MIN PAYMENT \(([^()]+?) -\$([0-9.]+)\)$",
+                            directive,
+                        )
+                        if match:
+                            account_name = directive_debt_name(match.group(2))
+                            if account_name is not None:
+                                key = (row_date, account_name)
+                                minimum_totals[key] = (
+                                    minimum_totals.get(key, 0.0) + float(match.group(3))
+                                )
+                            continue
+
+                        match = re.match(
+                            r"^MINIMUM PAYMENT \(([^()]+) \+\$([0-9.]+)\)$",
+                            directive,
+                        )
+                        if match and match.group(1).strip() in debt_names:
+                            key = (row_date, match.group(1).strip())
+                            minimum_totals[key] = (
+                                minimum_totals.get(key, 0.0) + float(match.group(2))
+                            )
+                            continue
+
+                        match = re.match(
+                            r"^ADDTL (?:CC|LOAN) PAYMENT \(([^()]+?) -\$([0-9.]+)\)$",
+                            directive,
+                        )
+                        account_name = (
+                            directive_debt_name(match.group(1)) if match else None
+                        )
+                        if account_name is not None:
+                            additional_totals[account_name] = (
+                                additional_totals.get(account_name, 0.0)
+                                + float(match.group(2))
+                            )
+
+                for (_, account_name), amount in minimum_totals.items():
+                    add_edge(primary_checking_name, account_name, amount)
+                for account_name, amount in additional_totals.items():
+                    uncovered_amount = max(
+                        0.0, amount - confirmed_debt_totals.get(account_name, 0.0)
+                    )
+                    add_edge(primary_checking_name, account_name, uncovered_amount)
+
+                final_checking_balance = float(
+                    E.forecast_df.iloc[-1][primary_checking_name]
+                )
+                add_edge(
+                    primary_checking_name,
+                    "Not Spent",
+                    max(0.0, final_checking_balance),
+                )
+
+                source_totals = {}
+                destination_totals = {}
+                for (source, target), amount in edge_totals.items():
+                    source_totals[source] = source_totals.get(source, 0.0) + amount
+                    destination_totals[target] = (
+                        destination_totals.get(target, 0.0) + amount
+                    )
+                return {
+                    "left": [
+                        {"name": name, "value": amount}
+                        for name, amount in sorted(
+                            source_totals.items(),
+                            key=lambda item: item[1],
+                            reverse=True,
+                        )
+                    ],
+                    "right": [
+                        {"name": name, "value": amount}
+                        for name, amount in sorted(
+                            destination_totals.items(),
+                            key=lambda item: item[1],
+                            reverse=True,
+                        )
+                    ],
+                    "links": [
+                        {"source": source, "target": target, "value": amount}
+                        for (source, target), amount in edge_totals.items()
+                    ],
+                }
+
+            income_totals = {}
+            destination_totals = {}
+
+            def transaction_bin(memo):
+                if not memo.startswith("POLICY "):
+                    return memo
+                policy_key = memo.split(" ", 2)[1].split(":", 1)[0]
+                return "Policy: " + format_policy_label(policy_key)
+
+            for _, transaction in transaction_schedule.iterrows():
+                amount = abs(float(transaction.get("Amount", 0) or 0))
+                if amount <= 0:
+                    continue
+                memo = str(transaction.get("Memo", "Transaction"))
+                is_income = bool(transaction.get("Income_Flag", False))
+                if is_income:
+                    income_totals[memo] = income_totals.get(memo, 0) + amount
+                    continue
+
+                destination = transaction_bin(memo)
+                destination_totals[destination] = (
+                    destination_totals.get(destination, 0) + amount
+                )
+
+            total_income = sum(income_totals.values())
+            total_destination = sum(destination_totals.values())
+            allocated = min(total_income, total_destination)
+            links = []
+            if total_income and total_destination:
+                for source, source_amount in income_totals.items():
+                    for target, target_amount in destination_totals.items():
+                        links.append({
+                            "source": source,
+                            "target": target,
+                            "value": allocated * source_amount / total_income
+                            * target_amount / total_destination,
+                        })
+            if total_income > allocated:
+                destination_totals["Unallocated Income"] = total_income - allocated
+                for source, source_amount in income_totals.items():
+                    links.append({
+                        "source": source,
+                        "target": "Unallocated Income",
+                        "value": (total_income - allocated) * source_amount / total_income,
+                    })
+            return {
+                "left": [{"name": key, "value": value} for key, value in income_totals.items()],
+                "right": [{"name": key, "value": value} for key, value in destination_totals.items()],
+                "links": links,
+            }
+
+        sankey_json = json.dumps(
+            {
+                "transaction": sankey_payload(False),
+                "account": sankey_payload(True),
+            },
             ensure_ascii=False,
             default=str,
         ).replace("</", "<\\/")
@@ -14428,6 +13328,7 @@ class ForecastHandler:
                 .detail-page-text {{
                     max-width: 940px;
                     line-height: 1.65;
+                    white-space: pre-line;
                 }}
 
                 .detail-page-text:empty {{
@@ -14468,6 +13369,53 @@ class ForecastHandler:
                     grid-template-columns: minmax(0, 1fr);
                     gap: var(--detail-section-spacing);
                     margin-top: var(--detail-section-spacing);
+                }}
+
+                .last-day-table-card .report-table th,
+                .last-day-table-card .report-table td {{
+                    text-align: center;
+                }}
+
+                .last-day-summary-card .report-table {{
+                    table-layout: auto;
+                    min-width: max-content;
+                    font-size: 1.72rem;
+                }}
+
+                .last-day-summary-card .report-table thead th {{
+                    font-size: 1.48rem;
+                }}
+
+                .last-day-code-card pre {{
+                    overflow-x: auto;
+                    margin: 16px 0 0;
+                    padding: 18px;
+                    border: 1px solid var(--report-soft-border-color);
+                    border-radius: 8px;
+                    background: var(--report-page-background);
+                    font-family: var(--report-monospace-font-family);
+                    line-height: 1.5;
+                }}
+
+                .sankey-view-toggle {{
+                    display: flex;
+                    justify-content: center;
+                    gap: 8px;
+                    margin-bottom: 18px;
+                }}
+
+                .sankey-toggle-button {{
+                    padding: 8px 18px;
+                    border: 1px solid var(--report-border-color);
+                    border-radius: 999px;
+                    background: transparent;
+                    cursor: pointer;
+                }}
+
+                .sankey-toggle-button.is-active {{
+                    border-color: var(--report-accent-color);
+                    background: var(--report-accent-color);
+                    color: var(--report-accent-text-color);
                 }}
 
                 .detailed-table-section {{
@@ -14762,6 +13710,12 @@ class ForecastHandler:
                     >
 
                         {render_table_card(
+                            "Policies",
+                            "policies",
+                            empty_message="No policies configured.",
+                        )}
+
+                        {render_table_card(
                             "Forecast Metadata",
                             "forecast_metadata",
                         )}
@@ -14796,6 +13750,18 @@ class ForecastHandler:
                                 data-detail-target="parameters"
                             >
                                 Parameters
+                            </button>
+
+                            <button
+                                id="detail-tab-policies"
+                                class="detail-nav-button"
+                                type="button"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="detail-page-policies"
+                                data-detail-target="policies"
+                            >
+                                Policies
                             </button>
 
                             <button
@@ -15084,19 +14050,110 @@ class ForecastHandler:
             >
                 {detail_chart_json}
             </script>
+            <script id="sankey-data" type="application/json">{sankey_json}</script>
             <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+            <script>
+                (() => {{
+                    const payload = JSON.parse(
+                        document.getElementById("sankey-data")?.textContent || "{{}}"
+                    );
+                    const svg = d3.select("#sankey-chart");
+                    const buttons = document.querySelectorAll("[data-sankey-mode]");
+
+                    function renderSankey(mode) {{
+                        const data = payload[mode] || {{left: [], right: [], links: []}};
+                        const width = 1200;
+                        const height = 600;
+                        const nodeWidth = 340;
+                        const leftX = 30;
+                        const rightX = width - nodeWidth - 30;
+                        const usableHeight = height - 60;
+                        svg.selectAll("*").remove();
+                        svg.attr("viewBox", `0 0 ${{width}} ${{height}}`);
+
+                        if (!data.left.length || !data.right.length) {{
+                            svg.append("text").attr("x", width / 2).attr("y", height / 2)
+                                .attr("text-anchor", "middle").attr("fill", "#77777d")
+                                .text("No income flow data available.");
+                            return;
+                        }}
+
+                        function position(nodes, x) {{
+                            const total = d3.sum(nodes, (node) => node.value) || 1;
+                            const gap = 12;
+                            const available = usableHeight - gap * Math.max(0, nodes.length - 1);
+                            let y = 30;
+                            return new Map(nodes.map((node) => {{
+                                const nodeHeight = Math.max(48, available * node.value / total);
+                                const positioned = {{...node, x, y, height: nodeHeight}};
+                                y += nodeHeight + gap;
+                                return [node.name, positioned];
+                            }}));
+                        }}
+
+                        const left = position(data.left, leftX);
+                        const right = position(
+                            [...data.right].sort((a, b) => b.value - a.value),
+                            rightX
+                        );
+                        const maxFlow = d3.max(data.links, (link) => link.value) || 1;
+                        const flowWidth = d3.scaleLinear().domain([0, maxFlow]).range([1, 34]);
+                        const linkLayer = svg.append("g").attr("fill", "none");
+                        data.links.forEach((link) => {{
+                            const source = left.get(link.source);
+                            const target = right.get(link.target);
+                            if (!source || !target) return;
+                            const x1 = source.x + nodeWidth;
+                            const x2 = target.x;
+                            const y1 = source.y + source.height / 2;
+                            const y2 = target.y + target.height / 2;
+                            linkLayer.append("path")
+                                .attr("d", `M${{x1}},${{y1}} C${{width / 2}},${{y1}} ${{width / 2}},${{y2}} ${{x2}},${{y2}}`)
+                                .attr("stroke", "#7097aa").attr("stroke-opacity", 0.35)
+                                .attr("stroke-width", flowWidth(link.value));
+                        }});
+
+                        function drawNodes(nodes, color) {{
+                            const groups = svg.append("g").selectAll("g")
+                                .data([...nodes.values()]).join("g");
+                            groups.append("rect").attr("x", (node) => node.x)
+                                .attr("y", (node) => node.y).attr("width", nodeWidth)
+                                .attr("height", (node) => node.height).attr("rx", 5)
+                                .attr("fill", color);
+                            groups.append("foreignObject")
+                                .attr("x", (node) => node.x + 10)
+                                .attr("y", (node) => node.y + 5)
+                                .attr("width", nodeWidth - 20)
+                                .attr("height", (node) => Math.max(38, node.height - 10))
+                                .append("xhtml:div")
+                                .style("color", "white")
+                                .style("font-size", "12px")
+                                .style("line-height", "1.25")
+                                .style("overflow-wrap", "anywhere")
+                                .text((node) => `${{node.name}} ($${{d3.format(",.2f")(node.value)}})`);
+                        }}
+                        drawNodes(left, "#2f7d4a");
+                        drawNodes(right, "#315c72");
+                    }}
+
+                    buttons.forEach((button) => button.addEventListener("click", () => {{
+                        buttons.forEach((candidate) => candidate.classList.toggle(
+                            "is-active", candidate === button
+                        ));
+                        renderSankey(button.dataset.sankeyMode);
+                    }}));
+                    renderSankey("transaction");
+                }})();
+            </script>
             <script src="./hero_chart.js"></script>
             <script src="./detail_charts.js"></script>
         </body>
         </html>
         """
 
-        return html
+        if not write_file:
+            return html
 
-    @classmethod
-    def generateHTMLReport(cls, E: ExpenseForecastResult, output_path=None):
-        """Compatibility wrapper that optionally writes the generated report."""
-        html = cls.generateHTMLreport(E)
         if output_path is None:
             target_path = Path(f"Forecast_{E.unique_id}.html")
         else:
@@ -15970,7 +15027,7 @@ class ForecastHandler:
         )
         return result
 
-    #TODO manual review of ForecastHandler.runForecastWithMilestoneConditionalSwaps docstring
+    #TODO DOC manual review of ForecastHandler.runForecastWithMilestoneConditionalSwaps docstring
     @classmethod
     def runForecastWithMilestoneConditionalSwaps(cls,
                              IO,
@@ -15987,35 +15044,35 @@ class ForecastHandler:
 
         # Order of fork options introduces instability, so fork options are processed in order
         """
-        TODO one-line description of ForecastHandler.runForecastWithMilestoneConditionalSwaps.
+        #TODO DOC one-line description of ForecastHandler.runForecastWithMilestoneConditionalSwaps.
 
-        TODO multi-line description of ForecastHandler.runForecastWithMilestoneConditionalSwaps.
-        TODO explain how ForecastHandler.runForecastWithMilestoneConditionalSwaps participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler.runForecastWithMilestoneConditionalSwaps.
+        #TODO DOC explain how ForecastHandler.runForecastWithMilestoneConditionalSwaps participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         IO : object
-            TODO one-line description of ForecastHandler.runForecastWithMilestoneConditionalSwaps.IO.
+            #TODO DOC one-line description of ForecastHandler.runForecastWithMilestoneConditionalSwaps.IO.
 
         MS : object
-            TODO one-line description of ForecastHandler.runForecastWithMilestoneConditionalSwaps.MS.
+            #TODO DOC one-line description of ForecastHandler.runForecastWithMilestoneConditionalSwaps.MS.
 
         include_debug_columns : bool
-            TODO one-line description of ForecastHandler.runForecastWithMilestoneConditionalSwaps.include_debug_columns.
+            #TODO DOC one-line description of ForecastHandler.runForecastWithMilestoneConditionalSwaps.include_debug_columns.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler.runForecastWithMilestoneConditionalSwaps.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler.runForecastWithMilestoneConditionalSwaps.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler.runForecastWithMilestoneConditionalSwaps.
+            #TODO DOC one-line description of return value of ForecastHandler.runForecastWithMilestoneConditionalSwaps.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler.runForecastWithMilestoneConditionalSwaps.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler.runForecastWithMilestoneConditionalSwaps.
+        - #TODO DOC contract lines for ForecastHandler.runForecastWithMilestoneConditionalSwaps.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler.runForecastWithMilestoneConditionalSwaps.
 
         @interface-report: show
         """

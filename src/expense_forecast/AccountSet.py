@@ -81,7 +81,7 @@ class AccountSet:
     @staticmethod
     def _money(value):
         """
-        TODO DEFER one-line description of _money. #Codex-write-doctstring-OK
+        #TODO DEFER one-line description of _money. #Codex-write-doctstring-OK
 
         @interface-report: ignore
         """
@@ -90,7 +90,7 @@ class AccountSet:
     @staticmethod
     def _dict_value(value):
         """
-        TODO DEFER one-line description of _dict_value. #Codex-write-doctstring-OK
+        #TODO DEFER one-line description of _dict_value. #Codex-write-doctstring-OK
 
         @interface-report: ignore
         """
@@ -103,7 +103,7 @@ class AccountSet:
     @staticmethod
     def _forecast_value(value):
         """
-        TODO DEFER one-line description of _forecast_value. #Codex-write-doctstring-OK
+        #TODO DEFER one-line description of _forecast_value. #Codex-write-doctstring-OK
 
         @interface-report: ignore
         """
@@ -177,12 +177,12 @@ class AccountSet:
             return
 
         accounts_df = self.getAccounts()
-        #TODO set primary_checking_account_name when creating AccountSet from a list of accounts
+        #TODO DEFER CODEX-OK set primary_checking_account_name when creating AccountSet from a list of accounts
         AccountSet._validate_unique_names(accounts_df)
 
     def __str__(self):
         """
-        TODO DEFER one-line description of __str__. #Codex-write-doctstring-OK
+        #TODO DEFER one-line description of __str__. #Codex-write-doctstring-OK
 
         @interface-report: show
         """
@@ -715,29 +715,29 @@ class AccountSet:
         billing_days.add(billing_start_date)
         return current_date in billing_days
 
-    #TODO manual review of AccountSet.processCreditCardBillingDay docstring
+    #TODO DOC manual review of AccountSet.processCreditCardBillingDay docstring
     def processCreditCardBillingDay(self, current_date):
         """
-        TODO one-line description of processCreditCardBillingDay.
+        #TODO DOC one-line description of processCreditCardBillingDay.
 
-        TODO multi-line description of processCreditCardBillingDay.
-        TODO explain how AccountSet.processCreditCardBillingDay participates in account
-        TODO state management, forecasting, validation, or serialization.
+        #TODO DOC multi-line description of processCreditCardBillingDay.
+        #TODO DOC explain how AccountSet.processCreditCardBillingDay participates in account
+        #TODO DOC state management, forecasting, validation, or serialization.
 
         Parameters
         ----------
         current_date : date
-            TODO one-line description of processCreditCardBillingDay.current_date.
+            #TODO DOC one-line description of processCreditCardBillingDay.current_date.
 
         Returns
         -------
         list[str]
-            TODO one-line description of return value of processCreditCardBillingDay.
+            #TODO DOC one-line description of return value of processCreditCardBillingDay.
 
         Contract
         --------
-        - #TODO contract lines for processCreditCardBillingDay.
-        - #TODO document exceptions, mutations, and precision assumptions for processCreditCardBillingDay.
+        - #TODO DOC contract lines for processCreditCardBillingDay.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for processCreditCardBillingDay.
 
         @interface-report: show
         """
@@ -784,30 +784,30 @@ class AccountSet:
                     + account.billing_state.billing_cycle_payment_balance
                 )
 
-    #TODO manual review of AccountSet.getForecastColumnsForAccount docstring
+    #TODO DOC manual review of AccountSet.getForecastColumnsForAccount docstring
     @staticmethod
     def getForecastColumnsForAccount(account):
         """
-        TODO one-line description of getForecastColumnsForAccount.
+        #TODO DOC one-line description of getForecastColumnsForAccount.
 
-        TODO multi-line description of getForecastColumnsForAccount.
-        TODO explain how AccountSet.getForecastColumnsForAccount participates in account
-        TODO state management, forecasting, validation, or serialization.
+        #TODO DOC multi-line description of getForecastColumnsForAccount.
+        #TODO DOC explain how AccountSet.getForecastColumnsForAccount participates in account
+        #TODO DOC state management, forecasting, validation, or serialization.
 
         Parameters
         ----------
         account : Account
-            TODO one-line description of getForecastColumnsForAccount.account.
+            #TODO DOC one-line description of getForecastColumnsForAccount.account.
 
         Returns
         -------
         dict
-            TODO one-line description of return value of getForecastColumnsForAccount.
+            #TODO DOC one-line description of return value of getForecastColumnsForAccount.
 
         Contract
         --------
-        - #TODO contract lines for getForecastColumnsForAccount.
-        - #TODO document exceptions, mutations, and precision assumptions for getForecastColumnsForAccount.
+        - #TODO DOC contract lines for getForecastColumnsForAccount.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for getForecastColumnsForAccount.
 
         @interface-report: show
         """
@@ -867,7 +867,7 @@ class AccountSet:
         else:
             raise ValueError(f"Account '{account.name}' is not a debt account")
 
-    #TODO manual review of AccountSet.executeTransaction docstring
+    #TODO DOC manual review of AccountSet.executeTransaction docstring
     def executeTransaction(
         self,
         Account_From,
@@ -878,38 +878,38 @@ class AccountSet:
         allocation_strategy="avalanche",
     ):
         """
-        TODO one-line description of executeTransaction.
+        #TODO DOC one-line description of executeTransaction.
 
-        TODO multi-line description of executeTransaction.
-        TODO explain how AccountSet.executeTransaction participates in account
-        TODO state management, forecasting, validation, or serialization.
+        #TODO DOC multi-line description of executeTransaction.
+        #TODO DOC explain how AccountSet.executeTransaction participates in account
+        #TODO DOC state management, forecasting, validation, or serialization.
 
         Parameters
         ----------
         Account_From : str | None
-            TODO one-line description of executeTransaction.Account_From.
+            #TODO DOC one-line description of executeTransaction.Account_From.
 
         Account_To : str | None
-            TODO one-line description of executeTransaction.Account_To.
+            #TODO DOC one-line description of executeTransaction.Account_To.
 
         Amount : float
-            TODO one-line description of executeTransaction.Amount.
+            #TODO DOC one-line description of executeTransaction.Amount.
 
         income_flag : bool
-            TODO one-line description of executeTransaction.income_flag.
+            #TODO DOC one-line description of executeTransaction.income_flag.
 
         minimum_payment_flag : bool
-            TODO one-line description of executeTransaction.minimum_payment_flag.
+            #TODO DOC one-line description of executeTransaction.minimum_payment_flag.
 
         Returns
         -------
         None
-            TODO one-line description of return value of executeTransaction.
+            #TODO DOC one-line description of return value of executeTransaction.
 
         Contract
         --------
-        - #TODO contract lines for executeTransaction.
-        - #TODO document exceptions, mutations, and precision assumptions for executeTransaction.
+        - #TODO DOC contract lines for executeTransaction.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for executeTransaction.
 
         @interface-report: show
         """
@@ -1152,29 +1152,29 @@ class AccountSet:
             amount, "credit", account_from, strategy
         )
 
-    #TODO manual review of AccountSet.getAccounts docstring
+    #TODO DOC manual review of AccountSet.getAccounts docstring
     def getAccounts(self):
         """
-        TODO one-line description of getAccounts.
+        #TODO DOC one-line description of getAccounts.
 
-        TODO multi-line description of getAccounts.
-        TODO explain how AccountSet.getAccounts participates in account
-        TODO state management, forecasting, validation, or serialization.
+        #TODO DOC multi-line description of getAccounts.
+        #TODO DOC explain how AccountSet.getAccounts participates in account
+        #TODO DOC state management, forecasting, validation, or serialization.
 
         Parameters
         ----------
         None
-            TODO confirm that getAccounts takes no parameters beyond self/cls.
+            #TODO DOC confirm that getAccounts takes no parameters beyond self/cls.
 
         Returns
         -------
         pd.DataFrame
-            TODO one-line description of return value of getAccounts.
+            #TODO DOC one-line description of return value of getAccounts.
 
         Contract
         --------
-        - #TODO contract lines for getAccounts.
-        - #TODO document exceptions, mutations, and precision assumptions for getAccounts.
+        - #TODO DOC contract lines for getAccounts.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for getAccounts.
 
         @interface-report: show
         """
@@ -1277,6 +1277,79 @@ class AccountSet:
             account_rows.append(account_row)
 
         return {"accounts": account_rows}
+
+    @classmethod
+    def from_dict(cls, data):
+        """Rebuild an AccountSet from the structure returned by ``to_dict``."""
+        if not isinstance(data, dict) or not isinstance(data.get("accounts"), list):
+            raise TypeError("AccountSet.from_dict requires an 'accounts' list")
+
+        def parsed_date(value):
+            if value in (None, "None", ""):
+                return None
+            if isinstance(value, datetime):
+                return value.date()
+            if isinstance(value, date):
+                return value
+            return date.fromisoformat(str(value))
+
+        account_set = cls()
+        for row in data["accounts"]:
+            account_type = row["Account_Type"]
+            common = {
+                "name": row["Name"],
+                "min_balance": row["Min_Balance"],
+                "max_balance": row["Max_Balance"],
+            }
+            if account_type == "checking":
+                account_set.createCheckingAccount(
+                    **common,
+                    balance=row["Balance"],
+                    primary_checking_ind=row["Primary_Checking_Ind"],
+                )
+            elif account_type == "credit":
+                account_set.createCreditCardAccount(
+                    **common,
+                    current_statement_balance=row["Current_Statement_Balance"],
+                    previous_statement_balance=row["Previous_Statement_Balance"],
+                    billing_start_date=parsed_date(row["Billing_Start_Date"]),
+                    apr=row["APR"],
+                    minimum_payment=row["Minimum_Payment"],
+                    end_of_previous_cycle_balance=row[
+                        "End_Of_Previous_Cycle_Balance"
+                    ],
+                )
+                state = account_set.accounts[-1].billing_state
+                if "Minimum_Payment_Floor" in row:
+                    state.minimum_payment_floor = account_set._money(
+                        row["Minimum_Payment_Floor"]
+                    )
+                if "Minimum_Payment_Credit_Balance" in row:
+                    state.minimum_payment_credit_balance = account_set._money(
+                        row["Minimum_Payment_Credit_Balance"]
+                    )
+            elif account_type == "loan":
+                account_set.createLoanAccount(
+                    **common,
+                    principal_balance=row["Principal_Balance"],
+                    interest_balance=row["Interest_Balance"],
+                    billing_start_date=parsed_date(row["Billing_Start_Date"]),
+                    apr=row["APR"],
+                    minimum_payment=row["Minimum_Payment"],
+                    billing_cycle_payment_balance=row.get(
+                        "Billing_Cycle_Payment_Balance", 0
+                    ),
+                )
+            elif account_type == "investment":
+                account_set.createInvestmentAccount(
+                    name=row["Name"],
+                    balance=row["Balance"],
+                    billing_start_date=parsed_date(row["Billing_Start_Date"]),
+                    apr=row["APR"],
+                )
+            else:
+                raise ValueError(f"Unsupported Account_Type: {account_type!r}")
+        return account_set
 
     def to_json(self):
         """

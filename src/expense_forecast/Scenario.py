@@ -41,22 +41,22 @@ class Scenario:
     #TODO DEFER manual review of Scenario.__init__ docstring
     def __init__(self, label, choices, budget_set):
         """
-        TODO DEFER one-line description of Scenario.__init__.
+        #TODO DEFER one-line description of Scenario.__init__.
 
-        TODO DEFER multi-line description of Scenario.__init__.
-        TODO DEFER explain how Scenario.__init__ participates in this module.
-        TODO DEFER document important state, validation, or serialization behavior.
+        #TODO DEFER multi-line description of Scenario.__init__.
+        #TODO DEFER explain how Scenario.__init__ participates in this module.
+        #TODO DEFER document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         label : str
-            TODO DEFER one-line description of Scenario.__init__.label.
+            #TODO DEFER one-line description of Scenario.__init__.label.
 
         choices : object
-            TODO DEFER one-line description of Scenario.__init__.choices.
+            #TODO DEFER one-line description of Scenario.__init__.choices.
 
         budget_set : object
-            TODO DEFER one-line description of Scenario.__init__.budget_set.
+            #TODO DEFER one-line description of Scenario.__init__.budget_set.
 
         Returns
         -------

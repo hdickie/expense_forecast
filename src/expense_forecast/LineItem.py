@@ -2,7 +2,7 @@ import pandas as pd
 import datetime
 import json
 
-#TODO manual review of LineItem docstring
+#TODO DOC manual review of LineItem docstring
 class LineItem:
     """
     Represents a single financial event within a forecast.
@@ -88,48 +88,48 @@ class LineItem:
         assert len(memo.strip()) > 0
         assert ';' not in memo
 
-    #TODO manual review of LineItem.__init__ docstring
+    #TODO DOC manual review of LineItem.__init__ docstring
     def __init__(self, start_date, end_date, priority, interval, amount, memo, **kwargs):
 
         """
-        TODO one-line description of LineItem.__init__.
+        #TODO DOC one-line description of LineItem.__init__.
 
-        TODO multi-line description of LineItem.__init__.
-        TODO explain how LineItem.__init__ participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of LineItem.__init__.
+        #TODO DOC explain how LineItem.__init__ participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         start_date : date
-            TODO one-line description of LineItem.__init__.start_date.
+            #TODO DOC one-line description of LineItem.__init__.start_date.
 
         end_date : date
-            TODO one-line description of LineItem.__init__.end_date.
+            #TODO DOC one-line description of LineItem.__init__.end_date.
 
         priority : int
-            TODO one-line description of LineItem.__init__.priority.
+            #TODO DOC one-line description of LineItem.__init__.priority.
 
         interval : str
-            TODO one-line description of LineItem.__init__.interval.
+            #TODO DOC one-line description of LineItem.__init__.interval.
 
         amount : float
-            TODO one-line description of LineItem.__init__.amount.
+            #TODO DOC one-line description of LineItem.__init__.amount.
 
         memo : str
-            TODO one-line description of LineItem.__init__.memo.
+            #TODO DOC one-line description of LineItem.__init__.memo.
 
         **kwargs : dict
-            TODO one-line description of LineItem.__init__.kwargs.
+            #TODO DOC one-line description of LineItem.__init__.kwargs.
 
         Returns
         -------
         None
-            TODO one-line description of return value of LineItem.__init__.
+            #TODO DOC one-line description of return value of LineItem.__init__.
 
         Contract
         --------
-        - #TODO contract lines for LineItem.__init__.
-        - #TODO document exceptions, mutations, and precision assumptions for LineItem.__init__.
+        - #TODO DOC contract lines for LineItem.__init__.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for LineItem.__init__.
 
         @interface-report: show
         """

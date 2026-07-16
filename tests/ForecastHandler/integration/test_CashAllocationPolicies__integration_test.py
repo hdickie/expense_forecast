@@ -1,4 +1,5 @@
 from datetime import date
+import json
 
 import pytest
 
@@ -10,8 +11,10 @@ from expense_forecast.ForecastPolicySet import ForecastPolicySet
 from expense_forecast.IncomePercentageInvestmentPolicy import IncomePercentageInvestmentPolicy
 from expense_forecast.LineItemSet import LineItemSet
 from expense_forecast.MemoRuleSet import MemoRuleSet
+from expense_forecast.MinimumCheckingBalancePolicy import MinimumCheckingBalancePolicy
 from expense_forecast.PeriodicInvestmentContributionCapPolicy import PeriodicInvestmentContributionCapPolicy
 from expense_forecast.SurplusDebtPaymentPolicy import SurplusDebtPaymentPolicy
+from expense_forecast.SurplusInvestmentPolicy import SurplusInvestmentPolicy
 from expense_forecast.CurrentStatementBalancePaymentPolicy import (
     CurrentStatementBalancePaymentPolicy,
 )
@@ -29,6 +32,145 @@ def _checking_and_investment():
     accounts.createCheckingAccount("Checking", 1000, 0, float("inf"), True)
     accounts.createInvestmentAccount("Brokerage", 0, date(2026, 2, 1), 0)
     return accounts
+
+
+def test_policy_report_renders_summary_and_type_specific_details():
+    accounts = AccountSet()
+    accounts.createCheckingAccount("Checking", 5_000, 0, float("inf"), True)
+    accounts.createInvestmentAccount("Brokerage", 0, date(2026, 2, 1), 0)
+    accounts.createInvestmentAccount("IRA", 0, date(2026, 2, 1), 0)
+    accounts.createCreditCardAccount(
+        name="Chase", current_statement_balance=0,
+        previous_statement_balance=0, billing_start_date=date(2026, 1, 1),
+        minimum_payment=0, end_of_previous_cycle_balance=0,
+        min_balance=0, max_balance=10_000, apr=0,
+    )
+    result = ForecastHandler.runForecast(
+        _base(accounts, LineItemSet(), MemoRuleSet())
+    )
+    result.initial_conditions.policy_set = ForecastPolicySet(
+        CurrentStatementBalancePaymentPolicy("Chase", priority=2, on_unmet="fail"),
+        MinimumCheckingBalancePolicy(2_000, priority=1),
+        SurplusDebtPaymentPolicy("credit", "avalanche", priority=3),
+        FixedMonthlyInvestmentPolicy("Brokerage", 500, priority=4, day=1),
+        FixedMonthlyInvestmentPolicy("IRA", 250, priority=4, day=15),
+        IncomePercentageInvestmentPolicy("Brokerage", 0.10, priority=5),
+        SurplusInvestmentPolicy("Brokerage", 3_000, priority=6),
+        PeriodicInvestmentContributionCapPolicy(
+            "IRA", 7_000, "year", priority=7
+        ),
+    )
+    result.policy_results = {
+        "minimum_checking_balance": {
+            "status": "activated", "activation_date": date(2026, 2, 2),
+        },
+        "current_statement_balance_payment:Chase": {
+            "status": "completed", "requested": 300, "executed": 300,
+        },
+        "surplus_debt_payment:credit": {
+            "status": "completed", "debt_paid": 1_200,
+        },
+        "fixed_monthly_investment:Brokerage": {
+            "status": "capped", "requested": 500, "executed": 400,
+            "capped": 100, "missed": 0,
+        },
+        "fixed_monthly_investment:IRA": {
+            "status": "completed", "requested": 250, "executed": 250,
+            "capped": 0, "missed": 0,
+        },
+        "income_percentage_investment:Brokerage": {
+            "status": "unmet", "requested": 100, "executed": 80,
+            "capped": 0, "missed": 1,
+        },
+        "surplus_investment:Brokerage": {
+            "status": "completed", "executed": 600,
+        },
+        "periodic_investment_contribution_cap:IRA:year": {
+            "status": "completed",
+        },
+    }
+
+    html = ForecastHandler.generateHTMLReport(result, write_file=False)
+    summary = html.split(">Policies</h2>", 1)[1].split(">Forecast Metadata</h2>", 1)[0]
+
+    assert summary.index("Minimum Checking Balance") < summary.index(
+        "Current Statement Balance Payment"
+    )
+    assert summary.index("Current Statement Balance Payment") < summary.index(
+        "Surplus Debt Payment"
+    )
+    assert summary.index("Brokerage") < summary.index("IRA")
+    assert "Keep $2,000.00 available" in summary
+    assert "$500.00 on day 1" in summary
+    assert "$7,000.00 / year" in summary
+    assert "Fail" in summary
+    assert 'id="detail-tab-policies"' in html
+    assert 'id="detail-page-policies"' in html
+
+    policy_page = html.split('id="detail-page-policies"', 1)[1].split(
+        'id="detail-page-output_data"', 1
+    )[0]
+    for heading in (
+        "Minimum Checking Balance",
+        "Current Statement Balance Payment",
+        "Surplus Debt Payment",
+        "Fixed Monthly Investment",
+        "Income Percentage Investment",
+        "Surplus Investment",
+        "Investment Contribution Cap",
+    ):
+        assert f">{heading}</h2>" in policy_page
+    assert "2026-02-02" in policy_page
+    assert "$1,200.00" in policy_page
+    assert "$100.00" in policy_page
+    assert "Unmet" in policy_page
+
+
+def test_policy_report_shows_empty_messages_for_all_policy_types():
+    result = ForecastHandler.runForecast(
+        _base(_checking_and_investment(), LineItemSet(), MemoRuleSet())
+    )
+
+    html = ForecastHandler.generateHTMLReport(result, write_file=False)
+    policy_page = html.split('id="detail-page-policies"', 1)[1].split(
+        'id="detail-page-output_data"', 1
+    )[0]
+
+    summary = html.split(">Policies</h2>", 1)[1].split(
+        ">Forecast Metadata</h2>", 1
+    )[0]
+    assert "No policies configured." in summary
+    assert policy_page.count("No policies configured.") == 7
+    parameters_page = html.split('id="detail-page-parameters"', 1)[1].split(
+        'id="detail-page-policies"', 1
+    )[0]
+    milestones_page = html.split('id="detail-page-milestones"', 1)[1].split(
+        'id="detail-page-sankey"', 1
+    )[0]
+    assert "Milestone Definitions" not in parameters_page
+    assert "Achievement Dates" in milestones_page
+    assert "Account Milestone Definitions" in milestones_page
+    assert 'id="all-chart"' in html
+    assert 'id="sankey-chart"' in html
+    assert 'data-sankey-mode="transaction"' in html
+    assert 'data-sankey-mode="account"' in html
+    assert ">Account Type Summary</h2>" in html
+    assert ">Accounts</h2>" in html
+    assert "AccountSet.from_dict(" in html
+    assert "float(&#x27;inf&#x27;)" in html
+    assert "report-table-last-day-account-type-summary" in html
+    for table_id in (
+        "report-table-last-day-account-type-summary",
+        "report-table-last-day-accounts",
+    ):
+        table_html = html.split(table_id, 1)[1].split("</table>", 1)[0]
+        assert table_html.split("<tbody>", 1)[1].count("<tr>") == 1
+    assert ".last-day-summary-card .report-table" in html
+    assert "#detail-page-last_day .table-card-title" not in html
+    assert "#detail-page-last_day .report-table thead th" not in html
+    assert "font-size: 1.6rem" not in html
+    assert "font-size: 1.72rem" in html
+    assert "[...data.right].sort((a, b) => b.value - a.value)" in html
 
 
 def test_fixed_monthly_investment_executes_at_policy_priority():
@@ -62,9 +204,50 @@ def test_income_percentage_investment_uses_lower_priority_income():
 
     assert result.forecast_df.iloc[-1]["Checking"] == 1450
     assert result.forecast_df.iloc[-1]["Brokerage"] == 50
-    html = ForecastHandler.generateHTMLreport(result)
+    html = ForecastHandler.generateHTMLReport(result, write_file=False)
     income_section = html.split(">Income</h2>", 1)[1].split(">Non-Essential Transactions</h2>", 1)[0]
     assert "income" in income_section
+    sankey_data = json.loads(
+        html.split('id="sankey-data" type="application/json">', 1)[1]
+        .split("</script>", 1)[0]
+    )
+    assert sankey_data["account"]["left"] == [
+        {"name": "Checking", "value": 1500.0},
+        {"name": "Income", "value": 500.0},
+    ]
+    assert sankey_data["account"]["right"] == [
+        {"name": "Not Spent", "value": 1450.0},
+        {"name": "Checking", "value": 500.0},
+        {"name": "Brokerage", "value": 50.0}
+    ]
+    assert sankey_data["account"]["links"] == [
+        {"source": "Income", "target": "Checking", "value": 500.0},
+        {"source": "Checking", "target": "Brokerage", "value": 50.0},
+        {"source": "Checking", "target": "Not Spent", "value": 1450.0},
+    ]
+    assert any(
+        link["target"] == "Policy: Income Percentage Investment"
+        for link in sankey_data["transaction"]["links"]
+    )
+
+
+def test_approximate_income_is_reported_as_net_gain():
+    accounts = AccountSet()
+    accounts.createCheckingAccount("Checking", 1_000, 0, float("inf"), True)
+    budget, rules = LineItemSet(), MemoRuleSet()
+    budget.addLineItem(
+        date(2026, 2, 2), date(2026, 2, 2), 1, "once", 500, "income",
+        income_flag=True,
+    )
+    rules.addMemoRule("income", None, "Checking", 1)
+    conditions = ExpenseForecastInitialConditions(
+        date(2026, 2, 1), date(2026, 2, 3), accounts, budget, rules,
+    )
+
+    result = ForecastHandler.runForecastApproximate(conditions)
+
+    assert result.forecast_df["Net Gain"].sum() == pytest.approx(500)
+    assert result.forecast_df["Net Loss"].sum() == pytest.approx(0)
 
 
 def test_surplus_loan_policy_uses_snowball():
@@ -93,10 +276,33 @@ def test_surplus_loan_policy_uses_snowball():
     assert result.forecast_df.iloc[-1]["Checking"] == 500
     assert result.forecast_df.iloc[-1]["Small"] == 0
     assert result.forecast_df.iloc[-1]["Large"] == pytest.approx(700.86)
-    html = ForecastHandler.generateHTMLreport(result)
+    html = ForecastHandler.generateHTMLReport(result, write_file=False)
     loan_section = html.split(">Loan Payments</h2>", 1)[1].split(">All Transactions</h2>", 1)[0]
     assert "ALL_LOANS" in loan_section
     assert "Policy" in loan_section
+    sankey_data = json.loads(
+        html.split('id="sankey-data" type="application/json">', 1)[1]
+        .split("</script>", 1)[0]
+    )["account"]
+    assert sankey_data["left"] == sorted(
+        sankey_data["left"], key=lambda node: node["value"], reverse=True
+    )
+    assert any(
+        link["source"] == "Checking"
+        and link["target"] == "Small"
+        and link["value"] > 0
+        for link in sankey_data["links"]
+    )
+    assert any(
+        link["source"] == "Checking"
+        and link["target"] == "Large"
+        and link["value"] > 0
+        for link in sankey_data["links"]
+    )
+    account_set_code = html.split(">AccountSet Code</h2>", 1)[1].split(
+        "</code>", 1
+    )[0]
+    assert "&#x27;Small&#x27;" not in account_set_code
 
 
 def test_periodic_cap_limits_later_policy_contribution():
@@ -171,6 +377,8 @@ def test_approximate_surplus_policy_occurs_only_on_output_boundaries():
     ]
 
     assert set(policy_rows["Date"]) <= {date(2026, 3, 1), date(2026, 4, 1), date(2026, 4, 4)}
+    assert result.forecast_df["Net Gain"].sum() == pytest.approx(0)
+    assert result.forecast_df["Net Loss"].sum() == pytest.approx(0)
 
 
 def test_approximate_current_statement_policy_pays_current_cycle_charges():

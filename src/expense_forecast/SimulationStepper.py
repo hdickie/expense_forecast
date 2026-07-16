@@ -16,14 +16,14 @@ Contract
 import pandas as pd
 from expense_forecast.ExpenseForecastInitialConditions import ExpenseForecastInitialConditions
 from expense_forecast.ExpenseForecastResult import ExpenseForecastResult
-from expense_forecast.log_methods import log_in_color
+from expense_forecast.log_methods import log_in_color, project_log_file
 import logging
 import datetime
 pd.set_option("display.precision", 2) #todo this may more appropriate near some code for output or logging
 
 logger = logging.getLogger(__name__)
 formatter = logging.Formatter("%(asctime)s - %(levelname)-8s - %(message)s")
-fileHandler = logging.FileHandler(__name__ + ".log", mode="w")
+fileHandler = logging.FileHandler(project_log_file(__name__), mode="w")
 fileHandler.setFormatter(formatter)
 streamHandler = logging.StreamHandler()
 streamHandler.setFormatter(formatter)
@@ -53,21 +53,21 @@ class SimulationStepper:
     #TODO DEFER manual review of SimulationStepper.__init__ docstring
     def __init__(self):
         """
-        TODO DEFER one-line description of SimulationStepper.__init__.
+        #TODO DEFER one-line description of SimulationStepper.__init__.
 
-        TODO DEFER multi-line description of SimulationStepper.__init__.
-        TODO DEFER explain how SimulationStepper.__init__ participates in this module.
-        TODO DEFER document important state, validation, or serialization behavior.
+        #TODO DEFER multi-line description of SimulationStepper.__init__.
+        #TODO DEFER explain how SimulationStepper.__init__ participates in this module.
+        #TODO DEFER document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         None
-            TODO DEFER confirm that SimulationStepper.__init__ takes no parameters beyond self/cls.
+            #TODO DEFER confirm that SimulationStepper.__init__ takes no parameters beyond self/cls.
 
         Returns
         -------
         None
-            TODO DEFER one-line description of return value of SimulationStepper.__init__.
+            #TODO DEFER one-line description of return value of SimulationStepper.__init__.
 
         Contract
         --------
@@ -103,6 +103,5 @@ class SimulationStepper:
 
     #     # return result
     #     raise NotImplementedError
-
 
 

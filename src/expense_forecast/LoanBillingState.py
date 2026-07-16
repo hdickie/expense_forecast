@@ -5,7 +5,7 @@ from datetime import date
 from decimal import Decimal
 
 
-#TODO manual review of LoanBillingState docstring
+#TODO DOC manual review of LoanBillingState docstring
 @dataclass
 class LoanBillingState:
     """
@@ -26,7 +26,7 @@ class LoanBillingState:
     billing_cycle_payment_balance: Decimal
     minimum_payment: Decimal
 
-    #TODO manual review of LoanBillingState.__init__ docstring
+    #TODO DOC manual review of LoanBillingState.__init__ docstring
     def __init__(self, billing_cycle_start_date: date,
                   minimum_payment: Decimal,
                   interest_type: str,
@@ -39,53 +39,53 @@ class LoanBillingState:
                   current_statement_balance: Decimal = None,
                   ):
         """
-        TODO one-line description of LoanBillingState.__init__.
+        #TODO DOC one-line description of LoanBillingState.__init__.
 
-        TODO multi-line description of LoanBillingState.__init__.
-        TODO explain how LoanBillingState.__init__ participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of LoanBillingState.__init__.
+        #TODO DOC explain how LoanBillingState.__init__ participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         billing_cycle_start_date : object
-            TODO one-line description of LoanBillingState.__init__.billing_cycle_start_date.
+            #TODO DOC one-line description of LoanBillingState.__init__.billing_cycle_start_date.
 
         minimum_payment : float
-            TODO one-line description of LoanBillingState.__init__.minimum_payment.
+            #TODO DOC one-line description of LoanBillingState.__init__.minimum_payment.
 
         interest_type : object
-            TODO one-line description of LoanBillingState.__init__.interest_type.
+            #TODO DOC one-line description of LoanBillingState.__init__.interest_type.
 
         interest_interval : object
-            TODO one-line description of LoanBillingState.__init__.interest_interval.
+            #TODO DOC one-line description of LoanBillingState.__init__.interest_interval.
 
         apr : float
-            TODO one-line description of LoanBillingState.__init__.apr.
+            #TODO DOC one-line description of LoanBillingState.__init__.apr.
 
         principal_balance : object
-            TODO one-line description of LoanBillingState.__init__.principal_balance.
+            #TODO DOC one-line description of LoanBillingState.__init__.principal_balance.
 
         interest_balance : object
-            TODO one-line description of LoanBillingState.__init__.interest_balance.
+            #TODO DOC one-line description of LoanBillingState.__init__.interest_balance.
 
         billing_cycle_payment_balance : object
-            TODO one-line description of LoanBillingState.__init__.billing_cycle_payment_balance.
+            #TODO DOC one-line description of LoanBillingState.__init__.billing_cycle_payment_balance.
 
         previous_statement_balance : object
-            TODO one-line description of LoanBillingState.__init__.previous_statement_balance.
+            #TODO DOC one-line description of LoanBillingState.__init__.previous_statement_balance.
 
         current_statement_balance : object
-            TODO one-line description of LoanBillingState.__init__.current_statement_balance.
+            #TODO DOC one-line description of LoanBillingState.__init__.current_statement_balance.
 
         Returns
         -------
         None
-            TODO one-line description of return value of LoanBillingState.__init__.
+            #TODO DOC one-line description of return value of LoanBillingState.__init__.
 
         Contract
         --------
-        - #TODO contract lines for LoanBillingState.__init__.
-        - #TODO document exceptions, mutations, and precision assumptions for LoanBillingState.__init__.
+        - #TODO DOC contract lines for LoanBillingState.__init__.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for LoanBillingState.__init__.
 
         @interface-report: show
         """
@@ -163,59 +163,59 @@ class LoanBillingState:
         assert value >= 0
         self.principal_balance = value
 
-    #TODO manual review of LoanBillingState.current_statement_balance docstring
+    #TODO DOC manual review of LoanBillingState.current_statement_balance docstring
     @property
     def current_statement_balance(self) -> Decimal:
         """
-        TODO one-line description of LoanBillingState.current_statement_balance.
+        #TODO DOC one-line description of LoanBillingState.current_statement_balance.
 
-        TODO multi-line description of LoanBillingState.current_statement_balance.
-        TODO explain how LoanBillingState.current_statement_balance participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of LoanBillingState.current_statement_balance.
+        #TODO DOC explain how LoanBillingState.current_statement_balance participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         None
-            TODO confirm that LoanBillingState.current_statement_balance takes no parameters beyond self/cls.
+            #TODO DOC confirm that LoanBillingState.current_statement_balance takes no parameters beyond self/cls.
 
         Returns
         -------
         object
-            TODO one-line description of return value of LoanBillingState.current_statement_balance.
+            #TODO DOC one-line description of return value of LoanBillingState.current_statement_balance.
 
         Contract
         --------
-        - #TODO contract lines for LoanBillingState.current_statement_balance.
-        - #TODO document exceptions, mutations, and precision assumptions for LoanBillingState.current_statement_balance.
+        - #TODO DOC contract lines for LoanBillingState.current_statement_balance.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for LoanBillingState.current_statement_balance.
 
         @interface-report: show
         """
         return self.balance
 
-    #TODO manual review of LoanBillingState.current_statement_balance docstring
+    #TODO DOC manual review of LoanBillingState.current_statement_balance docstring
     @current_statement_balance.setter
     def current_statement_balance(self, value: Decimal):
         """
-        TODO one-line description of LoanBillingState.current_statement_balance.
+        #TODO DOC one-line description of LoanBillingState.current_statement_balance.
 
-        TODO multi-line description of LoanBillingState.current_statement_balance.
-        TODO explain how LoanBillingState.current_statement_balance participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of LoanBillingState.current_statement_balance.
+        #TODO DOC explain how LoanBillingState.current_statement_balance participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         value : object
-            TODO one-line description of LoanBillingState.current_statement_balance.value.
+            #TODO DOC one-line description of LoanBillingState.current_statement_balance.value.
 
         Returns
         -------
         object
-            TODO one-line description of return value of LoanBillingState.current_statement_balance.
+            #TODO DOC one-line description of return value of LoanBillingState.current_statement_balance.
 
         Contract
         --------
-        - #TODO contract lines for LoanBillingState.current_statement_balance.
-        - #TODO document exceptions, mutations, and precision assumptions for LoanBillingState.current_statement_balance.
+        - #TODO DOC contract lines for LoanBillingState.current_statement_balance.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for LoanBillingState.current_statement_balance.
 
         @interface-report: show
         """
@@ -223,29 +223,29 @@ class LoanBillingState:
         self.interest_balance = value - self.principal_balance
         assert self.interest_balance >= 0
 
-    #TODO manual review of LoanBillingState.interest_accrued_for_period docstring
+    #TODO DOC manual review of LoanBillingState.interest_accrued_for_period docstring
     def interest_accrued_for_period(self) -> Decimal:
         """
-        TODO one-line description of LoanBillingState.interest_accrued_for_period.
+        #TODO DOC one-line description of LoanBillingState.interest_accrued_for_period.
 
-        TODO multi-line description of LoanBillingState.interest_accrued_for_period.
-        TODO explain how LoanBillingState.interest_accrued_for_period participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of LoanBillingState.interest_accrued_for_period.
+        #TODO DOC explain how LoanBillingState.interest_accrued_for_period participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         None
-            TODO confirm that LoanBillingState.interest_accrued_for_period takes no parameters beyond self/cls.
+            #TODO DOC confirm that LoanBillingState.interest_accrued_for_period takes no parameters beyond self/cls.
 
         Returns
         -------
         object
-            TODO one-line description of return value of LoanBillingState.interest_accrued_for_period.
+            #TODO DOC one-line description of return value of LoanBillingState.interest_accrued_for_period.
 
         Contract
         --------
-        - #TODO contract lines for LoanBillingState.interest_accrued_for_period.
-        - #TODO document exceptions, mutations, and precision assumptions for LoanBillingState.interest_accrued_for_period.
+        - #TODO DOC contract lines for LoanBillingState.interest_accrued_for_period.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for LoanBillingState.interest_accrued_for_period.
 
         @interface-report: show
         """
@@ -259,29 +259,29 @@ class LoanBillingState:
             return self.principal_balance * self.apr
         raise ValueError(f"Unsupported loan interest interval: {self.interest_interval}")
 
-    #TODO manual review of LoanBillingState.accrue_interest docstring
+    #TODO DOC manual review of LoanBillingState.accrue_interest docstring
     def accrue_interest(self) -> Decimal:
         """
-        TODO one-line description of LoanBillingState.accrue_interest.
+        #TODO DOC one-line description of LoanBillingState.accrue_interest.
 
-        TODO multi-line description of LoanBillingState.accrue_interest.
-        TODO explain how LoanBillingState.accrue_interest participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of LoanBillingState.accrue_interest.
+        #TODO DOC explain how LoanBillingState.accrue_interest participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         None
-            TODO confirm that LoanBillingState.accrue_interest takes no parameters beyond self/cls.
+            #TODO DOC confirm that LoanBillingState.accrue_interest takes no parameters beyond self/cls.
 
         Returns
         -------
         object
-            TODO one-line description of return value of LoanBillingState.accrue_interest.
+            #TODO DOC one-line description of return value of LoanBillingState.accrue_interest.
 
         Contract
         --------
-        - #TODO contract lines for LoanBillingState.accrue_interest.
-        - #TODO document exceptions, mutations, and precision assumptions for LoanBillingState.accrue_interest.
+        - #TODO DOC contract lines for LoanBillingState.accrue_interest.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for LoanBillingState.accrue_interest.
 
         @interface-report: show
         """
@@ -289,29 +289,29 @@ class LoanBillingState:
         self.interest_balance += interest_accrued
         return interest_accrued
 
-    #TODO manual review of LoanBillingState.remaining_minimum_payment_due docstring
+    #TODO DOC manual review of LoanBillingState.remaining_minimum_payment_due docstring
     def remaining_minimum_payment_due(self) -> Decimal:
         """
-        TODO one-line description of LoanBillingState.remaining_minimum_payment_due.
+        #TODO DOC one-line description of LoanBillingState.remaining_minimum_payment_due.
 
-        TODO multi-line description of LoanBillingState.remaining_minimum_payment_due.
-        TODO explain how LoanBillingState.remaining_minimum_payment_due participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of LoanBillingState.remaining_minimum_payment_due.
+        #TODO DOC explain how LoanBillingState.remaining_minimum_payment_due participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         None
-            TODO confirm that LoanBillingState.remaining_minimum_payment_due takes no parameters beyond self/cls.
+            #TODO DOC confirm that LoanBillingState.remaining_minimum_payment_due takes no parameters beyond self/cls.
 
         Returns
         -------
         object
-            TODO one-line description of return value of LoanBillingState.remaining_minimum_payment_due.
+            #TODO DOC one-line description of return value of LoanBillingState.remaining_minimum_payment_due.
 
         Contract
         --------
-        - #TODO contract lines for LoanBillingState.remaining_minimum_payment_due.
-        - #TODO document exceptions, mutations, and precision assumptions for LoanBillingState.remaining_minimum_payment_due.
+        - #TODO DOC contract lines for LoanBillingState.remaining_minimum_payment_due.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for LoanBillingState.remaining_minimum_payment_due.
 
         @interface-report: show
         """
@@ -320,29 +320,29 @@ class LoanBillingState:
             self.minimum_payment - self.billing_cycle_payment_balance
         )
 
-    #TODO manual review of LoanBillingState.apply_payment docstring
+    #TODO DOC manual review of LoanBillingState.apply_payment docstring
     def apply_payment(self, amount: Decimal) -> tuple[Decimal, Decimal]:
         """
-        TODO one-line description of LoanBillingState.apply_payment.
+        #TODO DOC one-line description of LoanBillingState.apply_payment.
 
-        TODO multi-line description of LoanBillingState.apply_payment.
-        TODO explain how LoanBillingState.apply_payment participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of LoanBillingState.apply_payment.
+        #TODO DOC explain how LoanBillingState.apply_payment participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         amount : float
-            TODO one-line description of LoanBillingState.apply_payment.amount.
+            #TODO DOC one-line description of LoanBillingState.apply_payment.amount.
 
         Returns
         -------
         object
-            TODO one-line description of return value of LoanBillingState.apply_payment.
+            #TODO DOC one-line description of return value of LoanBillingState.apply_payment.
 
         Contract
         --------
-        - #TODO contract lines for LoanBillingState.apply_payment.
-        - #TODO document exceptions, mutations, and precision assumptions for LoanBillingState.apply_payment.
+        - #TODO DOC contract lines for LoanBillingState.apply_payment.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for LoanBillingState.apply_payment.
 
         @interface-report: show
         """

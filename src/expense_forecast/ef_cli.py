@@ -23,7 +23,7 @@ import logging
 from .ExpenseForecastInitialConditions import ExpenseForecastInitialConditions
 from .ExpenseForecastResult import ExpenseForecastResult
 # from .ForecastSetInitialConditions import ForecastSet
-from .log_methods import log_in_color
+from .log_methods import log_in_color, project_log_file
 import pandas as pd
 import psycopg2
 from .AccountSet import AccountSet
@@ -37,7 +37,7 @@ import configparser
 
 logger = logging.getLogger(__name__)
 formatter = logging.Formatter("%(asctime)s - %(levelname)-8s - %(message)s")
-fileHandler = logging.FileHandler(__name__ + ".log", mode="w")
+fileHandler = logging.FileHandler(project_log_file(__name__), mode="w")
 fileHandler.setFormatter(formatter)
 streamHandler = logging.StreamHandler()
 streamHandler.setFormatter(formatter)
@@ -49,30 +49,30 @@ logger.propagate = False
 
 # asserts that config has reasonable values and is internally consistent
 # agnostic of (and before) action
-#TODO manual review of ef_cli.validate_config docstring
+#TODO DOC manual review of ef_cli.validate_config docstring
 def validate_config(args):
 
     """
-    TODO one-line description of ef_cli.validate_config.
+    #TODO DOC one-line description of ef_cli.validate_config.
 
-    TODO multi-line description of ef_cli.validate_config.
-    TODO explain how ef_cli.validate_config participates in this module.
-    TODO document important state, validation, or serialization behavior.
+    #TODO DOC multi-line description of ef_cli.validate_config.
+    #TODO DOC explain how ef_cli.validate_config participates in this module.
+    #TODO DOC document important state, validation, or serialization behavior.
 
     Parameters
     ----------
     args : list
-        TODO one-line description of ef_cli.validate_config.args.
+        #TODO DOC one-line description of ef_cli.validate_config.args.
 
     Returns
     -------
     None
-        TODO one-line description of return value of ef_cli.validate_config.
+        #TODO DOC one-line description of return value of ef_cli.validate_config.
 
     Contract
     --------
-    - #TODO contract lines for ef_cli.validate_config.
-    - #TODO document exceptions, mutations, and precision assumptions for ef_cli.validate_config.
+    - #TODO DOC contract lines for ef_cli.validate_config.
+    - #TODO DOC document exceptions, mutations, and precision assumptions for ef_cli.validate_config.
 
     @interface-report: show
     """
@@ -80,58 +80,58 @@ def validate_config(args):
 
 # asserts that args has reasonable values and is internally consistent
 # in the context of the specific action
-#TODO manual review of ef_cli.validate_args docstring
+#TODO DOC manual review of ef_cli.validate_args docstring
 def validate_args(args):
 
     """
-    TODO one-line description of ef_cli.validate_args.
+    #TODO DOC one-line description of ef_cli.validate_args.
 
-    TODO multi-line description of ef_cli.validate_args.
-    TODO explain how ef_cli.validate_args participates in this module.
-    TODO document important state, validation, or serialization behavior.
+    #TODO DOC multi-line description of ef_cli.validate_args.
+    #TODO DOC explain how ef_cli.validate_args participates in this module.
+    #TODO DOC document important state, validation, or serialization behavior.
 
     Parameters
     ----------
     args : list
-        TODO one-line description of ef_cli.validate_args.args.
+        #TODO DOC one-line description of ef_cli.validate_args.args.
 
     Returns
     -------
     None
-        TODO one-line description of return value of ef_cli.validate_args.
+        #TODO DOC one-line description of return value of ef_cli.validate_args.
 
     Contract
     --------
-    - #TODO contract lines for ef_cli.validate_args.
-    - #TODO document exceptions, mutations, and precision assumptions for ef_cli.validate_args.
+    - #TODO DOC contract lines for ef_cli.validate_args.
+    - #TODO DOC document exceptions, mutations, and precision assumptions for ef_cli.validate_args.
 
     @interface-report: show
     """
     return NotImplementedError
 
-#TODO manual review of ef_cli.scrape_dir_for_forecast_details docstring
+#TODO DOC manual review of ef_cli.scrape_dir_for_forecast_details docstring
 def scrape_dir_for_forecast_details(target_directory):
     """
-    TODO one-line description of ef_cli.scrape_dir_for_forecast_details.
+    #TODO DOC one-line description of ef_cli.scrape_dir_for_forecast_details.
 
-    TODO multi-line description of ef_cli.scrape_dir_for_forecast_details.
-    TODO explain how ef_cli.scrape_dir_for_forecast_details participates in this module.
-    TODO document important state, validation, or serialization behavior.
+    #TODO DOC multi-line description of ef_cli.scrape_dir_for_forecast_details.
+    #TODO DOC explain how ef_cli.scrape_dir_for_forecast_details participates in this module.
+    #TODO DOC document important state, validation, or serialization behavior.
 
     Parameters
     ----------
     target_directory : object
-        TODO one-line description of ef_cli.scrape_dir_for_forecast_details.target_directory.
+        #TODO DOC one-line description of ef_cli.scrape_dir_for_forecast_details.target_directory.
 
     Returns
     -------
     object
-        TODO one-line description of return value of ef_cli.scrape_dir_for_forecast_details.
+        #TODO DOC one-line description of return value of ef_cli.scrape_dir_for_forecast_details.
 
     Contract
     --------
-    - #TODO contract lines for ef_cli.scrape_dir_for_forecast_details.
-    - #TODO document exceptions, mutations, and precision assumptions for ef_cli.scrape_dir_for_forecast_details.
+    - #TODO DOC contract lines for ef_cli.scrape_dir_for_forecast_details.
+    - #TODO DOC document exceptions, mutations, and precision assumptions for ef_cli.scrape_dir_for_forecast_details.
 
     @interface-report: show
     """
@@ -258,30 +258,30 @@ def scrape_dir_for_forecast_details(target_directory):
     return return_df
 
 # Gather our code in a main() function
-#TODO manual review of ef_cli.run docstring
+#TODO DOC manual review of ef_cli.run docstring
 def run(args):
     # logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
     """
-    TODO one-line description of ef_cli.run.
+    #TODO DOC one-line description of ef_cli.run.
 
-    TODO multi-line description of ef_cli.run.
-    TODO explain how ef_cli.run participates in this module.
-    TODO document important state, validation, or serialization behavior.
+    #TODO DOC multi-line description of ef_cli.run.
+    #TODO DOC explain how ef_cli.run participates in this module.
+    #TODO DOC document important state, validation, or serialization behavior.
 
     Parameters
     ----------
     args : list
-        TODO one-line description of ef_cli.run.args.
+        #TODO DOC one-line description of ef_cli.run.args.
 
     Returns
     -------
     object
-        TODO one-line description of return value of ef_cli.run.
+        #TODO DOC one-line description of return value of ef_cli.run.
 
     Contract
     --------
-    - #TODO contract lines for ef_cli.run.
-    - #TODO document exceptions, mutations, and precision assumptions for ef_cli.run.
+    - #TODO DOC contract lines for ef_cli.run.
+    - #TODO DOC document exceptions, mutations, and precision assumptions for ef_cli.run.
 
     @interface-report: show
     """
@@ -1472,29 +1472,29 @@ def run(args):
 # ef_cli export
 # ef_cli import
 
-#TODO manual review of ef_cli.build_parser docstring
+#TODO DOC manual review of ef_cli.build_parser docstring
 def build_parser():
     """
-    TODO one-line description of ef_cli.build_parser.
+    #TODO DOC one-line description of ef_cli.build_parser.
 
-    TODO multi-line description of ef_cli.build_parser.
-    TODO explain how ef_cli.build_parser participates in this module.
-    TODO document important state, validation, or serialization behavior.
+    #TODO DOC multi-line description of ef_cli.build_parser.
+    #TODO DOC explain how ef_cli.build_parser participates in this module.
+    #TODO DOC document important state, validation, or serialization behavior.
 
     Parameters
     ----------
     None
-        TODO confirm that ef_cli.build_parser takes no parameters beyond self/cls.
+        #TODO DOC confirm that ef_cli.build_parser takes no parameters beyond self/cls.
 
     Returns
     -------
     object
-        TODO one-line description of return value of ef_cli.build_parser.
+        #TODO DOC one-line description of return value of ef_cli.build_parser.
 
     Contract
     --------
-    - #TODO contract lines for ef_cli.build_parser.
-    - #TODO document exceptions, mutations, and precision assumptions for ef_cli.build_parser.
+    - #TODO DOC contract lines for ef_cli.build_parser.
+    - #TODO DOC document exceptions, mutations, and precision assumptions for ef_cli.build_parser.
 
     @interface-report: show
     """
@@ -1623,29 +1623,29 @@ def build_parser():
 
     return parser
 
-#TODO manual review of ef_cli.main docstring
+#TODO DOC manual review of ef_cli.main docstring
 def main():
     """
-    TODO one-line description of ef_cli.main.
+    #TODO DOC one-line description of ef_cli.main.
 
-    TODO multi-line description of ef_cli.main.
-    TODO explain how ef_cli.main participates in this module.
-    TODO document important state, validation, or serialization behavior.
+    #TODO DOC multi-line description of ef_cli.main.
+    #TODO DOC explain how ef_cli.main participates in this module.
+    #TODO DOC document important state, validation, or serialization behavior.
 
     Parameters
     ----------
     None
-        TODO confirm that ef_cli.main takes no parameters beyond self/cls.
+        #TODO DOC confirm that ef_cli.main takes no parameters beyond self/cls.
 
     Returns
     -------
     int
-        TODO one-line description of return value of ef_cli.main.
+        #TODO DOC one-line description of return value of ef_cli.main.
 
     Contract
     --------
-    - #TODO contract lines for ef_cli.main.
-    - #TODO document exceptions, mutations, and precision assumptions for ef_cli.main.
+    - #TODO DOC contract lines for ef_cli.main.
+    - #TODO DOC document exceptions, mutations, and precision assumptions for ef_cli.main.
 
     @interface-report: show
     """

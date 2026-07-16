@@ -59,7 +59,7 @@ class LineItemSet:
     such as BudgetSet and MemoRuleSet, define how the contained LineItems
     are interpreted and used by the forecasting engine.
     """
-    #TODO manual review of LineItemSet.__init__ docstring
+    #TODO DOC manual review of LineItemSet.__init__ docstring
     def __init__(
         self,
         line_items__list=None,
@@ -67,26 +67,26 @@ class LineItemSet:
         scenario_dimensions=None,
     ):
         """
-        TODO one-line description of LineItemSet.__init__.
+        #TODO DOC one-line description of LineItemSet.__init__.
 
-        TODO multi-line description of LineItemSet.__init__.
-        TODO explain how LineItemSet.__init__ participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of LineItemSet.__init__.
+        #TODO DOC explain how LineItemSet.__init__ participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         line_items__list : object
-            TODO one-line description of LineItemSet.__init__.line_items__list.
+            #TODO DOC one-line description of LineItemSet.__init__.line_items__list.
 
         Returns
         -------
         None
-            TODO one-line description of return value of LineItemSet.__init__.
+            #TODO DOC one-line description of return value of LineItemSet.__init__.
 
         Contract
         --------
-        - #TODO contract lines for LineItemSet.__init__.
-        - #TODO document exceptions, mutations, and precision assumptions for LineItemSet.__init__.
+        - #TODO DOC contract lines for LineItemSet.__init__.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for LineItemSet.__init__.
 
         @interface-report: show
         """
@@ -152,30 +152,30 @@ class LineItemSet:
         """
         return self.getLineItems().to_string()
 
-    #TODO manual review of LineItemSet.getLineItems docstring
+    #TODO DOC manual review of LineItemSet.getLineItems docstring
     def getLineItems(self):
 
         """
-        TODO one-line description of LineItemSet.getLineItems.
+        #TODO DOC one-line description of LineItemSet.getLineItems.
 
-        TODO multi-line description of LineItemSet.getLineItems.
-        TODO explain how LineItemSet.getLineItems participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of LineItemSet.getLineItems.
+        #TODO DOC explain how LineItemSet.getLineItems participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         None
-            TODO confirm that LineItemSet.getLineItems takes no parameters beyond self/cls.
+            #TODO DOC confirm that LineItemSet.getLineItems takes no parameters beyond self/cls.
 
         Returns
         -------
         pd.DataFrame
-            TODO one-line description of return value of LineItemSet.getLineItems.
+            #TODO DOC one-line description of return value of LineItemSet.getLineItems.
 
         Contract
         --------
-        - #TODO contract lines for LineItemSet.getLineItems.
-        - #TODO document exceptions, mutations, and precision assumptions for LineItemSet.getLineItems.
+        - #TODO DOC contract lines for LineItemSet.getLineItems.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for LineItemSet.getLineItems.
 
         @interface-report: show
         """
@@ -219,30 +219,30 @@ class LineItemSet:
         all_line_items_df.reset_index(drop=True, inplace=True)
         return all_line_items_df
 
-    #TODO manual review of LineItemSet.getLineItemSchedule docstring
+    #TODO DOC manual review of LineItemSet.getLineItemSchedule docstring
     def getLineItemSchedule(self):
 
         """
-        TODO one-line description of LineItemSet.getLineItemSchedule.
+        #TODO DOC one-line description of LineItemSet.getLineItemSchedule.
 
-        TODO multi-line description of LineItemSet.getLineItemSchedule.
-        TODO explain how LineItemSet.getLineItemSchedule participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of LineItemSet.getLineItemSchedule.
+        #TODO DOC explain how LineItemSet.getLineItemSchedule participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         None
-            TODO confirm that LineItemSet.getLineItemSchedule takes no parameters beyond self/cls.
+            #TODO DOC confirm that LineItemSet.getLineItemSchedule takes no parameters beyond self/cls.
 
         Returns
         -------
         pd.DataFrame
-            TODO one-line description of return value of LineItemSet.getLineItemSchedule.
+            #TODO DOC one-line description of return value of LineItemSet.getLineItemSchedule.
 
         Contract
         --------
-        - #TODO contract lines for LineItemSet.getLineItemSchedule.
-        - #TODO document exceptions, mutations, and precision assumptions for LineItemSet.getLineItemSchedule.
+        - #TODO DOC contract lines for LineItemSet.getLineItemSchedule.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for LineItemSet.getLineItemSchedule.
 
         @interface-report: show
         """
@@ -336,50 +336,50 @@ class LineItemSet:
             .loc[:, result_columns]
         )
 
-    #TODO manual review of LineItemSet.addLineItem docstring
+    #TODO DOC manual review of LineItemSet.addLineItem docstring
     def addLineItem(self, start_date, end_date, priority, interval, amount, memo, income_flag = False, **kwargs):
         """
-        TODO one-line description of LineItemSet.addLineItem.
+        #TODO DOC one-line description of LineItemSet.addLineItem.
 
-        TODO multi-line description of LineItemSet.addLineItem.
-        TODO explain how LineItemSet.addLineItem participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of LineItemSet.addLineItem.
+        #TODO DOC explain how LineItemSet.addLineItem participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         start_date : date
-            TODO one-line description of LineItemSet.addLineItem.start_date.
+            #TODO DOC one-line description of LineItemSet.addLineItem.start_date.
 
         end_date : date
-            TODO one-line description of LineItemSet.addLineItem.end_date.
+            #TODO DOC one-line description of LineItemSet.addLineItem.end_date.
 
         priority : int
-            TODO one-line description of LineItemSet.addLineItem.priority.
+            #TODO DOC one-line description of LineItemSet.addLineItem.priority.
 
         interval : str
-            TODO one-line description of LineItemSet.addLineItem.interval.
+            #TODO DOC one-line description of LineItemSet.addLineItem.interval.
 
         amount : float
-            TODO one-line description of LineItemSet.addLineItem.amount.
+            #TODO DOC one-line description of LineItemSet.addLineItem.amount.
 
         memo : str
-            TODO one-line description of LineItemSet.addLineItem.memo.
+            #TODO DOC one-line description of LineItemSet.addLineItem.memo.
 
         income_flag : bool
-            TODO one-line description of LineItemSet.addLineItem.income_flag.
+            #TODO DOC one-line description of LineItemSet.addLineItem.income_flag.
 
         **kwargs : dict
-            TODO one-line description of LineItemSet.addLineItem.kwargs.
+            #TODO DOC one-line description of LineItemSet.addLineItem.kwargs.
 
         Returns
         -------
         object
-            TODO one-line description of return value of LineItemSet.addLineItem.
+            #TODO DOC one-line description of return value of LineItemSet.addLineItem.
 
         Contract
         --------
-        - #TODO contract lines for LineItemSet.addLineItem.
-        - #TODO document exceptions, mutations, and precision assumptions for LineItemSet.addLineItem.
+        - #TODO DOC contract lines for LineItemSet.addLineItem.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for LineItemSet.addLineItem.
 
         @interface-report: show
         """
@@ -409,29 +409,29 @@ class LineItemSet:
         # Append the line item
         self.line_items.append(line_item)
 
-    #TODO manual review of LineItemSet.to_dict docstring
+    #TODO DOC manual review of LineItemSet.to_dict docstring
     def to_dict(self):
         """
-        TODO one-line description of LineItemSet.to_dict.
+        #TODO DOC one-line description of LineItemSet.to_dict.
 
-        TODO multi-line description of LineItemSet.to_dict.
-        TODO explain how LineItemSet.to_dict participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of LineItemSet.to_dict.
+        #TODO DOC explain how LineItemSet.to_dict participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         None
-            TODO confirm that LineItemSet.to_dict takes no parameters beyond self/cls.
+            #TODO DOC confirm that LineItemSet.to_dict takes no parameters beyond self/cls.
 
         Returns
         -------
         dict
-            TODO one-line description of return value of LineItemSet.to_dict.
+            #TODO DOC one-line description of return value of LineItemSet.to_dict.
 
         Contract
         --------
-        - #TODO contract lines for LineItemSet.to_dict.
-        - #TODO document exceptions, mutations, and precision assumptions for LineItemSet.to_dict.
+        - #TODO DOC contract lines for LineItemSet.to_dict.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for LineItemSet.to_dict.
 
         @interface-report: show
         """
@@ -523,21 +523,21 @@ class LineItemSet:
     @staticmethod
     def _line_item_key(line_item):
         """
-        TODO DEFER one-line description of LineItemSet._line_item_key.
+        #TODO DEFER one-line description of LineItemSet._line_item_key.
 
-        TODO DEFER multi-line description of LineItemSet._line_item_key.
-        TODO DEFER explain how LineItemSet._line_item_key participates in this module.
-        TODO DEFER document important state, validation, or serialization behavior.
+        #TODO DEFER multi-line description of LineItemSet._line_item_key.
+        #TODO DEFER explain how LineItemSet._line_item_key participates in this module.
+        #TODO DEFER document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         line_item : object
-            TODO DEFER one-line description of LineItemSet._line_item_key.line_item.
+            #TODO DEFER one-line description of LineItemSet._line_item_key.line_item.
 
         Returns
         -------
         object
-            TODO DEFER one-line description of return value of LineItemSet._line_item_key.
+            #TODO DEFER one-line description of return value of LineItemSet._line_item_key.
 
         Contract
         --------

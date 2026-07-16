@@ -16,36 +16,36 @@ import pandas as pd
 import datetime
 
 
-#TODO manual review of generate_date_sequence.generate_date_sequence docstring
+#TODO DOC manual review of generate_date_sequence.generate_date_sequence docstring
 def generate_date_sequence(start_date, num_days, interval):
 
     """
-    TODO one-line description of generate_date_sequence.generate_date_sequence.
+    #TODO DOC one-line description of generate_date_sequence.generate_date_sequence.
 
-    TODO multi-line description of generate_date_sequence.generate_date_sequence.
-    TODO explain how generate_date_sequence.generate_date_sequence participates in this module.
-    TODO document important state, validation, or serialization behavior.
+    #TODO DOC multi-line description of generate_date_sequence.generate_date_sequence.
+    #TODO DOC explain how generate_date_sequence.generate_date_sequence participates in this module.
+    #TODO DOC document important state, validation, or serialization behavior.
 
     Parameters
     ----------
     start_date : date
-        TODO one-line description of generate_date_sequence.generate_date_sequence.start_date.
+        #TODO DOC one-line description of generate_date_sequence.generate_date_sequence.start_date.
 
     num_days : int
-        TODO one-line description of generate_date_sequence.generate_date_sequence.num_days.
+        #TODO DOC one-line description of generate_date_sequence.generate_date_sequence.num_days.
 
     interval : str
-        TODO one-line description of generate_date_sequence.generate_date_sequence.interval.
+        #TODO DOC one-line description of generate_date_sequence.generate_date_sequence.interval.
 
     Returns
     -------
     pd.Series | list[date]
-        TODO one-line description of return value of generate_date_sequence.generate_date_sequence.
+        #TODO DOC one-line description of return value of generate_date_sequence.generate_date_sequence.
 
     Contract
     --------
-    - #TODO contract lines for generate_date_sequence.generate_date_sequence.
-    - #TODO document exceptions, mutations, and precision assumptions for generate_date_sequence.generate_date_sequence.
+    - #TODO DOC contract lines for generate_date_sequence.generate_date_sequence.
+    - #TODO DOC document exceptions, mutations, and precision assumptions for generate_date_sequence.generate_date_sequence.
 
     @interface-report: show
     """

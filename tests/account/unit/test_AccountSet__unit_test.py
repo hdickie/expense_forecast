@@ -5,6 +5,22 @@ import pandas as pd
 import tempfile
 from expense_forecast.Account import Account
 from expense_forecast.AccountSet import AccountSet
+
+
+def test_account_set_from_dict_round_trips_all_account_types():
+    accounts = AccountSet()
+    accounts.createCheckingAccount("Checking", 1000, 0, float("inf"), True)
+    accounts.createCreditCardAccount(
+        "Card", 100, 200, 0, 5000, date(2026, 1, 1), 0.2, 40, 250
+    )
+    accounts.createLoanAccount(
+        "Loan", 800, 20, 0, 2000, date(2026, 1, 1), 0.05, 50, 10
+    )
+    accounts.createInvestmentAccount("IRA", 500, date(2026, 1, 1), 0.07)
+
+    rebuilt = AccountSet.from_dict(accounts.to_dict())
+
+    assert rebuilt.to_dict() == accounts.to_dict()
 import doctest, copy
 from datetime import date
 from decimal import Decimal

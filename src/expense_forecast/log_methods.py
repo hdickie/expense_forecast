@@ -1,6 +1,7 @@
 
 
 import logging
+from pathlib import Path
 from colorama import init as colorama_init
 from colorama import Fore
 from colorama import Style
@@ -15,6 +16,15 @@ BEGIN_MAGENTA = f"{Fore.MAGENTA}"
 BEGIN_WHITE = f"{Fore.WHITE}"
 BEGIN_CYAN = f"{Fore.CYAN}"
 RESET_COLOR = f"{Style.RESET_ALL}"
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+LOG_DIR = PROJECT_ROOT / "log"
+
+
+def project_log_file(logger_name: str) -> Path:
+    """Return a project log path, creating the log directory if needed."""
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    return LOG_DIR / f"{logger_name}.log"
 
 
 # https://stackoverflow.com/questions/6796492/temporarily-redirect-stdout-stderr
@@ -39,6 +49,8 @@ def setup_logger(logger_name, log_file, level=logging.DEBUG):
     """
     logger_object = logging.getLogger(logger_name)
     formatter = logging.Formatter("%(asctime)s - %(levelname)-8s - %(message)s")
+    log_file = Path(log_file)
+    log_file.parent.mkdir(parents=True, exist_ok=True)
     fileHandler = logging.FileHandler(log_file, mode="w")
     fileHandler.setFormatter(formatter)
     streamHandler = logging.StreamHandler()

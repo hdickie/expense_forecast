@@ -13,6 +13,7 @@ START_MARKER = "<!-- TODO:GENERATED:START -->"
 END_MARKER = "<!-- TODO:GENERATED:END -->"
 TODO_RE = re.compile(r"\btodo\b(?:\s*:|\s+-|\s+)?", re.IGNORECASE)
 TODO_DEFER_RE = re.compile(r"\btodo\s+defer\b", re.IGNORECASE)
+TODO_DOC_RE = re.compile(r"\btodo\s+doc\b", re.IGNORECASE)
 TODO_OPTIMIZATION_RE = re.compile(r"\btodo\s+optimization\b", re.IGNORECASE)
 
 DEFAULT_PREAMBLE = """# TODO
@@ -73,6 +74,8 @@ class Todo:
 def todo_bucket(todo: Todo) -> str:
     if TODO_OPTIMIZATION_RE.search(todo.text):
         return "optimization"
+    if TODO_DOC_RE.search(todo.text):
+        return "doc"
     if TODO_DEFER_RE.search(todo.text):
         return "defer"
     return "regular"
@@ -134,6 +137,7 @@ def render_generated_block(todos: list[Todo]) -> str:
     grouped_todos = {
         "regular": [],
         "defer": [],
+        "doc": [],
         "optimization": [],
     }
     for todo in todos:
@@ -142,6 +146,7 @@ def render_generated_block(todos: list[Todo]) -> str:
     section_order = [
         ("regular", "TODO"),
         ("defer", "TODO DEFER"),
+        ("doc", "TODO DOC"),
         ("optimization", "TODO OPTIMIZATION"),
     ]
 

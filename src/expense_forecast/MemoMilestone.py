@@ -5,7 +5,7 @@ import pandas as pd
 import jsonpickle
 
 
-#TODO manual review of MemoMilestone docstring
+#TODO DOC manual review of MemoMilestone docstring
 class MemoMilestone:
 
     def __init__(

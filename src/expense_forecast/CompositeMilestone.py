@@ -18,7 +18,7 @@ from .AccountMilestone import AccountMilestone
 import pandas as pd
 
 
-#TODO manual review of CompositeMilestone docstring
+#TODO DOC manual review of CompositeMilestone docstring
 class CompositeMilestone:
 
     """
@@ -33,31 +33,31 @@ class CompositeMilestone:
 
     @interface-report: show
     """
-    #TODO manual review of CompositeMilestone._validate_account_milestones docstring
+    #TODO DOC manual review of CompositeMilestone._validate_account_milestones docstring
     @staticmethod
     def _validate_account_milestones(account_milestones):
 
         """
-        TODO one-line description of CompositeMilestone._validate_account_milestones.
+        #TODO DOC one-line description of CompositeMilestone._validate_account_milestones.
 
-        TODO multi-line description of CompositeMilestone._validate_account_milestones.
-        TODO explain how CompositeMilestone._validate_account_milestones participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of CompositeMilestone._validate_account_milestones.
+        #TODO DOC explain how CompositeMilestone._validate_account_milestones participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         account_milestones : object
-            TODO one-line description of CompositeMilestone._validate_account_milestones.account_milestones.
+            #TODO DOC one-line description of CompositeMilestone._validate_account_milestones.account_milestones.
 
         Returns
         -------
         None
-            TODO one-line description of return value of CompositeMilestone._validate_account_milestones.
+            #TODO DOC one-line description of return value of CompositeMilestone._validate_account_milestones.
 
         Contract
         --------
-        - #TODO contract lines for CompositeMilestone._validate_account_milestones.
-        - #TODO document exceptions, mutations, and precision assumptions for CompositeMilestone._validate_account_milestones.
+        - #TODO DOC contract lines for CompositeMilestone._validate_account_milestones.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for CompositeMilestone._validate_account_milestones.
 
         @interface-report: show
         """
@@ -76,31 +76,31 @@ class CompositeMilestone:
             for attr in non_builtin_attr:
                 assert attr in account_milestone_required_attributes
 
-    #TODO manual review of CompositeMilestone._validate_memo_milestones docstring
+    #TODO DOC manual review of CompositeMilestone._validate_memo_milestones docstring
     @staticmethod
     def _validate_memo_milestones(memo_milestones):
 
         """
-        TODO one-line description of CompositeMilestone._validate_memo_milestones.
+        #TODO DOC one-line description of CompositeMilestone._validate_memo_milestones.
 
-        TODO multi-line description of CompositeMilestone._validate_memo_milestones.
-        TODO explain how CompositeMilestone._validate_memo_milestones participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of CompositeMilestone._validate_memo_milestones.
+        #TODO DOC explain how CompositeMilestone._validate_memo_milestones participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         memo_milestones : object
-            TODO one-line description of CompositeMilestone._validate_memo_milestones.memo_milestones.
+            #TODO DOC one-line description of CompositeMilestone._validate_memo_milestones.memo_milestones.
 
         Returns
         -------
         None
-            TODO one-line description of return value of CompositeMilestone._validate_memo_milestones.
+            #TODO DOC one-line description of return value of CompositeMilestone._validate_memo_milestones.
 
         Contract
         --------
-        - #TODO contract lines for CompositeMilestone._validate_memo_milestones.
-        - #TODO document exceptions, mutations, and precision assumptions for CompositeMilestone._validate_memo_milestones.
+        - #TODO DOC contract lines for CompositeMilestone._validate_memo_milestones.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for CompositeMilestone._validate_memo_milestones.
 
         @interface-report: show
         """
@@ -119,35 +119,35 @@ class CompositeMilestone:
                 assert attr in memo_milestone_required_attributes
 
 
-    #TODO manual review of CompositeMilestone.__init__ docstring
+    #TODO DOC manual review of CompositeMilestone.__init__ docstring
     def __init__(self, milestone_name, account_milestones, memo_milestones):
         """
-        TODO one-line description of CompositeMilestone.__init__.
+        #TODO DOC one-line description of CompositeMilestone.__init__.
 
-        TODO multi-line description of CompositeMilestone.__init__.
-        TODO explain how CompositeMilestone.__init__ participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of CompositeMilestone.__init__.
+        #TODO DOC explain how CompositeMilestone.__init__ participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         milestone_name : object
-            TODO one-line description of CompositeMilestone.__init__.milestone_name.
+            #TODO DOC one-line description of CompositeMilestone.__init__.milestone_name.
 
         account_milestones : object
-            TODO one-line description of CompositeMilestone.__init__.account_milestones.
+            #TODO DOC one-line description of CompositeMilestone.__init__.account_milestones.
 
         memo_milestones : object
-            TODO one-line description of CompositeMilestone.__init__.memo_milestones.
+            #TODO DOC one-line description of CompositeMilestone.__init__.memo_milestones.
 
         Returns
         -------
         None
-            TODO one-line description of return value of CompositeMilestone.__init__.
+            #TODO DOC one-line description of return value of CompositeMilestone.__init__.
 
         Contract
         --------
-        - #TODO contract lines for CompositeMilestone.__init__.
-        - #TODO document exceptions, mutations, and precision assumptions for CompositeMilestone.__init__.
+        - #TODO DOC contract lines for CompositeMilestone.__init__.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for CompositeMilestone.__init__.
 
         @interface-report: show
         """
@@ -165,7 +165,7 @@ class CompositeMilestone:
         self.memo_milestones = memo_milestones
         CompositeMilestone._validate_memo_milestones(self.memo_milestones)
 
-        #TODO validate unique names and add test
+        #TODO DEFER CODEX-OK validate unique names and add test
 
 
 
@@ -175,30 +175,30 @@ class CompositeMilestone:
 
 
 
-    #TODO manual review of CompositeMilestone.__str__ docstring
+    #TODO DOC manual review of CompositeMilestone.__str__ docstring
     def __str__(self):
 
         """
-        TODO one-line description of CompositeMilestone.__str__.
+        #TODO DOC one-line description of CompositeMilestone.__str__.
 
-        TODO multi-line description of CompositeMilestone.__str__.
-        TODO explain how CompositeMilestone.__str__ participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of CompositeMilestone.__str__.
+        #TODO DOC explain how CompositeMilestone.__str__ participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         None
-            TODO confirm that CompositeMilestone.__str__ takes no parameters beyond self/cls.
+            #TODO DOC confirm that CompositeMilestone.__str__ takes no parameters beyond self/cls.
 
         Returns
         -------
         str
-            TODO one-line description of return value of CompositeMilestone.__str__.
+            #TODO DOC one-line description of return value of CompositeMilestone.__str__.
 
         Contract
         --------
-        - #TODO contract lines for CompositeMilestone.__str__.
-        - #TODO document exceptions, mutations, and precision assumptions for CompositeMilestone.__str__.
+        - #TODO DOC contract lines for CompositeMilestone.__str__.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for CompositeMilestone.__str__.
 
         @interface-report: show
         """
@@ -249,30 +249,30 @@ class CompositeMilestone:
 
         return return_string
 
-    #TODO manual review of CompositeMilestone.to_json docstring
+    #TODO DOC manual review of CompositeMilestone.to_json docstring
     def to_json(self):
 
         """
-        TODO one-line description of CompositeMilestone.to_json.
+        #TODO DOC one-line description of CompositeMilestone.to_json.
 
-        TODO multi-line description of CompositeMilestone.to_json.
-        TODO explain how CompositeMilestone.to_json participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of CompositeMilestone.to_json.
+        #TODO DOC explain how CompositeMilestone.to_json participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         None
-            TODO confirm that CompositeMilestone.to_json takes no parameters beyond self/cls.
+            #TODO DOC confirm that CompositeMilestone.to_json takes no parameters beyond self/cls.
 
         Returns
         -------
         str
-            TODO one-line description of return value of CompositeMilestone.to_json.
+            #TODO DOC one-line description of return value of CompositeMilestone.to_json.
 
         Contract
         --------
-        - #TODO contract lines for CompositeMilestone.to_json.
-        - #TODO document exceptions, mutations, and precision assumptions for CompositeMilestone.to_json.
+        - #TODO DOC contract lines for CompositeMilestone.to_json.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for CompositeMilestone.to_json.
 
         @interface-report: show
         """

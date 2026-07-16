@@ -21,7 +21,9 @@ import jsonpickle
 import logging
 from . import log_methods
 
-logger = log_methods.setup_logger(__name__, "./" + __name__ + ".log", level=logging.DEBUG)
+logger = log_methods.setup_logger(
+    __name__, log_methods.project_log_file(__name__), level=logging.DEBUG
+)
 
 
 # def initialize_from_dataframe(
@@ -65,7 +67,7 @@ logger = log_methods.setup_logger(__name__, "./" + __name__ + ".log", level=logg
 #     return MilestoneSet(am__list, mm__list, cm__list)
 
 
-#TODO manual review of MilestoneSet docstring
+#TODO DOC manual review of MilestoneSet docstring
 class MilestoneSet:
 
     """
@@ -108,30 +110,30 @@ class MilestoneSet:
             + repr(account_name)
         )
 
-    #TODO manual review of MilestoneSet._validate_unique_account_milestones docstring
+    #TODO DOC manual review of MilestoneSet._validate_unique_account_milestones docstring
     @staticmethod
     def _validate_unique_account_milestones(account_milestones):
         """
-        TODO one-line description of MilestoneSet._validate_unique_account_milestones.
+        #TODO DOC one-line description of MilestoneSet._validate_unique_account_milestones.
 
-        TODO multi-line description of MilestoneSet._validate_unique_account_milestones.
-        TODO explain how MilestoneSet._validate_unique_account_milestones participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of MilestoneSet._validate_unique_account_milestones.
+        #TODO DOC explain how MilestoneSet._validate_unique_account_milestones participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         account_milestones : object
-            TODO one-line description of MilestoneSet._validate_unique_account_milestones.account_milestones.
+            #TODO DOC one-line description of MilestoneSet._validate_unique_account_milestones.account_milestones.
 
         Returns
         -------
         None
-            TODO one-line description of return value of MilestoneSet._validate_unique_account_milestones.
+            #TODO DOC one-line description of return value of MilestoneSet._validate_unique_account_milestones.
 
         Contract
         --------
-        - #TODO contract lines for MilestoneSet._validate_unique_account_milestones.
-        - #TODO document exceptions, mutations, and precision assumptions for MilestoneSet._validate_unique_account_milestones.
+        - #TODO DOC contract lines for MilestoneSet._validate_unique_account_milestones.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for MilestoneSet._validate_unique_account_milestones.
 
         @interface-report: show
         """
@@ -144,30 +146,30 @@ class MilestoneSet:
                 else:
                     raise ValueError("Duplicate AccountMilestone detected: " + str(am_key))
 
-    #TODO manual review of MilestoneSet._validate_unique_memo_milestones docstring
+    #TODO DOC manual review of MilestoneSet._validate_unique_memo_milestones docstring
     @staticmethod
     def _validate_unique_memo_milestones(memo_milestones):
         """
-        TODO one-line description of MilestoneSet._validate_unique_memo_milestones.
+        #TODO DOC one-line description of MilestoneSet._validate_unique_memo_milestones.
 
-        TODO multi-line description of MilestoneSet._validate_unique_memo_milestones.
-        TODO explain how MilestoneSet._validate_unique_memo_milestones participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of MilestoneSet._validate_unique_memo_milestones.
+        #TODO DOC explain how MilestoneSet._validate_unique_memo_milestones participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         memo_milestones : object
-            TODO one-line description of MilestoneSet._validate_unique_memo_milestones.memo_milestones.
+            #TODO DOC one-line description of MilestoneSet._validate_unique_memo_milestones.memo_milestones.
 
         Returns
         -------
         None
-            TODO one-line description of return value of MilestoneSet._validate_unique_memo_milestones.
+            #TODO DOC one-line description of return value of MilestoneSet._validate_unique_memo_milestones.
 
         Contract
         --------
-        - #TODO contract lines for MilestoneSet._validate_unique_memo_milestones.
-        - #TODO document exceptions, mutations, and precision assumptions for MilestoneSet._validate_unique_memo_milestones.
+        - #TODO DOC contract lines for MilestoneSet._validate_unique_memo_milestones.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for MilestoneSet._validate_unique_memo_milestones.
 
         @interface-report: show
         """
@@ -180,30 +182,30 @@ class MilestoneSet:
                 else:
                     raise ValueError("Duplicate MemoMilestone detected: " + str(mm_key))
 
-    #TODO manual review of MilestoneSet._validate_unique_composite_milestones docstring
+    #TODO DOC manual review of MilestoneSet._validate_unique_composite_milestones docstring
     @staticmethod
     def _validate_unique_composite_milestones(composite_milestones):
         """
-        TODO one-line description of MilestoneSet._validate_unique_composite_milestones.
+        #TODO DOC one-line description of MilestoneSet._validate_unique_composite_milestones.
 
-        TODO multi-line description of MilestoneSet._validate_unique_composite_milestones.
-        TODO explain how MilestoneSet._validate_unique_composite_milestones participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of MilestoneSet._validate_unique_composite_milestones.
+        #TODO DOC explain how MilestoneSet._validate_unique_composite_milestones participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         composite_milestones : object
-            TODO one-line description of MilestoneSet._validate_unique_composite_milestones.composite_milestones.
+            #TODO DOC one-line description of MilestoneSet._validate_unique_composite_milestones.composite_milestones.
 
         Returns
         -------
         None
-            TODO one-line description of return value of MilestoneSet._validate_unique_composite_milestones.
+            #TODO DOC one-line description of return value of MilestoneSet._validate_unique_composite_milestones.
 
         Contract
         --------
-        - #TODO contract lines for MilestoneSet._validate_unique_composite_milestones.
-        - #TODO document exceptions, mutations, and precision assumptions for MilestoneSet._validate_unique_composite_milestones.
+        - #TODO DOC contract lines for MilestoneSet._validate_unique_composite_milestones.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for MilestoneSet._validate_unique_composite_milestones.
 
         @interface-report: show
         """
@@ -221,36 +223,36 @@ class MilestoneSet:
                 # else:
                 #     raise ValueError("Duplicate CompositeMilestone detected: " + str(cm_key))
 
-    #TODO manual review of MilestoneSet._validate_unique_milestone_names docstring
+    #TODO DOC manual review of MilestoneSet._validate_unique_milestone_names docstring
     @staticmethod
     def _validate_unique_milestone_names(account_milestones, memo_milestones, composite_milestones):
         """
-        TODO one-line description of MilestoneSet._validate_unique_milestone_names.
+        #TODO DOC one-line description of MilestoneSet._validate_unique_milestone_names.
 
-        TODO multi-line description of MilestoneSet._validate_unique_milestone_names.
-        TODO explain how MilestoneSet._validate_unique_milestone_names participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of MilestoneSet._validate_unique_milestone_names.
+        #TODO DOC explain how MilestoneSet._validate_unique_milestone_names participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         account_milestones : object
-            TODO one-line description of MilestoneSet._validate_unique_milestone_names.account_milestones.
+            #TODO DOC one-line description of MilestoneSet._validate_unique_milestone_names.account_milestones.
 
         memo_milestones : object
-            TODO one-line description of MilestoneSet._validate_unique_milestone_names.memo_milestones.
+            #TODO DOC one-line description of MilestoneSet._validate_unique_milestone_names.memo_milestones.
 
         composite_milestones : object
-            TODO one-line description of MilestoneSet._validate_unique_milestone_names.composite_milestones.
+            #TODO DOC one-line description of MilestoneSet._validate_unique_milestone_names.composite_milestones.
 
         Returns
         -------
         None
-            TODO one-line description of return value of MilestoneSet._validate_unique_milestone_names.
+            #TODO DOC one-line description of return value of MilestoneSet._validate_unique_milestone_names.
 
         Contract
         --------
-        - #TODO contract lines for MilestoneSet._validate_unique_milestone_names.
-        - #TODO document exceptions, mutations, and precision assumptions for MilestoneSet._validate_unique_milestone_names.
+        - #TODO DOC contract lines for MilestoneSet._validate_unique_milestone_names.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for MilestoneSet._validate_unique_milestone_names.
 
         @interface-report: show
         """
@@ -278,30 +280,30 @@ class MilestoneSet:
             first_offender = find_first_duplicate(milestone_names)
             raise ValueError("Duplicate Milestone Name detected. First Offender: "+str(first_offender))
 
-    #TODO manual review of MilestoneSet.__init__ docstring
+    #TODO DOC manual review of MilestoneSet.__init__ docstring
     def __init__(self, milestones=None, **kwargs):
 
         """
-        TODO one-line description of MilestoneSet.__init__.
+        #TODO DOC one-line description of MilestoneSet.__init__.
 
-        TODO multi-line description of MilestoneSet.__init__.
-        TODO explain how MilestoneSet.__init__ participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of MilestoneSet.__init__.
+        #TODO DOC explain how MilestoneSet.__init__ participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         **kwargs : dict
-            TODO one-line description of MilestoneSet.__init__.kwargs.
+            #TODO DOC one-line description of MilestoneSet.__init__.kwargs.
 
         Returns
         -------
         None
-            TODO one-line description of return value of MilestoneSet.__init__.
+            #TODO DOC one-line description of return value of MilestoneSet.__init__.
 
         Contract
         --------
-        - #TODO contract lines for MilestoneSet.__init__.
-        - #TODO document exceptions, mutations, and precision assumptions for MilestoneSet.__init__.
+        - #TODO DOC contract lines for MilestoneSet.__init__.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for MilestoneSet.__init__.
 
         @interface-report: show
         """
@@ -355,29 +357,29 @@ class MilestoneSet:
         }
 
 
-    #TODO manual review of MilestoneSet.__eq__ docstring
+    #TODO DOC manual review of MilestoneSet.__eq__ docstring
     def __eq__(self, other):
         """
-        TODO one-line description of MilestoneSet.__eq__.
+        #TODO DOC one-line description of MilestoneSet.__eq__.
 
-        TODO multi-line description of MilestoneSet.__eq__.
-        TODO explain how MilestoneSet.__eq__ participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of MilestoneSet.__eq__.
+        #TODO DOC explain how MilestoneSet.__eq__ participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         other : object
-            TODO one-line description of MilestoneSet.__eq__.other.
+            #TODO DOC one-line description of MilestoneSet.__eq__.other.
 
         Returns
         -------
         bool
-            TODO one-line description of return value of MilestoneSet.__eq__.
+            #TODO DOC one-line description of return value of MilestoneSet.__eq__.
 
         Contract
         --------
-        - #TODO contract lines for MilestoneSet.__eq__.
-        - #TODO document exceptions, mutations, and precision assumptions for MilestoneSet.__eq__.
+        - #TODO DOC contract lines for MilestoneSet.__eq__.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for MilestoneSet.__eq__.
 
         @interface-report: show
         """
@@ -386,30 +388,30 @@ class MilestoneSet:
         return self.to_json() == other.to_json()
 
 
-    #TODO manual review of MilestoneSet.__str__ docstring
+    #TODO DOC manual review of MilestoneSet.__str__ docstring
     def __str__(self):
 
         """
-        TODO one-line description of MilestoneSet.__str__.
+        #TODO DOC one-line description of MilestoneSet.__str__.
 
-        TODO multi-line description of MilestoneSet.__str__.
-        TODO explain how MilestoneSet.__str__ participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of MilestoneSet.__str__.
+        #TODO DOC explain how MilestoneSet.__str__ participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         None
-            TODO confirm that MilestoneSet.__str__ takes no parameters beyond self/cls.
+            #TODO DOC confirm that MilestoneSet.__str__ takes no parameters beyond self/cls.
 
         Returns
         -------
         str
-            TODO one-line description of return value of MilestoneSet.__str__.
+            #TODO DOC one-line description of return value of MilestoneSet.__str__.
 
         Contract
         --------
-        - #TODO contract lines for MilestoneSet.__str__.
-        - #TODO document exceptions, mutations, and precision assumptions for MilestoneSet.__str__.
+        - #TODO DOC contract lines for MilestoneSet.__str__.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for MilestoneSet.__str__.
 
         @interface-report: show
         """
@@ -436,32 +438,32 @@ class MilestoneSet:
 
         return return_string
 
-    #TODO manual review of MilestoneSet.addMemoMilestone docstring
+    #TODO DOC manual review of MilestoneSet.addMemoMilestone docstring
     def addMemoMilestone(self, milestone_name, memo_regex_string):
         """
-        TODO one-line description of MilestoneSet.addMemoMilestone.
+        #TODO DOC one-line description of MilestoneSet.addMemoMilestone.
 
-        TODO multi-line description of MilestoneSet.addMemoMilestone.
-        TODO explain how MilestoneSet.addMemoMilestone participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of MilestoneSet.addMemoMilestone.
+        #TODO DOC explain how MilestoneSet.addMemoMilestone participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         milestone_name : object
-            TODO one-line description of MilestoneSet.addMemoMilestone.milestone_name.
+            #TODO DOC one-line description of MilestoneSet.addMemoMilestone.milestone_name.
 
         memo_regex_string : str
-            TODO one-line description of MilestoneSet.addMemoMilestone.memo_regex_string.
+            #TODO DOC one-line description of MilestoneSet.addMemoMilestone.memo_regex_string.
 
         Returns
         -------
         object
-            TODO one-line description of return value of MilestoneSet.addMemoMilestone.
+            #TODO DOC one-line description of return value of MilestoneSet.addMemoMilestone.
 
         Contract
         --------
-        - #TODO contract lines for MilestoneSet.addMemoMilestone.
-        - #TODO document exceptions, mutations, and precision assumptions for MilestoneSet.addMemoMilestone.
+        - #TODO DOC contract lines for MilestoneSet.addMemoMilestone.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for MilestoneSet.addMemoMilestone.
 
         @interface-report: show
         """
@@ -469,40 +471,40 @@ class MilestoneSet:
             MemoMilestone(milestone_name, memo_regex_string)
         ]
 
-    #TODO manual review of MilestoneSet.addAccountMilestone docstring
+    #TODO DOC manual review of MilestoneSet.addAccountMilestone docstring
     def addAccountMilestone(
         self, milestone_name, account_name, min_balance, max_balance
     ):
         """
-        TODO one-line description of MilestoneSet.addAccountMilestone.
+        #TODO DOC one-line description of MilestoneSet.addAccountMilestone.
 
-        TODO multi-line description of MilestoneSet.addAccountMilestone.
-        TODO explain how MilestoneSet.addAccountMilestone participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of MilestoneSet.addAccountMilestone.
+        #TODO DOC explain how MilestoneSet.addAccountMilestone participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         milestone_name : object
-            TODO one-line description of MilestoneSet.addAccountMilestone.milestone_name.
+            #TODO DOC one-line description of MilestoneSet.addAccountMilestone.milestone_name.
 
         account_name : str
-            TODO one-line description of MilestoneSet.addAccountMilestone.account_name.
+            #TODO DOC one-line description of MilestoneSet.addAccountMilestone.account_name.
 
         min_balance : float
-            TODO one-line description of MilestoneSet.addAccountMilestone.min_balance.
+            #TODO DOC one-line description of MilestoneSet.addAccountMilestone.min_balance.
 
         max_balance : float
-            TODO one-line description of MilestoneSet.addAccountMilestone.max_balance.
+            #TODO DOC one-line description of MilestoneSet.addAccountMilestone.max_balance.
 
         Returns
         -------
         object
-            TODO one-line description of return value of MilestoneSet.addAccountMilestone.
+            #TODO DOC one-line description of return value of MilestoneSet.addAccountMilestone.
 
         Contract
         --------
-        - #TODO contract lines for MilestoneSet.addAccountMilestone.
-        - #TODO document exceptions, mutations, and precision assumptions for MilestoneSet.addAccountMilestone.
+        - #TODO DOC contract lines for MilestoneSet.addAccountMilestone.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for MilestoneSet.addAccountMilestone.
 
         @interface-report: show
         """
@@ -512,38 +514,38 @@ class MilestoneSet:
             )
         ]
 
-    #TODO manual review of MilestoneSet.addCompositeMilestone docstring
+    #TODO DOC manual review of MilestoneSet.addCompositeMilestone docstring
     def addCompositeMilestone(
         self, milestone_name, account_milestones__list, memo_milestones__list
     ):
 
         """
-        TODO one-line description of MilestoneSet.addCompositeMilestone.
+        #TODO DOC one-line description of MilestoneSet.addCompositeMilestone.
 
-        TODO multi-line description of MilestoneSet.addCompositeMilestone.
-        TODO explain how MilestoneSet.addCompositeMilestone participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of MilestoneSet.addCompositeMilestone.
+        #TODO DOC explain how MilestoneSet.addCompositeMilestone participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         milestone_name : object
-            TODO one-line description of MilestoneSet.addCompositeMilestone.milestone_name.
+            #TODO DOC one-line description of MilestoneSet.addCompositeMilestone.milestone_name.
 
         account_milestones__list : object
-            TODO one-line description of MilestoneSet.addCompositeMilestone.account_milestones__list.
+            #TODO DOC one-line description of MilestoneSet.addCompositeMilestone.account_milestones__list.
 
         memo_milestones__list : object
-            TODO one-line description of MilestoneSet.addCompositeMilestone.memo_milestones__list.
+            #TODO DOC one-line description of MilestoneSet.addCompositeMilestone.memo_milestones__list.
 
         Returns
         -------
         object
-            TODO one-line description of return value of MilestoneSet.addCompositeMilestone.
+            #TODO DOC one-line description of return value of MilestoneSet.addCompositeMilestone.
 
         Contract
         --------
-        - #TODO contract lines for MilestoneSet.addCompositeMilestone.
-        - #TODO document exceptions, mutations, and precision assumptions for MilestoneSet.addCompositeMilestone.
+        - #TODO DOC contract lines for MilestoneSet.addCompositeMilestone.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for MilestoneSet.addCompositeMilestone.
 
         @interface-report: show
         """
@@ -553,59 +555,59 @@ class MilestoneSet:
             )
         ]
 
-    #TODO manual review of MilestoneSet.to_json docstring
+    #TODO DOC manual review of MilestoneSet.to_json docstring
     def to_json(self):
         """
-        TODO one-line description of MilestoneSet.to_json.
+        #TODO DOC one-line description of MilestoneSet.to_json.
 
-        TODO multi-line description of MilestoneSet.to_json.
-        TODO explain how MilestoneSet.to_json participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of MilestoneSet.to_json.
+        #TODO DOC explain how MilestoneSet.to_json participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         None
-            TODO confirm that MilestoneSet.to_json takes no parameters beyond self/cls.
+            #TODO DOC confirm that MilestoneSet.to_json takes no parameters beyond self/cls.
 
         Returns
         -------
         str
-            TODO one-line description of return value of MilestoneSet.to_json.
+            #TODO DOC one-line description of return value of MilestoneSet.to_json.
 
         Contract
         --------
-        - #TODO contract lines for MilestoneSet.to_json.
-        - #TODO document exceptions, mutations, and precision assumptions for MilestoneSet.to_json.
+        - #TODO DOC contract lines for MilestoneSet.to_json.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for MilestoneSet.to_json.
 
         @interface-report: show
         """
         return jsonpickle.encode(self, indent=4, unpicklable=False)
 
     # todo rename?
-    #TODO manual review of MilestoneSet.getAccountMilestonesDF docstring
+    #TODO DOC manual review of MilestoneSet.getAccountMilestonesDF docstring
     def getAccountMilestonesDF(self):
 
         """
-        TODO one-line description of MilestoneSet.getAccountMilestonesDF.
+        #TODO DOC one-line description of MilestoneSet.getAccountMilestonesDF.
 
-        TODO multi-line description of MilestoneSet.getAccountMilestonesDF.
-        TODO explain how MilestoneSet.getAccountMilestonesDF participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of MilestoneSet.getAccountMilestonesDF.
+        #TODO DOC explain how MilestoneSet.getAccountMilestonesDF participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         None
-            TODO confirm that MilestoneSet.getAccountMilestonesDF takes no parameters beyond self/cls.
+            #TODO DOC confirm that MilestoneSet.getAccountMilestonesDF takes no parameters beyond self/cls.
 
         Returns
         -------
         pd.DataFrame
-            TODO one-line description of return value of MilestoneSet.getAccountMilestonesDF.
+            #TODO DOC one-line description of return value of MilestoneSet.getAccountMilestonesDF.
 
         Contract
         --------
-        - #TODO contract lines for MilestoneSet.getAccountMilestonesDF.
-        - #TODO document exceptions, mutations, and precision assumptions for MilestoneSet.getAccountMilestonesDF.
+        - #TODO DOC contract lines for MilestoneSet.getAccountMilestonesDF.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for MilestoneSet.getAccountMilestonesDF.
 
         @interface-report: show
         """
@@ -636,29 +638,29 @@ class MilestoneSet:
             account_milestones_df.reset_index(drop=True, inplace=True)
         return account_milestones_df
 
-    #TODO manual review of MilestoneSet.getMemoMilestonesDF docstring
+    #TODO DOC manual review of MilestoneSet.getMemoMilestonesDF docstring
     def getMemoMilestonesDF(self):
         """
-        TODO one-line description of MilestoneSet.getMemoMilestonesDF.
+        #TODO DOC one-line description of MilestoneSet.getMemoMilestonesDF.
 
-        TODO multi-line description of MilestoneSet.getMemoMilestonesDF.
-        TODO explain how MilestoneSet.getMemoMilestonesDF participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of MilestoneSet.getMemoMilestonesDF.
+        #TODO DOC explain how MilestoneSet.getMemoMilestonesDF participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         None
-            TODO confirm that MilestoneSet.getMemoMilestonesDF takes no parameters beyond self/cls.
+            #TODO DOC confirm that MilestoneSet.getMemoMilestonesDF takes no parameters beyond self/cls.
 
         Returns
         -------
         pd.DataFrame
-            TODO one-line description of return value of MilestoneSet.getMemoMilestonesDF.
+            #TODO DOC one-line description of return value of MilestoneSet.getMemoMilestonesDF.
 
         Contract
         --------
-        - #TODO contract lines for MilestoneSet.getMemoMilestonesDF.
-        - #TODO document exceptions, mutations, and precision assumptions for MilestoneSet.getMemoMilestonesDF.
+        - #TODO DOC contract lines for MilestoneSet.getMemoMilestonesDF.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for MilestoneSet.getMemoMilestonesDF.
 
         @interface-report: show
         """
@@ -680,29 +682,29 @@ class MilestoneSet:
             memo_milestones_df.reset_index(drop=True, inplace=True)
         return memo_milestones_df
 
-    #TODO manual review of MilestoneSet.getCompositeMilestonesDF docstring
+    #TODO DOC manual review of MilestoneSet.getCompositeMilestonesDF docstring
     def getCompositeMilestonesDF(self):
         """
-        TODO one-line description of MilestoneSet.getCompositeMilestonesDF.
+        #TODO DOC one-line description of MilestoneSet.getCompositeMilestonesDF.
 
-        TODO multi-line description of MilestoneSet.getCompositeMilestonesDF.
-        TODO explain how MilestoneSet.getCompositeMilestonesDF participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of MilestoneSet.getCompositeMilestonesDF.
+        #TODO DOC explain how MilestoneSet.getCompositeMilestonesDF participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         None
-            TODO confirm that MilestoneSet.getCompositeMilestonesDF takes no parameters beyond self/cls.
+            #TODO DOC confirm that MilestoneSet.getCompositeMilestonesDF takes no parameters beyond self/cls.
 
         Returns
         -------
         pd.DataFrame
-            TODO one-line description of return value of MilestoneSet.getCompositeMilestonesDF.
+            #TODO DOC one-line description of return value of MilestoneSet.getCompositeMilestonesDF.
 
         Contract
         --------
-        - #TODO contract lines for MilestoneSet.getCompositeMilestonesDF.
-        - #TODO document exceptions, mutations, and precision assumptions for MilestoneSet.getCompositeMilestonesDF.
+        - #TODO DOC contract lines for MilestoneSet.getCompositeMilestonesDF.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for MilestoneSet.getCompositeMilestonesDF.
 
         @interface-report: show
         """
@@ -746,7 +748,7 @@ class MilestoneSet:
 
 
     # TODO evaluateAccountMilestone does not seem like it belongs on F
-    #TODO manual review of ForecastHandler.evaluateAccountMilestone docstring
+    #TODO DOC manual review of ForecastHandler.evaluateAccountMilestone docstring
     @classmethod
     def evaluateAccountMilestone(
         cls, forecast_df, account_name, min_balance, max_balance, log_stack_depth
@@ -765,38 +767,38 @@ class MilestoneSet:
         #     log_stack_depth,
         # )
         """
-        TODO one-line description of ForecastHandler.evaluateAccountMilestone.
+        #TODO DOC one-line description of ForecastHandler.evaluateAccountMilestone.
 
-        TODO multi-line description of ForecastHandler.evaluateAccountMilestone.
-        TODO explain how ForecastHandler.evaluateAccountMilestone participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler.evaluateAccountMilestone.
+        #TODO DOC explain how ForecastHandler.evaluateAccountMilestone participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         forecast_df : object
-            TODO one-line description of ForecastHandler.evaluateAccountMilestone.forecast_df.
+            #TODO DOC one-line description of ForecastHandler.evaluateAccountMilestone.forecast_df.
 
         account_name : str
-            TODO one-line description of ForecastHandler.evaluateAccountMilestone.account_name.
+            #TODO DOC one-line description of ForecastHandler.evaluateAccountMilestone.account_name.
 
         min_balance : float
-            TODO one-line description of ForecastHandler.evaluateAccountMilestone.min_balance.
+            #TODO DOC one-line description of ForecastHandler.evaluateAccountMilestone.min_balance.
 
         max_balance : float
-            TODO one-line description of ForecastHandler.evaluateAccountMilestone.max_balance.
+            #TODO DOC one-line description of ForecastHandler.evaluateAccountMilestone.max_balance.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler.evaluateAccountMilestone.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler.evaluateAccountMilestone.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler.evaluateAccountMilestone.
+            #TODO DOC one-line description of return value of ForecastHandler.evaluateAccountMilestone.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler.evaluateAccountMilestone.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler.evaluateAccountMilestone.
+        - #TODO DOC contract lines for ForecastHandler.evaluateAccountMilestone.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler.evaluateAccountMilestone.
 
         @interface-report: show
         """
@@ -872,7 +874,7 @@ class MilestoneSet:
         # )
         return success_date
 
-    #TODO manual review of MilestoneSet.evaulateMemoMilestone docstring
+    #TODO DOC manual review of MilestoneSet.evaulateMemoMilestone docstring
     @classmethod
     def evaulateMemoMilestone(cls, forecast_df, memo_regex, log_stack_depth):
         # log_in_color(
@@ -883,32 +885,32 @@ class MilestoneSet:
         #     log_stack_depth,
         # )
         """
-        TODO one-line description of ForecastHandler.evaulateMemoMilestone.
+        #TODO DOC one-line description of ForecastHandler.evaulateMemoMilestone.
 
-        TODO multi-line description of ForecastHandler.evaulateMemoMilestone.
-        TODO explain how ForecastHandler.evaulateMemoMilestone participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler.evaulateMemoMilestone.
+        #TODO DOC explain how ForecastHandler.evaulateMemoMilestone participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         forecast_df : object
-            TODO one-line description of ForecastHandler.evaulateMemoMilestone.forecast_df.
+            #TODO DOC one-line description of ForecastHandler.evaulateMemoMilestone.forecast_df.
 
         memo_regex : str
-            TODO one-line description of ForecastHandler.evaulateMemoMilestone.memo_regex.
+            #TODO DOC one-line description of ForecastHandler.evaulateMemoMilestone.memo_regex.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler.evaulateMemoMilestone.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler.evaulateMemoMilestone.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler.evaulateMemoMilestone.
+            #TODO DOC one-line description of return value of ForecastHandler.evaulateMemoMilestone.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler.evaulateMemoMilestone.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler.evaulateMemoMilestone.
+        - #TODO DOC contract lines for ForecastHandler.evaulateMemoMilestone.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler.evaulateMemoMilestone.
 
         @interface-report: show
         """
@@ -936,7 +938,7 @@ class MilestoneSet:
         # )
         return None
 
-    #TODO manual review of MilestoneSet.evaluateCompositeMilestone docstring
+    #TODO DOC manual review of MilestoneSet.evaluateCompositeMilestone docstring
     @classmethod
     def evaluateCompositeMilestone(
         cls,
@@ -953,35 +955,35 @@ class MilestoneSet:
         #     log_stack_depth,
         # )
         """
-        TODO one-line description of ForecastHandler.evaluateCompositeMilestone.
+        #TODO DOC one-line description of ForecastHandler.evaluateCompositeMilestone.
 
-        TODO multi-line description of ForecastHandler.evaluateCompositeMilestone.
-        TODO explain how ForecastHandler.evaluateCompositeMilestone participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler.evaluateCompositeMilestone.
+        #TODO DOC explain how ForecastHandler.evaluateCompositeMilestone participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         forecast_df : object
-            TODO one-line description of ForecastHandler.evaluateCompositeMilestone.forecast_df.
+            #TODO DOC one-line description of ForecastHandler.evaluateCompositeMilestone.forecast_df.
 
         list_of_account_milestones : object
-            TODO one-line description of ForecastHandler.evaluateCompositeMilestone.list_of_account_milestones.
+            #TODO DOC one-line description of ForecastHandler.evaluateCompositeMilestone.list_of_account_milestones.
 
         list_of_memo_milestones : object
-            TODO one-line description of ForecastHandler.evaluateCompositeMilestone.list_of_memo_milestones.
+            #TODO DOC one-line description of ForecastHandler.evaluateCompositeMilestone.list_of_memo_milestones.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler.evaluateCompositeMilestone.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler.evaluateCompositeMilestone.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler.evaluateCompositeMilestone.
+            #TODO DOC one-line description of return value of ForecastHandler.evaluateCompositeMilestone.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler.evaluateCompositeMilestone.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler.evaluateCompositeMilestone.
+        - #TODO DOC contract lines for ForecastHandler.evaluateCompositeMilestone.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler.evaluateCompositeMilestone.
 
         @interface-report: show
         """
@@ -1054,37 +1056,37 @@ class MilestoneSet:
         log_stack_depth -= 1
         return result_date
 
-    #TODO manual review of MilestoneSet.evaluateMilestones docstring
+    #TODO DOC manual review of MilestoneSet.evaluateMilestones docstring
     @classmethod
     def evaluateMilestones(cls, forecast_df, milestone_set, log_stack_depth):
 
         """
-        TODO one-line description of ForecastHandler.evaluateMilestones.
+        #TODO DOC one-line description of ForecastHandler.evaluateMilestones.
 
-        TODO multi-line description of ForecastHandler.evaluateMilestones.
-        TODO explain how ForecastHandler.evaluateMilestones participates in this module.
-        TODO document important state, validation, or serialization behavior.
+        #TODO DOC multi-line description of ForecastHandler.evaluateMilestones.
+        #TODO DOC explain how ForecastHandler.evaluateMilestones participates in this module.
+        #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         forecast_df : object
-            TODO one-line description of ForecastHandler.evaluateMilestones.forecast_df.
+            #TODO DOC one-line description of ForecastHandler.evaluateMilestones.forecast_df.
 
         milestone_set : object
-            TODO one-line description of ForecastHandler.evaluateMilestones.milestone_set.
+            #TODO DOC one-line description of ForecastHandler.evaluateMilestones.milestone_set.
 
         log_stack_depth : int
-            TODO one-line description of ForecastHandler.evaluateMilestones.log_stack_depth.
+            #TODO DOC one-line description of ForecastHandler.evaluateMilestones.log_stack_depth.
 
         Returns
         -------
         object
-            TODO one-line description of return value of ForecastHandler.evaluateMilestones.
+            #TODO DOC one-line description of return value of ForecastHandler.evaluateMilestones.
 
         Contract
         --------
-        - #TODO contract lines for ForecastHandler.evaluateMilestones.
-        - #TODO document exceptions, mutations, and precision assumptions for ForecastHandler.evaluateMilestones.
+        - #TODO DOC contract lines for ForecastHandler.evaluateMilestones.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler.evaluateMilestones.
 
         @interface-report: show
         """

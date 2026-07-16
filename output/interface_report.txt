@@ -1,0 +1,200 @@
+
+CLASS / METHOD MATRIX
+========================================================================================================================
+Class                                   	File                                                             	__add__   	__eq__    	__hash__  	__ne__    	__repr__  	__str__   	__sub__   	from_dict 	from_json 	to_dict   	to_json   	Probable tests
+Account                                 	src/expense_forecast/Account.py                                  	⬛         	—         	—         	—         	—         	OK        	—         	—         	—         	—         	OK        	33
+AccountMilestone                        	src/expense_forecast/AccountMilestone.py                         	—         	—         	—         	—         	—         	OK        	—         	—         	—         	—         	OK        	5
+AccountBoundaryError                    	src/expense_forecast/AccountSet.py                               	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	0
+AccountSet                              	src/expense_forecast/AccountSet.py                               	—         	—         	—         	—         	—         	OK        	—         	—         	—         	OK        	OK        	11
+BudgetItem                              	src/expense_forecast/BudgetItem.py                               	—         	—         	—         	—         	—         	OK        	—         	—         	—         	OK        	OK        	10
+BudgetSet                               	src/expense_forecast/BudgetSet.py                                	OK        	—         	—         	—         	—         	OK        	OK        	—         	—         	OK        	OK        	7
+CheckingBillingState                    	src/expense_forecast/CheckingBillingState.py                     	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	0
+CompositeMilestone                      	src/expense_forecast/CompositeMilestone.py                       	—         	—         	—         	—         	—         	OK        	—         	—         	—         	—         	OK        	4
+CreditCardBillingState                  	src/expense_forecast/CreditCardBillingState.py                   	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	0
+ExpenseForecastClient                   	src/expense_forecast/ExpenseForecastClient.py                    	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	0
+ExpenseForecastInitialConditions        	src/expense_forecast/ExpenseForecastInitialConditions.py         	—         	STUB      	STUB      	STUB      	STUB      	STUB      	—         	—         	—         	OK        	OK        	5
+ExpenseForecastResult                   	src/expense_forecast/ExpenseForecastResult.py                    	—         	STUB      	STUB      	STUB      	STUB      	STUB      	—         	—         	—         	OK        	OK        	0
+ExpenseForecastServer                   	src/expense_forecast/ExpenseForecastServer.py                    	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	0
+ForecastHandler                         	src/expense_forecast/ForecastHandler.py                          	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	26
+LoanBillingState                        	src/expense_forecast/LoanBillingState.py                         	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	0
+MemoMilestone                           	src/expense_forecast/MemoMilestone.py                            	—         	—         	—         	—         	—         	OK        	—         	—         	—         	—         	OK        	3
+MemoRule                                	src/expense_forecast/MemoRule.py                                 	—         	—         	—         	—         	—         	OK        	—         	—         	—         	—         	OK        	7
+MemoRuleSet                             	src/expense_forecast/MemoRuleSet.py                              	—         	—         	—         	—         	OK        	OK        	—         	—         	—         	OK        	OK        	5
+MilestoneConditionalAccountSetSwap      	src/expense_forecast/MilestoneConditionalAccountSetSwap.py       	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	0
+MilestoneConditionalAccountSetSwap      	src/expense_forecast/MilestoneConditionalAccountSetSwapSet.py    	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	0
+MilestoneConditionalBudgetSetSwap       	src/expense_forecast/MilestoneConditionalBudgetSetSwap.py        	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	0
+MilestoneConditionalBudgetSetSwapSet    	src/expense_forecast/MilestoneConditionalBudgetSetSwapSet.py     	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	0
+MilestoneConditionalMemoRuleSetSwap     	src/expense_forecast/MilestoneConditionalMemoRuleSetSwap.py      	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	0
+MilestoneConditionalMemoRuleSetSwapSet  	src/expense_forecast/MilestoneConditionalMemoRuleSetSwapSet.py   	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	0
+MilestoneSet                            	src/expense_forecast/MilestoneSet.py                             	—         	OK        	—         	—         	—         	OK        	—         	—         	—         	—         	OK        	4
+SavingsBillingState                     	src/expense_forecast/SavingsBillingState.py                      	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	0
+Scenario                                	src/expense_forecast/Scenario.py                                 	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	8
+ScenarioDimension                       	src/expense_forecast/ScenarioDimension.py                        	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	0
+ScenarioSpace                           	src/expense_forecast/ScenarioSpace.py                            	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	0
+SimulationReport                        	src/expense_forecast/SimulationReport.py                         	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	0
+SimulationStepper                       	src/expense_forecast/SimulationStepper.py                        	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	—         	0
+
+TEST INVENTORY
+========================================================================================================================
+tests/BudgetItem/unit/test_BudgetItem__unit_test.py:24  TestBudgetItemMethods.test_BudgetItem_Constructor__valid_inputs
+tests/BudgetItem/unit/test_BudgetItem__unit_test.py:159  TestBudgetItemMethods.test_BudgetItem_Constructor__invalid_inputs
+tests/BudgetItem/unit/test_BudgetItem__unit_test.py:185  TestBudgetItemMethods.test_budget_item_to_dict
+tests/BudgetItem/unit/test_BudgetSet__unit_test.py:28  TestBudgetSetMethods.test_BudgetSet_Constructor
+tests/BudgetItem/unit/test_BudgetSet__unit_test.py:37  TestBudgetSetMethods.test_addBudgetItem
+tests/BudgetItem/unit/test_BudgetSet__unit_test.py:60  TestBudgetSetMethods.test_getBudgetItems
+tests/BudgetItem/unit/test_BudgetSet__unit_test.py:76  TestBudgetSetMethods.test_getBudgetSchedule
+tests/BudgetItem/unit/test_BudgetSet__unit_test.py:150  TestBudgetSetMethods.test_str
+tests/BudgetItem/unit/test_BudgetSet__unit_test.py:169  TestBudgetSetMethods.test_duplicate_budget_items_not_allowed
+tests/BudgetItem/unit/test_BudgetSet__unit_test.py:196  TestBudgetSetMethods.test_illegal_interval_in__generate_date_sequence__internal_method
+tests/ExpenseForecast/integration/test_ExpenseForecast__integration_test.py:16  TestExpenseForecastIntegration.test_initial_conditions_round_trip_preserves_forecast_result
+tests/ExpenseForecast/integration/test_ExpenseForecast__integration_test.py:79  TestExpenseForecastIntegration.test_expense_forecast_result_round_trip_preserves_forecast_result
+tests/ExpenseForecast/unit/test_ExpenseForecast__unit_test.py:256  TestExpenseForecastInitialConditionsUnit.test_ExpenseForecastInitialConditions_Constructor__valid_inputs
+tests/ExpenseForecast/unit/test_ExpenseForecast__unit_test.py:341  TestExpenseForecastInitialConditionsUnit.test_ExpenseForecastInitialConditions_Constructor__invalid_inputs
+tests/ExpenseForecast/unit/test_ExpenseForecast__unit_test.py:531  TestExpenseForecastInitialConditionsUnit.test_multiple_matching_memo_rule_regex
+tests/ExpenseForecast/unit/test_ExpenseForecast__unit_test.py:622  TestExpenseForecastInitialConditionsUnit.test_str
+tests/ExpenseForecast/unit/test_ExpenseForecast__unit_test.py:709  TestExpenseForecastInitialConditionsUnit.test_initialize_from_dict
+tests/ForecastHandler/integration/test_ForecastHandler__integration_test.py:17  TestForecastHandler.test_ForecastHandler__debug_t_and_f__checking_only
+tests/ForecastHandler/integration/test_ForecastHandler__integration_test.py:149  TestForecastHandler.test_ForecastHandler__debug_t_and_f__checking_and_credit__no_cc_bal
+tests/ForecastHandler/integration/test_ForecastHandler__integration_test.py:322  TestForecastHandler.test_ForecastHandler__debug_t_and_f__checking_and_loan__no_loan_interest_accrual
+tests/ForecastHandler/integration/test_ForecastHandler__integration_test.py:493  TestForecastHandler.test_ForecastHandler__checking_and_credit__min_cc_payment
+tests/ForecastHandler/integration/test_ForecastHandler__integration_test.py:858  TestForecastHandler.test_ForecastHandler__all_loans_budget_payment
+tests/ForecastHandler/integration/test_ForecastHandler__integration_test.py:1044  TestForecastHandler.test_ForecastHandler__checking_and_credit__min_cc_payment_gt_default
+tests/ForecastHandler/integration/test_ForecastHandler__integration_test.py:1099  TestForecastHandler.test_ForecastHandler__checking_and_credit__min_cc_payment_w_advance_partial_payment
+tests/ForecastHandler/integration/test_ForecastHandler__integration_test.py:1121  TestForecastHandler.test_ForecastHandler__checking_and_credit__min_cc_payment_w_advance_exact_payment
+tests/ForecastHandler/integration/test_ForecastHandler__integration_test.py:1143  TestForecastHandler.test_ForecastHandler__checking_and_credit__min_cc_payment_w_advance_surplus_payment
+tests/ForecastHandler/integration/test_ForecastHandler__integration_test.py:1165  TestForecastHandler.test_ForecastHandler__checking_and_credit__min_cc_payment_w_same_day_partial_payment
+tests/ForecastHandler/integration/test_ForecastHandler__integration_test.py:1187  TestForecastHandler.test_ForecastHandler__checking_and_credit__min_cc_payment_w_same_day_exact_payment
+tests/ForecastHandler/integration/test_ForecastHandler__integration_test.py:1209  TestForecastHandler.test_ForecastHandler__checking_and_credit__min_cc_payment_w_same_day_surplus_payment
+tests/ForecastHandler/integration/test_ForecastHandler__integration_test.py:1231  TestForecastHandler.test_ForecastHandler__checking_and_credit__min_cc_payment_gt_default_w_advance_partial_payment
+tests/ForecastHandler/integration/test_ForecastHandler__integration_test.py:1255  TestForecastHandler.test_ForecastHandler__checking_and_credit__min_cc_payment_gt_default_w_advance_exact_payment
+tests/ForecastHandler/integration/test_ForecastHandler__integration_test.py:1279  TestForecastHandler.test_ForecastHandler__checking_and_credit__min_cc_payment_gt_default_w_advance_surplus_payment
+tests/ForecastHandler/integration/test_ForecastHandler__integration_test.py:1303  TestForecastHandler.test_ForecastHandler__checking_and_credit__min_cc_payment_gt_default_w_same_day_partial_payment
+tests/ForecastHandler/integration/test_ForecastHandler__integration_test.py:1327  TestForecastHandler.test_ForecastHandler__checking_and_credit__min_cc_payment_gt_default_w_same_day_exact_payment
+tests/ForecastHandler/integration/test_ForecastHandler__integration_test.py:1351  TestForecastHandler.test_ForecastHandler__checking_and_credit__min_cc_payment_gt_default_w_same_day_surplus_payment
+tests/ForecastHandler/integration/test_ForecastHandler__integration_test.py:1375  TestForecastHandler.test_ForecastHandler__checking_and_loan__min_loan_payment
+tests/ForecastHandler/integration/test_ForecastHandler__integration_test.py:1400  TestForecastHandler.test_ForecastHandler__checking_and_loan__daily_interest_accrues_after_billing_start
+tests/ForecastHandler/integration/test_ForecastHandler__integration_test.py:1467  TestForecastHandler.test_ForecastHandler__checking_and_loan__min_loan_payment_w_advance_partial_payment
+tests/ForecastHandler/integration/test_ForecastHandler__integration_test.py:1495  TestForecastHandler.test_ForecastHandler__checking_and_loan__min_loan_payment_w_advance_exact_payment
+tests/ForecastHandler/integration/test_ForecastHandler__integration_test.py:1523  TestForecastHandler.test_ForecastHandler__checking_and_loan__min_loan_payment_w_advance_surplus_payment
+tests/ForecastHandler/integration/test_ForecastHandler__integration_test.py:1551  TestForecastHandler.test_ForecastHandler__checking_and_loan__min_loan_payment_w_same_day_partial_payment
+tests/ForecastHandler/integration/test_ForecastHandler__integration_test.py:1579  TestForecastHandler.test_ForecastHandler__checking_and_loan__min_loan_payment_w_same_day_exact_payment
+tests/ForecastHandler/integration/test_ForecastHandler__integration_test.py:1607  TestForecastHandler.test_ForecastHandler__checking_and_loan__min_loan_payment_w_same_day_surplus_payment
+tests/MemoRule/unit/test_MemoRule.py:11  TestMemoRuleMethods.test_MemoRule_Constructor
+tests/MemoRule/unit/test_MemoRule.py:42  TestMemoRuleMethods.test_MemoRule_str
+tests/MemoRule/unit/test_MemoRuleSet.py:65  TestMemoRuleSetMethods.test_MemoRuleSet_Constructor
+tests/MemoRule/unit/test_MemoRuleSet.py:79  TestMemoRuleSetMethods.test_str
+tests/MemoRule/unit/test_MemoRuleSet.py:92  TestMemoRuleSetMethods.test_getMemoRules
+tests/MemoRule/unit/test_MemoRuleSet.py:107  TestMemoRuleSetMethods.test_addMemoRule
+tests/MemoRule/unit/test_MemoRuleSet.py:133  TestMemoRuleSetMethods.test_find_matching_memo_rule
+tests/Scenario/integration/test_Scenario__interation_test.py:5  TestScenarioIntegration.test_scenario__valid_inputs
+tests/Scenario/unit/test_Scenario__unit_test.py:10  TestForecastScenarioUnit.test_scenario__valid_inputs
+tests/Scenario/unit/test_Scenario__unit_test.py:17  TestForecastScenarioUnit.test_scenario__invalid_name
+tests/Scenario/unit/test_Scenario__unit_test.py:29  TestForecastScenarioUnit.test_scenario__empty_budget_set
+tests/Scenario/unit/test_Scenario__unit_test.py:36  TestForecastScenarioUnit.test_scenario__none_budget_set
+tests/Scenario/unit/test_Scenario__unit_test.py:43  TestForecastScenarioUnit.test_scenario__empty_choice_list
+tests/Scenario/unit/test_Scenario__unit_test.py:50  TestForecastScenarioUnit.test_scenario_dimension__valid_inputs
+tests/Scenario/unit/test_Scenario__unit_test.py:58  TestForecastScenarioUnit.test_scenario_dimension__invalid_inputs
+tests/_e2e/test_E2E.py:51  TestE2E.test_cli_runs_simple_forecast
+tests/_e2e/test_E2E.py:92  TestE2E.test_cli_run_forecast_and_generate_report
+tests/_e2e/test_E2E.py:145  TestE2E.test_cli_help_runs
+tests/_e2e/test_E2E.py:157  TestE2E.test_E2E_MVP
+tests/_e2e/test_E2E.py:163  TestE2E.test_IRL
+tests/_e2e/test_E2E.py:320  TestE2E.test_E2E_pay_off_credit_card
+tests/_e2e/test_E2E.py:326  TestE2E.test_E2E_optimize_loan_payment
+tests/_e2e/test_E2E.py:331  TestE2E.test_E2E_home_ownership
+tests/_e2e/test_E2E.py:336  TestE2E.test_E2E_retirement
+tests/_e2e/test_E2E.py:341  TestE2E.test_E2E_risk_management
+tests/_e2e/test_E2E.py:346  TestE2E.test_E2E_impulse_spending
+tests/_e2e/test_E2E.py:351  TestE2E.test_E2E_accruals_and_milestone_tracking
+tests/_e2e/test_E2E.py:356  TestE2E.test_E2E_define_rich
+tests/_e2e/test_E2E.py:361  TestE2E.test_E2E_communicate
+tests/_e2e/test_E2E.py:366  TestE2E.test_E2E_privacy
+tests/account/unit/test_AccountSet__unit_test.py:428  TestAccountSet.test_AccountSet_Constructor__valid_inputs
+tests/account/unit/test_AccountSet__unit_test.py:472  TestAccountSet.test_AccountSet_Constructor__invalid_inputs
+tests/account/unit/test_AccountSet__unit_test.py:490  TestAccountSet.test_execute_transaction_valid_inputs
+tests/account/unit/test_AccountSet__unit_test.py:506  TestAccountSet.test_allocate_additional_loan_payments_uses_refactored_loan_accounts
+tests/account/unit/test_AccountSet__unit_test.py:545  TestAccountSet.test_execute_transaction_all_loans_uses_refactored_loan_accounts
+tests/account/unit/test_AccountSet__unit_test.py:593  TestAccountSet.test_allocate_additional_loan_payments_treats_near_equal_marginal_interest_as_tied
+tests/account/unit/test_AccountSet__unit_test.py:708  TestAccountSet.test_createAccount__invalid_inputs
+tests/account/unit/test_AccountSet__unit_test.py:723  TestAccountSet.test_getAccounts
+tests/account/unit/test_AccountSet__unit_test.py:743  TestAccountSet.test_str
+tests/account/unit/test_AccountSet__unit_test.py:749  TestAccountSet.test_validate_one_and_only_one_primary_checking_account
+tests/account/unit/test_AccountSet__unit_test.py:1682  TestAccountSet.test_determineMinPaymentAmount
+tests/account/unit/test_Account__unit_test.py:99  TestAccount.test_Account_constructor_valid_inputs
+tests/account/unit/test_Account__unit_test.py:158  TestAccount.test_Account_constructor_invalid_inputs
+tests/account/unit/test_Account__unit_test.py:180  TestAccount.test_validate_balances__expect_success
+tests/account/unit/test_Account__unit_test.py:201  TestAccount.test_validate_balances__expect_fail
+tests/account/unit/test_Account__unit_test.py:207  TestAccount.test_validate_account_type__expect_success
+tests/account/unit/test_Account__unit_test.py:215  TestAccount.test_validate_account_type__expect_fail
+tests/account/unit/test_Account__unit_test.py:230  TestAccount.test_validate_apr__expect_success
+tests/account/unit/test_Account__unit_test.py:247  TestAccount.test_validate_apr__expect_fail
+tests/account/unit/test_Account__unit_test.py:263  TestAccount.test_validate_interest_interval__expect_success
+tests/account/unit/test_Account__unit_test.py:277  TestAccount.test_validate_interest_interval__expect_fail
+tests/account/unit/test_Account__unit_test.py:293  TestAccount.test_validate_interest_type__expect_success
+tests/account/unit/test_Account__unit_test.py:308  TestAccount.test_validate_interest_type__expect_fail
+tests/account/unit/test_Account__unit_test.py:322  TestAccount.test_validate_billing_state__expect_success
+tests/account/unit/test_Account__unit_test.py:336  TestAccount.test_validate_billing_state__expect_fail
+tests/account/unit/test_Account__unit_test.py:351  TestAccount.test_validate_primary_checking_ind__expect_success
+tests/account/unit/test_Account__unit_test.py:367  TestAccount.test_validate_primary_checking_ind__expect_fail
+tests/account/unit/test_Account__unit_test.py:374  TestAccount.test_str
+tests/milestone/integration/test_MilestoneSet__integration_test.py:36  TestMilestoneSetIntegration.test_MilestoneSet_AccountMilestone_evaluation
+tests/milestone/integration/test_MilestoneSet__integration_test.py:50  TestMilestoneSetIntegration.test_MilestoneSet_MemoMilestone_evaluation
+tests/milestone/integration/test_MilestoneSet__integration_test.py:63  TestMilestoneSetIntegration.test_MilestoneSet_CompositeMilestone_evaluation
+tests/milestone/unit/test_AccountMilestone__unit_test.py:9  TestAccountMilestoneMethods.test_AccountMilestone_constructor__valid_inputs
+tests/milestone/unit/test_AccountMilestone__unit_test.py:13  TestAccountMilestoneMethods.test_AccountMilestone_constructor__invalid_inputs
+tests/milestone/unit/test_AccountMilestone__unit_test.py:23  TestAccountMilestoneMethods.test_str
+tests/milestone/unit/test_AccountMilestone__unit_test.py:35  TestAccountMilestoneMethods.test_MilestoneSet_AccountMilestone_summary_column
+tests/milestone/unit/test_CompositeMilestone__unit_test.py:11  TestCompositeMilestoneMethods.test_CompositeMilestone_constructor__valid_inputs
+tests/milestone/unit/test_CompositeMilestone__unit_test.py:21  TestCompositeMilestoneMethods.test_CompositeMilestone_constructor__invalid_inputs
+tests/milestone/unit/test_CompositeMilestone__unit_test.py:83  TestCompositeMilestoneMethods.test_str
+tests/milestone/unit/test_MemoMilestone__unit_test.py:8  TestMemoMilestoneMethods.test_MemoMilestone_constructor
+tests/milestone/unit/test_MemoMilestone__unit_test.py:15  TestMemoMilestoneMethods.test_str
+
+STUB METHODS
+========================================================================================================================
+src/expense_forecast/AccountSet.py:1355  AccountSet.executeTransaction
+src/expense_forecast/CreditCardBillingState.py:196  CreditCardBillingState.interest_accrued_this_cycle
+src/expense_forecast/ExpenseForecastInitialConditions.py:516  ExpenseForecastInitialConditions.__eq__
+src/expense_forecast/ExpenseForecastInitialConditions.py:572  ExpenseForecastInitialConditions.__hash__
+src/expense_forecast/ExpenseForecastInitialConditions.py:544  ExpenseForecastInitialConditions.__ne__
+src/expense_forecast/ExpenseForecastInitialConditions.py:997  ExpenseForecastInitialConditions.__repr__
+src/expense_forecast/ExpenseForecastInitialConditions.py:969  ExpenseForecastInitialConditions.__str__
+src/expense_forecast/ExpenseForecastInitialConditions.py:248  ExpenseForecastInitialConditions._account_set_from_dict
+src/expense_forecast/ExpenseForecastInitialConditions.py:817  ExpenseForecastInitialConditions._validate_swap_set_milestone_set_intersection
+src/expense_forecast/ExpenseForecastInitialConditions.py:1027  ExpenseForecastInitialConditions.load_csv_file
+src/expense_forecast/ExpenseForecastInitialConditions.py:1164  ExpenseForecastInitialConditions.load_database_tables
+src/expense_forecast/ExpenseForecastInitialConditions.py:1193  ExpenseForecastInitialConditions.load_excel_file
+src/expense_forecast/ExpenseForecastInitialConditions.py:1222  ExpenseForecastInitialConditions.load_pickle_file
+src/expense_forecast/ExpenseForecastInitialConditions.py:1056  ExpenseForecastInitialConditions.load_xml_file
+src/expense_forecast/ExpenseForecastInitialConditions.py:1251  ExpenseForecastInitialConditions.to_csv_string
+src/expense_forecast/ExpenseForecastInitialConditions.py:1279  ExpenseForecastInitialConditions.to_xml_string
+src/expense_forecast/ExpenseForecastInitialConditions.py:1336  ExpenseForecastInitialConditions.write_csv_file
+src/expense_forecast/ExpenseForecastInitialConditions.py:1480  ExpenseForecastInitialConditions.write_database_tables
+src/expense_forecast/ExpenseForecastInitialConditions.py:1508  ExpenseForecastInitialConditions.write_excel_file
+src/expense_forecast/ExpenseForecastInitialConditions.py:1536  ExpenseForecastInitialConditions.write_pickle_file
+src/expense_forecast/ExpenseForecastInitialConditions.py:1364  ExpenseForecastInitialConditions.write_xml_file
+src/expense_forecast/ExpenseForecastResult.py:174  ExpenseForecastResult.__eq__
+src/expense_forecast/ExpenseForecastResult.py:230  ExpenseForecastResult.__hash__
+src/expense_forecast/ExpenseForecastResult.py:202  ExpenseForecastResult.__ne__
+src/expense_forecast/ExpenseForecastResult.py:352  ExpenseForecastResult.__repr__
+src/expense_forecast/ExpenseForecastResult.py:324  ExpenseForecastResult.__str__
+src/expense_forecast/ExpenseForecastResult.py:382  ExpenseForecastResult.load_csv_file
+src/expense_forecast/ExpenseForecastResult.py:613  ExpenseForecastResult.load_database_tables
+src/expense_forecast/ExpenseForecastResult.py:642  ExpenseForecastResult.load_excel_file
+src/expense_forecast/ExpenseForecastResult.py:671  ExpenseForecastResult.load_pickle_file
+src/expense_forecast/ExpenseForecastResult.py:411  ExpenseForecastResult.load_xml_file
+src/expense_forecast/ExpenseForecastResult.py:700  ExpenseForecastResult.to_csv_string
+src/expense_forecast/ExpenseForecastResult.py:728  ExpenseForecastResult.to_xml_string
+src/expense_forecast/ExpenseForecastResult.py:851  ExpenseForecastResult.write_csv_file
+src/expense_forecast/ExpenseForecastResult.py:995  ExpenseForecastResult.write_database_tables
+src/expense_forecast/ExpenseForecastResult.py:1023  ExpenseForecastResult.write_excel_file
+src/expense_forecast/ExpenseForecastResult.py:1051  ExpenseForecastResult.write_pickle_file
+src/expense_forecast/ExpenseForecastResult.py:879  ExpenseForecastResult.write_xml_file
+src/expense_forecast/ForecastHandler.py:2294  ForecastHandler._calculate_reduced_amount
+src/expense_forecast/MilestoneConditionalAccountSetSwap.py:32  MilestoneConditionalAccountSetSwap.__init__
+src/expense_forecast/MilestoneConditionalAccountSetSwapSet.py:32  MilestoneConditionalAccountSetSwap.__init__
+src/expense_forecast/MilestoneConditionalBudgetSetSwapSet.py:33  MilestoneConditionalBudgetSetSwapSet.__init__
+src/expense_forecast/MilestoneConditionalMemoRuleSetSwap.py:32  MilestoneConditionalMemoRuleSetSwap.__init__
+src/expense_forecast/MilestoneConditionalMemoRuleSetSwapSet.py:32  MilestoneConditionalMemoRuleSetSwapSet.__init__
+src/expense_forecast/SavingsBillingState.py:116  SavingsBillingState.calculate_next_minimum_payment
+src/expense_forecast/ScenarioSpace.py:37  ScenarioSpace._validate_memo_rule_set_and_scenario_dimensions_are_compatible
