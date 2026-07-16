@@ -2,8 +2,33 @@ import pytest
 from expense_forecast.Scenario import Scenario
 from expense_forecast.LineItemSet import LineItemSet
 from expense_forecast.ScenarioDimension import ScenarioDimension
+from expense_forecast.ScenarioSpace import ScenarioSpace
+from expense_forecast.ForecastPolicySet import ForecastPolicySet
+from expense_forecast.MinimumCheckingBalancePolicy import MinimumCheckingBalancePolicy
+from expense_forecast.MemoRuleSet import MemoRuleSet
 
 class TestForecastScenarioUnit:
+
+    def test_scenario_space_resolves_default_and_exact_policy_overrides(self):
+        work = ScenarioDimension(
+            "Work", {"RN": LineItemSet(), "Unemployed": LineItemSet()}
+        )
+        default = ForecastPolicySet(MinimumCheckingBalancePolicy(100, priority=2))
+        override = ForecastPolicySet(MinimumCheckingBalancePolicy(500, priority=2))
+
+        space = ScenarioSpace(
+            LineItemSet(),
+            {"Work": work},
+            MemoRuleSet(),
+            default_policy_set=default,
+            policy_overrides=[({"Work": "Unemployed"}, override)],
+        )
+
+        assert isinstance(space.scenarios["RN"], Scenario)
+        assert space.scenarios["RN"].policy_set.policies[0].target == 100
+        assert space.scenarios["Unemployed"].policy_set.policies[0].target == 500
+        space.scenarios["RN"].policy_set.policies[0].target = 999
+        assert space.scenarios["Unemployed"].policy_set.policies[0].target == 500
 
     # __init__(self, label, choices, budget_set)
     @pytest.mark.skip

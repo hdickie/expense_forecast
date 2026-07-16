@@ -65,6 +65,7 @@ class LineItemSet:
         line_items__list=None,
         scenario_selections=None,
         scenario_dimensions=None,
+        scenario_timelines=None,
     ):
         """
         #TODO DOC one-line description of LineItemSet.__init__.
@@ -96,6 +97,7 @@ class LineItemSet:
         self.budget_items = self.line_items
         self.scenario_selections = dict(scenario_selections or {})
         self.scenario_dimensions = copy.deepcopy(scenario_dimensions or {})
+        self.scenario_timelines = copy.deepcopy(scenario_timelines or {})
 
         if set(self.scenario_selections) - set(self.scenario_dimensions):
             missing = sorted(set(self.scenario_selections) - set(self.scenario_dimensions))
@@ -190,6 +192,8 @@ class LineItemSet:
                 "Income_Flag": [],
                 "Deferrable": [],
                 "Partial_Payment_Allowed": [],
+                "Recurrence_Key": [],
+                "Recurrence_Anchor": [],
             }
         )
 
@@ -205,6 +209,8 @@ class LineItemSet:
                     "Income_Flag": [line_item.income_flag],
                     "Deferrable": [line_item.deferrable],
                     "Partial_Payment_Allowed": [line_item.partial_payment_allowed],
+                    "Recurrence_Key": [line_item.recurrence_key],
+                    "Recurrence_Anchor": [line_item.recurrence_anchor],
                 }
             )
 
@@ -250,8 +256,14 @@ class LineItemSet:
         for line_item in self.line_items:
             relative_num_days = (line_item.end_date - line_item.start_date).days
             relevant_date_sequence = generate_date_sequence(
-                line_item.start_date, relative_num_days, line_item.interval
+                line_item.recurrence_anchor,
+                (line_item.end_date - line_item.recurrence_anchor).days,
+                line_item.interval,
             )
+            relevant_date_sequence = [
+                scheduled_date for scheduled_date in relevant_date_sequence
+                if line_item.start_date <= scheduled_date <= line_item.end_date
+            ]
 
             for scheduled_date in relevant_date_sequence:
                 budget_schedule_rows.append(
@@ -393,6 +405,8 @@ class LineItemSet:
             income_flag=income_flag,
             deferrable=kwargs.get('deferrable',None),
             partial_payment_allowed=kwargs.get('partial_payment_allowed',None),
+            recurrence_key=kwargs.get('recurrence_key'),
+            recurrence_anchor=kwargs.get('recurrence_anchor'),
         )
 
         # Check for duplicates
@@ -401,6 +415,8 @@ class LineItemSet:
             duplicates = all_line_items[
                 (all_line_items["Priority"] == priority)
                 & (all_line_items["Memo"] == memo)
+                & (all_line_items["Start_Date"] <= end_date)
+                & (all_line_items["End_Date"] >= start_date)
             ]
             if not duplicates.empty:
                 error_message = f"A line item with priority {priority} and memo '{memo}' already exists."
@@ -447,18 +463,36 @@ class LineItemSet:
                     "Income_Flag": line_item.income_flag,
                     "Deferrable": line_item.deferrable,
                     "Partial_Payment_Allowed": line_item.partial_payment_allowed,
+                    "Recurrence_Key": line_item.recurrence_key,
+                    "Recurrence_Anchor": line_item.recurrence_anchor.isoformat(),
                 }
                 for line_item in self.line_items
             ]
         }
         if self.scenario_selections:
             result["scenario_selections"] = dict(self.scenario_selections)
+        if self.scenario_dimensions:
             result["scenario_dimensions"] = {
                 dimension_name: {
                     choice_name: choice_set.to_dict()
                     for choice_name, choice_set in choices.items()
                 }
                 for dimension_name, choices in self.scenario_dimensions.items()
+            }
+        if self.scenario_timelines:
+            result["scenario_timelines"] = {
+                dimension_name: [
+                    {
+                        **entry,
+                        "effective_date": entry["effective_date"].isoformat(),
+                        "end_date": (
+                            entry["end_date"].isoformat()
+                            if entry.get("end_date") is not None else None
+                        ),
+                    }
+                    for entry in timeline
+                ]
+                for dimension_name, timeline in self.scenario_timelines.items()
             }
         return result
 
@@ -505,6 +539,37 @@ class LineItemSet:
             else:
                 merged_dimensions[dimension_name] = copy.deepcopy(choices)
 
+        merged_timelines = copy.deepcopy(self.scenario_timelines)
+        boundary_adjustments = []
+        for dimension_name, timeline in other.scenario_timelines.items():
+            combined = merged_timelines.get(dimension_name, []) + copy.deepcopy(timeline)
+            combined.sort(key=lambda entry: entry["effective_date"])
+            for previous, current in zip(combined, combined[1:]):
+                previous_end = previous.get("end_date")
+                if previous_end is None:
+                    previous["end_date"] = current["effective_date"] - datetime.timedelta(days=1)
+                    previous_end = previous["end_date"]
+                if previous_end == current["effective_date"]:
+                    boundary_adjustments.append((
+                        previous_end,
+                        set(previous.get("recurrence_keys", [])),
+                    ))
+                    previous["end_date"] = (
+                        current["effective_date"] - datetime.timedelta(days=1)
+                    )
+                elif previous_end > current["effective_date"]:
+                    raise ValueError(
+                        f"Overlapping selections for ScenarioDimension {dimension_name!r}"
+                    )
+            merged_timelines[dimension_name] = combined
+
+        anchors = {}
+        for item in list(self.line_items) + list(other.line_items):
+            anchors[item.recurrence_key] = min(
+                anchors.get(item.recurrence_key, item.recurrence_anchor),
+                item.recurrence_anchor,
+            )
+
         merged_items = list(self.line_items)
         observed_keys = {self._line_item_key(item) for item in merged_items}
         for item in other.line_items:
@@ -512,11 +577,21 @@ class LineItemSet:
             if item_key not in observed_keys:
                 merged_items.append(item)
                 observed_keys.add(item_key)
+        merged_items = copy.deepcopy(merged_items)
+        for item in merged_items:
+            item.recurrence_anchor = anchors[item.recurrence_key]
+            for boundary_date, recurrence_keys in boundary_adjustments:
+                if (
+                    item.end_date == boundary_date
+                    and item.recurrence_key in recurrence_keys
+                ):
+                    item.end_date = boundary_date - datetime.timedelta(days=1)
 
         return LineItemSet(
             merged_items,
             scenario_selections=merged_selections,
             scenario_dimensions=merged_dimensions,
+            scenario_timelines=merged_timelines,
         )
 
     #Codex-write-doctstring-OK
@@ -556,6 +631,8 @@ class LineItemSet:
             line_item.income_flag,
             line_item.deferrable,
             line_item.partial_payment_allowed,
+            line_item.recurrence_key,
+            line_item.recurrence_anchor,
         )
 
     def __sub__(self, other: LineItemSet):
@@ -595,6 +672,7 @@ class LineItemSet:
             remaining_items,
             scenario_selections=remaining_selections,
             scenario_dimensions=remaining_dimensions,
+            scenario_timelines=self.scenario_timelines,
         )
 
     def replace_scenario_choice(self, dimension_name, choice_name):
@@ -641,4 +719,5 @@ class LineItemSet:
             remaining_items,
             scenario_selections=selections,
             scenario_dimensions=self.scenario_dimensions,
+            scenario_timelines=self.scenario_timelines,
         )

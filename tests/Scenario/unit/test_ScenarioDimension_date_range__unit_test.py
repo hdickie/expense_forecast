@@ -4,6 +4,7 @@ import pytest
 
 from expense_forecast.LineItemSet import LineItemSet
 from expense_forecast.ScenarioDimension import ScenarioDimension
+from expense_forecast.ExpenseForecastInitialConditions import ExpenseForecastInitialConditions
 
 
 def _line_items(*, start, end, interval="monthly", memo="income"):
@@ -37,7 +38,8 @@ def test_choice_for_date_range_reschedules_recurring_items_without_mutating_choi
     assert dimension.choices["RN Year 1"].line_items[0].start_date == original_start
     assert dimension.choices["RN Year 1"].line_items[0].end_date == original_end
     assert result.scenario_selections == {}
-    assert result.scenario_dimensions == {}
+    assert set(result.scenario_dimensions) == {"Income"}
+    assert result.scenario_timelines["Income"][0]["choice"] == "RN Year 1"
 
 
 def test_dated_choices_from_same_dimension_can_be_combined():
@@ -54,6 +56,35 @@ def test_dated_choices_from_same_dimension_can_be_combined():
 
     assert len(result.line_items) == 2
     assert result.scenario_selections == {}
+
+
+def test_dated_semiweekly_choices_preserve_cadence_across_shared_boundary():
+    first = _line_items(
+        start=date(2020, 1, 1), end=date(2020, 12, 31), interval="semiweekly",
+        memo="paycheck",
+    )
+    second = _line_items(
+        start=date(2020, 1, 1), end=date(2020, 12, 31), interval="semiweekly",
+        memo="paycheck",
+    )
+    dimension = ScenarioDimension("Income", {"Year 1": first, "Year 2": second})
+    transition = date(2026, 12, 31)
+
+    result = dimension.choice_for_date_range(
+        "Year 1", date(2026, 1, 1), transition
+    ) + dimension.choice_for_date_range(
+        "Year 2", transition, date(2027, 12, 31)
+    )
+
+    dates = result.getLineItemSchedule()["Date"].tolist()
+    assert all((right - left).days == 14 for left, right in zip(dates, dates[1:]))
+    assert result.scenario_timelines["Income"][0]["end_date"] == transition.replace(
+        day=30
+    )
+
+    rebuilt = ExpenseForecastInitialConditions._budget_set_from_dict(result.to_dict())
+    assert rebuilt.scenario_timelines == result.scenario_timelines
+    assert rebuilt.line_items[0].recurrence_anchor == date(2026, 1, 1)
 
 
 def test_choice_for_date_range_keeps_in_range_one_time_item_at_original_date():

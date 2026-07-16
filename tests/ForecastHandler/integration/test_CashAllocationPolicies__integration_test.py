@@ -5,6 +5,7 @@ import pytest
 
 from expense_forecast.AccountSet import AccountSet
 from expense_forecast.ExpenseForecastInitialConditions import ExpenseForecastInitialConditions
+from expense_forecast.ExpenseForecastResult import ExpenseForecastResult
 from expense_forecast.FixedMonthlyInvestmentPolicy import FixedMonthlyInvestmentPolicy
 from expense_forecast.ForecastHandler import ForecastHandler
 from expense_forecast.ForecastPolicySet import ForecastPolicySet
@@ -33,6 +34,33 @@ def _checking_and_investment():
     accounts.createCheckingAccount("Checking", 1000, 0, float("inf"), True)
     accounts.createInvestmentAccount("Brokerage", 0, date(2026, 2, 1), 0)
     return accounts
+
+
+def test_exact_deterministic_checking_spend_avoids_recursive_suffix(monkeypatch):
+    accounts = AccountSet()
+    accounts.createCheckingAccount("Checking", 1000, 100, float("inf"), True)
+    budget = LineItemSet()
+    budget.addLineItem(
+        date(2026, 2, 2), date(2026, 2, 2), 2, "once", 100, "optional food",
+        partial_payment_allowed=True,
+    )
+    rules = MemoRuleSet()
+    rules.addMemoRule("optional food", "Checking", None, 2)
+    conditions = _base(accounts, budget, rules)
+    recursive_calls = 0
+    original = ForecastHandler._attemptTransaction.__func__
+
+    def counted(cls, *args, **kwargs):
+        nonlocal recursive_calls
+        recursive_calls += 1
+        return original(cls, *args, **kwargs)
+
+    monkeypatch.setattr(ForecastHandler, "_attemptTransaction", classmethod(counted))
+    result = ForecastHandler.runForecast(conditions)
+
+    assert recursive_calls == 0
+    assert result.confirmed_df["Memo"].tolist() == ["optional food"]
+    assert result.forecast_df.iloc[-1]["Checking"] == 900
 
 
 def test_policy_report_renders_summary_and_type_specific_details():
@@ -304,6 +332,17 @@ def test_surplus_saving_funds_named_savings_to_threshold(approximate):
     assert result.forecast_df.iloc[-1]["Checking"] == 3000
     assert result.forecast_df.iloc[-1]["Savings"] == 2000
     assert result.forecast_df["Net Gain"].sum() == pytest.approx(2000)
+    assert result.safety_decisions
+    saving_decisions = [
+        decision for decision in result.safety_decisions
+        if "surplus_saving:Savings" in decision["memo"]
+    ]
+    assert saving_decisions[0]["resolution_method"] == "constraint"
+
+    rebuilt_result = ExpenseForecastResult.initialize_from_json_string(
+        result.to_json_string()
+    )
+    assert rebuilt_result.safety_decisions == result.safety_decisions
     assert result.forecast_df["Net Loss"].sum() == pytest.approx(0)
     policy_result = result.policy_results["surplus_saving:Savings"]
     assert policy_result["status"] == "completed"

@@ -133,7 +133,10 @@ class LineItem:
 
         @interface-report: show
         """
-        allowed_kwargs = ['deferrable','partial_payment_allowed', 'income_flag']
+        allowed_kwargs = [
+            'deferrable', 'partial_payment_allowed', 'income_flag',
+            'recurrence_key', 'recurrence_anchor',
+        ]
         for key in kwargs:
            if key not in allowed_kwargs:
                raise TypeError(f"Unexpected keyword argument '{key}'")
@@ -154,6 +157,23 @@ class LineItem:
         # Validate memo
         self.memo = memo
         LineItem._validate_memo(self.memo)
+
+        recurrence_key = kwargs.get('recurrence_key')
+        if recurrence_key is not None and (
+            not isinstance(recurrence_key, str) or not recurrence_key.strip()
+        ):
+            raise ValueError('recurrence_key must be a non-empty string or None')
+        recurrence_anchor = kwargs.get('recurrence_anchor')
+        if recurrence_anchor is not None and not isinstance(
+            recurrence_anchor, datetime.date
+        ):
+            raise TypeError('recurrence_anchor must be a datetime.date or None')
+        self.recurrence_key = (
+            recurrence_key.strip()
+            if recurrence_key is not None
+            else f"{' '.join(self.memo.lower().split())}|{self.interval.lower()}"
+        )
+        self.recurrence_anchor = recurrence_anchor or self.start_date
 
         # todo this may not be best practice bc this behaves like an optional parameters
         # but it is not obvious from looking at the method signature? Genuinely don't know
@@ -202,6 +222,8 @@ class LineItem:
             "Memo": self.memo,
             "Deferrable": self.deferrable,
             "Partial_Payment_Allowed": self.partial_payment_allowed,
+            "Recurrence_Key": self.recurrence_key,
+            "Recurrence_Anchor": self.recurrence_anchor.strftime("%Y%m%d"),
         }
 
     def to_dataframe(self):

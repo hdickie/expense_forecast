@@ -44,6 +44,7 @@ from decimal import Decimal
 from typing import Any
 import datetime
 import calendar
+import math
 from contextlib import nullcontext
 from time import perf_counter
 import os
@@ -566,6 +567,7 @@ class ForecastHandler:
             )
         confirmed_records = []
         skipped_records = []
+        safety_decisions = []
         pending_deferred_records = []
         if isinstance(IO.initial_deferred_df, pd.DataFrame):
             pending_deferred_records = IO.initial_deferred_df.to_dict(orient="records")
@@ -701,6 +703,57 @@ class ForecastHandler:
             if not feasible:
                 return None, Decimal("0")
             return candidate_account_set, executed
+
+        def constrained_transaction(base_account_set, txn, amount):
+            """Prove a direct checking-account transaction safe analytically."""
+            memo = str(txn["Memo"])
+            if not memo.startswith("POLICY "):
+                return None, None, "ordinary optional transaction"
+            source = txn.get("Account_From")
+            destination = txn.get("Account_To")
+            if source in [None, "", "None"] or str(destination).startswith("ALL_"):
+                return None, None, "aggregate or external endpoint"
+            source_account = base_account_set._get_account_by_name(source)
+            destination_account = base_account_set._get_account_by_name(destination)
+            if source_account is None or source_account.account_type != "checking":
+                return None, None, "non-checking source"
+            if destination_account is not None and destination_account.account_type in {
+                "loan", "credit", "investment"
+            }:
+                return None, None, "balance-dependent destination"
+
+            future = schedule.loc[
+                (schedule["Date"] > txn["Date"])
+                & (schedule["Priority"] < int(txn["Priority"]))
+            ].copy()
+            running_need = Decimal("0")
+            maximum_need = Decimal("0")
+            binding_date = None
+            for _, future_txn in future.sort_values("Date").iterrows():
+                future_rule = memo_rule_set.findMatchingMemoRule(
+                    future_txn["Memo"], future_txn["Priority"]
+                )
+                value = Decimal(str(future_txn["Amount"]))
+                if future_rule.account_from == source:
+                    running_need += value
+                if future_rule.account_to == source:
+                    running_need -= value
+                if running_need > maximum_need:
+                    maximum_need = running_need
+                    binding_date = future_txn["Date"]
+
+            available = (
+                Decimal(str(source_account.balance))
+                - Decimal(str(source_account.min_balance))
+                - maximum_need
+            )
+            safe_amount = max(Decimal("0"), min(Decimal(str(amount)), available))
+            return safe_amount, {
+                "available_headroom": float(max(Decimal("0"), available)),
+                "binding_account": source,
+                "binding_date": binding_date,
+                "binding_constraint": "future mandatory reserve",
+            }, None
 
         def maximum_partial_transaction(base_account_set, txn):
             """Find the largest currently valid amount without mutating state."""
@@ -840,11 +893,21 @@ class ForecastHandler:
                     "Account_From": account_from,
                     "Account_To": account_to,
                 }
-                candidate_account_set, executed_amount = attempt_transaction(
-                    account_set,
-                    executable_txn,
-                    txn["Amount"],
+                constrained_amount, constraint_detail, fallback_reason = (
+                    constrained_transaction(account_set, executable_txn, txn["Amount"])
                 )
+                resolution_method = "recursive"
+                if constrained_amount is not None:
+                    resolution_method = "constraint"
+                    candidate_account_set, executed_amount = attempt_current_transaction(
+                        account_set, executable_txn, constrained_amount
+                    )
+                else:
+                    candidate_account_set, executed_amount = attempt_transaction(
+                        account_set,
+                        executable_txn,
+                        txn["Amount"],
+                    )
 
                 if (
                     candidate_account_set is None
@@ -858,6 +921,17 @@ class ForecastHandler:
                     candidate_account_set is not None
                     and executed_amount > MONEY_BOUNDARY_TOLERANCE
                 )
+                if str(txn["Memo"]).startswith("POLICY "):
+                    safety_decisions.append({
+                        "date": txn["Date"],
+                        "memo": txn["Memo"],
+                        "priority": int(txn["Priority"]),
+                        "requested": float(txn["Amount"]),
+                        "executed": float(executed_amount),
+                        "resolution_method": resolution_method,
+                        "fallback_reason": fallback_reason,
+                        **(constraint_detail or {}),
+                    })
                 if not transaction_permitted:
                     if bool(txn["Deferrable"]):
                         next_income_date = next_income_date_after(txn["Date"])
@@ -1081,6 +1155,7 @@ class ForecastHandler:
             "deferred_df": deferred_df,
             "skipped_df": skipped_df,
             "approximate_flag": True,
+            "safety_decisions": safety_decisions,
         }
         if milestone_set:
             result_kwargs["milestone_set"] = milestone_set
@@ -2369,15 +2444,116 @@ class ForecastHandler:
             # editing confirmed_df causes downstream problems, so we have a working copy for the scope of this method
             # local_scope_og_confirmed_df = confirmed_df
             local_scope_confirmed_df = pd.concat([new_confirmed_df, confirmed_df])
-            result = cls._attemptTransaction(end_date=end_date,
-                forecast_df=forecast_df,
-                account_set=copy.deepcopy(account_set),
-                memo_set=memo_set,
-                confirmed_df=local_scope_confirmed_df,
-                proposed_row_df=proposed_row,
-                log_stack_depth=log_stack_depth,
-                include_debug_columns=include_debug_columns,
+            source_name = memo_rule_row["Account_From"]
+            destination_name = memo_rule_row["Account_To"]
+            source_account = account_set._get_account_by_name(source_name)
+            destination_account = account_set._get_account_by_name(destination_name)
+            destination_column = destination_name
+            policy_destination_headroom = None
+            if str(destination_name).startswith("SAVINGS_BELOW:"):
+                _, threshold, savings_name = str(destination_name).split(":", 2)
+                destination_account = account_set._get_account_by_name(savings_name)
+                destination_column = savings_name
+                policy_destination_headroom = max(
+                    Decimal("0"),
+                    Decimal(str(threshold)) - Decimal(str(destination_account.balance)),
+                )
+                if policy_destination_headroom <= MONEY_BOUNDARY_TOLERANCE:
+                    new_skipped_df = pd.concat(
+                        [new_skipped_df, proposed_row.to_frame().T],
+                        ignore_index=True,
+                    )
+                    continue
+            deterministic_endpoints = (
+                source_account is not None
+                and source_account.account_type == "checking"
+                and (
+                    destination_name in [None, "", "None"]
+                    or (
+                        destination_account is not None
+                        and destination_account.account_type == "checking"
+                    )
+                )
             )
+            result = None
+            if deterministic_endpoints and source_name in forecast_df.columns:
+                future_mask = forecast_df["Date"] >= d
+                source_headroom = Decimal(str(
+                    forecast_df.loc[future_mask, source_name].min()
+                )) - Decimal(str(source_account.min_balance))
+                destination_headroom = Decimal("Infinity")
+                if policy_destination_headroom is not None:
+                    destination_headroom = policy_destination_headroom
+                if destination_account is not None and not math.isinf(
+                    float(destination_account.max_balance)
+                ):
+                    destination_headroom = min(
+                        destination_headroom,
+                        Decimal(str(destination_account.max_balance)) - Decimal(str(
+                            forecast_df.loc[future_mask, destination_column].max()
+                        )),
+                    )
+                safe_amount = max(
+                    Decimal("0"),
+                    min(
+                        Decimal(str(proposed_row["Amount"])),
+                        source_headroom,
+                        destination_headroom,
+                    ),
+                )
+                requested_amount = Decimal(str(proposed_row["Amount"]))
+                if safe_amount >= requested_amount - MONEY_BOUNDARY_TOLERANCE:
+                    result = forecast_df.copy()
+                    result.loc[future_mask, source_name] = (
+                        pd.to_numeric(result.loc[future_mask, source_name])
+                        - float(requested_amount)
+                    )
+                    if destination_account is not None:
+                        result.loc[future_mask, destination_column] = (
+                            pd.to_numeric(result.loc[future_mask, destination_column])
+                            + float(requested_amount)
+                        )
+                elif bool(proposed_row["Partial_Payment_Allowed"]) and (
+                    safe_amount > MONEY_BOUNDARY_TOLERANCE
+                ):
+                    proposed_row["Amount"] = safe_amount
+                    result = forecast_df.copy()
+                    result.loc[future_mask, source_name] = (
+                        pd.to_numeric(result.loc[future_mask, source_name])
+                        - float(safe_amount)
+                    )
+                    if destination_account is not None:
+                        result.loc[future_mask, destination_column] = (
+                            pd.to_numeric(result.loc[future_mask, destination_column])
+                            + float(safe_amount)
+                        )
+
+                if result is not None:
+                    amount = Decimal(str(proposed_row["Amount"]))
+                    date_mask = result["Date"] == d
+                    if str(destination_name).startswith("SAVINGS_BELOW:"):
+                        result.loc[date_mask, "Memo"] += (
+                            f"; {proposed_row['Memo']} ({source_name} -${amount}) "
+                        )
+                        result.loc[date_mask, "Memo Directives"] += (
+                            f"; SAVINGS CONTRIBUTION "
+                            f"({destination_column} +${amount}) "
+                        )
+                    elif destination_name in [None, "", "None"]:
+                        result.loc[date_mask, "Memo"] += (
+                            f"; {proposed_row['Memo']} ({source_name} -${amount}) "
+                        )
+
+            if result is None:
+                result = cls._attemptTransaction(end_date=end_date,
+                    forecast_df=forecast_df,
+                    account_set=copy.deepcopy(account_set),
+                    memo_set=memo_set,
+                    confirmed_df=local_scope_confirmed_df,
+                    proposed_row_df=proposed_row,
+                    log_stack_depth=log_stack_depth,
+                    include_debug_columns=include_debug_columns,
+                )
 
             # Check if the transaction is permitted (returns a DataFrame if successful)
             transaction_permitted = isinstance(result, pd.DataFrame)
@@ -11601,6 +11777,20 @@ class ForecastHandler:
             return f"{float(value) * 100:g}%"
 
         policy_results = getattr(E, "policy_results", {}) or {}
+        safety_decisions = list(getattr(E, "safety_decisions", []) or [])
+
+        def policy_resolution(policy):
+            methods = {
+                decision.get("resolution_method")
+                for decision in safety_decisions
+                if str(decision.get("memo", "")).startswith(
+                    f"POLICY {policy.policy_key} "
+                )
+            }
+            methods.discard(None)
+            if not methods:
+                return "Not evaluated"
+            return "Mixed" if len(methods) > 1 else format_policy_label(next(iter(methods)))
         configured_policies = list(
             getattr(initial_conditions.policy_set, "policies", []) or []
         )
@@ -11747,10 +11937,49 @@ class ForecastHandler:
                     "Applies To": policy_presentation(policy)[1],
                     "Configuration": policy_presentation(policy)[2],
                     "If Unmet": format_policy_label(policy.on_unmet),
+                    "Safety Resolution": policy_resolution(policy),
                 }
                 for policy in ordered_policies
             ],
-            columns=["Priority", "Policy", "Applies To", "Configuration", "If Unmet"],
+            columns=[
+                "Priority", "Policy", "Applies To", "Configuration", "If Unmet",
+                "Safety Resolution",
+            ],
+        )
+
+        report_data_frames["policy_safety_decisions"] = pd.DataFrame(
+            [
+                {
+                    "Date": (
+                        decision.get("date").isoformat()
+                        if hasattr(decision.get("date"), "isoformat")
+                        else decision.get("date", "—")
+                    ),
+                    "Policy Transaction": decision.get("memo", "—"),
+                    "Requested": format_report_currency(decision.get("requested", 0)),
+                    "Executed": format_report_currency(decision.get("executed", 0)),
+                    "Resolution": format_policy_label(
+                        decision.get("resolution_method", "unknown")
+                    ),
+                    "Available Headroom": (
+                        format_report_currency(decision["available_headroom"])
+                        if decision.get("available_headroom") is not None else "—"
+                    ),
+                    "Binding Account": decision.get("binding_account") or "—",
+                    "Binding Date": decision.get("binding_date") or "—",
+                    "Constraint / Fallback": (
+                        decision.get("binding_constraint")
+                        or decision.get("fallback_reason")
+                        or "—"
+                    ),
+                }
+                for decision in safety_decisions
+            ],
+            columns=[
+                "Date", "Policy Transaction", "Requested", "Executed",
+                "Resolution", "Available Headroom", "Binding Account",
+                "Binding Date", "Constraint / Fallback",
+            ],
         )
 
         def policy_detail_row(policy):
@@ -12405,7 +12634,11 @@ class ForecastHandler:
             ]
         )
 
-        policy_sections = "".join(
+        policy_sections = render_table_card(
+            "Safety Decision Audit",
+            "policy_safety_decisions",
+            empty_message="No optimized policy decisions recorded.",
+        ) + "".join(
             render_table_card(
                 title,
                 dataframe_name,
@@ -14696,6 +14929,41 @@ class ForecastHandler:
 
     @classmethod
     def _summarize_cash_policy_results(cls, policy_set, result):
+        if not getattr(result, "safety_decisions", None):
+            result.safety_decisions = []
+            for frame, executed in (
+                (getattr(result, "confirmed_df", None), True),
+                (getattr(result, "skipped_df", None), False),
+            ):
+                if not isinstance(frame, pd.DataFrame) or frame.empty:
+                    continue
+                for _, row in frame.iterrows():
+                    if not str(row.get("Memo", "")).startswith("POLICY "):
+                        continue
+                    matching_policy = next((
+                        policy for policy in policy_set.policies
+                        if str(row.get("Memo", "")).startswith(
+                            f"POLICY {policy.policy_key} "
+                        )
+                    ), None)
+                    analytical = isinstance(matching_policy, SurplusSavingPolicy)
+                    result.safety_decisions.append({
+                        "date": row.get("Date"),
+                        "memo": row.get("Memo"),
+                        "priority": int(row.get("Priority", 0)),
+                        "requested": float(row.get("Amount", 0)),
+                        "executed": float(row.get("Amount", 0)) if executed else 0.0,
+                        "resolution_method": "constraint" if analytical else "recursive",
+                        "available_headroom": None,
+                        "binding_account": None,
+                        "binding_date": None,
+                        "fallback_reason": (
+                            None if analytical else "nonlinear or unsupported endpoint"
+                        ),
+                        "binding_constraint": (
+                            "future mandatory reserve" if analytical else None
+                        ),
+                    })
         summaries = {}
         confirmed = result.confirmed_df
         for policy in policy_set.policies:

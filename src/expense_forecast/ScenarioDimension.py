@@ -148,16 +148,36 @@ class ScenarioDimension:
             raise ValueError("ScenarioDimension choices cannot contain scenario selections")
         self.choices[label] = copy.deepcopy(budget_set)
 
-    def select(self, choice_name: str) -> LineItemSet:
+    def select(
+        self, choice_name: str, effective_date: datetime.date = None
+    ) -> LineItemSet:
         """Return the chosen line items with active scenario metadata."""
         if choice_name not in self.choices:
             raise ValueError(
                 f"Unknown choice {choice_name!r} for ScenarioDimension {self.name!r}"
             )
+        if effective_date is not None and not isinstance(effective_date, datetime.date):
+            raise TypeError("effective_date must be a datetime.date or None")
+        items = copy.deepcopy(self.choices[choice_name].line_items)
+        if effective_date is not None:
+            for item in items:
+                if item.interval != "once":
+                    item.start_date = effective_date
+                    item.recurrence_anchor = effective_date
         return LineItemSet(
-            copy.deepcopy(self.choices[choice_name].line_items),
-            scenario_selections={self.name: choice_name},
+            items,
+            scenario_selections=(
+                {self.name: choice_name} if effective_date is None else {}
+            ),
             scenario_dimensions={self.name: self.choices},
+            scenario_timelines=(
+                {self.name: [{
+                    "choice": choice_name,
+                    "effective_date": effective_date,
+                    "end_date": None,
+                }]}
+                if effective_date is not None else {}
+            ),
         )
 
     def choice_for_date_range(
@@ -209,6 +229,21 @@ class ScenarioDimension:
             line_item.end_date = end_date
             scheduled_items.append(line_item)
 
-        return LineItemSet(scheduled_items)
+        for line_item in scheduled_items:
+            if line_item.interval != "once":
+                line_item.recurrence_anchor = start_date
+        return LineItemSet(
+            scheduled_items,
+            scenario_dimensions={self.name: self.choices},
+            scenario_timelines={self.name: [{
+                "choice": choice_name,
+                "effective_date": start_date,
+                "end_date": end_date,
+                "recurrence_keys": [
+                    item.recurrence_key for item in scheduled_items
+                    if item.interval != "once"
+                ],
+            }]},
+        )
 
     # TODO DEFER conceivably I would need dropChoice, but not rn so tabling it for now

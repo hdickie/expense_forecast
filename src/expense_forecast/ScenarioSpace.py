@@ -16,6 +16,9 @@ Contract
 from expense_forecast.MemoRuleSet import MemoRuleSet
 from expense_forecast.ScenarioDimension import ScenarioDimension
 from expense_forecast.LineItemSet import LineItemSet
+from expense_forecast.ForecastPolicySet import ForecastPolicySet
+from expense_forecast.Scenario import Scenario
+import copy
 import pandas as pd
 
 #TODO DOC manual review of ScenarioSpace docstring
@@ -127,8 +130,22 @@ class ScenarioSpace:
                 else:
                     new_scenario_name = choice_name
 
-                new_scenarios[new_scenario_name] = (
-                    existing_scenario_budget_set + scenario_dimension.select(choice_name)
+                existing_set = (
+                    existing_scenario_budget_set.line_item_set
+                    if isinstance(existing_scenario_budget_set, Scenario)
+                    else existing_scenario_budget_set
+                )
+                line_item_set = existing_set + scenario_dimension.select(choice_name)
+                choices = dict(
+                    existing_scenario_budget_set.choices
+                    if isinstance(existing_scenario_budget_set, Scenario) else {}
+                )
+                choices[dimension_name] = choice_name
+                new_scenarios[new_scenario_name] = Scenario(
+                    new_scenario_name,
+                    choices,
+                    line_item_set,
+                    self._policy_set_for_choices(choices),
                 )
         self.scenarios = new_scenarios
 
@@ -200,7 +217,9 @@ class ScenarioSpace:
     def __init__(self,
                  invariant_transactions: LineItemSet,
                  scenario_dimensions: dict[str, ScenarioDimension],
-                 memo_rule_set: MemoRuleSet):
+                 memo_rule_set: MemoRuleSet,
+                 default_policy_set: ForecastPolicySet = None,
+                 policy_overrides=None):
 
         """
         #TODO DOC one-line description of ScenarioSpace.__init__.
@@ -236,17 +255,39 @@ class ScenarioSpace:
         self.dimension_indices = {} #input is dict, in choice string we need to know order and have it be stable
         self.dimension_names = [] #inverse of above
         self.scenarios = {} # str -> LineItemSet (concat choice labels -> union budgetset)
+        self.default_policy_set = copy.deepcopy(
+            default_policy_set or ForecastPolicySet()
+        )
+        if not isinstance(self.default_policy_set, ForecastPolicySet):
+            raise TypeError("default_policy_set must be a ForecastPolicySet")
+        self.policy_overrides = []
+        for choice_map, policy_set in (policy_overrides or []):
+            if not isinstance(choice_map, dict):
+                raise TypeError("policy override choices must be a mapping")
+            if not isinstance(policy_set, ForecastPolicySet):
+                raise TypeError("policy override value must be a ForecastPolicySet")
+            self.policy_overrides.append((dict(choice_map), copy.deepcopy(policy_set)))
 
         self._validate_memo_rule_set_and_scenario_dimensions_are_compatible(invariant_transactions, scenario_dimensions, memo_rule_set)
         self.invariant_transactions = invariant_transactions
         self.memo_rule_set = memo_rule_set
 
         self.dimension_count = 0
-        self.scenarios[''] = self.invariant_transactions
+        self.scenarios[''] = Scenario(
+            '', {}, self.invariant_transactions, self.default_policy_set
+        )
 
         for dimension_name, dimension_budget_set in scenario_dimensions.items():
             self.addDimension(dimension_name, dimension_budget_set)
 
+    def _policy_set_for_choices(self, choices):
+        matching = [
+            policy_set for choice_map, policy_set in self.policy_overrides
+            if choice_map == choices
+        ]
+        if len(matching) > 1:
+            raise ValueError(f"Duplicate policy override for choices {choices!r}")
+        return copy.deepcopy(matching[0] if matching else self.default_policy_set)
 
 
 

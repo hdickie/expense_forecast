@@ -538,6 +538,7 @@ if __name__ == '__main__':
     # action = 'net worth 0 after 18 months of RN car life'
     # action = 'test approximate case'
     # action = 'test milestone conditional swaps'
+    # action = 'dated scenarios and policies'
     # action = 'prioritized policies'
     # action = 'inspect'
 
@@ -613,6 +614,144 @@ if __name__ == '__main__':
         # if i can make $312.50 per week that makes the difference 
         # my student loans will go into deferrment actually, so thats $200/month i dont need to pay
         # so i will actually need $25k in private loans
+
+    elif action == 'dated scenarios and policies':
+        # Demonstrates three related features:
+        #   1. dated choices preserve a recurring transaction's cadence;
+        #   2. ScenarioSpace values are Scenario objects containing line items
+        #      and policies; and
+        #   3. a complete choice combination can override the default policies.
+        start_date = date(2026, 1, 1)
+        transition_date = start_date + datetime.timedelta(days=365)
+        end_date = start_date + datetime.timedelta(days=365 * 2)
+
+        accounts = AccountSet()
+        accounts.createCheckingAccount(
+            'Checking', 5_000, 1_000, float('inf'), True
+        )
+        accounts.createCheckingAccount(
+            'Savings', 0, 0, float('inf'), False
+        )
+
+        rn_year_1 = LineItemSet()
+        rn_year_1.addLineItem(
+            start_date=start_date,
+            end_date=end_date,
+            priority=1,
+            interval='semiweekly',
+            amount=2_900,
+            memo='RN Year 1 income',
+            income_flag=True,
+            recurrence_key='RN paycheck',
+        )
+        rn_year_2 = LineItemSet()
+        rn_year_2.addLineItem(
+            start_date=start_date,
+            end_date=end_date,
+            priority=1,
+            interval='semiweekly',
+            amount=2_900 * 1.05,
+            memo='RN Year 2 income',
+            income_flag=True,
+            recurrence_key='RN paycheck',
+        )
+        income = ScenarioDimension(
+            'Income',
+            {'RN Year 1': rn_year_1, 'RN Year 2': rn_year_2},
+        )
+        dated_income = income.choice_for_date_range(
+            'RN Year 1', start_date, transition_date
+        ) + income.choice_for_date_range(
+            'RN Year 2', transition_date, end_date
+        )
+
+        low_food = LineItemSet()
+        low_food.addLineItem(
+            start_date=start_date,
+            end_date=end_date,
+            priority=2,
+            interval='daily',
+            amount=15,
+            memo='food expense',
+            partial_payment_allowed=True,
+        )
+        standard_food = LineItemSet()
+        standard_food.addLineItem(
+            start_date=start_date,
+            end_date=end_date,
+            priority=2,
+            interval='daily',
+            amount=25,
+            memo='food expense',
+            partial_payment_allowed=True,
+        )
+        food = ScenarioDimension(
+            'Food', {'Low': low_food, 'Standard': standard_food}
+        )
+
+        memo_rules = MemoRuleSet()
+        memo_rules.addMemoRule(r'RN Year [12] income', None, 'Checking', 1)
+        memo_rules.addMemoRule('food expense', 'Checking', None, 2)
+
+        scenario_space = ScenarioSpace(
+            invariant_transactions=dated_income,
+            scenario_dimensions={'Food': food},
+            memo_rule_set=memo_rules,
+            default_policy_set=ForecastPolicySet(
+                MinimumCheckingBalancePolicy(
+                    account_name='Checking', target=2_000,
+                    priority=3, on_unmet='warn',
+                )
+            ),
+            policy_overrides=[
+                (
+                    {'Food': 'Standard'},
+                    ForecastPolicySet(
+                        SurplusSavingPolicy(
+                            account_name='Savings',
+                            saved_minimum_threshold=10_000,
+                            priority=3,
+                            on_unmet='warn',
+                        )
+                    ),
+                )
+            ],
+        )
+
+        scenario = scenario_space.scenarios['Standard']
+        IO = scenario.to_initial_conditions(
+            start_date, end_date, accounts, memo_rules,
+            forecast_name='Dated scenario and policy demo',
+        )
+        R = ForecastHandler.runForecastApproximate(IO)
+
+        paycheck_dates = scenario.line_item_set.getLineItemSchedule().loc[
+            lambda schedule: schedule['Memo'].str.contains('RN Year'), 'Date'
+        ].tolist()
+        transition_window = [
+            scheduled_date for scheduled_date in paycheck_dates
+            if abs((scheduled_date - transition_date).days) <= 21
+        ]
+        print('Scenario choices:', scenario.choices)
+        print('Scenario policies:', [
+            policy.policy_key for policy in scenario.policy_set.policies
+        ])
+        print('Paychecks around transition:', transition_window)
+        print('Paycheck day gaps:', [
+            (right - left).days
+            for left, right in zip(transition_window, transition_window[1:])
+        ])
+        print('Safety resolution counts:', {
+            method: sum(
+                decision['resolution_method'] == method
+                for decision in R.safety_decisions
+            )
+            for method in {'constraint', 'recursive'}
+        })
+        print('Executed safety decisions:', [
+            decision for decision in R.safety_decisions
+            if decision['executed'] > 0
+        ])
 
     elif action == 'second year of RN life':
 

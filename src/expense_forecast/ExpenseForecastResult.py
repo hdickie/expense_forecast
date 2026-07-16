@@ -288,7 +288,7 @@ class ExpenseForecastResult:
 
         @interface-report: show
         """
-        allowed_kwargs = ['confirmed_df', 'deferred_df', 'skipped_df', 'milestone_set', 'milestone_results', 'approximate_flag', 'policy_results']
+        allowed_kwargs = ['confirmed_df', 'deferred_df', 'skipped_df', 'milestone_set', 'milestone_results', 'approximate_flag', 'policy_results', 'safety_decisions']
         for key in kwargs:
             if key not in allowed_kwargs:
                 raise TypeError(f"Unexpected keyword argument '{key}'")
@@ -316,6 +316,7 @@ class ExpenseForecastResult:
         self.milestone_results = kwargs.get('milestone_results', None)
 
         self.policy_results = kwargs.get('policy_results', {})
+        self.safety_decisions = kwargs.get('safety_decisions', [])
 
         self.approximate_flag = kwargs.get('approximate_flag', False)
         if self.approximate_flag:
@@ -607,6 +608,9 @@ class ExpenseForecastResult:
             "policy_results": cls._object_from_json_data(
                 data.get("policy_results")
             ) or {},
+            "safety_decisions": cls._object_from_json_data(
+                data.get("safety_decisions")
+            ) or [],
             "approximate_flag": data.get("approximate_flag", False),
         }
         if milestone_set is not None or milestone_results is not None:
@@ -833,6 +837,7 @@ class ExpenseForecastResult:
             "milestone_set": self._object_to_json_data(self.milestone_set),
             "milestone_results": self._object_to_json_data(self.milestone_results),
             "policy_results": self._object_to_json_data(self.policy_results),
+            "safety_decisions": self._object_to_json_data(self.safety_decisions),
             "start_ts": self.start_ts.isoformat(),
             "end_ts": self.end_ts.isoformat(),
             "approximate_flag": self.approximate_flag,

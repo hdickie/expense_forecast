@@ -310,6 +310,11 @@ class ExpenseForecastInitialConditions:
                 income_flag=budget_item.get("Income_Flag", False),
                 deferrable=budget_item.get("Deferrable"),
                 partial_payment_allowed=budget_item.get("Partial_Payment_Allowed"),
+                recurrence_key=budget_item.get("Recurrence_Key"),
+                recurrence_anchor=(
+                    cls._date_from_dict_value(budget_item["Recurrence_Anchor"])
+                    if budget_item.get("Recurrence_Anchor") else None
+                ),
             )
         scenario_dimensions = {}
         for dimension_name, choices_data in data.get("scenario_dimensions", {}).items():
@@ -317,11 +322,26 @@ class ExpenseForecastInitialConditions:
                 choice_name: cls._budget_set_from_dict(choice_data)
                 for choice_name, choice_data in choices_data.items()
             }
-        if data.get("scenario_selections"):
+        scenario_timelines = {
+            dimension_name: [
+                {
+                    **entry,
+                    "effective_date": cls._date_from_dict_value(entry["effective_date"]),
+                    "end_date": (
+                        cls._date_from_dict_value(entry["end_date"])
+                        if entry.get("end_date") else None
+                    ),
+                }
+                for entry in timeline
+            ]
+            for dimension_name, timeline in data.get("scenario_timelines", {}).items()
+        }
+        if data.get("scenario_selections") or scenario_timelines:
             budget_set = LineItemSet(
                 budget_set.line_items,
-                scenario_selections=data["scenario_selections"],
+                scenario_selections=data.get("scenario_selections", {}),
                 scenario_dimensions=scenario_dimensions,
+                scenario_timelines=scenario_timelines,
             )
         return budget_set
 
@@ -429,6 +449,7 @@ class ExpenseForecastInitialConditions:
             "scenario_selections": dict(
                 getattr(budget_set, "scenario_selections", {})
             ),
+            "scenario_timelines": getattr(budget_set, "scenario_timelines", {}),
             "memo_rules": _stable_df_payload(memo_rules_df),
         }
 
