@@ -88,6 +88,8 @@ from expense_forecast.InvestmentPolicies import (
     SurplusInvestmentPolicy,
 )
 from expense_forecast.ForecastPolicy import ForecastPolicyError
+from expense_forecast.PolicyProgram import PolicyRegime
+from expense_forecast.PolicyEventGraph import PolicyEventGraph
 from matplotlib.pyplot import figure
 
 try:
@@ -235,9 +237,35 @@ class ForecastHandler:
         IO: ExpenseForecastInitialConditions,
         milestone_set: MilestoneSet = None,
         include_debug_columns=False,
+        engine="legacy",
     ) -> ExpenseForecastResult:
+        if engine not in {"legacy", "graph", "shadow"}:
+            raise ValueError("engine must be 'legacy', 'graph', or 'shadow'")
+        if engine in {"graph", "shadow"}:
+            from expense_forecast.graph_engine import GraphForecastRunner
+            from expense_forecast.graph_engine.comparator import compare_results
+
+            graph_result = GraphForecastRunner(
+                IO, milestone_set, approximate=False,
+                include_debug_columns=include_debug_columns,
+            ).run()
+            if engine == "graph":
+                return graph_result
+            legacy_started = perf_counter()
+            legacy_result = cls.runForecast(
+                IO, milestone_set, include_debug_columns, engine="legacy"
+            )
+            graph_result.graph_diagnostics.legacy_shadow_seconds = (
+                perf_counter() - legacy_started
+            )
+            compare_results(graph_result, legacy_result)
+            return graph_result
         cls._log_interpretation_guide(IO)
         milestone_set = milestone_set or getattr(IO, "milestone_set", MilestoneSet())
+        if getattr(IO, "policy_program", None) and IO.policy_program.dated_changes:
+            return cls._runForecastWithPolicyProgram(
+                IO, milestone_set, include_debug_columns, approximate=False
+            )
         if getattr(IO, "policy_set", None):
             return cls._runForecastWithPolicies(
                 IO, milestone_set, include_debug_columns, approximate=False
@@ -449,9 +477,35 @@ class ForecastHandler:
         IO: ExpenseForecastInitialConditions,
         milestone_set: MilestoneSet = None,
         include_debug_columns=False,
+        engine="legacy",
     ) -> ExpenseForecastResult:
+        if engine not in {"legacy", "graph", "shadow"}:
+            raise ValueError("engine must be 'legacy', 'graph', or 'shadow'")
+        if engine in {"graph", "shadow"}:
+            from expense_forecast.graph_engine import GraphForecastRunner
+            from expense_forecast.graph_engine.comparator import compare_results
+
+            graph_result = GraphForecastRunner(
+                IO, milestone_set, approximate=True,
+                include_debug_columns=include_debug_columns,
+            ).run()
+            if engine == "graph":
+                return graph_result
+            legacy_started = perf_counter()
+            legacy_result = cls.runForecastApproximate(
+                IO, milestone_set, include_debug_columns, engine="legacy"
+            )
+            graph_result.graph_diagnostics.legacy_shadow_seconds = (
+                perf_counter() - legacy_started
+            )
+            compare_results(graph_result, legacy_result)
+            return graph_result
         cls._log_interpretation_guide(IO)
         milestone_set = milestone_set or getattr(IO, "milestone_set", MilestoneSet())
+        if getattr(IO, "policy_program", None) and IO.policy_program.dated_changes:
+            return cls._runForecastWithPolicyProgram(
+                IO, milestone_set, include_debug_columns, approximate=True
+            )
         if getattr(IO, "policy_set", None):
             return cls._runForecastWithPolicies(
                 IO, milestone_set, include_debug_columns, approximate=True
@@ -553,6 +607,7 @@ class ForecastHandler:
                 for index, policy in enumerate(IO.policy_set.policies)
             },
         )
+        policy_event_graph = PolicyEventGraph.from_schedule(schedule, memo_rule_set)
 
         def policy_order_for_memo(memo):
             memo = str(memo)
@@ -568,6 +623,10 @@ class ForecastHandler:
         confirmed_records = []
         skipped_records = []
         safety_decisions = []
+        policy_shadow_mode = bool(
+            getattr(IO, "_policy_shadow_mode", False)
+            or os.environ.get("EXPENSE_FORECAST_POLICY_SHADOW") == "1"
+        )
         pending_deferred_records = []
         if isinstance(IO.initial_deferred_df, pd.DataFrame):
             pending_deferred_records = IO.initial_deferred_df.to_dict(orient="records")
@@ -681,6 +740,7 @@ class ForecastHandler:
                     txn["Account_To"],
                     amount,
                     income_flag=bool(txn["Income_Flag"]),
+                    enforce_policy_minimum=int(txn["Priority"]) > 1,
                 )
             except AccountBoundaryError:
                 return None, Decimal("0")
@@ -711,48 +771,80 @@ class ForecastHandler:
                 return None, None, "ordinary optional transaction"
             source = txn.get("Account_From")
             destination = txn.get("Account_To")
-            if source in [None, "", "None"] or str(destination).startswith("ALL_"):
-                return None, None, "aggregate or external endpoint"
+            if source in [None, "", "None"]:
+                return None, None, "external source endpoint"
             source_account = base_account_set._get_account_by_name(source)
             destination_account = base_account_set._get_account_by_name(destination)
             if source_account is None or source_account.account_type != "checking":
                 return None, None, "non-checking source"
-            if destination_account is not None and destination_account.account_type in {
-                "loan", "credit", "investment"
-            }:
+            if destination_account is not None and (
+                destination_account.account_type == "loan"
+                or destination_account.account_type == "investment"
+                or (
+                    destination_account.account_type == "credit"
+                    and not str(destination).startswith("CURRENT_STATEMENT_BALANCE:")
+                )
+            ):
                 return None, None, "balance-dependent destination"
 
-            future = schedule.loc[
-                (schedule["Date"] > txn["Date"])
-                & (schedule["Priority"] < int(txn["Priority"]))
-            ].copy()
-            running_need = Decimal("0")
-            maximum_need = Decimal("0")
-            binding_date = None
-            for _, future_txn in future.sort_values("Date").iterrows():
-                future_rule = memo_rule_set.findMatchingMemoRule(
-                    future_txn["Memo"], future_txn["Priority"]
+            source_name = source_account.name
+            source_floor = Decimal(str(
+                source_account.effective_policy_min_balance
+                if int(txn["Priority"]) > 1
+                else source_account.min_balance
+            ))
+            if str(source).startswith("CHECKING_ABOVE:"):
+                source_floor = max(
+                    source_floor,
+                    Decimal(str(source).split(":", 1)[1]),
                 )
-                value = Decimal(str(future_txn["Amount"]))
-                if future_rule.account_from == source:
-                    running_need += value
-                if future_rule.account_to == source:
-                    running_need -= value
-                if running_need > maximum_need:
-                    maximum_need = running_need
-                    binding_date = future_txn["Date"]
+
+            maximum_need, binding_date, affected_nodes = (
+                policy_event_graph.reserve_requirement(
+                    source_name, txn["Date"], txn["Priority"]
+                )
+            )
 
             available = (
                 Decimal(str(source_account.balance))
-                - Decimal(str(source_account.min_balance))
+                - source_floor
                 - maximum_need
             )
-            safe_amount = max(Decimal("0"), min(Decimal(str(amount)), available))
+            destination_capacity = Decimal("Infinity")
+            if str(destination).startswith("ALL_"):
+                debt_type = (
+                    "loan" if str(destination).startswith("ALL_LOANS") else "credit"
+                )
+                debt_accounts = [
+                    account for account in base_account_set.accounts
+                    if account.account_type == debt_type
+                ]
+                if any(
+                    Decimal(str(account.billing_state.apr)) != 0
+                    for account in debt_accounts
+                ):
+                    return None, None, "nonlinear debt ledger"
+                future_payments = policy_event_graph.future_incoming(
+                    [account.name for account in debt_accounts],
+                    txn["Date"], txn["Priority"],
+                )
+                destination_capacity = max(
+                    Decimal("0"),
+                    sum(
+                        (Decimal(str(account.balance)) for account in debt_accounts),
+                        Decimal("0"),
+                    ) - future_payments,
+                )
+            safe_amount = max(
+                Decimal("0"),
+                min(Decimal(str(amount)), available, destination_capacity),
+            )
             return safe_amount, {
                 "available_headroom": float(max(Decimal("0"), available)),
-                "binding_account": source,
+                "binding_account": source_name,
                 "binding_date": binding_date,
                 "binding_constraint": "future mandatory reserve",
+                "affected_graph_nodes": affected_nodes,
             }, None
 
         def maximum_partial_transaction(base_account_set, txn):
@@ -764,7 +856,14 @@ class ForecastHandler:
             best_executed_amount = Decimal("0")
 
             for _ in range(60):
-                if high - low <= MONEY_BOUNDARY_TOLERANCE:
+                # This search determines persisted debt/payment state, not
+                # merely whether a displayed cent is meaningful. Stopping at
+                # the general half-cent boundary can put graph and legacy on
+                # opposite sides of a cent after interest and billing-state
+                # rounding. Resolve the executable boundary to sub-cent
+                # precision and leave presentation rounding to the result
+                # materializer.
+                if high - low <= Decimal("0.000001"):
                     break
                 candidate_amount = (low + high) / Decimal("2")
                 candidate_account_set, executed_amount = attempt_current_transaction(
@@ -893,15 +992,41 @@ class ForecastHandler:
                     "Account_From": account_from,
                     "Account_To": account_to,
                 }
+                resolution_started_at = perf_counter()
                 constrained_amount, constraint_detail, fallback_reason = (
                     constrained_transaction(account_set, executable_txn, txn["Amount"])
                 )
                 resolution_method = "recursive"
+                shadow_equivalent = None
                 if constrained_amount is not None:
                     resolution_method = "constraint"
                     candidate_account_set, executed_amount = attempt_current_transaction(
                         account_set, executable_txn, constrained_amount
                     )
+                    if policy_shadow_mode:
+                        oracle_account_set, oracle_executed = attempt_transaction(
+                            account_set, executable_txn, txn["Amount"]
+                        )
+                        if (
+                            oracle_account_set is None
+                            and bool(txn["Partial_Payment_Allowed"])
+                        ):
+                            oracle_account_set, oracle_executed = (
+                                maximum_partial_transaction(
+                                    account_set, executable_txn
+                                )
+                            )
+                        shadow_equivalent = (
+                            oracle_account_set is not None
+                            and abs(oracle_executed - executed_amount)
+                            <= MONEY_BOUNDARY_TOLERANCE
+                        )
+                        if not shadow_equivalent:
+                            raise AssertionError(
+                                "Policy compiler shadow mismatch: "
+                                f"memo={txn['Memo']!r} compiled={executed_amount} "
+                                f"recursive={oracle_executed}"
+                            )
                 else:
                     candidate_account_set, executed_amount = attempt_transaction(
                         account_set,
@@ -930,7 +1055,28 @@ class ForecastHandler:
                         "executed": float(executed_amount),
                         "resolution_method": resolution_method,
                         "fallback_reason": fallback_reason,
-                        **(constraint_detail or {}),
+                        "affected_graph_nodes": [
+                            str(account_from), str(account_to),
+                            f"schedule-after:{txn['Date']}",
+                        ] + list((constraint_detail or {}).get(
+                            "affected_graph_nodes", []
+                        )),
+                        "proof_conditions": (
+                            ["source reserve envelope covers higher-priority future flows"]
+                            if resolution_method == "constraint" else []
+                        ),
+                        "recomputed_nodes": len(schedule.loc[
+                            schedule["Date"] > txn["Date"]
+                        ]),
+                        "incremental_seconds": perf_counter() - resolution_started_at,
+                        "suffix_forecasts_avoided": int(
+                            resolution_method == "constraint"
+                        ),
+                        "shadow_equivalent": shadow_equivalent,
+                        **{
+                            key: value for key, value in (constraint_detail or {}).items()
+                            if key != "affected_graph_nodes"
+                        },
                     })
                 if not transaction_permitted:
                     if bool(txn["Deferrable"]):
@@ -1941,6 +2087,7 @@ class ForecastHandler:
                     Account_To=memo_rule.account_to,
                     Amount=confirmed_row.Amount,
                     income_flag=income_flag,
+                    enforce_policy_minimum=int(confirmed_row.Priority) > 1,
                 )
                 if executed_amount is not None:
                     confirmed_row.Amount = float(executed_amount)
@@ -2449,6 +2596,56 @@ class ForecastHandler:
             source_account = account_set._get_account_by_name(source_name)
             destination_account = account_set._get_account_by_name(destination_name)
             destination_column = destination_name
+
+            # Synthetic surplus sources are resolved against the primary
+            # checking balance at execution time.  Once that balance has
+            # reached the threshold, executing the transaction is a no-op.
+            # Do not send that no-op through the recursive safety forecast:
+            # a suffix with an unchanged balance is otherwise considered a
+            # successful transaction and the original synthetic proposal is
+            # incorrectly confirmed and rendered as a $0 memo.
+            if str(source_name).startswith("CHECKING_ABOVE:"):
+                threshold = Decimal(str(source_name).split(":", 1)[1])
+                executable_surplus = max(
+                    Decimal("0"),
+                    Decimal(str(source_account.balance)) - threshold,
+                )
+                if executable_surplus <= MONEY_BOUNDARY_TOLERANCE:
+                    new_skipped_df = pd.concat(
+                        [new_skipped_df, proposed_row.to_frame().T],
+                        ignore_index=True,
+                    )
+                    continue
+                proposed_row["Amount"] = min(
+                    Decimal(str(proposed_row["Amount"])),
+                    executable_surplus,
+                )
+
+            # Active minimum-balance policies constrain optional allocations
+            # without becoming hard account boundaries. Resolve the immediate
+            # headroom here so the recursive suffix cannot call a policy-floor
+            # rejection a successful (but skipped) candidate.
+            policy_floor = getattr(source_account, "policy_min_balance", None)
+            if policy_floor is not None and int(proposed_row["Priority"]) > 1:
+                policy_headroom = max(
+                    Decimal("0"),
+                    Decimal(str(source_account.balance))
+                    - Decimal(str(source_account.effective_policy_min_balance)),
+                )
+                requested = Decimal(str(proposed_row["Amount"]))
+                if requested > policy_headroom:
+                    if (
+                        bool(proposed_row["Partial_Payment_Allowed"])
+                        and policy_headroom > MONEY_BOUNDARY_TOLERANCE
+                    ):
+                        proposed_row["Amount"] = policy_headroom
+                    else:
+                        new_skipped_df = pd.concat(
+                            [new_skipped_df, proposed_row.to_frame().T],
+                            ignore_index=True,
+                        )
+                        continue
+
             policy_destination_headroom = None
             if str(destination_name).startswith("SAVINGS_BELOW:"):
                 _, threshold, savings_name = str(destination_name).split(":", 2)
@@ -2722,6 +2919,7 @@ class ForecastHandler:
                     Account_To=memo_rule_row["Account_To"],
                     Amount=proposed_row["Amount"],
                     income_flag=False,
+                    enforce_policy_minimum=int(proposed_row["Priority"]) > 1,
                 )
 
                 # Add the transaction to the confirmed DataFrame
@@ -11981,6 +12179,34 @@ class ForecastHandler:
                 "Binding Date", "Constraint / Fallback",
             ],
         )
+        policy_regimes = list(getattr(E, "policy_regimes", []) or [])
+        report_data_frames["policy_regime_timeline"] = pd.DataFrame(
+            [
+                {
+                    "Regime": getattr(regime, "regime_id", "—"),
+                    "Start": getattr(regime, "start_date", "—"),
+                    "End": getattr(regime, "end_date", "—"),
+                    "Source": format_policy_label(getattr(regime, "source", "configured")),
+                    "Active Policies": ", ".join(
+                        getattr(regime, "active_policy_keys", [])
+                    ) or "None",
+                    "Changes": "; ".join(getattr(regime, "changes", [])) or "—",
+                    "Derived Transformations": "; ".join(
+                        getattr(regime, "derived_transformations", [])
+                    ) or "—",
+                    "Proofs": "; ".join(getattr(regime, "proofs", [])) or "—",
+                    "Invalidation": getattr(regime, "invalidation_reason", None) or "—",
+                    "Analytical": getattr(regime, "analytical_decisions", 0),
+                    "Recursive": getattr(regime, "recursive_decisions", 0),
+                    "Seconds": f"{getattr(regime, 'execution_seconds', 0):.3f}",
+                    "Nodes Recomputed": getattr(regime, "recomputed_nodes", 0),
+                    "Suffix Forecasts Avoided": getattr(
+                        regime, "suffix_forecasts_avoided", 0
+                    ),
+                }
+                for regime in policy_regimes
+            ]
+        )
 
         def policy_detail_row(policy):
             result = policy_results.get(policy.policy_key, {}) or {}
@@ -12635,6 +12861,10 @@ class ForecastHandler:
         )
 
         policy_sections = render_table_card(
+            "Policy Regime Timeline",
+            "policy_regime_timeline",
+            empty_message="No compiled policy regimes recorded.",
+        ) + render_table_card(
             "Safety Decision Audit",
             "policy_safety_decisions",
             empty_message="No optimized policy decisions recorded.",
@@ -15062,6 +15292,158 @@ class ForecastHandler:
         return summaries
 
     @classmethod
+    def _runForecastWithPolicyProgram(
+        cls, IO, milestone_set, include_debug_columns=False, approximate=False
+    ):
+        """Execute each configured policy regime over its half-open date phase."""
+        original_IO = copy.deepcopy(IO)
+        boundaries = IO.policy_program.phase_boundaries(IO.start_date, IO.end_date)
+        phase_starts = sorted(set(boundaries))
+        forecast_parts = []
+        transaction_parts = {
+            name: [] for name in ("confirmed_df", "deferred_df", "skipped_df")
+        }
+        policy_results = {}
+        safety_decisions = []
+        policy_regimes = []
+        current_accounts = copy.deepcopy(IO.initial_account_set)
+        first_start_ts = None
+        final_end_ts = None
+
+        for index, phase_start in enumerate(phase_starts):
+            phase_end = (
+                phase_starts[index + 1] - datetime.timedelta(days=1)
+                if index + 1 < len(phase_starts) else IO.end_date
+            )
+            if phase_end < phase_start:
+                continue
+            active = IO.policy_program.resolve(phase_start)
+            phase_IO = ExpenseForecastInitialConditions(
+                start_date=phase_start,
+                end_date=phase_end,
+                account_set=current_accounts,
+                budget_set=IO.initial_budget_set,
+                memo_rule_set=IO.initial_memo_rule_set,
+                milestone_set=milestone_set,
+                transitions=IO.transitions,
+                policy_set=active,
+                forecast_name=IO.forecast_name,
+            )
+            phase_started = perf_counter()
+            runner = cls.runForecastApproximate if approximate else cls.runForecast
+            segment = runner(phase_IO, milestone_set, include_debug_columns=True)
+            elapsed = perf_counter() - phase_started
+            if first_start_ts is None:
+                first_start_ts = segment.start_ts
+            final_end_ts = segment.end_ts
+
+            part = segment.forecast_df.copy()
+            if forecast_parts and not part.empty:
+                part = part.iloc[1:].copy()
+            forecast_parts.append(part)
+            for name in transaction_parts:
+                frame = getattr(segment, name, None)
+                if isinstance(frame, pd.DataFrame) and not frame.empty:
+                    transaction_parts[name].append(frame)
+            policy_results.update(getattr(segment, "policy_results", {}) or {})
+            decisions = copy.deepcopy(getattr(segment, "safety_decisions", []) or [])
+            safety_decisions.extend(decisions)
+
+            transformations = []
+            proofs = []
+            for policy in active.policies:
+                if isinstance(policy, SurplusSavingPolicy):
+                    destination = current_accounts._get_account_by_name(policy.account_name)
+                    outgoing = any(
+                        rule.account_from == policy.account_name
+                        for rule in IO.initial_memo_rule_set.memo_rules
+                    )
+                    final_balance = float(segment.forecast_df.iloc[-1][policy.account_name])
+                    if final_balance >= float(policy.saved_minimum_threshold) and not outgoing:
+                        transformations.append(f"retire {policy.policy_key} while target remains satisfied")
+                        proofs.append(
+                            f"{policy.account_name} >= {policy.saved_minimum_threshold} and has no reachable outflow"
+                        )
+                if isinstance(policy, SurplusDebtPaymentPolicy):
+                    debt_accounts = [
+                        account for account in current_accounts.accounts
+                        if account.account_type == policy.debt_type
+                    ]
+                    if debt_accounts and all(
+                        float(segment.forecast_df.iloc[-1][account.name]) <= 0.01
+                        for account in debt_accounts
+                    ):
+                        transformations.append(f"retire {policy.policy_key} after portfolio payoff")
+                        proofs.append(f"all {policy.debt_type} balances are zero at phase end")
+
+            policy_regimes.append(PolicyRegime(
+                regime_id=f"regime-{index + 1}",
+                start_date=phase_start,
+                end_date=phase_end,
+                active_policy_keys=[policy.policy_key for policy in active.policies],
+                source="configured" if index == 0 else "dated change",
+                changes=(
+                    [] if index == 0 else [
+                        f"effective {phase_start.isoformat()}"
+                    ]
+                ),
+                derived_transformations=transformations,
+                proofs=proofs,
+                analytical_decisions=sum(
+                    decision.get("resolution_method") == "constraint"
+                    for decision in decisions
+                ),
+                recursive_decisions=sum(
+                    decision.get("resolution_method") == "recursive"
+                    for decision in decisions
+                ),
+                execution_seconds=elapsed,
+                recomputed_nodes=sum(
+                    int(decision.get("recomputed_nodes", 0)) for decision in decisions
+                ),
+                suffix_forecasts_avoided=sum(
+                    decision.get("resolution_method") == "constraint"
+                    for decision in decisions
+                ),
+            ))
+            current_accounts = cls._account_set_from_forecast_row(
+                current_accounts, segment.forecast_df.iloc[-1]
+            )
+
+        forecast_df = pd.concat(forecast_parts, ignore_index=True)
+        result = ExpenseForecastResult(
+            original_IO,
+            forecast_df,
+            first_start_ts or datetime.datetime.now(),
+            final_end_ts or datetime.datetime.now(),
+            confirmed_df=pd.concat(transaction_parts["confirmed_df"], ignore_index=True)
+            if transaction_parts["confirmed_df"] else pd.DataFrame(),
+            deferred_df=pd.concat(transaction_parts["deferred_df"], ignore_index=True)
+            if transaction_parts["deferred_df"] else pd.DataFrame(),
+            skipped_df=pd.concat(transaction_parts["skipped_df"], ignore_index=True)
+            if transaction_parts["skipped_df"] else pd.DataFrame(),
+            milestone_set=milestone_set,
+            milestone_results=MilestoneSet.evaluateMilestones(
+                forecast_df, milestone_set, log_stack_depth=0
+            ),
+            approximate_flag=approximate,
+            policy_results=policy_results,
+            safety_decisions=safety_decisions,
+            policy_regimes=policy_regimes,
+        )
+        if not include_debug_columns:
+            debug_columns = set()
+            for account in original_IO.initial_account_set.accounts:
+                debug_columns.update(
+                    set(original_IO.initial_account_set.getForecastColumnsForAccount(account))
+                    - {account.name}
+                )
+            result.forecast_df = result.forecast_df.drop(
+                columns=list(debug_columns), errors="ignore"
+            )
+        return result
+
+    @classmethod
     def _runForecastWithPolicies(
         cls, IO, milestone_set, include_debug_columns=False, approximate=False
     ):
@@ -15088,6 +15470,7 @@ class ForecastHandler:
             result.policy_results = cls._summarize_cash_policy_results(
                 policy_set, result
             )
+            cls._attach_policy_regime(configured_IO, result)
             return result
 
         original_IO = configured_IO
@@ -15302,6 +15685,7 @@ class ForecastHandler:
                 for key, value in policy_results.items()
                 if key in unattainable_keys
             })
+            cls._attach_policy_regime(original_IO, fallback_result)
             return fallback_result
 
         activation_row = qualifying.iloc[0]
@@ -15328,7 +15712,7 @@ class ForecastHandler:
                 for account in activation_accounts.accounts
                 if account.name == reserve_account.name
             )
-            activation_reserve_account.min_balance = float(candidate.target)
+            activation_reserve_account.policy_min_balance = float(candidate.target)
 
         flattened_milestones = cls._flatten_milestone_results(
             exact_discovery.milestone_results
@@ -15363,6 +15747,15 @@ class ForecastHandler:
             transitions=ConditionalScenarioTransitionSet(remaining_transitions),
             policy_set=ForecastPolicySet(),
         )
+        # Initial-condition normalization rebuilds account objects and keeps
+        # only serialized hard boundaries. Reattach active policy floors to
+        # the execution accounts so optional policies cannot consume them.
+        for candidate, reserve_account in reserve_entries:
+            tail_reserve_account = next(
+                account for account in tail_IO.initial_account_set.accounts
+                if account.name == reserve_account.name
+            )
+            tail_reserve_account.policy_min_balance = float(candidate.target)
         tail_confirmed_dates = tail_IO.initial_confirmed_df["Date"].apply(
             cls._normalize_date_value
         )
@@ -15418,6 +15811,20 @@ class ForecastHandler:
         tail_forecast = tail_result.forecast_df.drop(
             columns=list(summary_columns), errors="ignore"
         )
+        if activation_date > IO.start_date:
+            activation_mask = tail_forecast["Date"].apply(
+                cls._normalize_date_value
+            ) == activation_date
+            if activation_mask.any():
+                activation_index = tail_forecast.index[activation_mask][0]
+                for message_column in ("Memo Directives", "Memo"):
+                    discovery_text = str(activation_row.get(message_column, "") or "").strip()
+                    tail_text = str(
+                        tail_forecast.at[activation_index, message_column] or ""
+                    ).strip()
+                    tail_forecast.at[activation_index, message_column] = "; ".join(
+                        text for text in (discovery_text, tail_text) if text
+                    )
         forecast_df = pd.concat([pre_forecast, tail_forecast], ignore_index=True)
         forecast_df = cls._appendSummaryLines(
             original_IO.initial_account_set, forecast_df, log_stack_depth=0
@@ -15450,6 +15857,9 @@ class ForecastHandler:
                 forecast_df, milestone_set, log_stack_depth=0
             ),
             approximate_flag=approximate,
+            safety_decisions=copy.deepcopy(
+                getattr(tail_result, "safety_decisions", [])
+            ),
             policy_results={
                 **cls._summarize_cash_policy_results(IO.policy_set, tail_result),
                 **policy_results,
@@ -15465,7 +15875,58 @@ class ForecastHandler:
             result.forecast_df = result.forecast_df.drop(
                 columns=list(debug_columns), errors="ignore"
             )
+        cls._attach_policy_regime(original_IO, result)
         return result
+
+    @classmethod
+    def _attach_policy_regime(cls, IO, result):
+        """Attach one compiled-regime audit to a non-dated policy forecast."""
+        if getattr(result, "policy_regimes", None):
+            return
+        decisions = list(getattr(result, "safety_decisions", []) or [])
+        transformations = []
+        proofs = []
+        active = list(getattr(IO.policy_set, "policies", []) or [])
+        for policy in active:
+            if isinstance(policy, SurplusSavingPolicy):
+                outgoing = any(
+                    rule.account_from == policy.account_name
+                    for rule in IO.initial_memo_rule_set.memo_rules
+                )
+                if (
+                    policy.account_name in result.forecast_df.columns
+                    and float(result.forecast_df.iloc[-1][policy.account_name])
+                    >= float(policy.saved_minimum_threshold)
+                    and not outgoing
+                ):
+                    transformations.append(f"retire {policy.policy_key}")
+                    proofs.append(
+                        f"{policy.account_name} target satisfied with no reachable outflow"
+                    )
+        result.policy_regimes = [PolicyRegime(
+            regime_id="regime-1",
+            start_date=IO.start_date,
+            end_date=IO.end_date,
+            active_policy_keys=[policy.policy_key for policy in active],
+            derived_transformations=transformations,
+            proofs=proofs,
+            analytical_decisions=sum(
+                decision.get("resolution_method") == "constraint"
+                for decision in decisions
+            ),
+            recursive_decisions=sum(
+                decision.get("resolution_method") == "recursive"
+                for decision in decisions
+            ),
+            execution_seconds=(result.end_ts - result.start_ts).total_seconds(),
+            recomputed_nodes=sum(
+                int(decision.get("recomputed_nodes", 0)) for decision in decisions
+            ),
+            suffix_forecasts_avoided=sum(
+                int(decision.get("suffix_forecasts_avoided", 0))
+                for decision in decisions
+            ),
+        )]
 
     @classmethod
     def _runForecastWithScenarioTransitions(

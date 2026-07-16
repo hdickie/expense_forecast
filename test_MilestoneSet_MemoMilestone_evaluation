@@ -1,7 +1,7 @@
 {
-    "unique_id": "000101_4_1_6faf93bd35",
+    "unique_id": "000101_4_1_52e7c7210a",
     "initial_conditions": {
-        "unique_id": "000101_4_1_6faf93bd35",
+        "unique_id": "000101_4_1_52e7c7210a",
         "start_date": "2000-01-01",
         "end_date": "2000-01-05",
         "account_set": {
@@ -32,7 +32,9 @@
                     "Memo": "Test Txn",
                     "Income_Flag": false,
                     "Deferrable": null,
-                    "Partial_Payment_Allowed": null
+                    "Partial_Payment_Allowed": null,
+                    "Recurrence_Key": "test txn|daily",
+                    "Recurrence_Anchor": "2000-01-01"
                 }
             ]
         },
@@ -59,13 +61,22 @@
         "policy_set": {
             "py/object": "expense_forecast.ForecastPolicySet.ForecastPolicySet",
             "policies": []
+        },
+        "policy_program": {
+            "py/object": "expense_forecast.PolicyProgram.PolicyProgram",
+            "base_policy_set": {
+                "py/object": "expense_forecast.ForecastPolicySet.ForecastPolicySet",
+                "policies": []
+            },
+            "dated_changes": []
         }
     },
     "forecast_df": {
         "columns": [
             "Date",
             "Checking",
-            "Marginal Interest",
+            "Interest Accrued",
+            "Investment Returns",
             "Net Gain",
             "Net Loss",
             "Net Worth",
@@ -90,6 +101,7 @@
                 0.0,
                 0.0,
                 0.0,
+                0.0,
                 1200.0,
                 0.0,
                 0.0,
@@ -101,6 +113,7 @@
             [
                 "2000-01-02T00:00:00.000",
                 900.0,
+                0.0,
                 0.0,
                 0.0,
                 300.0,
@@ -117,6 +130,7 @@
                 600.0,
                 0.0,
                 0.0,
+                0.0,
                 300.0,
                 600.0,
                 0.0,
@@ -131,6 +145,7 @@
                 300.0,
                 0.0,
                 0.0,
+                0.0,
                 300.0,
                 300.0,
                 0.0,
@@ -142,6 +157,7 @@
             ],
             [
                 "2000-01-05T00:00:00.000",
+                0.0,
                 0.0,
                 0.0,
                 0.0,
@@ -277,7 +293,10 @@
         {}
     ],
     "policy_results": {},
-    "start_ts": "2026-07-15T04:51:25.713645",
-    "end_ts": "2026-07-15T04:51:25.842039",
+    "safety_decisions": [],
+    "policy_regimes": [],
+    "graph_diagnostics": null,
+    "start_ts": "2026-07-16T15:55:40.597977",
+    "end_ts": "2026-07-16T15:55:40.714361",
     "approximate_flag": false
 }

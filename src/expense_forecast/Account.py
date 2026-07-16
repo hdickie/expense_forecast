@@ -234,6 +234,11 @@ class Account:
 
         self.balance = balance
         self.min_balance = min_balance
+        # A policy floor is an allocation target, not a legal account
+        # boundary. Mandatory transactions may cross it; optional spending
+        # and policy allocations may not. ``min_balance`` remains the
+        # backward-compatible hard minimum supplied by account configuration.
+        self.policy_min_balance = None
         self.max_balance = max_balance
 
         self.account_type = account_type
@@ -249,6 +254,14 @@ class Account:
         self.interest_interval = getattr(self.billing_state, "interest_interval", None)
         self.minimum_payment = getattr(self.billing_state, "minimum_payment", None)
         self.primary_checking_ind = getattr(self.billing_state, "is_primary", None)
+
+    @property
+    def effective_policy_min_balance(self):
+        """Return the stricter of the hard boundary and active policy floor."""
+        policy_minimum = getattr(self, "policy_min_balance", None)
+        if policy_minimum is None:
+            return self.min_balance
+        return max(self.min_balance, policy_minimum)
 
 
     def to_json(self):

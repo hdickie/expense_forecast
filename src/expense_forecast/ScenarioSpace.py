@@ -18,6 +18,7 @@ from expense_forecast.ScenarioDimension import ScenarioDimension
 from expense_forecast.LineItemSet import LineItemSet
 from expense_forecast.ForecastPolicySet import ForecastPolicySet
 from expense_forecast.Scenario import Scenario
+from expense_forecast.PolicyProgram import PolicyProgram
 import copy
 import pandas as pd
 
@@ -258,14 +259,16 @@ class ScenarioSpace:
         self.default_policy_set = copy.deepcopy(
             default_policy_set or ForecastPolicySet()
         )
-        if not isinstance(self.default_policy_set, ForecastPolicySet):
-            raise TypeError("default_policy_set must be a ForecastPolicySet")
+        if not isinstance(self.default_policy_set, (ForecastPolicySet, PolicyProgram)):
+            raise TypeError("default_policy_set must be a ForecastPolicySet or PolicyProgram")
         self.policy_overrides = []
         for choice_map, policy_set in (policy_overrides or []):
             if not isinstance(choice_map, dict):
                 raise TypeError("policy override choices must be a mapping")
-            if not isinstance(policy_set, ForecastPolicySet):
-                raise TypeError("policy override value must be a ForecastPolicySet")
+            if not isinstance(policy_set, (ForecastPolicySet, PolicyProgram)):
+                raise TypeError(
+                    "policy override value must be a ForecastPolicySet or PolicyProgram"
+                )
             self.policy_overrides.append((dict(choice_map), copy.deepcopy(policy_set)))
 
         self._validate_memo_rule_set_and_scenario_dimensions_are_compatible(invariant_transactions, scenario_dimensions, memo_rule_set)
@@ -288,6 +291,5 @@ class ScenarioSpace:
         if len(matching) > 1:
             raise ValueError(f"Duplicate policy override for choices {choices!r}")
         return copy.deepcopy(matching[0] if matching else self.default_policy_set)
-
 
 

@@ -539,12 +539,19 @@ class AccountSet:
 
     #Codex-write-doctstring-OK
     @staticmethod
-    def _validate_account_balance_bounds(account, proposed_balance, role):
+    def _validate_account_balance_bounds(
+        account, proposed_balance, role, enforce_policy_minimum=False
+    ):
         """
         @interface-report: show
         """
         proposed_balance_decimal = Decimal(str(proposed_balance))
-        min_balance_decimal = Decimal(str(account.min_balance))
+        minimum = (
+            account.effective_policy_min_balance
+            if enforce_policy_minimum
+            else account.min_balance
+        )
+        min_balance_decimal = Decimal(str(minimum))
         max_balance_is_infinite = math.isinf(float(account.max_balance))
         max_balance_decimal = (
             None
@@ -553,7 +560,16 @@ class AccountSet:
         )
 
         if proposed_balance_decimal < min_balance_decimal:
-            if min_balance_decimal - proposed_balance_decimal <= MONEY_BOUNDARY_TOLERANCE:
+            # A policy floor is an allocation constraint whose remaining
+            # headroom feeds later policy decisions. Treat it exactly: the
+            # normal half-cent hard-boundary clamp would otherwise permit a
+            # debt payment slightly larger than the available cash, clamp the
+            # checking side, and effectively create a few mills of money.
+            if (
+                not enforce_policy_minimum
+                and min_balance_decimal - proposed_balance_decimal
+                <= MONEY_BOUNDARY_TOLERANCE
+            ):
                 return (
                     min_balance_decimal
                     if isinstance(proposed_balance, Decimal)
@@ -877,6 +893,7 @@ class AccountSet:
         income_flag=False,
         minimum_payment_flag=False,
         allocation_strategy="avalanche",
+        enforce_policy_minimum=False,
     ):
         """
         #TODO DOC one-line description of executeTransaction.
@@ -963,7 +980,10 @@ class AccountSet:
                 )
             checking = self._get_account_by_name(Account_From)
             available_cash = (
-                self._money(checking.balance) - self._money(checking.min_balance)
+                self._money(checking.balance) - self._money(
+                    checking.effective_policy_min_balance
+                    if enforce_policy_minimum else checking.min_balance
+                )
                 if checking is not None and checking.account_type == "checking"
                 else self._money(abs(Amount))
             )
@@ -992,7 +1012,10 @@ class AccountSet:
                 max(Decimal("0"), threshold - self._money(savings.balance)),
                 max(
                     Decimal("0"),
-                    self._money(checking.balance) - self._money(checking.min_balance),
+                    self._money(checking.balance) - self._money(
+                        checking.effective_policy_min_balance
+                        if enforce_policy_minimum else checking.min_balance
+                    ),
                 ),
             )
             Account_To = savings_name
@@ -1002,6 +1025,17 @@ class AccountSet:
         if Account_To in {"ALL_LOANS", "ALL_LOANS_SNOWBALL"}:
             if Account_To.endswith("SNOWBALL"):
                 allocation_strategy = "snowball"
+            if enforce_policy_minimum:
+                checking = self._get_account_by_name(Account_From)
+                if checking is not None and checking.account_type == "checking":
+                    Amount = min(
+                        self._money(abs(Amount)),
+                        max(
+                            Decimal("0"),
+                            self._money(checking.balance)
+                            - self._money(checking.effective_policy_min_balance),
+                        ),
+                    )
             allocated_payments = self.allocate_additional_loan_payments(
                 Amount, account_from=Account_From, strategy=allocation_strategy
             )
@@ -1011,6 +1045,7 @@ class AccountSet:
                     single_account_loan_payment[1],
                     single_account_loan_payment[2],
                     income_flag=False,
+                    enforce_policy_minimum=enforce_policy_minimum,
                 )
             return sum(
                 (self._money(payment[2]) for payment in allocated_payments),
@@ -1020,11 +1055,25 @@ class AccountSet:
         if Account_To in {"ALL_CREDIT_CARDS", "ALL_CREDIT_CARDS_SNOWBALL"}:
             if Account_To.endswith("SNOWBALL"):
                 allocation_strategy = "snowball"
+            if enforce_policy_minimum:
+                checking = self._get_account_by_name(Account_From)
+                if checking is not None and checking.account_type == "checking":
+                    Amount = min(
+                        self._money(abs(Amount)),
+                        max(
+                            Decimal("0"),
+                            self._money(checking.balance)
+                            - self._money(checking.effective_policy_min_balance),
+                        ),
+                    )
             allocated_payments = self.allocate_additional_credit_card_payments(
                 Amount, account_from=Account_From, strategy=allocation_strategy
             )
             for source, destination, payment_amount in allocated_payments:
-                self.executeTransaction(source, destination, payment_amount)
+                self.executeTransaction(
+                    source, destination, payment_amount,
+                    enforce_policy_minimum=enforce_policy_minimum,
+                )
             return sum(
                 (self._money(payment[2]) for payment in allocated_payments),
                 Decimal("0"),
@@ -1054,7 +1103,8 @@ class AccountSet:
                     amount
                 )
                 proposed_balance = self._validate_account_balance_bounds(
-                    account_from, proposed_balance, "Account_From"
+                    account_from, proposed_balance, "Account_From",
+                    enforce_policy_minimum=enforce_policy_minimum,
                 )
                 account_from.balance = proposed_balance
                 account_from.billing_state.balance = proposed_balance

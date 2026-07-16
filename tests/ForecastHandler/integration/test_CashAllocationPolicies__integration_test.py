@@ -63,6 +63,39 @@ def test_exact_deterministic_checking_spend_avoids_recursive_suffix(monkeypatch)
     assert result.forecast_df.iloc[-1]["Checking"] == 900
 
 
+def test_exact_surplus_investment_omits_exhausted_zero_dollar_proposals():
+    accounts = AccountSet()
+    accounts.createCheckingAccount("Checking", 2_000, 500, float("inf"), True)
+    accounts.createInvestmentAccount("Brokerage", 0, date(2026, 2, 1), 0)
+
+    result = ForecastHandler.runForecast(
+        _base(
+            accounts,
+            LineItemSet(),
+            MemoRuleSet(),
+            SurplusInvestmentPolicy(
+                "Brokerage", checking_threshold=1_000, priority=2
+            ),
+        ),
+        engine="legacy",
+    )
+
+    policy_confirmed = result.confirmed_df[
+        result.confirmed_df["Memo"].str.startswith(
+            "POLICY surplus_investment:Brokerage", na=False
+        )
+    ]
+    rendered_memos = "; ".join(
+        result.forecast_df["Memo"].astype(str).tolist()
+        + result.forecast_df["Memo Directives"].astype(str).tolist()
+    )
+
+    assert policy_confirmed["Amount"].astype(float).tolist() == [1_000.0]
+    assert "$0.00" not in rendered_memos
+    assert result.forecast_df.iloc[-1]["Checking"] == 1_000
+    assert result.forecast_df.iloc[-1]["Brokerage"] == 1_000
+
+
 def test_policy_report_renders_summary_and_type_specific_details():
     accounts = AccountSet()
     accounts.createCheckingAccount("Checking", 5_000, 0, float("inf"), True)

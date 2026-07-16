@@ -6,7 +6,27 @@ import pytest
 import pandas as pd
 import tempfile
 from expense_forecast.Account import Account
-from expense_forecast.AccountSet import AccountSet
+from expense_forecast.AccountSet import AccountBoundaryError, AccountSet
+
+
+def test_policy_minimum_is_soft_but_hard_minimum_always_applies():
+    accounts = AccountSet()
+    accounts.createCheckingAccount("Checking", 1_000, 100, float("inf"), True)
+    checking = accounts.accounts[0]
+    checking.policy_min_balance = 500
+
+    mandatory = copy.deepcopy(accounts)
+    mandatory.executeTransaction("Checking", None, 600)
+    assert mandatory.accounts[0].balance == Decimal("400")
+
+    optional = copy.deepcopy(accounts)
+    with pytest.raises(AccountBoundaryError, match="Account_From boundaries"):
+        optional.executeTransaction(
+            "Checking", None, 600, enforce_policy_minimum=True
+        )
+
+    with pytest.raises(AccountBoundaryError, match="Account_From boundaries"):
+        accounts.executeTransaction("Checking", None, 950)
 
 
 def test_account_set_from_dict_round_trips_all_account_types():

@@ -31,11 +31,87 @@ from expense_forecast.SurplusInvestmentPolicy import SurplusInvestmentPolicy
 from expense_forecast.PeriodicInvestmentContributionCapPolicy import PeriodicInvestmentContributionCapPolicy
 
 import datetime
+import os
 from datetime import date
 
 import inspect
 
 import numpy as np
+
+
+def print_policy_safety_diagnostics(
+    line_items, policies, result, transition_date=None
+):
+    """Print scenario cadence and policy-safety audit information."""
+    scenario_choices = {
+        dimension_name: timeline[-1]['choice']
+        for dimension_name, timeline in line_items.scenario_timelines.items()
+        if timeline
+    }
+    paycheck_dates = line_items.getLineItemSchedule().loc[
+        lambda schedule: schedule['Memo'].str.contains('RN Year'), 'Date'
+    ].tolist()
+    if transition_date is None:
+        paycheck_window = paycheck_dates[:3]
+    else:
+        paycheck_window = [
+            scheduled_date for scheduled_date in paycheck_dates
+            if abs((scheduled_date - transition_date).days) <= 21
+        ]
+    print('Scenario choices:', scenario_choices)
+    print('Scenario policies:', [
+        policy.policy_key for policy in policies.policies
+    ])
+    print('Paychecks around transition:', paycheck_window)
+    print('Paycheck day gaps:', [
+        (right - left).days
+        for left, right in zip(paycheck_window, paycheck_window[1:])
+    ])
+    print('Safety resolution counts:', {
+        method: sum(
+            decision['resolution_method'] == method
+            for decision in result.safety_decisions
+        )
+        for method in {'constraint', 'recursive'}
+    })
+    print('Safety fallback reasons:', {
+        reason: sum(
+            decision.get('fallback_reason') == reason
+            for decision in result.safety_decisions
+        )
+        for reason in {
+            decision.get('fallback_reason')
+            for decision in result.safety_decisions
+            if decision.get('fallback_reason')
+        }
+    })
+    print('Policy regimes:', [
+        {
+            'id': regime.regime_id,
+            'start': regime.start_date,
+            'end': regime.end_date,
+            'active': regime.active_policy_keys,
+            'derived': regime.derived_transformations,
+            'proofs': regime.proofs,
+        }
+        for regime in result.policy_regimes
+    ])
+    print('Compiler metrics:', {
+        'nodes_recomputed': sum(
+            regime.recomputed_nodes for regime in result.policy_regimes
+        ),
+        'suffix_forecasts_avoided': sum(
+            regime.suffix_forecasts_avoided for regime in result.policy_regimes
+        ),
+    })
+    print('Executed safety decisions:', [
+        decision for decision in result.safety_decisions
+        if decision['executed'] > 0
+    ])
+    print(
+        'Forecast elapsed seconds:',
+        round((result.end_ts - result.start_ts).total_seconds(), 2),
+    )
 
 def get_B_invariant(start_date, end_date):
     B_invariant = LineItemSet()
@@ -533,8 +609,8 @@ def fuck_off_to_spain(start_date : date, end_date : date) -> LineItemSet:
 if __name__ == '__main__':
 
     # action = 'near term'
-    # action = 'start of RN life'
-    action = 'second year of RN life'
+    action = 'start of RN life'
+    # action = 'second year of RN life'
     # action = 'net worth 0 after 18 months of RN car life'
     # action = 'test approximate case'
     # action = 'test milestone conditional swaps'
@@ -545,6 +621,8 @@ if __name__ == '__main__':
     # action = 'I just won the lottery'
 
     # action = 'example single forecast report'
+
+    # action = 'dated scenarios and policies'
 
     if action == 'near term':
 
@@ -1249,7 +1327,12 @@ if __name__ == '__main__':
                           composite_milestones=[composite_milestone])
 
         F = ForecastHandler()
-        R = F.runForecastApproximate(IO, MS, include_debug_columns=True)
+        R = F.runForecastApproximate(IO, MS,
+                                     engine=os.environ.get(
+                                         "EXPENSE_FORECAST_ENGINE", "graph"
+                                     ),
+                                     include_debug_columns=True)
+        print_policy_safety_diagnostics(L, policies, R)
         R.writeToJSONFile(str(R.unique_id)+'.json')
         # F.generateHTMLReport(R)
 

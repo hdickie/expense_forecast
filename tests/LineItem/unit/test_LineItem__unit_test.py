@@ -203,4 +203,6 @@ class TestLineItemMethods:
             "Memo": "rent",
             "Deferrable": False,
             "Partial_Payment_Allowed": False,
+            "Recurrence_Key": "rent|once",
+            "Recurrence_Anchor": "20000102",
         }

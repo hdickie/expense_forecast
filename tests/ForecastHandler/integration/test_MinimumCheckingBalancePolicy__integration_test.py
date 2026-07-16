@@ -287,6 +287,10 @@ def test_unattainable_savings_reserve_does_not_suppress_surplus_debt_policy():
     ]["status"] == "not_achieved"
     assert result.policy_results["surplus_debt_payment:loan"]["debt_paid"] > 0
     assert result.forecast_df.iloc[-1]["Loan"] < 1000
+    assert any(
+        decision["memo"].startswith("POLICY surplus_debt_payment:loan ")
+        for decision in result.safety_decisions
+    )
 
 
 def test_named_policy_round_trip():
