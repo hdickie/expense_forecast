@@ -23,7 +23,7 @@ from typing import Any
 from datetime import date
 import logging
 import copy
-from expense_forecast.log_methods import log_in_color, project_log_file
+from expense_forecast.log_methods import log_in_color, project_log_file, setup_logger
 from expense_forecast.AccountSet import AccountSet
 from expense_forecast.LineItemSet import LineItemSet
 from expense_forecast.MemoRuleSet import MemoRuleSet
@@ -33,17 +33,7 @@ from expense_forecast.ConditionalScenarioTransitionSet import (
 )
 from expense_forecast.ForecastPolicySet import ForecastPolicySet
 
-logger = logging.getLogger(__name__)
-formatter = logging.Formatter("%(asctime)s - %(levelname)-8s - %(message)s")
-fileHandler = logging.FileHandler(project_log_file(__name__), mode="w")
-fileHandler.setFormatter(formatter)
-streamHandler = logging.StreamHandler()
-streamHandler.setFormatter(formatter)
-logger.setLevel(logging.DEBUG)
-logger.handlers.clear()
-logger.addHandler(fileHandler)
-logger.addHandler(streamHandler)
-logger.propagate = False
+logger = setup_logger(__name__, project_log_file(__name__))
 
 #TODO DOC manual review of ExpenseForecastInitialConditions._stable_df_payload docstring
 def _stable_df_payload(df):
@@ -664,6 +654,7 @@ class ExpenseForecastInitialConditions:
                 and not str(name).startswith("ALL_CREDIT_CARDS")
                 and not str(name).startswith("CHECKING_ABOVE:")
                 and not str(name).startswith("CURRENT_STATEMENT_BALANCE:")
+                and not str(name).startswith("SAVINGS_BELOW:")
             }
 
             A2 = {""}

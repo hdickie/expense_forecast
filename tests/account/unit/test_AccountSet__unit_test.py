@@ -1,4 +1,6 @@
 import logging
+import io
+import time
 
 import pytest
 import pandas as pd
@@ -28,12 +30,148 @@ from decimal import Decimal
 from expense_forecast.CheckingBillingState import CheckingBillingState
 from expense_forecast.CreditCardBillingState import CreditCardBillingState
 from expense_forecast.LoanBillingState import LoanBillingState
-from expense_forecast.log_methods import log_in_color
+from expense_forecast.log_methods import (
+    BEGIN_CYAN,
+    ForecastProgress,
+    log_in_color,
+    log_user_message,
+    setup_logger,
+)
 
 import pandas as pd
 import pytest
 
 from expense_forecast.AccountSet import AccountSet
+
+
+def test_account_validation_does_not_print_account_table(capsys):
+    accounts = AccountSet()
+    accounts.createCheckingAccount("Checking", 1000, 0, float("inf"), True)
+    capsys.readouterr()
+
+    AccountSet.from_dict(accounts.to_dict())
+
+    captured = capsys.readouterr()
+    assert captured.out == ""
+
+
+def test_setup_logger_is_idempotent_and_splits_console_and_file_levels(
+    tmp_path, capsys
+):
+    logger_name = f"expense_forecast.test_logging.{id(tmp_path)}"
+    log_path = tmp_path / "forecast.log"
+    logger = setup_logger(logger_name, log_path)
+    same_logger = setup_logger(logger_name, log_path)
+
+    assert same_logger is logger
+    assert len([
+        handler for handler in logger.handlers
+        if getattr(handler, "_expense_forecast_managed", False)
+    ]) == 2
+
+    logger.debug("transaction-level detail")
+    logger.info("forecast phase summary")
+    for handler in logger.handlers:
+        handler.flush()
+
+    console = capsys.readouterr()
+    assert "forecast phase summary" in console.err
+    assert "transaction-level detail" not in console.err
+    file_output = log_path.read_text()
+    assert "forecast phase summary" in file_output
+    assert "transaction-level detail" in file_output
+
+
+def test_colored_progress_redraws_terminal_and_logs_separate_heartbeats(tmp_path):
+    class InteractiveStream(io.StringIO):
+        def isatty(self):
+            return True
+
+    logger = setup_logger(
+        f"expense_forecast.test_progress.{id(tmp_path)}",
+        tmp_path / "progress.log",
+    )
+    stream = InteractiveStream()
+    with ForecastProgress(
+        logger,
+        "Test phase",
+        4,
+        heartbeat_interval=0.01,
+        stream=stream,
+    ) as progress:
+        progress.update(1, context="2026-07-01")
+        time.sleep(0.03)
+
+    terminal_output = stream.getvalue()
+    assert "Test phase" in terminal_output
+    assert "\r" in terminal_output
+    assert "100%" in terminal_output
+    file_output = (tmp_path / "progress.log").read_text()
+    assert "Heartbeat: phase=Test phase" in file_output
+    assert "current=2026-07-01" in file_output
+    assert BEGIN_CYAN in file_output
+    assert not any(
+        thread.name == "forecast-heartbeat-Test phase" and thread.is_alive()
+        for thread in __import__("threading").enumerate()
+    )
+
+
+def test_noninteractive_progress_uses_log_lines_without_carriage_returns(
+    tmp_path, capsys
+):
+    logger = setup_logger(
+        f"expense_forecast.test_noninteractive_progress.{id(tmp_path)}",
+        tmp_path / "progress.log",
+    )
+    stream = io.StringIO()
+    with ForecastProgress(
+        logger,
+        "Redirected phase",
+        2,
+        heartbeat_interval=0.01,
+        stream=stream,
+    ) as progress:
+        progress.update(1)
+        time.sleep(0.025)
+
+    assert "\r" not in stream.getvalue()
+    assert "Heartbeat: phase=Redirected phase" in capsys.readouterr().err
+
+
+def test_progress_stops_heartbeat_when_phase_raises(tmp_path):
+    logger = setup_logger(
+        f"expense_forecast.test_failed_progress.{id(tmp_path)}",
+        tmp_path / "progress.log",
+    )
+
+    with pytest.raises(RuntimeError, match="phase failed"):
+        with ForecastProgress(
+            logger,
+            "Failing phase",
+            3,
+            heartbeat_interval=0.01,
+            stream=io.StringIO(),
+        ):
+            time.sleep(0.015)
+            raise RuntimeError("phase failed")
+
+    assert not any(
+        thread.name == "forecast-heartbeat-Failing phase" and thread.is_alive()
+        for thread in __import__("threading").enumerate()
+    )
+
+
+def test_user_message_preserves_ansi_color_in_log_file(tmp_path):
+    log_path = tmp_path / "colored.log"
+    logger = setup_logger(
+        f"expense_forecast.test_colored_log.{id(tmp_path)}", log_path
+    )
+
+    log_user_message(logger, "cyan", "info", "colored phase")
+    for handler in logger.handlers:
+        handler.flush()
+
+    assert BEGIN_CYAN + "colored phase" in log_path.read_text()
 
 def checking_billing_state(balance=0, is_primary=True):
     return CheckingBillingState(

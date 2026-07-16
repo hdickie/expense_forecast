@@ -7,6 +7,7 @@ from expense_forecast.MinimumCheckingBalancePolicy import MinimumCheckingBalance
 from expense_forecast.PeriodicInvestmentContributionCapPolicy import PeriodicInvestmentContributionCapPolicy
 from expense_forecast.SurplusDebtPaymentPolicy import SurplusDebtPaymentPolicy
 from expense_forecast.SurplusInvestmentPolicy import SurplusInvestmentPolicy
+from expense_forecast.SurplusSavingPolicy import SurplusSavingPolicy
 from expense_forecast.CurrentStatementBalancePaymentPolicy import (
     CurrentStatementBalancePaymentPolicy,
 )
@@ -42,6 +43,7 @@ def test_policy_set_allows_duplicate_priority_in_declaration_order():
         lambda: FixedMonthlyInvestmentPolicy("Brokerage", 100, priority=2, day=32),
         lambda: IncomePercentageInvestmentPolicy("Brokerage", 1.1, priority=2),
         lambda: SurplusInvestmentPolicy("Brokerage", -1, priority=2),
+        lambda: SurplusSavingPolicy("Savings", -1, priority=2),
         lambda: PeriodicInvestmentContributionCapPolicy(
             "Brokerage", 100, "week", priority=2
         ),

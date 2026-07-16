@@ -136,7 +136,6 @@ class AccountSet:
         primary_checking_accounts_df = checking_accounts_df[
             checking_accounts_df.Primary_Checking_Ind == True
         ]
-        print(checking_accounts_df.to_string())
         if primary_checking_accounts_df.shape[0] != 1:
             raise ValueError("AccountSet must have one and only one primary checking account")
 
@@ -524,6 +523,8 @@ class AccountSet:
             return self._get_account_by_name(self.primary_checking_account_name)
         if str(account_name).startswith("CURRENT_STATEMENT_BALANCE:"):
             return self._get_account_by_name(str(account_name).split(":", 1)[1])
+        if str(account_name).startswith("SAVINGS_BELOW:"):
+            return self._get_account_by_name(str(account_name).split(":", 2)[2])
         if account_name in [None, "", "None"] or str(account_name).startswith("ALL_"):
             return None
 
@@ -972,6 +973,29 @@ class AccountSet:
                 max(Decimal("0"), available_cash),
             )
             Account_To = card_name
+            if Amount <= MONEY_BOUNDARY_TOLERANCE:
+                return Decimal("0")
+
+        if str(Account_To).startswith("SAVINGS_BELOW:"):
+            _, threshold_text, savings_name = str(Account_To).split(":", 2)
+            threshold = self._money(threshold_text)
+            savings = self._get_account_by_name(savings_name)
+            checking = self._get_account_by_name(Account_From)
+            if savings is None or savings.account_type != "checking":
+                raise ValueError(
+                    f"Surplus saving requires checking-type account {savings_name!r}"
+                )
+            if checking is None or checking.account_type != "checking":
+                raise ValueError("Surplus saving requires a checking source account")
+            Amount = min(
+                self._money(abs(Amount)),
+                max(Decimal("0"), threshold - self._money(savings.balance)),
+                max(
+                    Decimal("0"),
+                    self._money(checking.balance) - self._money(checking.min_balance),
+                ),
+            )
+            Account_To = savings_name
             if Amount <= MONEY_BOUNDARY_TOLERANCE:
                 return Decimal("0")
 

@@ -50,7 +50,8 @@ class TestForecastHandler:
             {
                 "Date": [date(2026,6,10)],
                 "Checking": [1000.0],
-                "Marginal Interest": [0.0],
+                "Interest Accrued": [0.0],
+                "Investment Returns": [0.0],
                 "Net Gain": [0.0],
                 "Net Loss": [0.0],
                 "Net Worth": [1000.0],
@@ -74,7 +75,8 @@ class TestForecastHandler:
         required_columns__debug_true_case = {
             "Date",
             "Checking",
-            "Marginal Interest",
+            "Interest Accrued",
+            "Investment Returns",
             "Net Gain",
             "Net Loss",
             "Net Worth",
@@ -99,7 +101,7 @@ class TestForecastHandler:
         )
 
         assert R__debug_true.forecast_df.shape[0] == 10
-        assert R__debug_true.forecast_df.shape[1] == 12
+        assert R__debug_true.forecast_df.shape[1] == 13
 
         pd.testing.assert_frame_equal(
             R__debug_true.forecast_df.tail(1),
@@ -116,7 +118,8 @@ class TestForecastHandler:
         required_columns__debug_false_case = {
             "Date",
             "Checking",
-            "Marginal Interest",
+            "Interest Accrued",
+            "Investment Returns",
             "Net Gain",
             "Net Loss",
             "Net Worth",
@@ -141,7 +144,7 @@ class TestForecastHandler:
         )
 
         assert R__debug_false.forecast_df.shape[0] == 10
-        assert R__debug_false.forecast_df.shape[1] == 12
+        assert R__debug_false.forecast_df.shape[1] == 13
 
         pd.testing.assert_frame_equal(
             R__debug_false.forecast_df.tail(1),
@@ -199,7 +202,8 @@ class TestForecastHandler:
                 "Credit: Prev Stmt Bal": [0.0],
                 "Credit: Credit Billing Cycle Payment Bal": [0.0],
                 "Credit: Credit End of Prev Cycle Bal": [0.0],
-                "Marginal Interest": [0.0],
+                "Interest Accrued": [0.0],
+                "Investment Returns": [0.0],
                 "Net Gain": [0.0],
                 "Net Loss": [0.0],
                 "Net Worth": [1000.0],
@@ -226,7 +230,8 @@ class TestForecastHandler:
             "Credit: Prev Stmt Bal",
             "Credit: Credit Billing Cycle Payment Bal",
             "Credit: Credit End of Prev Cycle Bal",
-            "Marginal Interest",
+            "Interest Accrued",
+            "Investment Returns",
             "Net Gain",
             "Net Loss",
             "Net Worth",
@@ -251,7 +256,7 @@ class TestForecastHandler:
         )
 
         assert R__debug_true.forecast_df.shape[0] == 5
-        assert R__debug_true.forecast_df.shape[1] == 17
+        assert R__debug_true.forecast_df.shape[1] == 18
 
         pd.testing.assert_frame_equal(
             R__debug_true.forecast_df.tail(1),
@@ -265,7 +270,8 @@ class TestForecastHandler:
                 "Date": [date(2026,6,5)],
                 "Checking": [1000.0],
                 "Credit": [0.0],
-                "Marginal Interest": [0.0],
+                "Interest Accrued": [0.0],
+                "Investment Returns": [0.0],
                 "Net Gain": [0.0],
                 "Net Loss": [0.0],
                 "Net Worth": [1000.0],
@@ -288,7 +294,8 @@ class TestForecastHandler:
             "Date",
             "Checking",
             "Credit",
-            "Marginal Interest",
+            "Interest Accrued",
+            "Investment Returns",
             "Net Gain",
             "Net Loss",
             "Net Worth",
@@ -313,7 +320,7 @@ class TestForecastHandler:
         )
 
         assert R__debug_false.forecast_df.shape[0] == 5
-        assert R__debug_false.forecast_df.shape[1] == 13
+        assert R__debug_false.forecast_df.shape[1] == 14
 
         pd.testing.assert_frame_equal(
             R__debug_false.forecast_df.tail(1),
@@ -371,7 +378,8 @@ class TestForecastHandler:
                 "Loan: Principal Balance": [15000.0],
                 "Loan: Interest": [500.0],
                 "Loan: Loan Billing Cycle Payment Bal": [0.0],
-                "Marginal Interest": [0.0],
+                "Interest Accrued": [0.0],
+                "Investment Returns": [0.0],
                 "Net Gain": [0.0],
                 "Net Loss": [0.0],
                 "Net Worth": [-14500.0],
@@ -397,7 +405,8 @@ class TestForecastHandler:
             "Loan: Principal Balance",
             "Loan: Interest",
             "Loan: Loan Billing Cycle Payment Bal",
-            "Marginal Interest",
+            "Interest Accrued",
+            "Investment Returns",
             "Net Gain",
             "Net Loss",
             "Net Worth",
@@ -422,7 +431,7 @@ class TestForecastHandler:
         )
 
         assert R__debug_true.forecast_df.shape[0] == 5
-        assert R__debug_true.forecast_df.shape[1] == 16
+        assert R__debug_true.forecast_df.shape[1] == 17
 
         pd.testing.assert_frame_equal(
             R__debug_true.forecast_df.tail(1),
@@ -436,7 +445,8 @@ class TestForecastHandler:
                 "Date": [date(2026,6,5)],
                 "Checking": [1000.0],
                 "Loan": [15500.0],
-                "Marginal Interest": [0.0],
+                "Interest Accrued": [0.0],
+                "Investment Returns": [0.0],
                 "Net Gain": [0.0],
                 "Net Loss": [0.0],
                 "Net Worth": [-14500.0],
@@ -459,7 +469,8 @@ class TestForecastHandler:
             "Date",
             "Checking",
             "Loan",
-            "Marginal Interest",
+            "Interest Accrued",
+            "Investment Returns",
             "Net Gain",
             "Net Loss",
             "Net Worth",
@@ -484,7 +495,7 @@ class TestForecastHandler:
         )
 
         assert R__debug_false.forecast_df.shape[0] == 5
-        assert R__debug_false.forecast_df.shape[1] == 13
+        assert R__debug_false.forecast_df.shape[1] == 14
 
         pd.testing.assert_frame_equal(
             R__debug_false.forecast_df.tail(1),
@@ -541,7 +552,8 @@ class TestForecastHandler:
                 "Credit: Prev Stmt Bal": [983.33],
                 "Credit: Credit Billing Cycle Payment Bal": [0.0],
                 "Credit: Credit End of Prev Cycle Bal": [1000.0], #this doesn't change until the next day, and i think that's correct
-                "Marginal Interest": [23.33],
+                "Interest Accrued": [23.33],
+                "Investment Returns": [0.0],
                 "Net Gain": [0.0],
                 "Net Loss": [23.33],
                 "Net Worth": [-23.33],
@@ -564,7 +576,8 @@ class TestForecastHandler:
                 "Credit: Prev Stmt Bal": [983.33],
                 "Credit: Credit Billing Cycle Payment Bal": [0.0],
                 "Credit: Credit End of Prev Cycle Bal": [983.33],
-                "Marginal Interest": [0.0],
+                "Interest Accrued": [0.0],
+                "Investment Returns": [0.0],
                 "Net Gain": [0.0],
                 "Net Loss": [0.0],
                 "Net Worth": [-23.33],
@@ -700,7 +713,8 @@ class TestForecastHandler:
                 "Credit: Prev Stmt Bal": [None],
                 "Credit: Credit Billing Cycle Payment Bal": [None],
                 "Credit: Credit End of Prev Cycle Bal": [None],
-                "Marginal Interest": [None],
+                "Interest Accrued": [None],
+                "Investment Returns": [0.0],
                 "Net Gain": [0.0],
                 "Net Loss": [None],
                 "Net Worth": [None],
@@ -723,7 +737,8 @@ class TestForecastHandler:
                 "Credit: Prev Stmt Bal": [None],
                 "Credit: Credit Billing Cycle Payment Bal": [None],
                 "Credit: Credit End of Prev Cycle Bal": [None],
-                "Marginal Interest": [None],
+                "Interest Accrued": [None],
+                "Investment Returns": [0.0],
                 "Net Gain": [0.0],
                 "Net Loss": [None],
                 "Net Worth": [None],
@@ -761,7 +776,8 @@ class TestForecastHandler:
         expected_billing_date_state["Credit: Credit End of Prev Cycle Bal"] = (
             billing_date_end_of_previous_cycle_balance
         )
-        expected_billing_date_state["Marginal Interest"] = marginal_interest
+        expected_billing_date_state["Interest Accrued"] = marginal_interest
+        expected_billing_date_state["Investment Returns"] = 0.0
         expected_billing_date_state["Net Gain"] = 0.0
         expected_billing_date_state["Net Loss"] = marginal_interest
         expected_billing_date_state["Net Worth"] = checking - credit
@@ -781,7 +797,8 @@ class TestForecastHandler:
         expected_final["Credit: Credit End of Prev Cycle Bal"] = (
             final_end_of_previous_cycle_balance
         )
-        expected_final["Marginal Interest"] = 0.0
+        expected_final["Interest Accrued"] = 0.0
+        expected_final["Investment Returns"] = 0.0
         expected_final["Net Gain"] = 0.0
         expected_final["Net Loss"] = 0.0
         expected_final["Net Worth"] = checking - credit
@@ -958,7 +975,8 @@ class TestForecastHandler:
                 "Loan: Principal Balance": [None],
                 "Loan: Interest": [None],
                 "Loan: Loan Billing Cycle Payment Bal": [None],
-                "Marginal Interest": [None],
+                "Interest Accrued": [None],
+                "Investment Returns": [0.0],
                 "Net Gain": [0.0],
                 "Net Loss": [None],
                 "Net Worth": [None],
@@ -980,7 +998,8 @@ class TestForecastHandler:
                 "Loan: Principal Balance": [None],
                 "Loan: Interest": [None],
                 "Loan: Loan Billing Cycle Payment Bal": [None],
-                "Marginal Interest": [0.0],
+                "Interest Accrued": [0.0],
+                "Investment Returns": [0.0],
                 "Net Gain": [0.0],
                 "Net Loss": [0.0],
                 "Net Worth": [None],
@@ -1031,7 +1050,8 @@ class TestForecastHandler:
         expected_billing_date_state["Loan: Loan Billing Cycle Payment Bal"] = (
             billing_cycle_payment_balance
         )
-        expected_billing_date_state["Marginal Interest"] = marginal_interest
+        expected_billing_date_state["Interest Accrued"] = marginal_interest
+        expected_billing_date_state["Investment Returns"] = 0.0
         expected_billing_date_state["Net Gain"] = 0.0
         expected_billing_date_state["Net Loss"] = marginal_interest
         expected_billing_date_state["Net Worth"] = checking - loan
@@ -1048,7 +1068,8 @@ class TestForecastHandler:
         expected_final["Loan: Loan Billing Cycle Payment Bal"] = (
             billing_cycle_payment_balance
         )
-        expected_final["Marginal Interest"] = final_marginal_interest
+        expected_final["Interest Accrued"] = final_marginal_interest
+        expected_final["Investment Returns"] = 0.0
         expected_final["Net Gain"] = 0.0
         expected_final["Net Loss"] = final_net_loss
         expected_final["Net Worth"] = checking - final_loan
@@ -1073,7 +1094,8 @@ class TestForecastHandler:
         expected_billing_date_state["Credit: Prev Stmt Bal"] = prev_stmt_bal - expected_min_payment + expected_interest
         expected_billing_date_state["Credit: Credit Billing Cycle Payment Bal"] = 0.0
         expected_billing_date_state["Credit: Credit End of Prev Cycle Bal"] = prev_stmt_bal #payment is added next day
-        expected_billing_date_state["Marginal Interest"] = expected_interest
+        expected_billing_date_state["Interest Accrued"] = expected_interest
+        expected_billing_date_state["Investment Returns"] = 0.0
         expected_billing_date_state["Net Gain"] = 0.0
         expected_billing_date_state["Net Loss"] = expected_interest
         expected_billing_date_state["Net Worth"] = checking - prev_stmt_bal - expected_interest
@@ -1089,7 +1111,8 @@ class TestForecastHandler:
         expected_final["Credit: Prev Stmt Bal"] = prev_stmt_bal - expected_min_payment + expected_interest
         expected_final["Credit: Credit Billing Cycle Payment Bal"] = 0.0
         expected_final["Credit: Credit End of Prev Cycle Bal"] = prev_stmt_bal - expected_min_payment + expected_interest
-        expected_final["Marginal Interest"] = 0.0
+        expected_final["Interest Accrued"] = 0.0
+        expected_final["Investment Returns"] = 0.0
         expected_final["Net Gain"] = 0.0
         expected_final["Net Loss"] = 0.0
         expected_final["Net Worth"] = checking - prev_stmt_bal - expected_interest
@@ -1464,7 +1487,8 @@ class TestForecastHandler:
                 "Loan: Principal Balance": [1000.0],
                 "Loan: Interest": [1.0],
                 "Loan: Loan Billing Cycle Payment Bal": [0.0],
-                "Marginal Interest": [1.0],
+                "Interest Accrued": [1.0],
+                "Investment Returns": [0.0],
                 "Net Gain": [0.0],
                 "Net Loss": [1.0],
                 "Net Worth": [-1.0],
@@ -1743,7 +1767,7 @@ class TestForecastHandler:
     #         "Loan: Interest",
     #         "Loan: Loan Billing Cycle Payment Bal",
 
-    #         "Marginal Interest",
+    #         "Interest Accrued",
     #         "Net Gain",
     #         "Net Loss",
     #         "Net Worth",
@@ -3063,6 +3087,13 @@ class TestForecastHandler:
         assert approximate.forecast_df.iloc[-1]["Brokerage"] == expected_rounded
         assert exact.forecast_df.iloc[-1]["Net Worth"] == 1000 + expected_rounded
         assert approximate.forecast_df.iloc[-1]["Net Worth"] == 1000 + expected_rounded
+        for result in (exact, approximate):
+            assert result.forecast_df["Investment Returns"].sum() == pytest.approx(
+                expected_rounded - 1000,
+                # Approximate output bins accrue with full precision but its
+                # memo directives retain cent-denominated daily postings.
+                abs=0.03,
+            )
         assert sum(
             "INVESTMENT RETURN" in directives
             for directives in exact.forecast_df["Memo Directives"]
@@ -3638,7 +3669,7 @@ class TestForecastHandler:
     #                         "20000105",
     #                     ],
     #                     "Checking": [1000, 1100, 1100, 1200, 1200],
-    #                     "Marginal Interest": [0, 0, 0, 0, 0],
+    #                     "Interest Accrued": [0, 0, 0, 0, 0],
     #                     "Net Gain": [0, 100, 0, 100, 0],
     #                     "Net Loss": [0, 0, 0, 0, 0],
     #                     "Net Worth": [1000, 1100, 1100, 1200, 1200],

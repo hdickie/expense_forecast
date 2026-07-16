@@ -23,7 +23,7 @@ import logging
 from .ExpenseForecastInitialConditions import ExpenseForecastInitialConditions
 from .ExpenseForecastResult import ExpenseForecastResult
 # from .ForecastSetInitialConditions import ForecastSet
-from .log_methods import log_in_color, project_log_file
+from .log_methods import log_in_color, project_log_file, setup_logger
 import pandas as pd
 import psycopg2
 from .AccountSet import AccountSet
@@ -35,17 +35,7 @@ from .ForecastHandler import ForecastHandler
 from sqlalchemy import create_engine
 import configparser
 
-logger = logging.getLogger(__name__)
-formatter = logging.Formatter("%(asctime)s - %(levelname)-8s - %(message)s")
-fileHandler = logging.FileHandler(project_log_file(__name__), mode="w")
-fileHandler.setFormatter(formatter)
-streamHandler = logging.StreamHandler()
-streamHandler.setFormatter(formatter)
-# logger.setLevel(logging.INFO) #this gets overwritten
-logger.handlers.clear()
-logger.addHandler(fileHandler)
-logger.addHandler(streamHandler)
-logger.propagate = False
+logger = setup_logger(__name__, project_log_file(__name__))
 
 # asserts that config has reasonable values and is internally consistent
 # agnostic of (and before) action
@@ -1665,7 +1655,13 @@ def main():
     else:
         loglevel = logging.WARNING
     # loglevel = logging.INFO
-    logger.setLevel(loglevel)
+    logger.setLevel(logging.DEBUG)
+    for handler in logger.handlers:
+        if (
+            getattr(handler, "_expense_forecast_managed", False)
+            and not isinstance(handler, logging.FileHandler)
+        ):
+            handler.setLevel(loglevel)
 
     # print('args:')
     # print(args)

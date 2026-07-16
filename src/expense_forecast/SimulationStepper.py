@@ -16,22 +16,12 @@ Contract
 import pandas as pd
 from expense_forecast.ExpenseForecastInitialConditions import ExpenseForecastInitialConditions
 from expense_forecast.ExpenseForecastResult import ExpenseForecastResult
-from expense_forecast.log_methods import log_in_color, project_log_file
+from expense_forecast.log_methods import log_in_color, project_log_file, setup_logger
 import logging
 import datetime
 pd.set_option("display.precision", 2) #todo this may more appropriate near some code for output or logging
 
-logger = logging.getLogger(__name__)
-formatter = logging.Formatter("%(asctime)s - %(levelname)-8s - %(message)s")
-fileHandler = logging.FileHandler(project_log_file(__name__), mode="w")
-fileHandler.setFormatter(formatter)
-streamHandler = logging.StreamHandler()
-streamHandler.setFormatter(formatter)
-logger.setLevel(logging.DEBUG)
-logger.handlers.clear()
-logger.addHandler(fileHandler)
-logger.addHandler(streamHandler)
-logger.propagate = False
+logger = setup_logger(__name__, project_log_file(__name__))
 
 #TODO DEFER manual review of SimulationStepper docstring
 class SimulationStepper:
@@ -103,5 +93,4 @@ class SimulationStepper:
 
     #     # return result
     #     raise NotImplementedError
-
 

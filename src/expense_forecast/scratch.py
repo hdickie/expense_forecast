@@ -21,6 +21,7 @@ from expense_forecast.ScenarioSpace import ScenarioSpace
 from expense_forecast.ForecastPolicySet import ForecastPolicySet
 from expense_forecast.MinimumCheckingBalancePolicy import MinimumCheckingBalancePolicy
 from expense_forecast.SurplusDebtPaymentPolicy import SurplusDebtPaymentPolicy
+from expense_forecast.SurplusSavingPolicy import SurplusSavingPolicy
 from expense_forecast.CurrentStatementBalancePaymentPolicy import (
     CurrentStatementBalancePaymentPolicy,
 )
@@ -33,6 +34,8 @@ import datetime
 from datetime import date
 
 import inspect
+
+import numpy as np
 
 def get_B_invariant(start_date, end_date):
     B_invariant = LineItemSet()
@@ -531,10 +534,11 @@ if __name__ == '__main__':
 
     # action = 'near term'
     # action = 'start of RN life'
+    action = 'second year of RN life'
     # action = 'net worth 0 after 18 months of RN car life'
     # action = 'test approximate case'
     # action = 'test milestone conditional swaps'
-    action = 'prioritized policies'
+    # action = 'prioritized policies'
     # action = 'inspect'
 
     # action = 'I just won the lottery'
@@ -610,38 +614,478 @@ if __name__ == '__main__':
         # my student loans will go into deferrment actually, so thats $200/month i dont need to pay
         # so i will actually need $25k in private loans
 
+    elif action == 'second year of RN life':
+
+        A = AccountSet.from_dict({'accounts': [{'Name': 'Checking',
+               'Balance': 2000.0,
+               'Min_Balance': 0,
+               'Max_Balance': float('inf'),
+               'Account_Type': 'checking',
+               'Billing_Start_Date': None,
+               'Interest_Type': None,
+               'APR': None,
+               'Interest_interval': None,
+               'Minimum_Payment': None,
+               'Primary_Checking_Ind': True},
+              {'Name': 'Savings',
+               'Balance': 20000.0,
+               'Min_Balance': 0,
+               'Max_Balance': float('inf'),
+               'Account_Type': 'checking',
+               'Billing_Start_Date': None,
+               'Interest_Type': None,
+               'APR': None,
+               'Interest_interval': None,
+               'Minimum_Payment': None,
+               'Primary_Checking_Ind': False},
+              {'Name': 'Citi',
+               'Balance': 0.0,
+               'Min_Balance': 0,
+               'Max_Balance': 4000,
+               'Account_Type': 'credit',
+               'Billing_Start_Date': '2026-06-14',
+               'Interest_Type': 'compound',
+               'APR': 0.2149,
+               'Interest_interval': 'monthly',
+               'Minimum_Payment': 40.0,
+               'Primary_Checking_Ind': None,
+               'Current_Statement_Balance': 0.0,
+               'Previous_Statement_Balance': 0.0,
+               'Billing_Cycle_Payment_Balance': 0.0,
+               'End_Of_Previous_Cycle_Balance': 0.0,
+               'Minimum_Payment_Floor': 40.0,
+               'Minimum_Payment_Credit_Balance': 0.0},
+              {'Name': 'Chase',
+               'Balance': 0.0,
+               'Min_Balance': 0,
+               'Max_Balance': 25000,
+               'Account_Type': 'credit',
+               'Billing_Start_Date': '2026-06-06',
+               'Interest_Type': 'compound',
+               'APR': 0.2724,
+               'Interest_interval': 'monthly',
+               'Minimum_Payment': 40.0,
+               'Primary_Checking_Ind': None,
+               'Current_Statement_Balance': 0.0,
+               'Previous_Statement_Balance': 0.0,
+               'Billing_Cycle_Payment_Balance': 1235.68,
+               'End_Of_Previous_Cycle_Balance': 1458.68,
+               'Minimum_Payment_Floor': 40.0,
+               'Minimum_Payment_Credit_Balance': 0.0},
+              {'Name': 'Brokerage',
+               'Balance': 19427.08,
+               'Min_Balance': 0,
+               'Max_Balance': float('inf'),
+               'Account_Type': 'investment',
+               'Billing_Start_Date': '2030-01-01',
+               'Interest_Type': None,
+               'APR': 0.07,
+               'Interest_interval': None,
+               'Minimum_Payment': None,
+               'Primary_Checking_Ind': None}]})
+
+        start_date = date(2031,1,1)
+        end_date = start_date + datetime.timedelta(days=365 * 1)
+
+        L_invariant = get_B_invariant_post_RN_life()
+        M = getComprehensiveMemoRules() 
+
+        unemployed = LineItemSet()
+        rn_income_y1 = LineItemSet()
+        rn_income_y1.addLineItem(
+            start_date=start_date,
+            end_date=end_date,
+            priority=1,
+            interval='semiweekly',
+            amount=2900,
+            memo='RN Year 1 income',
+            income_flag=True,
+            deferrable=False,
+            partial_payment_allowed=False,
+        )
+        rn_income_y2 = LineItemSet()
+        rn_income_y2.addLineItem(
+            start_date=start_date,
+            end_date=end_date,
+            priority=1,
+            interval='semiweekly',
+            amount=2900*1.05,
+            memo='RN Year 2 income',
+            income_flag=True,
+            deferrable=False,
+            partial_payment_allowed=False,
+        )
+        rn_income_y3 = LineItemSet()
+        rn_income_y3.addLineItem(
+            start_date=start_date,
+            end_date=end_date,
+            priority=1,
+            interval='semiweekly',
+            amount=2900*(1.05**2),
+            memo='RN Year 3 income',
+            income_flag=True,
+            deferrable=False,
+            partial_payment_allowed=False,
+        )
+        rn_income_y4 = LineItemSet()
+        rn_income_y4.addLineItem(
+            start_date=start_date,
+            end_date=end_date,
+            priority=1,
+            interval='semiweekly',
+            amount=2900*(1.05**3),
+            memo='RN Year 4 income',
+            income_flag=True,
+            deferrable=False,
+            partial_payment_allowed=False,
+        )
+        income = ScenarioDimension(
+            name='Income',
+            choices={
+                'Unemployed': unemployed,
+                'RN Year 1': rn_income_y1,
+                'RN Year 2': rn_income_y2,
+                'RN Year 3': rn_income_y3,
+                'RN Year 4': rn_income_y4,
+            },
+        )
+        
+        L_income = income.choice_for_date_range(
+            "RN Year 2",
+            start_date,
+            end_date
+        )
+
+
+        L = L_invariant + L_income
+
+        policies = ForecastPolicySet(
+            CurrentStatementBalancePaymentPolicy(
+                account_name='Chase', priority=1, on_unmet='warn'
+            ),
+            SurplusDebtPaymentPolicy(
+                debt_type='credit', strategy='avalanche',
+                priority=2, on_unmet='warn',
+            ),
+
+            SurplusInvestmentPolicy(
+                account_name='Brokerage', 
+                checking_threshold=2_000,
+                priority=3, on_unmet='warn',
+            ),
+            # PeriodicInvestmentContributionCapPolicy(
+            #     account_name='Brokerage', limit=1_000,
+            #     period='month', priority=3, on_unmet='warn',
+            # ),
+            # FixedMonthlyInvestmentPolicy(
+            #     account_name='Brokerage', amount=300, day=15,
+            #     priority=4, on_unmet='warn',
+            # ),
+            # IncomePercentageInvestmentPolicy(
+            #     account_name='Brokerage', percentage=0.10,
+            #     priority=5, on_unmet='warn',
+            # ),
+            
+        )
+
+        IO = ExpenseForecastInitialConditions(start_date, end_date, 
+                                              A, L, M, 
+                                              policy_set = policies, 
+                                              forecast_name = 'Second Year of RN Life Still in My Car')
+
+        MS = MilestoneSet()
+
+        F = ForecastHandler()
+        R = F.runForecastApproximate(IO, MS, include_debug_columns=True)
+        R.writeToJSONFile(str(R.unique_id)+'.json')
+        # F.generateHTMLReport(R)
+
+        html_report = F.generateHTMLReport(R, write_file=False)
+
+        with open('test_report.html', "w") as f:
+            f.write(html_report)
+
+        user_vars = getUserVars()
+
     elif action == 'start of RN life':
         pass
 
         start_date = date(2030,1,1)
-        end_date = start_date + datetime.timedelta(days=365 * 2)
+        end_date = start_date + datetime.timedelta(days=365 * 1)
 
-        A = get_hypothetical_A_at_start_of_RN_life()
-        B_invariant = get_B_invariant_post_RN_life()
+        A = AccountSet.from_dict({'accounts': [{'Name': 'Checking',
+               'Balance': np.float64(2000.0),
+               'Min_Balance': 0,
+               'Max_Balance': float('inf'),
+               'Account_Type': 'checking',
+               'Billing_Start_Date': None,
+               'Interest_Type': None,
+               'APR': None,
+               'Interest_interval': None,
+               'Minimum_Payment': None,
+               'Primary_Checking_Ind': True},
+              {'Name': 'Savings',
+               'Balance': np.float64(325.21),
+               'Min_Balance': 0,
+               'Max_Balance': float('inf'),
+               'Account_Type': 'checking',
+               'Billing_Start_Date': None,
+               'Interest_Type': None,
+               'APR': None,
+               'Interest_interval': None,
+               'Minimum_Payment': None,
+               'Primary_Checking_Ind': False},
+              {'Name': 'Citi',
+               'Balance': np.float64(0.0),
+               'Min_Balance': 0,
+               'Max_Balance': 4000,
+               'Account_Type': 'credit',
+               'Billing_Start_Date': '2026-06-14',
+               'Interest_Type': 'compound',
+               'APR': 0.2149,
+               'Interest_interval': 'monthly',
+               'Minimum_Payment': 40.0,
+               'Primary_Checking_Ind': None,
+               'Current_Statement_Balance': 0.0,
+               'Previous_Statement_Balance': 0.0,
+               'Billing_Cycle_Payment_Balance': 0.0,
+               'End_Of_Previous_Cycle_Balance': 0.0,
+               'Minimum_Payment_Floor': 40.0,
+               'Minimum_Payment_Credit_Balance': 0.0},
+              {'Name': 'Chase',
+               'Balance': np.float64(2001.52),
+               'Min_Balance': 0,
+               'Max_Balance': 25000,
+               'Account_Type': 'credit',
+               'Billing_Start_Date': '2026-06-06',
+               'Interest_Type': 'compound',
+               'APR': 0.2724,
+               'Interest_interval': 'monthly',
+               'Minimum_Payment': 40.0,
+               'Primary_Checking_Ind': None,
+               'Current_Statement_Balance': 0.0,
+               'Previous_Statement_Balance': 2001.52,
+               'Billing_Cycle_Payment_Balance': 0.0,
+               'End_Of_Previous_Cycle_Balance': 2001.52,
+               'Minimum_Payment_Floor': 40.0,
+               'Minimum_Payment_Credit_Balance': 0.0},
+              {'Name': 'Loan A',
+               'Balance': 3588.31,
+               'Min_Balance': 0,
+               'Max_Balance': 20000,
+               'Account_Type': 'loan',
+               'Billing_Start_Date': '2026-06-03',
+               'Interest_Type': 'simple',
+               'APR': 0.0466,
+               'Interest_interval': 'daily',
+               'Minimum_Payment': 40.0,
+               'Primary_Checking_Ind': None,
+               'Principal_Balance': 3588.31,
+               'Interest_Balance': 0.0,
+               'Billing_Cycle_Payment_Balance': 0.0},
+              {'Name': 'Loan B',
+               'Balance': 4663.83,
+               'Min_Balance': 0,
+               'Max_Balance': 20000,
+               'Account_Type': 'loan',
+               'Billing_Start_Date': '2026-06-03',
+               'Interest_Type': 'simple',
+               'APR': 0.0429,
+               'Interest_interval': 'daily',
+               'Minimum_Payment': 40.0,
+               'Primary_Checking_Ind': None,
+               'Principal_Balance': 4663.83,
+               'Interest_Balance': 0.0,
+               'Billing_Cycle_Payment_Balance': 0.0},
+              {'Name': 'Loan C',
+               'Balance': 1880.52,
+               'Min_Balance': 0,
+               'Max_Balance': 20000,
+               'Account_Type': 'loan',
+               'Billing_Start_Date': '2026-06-03',
+               'Interest_Type': 'simple',
+               'APR': 0.0429,
+               'Interest_interval': 'daily',
+               'Minimum_Payment': 40.0,
+               'Primary_Checking_Ind': None,
+               'Principal_Balance': 1880.52,
+               'Interest_Balance': 0.0,
+               'Billing_Cycle_Payment_Balance': 0.0},
+              {'Name': 'Loan D',
+               'Balance': 4634.93,
+               'Min_Balance': 0,
+               'Max_Balance': 20000,
+               'Account_Type': 'loan',
+               'Billing_Start_Date': '2026-06-03',
+               'Interest_Type': 'simple',
+               'APR': 0.0376,
+               'Interest_interval': 'daily',
+               'Minimum_Payment': 40.0,
+               'Primary_Checking_Ind': None,
+               'Principal_Balance': 4634.93,
+               'Interest_Balance': 0.0,
+               'Billing_Cycle_Payment_Balance': 0.0},
+              {'Name': 'Loan E',
+               'Balance': 1744.23,
+               'Min_Balance': 0,
+               'Max_Balance': 20000,
+               'Account_Type': 'loan',
+               'Billing_Start_Date': '2026-06-03',
+               'Interest_Type': 'simple',
+               'APR': 0.0376,
+               'Interest_interval': 'daily',
+               'Minimum_Payment': 40.0,
+               'Primary_Checking_Ind': None,
+               'Principal_Balance': 1744.23,
+               'Interest_Balance': 0.0,
+               'Billing_Cycle_Payment_Balance': 0.0}]})
+        A.createInvestmentAccount('Brokerage',0,start_date,apr=0.07)
+
+        L_invariant = get_B_invariant_post_RN_life()
         M = getComprehensiveMemoRules() 
-        
-        RN_income = LineItemSet()
-        RN_income.addLineItem( start_date + datetime.timedelta(days=30), 
-                                start_date + datetime.timedelta(days=30 + 365), #end date
-                                1, 'semiweekly', 2900, 'RN income 1st Year', True)
-        # 5% raise after first year
-        RN_income.addLineItem( start_date + datetime.timedelta(days=30 + 365), 
-                                start_date + datetime.timedelta(days=30 + 365*2), #end date
-                                1, 'semiweekly', 2900*1.05, 'RN income 2nd Year', True)
 
-        B_keep_cc_payed_off = LineItemSet()
-        B_keep_cc_payed_off.addLineItem(start_date=date(2030,2,1), end_date=end_date, priority=1,
-                    interval='monthly',amount=1400,memo='extra cc payment cyclical',income_flag=False, 
-                    deferrable=False, partial_payment_allowed=False)
+        unemployed = LineItemSet()
+        rn_income_y1 = LineItemSet()
+        rn_income_y1.addLineItem(
+            start_date=start_date,
+            end_date=end_date,
+            priority=1,
+            interval='semiweekly',
+            amount=2900,
+            memo='RN Year 1 income',
+            income_flag=True,
+            deferrable=False,
+            partial_payment_allowed=False,
+        )
+        rn_income_y2 = LineItemSet()
+        rn_income_y2.addLineItem(
+            start_date=start_date,
+            end_date=end_date,
+            priority=1,
+            interval='semiweekly',
+            amount=2900*1.05,
+            memo='RN Year 2 income',
+            income_flag=True,
+            deferrable=False,
+            partial_payment_allowed=False,
+        )
+        rn_income_y3 = LineItemSet()
+        rn_income_y3.addLineItem(
+            start_date=start_date,
+            end_date=end_date,
+            priority=1,
+            interval='semiweekly',
+            amount=2900*(1.05**2),
+            memo='RN Year 3 income',
+            income_flag=True,
+            deferrable=False,
+            partial_payment_allowed=False,
+        )
+        rn_income_y4 = LineItemSet()
+        rn_income_y4.addLineItem(
+            start_date=start_date,
+            end_date=end_date,
+            priority=1,
+            interval='semiweekly',
+            amount=2900*(1.05**3),
+            memo='RN Year 4 income',
+            income_flag=True,
+            deferrable=False,
+            partial_payment_allowed=False,
+        )
+        income = ScenarioDimension(
+            name='Income',
+            choices={
+                'Unemployed': unemployed,
+                'RN Year 1': rn_income_y1,
+                'RN Year 2': rn_income_y2,
+                'RN Year 3': rn_income_y3,
+                'RN Year 4': rn_income_y4,
+            },
+        )
         
-        B_loan_payments = LineItemSet()
-        B_loan_payments.addLineItem(start_date=start_date + datetime.timedelta(days=90), 
-                                      end_date=end_date, 
-                                      priority=1, interval="monthly", amount=4_200,
-                                      memo='all loan payment')
+        L_income = income.choice_for_date_range(
+            "RN Year 1",
+            start_date,
+            start_date + datetime.timedelta(days=365)
+        ) + income.choice_for_date_range(
+            "RN Year 2",
+            start_date + datetime.timedelta(days=365 + 14),
+            start_date + datetime.timedelta(days=365*2)
+        ) + income.choice_for_date_range(
+            "RN Year 3",
+            start_date + datetime.timedelta(days=365*2 + 14),
+            start_date + datetime.timedelta(days=365*3)
+        ) + income.choice_for_date_range(
+            "RN Year 4",
+            start_date + datetime.timedelta(days=365*3 + 14),
+            start_date + datetime.timedelta(days=365*4)
+        )
 
-        B = B_invariant + RN_income + B_keep_cc_payed_off + B_loan_payments
-        IO = ExpenseForecastInitialConditions(start_date, end_date, A, B, M, forecast_name = 'First Two Years of RN Life Still in My Car')
+        #in this case is achieved by 10/1 so let's skip the checks and hard code
+        # L_emergency_fund = LineItemSet()
+        # L_emergency_fund.addLineItem(
+        #     start_date=date(2030,10,1),
+        #     end_date=date(2030,10,1),
+        #     priority=1,
+        #     interval='once',
+        #     amount=20_000,
+        #     memo='save',
+        #     income_flag=False,
+        #     deferrable=False,
+        #     partial_payment_allowed=False,
+        # )
+        # M.addMemoRule('save','Checking','Savings',1)
+
+        L = L_invariant + L_income #+ L_emergency_fund
+
+        policies = ForecastPolicySet(
+            CurrentStatementBalancePaymentPolicy(
+                account_name='Chase', priority=1, on_unmet='warn'
+            ),
+            MinimumCheckingBalancePolicy(
+                target=2_000, priority=2, on_unmet='warn'
+            ),
+            SurplusDebtPaymentPolicy(
+                debt_type='credit', strategy='avalanche',
+                priority=3, on_unmet='warn',
+            ),
+            SurplusDebtPaymentPolicy(
+                debt_type='loan', strategy='avalanche',
+                priority=4, on_unmet='warn',
+            ),
+
+            SurplusSavingPolicy(
+                account_name="Savings",
+                saved_minimum_threshold=20_000,
+                priority=5,
+                on_unmet="warn",
+            ), 
+
+            SurplusInvestmentPolicy(
+                account_name='Brokerage', 
+                checking_threshold=2_000,
+                priority=6, on_unmet='warn',
+            ),
+            # PeriodicInvestmentContributionCapPolicy(
+            #     account_name='Brokerage', limit=1_000,
+            #     period='month', priority=3, on_unmet='warn',
+            # ),
+            # FixedMonthlyInvestmentPolicy(
+            #     account_name='Brokerage', amount=300, day=15,
+            #     priority=4, on_unmet='warn',
+            # ),
+            # IncomePercentageInvestmentPolicy(
+            #     account_name='Brokerage', percentage=0.10,
+            #     priority=5, on_unmet='warn',
+            # ),
+            
+        )
+
+        IO = ExpenseForecastInitialConditions(start_date, end_date, 
+                                              A, L, M, 
+                                              policy_set = policies, 
+                                              forecast_name = 'First Year of RN Life Still in My Car')
 
         composite_milestone = CompositeMilestone('All OG Loans Paid Off',
                                 [
@@ -661,32 +1105,6 @@ if __name__ == '__main__':
                             AccountMilestone('Loan D Paid Off','Loan D', 0, 0),
                             AccountMilestone('Loan E Paid Off','Loan E', 0, 0),
 
-                            AccountMilestone('Subsidized FAFSA Disbursement 1 Paid Off',
-                                             'Subsidized FAFSA Disbursement 1', 0, 0),
-                            AccountMilestone('Subsidized FAFSA Disbursement 2 Paid Off',
-                                             'Subsidized FAFSA Disbursement 2', 0, 0),
-                            AccountMilestone('Subsidized FAFSA Disbursement 3 Paid Off',
-                                             'Subsidized FAFSA Disbursement 3', 0, 0),
-                            AccountMilestone('Subsidized FAFSA Disbursement 4 Paid Off',
-                                             'Subsidized FAFSA Disbursement 4', 0, 0),
-
-                            AccountMilestone('Unsubsidized FAFSA Disbursement 1 Paid Off',
-                                             'Unsubsidized FAFSA Disbursement 1', 0, 0),
-                            AccountMilestone('Unsubsidized FAFSA Disbursement 2 Paid Off',
-                                             'Unsubsidized FAFSA Disbursement 2', 0, 0),
-                            AccountMilestone('Unsubsidized FAFSA Disbursement 3 Paid Off',
-                                             'Unsubsidized FAFSA Disbursement 3', 0, 0),
-                            AccountMilestone('Unsubsidized FAFSA Disbursement 4 Paid Off',
-                                             'Unsubsidized FAFSA Disbursement 4', 0, 0),
-
-                            AccountMilestone('Private Disbursement 1 Paid Off',
-                                             'Private Disbursement 1', 0, 0),
-                            AccountMilestone('Private Disbursement 2 Paid Off',
-                                             'Private Disbursement 2', 0, 0),
-                            AccountMilestone('Private Disbursement 3 Paid Off',
-                                             'Private Disbursement 3', 0, 0),
-                            AccountMilestone('Private Disbursement 4 Paid Off',
-                                             'Private Disbursement 4', 0, 0),
                             
                             ],
                           composite_milestones=[composite_milestone])
@@ -703,61 +1121,6 @@ if __name__ == '__main__':
 
         user_vars = getUserVars()
 
-        ### 5/9/31 net worth 0
-
-        ### def __init__(self, name, choices=dict[str, LineItemSet])
-
-        ### Dimensions
-        # CC Payments
-        # this could be invariant just partial payment allowed
-
-        # Housing
-        # B_live_in_car = LineItemSet() #TODO maybe increase cost of gas ?
-        # B_1500_rent = LineItemSet() #TODO 
-        # B_2200_rent = LineItemSet() #TODO 
-        # # ...
-        # # live in boat!!! #TODO
-        # # move to spain in 3 years #TODO
-        # # move to spain in 4 years #TODO
-        # # move to spain in 5 years #TODO
-        # housing = ScenarioDimension("Housing", {
-        #     "Live in Car":B_live_in_car,
-        #     "Rent 1500":B_1500_rent,
-        #     "Rent 2200":B_2200_rent,
-        # })
-
-        # # Work
-        # RN_employment_not_travel = LineItemSet() #TODO
-        # RN_employment_travel_after_1_year = LineItemSet() #TODO
-        # RN_employment_travel_after_2_years = LineItemSet() #TODO
-        # RN_employment_travel_after_3_years = LineItemSet() #TODO
-        # RN_employment_travel_after_4_years = LineItemSet() #TODO
-        # # work in spain #TODO
-
-        # work = ScenarioDimension("Work", {
-        #     "Staff Nurse for 5 Years":RN_employment_not_travel,
-        #     "Travel RN in 1 Year":RN_employment_travel_after_1_year,
-        #     "Travel RN in 2 Years":RN_employment_travel_after_2_years,
-        #     "Travel RN in 3 Years":RN_employment_travel_after_3_years,
-        #     "Travel RN in 4 Years":RN_employment_travel_after_4_years,
-        # })
-
-        # scenario_dimensions = {}
-        # scenario_dimensions["Housing"] = housing
-        # scenario_dimensions["Work"] = work
-        
-        # S = ScenarioSpace(B_invariant,
-        #                 scenario_dimensions,
-        #                 M)
-        
-        # MS = MilestoneSet()
-        
-        # FS = ForecastSetInitialConditions(IO, S, "The Next 5 Years")
-
-        # F = ForecastHandler()
-
-        # # describe what will be run before I decide to press start
-        # F.show_plan(FS)
         
     elif action == 'net worth 0 after 18 months of RN car life':
         pass

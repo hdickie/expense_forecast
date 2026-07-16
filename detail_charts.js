@@ -7,6 +7,23 @@
     const parseDate = d3.timeParse("%Y-%m-%d");
     const formatDate = d3.timeFormat("%b %-d, %Y");
     const formatCurrency = (value) => `$${d3.format(",.2f")(value)}`;
+    const formatXAxisTick = (date) =>
+        date.getMonth() === 0 && date.getDate() === 1
+            ? d3.timeFormat("%Y")(date)
+            : d3.timeFormat("%b %-d")(date);
+
+    function xAxisTickValues(scale, count = 7) {
+        const [start, end] = scale.domain();
+        const yearBoundaries = d3.timeYear.range(
+            d3.timeYear.ceil(start),
+            d3.timeYear.offset(d3.timeYear.floor(end), 1)
+        );
+        return [...new Map(
+            [...scale.ticks(count), ...yearBoundaries]
+                .filter((date) => date >= start && date <= end)
+                .map((date) => [+date, date])
+        ).values()].sort((left, right) => left - right);
+    }
 
     function renderChart(pageName) {
         if (renderedCharts.has(pageName) || !chartPayloads[pageName]) {
@@ -89,7 +106,9 @@
         chart.append("g")
             .attr("class", "hero-axis")
             .attr("transform", `translate(0,${innerHeight})`)
-            .call(d3.axisBottom(xScale).ticks(7).tickFormat(d3.timeFormat("%b %-d")));
+            .call(d3.axisBottom(xScale)
+                .tickValues(xAxisTickValues(xScale))
+                .tickFormat(formatXAxisTick));
         chart.append("g")
             .attr("class", "hero-axis")
             .call(d3.axisLeft(yScale).ticks(7).tickFormat((value) => `$${d3.format("~s")(value)}`));

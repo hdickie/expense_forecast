@@ -44,14 +44,19 @@ from decimal import Decimal
 from typing import Any
 import datetime
 import calendar
+from contextlib import nullcontext
 from time import perf_counter
 import os
 import tempfile
 from pathlib import Path
 from dateutil.relativedelta import relativedelta
-from expense_forecast.log_methods import log_in_color, project_log_file
+from expense_forecast.log_methods import (
+    ForecastProgress,
+    log_in_color,
+    project_log_file,
+    setup_logger,
+)
 import logging
-import tqdm
 
 os.environ.setdefault("MPLBACKEND", "Agg")
 os.environ.setdefault(
@@ -71,6 +76,7 @@ import re
 import copy
 from expense_forecast.generate_date_sequence import generate_date_sequence
 from expense_forecast.SurplusDebtPaymentPolicy import SurplusDebtPaymentPolicy
+from expense_forecast.SurplusSavingPolicy import SurplusSavingPolicy
 from expense_forecast.CurrentStatementBalancePaymentPolicy import (
     CurrentStatementBalancePaymentPolicy,
 )
@@ -92,17 +98,7 @@ matplotlib.rcParams["figure.facecolor"] = "#d1d5db"
 matplotlib.rcParams["axes.facecolor"] = "#e5e7eb"
 matplotlib.rcParams["savefig.facecolor"] = "#d1d5db"
 
-logger = logging.getLogger(__name__)
-formatter = logging.Formatter("%(asctime)s - %(levelname)-8s - %(message)s")
-fileHandler = logging.FileHandler(project_log_file(__name__), mode="w")
-fileHandler.setFormatter(formatter)
-streamHandler = logging.StreamHandler()
-streamHandler.setFormatter(formatter)
-logger.setLevel(logging.DEBUG)
-logger.handlers.clear()
-logger.addHandler(fileHandler)
-logger.addHandler(streamHandler)
-logger.propagate = False
+logger = setup_logger(__name__, project_log_file(__name__))
 
 # Show all decimal places in data frames
 pd.set_option("display.precision", 2)
@@ -137,6 +133,37 @@ class ForecastHandler:
     @interface-report: show
     """
     #Codex-write-doctstring-OK
+    @staticmethod
+    def _log_interpretation_guide(IO):
+        if getattr(IO, "_suppress_log_guide", False):
+            return
+        guide_lines = (
+            "How to read this forecast log:",
+            "BLUE starts setup or a new phase.",
+            "MAGENTA describes policy discovery and activation.",
+            "CYAN means work is active; heartbeats confirm long simulations are progressing.",
+            "GREEN marks successful completion.",
+            "YELLOW marks skipped/deferred work or a recoverable warning.",
+            "RED marks a failure requiring attention.",
+            "Discovery and feasibility forecasts are internal safety checks; "
+            "the post-activation pass produces the final forecast.",
+            "Transaction-level DEBUG detail is written under ./log/.",
+        )
+        colors = (
+            "blue", "blue", "magenta", "cyan", "green",
+            "yellow", "red", "white", "white",
+        )
+        for color, line in zip(colors, guide_lines):
+            log_in_color(
+                logger, color, "info", line, user_facing=True
+            )
+
+    @staticmethod
+    def _phase_log(color, message, level="info"):
+        log_in_color(
+            logger, color, level, message, user_facing=True
+        )
+
     @staticmethod
     def _normalize_date_value(value):
         """
@@ -208,6 +235,7 @@ class ForecastHandler:
         milestone_set: MilestoneSet = None,
         include_debug_columns=False,
     ) -> ExpenseForecastResult:
+        cls._log_interpretation_guide(IO)
         milestone_set = milestone_set or getattr(IO, "milestone_set", MilestoneSet())
         if getattr(IO, "policy_set", None):
             return cls._runForecastWithPolicies(
@@ -268,25 +296,12 @@ class ForecastHandler:
         cls.initial_budget_set = IO.initial_budget_set
         cls.initial_memo_rule_set = IO.initial_memo_rule_set
 
-        log_in_color(
-            logger, "white", "info", "Starting Forecast " + str(IO.unique_id)
+        cls._phase_log(
+            "blue",
+            "Starting Forecast: "
+            f"name={(getattr(IO, 'forecast_name', None) or 'Unnamed forecast')!r} "
+            f"id={IO.unique_id} mode=exact range={IO.start_date} to {IO.end_date}",
         )
-
-        predicted__satisfice_runtime_in_simulated_days = (IO.end_date - IO.start_date).days
-
-        # On second thought, I would rather deal wit ha stilted progress bar than figuring out how to track progress in recursion
-        no_of_p2plus_priority_levels = len(set(IO.initial_proposed_df.Priority))
-        total_predicted_max_runtime_in_simulated_days = (
-            predicted__satisfice_runtime_in_simulated_days
-            + predicted__satisfice_runtime_in_simulated_days
-            * no_of_p2plus_priority_levels
-        )
-        progress_bar = tqdm.tqdm(
-            range(total_predicted_max_runtime_in_simulated_days),
-            total=total_predicted_max_runtime_in_simulated_days,
-            desc=IO.unique_id,
-            disable=True,
-        )  # disabled tqdm
 
         forecast_df, skipped_df, confirmed_df, deferred_df = (
             cls._computeOptimalForecast(
@@ -300,7 +315,8 @@ class ForecastHandler:
                 memo_rule_set=copy.deepcopy(IO.initial_memo_rule_set),
                 log_stack_depth=log_stack_depth,
                 raise__satisfice_failed_exception=False,
-                progress_bar=progress_bar,
+                progress_bar=None,
+                progress_phase=getattr(IO, "_progress_phase", "Exact"),
                 include_debug_columns=include_debug_columns
             )
         )
@@ -332,7 +348,12 @@ class ForecastHandler:
                         raise ValueError("Regex did not match")
                     og_amt = float(match.group(1))
                 except Exception:
-                    print("Offending memo directive:", md) #TODO should be a log instead of print
+                    logger.exception(
+                        "Forecast output normalization failed: malformed memo "
+                        "directive=%r forecast_id=%s",
+                        md,
+                        IO.unique_id,
+                    )
                     raise
 
                 new_amount = f"{og_amt:.2f}"
@@ -364,9 +385,15 @@ class ForecastHandler:
             result_kwargs["milestone_results"] = milestone_results
 
         R = ExpenseForecastResult(IO, forecast_df,  cls.start_ts, cls.end_ts, **result_kwargs)
-        log_in_color(
-            logger, "white", "info", "Finished Forecast " + str(IO.unique_id)
-        ) #TODO this line is part of verbose logging and should be parameter conditional
+        cls._phase_log(
+            "green",
+            "Finished Forecast: "
+            f"id={IO.unique_id} mode=exact "
+            f"elapsed={(cls.end_ts - cls.start_ts).total_seconds():.2f}s "
+            f"confirmed={len(confirmed_df)} deferred={len(deferred_df)} "
+            f"skipped={len(skipped_df)} "
+            f"final_net_worth=${float(forecast_df['Net Worth'].iloc[-1]):.2f}",
+        )
 
         # log_in_color(logger, "white", "info", cls.forecast_df.to_string())
         # if play_notification_sound:
@@ -403,6 +430,8 @@ class ForecastHandler:
             return None
         account_from_obj = account_set._get_account_by_name(account_from)
         account_to_obj = account_set._get_account_by_name(account_to)
+        if str(account_to).startswith("SAVINGS_BELOW:"):
+            return f"SAVINGS CONTRIBUTION ({account_to_obj.name} +${amount})"
         if account_to_obj is not None and account_to_obj.account_type == "investment":
             return f"INVESTMENT CONTRIBUTION ({account_to_obj.name} +${amount})"
         if (
@@ -420,6 +449,7 @@ class ForecastHandler:
         milestone_set: MilestoneSet = None,
         include_debug_columns=False,
     ) -> ExpenseForecastResult:
+        cls._log_interpretation_guide(IO)
         milestone_set = milestone_set or getattr(IO, "milestone_set", MilestoneSet())
         if getattr(IO, "policy_set", None):
             return cls._runForecastWithPolicies(
@@ -434,9 +464,17 @@ class ForecastHandler:
                 include_debug_columns=include_debug_columns,
                 approximate=True,
             )
-        return cls._runForecastApproximateOnce(
-            IO, milestone_set, include_debug_columns
-        )
+        total = max(1, len(cls._approximate_output_dates(IO.start_date, IO.end_date)) - 1)
+        progress_phase = getattr(IO, "_progress_phase", "Approximate execution")
+        with ForecastProgress(logger, progress_phase, total) as progress:
+            IO._forecast_progress = progress
+            try:
+                return cls._runForecastApproximateOnce(
+                    IO, milestone_set, include_debug_columns
+                )
+            finally:
+                if hasattr(IO, "_forecast_progress"):
+                    delattr(IO, "_forecast_progress")
 
     @classmethod
     def _runForecastApproximateOnce(
@@ -454,9 +492,13 @@ class ForecastHandler:
         """
         start_ts = datetime.datetime.now()
         feasibility_only = getattr(IO, "_feasibility_only", False)
+        progress = getattr(IO, "_forecast_progress", None)
         if not feasibility_only:
-            log_in_color(
-                logger, "white", "info", "Starting Approximate Forecast " + str(IO.unique_id)
+            cls._phase_log(
+                "blue",
+                "Starting Approximate Forecast: "
+                f"name={(getattr(IO, 'forecast_name', None) or 'Unnamed forecast')!r} "
+                f"id={IO.unique_id} range={IO.start_date} to {IO.end_date}",
             )
         account_set = copy.deepcopy(IO.initial_account_set)
         memo_rule_set = copy.deepcopy(IO.initial_memo_rule_set)
@@ -483,6 +525,14 @@ class ForecastHandler:
                 schedule = schedule.loc[
                     schedule["Date"] > exclude_schedule_through
                 ].copy()
+
+        if not feasibility_only:
+            cls._phase_log(
+                "cyan",
+                "Approximate forecast prepared: "
+                f"accounts={len(account_set.accounts)} "
+                f"scheduled_transactions={len(schedule)} output_dates={len(output_dates)}",
+            )
 
         transaction_columns = list(schedule.columns)
         current_statement_policy_cards = {
@@ -585,7 +635,7 @@ class ForecastHandler:
             account.balance = account.billing_state.balance
             if growth:
                 directives.append(
-                    f"INVESTMENT RETURN ({account.name} +${growth:.2f})"
+                    f"INVESTMENT RETURN ({account.name} +${growth})"
                 )
 
         def future_lower_priorities_are_feasible(candidate_account_set, txn):
@@ -643,6 +693,8 @@ class ForecastHandler:
             )
             if candidate_account_set is None:
                 return None, Decimal("0")
+            if executed <= MONEY_BOUNDARY_TOLERANCE:
+                return candidate_account_set, Decimal("0")
             feasible, _ = future_lower_priorities_are_feasible(
                 candidate_account_set, txn
             )
@@ -994,6 +1046,8 @@ class ForecastHandler:
                 }
             )
             previous_output_date = output_date
+            if progress is not None:
+                progress.update(1, context=output_date)
 
         forecast_df = pd.DataFrame(rows)
         forecast_df = cls._appendSummaryLines(IO.initial_account_set, forecast_df, log_stack_depth=0)
@@ -1033,8 +1087,14 @@ class ForecastHandler:
             result_kwargs["milestone_results"] = milestone_results
         result = ExpenseForecastResult(IO, forecast_df, start_ts, end_ts = datetime.datetime.now(), **result_kwargs)
         if not feasibility_only:
-            log_in_color(
-                logger, "white", "info", "Finished Approximate Forecast " + str(IO.unique_id)
+            cls._phase_log(
+                "green",
+                "Finished Approximate Forecast: "
+                f"id={IO.unique_id} "
+                f"elapsed={(result.end_ts - result.start_ts).total_seconds():.2f}s "
+                f"confirmed={len(confirmed_df)} deferred={len(deferred_df)} "
+                f"skipped={len(skipped_df)} "
+                f"final_net_worth=${float(forecast_df['Net Worth'].iloc[-1]):.2f}",
             )
         return result
 
@@ -1801,12 +1861,14 @@ class ForecastHandler:
                 log_in_color(logger, 'white', 'debug', log_string, log_stack_depth)
                 # log_in_color(logger, 'white', 'debug', str(d) + ' before txn: ', log_stack_depth)
                 # log_in_color(logger, 'white', 'debug', account_set.getAccounts().to_string(), log_stack_depth)
-                account_set.executeTransaction(
+                executed_amount = account_set.executeTransaction(
                     Account_From=memo_rule.account_from,
                     Account_To=memo_rule.account_to,
                     Amount=confirmed_row.Amount,
                     income_flag=income_flag,
                 )
+                if executed_amount is not None:
+                    confirmed_row.Amount = float(executed_amount)
                 # log_in_color(logger, 'yellow', 'debug', str(d) + ' after txn: ', log_stack_depth)
                 # log_in_color(logger, 'yellow', 'debug', account_set.getAccounts().to_string(), log_stack_depth)
             except Exception as e:
@@ -2375,13 +2437,10 @@ class ForecastHandler:
                     log_stack_depth=log_stack_depth,
                 )
 
-                log_in_color(
-                    logger,
-                    "cyan",
-                    "info",
-                    str(d)
-                    + " re-attempt at reduced amount: "
-                    + str(reduced_amount),
+                logger.debug(
+                    "Transaction retry: date=%s reduced_amount=%s depth=%s",
+                    d,
+                    reduced_amount,
                     log_stack_depth,
                 )
 
@@ -2772,8 +2831,15 @@ class ForecastHandler:
             for aname in account_set.getAccounts()["Name"]
         ]
 
-        from_basename_sel_vec = account_base_names == memo_rule_row["Account_From"]
-        to_basename_sel_vec = account_base_names == memo_rule_row["Account_To"]
+        source_name = memo_rule_row["Account_From"]
+        destination_name = memo_rule_row["Account_To"]
+        savings_threshold = None
+        if str(destination_name).startswith("SAVINGS_BELOW:"):
+            _, threshold_text, destination_name = str(destination_name).split(":", 2)
+            savings_threshold = Decimal(threshold_text)
+
+        from_basename_sel_vec = account_base_names == source_name
+        to_basename_sel_vec = account_base_names == destination_name
 
         from_basename_sel_vec = [
             a & b for a, b in zip(from_basename_sel_vec, not_eopc_or_bcpb_sel_vec)
@@ -2891,8 +2957,13 @@ class ForecastHandler:
                 )
             return capacity
 
-        destination_name = memo_rule_row["Account_To"]
-        if destination_name in {"ALL_CREDIT_CARDS", "ALL_CREDIT_CARDS_SNOWBALL"}:
+        if savings_threshold is not None:
+            destination_account = account_set._get_account_by_name(destination_name)
+            dest_bound = max(
+                Decimal("0"),
+                savings_threshold - Decimal(str(destination_account.balance)),
+            )
+        elif destination_name in {"ALL_CREDIT_CARDS", "ALL_CREDIT_CARDS_SNOWBALL"}:
             dest_bound = sum(
                 (
                     future_debt_capacity(account.name)
@@ -7280,11 +7351,16 @@ class ForecastHandler:
         # log_in_color(logger, 'cyan', 'debug', 'account_deltas:'+str(account_deltas), log_stack_depth)
 
         # Sanity check: For certain account types, deltas should be <= 0
-        account_types_to_check = ["checking", "principal balance", "interest"]
-        is_account_type = A_df["Account_Type"].isin(account_types_to_check)
-        violations = account_deltas[is_account_type] > 0
+        debt_component_types = ["principal balance", "interest"]
+        is_debt_component = A_df["Account_Type"].isin(debt_component_types)
+        violations = account_deltas[is_debt_component] > 0
+        checking_deltas = account_deltas[A_df["Account_Type"].eq("checking")]
+        checking_created_value = (
+            sum(Decimal(str(delta)) for delta in checking_deltas)
+            > MONEY_BOUNDARY_TOLERANCE
+        )
 
-        if violations.any():
+        if violations.any() or checking_created_value:
             log_in_color( #TODO is log error message redundant if an exception is raised immediately after?
                 logger,
                 "red",
@@ -8360,7 +8436,7 @@ class ForecastHandler:
 
                 if not raise__satisfice_failed_exception:
                     if progress_bar is not None:
-                        progress_bar.update(1)
+                        progress_bar.update(1, context=f"P{priority_index} {d}")
                         progress_bar.refresh()
 
                     iteration_time_elapsed = datetime.datetime.now() - last_iteration_ts
@@ -8790,7 +8866,7 @@ class ForecastHandler:
 
         for d in all_days:
             if progress_bar:
-                progress_bar.update(1)
+                progress_bar.update(1, context=d)
                 progress_bar.refresh()
 
             # log_in_color(logger, 'magenta', 'info', str(date_str)+' forecast_df', log_stack_depth)
@@ -8989,6 +9065,7 @@ class ForecastHandler:
         log_stack_depth,
         raise__satisfice_failed_exception=True,
         progress_bar=None,
+        progress_phase="Exact",
         include_debug_columns=False
     ):
         # log_in_color(
@@ -9099,18 +9176,28 @@ class ForecastHandler:
 
         # Attempt to _satisfice (execute priority 1 transactions for each day)
         # log_in_color(logger, 'magenta', 'debug', confirmed_df.to_string(), log_stack_depth)
-        _satisfice_df = cls._satisfice(start_date,
-            end_date,
-            all_days,
-            confirmed_df=confirmed_df,
-            account_set=account_set,
-            memo_rule_set=memo_rule_set,
-            forecast_df=forecast_df,
-            raise__satisfice_failed_exception=raise__satisfice_failed_exception,
-            progress_bar=progress_bar,
-            log_stack_depth=log_stack_depth,
-            include_debug_columns=include_debug_columns
+        mandatory_context = (
+            ForecastProgress(
+                logger,
+                f"{progress_phase} mandatory pass",
+                max(1, len(all_days)),
+            )
+            if not raise__satisfice_failed_exception and progress_bar is None
+            else nullcontext(progress_bar)
         )
+        with mandatory_context as mandatory_progress:
+            _satisfice_df = cls._satisfice(start_date,
+                end_date,
+                all_days,
+                confirmed_df=confirmed_df,
+                account_set=account_set,
+                memo_rule_set=memo_rule_set,
+                forecast_df=forecast_df,
+                raise__satisfice_failed_exception=raise__satisfice_failed_exception,
+                progress_bar=mandatory_progress,
+                log_stack_depth=log_stack_depth,
+                include_debug_columns=include_debug_columns
+            )
 
         # Check if _satisfice succeeded by verifying the last date in the forecast
         _satisfice_success = _satisfice_df.tail(1)["Date"].iat[0] == end_date
@@ -9132,33 +9219,56 @@ class ForecastHandler:
                 optimization_started_at = perf_counter()
                 if not raise__satisfice_failed_exception:
                     optional_count = int((proposed_df["Priority"] > 1).sum())
-                    logger.info(
-                        "Optimization pass: evaluating %s optional transaction(s) "
-                        "over %s day(s). Future-safety simulations may make this "
-                        "phase quiet for a while.",
-                        optional_count,
-                        len(all_days),
+                    cls._phase_log(
+                        "cyan",
+                        "Optimization pass started: "
+                        f"optional_transactions={optional_count} days={len(all_days)}. "
+                        "Future-safety simulations may hold the percentage while "
+                        "the heartbeat continues.",
                     )
-                forecast_df, skipped_df, confirmed_df, deferred_df = (
-                    cls._assessPotentialOptimizations(
-                        end_date=end_date,
-                        forecast_df=forecast_df,
-                        account_set=account_set,
-                        memo_rule_set=memo_rule_set,
-                        confirmed_df=confirmed_df,
-                        proposed_df=proposed_df,
-                        deferred_df=deferred_df,
-                        skipped_df=skipped_df,
-                        raise__satisfice_failed_exception=raise__satisfice_failed_exception,
-                        progress_bar=progress_bar,
-                        log_stack_depth=log_stack_depth,
-                        include_debug_columns=include_debug_columns
+                optimization_priorities = max(
+                    1,
+                    len([
+                        priority for priority in full_budget_priorities
+                        if priority != 1
+                    ]),
+                ) if (full_budget_priorities := sorted(set(
+                    pd.concat([confirmed_df, proposed_df, deferred_df, skipped_df])[
+                        "Priority"
+                    ].tolist()
+                ))) else 1
+                optimization_total = max(1, optimization_priorities * max(1, len(all_days) - 1))
+                optimization_context = (
+                    ForecastProgress(
+                        logger,
+                        f"{progress_phase} optimization",
+                        optimization_total,
                     )
+                    if not raise__satisfice_failed_exception and optional_count > 0
+                    else nullcontext(None)
                 )
+                with optimization_context as optimization_progress:
+                    forecast_df, skipped_df, confirmed_df, deferred_df = (
+                        cls._assessPotentialOptimizations(
+                            end_date=end_date,
+                            forecast_df=forecast_df,
+                            account_set=account_set,
+                            memo_rule_set=memo_rule_set,
+                            confirmed_df=confirmed_df,
+                            proposed_df=proposed_df,
+                            deferred_df=deferred_df,
+                            skipped_df=skipped_df,
+                            raise__satisfice_failed_exception=raise__satisfice_failed_exception,
+                            progress_bar=optimization_progress,
+                            log_stack_depth=log_stack_depth,
+                            include_debug_columns=include_debug_columns
+                        )
+                    )
                 if not raise__satisfice_failed_exception:
-                    logger.info(
-                        "Optimization pass finished in %.2f seconds.",
-                        perf_counter() - optimization_started_at,
+                    cls._phase_log(
+                        "green",
+                        "Optimization pass finished: "
+                        f"elapsed={perf_counter() - optimization_started_at:.2f}s",
                     )
 
             except Exception as e:
@@ -9479,12 +9589,18 @@ class ForecastHandler:
 
         loan_acct_info = account_info.loc[loan_acct_sel_vec, :]
         credit_acct_info = account_info.loc[cc_acct_sel_vec, :]
+        checking_acct_info = account_info.loc[checking_sel_vec, :]
         investment_acct_info = account_info.loc[investment_sel_vec, :]
 
         def summary_numeric_series(column_name):
             return pd.to_numeric(forecast_df.loc[:, column_name], errors="coerce").fillna(0.0)
 
-        NetWorth = summary_numeric_series("Checking")
+        zero_series = (
+            summary_numeric_series("Checking") - summary_numeric_series("Checking")
+        )
+        NetWorth = zero_series.copy()
+        for _, checking_account_row in checking_acct_info.iterrows():
+            NetWorth = NetWorth + summary_numeric_series(checking_account_row.Name)
         for loan_account_index, loan_account_row in loan_acct_info.iterrows():
             # loan_acct_col_sel_vec = (cls.forecast_df.columns == loan_account_row.Name)
             # print('loan_acct_col_sel_vec')
@@ -9505,7 +9621,8 @@ class ForecastHandler:
         for credit_account_index, credit_account_row in credit_acct_info.iterrows():
             CCDebtTotal = CCDebtTotal + summary_numeric_series(credit_account_row.Name)
 
-        forecast_df["Marginal Interest"] = 0.0
+        forecast_df["Interest Accrued"] = 0.0
+        forecast_df["Investment Returns"] = 0.0
         loan_interest_acct_sel_vec = account_info.Account_Type == "interest"
         cc_curr_stmt_acct_sel_vec = account_info.Account_Type == "credit curr stmt bal"
         cc_prev_stmt_acct_sel_vec = account_info.Account_Type == "credit prev stmt bal"
@@ -9579,7 +9696,7 @@ class ForecastHandler:
                     line_item_value = float(line_item_value_string)
 
                     if "CC INTEREST" in memo_directives_line_item:
-                        forecast_df.loc[index, "Marginal Interest"] += abs(
+                        forecast_df.loc[index, "Interest Accrued"] += abs(
                             line_item_value
                         )
 
@@ -9604,7 +9721,7 @@ class ForecastHandler:
                         .replace("$", "")
                     )
                     line_item_value = float(line_item_value_string)
-                    forecast_df.loc[index, "Marginal Interest"] += abs(
+                    forecast_df.loc[index, "Interest Accrued"] += abs(
                         line_item_value
                     )
 
@@ -9649,14 +9766,14 @@ class ForecastHandler:
                             new_delta = abs(line_item_value)
                             delta = delta + new_delta
 
-                forecast_df.loc[index, "Marginal Interest"] += delta
+                forecast_df.loc[index, "Interest Accrued"] += delta
                 # print('')
 
             previous_row = row
 
         # just memo
         forecast_df["Net Gain"] = 0.0
-        forecast_df["Net Loss"] = forecast_df["Marginal Interest"]
+        forecast_df["Net Loss"] = forecast_df["Interest Accrued"]
         for index, row in forecast_df.iterrows():
 
             forecast_df.loc[index, "Net Loss"] = abs(
@@ -9678,6 +9795,7 @@ class ForecastHandler:
                     (
                         "POLICY current_statement_balance_payment:",
                         "POLICY surplus_debt_payment:",
+                        "POLICY surplus_saving:",
                     )
                 ):
                     continue
@@ -9769,6 +9887,10 @@ class ForecastHandler:
                 )
 
                 line_item_value = float(line_item_value_string)
+                if "INVESTMENT RETURN" in memo_line_item:
+                    forecast_df.loc[index, "Investment Returns"] += abs(
+                        line_item_value
+                    )
                 if any(
                     directive_type in memo_line_item
                     for directive_type in (
@@ -9776,6 +9898,7 @@ class ForecastHandler:
                         "INVESTMENT RETURN",
                         "INVESTMENT CONTRIBUTION",
                         "INVESTMENT WITHDRAWAL",
+                        "SAVINGS CONTRIBUTION",
                     )
                 ):
                     forecast_df.loc[index, "Net Gain"] += abs(line_item_value)
@@ -9893,6 +10016,9 @@ class ForecastHandler:
             memo = row_df["Memo"].iat[0]
             md = row_df["Memo Directives"].iat[0]
 
+            if "SAVINGS CONTRIBUTION" in md:
+                continue
+
             log_string = str(
                 row["Date"].strftime('%Y-%m-%d').rjust(10)
                 + " "
@@ -10003,7 +10129,9 @@ class ForecastHandler:
                 logger, "green", "debug", "Validation SUCCESS", log_stack_depth
             )
 
-        LiquidTotal = forecast_df.Checking
+        LiquidTotal = zero_series.copy()
+        for _, checking_account_row in checking_acct_info.iterrows():
+            LiquidTotal = LiquidTotal + summary_numeric_series(checking_account_row.Name)
 
         forecast_df["Net Worth"] = NetWorth
         forecast_df["Loan Total"] = LoanTotal
@@ -11014,7 +11142,8 @@ class ForecastHandler:
                 "Liquid Total",
                 "Net Gain",
                 "Net Loss",
-                "Marginal Interest",
+                "Interest Accrued",
+                "Investment Returns",
                 "Memo",
                 "Memo Directives",
                 "Next Income Date",
@@ -11039,35 +11168,35 @@ class ForecastHandler:
         plt.savefig(output_path)
         matplotlib.pyplot.close()
 
-    #TODO DOC manual review of ForecastHandler.plotMarginalInterest docstring
-    def plotMarginalInterest(self, expense_forecast, output_path, linestyle="solid"):
+    #TODO DOC manual review of ForecastHandler.plotInterestAccrued docstring
+    def plotInterestAccrued(self, expense_forecast, output_path, linestyle="solid"):
         """
-        #TODO DOC one-line description of ForecastHandler.plotMarginalInterest.
+        #TODO DOC one-line description of ForecastHandler.plotInterestAccrued.
 
-        #TODO DOC multi-line description of ForecastHandler.plotMarginalInterest.
-        #TODO DOC explain how ForecastHandler.plotMarginalInterest participates in this module.
+        #TODO DOC multi-line description of ForecastHandler.plotInterestAccrued.
+        #TODO DOC explain how ForecastHandler.plotInterestAccrued participates in this module.
         #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         expense_forecast : object
-            #TODO DOC one-line description of ForecastHandler.plotMarginalInterest.expense_forecast.
+            #TODO DOC one-line description of ForecastHandler.plotInterestAccrued.expense_forecast.
 
         output_path : object
-            #TODO DOC one-line description of ForecastHandler.plotMarginalInterest.output_path.
+            #TODO DOC one-line description of ForecastHandler.plotInterestAccrued.output_path.
 
         linestyle : object
-            #TODO DOC one-line description of ForecastHandler.plotMarginalInterest.linestyle.
+            #TODO DOC one-line description of ForecastHandler.plotInterestAccrued.linestyle.
 
         Returns
         -------
         object
-            #TODO DOC one-line description of return value of ForecastHandler.plotMarginalInterest.
+            #TODO DOC one-line description of return value of ForecastHandler.plotInterestAccrued.
 
         Contract
         --------
-        - #TODO DOC contract lines for ForecastHandler.plotMarginalInterest.
-        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler.plotMarginalInterest.
+        - #TODO DOC contract lines for ForecastHandler.plotInterestAccrued.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler.plotInterestAccrued.
 
         @interface-report: show
         """
@@ -11078,8 +11207,8 @@ class ForecastHandler:
         x_values = self._report_dates_for_plot(expense_forecast)
         plt.plot(
             x_values,
-            expense_forecast.forecast_df["Marginal Interest"],
-            label="Marginal Interest " + str(expense_forecast.unique_id),
+            expense_forecast.forecast_df["Interest Accrued"],
+            label="Interest Accrued " + str(expense_forecast.unique_id),
             linestyle=linestyle,
         )
 
@@ -11315,6 +11444,14 @@ class ForecastHandler:
         false, return the generated HTML without writing a file.
         """
 
+        report_started_at = perf_counter()
+        cls._phase_log(
+            "blue",
+            "Report generation started: "
+            f"forecast={(getattr(E.initial_conditions, 'forecast_name', None) or 'Unnamed forecast')!r} "
+            f"id={E.unique_id} output="
+            f"{'memory' if not write_file else output_path or 'default HTML path'}",
+        )
         report_scalars = {}
 
         report_scalars['scenario_name'] = E.initial_conditions.forecast_name
@@ -11341,8 +11478,12 @@ class ForecastHandler:
         report_scalars['account_type_page_text_above_plots'] = liquid_delta_sent + '\n' + cc_delta_sent + '\n' + loan_delta_sent
         account_type_page_text_below_plots = ''
 
-        total_interest_paid = sum(E.forecast_df['Marginal Interest'])
-        report_scalars['interest_page_text_above_plots']= f"A total of ${total_interest_paid:,.2f} is paid."
+        total_interest_accrued = sum(E.forecast_df['Interest Accrued'])
+        total_investment_returns = sum(E.forecast_df['Investment Returns'])
+        report_scalars['interest_page_text_above_plots'] = (
+            f"Interest accrued: ${total_interest_accrued:,.2f}. "
+            f"Investment returns: ${total_investment_returns:,.2f}."
+        )
         interest_page_text_below_plots = ''
         
         sankey_page_text_above_plots = ''
@@ -11359,9 +11500,25 @@ class ForecastHandler:
         )
         forecast_start_date = pd.Timestamp(E.forecast_df["Date"].iloc[0])
 
-        def format_milestone_elapsed_time(date_achieved) -> str:
+        def milestone_timestamp(date_achieved):
+            if date_achieved is None:
+                return None
+            if isinstance(date_achieved, str) and date_achieved.strip().lower() in {
+                "", "none", "nan", "nat",
+            }:
+                return None
+            timestamp = pd.to_datetime(date_achieved, errors="coerce")
+            return None if pd.isna(timestamp) else pd.Timestamp(timestamp)
+
+        achieved_milestones = [
+            (milestone_name, timestamp)
+            for milestone_name, date_achieved in milestone_results.items()
+            if (timestamp := milestone_timestamp(date_achieved)) is not None
+        ]
+
+        def format_milestone_elapsed_time(date_achieved: pd.Timestamp) -> str:
             elapsed_days = (
-                pd.Timestamp(date_achieved).normalize()
+                date_achieved.normalize()
                 - forecast_start_date.normalize()
             ).days
             if elapsed_days < 365:
@@ -11373,24 +11530,23 @@ class ForecastHandler:
         report_data_frames["milestone_dates"] = pd.DataFrame(
             [
                 {
-                    "Time": format_milestone_elapsed_time(date_achieved),
                     "Milestone": milestone_name,
+                    "Date": date_achieved.date().isoformat(),
+                    "Time": format_milestone_elapsed_time(date_achieved),
                 }
                 for milestone_name, date_achieved in sorted(
-                    milestone_results.items(),
-                    key=lambda item: pd.Timestamp(item[1])
-                    if pd.notna(item[1])
-                    else pd.Timestamp.max,
+                    achieved_milestones,
+                    key=lambda item: item[1],
                 )
-                if pd.notna(date_achieved)
             ],
-            columns=["Time", "Milestone"],
+            columns=["Milestone", "Date", "Time"],
         )
 
         initial_conditions = E.initial_conditions
         initial_account_set = initial_conditions.initial_account_set
         initial_budget_set = initial_conditions.initial_budget_set
         initial_memo_rule_set = initial_conditions.initial_memo_rule_set
+        primary_checking_name = initial_account_set.primary_checking_account_name
         milestone_set = E.milestone_set
 
         report_data_frames["initial_account_set"] = initial_account_set.getAccounts()
@@ -11416,6 +11572,20 @@ class ForecastHandler:
         final_cash_reserve = float(E.forecast_df["Liquid Total"].iloc[-1])
         final_available_credit = total_credit_limit - float(
             E.forecast_df["CC Debt Total"].iloc[-1]
+        )
+        investment_account_names = [
+            account.name
+            for account in initial_account_set.accounts
+            if account.account_type == "investment"
+            and account.name in E.forecast_df.columns
+        ]
+        initial_investments = (
+            float(E.forecast_df.iloc[0][investment_account_names].sum())
+            if investment_account_names else 0.0
+        )
+        final_investments = (
+            float(E.forecast_df.iloc[-1][investment_account_names].sum())
+            if investment_account_names else 0.0
         )
 
         def format_report_currency(value) -> str:
@@ -11498,6 +11668,15 @@ class ForecastHandler:
                 ],
             ),
             (
+                SurplusSavingPolicy,
+                "Surplus Saving",
+                "surplus_saving_policies",
+                [
+                    "Priority", "Account", "Saved Minimum Threshold", "If Unmet",
+                    "Status", "Executed", "Shortfall",
+                ],
+            ),
+            (
                 PeriodicInvestmentContributionCapPolicy,
                 "Investment Contribution Cap",
                 "investment_contribution_cap_policies",
@@ -11510,9 +11689,10 @@ class ForecastHandler:
 
         def policy_presentation(policy):
             if isinstance(policy, MinimumCheckingBalancePolicy):
+                account_name = policy.account_name or primary_checking_name
                 return (
                     "Minimum Checking Balance",
-                    "Primary checking",
+                    account_name,
                     f"Keep {format_report_currency(policy.target)} available",
                 )
             if isinstance(policy, CurrentStatementBalancePaymentPolicy):
@@ -11546,6 +11726,13 @@ class ForecastHandler:
                     policy.account_name,
                     f"Invest checking above {format_report_currency(policy.checking_threshold)}",
                 )
+            if isinstance(policy, SurplusSavingPolicy):
+                return (
+                    "Surplus Saving",
+                    policy.account_name,
+                    "Save until "
+                    f"{format_report_currency(policy.saved_minimum_threshold)}",
+                )
             return (
                 "Investment Contribution Cap",
                 policy.account_name,
@@ -11578,7 +11765,7 @@ class ForecastHandler:
                 activation_date = result.get("activation_date")
                 return {
                     **common,
-                    "Applies To": "Primary checking",
+                    "Applies To": policy.account_name or primary_checking_name,
                     "Target": format_report_currency(policy.target),
                     "Activation Date": (
                         cls._normalize_date_value(activation_date).isoformat()
@@ -11628,6 +11815,16 @@ class ForecastHandler:
                     "Checking Threshold": format_report_currency(policy.checking_threshold),
                     "Executed": format_report_currency(result.get("executed", 0)),
                 }
+            if isinstance(policy, SurplusSavingPolicy):
+                return {
+                    **common,
+                    "Account": policy.account_name,
+                    "Saved Minimum Threshold": format_report_currency(
+                        policy.saved_minimum_threshold
+                    ),
+                    "Executed": format_report_currency(result.get("executed", 0)),
+                    "Shortfall": format_report_currency(result.get("shortfall", 0)),
+                }
             return {
                 **common,
                 "Account": policy.account_name,
@@ -11656,12 +11853,20 @@ class ForecastHandler:
                     "Amount": format_report_currency(initial_reserve_credit),
                 },
                 {
+                    "Metric": "Initial Investments",
+                    "Amount": format_report_currency(initial_investments),
+                },
+                {
                     "Metric": "Final Cash Reserve",
                     "Amount": format_report_currency(final_cash_reserve),
                 },
                 {
                     "Metric": "Final Available Credit",
                     "Amount": format_report_currency(final_available_credit),
+                },
+                {
+                    "Metric": "Final Investments",
+                    "Amount": format_report_currency(final_investments),
                 },
             ],
             columns=["Metric", "Amount"],
@@ -11838,6 +12043,17 @@ class ForecastHandler:
 
         last_day = E.forecast_df.tail(1).T
         final_row = E.forecast_df.tail(1).copy()
+        investment_account_names = [
+            account.name
+            for account in initial_account_set.accounts
+            if account.account_type == "investment"
+            and account.name in final_row.columns
+        ]
+        final_row["Investment Total"] = (
+            final_row[investment_account_names].sum(axis=1)
+            if investment_account_names
+            else 0.0
+        )
         account_names = [
             account.name
             for account in initial_account_set.accounts
@@ -11904,7 +12120,8 @@ class ForecastHandler:
                 or row.startswith("Memo")
                 or row.startswith("Memo Directive")
                 or row.startswith("Next Income Date")
-                or row.startswith("Marginal Interest")
+                or row.startswith("Interest Accrued")
+                or row.startswith("Investment Returns")
                 or row.startswith("Net Gain")
                 or row.startswith("Net Loss")
                 or ':' in row #TODO change HTML report logic to filter out sub accounts without checking for : in name
@@ -12500,12 +12717,17 @@ class ForecastHandler:
                 },
             },
             "interest": {
-                "series_data": dataframe_to_chart_records(
-                    E.forecast_df.loc[:, ["Date", "Marginal Interest"]]
-                ),
+                "series_data": dataframe_to_chart_records(pd.DataFrame({
+                    "Date": E.forecast_df["Date"],
+                    "Investment Returns": E.forecast_df["Investment Returns"],
+                    "Interest Accrued": -E.forecast_df["Interest Accrued"].abs(),
+                })),
                 "options": {
+                    "symmetric_zero": True,
+                    "absolute_tooltip_series": ["Interest Accrued"],
                     "line_styles": {
-                        "Marginal Interest": {"color": "#c47a24"},
+                        "Investment Returns": {"color": "#268a51"},
+                        "Interest Accrued": {"color": "#c94747"},
                     },
                 },
             },
@@ -12536,6 +12758,8 @@ class ForecastHandler:
                     if value is None or (not isinstance(value, str) and pd.isna(value)):
                         return None
                     value = str(value).strip()
+                    if value.startswith("SAVINGS_BELOW:"):
+                        value = value.split(":", 2)[2]
                     return None if value in {"", "None", "nan"} else value
 
                 def policy_endpoints(memo):
@@ -12572,6 +12796,8 @@ class ForecastHandler:
                     if amount <= float(ROUNDING_ERROR_TOLERANCE):
                         continue
                     memo = str(transaction.get("Memo", ""))
+                    if memo.startswith("POLICY surplus_saving:"):
+                        continue
                     endpoint_columns_present = (
                         "Account_From" in transaction.index
                         and "Account_To" in transaction.index
@@ -12603,6 +12829,14 @@ class ForecastHandler:
                         confirmed_debt_totals[account_to] = (
                             confirmed_debt_totals.get(account_to, 0.0) + amount
                         )
+
+                for policy in configured_policies:
+                    if not isinstance(policy, SurplusSavingPolicy):
+                        continue
+                    executed = float(
+                        policy_results.get(policy.policy_key, {}).get("executed", 0)
+                    )
+                    add_edge(primary_checking_name, policy.account_name, executed)
 
                 minimum_totals = {}
                 additional_totals = {}
@@ -12711,6 +12945,7 @@ class ForecastHandler:
 
             income_totals = {}
             destination_totals = {}
+            seen_surplus_saving_policies = set()
 
             def transaction_bin(memo):
                 if not memo.startswith("POLICY "):
@@ -12723,6 +12958,16 @@ class ForecastHandler:
                 if amount <= 0:
                     continue
                 memo = str(transaction.get("Memo", "Transaction"))
+                if memo.startswith("POLICY surplus_saving:"):
+                    policy_key = memo.split(" ", 2)[1]
+                    if policy_key in seen_surplus_saving_policies:
+                        continue
+                    seen_surplus_saving_policies.add(policy_key)
+                    amount = float(
+                        policy_results.get(policy_key, {}).get("executed", 0)
+                    )
+                    if amount <= float(ROUNDING_ERROR_TOLERANCE):
+                        continue
                 is_income = bool(transaction.get("Income_Flag", False))
                 if is_income:
                     income_totals[memo] = income_totals.get(memo, 0) + amount
@@ -13821,7 +14066,7 @@ class ForecastHandler:
                                 aria-controls="detail-page-interest"
                                 data-detail-target="interest"
                             >
-                                Interest
+                                Interest &amp; Investment Returns
                             </button>
 
                             <button
@@ -14152,6 +14397,12 @@ class ForecastHandler:
         """
 
         if not write_file:
+            cls._phase_log(
+                "green",
+                "Report generation completed: "
+                f"id={E.unique_id} destination=memory "
+                f"elapsed={perf_counter() - report_started_at:.2f}s",
+            )
             return html
 
         if output_path is None:
@@ -14162,6 +14413,12 @@ class ForecastHandler:
                 target_path = target_path / f"Forecast_{E.unique_id}.html"
         target_path.parent.mkdir(parents=True, exist_ok=True)
         target_path.write_text(html)
+        cls._phase_log(
+            "green",
+            "Report generation completed: "
+            f"id={E.unique_id} destination={target_path} "
+            f"elapsed={perf_counter() - report_started_at:.2f}s",
+        )
         return str(target_path)
 
     # def show_plan(self, forecast_set: ForecastSetInitialConditions):
@@ -14390,6 +14647,20 @@ class ForecastHandler:
                         f"CHECKING_ABOVE:{policy.checking_threshold}",
                         policy.account_name, "surplus",
                     )
+            elif isinstance(policy, SurplusSavingPolicy):
+                destination = (
+                    f"SAVINGS_BELOW:{policy.saved_minimum_threshold}:"
+                    f"{policy.account_name}"
+                )
+                for saving_date in surplus_occurrence_dates:
+                    add_once(
+                        policy,
+                        saving_date,
+                        10**15,
+                        primary_checking.name,
+                        destination,
+                        "surplus saving",
+                    )
             elif isinstance(policy, SurplusDebtPaymentPolicy):
                 destination = (
                     "ALL_LOANS" if policy.debt_type == "loan"
@@ -14482,6 +14753,28 @@ class ForecastHandler:
                 # The requested amount is resolved dynamically from billing
                 # state, so materialization's sentinel is not meaningful.
                 summary["requested"] = summary["executed"]
+            if isinstance(policy, SurplusSavingPolicy):
+                initial_account = next(
+                    account
+                    for account in result.initial_conditions.initial_account_set.accounts
+                    if account.name == policy.account_name
+                )
+                initial_balance = float(initial_account.balance)
+                final_balance = float(result.forecast_df.iloc[-1][policy.account_name])
+                target = float(policy.saved_minimum_threshold)
+                summary["requested"] = max(0.0, target - initial_balance)
+                summary["executed"] = max(0.0, final_balance - initial_balance)
+                summary["shortfall"] = max(0.0, target - final_balance)
+                if summary["shortfall"] > float(ROUNDING_ERROR_TOLERANCE):
+                    summary["status"] = "unmet"
+                    summary["missed"] = 1
+                    message = (
+                        f"Policy {policy.policy_key} was short by "
+                        f"${summary['shortfall']:.2f}"
+                    )
+                    if policy.on_unmet == "fail":
+                        raise ForecastPolicyError(message)
+                    logger.warning(message)
             expected = max(0.0, summary["requested"] - summary["capped"])
             if isinstance(
                 policy, (FixedMonthlyInvestmentPolicy, IncomePercentageInvestmentPolicy)
@@ -14509,9 +14802,13 @@ class ForecastHandler:
         IO = cls._materialize_cash_allocation_policies(
             copy.deepcopy(IO), approximate=approximate
         )
-        policy = IO.policy_set.get(MinimumCheckingBalancePolicy)
+        reserve_policies = [
+            candidate
+            for candidate in IO.policy_set.policies
+            if isinstance(candidate, MinimumCheckingBalancePolicy)
+        ]
 
-        if policy is None:
+        if not reserve_policies:
             policy_set = copy.deepcopy(IO.policy_set)
             result = run_io = copy.deepcopy(IO)
             run_io.policy_set = ForecastPolicySet()
@@ -14526,21 +14823,34 @@ class ForecastHandler:
             return result
 
         original_IO = configured_IO
-        primary_checking = [
-            account
-            for account in IO.initial_account_set.accounts
-            if account.account_type == "checking"
-            and account.primary_checking_ind
-        ]
-        if len(primary_checking) != 1:
-            raise ValueError(
-                "MinimumCheckingBalancePolicy requires exactly one primary checking account"
-            )
-        checking = primary_checking[0]
-        target = float(policy.target)
+        policy = min(reserve_policies, key=lambda candidate: candidate.priority)
 
-        def run_without_policy(io, use_approximate):
+        def resolve_reserve_account(candidate):
+            if candidate.account_name is not None:
+                return next(
+                    account for account in IO.initial_account_set.accounts
+                    if account.name == candidate.account_name
+                )
+            primary_accounts = [
+                account for account in IO.initial_account_set.accounts
+                if account.account_type == "checking" and account.primary_checking_ind
+            ]
+            if len(primary_accounts) != 1:
+                raise ValueError(
+                    "MinimumCheckingBalancePolicy requires exactly one primary "
+                    "checking account when account_name is not provided"
+                )
+            return primary_accounts[0]
+
+        reserve_entries = [
+            (candidate, resolve_reserve_account(candidate))
+            for candidate in reserve_policies
+        ]
+
+        def run_without_policy(io, use_approximate, progress_phase):
             io.policy_set = ForecastPolicySet()
+            io._suppress_log_guide = True
+            io._progress_phase = progress_phase
             runner = cls.runForecastApproximate if use_approximate else cls.runForecast
             return runner(
                 io,
@@ -14548,19 +14858,24 @@ class ForecastHandler:
                 include_debug_columns=True,
             )
 
-        if checking.min_balance >= target:
-            result = run_without_policy(copy.deepcopy(IO), approximate)
+        if all(
+            account.min_balance >= float(candidate.target)
+            for candidate, account in reserve_entries
+        ):
+            result = run_without_policy(
+                copy.deepcopy(IO), approximate, "Reserve-enforced execution"
+            )
             result.initial_conditions = original_IO
             result.unique_id = original_IO.unique_id + ("_A" if approximate else "")
             result.policy_results = cls._summarize_cash_policy_results(
                 IO.policy_set, result
             )
-            result.policy_results[policy.policy_name] = {
+            result.policy_results.update({candidate.policy_key: {
                     "status": "already_enforced",
-                    "account_name": checking.name,
-                    "target": policy.target,
+                    "account_name": account.name,
+                    "target": candidate.target,
                     "activation_date": IO.start_date,
-                }
+                } for candidate, account in reserve_entries})
             return result
 
         def priority_one_io(source_io):
@@ -14621,87 +14936,131 @@ class ForecastHandler:
             return result
 
         discovery_started_at = perf_counter()
-        logger.info(
-            "Minimum-checking policy discovery: running an %s forecast of "
-            "priorities below P%s to find the earliest permanently stable "
-            "$%.2f reserve.%s",
-            "approximate" if approximate else "exact",
-            policy.priority,
-            target,
-            " Discovery uses approximate event/binned granularity."
-            if approximate
-            else " Transaction messages in this phase are daily and unbinned.",
+        reserve_description = ", ".join(
+            f"{account.name}=${float(candidate.target):,.2f} at P{candidate.priority}"
+            for candidate, account in reserve_entries
         )
-        exact_discovery = run_without_policy(priority_one_io(IO), approximate)
-        logger.info(
-            "Minimum-checking policy discovery finished in %.2f seconds; "
+        cls._phase_log(
+            "magenta",
+            "Reserve policy discovery started: "
+            f"mode={'approximate' if approximate else 'exact'} "
+            f"reserves=[{reserve_description}] execution_gate=P{policy.priority}."
+            + (
+                " Discovery uses approximate event/binned granularity."
+                if approximate
+                else " Transaction messages in this phase are daily and unbinned."
+            ),
+        )
+        exact_discovery = run_without_policy(
+            priority_one_io(IO), approximate, "Policy discovery"
+        )
+        cls._phase_log(
+            "green",
+            "Reserve policy discovery finished: "
+            f"elapsed={perf_counter() - discovery_started_at:.2f}s; "
             "evaluating the stable balance crossing.",
-            perf_counter() - discovery_started_at,
         )
         discovery_dates = exact_discovery.forecast_df["Date"].apply(
             cls._normalize_date_value
         )
-        balances = pd.to_numeric(
-            exact_discovery.forecast_df[checking.name], errors="coerce"
-        )
-        suffix_minimum = balances.iloc[::-1].cummin().iloc[::-1]
-        qualifying = exact_discovery.forecast_df.loc[
-            suffix_minimum >= float(target)
-        ]
+        qualifying_mask = pd.Series(True, index=exact_discovery.forecast_df.index)
+        individual_qualifying_masks = {}
+        for candidate, account in reserve_entries:
+            balances = pd.to_numeric(
+                exact_discovery.forecast_df[account.name], errors="coerce"
+            )
+            suffix_minimum = balances.iloc[::-1].cummin().iloc[::-1]
+            candidate_qualifying = suffix_minimum >= float(candidate.target)
+            individual_qualifying_masks[candidate.policy_key] = candidate_qualifying
+            qualifying_mask &= candidate_qualifying
+        qualifying = exact_discovery.forecast_df.loc[qualifying_mask]
 
-        policy_result = {
-            "status": "not_achieved",
-            "account_name": checking.name,
-            "target": policy.target,
-            "activation_date": None,
+        policy_results = {
+            candidate.policy_key: {
+                "status": "not_achieved",
+                "account_name": account.name,
+                "target": candidate.target,
+                "activation_date": None,
+            }
+            for candidate, account in reserve_entries
         }
         proposed = IO.initial_proposed_df.copy()
         if qualifying.empty:
-            logger.warning(
-                "Primary checking never established the requested stable minimum of %s",
-                target,
-            )
-            if policy.on_unmet == "fail":
-                raise ForecastPolicyError(
-                    "Minimum checking balance policy never established its reserve"
+            unattainable_entries = [
+                (candidate, account)
+                for candidate, account in reserve_entries
+                if not individual_qualifying_masks[candidate.policy_key].any()
+            ]
+            for candidate, account in unattainable_entries:
+                logger.warning(
+                    "%s never established the requested stable minimum of %s",
+                    account.name,
+                    float(candidate.target),
                 )
-            deferrable = proposed["Deferrable"].astype(bool) if not proposed.empty else []
-            exact_discovery.deferred_df = proposed.loc[deferrable].copy()
-            exact_discovery.skipped_df = proposed.loc[
-                ~deferrable if len(proposed) else []
-            ].copy()
-            exact_discovery.initial_conditions = original_IO
-            exact_discovery.unique_id = original_IO.unique_id
-            exact_discovery.policy_results = cls._summarize_cash_policy_results(
-                IO.policy_set, exact_discovery
+                if candidate.on_unmet == "fail":
+                    raise ForecastPolicyError(
+                        f"Minimum balance policy for {account.name} never "
+                        "established its reserve"
+                    )
+            unattainable_keys = {
+                candidate.policy_key for candidate, _ in unattainable_entries
+            }
+            fallback_IO = copy.deepcopy(original_IO)
+            fallback_IO.policy_set = ForecastPolicySet([
+                candidate
+                for candidate in fallback_IO.policy_set.policies
+                if candidate.policy_key not in unattainable_keys
+            ])
+            fallback_IO._suppress_log_guide = True
+            cls._phase_log(
+                "yellow",
+                "Unattainable warning-only reserve policies will be ignored; "
+                "rerunning with the remaining policies: "
+                + ", ".join(sorted(unattainable_keys)),
+                level="warning",
             )
-            exact_discovery.policy_results[policy.policy_name] = policy_result
-            if approximate:
-                exact_discovery.unique_id = original_IO.unique_id + "_A"
-            return exact_discovery
+            fallback_result = cls._runForecastWithPolicies(
+                fallback_IO,
+                milestone_set,
+                include_debug_columns=include_debug_columns,
+                approximate=approximate,
+            )
+            fallback_result.initial_conditions = original_IO
+            fallback_result.unique_id = original_IO.unique_id + (
+                "_A" if approximate else ""
+            )
+            fallback_result.policy_results.update({
+                key: value
+                for key, value in policy_results.items()
+                if key in unattainable_keys
+            })
+            return fallback_result
 
         activation_row = qualifying.iloc[0]
         activation_date = cls._normalize_date_value(activation_row["Date"])
-        policy_result.update(status="activated", activation_date=activation_date)
-        logger.info(
-            "Minimum-checking reserve activates on %s. Running the %s forecast "
-            "from that boundary with a $%.2f checking floor.%s",
-            activation_date,
-            "approximate" if approximate else "exact",
-            target,
-            " Approximate transaction messages are binned into summary dates."
-            if approximate else "",
+        for policy_result in policy_results.values():
+            policy_result.update(status="activated", activation_date=activation_date)
+        cls._phase_log(
+            "magenta",
+            "Reserve policies activated: "
+            f"date={activation_date} mode={'approximate' if approximate else 'exact'} "
+            f"floors=[{reserve_description}]."
+            + (
+                " Approximate transaction messages are binned into summary dates."
+                if approximate else ""
+            ),
         )
 
         activation_accounts = cls._account_set_from_forecast_row(
             IO.initial_account_set, activation_row
         )
-        activation_checking = next(
-            account
-            for account in activation_accounts.accounts
-            if account.account_type == "checking" and account.primary_checking_ind
-        )
-        activation_checking.min_balance = target
+        for candidate, reserve_account in reserve_entries:
+            activation_reserve_account = next(
+                account
+                for account in activation_accounts.accounts
+                if account.name == reserve_account.name
+            )
+            activation_reserve_account.min_balance = float(candidate.target)
 
         flattened_milestones = cls._flatten_milestone_results(
             exact_discovery.milestone_results
@@ -14766,17 +15125,20 @@ class ForecastHandler:
         ].copy()
 
         tail_started_at = perf_counter()
-        tail_result = run_without_policy(tail_IO, approximate)
-        logger.info(
-            "Post-activation %s forecast finished in %.2f seconds.",
-            "approximate" if approximate else "exact",
-            perf_counter() - tail_started_at,
+        tail_result = run_without_policy(
+            tail_IO, approximate, "Post-activation execution"
+        )
+        cls._phase_log(
+            "green",
+            "Post-activation forecast finished: "
+            f"mode={'approximate' if approximate else 'exact'} "
+            f"elapsed={perf_counter() - tail_started_at:.2f}s",
         )
         # Discovery already uses the requested execution mode, so its prefix
         # can be stitched directly without a redundant presentation pass.
         display_discovery = exact_discovery
         summary_columns = {
-            "Marginal Interest", "Net Gain", "Net Loss", "Net Worth",
+            "Interest Accrued", "Investment Returns", "Net Gain", "Net Loss", "Net Worth",
             "Loan Total", "CC Debt Total", "Liquid Total", "Investment Total",
         }
         pre_forecast = display_discovery.forecast_df.drop(
@@ -14822,7 +15184,7 @@ class ForecastHandler:
             approximate_flag=approximate,
             policy_results={
                 **cls._summarize_cash_policy_results(IO.policy_set, tail_result),
-                policy.policy_name: policy_result,
+                **policy_results,
             },
         )
         if not include_debug_columns:
@@ -14857,7 +15219,7 @@ class ForecastHandler:
         boundary_date = None
 
         summary_columns = {
-            "Marginal Interest", "Net Gain", "Net Loss", "Net Worth",
+            "Interest Accrued", "Investment Returns", "Net Gain", "Net Loss", "Net Worth",
             "Loan Total", "CC Debt Total", "Liquid Total", "Investment Total",
         }
 
@@ -15077,7 +15439,8 @@ class ForecastHandler:
         @interface-report: show
         """
         summary_columns = {
-            "Marginal Interest",
+            "Interest Accrued",
+            "Investment Returns",
             "Net Gain",
             "Net Loss",
             "Net Worth",

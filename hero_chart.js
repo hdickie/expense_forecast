@@ -1,6 +1,24 @@
 (() => {
     "use strict";
 
+    function xAxisTickValues(scale, count = 7) {
+        const [start, end] = scale.domain();
+        const yearBoundaries = d3.timeYear.range(
+            d3.timeYear.ceil(start),
+            d3.timeYear.offset(d3.timeYear.floor(end), 1)
+        );
+        return [...new Map(
+            [...scale.ticks(count), ...yearBoundaries]
+                .filter((date) => date >= start && date <= end)
+                .map((date) => [+date, date])
+        ).values()].sort((left, right) => left - right);
+    }
+
+    const formatXAxisTick = (date) =>
+        date.getMonth() === 0 && date.getDate() === 1
+            ? d3.timeFormat("%Y")(date)
+            : d3.timeFormat("%b %-d")(date);
+
     const heroChartDataElement =
         document.getElementById("hero-chart-data");
 
@@ -273,8 +291,8 @@
             .call(
                 d3
                     .axisBottom(xScale)
-                    .ticks(7)
-                    .tickFormat(d3.timeFormat("%b %-d"))
+                    .tickValues(xAxisTickValues(xScale))
+                    .tickFormat(formatXAxisTick)
             );
 
         chart
