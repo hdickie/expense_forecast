@@ -1,0 +1,2372 @@
+<!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+
+            <meta
+                name="viewport"
+                content="width=device-width, initial-scale=1.0"
+            >
+
+            <title>
+                
+            </title>
+
+            <!--
+            ========================================================================
+            REPORT DESIGN VARIABLES
+
+            Change these variables to adjust the report's typography, colors,
+            spacing, table density, content width, and other repeated design values.
+            ========================================================================
+            -->
+            <style>
+                :root {
+                    /* Typography */
+                    --report-font-family:
+                        Inter,
+                        ui-sans-serif,
+                        system-ui,
+                        -apple-system,
+                        BlinkMacSystemFont,
+                        "Segoe UI",
+                        sans-serif;
+
+                    --report-monospace-font-family:
+                        "SFMono-Regular",
+                        Consolas,
+                        "Liberation Mono",
+                        monospace;
+
+                    --report-title-font-size: 2rem;
+                    --report-subtitle-font-size: 0.92rem;
+                    --report-date-range-font-size: 0.78rem;
+                    --report-body-font-size: 0.95rem;
+                    --report-small-font-size: 0.78rem;
+
+                    /* Colors */
+                    --report-page-background: #f7f7f5;
+                    --report-surface-color: #ffffff;
+                    --report-text-color: #1d1d1f;
+                    --report-muted-text-color: #77777d;
+                    --report-border-color: #dedee2;
+                    --report-soft-border-color: #ececef;
+                    --report-hover-color: #f2f2f3;
+                    --report-selected-color: #e8e8eb;
+                    --report-accent-color: #315c72;
+                    --report-accent-text-color: #ffffff;
+
+                    /* Page layout */
+                    --report-page-max-width: 1500px;
+                    --report-page-side-padding: clamp(24px, 4vw, 72px);
+                    --report-page-top-padding: 42px;
+                    --report-section-gap: 34px;
+
+                    /*
+                    Header width is deliberately symmetrical.
+
+                    The left scenario block occupies one column. A comparison report
+                    can place the second scenario block in the matching right column
+                    without shifting the page's visual center.
+                    */
+                    --report-header-side-column-width: minmax(220px, 1fr);
+                    --report-header-center-column-width: minmax(180px, 1.15fr);
+
+                    /* Hero chart */
+                    --hero-chart-height: clamp(390px, 47vh, 650px);
+                    --hero-chart-max-width: 1240px;
+                    --hero-chart-background: transparent;
+
+                    /* Buttons */
+                    --view-toggle-height: 38px;
+                    --view-toggle-horizontal-padding: 22px;
+                    --view-toggle-border-radius: 999px;
+
+                    /* Summary table layout */
+                    --summary-table-column-gap: 26px;
+                    --summary-table-row-gap: 28px;
+
+                    /*
+                    TABLE DENSITY CONTROL
+
+                    Increase these values for a more spacious table.
+                    Decrease them for a denser table.
+                    */
+                    --report-table-cell-padding-vertical: 11px;
+                    --report-table-cell-padding-horizontal: 14px;
+                    --report-table-row-line-height: 1.4;
+
+                    --report-table-card-padding: 20px;
+                    --report-table-card-border-radius: 10px;
+                    --report-table-card-min-height: 120px;
+
+                    /* Detailed view */
+                    --detail-navbar-height: 48px;
+                    --detail-content-max-width: 1240px;
+                    --detail-section-spacing: 38px;
+                }
+
+                * {
+                    box-sizing: border-box;
+                }
+
+                html {
+                    background: var(--report-page-background);
+                    color: var(--report-text-color);
+                    font-family: var(--report-font-family);
+                }
+
+                body {
+                    min-width: 320px;
+                    margin: 0;
+                    background: var(--report-page-background);
+                    color: var(--report-text-color);
+                    font-size: var(--report-body-font-size);
+                }
+
+                button,
+                input,
+                select,
+                textarea {
+                    font: inherit;
+                }
+
+                button {
+                    color: inherit;
+                }
+
+                .report-page {
+                    width: min(
+                        100%,
+                        calc(
+                            var(--report-page-max-width) +
+                            2 * var(--report-page-side-padding)
+                        )
+                    );
+                    min-height: 100vh;
+                    margin: 0 auto;
+                    padding:
+                        var(--report-page-top-padding)
+                        var(--report-page-side-padding)
+                        72px;
+                }
+
+                /*
+                ====================================================================
+                REPORT HEADER
+                ====================================================================
+                */
+
+                .report-header {
+                    display: grid;
+                    grid-template-columns:
+                        var(--report-header-side-column-width)
+                        var(--report-header-center-column-width)
+                        var(--report-header-side-column-width);
+                    align-items: start;
+                    width: 100%;
+                    margin-bottom: 18px;
+                }
+
+                .scenario-identity {
+                    min-width: 0;
+                }
+
+                .scenario-identity-left {
+                    grid-column: 1;
+                    justify-self: start;
+                    text-align: left;
+                }
+
+                /*
+                Reserved for future comparison reports.
+
+                Add a second .scenario-identity element with this class. Because the
+                header uses symmetrical side columns, it will mirror the first
+                scenario without changing the central page layout.
+                */
+                .scenario-identity-right {
+                    grid-column: 3;
+                    justify-self: end;
+                    text-align: right;
+                }
+
+                .scenario-name {
+                    margin: 0;
+                    font-size: var(--report-title-font-size);
+                    font-weight: 650;
+                    line-height: 1.12;
+                    letter-spacing: -0.025em;
+                }
+
+                /*
+                The identity metadata stays in the narrow left header column,
+                but the primary forecast name may use the full report content
+                width. It therefore wraps only when it reaches the page's
+                right content edge instead of the first grid-column boundary.
+                */
+                .scenario-identity-left .scenario-name {
+                    width: min(
+                        var(--report-page-max-width),
+                        calc(100vw - 2 * var(--report-page-side-padding))
+                    );
+                    max-width: none;
+                    white-space: normal;
+                }
+
+                .scenario-unique-id {
+                    margin: 7px 0 0;
+                    font-family: var(--report-monospace-font-family);
+                    font-size: var(--report-subtitle-font-size);
+                    font-weight: 500;
+                    line-height: 1.25;
+                    letter-spacing: 0.015em;
+                    white-space: nowrap;
+                }
+
+                .scenario-date-range {
+                    margin: 6px 0 0;
+                    color: var(--report-muted-text-color);
+                    font-size: var(--report-date-range-font-size);
+                    font-weight: 450;
+                    line-height: 1.3;
+                }
+
+                /*
+                ====================================================================
+                HERO CHART
+                ====================================================================
+                */
+
+                .hero-section {
+                    width: 100%;
+                }
+
+                .hero-chart-container {
+                    position: relative;
+                    display: flex;
+                    align-items: stretch;
+                    justify-content: center;
+                    width: min(100%, var(--hero-chart-max-width));
+                    height: var(--hero-chart-height);
+                    margin: 0 auto;
+                    background: var(--hero-chart-background);
+                }
+
+                .hero-chart {
+                    display: block;
+                    width: 100%;
+                    height: 100%;
+                    overflow: visible;
+                }
+
+                .hero-chart-placeholder {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 100%;
+                    min-height: 100%;
+                    border-bottom: 1px solid var(--report-soft-border-color);
+                    color: var(--report-muted-text-color);
+                    font-size: var(--report-small-font-size);
+                    letter-spacing: 0.04em;
+                    text-transform: uppercase;
+                }
+
+                /*
+                ====================================================================
+                SUMMARY / DETAILED VIEW TOGGLE
+                ====================================================================
+                */
+
+                .view-toggle-row {
+                    display: flex;
+                    justify-content: center;
+                    width: 100%;
+                    margin: 18px 0 var(--report-section-gap);
+                }
+
+                .view-toggle-button {
+                    min-height: var(--view-toggle-height);
+                    padding:
+                        0
+                        var(--view-toggle-horizontal-padding);
+                    border: 1px solid var(--report-border-color);
+                    border-radius: var(--view-toggle-border-radius);
+                    background: var(--report-surface-color);
+                    cursor: pointer;
+                    transition:
+                        background-color 150ms ease,
+                        border-color 150ms ease,
+                        transform 150ms ease;
+                }
+
+                .view-toggle-button:hover {
+                    border-color: var(--report-muted-text-color);
+                    background: var(--report-hover-color);
+                }
+
+                .view-toggle-button:active {
+                    transform: translateY(1px);
+                }
+
+                .view-toggle-button:focus-visible,
+                .detail-nav-button:focus-visible {
+                    outline: 3px solid color-mix(
+                        in srgb,
+                        var(--report-accent-color) 32%,
+                        transparent
+                    );
+                    outline-offset: 3px;
+                }
+
+                /*
+                ====================================================================
+                SUMMARY TABLE GRID
+                ====================================================================
+                */
+
+                .summary-view {
+                    display: block;
+                }
+
+                .summary-view[hidden],
+                .detailed-view[hidden] {
+                    display: none;
+                }
+
+                .summary-table-row {
+                    display: grid;
+                    align-items: stretch;
+                    gap:
+                        var(--summary-table-row-gap)
+                        var(--summary-table-column-gap);
+                    width: 100%;
+                }
+
+                .summary-table-row-primary {
+                    grid-template-columns: repeat(3, minmax(0, 1fr));
+                }
+
+                .summary-table-row-secondary {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                    max-width: calc(
+                        (
+                            2 * (
+                                100% - 2 * var(--summary-table-column-gap)
+                            )
+                        ) / 3 + var(--summary-table-column-gap)
+                    );
+                    margin-top: var(--summary-table-row-gap);
+                }
+
+                /*
+                Each table card stretches to the height of the tallest card in its
+                grid row. This creates the requested aligned 1 × 3 rectangle.
+                */
+                .table-card {
+                    display: flex;
+                    flex-direction: column;
+                    min-width: 0;
+                    min-height: var(--report-table-card-min-height);
+                    padding: var(--report-table-card-padding);
+                    border: 1px solid var(--report-soft-border-color);
+                    border-radius: var(--report-table-card-border-radius);
+                    background: var(--report-surface-color);
+                }
+
+                .table-card-title {
+                    margin: 0 0 16px;
+                    font-size: 0.94rem;
+                    font-weight: 650;
+                    line-height: 1.25;
+                    letter-spacing: -0.01em;
+                }
+
+                .table-scroll-container {
+                    width: 100%;
+                    min-width: 0;
+                    overflow-x: auto;
+                }
+
+                /*
+                ====================================================================
+                SHARED TABLE STYLING
+                ====================================================================
+
+                The primary table-density variables are defined in :root:
+                    --report-table-cell-padding-vertical
+                    --report-table-cell-padding-horizontal
+                    --report-table-row-line-height
+                */
+
+                .report-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    border-spacing: 0;
+                    font-size: 0.86rem;
+                    line-height: var(--report-table-row-line-height);
+                }
+
+                .report-table thead th {
+                    padding:
+                        var(--report-table-cell-padding-vertical)
+                        var(--report-table-cell-padding-horizontal);
+                    border-bottom: 1px solid var(--report-border-color);
+                    color: var(--report-muted-text-color);
+                    font-size: 0.74rem;
+                    font-weight: 650;
+                    letter-spacing: 0.035em;
+                    text-align: left;
+                    text-transform: uppercase;
+                    vertical-align: bottom;
+                    white-space: nowrap;
+                }
+
+                .report-table tbody td {
+                    padding:
+                        var(--report-table-cell-padding-vertical)
+                        var(--report-table-cell-padding-horizontal);
+                    border-bottom: 1px solid var(--report-soft-border-color);
+                    text-align: left;
+                    vertical-align: top;
+                }
+
+                .report-table tbody tr:last-child td {
+                    border-bottom: 0;
+                }
+
+                .report-table tbody tr:hover {
+                    background: var(--report-hover-color);
+                }
+
+                /*
+                Keep the raw forecast output compact vertically. The final two
+                columns are Memo Directives and Memo, which are intentionally
+                wide and horizontally scrollable instead of wrapping.
+                */
+                .report-table-forecast-output th,
+                .report-table-forecast-output td {
+                    white-space: nowrap;
+                }
+
+                .report-table-forecast-output th:nth-last-child(2),
+                .report-table-forecast-output td:nth-last-child(2) {
+                    min-width: 1200px;
+                }
+
+                .report-table-forecast-output th:last-child,
+                .report-table-forecast-output td:last-child {
+                    min-width: 720px;
+                }
+
+                .report-table-empty {
+                    display: flex;
+                    align-items: center;
+                    min-height: 58px;
+                    color: var(--report-muted-text-color);
+                    font-size: var(--report-small-font-size);
+                }
+
+                /*
+                ====================================================================
+                DETAILED VIEW
+                ====================================================================
+                */
+
+                .detailed-view {
+                    width: 100%;
+                }
+
+                .detail-navbar-container {
+                    position: sticky;
+                    top: 0;
+                    z-index: 10;
+                    width: 100%;
+                    margin-bottom: var(--detail-section-spacing);
+                    padding: 8px 0;
+                    background:
+                        color-mix(
+                            in srgb,
+                            var(--report-page-background) 94%,
+                            transparent
+                        );
+                    backdrop-filter: blur(10px);
+                }
+
+                .detail-navbar {
+                    display: flex;
+                    align-items: center;
+                    width: 100%;
+                    min-height: var(--detail-navbar-height);
+                    overflow-x: auto;
+                    border-bottom: 1px solid var(--report-border-color);
+                    scrollbar-width: thin;
+                    justify-content: center;
+                }
+
+                .detail-nav-button {
+                    flex: 0 0 auto;
+                    min-height: var(--detail-navbar-height);
+                    padding: 0 15px;
+                    border: 0;
+                    border-bottom: 2px solid transparent;
+                    background: transparent;
+                    color: var(--report-muted-text-color);
+                    cursor: pointer;
+                    font-size: 0.83rem;
+                    font-weight: 550;
+                    white-space: nowrap;
+                }
+
+                .detail-nav-button:hover {
+                    color: var(--report-text-color);
+                    background: var(--report-hover-color);
+                }
+
+                .detail-nav-button.is-active {
+                    border-bottom-color: var(--report-accent-color);
+                    color: var(--report-text-color);
+                }
+
+                .detail-content {
+                    width: min(100%, var(--detail-content-max-width));
+                    margin: 0 auto;
+                }
+
+                .detail-page {
+                    display: none;
+                    width: 100%;
+                }
+
+                .detail-page.is-active {
+                    display: block;
+                }
+
+                .detail-page-header {
+                    margin-bottom: 22px;
+                }
+
+                .detail-page-title {
+                    margin: 0;
+                    font-size: 1.55rem;
+                    font-weight: 650;
+                    letter-spacing: -0.02em;
+                }
+
+                .detail-page-text {
+                    max-width: 940px;
+                    line-height: 1.65;
+                    white-space: pre-line;
+                }
+
+                .detail-page-text:empty {
+                    display: none;
+                }
+
+                .detail-page-text-above {
+                    margin-bottom: 26px;
+                }
+
+                .detail-page-text-below {
+                    margin-top: 26px;
+                }
+
+                .detail-page-plots {
+                    width: 100%;
+                    min-height: 320px;
+                    border-bottom: 1px solid var(--report-soft-border-color);
+                }
+
+                .detail-line-chart-container {
+                    position: relative;
+                    width: 100%;
+                    height: clamp(390px, 47vh, 650px);
+                }
+
+                .detail-line-chart {
+                    width: 100%;
+                    height: 100%;
+                }
+
+                .detailed-primary-table {
+                    margin-top: var(--detail-section-spacing);
+                }
+
+                .detailed-additional-sections {
+                    display: grid;
+                    grid-template-columns: minmax(0, 1fr);
+                    gap: var(--detail-section-spacing);
+                    margin-top: var(--detail-section-spacing);
+                }
+
+                .last-day-table-card .report-table th,
+                .last-day-table-card .report-table td {
+                    text-align: center;
+                }
+
+                .last-day-summary-card .report-table {
+                    table-layout: auto;
+                    min-width: max-content;
+                    font-size: 1.72rem;
+                }
+
+                .last-day-summary-card .report-table thead th {
+                    font-size: 1.48rem;
+                }
+
+                .last-day-code-card pre {
+                    overflow-x: auto;
+                    margin: 16px 0 0;
+                    padding: 18px;
+                    border: 1px solid var(--report-soft-border-color);
+                    border-radius: 8px;
+                    background: var(--report-page-background);
+                    font-family: var(--report-monospace-font-family);
+                    line-height: 1.5;
+                }
+
+                .sankey-view-toggle {
+                    display: flex;
+                    justify-content: center;
+                    gap: 8px;
+                    margin-bottom: 18px;
+                }
+
+                .sankey-toggle-button {
+                    padding: 8px 18px;
+                    border: 1px solid var(--report-border-color);
+                    border-radius: 999px;
+                    background: transparent;
+                    cursor: pointer;
+                }
+
+                .sankey-toggle-button.is-active {
+                    border-color: var(--report-accent-color);
+                    background: var(--report-accent-color);
+                    color: var(--report-accent-text-color);
+                }
+
+                .detailed-table-section {
+                    min-width: 0;
+                    padding-top: 4px;
+                }
+
+                .detailed-table-section-title {
+                    margin: 0 0 14px;
+                    font-size: 1rem;
+                    font-weight: 650;
+                    letter-spacing: -0.01em;
+                }
+
+                /*
+                ====================================================================
+                RESPONSIVE LAYOUT
+                ====================================================================
+                */
+
+                @media (max-width: 1050px) {
+                    .summary-table-row-primary {
+                        grid-template-columns: repeat(2, minmax(0, 1fr));
+                    }
+
+                    .summary-table-row-primary .table-card:last-child {
+                        grid-column: 1 / -1;
+                    }
+
+                    .summary-table-row-secondary {
+                        max-width: none;
+                    }
+                }
+
+                @media (max-width: 760px) {
+                    :root {
+                        --report-page-side-padding: 18px;
+                        --report-page-top-padding: 26px;
+                        --hero-chart-height: 380px;
+                    }
+
+                    .report-header {
+                        grid-template-columns: 1fr;
+                        gap: 20px;
+                    }
+
+                    .scenario-identity-left,
+                    .scenario-identity-right {
+                        grid-column: 1;
+                        justify-self: start;
+                        text-align: left;
+                    }
+
+                    .summary-table-row-primary,
+                    .summary-table-row-secondary {
+                        grid-template-columns: minmax(0, 1fr);
+                        max-width: none;
+                    }
+
+                    .summary-table-row-primary .table-card:last-child {
+                        grid-column: auto;
+                    }
+
+                    .report-table {
+                        min-width: 540px;
+                    }
+                }
+
+                @media (prefers-reduced-motion: reduce) {
+                    *,
+                    *::before,
+                    *::after {
+                        scroll-behavior: auto !important;
+                        transition-duration: 0.01ms !important;
+                        animation-duration: 0.01ms !important;
+                        animation-iteration-count: 1 !important;
+                    }
+                }
+
+                /*
+                Added for Hero Chart
+                */
+
+                .hero-axis {
+                    color: var(--report-muted-text-color);
+                    font-family: var(--report-font-family);
+                    font-size: 0.76rem;
+                }
+
+                .hero-axis path,
+                .hero-axis line {
+                    stroke: var(--report-border-color);
+                }
+
+                .hero-grid line {
+                    stroke: var(--report-soft-border-color);
+                    stroke-dasharray: 2 4;
+                }
+
+                .hero-grid path {
+                    display: none;
+                }
+
+                .hero-series-line {
+                    fill: none;
+                    stroke-linecap: round;
+                    stroke-linejoin: round;
+                }
+
+                .hero-today-guide {
+                    stroke: var(--report-border-color);
+                    stroke-width: 1;
+                    stroke-dasharray: 3 5;
+                }
+
+                .hero-today-dot {
+                    cursor: pointer;
+                    transform-box: fill-box;
+                    transform-origin: center;
+                    animation: hero-today-pulse 2.8s ease-in-out infinite;
+                }
+
+                .hero-transaction-dot {
+                    cursor: pointer;
+                }
+
+                .hero-milestone-dot {
+                    cursor: pointer;
+                }
+
+                .hero-chart-tooltip {
+                    position: absolute;
+                    z-index: 20;
+                    min-width: 150px;
+                    max-width: 260px;
+                    padding: 10px 12px;
+                    border: 1px solid var(--report-border-color);
+                    border-radius: 8px;
+                    background: var(--report-surface-color);
+                    box-shadow: 0 8px 24px rgb(0 0 0 / 10%);
+                    color: var(--report-text-color);
+                    font-size: 0.78rem;
+                    line-height: 1.5;
+                    pointer-events: none;
+                }
+
+                .hero-chart-tooltip-row {
+                    display: flex;
+                    justify-content: space-between;
+                    gap: 18px;
+                }
+
+                .hero-chart-tooltip-label {
+                    color: var(--report-muted-text-color);
+                }
+
+                .hero-chart-tooltip-value {
+                    font-weight: 600;
+                    text-align: right;
+                }
+
+                @keyframes hero-today-pulse {
+                    0%,
+                    100% {
+                        transform: scale(1);
+                        opacity: 1;
+                    }
+
+                    50% {
+                        transform: scale(1.45);
+                        opacity: 0.62;
+                    }
+                }
+
+                @media (prefers-reduced-motion: reduce) {
+                    .hero-today-dot {
+                        animation: none;
+                    }
+                }
+            </style>
+        </head>
+
+        <body>
+            <main class="report-page">
+                <header class="report-header">
+                    <section class="scenario-identity scenario-identity-left">
+                        <h1 class="scenario-name">
+                            
+                        </h1>
+
+                        <p class="scenario-unique-id">
+                            000101_4_1_52e7c7210a
+                        </p>
+
+                        <p class="scenario-date-range">
+                            4 days : 2000-01-01 to 2000-01-05
+                        </p>
+                    </section>
+
+                    <!--
+                    Future comparison-report identity:
+
+                    <section class="scenario-identity scenario-identity-right">
+                        <h1 class="scenario-name">
+                            comparison scenario name
+                        </h1>
+
+                        <p class="scenario-unique-id">
+                            comparison unique ID
+                        </p>
+
+                        <p class="scenario-date-range">
+                            comparison date range
+                        </p>
+                    </section>
+                    -->
+                </header>
+
+                <div class="view-toggle-row">
+                    <button
+                        id="view-toggle-button"
+                        class="view-toggle-button"
+                        type="button"
+                        aria-controls="summary-view detailed-view"
+                        aria-expanded="false"
+                    >
+                        Detailed View
+                    </button>
+                </div>
+
+                <section class="hero-section">
+                    <div
+                        id="hero-chart-container"
+                        class="hero-chart-container"
+                    >
+                        
+                        <svg
+                            id="hero-chart"
+                            class="hero-chart"
+                            role="img"
+                            aria-label="Forecast account balances over time"
+                        ></svg>
+
+                        <div
+                            id="hero-chart-tooltip"
+                            class="hero-chart-tooltip"
+                            hidden
+                        ></div>
+
+                    </div>
+                </section>
+
+                <!--
+                ====================================================================
+                SUMMARY VIEW
+                ====================================================================
+                -->
+
+                <section
+                    id="summary-view"
+                    class="summary-view"
+                    aria-label="Forecast summary"
+                >
+                    <div
+                        class="
+                            summary-table-row
+                            summary-table-row-primary
+                        "
+                    >
+                        
+                <section class="table-card">
+                    <h2 class="table-card-title">Final Account Balances</h2>
+                    <div class="table-scroll-container">
+                        <table class="dataframe report-table report-table-final-account-balances">
+  <thead>
+    <tr style="text-align: left;">
+      <th>Account</th>
+      <th>Balance</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Checking</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>Net Worth</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>Loan Total</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>CC Debt Total</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>Liquid Total</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+                    </div>
+                </section>
+            
+
+                        
+                <section class="table-card">
+                    <h2 class="table-card-title">Margin Metrics</h2>
+                    <div class="table-scroll-container">
+                        <table class="dataframe report-table report-table-margin-metrics">
+  <thead>
+    <tr style="text-align: left;">
+      <th>Metric</th>
+      <th>Amount</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Initial Cash Reserve</td>
+      <td>$0.00</td>
+    </tr>
+    <tr>
+      <td>Initial Reserve Credit</td>
+      <td>$0.00</td>
+    </tr>
+    <tr>
+      <td>Initial Investments</td>
+      <td>$0.00</td>
+    </tr>
+    <tr>
+      <td>Final Cash Reserve</td>
+      <td>$0.00</td>
+    </tr>
+    <tr>
+      <td>Final Available Credit</td>
+      <td>$0.00</td>
+    </tr>
+    <tr>
+      <td>Final Investments</td>
+      <td>$0.00</td>
+    </tr>
+  </tbody>
+</table>
+                    </div>
+                </section>
+            
+
+                        
+                <section class="table-card">
+                    <h2 class="table-card-title">Milestones</h2>
+                    <div class="table-scroll-container">
+                        <table class="dataframe report-table report-table-milestone-dates">
+  <thead>
+    <tr style="text-align: left;">
+      <th>Milestone</th>
+      <th>Date</th>
+      <th>Time</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Composite Milestone</td>
+      <td>2000-01-05</td>
+      <td>4 days</td>
+    </tr>
+  </tbody>
+</table>
+                    </div>
+                </section>
+            
+
+                    </div>
+
+                    <div
+                        class="
+                            summary-table-row
+                            summary-table-row-secondary
+                        "
+                    >
+
+                        
+                <section class="table-card">
+                    <h2 class="table-card-title">Policies</h2>
+                    <div class="table-scroll-container">
+                        <div class="report-table-empty">No policies configured.</div>
+                    </div>
+                </section>
+            
+
+                        
+                <section class="table-card">
+                    <h2 class="table-card-title">Forecast Metadata</h2>
+                    <div class="table-scroll-container">
+                        <table class="dataframe report-table report-table-forecast-metadata">
+  <thead>
+    <tr style="text-align: left;">
+      <th>Stat</th>
+      <th>Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Start</td>
+      <td>2026-07-16 15:55:40.829618</td>
+    </tr>
+    <tr>
+      <td>End</td>
+      <td>2026-07-16 15:55:40.944811</td>
+    </tr>
+    <tr>
+      <td>Elapsed</td>
+      <td>115,193 microseconds</td>
+    </tr>
+  </tbody>
+</table>
+                    </div>
+                </section>
+            
+                    </div>
+                </section>
+
+                <!--
+                ====================================================================
+                DETAILED VIEW
+                ====================================================================
+                -->
+
+                <section
+                    id="detailed-view"
+                    class="detailed-view"
+                    aria-label="Detailed forecast report"
+                    hidden
+                >
+                    <div class="detail-navbar-container">
+                        <nav
+                            class="detail-navbar"
+                            aria-label="Detailed report sections"
+                            role="tablist"
+                        >
+                            <button
+                                id="detail-tab-parameters"
+                                class="detail-nav-button is-active"
+                                type="button"
+                                role="tab"
+                                aria-selected="true"
+                                aria-controls="detail-page-parameters"
+                                data-detail-target="parameters"
+                            >
+                                Parameters
+                            </button>
+
+                            <button
+                                id="detail-tab-policies"
+                                class="detail-nav-button"
+                                type="button"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="detail-page-policies"
+                                data-detail-target="policies"
+                            >
+                                Policies
+                            </button>
+
+                            <button
+                                id="detail-tab-output_data"
+                                class="detail-nav-button"
+                                type="button"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="detail-page-output_data"
+                                data-detail-target="output_data"
+                            >
+                                Output Data
+                            </button>
+
+                            <button
+                                id="detail-tab-net_worth"
+                                class="detail-nav-button"
+                                type="button"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="detail-page-net_worth"
+                                data-detail-target="net_worth"
+                            >
+                                Net Worth
+                            </button>
+
+                            <button
+                                id="detail-tab-net_gain_and_loss"
+                                class="detail-nav-button"
+                                type="button"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="detail-page-net_gain_and_loss"
+                                data-detail-target="net_gain_and_loss"
+                            >
+                                Net Gain &amp; Loss
+                            </button>
+
+                            <button
+                                id="detail-tab-account_type"
+                                class="detail-nav-button"
+                                type="button"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="detail-page-account_type"
+                                data-detail-target="account_type"
+                            >
+                                Account Type
+                            </button>
+
+                            <button
+                                id="detail-tab-interest"
+                                class="detail-nav-button"
+                                type="button"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="detail-page-interest"
+                                data-detail-target="interest"
+                            >
+                                Interest &amp; Investment Returns
+                            </button>
+
+                            <button
+                                id="detail-tab-milestones"
+                                class="detail-nav-button"
+                                type="button"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="detail-page-milestones"
+                                data-detail-target="milestones"
+                            >
+                                Milestones
+                            </button>
+
+                            <button
+                                id="detail-tab-sankey"
+                                class="detail-nav-button"
+                                type="button"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="detail-page-sankey"
+                                data-detail-target="sankey"
+                            >
+                                Sankey
+                            </button>
+
+                            <button
+                                id="detail-tab-all"
+                                class="detail-nav-button"
+                                type="button"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="detail-page-all"
+                                data-detail-target="all"
+                            >
+                                All
+                            </button>
+
+                            <button
+                                id="detail-tab-transaction_schedule"
+                                class="detail-nav-button"
+                                type="button"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="detail-page-transaction_schedule"
+                                data-detail-target="transaction_schedule"
+                            >
+                                Transaction Schedule
+                            </button>
+
+                            <button
+                                id="detail-tab-last_day"
+                                class="detail-nav-button"
+                                type="button"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="detail-page-last_day"
+                                data-detail-target="last_day"
+                            >
+                                Last Day
+                            </button>
+                        </nav>
+                    </div>
+
+                    <div class="detail-content">
+                        <section
+                    id="detail-page-parameters"
+                    class="detail-page is-active"
+                    data-detail-page="parameters"
+                    aria-labelledby="detail-tab-parameters"
+                >
+                    <header class="detail-page-header">
+                        <h2 class="detail-page-title">
+                            Parameters
+                        </h2>
+                    </header>
+                    <div class="detail-page-text detail-page-text-above"></div>
+                    
+                    <div class="detail-page-text detail-page-text-below"></div>
+                    
+                    <div class="detailed-additional-sections">
+                        
+                <section class="table-card">
+                    <h2 class="table-card-title">Account Set</h2>
+                    <div class="table-scroll-container">
+                        <table class="dataframe report-table report-table-initial-account-set">
+  <thead>
+    <tr style="text-align: left;">
+      <th>Name</th>
+      <th>Balance</th>
+      <th>Min_Balance</th>
+      <th>Max_Balance</th>
+      <th>Account_Type</th>
+      <th>Billing_Start_Date</th>
+      <th>Interest_Type</th>
+      <th>APR</th>
+      <th>Interest_interval</th>
+      <th>Minimum_Payment</th>
+      <th>Primary_Checking_Ind</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Checking</td>
+      <td>1200</td>
+      <td>0</td>
+      <td>10000</td>
+      <td>checking</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>True</td>
+    </tr>
+  </tbody>
+</table>
+                    </div>
+                </section>
+            
+                <section class="table-card">
+                    <h2 class="table-card-title">Line Items</h2>
+                    <div class="table-scroll-container">
+                        <table class="dataframe report-table report-table-initial-line-item-set">
+  <thead>
+    <tr style="text-align: left;">
+      <th>Start_Date</th>
+      <th>End_Date</th>
+      <th>Priority</th>
+      <th>interval</th>
+      <th>Amount</th>
+      <th>Memo</th>
+      <th>Income_Flag</th>
+      <th>Deferrable</th>
+      <th>Partial_Payment_Allowed</th>
+      <th>Recurrence_Key</th>
+      <th>Recurrence_Anchor</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>2000-01-01</td>
+      <td>2000-01-05</td>
+      <td>1</td>
+      <td>daily</td>
+      <td>300</td>
+      <td>Test Txn</td>
+      <td>False</td>
+      <td>None</td>
+      <td>None</td>
+      <td>test txn|daily</td>
+      <td>2000-01-01</td>
+    </tr>
+  </tbody>
+</table>
+                    </div>
+                </section>
+            
+                <section class="table-card">
+                    <h2 class="table-card-title">Memo Rules</h2>
+                    <div class="table-scroll-container">
+                        <table class="dataframe report-table report-table-initial-memo-rule-set">
+  <thead>
+    <tr style="text-align: left;">
+      <th>Memo_Regex</th>
+      <th>Account_From</th>
+      <th>Account_To</th>
+      <th>Transaction_Priority</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>.*</td>
+      <td>Checking</td>
+      <td>None</td>
+      <td>1.0</td>
+    </tr>
+  </tbody>
+</table>
+                    </div>
+                </section>
+            
+                    </div>
+                </section><section
+                    id="detail-page-policies"
+                    class="detail-page"
+                    data-detail-page="policies"
+                    aria-labelledby="detail-tab-policies"
+                >
+                    <header class="detail-page-header">
+                        <h2 class="detail-page-title">
+                            Policies
+                        </h2>
+                    </header>
+                    <div class="detail-page-text detail-page-text-above"></div>
+                    
+                    <div class="detail-page-text detail-page-text-below"></div>
+                    
+                    <div class="detailed-additional-sections">
+                        
+                <section class="table-card">
+                    <h2 class="table-card-title">Policy Regime Timeline</h2>
+                    <div class="table-scroll-container">
+                        <div class="report-table-empty">No compiled policy regimes recorded.</div>
+                    </div>
+                </section>
+            
+                <section class="table-card">
+                    <h2 class="table-card-title">Safety Decision Audit</h2>
+                    <div class="table-scroll-container">
+                        <div class="report-table-empty">No optimized policy decisions recorded.</div>
+                    </div>
+                </section>
+            
+                <section class="table-card">
+                    <h2 class="table-card-title">Minimum Checking Balance</h2>
+                    <div class="table-scroll-container">
+                        <div class="report-table-empty">No policies configured.</div>
+                    </div>
+                </section>
+            
+                <section class="table-card">
+                    <h2 class="table-card-title">Current Statement Balance Payment</h2>
+                    <div class="table-scroll-container">
+                        <div class="report-table-empty">No policies configured.</div>
+                    </div>
+                </section>
+            
+                <section class="table-card">
+                    <h2 class="table-card-title">Surplus Debt Payment</h2>
+                    <div class="table-scroll-container">
+                        <div class="report-table-empty">No policies configured.</div>
+                    </div>
+                </section>
+            
+                <section class="table-card">
+                    <h2 class="table-card-title">Fixed Monthly Investment</h2>
+                    <div class="table-scroll-container">
+                        <div class="report-table-empty">No policies configured.</div>
+                    </div>
+                </section>
+            
+                <section class="table-card">
+                    <h2 class="table-card-title">Income Percentage Investment</h2>
+                    <div class="table-scroll-container">
+                        <div class="report-table-empty">No policies configured.</div>
+                    </div>
+                </section>
+            
+                <section class="table-card">
+                    <h2 class="table-card-title">Surplus Investment</h2>
+                    <div class="table-scroll-container">
+                        <div class="report-table-empty">No policies configured.</div>
+                    </div>
+                </section>
+            
+                <section class="table-card">
+                    <h2 class="table-card-title">Surplus Saving</h2>
+                    <div class="table-scroll-container">
+                        <div class="report-table-empty">No policies configured.</div>
+                    </div>
+                </section>
+            
+                <section class="table-card">
+                    <h2 class="table-card-title">Investment Contribution Cap</h2>
+                    <div class="table-scroll-container">
+                        <div class="report-table-empty">No policies configured.</div>
+                    </div>
+                </section>
+            
+                    </div>
+                </section><section
+                    id="detail-page-output_data"
+                    class="detail-page"
+                    data-detail-page="output_data"
+                    aria-labelledby="detail-tab-output_data"
+                >
+                    <header class="detail-page-header">
+                        <h2 class="detail-page-title">
+                            Output Data
+                        </h2>
+                    </header>
+                    <div class="detail-page-text detail-page-text-above"></div>
+                    
+                    <div class="detail-page-text detail-page-text-below"></div>
+                    
+                    <div class="detailed-additional-sections">
+                        
+                <section class="table-card">
+                    <h2 class="table-card-title">Forecast Output</h2>
+                    <div class="table-scroll-container">
+                        <table class="dataframe report-table report-table-forecast-output">
+  <thead>
+    <tr style="text-align: left;">
+      <th>Date</th>
+      <th>Checking</th>
+      <th>Interest Accrued</th>
+      <th>Investment Returns</th>
+      <th>Net Gain</th>
+      <th>Net Loss</th>
+      <th>Net Worth</th>
+      <th>Loan Total</th>
+      <th>CC Debt Total</th>
+      <th>Liquid Total</th>
+      <th>Next Income Date</th>
+      <th>Memo Directives</th>
+      <th>Memo</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>2000-01-01</td>
+      <td>1200.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>1200.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>1200.0</td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>2000-01-02</td>
+      <td>900.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>300.0</td>
+      <td>900.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>900.0</td>
+      <td></td>
+      <td></td>
+      <td>Test Txn (Checking -$300.00)</td>
+    </tr>
+    <tr>
+      <td>2000-01-03</td>
+      <td>600.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>300.0</td>
+      <td>600.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>600.0</td>
+      <td></td>
+      <td></td>
+      <td>Test Txn (Checking -$300.00)</td>
+    </tr>
+    <tr>
+      <td>2000-01-04</td>
+      <td>300.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>300.0</td>
+      <td>300.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>300.0</td>
+      <td></td>
+      <td></td>
+      <td>Test Txn (Checking -$300.00)</td>
+    </tr>
+    <tr>
+      <td>2000-01-05</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>300.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td></td>
+      <td></td>
+      <td>Test Txn (Checking -$300.00)</td>
+    </tr>
+  </tbody>
+</table>
+                    </div>
+                </section>
+            
+                    </div>
+                </section><section
+                    id="detail-page-net_worth"
+                    class="detail-page"
+                    data-detail-page="net_worth"
+                    aria-labelledby="detail-tab-net_worth"
+                >
+                    <header class="detail-page-header">
+                        <h2 class="detail-page-title">
+                            Net Worth
+                        </h2>
+                    </header>
+                    <div class="detail-page-text detail-page-text-above">Net Worth fell by $-1,200.00 over 4 days, averaging $-300.00 per day.</div>
+                    
+                    <div
+                        id="net_worth-plots"
+                        class="detail-page-plots"
+                        data-plot-page="net_worth"
+                    >
+                        
+                        <div class="detail-line-chart-container">
+                            <svg
+                                id="net_worth-chart"
+                                class="hero-chart detail-line-chart"
+                                role="img"
+                                aria-label="Net Worth line chart"
+                            ></svg>
+                            <div
+                                id="net_worth-chart-tooltip"
+                                class="hero-chart-tooltip"
+                                hidden
+                            ></div>
+                        </div>
+                    
+                    </div>
+                
+                    <div class="detail-page-text detail-page-text-below"></div>
+                    
+                    <section class="detailed-primary-table">
+                        <div class="table-scroll-container">
+                            <div class="report-table-empty">No data available.</div>
+                        </div>
+                    </section>
+                
+                    <div class="detailed-additional-sections">
+                        
+                    </div>
+                </section><section
+                    id="detail-page-net_gain_and_loss"
+                    class="detail-page"
+                    data-detail-page="net_gain_and_loss"
+                    aria-labelledby="detail-tab-net_gain_and_loss"
+                >
+                    <header class="detail-page-header">
+                        <h2 class="detail-page-title">
+                            Net Gain &amp; Loss
+                        </h2>
+                    </header>
+                    <div class="detail-page-text detail-page-text-above"></div>
+                    
+                    <div
+                        id="net_gain_and_loss-plots"
+                        class="detail-page-plots"
+                        data-plot-page="net_gain_and_loss"
+                    >
+                        
+                        <div class="detail-line-chart-container">
+                            <svg
+                                id="net_gain_and_loss-chart"
+                                class="hero-chart detail-line-chart"
+                                role="img"
+                                aria-label="Net Gain &amp; Loss line chart"
+                            ></svg>
+                            <div
+                                id="net_gain_and_loss-chart-tooltip"
+                                class="hero-chart-tooltip"
+                                hidden
+                            ></div>
+                        </div>
+                    
+                    </div>
+                
+                    <div class="detail-page-text detail-page-text-below"></div>
+                    
+                    <section class="detailed-primary-table">
+                        <div class="table-scroll-container">
+                            <div class="report-table-empty">No data available.</div>
+                        </div>
+                    </section>
+                
+                    <div class="detailed-additional-sections">
+                        
+                    </div>
+                </section><section
+                    id="detail-page-account_type"
+                    class="detail-page"
+                    data-detail-page="account_type"
+                    aria-labelledby="detail-tab-account_type"
+                >
+                    <header class="detail-page-header">
+                        <h2 class="detail-page-title">
+                            Account Type
+                        </h2>
+                    </header>
+                    <div class="detail-page-text detail-page-text-above">Liquid Total fell by $-1,200.00 over 4 days, averaging $-300.00 per day.
+CC Debt Total did not change.
+Loan Total did not change.</div>
+                    
+                    <div
+                        id="account_type-plots"
+                        class="detail-page-plots"
+                        data-plot-page="account_type"
+                    >
+                        
+                        <div class="detail-line-chart-container">
+                            <svg
+                                id="account_type-chart"
+                                class="hero-chart detail-line-chart"
+                                role="img"
+                                aria-label="Account Type line chart"
+                            ></svg>
+                            <div
+                                id="account_type-chart-tooltip"
+                                class="hero-chart-tooltip"
+                                hidden
+                            ></div>
+                        </div>
+                    
+                    </div>
+                
+                    <div class="detail-page-text detail-page-text-below"></div>
+                    
+                    <section class="detailed-primary-table">
+                        <div class="table-scroll-container">
+                            <div class="report-table-empty">No data available.</div>
+                        </div>
+                    </section>
+                
+                    <div class="detailed-additional-sections">
+                        
+                    </div>
+                </section><section
+                    id="detail-page-interest"
+                    class="detail-page"
+                    data-detail-page="interest"
+                    aria-labelledby="detail-tab-interest"
+                >
+                    <header class="detail-page-header">
+                        <h2 class="detail-page-title">
+                            Interest
+                        </h2>
+                    </header>
+                    <div class="detail-page-text detail-page-text-above">Interest accrued: $0.00. Investment returns: $0.00.</div>
+                    
+                    <div
+                        id="interest-plots"
+                        class="detail-page-plots"
+                        data-plot-page="interest"
+                    >
+                        
+                        <div class="detail-line-chart-container">
+                            <svg
+                                id="interest-chart"
+                                class="hero-chart detail-line-chart"
+                                role="img"
+                                aria-label="Interest line chart"
+                            ></svg>
+                            <div
+                                id="interest-chart-tooltip"
+                                class="hero-chart-tooltip"
+                                hidden
+                            ></div>
+                        </div>
+                    
+                    </div>
+                
+                    <div class="detail-page-text detail-page-text-below"></div>
+                    
+                    <section class="detailed-primary-table">
+                        <div class="table-scroll-container">
+                            <div class="report-table-empty">No data available.</div>
+                        </div>
+                    </section>
+                
+                    <div class="detailed-additional-sections">
+                        
+                    </div>
+                </section><section
+                    id="detail-page-milestones"
+                    class="detail-page"
+                    data-detail-page="milestones"
+                    aria-labelledby="detail-tab-milestones"
+                >
+                    <header class="detail-page-header">
+                        <h2 class="detail-page-title">
+                            Milestones
+                        </h2>
+                    </header>
+                    <div class="detail-page-text detail-page-text-above"></div>
+                    
+                    <div class="detail-page-text detail-page-text-below"></div>
+                    
+                    <div class="detailed-additional-sections">
+                        
+                <section class="table-card">
+                    <h2 class="table-card-title">Achievement Dates</h2>
+                    <div class="table-scroll-container">
+                        <table class="dataframe report-table report-table-milestone-dates">
+  <thead>
+    <tr style="text-align: left;">
+      <th>Milestone</th>
+      <th>Date</th>
+      <th>Time</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Composite Milestone</td>
+      <td>2000-01-05</td>
+      <td>4 days</td>
+    </tr>
+  </tbody>
+</table>
+                    </div>
+                </section>
+            
+                <section class="table-card">
+                    <h2 class="table-card-title">Composite Milestone Definitions</h2>
+                    <div class="table-scroll-container">
+                        <table class="dataframe report-table report-table-composite-milestones">
+  <thead>
+    <tr style="text-align: left;">
+      <th>Composite_Milestone_Name</th>
+      <th>Milestone_Type</th>
+      <th>Milestone_Name</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Composite Milestone</td>
+      <td>Account</td>
+      <td>Account Milestone</td>
+    </tr>
+    <tr>
+      <td>Composite Milestone</td>
+      <td>Memo</td>
+      <td>Memo Milestone</td>
+    </tr>
+  </tbody>
+</table>
+                    </div>
+                </section>
+            
+                <section class="table-card">
+                    <h2 class="table-card-title">Account Milestone Definitions</h2>
+                    <div class="table-scroll-container">
+                        <div class="report-table-empty">No data available.</div>
+                    </div>
+                </section>
+            
+                <section class="table-card">
+                    <h2 class="table-card-title">Memo Milestone Definitions</h2>
+                    <div class="table-scroll-container">
+                        <div class="report-table-empty">No data available.</div>
+                    </div>
+                </section>
+            
+                    </div>
+                </section><section
+                    id="detail-page-sankey"
+                    class="detail-page"
+                    data-detail-page="sankey"
+                    aria-labelledby="detail-tab-sankey"
+                >
+                    <header class="detail-page-header">
+                        <h2 class="detail-page-title">
+                            Sankey
+                        </h2>
+                    </header>
+                    <div class="detail-page-text detail-page-text-above"></div>
+                    
+                    <div
+                        id="sankey-plots"
+                        class="detail-page-plots"
+                        data-plot-page="sankey"
+                    >
+                        
+                        <div class="sankey-view-toggle" role="tablist" aria-label="Sankey grouping">
+                            <button class="sankey-toggle-button is-active" type="button" data-sankey-mode="transaction">Transaction</button>
+                            <button class="sankey-toggle-button" type="button" data-sankey-mode="account">Account</button>
+                        </div>
+                        <div class="detail-line-chart-container sankey-chart-container">
+                            <svg id="sankey-chart" class="hero-chart detail-line-chart" role="img" aria-label="Income flow Sankey diagram"></svg>
+                        </div>
+                    
+                    </div>
+                
+                    <div class="detail-page-text detail-page-text-below"></div>
+                    
+                    <section class="detailed-primary-table">
+                        <div class="table-scroll-container">
+                            <div class="report-table-empty">No data available.</div>
+                        </div>
+                    </section>
+                
+                    <div class="detailed-additional-sections">
+                        
+                    </div>
+                </section><section
+                    id="detail-page-all"
+                    class="detail-page"
+                    data-detail-page="all"
+                    aria-labelledby="detail-tab-all"
+                >
+                    <header class="detail-page-header">
+                        <h2 class="detail-page-title">
+                            All
+                        </h2>
+                    </header>
+                    <div class="detail-page-text detail-page-text-above"></div>
+                    
+                    <div
+                        id="all-plots"
+                        class="detail-page-plots"
+                        data-plot-page="all"
+                    >
+                        
+                        <div class="detail-line-chart-container">
+                            <svg
+                                id="all-chart"
+                                class="hero-chart detail-line-chart"
+                                role="img"
+                                aria-label="All line chart"
+                            ></svg>
+                            <div
+                                id="all-chart-tooltip"
+                                class="hero-chart-tooltip"
+                                hidden
+                            ></div>
+                        </div>
+                    
+                    </div>
+                
+                    <div class="detail-page-text detail-page-text-below"></div>
+                    
+                    <section class="detailed-primary-table">
+                        <div class="table-scroll-container">
+                            <div class="report-table-empty">No data available.</div>
+                        </div>
+                    </section>
+                
+                    <div class="detailed-additional-sections">
+                        
+                    </div>
+                </section><section
+                    id="detail-page-transaction_schedule"
+                    class="detail-page"
+                    data-detail-page="transaction_schedule"
+                    aria-labelledby="detail-tab-transaction_schedule"
+                >
+                    <header class="detail-page-header">
+                        <h2 class="detail-page-title">
+                            Transaction Schedule
+                        </h2>
+                    </header>
+                    <div class="detail-page-text detail-page-text-above"></div>
+                    
+                    <div class="detail-page-text detail-page-text-below"></div>
+                    
+                    <div class="detailed-additional-sections">
+                        
+                <section class="table-card">
+                    <h2 class="table-card-title">Income</h2>
+                    <div class="table-scroll-container">
+                        <div class="report-table-empty">No data available.</div>
+                    </div>
+                </section>
+            
+                <section class="table-card">
+                    <h2 class="table-card-title">Non-Essential Transactions</h2>
+                    <div class="table-scroll-container">
+                        <div class="report-table-empty">No data available.</div>
+                    </div>
+                </section>
+            
+                <section class="table-card">
+                    <h2 class="table-card-title">Credit Card Payments</h2>
+                    <div class="table-scroll-container">
+                        <div class="report-table-empty">No data available.</div>
+                    </div>
+                </section>
+            
+                <section class="table-card">
+                    <h2 class="table-card-title">Credit Card Interest Payments</h2>
+                    <div class="table-scroll-container">
+                        <div class="report-table-empty">No data available.</div>
+                    </div>
+                </section>
+            
+                <section class="table-card">
+                    <h2 class="table-card-title">Loan Payments</h2>
+                    <div class="table-scroll-container">
+                        <div class="report-table-empty">No data available.</div>
+                    </div>
+                </section>
+            
+                <section class="table-card">
+                    <h2 class="table-card-title">All Transactions</h2>
+                    <div class="table-scroll-container">
+                        <table class="dataframe report-table report-table-all-transactions">
+  <thead>
+    <tr style="text-align: left;">
+      <th>Date</th>
+      <th>Priority</th>
+      <th>Amount</th>
+      <th>Memo</th>
+      <th>Income_Flag</th>
+      <th>Deferrable</th>
+      <th>Partial_Payment_Allowed</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>2000-01-01</td>
+      <td>1</td>
+      <td>300</td>
+      <td>Test Txn</td>
+      <td>False</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>2000-01-02</td>
+      <td>1</td>
+      <td>300</td>
+      <td>Test Txn</td>
+      <td>False</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>2000-01-03</td>
+      <td>1</td>
+      <td>300</td>
+      <td>Test Txn</td>
+      <td>False</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>2000-01-04</td>
+      <td>1</td>
+      <td>300</td>
+      <td>Test Txn</td>
+      <td>False</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>2000-01-05</td>
+      <td>1</td>
+      <td>300</td>
+      <td>Test Txn</td>
+      <td>False</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+  </tbody>
+</table>
+                    </div>
+                </section>
+            
+                    </div>
+                </section><section
+                    id="detail-page-last_day"
+                    class="detail-page"
+                    data-detail-page="last_day"
+                    aria-labelledby="detail-tab-last_day"
+                >
+                    <header class="detail-page-header">
+                        <h2 class="detail-page-title">
+                            Last Day
+                        </h2>
+                    </header>
+                    <div class="detail-page-text detail-page-text-above"></div>
+                    
+                    <div class="detail-page-text detail-page-text-below"></div>
+                    
+                    <div class="detailed-additional-sections">
+                        
+                <section class="table-card last-day-table-card last-day-summary-card">
+                    <h2 class="table-card-title">Account Type Summary</h2>
+                    <div class="table-scroll-container">
+                        <table class="dataframe report-table report-table-last-day-account-type-summary">
+  <thead>
+    <tr style="text-align: left;">
+      <th>Date</th>
+      <th>Liquid Total</th>
+      <th>CC Debt Total</th>
+      <th>Loan Total</th>
+      <th>Investment Total</th>
+      <th>Net Worth</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>2000-01-05</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+                    </div>
+                </section>
+            
+                <section class="table-card last-day-table-card">
+                    <h2 class="table-card-title">Accounts</h2>
+                    <div class="table-scroll-container">
+                        <table class="dataframe report-table report-table-last-day-accounts">
+  <thead>
+    <tr style="text-align: left;">
+      <th>Date</th>
+      <th>Checking</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>2000-01-05</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+                    </div>
+                </section>
+            <section class="table-card last-day-code-card"><h2 class="table-card-title">AccountSet Code</h2><pre><code>AccountSet.from_dict({&#x27;accounts&#x27;: [{&#x27;Name&#x27;: &#x27;Checking&#x27;,
+               &#x27;Balance&#x27;: 0.0,
+               &#x27;Min_Balance&#x27;: 0,
+               &#x27;Max_Balance&#x27;: 10000,
+               &#x27;Account_Type&#x27;: &#x27;checking&#x27;,
+               &#x27;Billing_Start_Date&#x27;: None,
+               &#x27;Interest_Type&#x27;: None,
+               &#x27;APR&#x27;: None,
+               &#x27;Interest_interval&#x27;: None,
+               &#x27;Minimum_Payment&#x27;: None,
+               &#x27;Primary_Checking_Ind&#x27;: True}]})</code></pre></section>
+                    </div>
+                </section>
+                    </div>
+                </section>
+            </main>
+
+            <script>
+                (() => {
+                    "use strict";
+
+                    const heroSection = document.querySelector(".hero-section");
+
+                    const summaryView =
+                        document.getElementById("summary-view");
+
+                    const detailedView =
+                        document.getElementById("detailed-view");
+
+                    const viewToggleButton =
+                        document.getElementById("view-toggle-button");
+
+                    const detailNavButtons = Array.from(
+                        document.querySelectorAll(
+                            "[data-detail-target]"
+                        )
+                    );
+
+                    const detailPages = Array.from(
+                        document.querySelectorAll(
+                            "[data-detail-page]"
+                        )
+                    );
+
+                    let showingDetailedView = false;
+
+                    
+
+                    function setDetailedViewVisibility(showDetailed) {
+                        showingDetailedView = showDetailed;
+
+                        summaryView.hidden = showDetailed;
+                        detailedView.hidden = !showDetailed;
+
+                        setHeroPlotVisible(!showDetailed);
+
+                        viewToggleButton.textContent =
+                            showDetailed
+                                ? "Show Summary View"
+                                : "Show Detailed View";
+
+                        viewToggleButton.setAttribute(
+                            "aria-expanded",
+                            String(showDetailed)
+                        );
+                    }
+
+                    function setHeroPlotVisible(isVisible) {
+                        heroSection.hidden = !isVisible;
+                    }
+
+                    function activateDetailPage(pageName) {
+                        detailNavButtons.forEach((button) => {
+                            const isActive =
+                                button.dataset.detailTarget === pageName;
+
+                            button.classList.toggle(
+                                "is-active",
+                                isActive
+                            );
+
+                            button.setAttribute(
+                                "aria-selected",
+                                String(isActive)
+                            );
+
+                            button.tabIndex = isActive ? 0 : -1;
+                        });
+
+                        detailPages.forEach((page) => {
+                            const isActive =
+                                page.dataset.detailPage === pageName;
+
+                            page.classList.toggle(
+                                "is-active",
+                                isActive
+                            );
+                        });
+                    }
+
+                    viewToggleButton.addEventListener(
+                        "click",
+                        () => {
+                            setDetailedViewVisibility(
+                                !showingDetailedView
+                            );
+                        }
+                    );
+
+                    detailNavButtons.forEach((button, index) => {
+                        button.addEventListener("click", () => {
+                            activateDetailPage(
+                                button.dataset.detailTarget
+                            );
+                        });
+
+                        button.addEventListener(
+                            "keydown",
+                            (event) => {
+                                if (
+                                    event.key !== "ArrowLeft" &&
+                                    event.key !== "ArrowRight"
+                                ) {
+                                    return;
+                                }
+
+                                event.preventDefault();
+
+                                const direction =
+                                    event.key === "ArrowRight"
+                                        ? 1
+                                        : -1;
+
+                                const nextIndex =
+                                    (
+                                        index +
+                                        direction +
+                                        detailNavButtons.length
+                                    ) % detailNavButtons.length;
+
+                                const nextButton =
+                                    detailNavButtons[nextIndex];
+
+                                activateDetailPage(
+                                    nextButton.dataset.detailTarget
+                                );
+
+                                nextButton.focus();
+                            }
+                        );
+                    });
+
+                    /*
+                    Initial page state:
+                        - Summary is visible.
+                        - Detailed view is hidden.
+                        - Parameters is the selected detailed page.
+                    */
+                    activateDetailPage("parameters");
+                    setDetailedViewVisibility(false);
+                })();
+            </script>
+
+            <script
+                id="hero-chart-data"
+                type="application/json"
+            >
+                {"series_data": [{"Date": "2000-01-01", "Checking": 1200.0}, {"Date": "2000-01-02", "Checking": 900.0}, {"Date": "2000-01-03", "Checking": 600.0}, {"Date": "2000-01-04", "Checking": 300.0}, {"Date": "2000-01-05", "Checking": 0.0}], "highlighted_transactions": [], "account_milestone_achieved_dates": [], "options": {"date_column": "Date", "primary_series": "Checking", "line_animation_ms": 1800, "respect_reduced_motion": false, "line_styles": {"Checking": {"color": "#2f7d4a", "width": 3.5}, "Savings": {"color": "#8a8a8f", "width": 2}, "Credit Card": {"color": "#b65a5a", "width": 2}}, "default_line_color": "#7a7a80", "default_line_width": 2, "today_color": "#2878d0", "transaction_color": "#929298", "transaction_delay_ms": 150, "transaction_stagger_ms": 130, "currency_symbol": "$"}}
+            </script>
+            <script
+                id="detail-chart-data"
+                type="application/json"
+            >
+                {"net_worth": {"series_data": [{"Date": "2000-01-01", "Net Worth": 1200.0}, {"Date": "2000-01-02", "Net Worth": 900.0}, {"Date": "2000-01-03", "Net Worth": 600.0}, {"Date": "2000-01-04", "Net Worth": 300.0}, {"Date": "2000-01-05", "Net Worth": 0.0}], "options": {"line_styles": {"Net Worth": {"color": "#2878d0"}}}}, "net_gain_and_loss": {"series_data": [{"Date": "2000-01-01", "Net Gain": 0.0, "Net Loss": -0.0}, {"Date": "2000-01-02", "Net Gain": 0.0, "Net Loss": -300.0}, {"Date": "2000-01-03", "Net Gain": 0.0, "Net Loss": -300.0}, {"Date": "2000-01-04", "Net Gain": 0.0, "Net Loss": -300.0}, {"Date": "2000-01-05", "Net Gain": 0.0, "Net Loss": -300.0}], "options": {"symmetric_zero": true, "absolute_tooltip_series": ["Net Loss"], "line_styles": {"Net Gain": {"color": "#268a51"}, "Net Loss": {"color": "#c94747"}}}}, "account_type": {"series_data": [{"Date": "2000-01-01", "Liquid Total": 1200.0, "CC Debt Total": 0.0, "Loan Total": 0.0}, {"Date": "2000-01-02", "Liquid Total": 900.0, "CC Debt Total": 0.0, "Loan Total": 0.0}, {"Date": "2000-01-03", "Liquid Total": 600.0, "CC Debt Total": 0.0, "Loan Total": 0.0}, {"Date": "2000-01-04", "Liquid Total": 300.0, "CC Debt Total": 0.0, "Loan Total": 0.0}, {"Date": "2000-01-05", "Liquid Total": 0.0, "CC Debt Total": 0.0, "Loan Total": 0.0}], "options": {"line_styles": {"Liquid Total": {"color": "#2878d0"}, "CC Debt Total": {"color": "#c94747"}, "Loan Total": {"color": "#a05a9c"}, "Investment Total": {"color": "#268a51"}}}}, "interest": {"series_data": [{"Date": "2000-01-01", "Investment Returns": 0.0, "Interest Accrued": -0.0}, {"Date": "2000-01-02", "Investment Returns": 0.0, "Interest Accrued": -0.0}, {"Date": "2000-01-03", "Investment Returns": 0.0, "Interest Accrued": -0.0}, {"Date": "2000-01-04", "Investment Returns": 0.0, "Interest Accrued": -0.0}, {"Date": "2000-01-05", "Investment Returns": 0.0, "Interest Accrued": -0.0}], "options": {"symmetric_zero": true, "absolute_tooltip_series": ["Interest Accrued"], "line_styles": {"Investment Returns": {"color": "#268a51"}, "Interest Accrued": {"color": "#c94747"}}}}, "all": {"series_data": [{"Date": "2000-01-01", "Checking": 1200.0, "Net Worth": 1200.0, "Liquid Total": 1200.0, "CC Debt Total": 0.0, "Loan Total": 0.0}, {"Date": "2000-01-02", "Checking": 900.0, "Net Worth": 900.0, "Liquid Total": 900.0, "CC Debt Total": 0.0, "Loan Total": 0.0}, {"Date": "2000-01-03", "Checking": 600.0, "Net Worth": 600.0, "Liquid Total": 600.0, "CC Debt Total": 0.0, "Loan Total": 0.0}, {"Date": "2000-01-04", "Checking": 300.0, "Net Worth": 300.0, "Liquid Total": 300.0, "CC Debt Total": 0.0, "Loan Total": 0.0}, {"Date": "2000-01-05", "Checking": 0.0, "Net Worth": 0.0, "Liquid Total": 0.0, "CC Debt Total": 0.0, "Loan Total": 0.0}], "options": {}}}
+            </script>
+            <script id="sankey-data" type="application/json">{"transaction": {"left": [], "right": [{"name": "Test Txn", "value": 1500.0}], "links": []}, "account": {"left": [{"name": "Checking", "value": 1500.0}], "right": [{"name": "Spend", "value": 1500.0}], "links": [{"source": "Checking", "target": "Spend", "value": 1500.0}]}}</script>
+            <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+            <script>
+                (() => {
+                    const payload = JSON.parse(
+                        document.getElementById("sankey-data")?.textContent || "{}"
+                    );
+                    const svg = d3.select("#sankey-chart");
+                    const buttons = document.querySelectorAll("[data-sankey-mode]");
+
+                    function renderSankey(mode) {
+                        const data = payload[mode] || {left: [], right: [], links: []};
+                        const width = 1200;
+                        const height = 600;
+                        const nodeWidth = 340;
+                        const leftX = 30;
+                        const rightX = width - nodeWidth - 30;
+                        const usableHeight = height - 60;
+                        svg.selectAll("*").remove();
+                        svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+                        if (!data.left.length || !data.right.length) {
+                            svg.append("text").attr("x", width / 2).attr("y", height / 2)
+                                .attr("text-anchor", "middle").attr("fill", "#77777d")
+                                .text("No income flow data available.");
+                            return;
+                        }
+
+                        function position(nodes, x) {
+                            const total = d3.sum(nodes, (node) => node.value) || 1;
+                            const gap = 12;
+                            const available = usableHeight - gap * Math.max(0, nodes.length - 1);
+                            let y = 30;
+                            return new Map(nodes.map((node) => {
+                                const nodeHeight = Math.max(48, available * node.value / total);
+                                const positioned = {...node, x, y, height: nodeHeight};
+                                y += nodeHeight + gap;
+                                return [node.name, positioned];
+                            }));
+                        }
+
+                        const left = position(data.left, leftX);
+                        const right = position(
+                            [...data.right].sort((a, b) => b.value - a.value),
+                            rightX
+                        );
+                        const maxFlow = d3.max(data.links, (link) => link.value) || 1;
+                        const flowWidth = d3.scaleLinear().domain([0, maxFlow]).range([1, 34]);
+                        const linkLayer = svg.append("g").attr("fill", "none");
+                        data.links.forEach((link) => {
+                            const source = left.get(link.source);
+                            const target = right.get(link.target);
+                            if (!source || !target) return;
+                            const x1 = source.x + nodeWidth;
+                            const x2 = target.x;
+                            const y1 = source.y + source.height / 2;
+                            const y2 = target.y + target.height / 2;
+                            linkLayer.append("path")
+                                .attr("d", `M${x1},${y1} C${width / 2},${y1} ${width / 2},${y2} ${x2},${y2}`)
+                                .attr("stroke", "#7097aa").attr("stroke-opacity", 0.35)
+                                .attr("stroke-width", flowWidth(link.value));
+                        });
+
+                        function drawNodes(nodes, color) {
+                            const groups = svg.append("g").selectAll("g")
+                                .data([...nodes.values()]).join("g");
+                            groups.append("rect").attr("x", (node) => node.x)
+                                .attr("y", (node) => node.y).attr("width", nodeWidth)
+                                .attr("height", (node) => node.height).attr("rx", 5)
+                                .attr("fill", color);
+                            groups.append("foreignObject")
+                                .attr("x", (node) => node.x + 10)
+                                .attr("y", (node) => node.y + 5)
+                                .attr("width", nodeWidth - 20)
+                                .attr("height", (node) => Math.max(38, node.height - 10))
+                                .append("xhtml:div")
+                                .style("color", "white")
+                                .style("font-size", "12px")
+                                .style("line-height", "1.25")
+                                .style("overflow-wrap", "anywhere")
+                                .text((node) => `${node.name} ($${d3.format(",.2f")(node.value)})`);
+                        }
+                        drawNodes(left, "#2f7d4a");
+                        drawNodes(right, "#315c72");
+                    }
+
+                    buttons.forEach((button) => button.addEventListener("click", () => {
+                        buttons.forEach((candidate) => candidate.classList.toggle(
+                            "is-active", candidate === button
+                        ));
+                        renderSankey(button.dataset.sankeyMode);
+                    }));
+                    renderSankey("transaction");
+                })();
+            </script>
+            <script src="./hero_chart.js"></script>
+            <script src="./detail_charts.js"></script>
+        </body>
+        </html>
+        

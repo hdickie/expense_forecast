@@ -1,0 +1,4485 @@
+<!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+
+            <meta
+                name="viewport"
+                content="width=device-width, initial-scale=1.0"
+            >
+
+            <title>
+                
+            </title>
+
+            <!--
+            ========================================================================
+            REPORT DESIGN VARIABLES
+
+            Change these variables to adjust the report's typography, colors,
+            spacing, table density, content width, and other repeated design values.
+            ========================================================================
+            -->
+            <style>
+                :root {
+                    /* Typography */
+                    --report-font-family:
+                        Inter,
+                        ui-sans-serif,
+                        system-ui,
+                        -apple-system,
+                        BlinkMacSystemFont,
+                        "Segoe UI",
+                        sans-serif;
+
+                    --report-monospace-font-family:
+                        "SFMono-Regular",
+                        Consolas,
+                        "Liberation Mono",
+                        monospace;
+
+                    --report-title-font-size: 2rem;
+                    --report-subtitle-font-size: 0.92rem;
+                    --report-date-range-font-size: 0.78rem;
+                    --report-body-font-size: 0.95rem;
+                    --report-small-font-size: 0.78rem;
+
+                    /* Colors */
+                    --report-page-background: #f7f7f5;
+                    --report-surface-color: #ffffff;
+                    --report-text-color: #1d1d1f;
+                    --report-muted-text-color: #77777d;
+                    --report-border-color: #dedee2;
+                    --report-soft-border-color: #ececef;
+                    --report-hover-color: #f2f2f3;
+                    --report-selected-color: #e8e8eb;
+                    --report-accent-color: #315c72;
+                    --report-accent-text-color: #ffffff;
+
+                    /* Page layout */
+                    --report-page-max-width: 1500px;
+                    --report-page-side-padding: clamp(24px, 4vw, 72px);
+                    --report-page-top-padding: 42px;
+                    --report-section-gap: 34px;
+
+                    /*
+                    Header width is deliberately symmetrical.
+
+                    The left scenario block occupies one column. A comparison report
+                    can place the second scenario block in the matching right column
+                    without shifting the page's visual center.
+                    */
+                    --report-header-side-column-width: minmax(220px, 1fr);
+                    --report-header-center-column-width: minmax(180px, 1.15fr);
+
+                    /* Hero chart */
+                    --hero-chart-height: clamp(390px, 47vh, 650px);
+                    --hero-chart-max-width: 1240px;
+                    --hero-chart-background: transparent;
+
+                    /* Buttons */
+                    --view-toggle-height: 38px;
+                    --view-toggle-horizontal-padding: 22px;
+                    --view-toggle-border-radius: 999px;
+
+                    /* Summary table layout */
+                    --summary-table-column-gap: 26px;
+                    --summary-table-row-gap: 28px;
+
+                    /*
+                    TABLE DENSITY CONTROL
+
+                    Increase these values for a more spacious table.
+                    Decrease them for a denser table.
+                    */
+                    --report-table-cell-padding-vertical: 11px;
+                    --report-table-cell-padding-horizontal: 14px;
+                    --report-table-row-line-height: 1.4;
+
+                    --report-table-card-padding: 20px;
+                    --report-table-card-border-radius: 10px;
+                    --report-table-card-min-height: 120px;
+
+                    /* Detailed view */
+                    --detail-navbar-height: 48px;
+                    --detail-content-max-width: 1240px;
+                    --detail-section-spacing: 38px;
+                }
+
+                * {
+                    box-sizing: border-box;
+                }
+
+                html {
+                    background: var(--report-page-background);
+                    color: var(--report-text-color);
+                    font-family: var(--report-font-family);
+                }
+
+                body {
+                    min-width: 320px;
+                    margin: 0;
+                    background: var(--report-page-background);
+                    color: var(--report-text-color);
+                    font-size: var(--report-body-font-size);
+                }
+
+                button,
+                input,
+                select,
+                textarea {
+                    font: inherit;
+                }
+
+                button {
+                    color: inherit;
+                }
+
+                .report-page {
+                    width: min(
+                        100%,
+                        calc(
+                            var(--report-page-max-width) +
+                            2 * var(--report-page-side-padding)
+                        )
+                    );
+                    min-height: 100vh;
+                    margin: 0 auto;
+                    padding:
+                        var(--report-page-top-padding)
+                        var(--report-page-side-padding)
+                        72px;
+                }
+
+                /*
+                ====================================================================
+                REPORT HEADER
+                ====================================================================
+                */
+
+                .report-header {
+                    display: grid;
+                    grid-template-columns:
+                        var(--report-header-side-column-width)
+                        var(--report-header-center-column-width)
+                        var(--report-header-side-column-width);
+                    align-items: start;
+                    width: 100%;
+                    margin-bottom: 18px;
+                }
+
+                .scenario-identity {
+                    min-width: 0;
+                }
+
+                .scenario-identity-left {
+                    grid-column: 1;
+                    justify-self: start;
+                    text-align: left;
+                }
+
+                /*
+                Reserved for future comparison reports.
+
+                Add a second .scenario-identity element with this class. Because the
+                header uses symmetrical side columns, it will mirror the first
+                scenario without changing the central page layout.
+                */
+                .scenario-identity-right {
+                    grid-column: 3;
+                    justify-self: end;
+                    text-align: right;
+                }
+
+                .scenario-name {
+                    margin: 0;
+                    font-size: var(--report-title-font-size);
+                    font-weight: 650;
+                    line-height: 1.12;
+                    letter-spacing: -0.025em;
+                }
+
+                .scenario-unique-id {
+                    margin: 7px 0 0;
+                    font-family: var(--report-monospace-font-family);
+                    font-size: var(--report-subtitle-font-size);
+                    font-weight: 500;
+                    line-height: 1.25;
+                    letter-spacing: 0.015em;
+                    white-space: nowrap;
+                }
+
+                .scenario-date-range {
+                    margin: 6px 0 0;
+                    color: var(--report-muted-text-color);
+                    font-size: var(--report-date-range-font-size);
+                    font-weight: 450;
+                    line-height: 1.3;
+                }
+
+                /*
+                ====================================================================
+                HERO CHART
+                ====================================================================
+                */
+
+                .hero-section {
+                    width: 100%;
+                }
+
+                .hero-chart-container {
+                    position: relative;
+                    display: flex;
+                    align-items: stretch;
+                    justify-content: center;
+                    width: min(100%, var(--hero-chart-max-width));
+                    height: var(--hero-chart-height);
+                    margin: 0 auto;
+                    background: var(--hero-chart-background);
+                }
+
+                .hero-chart {
+                    display: block;
+                    width: 100%;
+                    height: 100%;
+                    overflow: visible;
+                }
+
+                .hero-chart-placeholder {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 100%;
+                    min-height: 100%;
+                    border-bottom: 1px solid var(--report-soft-border-color);
+                    color: var(--report-muted-text-color);
+                    font-size: var(--report-small-font-size);
+                    letter-spacing: 0.04em;
+                    text-transform: uppercase;
+                }
+
+                /*
+                ====================================================================
+                SUMMARY / DETAILED VIEW TOGGLE
+                ====================================================================
+                */
+
+                .view-toggle-row {
+                    display: flex;
+                    justify-content: center;
+                    width: 100%;
+                    margin: 18px 0 var(--report-section-gap);
+                }
+
+                .view-toggle-button {
+                    min-height: var(--view-toggle-height);
+                    padding:
+                        0
+                        var(--view-toggle-horizontal-padding);
+                    border: 1px solid var(--report-border-color);
+                    border-radius: var(--view-toggle-border-radius);
+                    background: var(--report-surface-color);
+                    cursor: pointer;
+                    transition:
+                        background-color 150ms ease,
+                        border-color 150ms ease,
+                        transform 150ms ease;
+                }
+
+                .view-toggle-button:hover {
+                    border-color: var(--report-muted-text-color);
+                    background: var(--report-hover-color);
+                }
+
+                .view-toggle-button:active {
+                    transform: translateY(1px);
+                }
+
+                .view-toggle-button:focus-visible,
+                .detail-nav-button:focus-visible {
+                    outline: 3px solid color-mix(
+                        in srgb,
+                        var(--report-accent-color) 32%,
+                        transparent
+                    );
+                    outline-offset: 3px;
+                }
+
+                /*
+                ====================================================================
+                SUMMARY TABLE GRID
+                ====================================================================
+                */
+
+                .summary-view {
+                    display: block;
+                }
+
+                .summary-view[hidden],
+                .detailed-view[hidden] {
+                    display: none;
+                }
+
+                .summary-table-row {
+                    display: grid;
+                    align-items: stretch;
+                    gap:
+                        var(--summary-table-row-gap)
+                        var(--summary-table-column-gap);
+                    width: 100%;
+                }
+
+                .summary-table-row-primary {
+                    grid-template-columns: repeat(3, minmax(0, 1fr));
+                }
+
+                .summary-table-row-secondary {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                    max-width: calc(
+                        (
+                            2 * (
+                                100% - 2 * var(--summary-table-column-gap)
+                            )
+                        ) / 3 + var(--summary-table-column-gap)
+                    );
+                    margin-top: var(--summary-table-row-gap);
+                }
+
+                /*
+                Each table card stretches to the height of the tallest card in its
+                grid row. This creates the requested aligned 1 × 3 rectangle.
+                */
+                .table-card {
+                    display: flex;
+                    flex-direction: column;
+                    min-width: 0;
+                    min-height: var(--report-table-card-min-height);
+                    padding: var(--report-table-card-padding);
+                    border: 1px solid var(--report-soft-border-color);
+                    border-radius: var(--report-table-card-border-radius);
+                    background: var(--report-surface-color);
+                }
+
+                .table-card-title {
+                    margin: 0 0 16px;
+                    font-size: 0.94rem;
+                    font-weight: 650;
+                    line-height: 1.25;
+                    letter-spacing: -0.01em;
+                }
+
+                .table-scroll-container {
+                    width: 100%;
+                    min-width: 0;
+                    overflow-x: auto;
+                }
+
+                /*
+                ====================================================================
+                SHARED TABLE STYLING
+                ====================================================================
+
+                The primary table-density variables are defined in :root:
+                    --report-table-cell-padding-vertical
+                    --report-table-cell-padding-horizontal
+                    --report-table-row-line-height
+                */
+
+                .report-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    border-spacing: 0;
+                    font-size: 0.86rem;
+                    line-height: var(--report-table-row-line-height);
+                }
+
+                .report-table thead th {
+                    padding:
+                        var(--report-table-cell-padding-vertical)
+                        var(--report-table-cell-padding-horizontal);
+                    border-bottom: 1px solid var(--report-border-color);
+                    color: var(--report-muted-text-color);
+                    font-size: 0.74rem;
+                    font-weight: 650;
+                    letter-spacing: 0.035em;
+                    text-align: left;
+                    text-transform: uppercase;
+                    vertical-align: bottom;
+                    white-space: nowrap;
+                }
+
+                .report-table tbody td {
+                    padding:
+                        var(--report-table-cell-padding-vertical)
+                        var(--report-table-cell-padding-horizontal);
+                    border-bottom: 1px solid var(--report-soft-border-color);
+                    text-align: left;
+                    vertical-align: top;
+                }
+
+                .report-table tbody tr:last-child td {
+                    border-bottom: 0;
+                }
+
+                .report-table tbody tr:hover {
+                    background: var(--report-hover-color);
+                }
+
+                /*
+                Keep the raw forecast output compact vertically. The final two
+                columns are Memo Directives and Memo, which are intentionally
+                wide and horizontally scrollable instead of wrapping.
+                */
+                .report-table-forecast-output th,
+                .report-table-forecast-output td {
+                    white-space: nowrap;
+                }
+
+                .report-table-forecast-output th:nth-last-child(2),
+                .report-table-forecast-output td:nth-last-child(2) {
+                    min-width: 1200px;
+                }
+
+                .report-table-forecast-output th:last-child,
+                .report-table-forecast-output td:last-child {
+                    min-width: 720px;
+                }
+
+                .report-table-empty {
+                    display: flex;
+                    align-items: center;
+                    min-height: 58px;
+                    color: var(--report-muted-text-color);
+                    font-size: var(--report-small-font-size);
+                }
+
+                /*
+                ====================================================================
+                DETAILED VIEW
+                ====================================================================
+                */
+
+                .detailed-view {
+                    width: 100%;
+                }
+
+                .detail-navbar-container {
+                    position: sticky;
+                    top: 0;
+                    z-index: 10;
+                    width: 100%;
+                    margin-bottom: var(--detail-section-spacing);
+                    padding: 8px 0;
+                    background:
+                        color-mix(
+                            in srgb,
+                            var(--report-page-background) 94%,
+                            transparent
+                        );
+                    backdrop-filter: blur(10px);
+                }
+
+                .detail-navbar {
+                    display: flex;
+                    align-items: center;
+                    width: 100%;
+                    min-height: var(--detail-navbar-height);
+                    overflow-x: auto;
+                    border-bottom: 1px solid var(--report-border-color);
+                    scrollbar-width: thin;
+                    justify-content: center;
+                }
+
+                .detail-nav-button {
+                    flex: 0 0 auto;
+                    min-height: var(--detail-navbar-height);
+                    padding: 0 15px;
+                    border: 0;
+                    border-bottom: 2px solid transparent;
+                    background: transparent;
+                    color: var(--report-muted-text-color);
+                    cursor: pointer;
+                    font-size: 0.83rem;
+                    font-weight: 550;
+                    white-space: nowrap;
+                }
+
+                .detail-nav-button:hover {
+                    color: var(--report-text-color);
+                    background: var(--report-hover-color);
+                }
+
+                .detail-nav-button.is-active {
+                    border-bottom-color: var(--report-accent-color);
+                    color: var(--report-text-color);
+                }
+
+                .detail-content {
+                    width: min(100%, var(--detail-content-max-width));
+                    margin: 0 auto;
+                }
+
+                .detail-page {
+                    display: none;
+                    width: 100%;
+                }
+
+                .detail-page.is-active {
+                    display: block;
+                }
+
+                .detail-page-header {
+                    margin-bottom: 22px;
+                }
+
+                .detail-page-title {
+                    margin: 0;
+                    font-size: 1.55rem;
+                    font-weight: 650;
+                    letter-spacing: -0.02em;
+                }
+
+                .detail-page-text {
+                    max-width: 940px;
+                    line-height: 1.65;
+                }
+
+                .detail-page-text:empty {
+                    display: none;
+                }
+
+                .detail-page-text-above {
+                    margin-bottom: 26px;
+                }
+
+                .detail-page-text-below {
+                    margin-top: 26px;
+                }
+
+                .detail-page-plots {
+                    width: 100%;
+                    min-height: 320px;
+                    border-bottom: 1px solid var(--report-soft-border-color);
+                }
+
+                .detail-line-chart-container {
+                    position: relative;
+                    width: 100%;
+                    height: clamp(390px, 47vh, 650px);
+                }
+
+                .detail-line-chart {
+                    width: 100%;
+                    height: 100%;
+                }
+
+                .detailed-primary-table {
+                    margin-top: var(--detail-section-spacing);
+                }
+
+                .detailed-additional-sections {
+                    display: grid;
+                    grid-template-columns: minmax(0, 1fr);
+                    gap: var(--detail-section-spacing);
+                    margin-top: var(--detail-section-spacing);
+                }
+
+                .detailed-table-section {
+                    min-width: 0;
+                    padding-top: 4px;
+                }
+
+                .detailed-table-section-title {
+                    margin: 0 0 14px;
+                    font-size: 1rem;
+                    font-weight: 650;
+                    letter-spacing: -0.01em;
+                }
+
+                /*
+                ====================================================================
+                RESPONSIVE LAYOUT
+                ====================================================================
+                */
+
+                @media (max-width: 1050px) {
+                    .summary-table-row-primary {
+                        grid-template-columns: repeat(2, minmax(0, 1fr));
+                    }
+
+                    .summary-table-row-primary .table-card:last-child {
+                        grid-column: 1 / -1;
+                    }
+
+                    .summary-table-row-secondary {
+                        max-width: none;
+                    }
+                }
+
+                @media (max-width: 760px) {
+                    :root {
+                        --report-page-side-padding: 18px;
+                        --report-page-top-padding: 26px;
+                        --hero-chart-height: 380px;
+                    }
+
+                    .report-header {
+                        grid-template-columns: 1fr;
+                        gap: 20px;
+                    }
+
+                    .scenario-identity-left,
+                    .scenario-identity-right {
+                        grid-column: 1;
+                        justify-self: start;
+                        text-align: left;
+                    }
+
+                    .summary-table-row-primary,
+                    .summary-table-row-secondary {
+                        grid-template-columns: minmax(0, 1fr);
+                        max-width: none;
+                    }
+
+                    .summary-table-row-primary .table-card:last-child {
+                        grid-column: auto;
+                    }
+
+                    .report-table {
+                        min-width: 540px;
+                    }
+                }
+
+                @media (prefers-reduced-motion: reduce) {
+                    *,
+                    *::before,
+                    *::after {
+                        scroll-behavior: auto !important;
+                        transition-duration: 0.01ms !important;
+                        animation-duration: 0.01ms !important;
+                        animation-iteration-count: 1 !important;
+                    }
+                }
+
+                /*
+                Added for Hero Chart
+                */
+
+                .hero-axis {
+                    color: var(--report-muted-text-color);
+                    font-family: var(--report-font-family);
+                    font-size: 0.76rem;
+                }
+
+                .hero-axis path,
+                .hero-axis line {
+                    stroke: var(--report-border-color);
+                }
+
+                .hero-grid line {
+                    stroke: var(--report-soft-border-color);
+                    stroke-dasharray: 2 4;
+                }
+
+                .hero-grid path {
+                    display: none;
+                }
+
+                .hero-series-line {
+                    fill: none;
+                    stroke-linecap: round;
+                    stroke-linejoin: round;
+                }
+
+                .hero-today-guide {
+                    stroke: var(--report-border-color);
+                    stroke-width: 1;
+                    stroke-dasharray: 3 5;
+                }
+
+                .hero-today-dot {
+                    cursor: pointer;
+                    transform-box: fill-box;
+                    transform-origin: center;
+                    animation: hero-today-pulse 2.8s ease-in-out infinite;
+                }
+
+                .hero-transaction-dot {
+                    cursor: pointer;
+                }
+
+                .hero-milestone-dot {
+                    cursor: pointer;
+                }
+
+                .hero-chart-tooltip {
+                    position: absolute;
+                    z-index: 20;
+                    min-width: 150px;
+                    max-width: 260px;
+                    padding: 10px 12px;
+                    border: 1px solid var(--report-border-color);
+                    border-radius: 8px;
+                    background: var(--report-surface-color);
+                    box-shadow: 0 8px 24px rgb(0 0 0 / 10%);
+                    color: var(--report-text-color);
+                    font-size: 0.78rem;
+                    line-height: 1.5;
+                    pointer-events: none;
+                }
+
+                .hero-chart-tooltip-row {
+                    display: flex;
+                    justify-content: space-between;
+                    gap: 18px;
+                }
+
+                .hero-chart-tooltip-label {
+                    color: var(--report-muted-text-color);
+                }
+
+                .hero-chart-tooltip-value {
+                    font-weight: 600;
+                    text-align: right;
+                }
+
+                @keyframes hero-today-pulse {
+                    0%,
+                    100% {
+                        transform: scale(1);
+                        opacity: 1;
+                    }
+
+                    50% {
+                        transform: scale(1.45);
+                        opacity: 0.62;
+                    }
+                }
+
+                @media (prefers-reduced-motion: reduce) {
+                    .hero-today-dot {
+                        animation: none;
+                    }
+                }
+            </style>
+        </head>
+
+        <body>
+            <main class="report-page">
+                <header class="report-header">
+                    <section class="scenario-identity scenario-identity-left">
+                        <h1 class="scenario-name">
+                            
+                        </h1>
+
+                        <p class="scenario-unique-id">
+                            260701_215_1_9914518a04_A
+                        </p>
+
+                        <p class="scenario-date-range">
+                            215 days : 2026-07-01 to 2027-02-01
+                        </p>
+                    </section>
+
+                    <!--
+                    Future comparison-report identity:
+
+                    <section class="scenario-identity scenario-identity-right">
+                        <h1 class="scenario-name">
+                            comparison scenario name
+                        </h1>
+
+                        <p class="scenario-unique-id">
+                            comparison unique ID
+                        </p>
+
+                        <p class="scenario-date-range">
+                            comparison date range
+                        </p>
+                    </section>
+                    -->
+                </header>
+
+                <div class="view-toggle-row">
+                    <button
+                        id="view-toggle-button"
+                        class="view-toggle-button"
+                        type="button"
+                        aria-controls="summary-view detailed-view"
+                        aria-expanded="false"
+                    >
+                        Detailed View
+                    </button>
+                </div>
+
+                <section class="hero-section">
+                    <div
+                        id="hero-chart-container"
+                        class="hero-chart-container"
+                    >
+                        
+                        <svg
+                            id="hero-chart"
+                            class="hero-chart"
+                            role="img"
+                            aria-label="Forecast account balances over time"
+                        ></svg>
+
+                        <div
+                            id="hero-chart-tooltip"
+                            class="hero-chart-tooltip"
+                            hidden
+                        ></div>
+
+                    </div>
+                </section>
+
+                <!--
+                ====================================================================
+                SUMMARY VIEW
+                ====================================================================
+                -->
+
+                <section
+                    id="summary-view"
+                    class="summary-view"
+                    aria-label="Forecast summary"
+                >
+                    <div
+                        class="
+                            summary-table-row
+                            summary-table-row-primary
+                        "
+                    >
+                        
+                <section class="table-card">
+                    <h2 class="table-card-title">Final Account Balances</h2>
+                    <div class="table-scroll-container">
+                        <table class="dataframe report-table report-table-final-account-balances">
+  <thead>
+    <tr style="text-align: left;">
+      <th>Account</th>
+      <th>Balance</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Checking</td>
+      <td>18490.03</td>
+    </tr>
+    <tr>
+      <td>Savings</td>
+      <td>325.21</td>
+    </tr>
+    <tr>
+      <td>Citi</td>
+      <td>3608.94</td>
+    </tr>
+    <tr>
+      <td>Chase</td>
+      <td>8216.38</td>
+    </tr>
+    <tr>
+      <td>Loan A</td>
+      <td>3424.08</td>
+    </tr>
+    <tr>
+      <td>Loan B</td>
+      <td>4420.47</td>
+    </tr>
+    <tr>
+      <td>Loan C</td>
+      <td>1801.36</td>
+    </tr>
+    <tr>
+      <td>Loan D</td>
+      <td>4377.72</td>
+    </tr>
+    <tr>
+      <td>Loan E</td>
+      <td>1665.57</td>
+    </tr>
+    <tr>
+      <td>Net Worth</td>
+      <td>-9024.49</td>
+    </tr>
+    <tr>
+      <td>Loan Total</td>
+      <td>15689.2</td>
+    </tr>
+    <tr>
+      <td>CC Debt Total</td>
+      <td>11825.32</td>
+    </tr>
+    <tr>
+      <td>Liquid Total</td>
+      <td>18490.03</td>
+    </tr>
+  </tbody>
+</table>
+                    </div>
+                </section>
+            
+
+                        
+                <section class="table-card">
+                    <h2 class="table-card-title">Margin Metrics</h2>
+                    <div class="table-scroll-container">
+                        <table class="dataframe report-table report-table-margin-metrics">
+  <thead>
+    <tr style="text-align: left;">
+      <th>Metric</th>
+      <th>Amount</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Initial Cash Reserve</td>
+      <td>$5,375.02</td>
+    </tr>
+    <tr>
+      <td>Initial Reserve Credit</td>
+      <td>$17,174.68</td>
+    </tr>
+    <tr>
+      <td>Final Cash Reserve</td>
+      <td>$18,490.03</td>
+    </tr>
+    <tr>
+      <td>Final Available Credit</td>
+      <td>$17,174.68</td>
+    </tr>
+  </tbody>
+</table>
+                    </div>
+                </section>
+            
+
+                        
+                <section class="table-card">
+                    <h2 class="table-card-title">Milestones</h2>
+                    <div class="table-scroll-container">
+                        <div class="report-table-empty">No data available.</div>
+                    </div>
+                </section>
+            
+
+                    </div>
+
+                    <div
+                        class="
+                            summary-table-row
+                            summary-table-row-secondary
+                        "
+                    >
+
+                        
+                <section class="table-card">
+                    <h2 class="table-card-title">Forecast Metadata</h2>
+                    <div class="table-scroll-container">
+                        <table class="dataframe report-table report-table-forecast-metadata">
+  <thead>
+    <tr style="text-align: left;">
+      <th>Stat</th>
+      <th>Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Start</td>
+      <td>2026-07-15 02:09:03.776105</td>
+    </tr>
+    <tr>
+      <td>End</td>
+      <td>2026-07-15 02:09:03.776114</td>
+    </tr>
+    <tr>
+      <td>Elapsed</td>
+      <td>9 microseconds</td>
+    </tr>
+  </tbody>
+</table>
+                    </div>
+                </section>
+            
+                    </div>
+                </section>
+
+                <!--
+                ====================================================================
+                DETAILED VIEW
+                ====================================================================
+                -->
+
+                <section
+                    id="detailed-view"
+                    class="detailed-view"
+                    aria-label="Detailed forecast report"
+                    hidden
+                >
+                    <div class="detail-navbar-container">
+                        <nav
+                            class="detail-navbar"
+                            aria-label="Detailed report sections"
+                            role="tablist"
+                        >
+                            <button
+                                id="detail-tab-parameters"
+                                class="detail-nav-button is-active"
+                                type="button"
+                                role="tab"
+                                aria-selected="true"
+                                aria-controls="detail-page-parameters"
+                                data-detail-target="parameters"
+                            >
+                                Parameters
+                            </button>
+
+                            <button
+                                id="detail-tab-output_data"
+                                class="detail-nav-button"
+                                type="button"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="detail-page-output_data"
+                                data-detail-target="output_data"
+                            >
+                                Output Data
+                            </button>
+
+                            <button
+                                id="detail-tab-net_worth"
+                                class="detail-nav-button"
+                                type="button"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="detail-page-net_worth"
+                                data-detail-target="net_worth"
+                            >
+                                Net Worth
+                            </button>
+
+                            <button
+                                id="detail-tab-net_gain_and_loss"
+                                class="detail-nav-button"
+                                type="button"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="detail-page-net_gain_and_loss"
+                                data-detail-target="net_gain_and_loss"
+                            >
+                                Net Gain &amp; Loss
+                            </button>
+
+                            <button
+                                id="detail-tab-account_type"
+                                class="detail-nav-button"
+                                type="button"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="detail-page-account_type"
+                                data-detail-target="account_type"
+                            >
+                                Account Type
+                            </button>
+
+                            <button
+                                id="detail-tab-interest"
+                                class="detail-nav-button"
+                                type="button"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="detail-page-interest"
+                                data-detail-target="interest"
+                            >
+                                Interest
+                            </button>
+
+                            <button
+                                id="detail-tab-milestones"
+                                class="detail-nav-button"
+                                type="button"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="detail-page-milestones"
+                                data-detail-target="milestones"
+                            >
+                                Milestones
+                            </button>
+
+                            <button
+                                id="detail-tab-sankey"
+                                class="detail-nav-button"
+                                type="button"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="detail-page-sankey"
+                                data-detail-target="sankey"
+                            >
+                                Sankey
+                            </button>
+
+                            <button
+                                id="detail-tab-all"
+                                class="detail-nav-button"
+                                type="button"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="detail-page-all"
+                                data-detail-target="all"
+                            >
+                                All
+                            </button>
+
+                            <button
+                                id="detail-tab-transaction_schedule"
+                                class="detail-nav-button"
+                                type="button"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="detail-page-transaction_schedule"
+                                data-detail-target="transaction_schedule"
+                            >
+                                Transaction Schedule
+                            </button>
+
+                            <button
+                                id="detail-tab-last_day"
+                                class="detail-nav-button"
+                                type="button"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="detail-page-last_day"
+                                data-detail-target="last_day"
+                            >
+                                Last Day
+                            </button>
+                        </nav>
+                    </div>
+
+                    <div class="detail-content">
+                        
+                <section
+                    id="detail-page-parameters"
+                    class="detail-page is-active"
+                    data-detail-page="parameters"
+                    aria-labelledby="detail-tab-parameters"
+                >
+                    <header class="detail-page-header">
+                        <h2 class="detail-page-title">
+                            Parameters
+                        </h2>
+                    </header>
+
+                    <div class="detail-page-text detail-page-text-above">
+                        
+                    </div>
+
+                    
+
+                    <div class="detail-page-text detail-page-text-below">
+                        
+                    </div>
+
+                    
+
+                    <div class="detailed-additional-sections">
+                        
+                <section class="table-card">
+                    <h2 class="table-card-title">Account Set</h2>
+                    <div class="table-scroll-container">
+                        <table class="dataframe report-table report-table-initial-account-set">
+  <thead>
+    <tr style="text-align: left;">
+      <th>Name</th>
+      <th>Balance</th>
+      <th>Min_Balance</th>
+      <th>Max_Balance</th>
+      <th>Account_Type</th>
+      <th>Billing_Start_Date</th>
+      <th>Interest_Type</th>
+      <th>APR</th>
+      <th>Interest_interval</th>
+      <th>Minimum_Payment</th>
+      <th>Primary_Checking_Ind</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Checking</td>
+      <td>5897.8</td>
+      <td>0</td>
+      <td>inf</td>
+      <td>checking</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <td>Savings</td>
+      <td>325.21</td>
+      <td>0</td>
+      <td>inf</td>
+      <td>checking</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>Citi</td>
+      <td>3871.98</td>
+      <td>0</td>
+      <td>4000.0</td>
+      <td>credit</td>
+      <td>2026-06-14</td>
+      <td>compound</td>
+      <td>0.2149</td>
+      <td>monthly</td>
+      <td>40</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>Chase</td>
+      <td>6566.49</td>
+      <td>0</td>
+      <td>25000.0</td>
+      <td>credit</td>
+      <td>2026-06-06</td>
+      <td>compound</td>
+      <td>0.2724</td>
+      <td>monthly</td>
+      <td>40</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>Loan A</td>
+      <td>3608.67</td>
+      <td>0</td>
+      <td>20000.0</td>
+      <td>loan</td>
+      <td>2026-06-03</td>
+      <td>simple</td>
+      <td>0.0466</td>
+      <td>daily</td>
+      <td>40</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>Loan B</td>
+      <td>4586.91</td>
+      <td>0</td>
+      <td>20000.0</td>
+      <td>loan</td>
+      <td>2026-06-03</td>
+      <td>simple</td>
+      <td>0.0429</td>
+      <td>daily</td>
+      <td>40</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>Loan C</td>
+      <td>2032.86</td>
+      <td>0</td>
+      <td>20000.0</td>
+      <td>loan</td>
+      <td>2026-06-03</td>
+      <td>simple</td>
+      <td>0.0429</td>
+      <td>daily</td>
+      <td>40</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>Loan D</td>
+      <td>4558.79</td>
+      <td>0</td>
+      <td>20000.0</td>
+      <td>loan</td>
+      <td>2026-06-03</td>
+      <td>simple</td>
+      <td>0.0376</td>
+      <td>daily</td>
+      <td>40</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>Loan E</td>
+      <td>1905.87</td>
+      <td>0</td>
+      <td>20000.0</td>
+      <td>loan</td>
+      <td>2026-06-03</td>
+      <td>simple</td>
+      <td>0.0376</td>
+      <td>daily</td>
+      <td>40</td>
+      <td>None</td>
+    </tr>
+  </tbody>
+</table>
+                    </div>
+                </section>
+            
+                <section class="table-card">
+                    <h2 class="table-card-title">Line Items</h2>
+                    <div class="table-scroll-container">
+                        <table class="dataframe report-table report-table-initial-line-item-set">
+  <thead>
+    <tr style="text-align: left;">
+      <th>Start_Date</th>
+      <th>End_Date</th>
+      <th>Priority</th>
+      <th>interval</th>
+      <th>Amount</th>
+      <th>Memo</th>
+      <th>Income_Flag</th>
+      <th>Deferrable</th>
+      <th>Partial_Payment_Allowed</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>2026-07-01</td>
+      <td>2027-02-01</td>
+      <td>1</td>
+      <td>daily</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-08-22</td>
+      <td>2027-02-01</td>
+      <td>1</td>
+      <td>semiweekly</td>
+      <td>1366.2</td>
+      <td>CNA income</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+  </tbody>
+</table>
+                    </div>
+                </section>
+            
+                <section class="table-card">
+                    <h2 class="table-card-title">Memo Rules</h2>
+                    <div class="table-scroll-container">
+                        <table class="dataframe report-table report-table-initial-memo-rule-set">
+  <thead>
+    <tr style="text-align: left;">
+      <th>Memo_Regex</th>
+      <th>Account_From</th>
+      <th>Account_To</th>
+      <th>Transaction_Priority</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>.*expense.*</td>
+      <td>Chase</td>
+      <td>None</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <td>.*cc payment.*</td>
+      <td>Checking</td>
+      <td>Chase</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <td>.*income.*</td>
+      <td>None</td>
+      <td>Checking</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <td>extra cc payment</td>
+      <td>Checking</td>
+      <td>Chase</td>
+      <td>2.0</td>
+    </tr>
+    <tr>
+      <td>citi payment</td>
+      <td>Checking</td>
+      <td>Citi</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <td>all loan payment</td>
+      <td>Checking</td>
+      <td>ALL_LOANS</td>
+      <td>1.0</td>
+    </tr>
+  </tbody>
+</table>
+                    </div>
+                </section>
+            
+                <section class="table-card">
+                    <h2 class="table-card-title">Composite Milestones</h2>
+                    <div class="table-scroll-container">
+                        <div class="report-table-empty">No data available.</div>
+                    </div>
+                </section>
+            
+                <section class="table-card">
+                    <h2 class="table-card-title">Account Milestones</h2>
+                    <div class="table-scroll-container">
+                        <div class="report-table-empty">No data available.</div>
+                    </div>
+                </section>
+            
+                <section class="table-card">
+                    <h2 class="table-card-title">Memo Milestones</h2>
+                    <div class="table-scroll-container">
+                        <table class="dataframe report-table report-table-memo-milestones">
+  <thead>
+    <tr style="text-align: left;">
+      <th>Milestone_Name</th>
+      <th>Memo_Regex</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Get job as RN</td>
+      <td>RN Year 1 income</td>
+    </tr>
+  </tbody>
+</table>
+                    </div>
+                </section>
+            
+                    </div>
+                </section>
+            
+                <section
+                    id="detail-page-output_data"
+                    class="detail-page"
+                    data-detail-page="output_data"
+                    aria-labelledby="detail-tab-output_data"
+                >
+                    <header class="detail-page-header">
+                        <h2 class="detail-page-title">
+                            Output Data
+                        </h2>
+                    </header>
+
+                    <div class="detail-page-text detail-page-text-above">
+                        
+                    </div>
+
+                    
+
+                    <div class="detail-page-text detail-page-text-below">
+                        
+                    </div>
+
+                    
+
+                    <div class="detailed-additional-sections">
+                        
+                <section class="table-card">
+                    <h2 class="table-card-title">Forecast Output</h2>
+                    <div class="table-scroll-container">
+                        <table class="dataframe report-table report-table-forecast-output">
+  <thead>
+    <tr style="text-align: left;">
+      <th>Date</th>
+      <th>Checking</th>
+      <th>Savings</th>
+      <th>Citi</th>
+      <th>Chase</th>
+      <th>Loan A</th>
+      <th>Loan B</th>
+      <th>Loan C</th>
+      <th>Loan D</th>
+      <th>Loan E</th>
+      <th>Marginal Interest</th>
+      <th>Net Gain</th>
+      <th>Net Loss</th>
+      <th>Net Worth</th>
+      <th>Loan Total</th>
+      <th>CC Debt Total</th>
+      <th>Liquid Total</th>
+      <th>Next Income Date</th>
+      <th>Memo Directives</th>
+      <th>Memo</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>2026-07-01</td>
+      <td>5897.80</td>
+      <td>325.21</td>
+      <td>3871.98</td>
+      <td>6566.49</td>
+      <td>3608.67</td>
+      <td>4586.91</td>
+      <td>2032.86</td>
+      <td>4558.79</td>
+      <td>1905.87</td>
+      <td>0.00</td>
+      <td>0.0</td>
+      <td>0.00</td>
+      <td>-21233.77</td>
+      <td>16693.10</td>
+      <td>10438.47</td>
+      <td>5897.80</td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>2026-08-01</td>
+      <td>5375.02</td>
+      <td>325.21</td>
+      <td>3833.26</td>
+      <td>6820.83</td>
+      <td>3582.45</td>
+      <td>4563.37</td>
+      <td>2000.03</td>
+      <td>4533.17</td>
+      <td>1871.79</td>
+      <td>276.11</td>
+      <td>0.0</td>
+      <td>1641.67</td>
+      <td>-21829.88</td>
+      <td>16550.81</td>
+      <td>10654.09</td>
+      <td>5375.02</td>
+      <td></td>
+      <td>CC INTEREST (Citi: Prev Stmt Bal +$69.34); MINIMUM PAYMENT (Checking -$108.06); MINIMUM PAYMENT (Citi +$108.06); CC INTEREST (Chase: Prev Stmt Bal +$149.06); MINIMUM PAYMENT (Checking -$214.72); MINIMUM PAYMENT (Chase +$214.72); LOAN INTEREST (Loan A: Interest +$13.78); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan A +$40.00); LOAN INTEREST (Loan B: Interest +$16.46); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan B +$40.00); LOAN INTEREST (Loan C: Interest +$7.17); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan C +$40.00); LOAN INTEREST (Loan D: Interest +$14.38); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan D +$40.00); LOAN INTEREST (Loan E: Interest +$5.92); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan E +$40.00)</td>
+      <td>very low food expense x32 (Chase -$320.00)</td>
+    </tr>
+    <tr>
+      <td>2026-09-01</td>
+      <td>6211.19</td>
+      <td>325.21</td>
+      <td>3794.93</td>
+      <td>7062.62</td>
+      <td>3556.23</td>
+      <td>4539.82</td>
+      <td>1967.20</td>
+      <td>4507.55</td>
+      <td>1837.71</td>
+      <td>281.19</td>
+      <td>0.0</td>
+      <td>1651.23</td>
+      <td>-21054.87</td>
+      <td>16408.51</td>
+      <td>10857.55</td>
+      <td>6211.19</td>
+      <td></td>
+      <td>CC INTEREST (Citi: Prev Stmt Bal +$68.65); MINIMUM PAYMENT (Checking -$106.98); MINIMUM PAYMENT (Citi +$106.98); CC INTEREST (Chase: Prev Stmt Bal +$154.83); MINIMUM PAYMENT (Checking -$223.04); MINIMUM PAYMENT (Chase +$223.04); LOAN INTEREST (Loan A: Interest +$13.78); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan A +$40.00); LOAN INTEREST (Loan B: Interest +$16.46); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan B +$40.00); LOAN INTEREST (Loan C: Interest +$7.17); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan C +$40.00); LOAN INTEREST (Loan D: Interest +$14.38); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan D +$40.00); LOAN INTEREST (Loan E: Interest +$5.92); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan E +$40.00)</td>
+      <td>very low food expense x31 (Chase -$310.00); CNA income (Checking +$1366.20)</td>
+    </tr>
+    <tr>
+      <td>2026-10-01</td>
+      <td>8406.74</td>
+      <td>325.21</td>
+      <td>3756.98</td>
+      <td>7291.99</td>
+      <td>3529.57</td>
+      <td>4515.75</td>
+      <td>1934.13</td>
+      <td>4481.47</td>
+      <td>1803.39</td>
+      <td>284.08</td>
+      <td>0.0</td>
+      <td>1657.80</td>
+      <td>-18906.54</td>
+      <td>16264.31</td>
+      <td>11048.97</td>
+      <td>8406.74</td>
+      <td></td>
+      <td>CC INTEREST (Citi: Prev Stmt Bal +$67.96); MINIMUM PAYMENT (Checking -$105.91); MINIMUM PAYMENT (Citi +$105.91); CC INTEREST (Chase: Prev Stmt Bal +$160.32); MINIMUM PAYMENT (Checking -$230.95); MINIMUM PAYMENT (Chase +$230.95); LOAN INTEREST (Loan A: Interest +$13.34); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan A +$40.00); LOAN INTEREST (Loan B: Interest +$15.93); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan B +$40.00); LOAN INTEREST (Loan C: Interest +$6.93); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan C +$40.00); LOAN INTEREST (Loan D: Interest +$13.92); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan D +$40.00); LOAN INTEREST (Loan E: Interest +$5.68); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan E +$40.00)</td>
+      <td>very low food expense x30 (Chase -$300.00); CNA income x2 (Checking +$2732.40)</td>
+    </tr>
+    <tr>
+      <td>2026-11-01</td>
+      <td>11962.04</td>
+      <td>325.21</td>
+      <td>3719.41</td>
+      <td>7529.07</td>
+      <td>3503.35</td>
+      <td>4492.19</td>
+      <td>1901.18</td>
+      <td>4455.77</td>
+      <td>1769.14</td>
+      <td>290.13</td>
+      <td>0.0</td>
+      <td>1686.73</td>
+      <td>-15408.07</td>
+      <td>16121.63</td>
+      <td>11248.48</td>
+      <td>11962.04</td>
+      <td></td>
+      <td>CC INTEREST (Citi: Prev Stmt Bal +$67.28); MINIMUM PAYMENT (Checking -$104.85); MINIMUM PAYMENT (Citi +$104.85); CC INTEREST (Chase: Prev Stmt Bal +$165.53); MINIMUM PAYMENT (Checking -$238.45); MINIMUM PAYMENT (Chase +$238.45); LOAN INTEREST (Loan A: Interest +$13.78); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan A +$40.00); LOAN INTEREST (Loan B: Interest +$16.44); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan B +$40.00); LOAN INTEREST (Loan C: Interest +$7.04); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan C +$40.00); LOAN INTEREST (Loan D: Interest +$14.30); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan D +$40.00); LOAN INTEREST (Loan E: Interest +$5.76); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan E +$40.00)</td>
+      <td>very low food expense x31 (Chase -$310.00); CNA income x3 (Checking +$4098.60)</td>
+    </tr>
+    <tr>
+      <td>2026-12-01</td>
+      <td>14144.43</td>
+      <td>325.21</td>
+      <td>3682.21</td>
+      <td>7753.78</td>
+      <td>3476.69</td>
+      <td>4468.02</td>
+      <td>1867.88</td>
+      <td>4429.53</td>
+      <td>1734.61</td>
+      <td>292.61</td>
+      <td>0.0</td>
+      <td>1692.61</td>
+      <td>-13268.29</td>
+      <td>15976.73</td>
+      <td>11435.99</td>
+      <td>14144.43</td>
+      <td></td>
+      <td>CC INTEREST (Citi: Prev Stmt Bal +$66.61); MINIMUM PAYMENT (Checking -$103.80); MINIMUM PAYMENT (Citi +$103.80); CC INTEREST (Chase: Prev Stmt Bal +$170.91); MINIMUM PAYMENT (Checking -$246.20); MINIMUM PAYMENT (Chase +$246.20); LOAN INTEREST (Loan A: Interest +$13.34); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan A +$40.00); LOAN INTEREST (Loan B: Interest +$15.83); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan B +$40.00); LOAN INTEREST (Loan C: Interest +$6.70); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan C +$40.00); LOAN INTEREST (Loan D: Interest +$13.76); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan D +$40.00); LOAN INTEREST (Loan E: Interest +$5.46); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan E +$40.00)</td>
+      <td>very low food expense x30 (Chase -$300.00); CNA income x2 (Checking +$2732.40)</td>
+    </tr>
+    <tr>
+      <td>2027-01-01</td>
+      <td>16320.52</td>
+      <td>325.21</td>
+      <td>3645.39</td>
+      <td>7986.24</td>
+      <td>3450.44</td>
+      <td>4444.29</td>
+      <td>1834.68</td>
+      <td>4403.66</td>
+      <td>1700.14</td>
+      <td>298.45</td>
+      <td>0.0</td>
+      <td>1721.07</td>
+      <td>-11144.32</td>
+      <td>15833.21</td>
+      <td>11631.63</td>
+      <td>16320.52</td>
+      <td></td>
+      <td>CC INTEREST (Citi: Prev Stmt Bal +$65.94); MINIMUM PAYMENT (Checking -$102.76); MINIMUM PAYMENT (Citi +$102.76); CC INTEREST (Chase: Prev Stmt Bal +$176.01); MINIMUM PAYMENT (Checking -$253.55); MINIMUM PAYMENT (Chase +$253.55); LOAN INTEREST (Loan A: Interest +$13.75); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan A +$40.00); LOAN INTEREST (Loan B: Interest +$16.27); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan B +$40.00); LOAN INTEREST (Loan C: Interest +$6.80); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan C +$40.00); LOAN INTEREST (Loan D: Interest +$14.14); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan D +$40.00); LOAN INTEREST (Loan E: Interest +$5.54); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan E +$40.00)</td>
+      <td>very low food expense x31 (Chase -$310.00); CNA income x2 (Checking +$2732.40)</td>
+    </tr>
+    <tr>
+      <td>2027-02-01</td>
+      <td>18490.03</td>
+      <td>325.21</td>
+      <td>3608.94</td>
+      <td>8216.38</td>
+      <td>3424.08</td>
+      <td>4420.47</td>
+      <td>1801.36</td>
+      <td>4377.72</td>
+      <td>1665.57</td>
+      <td>302.56</td>
+      <td>0.0</td>
+      <td>1738.34</td>
+      <td>-9024.49</td>
+      <td>15689.20</td>
+      <td>11825.32</td>
+      <td>18490.03</td>
+      <td></td>
+      <td>CC INTEREST (Citi: Prev Stmt Bal +$65.28); MINIMUM PAYMENT (Checking -$101.74); MINIMUM PAYMENT (Citi +$101.74); CC INTEREST (Chase: Prev Stmt Bal +$181.29); MINIMUM PAYMENT (Checking -$261.15); MINIMUM PAYMENT (Chase +$261.15); LOAN INTEREST (Loan A: Interest +$13.65); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan A +$40.00); LOAN INTEREST (Loan B: Interest +$16.18); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan B +$40.00); LOAN INTEREST (Loan C: Interest +$6.68); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan C +$40.00); LOAN INTEREST (Loan D: Interest +$14.05); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan D +$40.00); LOAN INTEREST (Loan E: Interest +$5.43); MINIMUM PAYMENT (Checking -$40.00); MINIMUM PAYMENT (Loan E +$40.00)</td>
+      <td>very low food expense x31 (Chase -$310.00); CNA income x2 (Checking +$2732.40)</td>
+    </tr>
+  </tbody>
+</table>
+                    </div>
+                </section>
+            
+                    </div>
+                </section>
+            
+                <section
+                    id="detail-page-net_worth"
+                    class="detail-page"
+                    data-detail-page="net_worth"
+                    aria-labelledby="detail-tab-net_worth"
+                >
+                    <header class="detail-page-header">
+                        <h2 class="detail-page-title">
+                            Net Worth
+                        </h2>
+                    </header>
+
+                    <div class="detail-page-text detail-page-text-above">
+                        Net Worth rose by $12,209.28 over 215 days, averaging $56.79 per day.
+                    </div>
+
+                    
+                    <div
+                        id="net_worth-plots"
+                        class="detail-page-plots"
+                        data-plot-page="net_worth"
+                    >
+                        
+                        <div class="detail-line-chart-container">
+                            <svg
+                                id="net_worth-chart"
+                                class="hero-chart detail-line-chart"
+                                role="img"
+                                aria-label="Net Worth line chart"
+                            ></svg>
+                            <div
+                                id="net_worth-chart-tooltip"
+                                class="hero-chart-tooltip"
+                                hidden
+                            ></div>
+                        </div>
+                    
+                    </div>
+                
+
+                    <div class="detail-page-text detail-page-text-below">
+                        
+                    </div>
+
+                    
+                    <section class="detailed-primary-table">
+                        <div class="table-scroll-container">
+                            <div class="report-table-empty">No data available.</div>
+                        </div>
+                    </section>
+                
+
+                    <div class="detailed-additional-sections">
+                        
+                    </div>
+                </section>
+            
+                <section
+                    id="detail-page-net_gain_and_loss"
+                    class="detail-page"
+                    data-detail-page="net_gain_and_loss"
+                    aria-labelledby="detail-tab-net_gain_and_loss"
+                >
+                    <header class="detail-page-header">
+                        <h2 class="detail-page-title">
+                            Net Gain &amp; Loss
+                        </h2>
+                    </header>
+
+                    <div class="detail-page-text detail-page-text-above">
+                        
+                    </div>
+
+                    
+                    <div
+                        id="net_gain_and_loss-plots"
+                        class="detail-page-plots"
+                        data-plot-page="net_gain_and_loss"
+                    >
+                        
+                        <div class="detail-line-chart-container">
+                            <svg
+                                id="net_gain_and_loss-chart"
+                                class="hero-chart detail-line-chart"
+                                role="img"
+                                aria-label="Net Gain &amp; Loss line chart"
+                            ></svg>
+                            <div
+                                id="net_gain_and_loss-chart-tooltip"
+                                class="hero-chart-tooltip"
+                                hidden
+                            ></div>
+                        </div>
+                    
+                    </div>
+                
+
+                    <div class="detail-page-text detail-page-text-below">
+                        
+                    </div>
+
+                    
+                    <section class="detailed-primary-table">
+                        <div class="table-scroll-container">
+                            <div class="report-table-empty">No data available.</div>
+                        </div>
+                    </section>
+                
+
+                    <div class="detailed-additional-sections">
+                        
+                    </div>
+                </section>
+            
+                <section
+                    id="detail-page-account_type"
+                    class="detail-page"
+                    data-detail-page="account_type"
+                    aria-labelledby="detail-tab-account_type"
+                >
+                    <header class="detail-page-header">
+                        <h2 class="detail-page-title">
+                            Account Type
+                        </h2>
+                    </header>
+
+                    <div class="detail-page-text detail-page-text-above">
+                        Liquid Total rose by $12,209.28 over 215 days, averaging $56.79 per day.
+CC Debt Total rose by $12,209.28 over 215 days, averaging $56.79 per day.
+Loan Total rose by $12,209.28 over 215 days, averaging $56.79 per day.
+
+                    </div>
+
+                    
+                    <div
+                        id="account_type-plots"
+                        class="detail-page-plots"
+                        data-plot-page="account_type"
+                    >
+                        
+                        <div class="detail-line-chart-container">
+                            <svg
+                                id="account_type-chart"
+                                class="hero-chart detail-line-chart"
+                                role="img"
+                                aria-label="Account Type line chart"
+                            ></svg>
+                            <div
+                                id="account_type-chart-tooltip"
+                                class="hero-chart-tooltip"
+                                hidden
+                            ></div>
+                        </div>
+                    
+                    </div>
+                
+
+                    <div class="detail-page-text detail-page-text-below">
+                        
+                    </div>
+
+                    
+                    <section class="detailed-primary-table">
+                        <div class="table-scroll-container">
+                            <div class="report-table-empty">No data available.</div>
+                        </div>
+                    </section>
+                
+
+                    <div class="detailed-additional-sections">
+                        
+                    </div>
+                </section>
+            
+                <section
+                    id="detail-page-interest"
+                    class="detail-page"
+                    data-detail-page="interest"
+                    aria-labelledby="detail-tab-interest"
+                >
+                    <header class="detail-page-header">
+                        <h2 class="detail-page-title">
+                            Interest
+                        </h2>
+                    </header>
+
+                    <div class="detail-page-text detail-page-text-above">
+                        
+                    </div>
+
+                    
+                    <div
+                        id="interest-plots"
+                        class="detail-page-plots"
+                        data-plot-page="interest"
+                    >
+                        
+                        <div class="detail-line-chart-container">
+                            <svg
+                                id="interest-chart"
+                                class="hero-chart detail-line-chart"
+                                role="img"
+                                aria-label="Interest line chart"
+                            ></svg>
+                            <div
+                                id="interest-chart-tooltip"
+                                class="hero-chart-tooltip"
+                                hidden
+                            ></div>
+                        </div>
+                    
+                    </div>
+                
+
+                    <div class="detail-page-text detail-page-text-below">
+                        
+                    </div>
+
+                    
+                    <section class="detailed-primary-table">
+                        <div class="table-scroll-container">
+                            <div class="report-table-empty">No data available.</div>
+                        </div>
+                    </section>
+                
+
+                    <div class="detailed-additional-sections">
+                        
+                    </div>
+                </section>
+            
+                <section
+                    id="detail-page-milestones"
+                    class="detail-page"
+                    data-detail-page="milestones"
+                    aria-labelledby="detail-tab-milestones"
+                >
+                    <header class="detail-page-header">
+                        <h2 class="detail-page-title">
+                            Milestones
+                        </h2>
+                    </header>
+
+                    <div class="detail-page-text detail-page-text-above">
+                        
+                    </div>
+
+                    
+                    <div
+                        id="milestones-plots"
+                        class="detail-page-plots"
+                        data-plot-page="milestones"
+                    >
+                        
+                    </div>
+                
+
+                    <div class="detail-page-text detail-page-text-below">
+                        
+                    </div>
+
+                    
+                    <section class="detailed-primary-table">
+                        <div class="table-scroll-container">
+                            <div class="report-table-empty">No data available.</div>
+                        </div>
+                    </section>
+                
+
+                    <div class="detailed-additional-sections">
+                        
+                    </div>
+                </section>
+            
+                <section
+                    id="detail-page-sankey"
+                    class="detail-page"
+                    data-detail-page="sankey"
+                    aria-labelledby="detail-tab-sankey"
+                >
+                    <header class="detail-page-header">
+                        <h2 class="detail-page-title">
+                            Sankey
+                        </h2>
+                    </header>
+
+                    <div class="detail-page-text detail-page-text-above">
+                        
+                    </div>
+
+                    
+                    <div
+                        id="sankey-plots"
+                        class="detail-page-plots"
+                        data-plot-page="sankey"
+                    >
+                        
+                    </div>
+                
+
+                    <div class="detail-page-text detail-page-text-below">
+                        
+                    </div>
+
+                    
+                    <section class="detailed-primary-table">
+                        <div class="table-scroll-container">
+                            <div class="report-table-empty">No data available.</div>
+                        </div>
+                    </section>
+                
+
+                    <div class="detailed-additional-sections">
+                        
+                    </div>
+                </section>
+            
+                <section
+                    id="detail-page-all"
+                    class="detail-page"
+                    data-detail-page="all"
+                    aria-labelledby="detail-tab-all"
+                >
+                    <header class="detail-page-header">
+                        <h2 class="detail-page-title">
+                            All
+                        </h2>
+                    </header>
+
+                    <div class="detail-page-text detail-page-text-above">
+                        
+                    </div>
+
+                    
+                    <div
+                        id="all-plots"
+                        class="detail-page-plots"
+                        data-plot-page="all"
+                    >
+                        
+                    </div>
+                
+
+                    <div class="detail-page-text detail-page-text-below">
+                        
+                    </div>
+
+                    
+                    <section class="detailed-primary-table">
+                        <div class="table-scroll-container">
+                            <div class="report-table-empty">No data available.</div>
+                        </div>
+                    </section>
+                
+
+                    <div class="detailed-additional-sections">
+                        
+                    </div>
+                </section>
+            
+                <section
+                    id="detail-page-transaction_schedule"
+                    class="detail-page"
+                    data-detail-page="transaction_schedule"
+                    aria-labelledby="detail-tab-transaction_schedule"
+                >
+                    <header class="detail-page-header">
+                        <h2 class="detail-page-title">
+                            Transaction Schedule
+                        </h2>
+                    </header>
+
+                    <div class="detail-page-text detail-page-text-above">
+                        
+                    </div>
+
+                    
+
+                    <div class="detail-page-text detail-page-text-below">
+                        
+                    </div>
+
+                    
+
+                    <div class="detailed-additional-sections">
+                        
+                <section class="table-card">
+                    <h2 class="table-card-title">Non-Essential Transactions</h2>
+                    <div class="table-scroll-container">
+                        <div class="report-table-empty">No data available.</div>
+                    </div>
+                </section>
+            
+                <section class="table-card">
+                    <h2 class="table-card-title">Credit Card Payments</h2>
+                    <div class="table-scroll-container">
+                        <div class="report-table-empty">No data available.</div>
+                    </div>
+                </section>
+            
+                <section class="table-card">
+                    <h2 class="table-card-title">Credit Card Interest Payments</h2>
+                    <div class="table-scroll-container">
+                        <table class="dataframe report-table report-table-credit-card-interest-payments">
+  <thead>
+    <tr style="text-align: left;">
+      <th>Date</th>
+      <th>Account</th>
+      <th>Amount</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>2026-08-01</td>
+      <td>Citi</td>
+      <td>69.34</td>
+    </tr>
+    <tr>
+      <td>2026-08-01</td>
+      <td>Chase</td>
+      <td>149.06</td>
+    </tr>
+    <tr>
+      <td>2026-09-01</td>
+      <td>Citi</td>
+      <td>68.65</td>
+    </tr>
+    <tr>
+      <td>2026-09-01</td>
+      <td>Chase</td>
+      <td>154.83</td>
+    </tr>
+    <tr>
+      <td>2026-10-01</td>
+      <td>Citi</td>
+      <td>67.96</td>
+    </tr>
+    <tr>
+      <td>2026-10-01</td>
+      <td>Chase</td>
+      <td>160.32</td>
+    </tr>
+    <tr>
+      <td>2026-11-01</td>
+      <td>Citi</td>
+      <td>67.28</td>
+    </tr>
+    <tr>
+      <td>2026-11-01</td>
+      <td>Chase</td>
+      <td>165.53</td>
+    </tr>
+    <tr>
+      <td>2026-12-01</td>
+      <td>Citi</td>
+      <td>66.61</td>
+    </tr>
+    <tr>
+      <td>2026-12-01</td>
+      <td>Chase</td>
+      <td>170.91</td>
+    </tr>
+    <tr>
+      <td>2027-01-01</td>
+      <td>Citi</td>
+      <td>65.94</td>
+    </tr>
+    <tr>
+      <td>2027-01-01</td>
+      <td>Chase</td>
+      <td>176.01</td>
+    </tr>
+    <tr>
+      <td>2027-02-01</td>
+      <td>Citi</td>
+      <td>65.28</td>
+    </tr>
+    <tr>
+      <td>2027-02-01</td>
+      <td>Chase</td>
+      <td>181.29</td>
+    </tr>
+  </tbody>
+</table>
+                    </div>
+                </section>
+            
+                <section class="table-card">
+                    <h2 class="table-card-title">Loan Payments</h2>
+                    <div class="table-scroll-container">
+                        <div class="report-table-empty">No data available.</div>
+                    </div>
+                </section>
+            
+                <section class="table-card">
+                    <h2 class="table-card-title">All Transactions</h2>
+                    <div class="table-scroll-container">
+                        <table class="dataframe report-table report-table-all-transactions">
+  <thead>
+    <tr style="text-align: left;">
+      <th>Date</th>
+      <th>Priority</th>
+      <th>Amount</th>
+      <th>Memo</th>
+      <th>Income_Flag</th>
+      <th>Deferrable</th>
+      <th>Partial_Payment_Allowed</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>2026-07-01</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-07-02</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-07-03</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-07-04</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-07-05</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-07-06</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-07-07</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-07-08</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-07-09</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-07-10</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-07-11</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-07-12</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-07-13</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-07-14</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-07-15</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-07-16</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-07-17</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-07-18</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-07-19</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-07-20</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-07-21</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-07-22</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-07-23</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-07-24</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-07-25</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-07-26</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-07-27</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-07-28</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-07-29</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-07-30</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-07-31</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-08-01</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-08-02</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-08-03</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-08-04</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-08-05</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-08-06</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-08-07</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-08-08</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-08-09</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-08-10</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-08-11</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-08-12</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-08-13</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-08-14</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-08-15</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-08-16</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-08-17</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-08-18</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-08-19</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-08-20</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-08-21</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-08-22</td>
+      <td>1</td>
+      <td>1366.1999999999998</td>
+      <td>CNA income</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-08-22</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-08-23</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-08-24</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-08-25</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-08-26</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-08-27</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-08-28</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-08-29</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-08-30</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-08-31</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-09-01</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-09-02</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-09-03</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-09-04</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-09-05</td>
+      <td>1</td>
+      <td>1366.1999999999998</td>
+      <td>CNA income</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-09-05</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-09-06</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-09-07</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-09-08</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-09-09</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-09-10</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-09-11</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-09-12</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-09-13</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-09-14</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-09-15</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-09-16</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-09-17</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-09-18</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-09-19</td>
+      <td>1</td>
+      <td>1366.1999999999998</td>
+      <td>CNA income</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-09-19</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-09-20</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-09-21</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-09-22</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-09-23</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-09-24</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-09-25</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-09-26</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-09-27</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-09-28</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-09-29</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-09-30</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-01</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-02</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-03</td>
+      <td>1</td>
+      <td>1366.1999999999998</td>
+      <td>CNA income</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-03</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-04</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-05</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-06</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-07</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-08</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-09</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-10</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-11</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-12</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-13</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-14</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-15</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-16</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-17</td>
+      <td>1</td>
+      <td>1366.1999999999998</td>
+      <td>CNA income</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-17</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-18</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-19</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-20</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-21</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-22</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-23</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-24</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-25</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-26</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-27</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-28</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-29</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-30</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-31</td>
+      <td>1</td>
+      <td>1366.1999999999998</td>
+      <td>CNA income</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-10-31</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-11-01</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-11-02</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-11-03</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-11-04</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-11-05</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-11-06</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-11-07</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-11-08</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-11-09</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-11-10</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-11-11</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-11-12</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-11-13</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-11-14</td>
+      <td>1</td>
+      <td>1366.1999999999998</td>
+      <td>CNA income</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-11-14</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-11-15</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-11-16</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-11-17</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-11-18</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-11-19</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-11-20</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-11-21</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-11-22</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-11-23</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-11-24</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-11-25</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-11-26</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-11-27</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-11-28</td>
+      <td>1</td>
+      <td>1366.1999999999998</td>
+      <td>CNA income</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-11-28</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-11-29</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-11-30</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-12-01</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-12-02</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-12-03</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-12-04</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-12-05</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-12-06</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-12-07</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-12-08</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-12-09</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-12-10</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-12-11</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-12-12</td>
+      <td>1</td>
+      <td>1366.1999999999998</td>
+      <td>CNA income</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-12-12</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-12-13</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-12-14</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-12-15</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-12-16</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-12-17</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-12-18</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-12-19</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-12-20</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-12-21</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-12-22</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-12-23</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-12-24</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-12-25</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-12-26</td>
+      <td>1</td>
+      <td>1366.1999999999998</td>
+      <td>CNA income</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-12-26</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-12-27</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-12-28</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-12-29</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-12-30</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2026-12-31</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-01-01</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-01-02</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-01-03</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-01-04</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-01-05</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-01-06</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-01-07</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-01-08</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-01-09</td>
+      <td>1</td>
+      <td>1366.1999999999998</td>
+      <td>CNA income</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-01-09</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-01-10</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-01-11</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-01-12</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-01-13</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-01-14</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-01-15</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-01-16</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-01-17</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-01-18</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-01-19</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-01-20</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-01-21</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-01-22</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-01-23</td>
+      <td>1</td>
+      <td>1366.1999999999998</td>
+      <td>CNA income</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-01-23</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-01-24</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-01-25</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-01-26</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-01-27</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-01-28</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-01-29</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-01-30</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-01-31</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>2027-02-01</td>
+      <td>1</td>
+      <td>10.0</td>
+      <td>very low food expense</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+  </tbody>
+</table>
+                    </div>
+                </section>
+            
+                    </div>
+                </section>
+            
+                <section
+                    id="detail-page-last_day"
+                    class="detail-page"
+                    data-detail-page="last_day"
+                    aria-labelledby="detail-tab-last_day"
+                >
+                    <header class="detail-page-header">
+                        <h2 class="detail-page-title">
+                            Last Day
+                        </h2>
+                    </header>
+
+                    <div class="detail-page-text detail-page-text-above">
+                        
+                    </div>
+
+                    
+                    <div
+                        id="last_day-plots"
+                        class="detail-page-plots"
+                        data-plot-page="last_day"
+                    >
+                        
+                    </div>
+                
+
+                    <div class="detail-page-text detail-page-text-below">
+                        
+                    </div>
+
+                    
+                    <section class="detailed-primary-table">
+                        <div class="table-scroll-container">
+                            <div class="report-table-empty">No data available.</div>
+                        </div>
+                    </section>
+                
+
+                    <div class="detailed-additional-sections">
+                        
+                    </div>
+                </section>
+            
+                    </div>
+                </section>
+            </main>
+
+            <script>
+                (() => {
+                    "use strict";
+
+                    const heroSection = document.querySelector(".hero-section");
+
+                    const summaryView =
+                        document.getElementById("summary-view");
+
+                    const detailedView =
+                        document.getElementById("detailed-view");
+
+                    const viewToggleButton =
+                        document.getElementById("view-toggle-button");
+
+                    const detailNavButtons = Array.from(
+                        document.querySelectorAll(
+                            "[data-detail-target]"
+                        )
+                    );
+
+                    const detailPages = Array.from(
+                        document.querySelectorAll(
+                            "[data-detail-page]"
+                        )
+                    );
+
+                    let showingDetailedView = false;
+
+                    
+
+                    function setDetailedViewVisibility(showDetailed) {
+                        showingDetailedView = showDetailed;
+
+                        summaryView.hidden = showDetailed;
+                        detailedView.hidden = !showDetailed;
+
+                        setHeroPlotVisible(!showDetailed);
+
+                        viewToggleButton.textContent =
+                            showDetailed
+                                ? "Show Summary View"
+                                : "Show Detailed View";
+
+                        viewToggleButton.setAttribute(
+                            "aria-expanded",
+                            String(showDetailed)
+                        );
+                    }
+
+                    function setHeroPlotVisible(isVisible) {
+                        heroSection.hidden = !isVisible;
+                    }
+
+                    function activateDetailPage(pageName) {
+                        detailNavButtons.forEach((button) => {
+                            const isActive =
+                                button.dataset.detailTarget === pageName;
+
+                            button.classList.toggle(
+                                "is-active",
+                                isActive
+                            );
+
+                            button.setAttribute(
+                                "aria-selected",
+                                String(isActive)
+                            );
+
+                            button.tabIndex = isActive ? 0 : -1;
+                        });
+
+                        detailPages.forEach((page) => {
+                            const isActive =
+                                page.dataset.detailPage === pageName;
+
+                            page.classList.toggle(
+                                "is-active",
+                                isActive
+                            );
+                        });
+                    }
+
+                    viewToggleButton.addEventListener(
+                        "click",
+                        () => {
+                            setDetailedViewVisibility(
+                                !showingDetailedView
+                            );
+                        }
+                    );
+
+                    detailNavButtons.forEach((button, index) => {
+                        button.addEventListener("click", () => {
+                            activateDetailPage(
+                                button.dataset.detailTarget
+                            );
+                        });
+
+                        button.addEventListener(
+                            "keydown",
+                            (event) => {
+                                if (
+                                    event.key !== "ArrowLeft" &&
+                                    event.key !== "ArrowRight"
+                                ) {
+                                    return;
+                                }
+
+                                event.preventDefault();
+
+                                const direction =
+                                    event.key === "ArrowRight"
+                                        ? 1
+                                        : -1;
+
+                                const nextIndex =
+                                    (
+                                        index +
+                                        direction +
+                                        detailNavButtons.length
+                                    ) % detailNavButtons.length;
+
+                                const nextButton =
+                                    detailNavButtons[nextIndex];
+
+                                activateDetailPage(
+                                    nextButton.dataset.detailTarget
+                                );
+
+                                nextButton.focus();
+                            }
+                        );
+                    });
+
+                    /*
+                    Initial page state:
+                        - Summary is visible.
+                        - Detailed view is hidden.
+                        - Parameters is the selected detailed page.
+                    */
+                    activateDetailPage("parameters");
+                    setDetailedViewVisibility(false);
+                })();
+            </script>
+
+            <script
+                id="hero-chart-data"
+                type="application/json"
+            >
+                {"series_data": [{"Date": "2026-07-01", "Checking": 5897.8}, {"Date": "2026-08-01", "Checking": 5375.02}, {"Date": "2026-09-01", "Checking": 6211.19}, {"Date": "2026-10-01", "Checking": 8406.74}, {"Date": "2026-11-01", "Checking": 11962.04}, {"Date": "2026-12-01", "Checking": 14144.43}, {"Date": "2027-01-01", "Checking": 16320.52}, {"Date": "2027-02-01", "Checking": 18490.03}], "highlighted_transactions": [], "account_milestone_achieved_dates": [], "options": {"date_column": "Date", "primary_series": "Checking", "line_animation_ms": 1800, "respect_reduced_motion": false, "line_styles": {"Checking": {"color": "#2f7d4a", "width": 3.5}, "Savings": {"color": "#8a8a8f", "width": 2}, "Credit Card": {"color": "#b65a5a", "width": 2}}, "default_line_color": "#7a7a80", "default_line_width": 2, "today_color": "#2878d0", "transaction_color": "#929298", "transaction_delay_ms": 150, "transaction_stagger_ms": 130, "currency_symbol": "$"}}
+            </script>
+            <script
+                id="detail-chart-data"
+                type="application/json"
+            >
+                {"net_worth": {"series_data": [{"Date": "2026-07-01", "Net Worth": -21233.77}, {"Date": "2026-08-01", "Net Worth": -21829.88}, {"Date": "2026-09-01", "Net Worth": -21054.87}, {"Date": "2026-10-01", "Net Worth": -18906.54}, {"Date": "2026-11-01", "Net Worth": -15408.07}, {"Date": "2026-12-01", "Net Worth": -13268.29}, {"Date": "2027-01-01", "Net Worth": -11144.32}, {"Date": "2027-02-01", "Net Worth": -9024.49}], "options": {"line_styles": {"Net Worth": {"color": "#2878d0"}}}}, "net_gain_and_loss": {"series_data": [{"Date": "2026-07-01", "Net Gain": 0.0, "Net Loss": -0.0}, {"Date": "2026-08-01", "Net Gain": 0.0, "Net Loss": -1641.67}, {"Date": "2026-09-01", "Net Gain": 0.0, "Net Loss": -1651.23}, {"Date": "2026-10-01", "Net Gain": 0.0, "Net Loss": -1657.8}, {"Date": "2026-11-01", "Net Gain": 0.0, "Net Loss": -1686.73}, {"Date": "2026-12-01", "Net Gain": 0.0, "Net Loss": -1692.61}, {"Date": "2027-01-01", "Net Gain": 0.0, "Net Loss": -1721.07}, {"Date": "2027-02-01", "Net Gain": 0.0, "Net Loss": -1738.34}], "options": {"symmetric_zero": true, "absolute_tooltip_series": ["Net Loss"], "line_styles": {"Net Gain": {"color": "#268a51"}, "Net Loss": {"color": "#c94747"}}}}, "account_type": {"series_data": [{"Date": "2026-07-01", "Liquid Total": 5897.8, "CC Debt Total": 10438.47, "Loan Total": 16693.1}, {"Date": "2026-08-01", "Liquid Total": 5375.02, "CC Debt Total": 10654.09, "Loan Total": 16550.81}, {"Date": "2026-09-01", "Liquid Total": 6211.19, "CC Debt Total": 10857.55, "Loan Total": 16408.51}, {"Date": "2026-10-01", "Liquid Total": 8406.74, "CC Debt Total": 11048.97, "Loan Total": 16264.31}, {"Date": "2026-11-01", "Liquid Total": 11962.04, "CC Debt Total": 11248.48, "Loan Total": 16121.63}, {"Date": "2026-12-01", "Liquid Total": 14144.43, "CC Debt Total": 11435.99, "Loan Total": 15976.73}, {"Date": "2027-01-01", "Liquid Total": 16320.52, "CC Debt Total": 11631.63, "Loan Total": 15833.21}, {"Date": "2027-02-01", "Liquid Total": 18490.03, "CC Debt Total": 11825.32, "Loan Total": 15689.2}], "options": {"line_styles": {"Liquid Total": {"color": "#2878d0"}, "CC Debt Total": {"color": "#c94747"}, "Loan Total": {"color": "#a05a9c"}, "Investment Total": {"color": "#268a51"}}}}, "interest": {"series_data": [{"Date": "2026-07-01", "Marginal Interest": 0.0}, {"Date": "2026-08-01", "Marginal Interest": 276.11}, {"Date": "2026-09-01", "Marginal Interest": 281.19}, {"Date": "2026-10-01", "Marginal Interest": 284.08}, {"Date": "2026-11-01", "Marginal Interest": 290.13}, {"Date": "2026-12-01", "Marginal Interest": 292.61}, {"Date": "2027-01-01", "Marginal Interest": 298.45}, {"Date": "2027-02-01", "Marginal Interest": 302.56}], "options": {"line_styles": {"Marginal Interest": {"color": "#c47a24"}}}}}
+            </script>
+            <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+            <script src="./hero_chart.js"></script>
+            <script src="./detail_charts.js"></script>
+        </body>
+        </html>
+        
