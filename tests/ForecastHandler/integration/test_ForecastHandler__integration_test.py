@@ -40,7 +40,7 @@ class TestForecastHandler:
             start_date=start_date,
             end_date=end_date,
             account_set=A,
-            budget_set=B,
+            line_item_set=B,
             memo_rule_set=M,
             milestone_set=MS)
         
@@ -187,7 +187,7 @@ class TestForecastHandler:
             start_date=start_date,
             end_date=end_date,
             account_set=A,
-            budget_set=B,
+            line_item_set=B,
             memo_rule_set=M,
             milestone_set=MS)
         
@@ -364,7 +364,7 @@ class TestForecastHandler:
             start_date=start_date,
             end_date=end_date,
             account_set=A,
-            budget_set=B,
+            line_item_set=B,
             memo_rule_set=M,
             milestone_set=MS)
         
@@ -539,7 +539,7 @@ class TestForecastHandler:
             start_date=start_date,
             end_date=end_date,
             account_set=A,
-            budget_set=B,
+            line_item_set=B,
             memo_rule_set=M,
             milestone_set=MS)
         
@@ -669,7 +669,7 @@ class TestForecastHandler:
             start_date=start_date,
             end_date=end_date,
             account_set=A,
-            budget_set=B,
+            line_item_set=B,
             memo_rule_set=M,
             milestone_set=MS,
         )
@@ -870,7 +870,7 @@ class TestForecastHandler:
             start_date=start_date,
             end_date=end_date,
             account_set=A,
-            budget_set=B,
+            line_item_set=B,
             memo_rule_set=M,
             milestone_set=MS,
         )
@@ -952,7 +952,7 @@ class TestForecastHandler:
                 start_date=start_date,
                 end_date=end_date,
                 account_set=A,
-                budget_set=B,
+                line_item_set=B,
                 memo_rule_set=M,
                 milestone_set=MS,
             ),
@@ -1471,7 +1471,7 @@ class TestForecastHandler:
                 start_date=start_date,
                 end_date=end_date,
                 account_set=A,
-                budget_set=B,
+                line_item_set=B,
                 memo_rule_set=M,
                 milestone_set=MS,
             ),
@@ -1744,7 +1744,7 @@ class TestForecastHandler:
     #         start_date=start_date,
     #         end_date=end_date,
     #         account_set=A,
-    #         budget_set=B,
+    #         line_item_set=B,
     #         memo_rule_set=M,
     #         milestone_set=MS)
         
@@ -1919,7 +1919,7 @@ class TestForecastHandler:
             start_date=start_date,
             end_date=end_date,
             account_set=A,
-            budget_set=B,
+            line_item_set=B,
             memo_rule_set=M,
             milestone_set=MS,
         )
@@ -1964,7 +1964,7 @@ class TestForecastHandler:
                 start_date=start_date,
                 end_date=end_date,
                 account_set=A,
-                budget_set=B,
+                line_item_set=B,
                 memo_rule_set=M,
                 milestone_set=MS,
             )
@@ -2009,7 +2009,7 @@ class TestForecastHandler:
                 start_date=start_date,
                 end_date=end_date,
                 account_set=A,
-                budget_set=B,
+                line_item_set=B,
                 memo_rule_set=M,
                 milestone_set=MS,
             )
@@ -2054,7 +2054,7 @@ class TestForecastHandler:
                 start_date=start_date,
                 end_date=end_date,
                 account_set=A,
-                budget_set=B,
+                line_item_set=B,
                 memo_rule_set=M,
                 milestone_set=MS,
             )
@@ -2135,7 +2135,7 @@ class TestForecastHandler:
                 start_date=start_date,
                 end_date=end_date,
                 account_set=A,
-                budget_set=B,
+                line_item_set=B,
                 memo_rule_set=M,
                 milestone_set=MS,
             )
@@ -2215,7 +2215,7 @@ class TestForecastHandler:
                 start_date=start_date,
                 end_date=end_date,
                 account_set=A,
-                budget_set=B,
+                line_item_set=B,
                 memo_rule_set=M,
                 milestone_set=MS,
             )
@@ -2295,7 +2295,7 @@ class TestForecastHandler:
                 start_date=start_date,
                 end_date=end_date,
                 account_set=A,
-                budget_set=B,
+                line_item_set=B,
                 memo_rule_set=M,
                 milestone_set=MS,
             )
@@ -2375,7 +2375,7 @@ class TestForecastHandler:
                 start_date=start_date,
                 end_date=end_date,
                 account_set=A,
-                budget_set=B,
+                line_item_set=B,
                 memo_rule_set=M,
                 milestone_set=MS,
             )
@@ -2455,7 +2455,7 @@ class TestForecastHandler:
                 start_date=start_date,
                 end_date=end_date,
                 account_set=A,
-                budget_set=B,
+                line_item_set=B,
                 memo_rule_set=M,
                 milestone_set=MS,
             )
@@ -2535,7 +2535,7 @@ class TestForecastHandler:
                 start_date=start_date,
                 end_date=end_date,
                 account_set=A,
-                budget_set=B,
+                line_item_set=B,
                 memo_rule_set=M,
                 milestone_set=MS,
             )
@@ -2564,7 +2564,7 @@ class TestForecastHandler:
             start_date=start_date,
             end_date=end_date,
             account_set=accounts,
-            budget_set=budget or LineItemSet(),
+            line_item_set=budget or LineItemSet(),
             memo_rule_set=memo_rules or MemoRuleSet(),
             milestone_set=MilestoneSet(),
         )
@@ -3333,7 +3333,7 @@ class TestForecastHandler:
     #     end_date = "20000104"
 
     #     account_set = AccountSet([])
-    #     budget_set = LineItemSet([])
+    #     line_item_set = LineItemSet([])
     #     memo_rule_set = MemoRuleSet([])
 
     #     account_set.createAccount(
@@ -3345,7 +3345,7 @@ class TestForecastHandler:
     #         primary_checking_ind=True,
     #     )
 
-    #     budget_set.addLineItem(
+    #     line_item_set.addLineItem(
     #         start_date="20000101",
     #         end_date="20000104",
     #         priority=1,
@@ -3374,7 +3374,7 @@ class TestForecastHandler:
     #     #                            expected_result_df.Date]
     #     #
     #     # E = self.compute_forecast_and_actual_vs_expected(account_set,
-    #     #                                                  budget_set,
+    #     #                                                  line_item_set,
     #     #                                                  memo_rule_set,
     #     #                                                  start_date,
     #     #                                                  end_date,
@@ -3385,14 +3385,14 @@ class TestForecastHandler:
     #         datetime.datetime.strptime(start_date, "%Y%m%d").date(),
     #         datetime.datetime.strptime(end_date, "%Y%m%d").date(),
     #         account_set,
-    #         budget_set,
+    #         line_item_set,
     #         memo_rule_set,
     #     )
 
     # @pytest.mark.skip
     # @pytest.mark.unit
     # @pytest.mark.parametrize(
-    #     "test_description,account_set,budget_set,memo_rule_set,start_date,end_date,milestone_set,account_milestone_names,expected_milestone_dates",
+    #     "test_description,account_set,line_item_set,memo_rule_set,start_date,end_date,milestone_set,account_milestone_names,expected_milestone_dates",
     #     [
     #         (
     #             "test_account_milestone",
@@ -3427,7 +3427,7 @@ class TestForecastHandler:
     #     self,
     #     test_description,
     #     account_set,
-    #     budget_set,
+    #     line_item_set,
     #     memo_rule_set,
     #     start_date,
     #     end_date,
@@ -3439,7 +3439,7 @@ class TestForecastHandler:
     #         datetime.datetime.strptime(start_date, "%Y%m%d").date(),
     #         datetime.datetime.strptime(end_date, "%Y%m%d").date(),
     #         account_set,
-    #         budget_set,
+    #         line_item_set,
     #         memo_rule_set,
     #     )
     #     E = ForecastHandler().runForecast(E, milestone_set)
@@ -3463,7 +3463,7 @@ class TestForecastHandler:
     # @pytest.mark.skip
     # @pytest.mark.unit
     # @pytest.mark.parametrize(
-    #     "test_description,account_set,budget_set,memo_rule_set,start_date,end_date,milestone_set,memo_milestone_names,expected_milestone_dates",
+    #     "test_description,account_set,line_item_set,memo_rule_set,start_date,end_date,milestone_set,memo_milestone_names,expected_milestone_dates",
     #     [
     #         (
     #             "test_memo_milestone",
@@ -3496,7 +3496,7 @@ class TestForecastHandler:
     #     self,
     #     test_description,
     #     account_set,
-    #     budget_set,
+    #     line_item_set,
     #     memo_rule_set,
     #     start_date,
     #     end_date,
@@ -3508,7 +3508,7 @@ class TestForecastHandler:
     #         datetime.datetime.strptime(start_date, "%Y%m%d").date(),
     #         datetime.datetime.strptime(end_date, "%Y%m%d").date(),
     #         account_set,
-    #         budget_set,
+    #         line_item_set,
     #         memo_rule_set,
     #     )
     #     E = ForecastHandler().runForecast(E, milestone_set)
@@ -3531,7 +3531,7 @@ class TestForecastHandler:
     # @pytest.mark.skip
     # @pytest.mark.unit
     # @pytest.mark.parametrize(
-    #     "test_description,account_set,budget_set,memo_rule_set,start_date,end_date,milestone_set,composite_milestone_names,expected_milestone_dates",
+    #     "test_description,account_set,line_item_set,memo_rule_set,start_date,end_date,milestone_set,composite_milestone_names,expected_milestone_dates",
     #     [
     #         (
     #             "test composite milestone",
@@ -3584,7 +3584,7 @@ class TestForecastHandler:
     #     self,
     #     test_description,
     #     account_set,
-    #     budget_set,
+    #     line_item_set,
     #     memo_rule_set,
     #     start_date,
     #     end_date,
@@ -3597,7 +3597,7 @@ class TestForecastHandler:
     #         datetime.datetime.strptime(start_date, "%Y%m%d").date(),
     #         datetime.datetime.strptime(end_date, "%Y%m%d").date(),
     #         account_set,
-    #         budget_set,
+    #         line_item_set,
     #         memo_rule_set,
     #     )
     #     E = ForecastHandler().runForecast(E, milestone_set)
@@ -3632,7 +3632,7 @@ class TestForecastHandler:
     # @pytest.mark.skip
     # @pytest.mark.unit
     # @pytest.mark.parametrize(
-    #     "test_description,account_set,budget_set,memo_rule_set,start_date,end_date,milestone_set,expected_result_df",
+    #     "test_description,account_set,line_item_set,memo_rule_set,start_date,end_date,milestone_set,expected_result_df",
     #     [
     #         (
     #             "test_next_income_date",
@@ -3706,7 +3706,7 @@ class TestForecastHandler:
     #     self,
     #     test_description,
     #     account_set,
-    #     budget_set,
+    #     line_item_set,
     #     memo_rule_set,
     #     start_date,
     #     end_date,
@@ -3719,7 +3719,7 @@ class TestForecastHandler:
 
     #     E = self.compute_forecast_and_actual_vs_expected(
     #         account_set,
-    #         budget_set,
+    #         line_item_set,
     #         memo_rule_set,
     #         start_date,
     #         end_date,

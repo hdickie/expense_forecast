@@ -27,7 +27,7 @@ async def root():
 #
 # def compute_forecast_and_actual_vs_expected(
 #     account_set,
-#     budget_set,
+#     line_item_set,
 #     memo_rule_set,
 #     start_date_YYYYMMDD,
 #     end_date_YYYYMMDD,
@@ -37,7 +37,7 @@ async def root():
 # ):
 #     E = ExpenseForecast(
 #         account_set,
-#         budget_set,
+#         line_item_set,
 #         memo_rule_set,
 #         start_date_YYYYMMDD,
 #         end_date_YYYYMMDD,
@@ -448,7 +448,7 @@ async def root():
 #     #     lines = json.loads(string_lines)
 #     #     print(lines['totals']['percent_covered_display'])
 #
-#     # test_description, account_set, budget_set, memo_rule_set, start_date_YYYYMMDD, end_date_YYYYMMDD, milestone_set, expected_result_df =(
+#     # test_description, account_set, line_item_set, memo_rule_set, start_date_YYYYMMDD, end_date_YYYYMMDD, milestone_set, expected_result_df =(
 #     #                 'test_next_income_date',
 #     #                 AccountSet(checking_acct_list(1000)),
 #     #                 BudgetSet(
@@ -477,7 +477,7 @@ async def root():
 #     #                 })
 #     #         )
 #     #
-#     # E = ExpenseForecast(account_set, budget_set,
+#     # E = ExpenseForecast(account_set, line_item_set,
 #     #                                     memo_rule_set,
 #     #                                     start_date_YYYYMMDD,
 #     #                                     end_date_YYYYMMDD,
@@ -488,7 +488,7 @@ async def root():
 #     # print(E.forecast_df.to_string())
 #
 #     # compute_forecast_and_actual_vs_expected(account_set,
-#     #                                              budget_set,
+#     #                                              line_item_set,
 #     #                                              memo_rule_set,
 #     #                                              start_date_YYYYMMDD,
 #     #                                              end_date_YYYYMMDD,

@@ -20,6 +20,18 @@ from expense_forecast.MinimumCheckingBalancePolicy import MinimumCheckingBalance
 import pandas as pd
 from datetime import date
 import datetime
+from decimal import Decimal
+
+import logging
+
+logger = logging.getLogger(__name__)
+
+if not logger.handlers:
+    logging.basicConfig(
+        level=logging.DEBUG,  # INFO when you get tired of the spam
+        format="%(asctime)s %(levelname)-8s %(name)s: %(message)s",
+        datefmt="%H:%M:%S",
+    )
 
 def values_equal(left, right) -> bool:
     if pd.isna(left) and pd.isna(right):
@@ -50,7 +62,7 @@ class ExecutionContext:
 
     readers: dict[CellId, set[NodeId]] = field(default_factory=dict)
     nodes: dict[NodeId, "ComputationNode"] = field(default_factory=dict)
-    execution_order: list[NodeId] = field(default_factory=list)
+    registration_order: list[NodeId] = field(default_factory=list)
     pending_heap: list[tuple[Priority, NodeId]] = field(default_factory=list)
     pending_ids: set[NodeId] = field(default_factory=set)
 
@@ -63,26 +75,27 @@ class ExecutionContext:
     # nodes: dict[NodeId, "ComputationNode"] = field(default_factory=dict)
 
     # # Full order of nodes created during the execution.
-    # execution_order: list[NodeId] = field(default_factory=list)
+    # registration_order: list[NodeId] = field(default_factory=list)
 
     # # Current repair frontier.
     # pending_heap: list[tuple[Priority, NodeId]] = field(default_factory=list)
     # pending_ids: set[NodeId] = field(default_factory=set)
 
-    def register(self, day_index: int, phase_index: int, node: "ComputationNode") -> None:
+    def register(self, day_index: int, priority_level: int, node: "ComputationNode") -> None:
+        logger.info('register '+str(node.__class__)+' '+str(node.node_id))
         if node.node_id in self.nodes:
             raise ValueError(f"Duplicate node ID: {node.node_id!r}")
 
-        sequence = len(self.execution_order) #TODO not sure this is the right way
+        sequence = len(self.registration_order) #TODO not sure this is the right way
 
         node.priority = Priority(
             day_index,
-            phase_index,
+            priority_level,
             sequence
         )
 
         self.nodes[node.node_id] = node
-        self.execution_order.append(node.node_id)
+        self.registration_order.append(node.node_id)
 
         for location in node.reads:
             self.readers.setdefault(location, set()).add(node.node_id)
@@ -100,9 +113,6 @@ class ExecutionContext:
         self.pending_ids.remove(node_id)
         return self.nodes[node_id]
     
-    # def __init__(self, 
-    #              initial_conditions: ExpenseForecastInitialConditions,
-    #              milestone_set: MilestoneSet):
     def __post_init__(self) -> None:
         
         account_names = (
@@ -130,6 +140,7 @@ class ExecutionContext:
         ]
 
     def write(self, cell: CellId, value) -> bool:
+        logger.info('write '+str(cell.forecast_date)+' '+str(cell.column_name).ljust(25,'.')+' '+str(value))
         previous_value = self.forecast_df.at[
             cell.forecast_date,
             cell.column_name,
@@ -145,16 +156,31 @@ class ExecutionContext:
 
         return changed
 
-
-
 @dataclass
 class ComputationNode(ABC):
+    # reads: set[CellId] = field(
+    #     init=False,
+    #     default_factory=set,
+    # )
+    # writes: set[CellId] = field(
+    #     init=False,
+    #     default_factory=set,
+    # )
     reads: set[CellId]
     writes: set[CellId]
 
     node_id: NodeId = field(init=False)
     priority: Priority = field(init=False)
 
+
+    # TODO instead use a stable semantic id
+    # e.g.
+    # (
+    #     "transaction",
+    #     line_item.stable_id,
+    #     occurrence_date,
+    #     occurrence_sequence,
+    # )
     def __post_init__(self) -> None:
         self.node_id = uuid.uuid4()
 
@@ -174,6 +200,7 @@ class WriteValueToOutputCellNode(ComputationNode):
         self,
         context: ExecutionContext,
     ) -> set[CellId]:
+        logger.info('execute WriteValueToOutputCellNode')
         output_cell = next(iter(self.writes))
         changed = context.write(output_cell, self.value)
 
@@ -186,6 +213,7 @@ class CarryBalanceForwardNode(ComputationNode):
         self,
         context: ExecutionContext,
     ) -> set[CellId]:
+        logger.info('execute CarryBalanceForwardNode')
         input_cell = next(iter(self.reads))
         output_cell = next(iter(self.writes))
 
@@ -194,6 +222,69 @@ class CarryBalanceForwardNode(ComputationNode):
 
         return {output_cell} if changed else set()
     
+# CreditCardRolloverNode
+# CreditCardMinimumPaymentNode
+# LoanMinimumPaymentNode
+# LoanSurplusPaymentNode
+# LoanInterestAccrualNode
+# InvestmentAccrualNode
+
+@dataclass
+class TransactionNode(ComputationNode):
+    amount: Decimal
+    account_from: str
+    account_to: str
+    transaction_date: date
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+
+        self.from_cell = CellId(
+            forecast_date=self.transaction_date,
+            column_name=self.account_from,
+        )
+        self.to_cell = CellId(
+            forecast_date=self.transaction_date,
+            column_name=self.account_to,
+        )
+
+        self.reads = {
+            self.from_cell,
+            self.to_cell,
+        }
+
+        self.writes = {
+            self.from_cell,
+            self.to_cell,
+        }
+
+    def execute(self, context: ExecutionContext) -> set[CellId]:
+        logger.info('execute TransactionNode')
+
+        changed_cells: set[CellId] = set()
+
+        if self.from_cell.column_name: #if the txn is not income
+            from_balance = Decimal(context.read(self.from_cell))
+            if context.write(
+                self.from_cell,
+                from_balance - self.amount,
+            ):
+                changed_cells.add(self.from_cell)
+
+        if self.to_cell.column_name: #if money is spent
+            # print('self.to_cell.column_name')
+            # print(self.to_cell.column_name)
+            to_balance = Decimal(context.read(self.to_cell))
+            if context.write(
+                self.to_cell,
+                to_balance + self.amount,
+            ):
+                changed_cells.add(self.to_cell)
+
+        # TODO memo and memo directive
+
+        return changed_cells
+
 @dataclass
 class CarryValueNode(ComputationNode):
     node_id: NodeId
@@ -204,39 +295,13 @@ class CarryValueNode(ComputationNode):
     writes: set[CellId]
 
     def execute(self, context: ExecutionContext) -> set[CellId]:
+        logger.info('execute CarryValueNode')
         value = context.read(self.source)
         changed = context.write(self.destination, value)
 
         return {self.destination} if changed else set()
 
 class ExecutionEngine:
-
-    @classmethod
-    def _initialize_accounts(
-        cls,
-        context: ExecutionContext,
-        account_df: pd.DataFrame,
-        forecast_date: date,
-    ) -> None:
-        for sequence, (_, account) in enumerate(account_df.iterrows()):
-            node = WriteValueToOutputCellNode(
-                node_id=(
-                    "initial_balance",
-                    forecast_date,
-                    account["Name"],
-                ),
-                priority=(0, 0, sequence),
-                value=account["Balance"],
-                reads=set(),
-                writes={
-                    CellId(
-                        forecast_date=forecast_date,
-                        column_name=account["Name"],
-                    )
-                },
-            )
-
-            context.register(node)
 
     @classmethod
     def _carry_accounts_forward(
@@ -275,6 +340,7 @@ class ExecutionEngine:
             )
 
             context.register(node)
+            context.enqueue(node.node_id)
 
     @classmethod
     def build_initial_account_nodes(
@@ -298,11 +364,13 @@ class ExecutionEngine:
 
             context.register(
                 day_index=0, #first day setup
-                phase_index=0, #phase_index == 0 means setup phase
+                priority_level=0, #priority_level == 0 means setup phase
                 node=node,
             )
+            context.enqueue(node.node_id)
 
-
+            # TODO adding account bounda as columns will allow policies to 
+            # move acceptable min and max
 
     @classmethod
     def build_balance_carry_nodes_for_day(
@@ -344,16 +412,46 @@ class ExecutionEngine:
 
             context.register(
                 day_index=day_index,
-                phase_index=0,
+                priority_level=0,
                 node=node,
             )
+            context.enqueue(node.node_id)
 
-    # this will not be used in practice
+    # # this will not be used in practice
+    # @classmethod
+    # def execute_all(cls, context: ExecutionContext) -> None:
+    #     for node_id in context.registration_order:
+    #         node = context.nodes[node_id]
+    #         node.execute(context)
+
     @classmethod
-    def execute_all(cls, context: ExecutionContext) -> None:
-        for node_id in context.execution_order:
-            node = context.nodes[node_id]
-            node.execute(context)
+    def propagate(cls, context: ExecutionContext) -> None:
+        while context.pending_heap:
+            node = context.pop_pending()
+
+            logger.debug(
+                "Executing %s at %s",
+                type(node).__name__,
+                node.priority,
+            )
+
+            # TODO use memoization
+            # simply checks against a set
+            # where the keys are - node_id and the input params
+            # the payoff of this will be negligible for small operations
+            # such as carring the balance forward, however, more expensive
+            # operations, such as calculating payments under multiple contraints
+            # are worth memoizing
+            changed_cells = node.execute(context)
+
+            for cell in changed_cells:
+                for dependent_id in context.readers.get(cell, set()):
+                    dependent = context.nodes[dependent_id]
+
+                    if dependent.priority <= node.priority:
+                        continue
+
+                    context.enqueue(dependent_id)
 
     @classmethod
     def runForecast(
@@ -366,14 +464,64 @@ class ExecutionEngine:
         # forecast_df has been initialized with 0s and empty strings
         cls.build_initial_account_nodes(context)
 
-        # Carry forward balances
-        for day_index in range(1, len(context.forecast_df.index)):
-            cls.build_balance_carry_nodes_for_day(
-                context=context,
-                day_index=day_index,
-            )
+        transactions_schedule = initial_conditions.initial_line_item_set.getLineItemSchedule()
+        memo_rule_set = initial_conditions.initial_memo_rule_set
 
-        cls.execute_all(context)
+        all_priority_levels = set(context.initial_conditions.initial_line_item_set.getLineItems()["Priority"].unique().flat)
+        all_priority_levels.add(1) #to make sure 1 is always in the set
+        for priority_level in sorted(list(all_priority_levels)):
+            for day_index in range(1, len(context.forecast_df.index)): #TODO does the RHS need a +1 ?
+
+                logger.info(str(priority_level)+' '+str(day_index))
+
+                transaction_date = context.forecast_df.index[day_index]
+                txn_date_selection_mask = (transactions_schedule["Date"] == transaction_date)
+                txn_priority_selection_mask = (transactions_schedule["Priority"] == priority_level)
+                transactions_for_this_day = transactions_schedule.loc[txn_date_selection_mask & txn_priority_selection_mask]
+
+                for line_item_index, line_item_row in transactions_for_this_day.iterrows():
+                    logger.info('    '+str(line_item_index))
+
+                    matching_memo_rule = memo_rule_set.findMatchingMemoRule(txn_memo=line_item_row["Memo"],
+                                                                            transaction_priority=priority_level)
+
+                    from_cell = CellId(
+                        forecast_date=transaction_date,
+                        column_name=matching_memo_rule.account_from,
+                    )
+
+                    to_cell = CellId(
+                        forecast_date=transaction_date,
+                        column_name=matching_memo_rule.account_to,
+                    )
+
+                    transaction_node = TransactionNode(amount=line_item_row["Amount"],
+                                    account_from=matching_memo_rule.account_from,
+                                    account_to=matching_memo_rule.account_to,
+                                    transaction_date=transaction_date,
+                                    reads={from_cell},
+                                    writes={to_cell},
+                                    )
+                    # this is the last place I am sure before hypothetical / candidate
+                    # stuff needs to start happening
+                    
+                    context.register(
+                        day_index=day_index,
+                        priority_level=priority_level,
+                        node=transaction_node,
+                    )
+                    context.enqueue(transaction_node.node_id)
+
+                    # TODO now the graph needs to resolve completely to determine if the transaction is accepted
+                    
+            for day_index in range(1, len(context.forecast_df.index)):
+                # Carry forward balances. Should be the last thing of the day
+                cls.build_balance_carry_nodes_for_day(
+                    context=context,
+                    day_index=day_index,
+                )
+
+        ExecutionEngine.propagate(context)
 
         return context.forecast_df
         
@@ -384,18 +532,20 @@ class ExecutionEngine:
         # apply_input_changes(context, changed_cells)
         # propagate(context)
 
-    @classmethod
-    def propagate(cls, E: ExecutionContext):
+    # @classmethod
+    # def propagate(cls, context: ExecutionContext) -> None:
+    #     while context.pending_heap:
+    #         node = context.pop_pending()
+    #         changed_cells = node.execute(context)
 
-        while E.pending_heap:
+    #         for cell in changed_cells:
+    #             for dependent_id in context.readers.get(cell, set()):
+    #                 dependent = context.nodes[dependent_id]
 
-            node = E.pop_pending()
+    #                 if dependent.priority <= node.priority:
+    #                     continue
 
-            changed_cells = node.execute(E)
-
-            for cell in changed_cells:
-                for dependent in E.readers.get(cell, []):
-                    E.enqueue(dependent)
+    #                 context.enqueue(dependent_id)
 
 if __name__ == '__main__':
 
@@ -408,13 +558,13 @@ if __name__ == '__main__':
 
     A.createCheckingAccount('Checking',1000,0,10_000,True)
     A.createCheckingAccount('Second Checking',2000,0,10_000,False)
-    # L.addLineItem(start_date=start_date + datetime.timedelta(days=3),
-    #               end_date=start_date + datetime.timedelta(days=3),
-    #               priority=1,
-    #               interval='once',
-    #               amount=1,
-    #               memo='test txn',
-    #               income_flag=False)
+    L.addLineItem(start_date=start_date + datetime.timedelta(days=3),
+                  end_date=start_date + datetime.timedelta(days=3),
+                  priority=1,
+                  interval='once',
+                  amount=1500,
+                  memo='test txn',
+                  income_flag=False)
     M.addMemoRule(memo_regex='.*',
                   account_from='Checking',
                   account_to=None,

@@ -116,8 +116,8 @@ Contract
 
 #     forecast_set_name = forecast_set_definition_df["forecast_set_name"].iat[0]
 
-#     # option_budget_set (there may be 0 rows)
-#     option_budget_set_df = pd.read_sql_query(
+#     # option_line_item_set (there may be 0 rows)
+#     option_line_item_set_df = pd.read_sql_query(
 #         "select * from prod.ef_budget_item_set_"
 #         + username
 #         + " where forecast_id = 'O"
@@ -125,7 +125,7 @@ Contract
 #         + "'",
 #         con=engine,
 #     )
-#     option_budget_set = BudgetSet.initialize_from_dataframe(option_budget_set_df)
+#     option_line_item_set = BudgetSet.initialize_from_dataframe(option_line_item_set_df)
 
 #     initialized_forecasts = {}
 #     id_to_name = {}
@@ -156,7 +156,7 @@ Contract
 
 #     assert base_forecast is not None
 #     S = ForecastSet(
-#         base_forecast, option_budget_set, initialized_forecasts, forecast_set_name
+#         base_forecast, option_line_item_set, initialized_forecasts, forecast_set_name
 #     )
 #     S.id_to_name = id_to_name
 #     # print('ForecastSet::initialize_forecast_set_from_database unique_id = ' + S.unique_id)
@@ -196,12 +196,12 @@ Contract
 #         return ExpenseForecastResult.initialize_from_dict(data)
 
 #     @classmethod
-#     def _load_budget_set(cls, data):
+#     def _load_line_item_set(cls, data):
 #         if isinstance(data, BudgetSet):
 #             return data
 #         if data is None:
 #             return BudgetSet()
-#         return ExpenseForecastInitialConditions._budget_set_from_dict(data)
+#         return ExpenseForecastInitialConditions._line_item_set_from_dict(data)
 
 #     @classmethod
 #     def initialize_from_json_string(cls, json_string):
@@ -214,7 +214,7 @@ Contract
 #     @classmethod
 #     def initialize_from_dict(cls, data):
 #         base_forecast = cls._load_initial_conditions(data["base_forecast"])
-#         option_budget_set = cls._load_budget_set(data.get("option_budget_set"))
+#         option_line_item_set = cls._load_line_item_set(data.get("option_line_item_set"))
 #         initialized_forecasts = {
 #             forecast_id: cls._load_initial_conditions(forecast_data)
 #             for forecast_id, forecast_data in data.get("initialized_forecasts", {}).items()
@@ -226,7 +226,7 @@ Contract
 
 #         forecast_set = cls(
 #             base_forecast=base_forecast,
-#             option_budget_set=option_budget_set,
+#             option_line_item_set=option_line_item_set,
 #             initialized_forecasts=initialized_forecasts,
 #             forecast_set_name=data.get("forecast_set_name", ""),
 #         )
@@ -257,12 +257,12 @@ Contract
 #         base_forecast.forecast_name = "Core"
 #         self.base_forecast = base_forecast
 
-#         self.core_budget_set = base_forecast.initial_budget_set
-#         self.option_budget_set = option_budget_set or BudgetSet()
+#         self.core_line_item_set = base_forecast.initial_line_item_set
+#         self.option_line_item_set = option_line_item_set or BudgetSet()
 
 #         intersection = pd.merge(
-#             self.core_budget_set.getBudgetItems(),
-#             self.option_budget_set.getBudgetItems(),
+#             self.core_line_item_set.getBudgetItems(),
+#             self.option_line_item_set.getBudgetItems(),
 #             how="inner",
 #         )
 #         if not intersection.empty:
@@ -402,9 +402,9 @@ Contract
 #         #         row.Interest_interval) + "', " + min_payment + ", '" + str(row.Primary_Checking_Ind) + "')"
 #         #     cursor.execute(insert_account_row_q)
 #         #
-#         # cursor.execute("DELETE FROM " + budget_set_table_name + " WHERE forecast_id = \'" + str(self.base_forecast.unique_id) + "\'")
-#         # for index, row in self.base_forecast.initial_budget_set.getBudgetItems().iterrows():
-#         #     insert_budget_item_row_q = "INSERT INTO " + budget_set_table_name + " (forecast_id, memo, priority, start_date, end_date, interval, amount, \"deferrable\", partial_payment_allowed) VALUES "
+#         # cursor.execute("DELETE FROM " + line_item_set_table_name + " WHERE forecast_id = \'" + str(self.base_forecast.unique_id) + "\'")
+#         # for index, row in self.base_forecast.initial_line_item_set.getBudgetItems().iterrows():
+#         #     insert_budget_item_row_q = "INSERT INTO " + line_item_set_table_name + " (forecast_id, memo, priority, start_date, end_date, interval, amount, \"deferrable\", partial_payment_allowed) VALUES "
 #         #     insert_budget_item_row_q += "('" + str(self.base_forecast.unique_id) + "','" + str(row.Memo) + "'," + str(
 #         #         row.Priority) + ",'" + str(row.Start_Date) + "','" + str(row.End_Date) + "','" + str(
 #         #         row.interval) + "'," + str(row.Amount) + ",'" + str(row.Deferrable) + "','" + str(
@@ -421,20 +421,20 @@ Contract
 
 #         # note that if there are no rows for this, then nothing is written, which is indistinguishable from an error
 #         # print('Writing Budget Set to database:')
-#         forecast_id_for_budget_set = "O" + self.unique_id
+#         forecast_id_for_line_item_set = "O" + self.unique_id
 #         cursor.execute(
 #             "DELETE FROM prod.ef_budget_item_set_"
 #             + username
 #             + " WHERE forecast_id = '"
-#             + forecast_id_for_budget_set
+#             + forecast_id_for_line_item_set
 #             + "'"
 #         )
-#         for index, row in self.option_budget_set.getBudgetItems().iterrows():
+#         for index, row in self.option_line_item_set.getBudgetItems().iterrows():
 #             q = (
 #                 "INSERT INTO prod.ef_budget_item_set_"
 #                 + username
 #                 + " SELECT '"
-#                 + forecast_id_for_budget_set
+#                 + forecast_id_for_line_item_set
 #                 + "','"
 #             )
 #             q += (
@@ -526,8 +526,8 @@ Contract
 #             "forecast_set_name": self.forecast_set_name,
 #             "id_to_name": self.id_to_name,
 #             "base_forecast": self.base_forecast.to_dict(),
-#             "core_budget_set": self.core_budget_set.to_dict(),
-#             "option_budget_set": self.option_budget_set.to_dict(),
+#             "core_line_item_set": self.core_line_item_set.to_dict(),
+#             "option_line_item_set": self.option_line_item_set.to_dict(),
 #             "initialized_forecasts": {
 #                 forecast_id: forecast.to_dict()
 #                 for forecast_id, forecast in self.initialized_forecasts.items()
@@ -544,10 +544,10 @@ Contract
 #     # def initialize_forecasts(self):
 #     #     new_id_to_name = {}
 #     #     new_initialized_forecasts = {}
-#     #     for forecast_name, budget_set in self.forecast_name_to_budget_item_set__dict.items():
+#     #     for forecast_name, line_item_set in self.forecast_name_to_budget_item_set__dict.items():
 #     #         #print('Initializing '+forecast_name)
 #     #         new_E = ExpenseForecast(account_set=self.base_forecast.initial_account_set,
-#     #                                                 budget_set=budget_set,
+#     #                                                 line_item_set=line_item_set,
 #     #                                                 memo_rule_set=self.base_forecast.initial_memo_rule_set,
 #     #                                                 start_date_YYYYMMDD=self.base_forecast.start_date_YYYYMMDD,
 #     #                                                 end_date_YYYYMMDD=self.base_forecast.end_date_YYYYMMDD,
@@ -595,7 +595,7 @@ Contract
 #         # log_in_color(logger, 'white', 'info', 'ENTER addChoiceToAllScenarios')
 
 #         # if len(self.forecast_name_to_budget_item_set__dict) == 0:
-#         #     self.forecast_name_to_budget_item_set__dict['Core'] = self.core_budget_set
+#         #     self.forecast_name_to_budget_item_set__dict['Core'] = self.core_line_item_set
 
 #         if len(self.initialized_forecasts) == 0:
 #             # log_in_color(logger, 'white', 'info', 'i_f empty, setting i_f[core] = b_f')
@@ -610,25 +610,25 @@ Contract
 
 #             for E_id, E in self.initialized_forecasts.items():
 #                 s_key = E.forecast_name or self.id_to_name.get(E_id, E_id)
-#                 s_value = E.initial_budget_set
+#                 s_value = E.initial_line_item_set
 #                 # for s_key, s_value in self.forecast_name_to_budget_item_set__dict.items():
 #                 # log_in_color(logger, 'white', 'info', 's_key ' + str(s_key))
-#                 new_option_budget_set = copy.deepcopy(s_value)
+#                 new_option_line_item_set = copy.deepcopy(s_value)
 
-#                 new_option_budget_set_list = new_option_budget_set.budget_items
-#                 for bi in self.option_budget_set.budget_items:
+#                 new_option_line_item_set_list = new_option_line_item_set.budget_items
+#                 for bi in self.option_line_item_set.budget_items:
 #                     # log_in_color(logger, 'white', 'info', 'bi ' + str(bi))
 #                     for memo_regex in list_of_memo_regexes:
 #                         # print((memo_regex, bi.memo))
 #                         match_result = re.search(memo_regex, bi.memo)
 #                         try:
 #                             match_result.group(0)
-#                             new_option_budget_set_list.append(bi)
+#                             new_option_line_item_set_list.append(bi)
 #                         except Exception:
 #                             pass
-#                 new_option_budget_set = BudgetSet(new_option_budget_set_list)
+#                 new_option_line_item_set = BudgetSet(new_option_line_item_set_list)
 #                 new_dict_of_scenarios[s_key + " | " + choice_name] = (
-#                     new_option_budget_set
+#                     new_option_line_item_set
 #                 )
 
 #             choice_index += 1
@@ -641,14 +641,14 @@ Contract
 #         new_id_to_name = {self.base_forecast.unique_id: "Core"}
 #         new_initialized_forecasts = {}
 #         # for E_id, E in self.initialized_forecasts.items():
-#         for forecast_name, budget_set in new_dict_of_scenarios.items():
+#         for forecast_name, line_item_set in new_dict_of_scenarios.items():
 #             # for s_key, s_value in self.forecast_name_to_budget_item_set__dict.items():
 #             # print('Initializing '+forecast_name)
 #             new_E = ExpenseForecastInitialConditions(
 #                 start_date=self.base_forecast.start_date,
 #                 end_date=self.base_forecast.end_date,
 #                 account_set=self.base_forecast.initial_account_set,
-#                 budget_set=budget_set,
+#                 line_item_set=line_item_set,
 #                 memo_rule_set=self.base_forecast.initial_memo_rule_set,
 #                 forecast_set_name=self.forecast_set_name,
 #                 forecast_name=forecast_name,
@@ -683,10 +683,10 @@ Contract
 #         return_string += "Id: " + self.unique_id + "\n"
 #         return_string += "------------------------------------------------------------------------------------------------\n"
 #         return_string += "Core Set " + self.base_forecast.unique_id + ":\n"
-#         return_string += self.core_budget_set.getBudgetItems().to_string() + "\n"
+#         return_string += self.core_line_item_set.getBudgetItems().to_string() + "\n"
 #         return_string += "------------------------------------------------------------------------------------------------\n"
 #         return_string += "Optional Set:\n"
-#         return_string += self.option_budget_set.getBudgetItems().to_string() + "\n"
+#         return_string += self.option_line_item_set.getBudgetItems().to_string() + "\n"
 #         return_string += "------------------------------------------------------------------------------------------------\n"
 #         return_string += "Initialized Forecasts:\n"
 #         return_string += "id              sd          ed          Complete  Forecast Name\n"
@@ -741,7 +741,7 @@ Contract
 #                 start_date=start_date,
 #                 end_date=end_date,
 #                 account_set=old_forecast.initial_account_set,
-#                 budget_set=old_forecast.initial_budget_set,
+#                 line_item_set=old_forecast.initial_line_item_set,
 #                 memo_rule_set=old_forecast.initial_memo_rule_set,
 #                 forecast_set_name=old_forecast.forecast_set_name,
 #                 forecast_name=old_forecast.forecast_name,
@@ -749,7 +749,7 @@ Contract
 
 #         old_id_to_name = self.id_to_name.copy()
 #         self.base_forecast = rebuild(self.base_forecast)
-#         self.core_budget_set = self.base_forecast.initial_budget_set
+#         self.core_line_item_set = self.base_forecast.initial_line_item_set
 
 #         new_initialized_forecasts = {}
 #         new_id_to_name = {self.base_forecast.unique_id: "Core"}

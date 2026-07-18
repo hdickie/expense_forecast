@@ -322,7 +322,7 @@ class ForecastHandler:
         log_stack_depth = 0
         cls.start_ts = datetime.datetime.now() #TODO does F need start_ts ?
         cls.initial_account_set = IO.initial_account_set
-        cls.initial_budget_set = IO.initial_budget_set
+        cls.initial_line_item_set = IO.initial_line_item_set
         cls.initial_memo_rule_set = IO.initial_memo_rule_set
 
         cls._phase_log(
@@ -558,7 +558,7 @@ class ForecastHandler:
         account_set = copy.deepcopy(IO.initial_account_set)
         memo_rule_set = copy.deepcopy(IO.initial_memo_rule_set)
         output_dates = cls._approximate_output_dates(IO.start_date, IO.end_date)
-        schedule = IO.initial_budget_set.getLineItemSchedule().copy()
+        schedule = IO.initial_line_item_set.getLineItemSchedule().copy()
         policy_activation_date = getattr(IO, "_policy_activation_date", None)
         if policy_activation_date is not None and not schedule.empty:
             schedule_dates = schedule["Date"].apply(cls._normalize_date_value)
@@ -707,7 +707,7 @@ class ForecastHandler:
             lower_priority_budget = LineItemSet(
                 [
                     copy.deepcopy(item)
-                    for item in IO.initial_budget_set.line_items
+                    for item in IO.initial_line_item_set.line_items
                     if item.priority < int(txn["Priority"])
                 ]
             )
@@ -717,7 +717,7 @@ class ForecastHandler:
                 start_date=txn["Date"],
                 end_date=IO.end_date,
                 account_set=candidate_account_set,
-                budget_set=lower_priority_budget,
+                line_item_set=lower_priority_budget,
                 memo_rule_set=IO.initial_memo_rule_set,
                 policy_set=ForecastPolicySet(),
             )
@@ -10800,37 +10800,37 @@ class ForecastHandler:
             getattr(initial_conditions, "initial_account_set", None),
         )
 
-    #TODO DOC manual review of ForecastHandler._report_budget_set docstring
-    def _report_budget_set(self, expense_forecast):
+    #TODO DOC manual review of ForecastHandler._report_line_item_set docstring
+    def _report_line_item_set(self, expense_forecast):
         """
-        #TODO DOC one-line description of ForecastHandler._report_budget_set.
+        #TODO DOC one-line description of ForecastHandler._report_line_item_set.
 
-        #TODO DOC multi-line description of ForecastHandler._report_budget_set.
-        #TODO DOC explain how ForecastHandler._report_budget_set participates in this module.
+        #TODO DOC multi-line description of ForecastHandler._report_line_item_set.
+        #TODO DOC explain how ForecastHandler._report_line_item_set participates in this module.
         #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         expense_forecast : object
-            #TODO DOC one-line description of ForecastHandler._report_budget_set.expense_forecast.
+            #TODO DOC one-line description of ForecastHandler._report_line_item_set.expense_forecast.
 
         Returns
         -------
         object
-            #TODO DOC one-line description of return value of ForecastHandler._report_budget_set.
+            #TODO DOC one-line description of return value of ForecastHandler._report_line_item_set.
 
         Contract
         --------
-        - #TODO DOC contract lines for ForecastHandler._report_budget_set.
-        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._report_budget_set.
+        - #TODO DOC contract lines for ForecastHandler._report_line_item_set.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ForecastHandler._report_line_item_set.
 
         @interface-report: show
         """
         initial_conditions = self._report_initial_conditions(expense_forecast)
         return getattr(
             expense_forecast,
-            "initial_budget_set",
-            getattr(initial_conditions, "initial_budget_set", None),
+            "initial_line_item_set",
+            getattr(initial_conditions, "initial_line_item_set", None),
         )
 
     #TODO DOC manual review of ForecastHandler._report_memo_rule_set docstring
@@ -11622,14 +11622,14 @@ class ForecastHandler:
         if go is None:
             raise ImportError("plotly is required to generate the Sankey diagram")
 
-        budget_set = self._report_budget_set(expense_forecast)
+        line_item_set = self._report_line_item_set(expense_forecast)
         memo_rule_set = self._report_memo_rule_set(expense_forecast)
-        if budget_set is None or memo_rule_set is None:
+        if line_item_set is None or memo_rule_set is None:
             raise ValueError("BudgetSet and MemoRuleSet are required for Sankey report")
 
         income_memos = []
         expense_memos = []
-        for _, row in budget_set.getLineItems().iterrows():
+        for _, row in line_item_set.getLineItems().iterrows():
             matching_memo_rule_set = memo_rule_set.findMatchingMemoRule(
                 row.Memo, row.Priority
             )
@@ -11918,13 +11918,13 @@ class ForecastHandler:
 
         initial_conditions = E.initial_conditions
         initial_account_set = initial_conditions.initial_account_set
-        initial_budget_set = initial_conditions.initial_budget_set
+        initial_line_item_set = initial_conditions.initial_line_item_set
         initial_memo_rule_set = initial_conditions.initial_memo_rule_set
         primary_checking_name = initial_account_set.primary_checking_account_name
         milestone_set = E.milestone_set
 
         report_data_frames["initial_account_set"] = initial_account_set.getAccounts()
-        report_data_frames["initial_line_item_set"] = initial_budget_set.getLineItems()
+        report_data_frames["initial_line_item_set"] = initial_line_item_set.getLineItems()
         report_data_frames["initial_memo_rule_set"] = initial_memo_rule_set.getMemoRules()
         report_data_frames["account_milestones"] = milestone_set.getAccountMilestonesDF()
         report_data_frames["memo_milestones"] = milestone_set.getMemoMilestonesDF()
@@ -12330,7 +12330,7 @@ class ForecastHandler:
         transaction_schedule = (
             E.confirmed_df.copy()
             if isinstance(E.confirmed_df, pd.DataFrame)
-            else initial_budget_set.getLineItemSchedule().iloc[0:0].copy()
+            else initial_line_item_set.getLineItemSchedule().iloc[0:0].copy()
         )
         if not transaction_schedule.empty:
             transaction_schedule = transaction_schedule.sort_values(
@@ -13074,7 +13074,7 @@ class ForecastHandler:
         # )
 
 
-        line_items_dataframe = E.initial_conditions.initial_budget_set.getLineItems()
+        line_items_dataframe = E.initial_conditions.initial_line_item_set.getLineItems()
         once_memos = set(
             line_items_dataframe.loc[
                 line_items_dataframe["interval"].eq("once"), "Memo"
@@ -14940,9 +14940,9 @@ class ForecastHandler:
     def _materialize_cash_allocation_policies(cls, IO, approximate=False):
         """Translate executable policies into ordinary prioritized transactions."""
         policies = copy.deepcopy(IO.policy_set)
-        budget = copy.deepcopy(IO.initial_budget_set)
+        budget = copy.deepcopy(IO.initial_line_item_set)
         rules = copy.deepcopy(IO.initial_memo_rule_set)
-        schedule = IO.initial_budget_set.getLineItemSchedule()
+        schedule = IO.initial_line_item_set.getLineItemSchedule()
         primary_checking = next(
             (
                 account for account in IO.initial_account_set.accounts
@@ -15143,7 +15143,7 @@ class ForecastHandler:
             start_date=IO.start_date,
             end_date=IO.end_date,
             account_set=IO.initial_account_set,
-            budget_set=budget,
+            line_item_set=budget,
             memo_rule_set=rules,
             milestone_set=IO.milestone_set,
             transitions=IO.transitions,
@@ -15322,7 +15322,7 @@ class ForecastHandler:
                 start_date=phase_start,
                 end_date=phase_end,
                 account_set=current_accounts,
-                budget_set=IO.initial_budget_set,
+                line_item_set=IO.initial_line_item_set,
                 memo_rule_set=IO.initial_memo_rule_set,
                 milestone_set=milestone_set,
                 transitions=IO.transitions,
@@ -15563,13 +15563,13 @@ class ForecastHandler:
                 ].copy()
             result.initial_deferred_df = result.initial_deferred_df.head(0).copy()
             result.initial_skipped_df = result.initial_skipped_df.head(0).copy()
-            result.initial_budget_set = LineItemSet(
+            result.initial_line_item_set = LineItemSet(
                 [
                     copy.deepcopy(item)
-                    for item in source_io.initial_budget_set.line_items
+                    for item in source_io.initial_line_item_set.line_items
                     if precedes_reserve(item.priority, item.memo)
                 ],
-                scenario_selections=source_io.initial_budget_set.scenario_selections,
+                scenario_selections=source_io.initial_line_item_set.scenario_selections,
                 scenario_dimensions={
                     dimension_name: {
                         choice_name: LineItemSet(
@@ -15581,7 +15581,7 @@ class ForecastHandler:
                         )
                         for choice_name, choice in choices.items()
                     }
-                    for dimension_name, choices in source_io.initial_budget_set.scenario_dimensions.items()
+                    for dimension_name, choices in source_io.initial_line_item_set.scenario_dimensions.items()
                 },
             )
             return result
@@ -15717,7 +15717,7 @@ class ForecastHandler:
         flattened_milestones = cls._flatten_milestone_results(
             exact_discovery.milestone_results
         )
-        current_budget = copy.deepcopy(IO.initial_budget_set)
+        current_budget = copy.deepcopy(IO.initial_line_item_set)
         remaining_transitions = []
         for transition in IO.transitions.transitions:
             achieved = flattened_milestones.get(transition.milestone)
@@ -15741,7 +15741,7 @@ class ForecastHandler:
             start_date=activation_date - datetime.timedelta(days=1),
             end_date=IO.end_date,
             account_set=activation_accounts,
-            budget_set=current_budget,
+            line_item_set=current_budget,
             memo_rule_set=IO.initial_memo_rule_set,
             milestone_set=milestone_set,
             transitions=ConditionalScenarioTransitionSet(remaining_transitions),
@@ -15938,10 +15938,10 @@ class ForecastHandler:
         approximate=False,
     ):
         """Run and stitch forecast segments separated by milestone transitions."""
-        transitions.validate(milestone_set, IO.initial_budget_set)
+        transitions.validate(milestone_set, IO.initial_line_item_set)
         original_IO = copy.deepcopy(IO)
         current_IO = copy.deepcopy(IO)
-        current_budget = copy.deepcopy(IO.initial_budget_set)
+        current_budget = copy.deepcopy(IO.initial_line_item_set)
         fired_milestones = set()
         forecast_parts = []
         transaction_parts = {name: [] for name in ("confirmed_df", "deferred_df", "skipped_df")}
@@ -16056,7 +16056,7 @@ class ForecastHandler:
                 start_date=next_start,
                 end_date=original_IO.end_date,
                 account_set=next_accounts,
-                budget_set=current_budget,
+                line_item_set=current_budget,
                 memo_rule_set=original_IO.initial_memo_rule_set,
                 **io_kwargs,
             )
@@ -16266,7 +16266,7 @@ class ForecastHandler:
 
             return account_set
 
-        def next_initial_conditions(current_IO, next_start_date, next_account_set, next_budget_set):
+        def next_initial_conditions(current_IO, next_start_date, next_account_set, next_line_item_set):
             kwargs = {}
             if getattr(current_IO, "forecast_name", None) is not None:
                 kwargs["forecast_name"] = current_IO.forecast_name
@@ -16277,7 +16277,7 @@ class ForecastHandler:
                 start_date=next_start_date,
                 end_date=current_IO.end_date,
                 account_set=next_account_set,
-                budget_set=next_budget_set,
+                line_item_set=next_line_item_set,
                 memo_rule_set=current_IO.initial_memo_rule_set,
                 log_stack_depth=log_stack_depth,
                 **kwargs,
@@ -16367,12 +16367,12 @@ class ForecastHandler:
                 current_IO.initial_account_set,
                 kept_forecast_rows.tail(1).iloc[0],
             )
-            next_budget_set = current_IO.initial_budget_set - swap_sets[0] + swap_sets[1]
+            next_line_item_set = current_IO.initial_line_item_set - swap_sets[0] + swap_sets[1]
             current_IO = next_initial_conditions(
                 current_IO,
                 next_start_date,
                 next_account_set,
-                next_budget_set,
+                next_line_item_set,
             )
             slice_start_date = current_IO.start_date
             nth_pass = cls.runForecast(current_IO, MS, include_debug_columns=True)

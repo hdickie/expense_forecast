@@ -123,8 +123,8 @@ class ScenarioSpace:
         self.scenario_dimensions[dimension_name] = scenario_dimension
         existing_scenarios = list(self.scenarios.items())
         new_scenarios = {}
-        for existing_scenario_name, existing_scenario_budget_set in existing_scenarios:
-            for choice_name, choice_budget_set in scenario_dimension.choices.items():
+        for existing_scenario_name, existing_scenario_line_item_set in existing_scenarios:
+            for choice_name, choice_line_item_set in scenario_dimension.choices.items():
 
                 if self.dimension_count > 0:
                     new_scenario_name = existing_scenario_name+" | "+choice_name
@@ -132,14 +132,14 @@ class ScenarioSpace:
                     new_scenario_name = choice_name
 
                 existing_set = (
-                    existing_scenario_budget_set.line_item_set
-                    if isinstance(existing_scenario_budget_set, Scenario)
-                    else existing_scenario_budget_set
+                    existing_scenario_line_item_set.line_item_set
+                    if isinstance(existing_scenario_line_item_set, Scenario)
+                    else existing_scenario_line_item_set
                 )
                 line_item_set = existing_set + scenario_dimension.select(choice_name)
                 choices = dict(
-                    existing_scenario_budget_set.choices
-                    if isinstance(existing_scenario_budget_set, Scenario) else {}
+                    existing_scenario_line_item_set.choices
+                    if isinstance(existing_scenario_line_item_set, Scenario) else {}
                 )
                 choices[dimension_name] = choice_name
                 new_scenarios[new_scenario_name] = Scenario(
@@ -280,8 +280,8 @@ class ScenarioSpace:
             '', {}, self.invariant_transactions, self.default_policy_set
         )
 
-        for dimension_name, dimension_budget_set in scenario_dimensions.items():
-            self.addDimension(dimension_name, dimension_budget_set)
+        for dimension_name, dimension_line_item_set in scenario_dimensions.items():
+            self.addDimension(dimension_name, dimension_line_item_set)
 
     def _policy_set_for_choices(self, choices):
         matching = [

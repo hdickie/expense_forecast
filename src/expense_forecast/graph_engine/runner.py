@@ -62,7 +62,7 @@ class ScheduleNode(GraphNode):
     def evaluate(self, context, dirty_range):
         events = []
         occurrence_counts = defaultdict(int)
-        for line_item in self.IO.initial_budget_set.line_items:
+        for line_item in self.IO.initial_line_item_set.line_items:
             dates = generate_date_sequence(
                 line_item.recurrence_anchor,
                 (line_item.end_date - line_item.recurrence_anchor).days,
@@ -489,7 +489,7 @@ class GraphForecastRunner:
 
         boundaries = program.phase_boundaries(self.IO.start_date, self.IO.end_date)
         self.policy_phase_boundaries = list(boundaries)
-        combined_budget = copy.deepcopy(self.IO.initial_budget_set)
+        combined_budget = copy.deepcopy(self.IO.initial_line_item_set)
         combined_rules = copy.deepcopy(self.IO.initial_memo_rule_set)
         policies_by_key = {}
         reserve_policies = []
@@ -529,7 +529,7 @@ class GraphForecastRunner:
                     materialized_policy
                 )
             generated_memos = set()
-            for item in materialized.initial_budget_set.line_items:
+            for item in materialized.initial_line_item_set.line_items:
                 if not str(item.memo).startswith("POLICY "):
                     continue
                 combined_budget.line_items.append(copy.deepcopy(item))
@@ -537,7 +537,7 @@ class GraphForecastRunner:
             for rule in materialized.initial_memo_rule_set.memo_rules:
                 if rule.memo_regex in generated_memos:
                     combined_rules.memo_rules.append(copy.deepcopy(rule))
-        self.IO.initial_budget_set = combined_budget
+        self.IO.initial_line_item_set = combined_budget
         self.IO.initial_memo_rule_set = combined_rules
         self.compiled_policy_set = ForecastPolicySet(list(policies_by_key.values()))
         self.configured_policy_set = copy.deepcopy(self.compiled_policy_set)
@@ -591,14 +591,14 @@ class GraphForecastRunner:
         self.context.diagnostics.wall_seconds = perf_counter() - started
         return self._result(start_ts)
 
-    def update_budget(self, budget_set, cause="budget update"):
+    def update_budget(self, line_item_set, cause="budget update"):
         """Incrementally reevaluate after replacing the in-memory LineItemSet."""
         old_items = {
-            self.IO.initial_budget_set._line_item_key(item)
-            for item in self.IO.initial_budget_set.line_items
+            self.IO.initial_line_item_set._line_item_key(item)
+            for item in self.IO.initial_line_item_set.line_items
         }
         new_items = {
-            budget_set._line_item_key(item) for item in budget_set.line_items
+            line_item_set._line_item_key(item) for item in line_item_set.line_items
         }
         changed_keys = old_items ^ new_items
         if not changed_keys:
@@ -606,7 +606,7 @@ class GraphForecastRunner:
             return self._result(datetime.datetime.now())
         affected_dates = [key[0] for key in changed_keys]
         first_date = max(self.IO.start_date, min(affected_dates))
-        self.IO.initial_budget_set = copy.deepcopy(budget_set)
+        self.IO.initial_line_item_set = copy.deepcopy(line_item_set)
         for node in self.nodes:
             if hasattr(node, "IO"):
                 node.IO = self.IO

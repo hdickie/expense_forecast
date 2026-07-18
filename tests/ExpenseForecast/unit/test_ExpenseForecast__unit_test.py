@@ -233,7 +233,7 @@ class TestExpenseForecastInitialConditionsUnit:
 
     @pytest.mark.unit
     @pytest.mark.parametrize(
-        "account_set,budget_set,memo_rule_set,start_date,end_date",
+        "account_set,line_item_set,memo_rule_set,start_date,end_date",
         [
             (
                 AccountSet(checking_acct_list(10)),
@@ -256,7 +256,7 @@ class TestExpenseForecastInitialConditionsUnit:
     def test_ExpenseForecastInitialConditions_Constructor__valid_inputs(
         self,
         account_set,
-        budget_set,
+        line_item_set,
         memo_rule_set,
         start_date,
         end_date,
@@ -265,13 +265,13 @@ class TestExpenseForecastInitialConditionsUnit:
             datetime.datetime.strptime(start_date, "%Y%m%d").date(),
             datetime.datetime.strptime(end_date, "%Y%m%d").date(),
             account_set,
-            budget_set,
+            line_item_set,
             memo_rule_set,
         )
 
     @pytest.mark.unit
     @pytest.mark.parametrize(
-        "account_set,budget_set,memo_rule_set,start_date,end_date,expected_exception",
+        "account_set,line_item_set,memo_rule_set,start_date,end_date,expected_exception",
         [
             (
                 AccountSet([]),
@@ -341,7 +341,7 @@ class TestExpenseForecastInitialConditionsUnit:
     def test_ExpenseForecastInitialConditions_Constructor__invalid_inputs(
         self,
         account_set,
-        budget_set,
+        line_item_set,
         memo_rule_set,
         start_date,
         end_date,
@@ -352,14 +352,14 @@ class TestExpenseForecastInitialConditionsUnit:
                 datetime.datetime.strptime(start_date, "%Y%m%d").date(),
                 datetime.datetime.strptime(end_date, "%Y%m%d").date(),
                 account_set,
-                budget_set,
+                line_item_set,
                 memo_rule_set,
             )
 
     def compute_forecast_and_actual_vs_expected(
         self,
         account_set,
-        budget_set,
+        line_item_set,
         memo_rule_set,
         start_date,
         end_date,
@@ -372,7 +372,7 @@ class TestExpenseForecastInitialConditionsUnit:
             datetime.datetime.strptime(start_date, "%Y%m%d").date(),
             datetime.datetime.strptime(end_date, "%Y%m%d").date(),
             account_set,
-            budget_set,
+            line_item_set,
             memo_rule_set,
         )
         F = ForecastHandler()
@@ -534,7 +534,7 @@ class TestExpenseForecastInitialConditionsUnit:
         end_date = date(2000,1,3)
 
         account_set = AccountSet([])
-        budget_set = LineItemSet([])
+        line_item_set = LineItemSet([])
         memo_rule_set = MemoRuleSet([])
 
         account_set.createAccount(
@@ -561,7 +561,7 @@ class TestExpenseForecastInitialConditionsUnit:
             end_of_previous_cycle_balance=0,
         )
 
-        budget_set.addLineItem(
+        line_item_set.addLineItem(
             start_date=date(2000,1,2),
             end_date=date(2000,1,2),
             priority=2,
@@ -596,7 +596,7 @@ class TestExpenseForecastInitialConditionsUnit:
                 start_date,
                 end_date,
                 account_set,
-                budget_set,
+                line_item_set,
                 memo_rule_set,
             )
 
@@ -611,7 +611,7 @@ class TestExpenseForecastInitialConditionsUnit:
         #                            expected_result_df.Date]
         #
         # E = self.compute_forecast_and_actual_vs_expected(account_set,
-        #                                                  budget_set,
+        #                                                  line_item_set,
         #                                                  memo_rule_set,
         #                                                  start_date,
         #                                                  end_date,
@@ -624,7 +624,7 @@ class TestExpenseForecastInitialConditionsUnit:
         end_date = "20000103"
 
         account_set = AccountSet([])
-        budget_set = LineItemSet([])
+        line_item_set = LineItemSet([])
         memo_rule_set = MemoRuleSet([])
 
         account_set.createAccount(
@@ -651,7 +651,7 @@ class TestExpenseForecastInitialConditionsUnit:
             end_of_previous_cycle_balance=0,
         )
 
-        budget_set.addLineItem(
+        line_item_set.addLineItem(
             start_date="20000101",
             end_date="20000103",
             priority=1,
@@ -695,7 +695,7 @@ class TestExpenseForecastInitialConditionsUnit:
             datetime.datetime.strptime(start_date, "%Y%m%d").date(),
             datetime.datetime.strptime(end_date, "%Y%m%d").date(),
             account_set,
-            budget_set,
+            line_item_set,
             memo_rule_set,
         )
 
@@ -711,7 +711,7 @@ class TestExpenseForecastInitialConditionsUnit:
             start_date=datetime.date(2026, 1, 1),
             end_date=datetime.date(2026, 1, 31),
             account_set=AccountSet(checking_acct_list(1000)),
-            budget_set=LineItemSet([]),
+            line_item_set=LineItemSet([]),
             memo_rule_set=MemoRuleSet([]),
             milestone_set=MilestoneSet(),
         )
@@ -729,8 +729,8 @@ class TestExpenseForecastInitialConditionsUnit:
         )
 
         pd.testing.assert_frame_equal(
-            restored.initial_budget_set.getLineItems(),
-            original.initial_budget_set.getLineItems(),
+            restored.initial_line_item_set.getLineItems(),
+            original.initial_line_item_set.getLineItems(),
         )
 
         pd.testing.assert_frame_equal(

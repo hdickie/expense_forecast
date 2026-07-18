@@ -90,24 +90,24 @@ class ScenarioDimension:
         self.name = name.strip()
         self.choices = {}
         if choices is not None:
-            for choice_name, choice_budget_set in choices.items():
+            for choice_name, choice_line_item_set in choices.items():
                 if choice_name is None:
                     raise ValueError("choice_name for ScenarioDimension cannot be None")
 
                 if not isinstance(choice_name, str) or choice_name.strip() == "":
                     raise ValueError("choice_name for ScenarioDimension cannot be empty string")
-                if not isinstance(choice_budget_set, LineItemSet):
+                if not isinstance(choice_line_item_set, LineItemSet):
                     raise TypeError(
                         "ScenarioDimension choices must be LineItemSet instances"
                     )
-                if choice_budget_set.scenario_selections:
+                if choice_line_item_set.scenario_selections:
                     raise ValueError(
                         "ScenarioDimension choices cannot contain scenario selections"
                     )
-                self.choices[choice_name] = copy.deepcopy(choice_budget_set)
+                self.choices[choice_name] = copy.deepcopy(choice_line_item_set)
 
     #TODO DOC manual review of ScenarioDimension.addChoice docstring
-    def addChoice(self, label: str, budget_set: LineItemSet):
+    def addChoice(self, label: str, line_item_set: LineItemSet):
         """
         #TODO DOC one-line description of ScenarioDimension.addChoice.
 
@@ -120,8 +120,8 @@ class ScenarioDimension:
         label : str
             #TODO DOC one-line description of ScenarioDimension.addChoice.label.
 
-        budget_set : object
-            #TODO DOC one-line description of ScenarioDimension.addChoice.budget_set.
+        line_item_set : object
+            #TODO DOC one-line description of ScenarioDimension.addChoice.line_item_set.
 
         Returns
         -------
@@ -140,13 +140,13 @@ class ScenarioDimension:
 
         if not isinstance(label, str) or label.strip() == "":
             raise ValueError("label for ScenarioDimensio::addChoice cannot be empty string")
-        if not isinstance(budget_set, LineItemSet):
-            raise TypeError("budget_set must be a LineItemSet")
+        if not isinstance(line_item_set, LineItemSet):
+            raise TypeError("line_item_set must be a LineItemSet")
         if label in self.choices:
             raise ValueError(f"Duplicate choice {label!r}")
-        if budget_set.scenario_selections:
+        if line_item_set.scenario_selections:
             raise ValueError("ScenarioDimension choices cannot contain scenario selections")
-        self.choices[label] = copy.deepcopy(budget_set)
+        self.choices[label] = copy.deepcopy(line_item_set)
 
     def select(
         self, choice_name: str, effective_date: datetime.date = None

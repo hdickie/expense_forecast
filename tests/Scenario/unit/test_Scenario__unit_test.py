@@ -30,7 +30,7 @@ class TestForecastScenarioUnit:
         space.scenarios["RN"].policy_set.policies[0].target = 999
         assert space.scenarios["Unemployed"].policy_set.policies[0].target == 500
 
-    # __init__(self, label, choices, budget_set)
+    # __init__(self, label, choices, line_item_set)
     @pytest.mark.skip
     def test_scenario__valid_inputs(self):
          
@@ -51,14 +51,14 @@ class TestForecastScenarioUnit:
                      LineItemSet())
         
     @pytest.mark.skip
-    def test_scenario__empty_budget_set(self):
+    def test_scenario__empty_line_item_set(self):
         with pytest.raises(ValueError):
             S = Scenario("One Specific Forecast",
                      ['Choice 1A','Choice 2B','Choice 3C'],
                      LineItemSet())
             
     @pytest.mark.skip
-    def test_scenario__none_budget_set(self):
+    def test_scenario__none_line_item_set(self):
         with pytest.raises(ValueError):
             S = Scenario("One Specific Forecast",
                      ['Choice 1A','Choice 2B','Choice 3C'],

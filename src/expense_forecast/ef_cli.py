@@ -886,7 +886,7 @@ def run(args):
             # forecast_stage_df = pd.read_sql_query('select * from ' + forecast_stage_table_name, con=engine)
             #
             # account_set_table_name = 'prod.ef_account_set_' + args.username
-            # budget_set_table_name='prod.ef_budget_item_set_'+args.username
+            # line_item_set_table_name='prod.ef_budget_item_set_'+args.username
             # memo_rule_set_table_name = 'prod.ef_memo_rule_set_' + args.username
             # account_milestone_table_name = 'prod.ef_account_milestones_' + args.username
             # memo_milestone_table_name = 'prod.ef_memo_milestones_' + args.username
@@ -899,7 +899,7 @@ def run(args):
             #     forecast_set_name = row.forecast_set_name
             #     forecast_name = row.forecast_name
             #     A_q = 'select * from ' + account_set_table_name + ' where forecast_id = \''+forecast_id+'\''
-            #     B_q = 'select * from ' + budget_set_table_name + ' where forecast_id = \''+forecast_id+'\''
+            #     B_q = 'select * from ' + line_item_set_table_name + ' where forecast_id = \''+forecast_id+'\''
             #     M_q = 'select * from ' + memo_rule_set_table_name + ' where forecast_id = \''+forecast_id+'\''
             #     AM_q = 'select * from ' + account_milestone_table_name + ' where forecast_id = \''+forecast_id+'\''
             #     MM_q = 'select * from ' + memo_milestone_table_name + ' where forecast_id = \''+forecast_id+'\''
@@ -1001,14 +1001,14 @@ def run(args):
             cursor = connection.cursor()
 
             account_set_table_name = "prod.ef_account_set_" + args.username
-            budget_set_table_name = "prod.ef_budget_item_set_" + args.username
+            line_item_set_table_name = "prod.ef_budget_item_set_" + args.username
             memo_rule_set_table_name = "prod.ef_memo_rule_set_" + args.username
             date_range_table_name = "prod." + args.username + "_forecast_date_ranges"
 
             temporary_account_set_table_name = (
                 "prod.ef_account_set_" + args.username + "_temporary"
             )
-            temporary_budget_set_table_name = (
+            temporary_line_item_set_table_name = (
                 "prod.ef_budget_item_set_" + args.username + "_temporary"
             )
             temporary_memo_rule_set_table_name = (
@@ -1029,7 +1029,7 @@ def run(args):
             )
 
             account_set_select_q = "select * from " + temporary_account_set_table_name
-            budget_set_select_q = "select * from " + temporary_budget_set_table_name
+            line_item_set_select_q = "select * from " + temporary_line_item_set_table_name
             memo_rule_set_select_q = (
                 "select * from " + temporary_memo_rule_set_table_name
             )
@@ -1082,7 +1082,7 @@ def run(args):
                 args.start_date,
                 args.end_date,
                 account_set_select_q=account_set_select_q,
-                budget_set_select_q=budget_set_select_q,
+                line_item_set_select_q=line_item_set_select_q,
                 memo_rule_set_select_q=memo_rule_set_select_q,
                 account_milestone_select_q=account_milestone_select_q,
                 memo_milestone_select_q=memo_milestone_select_q,
@@ -1121,7 +1121,7 @@ def run(args):
             cursor.execute(A_insert_q)
             B_delete_q = (
                 "DELETE FROM "
-                + budget_set_table_name
+                + line_item_set_table_name
                 + " WHERE forecast_id = '"
                 + E.unique_id
                 + "'"
@@ -1129,11 +1129,11 @@ def run(args):
             cursor.execute(B_delete_q)
             B_insert_q = (
                 "INSERT INTO "
-                + budget_set_table_name
+                + line_item_set_table_name
                 + " Select '"
                 + E.unique_id
                 + '\', memo, priority, start_date, end_date,  interval, amount, "deferrable", partial_payment_allowed from '
-                + temporary_budget_set_table_name
+                + temporary_line_item_set_table_name
             )
             cursor.execute(B_insert_q)
             M_delete_q = (
@@ -1214,7 +1214,7 @@ def run(args):
             temporary_account_set_table_name = (
                 "prod.ef_account_set_" + args.username + "_temporary"
             )
-            temporary_budget_set_table_name = (
+            temporary_line_item_set_table_name = (
                 "prod.ef_budget_item_set_" + args.username + "_temporary"
             )
             temporary_memo_rule_set_table_name = (
@@ -1231,7 +1231,7 @@ def run(args):
             )
 
             account_set_table_name = "prod.ef_account_set_" + args.username
-            budget_set_table_name = "prod.ef_budget_item_set_" + args.username
+            line_item_set_table_name = "prod.ef_budget_item_set_" + args.username
             memo_rule_set_table_name = "prod.ef_memo_rule_set_" + args.username
             account_milestone_table_name = "prod.ef_account_milestones_" + args.username
             memo_milestone_table_name = "prod.ef_memo_milestones_" + args.username
@@ -1244,7 +1244,7 @@ def run(args):
             )
 
             account_set_select_q = "select * from " + temporary_account_set_table_name
-            budget_set_select_q = "select * from " + temporary_budget_set_table_name
+            line_item_set_select_q = "select * from " + temporary_line_item_set_table_name
             memo_rule_set_select_q = (
                 "select * from " + temporary_memo_rule_set_table_name
             )
@@ -1295,7 +1295,7 @@ def run(args):
                 args.start_date,
                 args.end_date,
                 account_set_select_q=account_set_select_q,
-                budget_set_select_q=budget_set_select_q,
+                line_item_set_select_q=line_item_set_select_q,
                 memo_rule_set_select_q=memo_rule_set_select_q,
                 account_milestone_select_q=account_milestone_select_q,
                 memo_milestone_select_q=memo_milestone_select_q,
@@ -1320,7 +1320,7 @@ def run(args):
             # end_date_YYYYMMDD = base_E.end_date_YYYYMMDD
             # MS = base_E.milestone_set
             #
-            # core_budget_set = base_E.initial_budget_set
+            # core_line_item_set = base_E.initial_line_item_set
 
             connection = psycopg2.connect(
                 host=args.database_hostname,
@@ -1346,17 +1346,17 @@ def run(args):
             )
             engine = create_engine(connect_string)
             # engine = create_engine('postgresql://bsdegjmy_humedick@localhost:5432/bsdegjmy_sandbox')
-            option_budget_set_table_name = (
+            option_line_item_set_table_name = (
                 "prod.ef_budget_item_set_optional_" + args.username + "_temporary"
             )
-            option_budget_set = LineItemSet.initialize_from_dataframe(
+            option_line_item_set = LineItemSet.initialize_from_dataframe(
                 pd.read_sql_query(
-                    "select * from " + option_budget_set_table_name, con=engine
+                    "select * from " + option_line_item_set_table_name, con=engine
                 )
             )
 
             S = ForecastSet(
-                base_E, option_budget_set, forecast_set_name=args.label
+                base_E, option_line_item_set, forecast_set_name=args.label
             )
             choice_table_name = "prod.ef_choices_" + args.username + "_temporary"
             choices_df = pd.read_sql_query(
@@ -1417,9 +1417,9 @@ def run(args):
             #         insert_account_row_q += "('"+str(E.unique_id)+"', '"+str(row.Name)+"', "+str(row.Balance)+", "+str(row.Min_Balance)+", "+str(row.Max_Balance)+", '"+str(row.Account_Type)+"', "+str(bsd)+", "+apr+", '"+str(row.Interest_interval)+"', "+min_payment+", '"+str(row.Primary_Checking_Ind)+"')"
             #         cursor.execute(insert_account_row_q)
             #
-            #     cursor.execute("DELETE FROM " + budget_set_table_name + " WHERE forecast_id = \'" + str(E.unique_id) + "\'")
-            #     for index, row in E.initial_budget_set.getLineItems().iterrows():
-            #         insert_budget_item_row_q = "INSERT INTO " + budget_set_table_name + " (forecast_id, memo, priority, start_date, end_date, interval, amount, \"deferrable\", partial_payment_allowed) VALUES "
+            #     cursor.execute("DELETE FROM " + line_item_set_table_name + " WHERE forecast_id = \'" + str(E.unique_id) + "\'")
+            #     for index, row in E.initial_line_item_set.getLineItems().iterrows():
+            #         insert_budget_item_row_q = "INSERT INTO " + line_item_set_table_name + " (forecast_id, memo, priority, start_date, end_date, interval, amount, \"deferrable\", partial_payment_allowed) VALUES "
             #         insert_budget_item_row_q += "('"+str(E.unique_id)+"','"+str(row.Memo)+"',"+str(row.Priority)+",'"+str(row.Start_Date)+"','"+str(row.End_Date)+"','"+str(row.interval)+"',"+str(row.Amount)+",'"+str(row.Deferrable)+"','"+str(row.Partial_Payment_Allowed)+"')"
             #         cursor.execute(insert_budget_item_row_q)
             #

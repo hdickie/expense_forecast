@@ -50,7 +50,7 @@ class TestExpenseForecastIntegration:
             start_date=start_date,
             end_date=end_date,
             account_set=A,
-            budget_set=B,
+            line_item_set=B,
             memo_rule_set=M,
             milestone_set=MS,
         )
@@ -114,7 +114,7 @@ class TestExpenseForecastIntegration:
             start_date=start_date,
             end_date=end_date,
             account_set=A,
-            budget_set=B,
+            line_item_set=B,
             memo_rule_set=M,
             milestone_set=MS,
         )

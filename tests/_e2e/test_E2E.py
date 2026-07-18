@@ -36,7 +36,7 @@ def simple_forecast_initial_conditions(path):
         start_date=date(2026, 6, 1),
         end_date=date(2026, 6, 3),
         account_set=A,
-        budget_set=B,
+        line_item_set=B,
         memo_rule_set=M,
         milestone_set=MS,
     )

@@ -269,39 +269,39 @@ class ExpenseForecastInitialConditions:
             return AccountSet.from_dict(data)
         return cls._object_from_json_data(data)
 
-    #TODO DOC manual review of ExpenseForecastInitialConditions._budget_set_from_dict docstring
+    #TODO DOC manual review of ExpenseForecastInitialConditions._line_item_set_from_dict docstring
     @classmethod
-    def _budget_set_from_dict(cls, data):
+    def _line_item_set_from_dict(cls, data):
         """
-        #TODO DOC one-line description of ExpenseForecastInitialConditions._budget_set_from_dict.
+        #TODO DOC one-line description of ExpenseForecastInitialConditions._line_item_set_from_dict.
 
-        #TODO DOC multi-line description of ExpenseForecastInitialConditions._budget_set_from_dict.
-        #TODO DOC explain how ExpenseForecastInitialConditions._budget_set_from_dict participates in this module.
+        #TODO DOC multi-line description of ExpenseForecastInitialConditions._line_item_set_from_dict.
+        #TODO DOC explain how ExpenseForecastInitialConditions._line_item_set_from_dict participates in this module.
         #TODO DOC document important state, validation, or serialization behavior.
 
         Parameters
         ----------
         data : dict
-            #TODO DOC one-line description of ExpenseForecastInitialConditions._budget_set_from_dict.data.
+            #TODO DOC one-line description of ExpenseForecastInitialConditions._line_item_set_from_dict.data.
 
         Returns
         -------
         object
-            #TODO DOC one-line description of return value of ExpenseForecastInitialConditions._budget_set_from_dict.
+            #TODO DOC one-line description of return value of ExpenseForecastInitialConditions._line_item_set_from_dict.
 
         Contract
         --------
-        - #TODO DOC contract lines for ExpenseForecastInitialConditions._budget_set_from_dict.
-        - #TODO DOC document exceptions, mutations, and precision assumptions for ExpenseForecastInitialConditions._budget_set_from_dict.
+        - #TODO DOC contract lines for ExpenseForecastInitialConditions._line_item_set_from_dict.
+        - #TODO DOC document exceptions, mutations, and precision assumptions for ExpenseForecastInitialConditions._line_item_set_from_dict.
 
         @interface-report: show
         """
         if "budget_items" not in data:
             return cls._object_from_json_data(data)
 
-        budget_set = LineItemSet()
+        line_item_set = LineItemSet()
         for budget_item in data["budget_items"]:
-            budget_set.addLineItem(
+            line_item_set.addLineItem(
                 start_date=cls._date_from_dict_value(budget_item["Start_Date"]),
                 end_date=cls._date_from_dict_value(budget_item["End_Date"]),
                 priority=budget_item["Priority"],
@@ -320,7 +320,7 @@ class ExpenseForecastInitialConditions:
         scenario_dimensions = {}
         for dimension_name, choices_data in data.get("scenario_dimensions", {}).items():
             scenario_dimensions[dimension_name] = {
-                choice_name: cls._budget_set_from_dict(choice_data)
+                choice_name: cls._line_item_set_from_dict(choice_data)
                 for choice_name, choice_data in choices_data.items()
             }
         scenario_timelines = {
@@ -338,13 +338,13 @@ class ExpenseForecastInitialConditions:
             for dimension_name, timeline in data.get("scenario_timelines", {}).items()
         }
         if data.get("scenario_selections") or scenario_timelines:
-            budget_set = LineItemSet(
-                budget_set.line_items,
+            line_item_set = LineItemSet(
+                line_item_set.line_items,
                 scenario_selections=data.get("scenario_selections", {}),
                 scenario_dimensions=scenario_dimensions,
                 scenario_timelines=scenario_timelines,
             )
-        return budget_set
+        return line_item_set
 
     #TODO DOC manual review of ExpenseForecastInitialConditions._memo_rule_set_from_dict docstring
     @classmethod
@@ -392,7 +392,7 @@ class ExpenseForecastInitialConditions:
         start_date: date,
         end_date: date,
         account_set,
-        budget_set,
+        line_item_set,
         memo_rule_set
     ) -> str:
 
@@ -414,8 +414,8 @@ class ExpenseForecastInitialConditions:
         account_set : object
             #TODO DOC one-line description of ExpenseForecastInitialConditions.compute_forecast_id.account_set.
 
-        budget_set : object
-            #TODO DOC one-line description of ExpenseForecastInitialConditions.compute_forecast_id.budget_set.
+        line_item_set : object
+            #TODO DOC one-line description of ExpenseForecastInitialConditions.compute_forecast_id.line_item_set.
 
         memo_rule_set : object
             #TODO DOC one-line description of ExpenseForecastInitialConditions.compute_forecast_id.memo_rule_set.
@@ -436,7 +436,7 @@ class ExpenseForecastInitialConditions:
             raise ValueError("end_date must be on or after start_date")
 
         accounts_df = account_set.getAccounts()
-        budget_df = budget_set.getLineItems()
+        budget_df = line_item_set.getLineItems()
         memo_rules_df = memo_rule_set.getMemoRules()
 
         num_days = (end_date - start_date).days
@@ -448,9 +448,9 @@ class ExpenseForecastInitialConditions:
             "accounts": _stable_df_payload(accounts_df),
             "budget_items": _stable_df_payload(budget_df),
             "scenario_selections": dict(
-                getattr(budget_set, "scenario_selections", {})
+                getattr(line_item_set, "scenario_selections", {})
             ),
-            "scenario_timelines": getattr(budget_set, "scenario_timelines", {}),
+            "scenario_timelines": getattr(line_item_set, "scenario_timelines", {}),
             "memo_rules": _stable_df_payload(memo_rules_df),
         }
 
@@ -710,7 +710,7 @@ class ExpenseForecastInitialConditions:
 
     #TODO DOC manual review of ExpenseForecastInitialConditions._preprocess_budget_items docstring
     @classmethod
-    def _preprocess_budget_items(cls, start_date, end_date, budget_set):
+    def _preprocess_budget_items(cls, start_date, end_date, line_item_set):
         """
         #TODO DOC one-line description of ExpenseForecastInitialConditions._preprocess_budget_items.
 
@@ -726,8 +726,8 @@ class ExpenseForecastInitialConditions:
         end_date : date
             #TODO DOC one-line description of ExpenseForecastInitialConditions._preprocess_budget_items.end_date.
 
-        budget_set : object
-            #TODO DOC one-line description of ExpenseForecastInitialConditions._preprocess_budget_items.budget_set.
+        line_item_set : object
+            #TODO DOC one-line description of ExpenseForecastInitialConditions._preprocess_budget_items.line_item_set.
 
         Returns
         -------
@@ -741,7 +741,7 @@ class ExpenseForecastInitialConditions:
 
         @interface-report: show
         """
-        first_proposed_df = budget_set.getLineItemSchedule()
+        first_proposed_df = line_item_set.getLineItemSchedule()
         if not first_proposed_df.empty:
             first_proposed_df = first_proposed_df.copy()
             first_proposed_df["Date"] = pd.to_datetime(first_proposed_df["Date"]).dt.date
@@ -783,7 +783,7 @@ class ExpenseForecastInitialConditions:
                  start_date: date,
                  end_date: date,
                  account_set: AccountSet,
-                 budget_set: LineItemSet,
+                 line_item_set: LineItemSet,
                  memo_rule_set: MemoRuleSet,
                  log_stack_depth=0, #TODO IO::init.log_stack_depth be a kwarg instead of a param w default?
                  **kwargs):
@@ -806,8 +806,8 @@ class ExpenseForecastInitialConditions:
         account_set : object
             #TODO DOC one-line description of ExpenseForecastInitialConditions.__init__.account_set.
 
-        budget_set : object
-            #TODO DOC one-line description of ExpenseForecastInitialConditions.__init__.budget_set.
+        line_item_set : object
+            #TODO DOC one-line description of ExpenseForecastInitialConditions.__init__.line_item_set.
 
         memo_rule_set : object
             #TODO DOC one-line description of ExpenseForecastInitialConditions.__init__.memo_rule_set.
@@ -849,10 +849,10 @@ class ExpenseForecastInitialConditions:
         self.start_date = start_date
         self.end_date = end_date
 
-        self._validate_account_budget_memo_rule_intersection(account_set, budget_set, memo_rule_set)
+        self._validate_account_budget_memo_rule_intersection(account_set, line_item_set, memo_rule_set)
 
         self.initial_account_set = copy.deepcopy(account_set)
-        self.initial_budget_set = copy.deepcopy(budget_set)
+        self.initial_line_item_set = copy.deepcopy(line_item_set)
         self.initial_memo_rule_set = copy.deepcopy(memo_rule_set)
         self.milestone_set = copy.deepcopy(kwargs.get('milestone_set') or MilestoneSet())
         self.transitions = copy.deepcopy(
@@ -860,7 +860,7 @@ class ExpenseForecastInitialConditions:
         )
         if not isinstance(self.transitions, ConditionalScenarioTransitionSet):
             raise TypeError("transitions must be a ConditionalScenarioTransitionSet")
-        self.transitions.validate(self.milestone_set, self.initial_budget_set)
+        self.transitions.validate(self.milestone_set, self.initial_line_item_set)
         if kwargs.get('policy_set') is not None and kwargs.get('policy_program') is not None:
             raise ValueError("Specify policy_set or policy_program, not both")
         configured_policies = kwargs.get('policy_program', kwargs.get('policy_set'))
@@ -876,14 +876,14 @@ class ExpenseForecastInitialConditions:
         self.policy_set = self.policy_program.resolve(self.start_date)
         for boundary in self.policy_program.phase_boundaries(self.start_date, self.end_date):
             self.policy_program.resolve(boundary).validate(
-                self.initial_account_set, self.initial_budget_set
+                self.initial_account_set, self.initial_line_item_set
             )
 
         self.unique_id = ExpenseForecastInitialConditions.compute_forecast_id(
             start_date=self.start_date,
             end_date=self.end_date,
             account_set=self.initial_account_set,
-            budget_set=self.initial_budget_set,
+            line_item_set=self.initial_line_item_set,
             memo_rule_set=self.initial_memo_rule_set)
         if self.policy_program:
             policy_json = json.dumps(
@@ -896,7 +896,7 @@ class ExpenseForecastInitialConditions:
         # GPT doesn't like that ExpenseForecastInitialConditions is owning this logic
         # and that data frame manipulation is occuring inside __init__ here,
         # but I have decided to ignore this advice
-        confirmed_df, proposed_df, deferred_df, skipped_df = self._preprocess_budget_items(start_date, end_date, budget_set)
+        confirmed_df, proposed_df, deferred_df, skipped_df = self._preprocess_budget_items(start_date, end_date, line_item_set)
 
         self.initial_proposed_df = proposed_df
         self.initial_deferred_df = deferred_df
@@ -1091,7 +1091,7 @@ class ExpenseForecastInitialConditions:
             start_date=cls._date_from_dict_value(data["start_date"]),
             end_date=cls._date_from_dict_value(data["end_date"]),
             account_set=cls._account_set_from_dict(data["account_set"]),
-            budget_set=cls._budget_set_from_dict(data["budget_set"]),
+            line_item_set=cls._line_item_set_from_dict(data["line_item_set"]),
             memo_rule_set=cls._memo_rule_set_from_dict(data["memo_rule_set"]),
             milestone_set=cls._object_from_json_data(
                 data.get("milestone_set")
@@ -1544,7 +1544,7 @@ class ExpenseForecastInitialConditions:
             "start_date": self.start_date.isoformat(),
             "end_date": self.end_date.isoformat(),
             "account_set": self.initial_account_set.to_dict(),
-            "budget_set": self.initial_budget_set.to_dict(),
+            "line_item_set": self.initial_line_item_set.to_dict(),
             "memo_rule_set": self.initial_memo_rule_set.to_dict(),
             "milestone_set": self._object_to_json_data(self.milestone_set),
             "transitions": self._object_to_json_data(self.transitions),

@@ -20,7 +20,7 @@ Contract
 #         "School": "Nursing school",
 #         "Work": "Weekend CNA"
 #     }
-#     budget_set: BudgetSet(...)
+#     line_item_set: BudgetSet(...)
 
 
 import copy
@@ -64,8 +64,8 @@ class Scenario:
         choices : object
             #TODO DEFER one-line description of Scenario.__init__.choices.
 
-        budget_set : object
-            #TODO DEFER one-line description of Scenario.__init__.budget_set.
+        line_item_set : object
+            #TODO DEFER one-line description of Scenario.__init__.line_item_set.
 
         Returns
         -------
@@ -98,11 +98,6 @@ class Scenario:
         self.policy_set = copy.deepcopy(self.policy_program.base_policy_set)
 
     @property
-    def budget_set(self):
-        """Backward-compatible name for the scenario's line items."""
-        return self.line_item_set
-
-    @property
     def line_items(self):
         return self.line_item_set.line_items
 
@@ -117,7 +112,7 @@ class Scenario:
             start_date=start_date,
             end_date=end_date,
             account_set=copy.deepcopy(account_set),
-            budget_set=copy.deepcopy(self.line_item_set),
+            line_item_set=copy.deepcopy(self.line_item_set),
             memo_rule_set=copy.deepcopy(memo_rule_set),
             policy_program=copy.deepcopy(self.policy_program),
             **kwargs,

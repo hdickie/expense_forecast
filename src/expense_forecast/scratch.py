@@ -1666,7 +1666,7 @@ if __name__ == '__main__':
             start_date=start_date,
             end_date=end_date,
             account_set=accounts,
-            budget_set=lifestyle,
+            line_item_set=lifestyle,
             memo_rule_set=memo_rules,
             milestone_set=milestones,
             transitions=transitions,
@@ -1956,7 +1956,7 @@ if __name__ == '__main__':
             start_date=start_date,
             end_date=end_date,
             account_set=accounts,
-            budget_set=lifestyle,
+            line_item_set=lifestyle,
             memo_rule_set=memo_rules,
             policy_set=policies,
             forecast_name='I can pay for Nursing School working part-time during school and full-time during breaks!'

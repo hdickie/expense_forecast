@@ -52,7 +52,7 @@ class ForecastPolicySet:
             None,
         )
 
-    def validate(self, account_set, budget_set):
+    def validate(self, account_set, line_item_set):
         accounts_by_name = {account.name: account for account in account_set.accounts}
         primary_checking_name = account_set.primary_checking_account_name
         reserves = [

@@ -82,7 +82,7 @@ def test_dated_semiweekly_choices_preserve_cadence_across_shared_boundary():
         day=30
     )
 
-    rebuilt = ExpenseForecastInitialConditions._budget_set_from_dict(result.to_dict())
+    rebuilt = ExpenseForecastInitialConditions._line_item_set_from_dict(result.to_dict())
     assert rebuilt.scenario_timelines == result.scenario_timelines
     assert rebuilt.line_items[0].recurrence_anchor == date(2026, 1, 1)
 
