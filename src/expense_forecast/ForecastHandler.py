@@ -239,8 +239,64 @@ class ForecastHandler:
         include_debug_columns=False,
         engine="legacy",
     ) -> ExpenseForecastResult:
-        if engine not in {"legacy", "graph", "shadow"}:
-            raise ValueError("engine must be 'legacy', 'graph', or 'shadow'")
+        if engine not in {
+            "legacy", "graph", "graph v2", "shadow", "shadow v2"
+        }:
+            raise ValueError(
+                "engine must be 'legacy', 'graph', 'graph v2', 'shadow', "
+                "or 'shadow v2'"
+            )
+        if engine == "graph v2":
+            raise NotImplementedError(
+                "engine='graph v2' is under construction and cannot yet "
+                "produce a complete ExpenseForecastResult. Call "
+                "MemoizedDynamicDependencyGraphEngine.ExecutionEngine."
+                "runForecast() directly while developing graph v2."
+            )
+        if engine == "shadow v2":
+            from expense_forecast.MemoizedDynamicDependencyGraphEngine import (
+                ExecutionEngine,
+                GraphV2Difference,
+                GraphV2ShadowMismatchError,
+                compare_v2_result,
+            )
+
+            resolved_milestones = milestone_set or getattr(
+                IO, "milestone_set", MilestoneSet()
+            )
+            legacy_result = cls.runForecast(
+                IO,
+                resolved_milestones,
+                include_debug_columns,
+                engine="legacy",
+            )
+            scenario = IO.forecast_name or IO.unique_id
+            try:
+                graph_output = ExecutionEngine.runForecast(
+                    IO, resolved_milestones
+                )
+            except Exception as error:
+                raise GraphV2ShadowMismatchError(
+                    scenario=scenario,
+                    differences=[
+                        GraphV2Difference(
+                            section="execution",
+                            variable=type(error).__name__,
+                            graph_value=str(error),
+                            legacy_value="completed successfully",
+                            producer="ExecutionEngine.runForecast",
+                        )
+                    ],
+                ) from error
+            compare_v2_result(
+                graph_output,
+                legacy_result,
+                scenario=scenario,
+            )
+            # Until v2 assembles ExpenseForecastResult, legacy supplies the
+            # public return value only after the independently computed v2
+            # account state has matched.
+            return legacy_result
         if engine in {"graph", "shadow"}:
             from expense_forecast.graph_engine import GraphForecastRunner
             from expense_forecast.graph_engine.comparator import compare_results
@@ -3588,10 +3644,9 @@ class ForecastHandler:
                 continue
 
             # Find the matching memo rule for the deferred transaction
-            memo_rule_set = memo_set.findMatchingMemoRule(
+            memo_rule = memo_set.findMatchingMemoRule(
                 deferred_row["Memo"], deferred_row["Priority"]
             )
-            memo_rule_row = memo_rule_set.getMemoRules().iloc[0]
 
             # Initialize an empty forecast DataFrame for the hypothetical future state
             hypothetical_future_forecast = forecast_df.iloc[0:0].copy()
@@ -3628,6 +3683,7 @@ class ForecastHandler:
                         )
                     ),
                     memo_rule_set=memo_set,
+                    log_stack_depth=log_stack_depth,
                 )[0]
 
                 transaction_permitted = True
@@ -3662,15 +3718,16 @@ class ForecastHandler:
 
                 # Execute the transaction
                 account_set.executeTransaction(
-                    Account_From=memo_rule_row["Account_From"],
-                    Account_To=memo_rule_row["Account_To"],
+                    Account_From=memo_rule.account_from,
+                    Account_To=memo_rule.account_to,
                     Amount=deferred_row["Amount"],
                     income_flag=False,
                 )
 
                 # Add the transaction to the new confirmed DataFrame
-                confirmed_df = pd.concat(
-                    [confirmed_df, deferred_row.to_frame().T], ignore_index=True
+                new_confirmed_df = pd.concat(
+                    [new_confirmed_df, deferred_row.to_frame().T],
+                    ignore_index=True,
                 )
 
                 # Remove the transaction from relevant deferred transactions
@@ -3709,7 +3766,7 @@ class ForecastHandler:
         log_stack_depth -= 1
 
         # Return the updated forecast and DataFrames
-        return forecast_df, confirmed_df, new_deferred_df
+        return forecast_df, new_confirmed_df, new_deferred_df
 
     # @profile
     #TODO DOC manual review of ForecastHandler._executeTransactionsForDay docstring
@@ -3924,7 +3981,8 @@ class ForecastHandler:
                 )  # Keep original for comparison
 
                 forecast_df, new_confirmed_df, new_deferred_df = (
-                    cls._processDeferredTransactions(cls,
+                    cls._processDeferredTransactions(
+                        start_date=forecast_df["Date"].min(),
                         end_date=end_date,
                         account_set=account_set,
                         forecast_df=forecast_df,
@@ -9918,7 +9976,7 @@ class ForecastHandler:
 
     #TODO DOC manual review of ForecastHandler._appendSummaryLines docstring
     @classmethod
-    def _appendSummaryLines(cls, initial_A, forecast_df, log_stack_depth):
+    def _appendSummaryLines(cls, initial_A, forecast_df, log_stack_depth=0):
 
         """
         #TODO DOC one-line description of ForecastHandler._appendSummaryLines.

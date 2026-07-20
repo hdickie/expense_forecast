@@ -20,6 +20,40 @@ def example_line_item():
 
 class TestLineItemSetMethods:
 
+    def test_from_dict_round_trips_line_items_and_recurrence_metadata(self):
+        original = LineItemSet()
+        original.addLineItem(
+            start_date=date(2026, 1, 1),
+            end_date=date(2026, 2, 1),
+            priority=2,
+            interval="weekly",
+            amount=25,
+            memo="groceries",
+            deferrable=True,
+            partial_payment_allowed=False,
+            recurrence_key="food cadence",
+            recurrence_anchor=date(2025, 12, 25),
+        )
+
+        rebuilt = LineItemSet.from_dict(original.to_dict())
+
+        assert rebuilt.to_dict() == original.to_dict()
+
+    def test_from_dict_round_trips_scenario_definitions_and_timelines(self):
+        choice = LineItemSet([example_line_item()])
+        dimension = ScenarioDimension("Food", {"Very Low": choice})
+        original = dimension.choice_for_date_range(
+            "Very Low", date(2026, 1, 1), date(2026, 1, 31)
+        )
+
+        rebuilt = LineItemSet.from_dict(original.to_dict())
+
+        assert rebuilt.to_dict() == original.to_dict()
+
+    def test_from_dict_rejects_noncanonical_payload(self):
+        with pytest.raises(TypeError, match="budget_items"):
+            LineItemSet.from_dict({})
+
     def test_union_is_idempotent_and_preserves_scenario_selection(self):
         choice = LineItemSet([example_line_item()])
         food = ScenarioDimension("Food", {"Very Low": choice})

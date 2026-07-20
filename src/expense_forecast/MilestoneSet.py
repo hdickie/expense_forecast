@@ -751,7 +751,7 @@ class MilestoneSet:
     #TODO DOC manual review of ForecastHandler.evaluateAccountMilestone docstring
     @classmethod
     def evaluateAccountMilestone(
-        cls, forecast_df, account_name, min_balance, max_balance, log_stack_depth
+        cls, forecast_df, account_name, min_balance, max_balance, log_stack_depth=0
     ):
         # log_in_color(
         #     logger,
@@ -1058,7 +1058,7 @@ class MilestoneSet:
 
     #TODO DOC manual review of MilestoneSet.evaluateMilestones docstring
     @classmethod
-    def evaluateMilestones(cls, forecast_df, milestone_set, log_stack_depth):
+    def evaluateMilestones(cls, forecast_df, milestone_set, log_stack_depth=0):
 
         """
         #TODO DOC one-line description of ForecastHandler.evaluateMilestones.

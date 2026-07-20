@@ -298,53 +298,7 @@ class ExpenseForecastInitialConditions:
         """
         if "budget_items" not in data:
             return cls._object_from_json_data(data)
-
-        line_item_set = LineItemSet()
-        for budget_item in data["budget_items"]:
-            line_item_set.addLineItem(
-                start_date=cls._date_from_dict_value(budget_item["Start_Date"]),
-                end_date=cls._date_from_dict_value(budget_item["End_Date"]),
-                priority=budget_item["Priority"],
-                interval=budget_item["interval"],
-                amount=budget_item["Amount"],
-                memo=budget_item["Memo"],
-                income_flag=budget_item.get("Income_Flag", False),
-                deferrable=budget_item.get("Deferrable"),
-                partial_payment_allowed=budget_item.get("Partial_Payment_Allowed"),
-                recurrence_key=budget_item.get("Recurrence_Key"),
-                recurrence_anchor=(
-                    cls._date_from_dict_value(budget_item["Recurrence_Anchor"])
-                    if budget_item.get("Recurrence_Anchor") else None
-                ),
-            )
-        scenario_dimensions = {}
-        for dimension_name, choices_data in data.get("scenario_dimensions", {}).items():
-            scenario_dimensions[dimension_name] = {
-                choice_name: cls._line_item_set_from_dict(choice_data)
-                for choice_name, choice_data in choices_data.items()
-            }
-        scenario_timelines = {
-            dimension_name: [
-                {
-                    **entry,
-                    "effective_date": cls._date_from_dict_value(entry["effective_date"]),
-                    "end_date": (
-                        cls._date_from_dict_value(entry["end_date"])
-                        if entry.get("end_date") else None
-                    ),
-                }
-                for entry in timeline
-            ]
-            for dimension_name, timeline in data.get("scenario_timelines", {}).items()
-        }
-        if data.get("scenario_selections") or scenario_timelines:
-            line_item_set = LineItemSet(
-                line_item_set.line_items,
-                scenario_selections=data.get("scenario_selections", {}),
-                scenario_dimensions=scenario_dimensions,
-                scenario_timelines=scenario_timelines,
-            )
-        return line_item_set
+        return LineItemSet.from_dict(data)
 
     #TODO DOC manual review of ExpenseForecastInitialConditions._memo_rule_set_from_dict docstring
     @classmethod

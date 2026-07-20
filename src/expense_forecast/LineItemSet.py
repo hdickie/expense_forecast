@@ -496,6 +496,93 @@ class LineItemSet:
             }
         return result
 
+    @classmethod
+    def from_dict(cls, data):
+        """Rebuild a LineItemSet from the structure returned by ``to_dict``."""
+        if (
+            not isinstance(data, dict)
+            or not isinstance(data.get("budget_items"), list)
+        ):
+            raise TypeError(
+                "LineItemSet.from_dict requires a 'budget_items' list"
+            )
+
+        def parsed_date(value, *, required=True):
+            if value in (None, "None", ""):
+                if required:
+                    raise ValueError("Required line-item date is missing")
+                return None
+            if isinstance(value, datetime.datetime):
+                return value.date()
+            if isinstance(value, datetime.date):
+                return value
+            rendered = str(value)
+            try:
+                return datetime.date.fromisoformat(rendered)
+            except ValueError:
+                return datetime.datetime.strptime(
+                    rendered, "%Y%m%d"
+                ).date()
+
+        line_items = []
+        for row in data["budget_items"]:
+            if not isinstance(row, dict):
+                raise TypeError("budget_items must contain dictionaries")
+            line_items.append(
+                LineItem(
+                    start_date=parsed_date(row["Start_Date"]),
+                    end_date=parsed_date(row["End_Date"]),
+                    priority=row["Priority"],
+                    interval=row["interval"],
+                    amount=row["Amount"],
+                    memo=row["Memo"],
+                    income_flag=row.get("Income_Flag", False),
+                    deferrable=row.get("Deferrable"),
+                    partial_payment_allowed=row.get(
+                        "Partial_Payment_Allowed"
+                    ),
+                    recurrence_key=row.get("Recurrence_Key"),
+                    recurrence_anchor=parsed_date(
+                        row.get("Recurrence_Anchor"),
+                        required=False,
+                    ),
+                )
+            )
+
+        scenario_dimensions = {
+            dimension_name: {
+                choice_name: cls.from_dict(choice_data)
+                for choice_name, choice_data in choices_data.items()
+            }
+            for dimension_name, choices_data in data.get(
+                "scenario_dimensions", {}
+            ).items()
+        }
+        scenario_timelines = {
+            dimension_name: [
+                {
+                    **entry,
+                    "effective_date": parsed_date(
+                        entry["effective_date"]
+                    ),
+                    "end_date": parsed_date(
+                        entry.get("end_date"),
+                        required=False,
+                    ),
+                }
+                for entry in timeline
+            ]
+            for dimension_name, timeline in data.get(
+                "scenario_timelines", {}
+            ).items()
+        }
+        return cls(
+            line_items,
+            scenario_selections=data.get("scenario_selections", {}),
+            scenario_dimensions=scenario_dimensions,
+            scenario_timelines=scenario_timelines,
+        )
+
     def to_json(self):
         """
         @interface-report: show
