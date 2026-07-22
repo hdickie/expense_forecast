@@ -14,23 +14,74 @@ from expense_forecast.ForecastHandler import ForecastHandler
 from expense_forecast.ExpenseForecastInitialConditions import ExpenseForecastInitialConditions
 from expense_forecast.ExpenseForecastResult import ExpenseForecastResult
 from expense_forecast.ForecastPolicySet import ForecastPolicySet
+from expense_forecast.ConditionalScenarioTransitionSet import ConditionalScenarioTransitionSet
+from expense_forecast.ScenarioDimension import ScenarioDimension
+from expense_forecast.ScenarioSpace import ScenarioSpace
+
+from expense_forecast.ForecastPolicy import ForecastPolicy, ForecastPolicyError
+
 from expense_forecast.MinimumCheckingBalancePolicy import MinimumCheckingBalancePolicy
+from expense_forecast.SurplusDebtPaymentPolicy import SurplusDebtPaymentPolicy
+from expense_forecast.CurrentStatementBalancePaymentPolicy import (
+    CurrentStatementBalancePaymentPolicy,
+)
+from expense_forecast.SurplusSavingPolicy import SurplusSavingPolicy
+from expense_forecast.InvestmentPolicies import (
+    FixedMonthlyInvestmentPolicy,
+    IncomePercentageInvestmentPolicy,
+    PeriodicInvestmentContributionCapPolicy,
+    SurplusInvestmentPolicy,
+)
+
+
 from copy import deepcopy
 import pandas as pd
 from datetime import date
 import datetime
+import calendar
 from decimal import Decimal
 import copy
 import logging
+import threading
+from contextlib import contextmanager
+from time import perf_counter
+from expense_forecast.log_methods import project_log_file, setup_logger
 
-logger = logging.getLogger(__name__)
+logger = setup_logger(
+    __name__,
+    project_log_file(__name__),
+    console_level=logging.INFO,
+    file_level=logging.DEBUG,
+)
 
-if not logger.handlers:
-    logging.basicConfig(
-        level=logging.DEBUG,  # INFO when you get tired of the spam
-        format="%(asctime)s %(levelname)-8s %(name)s: %(message)s",
-        datefmt="%H:%M:%S",
+
+@contextmanager
+def logged_phase(name: str, *, heartbeat_seconds: float = 10.0):
+    """Log phase boundaries and reassure the user during opaque setup work."""
+    started = perf_counter()
+    stopped = threading.Event()
+
+    def heartbeat() -> None:
+        while not stopped.wait(heartbeat_seconds):
+            logger.info(
+                "%s still running: elapsed=%.1fs",
+                name,
+                perf_counter() - started,
+            )
+
+    logger.info("%s started", name)
+    worker = threading.Thread(
+        target=heartbeat,
+        name=f"graph-v2-{name}",
+        daemon=True,
     )
+    worker.start()
+    try:
+        yield
+    finally:
+        stopped.set()
+        worker.join(timeout=1)
+        logger.info("%s finished: elapsed=%.2fs", name, perf_counter() - started)
 
 def values_equal(left, right) -> bool:
     if pd.isna(left) and pd.isna(right):
@@ -324,15 +375,28 @@ def compare_v2_result(
                     producer="result assembly",
                 )
             )
-        elif getattr(graph_output, attribute) != getattr(
-            legacy_result, attribute
-        ):
+        else:
+            graph_value = getattr(graph_output, attribute)
+            legacy_value = getattr(legacy_result, attribute)
+            if attribute == "policy_results":
+                # Graph v2 exposes structured constraint/audit fields that do
+                # not exist in the retiring legacy result. Compare every
+                # legacy business field while allowing those additive fields.
+                graph_value = {
+                    key: {
+                        field: graph_value.get(key, {}).get(field)
+                        for field in value
+                    }
+                    for key, value in legacy_value.items()
+                }
+            if graph_value == legacy_value:
+                continue
             differences.append(
                 GraphV2Difference(
                     section=attribute,
                     variable="value",
-                    graph_value=getattr(graph_output, attribute),
-                    legacy_value=getattr(legacy_result, attribute),
+                    graph_value=graph_value,
+                    legacy_value=legacy_value,
                     producer="result assembly",
                 )
             )
@@ -403,7 +467,9 @@ def loan_payment_balance_column(account_name: str) -> str:
 def account_initial_cell_values(account) -> dict[str, object]:
     values: dict[str, object] = {
         balance_column(account.name): account.balance,
-        policy_minimum_column(account.name): account.min_balance,
+        policy_minimum_column(account.name): (
+            account.effective_policy_min_balance
+        ),
         policy_maximum_column(account.name): account.max_balance,
     }
     state = account.billing_state
@@ -462,6 +528,13 @@ class ExecutionContext:
     occurrence_counts: dict[tuple[Hashable, ...], int] = field(
         default_factory=dict
     )
+    policy_results: dict[str, dict[str, object]] = field(default_factory=dict)
+    active_contribution_caps: list[
+        PeriodicInvestmentContributionCapPolicy
+    ] = field(default_factory=list)
+    safety_decisions: list[dict[str, object]] = field(default_factory=list)
+    policy_execution_seconds: float = 0.0
+    policy_requests_evaluated: int = 0
 
     def fork(self) -> "ExecutionContext":
         candidate = object.__new__(ExecutionContext)
@@ -481,6 +554,13 @@ class ExecutionContext:
         candidate.pending_heap = self.pending_heap.copy()
         candidate.pending_ids = self.pending_ids.copy()
         candidate.occurrence_counts = self.occurrence_counts.copy()
+        candidate.policy_results = deepcopy(self.policy_results)
+        candidate.active_contribution_caps = deepcopy(
+            self.active_contribution_caps
+        )
+        candidate.safety_decisions = deepcopy(self.safety_decisions)
+        candidate.policy_execution_seconds = self.policy_execution_seconds
+        candidate.policy_requests_evaluated = self.policy_requests_evaluated
 
         candidate.name_to_account_type = self.name_to_account_type.copy()
         candidate.name_to_account_min = self.name_to_account_min.copy()
@@ -506,7 +586,7 @@ class ExecutionContext:
     # pending_ids: set[NodeId] = field(default_factory=set)
 
     def register(self, day_index: int, priority_level: int, node: "ComputationNode") -> None:
-        logger.info('register '+str(node.__class__)+' '+str(node.node_id))
+        logger.debug('register '+str(node.__class__)+' '+str(node.node_id))
         if node.node_id in self.nodes:
             raise ValueError(f"Duplicate node ID: {node.node_id!r}")
 
@@ -575,7 +655,7 @@ class ExecutionContext:
         # used to differentiate between txns w all the same values
         self.occurrence_counts: dict[tuple[Hashable, ...], int] = {}
 
-        
+
 
     def read(self, cell: CellId):
         return self.forecast_df.at[
@@ -584,7 +664,7 @@ class ExecutionContext:
         ]
 
     def write(self, cell: CellId, value) -> bool:
-        logger.info('write '+str(cell.forecast_date)+' '+str(cell.column_name).ljust(25,'.')+' '+str(value))
+        logger.debug('write '+str(cell.forecast_date)+' '+str(cell.column_name).ljust(25,'.')+' '+str(value))
         previous_value = self.forecast_df.at[
             cell.forecast_date,
             cell.column_name,
@@ -705,11 +785,46 @@ class WriteValueToOutputCellNode(ComputationNode):
         self,
         context: ExecutionContext,
     ) -> set[CellId]:
-        logger.info('execute WriteValueToOutputCellNode')
+        logger.debug('execute WriteValueToOutputCellNode')
         output_cell = next(iter(self.writes))
         changed = context.write(output_cell, self.value)
 
         return {output_cell} if changed else set()
+
+
+@dataclass
+class PolicyMinimumBalanceNode(ComputationNode):
+    """Establish a policy floor at one date.
+
+    The ordinary policy-bound carry nodes propagate this value through the
+    remaining forecast.  Keeping the change in the graph (instead of assigning
+    directly into ``forecast_df``) ensures downstream readers are invalidated.
+    """
+
+    policy_key: str
+    account_name: str
+    effective_date: date
+    target: Decimal
+
+    def __post_init__(self) -> None:
+        self.output_cell = CellId(
+            self.effective_date,
+            policy_minimum_column(self.account_name),
+        )
+        self.writes = {self.output_cell}
+        super().__post_init__()
+
+    def semantic_id(self) -> NodeId:
+        return (
+            "policy-minimum-balance",
+            self.policy_key,
+            self.account_name,
+            self.effective_date,
+        )
+
+    def execute(self, context: ExecutionContext) -> set[CellId]:
+        changed = context.write(self.output_cell, self.target)
+        return {self.output_cell} if changed else set()
     
 @dataclass
 class CarryBalanceForwardNode(ComputationNode):
@@ -728,7 +843,7 @@ class CarryBalanceForwardNode(ComputationNode):
         self,
         context: ExecutionContext,
     ) -> set[CellId]:
-        logger.info('execute CarryBalanceForwardNode')
+        logger.debug('execute CarryBalanceForwardNode')
         input_cell = next(iter(self.reads))
         output_cell = next(iter(self.writes))
 
@@ -1426,7 +1541,7 @@ class TransactionNode(ComputationNode):
         )
 
     def execute(self, context: ExecutionContext) -> set[CellId]:
-        logger.info('execute TransactionNode')
+        logger.debug('execute TransactionNode')
 
         changed_cells: set[CellId] = set()
 
@@ -1473,6 +1588,18 @@ class TransactionNode(ComputationNode):
                 f"{self.memo} "
                 f"({self.from_cell.column_name} -${self.amount:.2f})"
             )
+        elif (
+            self.from_cell is not None
+            and self.to_cell is not None
+            and self.memo.startswith("POLICY surplus_saving:")
+        ):
+            # Ordinary checking transfers are intentionally presentation-
+            # neutral. A savings policy is user-visible allocation activity,
+            # so mirror legacy's source-side memo and destination directive.
+            memo_entry = (
+                f"{self.memo} "
+                f"({self.from_cell.column_name} -${self.amount:.2f})"
+            )
 
         if memo_entry is not None:
             existing_memo = str(context.read(self.memo_cell)).strip()
@@ -1483,6 +1610,21 @@ class TransactionNode(ComputationNode):
             )
             if context.write(self.memo_cell, rendered_memo):
                 changed_cells.add(self.memo_cell)
+
+        if (
+            self.to_cell is not None
+            and self.memo.startswith("POLICY surplus_saving:")
+        ):
+            changed_cells.update(
+                append_memo_directives(
+                    context,
+                    self.transaction_date,
+                    [
+                        "SAVINGS CONTRIBUTION "
+                        f"({self.to_cell.column_name} +${self.amount:.2f})"
+                    ],
+                )
+            )
 
         # Ordinary spending does not produce memo directives.
 
@@ -1867,7 +2009,7 @@ class CarryValueNode(ComputationNode):
         )
 
     def execute(self, context: ExecutionContext) -> set[CellId]:
-        logger.info('execute CarryValueNode')
+        logger.debug('execute CarryValueNode')
         value = context.read(self.source)
         changed = context.write(self.destination, value)
 
@@ -2201,9 +2343,41 @@ class ExecutionEngine:
     #         node.execute(context)
 
     @classmethod
-    def propagate(cls, context: ExecutionContext) -> None:
+    def propagate(
+        cls,
+        context: ExecutionContext,
+        through_date: date | None = None,
+    ) -> None:
+        """Resolve queued graph work, optionally stopping at a date boundary.
+
+        Work beyond ``through_date`` remains on the heap. This lets runtime
+        policy decisions observe a complete closing-day state without first
+        executing the following day's rollover and minimum-payment nodes.
+        """
+        started = perf_counter()
+        last_report = started
+        executed_count = 0
+        initial_pending = len(context.pending_heap)
+        through_day = None
+        if through_date is not None:
+            through_day = int(
+                context.forecast_df.index.get_indexer(
+                    pd.Index([through_date])
+                )[0]
+            )
+            if through_day < 0:
+                raise ValueError(
+                    f"Propagation boundary {through_date} is outside the "
+                    "forecast calendar"
+                )
         while context.pending_heap:
+            if (
+                through_day is not None
+                and context.pending_heap[0][0].day > through_day
+            ):
+                break
             node = context.pop_pending()
+            executed_count += 1
 
             logger.debug(
                 "Executing %s at %s",
@@ -2228,6 +2402,28 @@ class ExecutionEngine:
                         continue
 
                     context.enqueue(dependent_id)
+
+            now = perf_counter()
+            if now - last_report >= 5:
+                logger.info(
+                    "Graph propagation active: executed=%d pending=%d "
+                    "elapsed=%.1fs current=%s",
+                    executed_count,
+                    len(context.pending_heap),
+                    now - started,
+                    type(node).__name__,
+                )
+                last_report = now
+
+        elapsed = perf_counter() - started
+        if elapsed >= 1:
+            logger.info(
+                "Graph propagation complete: initial_pending=%d "
+                "executed=%d elapsed=%.2fs",
+                initial_pending,
+                executed_count,
+                elapsed,
+            )
 
     @classmethod
     def assemble_transaction_node(
@@ -3020,15 +3216,1186 @@ class ExecutionEngine:
             )
 
 
+    @staticmethod
+    def _policy_transaction_node(
+        *,
+        policy: ForecastPolicy,
+        transaction_date: date,
+        amount: Decimal,
+        account_from: str,
+        account_to: str,
+        description: str,
+        partial_payment_allowed: bool = True,
+    ) -> TransactionNode:
+        """Build one stable policy transaction.
 
+        Policy allocations use the same specialized debt/checking nodes as
+        user-authored transactions.  That keeps statement allocation, loan
+        principal/interest allocation, account bounds, and future invalidation
+        in one implementation. Most policies allow feasibility resolution;
+        priority-one statement payments explicitly disable partial execution.
+        """
+        return TransactionNode(
+            amount=amount,
+            account_from=account_from,
+            account_to=account_to,
+            priority_level=policy.priority,
+            transaction_date=transaction_date,
+            memo=(
+                f"POLICY {policy.policy_key} {description} "
+                f"{transaction_date.isoformat()}"
+            ),
+            occurrence_ordinal=0,
+            deferrable=False,
+            partial_payment_allowed=partial_payment_allowed,
+            income_flag=False,
+        )
+
+    @staticmethod
+    def _policy_executed_total(
+        context: ExecutionContext,
+        policy: ForecastPolicy,
+    ) -> Decimal:
+        if context.confirmed_df.empty:
+            return Decimal("0")
+        matches = context.confirmed_df["Memo"].astype(str).str.startswith(
+            f"POLICY {policy.policy_key} "
+        )
+        amounts = pd.to_numeric(
+            context.confirmed_df.loc[matches, "Amount"], errors="coerce"
+        ).fillna(0)
+        return Decimal(str(amounts.sum()))
+
+    @staticmethod
+    def _policy_summary(
+        policy: ForecastPolicy,
+        *,
+        requested: Decimal = Decimal("0"),
+        executed: Decimal = Decimal("0"),
+    ) -> dict[str, object]:
+        """Return the common public result shape used by legacy policies."""
+        return {
+            "priority": policy.priority,
+            "status": "completed",
+            "requested": float(requested),
+            "executed": float(executed),
+            "capped": 0.0,
+            "missed": 0,
+            "debt_paid": 0.0,
+        }
+
+    @classmethod
+    def _apply_policy_transaction(
+        cls,
+        *,
+        policy: ForecastPolicy,
+        context: ExecutionContext,
+        transaction_date: date,
+        amount: Decimal,
+        account_from: str,
+        account_to: str,
+        description: str,
+    ) -> ExecutionContext:
+        """Execute a non-zero policy allocation through normal graph logic."""
+        if amount <= 0:
+            return context
+        node = cls._policy_transaction_node(
+            policy=policy,
+            transaction_date=transaction_date,
+            amount=amount,
+            account_from=account_from,
+            account_to=account_to,
+            description=description,
+        )
+        return cls.attemptTransaction(node, context)
+
+    @classmethod
+    def _execute_priority_one_statement_payment(
+        cls,
+        *,
+        policy: CurrentStatementBalancePaymentPolicy,
+        context: ExecutionContext,
+        close_date: date,
+    ) -> Decimal:
+        """Execute one mandatory statement payment at its event boundary."""
+        card_name = policy.account_name
+        requested = Decimal(str(context.read(CellId(
+            close_date,
+            credit_current_statement_column(card_name),
+        ))))
+        requested = max(Decimal("0"), requested)
+        if requested == 0:
+            return Decimal("0")
+
+        source_name = (
+            context.initial_conditions.initial_account_set
+            .primary_checking_account_name
+        )
+        node = cls._policy_transaction_node(
+            policy=policy,
+            transaction_date=close_date,
+            amount=requested,
+            account_from=source_name,
+            account_to=card_name,
+            description="current cycle charges",
+            partial_payment_allowed=False,
+        )
+        node = cls._specialize_transaction_node(node, context)
+        day_index = int(context.forecast_df.index.get_loc(close_date))
+        context.register(
+            day_index=day_index,
+            priority_level=policy.priority,
+            node=node,
+        )
+        context.enqueue(node.node_id)
+        try:
+            cls.propagate(context, through_date=close_date)
+        except SpeculativeTransactionRejected as error:
+            raise ForecastPolicyError(
+                f"Priority-1 policy {policy.policy_key} could not pay the "
+                f"full current statement balance of ${requested:.2f} on "
+                f"{close_date}: {error}"
+            ) from error
+
+        context.confirmed_df = pd.concat(
+            [
+                context.confirmed_df,
+                pd.DataFrame(cls._transaction_record(node)),
+            ],
+            ignore_index=True,
+        )
+        return requested
+
+    @staticmethod
+    def _contribution_period_key(
+        contribution_date: date,
+        period: str,
+    ) -> tuple[int, ...]:
+        if period == "month":
+            return (contribution_date.year, contribution_date.month)
+        return (contribution_date.year,)
+
+    @classmethod
+    def _confirmed_contribution_total(
+        cls,
+        context: ExecutionContext,
+        *,
+        account_name: str,
+        period: str,
+        period_key: tuple[int, ...],
+    ) -> Decimal:
+        """Return confirmed deposits into one investment contribution period.
+
+        Confirmed rows deliberately remain a public transaction table without
+        endpoint columns.  Recover the endpoint from the memo rule for normal
+        transactions and from the configured policy key for policy-generated
+        transactions.  This keeps contribution accounting derived from the
+        accepted ledger instead of maintaining a second mutable balance.
+        """
+        if context.confirmed_df.empty:
+            return Decimal("0")
+
+        policies = context.initial_conditions.policy_set.policies
+        total = Decimal("0")
+        for _, row in context.confirmed_df.iterrows():
+            memo = str(row.get("Memo", ""))
+            priority = int(row.get("Priority", 1))
+            destination = None
+            if memo.startswith("POLICY "):
+                policy = next(
+                    (
+                        candidate
+                        for candidate in policies
+                        if memo.startswith(
+                            f"POLICY {candidate.policy_key} "
+                        )
+                    ),
+                    None,
+                )
+                destination = getattr(policy, "account_name", None)
+            else:
+                try:
+                    destination = (
+                        context.initial_conditions.initial_memo_rule_set
+                        .findMatchingMemoRule(memo, priority)
+                        .account_to
+                    )
+                except ValueError:
+                    continue
+            if destination != account_name:
+                continue
+            contribution_date = row.get("Date")
+            if isinstance(contribution_date, pd.Timestamp):
+                contribution_date = contribution_date.date()
+            if not isinstance(contribution_date, date):
+                continue
+            if cls._contribution_period_key(
+                contribution_date, period
+            ) != period_key:
+                continue
+            total += Decimal(str(row.get("Amount", 0)))
+        return total
+
+    @classmethod
+    def _investment_allowance(
+        cls,
+        context: ExecutionContext,
+        *,
+        account_name: str,
+        contribution_date: date,
+        requested: Decimal,
+    ) -> tuple[Decimal, list[dict[str, object]]]:
+        """Apply every earlier-priority cap and describe the binding ledger."""
+        allowed = requested
+        constraints = []
+        for cap in context.active_contribution_caps:
+            if cap.account_name != account_name:
+                continue
+            key = cls._contribution_period_key(
+                contribution_date, cap.period
+            )
+            used = cls._confirmed_contribution_total(
+                context,
+                account_name=account_name,
+                period=cap.period,
+                period_key=key,
+            )
+            limit = Decimal(str(cap.limit))
+            remaining = max(Decimal("0"), limit - used)
+            allowed = min(allowed, remaining)
+            constraints.append(
+                {
+                    "type": "contribution_cap",
+                    "policy_key": cap.policy_key,
+                    "period": cap.period,
+                    "period_key": key,
+                    "limit": float(limit),
+                    "used": float(used),
+                    "remaining": float(remaining),
+                }
+            )
+        return max(Decimal("0"), allowed), constraints
+
+    @classmethod
+    def _execute_investment_requests(
+        cls,
+        *,
+        policy: ForecastPolicy,
+        context: ExecutionContext,
+        requests: list[tuple[date, Decimal]],
+        description: str,
+        base_constraints: list[dict[str, object]] | None = None,
+    ) -> ExecutionContext:
+        """Execute dated investment requests and build one policy result.
+
+        Each request is capped first and then sent through attemptTransaction,
+        so the existing graph remains the sole authority for account bounds
+        and future safety.  Measuring the confirmed total before and after the
+        attempt records the amount that actually moved, including partials.
+        """
+        source_name = (
+            context.initial_conditions.initial_account_set
+            .primary_checking_account_name
+        )
+        requested_total = Decimal("0")
+        executed_total = Decimal("0")
+        capped_total = Decimal("0")
+        missed = 0
+        constraints = list(base_constraints or [])
+        unmet_reasons = []
+
+        for request_date, raw_amount in requests:
+            raw_amount = max(Decimal("0"), raw_amount)
+            if raw_amount == 0 or request_date not in context.forecast_df.index:
+                continue
+            requested_total += raw_amount
+            allowed, cap_constraints = cls._investment_allowance(
+                context,
+                account_name=policy.account_name,
+                contribution_date=request_date,
+                requested=raw_amount,
+            )
+            constraints.extend(cap_constraints)
+            capped_total += raw_amount - allowed
+            if allowed == 0:
+                continue
+
+            before = cls._policy_executed_total(context, policy)
+            context.policy_requests_evaluated += 1
+            context = cls._apply_policy_transaction(
+                policy=policy,
+                context=context,
+                transaction_date=request_date,
+                amount=allowed,
+                account_from=source_name,
+                account_to=policy.account_name,
+                description=description,
+            )
+            after = cls._policy_executed_total(context, policy)
+            executed = max(Decimal("0"), after - before)
+            executed_total += executed
+            if executed + Decimal("0.005") < allowed:
+                missed += 1
+                unmet_reasons.append(
+                    f"{request_date.isoformat()}: requested ${allowed:.2f}, "
+                    f"executed ${executed:.2f}"
+                )
+            context.safety_decisions.append(
+                {
+                    "date": request_date,
+                    "policy_key": policy.policy_key,
+                    "requested": float(raw_amount),
+                    "allowed": float(allowed),
+                    "executed": float(executed),
+                    "resolution_method": "graph",
+                    "constraints": cap_constraints,
+                }
+            )
+
+        result = cls._policy_summary(
+            policy,
+            requested=requested_total,
+            executed=executed_total,
+        )
+        result.update(
+            capped=float(capped_total),
+            missed=missed,
+            constraints=constraints,
+        )
+        if missed:
+            result.update(status="unmet", unmet_reasons=unmet_reasons)
+            message = (
+                f"Policy {policy.policy_key} missed {missed} "
+                "investment request(s)"
+            )
+            if policy.on_unmet == "fail":
+                raise ForecastPolicyError(message)
+            logger.warning(message)
+        elif capped_total > 0:
+            result["status"] = "capped"
+        context.policy_results[policy.policy_key] = result
+        return context
+
+    @classmethod
+    def _finalize_contribution_cap_results(
+        cls,
+        context: ExecutionContext,
+    ) -> None:
+        """Refresh cap results after all later-priority policies have run."""
+        for cap in context.active_contribution_caps:
+            periods = []
+            cursor = context.initial_conditions.start_date
+            seen = set()
+            while cursor <= context.initial_conditions.end_date:
+                key = cls._contribution_period_key(cursor, cap.period)
+                if key not in seen:
+                    seen.add(key)
+                    used = cls._confirmed_contribution_total(
+                        context,
+                        account_name=cap.account_name,
+                        period=cap.period,
+                        period_key=key,
+                    )
+                    limit = Decimal(str(cap.limit))
+                    periods.append(
+                        {
+                            "period_key": key,
+                            "limit": float(limit),
+                            "used": float(used),
+                            "remaining": float(
+                                max(Decimal("0"), limit - used)
+                            ),
+                        }
+                    )
+                cursor += datetime.timedelta(days=1)
+            context.policy_results[cap.policy_key] = {
+                "priority": cap.priority,
+                "status": "completed",
+                "requested": 0.0,
+                "executed": 0.0,
+                "capped": 0.0,
+                "missed": 0,
+                "debt_paid": 0.0,
+                "constraints": [
+                    {
+                        "type": "contribution_cap",
+                        "account_name": cap.account_name,
+                        "period": cap.period,
+                        "periods": periods,
+                    }
+                ],
+            }
+
+    @classmethod
+    def applyPolicy(
+        cls,
+        policy: ForecastPolicy,
+        context: ExecutionContext,
+    ) -> ExecutionContext:
+        if isinstance(policy, MinimumCheckingBalancePolicy):
+            # Policy discovery reads the accepted forecast produced by all
+            # earlier priorities. Flush their queued graph work first; an
+            # empty priority-one schedule otherwise leaves even initialization
+            # and carry nodes pending here.
+            cls.propagate(context)
+            account_name = (
+                policy.account_name
+                or context.initial_conditions.initial_account_set.primary_checking_account_name
+            )
+            target = Decimal(str(policy.target))
+
+            # A reserve is safe to activate only where every later balance is
+            # already at least the target.  The reverse cumulative minimum is
+            # the same stable-suffix test used by the legacy policy runner.
+            balances = pd.to_numeric(
+                context.forecast_df[account_name], errors="coerce"
+            )
+            suffix_minimum = balances.iloc[::-1].cummin().iloc[::-1]
+            qualifying_dates = context.forecast_df.index[
+                suffix_minimum >= float(target)
+            ]
+
+            if len(qualifying_dates) == 0:
+                context.policy_results[policy.policy_key] = {
+                    "status": "not_achieved",
+                    "account_name": account_name,
+                    "target": policy.target,
+                    "activation_date": None,
+                }
+                if policy.on_unmet == "fail":
+                    raise ForecastPolicyError(
+                        f"Minimum balance policy for {account_name} never "
+                        "established its reserve"
+                    )
+                logger.warning(
+                    "%s never established the requested stable minimum of %s",
+                    account_name,
+                    float(policy.target),
+                )
+                return context
+
+            activation_date = qualifying_dates[0]
+            day_index = int(context.forecast_df.index.get_loc(activation_date))
+            node = PolicyMinimumBalanceNode(
+                policy_key=policy.policy_key,
+                account_name=account_name,
+                effective_date=activation_date,
+                target=target,
+            )
+            context.register(
+                day_index=day_index,
+                priority_level=policy.priority,
+                node=node,
+            )
+            context.enqueue(node.node_id)
+            cls.propagate(context)
+            context.policy_results[policy.policy_key] = {
+                "status": "activated",
+                "account_name": account_name,
+                "target": policy.target,
+                "activation_date": activation_date,
+            }
+            return context
+        elif isinstance(policy, SurplusDebtPaymentPolicy):
+            cls.propagate(context)
+            account_set = context.initial_conditions.initial_account_set
+            source_name = account_set.primary_checking_account_name
+            debts = [
+                account
+                for account in account_set.accounts
+                if account.account_type == policy.debt_type
+            ]
+
+            # A surplus policy may become feasible after any earlier-priority
+            # cash flow, not only on a billing boundary.  Evaluate each day,
+            # but stop allocating as soon as either cash or debt is exhausted.
+            # Each accepted payment invalidates only that day's downstream
+            # debt ledger; attemptTransaction performs the cent-exact search.
+            for payment_date in context.forecast_df.index[1:]:
+                if policy.strategy == "avalanche":
+                    ordered_debts = sorted(
+                        debts,
+                        key=lambda account: (
+                            -float(account.billing_state.apr),
+                            account.name,
+                        ),
+                    )
+                else:
+                    ordered_debts = sorted(
+                        debts,
+                        key=lambda account: (
+                            Decimal(str(context.read(CellId(
+                                payment_date, balance_column(account.name)
+                            )))),
+                            account.name,
+                        ),
+                    )
+
+                for debt in ordered_debts:
+                    debt_balance = Decimal(str(context.read(CellId(
+                        payment_date, balance_column(debt.name)
+                    ))))
+                    if debt_balance <= 0:
+                        continue
+                    context = cls._apply_policy_transaction(
+                        policy=policy,
+                        context=context,
+                        transaction_date=payment_date,
+                        amount=debt_balance,
+                        account_from=source_name,
+                        account_to=debt.name,
+                        description="surplus",
+                    )
+
+            executed = cls._policy_executed_total(context, policy)
+            result = cls._policy_summary(policy, executed=executed)
+            result["debt_paid"] = float(executed)
+            context.policy_results[policy.policy_key] = result
+            return context
+
+        elif isinstance(policy, CurrentStatementBalancePaymentPolicy):
+            cls.propagate(context)
+            account_set = context.initial_conditions.initial_account_set
+            source_name = account_set.primary_checking_account_name
+            card = next(
+                account
+                for account in account_set.accounts
+                if account.name == policy.account_name
+            )
+            billing_dates = cls._account_event_dates(
+                first_date=card.billing_state.billing_cycle_start_date,
+                last_date=context.initial_conditions.end_date
+                + datetime.timedelta(days=1),
+                interval="monthly",
+            )
+            requested = Decimal("0")
+
+            # Pay current-cycle charges on the day before rollover.  Reading
+            # the graph cell at that date naturally includes all earlier
+            # priority purchases and excludes the next statement cycle.
+            for billing_date in billing_dates:
+                close_date = billing_date - datetime.timedelta(days=1)
+                if close_date not in context.forecast_df.index:
+                    continue
+                current_statement = Decimal(str(context.read(CellId(
+                    close_date,
+                    credit_current_statement_column(card.name),
+                ))))
+                requested += max(Decimal("0"), current_statement)
+                context = cls._apply_policy_transaction(
+                    policy=policy,
+                    context=context,
+                    transaction_date=close_date,
+                    amount=max(Decimal("0"), current_statement),
+                    account_from=source_name,
+                    account_to=card.name,
+                    description="current cycle charges",
+                )
+
+            executed = cls._policy_executed_total(context, policy)
+            result = cls._policy_summary(
+                policy,
+                requested=requested,
+                executed=executed,
+            )
+            if executed < requested:
+                result.update(status="unmet", missed=1)
+                message = (
+                    f"Policy {policy.policy_key} was short by "
+                    f"${requested - executed:.2f}"
+                )
+                if policy.on_unmet == "fail":
+                    raise ForecastPolicyError(message)
+                logger.warning(message)
+            context.policy_results[policy.policy_key] = result
+            return context
+
+        elif isinstance(policy, SurplusSavingPolicy):
+            cls.propagate(context)
+            account_set = context.initial_conditions.initial_account_set
+            source_name = account_set.primary_checking_account_name
+            destination_name = policy.account_name
+            target = Decimal(str(policy.saved_minimum_threshold))
+            initial_destination_balance = Decimal(str(context.read(CellId(
+                context.initial_conditions.start_date,
+                balance_column(destination_name),
+            ))))
+
+            schedule = context.line_item_set.getLineItemSchedule()
+            eligible_income_dates = set()
+            if not schedule.empty:
+                income_mask = (
+                    schedule["Income_Flag"].fillna(False).astype(bool)
+                    & (schedule["Priority"] < policy.priority)
+                )
+                eligible_income_dates.update(schedule.loc[income_mask, "Date"])
+
+            # Initial cash is also available to the policy, so the first
+            # executable date acts like an opening-funds event. Thereafter we
+            # only reconsider the target when earlier-priority income arrives.
+            first_executable_date = (
+                context.initial_conditions.start_date
+                + datetime.timedelta(days=1)
+            )
+            candidate_dates = sorted({
+                first_executable_date,
+                *(
+                    candidate_date
+                    for candidate_date in eligible_income_dates
+                    if candidate_date > context.initial_conditions.start_date
+                ),
+            })
+            for saving_date in candidate_dates:
+                if saving_date not in context.forecast_df.index:
+                    continue
+                saved_balance = Decimal(str(context.read(CellId(
+                    saving_date, balance_column(destination_name)
+                ))))
+                shortfall = max(Decimal("0"), target - saved_balance)
+                context = cls._apply_policy_transaction(
+                    policy=policy,
+                    context=context,
+                    transaction_date=saving_date,
+                    amount=shortfall,
+                    account_from=source_name,
+                    account_to=destination_name,
+                    description="surplus saving",
+                )
+
+            final_balance = Decimal(str(context.read(CellId(
+                context.initial_conditions.end_date,
+                balance_column(destination_name),
+            ))))
+            requested = max(
+                Decimal("0"), target - initial_destination_balance
+            )
+            executed = max(
+                Decimal("0"), final_balance - initial_destination_balance
+            )
+            shortfall = max(Decimal("0"), target - final_balance)
+            result = cls._policy_summary(
+                policy,
+                requested=requested,
+                executed=executed,
+            )
+            result["shortfall"] = float(shortfall)
+            if shortfall > Decimal("0.005"):
+                result.update(status="unmet", missed=1)
+                message = (
+                    f"Policy {policy.policy_key} was short by "
+                    f"${shortfall:.2f}"
+                )
+                if policy.on_unmet == "fail":
+                    raise ForecastPolicyError(message)
+                logger.warning(message)
+            context.policy_results[policy.policy_key] = result
+            return context
+
+        elif isinstance(policy, PeriodicInvestmentContributionCapPolicy):
+            # A cap is a ledger constraint, not a cash movement. Register it
+            # now so only policies at later priorities can consume it.
+            context.active_contribution_caps.append(copy.deepcopy(policy))
+            cls._finalize_contribution_cap_results(context)
+            return context
+
+        elif isinstance(policy, FixedMonthlyInvestmentPolicy):
+            requests = []
+            cursor = date(
+                context.initial_conditions.start_date.year,
+                context.initial_conditions.start_date.month,
+                1,
+            )
+            while cursor <= context.initial_conditions.end_date:
+                contribution_day = min(
+                    policy.day,
+                    calendar.monthrange(cursor.year, cursor.month)[1],
+                )
+                contribution_date = cursor.replace(day=contribution_day)
+                if (
+                    context.initial_conditions.start_date
+                    <= contribution_date
+                    <= context.initial_conditions.end_date
+                ):
+                    requests.append(
+                        (contribution_date, Decimal(str(policy.amount)))
+                    )
+                cursor = (
+                    cursor.replace(day=28)
+                    + datetime.timedelta(days=4)
+                ).replace(day=1)
+            return cls._execute_investment_requests(
+                policy=policy,
+                context=context,
+                requests=requests,
+                description="fixed",
+            )
+
+        elif isinstance(policy, IncomePercentageInvestmentPolicy):
+            schedule = context.line_item_set.getLineItemSchedule()
+            requests = []
+            if not schedule.empty:
+                income = schedule.loc[
+                    schedule["Income_Flag"].fillna(False).astype(bool)
+                    & (schedule["Priority"] < policy.priority)
+                ].copy()
+                if not income.empty:
+                    income["Date"] = income["Date"].apply(
+                        lambda value: (
+                            value.date()
+                            if isinstance(value, pd.Timestamp)
+                            else value
+                        )
+                    )
+                    for income_date, rows in income.groupby("Date"):
+                        requests.append(
+                            (
+                                income_date,
+                                Decimal(str(rows["Amount"].sum()))
+                                * Decimal(str(policy.percentage)),
+                            )
+                        )
+            return cls._execute_investment_requests(
+                policy=policy,
+                context=context,
+                requests=requests,
+                description="percentage contribution",
+            )
+
+        elif isinstance(policy, SurplusInvestmentPolicy):
+            cls.propagate(context)
+            source_name = (
+                context.initial_conditions.initial_account_set
+                .primary_checking_account_name
+            )
+            schedule = context.line_item_set.getLineItemSchedule()
+            income_dates = set()
+            if not schedule.empty:
+                income_rows = schedule.loc[
+                    schedule["Income_Flag"].fillna(False).astype(bool)
+                    & (schedule["Priority"] < policy.priority),
+                    "Date",
+                ]
+                income_dates.update(
+                    value.date() if isinstance(value, pd.Timestamp) else value
+                    for value in income_rows
+                )
+            first_executable = (
+                context.initial_conditions.start_date
+                + datetime.timedelta(days=1)
+            )
+            candidate_dates = sorted(
+                {
+                    first_executable,
+                    *(
+                        value
+                        for value in income_dates
+                        if value > context.initial_conditions.start_date
+                    ),
+                }
+            )
+            requests = []
+            floor_constraints = []
+            for contribution_date in candidate_dates:
+                if contribution_date not in context.forecast_df.index:
+                    continue
+                hard_minimum = Decimal(
+                    str(context.name_to_account_min[source_name])
+                )
+                policy_minimum = Decimal(str(context.read(CellId(
+                    contribution_date,
+                    policy_minimum_column(source_name),
+                ))))
+                threshold = Decimal(str(policy.checking_threshold))
+                effective_floor = max(
+                    hard_minimum, policy_minimum, threshold
+                )
+                balance = Decimal(str(context.read(CellId(
+                    contribution_date, balance_column(source_name)
+                ))))
+                headroom = max(Decimal("0"), balance - effective_floor)
+                if headroom == 0:
+                    continue
+                requests.append((contribution_date, headroom))
+                floor_constraints.append(
+                    {
+                        "type": "checking_headroom",
+                        "date": contribution_date,
+                        "account_name": source_name,
+                        "hard_minimum": float(hard_minimum),
+                        "policy_minimum": float(policy_minimum),
+                        "checking_threshold": float(threshold),
+                        "effective_floor": float(effective_floor),
+                    }
+                )
+            return cls._execute_investment_requests(
+                policy=policy,
+                context=context,
+                requests=requests,
+                description="surplus",
+                base_constraints=floor_constraints,
+            )
+        else:
+            raise NotImplementedError(f"Unsupported policy type in applyPolicy:{policy.policy_name}")
+
+        ######
+        ### supported_types
+        ### each have priority and on_unmet
+        #     MinimumCheckingBalancePolicy,
+                # policy_name
+                # target
+                # account_name
+        #     SurplusDebtPaymentPolicy,
+                # policy_name
+                # debt_type
+                # debt_strategy
+        #     CurrentStatementBalancePaymentPolicy,
+                # policy_name
+                # account_name
+        #     SurplusSavingPolicy,
+                # account_name,
+                # saved_minimum_threshold,
+        #     FixedMonthlyInvestmentPolicy, #class stub?
+        #     IncomePercentageInvestmentPolicy, #class stub?
+        #     SurplusInvestmentPolicy, #class stub?
+        #     PeriodicInvestmentContributionCapPolicy, #class stub?
+
+        #initial_conditions.policy_set has a dict of policy_type_name_str ->
+        # policy
+
+    # The same as runForecastOnce, but it evaluates transitions, which require
+    # all priorities to resolved before they can be evaluated
     @classmethod
     def runForecast(
         cls,
         initial_conditions: ExpenseForecastInitialConditions,
         milestone_set: MilestoneSet
     ) -> ExpenseForecastResult:
+        transition_set = copy.deepcopy(initial_conditions.transition_set)
+        logger.info(
+            "Graph v2 forecast started: name=%r range=%s to %s "
+            "accounts=%d policies=%d transitions=%d",
+            initial_conditions.forecast_name or "Unnamed forecast",
+            initial_conditions.start_date,
+            initial_conditions.end_date,
+            len(initial_conditions.initial_account_set.accounts),
+            len(initial_conditions.policy_set.policies),
+            len(transition_set.transitions) if transition_set else 0,
+        )
+        if not transition_set:
+            return cls.runForecastOnce(initial_conditions, milestone_set)
+
+        # Transition boundaries need subtype ledgers and active policy bounds
+        # to seed the next graph. These columns remain internal until the final
+        # stitched forecast is materialized.
+        current_result = cls.runForecastOnce(
+            initial_conditions,
+            milestone_set,
+            include_debug_columns=True,
+        )
+        first_start_ts = current_result.start_ts
+        remaining = list(transition_set.transitions)
+        resolved_line_items = copy.deepcopy(
+            initial_conditions.initial_line_item_set
+        )
+        transition_results = {}
+        forecast_parts = []
+        transaction_parts = {
+            name: []
+            for name in ("confirmed_df", "deferred_df", "skipped_df")
+        }
+        policy_results = {}
+        safety_decisions = []
+        graph_diagnostic_segments = []
+        committed_through = None
+
+        summary_columns = {
+            "Interest Accrued", "Investment Returns", "Net Gain", "Net Loss",
+            "Net Worth", "Loan Total", "CC Debt Total", "Liquid Total",
+            "Investment Total", "Next Income Date",
+        }
+
+        def normalized_dates(frame):
+            return frame["Date"].apply(ForecastHandler._normalize_date_value)
+
+        def append_committed_segment(result, through_date=None):
+            frame = result.forecast_df.copy()
+            dates = normalized_dates(frame)
+            selection = pd.Series(True, index=frame.index)
+            if committed_through is not None:
+                selection &= dates > committed_through
+            if through_date is not None:
+                selection &= dates <= through_date
+            forecast_parts.append(frame.loc[selection].copy())
+
+            for name in transaction_parts:
+                transaction_frame = getattr(result, name, None)
+                if transaction_frame is None or transaction_frame.empty:
+                    continue
+                transaction_dates = normalized_dates(transaction_frame)
+                transaction_selection = pd.Series(
+                    True, index=transaction_frame.index
+                )
+                if committed_through is not None:
+                    transaction_selection &= transaction_dates > committed_through
+                if through_date is not None:
+                    transaction_selection &= transaction_dates <= through_date
+                selected = transaction_frame.loc[transaction_selection].copy()
+                if not selected.empty:
+                    transaction_parts[name].append(selected)
+
+            # A suffix forecast may later be discarded by a transition. Keep
+            # only decision records belonging to the portion committed here.
+            for decision in result.safety_decisions or []:
+                decision_date = decision.get("date")
+                if decision_date is None:
+                    continue
+                decision_date = ForecastHandler._normalize_date_value(
+                    decision_date
+                )
+                if committed_through is not None and decision_date <= committed_through:
+                    continue
+                if through_date is not None and decision_date > through_date:
+                    continue
+                safety_decisions.append(copy.deepcopy(decision))
+
+            graph_diagnostic_segments.append(
+                copy.deepcopy(result.graph_diagnostics or {})
+            )
+
+        while True:
+            # Evaluate against committed history plus the currently valid
+            # suffix. Composite milestones may depend on both portions.
+            visible_parts = [
+                part.drop(columns=summary_columns, errors="ignore")
+                for part in forecast_parts
+            ]
+            current_visible = current_result.forecast_df.copy()
+            current_dates = normalized_dates(current_visible)
+            if committed_through is not None:
+                current_visible = current_visible.loc[
+                    current_dates > committed_through
+                ].copy()
+            visible_parts.append(
+                current_visible.drop(columns=summary_columns, errors="ignore")
+            )
+            visible_forecast = pd.concat(visible_parts, ignore_index=True)
+            milestone_results = MilestoneSet.evaluateMilestones(
+                visible_forecast,
+                milestone_set,
+                log_stack_depth=0,
+            )
+            flattened = ForecastHandler._flatten_milestone_results(
+                milestone_results
+            )
+
+            candidates = []
+            for declaration_index, transition in enumerate(remaining):
+                trigger_date = flattened.get(transition.milestone)
+                if trigger_date is None:
+                    continue
+                trigger_date = ForecastHandler._normalize_date_value(
+                    trigger_date
+                )
+                if committed_through is not None and trigger_date <= committed_through:
+                    continue
+                candidates.append(
+                    (trigger_date, declaration_index, transition)
+                )
+
+            if not candidates:
+                logger.info(
+                    "Transition evaluation complete: no further milestones "
+                    "triggered (%d transition(s) remain)",
+                    len(remaining),
+                )
+                append_committed_segment(current_result)
+                break
+
+            next_date = min(candidate[0] for candidate in candidates)
+            same_date = sorted(
+                (
+                    candidate
+                    for candidate in candidates
+                    if candidate[0] == next_date
+                ),
+                key=lambda candidate: candidate[1],
+            )
+            append_committed_segment(current_result, next_date)
+            logger.info(
+                "Scenario transition boundary reached: date=%s count=%d; "
+                "committing prefix and rebuilding suffix",
+                next_date,
+                len(same_date),
+            )
+
+            writes_at_boundary = {}
+            for _, _, transition in same_date:
+                for dimension_name, choice_name in transition.changes.items():
+                    previous = writes_at_boundary.get(dimension_name)
+                    if previous is not None and previous != choice_name:
+                        logger.warning(
+                            "Multiple transitions changed ScenarioDimension %r "
+                            "on %s; %r was superseded by %r",
+                            dimension_name,
+                            next_date,
+                            previous,
+                            choice_name,
+                        )
+                    writes_at_boundary[dimension_name] = choice_name
+                resolved_line_items = (
+                    resolved_line_items.apply_scenario_transition(
+                        transition_name=transition.name,
+                        trigger_milestone=transition.milestone,
+                        trigger_date=next_date,
+                        changes=transition.changes,
+                        history_start_date=initial_conditions.start_date,
+                    )
+                )
+                transition_results[transition.name] = {
+                    "status": "triggered",
+                    "milestone": transition.milestone,
+                    "trigger_date": next_date,
+                    "changes": copy.deepcopy(transition.changes),
+                }
+                remaining.remove(transition)
+
+            policy_results.update(current_result.policy_results or {})
+            committed_through = next_date
+            if next_date >= initial_conditions.end_date:
+                break
+
+            boundary_rows = current_result.forecast_df.loc[
+                normalized_dates(current_result.forecast_df) == next_date
+            ]
+            if boundary_rows.empty:
+                raise ValueError(
+                    f"No forecast row exists for transition boundary {next_date}"
+                )
+            suffix_accounts = ForecastHandler._account_set_from_forecast_row(
+                initial_conditions.initial_account_set,
+                boundary_rows.iloc[-1],
+            )
+            suffix_conditions = ExpenseForecastInitialConditions(
+                start_date=next_date,
+                end_date=initial_conditions.end_date,
+                account_set=suffix_accounts,
+                line_item_set=resolved_line_items,
+                memo_rule_set=initial_conditions.initial_memo_rule_set,
+                milestone_set=milestone_set,
+                transition_set=ConditionalScenarioTransitionSet(),
+                policy_set=copy.deepcopy(initial_conditions.policy_set),
+                forecast_name=initial_conditions.forecast_name,
+            )
+            current_result = cls.runForecastOnce(
+                suffix_conditions,
+                milestone_set,
+                include_debug_columns=True,
+            )
+
+        for transition in remaining:
+            transition_results[transition.name] = {
+                "status": "untriggered",
+                "milestone": transition.milestone,
+                "trigger_date": None,
+                "changes": copy.deepcopy(transition.changes),
+            }
+
+        raw_forecast = pd.concat(forecast_parts, ignore_index=True)
+        raw_forecast = raw_forecast.drop(
+            columns=summary_columns,
+            errors="ignore",
+        )
+        raw_forecast["Next Income Date"] = ""
+        forecast_df = ForecastHandler._appendSummaryLines(
+            initial_conditions.initial_account_set,
+            raw_forecast,
+            log_stack_depth=0,
+        )
+        debug_columns = set()
+        for account in initial_conditions.initial_account_set.accounts:
+            debug_columns.update(
+                set(
+                    initial_conditions.initial_account_set
+                    .getForecastColumnsForAccount(account)
+                ) - {account.name}
+            )
+        forecast_df = forecast_df.drop(
+            columns=list(debug_columns),
+            errors="ignore",
+        )
+        forecast_df = ForecastHandler._roundForecastOutput(
+            forecast_df,
+            decimals=2,
+        )
+        final_milestones = MilestoneSet.evaluateMilestones(
+            forecast_df,
+            milestone_set,
+            log_stack_depth=0,
+        )
+        policy_results.update(current_result.policy_results or {})
+
+        result_frames = {
+            name: (
+                pd.concat(parts, ignore_index=True)
+                if parts else pd.DataFrame()
+            )
+            for name, parts in transaction_parts.items()
+        }
+        return ExpenseForecastResult(
+            initial_conditions=initial_conditions,
+            forecast_df=forecast_df,
+            start_ts=first_start_ts,
+            end_ts=current_result.end_ts,
+            confirmed_df=result_frames["confirmed_df"],
+            deferred_df=result_frames["deferred_df"],
+            skipped_df=result_frames["skipped_df"],
+            milestone_set=milestone_set,
+            milestone_results=final_milestones,
+            policy_results=policy_results,
+            safety_decisions=safety_decisions,
+            graph_diagnostics={
+                "segments": graph_diagnostic_segments,
+                "policy_execution_seconds": sum(
+                    segment.get("policy_execution_seconds", 0.0)
+                    for segment in graph_diagnostic_segments
+                ),
+                "policy_requests_evaluated": sum(
+                    segment.get("policy_requests_evaluated", 0)
+                    for segment in graph_diagnostic_segments
+                ),
+                "nodes_recomputed": sum(
+                    segment.get("nodes_recomputed", 0)
+                    for segment in graph_diagnostic_segments
+                ),
+                "checkpoints_reused": sum(
+                    segment.get("checkpoints_reused", 0)
+                    for segment in graph_diagnostic_segments
+                ),
+                "suffix_work_avoided": sum(
+                    segment.get("suffix_work_avoided", 0)
+                    for segment in graph_diagnostic_segments
+                ),
+            },
+            transition_results=transition_results,
+            resolved_line_item_set=resolved_line_items,
+        )
+
+    @classmethod
+    def runForecastOnce(
+        cls,
+        initial_conditions: ExpenseForecastInitialConditions,
+        milestone_set: MilestoneSet,
+        include_debug_columns: bool = False,
+    ) -> ExpenseForecastResult:
         start_ts = datetime.datetime.now()
+        run_started = perf_counter()
         context = ExecutionContext(initial_conditions, milestone_set)
+        logger.info(
+            "Graph v2 segment setup: range=%s to %s rows=%d",
+            initial_conditions.start_date,
+            initial_conditions.end_date,
+            len(context.forecast_df.index),
+        )
         
         # forecast_df has been initialized with 0s and empty strings
         cls.build_initial_account_nodes(context)
@@ -3038,6 +4405,12 @@ class ExecutionEngine:
                 day_index=day_index,
             )
         cls.build_account_semantic_nodes(context)
+        logger.info(
+            "Graph initialized: nodes=%d queued=%d; expanding transaction "
+            "schedule",
+            len(context.nodes),
+            len(context.pending_heap),
+        )
 
 
         #if there are deferrals, this needs to be recomputed (and it will be based on a flag)
@@ -3046,7 +4419,75 @@ class ExecutionEngine:
 
         all_priority_levels = set(context.initial_conditions.initial_line_item_set.getLineItems()["Priority"].unique().flat)
         all_priority_levels.add(1) #to make sure 1 is always in the set
-        for priority_level in sorted(list(all_priority_levels)):
+        all_priority_levels.update(
+            policy.priority
+            for policy in initial_conditions.policy_set.policies
+        )
+
+        ordered_priorities = sorted(all_priority_levels)
+        logger.info(
+            "Execution phase started: priorities=%s scheduled_occurrences=%d",
+            ordered_priorities,
+            len(transactions_schedule.index),
+        )
+        for priority_level in ordered_priorities:
+            policies_at_this_level = (
+                initial_conditions.policy_set.get_priority_n_policies(
+                    priority_level
+                )
+            )
+            scheduled_at_level = transactions_schedule.loc[
+                transactions_schedule["Priority"] == priority_level
+            ]
+            logger.info(
+                "Priority %s started: transactions=%d dates=%d policies=%d",
+                priority_level,
+                len(scheduled_at_level.index),
+                scheduled_at_level["Date"].nunique(),
+                len(policies_at_this_level),
+            )
+
+            mandatory_statement_events = {}
+            if priority_level == 1:
+                accounts_by_name = {
+                    account.name: account
+                    for account in (
+                        initial_conditions.initial_account_set.accounts
+                    )
+                }
+                for policy in policies_at_this_level:
+                    if not isinstance(
+                        policy, CurrentStatementBalancePaymentPolicy
+                    ):
+                        continue
+                    card = accounts_by_name[policy.account_name]
+                    billing_dates = cls._account_event_dates(
+                        first_date=(
+                            card.billing_state.billing_cycle_start_date
+                        ),
+                        last_date=(
+                            initial_conditions.end_date
+                            + datetime.timedelta(days=1)
+                        ),
+                        interval="monthly",
+                    )
+                    for billing_date in billing_dates:
+                        close_date = (
+                            billing_date - datetime.timedelta(days=1)
+                        )
+                        if (
+                            initial_conditions.start_date < close_date
+                            <= initial_conditions.end_date
+                        ):
+                            mandatory_statement_events.setdefault(
+                                close_date, []
+                            ).append(policy)
+
+            mandatory_statement_totals = {
+                policy.policy_key: Decimal("0")
+                for policies in mandatory_statement_events.values()
+                for policy in policies
+            }
 
             deferrals_exist_at_this_level = bool(
                 (
@@ -3069,20 +4510,27 @@ class ExecutionEngine:
                         context.line_item_set.getLineItemSchedule()
                     )
 
-                dates_at_priority = sorted(
-                    {
-                        scheduled_date
-                        for scheduled_date in transactions_schedule.loc[
-                            transactions_schedule["Priority"]
-                            == priority_level,
-                            "Date",
-                        ]
-                        if (
-                            processed_through < scheduled_date
-                            <= context.initial_conditions.end_date
-                        )
-                    }
+                # TODO an expanded version of the above will be required for
+                # transitions, but transitions operate on ScenarioDimensions
+
+                candidate_dates = {
+                    scheduled_date
+                    for scheduled_date in transactions_schedule.loc[
+                        transactions_schedule["Priority"]
+                        == priority_level,
+                        "Date",
+                    ]
+                    if (
+                        processed_through < scheduled_date
+                        <= context.initial_conditions.end_date
+                    )
+                }
+                candidate_dates.update(
+                    event_date
+                    for event_date in mandatory_statement_events
+                    if event_date > processed_through
                 )
+                dates_at_priority = sorted(candidate_dates)
                 if not dates_at_priority:
                     break
 
@@ -3098,14 +4546,19 @@ class ExecutionEngine:
                         "is outside the forecast calendar"
                     )
 
-                logger.info(str(priority_level)+' '+str(day_index))
+                logger.debug(
+                    "Priority %s processing date=%s row=%s",
+                    priority_level,
+                    transaction_date,
+                    day_index,
+                )
 
                 txn_date_selection_mask = (transactions_schedule["Date"] == transaction_date)
                 txn_priority_selection_mask = (transactions_schedule["Priority"] == priority_level)
                 transactions_for_this_day = transactions_schedule.loc[txn_date_selection_mask & txn_priority_selection_mask]
 
                 for line_item_index, line_item_row in transactions_for_this_day.iterrows():
-                    logger.info('    '+str(line_item_index))
+                    logger.debug("Processing line-item row %s", line_item_index)
                     transaction_node = cls.assemble_transaction_node(line_item_row, context)
                     if priority_level > 1:
                         context = cls.attemptTransaction(transaction_node=transaction_node,
@@ -3117,20 +4570,94 @@ class ExecutionEngine:
                             node=transaction_node,
                         )
                         context.enqueue(transaction_node.node_id)
-                        cls.propagate(context)
+
+                if priority_level == 1:
+                    # Complete this day's transactions, but do not release the
+                    # next day's rollover until mandatory close-date policy
+                    # payments have observed and paid the resulting statement.
+                    cls.propagate(
+                        context, through_date=transaction_date
+                    )
+                    for policy in mandatory_statement_events.get(
+                        transaction_date, []
+                    ):
+                        executed = (
+                            cls._execute_priority_one_statement_payment(
+                                policy=policy,
+                                context=context,
+                                close_date=transaction_date,
+                            )
+                        )
+                        mandatory_statement_totals[
+                            policy.policy_key
+                        ] += executed
                 processed_through = transaction_date
+
+            for policy in policies_at_this_level:
+                if (
+                    priority_level == 1
+                    and isinstance(
+                        policy, CurrentStatementBalancePaymentPolicy
+                    )
+                ):
+                    executed = mandatory_statement_totals.get(
+                        policy.policy_key, Decimal("0")
+                    )
+                    context.policy_results[policy.policy_key] = (
+                        cls._policy_summary(
+                            policy,
+                            requested=executed,
+                            executed=executed,
+                        )
+                    )
+
+            for policy in policies_at_this_level:
+                if (
+                    priority_level == 1
+                    and isinstance(
+                        policy, CurrentStatementBalancePaymentPolicy
+                    )
+                ):
+                    continue
+                logger.info(
+                    "Priority %s policy started: %s (%s)",
+                    priority_level,
+                    policy.policy_name,
+                    policy.policy_key,
+                )
+                policy_started = perf_counter()
+                context = cls.applyPolicy(policy=policy, context=context)
+                policy_elapsed = perf_counter() - policy_started
+                context.policy_execution_seconds += policy_elapsed
+                logger.info(
+                    "Priority %s policy finished: %s elapsed=%.2fs",
+                    priority_level,
+                    policy.policy_key,
+                    policy_elapsed,
+                )
+
+            logger.info(
+                "Priority %s finished: confirmed=%d deferred=%d skipped=%d "
+                "pending=%d",
+                priority_level,
+                len(context.confirmed_df.index),
+                len(context.deferred_df.index),
+                len(context.skipped_df.index),
+                len(context.pending_heap),
+            )
         ExecutionEngine.propagate(context)
 
         # Account ledgers and active bounds are graph implementation state.
         # Keep only the public account balances and memo columns before
         # applying the same summary materialization used by legacy.
-        public_columns = [
-            account.name
-            for account in (
-                initial_conditions.initial_account_set.accounts
-            )
-        ] + ["Memo Directives", "Memo"]
-        context.forecast_df = context.forecast_df.loc[:, public_columns]
+        if not include_debug_columns:
+            public_columns = [
+                account.name
+                for account in (
+                    initial_conditions.initial_account_set.accounts
+                )
+            ] + ["Memo Directives", "Memo"]
+            context.forecast_df = context.forecast_df.loc[:, public_columns]
 
         # Graph execution uses dates as its row index. Public forecast output
         # matches legacy: Date is the first column and rows use a RangeIndex.
@@ -3145,10 +4672,24 @@ class ExecutionEngine:
         context.forecast_df = ForecastHandler._appendSummaryLines(initial_conditions.initial_account_set, context.forecast_df)
         context.forecast_df = ForecastHandler._roundForecastOutput(context.forecast_df, decimals=2)
 
+        cls._finalize_contribution_cap_results(context)
         result_kwargs = {
             "confirmed_df": context.confirmed_df,
             "deferred_df": context.deferred_df,
             "skipped_df": context.skipped_df,
+            "policy_results": context.policy_results,
+            "safety_decisions": context.safety_decisions,
+            "graph_diagnostics": {
+                "policy_execution_seconds": context.policy_execution_seconds,
+                "policy_requests_evaluated": (
+                    context.policy_requests_evaluated
+                ),
+                "analytical_decisions": 0,
+                "recursive_decisions": 0,
+                "recomputed_nodes": len(context.registration_order),
+                "checkpoints_reused": 0,
+                "suffix_work_avoided": 0,
+            },
         }
         if milestone_set:
             result_kwargs["milestone_set"] = milestone_set
@@ -3156,11 +4697,22 @@ class ExecutionEngine:
             result_kwargs["milestone_results"] = milestone_results
 
         end_ts = datetime.datetime.now()
+        logger.info(
+            "Graph v2 segment complete: elapsed=%.2fs nodes=%d "
+            "confirmed=%d deferred=%d skipped=%d policy_requests=%d",
+            perf_counter() - run_started,
+            len(context.nodes),
+            len(context.confirmed_df.index),
+            len(context.deferred_df.index),
+            len(context.skipped_df.index),
+            context.policy_requests_evaluated,
+        )
 
         # implemented:
         # allowed_kwargs = ['confirmed_df', 'deferred_df', 'skipped_df', 'milestone_set', 'milestone_results', 
+        # 'policy_results',
         # TODO not yet implemented:
-        # 'approximate_flag', 'policy_results', 'safety_decisions', 'policy_regimes', 'graph_diagnostics']
+        # 'approximate_flag',  'safety_decisions', 'graph_diagnostics']
         R = ExpenseForecastResult(initial_conditions=initial_conditions,
                                   forecast_df=context.forecast_df,
                                   start_ts=start_ts,
@@ -3172,39 +4724,150 @@ class ExecutionEngine:
 
 if __name__ == '__main__':
 
-    start_date = date(2020,1,1)
-    end_date = date(2020,1,5)
-    A = AccountSet()
-    L = LineItemSet()
-    M = MemoRuleSet()
-    MS = MilestoneSet()
+    logger.info("Graph v2 demo startup")
+    start_date = date(2026, 1, 1)
+    transition_date = start_date + datetime.timedelta(days=365)
+    end_date = start_date + datetime.timedelta(days=365 * 2)
 
-    A.createCheckingAccount('Checking',1000,0,10_000,True)
-    A.createCheckingAccount('Second Checking',2000,0,10_000,False)
-    L.addLineItem(start_date=start_date + datetime.timedelta(days=3),
-                  end_date=start_date + datetime.timedelta(days=3),
-                  priority=1,
-                  interval='once',
-                  amount=1,
-                  memo='test txn',
-                  income_flag=False)
-    M.addMemoRule(memo_regex='.*',
-                  account_from='Checking',
-                  account_to=None,
-                  transaction_priority=1)
-
-    initial_conditions = ExpenseForecastInitialConditions(
-        start_date,
-        end_date,
-        A,
-        L,
-        M
+    accounts = AccountSet()
+    accounts.createCheckingAccount(
+        'Checking', 5_000, 1_000, float('inf'), True
+    )
+    accounts.createCreditCardAccount(name='Chase',
+                                current_statement_balance=0,
+                                previous_statement_balance=0,
+                                billing_start_date=date(2026,6,6),
+                                minimum_payment=40,
+                                end_of_previous_cycle_balance=6566.49,
+                                min_balance=0,
+                                max_balance=25_000,
+                                apr=0.2724)
+    accounts.createCheckingAccount(
+        'Savings', 0, 0, float('inf'), False
     )
 
-    R = ExecutionEngine.runForecast(initial_conditions, MS)
+    rn_year_1 = LineItemSet()
+    rn_year_1.addLineItem(
+        start_date=start_date,
+        end_date=end_date,
+        priority=1,
+        interval='semiweekly',
+        amount=2_900,
+        memo='RN Year 1 income',
+        income_flag=True,
+        recurrence_key='RN paycheck',
+    )
+    rn_year_2 = LineItemSet()
+    rn_year_2.addLineItem(
+        start_date=start_date,
+        end_date=end_date,
+        priority=1,
+        interval='semiweekly',
+        amount=2_900 * 1.05,
+        memo='RN Year 2 income',
+        income_flag=True,
+        recurrence_key='RN paycheck',
+    )
+    income = ScenarioDimension(
+        'Income',
+        {'RN Year 1': rn_year_1, 'RN Year 2': rn_year_2},
+    )
+    income.set_default(start_date, 'RN Year 1')
+    income.change_choice_on_date(transition_date, 'RN Year 2')
+    dated_income = income.to_line_item_set(end_date)
 
-    print(R.to_string())
+    low_food = LineItemSet()
+    low_food.addLineItem(
+        start_date=start_date,
+        end_date=end_date,
+        priority=1,
+        interval='daily',
+        amount=15,
+        memo='food expense',
+        partial_payment_allowed=False,
+    )
+    standard_food = LineItemSet()
+    standard_food.addLineItem(
+        start_date=start_date,
+        end_date=end_date,
+        priority=1,
+        interval='daily',
+        amount=25,
+        memo='food expense',
+        partial_payment_allowed=False,
+    )
+    food = ScenarioDimension(
+        'Food', {'Low': low_food, 'Standard': standard_food}
+    )
 
+    memo_rules = MemoRuleSet()
+    memo_rules.addMemoRule(r'RN Year [12] income', None, 'Checking', 1)
+    memo_rules.addMemoRule('food expense', 'Chase', None, 1)
 
-### TODOS
-# Lots of Decimal casting that could be moved to read
+    with logged_phase("Scenario-space expansion"):
+        scenario_space = ScenarioSpace(
+            invariant_transactions=dated_income,
+            scenario_dimensions={'Food': food},
+            memo_rule_set=memo_rules,
+            default_policy_set=ForecastPolicySet(
+                MinimumCheckingBalancePolicy(
+                    account_name='Checking', target=2_000,
+                    priority=3, on_unmet='warn',
+                )
+            ),
+            policy_overrides=[
+                (
+                    {'Food': 'Standard'},
+                    ForecastPolicySet(
+                        CurrentStatementBalancePaymentPolicy(
+                            account_name='Chase', priority=1, on_unmet='warn'
+                        ),
+                        SurplusSavingPolicy(
+                            account_name='Savings',
+                            saved_minimum_threshold=10_000,
+                            priority=3,
+                            on_unmet='warn',
+                        )
+                    ),
+                )
+            ],
+        )
+
+    scenario = scenario_space.scenarios['Standard']
+    with logged_phase("Initial-condition materialization"):
+        IO = scenario.to_initial_conditions(
+            start_date, end_date, accounts, memo_rules,
+            forecast_name='Dated scenario and policy demo',
+        )
+    with logged_phase("Graph v2 forecast"):
+        R = ForecastHandler.runForecast(IO, engine="graph v2")
+
+    ForecastHandler.generateHTMLReport(R)
+
+    # paycheck_dates = scenario.line_item_set.getLineItemSchedule().loc[
+    #     lambda schedule: schedule['Memo'].str.contains('RN Year'), 'Date'
+    # ].tolist()
+    # transition_window = [
+    #     scheduled_date for scheduled_date in paycheck_dates
+    #     if abs((scheduled_date - transition_date).days) <= 21
+    # ]
+    # print('Scenario choices:', scenario.choices)
+    # print('Scenario policies:', [
+    #     policy.policy_key for policy in scenario.policy_set.policies
+    # ])
+    # print('Paychecks around transition:', transition_window)
+    # print('Paycheck day gaps:', [
+    #     (right - left).days
+    #     for left, right in zip(transition_window, transition_window[1:])
+    # ])
+    # print('Safety resolution counts:', {
+    #     method: sum(
+    #         decision['resolution_method'] == method
+    #         for decision in R.safety_decisions
+    #     )
+    #     for method in {'constraint', 'recursive'}
+    # })
+    # print('Executed safety decisions:', [
+    #     decision for decision in R.safety_decisions
+    #     if decision['executed'] > 0
+    # ])

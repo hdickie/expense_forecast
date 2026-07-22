@@ -489,6 +489,17 @@ class LineItemSet:
                             entry["end_date"].isoformat()
                             if entry.get("end_date") is not None else None
                         ),
+                        **(
+                            {
+                                "trigger_date": (
+                                    entry["trigger_date"].isoformat()
+                                    if entry["trigger_date"] is not None
+                                    else None
+                                )
+                            }
+                            if "trigger_date" in entry
+                            else {}
+                        ),
                     }
                     for entry in timeline
                 ]
@@ -568,6 +579,16 @@ class LineItemSet:
                     "end_date": parsed_date(
                         entry.get("end_date"),
                         required=False,
+                    ),
+                    **(
+                        {
+                            "trigger_date": parsed_date(
+                                entry.get("trigger_date"),
+                                required=False,
+                            )
+                        }
+                        if "trigger_date" in entry
+                        else {}
                     ),
                 }
                 for entry in timeline
@@ -808,3 +829,58 @@ class LineItemSet:
             scenario_dimensions=self.scenario_dimensions,
             scenario_timelines=self.scenario_timelines,
         )
+
+    def apply_scenario_transition(
+        self,
+        *,
+        transition_name,
+        trigger_milestone,
+        trigger_date,
+        changes,
+        history_start_date,
+    ):
+        """Return the choices active after a named milestone transition.
+
+        The milestone date belongs to the old choice.  The replacement is
+        effective on the following day, while the transition identity and
+        trigger remain embedded in the affected dimension's timeline.
+        """
+        if not isinstance(trigger_date, datetime.date):
+            raise TypeError("trigger_date must be a datetime.date")
+        if not isinstance(history_start_date, datetime.date):
+            raise TypeError("history_start_date must be a datetime.date")
+
+        result = copy.deepcopy(self)
+        effective_date = trigger_date + datetime.timedelta(days=1)
+        for dimension_name, choice_name in changes.items():
+            previous_choice = result.scenario_selections[dimension_name]
+            result = result.replace_scenario_choice(
+                dimension_name,
+                choice_name,
+            )
+            timelines = copy.deepcopy(result.scenario_timelines)
+            timeline = timelines.setdefault(dimension_name, [])
+
+            if not timeline:
+                timeline.append({
+                    "choice": previous_choice,
+                    "effective_date": history_start_date,
+                    "end_date": trigger_date,
+                })
+            elif timeline[-1]["effective_date"] == effective_date:
+                # Multiple same-day transitions are applied in declaration
+                # order. Only the final choice owns the effective range.
+                timeline.pop()
+            else:
+                timeline[-1]["end_date"] = trigger_date
+
+            timeline.append({
+                "choice": choice_name,
+                "effective_date": effective_date,
+                "end_date": None,
+                "transition_name": transition_name,
+                "trigger_milestone": trigger_milestone,
+                "trigger_date": trigger_date,
+            })
+            result.scenario_timelines = timelines
+        return result

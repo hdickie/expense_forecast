@@ -12,7 +12,6 @@ from expense_forecast.SurplusSavingPolicy import SurplusSavingPolicy
 from expense_forecast.graph_engine import GraphForecastRunner
 from expense_forecast.InvestmentPolicies import FixedMonthlyInvestmentPolicy
 from expense_forecast.MinimumCheckingBalancePolicy import MinimumCheckingBalancePolicy
-from expense_forecast.PolicyProgram import DatedPolicyChange, PolicyProgram
 
 
 def cash_conditions(*, second_account=False):
@@ -282,27 +281,6 @@ def test_minimum_checking_activation_matches_shadow(approximate):
     result = runner(conditions, engine="shadow")
 
     assert result.policy_results["minimum_checking_balance"]["status"] == "activated"
-
-
-@pytest.mark.parametrize("approximate", [False, True])
-def test_dated_policy_addition_matches_shadow(approximate):
-    accounts, budget, rules = cash_conditions()
-    accounts.accounts[0].balance = 1000
-    accounts.createInvestmentAccount("Brokerage", 0, date(2026, 2, 1), 0)
-    policy = FixedMonthlyInvestmentPolicy("Brokerage", 100, priority=2, day=2)
-    program = PolicyProgram(
-        ForecastPolicySet(),
-        [DatedPolicyChange(date(2026, 3, 1), add=[policy])],
-    )
-    conditions = ExpenseForecastInitialConditions(
-        date(2026, 2, 25), date(2026, 3, 3), accounts, budget, rules,
-        policy_program=program,
-    )
-    runner = ForecastHandler.runForecastApproximate if approximate else ForecastHandler.runForecast
-
-    result = runner(conditions, engine="shadow")
-
-    assert result.forecast_df.iloc[-1]["Brokerage"] == 100
 
 
 def test_invalid_engine_name_is_rejected():

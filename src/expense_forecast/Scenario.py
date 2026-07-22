@@ -27,7 +27,6 @@ import copy
 
 from expense_forecast.ForecastPolicySet import ForecastPolicySet
 from expense_forecast.LineItemSet import LineItemSet
-from expense_forecast.PolicyProgram import PolicyProgram
 
 
 #TODO DEFER manual review of Scenario docstring
@@ -46,9 +45,7 @@ class Scenario:
     @interface-report: show
     """
     #TODO DEFER manual review of Scenario.__init__ docstring
-    def __init__(
-        self, label, choices, line_item_set, policy_set=None, policy_program=None
-    ):
+    def __init__(self, label, choices, line_item_set, policy_set=None):
         """
         #TODO DEFER one-line description of Scenario.__init__.
 
@@ -84,18 +81,13 @@ class Scenario:
             raise TypeError("choices must be a mapping")
         if not isinstance(line_item_set, LineItemSet):
             raise TypeError("line_item_set must be a LineItemSet")
-        if policy_set is not None and policy_program is not None:
-            raise ValueError("Specify policy_set or policy_program, not both")
-        configured = policy_program or policy_set or ForecastPolicySet()
-        if not isinstance(configured, (ForecastPolicySet, PolicyProgram)):
-            raise TypeError("policy configuration must be ForecastPolicySet or PolicyProgram")
+        configured = policy_set or ForecastPolicySet()
+        if not isinstance(configured, ForecastPolicySet):
+            raise TypeError("policy_set must be a ForecastPolicySet")
         self.label = label
         self.choices = dict(choices)
         self.line_item_set = copy.deepcopy(line_item_set)
-        self.policy_program = copy.deepcopy(
-            configured if isinstance(configured, PolicyProgram) else PolicyProgram(configured)
-        )
-        self.policy_set = copy.deepcopy(self.policy_program.base_policy_set)
+        self.policy_set = copy.deepcopy(configured)
 
     @property
     def line_items(self):
@@ -114,6 +106,6 @@ class Scenario:
             account_set=copy.deepcopy(account_set),
             line_item_set=copy.deepcopy(self.line_item_set),
             memo_rule_set=copy.deepcopy(memo_rule_set),
-            policy_program=copy.deepcopy(self.policy_program),
+            policy_set=copy.deepcopy(self.policy_set),
             **kwargs,
         )

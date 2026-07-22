@@ -59,7 +59,9 @@ def _initial_conditions(approximate=False, reserve_target=None):
     )
     transitions = ConditionalScenarioTransitionSet(
         ConditionalScenarioTransition(
-            "Get job as RN", {"Food": "Average"}
+            "Start average food budget",
+            "Get job as RN",
+            {"Food": "Average"},
         )
     )
     kwargs = {}
@@ -74,7 +76,7 @@ def _initial_conditions(approximate=False, reserve_target=None):
         budget,
         rules,
         milestone_set=milestones,
-        transitions=transitions,
+        transition_set=transitions,
         **kwargs,
     )
 
@@ -106,7 +108,7 @@ def test_transition_initial_conditions_round_trip_preserves_scenario_metadata():
     )
 
     assert rebuilt.initial_line_item_set.scenario_selections == {"Food": "Very Low"}
-    assert rebuilt.transitions.transitions[0].milestone == "Get job as RN"
+    assert rebuilt.transition_set.transitions[0].milestone == "Get job as RN"
     assert float(ForecastHandler.runForecast(rebuilt).forecast_df.iloc[-1]["Checking"]) == 180.0
 
 

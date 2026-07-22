@@ -31,7 +31,7 @@ class AccountStateNode(GraphNode):
 
     def __init__(
         self, IO, approximate=False, include_debug_columns=False,
-        reserve_policies=(), policy_phase_boundaries=(),
+        reserve_policies=(),
     ):
         super().__init__(
             "account-state",
@@ -42,28 +42,6 @@ class AccountStateNode(GraphNode):
         self.approximate = approximate
         self.include_debug_columns = include_debug_columns
         self.reserve_policies = tuple(copy.deepcopy(reserve_policies))
-        self.policy_phase_boundaries = tuple(policy_phase_boundaries)
-
-    def _presentation_dates(self):
-        if not self.policy_phase_boundaries:
-            return self._output_dates(
-                self.IO.start_date, self.IO.end_date, self.approximate
-            )
-        dates = []
-        boundaries = list(self.policy_phase_boundaries)
-        for index, phase_start in enumerate(boundaries):
-            phase_end = (
-                boundaries[index + 1] - datetime.timedelta(days=1)
-                if index + 1 < len(boundaries)
-                else self.IO.end_date
-            )
-            phase_dates = self._output_dates(
-                phase_start, phase_end, self.approximate
-            )
-            if index:
-                phase_dates = phase_dates[1:]
-            dates.extend(phase_dates)
-        return dates
 
     def _resolve_reserves(self, context, events, dirty_range):
         if not self.reserve_policies:
@@ -457,7 +435,7 @@ class AccountStateNode(GraphNode):
         income_dates = sorted({event.date for event in events if event.income_flag})
         output_dates = set(self._output_dates(
             self.IO.start_date, self.IO.end_date, self.approximate
-        )) if not self.policy_phase_boundaries else set(self._presentation_dates())
+        ))
         accrual_cursors = {}
         reserve_activates_at_start = any(
             pd.Timestamp(activation).date() == self.IO.start_date
@@ -721,8 +699,6 @@ class AccountStateNode(GraphNode):
                 projected.append(row)
                 previous = output_day
             frame = pd.DataFrame(projected)
-        elif self.policy_phase_boundaries:
-            frame = frame.loc[frame["Date"].isin(self._presentation_dates())].copy()
         achieved_seeds = [
             (reserve_activations[key], row)
             for key, row in reserve_seed_rows.items()
@@ -743,12 +719,21 @@ class AccountStateNode(GraphNode):
                 seed["Memo"] = ""
                 seed["Memo Directives"] = ""
                 seed["_Investment Returns"] = {}
-                insertion = pd.DataFrame([seed])
-                before = frame.loc[frame["Date"] <= seed["Date"]]
-                same_or_after = frame.loc[frame["Date"] > seed["Date"]]
-                frame = pd.concat(
-                    [before, insertion, same_or_after], ignore_index=True
-                )
+                # This is an internal propagation checkpoint. Expose it only
+                # when it is inside the requested range and its date is not
+                # already represented by the discovery projection. Exact
+                # output already contains every day; approximate output may
+                # need this additional presentation boundary.
+                if (
+                    seed["Date"] >= self.IO.start_date
+                    and seed["Date"] not in set(frame["Date"])
+                ):
+                    insertion = pd.DataFrame([seed])
+                    before = frame.loc[frame["Date"] <= seed["Date"]]
+                    same_or_after = frame.loc[frame["Date"] > seed["Date"]]
+                    frame = pd.concat(
+                        [before, insertion, same_or_after], ignore_index=True
+                    )
                 frame.loc[
                     frame["Date"] == activation, "Memo"
                 ] = ""

@@ -288,7 +288,7 @@ class ExpenseForecastResult:
 
         @interface-report: show
         """
-        allowed_kwargs = ['confirmed_df', 'deferred_df', 'skipped_df', 'milestone_set', 'milestone_results', 'approximate_flag', 'policy_results', 'safety_decisions', 'policy_regimes', 'graph_diagnostics']
+        allowed_kwargs = ['confirmed_df', 'deferred_df', 'skipped_df', 'milestone_set', 'milestone_results', 'approximate_flag', 'policy_results', 'safety_decisions', 'graph_diagnostics', 'transition_results', 'resolved_line_item_set']
         for key in kwargs:
             if key not in allowed_kwargs:
                 raise TypeError(f"Unexpected keyword argument '{key}'")
@@ -310,6 +310,18 @@ class ExpenseForecastResult:
         self.deferred_df = kwargs.get('deferred_df', None)
 
         self.skipped_df = kwargs.get('skipped_df', None)
+        if (
+            self.skipped_df is not None
+            and "Memo" in self.skipped_df.columns
+        ):
+            # Policy transactions are internal allocation attempts. A policy
+            # that has no remaining executable amount is described by its
+            # policy result; exposing each synthetic attempt as an ordinary
+            # skipped user transaction is redundant and misleading.
+            policy_rows = self.skipped_df["Memo"].astype(str).str.startswith(
+                "POLICY "
+            )
+            self.skipped_df = self.skipped_df.loc[~policy_rows].copy()
 
         self.milestone_set = kwargs.get('milestone_set', None)
 
@@ -317,8 +329,12 @@ class ExpenseForecastResult:
 
         self.policy_results = kwargs.get('policy_results', {})
         self.safety_decisions = kwargs.get('safety_decisions', [])
-        self.policy_regimes = kwargs.get('policy_regimes', [])
         self.graph_diagnostics = kwargs.get('graph_diagnostics', None)
+        self.transition_results = kwargs.get('transition_results', {})
+        self.resolved_line_item_set = kwargs.get(
+            'resolved_line_item_set',
+            initial_conditions.initial_line_item_set,
+        )
 
         self.approximate_flag = kwargs.get('approximate_flag', False)
         if self.approximate_flag:
@@ -613,12 +629,15 @@ class ExpenseForecastResult:
             "safety_decisions": cls._object_from_json_data(
                 data.get("safety_decisions")
             ) or [],
-            "policy_regimes": cls._object_from_json_data(
-                data.get("policy_regimes")
-            ) or [],
             "graph_diagnostics": cls._object_from_json_data(
                 data.get("graph_diagnostics")
             ),
+            "transition_results": cls._object_from_json_data(
+                data.get("transition_results")
+            ) or {},
+            "resolved_line_item_set": LineItemSet.from_dict(
+                data["resolved_line_item_set"]
+            ) if data.get("resolved_line_item_set") else initial_conditions.initial_line_item_set,
             "approximate_flag": data.get("approximate_flag", False),
         }
         if milestone_set is not None or milestone_results is not None:
@@ -846,8 +865,11 @@ class ExpenseForecastResult:
             "milestone_results": self._object_to_json_data(self.milestone_results),
             "policy_results": self._object_to_json_data(self.policy_results),
             "safety_decisions": self._object_to_json_data(self.safety_decisions),
-            "policy_regimes": self._object_to_json_data(self.policy_regimes),
             "graph_diagnostics": self._object_to_json_data(self.graph_diagnostics),
+            "transition_results": self._object_to_json_data(
+                self.transition_results
+            ),
+            "resolved_line_item_set": self.resolved_line_item_set.to_dict(),
             "start_ts": self.start_ts.isoformat(),
             "end_ts": self.end_ts.isoformat(),
             "approximate_flag": self.approximate_flag,

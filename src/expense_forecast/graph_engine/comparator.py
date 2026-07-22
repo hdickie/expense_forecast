@@ -107,7 +107,10 @@ def compare_results(graph_result, legacy_result):
         # Resolution provenance and regime timing are engine diagnostics. The
         # configured policies and their financial results are compared above.
         payload.pop("safety_decisions", None)
-        payload.pop("policy_regimes", None)
+        # The resolved scenario history is produced by the transition-aware v2
+        # wrapper.  The first graph engine and legacy policy materializer do not
+        # yet share an equivalent lifecycle for this audit-only field.
+        payload.pop("resolved_line_item_set", None)
         # DataFrames were compared above using their public normalized form;
         # legacy preserves incidental index/order details in split JSON.
         for dataframe_key in (

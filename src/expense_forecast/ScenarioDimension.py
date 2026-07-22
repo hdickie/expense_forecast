@@ -89,6 +89,10 @@ class ScenarioDimension:
 
         self.name = name.strip()
         self.choices = {}
+        # Authored choice changes live on the dimension. Materializing the
+        # dimension copies this metadata into a LineItemSet; it never mutates
+        # the choice templates themselves.
+        self.scenario_timelines = []
         if choices is not None:
             for choice_name, choice_line_item_set in choices.items():
                 if choice_name is None:
@@ -105,6 +109,115 @@ class ScenarioDimension:
                         "ScenarioDimension choices cannot contain scenario selections"
                     )
                 self.choices[choice_name] = copy.deepcopy(choice_line_item_set)
+
+    def _validate_timeline_choice(self, choice_name: str) -> None:
+        if choice_name not in self.choices:
+            raise ValueError(
+                f"Unknown choice {choice_name!r} for "
+                f"ScenarioDimension {self.name!r}"
+            )
+
+    @staticmethod
+    def _validate_timeline_date(value, parameter_name: str) -> None:
+        if not isinstance(value, datetime.date):
+            raise TypeError(
+                f"{parameter_name} must be a datetime.date"
+            )
+
+    def set_default(
+        self,
+        effective_date: datetime.date,
+        choice_name: str,
+    ) -> "ScenarioDimension":
+        """Set the first dated choice without changing its line-item template."""
+        self._validate_timeline_date(effective_date, "effective_date")
+        self._validate_timeline_choice(choice_name)
+        if self.scenario_timelines:
+            raise ValueError(
+                f"ScenarioDimension {self.name!r} already has a default choice"
+            )
+
+        self.scenario_timelines.append({
+            "choice": choice_name,
+            "effective_date": effective_date,
+            "end_date": None,
+        })
+        return self
+
+    def change_choice_on_date(
+        self,
+        effective_date: datetime.date,
+        choice_name: str,
+    ) -> "ScenarioDimension":
+        """Activate a different choice at the start of ``effective_date``."""
+        self._validate_timeline_date(effective_date, "effective_date")
+        self._validate_timeline_choice(choice_name)
+        if not self.scenario_timelines:
+            raise ValueError(
+                "set_default must be called before change_choice_on_date"
+            )
+
+        previous = self.scenario_timelines[-1]
+        if effective_date <= previous["effective_date"]:
+            raise ValueError(
+                "choice-change dates must be strictly increasing"
+            )
+        if choice_name == previous["choice"]:
+            raise ValueError(
+                f"Choice {choice_name!r} is already active"
+            )
+
+        previous["end_date"] = (
+            effective_date - datetime.timedelta(days=1)
+        )
+        self.scenario_timelines.append({
+            "choice": choice_name,
+            "effective_date": effective_date,
+            "end_date": None,
+        })
+        return self
+
+    def to_line_item_set(
+        self,
+        end_date: datetime.date,
+    ) -> LineItemSet:
+        """Materialize the authored timeline through an inclusive end date."""
+        self._validate_timeline_date(end_date, "end_date")
+        if not self.scenario_timelines:
+            raise ValueError(
+                "set_default must be called before to_line_item_set"
+            )
+        if end_date < self.scenario_timelines[0]["effective_date"]:
+            raise ValueError(
+                "end_date must be on or after the default effective date"
+            )
+
+        materialized = None
+        for index, entry in enumerate(self.scenario_timelines):
+            segment_start = entry["effective_date"]
+            if segment_start > end_date:
+                break
+
+            next_start = (
+                self.scenario_timelines[index + 1]["effective_date"]
+                if index + 1 < len(self.scenario_timelines)
+                else None
+            )
+            segment_end = (
+                min(end_date, next_start - datetime.timedelta(days=1))
+                if next_start is not None
+                else end_date
+            )
+            segment = self.choice_for_date_range(
+                entry["choice"], segment_start, segment_end
+            )
+            materialized = (
+                segment if materialized is None else materialized + segment
+            )
+
+        # At least the default entry is active because the range check above
+        # excludes an end date before it.
+        return materialized
 
     #TODO DOC manual review of ScenarioDimension.addChoice docstring
     def addChoice(self, label: str, line_item_set: LineItemSet):

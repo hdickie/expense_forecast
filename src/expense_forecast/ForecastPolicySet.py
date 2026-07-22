@@ -52,6 +52,19 @@ class ForecastPolicySet:
             None,
         )
 
+    def get_priority_n_policies(self, priority):
+        """Return policies at ``priority`` in declaration order.
+
+        Declaration order is significant when policies share a priority, so
+        this intentionally filters the existing list rather than regrouping it
+        through a set or dictionary.
+        """
+        return [
+            policy
+            for policy in self.policies
+            if policy.priority == priority
+        ]
+
     def validate(self, account_set, line_item_set):
         accounts_by_name = {account.name: account for account in account_set.accounts}
         primary_checking_name = account_set.primary_checking_account_name

@@ -85,25 +85,7 @@ def print_policy_safety_diagnostics(
             if decision.get('fallback_reason')
         }
     })
-    print('Policy regimes:', [
-        {
-            'id': regime.regime_id,
-            'start': regime.start_date,
-            'end': regime.end_date,
-            'active': regime.active_policy_keys,
-            'derived': regime.derived_transformations,
-            'proofs': regime.proofs,
-        }
-        for regime in result.policy_regimes
-    ])
-    print('Compiler metrics:', {
-        'nodes_recomputed': sum(
-            regime.recomputed_nodes for regime in result.policy_regimes
-        ),
-        'suffix_forecasts_avoided': sum(
-            regime.suffix_forecasts_avoided for regime in result.policy_regimes
-        ),
-    })
+    print('Graph diagnostics:', result.graph_diagnostics)
     print('Executed safety decisions:', [
         decision for decision in result.safety_decisions
         if decision['executed'] > 0
@@ -1655,6 +1637,7 @@ if __name__ == '__main__':
         })
         transitions = ConditionalScenarioTransitionSet(
             ConditionalScenarioTransition(
+                name='Start average food budget',
                 milestone='Get job as RN',
                 changes={
                     'Food': 'Average',
@@ -1669,7 +1652,7 @@ if __name__ == '__main__':
             line_item_set=lifestyle,
             memo_rule_set=memo_rules,
             milestone_set=milestones,
-            transitions=transitions,
+            transition_set=transitions,
         )
 
         R = ForecastHandler.runForecastApproximate(initial_conditions)

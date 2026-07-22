@@ -12,16 +12,22 @@ class ConditionalScenarioTransitionSet:
         if len(transitions) == 1 and isinstance(transitions[0], (list, tuple)):
             transitions = tuple(transitions[0])
         self.transitions = []
+        observed_names = set()
         observed_milestones = set()
         for transition in transitions:
             if not isinstance(transition, ConditionalScenarioTransition):
                 raise TypeError(
                     "ConditionalScenarioTransitionSet accepts only transitions"
                 )
+            if transition.name in observed_names:
+                raise ValueError(
+                    f"Duplicate transition name {transition.name!r}"
+                )
             if transition.milestone in observed_milestones:
                 raise ValueError(
                     f"Duplicate transition milestone {transition.milestone!r}"
                 )
+            observed_names.add(transition.name)
             observed_milestones.add(transition.milestone)
             self.transitions.append(transition)
 

@@ -415,6 +415,9 @@ def test_surplus_saving_warns_when_threshold_is_unmet():
     assert result.forecast_df["Net Gain"].sum() == pytest.approx(500)
     assert result.policy_results["surplus_saving:Savings"]["status"] == "unmet"
     assert result.policy_results["surplus_saving:Savings"]["shortfall"] == 1500
+    assert not result.skipped_df["Memo"].astype(str).str.startswith(
+        "POLICY "
+    ).any()
 
 
 def test_approximate_income_is_reported_as_net_gain():

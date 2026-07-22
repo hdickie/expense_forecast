@@ -32,7 +32,6 @@ from expense_forecast.ConditionalScenarioTransitionSet import (
     ConditionalScenarioTransitionSet,
 )
 from expense_forecast.ForecastPolicySet import ForecastPolicySet
-from expense_forecast.PolicyProgram import PolicyProgram
 
 logger = setup_logger(__name__, project_log_file(__name__))
 
@@ -715,10 +714,43 @@ class ExpenseForecastInitialConditions:
                     "Priority": [],
                     "Amount": [],
                     "Memo": [],
+                    "Income_Flag": [],
                     "Deferrable": [],
                     "Partial_Payment_Allowed": [],
                 }
             )
+
+        # Transaction flags are domain booleans, not numeric amounts. Give
+        # them an explicit dtype before empty result frames are derived below;
+        # otherwise pandas may infer float64 for an empty frame and later
+        # coerce appended True/False values into 1.0/0.0.
+        flag_columns = (
+            "Income_Flag",
+            "Deferrable",
+            "Partial_Payment_Allowed",
+        )
+        proposed_df = proposed_df.copy()
+        for column in flag_columns:
+            if column not in proposed_df.columns:
+                proposed_df[column] = False
+            proposed_df[column] = proposed_df[column].fillna(False).astype(bool)
+
+        # Keep one stable public transaction schema regardless of the column
+        # order supplied by LineItemSet or an empty schedule.
+        transaction_columns = [
+            "Date",
+            "Priority",
+            "Amount",
+            "Memo",
+            "Income_Flag",
+            "Deferrable",
+            "Partial_Payment_Allowed",
+        ]
+        remaining_columns = [
+            column for column in proposed_df.columns
+            if column not in transaction_columns
+        ]
+        proposed_df = proposed_df[transaction_columns + remaining_columns]
 
         # take priority 1 items and put them in confirmed
         confirmed_df = proposed_df[proposed_df.Priority == 1]
@@ -788,9 +820,8 @@ class ExpenseForecastInitialConditions:
             'forecast_name',
             'forecast_set_name',
             'milestone_set',
-            'transitions',
+            'transition_set',
             'policy_set',
-            'policy_program',
         ]
         for key in kwargs:
             if key not in allowed_kwargs:
@@ -809,29 +840,20 @@ class ExpenseForecastInitialConditions:
         self.initial_line_item_set = copy.deepcopy(line_item_set)
         self.initial_memo_rule_set = copy.deepcopy(memo_rule_set)
         self.milestone_set = copy.deepcopy(kwargs.get('milestone_set') or MilestoneSet())
-        self.transitions = copy.deepcopy(
-            kwargs.get('transitions') or ConditionalScenarioTransitionSet()
+        self.transition_set = copy.deepcopy(
+            kwargs.get('transition_set') or ConditionalScenarioTransitionSet()
         )
-        if not isinstance(self.transitions, ConditionalScenarioTransitionSet):
-            raise TypeError("transitions must be a ConditionalScenarioTransitionSet")
-        self.transitions.validate(self.milestone_set, self.initial_line_item_set)
-        if kwargs.get('policy_set') is not None and kwargs.get('policy_program') is not None:
-            raise ValueError("Specify policy_set or policy_program, not both")
-        configured_policies = kwargs.get('policy_program', kwargs.get('policy_set'))
-        if configured_policies is None:
-            configured_policies = ForecastPolicySet()
-        self.policy_program = copy.deepcopy(
-            configured_policies
-            if isinstance(configured_policies, PolicyProgram)
-            else PolicyProgram(configured_policies)
+        if not isinstance(self.transition_set, ConditionalScenarioTransitionSet):
+            raise TypeError("transition_set must be a ConditionalScenarioTransitionSet")
+        self.transition_set.validate(self.milestone_set, self.initial_line_item_set)
+        self.policy_set = copy.deepcopy(
+            kwargs.get('policy_set') or ForecastPolicySet()
         )
-        if not isinstance(self.policy_program, PolicyProgram):
-            raise TypeError("policy_program must be a PolicyProgram")
-        self.policy_set = self.policy_program.resolve(self.start_date)
-        for boundary in self.policy_program.phase_boundaries(self.start_date, self.end_date):
-            self.policy_program.resolve(boundary).validate(
-                self.initial_account_set, self.initial_line_item_set
-            )
+        if not isinstance(self.policy_set, ForecastPolicySet):
+            raise TypeError("policy_set must be a ForecastPolicySet")
+        self.policy_set.validate(
+            self.initial_account_set, self.initial_line_item_set
+        )
 
         self.unique_id = ExpenseForecastInitialConditions.compute_forecast_id(
             start_date=self.start_date,
@@ -839,9 +861,9 @@ class ExpenseForecastInitialConditions:
             account_set=self.initial_account_set,
             line_item_set=self.initial_line_item_set,
             memo_rule_set=self.initial_memo_rule_set)
-        if self.policy_program:
+        if self.policy_set:
             policy_json = json.dumps(
-                self._object_to_json_data(self.policy_program), sort_keys=True
+                self._object_to_json_data(self.policy_set), sort_keys=True
             )
             self.unique_id += "_" + hashlib.sha256(
                 policy_json.encode("utf-8")
@@ -1050,15 +1072,11 @@ class ExpenseForecastInitialConditions:
             milestone_set=cls._object_from_json_data(
                 data.get("milestone_set")
             ) or MilestoneSet(),
-            transitions=cls._object_from_json_data(
-                data.get("transitions")
+            transition_set=cls._object_from_json_data(
+                data.get("transition_set")
             ) or ConditionalScenarioTransitionSet(),
-            policy_program=cls._object_from_json_data(
-                data.get("policy_program")
-            ) or PolicyProgram(
-                cls._object_from_json_data(data.get("policy_set"))
-                or ForecastPolicySet()
-            ),
+            policy_set=cls._object_from_json_data(data.get("policy_set"))
+            or ForecastPolicySet(),
         ) #TODO forecast name
 
     #TODO DOC manual review of ExpenseForecastInitialConditions.load_database_tables docstring
@@ -1488,11 +1506,6 @@ class ExpenseForecastInitialConditions:
 
         @interface-report: show
         """
-        policy_program = copy.deepcopy(self.policy_program)
-        if not policy_program.dated_changes:
-            # Preserve the long-standing mutable ``policy_set`` compatibility
-            # view for callers that update a policy after construction.
-            policy_program.base_policy_set = copy.deepcopy(self.policy_set)
         return {
             "unique_id": self.unique_id,
             "start_date": self.start_date.isoformat(),
@@ -1501,7 +1514,6 @@ class ExpenseForecastInitialConditions:
             "line_item_set": self.initial_line_item_set.to_dict(),
             "memo_rule_set": self.initial_memo_rule_set.to_dict(),
             "milestone_set": self._object_to_json_data(self.milestone_set),
-            "transitions": self._object_to_json_data(self.transitions),
+            "transition_set": self._object_to_json_data(self.transition_set),
             "policy_set": self._object_to_json_data(self.policy_set),
-            "policy_program": self._object_to_json_data(policy_program),
         }

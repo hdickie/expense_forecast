@@ -4,7 +4,9 @@
 class ConditionalScenarioTransition:
     """Describe scenario choices activated when a milestone is achieved."""
 
-    def __init__(self, milestone: str, changes: dict):
+    def __init__(self, name: str, milestone: str, changes: dict):
+        if not isinstance(name, str) or not name.strip():
+            raise ValueError("name must be a non-empty string")
         if not isinstance(milestone, str) or not milestone.strip():
             raise ValueError("milestone must be a non-empty string")
         if not isinstance(changes, dict) or not changes:
@@ -23,5 +25,6 @@ class ConditionalScenarioTransition:
                 )
             normalized_changes[dimension_name] = choice_name.strip()
 
-        self.milestone = milestone
+        self.name = name.strip()
+        self.milestone = milestone.strip()
         self.changes = normalized_changes

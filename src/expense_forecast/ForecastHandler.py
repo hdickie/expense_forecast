@@ -88,7 +88,6 @@ from expense_forecast.InvestmentPolicies import (
     SurplusInvestmentPolicy,
 )
 from expense_forecast.ForecastPolicy import ForecastPolicyError
-from expense_forecast.PolicyProgram import PolicyRegime
 from expense_forecast.PolicyEventGraph import PolicyEventGraph
 from matplotlib.pyplot import figure
 
@@ -247,12 +246,14 @@ class ForecastHandler:
                 "or 'shadow v2'"
             )
         if engine == "graph v2":
-            raise NotImplementedError(
-                "engine='graph v2' is under construction and cannot yet "
-                "produce a complete ExpenseForecastResult. Call "
-                "MemoizedDynamicDependencyGraphEngine.ExecutionEngine."
-                "runForecast() directly while developing graph v2."
+            from expense_forecast.MemoizedDynamicDependencyGraphEngine import (
+                ExecutionEngine,
             )
+
+            resolved_milestones = milestone_set or getattr(
+                IO, "milestone_set", MilestoneSet()
+            )
+            return ExecutionEngine.runForecast(IO, resolved_milestones)
         if engine == "shadow v2":
             from expense_forecast.MemoizedDynamicDependencyGraphEngine import (
                 ExecutionEngine,
@@ -318,15 +319,11 @@ class ForecastHandler:
             return graph_result
         cls._log_interpretation_guide(IO)
         milestone_set = milestone_set or getattr(IO, "milestone_set", MilestoneSet())
-        if getattr(IO, "policy_program", None) and IO.policy_program.dated_changes:
-            return cls._runForecastWithPolicyProgram(
-                IO, milestone_set, include_debug_columns, approximate=False
-            )
         if getattr(IO, "policy_set", None):
             return cls._runForecastWithPolicies(
                 IO, milestone_set, include_debug_columns, approximate=False
             )
-        transitions = getattr(IO, "transitions", None)
+        transitions = getattr(IO, "transition_set", None)
         if transitions:
             return cls._runForecastWithScenarioTransitions(
                 IO,
@@ -558,15 +555,11 @@ class ForecastHandler:
             return graph_result
         cls._log_interpretation_guide(IO)
         milestone_set = milestone_set or getattr(IO, "milestone_set", MilestoneSet())
-        if getattr(IO, "policy_program", None) and IO.policy_program.dated_changes:
-            return cls._runForecastWithPolicyProgram(
-                IO, milestone_set, include_debug_columns, approximate=True
-            )
         if getattr(IO, "policy_set", None):
             return cls._runForecastWithPolicies(
                 IO, milestone_set, include_debug_columns, approximate=True
             )
-        transitions = getattr(IO, "transitions", None)
+        transitions = getattr(IO, "transition_set", None)
         if transitions:
             return cls._runForecastWithScenarioTransitions(
                 IO,
@@ -12237,34 +12230,6 @@ class ForecastHandler:
                 "Binding Date", "Constraint / Fallback",
             ],
         )
-        policy_regimes = list(getattr(E, "policy_regimes", []) or [])
-        report_data_frames["policy_regime_timeline"] = pd.DataFrame(
-            [
-                {
-                    "Regime": getattr(regime, "regime_id", "—"),
-                    "Start": getattr(regime, "start_date", "—"),
-                    "End": getattr(regime, "end_date", "—"),
-                    "Source": format_policy_label(getattr(regime, "source", "configured")),
-                    "Active Policies": ", ".join(
-                        getattr(regime, "active_policy_keys", [])
-                    ) or "None",
-                    "Changes": "; ".join(getattr(regime, "changes", [])) or "—",
-                    "Derived Transformations": "; ".join(
-                        getattr(regime, "derived_transformations", [])
-                    ) or "—",
-                    "Proofs": "; ".join(getattr(regime, "proofs", [])) or "—",
-                    "Invalidation": getattr(regime, "invalidation_reason", None) or "—",
-                    "Analytical": getattr(regime, "analytical_decisions", 0),
-                    "Recursive": getattr(regime, "recursive_decisions", 0),
-                    "Seconds": f"{getattr(regime, 'execution_seconds', 0):.3f}",
-                    "Nodes Recomputed": getattr(regime, "recomputed_nodes", 0),
-                    "Suffix Forecasts Avoided": getattr(
-                        regime, "suffix_forecasts_avoided", 0
-                    ),
-                }
-                for regime in policy_regimes
-            ]
-        )
 
         def policy_detail_row(policy):
             result = policy_results.get(policy.policy_key, {}) or {}
@@ -12919,10 +12884,6 @@ class ForecastHandler:
         )
 
         policy_sections = render_table_card(
-            "Policy Regime Timeline",
-            "policy_regime_timeline",
-            empty_message="No compiled policy regimes recorded.",
-        ) + render_table_card(
             "Safety Decision Audit",
             "policy_safety_decisions",
             empty_message="No optimized policy decisions recorded.",
@@ -14963,6 +14924,11 @@ class ForecastHandler:
         for account in account_set.accounts:
             if account.name in forecast_row.index:
                 account.balance = AccountSet._money(forecast_row[account.name])
+            policy_minimum_name = f"{account.name}: Policy Min Balance"
+            if policy_minimum_name in forecast_row.index:
+                account.policy_min_balance = AccountSet._money(
+                    forecast_row[policy_minimum_name]
+                )
             if account.account_type in {"checking", "investment"}:
                 account.billing_state.balance = account.balance
             elif account.account_type == "credit":
@@ -15204,7 +15170,7 @@ class ForecastHandler:
             line_item_set=budget,
             memo_rule_set=rules,
             milestone_set=IO.milestone_set,
-            transitions=IO.transitions,
+            transition_set=IO.transition_set,
             policy_set=ForecastPolicySet(),
         )
         rebuilt.policy_set = policies
@@ -15309,6 +15275,26 @@ class ForecastHandler:
                 # The requested amount is resolved dynamically from billing
                 # state, so materialization's sentinel is not meaningful.
                 summary["requested"] = summary["executed"]
+            if isinstance(policy, SurplusInvestmentPolicy):
+                # Materialization uses a large internal request so the
+                # transaction resolver can discover available headroom. The
+                # public request is the amount that was actually available,
+                # not that sentinel. Also render the real source account in
+                # the memo instead of the internal threshold endpoint.
+                summary["requested"] = (
+                    summary["executed"] + summary["capped"]
+                )
+                source_token = f"CHECKING_ABOVE:{policy.checking_threshold}"
+                source_name = (
+                    result.initial_conditions.initial_account_set
+                    .primary_checking_account_name
+                )
+                if "Memo" in result.forecast_df.columns:
+                    result.forecast_df["Memo"] = (
+                        result.forecast_df["Memo"].astype(str).str.replace(
+                            source_token, source_name, regex=False
+                        )
+                    )
             if isinstance(policy, SurplusSavingPolicy):
                 initial_account = next(
                     account
@@ -15350,158 +15336,6 @@ class ForecastHandler:
         return summaries
 
     @classmethod
-    def _runForecastWithPolicyProgram(
-        cls, IO, milestone_set, include_debug_columns=False, approximate=False
-    ):
-        """Execute each configured policy regime over its half-open date phase."""
-        original_IO = copy.deepcopy(IO)
-        boundaries = IO.policy_program.phase_boundaries(IO.start_date, IO.end_date)
-        phase_starts = sorted(set(boundaries))
-        forecast_parts = []
-        transaction_parts = {
-            name: [] for name in ("confirmed_df", "deferred_df", "skipped_df")
-        }
-        policy_results = {}
-        safety_decisions = []
-        policy_regimes = []
-        current_accounts = copy.deepcopy(IO.initial_account_set)
-        first_start_ts = None
-        final_end_ts = None
-
-        for index, phase_start in enumerate(phase_starts):
-            phase_end = (
-                phase_starts[index + 1] - datetime.timedelta(days=1)
-                if index + 1 < len(phase_starts) else IO.end_date
-            )
-            if phase_end < phase_start:
-                continue
-            active = IO.policy_program.resolve(phase_start)
-            phase_IO = ExpenseForecastInitialConditions(
-                start_date=phase_start,
-                end_date=phase_end,
-                account_set=current_accounts,
-                line_item_set=IO.initial_line_item_set,
-                memo_rule_set=IO.initial_memo_rule_set,
-                milestone_set=milestone_set,
-                transitions=IO.transitions,
-                policy_set=active,
-                forecast_name=IO.forecast_name,
-            )
-            phase_started = perf_counter()
-            runner = cls.runForecastApproximate if approximate else cls.runForecast
-            segment = runner(phase_IO, milestone_set, include_debug_columns=True)
-            elapsed = perf_counter() - phase_started
-            if first_start_ts is None:
-                first_start_ts = segment.start_ts
-            final_end_ts = segment.end_ts
-
-            part = segment.forecast_df.copy()
-            if forecast_parts and not part.empty:
-                part = part.iloc[1:].copy()
-            forecast_parts.append(part)
-            for name in transaction_parts:
-                frame = getattr(segment, name, None)
-                if isinstance(frame, pd.DataFrame) and not frame.empty:
-                    transaction_parts[name].append(frame)
-            policy_results.update(getattr(segment, "policy_results", {}) or {})
-            decisions = copy.deepcopy(getattr(segment, "safety_decisions", []) or [])
-            safety_decisions.extend(decisions)
-
-            transformations = []
-            proofs = []
-            for policy in active.policies:
-                if isinstance(policy, SurplusSavingPolicy):
-                    destination = current_accounts._get_account_by_name(policy.account_name)
-                    outgoing = any(
-                        rule.account_from == policy.account_name
-                        for rule in IO.initial_memo_rule_set.memo_rules
-                    )
-                    final_balance = float(segment.forecast_df.iloc[-1][policy.account_name])
-                    if final_balance >= float(policy.saved_minimum_threshold) and not outgoing:
-                        transformations.append(f"retire {policy.policy_key} while target remains satisfied")
-                        proofs.append(
-                            f"{policy.account_name} >= {policy.saved_minimum_threshold} and has no reachable outflow"
-                        )
-                if isinstance(policy, SurplusDebtPaymentPolicy):
-                    debt_accounts = [
-                        account for account in current_accounts.accounts
-                        if account.account_type == policy.debt_type
-                    ]
-                    if debt_accounts and all(
-                        float(segment.forecast_df.iloc[-1][account.name]) <= 0.01
-                        for account in debt_accounts
-                    ):
-                        transformations.append(f"retire {policy.policy_key} after portfolio payoff")
-                        proofs.append(f"all {policy.debt_type} balances are zero at phase end")
-
-            policy_regimes.append(PolicyRegime(
-                regime_id=f"regime-{index + 1}",
-                start_date=phase_start,
-                end_date=phase_end,
-                active_policy_keys=[policy.policy_key for policy in active.policies],
-                source="configured" if index == 0 else "dated change",
-                changes=(
-                    [] if index == 0 else [
-                        f"effective {phase_start.isoformat()}"
-                    ]
-                ),
-                derived_transformations=transformations,
-                proofs=proofs,
-                analytical_decisions=sum(
-                    decision.get("resolution_method") == "constraint"
-                    for decision in decisions
-                ),
-                recursive_decisions=sum(
-                    decision.get("resolution_method") == "recursive"
-                    for decision in decisions
-                ),
-                execution_seconds=elapsed,
-                recomputed_nodes=sum(
-                    int(decision.get("recomputed_nodes", 0)) for decision in decisions
-                ),
-                suffix_forecasts_avoided=sum(
-                    decision.get("resolution_method") == "constraint"
-                    for decision in decisions
-                ),
-            ))
-            current_accounts = cls._account_set_from_forecast_row(
-                current_accounts, segment.forecast_df.iloc[-1]
-            )
-
-        forecast_df = pd.concat(forecast_parts, ignore_index=True)
-        result = ExpenseForecastResult(
-            original_IO,
-            forecast_df,
-            first_start_ts or datetime.datetime.now(),
-            final_end_ts or datetime.datetime.now(),
-            confirmed_df=pd.concat(transaction_parts["confirmed_df"], ignore_index=True)
-            if transaction_parts["confirmed_df"] else pd.DataFrame(),
-            deferred_df=pd.concat(transaction_parts["deferred_df"], ignore_index=True)
-            if transaction_parts["deferred_df"] else pd.DataFrame(),
-            skipped_df=pd.concat(transaction_parts["skipped_df"], ignore_index=True)
-            if transaction_parts["skipped_df"] else pd.DataFrame(),
-            milestone_set=milestone_set,
-            milestone_results=MilestoneSet.evaluateMilestones(
-                forecast_df, milestone_set, log_stack_depth=0
-            ),
-            approximate_flag=approximate,
-            policy_results=policy_results,
-            safety_decisions=safety_decisions,
-            policy_regimes=policy_regimes,
-        )
-        if not include_debug_columns:
-            debug_columns = set()
-            for account in original_IO.initial_account_set.accounts:
-                debug_columns.update(
-                    set(original_IO.initial_account_set.getForecastColumnsForAccount(account))
-                    - {account.name}
-                )
-            result.forecast_df = result.forecast_df.drop(
-                columns=list(debug_columns), errors="ignore"
-            )
-        return result
-
-    @classmethod
     def _runForecastWithPolicies(
         cls, IO, milestone_set, include_debug_columns=False, approximate=False
     ):
@@ -15528,7 +15362,6 @@ class ForecastHandler:
             result.policy_results = cls._summarize_cash_policy_results(
                 policy_set, result
             )
-            cls._attach_policy_regime(configured_IO, result)
             return result
 
         original_IO = configured_IO
@@ -15743,7 +15576,6 @@ class ForecastHandler:
                 for key, value in policy_results.items()
                 if key in unattainable_keys
             })
-            cls._attach_policy_regime(original_IO, fallback_result)
             return fallback_result
 
         activation_row = qualifying.iloc[0]
@@ -15777,7 +15609,7 @@ class ForecastHandler:
         )
         current_budget = copy.deepcopy(IO.initial_line_item_set)
         remaining_transitions = []
-        for transition in IO.transitions.transitions:
+        for transition in IO.transition_set.transitions:
             achieved = flattened_milestones.get(transition.milestone)
             achieved = None if achieved is None else cls._normalize_date_value(achieved)
             if achieved is not None and achieved <= activation_date:
@@ -15802,7 +15634,7 @@ class ForecastHandler:
             line_item_set=current_budget,
             memo_rule_set=IO.initial_memo_rule_set,
             milestone_set=milestone_set,
-            transitions=ConditionalScenarioTransitionSet(remaining_transitions),
+            transition_set=ConditionalScenarioTransitionSet(remaining_transitions),
             policy_set=ForecastPolicySet(),
         )
         # Initial-condition normalization rebuilds account objects and keeps
@@ -15869,6 +15701,22 @@ class ForecastHandler:
         tail_forecast = tail_result.forecast_df.drop(
             columns=list(summary_columns), errors="ignore"
         )
+        # The post-activation forecast starts one day early so graph/optimizer
+        # propagation has a seed state.  Discard that row when it is outside
+        # the requested range or the discovery prefix already owns its date.
+        # Approximate discovery can omit that date; in that case it remains a
+        # legitimate presentation boundary and must be retained.
+        tail_dates = tail_forecast["Date"].apply(cls._normalize_date_value)
+        prefix_dates = set(
+            pre_forecast["Date"].apply(cls._normalize_date_value)
+        )
+        tail_forecast = tail_forecast.loc[
+            (tail_dates >= IO.start_date)
+            & ~(
+                (tail_dates < activation_date)
+                & tail_dates.isin(prefix_dates)
+            )
+        ].copy()
         if activation_date > IO.start_date:
             activation_mask = tail_forecast["Date"].apply(
                 cls._normalize_date_value
@@ -15933,58 +15781,7 @@ class ForecastHandler:
             result.forecast_df = result.forecast_df.drop(
                 columns=list(debug_columns), errors="ignore"
             )
-        cls._attach_policy_regime(original_IO, result)
         return result
-
-    @classmethod
-    def _attach_policy_regime(cls, IO, result):
-        """Attach one compiled-regime audit to a non-dated policy forecast."""
-        if getattr(result, "policy_regimes", None):
-            return
-        decisions = list(getattr(result, "safety_decisions", []) or [])
-        transformations = []
-        proofs = []
-        active = list(getattr(IO.policy_set, "policies", []) or [])
-        for policy in active:
-            if isinstance(policy, SurplusSavingPolicy):
-                outgoing = any(
-                    rule.account_from == policy.account_name
-                    for rule in IO.initial_memo_rule_set.memo_rules
-                )
-                if (
-                    policy.account_name in result.forecast_df.columns
-                    and float(result.forecast_df.iloc[-1][policy.account_name])
-                    >= float(policy.saved_minimum_threshold)
-                    and not outgoing
-                ):
-                    transformations.append(f"retire {policy.policy_key}")
-                    proofs.append(
-                        f"{policy.account_name} target satisfied with no reachable outflow"
-                    )
-        result.policy_regimes = [PolicyRegime(
-            regime_id="regime-1",
-            start_date=IO.start_date,
-            end_date=IO.end_date,
-            active_policy_keys=[policy.policy_key for policy in active],
-            derived_transformations=transformations,
-            proofs=proofs,
-            analytical_decisions=sum(
-                decision.get("resolution_method") == "constraint"
-                for decision in decisions
-            ),
-            recursive_decisions=sum(
-                decision.get("resolution_method") == "recursive"
-                for decision in decisions
-            ),
-            execution_seconds=(result.end_ts - result.start_ts).total_seconds(),
-            recomputed_nodes=sum(
-                int(decision.get("recomputed_nodes", 0)) for decision in decisions
-            ),
-            suffix_forecasts_avoided=sum(
-                int(decision.get("suffix_forecasts_avoided", 0))
-                for decision in decisions
-            ),
-        )]
 
     @classmethod
     def _runForecastWithScenarioTransitions(
@@ -16104,7 +15901,7 @@ class ForecastHandler:
             )
             io_kwargs = {
                 "milestone_set": milestone_set,
-                "transitions": type(transitions)(),
+                "transition_set": type(transitions)(),
             }
             if getattr(original_IO, "forecast_name", None) is not None:
                 io_kwargs["forecast_name"] = original_IO.forecast_name

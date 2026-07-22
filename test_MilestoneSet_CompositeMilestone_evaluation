@@ -54,21 +54,13 @@
             "memo_milestones": [],
             "composite_milestones": []
         },
-        "transitions": {
+        "transition_set": {
             "py/object": "expense_forecast.ConditionalScenarioTransitionSet.ConditionalScenarioTransitionSet",
             "transitions": []
         },
         "policy_set": {
             "py/object": "expense_forecast.ForecastPolicySet.ForecastPolicySet",
             "policies": []
-        },
-        "policy_program": {
-            "py/object": "expense_forecast.PolicyProgram.PolicyProgram",
-            "base_policy_set": {
-                "py/object": "expense_forecast.ForecastPolicySet.ForecastPolicySet",
-                "policies": []
-            },
-            "dated_changes": []
         }
     },
     "forecast_df": {
@@ -196,8 +188,8 @@
                 300,
                 "Test Txn",
                 false,
-                null,
-                null
+                false,
+                false
             ],
             [
                 "2000-01-02T00:00:00.000",
@@ -205,8 +197,8 @@
                 300,
                 "Test Txn",
                 false,
-                null,
-                null
+                false,
+                false
             ],
             [
                 "2000-01-03T00:00:00.000",
@@ -214,8 +206,8 @@
                 300,
                 "Test Txn",
                 false,
-                null,
-                null
+                false,
+                false
             ],
             [
                 "2000-01-04T00:00:00.000",
@@ -223,8 +215,8 @@
                 300,
                 "Test Txn",
                 false,
-                null,
-                null
+                false,
+                false
             ],
             [
                 "2000-01-05T00:00:00.000",
@@ -232,8 +224,8 @@
                 300,
                 "Test Txn",
                 false,
-                null,
-                null
+                false,
+                false
             ]
         ]
     },
@@ -309,9 +301,26 @@
     ],
     "policy_results": {},
     "safety_decisions": [],
-    "policy_regimes": [],
     "graph_diagnostics": null,
-    "start_ts": "2026-07-20T16:11:30.641659",
-    "end_ts": "2026-07-20T16:11:30.762281",
+    "transition_results": {},
+    "resolved_line_item_set": {
+        "budget_items": [
+            {
+                "Start_Date": "2000-01-01",
+                "End_Date": "2000-01-05",
+                "Priority": 1,
+                "interval": "daily",
+                "Amount": 300,
+                "Memo": "Test Txn",
+                "Income_Flag": false,
+                "Deferrable": null,
+                "Partial_Payment_Allowed": null,
+                "Recurrence_Key": "test txn|daily",
+                "Recurrence_Anchor": "2000-01-01"
+            }
+        ]
+    },
+    "start_ts": "2026-07-22T01:57:38.941957",
+    "end_ts": "2026-07-22T01:57:39.178715",
     "approximate_flag": false
 }

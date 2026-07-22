@@ -425,7 +425,6 @@ class GraphForecastRunner:
         self.configured_policy_set = copy.deepcopy(IO.policy_set)
         self.compiled_policy_set = copy.deepcopy(IO.policy_set)
         self.reserve_policies = []
-        self.policy_phase_boundaries = []
         self.IO = copy.deepcopy(IO)
         self.milestone_set = milestone_set or MilestoneSet()
         self.approximate = approximate
@@ -449,7 +448,6 @@ class GraphForecastRunner:
                     # public projection drops them below when not requested.
                     include_debug_columns=True,
                     reserve_policies=self.reserve_policies,
-                    policy_phase_boundaries=self.policy_phase_boundaries,
                 ),
                 SummaryNode(self.IO),
             ]
@@ -465,10 +463,6 @@ class GraphForecastRunner:
         self.context = GraphContext()
 
     def _compile_policies(self):
-        program = getattr(self.IO, "policy_program", None)
-        if program is not None and program.dated_changes:
-            self._compile_dated_policy_program(program)
-            return
         if not self.IO.policy_set:
             return
         reserve_policies = [
@@ -484,66 +478,6 @@ class GraphForecastRunner:
         self.compiled_policy_set = copy.deepcopy(self.IO.policy_set)
         self.IO.policy_set = ForecastPolicySet()
 
-    def _compile_dated_policy_program(self, program):
-        from expense_forecast.ForecastHandler import ForecastHandler
-
-        boundaries = program.phase_boundaries(self.IO.start_date, self.IO.end_date)
-        self.policy_phase_boundaries = list(boundaries)
-        combined_budget = copy.deepcopy(self.IO.initial_line_item_set)
-        combined_rules = copy.deepcopy(self.IO.initial_memo_rule_set)
-        policies_by_key = {}
-        reserve_policies = []
-        for index, phase_start in enumerate(boundaries):
-            phase_end = (
-                boundaries[index + 1] - datetime.timedelta(days=1)
-                if index + 1 < len(boundaries)
-                else self.IO.end_date
-            )
-            active = program.resolve(phase_start)
-            for policy in active.policies:
-                policies_by_key[policy.policy_key] = copy.deepcopy(policy)
-                if isinstance(policy, MinimumCheckingBalancePolicy):
-                    reserve = copy.deepcopy(policy)
-                    reserve._effective_start = phase_start
-                    reserve._effective_end = phase_end
-                    reserve_policies.append(reserve)
-            phase_IO = copy.deepcopy(self.IO)
-            phase_IO.start_date = phase_start
-            phase_IO.end_date = phase_end
-            phase_IO.policy_set = active
-            materialized = ForecastHandler._materialize_cash_allocation_policies(
-                phase_IO, approximate=self.approximate
-            )
-            for materialized_policy in materialized.policy_set.policies:
-                existing = policies_by_key.get(materialized_policy.policy_key)
-                if existing is not None:
-                    materialized_policy._requested = (
-                        getattr(existing, "_requested", 0.0)
-                        + getattr(materialized_policy, "_requested", 0.0)
-                    )
-                    materialized_policy._capped = (
-                        getattr(existing, "_capped", 0.0)
-                        + getattr(materialized_policy, "_capped", 0.0)
-                    )
-                policies_by_key[materialized_policy.policy_key] = copy.deepcopy(
-                    materialized_policy
-                )
-            generated_memos = set()
-            for item in materialized.initial_line_item_set.line_items:
-                if not str(item.memo).startswith("POLICY "):
-                    continue
-                combined_budget.line_items.append(copy.deepcopy(item))
-                generated_memos.add(item.memo)
-            for rule in materialized.initial_memo_rule_set.memo_rules:
-                if rule.memo_regex in generated_memos:
-                    combined_rules.memo_rules.append(copy.deepcopy(rule))
-        self.IO.initial_line_item_set = combined_budget
-        self.IO.initial_memo_rule_set = combined_rules
-        self.compiled_policy_set = ForecastPolicySet(list(policies_by_key.values()))
-        self.configured_policy_set = copy.deepcopy(self.compiled_policy_set)
-        self.reserve_policies = reserve_policies
-        self.IO.policy_set = ForecastPolicySet()
-
     def validate_supported(self):
         unsupported = []
         for account in self.IO.initial_account_set.accounts:
@@ -551,7 +485,7 @@ class GraphForecastRunner:
                 unsupported.append(
                     f"account {account.name!r} has type {account.account_type!r}"
                 )
-        if self.IO.transitions:
+        if self.IO.transition_set:
             unsupported.append("conditional scenario transitions")
         account_names = {account.name for account in self.IO.initial_account_set.accounts}
         for rule in self.IO.initial_memo_rule_set.memo_rules:
@@ -638,9 +572,6 @@ class GraphForecastRunner:
             name: pd.DataFrame(
                 records,
                 columns=(
-                    []
-                    if self.policy_phase_boundaries and not records
-                    else
                     empty_exact_columns
                     if not self.approximate and exact_schedule_is_empty
                     else columns
@@ -687,20 +618,4 @@ class GraphForecastRunner:
             result.policy_results.update(
                 self.context.values.get(LEDGER, {}).get("reserve_results", {})
             )
-            for decision in result.safety_decisions:
-                decision.update({
-                    "regime_id": "graph-policy-component",
-                    "affected_graph_nodes": [
-                        "policy-expansion", "account-state", "summary"
-                    ],
-                    "proof_conditions": [
-                        "priority-ordered source reserve and destination capacity"
-                    ],
-                    "recomputed_nodes": self.context.diagnostics.events_recomputed,
-                    "incremental_recomputation_cost": {
-                        "events": self.context.diagnostics.events_recomputed,
-                        "checkpoints_reused": self.context.diagnostics.checkpoints_reused,
-                    },
-                })
-            ForecastHandler._attach_policy_regime(self.configured_IO, result)
         return result
