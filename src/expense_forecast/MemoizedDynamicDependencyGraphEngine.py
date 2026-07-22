@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from heapq import heappop, heappush
 from collections.abc import Hashable
+from numbers import Number
 from abc import ABC, abstractmethod
 
 from expense_forecast.AccountSet import AccountSet
@@ -204,7 +205,7 @@ def compare_v2_account_balances(
 def _normalized_shadow_value(value):
     if pd.isna(value):
         return None
-    if isinstance(value, (int, float, Decimal)) and not isinstance(value, bool):
+    if isinstance(value, Number) and not isinstance(value, bool):
         decimal_value = Decimal(str(value))
         if not decimal_value.is_finite():
             return str(decimal_value)
@@ -535,6 +536,14 @@ class ExecutionContext:
     safety_decisions: list[dict[str, object]] = field(default_factory=list)
     policy_execution_seconds: float = 0.0
     policy_requests_evaluated: int = 0
+    memo_artifacts: dict[
+        CellId, dict[NodeId, list[str]]
+    ] = field(default_factory=dict)
+    write_revision: int = 0
+    cell_revisions: dict[CellId, int] = field(default_factory=dict)
+    node_output_snapshots: dict[
+        NodeId, dict[CellId, tuple[object, int]]
+    ] = field(default_factory=dict)
 
     def fork(self) -> "ExecutionContext":
         candidate = object.__new__(ExecutionContext)
@@ -561,6 +570,12 @@ class ExecutionContext:
         candidate.safety_decisions = deepcopy(self.safety_decisions)
         candidate.policy_execution_seconds = self.policy_execution_seconds
         candidate.policy_requests_evaluated = self.policy_requests_evaluated
+        candidate.memo_artifacts = deepcopy(self.memo_artifacts)
+        candidate.write_revision = self.write_revision
+        candidate.cell_revisions = self.cell_revisions.copy()
+        candidate.node_output_snapshots = deepcopy(
+            self.node_output_snapshots
+        )
 
         candidate.name_to_account_type = self.name_to_account_type.copy()
         candidate.name_to_account_min = self.name_to_account_min.copy()
@@ -640,7 +655,10 @@ class ExecutionContext:
         initialized_forecast_df = pd.DataFrame(
                 index=forecast_dates,
                 columns=cell_columns,
-                dtype=float,
+                # Graph calculations intentionally store Decimal values.
+                # Object-backed cells avoid pandas coercing Decimal to float
+                # (and the associated incompatible-dtype warnings).
+                dtype=object,
             )
         initialized_forecast_df['Memo'] = ''
         initialized_forecast_df['Memo Directives'] = ''
@@ -673,12 +691,58 @@ class ExecutionContext:
         changed = not values_equal(previous_value, value)
 
         if changed:
+            self.write_revision += 1
             self.forecast_df.at[
                 cell.forecast_date,
                 cell.column_name,
             ] = value
+            self.cell_revisions[cell] = self.write_revision
 
         return changed
+
+    def restore_owned_outputs(
+        self,
+        node: "ComputationNode",
+    ) -> set[CellId]:
+        """Restore outputs that still contain this node's previous result.
+
+        Graph nodes currently read and write the same date-grain account
+        cells. Before reevaluation, a node must not treat its own prior output
+        as fresh input. A revision check prevents us from restoring a cell
+        that another upstream computation has since replaced.
+        """
+        restored: set[CellId] = set()
+        for cell, (input_value, output_revision) in (
+            self.node_output_snapshots.get(node.node_id, {}).items()
+        ):
+            if self.cell_revisions.get(cell, 0) != output_revision:
+                continue
+            if self.write(cell, deepcopy(input_value)):
+                restored.add(cell)
+        return restored
+
+    def write_memo_artifacts(
+        self,
+        cell: CellId,
+        owner_id: NodeId,
+        entries: list[str],
+    ) -> bool:
+        """Replace one node's presentation entries and render the whole cell.
+
+        A computation node may be reevaluated after an upstream change. Its
+        financial output must be recomputed, but its memo contribution must
+        replace—not append to—its previous contribution. Distinct occurrence
+        node IDs remain distinct, even when their visible strings match.
+        """
+        normalized = [entry.strip() for entry in entries if entry.strip()]
+        contributions = self.memo_artifacts.setdefault(cell, {})
+        contributions[owner_id] = normalized
+        rendered = "; ".join(
+            entry
+            for owner_entries in contributions.values()
+            for entry in owner_entries
+        )
+        return self.write(cell, rendered)
 
     def payable_balance(self, cell: CellId) -> Decimal:
         if cell.column_name is None:
@@ -960,17 +1024,20 @@ class CreditCardRolloverNode(ComputationNode):
             for cell, value in updates.items()
             if context.write(cell, value)
         }
+        interest_directives = []
         if interest > 0:
-            changed_cells.update(
-                append_memo_directives(
-                    context,
-                    self.rollover_date,
-                    [
-                        "CC INTEREST "
-                        f"({self.card_name}: Prev Stmt Bal +${interest})"
-                    ],
-                )
+            interest_directives.append(
+                "CC INTEREST "
+                f"({self.card_name}: Prev Stmt Bal +${interest})"
             )
+        changed_cells.update(
+            append_memo_directives(
+                context,
+                self.rollover_date,
+                interest_directives,
+                self.node_id,
+            )
+        )
         return changed_cells
 
 
@@ -1060,7 +1127,12 @@ class CreditCardMinimumPaymentNode(ComputationNode):
             minimum_payment - payment_credit,
         )
         if payment_due == 0:
-            return set()
+            return append_memo_directives(
+                context,
+                self.payment_date,
+                [],
+                self.node_id,
+            )
 
         source_available = context.available_balance(
             self.source_balance_cell
@@ -1113,6 +1185,7 @@ class CreditCardMinimumPaymentNode(ComputationNode):
                         "CC MIN PAYMENT "
                         f"({self.source_account_name} -${payment_due:.2f})",
                     ],
+                self.node_id,
             )
         )
         return changed_cells
@@ -1187,7 +1260,12 @@ class LoanMinimumPaymentNode(ComputationNode):
             loan_balance,
         )
         if payment_due == 0:
-            return set()
+            return append_memo_directives(
+                context,
+                self.payment_date,
+                [],
+                self.node_id,
+            )
 
         source_available = context.available_balance(
             self.source_balance_cell
@@ -1245,6 +1323,7 @@ class LoanMinimumPaymentNode(ComputationNode):
                 context,
                 self.payment_date,
                 directives,
+                self.node_id,
             )
         )
         return changed_cells
@@ -1369,18 +1448,20 @@ class LoanInterestAccrualNode(ComputationNode):
             loan_balance + interest_accrued,
         ):
             changed_cells.add(self.balance_cell)
+        interest_directives = []
         if interest_accrued > 0:
-            changed_cells.update(
-                append_memo_directives(
-                    context,
-                    self.accrual_date,
-                    [
-                        "LOAN INTEREST "
-                        f"({self.loan_name}: Interest "
-                        f"+${interest_accrued:.2f})"
-                    ],
-                )
+            interest_directives.append(
+                "LOAN INTEREST "
+                f"({self.loan_name}: Interest +${interest_accrued:.2f})"
             )
+        changed_cells.update(
+            append_memo_directives(
+                context,
+                self.accrual_date,
+                interest_directives,
+                self.node_id,
+            )
+        )
         return changed_cells
 
 
@@ -1415,7 +1496,12 @@ class InvestmentAccrualNode(ComputationNode):
         opening_balance = Decimal(str(context.read(self.balance_cell)))
         daily_growth = opening_balance * self.apr / Decimal("365.25")
         if daily_growth == 0:
-            return set()
+            return append_memo_directives(
+                context,
+                self.accrual_date,
+                [],
+                self.node_id,
+            )
 
         changed_cells: set[CellId] = set()
         if context.write(
@@ -1431,6 +1517,7 @@ class InvestmentAccrualNode(ComputationNode):
                     "INVESTMENT RETURN "
                     f"({self.investment_name} +${daily_growth:.2f})"
                 ],
+                self.node_id,
             )
         )
         return changed_cells
@@ -1458,20 +1545,27 @@ def append_memo_directives(
     context: ExecutionContext,
     forecast_date: date,
     directives: list[str],
+    owner_id: NodeId,
 ) -> set[CellId]:
-    """Append non-empty directives using the legacy ``; `` separator."""
-    additions = [directive.strip() for directive in directives if directive.strip()]
-    if not additions:
-        return set()
-
+    """Render one node's idempotent memo-directive contribution."""
     memo_cell = CellId(forecast_date, "Memo Directives")
-    existing = [
-        directive.strip()
-        for directive in str(context.read(memo_cell)).split(";")
-        if directive.strip()
-    ]
-    rendered = "; ".join([*existing, *additions])
-    return {memo_cell} if context.write(memo_cell, rendered) else set()
+    changed = context.write_memo_artifacts(
+        memo_cell, owner_id, directives
+    )
+    return {memo_cell} if changed else set()
+
+
+def write_memo_entries(
+    context: ExecutionContext,
+    memo_cell: CellId,
+    owner_id: NodeId,
+    entries: list[str],
+) -> set[CellId]:
+    """Render one node's idempotent ordinary-memo contribution."""
+    changed = context.write_memo_artifacts(
+        memo_cell, owner_id, entries
+    )
+    return {memo_cell} if changed else set()
 
 
 @dataclass
@@ -1602,14 +1696,14 @@ class TransactionNode(ComputationNode):
             )
 
         if memo_entry is not None:
-            existing_memo = str(context.read(self.memo_cell)).strip()
-            rendered_memo = (
-                f"{existing_memo}; {memo_entry}"
-                if existing_memo
-                else memo_entry
+            changed_cells.update(
+                write_memo_entries(
+                    context,
+                    self.memo_cell,
+                    self.node_id,
+                    [memo_entry],
+                )
             )
-            if context.write(self.memo_cell, rendered_memo):
-                changed_cells.add(self.memo_cell)
 
         if (
             self.to_cell is not None
@@ -1623,6 +1717,7 @@ class TransactionNode(ComputationNode):
                         "SAVINGS CONTRIBUTION "
                         f"({self.to_cell.column_name} +${self.amount:.2f})"
                     ],
+                    self.node_id,
                 )
             )
 
@@ -1632,22 +1727,18 @@ class TransactionNode(ComputationNode):
         if self.income_flag:
             assert self.memo_directive_cell is not None
             assert self.to_cell is not None
-            existing_memo_directive = str(
-                context.read(self.memo_directive_cell)
-            ).strip()
             income_directive = (
                 f"INCOME "
                 f"({self.to_cell.column_name} +${self.amount:.2f})"
             )
-            rendered_memo_directive = (
-                f"{existing_memo_directive}; {income_directive}"
-                if existing_memo_directive
-                else income_directive
+            changed_cells.update(
+                append_memo_directives(
+                    context,
+                    self.transaction_date,
+                    [income_directive],
+                    self.node_id,
+                )
             )
-            if context.write(
-                self.memo_directive_cell, rendered_memo_directive
-            ):
-                changed_cells.add(self.memo_directive_cell)
 
         return changed_cells
 
@@ -1701,18 +1792,18 @@ class CreditPurchaseNode(TransactionNode):
         ):
             changed_cells.add(self.current_statement_cell)
 
-        existing_memo = str(context.read(self.memo_cell)).strip()
         memo_entry = (
             f"{self.memo} "
             f"({self.from_cell.column_name} -${self.amount:.2f})"
         )
-        rendered_memo = (
-            f"{existing_memo}; {memo_entry}"
-            if existing_memo
-            else memo_entry
+        changed_cells.update(
+            write_memo_entries(
+                context,
+                self.memo_cell,
+                self.node_id,
+                [memo_entry],
+            )
         )
-        if context.write(self.memo_cell, rendered_memo):
-            changed_cells.add(self.memo_cell)
         return changed_cells
 
 
@@ -1811,6 +1902,7 @@ class CreditCardSpecifiedAmountPaymentNode(TransactionNode):
                     "ADDTL CC PAYMENT "
                     f"({self.account_to} -${self.amount:.2f})"
                 ],
+                self.node_id,
             )
         )
         return changed_cells
@@ -1951,18 +2043,18 @@ class InvestmentTransferNode(TransactionNode):
 
         # Transfers are displayed from the source account's perspective even
         # though both endpoint balances are changed by the graph node.
-        existing_memo = str(context.read(self.memo_cell)).strip()
         memo_entry = (
             f"{self.memo} "
             f"({self.account_from} -${self.amount:.2f})"
         )
-        rendered_memo = (
-            f"{existing_memo}; {memo_entry}"
-            if existing_memo
-            else memo_entry
+        changed_cells.update(
+            write_memo_entries(
+                context,
+                self.memo_cell,
+                self.node_id,
+                [memo_entry],
+            )
         )
-        if context.write(self.memo_cell, rendered_memo):
-            changed_cells.add(self.memo_cell)
 
         from_type = context.name_to_account_type[self.account_from]
         to_type = context.name_to_account_type[self.account_to]
@@ -1985,6 +2077,7 @@ class InvestmentTransferNode(TransactionNode):
                 context,
                 self.transaction_date,
                 [directive],
+                self.node_id,
             )
         )
         return changed_cells
@@ -2385,14 +2478,31 @@ class ExecutionEngine:
                 node.priority,
             )
 
-            # TODO use memoization
-            # simply checks against a set
-            # where the keys are - node_id and the input params
-            # the payoff of this will be negligible for small operations
-            # such as carring the balance forward, however, more expensive
-            # operations, such as calculating payments under multiple contraints
-            # are worth memoizing
+            # A dirty node can execute more than once. Restore financial cells
+            # that still hold this node's own prior output so the calculation
+            # sees its original inputs rather than applying its effect twice.
+            # Memo cells use their separate owner ledger and are already
+            # idempotent, so they are deliberately excluded from snapshots.
+            restored_cells = context.restore_owned_outputs(node)
+            snapshot_inputs = {
+                cell: deepcopy(context.read(cell))
+                for cell in node.writes
+                if cell.column_name not in {"Memo", "Memo Directives"}
+            }
             changed_cells = node.execute(context)
+            changed_financial_cells = {
+                cell
+                for cell in changed_cells
+                if cell.column_name not in {"Memo", "Memo Directives"}
+            }
+            context.node_output_snapshots[node.node_id] = {
+                cell: (
+                    snapshot_inputs[cell],
+                    context.cell_revisions.get(cell, 0),
+                )
+                for cell in changed_financial_cells
+            }
+            changed_cells.update(restored_cells)
 
             for cell in changed_cells:
                 for dependent_id in context.readers.get(cell, set()):
@@ -4493,7 +4603,11 @@ class ExecutionEngine:
                 (
                     (transactions_schedule["Priority"] == priority_level)
                     & transactions_schedule["Deferrable"]
-                    .fillna(False)
+                    .map(
+                        lambda value: (
+                            False if pd.isna(value) else bool(value)
+                        )
+                    )
                     .astype(bool)
                 ).any()
             )
@@ -4727,7 +4841,8 @@ if __name__ == '__main__':
     logger.info("Graph v2 demo startup")
     start_date = date(2026, 1, 1)
     transition_date = start_date + datetime.timedelta(days=365)
-    end_date = start_date + datetime.timedelta(days=365 * 2)
+    # end_date = start_date + datetime.timedelta(days=365 * 2)
+    end_date = date(2026,7,1)
 
     accounts = AccountSet()
     accounts.createCheckingAccount(
@@ -4736,7 +4851,7 @@ if __name__ == '__main__':
     accounts.createCreditCardAccount(name='Chase',
                                 current_statement_balance=0,
                                 previous_statement_balance=0,
-                                billing_start_date=date(2026,6,6),
+                                billing_start_date=date(2026,1,6),
                                 minimum_payment=40,
                                 end_of_previous_cycle_balance=6566.49,
                                 min_balance=0,

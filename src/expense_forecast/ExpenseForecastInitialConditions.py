@@ -733,7 +733,9 @@ class ExpenseForecastInitialConditions:
         for column in flag_columns:
             if column not in proposed_df.columns:
                 proposed_df[column] = False
-            proposed_df[column] = proposed_df[column].fillna(False).astype(bool)
+            proposed_df[column] = proposed_df[column].map(
+                lambda value: False if pd.isna(value) else bool(value)
+            ).astype(bool)
 
         # Keep one stable public transaction schema regardless of the column
         # order supplied by LineItemSet or an empty schedule.

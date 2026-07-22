@@ -714,6 +714,69 @@ def test_shadow_v2_policy_parity(kind):
     _assert_shadow_parity(_policy_case(kind))
 
 
+def test_graph_v2_reexecution_does_not_duplicate_income_accounting():
+    """A policy repair may reevaluate income without recording it twice."""
+    accounts = _accounts(checking=500, savings=True)
+    line_items = LineItemSet()
+    _item(
+        line_items,
+        "income paycheck",
+        500,
+        start=date(2026, 1, 4),
+        income=True,
+    )
+    rules = MemoRuleSet()
+    rules.addMemoRule("income paycheck", None, "Checking", 1)
+    conditions = _conditions(
+        "idempotent-memo-artifacts",
+        accounts,
+        line_items,
+        rules,
+        end=date(2026, 1, 5),
+        policy_set=ForecastPolicySet(
+            SurplusSavingPolicy("Savings", 600, priority=2)
+        ),
+    )
+
+    result = ForecastHandler.runForecast(conditions, engine="graph v2")
+    paycheck_row = result.forecast_df.loc[
+        result.forecast_df["Date"] == date(2026, 1, 4)
+    ].iloc[0]
+    income_directive = "INCOME (Checking +$500.00)"
+
+    assert paycheck_row["Memo Directives"].split("; ").count(
+        income_directive
+    ) == 1
+    assert paycheck_row["Net Gain"] == pytest.approx(500)
+    assert ForecastHandler.generateHTMLReport(
+        result, write_file=False
+    ).startswith("<!DOCTYPE html>")
+
+    # Report generation must also reject an already-corrupted result rather
+    # than silently drawing an inflated Net Gain chart.
+    row_index = result.forecast_df.index[
+        result.forecast_df["Date"] == date(2026, 1, 4)
+    ][0]
+    original_directives = result.forecast_df.at[
+        row_index, "Memo Directives"
+    ]
+    result.forecast_df.at[row_index, "Memo Directives"] += (
+        f"; {income_directive}"
+    )
+    with pytest.raises(AssertionError, match="income memo directives exceed"):
+        ForecastHandler.generateHTMLReport(result, write_file=False)
+
+    result.forecast_df.at[row_index, "Memo Directives"] = original_directives
+    result.forecast_df.at[row_index, "Net Gain"] += 1
+    with pytest.raises(AssertionError, match="derived value does not match"):
+        ForecastHandler.generateHTMLReport(result, write_file=False)
+
+    result.forecast_df.at[row_index, "Net Gain"] -= 1
+    result.forecast_df.at[row_index, "Net Worth"] += 1
+    with pytest.raises(AssertionError, match="derived value does not match"):
+        ForecastHandler.generateHTMLReport(result, write_file=False)
+
+
 def test_graph_v2_priority_one_current_statement_runs_after_transactions():
     accounts = _accounts(checking=900)
     accounts.createCreditCardAccount(

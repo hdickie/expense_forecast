@@ -364,7 +364,7 @@ def test_surplus_saving_funds_named_savings_to_threshold(approximate):
 
     assert result.forecast_df.iloc[-1]["Checking"] == 3000
     assert result.forecast_df.iloc[-1]["Savings"] == 2000
-    assert result.forecast_df["Net Gain"].sum() == pytest.approx(2000)
+    assert result.forecast_df["Net Gain"].sum() == pytest.approx(0)
     assert result.safety_decisions
     saving_decisions = [
         decision for decision in result.safety_decisions
@@ -412,7 +412,7 @@ def test_surplus_saving_warns_when_threshold_is_unmet():
 
     assert result.forecast_df.iloc[-1]["Checking"] == 1000
     assert result.forecast_df.iloc[-1]["Savings"] == 500
-    assert result.forecast_df["Net Gain"].sum() == pytest.approx(500)
+    assert result.forecast_df["Net Gain"].sum() == pytest.approx(0)
     assert result.policy_results["surplus_saving:Savings"]["status"] == "unmet"
     assert result.policy_results["surplus_saving:Savings"]["shortfall"] == 1500
     assert not result.skipped_df["Memo"].astype(str).str.startswith(

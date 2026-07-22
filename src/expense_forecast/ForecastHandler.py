@@ -3744,7 +3744,7 @@ class ForecastHandler:
                     if account_name in forecast_df.columns:
                         forecast_df.loc[
                             forecast_df["Date"] == d, account_name
-                        ] = account_balance
+                        ] = float(account_balance)
             else:
                 # This case should not occur; raise an error
                 raise ValueError(
@@ -10316,6 +10316,11 @@ class ForecastHandler:
                     forecast_df.loc[index, "Investment Returns"] += abs(
                         line_item_value
                     )
+                # Moving cash from checking to savings changes its location,
+                # not the forecast's wealth. Keep the directive for audit and
+                # Sankey reporting, but exclude it from both gain and loss.
+                if "SAVINGS CONTRIBUTION" in memo_line_item:
+                    continue
                 if any(
                     directive_type in memo_line_item
                     for directive_type in (
@@ -10323,7 +10328,6 @@ class ForecastHandler:
                         "INVESTMENT RETURN",
                         "INVESTMENT CONTRIBUTION",
                         "INVESTMENT WITHDRAWAL",
-                        "SAVINGS CONTRIBUTION",
                     )
                 ):
                     forecast_df.loc[index, "Net Gain"] += abs(line_item_value)
@@ -11854,6 +11858,177 @@ class ForecastHandler:
 
         return ""
 
+    @staticmethod
+    def _assert_report_accounting_invariants(
+        E: ExpenseForecastResult,
+    ) -> None:
+        """Fail before rendering when presentation accounting is inconsistent.
+
+        Net Gain and Net Loss are derived from Memo and Memo Directives.  A
+        graph node that accidentally appends its presentation text again can
+        therefore inflate the report without changing any account balance.
+        These checks keep that class of engine bug from becoming a plausible-
+        looking HTML report.
+        """
+        forecast_df = E.forecast_df
+        for column in ("Net Gain", "Net Loss"):
+            if column not in forecast_df.columns:
+                continue
+            values = pd.to_numeric(forecast_df[column], errors="coerce")
+            assert values.notna().all(), (
+                f"Report invariant failed: {column} contains a non-numeric "
+                "value."
+            )
+            assert values.map(math.isfinite).all(), (
+                f"Report invariant failed: {column} contains an infinite "
+                "value."
+            )
+            assert (values >= -MONEY_BOUNDARY_TOLERANCE).all(), (
+                f"Report invariant failed: {column} contains a negative "
+                "value."
+            )
+
+        confirmed_df = E.confirmed_df
+        required_columns = {"Date", "Amount", "Income_Flag"}
+        if (
+            confirmed_df is None
+            or not required_columns.issubset(confirmed_df.columns)
+            or "Memo Directives" not in forecast_df.columns
+        ):
+            return
+
+        confirmed_income_counts: dict[tuple[date, Decimal], int] = {}
+        for _, transaction in confirmed_df.iterrows():
+            if not bool(transaction["Income_Flag"]):
+                continue
+            transaction_date = pd.Timestamp(transaction["Date"]).date()
+            amount = Decimal(str(transaction["Amount"])).quantize(
+                Decimal("0.01")
+            )
+            key = (transaction_date, amount)
+            confirmed_income_counts[key] = (
+                confirmed_income_counts.get(key, 0) + 1
+            )
+
+        rendered_income_counts: dict[tuple[date, Decimal], int] = {}
+        income_pattern = re.compile(
+            r"^INCOME\s*\([^)]*\+\$([0-9,]+(?:\.\d+)?)\)$",
+            re.IGNORECASE,
+        )
+        for row_index, row in forecast_df.iterrows():
+            row_date_value = (
+                row["Date"] if "Date" in forecast_df.columns else row_index
+            )
+            row_date = pd.Timestamp(row_date_value).date()
+            for raw_directive in str(row["Memo Directives"]).split(";"):
+                directive = raw_directive.strip()
+                match = income_pattern.match(directive)
+                if match is None:
+                    continue
+                amount = Decimal(match.group(1).replace(",", "")).quantize(
+                    Decimal("0.01")
+                )
+                key = (row_date, amount)
+                rendered_income_counts[key] = (
+                    rendered_income_counts.get(key, 0) + 1
+                )
+
+        for key, rendered_count in rendered_income_counts.items():
+            confirmed_count = confirmed_income_counts.get(key, 0)
+            assert rendered_count <= confirmed_count, (
+                "Report invariant failed: income memo directives exceed "
+                "confirmed income transactions for "
+                f"date={key[0]} amount=${key[1]:.2f}; "
+                f"directives={rendered_count}, confirmed={confirmed_count}. "
+                "A computation node may have appended its memo more than once."
+            )
+
+        # Rebuild every presentation-accounting column from the account rows,
+        # Memo, and Memo Directives. This deliberately starts with a copy of
+        # the raw forecast instead of trusting the values the report is about
+        # to plot. A mismatch identifies the exact row and derived column.
+        recomputed = ForecastHandler._appendSummaryLines(
+            E.initial_conditions.initial_account_set,
+            forecast_df.copy(deep=True),
+        )
+        audited_columns = (
+            "Net Gain",
+            "Net Loss",
+            "Interest Accrued",
+            "Investment Returns",
+            "Liquid Total",
+            "Investment Total",
+            "CC Debt Total",
+            "Loan Total",
+            "Net Worth",
+        )
+        tolerance = float(MONEY_BOUNDARY_TOLERANCE)
+        for column in audited_columns:
+            if column not in forecast_df.columns or column not in recomputed:
+                continue
+            actual_values = pd.to_numeric(
+                forecast_df[column], errors="coerce"
+            )
+            expected_values = pd.to_numeric(
+                recomputed[column], errors="coerce"
+            )
+            mismatches = (actual_values - expected_values).abs() > tolerance
+            if not mismatches.any():
+                continue
+            row_index = mismatches[mismatches].index[0]
+            row_date = (
+                forecast_df.at[row_index, "Date"]
+                if "Date" in forecast_df.columns
+                else row_index
+            )
+            assert False, (
+                "Report accounting invariant failed: derived value does not "
+                f"match account changes and parsed memo data at date={row_date} "
+                f"column={column!r}; actual={actual_values.at[row_index]!r}, "
+                f"recomputed={expected_values.at[row_index]!r}."
+            )
+
+        # Net worth and its day-to-day change must also reconcile directly to
+        # the four account-type totals. This is independent of memo parsing and
+        # catches a summary that omits or double-counts an account category.
+        total_columns = {
+            "Liquid Total",
+            "Investment Total",
+            "CC Debt Total",
+            "Loan Total",
+            "Net Worth",
+        }
+        if total_columns.issubset(forecast_df.columns):
+            numeric = {
+                column: pd.to_numeric(forecast_df[column], errors="coerce")
+                for column in total_columns
+            }
+            expected_net_worth = (
+                numeric["Liquid Total"]
+                + numeric["Investment Total"]
+                - numeric["CC Debt Total"]
+                - numeric["Loan Total"]
+            )
+            net_worth_mismatch = (
+                numeric["Net Worth"] - expected_net_worth
+            ).abs() > tolerance
+            assert not net_worth_mismatch.any(), (
+                "Report accounting invariant failed: Net Worth does not "
+                "equal liquid plus investments minus credit and loan debt."
+            )
+
+            actual_change = numeric["Net Worth"].diff().fillna(0)
+            expected_change = (
+                numeric["Liquid Total"].diff().fillna(0)
+                + numeric["Investment Total"].diff().fillna(0)
+                - numeric["CC Debt Total"].diff().fillna(0)
+                - numeric["Loan Total"].diff().fillna(0)
+            )
+            assert ((actual_change - expected_change).abs() <= tolerance).all(), (
+                "Report accounting invariant failed: a daily Net Worth change "
+                "does not reconcile to the account-type balance changes."
+            )
+
     @classmethod
     def generateHTMLReport(
         cls,
@@ -11870,6 +12045,7 @@ class ForecastHandler:
         """
 
         report_started_at = perf_counter()
+        cls._assert_report_accounting_invariants(E)
         cls._phase_log(
             "blue",
             "Report generation started: "
