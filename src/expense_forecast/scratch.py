@@ -35,8 +35,49 @@ import os
 from datetime import date
 
 import inspect
-
+import logging
 import numpy as np
+
+import threading
+from contextlib import contextmanager
+from time import perf_counter
+from expense_forecast.log_methods import project_log_file, setup_logger
+
+logger = setup_logger(
+    __name__,
+    project_log_file(__name__),
+    console_level=logging.INFO,
+    file_level=logging.DEBUG,
+)
+
+@contextmanager
+def logged_phase(name: str, *, heartbeat_seconds: float = 10.0):
+    """Log phase boundaries and reassure the user during opaque setup work."""
+    started = perf_counter()
+    stopped = threading.Event()
+
+    def heartbeat() -> None:
+        while not stopped.wait(heartbeat_seconds):
+            logger.info(
+                "%s still running: elapsed=%.1fs",
+                name,
+                perf_counter() - started,
+            )
+
+    logger.info("%s started", name)
+    worker = threading.Thread(
+        target=heartbeat,
+        name=f"graph-v2-{name}",
+        daemon=True,
+    )
+    worker.start()
+    try:
+        yield
+    finally:
+        stopped.set()
+        worker.join(timeout=1)
+        logger.info("%s finished: elapsed=%.2fs", name, perf_counter() - started)
+
 
 
 def print_policy_safety_diagnostics(
@@ -324,10 +365,13 @@ def getUserVars():
     user_vars["CNA_first_paycheck_date"] = date(2026,8,22)
     user_vars["CNA_paycheck_amount"] = 22.77 * 80 * 0.75 # assume 25% tax at a minimum
     user_vars["CNA_paycheck_one_shift_amount"] = 20 * 24 * 0.75 #lower wages in LA, 1 12hr shift per week
+    user_vars["CNA_paycheck_full_time_amount"] = 20 * 80 * 0.75 #lower wages in LA, 40 hrs per week
     user_vars["start_nursing_school_stop_working_full_time_date"] = date(2027,2,1)
     user_vars["nursing_school_end_date"] = date(2029,12,15)
     user_vars["begin_rn_job_date"] = date(2030,2,1)
     # user_kwargs[""] = 
+
+    user_vars["rn_year_1"] = 2900
 
     return user_vars
 
@@ -591,7 +635,7 @@ def fuck_off_to_spain(start_date : date, end_date : date) -> LineItemSet:
 if __name__ == '__main__':
 
     # action = 'near term'
-    action = 'start of RN life'
+    # action = 'start of RN life'
     # action = 'second year of RN life'
     # action = 'net worth 0 after 18 months of RN car life'
     # action = 'test approximate case'
@@ -599,12 +643,10 @@ if __name__ == '__main__':
     # action = 'dated scenarios and policies'
     # action = 'prioritized policies'
     # action = 'inspect'
-
     # action = 'I just won the lottery'
-
     # action = 'example single forecast report'
-
     # action = 'dated scenarios and policies'
+    action = 'forecast set'
 
     if action == 'near term':
 
@@ -1325,7 +1367,6 @@ if __name__ == '__main__':
 
         user_vars = getUserVars()
 
-        
     elif action == 'net worth 0 after 18 months of RN car life':
         pass
 
@@ -2114,3 +2155,217 @@ if __name__ == '__main__':
 
         with open('test_report.html', "w") as f:
             f.write(html_report)
+
+    elif action == 'forecast set':
+
+        logger.info("Scratch start")
+        with logged_phase("Base initialization"):
+
+            start_date = date(2026,7,14)
+            end_date = start_date + datetime.timedelta(days=365 * 2)
+
+            user_vars = getUserVars()
+
+            A = get_IRL_current_A() #TODO this could take kwargs
+            M = getComprehensiveMemoRules() 
+
+            ### Dimensions
+            # Housing
+            #   Car, 1800, 2200, 2500
+            # Work
+            #   RN for each year according to raise schedule. Does not consider inflation
+            income_key_to_LIS_map = {}
+            cna_eugene = LineItemSet()
+            cna_eugene.addLineItem(start_date=start_date, 
+                end_date=end_date, 
+                priority=1,
+                interval='semiweekly',
+                amount=user_vars["CNA_paycheck_amount"],
+                memo='CNA income Eugene',
+                income_flag=True, 
+                deferrable=False, 
+                partial_payment_allowed=False)      
+            cna_la_part_time = LineItemSet()
+            cna_la_part_time.addLineItem(start_date=start_date, 
+                end_date=end_date, 
+                priority=1,
+                interval='semiweekly',
+                amount=user_vars["CNA_paycheck_one_shift_amount"] ,
+                memo='CNA income Los Angeles part-time',
+                income_flag=True, 
+                deferrable=False, 
+                partial_payment_allowed=False)
+            cna_la_full_time = LineItemSet()
+            cna_la_full_time.addLineItem(start_date=start_date, 
+                end_date=end_date, 
+                priority=1,
+                interval='semiweekly',
+                amount=user_vars["CNA_paycheck_full_time_amount"] ,
+                memo='CNA income Los Angeles full-time',
+                income_flag=True, 
+                deferrable=False, 
+                partial_payment_allowed=False)
+            income_key_to_LIS_map['CNA Eugene'] =  LineItemSet()
+            income_key_to_LIS_map['CNA Eugene'] = cna_eugene
+            income_key_to_LIS_map['CNA LA Part-Time'] = cna_la_part_time
+            income_key_to_LIS_map['CNA LA Full-Time'] = cna_la_full_time
+
+            income_key_to_LIS_map[f"RN Year 1"] = LineItemSet()
+            income_key_to_LIS_map[f"RN Year 1"].addLineItem(
+                    start_date=start_date,
+                    end_date=end_date,
+                    priority=1,
+                    interval='semiweekly',
+                    amount=user_vars["rn_year_1"],
+                    memo='RN Year 1 income',
+                    income_flag=True,
+                    recurrence_key='RN paycheck',
+                )
+            previous_year_salary = user_vars["rn_year_1"]
+            rn_annual_raise_rates = [
+                0.060,  # Year 1
+                0.055,  # Year 2
+                0.050,  # Year 3
+                0.045,  # Year 4
+                0.040,  # Year 5
+                0.038,  # Year 6
+                0.036,  # Year 7
+                0.034,  # Year 8
+                0.032,  # Year 9
+                0.030,  # Year 10
+                0.030,  # Year 11
+                0.029,  # Year 12
+                0.029,  # Year 13
+                0.028,  # Year 14
+                0.028,  # Year 15
+                0.027,  # Year 16
+                0.027,  # Year 17
+                0.026,  # Year 18
+                0.026,  # Year 19
+                0.025,  # Year 20
+                0.025,  # Year 21
+                0.025,  # Year 22
+                0.025,  # Year 23
+                0.025,  # Year 24
+                0.025,  # Year 25
+            ]
+            for index, rate in enumerate(rn_annual_raise_rates):
+                income_key_to_LIS_map[f"RN Year {index+2}"] = LineItemSet()
+                income_key_to_LIS_map[f"RN Year {index+2}"].addLineItem(
+                    start_date=start_date,
+                    end_date=end_date,
+                    priority=1,
+                    interval='semiweekly',
+                    amount=previous_year_salary * (1+rate),
+                    memo=f"RN Year {index+2}",
+                    income_flag=True,
+                    recurrence_key='RN paycheck',
+                )
+            
+            income = ScenarioDimension("Income", income_key_to_LIS_map)
+
+
+            # Spring 2028	            Jan 18 to May 12
+            # Summer break (8 weeks)	May 13 to July 9
+            # Fall 2028	                July 10 to Dec 15
+            # Winter break (3 weeks)	Dec 16 to Jan 7
+            # Spring 2029	            Jan 8 to May 4
+            # Summer break (8 weeks)	May 5 to June 30
+            # Fall 2029	                July 1 to Dec 7
+            # Graduation	            December 2029
+            income.set_default(start_date, 'CNA Eugene')
+            income.change_choice_on_date(date(2027,1,18), 'CNA LA Part-Time')
+            income.change_choice_on_date(date(2027,5,13), 'CNA LA Full-Time')
+            income.change_choice_on_date(date(2027,7,10), 'CNA LA Part-Time')
+            income.change_choice_on_date(date(2027,12,16), 'CNA LA Full-Time')
+            income.change_choice_on_date(date(2028,1,8), 'CNA LA Part-Time')
+            income.change_choice_on_date(date(2028,5,5), 'CNA LA Full-Time')
+            income.change_choice_on_date(date(2028,7,1), 'CNA LA Part-Time')
+            income.change_choice_on_date(date(2028,12,16), 'CNA LA Full-Time')
+
+            # assume it takes 6 months to get an RN job
+            income.change_choice_on_date(date(2029,6,1), 'RN Year 1')
+            income.change_choice_on_date(date(2030,6,1), 'RN Year 2')
+            income.change_choice_on_date(date(2031,6,1), 'RN Year 3')
+            income.change_choice_on_date(date(2032,6,1), 'RN Year 4')
+
+            dated_income = income.to_line_item_set(end_date)
+
+        with logged_phase("Scenario-space expansion"):
+            scenario_space = ScenarioSpace(
+                invariant_transactions=(
+                    dated_income + get_B_invariant(start_date, end_date)
+                ),
+                scenario_dimensions={},
+                memo_rule_set=M,
+                default_policy_set=ForecastPolicySet(
+                    CurrentStatementBalancePaymentPolicy(
+                        account_name='Chase', priority=1, on_unmet='warn'
+                    ),
+                    SurplusDebtPaymentPolicy(
+                        debt_type='credit', strategy='avalanche',
+                        priority=2, on_unmet='warn',
+                    ),
+                    MinimumCheckingBalancePolicy(
+                        account_name='Checking', target=2_000,
+                        priority=3, on_unmet='warn',
+                    ),
+                ),
+                policy_overrides=[
+                ],
+            )
+
+            scenario = scenario_space.from_choice_keys({})  # no variable choices
+    
+        with logged_phase("Initial-condition materialization"):
+            IO = scenario.to_initial_conditions(
+                start_date, end_date, A, M,
+                forecast_name='Plan A',
+            )
+
+        
+        with logged_phase("Graph v2 forecast + report"):
+            R = ForecastHandler.runForecast(
+                IO,
+                engine="graph v2",
+                graph_trace=True,
+            )
+            # R_2 = ForecastHandler.runForecast(IO_2, engine="graph v2")
+            ForecastHandler.generateHTMLReport(R)
+
+        # ForecastHandler.generateComparisonReport(R_1, R_2)
+
+
+
+
+
+
+
+        ############################
+        # paycheck_dates = scenario.line_item_set.getLineItemSchedule().loc[
+        #     lambda schedule: schedule['Memo'].str.contains('RN Year'), 'Date'
+        # ].tolist()
+        # transition_window = [
+        #     scheduled_date for scheduled_date in paycheck_dates
+        #     if abs((scheduled_date - transition_date).days) <= 21
+        # ]
+        # print('Scenario choices:', scenario.choices)
+        # print('Scenario policies:', [
+        #     policy.policy_key for policy in scenario.policy_set.policies
+        # ])
+        # print('Paychecks around transition:', transition_window)
+        # print('Paycheck day gaps:', [
+        #     (right - left).days
+        #     for left, right in zip(transition_window, transition_window[1:])
+        # ])
+        # print('Safety resolution counts:', {
+        #     method: sum(
+        #         decision['resolution_method'] == method
+        #         for decision in R.safety_decisions
+        #     )
+        #     for method in {'constraint', 'recursive'}
+        # })
+        # print('Executed safety decisions:', [
+        #     decision for decision in R.safety_decisions
+        #     if decision['executed'] > 0
+        # ])

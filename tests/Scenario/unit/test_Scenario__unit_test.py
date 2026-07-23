@@ -9,6 +9,96 @@ from expense_forecast.MemoRuleSet import MemoRuleSet
 
 class TestForecastScenarioUnit:
 
+    def test_from_choice_keys_builds_partial_scenario_with_metadata(self):
+        food = ScenarioDimension(
+            "Food", {"Low": LineItemSet(), "Standard": LineItemSet()}
+        )
+        housing = ScenarioDimension(
+            "Housing", {"Rent": LineItemSet(), "Own": LineItemSet()}
+        )
+        space = ScenarioSpace(
+            LineItemSet(),
+            {"Food": food, "Housing": housing},
+            MemoRuleSet(),
+        )
+
+        scenario = space.from_choice_keys({"Food": "Standard"})
+
+        assert scenario.label == "Food: Standard"
+        assert scenario.choices == {"Food": "Standard"}
+        assert scenario.line_item_set.scenario_selections == {"Food": "Standard"}
+        assert set(scenario.line_item_set.scenario_dimensions) == {"Food"}
+
+    def test_from_choice_keys_uses_dimension_order_for_complete_label(self):
+        food = ScenarioDimension("Food", {"Standard": LineItemSet()})
+        housing = ScenarioDimension("Housing", {"Rent": LineItemSet()})
+        space = ScenarioSpace(
+            LineItemSet(),
+            {"Food": food, "Housing": housing},
+            MemoRuleSet(),
+        )
+
+        scenario = space.from_choice_keys(
+            {"Housing": "Rent", "Food": "Standard"}
+        )
+
+        assert scenario.label == "Food: Standard | Housing: Rent"
+        assert scenario.choices == {"Food": "Standard", "Housing": "Rent"}
+
+    def test_from_choice_keys_accepts_empty_mapping(self):
+        space = ScenarioSpace(LineItemSet(), {}, MemoRuleSet())
+
+        scenario = space.from_choice_keys({})
+
+        assert scenario.label == "Invariant"
+        assert scenario.choices == {}
+        assert scenario.line_item_set.scenario_selections == {}
+
+    def test_from_choice_keys_rejects_unknown_dimensions_and_choices(self):
+        food = ScenarioDimension("Food", {"Standard": LineItemSet()})
+        space = ScenarioSpace(
+            LineItemSet(), {"Food": food}, MemoRuleSet()
+        )
+
+        with pytest.raises(ValueError, match="Unknown scenario dimension"):
+            space.from_choice_keys({"Housing": "Rent"})
+        with pytest.raises(ValueError, match="Unknown choice 'Low'"):
+            space.from_choice_keys({"Food": "Low"})
+        with pytest.raises(TypeError, match="choice_keys must be a mapping"):
+            space.from_choice_keys([("Food", "Standard")])
+
+    def test_from_choice_keys_policy_override_and_fluent_replacement_are_isolated(self):
+        work = ScenarioDimension(
+            "Work", {"RN": LineItemSet(), "Unemployed": LineItemSet()}
+        )
+        default = ForecastPolicySet(MinimumCheckingBalancePolicy(100, priority=2))
+        override = ForecastPolicySet(MinimumCheckingBalancePolicy(500, priority=2))
+        replacement = ForecastPolicySet(
+            MinimumCheckingBalancePolicy(900, priority=2)
+        )
+        space = ScenarioSpace(
+            LineItemSet(),
+            {"Work": work},
+            MemoRuleSet(),
+            default_policy_set=default,
+            policy_overrides=[({"Work": "Unemployed"}, override)],
+        )
+
+        selected = space.from_choice_keys({"Work": "Unemployed"})
+        configured = selected.with_policy_set(replacement)
+
+        assert selected.policy_set.policies[0].target == 500
+        assert configured.policy_set.policies[0].target == 900
+        configured.policy_set.policies[0].target = 999
+        assert selected.policy_set.policies[0].target == 500
+        assert space.scenarios["Unemployed"].policy_set.policies[0].target == 500
+
+    def test_with_policy_set_requires_forecast_policy_set(self):
+        scenario = Scenario("Invariant", {}, LineItemSet())
+
+        with pytest.raises(TypeError, match="policy_set must be a ForecastPolicySet"):
+            scenario.with_policy_set([])
+
     def test_scenario_space_resolves_default_and_exact_policy_overrides(self):
         work = ScenarioDimension(
             "Work", {"RN": LineItemSet(), "Unemployed": LineItemSet()}

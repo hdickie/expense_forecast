@@ -5,7 +5,6 @@ import datetime
 import math
 from collections import defaultdict
 from dataclasses import dataclass, replace
-from decimal import Decimal
 from time import perf_counter
 
 import pandas as pd
@@ -34,7 +33,7 @@ class CashEvent:
     key: EventKey
     date: datetime.date
     priority: int
-    amount: Decimal
+    amount: float
     memo: str
     income_flag: bool
     deferrable: bool
@@ -83,7 +82,7 @@ class ScheduleNode(GraphNode):
                     EventKey(event_date, identity, sequence),
                     event_date,
                     int(line_item.priority),
-                    Decimal(str(line_item.amount)),
+                    float(str(line_item.amount)),
                     line_item.memo,
                     bool(line_item.income_flag),
                     line_item.deferrable,
@@ -137,8 +136,8 @@ class CheckingStateNode(GraphNode):
         }
 
     def _future_reserve(self, events, index, account_name, priority):
-        running = Decimal("0")
-        maximum = Decimal("0")
+        running = float("0")
+        maximum = float("0")
         for future in events[index + 1:]:
             if future.priority >= priority:
                 continue
@@ -155,11 +154,11 @@ class CheckingStateNode(GraphNode):
             source = self.accounts[event.account_from]
             reserve = self._future_reserve(
                 events, index, event.account_from, event.priority
-            ) if event.priority > 1 else Decimal("0")
+            ) if event.priority > 1 else float("0")
             amount = min(
                 amount,
                 balances[event.account_from]
-                - Decimal(str(source.min_balance))
+                - float(str(source.min_balance))
                 - reserve,
             )
         if event.account_to is not None:
@@ -167,15 +166,15 @@ class CheckingStateNode(GraphNode):
             if not math.isinf(float(destination.max_balance)):
                 amount = min(
                     amount,
-                    Decimal(str(destination.max_balance))
+                    float(str(destination.max_balance))
                     - balances[event.account_to],
                 )
-        return max(Decimal("0"), amount)
+        return max(float("0"), amount)
 
     def evaluate(self, context, dirty_range):
         events = list(context.values[ROUTED])
         initial_balances = {
-            name: Decimal(str(account.balance)) for name, account in self.accounts.items()
+            name: float(str(account.balance)) for name, account in self.accounts.items()
         }
         balances = dict(initial_balances)
         checkpoints = {}
@@ -375,7 +374,7 @@ class PresentationNode(GraphNode):
         groups = {}
         for event, amount in interval:
             key = (event.memo, event.account_from, event.account_to)
-            count, total = groups.get(key, (0, Decimal("0")))
+            count, total = groups.get(key, (0, float("0")))
             groups[key] = (count + 1, total + amount)
         memo_items = []
         for (memo, account_from, account_to), (count, amount) in groups.items():

@@ -15,7 +15,6 @@ Contract
 
 
 from dataclasses import dataclass
-from decimal import Decimal
 
 #TODO DOC manual review of CheckingBillingState docstring
 @dataclass
@@ -32,11 +31,11 @@ class CheckingBillingState:
 
     @interface-report: show
     """
-    balance: Decimal
+    balance: float
     is_primary: bool
 
     #TODO DOC manual review of CheckingBillingState.__init__ docstring
-    def __init__(self, balance: Decimal, is_primary: bool):
+    def __init__(self, balance: float, is_primary: bool):
         """
         #TODO DOC one-line description of CheckingBillingState.__init__.
 

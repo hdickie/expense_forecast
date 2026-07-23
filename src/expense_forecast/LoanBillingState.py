@@ -2,7 +2,6 @@
 
 from dataclasses import dataclass
 from datetime import date
-from decimal import Decimal
 
 
 #TODO DOC manual review of LoanBillingState docstring
@@ -21,22 +20,22 @@ class LoanBillingState:
     @interface-report: show
     """
     billing_cycle_start_date: date
-    principal_balance: Decimal
-    interest_balance: Decimal
-    billing_cycle_payment_balance: Decimal
-    minimum_payment: Decimal
+    principal_balance: float
+    interest_balance: float
+    billing_cycle_payment_balance: float
+    minimum_payment: float
 
     #TODO DOC manual review of LoanBillingState.__init__ docstring
     def __init__(self, billing_cycle_start_date: date,
-                  minimum_payment: Decimal,
+                  minimum_payment: float,
                   interest_type: str,
                   interest_interval: str,
-                  apr: Decimal,
-                  principal_balance: Decimal = None,
-                  interest_balance: Decimal = None,
-                  billing_cycle_payment_balance: Decimal = Decimal("0"),
-                  previous_statement_balance: Decimal = None,
-                  current_statement_balance: Decimal = None,
+                  apr: float,
+                  principal_balance: float = None,
+                  interest_balance: float = None,
+                  billing_cycle_payment_balance: float = float("0"),
+                  previous_statement_balance: float = None,
+                  current_statement_balance: float = None,
                   ):
         """
         #TODO DOC one-line description of LoanBillingState.__init__.
@@ -115,14 +114,14 @@ class LoanBillingState:
 
     #TODO this should be loan_balance
     @property
-    def balance(self) -> Decimal:
+    def balance(self) -> float:
         """
         @interface-report: show
         """
         return self.principal_balance + self.interest_balance
 
     @property
-    def previous_statement_balance(self) -> Decimal:
+    def previous_statement_balance(self) -> float:
         """
         Return the loan principal balance from the previous statement.
 
@@ -132,7 +131,7 @@ class LoanBillingState:
 
         Returns
         -------
-        Decimal
+        float
             Current principal balance.
 
         @interface-report: show
@@ -140,7 +139,7 @@ class LoanBillingState:
         return self.principal_balance
 
     @previous_statement_balance.setter
-    def previous_statement_balance(self, value: Decimal):
+    def previous_statement_balance(self, value: float):
         """
         Set the loan principal balance from a previous statement balance.
 
@@ -150,7 +149,7 @@ class LoanBillingState:
 
         Parameters
         ----------
-        value : Decimal
+        value : float
             Nonnegative statement principal balance.
 
         Contract
@@ -165,7 +164,7 @@ class LoanBillingState:
 
     #TODO DOC manual review of LoanBillingState.current_statement_balance docstring
     @property
-    def current_statement_balance(self) -> Decimal:
+    def current_statement_balance(self) -> float:
         """
         #TODO DOC one-line description of LoanBillingState.current_statement_balance.
 
@@ -194,7 +193,7 @@ class LoanBillingState:
 
     #TODO DOC manual review of LoanBillingState.current_statement_balance docstring
     @current_statement_balance.setter
-    def current_statement_balance(self, value: Decimal):
+    def current_statement_balance(self, value: float):
         """
         #TODO DOC one-line description of LoanBillingState.current_statement_balance.
 
@@ -224,7 +223,7 @@ class LoanBillingState:
         assert self.interest_balance >= 0
 
     #TODO DOC manual review of LoanBillingState.interest_accrued_for_period docstring
-    def interest_accrued_for_period(self) -> Decimal:
+    def interest_accrued_for_period(self) -> float:
         """
         #TODO DOC one-line description of LoanBillingState.interest_accrued_for_period.
 
@@ -250,17 +249,17 @@ class LoanBillingState:
         @interface-report: show
         """
         if self.interest_interval == "daily":
-            return self.principal_balance * self.apr / Decimal("365.25")
+            return self.principal_balance * self.apr / float("365.25")
         if self.interest_interval == "monthly":
-            return self.principal_balance * self.apr / Decimal("12")
+            return self.principal_balance * self.apr / float("12")
         if self.interest_interval == "quarterly":
-            return self.principal_balance * self.apr / Decimal("4")
+            return self.principal_balance * self.apr / float("4")
         if self.interest_interval == "annually":
             return self.principal_balance * self.apr
         raise ValueError(f"Unsupported loan interest interval: {self.interest_interval}")
 
     #TODO DOC manual review of LoanBillingState.accrue_interest docstring
-    def accrue_interest(self) -> Decimal:
+    def accrue_interest(self) -> float:
         """
         #TODO DOC one-line description of LoanBillingState.accrue_interest.
 
@@ -290,7 +289,7 @@ class LoanBillingState:
         return interest_accrued
 
     #TODO DOC manual review of LoanBillingState.remaining_minimum_payment_due docstring
-    def remaining_minimum_payment_due(self) -> Decimal:
+    def remaining_minimum_payment_due(self) -> float:
         """
         #TODO DOC one-line description of LoanBillingState.remaining_minimum_payment_due.
 
@@ -316,12 +315,12 @@ class LoanBillingState:
         @interface-report: show
         """
         return max(
-            Decimal("0"),
+            float("0"),
             self.minimum_payment - self.billing_cycle_payment_balance
         )
 
     #TODO DOC manual review of LoanBillingState.apply_payment docstring
-    def apply_payment(self, amount: Decimal) -> tuple[Decimal, Decimal]:
+    def apply_payment(self, amount: float) -> tuple[float, float]:
         """
         #TODO DOC one-line description of LoanBillingState.apply_payment.
 

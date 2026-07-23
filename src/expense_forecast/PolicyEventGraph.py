@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from decimal import Decimal
 
 
 @dataclass(frozen=True)
@@ -11,7 +10,7 @@ class PolicyEventNode:
     node_id: str
     date: object
     priority: int
-    amount: Decimal
+    amount: float
     memo: str
     account_from: str | None
     account_to: str | None
@@ -44,7 +43,7 @@ class PolicyEventGraph:
                 node_id=node_id,
                 date=row["Date"],
                 priority=int(row["Priority"]),
-                amount=Decimal(str(row["Amount"])),
+                amount=float(str(row["Amount"])),
                 memo=str(row["Memo"]),
                 account_from=rule.account_from,
                 account_to=rule.account_to,
@@ -56,8 +55,8 @@ class PolicyEventGraph:
         return cls(nodes)
 
     def reserve_requirement(self, account_name, after_date, policy_priority):
-        running = Decimal("0")
-        maximum = Decimal("0")
+        running = float("0")
+        maximum = float("0")
         binding_date = None
         affected = []
         for node in self.nodes:
@@ -90,7 +89,7 @@ class PolicyEventGraph:
                 and node.priority < int(policy_priority)
                 and node.account_to in names
             ),
-            Decimal("0"),
+            float("0"),
         )
 
 

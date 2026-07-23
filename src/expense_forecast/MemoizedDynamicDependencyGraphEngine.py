@@ -2,11 +2,17 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 from heapq import heappop, heappush
+from collections import Counter
 from collections.abc import Hashable
 from numbers import Number
 from abc import ABC, abstractmethod
 
-from expense_forecast.AccountSet import AccountSet
+from expense_forecast.AccountSet import (
+    AccountSet,
+    FLOAT_COMPARISON_TOLERANCE,
+    FLOAT_ROUNDING_DECIMALS,
+    MONEY_BOUNDARY_TOLERANCE,
+)
 from expense_forecast.LineItemSet import LineItemSet
 # from expense_forecast.ForecastSetInitialConditions import ForecastSetInitialConditions
 from expense_forecast.MemoRuleSet import MemoRuleSet
@@ -40,9 +46,9 @@ import pandas as pd
 from datetime import date
 import datetime
 import calendar
-from decimal import Decimal
 import copy
 import logging
+import math
 import threading
 from contextlib import contextmanager
 from time import perf_counter
@@ -87,7 +93,18 @@ def logged_phase(name: str, *, heartbeat_seconds: float = 10.0):
 def values_equal(left, right) -> bool:
     if pd.isna(left) and pd.isna(right):
         return True
-
+    if (
+        isinstance(left, Number)
+        and isinstance(right, Number)
+        and not isinstance(left, bool)
+        and not isinstance(right, bool)
+    ):
+        return math.isclose(
+            float(left),
+            float(right),
+            rel_tol=FLOAT_COMPARISON_TOLERANCE,
+            abs_tol=FLOAT_COMPARISON_TOLERANCE,
+        )
     return left == right
 
 type NodeId = Hashable
@@ -186,12 +203,12 @@ def compare_v2_account_balances(
 
     for forecast_date in graph.index:
         for account_name in account_names:
-            graph_value = Decimal(
-                str(graph.at[forecast_date, account_name])
-            ).quantize(Decimal("0.01"))
-            legacy_value = Decimal(
-                str(legacy.at[forecast_date, account_name])
-            ).quantize(Decimal("0.01"))
+            graph_value = round(
+                float(graph.at[forecast_date, account_name]), 2
+            )
+            legacy_value = round(
+                float(legacy.at[forecast_date, account_name]), 2
+            )
             if graph_value != legacy_value:
                 raise GraphV2ShadowMismatchError(
                     event=forecast_date,
@@ -206,10 +223,10 @@ def _normalized_shadow_value(value):
     if pd.isna(value):
         return None
     if isinstance(value, Number) and not isinstance(value, bool):
-        decimal_value = Decimal(str(value))
-        if not decimal_value.is_finite():
-            return str(decimal_value)
-        return decimal_value.quantize(Decimal("0.01"))
+        numeric_value = float(value)
+        if not math.isfinite(numeric_value):
+            return str(numeric_value)
+        return round(numeric_value, 2)
     return str(value)
 
 
@@ -489,7 +506,7 @@ def account_initial_cell_values(account) -> dict[str, object]:
             credit_minimum_payment_credit_column(account.name):
                 state.minimum_payment_credit_balance,
             previous_statement_policy_minimum_column(account.name):
-                Decimal("0"),
+                float("0"),
             previous_statement_policy_maximum_column(account.name):
                 account.max_balance,
         })
@@ -518,6 +535,7 @@ class ExecutionContext:
 
     initial_conditions: ExpenseForecastInitialConditions
     milestone_set: MilestoneSet
+    graph_trace: bool = False
     latest_priority: Priority = field(default_factory=lambda: Priority(0, 0, 0))
     forecast_df: pd.DataFrame = field(init=False)
 
@@ -550,6 +568,7 @@ class ExecutionContext:
 
         candidate.initial_conditions = self.initial_conditions
         candidate.milestone_set = deepcopy(self.milestone_set)
+        candidate.graph_trace = self.graph_trace
         candidate.latest_priority = self.latest_priority
 
         candidate.forecast_df = self.forecast_df.copy(deep=True)
@@ -619,13 +638,14 @@ class ExecutionContext:
         for location in node.reads:
             self.readers.setdefault(location, set()).add(node.node_id)
 
-    def enqueue(self, node_id: NodeId) -> None:
+    def enqueue(self, node_id: NodeId) -> bool:
         if node_id in self.pending_ids:
-            return
+            return False
 
         node = self.nodes[node_id]
         heappush(self.pending_heap, (node.priority, node_id))
         self.pending_ids.add(node_id)
+        return True
 
     def pop_pending(self) -> "ComputationNode":
         _, node_id = heappop(self.pending_heap)
@@ -655,10 +675,10 @@ class ExecutionContext:
         initialized_forecast_df = pd.DataFrame(
                 index=forecast_dates,
                 columns=cell_columns,
-                # Graph calculations intentionally store Decimal values.
-                # Object-backed cells avoid pandas coercing Decimal to float
-                # (and the associated incompatible-dtype warnings).
-                dtype=object,
+                # Numeric graph state stays in native float64 columns. Memo
+                # columns are added separately below and therefore retain
+                # their independent string/object dtype.
+                dtype="float64",
             )
         initialized_forecast_df['Memo'] = ''
         initialized_forecast_df['Memo Directives'] = ''
@@ -683,6 +703,12 @@ class ExecutionContext:
 
     def write(self, cell: CellId, value) -> bool:
         logger.debug('write '+str(cell.forecast_date)+' '+str(cell.column_name).ljust(25,'.')+' '+str(value))
+        if (
+            cell.column_name not in {"Memo", "Memo Directives"}
+            and isinstance(value, Number)
+            and not isinstance(value, bool)
+        ):
+            value = round(float(value), FLOAT_ROUNDING_DECIMALS)
         previous_value = self.forecast_df.at[
             cell.forecast_date,
             cell.column_name,
@@ -744,9 +770,9 @@ class ExecutionContext:
         )
         return self.write(cell, rendered)
 
-    def payable_balance(self, cell: CellId) -> Decimal:
+    def payable_balance(self, cell: CellId) -> float:
         if cell.column_name is None:
-            return Decimal('Inf')
+            return float('Inf')
 
         # TODO i don't like accessing these related fields by concatenating
         # because it means ':' is illegal in account names
@@ -755,26 +781,26 @@ class ExecutionContext:
         policy_max_allowed_balance_cell = CellId(cell.forecast_date,
                                           cell.column_name+": Policy Max Balance")
         
-        current_balance = Decimal(str(self.read(cell)))
+        current_balance = float(str(self.read(cell)))
         
         account_type = self.name_to_account_type[cell.column_name]
 
         if account_type == 'checking' or account_type == 'investment':
-            max_allowed_balance = Decimal(self.name_to_account_max[cell.column_name])
-            policy_max_allowed_balance = Decimal(str(self.read(policy_max_allowed_balance_cell)))
+            max_allowed_balance = float(self.name_to_account_max[cell.column_name])
+            policy_max_allowed_balance = float(str(self.read(policy_max_allowed_balance_cell)))
             return min(max_allowed_balance, policy_max_allowed_balance) - current_balance
         elif account_type == 'credit' or account_type == 'loan':
-            min_allowed_balance = Decimal(self.name_to_account_min[cell.column_name])
-            policy_min_allowed_balance = Decimal(str(self.read(policy_min_allowed_balance_cell)))
+            min_allowed_balance = float(self.name_to_account_min[cell.column_name])
+            policy_min_allowed_balance = float(str(self.read(policy_min_allowed_balance_cell)))
             return current_balance - max(min_allowed_balance, policy_min_allowed_balance)
         else:
             raise NotImplementedError #only payments from to checking, credit, loan and investment are supported
 
-    def available_balance(self, cell: CellId) -> Decimal:
+    def available_balance(self, cell: CellId) -> float:
         # CellId.forecast_date, CellId.column_name
 
         if cell.column_name is None:
-            return Decimal('Inf')
+            return float('Inf')
 
         # TODO i don't like accessing these related fields by concatenating
         # because it means ':' is illegal in account names
@@ -784,16 +810,16 @@ class ExecutionContext:
                                           cell.column_name+": Policy Max Balance")
         
         
-        current_balance = Decimal(str(self.read(cell)))
+        current_balance = float(str(self.read(cell)))
         
         account_type = self.name_to_account_type[cell.column_name]
         if account_type in {'checking', 'investment'}:
-            min_allowed_balance = Decimal(self.name_to_account_min[cell.column_name])
-            policy_min_allowed_balance = Decimal(str(self.read(policy_min_allowed_balance_cell)))
+            min_allowed_balance = float(self.name_to_account_min[cell.column_name])
+            policy_min_allowed_balance = float(str(self.read(policy_min_allowed_balance_cell)))
             return current_balance - max(min_allowed_balance, policy_min_allowed_balance)
         elif account_type == 'credit':
-            max_allowed_balance = Decimal(self.name_to_account_max[cell.column_name])
-            policy_max_allowed_balance = Decimal(str(self.read(policy_max_allowed_balance_cell)))
+            max_allowed_balance = float(self.name_to_account_max[cell.column_name])
+            policy_max_allowed_balance = float(str(self.read(policy_max_allowed_balance_cell)))
             return min(max_allowed_balance, policy_max_allowed_balance) - current_balance
         else:
             raise NotImplementedError #only payments from checking and credit accounts is supported
@@ -868,7 +894,7 @@ class PolicyMinimumBalanceNode(ComputationNode):
     policy_key: str
     account_name: str
     effective_date: date
-    target: Decimal
+    target: float
 
     def __post_init__(self) -> None:
         self.output_cell = CellId(
@@ -920,8 +946,8 @@ class CarryBalanceForwardNode(ComputationNode):
 class CreditCardRolloverNode(ComputationNode):
     card_name: str
     rollover_date: date
-    apr: Decimal
-    minimum_payment_floor: Decimal
+    apr: float
+    minimum_payment_floor: float
 
     def __post_init__(self) -> None:
         self.balance_cell = CellId(
@@ -981,22 +1007,22 @@ class CreditCardRolloverNode(ComputationNode):
         return ("credit-rollover", self.card_name, self.rollover_date)
 
     def execute(self, context: ExecutionContext) -> set[CellId]:
-        previous_statement = Decimal(
+        previous_statement = float(
             str(context.read(self.previous_statement_cell))
         )
-        current_statement = Decimal(
+        current_statement = float(
             str(context.read(self.current_statement_cell))
         )
-        cycle_payments = Decimal(
+        cycle_payments = float(
             str(context.read(self.payment_balance_cell))
         )
-        interest = previous_statement * (self.apr / Decimal("12"))
+        interest = previous_statement * (self.apr / float("12"))
         next_statement = (
             previous_statement + current_statement + interest
         )
-        principal_due = previous_statement * Decimal("0.01")
+        principal_due = previous_statement * float("0.01")
         next_minimum = (
-            Decimal("0")
+            float("0")
             if interest + principal_due == 0
             else min(
                 next_statement,
@@ -1011,8 +1037,8 @@ class CreditCardRolloverNode(ComputationNode):
         updates = {
             self.balance_cell: next_statement,
             self.previous_statement_cell: next_statement,
-            self.current_statement_cell: Decimal("0"),
-            self.payment_balance_cell: Decimal("0"),
+            self.current_statement_cell: float("0"),
+            self.payment_balance_cell: float("0"),
             self.end_previous_cycle_cell: (
                 previous_statement + cycle_payments
             ),
@@ -1028,7 +1054,7 @@ class CreditCardRolloverNode(ComputationNode):
         if interest > 0:
             interest_directives.append(
                 "CC INTEREST "
-                f"({self.card_name}: Prev Stmt Bal +${interest})"
+                f"({self.card_name}: Prev Stmt Bal +${interest:.2f})"
             )
         changed_cells.update(
             append_memo_directives(
@@ -1046,7 +1072,7 @@ class CreditCardMinimumPaymentNode(ComputationNode):
     source_account_name: str
     card_name: str
     payment_date: date
-    minimum_payment: Decimal
+    minimum_payment: float
 
     def __post_init__(self) -> None:
         self.source_balance_cell = CellId(
@@ -1116,14 +1142,14 @@ class CreditCardMinimumPaymentNode(ComputationNode):
         )
 
     def execute(self, context: ExecutionContext) -> set[CellId]:
-        minimum_payment = Decimal(
+        minimum_payment = float(
             str(context.read(self.minimum_payment_cell))
         )
-        payment_credit = Decimal(
+        payment_credit = float(
             str(context.read(self.minimum_payment_credit_cell))
         )
         payment_due = max(
-            Decimal("0"),
+            float("0"),
             minimum_payment - payment_credit,
         )
         if payment_due == 0:
@@ -1145,14 +1171,14 @@ class CreditCardMinimumPaymentNode(ComputationNode):
                 reason="Insufficient funds for credit-card minimum payment",
             )
 
-        source_balance = Decimal(
+        source_balance = float(
             str(context.read(self.source_balance_cell))
         )
-        card_balance = Decimal(str(context.read(self.card_balance_cell)))
-        previous_statement = Decimal(
+        card_balance = float(str(context.read(self.card_balance_cell)))
+        previous_statement = float(
             str(context.read(self.previous_statement_cell))
         )
-        current_statement = Decimal(
+        current_statement = float(
             str(context.read(self.current_statement_cell))
         )
         payment_due = min(payment_due, card_balance)
@@ -1196,7 +1222,7 @@ class LoanMinimumPaymentNode(ComputationNode):
     source_account_name: str
     loan_name: str
     payment_date: date
-    minimum_payment: Decimal
+    minimum_payment: float
 
     def __post_init__(self) -> None:
         self.source_balance_cell = CellId(
@@ -1251,12 +1277,12 @@ class LoanMinimumPaymentNode(ComputationNode):
         )
 
     def execute(self, context: ExecutionContext) -> set[CellId]:
-        cycle_payments = Decimal(
+        cycle_payments = float(
             str(context.read(self.payment_balance_cell))
         )
-        loan_balance = Decimal(str(context.read(self.loan_balance_cell)))
+        loan_balance = float(str(context.read(self.loan_balance_cell)))
         payment_due = min(
-            max(Decimal("0"), self.minimum_payment - cycle_payments),
+            max(float("0"), self.minimum_payment - cycle_payments),
             loan_balance,
         )
         if payment_due == 0:
@@ -1278,11 +1304,11 @@ class LoanMinimumPaymentNode(ComputationNode):
                 reason="Insufficient funds for loan minimum payment",
             )
 
-        source_balance = Decimal(
+        source_balance = float(
             str(context.read(self.source_balance_cell))
         )
-        interest_balance = Decimal(str(context.read(self.interest_cell)))
-        principal_balance = Decimal(str(context.read(self.principal_cell)))
+        interest_balance = float(str(context.read(self.interest_cell)))
+        principal_balance = float(str(context.read(self.principal_cell)))
         interest_payment = min(payment_due, interest_balance)
         principal_payment = min(
             payment_due - interest_payment,
@@ -1385,7 +1411,7 @@ class LoanSurplusPaymentNode(ComputationNode):
 class LoanInterestAccrualNode(ComputationNode):
     loan_name: str
     accrual_date: date
-    apr: Decimal
+    apr: float
     interest_interval: str
 
     def __post_init__(self) -> None:
@@ -1419,10 +1445,10 @@ class LoanInterestAccrualNode(ComputationNode):
 
     def execute(self, context: ExecutionContext) -> set[CellId]:
         divisors = {
-            "daily": Decimal("365.25"),
-            "monthly": Decimal("12"),
-            "quarterly": Decimal("4"),
-            "annually": Decimal("1"),
+            "daily": float("365.25"),
+            "monthly": float("12"),
+            "quarterly": float("4"),
+            "annually": float("1"),
         }
         try:
             divisor = divisors[self.interest_interval]
@@ -1432,9 +1458,9 @@ class LoanInterestAccrualNode(ComputationNode):
                 f"{self.interest_interval!r}"
             ) from error
 
-        principal = Decimal(str(context.read(self.principal_cell)))
-        interest_balance = Decimal(str(context.read(self.interest_cell)))
-        loan_balance = Decimal(str(context.read(self.balance_cell)))
+        principal = float(str(context.read(self.principal_cell)))
+        interest_balance = float(str(context.read(self.interest_cell)))
+        loan_balance = float(str(context.read(self.balance_cell)))
         interest_accrued = principal * self.apr / divisor
 
         changed_cells: set[CellId] = set()
@@ -1469,7 +1495,7 @@ class LoanInterestAccrualNode(ComputationNode):
 class InvestmentAccrualNode(ComputationNode):
     investment_name: str
     accrual_date: date
-    apr: Decimal
+    apr: float
 
     def __post_init__(self) -> None:
         self.balance_cell = CellId(
@@ -1493,8 +1519,8 @@ class InvestmentAccrualNode(ComputationNode):
         # Legacy models deterministic investment growth as daily compound
         # interest. Accrual runs before same-day contributions or withdrawals,
         # so today's return is based on the opening investment balance.
-        opening_balance = Decimal(str(context.read(self.balance_cell)))
-        daily_growth = opening_balance * self.apr / Decimal("365.25")
+        opening_balance = float(str(context.read(self.balance_cell)))
+        daily_growth = opening_balance * self.apr / float("365.25")
         if daily_growth == 0:
             return append_memo_directives(
                 context,
@@ -1570,7 +1596,7 @@ def write_memo_entries(
 
 @dataclass
 class TransactionNode(ComputationNode):
-    amount: Decimal
+    amount: float
     account_from: str | None
     account_to: str | None
     priority_level: int
@@ -1662,12 +1688,12 @@ class TransactionNode(ComputationNode):
 
         #I believe these potentially unbound errors are erroneous
         if self.from_cell is not None:
-            from_balance = Decimal(context.read(self.from_cell))
+            from_balance = float(context.read(self.from_cell))
             if context.write( self.from_cell, from_balance - self.amount):
                 changed_cells.add(self.from_cell)
 
         if self.to_cell is not None:
-            to_balance = Decimal(context.read(self.to_cell))
+            to_balance = float(context.read(self.to_cell))
             if context.write( self.to_cell, to_balance + self.amount ):
                 changed_cells.add(self.to_cell)
 
@@ -1780,8 +1806,8 @@ class CreditPurchaseNode(TransactionNode):
             )
 
         changed_cells: set[CellId] = set()
-        card_balance = Decimal(str(context.read(self.from_cell)))
-        current_statement = Decimal(
+        card_balance = float(str(context.read(self.from_cell)))
+        current_statement = float(
             str(context.read(self.current_statement_cell))
         )
         if context.write(self.from_cell, card_balance + self.amount):
@@ -1866,15 +1892,15 @@ class CreditCardSpecifiedAmountPaymentNode(TransactionNode):
                 reason="Credit-card overpayment",
             )
 
-        source_balance = Decimal(str(context.read(self.from_cell)))
-        card_balance = Decimal(str(context.read(self.to_cell)))
-        previous_statement = Decimal(
+        source_balance = float(str(context.read(self.from_cell)))
+        card_balance = float(str(context.read(self.to_cell)))
+        previous_statement = float(
             str(context.read(self.previous_statement_cell))
         )
-        current_statement = Decimal(
+        current_statement = float(
             str(context.read(self.current_statement_cell))
         )
-        payment_balance = Decimal(
+        payment_balance = float(
             str(context.read(self.payment_balance_cell))
         )
         previous_payment = min(self.amount, previous_statement)
@@ -1967,11 +1993,11 @@ class LoanSpecifiedAmountPaymentNode(TransactionNode):
                 reason="Loan overpayment",
             )
 
-        source_balance = Decimal(str(context.read(self.from_cell)))
-        loan_balance = Decimal(str(context.read(self.to_cell)))
-        interest_balance = Decimal(str(context.read(self.interest_cell)))
-        principal_balance = Decimal(str(context.read(self.principal_cell)))
-        payment_balance = Decimal(
+        source_balance = float(str(context.read(self.from_cell)))
+        loan_balance = float(str(context.read(self.to_cell)))
+        interest_balance = float(str(context.read(self.interest_cell)))
+        principal_balance = float(str(context.read(self.principal_cell)))
+        payment_balance = float(
             str(context.read(self.payment_balance_cell))
         )
         interest_payment = min(self.amount, interest_balance)
@@ -1981,11 +2007,11 @@ class LoanSpecifiedAmountPaymentNode(TransactionNode):
         remaining_interest = interest_balance - interest_payment
         remaining_principal = principal_balance - principal_payment
         remaining_payment_balance = payment_balance + self.amount
-        if remaining_loan_balance <= Decimal("0.005"):
-            remaining_loan_balance = Decimal("0")
-            remaining_interest = Decimal("0")
-            remaining_principal = Decimal("0")
-            remaining_payment_balance = Decimal("0")
+        if remaining_loan_balance <= float("0.005"):
+            remaining_loan_balance = float("0")
+            remaining_interest = float("0")
+            remaining_principal = float("0")
+            remaining_payment_balance = float("0")
 
         updates = {
             self.from_cell: source_balance - self.amount,
@@ -2334,8 +2360,8 @@ class ExecutionEngine:
                     CreditCardRolloverNode(
                         card_name=account.name,
                         rollover_date=event_date,
-                        apr=Decimal(str(account.billing_state.apr)),
-                        minimum_payment_floor=Decimal(
+                        apr=float(str(account.billing_state.apr)),
+                        minimum_payment_floor=float(
                             str(account.billing_state.minimum_payment_floor)
                         ),
                     ),
@@ -2356,7 +2382,7 @@ class ExecutionEngine:
                     LoanInterestAccrualNode(
                         loan_name=account.name,
                         accrual_date=event_date,
-                        apr=Decimal(str(account.billing_state.apr)),
+                        apr=float(str(account.billing_state.apr)),
                         interest_interval=(
                             account.billing_state.interest_interval
                         ),
@@ -2378,7 +2404,7 @@ class ExecutionEngine:
                     InvestmentAccrualNode(
                         investment_name=account.name,
                         accrual_date=event_date,
-                        apr=Decimal(str(account.billing_state.apr)),
+                        apr=float(str(account.billing_state.apr)),
                     ),
                     event_date,
                 )
@@ -2400,7 +2426,7 @@ class ExecutionEngine:
                         source_account_name=primary_checking,
                         loan_name=account.name,
                         payment_date=event_date,
-                        minimum_payment=Decimal(
+                        minimum_payment=float(
                             str(account.billing_state.minimum_payment)
                         ),
                     ),
@@ -2421,7 +2447,7 @@ class ExecutionEngine:
                         source_account_name=primary_checking,
                         card_name=account.name,
                         payment_date=event_date,
-                        minimum_payment=Decimal(
+                        minimum_payment=float(
                             str(account.billing_state.minimum_payment)
                         ),
                     ),
@@ -2440,6 +2466,7 @@ class ExecutionEngine:
         cls,
         context: ExecutionContext,
         through_date: date | None = None,
+        operation: str | None = None,
     ) -> None:
         """Resolve queued graph work, optionally stopping at a date boundary.
 
@@ -2451,6 +2478,14 @@ class ExecutionEngine:
         last_report = started
         executed_count = 0
         initial_pending = len(context.pending_heap)
+        maximum_pending = initial_pending
+        successful_enqueues = 0
+        changed_cell_count = 0
+        distinct_node_ids: set[NodeId] = set()
+        node_type_counts: Counter[str] = Counter()
+        last_report_executed = 0
+        last_report_enqueued = 0
+        operation_label = operation or "graph propagation"
         through_day = None
         if through_date is not None:
             through_day = int(
@@ -2463,6 +2498,14 @@ class ExecutionEngine:
                     f"Propagation boundary {through_date} is outside the "
                     "forecast calendar"
                 )
+        if context.graph_trace:
+            logger.info(
+                "Propagation started: operation=%s initial_pending=%d "
+                "through_date=%s",
+                operation_label,
+                initial_pending,
+                through_date or "end",
+            )
         while context.pending_heap:
             if (
                 through_day is not None
@@ -2471,6 +2514,8 @@ class ExecutionEngine:
                 break
             node = context.pop_pending()
             executed_count += 1
+            distinct_node_ids.add(node.node_id)
+            node_type_counts[type(node).__name__] += 1
 
             logger.debug(
                 "Executing %s at %s",
@@ -2489,7 +2534,35 @@ class ExecutionEngine:
                 for cell in node.writes
                 if cell.column_name not in {"Memo", "Memo Directives"}
             }
-            changed_cells = node.execute(context)
+            try:
+                changed_cells = node.execute(context)
+            except SpeculativeTransactionRejected as error:
+                if context.graph_trace:
+                    elapsed = perf_counter() - started
+                    current_date = context.forecast_df.index[node.priority.day]
+                    logger.info(
+                        "Propagation rejected: operation=%s date=%s "
+                        "node=%s executed=%d distinct=%d repeats=%d "
+                        "enqueued=%d changed_cells=%d pending=%d "
+                        "max_pending=%d requested=%s available=%s "
+                        "reason=%s elapsed=%.2fs",
+                        operation_label,
+                        current_date,
+                        type(node).__name__,
+                        executed_count,
+                        len(distinct_node_ids),
+                        executed_count - len(distinct_node_ids),
+                        successful_enqueues,
+                        changed_cell_count,
+                        len(context.pending_heap),
+                        maximum_pending,
+                        error.requested,
+                        error.available,
+                        error.reason,
+                        elapsed,
+                    )
+                raise
+            changed_cell_count += len(changed_cells)
             changed_financial_cells = {
                 cell
                 for cell in changed_cells
@@ -2511,22 +2584,96 @@ class ExecutionEngine:
                     if dependent.priority <= node.priority:
                         continue
 
-                    context.enqueue(dependent_id)
+                    if context.enqueue(dependent_id):
+                        successful_enqueues += 1
+                        maximum_pending = max(
+                            maximum_pending,
+                            len(context.pending_heap),
+                        )
 
             now = perf_counter()
             if now - last_report >= 5:
-                logger.info(
-                    "Graph propagation active: executed=%d pending=%d "
-                    "elapsed=%.1fs current=%s",
-                    executed_count,
-                    len(context.pending_heap),
-                    now - started,
-                    type(node).__name__,
-                )
+                if context.graph_trace:
+                    current_date = context.forecast_df.index[node.priority.day]
+                    logger.info(
+                        "Propagation active: operation=%s date=%s "
+                        "executed=%d distinct=%d repeats=%d enqueued=%d "
+                        "changed_cells=%d pending=%d max_pending=%d "
+                        "since_last_executed=%d since_last_enqueued=%d "
+                        "net_queue_change=%+d current=%s",
+                        operation_label,
+                        current_date,
+                        executed_count,
+                        len(distinct_node_ids),
+                        executed_count - len(distinct_node_ids),
+                        successful_enqueues,
+                        changed_cell_count,
+                        len(context.pending_heap),
+                        maximum_pending,
+                        executed_count - last_report_executed,
+                        successful_enqueues - last_report_enqueued,
+                        (
+                            successful_enqueues - last_report_enqueued
+                            - (executed_count - last_report_executed)
+                        ),
+                        type(node).__name__,
+                    )
+                    last_report_executed = executed_count
+                    last_report_enqueued = successful_enqueues
+                else:
+                    logger.info(
+                        "Graph propagation active: executed=%d pending=%d "
+                        "elapsed=%.1fs current=%s",
+                        executed_count,
+                        len(context.pending_heap),
+                        now - started,
+                        type(node).__name__,
+                    )
                 last_report = now
 
+        ### Node Collapse Optimization
+        # TODO here, we map self.nodes which, in the example
+        # of the first pass, has many CarryValueNodes and also
+        # the transactions- each of these are executed one by one
+        # during transaction testing
+        #
+        # Since, if the flow of control reaches this point in the 
+        # code, all nodes in the graph are accepted, we can map
+        # self.nodes to a new set of nodes which has 1 input- the
+        # cell on the previous day, and one output- the cell on the
+        # current day, and the operation is a simple +/-
+
+        # the MDDR data structure does not have the structure needed
+        # to compute this isomorphism, but context.forecast_df does
+        # and at this point in the code we have a guarantee that
+        # the net effect of self.nodes is to produce forecast_df
+
+
+
         elapsed = perf_counter() - started
-        if elapsed >= 1:
+        if context.graph_trace:
+            top_node_types = ", ".join(
+                f"{node_type}={count}"
+                for node_type, count in node_type_counts.most_common(5)
+            ) or "none"
+            logger.info(
+                "Propagation complete: operation=%s initial_pending=%d "
+                "executed=%d distinct=%d repeats=%d enqueued=%d "
+                "changed_cells=%d pending=%d max_pending=%d "
+                "top_node_types=[%s] elapsed=%.2fs",
+                operation_label,
+                initial_pending,
+                executed_count,
+                len(distinct_node_ids),
+                executed_count - len(distinct_node_ids),
+                successful_enqueues,
+                changed_cell_count,
+                len(context.pending_heap),
+                maximum_pending,
+                top_node_types,
+                elapsed,
+            )
+        elif elapsed >= 1:
             logger.info(
                 "Graph propagation complete: initial_pending=%d "
                 "executed=%d elapsed=%.2fs",
@@ -2570,7 +2717,7 @@ class ExecutionEngine:
         )
 
         transaction_node = TransactionNode(
-            amount=Decimal(str(line_item_row["Amount"])),
+            amount=float(str(line_item_row["Amount"])),
             account_from=matching_memo_rule.account_from,
             account_to=matching_memo_rule.account_to,
             transaction_date=transaction_date,
@@ -2596,9 +2743,9 @@ class ExecutionEngine:
         # minima by sweeping backward over the already-computed accepted
         # forecast. available_balance() and payable_balance() include the hard
         # and policy bounds in force on each date.
-        future_capacity: list[tuple[date, Decimal, Decimal]] = []
-        minimum_future_available = Decimal("Infinity")
-        minimum_future_payable = Decimal("Infinity")
+        future_capacity: list[tuple[date, float, float]] = []
+        minimum_future_available = float("Infinity")
+        minimum_future_payable = float("Infinity")
 
         for forecast_index_value in reversed(context.forecast_df.index):
             candidate_date = (
@@ -2614,14 +2761,14 @@ class ExecutionEngine:
                     CellId(candidate_date, transaction_node.account_from)
                 )
                 if transaction_node.account_from is not None
-                else Decimal("Infinity")
+                else float("Infinity")
             )
             payable = (
                 context.payable_balance(
                     CellId(candidate_date, transaction_node.account_to)
                 )
                 if transaction_node.account_to is not None
-                else Decimal("Infinity")
+                else float("Infinity")
             )
 
             minimum_future_available = min(
@@ -2661,14 +2808,14 @@ class ExecutionEngine:
         
             
     @classmethod
-    def determine_retry_amount_for_partial(cls, transaction_node: TransactionNode, context: ExecutionContext) -> Decimal:
+    def determine_retry_amount_for_partial(cls, transaction_node: TransactionNode, context: ExecutionContext) -> float:
         # OBSOLETE: retained temporarily as a reference while attemptTransaction
         # moves to the generalized cash suffix-capacity implementation.
         # A partial transaction executes on its original date, so its safe
         # amount is bounded by the smallest source headroom and destination
         # capacity from that date through the end of the accepted forecast.
-        minimum_future_available = Decimal("Infinity")
-        minimum_future_payable = Decimal("Infinity")
+        minimum_future_available = float("Infinity")
+        minimum_future_payable = float("Infinity")
 
         for forecast_index_value in reversed(context.forecast_df.index):
             candidate_date = (
@@ -2684,14 +2831,14 @@ class ExecutionEngine:
                     CellId(candidate_date, transaction_node.account_from)
                 )
                 if transaction_node.account_from is not None
-                else Decimal("Infinity")
+                else float("Infinity")
             )
             payable = (
                 context.payable_balance(
                     CellId(candidate_date, transaction_node.account_to)
                 )
                 if transaction_node.account_to is not None
-                else Decimal("Infinity")
+                else float("Infinity")
             )
             minimum_future_available = min(
                 minimum_future_available,
@@ -2707,18 +2854,18 @@ class ExecutionEngine:
             minimum_future_available,
             minimum_future_payable,
         )
-        return max(Decimal("0"), safe_amount)
+        return max(float("0"), safe_amount)
 
     @classmethod
     def _cash_suffix_capacity_by_date(
         cls,
         transaction_node: TransactionNode,
         context: ExecutionContext,
-    ) -> dict[date, Decimal]:
+    ) -> dict[date, float]:
         """Return the safe persistent cash delta for each forecast date."""
-        capacities: dict[date, Decimal] = {}
-        minimum_future_available = Decimal("Infinity")
-        minimum_future_payable = Decimal("Infinity")
+        capacities: dict[date, float] = {}
+        minimum_future_available = float("Infinity")
+        minimum_future_payable = float("Infinity")
 
         for forecast_index_value in reversed(context.forecast_df.index):
             candidate_date = (
@@ -2734,14 +2881,14 @@ class ExecutionEngine:
                     CellId(candidate_date, transaction_node.account_from)
                 )
                 if transaction_node.account_from is not None
-                else Decimal("Infinity")
+                else float("Infinity")
             )
             payable = (
                 context.payable_balance(
                     CellId(candidate_date, transaction_node.account_to)
                 )
                 if transaction_node.account_to is not None
-                else Decimal("Infinity")
+                else float("Infinity")
             )
             minimum_future_available = min(
                 minimum_future_available,
@@ -2752,7 +2899,7 @@ class ExecutionEngine:
                 payable,
             )
             capacities[candidate_date] = max(
-                Decimal("0"),
+                float("0"),
                 min(minimum_future_available, minimum_future_payable),
             )
 
@@ -2763,7 +2910,7 @@ class ExecutionEngine:
         transaction_node: TransactionNode,
         *,
         transaction_date: date | None = None,
-        amount: Decimal | None = None,
+        amount: float | None = None,
     ) -> dict[str, list[object]]:
         return {
             "Date": [transaction_date or transaction_node.transaction_date],
@@ -2783,7 +2930,7 @@ class ExecutionEngine:
     @staticmethod
     def _transaction_node_with_amount(
         transaction_node: TransactionNode,
-        amount: Decimal,
+        amount: float,
     ) -> TransactionNode:
         return TransactionNode(
             amount=amount,
@@ -3033,7 +3180,7 @@ class ExecutionEngine:
             )
             safe_amount = capacities.get(
                 transaction_node.transaction_date,
-                Decimal("0"),
+                float("0"),
             )
 
             if transaction_node.amount <= safe_amount:
@@ -3122,6 +3269,18 @@ class ExecutionEngine:
             # fork and propagated through the graph. If it fails, the same
             # specialized node type is used for each partial/date trial below.
             speculative_context = context.fork()
+            speculative_started = perf_counter()
+            if context.graph_trace:
+                logger.info(
+                    "Speculative transaction started: date=%s route=%s->%s "
+                    "amount=$%.2f node=%s memo=%r",
+                    transaction_node.transaction_date,
+                    transaction_node.account_from,
+                    transaction_node.account_to,
+                    transaction_node.amount,
+                    type(transaction_node).__name__,
+                    transaction_node.memo,
+                )
             try:
                 speculative_context.register(
                         day_index=day_index,
@@ -3129,7 +3288,15 @@ class ExecutionEngine:
                         node=transaction_node,
                 )
                 speculative_context.enqueue(transaction_node.node_id)
-                ExecutionEngine.propagate(speculative_context)
+                ExecutionEngine.propagate(
+                    speculative_context,
+                    operation=(
+                        "full transaction "
+                        f"{transaction_node.account_from}->"
+                        f"{transaction_node.account_to} "
+                        f"${transaction_node.amount:.2f}"
+                    ),
+                )
                 
                 # transaction accepted
                 speculative_context.confirmed_df = pd.concat([ context.confirmed_df, pd.DataFrame({"Date":[transaction_node.transaction_date], 
@@ -3139,8 +3306,41 @@ class ExecutionEngine:
                                                                                    "Income_Flag":[transaction_node.income_flag],
                                                                                    "Deferrable":[transaction_node.deferrable], 
                                                                                    "Partial_Payment_Allowed":[transaction_node.partial_payment_allowed] })])
+                if context.graph_trace:
+                    logger.info(
+                        "Speculative transaction accepted: date=%s "
+                        "amount=$%.2f elapsed=%.2fs",
+                        transaction_node.transaction_date,
+                        transaction_node.amount,
+                        perf_counter() - speculative_started,
+                    )
                 return speculative_context
             except SpeculativeTransactionRejected as e:
+                if context.graph_trace:
+                    rejecting_node = speculative_context.nodes.get(e.node_id)
+                    rejecting_date = (
+                        speculative_context.forecast_df.index[
+                            rejecting_node.priority.day
+                        ]
+                        if rejecting_node is not None else "unknown"
+                    )
+                    logger.info(
+                        "Speculative transaction rejected: date=%s "
+                        "amount=$%.2f rejecting_node=%s "
+                        "rejecting_date=%s requested=%s available=%s "
+                        "reason=%s elapsed=%.2fs",
+                        transaction_node.transaction_date,
+                        transaction_node.amount,
+                        (
+                            type(rejecting_node).__name__
+                            if rejecting_node is not None else "unknown"
+                        ),
+                        rejecting_date,
+                        e.requested,
+                        e.available,
+                        e.reason,
+                        perf_counter() - speculative_started,
+                    )
                 if not transaction_node.partial_payment_allowed and not transaction_node.deferrable:
                     context.skipped_df = pd.concat([ context.skipped_df, pd.DataFrame({"Date":[transaction_node.transaction_date], 
                                                                                         "Priority":[transaction_node.priority_level], 
@@ -3162,23 +3362,40 @@ class ExecutionEngine:
                     # the largest legal amount and best_context is the already
                     # resolved graph for that amount.
                     requested_cents = int(
-                        transaction_node.amount * Decimal("100")
+                        transaction_node.amount * float("100")
                     )
                     highest_success_cents = 0
                     lowest_failure_cents = requested_cents
                     best_context: ExecutionContext | None = None
+                    maximum_trials = max(
+                        1, (requested_cents - 1).bit_length()
+                    )
+                    trial_number = 0
+
+                    if context.graph_trace:
+                        logger.info(
+                            "Binary search started: date=%s route=%s->%s "
+                            "bounds=$%.2f..$%.2f maximum_trials=%d",
+                            transaction_node.transaction_date,
+                            transaction_node.account_from,
+                            transaction_node.account_to,
+                            float(highest_success_cents) / float("100"),
+                            float(lowest_failure_cents) / float("100"),
+                            maximum_trials,
+                        )
 
                     while (
                         lowest_failure_cents
                         - highest_success_cents
                         > 1
                     ):
+                        trial_number += 1
                         trial_cents = (
                             highest_success_cents
                             + lowest_failure_cents
                         ) // 2
                         trial_amount = (
-                            Decimal(trial_cents) / Decimal("100")
+                            float(trial_cents) / float("100")
                         )
                         trial_node = cls._transaction_node_with_amount(
                             transaction_node,
@@ -3195,15 +3412,104 @@ class ExecutionEngine:
                             node=trial_node,
                         )
                         binary_search_context.enqueue(trial_node.node_id)
+                        trial_started = perf_counter()
+                        if context.graph_trace:
+                            logger.info(
+                                "Binary trial started: trial=%d/%d "
+                                "bounds=$%.2f..$%.2f amount=$%.2f",
+                                trial_number,
+                                maximum_trials,
+                                (
+                                    float(highest_success_cents)
+                                    / float("100")
+                                ),
+                                (
+                                    float(lowest_failure_cents)
+                                    / float("100")
+                                ),
+                                trial_amount,
+                            )
                         try:
-                            cls.propagate(binary_search_context)
-                        except SpeculativeTransactionRejected:
+                            cls.propagate(
+                                binary_search_context,
+                                operation=(
+                                    f"binary trial {trial_number}/"
+                                    f"{maximum_trials} "
+                                    f"{transaction_node.account_from}->"
+                                    f"{transaction_node.account_to} "
+                                    f"${trial_amount:.2f}"
+                                ),
+                            )
+                        except SpeculativeTransactionRejected as trial_error:
                             lowest_failure_cents = trial_cents
+                            if context.graph_trace:
+                                rejecting_node = (
+                                    binary_search_context.nodes.get(
+                                        trial_error.node_id
+                                    )
+                                )
+                                rejecting_date = (
+                                    binary_search_context.forecast_df.index[
+                                        rejecting_node.priority.day
+                                    ]
+                                    if rejecting_node is not None else "unknown"
+                                )
+                                logger.info(
+                                    "Binary trial rejected: trial=%d/%d "
+                                    "amount=$%.2f new_bounds=$%.2f..$%.2f "
+                                    "node=%s date=%s requested=%s "
+                                    "available=%s reason=%s elapsed=%.2fs",
+                                    trial_number,
+                                    maximum_trials,
+                                    trial_amount,
+                                    (
+                                        float(highest_success_cents)
+                                        / float("100")
+                                    ),
+                                    (
+                                        float(lowest_failure_cents)
+                                        / float("100")
+                                    ),
+                                    (
+                                        type(rejecting_node).__name__
+                                        if rejecting_node is not None
+                                        else "unknown"
+                                    ),
+                                    rejecting_date,
+                                    trial_error.requested,
+                                    trial_error.available,
+                                    trial_error.reason,
+                                    perf_counter() - trial_started,
+                                )
                         else:
                             highest_success_cents = trial_cents
                             best_context = binary_search_context
+                            if context.graph_trace:
+                                logger.info(
+                                    "Binary trial accepted: trial=%d/%d "
+                                    "amount=$%.2f new_bounds=$%.2f..$%.2f "
+                                    "elapsed=%.2fs",
+                                    trial_number,
+                                    maximum_trials,
+                                    trial_amount,
+                                    (
+                                        float(highest_success_cents)
+                                        / float("100")
+                                    ),
+                                    (
+                                        float(lowest_failure_cents)
+                                        / float("100")
+                                    ),
+                                    perf_counter() - trial_started,
+                                )
 
                     if best_context is None:
+                        if context.graph_trace:
+                            logger.info(
+                                "Binary search completed: accepted=$0.00 "
+                                "trials=%d",
+                                trial_number,
+                            )
                         context.skipped_df = pd.concat(
                             [
                                 context.skipped_df,
@@ -3218,9 +3524,17 @@ class ExecutionEngine:
                         return context
 
                     accepted_amount = (
-                        Decimal(highest_success_cents)
-                        / Decimal("100")
+                        float(highest_success_cents)
+                        / float("100")
                     )
+                    if context.graph_trace:
+                        logger.info(
+                            "Binary search completed: accepted=$%.2f "
+                            "requested=$%.2f trials=%d",
+                            accepted_amount,
+                            transaction_node.amount,
+                            trial_number,
+                        )
                     best_context.confirmed_df = pd.concat(
                         [
                             context.confirmed_df,
@@ -3331,7 +3645,7 @@ class ExecutionEngine:
         *,
         policy: ForecastPolicy,
         transaction_date: date,
-        amount: Decimal,
+        amount: float,
         account_from: str,
         account_to: str,
         description: str,
@@ -3365,23 +3679,23 @@ class ExecutionEngine:
     def _policy_executed_total(
         context: ExecutionContext,
         policy: ForecastPolicy,
-    ) -> Decimal:
+    ) -> float:
         if context.confirmed_df.empty:
-            return Decimal("0")
+            return float("0")
         matches = context.confirmed_df["Memo"].astype(str).str.startswith(
             f"POLICY {policy.policy_key} "
         )
         amounts = pd.to_numeric(
             context.confirmed_df.loc[matches, "Amount"], errors="coerce"
         ).fillna(0)
-        return Decimal(str(amounts.sum()))
+        return float(str(amounts.sum()))
 
     @staticmethod
     def _policy_summary(
         policy: ForecastPolicy,
         *,
-        requested: Decimal = Decimal("0"),
-        executed: Decimal = Decimal("0"),
+        requested: float = float("0"),
+        executed: float = float("0"),
     ) -> dict[str, object]:
         """Return the common public result shape used by legacy policies."""
         return {
@@ -3401,7 +3715,7 @@ class ExecutionEngine:
         policy: ForecastPolicy,
         context: ExecutionContext,
         transaction_date: date,
-        amount: Decimal,
+        amount: float,
         account_from: str,
         account_to: str,
         description: str,
@@ -3426,16 +3740,16 @@ class ExecutionEngine:
         policy: CurrentStatementBalancePaymentPolicy,
         context: ExecutionContext,
         close_date: date,
-    ) -> Decimal:
+    ) -> float:
         """Execute one mandatory statement payment at its event boundary."""
         card_name = policy.account_name
-        requested = Decimal(str(context.read(CellId(
+        requested = float(str(context.read(CellId(
             close_date,
             credit_current_statement_column(card_name),
         ))))
-        requested = max(Decimal("0"), requested)
+        requested = max(float("0"), requested)
         if requested == 0:
-            return Decimal("0")
+            return float("0")
 
         source_name = (
             context.initial_conditions.initial_account_set
@@ -3493,7 +3807,7 @@ class ExecutionEngine:
         account_name: str,
         period: str,
         period_key: tuple[int, ...],
-    ) -> Decimal:
+    ) -> float:
         """Return confirmed deposits into one investment contribution period.
 
         Confirmed rows deliberately remain a public transaction table without
@@ -3503,10 +3817,10 @@ class ExecutionEngine:
         accepted ledger instead of maintaining a second mutable balance.
         """
         if context.confirmed_df.empty:
-            return Decimal("0")
+            return float("0")
 
         policies = context.initial_conditions.policy_set.policies
-        total = Decimal("0")
+        total = float("0")
         for _, row in context.confirmed_df.iterrows():
             memo = str(row.get("Memo", ""))
             priority = int(row.get("Priority", 1))
@@ -3543,7 +3857,7 @@ class ExecutionEngine:
                 contribution_date, period
             ) != period_key:
                 continue
-            total += Decimal(str(row.get("Amount", 0)))
+            total += float(str(row.get("Amount", 0)))
         return total
 
     @classmethod
@@ -3553,8 +3867,8 @@ class ExecutionEngine:
         *,
         account_name: str,
         contribution_date: date,
-        requested: Decimal,
-    ) -> tuple[Decimal, list[dict[str, object]]]:
+        requested: float,
+    ) -> tuple[float, list[dict[str, object]]]:
         """Apply every earlier-priority cap and describe the binding ledger."""
         allowed = requested
         constraints = []
@@ -3570,8 +3884,8 @@ class ExecutionEngine:
                 period=cap.period,
                 period_key=key,
             )
-            limit = Decimal(str(cap.limit))
-            remaining = max(Decimal("0"), limit - used)
+            limit = float(str(cap.limit))
+            remaining = max(float("0"), limit - used)
             allowed = min(allowed, remaining)
             constraints.append(
                 {
@@ -3584,7 +3898,7 @@ class ExecutionEngine:
                     "remaining": float(remaining),
                 }
             )
-        return max(Decimal("0"), allowed), constraints
+        return max(float("0"), allowed), constraints
 
     @classmethod
     def _execute_investment_requests(
@@ -3592,7 +3906,7 @@ class ExecutionEngine:
         *,
         policy: ForecastPolicy,
         context: ExecutionContext,
-        requests: list[tuple[date, Decimal]],
+        requests: list[tuple[date, float]],
         description: str,
         base_constraints: list[dict[str, object]] | None = None,
     ) -> ExecutionContext:
@@ -3607,15 +3921,15 @@ class ExecutionEngine:
             context.initial_conditions.initial_account_set
             .primary_checking_account_name
         )
-        requested_total = Decimal("0")
-        executed_total = Decimal("0")
-        capped_total = Decimal("0")
+        requested_total = float("0")
+        executed_total = float("0")
+        capped_total = float("0")
         missed = 0
         constraints = list(base_constraints or [])
         unmet_reasons = []
 
         for request_date, raw_amount in requests:
-            raw_amount = max(Decimal("0"), raw_amount)
+            raw_amount = max(float("0"), raw_amount)
             if raw_amount == 0 or request_date not in context.forecast_df.index:
                 continue
             requested_total += raw_amount
@@ -3642,9 +3956,9 @@ class ExecutionEngine:
                 description=description,
             )
             after = cls._policy_executed_total(context, policy)
-            executed = max(Decimal("0"), after - before)
+            executed = max(float("0"), after - before)
             executed_total += executed
-            if executed + Decimal("0.005") < allowed:
+            if executed + float("0.005") < allowed:
                 missed += 1
                 unmet_reasons.append(
                     f"{request_date.isoformat()}: requested ${allowed:.2f}, "
@@ -3706,14 +4020,14 @@ class ExecutionEngine:
                         period=cap.period,
                         period_key=key,
                     )
-                    limit = Decimal(str(cap.limit))
+                    limit = float(str(cap.limit))
                     periods.append(
                         {
                             "period_key": key,
                             "limit": float(limit),
                             "used": float(used),
                             "remaining": float(
-                                max(Decimal("0"), limit - used)
+                                max(float("0"), limit - used)
                             ),
                         }
                     )
@@ -3752,7 +4066,7 @@ class ExecutionEngine:
                 policy.account_name
                 or context.initial_conditions.initial_account_set.primary_checking_account_name
             )
-            target = Decimal(str(policy.target))
+            target = float(str(policy.target))
 
             # A reserve is safe to activate only where every later balance is
             # already at least the target.  The reverse cumulative minimum is
@@ -3816,12 +4130,44 @@ class ExecutionEngine:
                 if account.account_type == policy.debt_type
             ]
 
-            # A surplus policy may become feasible after any earlier-priority
-            # cash flow, not only on a billing boundary.  Evaluate each day,
-            # but stop allocating as soon as either cash or debt is exhausted.
-            # Each accepted payment invalidates only that day's downstream
-            # debt ledger; attemptTransaction performs the cent-exact search.
-            for payment_date in context.forecast_df.index[1:]:
+            schedule = context.line_item_set.getLineItemSchedule()
+            eligible_income_dates = set()
+            if not schedule.empty:
+                income_mask = (
+                    schedule["Income_Flag"].fillna(False).astype(bool)
+                    & (schedule["Priority"] < policy.priority)
+                )
+                eligible_income_dates.update(
+                    schedule.loc[income_mask, "Date"]
+                )
+
+            # Opening cash is available on the first executable day. After
+            # that, reevaluate only when an earlier-priority income transaction
+            # can have created new checking headroom.
+            first_executable_date = (
+                context.initial_conditions.start_date
+                + datetime.timedelta(days=1)
+            )
+            candidate_dates = sorted({
+                first_executable_date,
+                *(
+                    candidate_date
+                    for candidate_date in eligible_income_dates
+                    if candidate_date > context.initial_conditions.start_date
+                ),
+            })
+            if context.graph_trace:
+                logger.info(
+                    "Surplus debt candidates: policy=%s count=%d "
+                    "first=%s last=%s",
+                    policy.policy_key,
+                    len(candidate_dates),
+                    candidate_dates[0] if candidate_dates else None,
+                    candidate_dates[-1] if candidate_dates else None,
+                )
+            for payment_date in candidate_dates:
+                if payment_date not in context.forecast_df.index:
+                    continue
                 if policy.strategy == "avalanche":
                     ordered_debts = sorted(
                         debts,
@@ -3834,7 +4180,7 @@ class ExecutionEngine:
                     ordered_debts = sorted(
                         debts,
                         key=lambda account: (
-                            Decimal(str(context.read(CellId(
+                            float(str(context.read(CellId(
                                 payment_date, balance_column(account.name)
                             )))),
                             account.name,
@@ -3842,20 +4188,84 @@ class ExecutionEngine:
                     )
 
                 for debt in ordered_debts:
-                    debt_balance = Decimal(str(context.read(CellId(
+                    source_cell = CellId(
+                        payment_date, balance_column(source_name)
+                    )
+                    debt_cell = CellId(
                         payment_date, balance_column(debt.name)
-                    ))))
-                    if debt_balance <= 0:
+                    )
+                    available_cash = max(
+                        float("0"),
+                        context.available_balance(source_cell),
+                    )
+                    if available_cash <= MONEY_BOUNDARY_TOLERANCE:
+                        break
+
+                    payable_debt = max(
+                        float("0"),
+                        context.payable_balance(debt_cell),
+                    )
+                    if payable_debt <= MONEY_BOUNDARY_TOLERANCE:
                         continue
+
+                    requested = min(available_cash, payable_debt)
+                    if context.graph_trace:
+                        logger.info(
+                            "Surplus debt request: date=%s target=%s "
+                            "available=$%.2f payable=$%.2f request=$%.2f",
+                            payment_date,
+                            debt.name,
+                            available_cash,
+                            payable_debt,
+                            requested,
+                        )
+                    executed_before = cls._policy_executed_total(
+                        context, policy
+                    )
                     context = cls._apply_policy_transaction(
                         policy=policy,
                         context=context,
                         transaction_date=payment_date,
-                        amount=debt_balance,
+                        amount=requested,
                         account_from=source_name,
                         account_to=debt.name,
                         description="surplus",
                     )
+                    executed_after = cls._policy_executed_total(
+                        context, policy
+                    )
+                    executed = max(
+                        float("0"), executed_after - executed_before
+                    )
+                    remaining_cash = max(
+                        float("0"),
+                        context.available_balance(source_cell),
+                    )
+                    if context.graph_trace:
+                        logger.info(
+                            "Surplus debt result: date=%s target=%s "
+                            "requested=$%.2f executed=$%.2f "
+                            "remaining_available=$%.2f partial=%s",
+                            payment_date,
+                            debt.name,
+                            requested,
+                            executed,
+                            remaining_cash,
+                            (
+                                executed
+                                < requested - MONEY_BOUNDARY_TOLERANCE
+                            ),
+                        )
+
+                    # A partial result means a future graph constraint bound
+                    # the payment. Trying another debt on the same date cannot
+                    # create additional safe checking headroom.
+                    if (
+                        executed
+                        < requested - MONEY_BOUNDARY_TOLERANCE
+                        or remaining_cash <= MONEY_BOUNDARY_TOLERANCE
+                    ):
+                        break
 
             executed = cls._policy_executed_total(context, policy)
             result = cls._policy_summary(policy, executed=executed)
@@ -3878,7 +4288,7 @@ class ExecutionEngine:
                 + datetime.timedelta(days=1),
                 interval="monthly",
             )
-            requested = Decimal("0")
+            requested = float("0")
 
             # Pay current-cycle charges on the day before rollover.  Reading
             # the graph cell at that date naturally includes all earlier
@@ -3887,16 +4297,16 @@ class ExecutionEngine:
                 close_date = billing_date - datetime.timedelta(days=1)
                 if close_date not in context.forecast_df.index:
                     continue
-                current_statement = Decimal(str(context.read(CellId(
+                current_statement = float(str(context.read(CellId(
                     close_date,
                     credit_current_statement_column(card.name),
                 ))))
-                requested += max(Decimal("0"), current_statement)
+                requested += max(float("0"), current_statement)
                 context = cls._apply_policy_transaction(
                     policy=policy,
                     context=context,
                     transaction_date=close_date,
-                    amount=max(Decimal("0"), current_statement),
+                    amount=max(float("0"), current_statement),
                     account_from=source_name,
                     account_to=card.name,
                     description="current cycle charges",
@@ -3925,8 +4335,8 @@ class ExecutionEngine:
             account_set = context.initial_conditions.initial_account_set
             source_name = account_set.primary_checking_account_name
             destination_name = policy.account_name
-            target = Decimal(str(policy.saved_minimum_threshold))
-            initial_destination_balance = Decimal(str(context.read(CellId(
+            target = float(str(policy.saved_minimum_threshold))
+            initial_destination_balance = float(str(context.read(CellId(
                 context.initial_conditions.start_date,
                 balance_column(destination_name),
             ))))
@@ -3955,41 +4365,79 @@ class ExecutionEngine:
                     if candidate_date > context.initial_conditions.start_date
                 ),
             })
+            if context.graph_trace:
+                logger.info(
+                    "Surplus saving candidates: policy=%s count=%d "
+                    "first=%s last=%s",
+                    policy.policy_key,
+                    len(candidate_dates),
+                    candidate_dates[0] if candidate_dates else None,
+                    candidate_dates[-1] if candidate_dates else None,
+                )
             for saving_date in candidate_dates:
                 if saving_date not in context.forecast_df.index:
                     continue
-                saved_balance = Decimal(str(context.read(CellId(
+                source_cell = CellId(
+                    saving_date, balance_column(source_name)
+                )
+                destination_cell = CellId(
                     saving_date, balance_column(destination_name)
-                ))))
-                shortfall = max(Decimal("0"), target - saved_balance)
+                )
+                saved_balance = float(str(context.read(destination_cell)))
+                shortfall = max(float("0"), target - saved_balance)
+                available_cash = max(
+                    float("0"),
+                    context.available_balance(source_cell),
+                )
+                payable_savings = max(
+                    float("0"),
+                    context.payable_balance(destination_cell),
+                )
+                requested = min(
+                    shortfall,
+                    available_cash,
+                    payable_savings,
+                )
+                if context.graph_trace:
+                    logger.info(
+                        "Surplus saving request: date=%s target=%s "
+                        "shortfall=$%.2f available=$%.2f payable=$%.2f "
+                        "request=$%.2f",
+                        saving_date,
+                        destination_name,
+                        shortfall,
+                        available_cash,
+                        payable_savings,
+                        requested,
+                    )
                 context = cls._apply_policy_transaction(
                     policy=policy,
                     context=context,
                     transaction_date=saving_date,
-                    amount=shortfall,
+                    amount=requested,
                     account_from=source_name,
                     account_to=destination_name,
                     description="surplus saving",
                 )
 
-            final_balance = Decimal(str(context.read(CellId(
+            final_balance = float(str(context.read(CellId(
                 context.initial_conditions.end_date,
                 balance_column(destination_name),
             ))))
             requested = max(
-                Decimal("0"), target - initial_destination_balance
+                float("0"), target - initial_destination_balance
             )
             executed = max(
-                Decimal("0"), final_balance - initial_destination_balance
+                float("0"), final_balance - initial_destination_balance
             )
-            shortfall = max(Decimal("0"), target - final_balance)
+            shortfall = max(float("0"), target - final_balance)
             result = cls._policy_summary(
                 policy,
                 requested=requested,
                 executed=executed,
             )
             result["shortfall"] = float(shortfall)
-            if shortfall > Decimal("0.005"):
+            if shortfall > float("0.005"):
                 result.update(status="unmet", missed=1)
                 message = (
                     f"Policy {policy.policy_key} was short by "
@@ -4027,7 +4475,7 @@ class ExecutionEngine:
                     <= context.initial_conditions.end_date
                 ):
                     requests.append(
-                        (contribution_date, Decimal(str(policy.amount)))
+                        (contribution_date, float(str(policy.amount)))
                     )
                 cursor = (
                     cursor.replace(day=28)
@@ -4060,8 +4508,8 @@ class ExecutionEngine:
                         requests.append(
                             (
                                 income_date,
-                                Decimal(str(rows["Amount"].sum()))
-                                * Decimal(str(policy.percentage)),
+                                float(str(rows["Amount"].sum()))
+                                * float(str(policy.percentage)),
                             )
                         )
             return cls._execute_investment_requests(
@@ -4108,21 +4556,21 @@ class ExecutionEngine:
             for contribution_date in candidate_dates:
                 if contribution_date not in context.forecast_df.index:
                     continue
-                hard_minimum = Decimal(
+                hard_minimum = float(
                     str(context.name_to_account_min[source_name])
                 )
-                policy_minimum = Decimal(str(context.read(CellId(
+                policy_minimum = float(str(context.read(CellId(
                     contribution_date,
                     policy_minimum_column(source_name),
                 ))))
-                threshold = Decimal(str(policy.checking_threshold))
+                threshold = float(str(policy.checking_threshold))
                 effective_floor = max(
                     hard_minimum, policy_minimum, threshold
                 )
-                balance = Decimal(str(context.read(CellId(
+                balance = float(str(context.read(CellId(
                     contribution_date, balance_column(source_name)
                 ))))
-                headroom = max(Decimal("0"), balance - effective_floor)
+                headroom = max(float("0"), balance - effective_floor)
                 if headroom == 0:
                     continue
                 requests.append((contribution_date, headroom))
@@ -4178,7 +4626,8 @@ class ExecutionEngine:
     def runForecast(
         cls,
         initial_conditions: ExpenseForecastInitialConditions,
-        milestone_set: MilestoneSet
+        milestone_set: MilestoneSet,
+        graph_trace: bool = False,
     ) -> ExpenseForecastResult:
         transition_set = copy.deepcopy(initial_conditions.transition_set)
         logger.info(
@@ -4192,7 +4641,11 @@ class ExecutionEngine:
             len(transition_set.transitions) if transition_set else 0,
         )
         if not transition_set:
-            return cls.runForecastOnce(initial_conditions, milestone_set)
+            return cls.runForecastOnce(
+                initial_conditions,
+                milestone_set,
+                graph_trace=graph_trace,
+            )
 
         # Transition boundaries need subtype ledgers and active policy bounds
         # to seed the next graph. These columns remain internal until the final
@@ -4201,6 +4654,7 @@ class ExecutionEngine:
             initial_conditions,
             milestone_set,
             include_debug_columns=True,
+            graph_trace=graph_trace,
         )
         first_start_ts = current_result.start_ts
         remaining = list(transition_set.transitions)
@@ -4400,6 +4854,7 @@ class ExecutionEngine:
                 suffix_conditions,
                 milestone_set,
                 include_debug_columns=True,
+                graph_trace=graph_trace,
             )
 
         for transition in remaining:
@@ -4496,10 +4951,15 @@ class ExecutionEngine:
         initial_conditions: ExpenseForecastInitialConditions,
         milestone_set: MilestoneSet,
         include_debug_columns: bool = False,
+        graph_trace: bool = False,
     ) -> ExpenseForecastResult:
         start_ts = datetime.datetime.now()
         run_started = perf_counter()
-        context = ExecutionContext(initial_conditions, milestone_set)
+        context = ExecutionContext(
+            initial_conditions,
+            milestone_set,
+            graph_trace=graph_trace,
+        )
         logger.info(
             "Graph v2 segment setup: range=%s to %s rows=%d",
             initial_conditions.start_date,
@@ -4594,7 +5054,7 @@ class ExecutionEngine:
                             ).append(policy)
 
             mandatory_statement_totals = {
-                policy.policy_key: Decimal("0")
+                policy.policy_key: float("0")
                 for policies in mandatory_statement_events.values()
                 for policy in policies
             }
@@ -4671,6 +5131,15 @@ class ExecutionEngine:
                 txn_priority_selection_mask = (transactions_schedule["Priority"] == priority_level)
                 transactions_for_this_day = transactions_schedule.loc[txn_date_selection_mask & txn_priority_selection_mask]
 
+                # Same-day income must be available before any transaction can
+                # spend it.  A stable sort preserves declaration order within
+                # the income and non-income groups.
+                transactions_for_this_day = transactions_for_this_day.sort_values(
+                    by="Income_Flag",
+                    ascending=False,
+                    kind="stable",
+                )
+
                 for line_item_index, line_item_row in transactions_for_this_day.iterrows():
                     logger.debug("Processing line-item row %s", line_item_index)
                     transaction_node = cls.assemble_transaction_node(line_item_row, context)
@@ -4715,7 +5184,7 @@ class ExecutionEngine:
                     )
                 ):
                     executed = mandatory_statement_totals.get(
-                        policy.policy_key, Decimal("0")
+                        policy.policy_key, float("0")
                     )
                     context.policy_results[policy.policy_key] = (
                         cls._policy_summary(
@@ -4837,152 +5306,4 @@ class ExecutionEngine:
         return R
 
 if __name__ == '__main__':
-
-    logger.info("Graph v2 demo startup")
-    start_date = date(2026, 1, 1)
-    transition_date = start_date + datetime.timedelta(days=365)
-    # end_date = start_date + datetime.timedelta(days=365 * 2)
-    end_date = date(2026,7,1)
-
-    accounts = AccountSet()
-    accounts.createCheckingAccount(
-        'Checking', 5_000, 1_000, float('inf'), True
-    )
-    accounts.createCreditCardAccount(name='Chase',
-                                current_statement_balance=0,
-                                previous_statement_balance=0,
-                                billing_start_date=date(2026,1,6),
-                                minimum_payment=40,
-                                end_of_previous_cycle_balance=6566.49,
-                                min_balance=0,
-                                max_balance=25_000,
-                                apr=0.2724)
-    accounts.createCheckingAccount(
-        'Savings', 0, 0, float('inf'), False
-    )
-
-    rn_year_1 = LineItemSet()
-    rn_year_1.addLineItem(
-        start_date=start_date,
-        end_date=end_date,
-        priority=1,
-        interval='semiweekly',
-        amount=2_900,
-        memo='RN Year 1 income',
-        income_flag=True,
-        recurrence_key='RN paycheck',
-    )
-    rn_year_2 = LineItemSet()
-    rn_year_2.addLineItem(
-        start_date=start_date,
-        end_date=end_date,
-        priority=1,
-        interval='semiweekly',
-        amount=2_900 * 1.05,
-        memo='RN Year 2 income',
-        income_flag=True,
-        recurrence_key='RN paycheck',
-    )
-    income = ScenarioDimension(
-        'Income',
-        {'RN Year 1': rn_year_1, 'RN Year 2': rn_year_2},
-    )
-    income.set_default(start_date, 'RN Year 1')
-    income.change_choice_on_date(transition_date, 'RN Year 2')
-    dated_income = income.to_line_item_set(end_date)
-
-    low_food = LineItemSet()
-    low_food.addLineItem(
-        start_date=start_date,
-        end_date=end_date,
-        priority=1,
-        interval='daily',
-        amount=15,
-        memo='food expense',
-        partial_payment_allowed=False,
-    )
-    standard_food = LineItemSet()
-    standard_food.addLineItem(
-        start_date=start_date,
-        end_date=end_date,
-        priority=1,
-        interval='daily',
-        amount=25,
-        memo='food expense',
-        partial_payment_allowed=False,
-    )
-    food = ScenarioDimension(
-        'Food', {'Low': low_food, 'Standard': standard_food}
-    )
-
-    memo_rules = MemoRuleSet()
-    memo_rules.addMemoRule(r'RN Year [12] income', None, 'Checking', 1)
-    memo_rules.addMemoRule('food expense', 'Chase', None, 1)
-
-    with logged_phase("Scenario-space expansion"):
-        scenario_space = ScenarioSpace(
-            invariant_transactions=dated_income,
-            scenario_dimensions={'Food': food},
-            memo_rule_set=memo_rules,
-            default_policy_set=ForecastPolicySet(
-                MinimumCheckingBalancePolicy(
-                    account_name='Checking', target=2_000,
-                    priority=3, on_unmet='warn',
-                )
-            ),
-            policy_overrides=[
-                (
-                    {'Food': 'Standard'},
-                    ForecastPolicySet(
-                        CurrentStatementBalancePaymentPolicy(
-                            account_name='Chase', priority=1, on_unmet='warn'
-                        ),
-                        SurplusSavingPolicy(
-                            account_name='Savings',
-                            saved_minimum_threshold=10_000,
-                            priority=3,
-                            on_unmet='warn',
-                        )
-                    ),
-                )
-            ],
-        )
-
-    scenario = scenario_space.scenarios['Standard']
-    with logged_phase("Initial-condition materialization"):
-        IO = scenario.to_initial_conditions(
-            start_date, end_date, accounts, memo_rules,
-            forecast_name='Dated scenario and policy demo',
-        )
-    with logged_phase("Graph v2 forecast"):
-        R = ForecastHandler.runForecast(IO, engine="graph v2")
-
-    ForecastHandler.generateHTMLReport(R)
-
-    # paycheck_dates = scenario.line_item_set.getLineItemSchedule().loc[
-    #     lambda schedule: schedule['Memo'].str.contains('RN Year'), 'Date'
-    # ].tolist()
-    # transition_window = [
-    #     scheduled_date for scheduled_date in paycheck_dates
-    #     if abs((scheduled_date - transition_date).days) <= 21
-    # ]
-    # print('Scenario choices:', scenario.choices)
-    # print('Scenario policies:', [
-    #     policy.policy_key for policy in scenario.policy_set.policies
-    # ])
-    # print('Paychecks around transition:', transition_window)
-    # print('Paycheck day gaps:', [
-    #     (right - left).days
-    #     for left, right in zip(transition_window, transition_window[1:])
-    # ])
-    # print('Safety resolution counts:', {
-    #     method: sum(
-    #         decision['resolution_method'] == method
-    #         for decision in R.safety_decisions
-    #     )
-    #     for method in {'constraint', 'recursive'}
-    # })
-    # print('Executed safety decisions:', [
-    #     decision for decision in R.safety_decisions
-    #     if decision['executed'] > 0
-    # ])
+    pass

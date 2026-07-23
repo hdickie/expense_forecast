@@ -1,7 +1,6 @@
 """Shared forecast-policy contracts."""
 
 import math
-from decimal import Decimal
 from numbers import Real
 
 
@@ -28,7 +27,7 @@ class ForecastPolicy:
 
     @staticmethod
     def validate_amount(value, name):
-        if isinstance(value, bool) or not isinstance(value, (Real, Decimal)):
+        if isinstance(value, bool) or not isinstance(value, (Real, float)):
             raise TypeError(f"{name} must be a finite, non-negative number")
         if not math.isfinite(float(value)) or value < 0:
             raise ValueError(f"{name} must be a finite, non-negative number")

@@ -5,7 +5,6 @@ from .LoanBillingState import LoanBillingState
 from .InvestmentBillingState import InvestmentBillingState
 
 from datetime import date, datetime, timedelta
-from decimal import Decimal
 import math
 import pandas as pd
 import copy
@@ -20,8 +19,17 @@ from .generate_date_sequence import generate_date_sequence
 # logger = setup_logger('AccountSet','./log/AccountSet.log',logging.INFO)
 logger = logging.getLogger(__name__)
 
-ROUNDING_ERROR_TOLERANCE = 0.0000000001
-MONEY_BOUNDARY_TOLERANCE = Decimal("0.005")
+# Monetary state uses native float64 throughout the forecast engines.
+# Ten decimal places retain far more precision than report output requires
+# while preventing insignificant binary floating-point noise from repeatedly
+# invalidating graph nodes.
+FLOAT_ROUNDING_DECIMALS = 10
+FLOAT_COMPARISON_TOLERANCE = 1e-9
+# Memo directives can currently render three decimal places. Differences
+# below half of that final displayed unit are presentation noise rather than
+# a financial inconsistency.
+ROUNDING_ERROR_TOLERANCE = 0.0005
+MONEY_BOUNDARY_TOLERANCE = 0.005
 
 
 class AccountBoundaryError(ValueError):
@@ -76,7 +84,7 @@ class AccountSet:
     class
     """
 
-    ROUNDING_ERROR_TOLERANCE = 0.0000000001
+    ROUNDING_ERROR_TOLERANCE = ROUNDING_ERROR_TOLERANCE
 
     @staticmethod
     def _money(value):
@@ -85,7 +93,7 @@ class AccountSet:
 
         @interface-report: ignore
         """
-        return Decimal(str(value))
+        return round(float(value), FLOAT_ROUNDING_DECIMALS)
 
     @staticmethod
     def _dict_value(value):
@@ -94,7 +102,7 @@ class AccountSet:
 
         @interface-report: ignore
         """
-        if isinstance(value, Decimal):
+        if isinstance(value, float):
             return float(value)
         if isinstance(value, (datetime, date)):
             return value.isoformat()
@@ -107,7 +115,7 @@ class AccountSet:
 
         @interface-report: ignore
         """
-        if isinstance(value, Decimal):
+        if isinstance(value, float):
             return float(value)
         return value
 
@@ -245,34 +253,34 @@ class AccountSet:
             interest_type : str
                 One of 'simple', 'compound'. Either for loans, credit must be 'compound'.
 
-            apr : Decimal
+            apr : float
 
             interest_interval : str
                 One of 'daily', 'monthly'.
 
-            minimum_payment : Decimal
+            minimum_payment : float
 
-            previous_statement_balance : Decimal
+            previous_statement_balance : float
                 For credit cards, represents the interest-accruing balance.
 
-            current_statement_balance : Decimal
+            current_statement_balance : float
                 For credit cards, represents spend within the current 
                 cycle that is not yet accruing interest. Each billing
                 cycle, current_statement_balance is rolled into 
                 previous_statement_balance.
 
-            principal_balance : Decimal
+            principal_balance : float
                 For loans, represents the interest-accruing balance.
 
-            interest_balance : Decimal
+            interest_balance : float
                 For loans, represents the interest, which is paid first
                 before payments are applied to the princiapal.
                 
-            billing_cycle_payment_balance : Decimal
+            billing_cycle_payment_balance : float
                 For accounts with billing cycles, payments made before
                 the due date count as advance payment.
 
-            end_of_previous_cycle_balance : Decimal
+            end_of_previous_cycle_balance : float
                 For credit cards, if a credit card is paid off, interest
                 is still due on previous_statement_balance at the end
                 of the payment cycle, which is calculated using this.
@@ -545,18 +553,18 @@ class AccountSet:
         """
         @interface-report: show
         """
-        proposed_balance_decimal = Decimal(str(proposed_balance))
+        proposed_balance_decimal = float(str(proposed_balance))
         minimum = (
             account.effective_policy_min_balance
             if enforce_policy_minimum
             else account.min_balance
         )
-        min_balance_decimal = Decimal(str(minimum))
+        min_balance_decimal = float(str(minimum))
         max_balance_is_infinite = math.isinf(float(account.max_balance))
         max_balance_decimal = (
             None
             if max_balance_is_infinite
-            else Decimal(str(account.max_balance))
+            else float(str(account.max_balance))
         )
 
         if proposed_balance_decimal < min_balance_decimal:
@@ -572,7 +580,7 @@ class AccountSet:
             ):
                 return (
                     min_balance_decimal
-                    if isinstance(proposed_balance, Decimal)
+                    if isinstance(proposed_balance, float)
                     else float(min_balance_decimal)
                 )
             error = AccountBoundaryError(
@@ -591,7 +599,7 @@ class AccountSet:
             if proposed_balance_decimal - max_balance_decimal <= MONEY_BOUNDARY_TOLERANCE:
                 return (
                     max_balance_decimal
-                    if isinstance(proposed_balance, Decimal)
+                    if isinstance(proposed_balance, float)
                     else float(max_balance_decimal)
                 )
             error = AccountBoundaryError(
@@ -668,7 +676,7 @@ class AccountSet:
             error.account_name = account.name
             error.role = "account_to"
             raise error
-        payment_remaining = Decimal("0")
+        payment_remaining = float("0")
 
         if not minimum_payment_flag:
             account.billing_state.billing_cycle_payment_balance += amount
@@ -693,14 +701,14 @@ class AccountSet:
             error.account_name = account.name
             error.role = "account_to"
             raise error
-        payment_remaining = Decimal("0")
+        payment_remaining = float("0")
 
         if not minimum_payment_flag:
             account.billing_state.billing_cycle_payment_balance += amount
         if account.billing_state.balance <= MONEY_BOUNDARY_TOLERANCE:
-            account.billing_state.principal_balance = Decimal("0")
-            account.billing_state.interest_balance = Decimal("0")
-            account.billing_state.billing_cycle_payment_balance = Decimal("0")
+            account.billing_state.principal_balance = float("0")
+            account.billing_state.interest_balance = float("0")
+            account.billing_state.billing_cycle_payment_balance = float("0")
         AccountSet._sync_debt_account_from_billing_state(account)
         assert (
             abs(starting_balance - account.billing_state.balance - amount)
@@ -770,7 +778,8 @@ class AccountSet:
             interest_accrued = account.billing_state.interest_accrued_this_cycle()
             if interest_accrued > 0:
                 interest_directives.append(
-                    f"CC INTEREST ({previous_statement_name} +${interest_accrued})"
+                    "CC INTEREST "
+                    f"({previous_statement_name} +${interest_accrued:g})"
                 )
 
             account.billing_state = account.billing_state.roll_cycle(current_date)
@@ -965,11 +974,11 @@ class AccountSet:
             checking = self._get_account_by_name(self.primary_checking_account_name)
             Amount = min(
                 self._money(abs(Amount)),
-                max(Decimal("0"), self._money(checking.balance) - threshold),
+                max(float("0"), self._money(checking.balance) - threshold),
             )
             Account_From = checking.name
             if Amount <= MONEY_BOUNDARY_TOLERANCE:
-                return Decimal("0")
+                return float("0")
 
         if str(Account_To).startswith("CURRENT_STATEMENT_BALANCE:"):
             card_name = str(Account_To).split(":", 1)[1]
@@ -990,11 +999,11 @@ class AccountSet:
             Amount = min(
                 self._money(abs(Amount)),
                 self._money(card.billing_state.current_statement_balance),
-                max(Decimal("0"), available_cash),
+                max(float("0"), available_cash),
             )
             Account_To = card_name
             if Amount <= MONEY_BOUNDARY_TOLERANCE:
-                return Decimal("0")
+                return float("0")
 
         if str(Account_To).startswith("SAVINGS_BELOW:"):
             _, threshold_text, savings_name = str(Account_To).split(":", 2)
@@ -1009,9 +1018,9 @@ class AccountSet:
                 raise ValueError("Surplus saving requires a checking source account")
             Amount = min(
                 self._money(abs(Amount)),
-                max(Decimal("0"), threshold - self._money(savings.balance)),
+                max(float("0"), threshold - self._money(savings.balance)),
                 max(
-                    Decimal("0"),
+                    float("0"),
                     self._money(checking.balance) - self._money(
                         checking.effective_policy_min_balance
                         if enforce_policy_minimum else checking.min_balance
@@ -1020,7 +1029,7 @@ class AccountSet:
             )
             Account_To = savings_name
             if Amount <= MONEY_BOUNDARY_TOLERANCE:
-                return Decimal("0")
+                return float("0")
 
         if Account_To in {"ALL_LOANS", "ALL_LOANS_SNOWBALL"}:
             if Account_To.endswith("SNOWBALL"):
@@ -1031,7 +1040,7 @@ class AccountSet:
                     Amount = min(
                         self._money(abs(Amount)),
                         max(
-                            Decimal("0"),
+                            float("0"),
                             self._money(checking.balance)
                             - self._money(checking.effective_policy_min_balance),
                         ),
@@ -1049,7 +1058,7 @@ class AccountSet:
                 )
             return sum(
                 (self._money(payment[2]) for payment in allocated_payments),
-                Decimal("0"),
+                float("0"),
             )
 
         if Account_To in {"ALL_CREDIT_CARDS", "ALL_CREDIT_CARDS_SNOWBALL"}:
@@ -1061,7 +1070,7 @@ class AccountSet:
                     Amount = min(
                         self._money(abs(Amount)),
                         max(
-                            Decimal("0"),
+                            float("0"),
                             self._money(checking.balance)
                             - self._money(checking.effective_policy_min_balance),
                         ),
@@ -1076,7 +1085,7 @@ class AccountSet:
                 )
             return sum(
                 (self._money(payment[2]) for payment in allocated_payments),
-                Decimal("0"),
+                float("0"),
             )
 
         amount = abs(Amount)

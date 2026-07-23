@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import re
-from decimal import Decimal
 
 import pandas as pd
 
@@ -37,7 +36,7 @@ def _normalize_presented_money(value):
     """Compare monetary annotations at the report's cent precision."""
     return re.sub(
         r"\$([0-9]+(?:\.[0-9]+)?)",
-        lambda match: f"${Decimal(match.group(1)).quantize(Decimal('0.01'))}",
+        lambda match: f"${float(match.group(1)):.2f}",
         str(value),
     )
 

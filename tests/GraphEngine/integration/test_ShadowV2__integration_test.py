@@ -8,6 +8,7 @@ from datetime import date
 
 import pandas as pd
 import pytest
+import expense_forecast.MemoizedDynamicDependencyGraphEngine as graph_v2
 
 from expense_forecast.AccountSet import AccountSet
 from expense_forecast.ConditionalScenarioTransition import (
@@ -168,6 +169,39 @@ def test_transaction_flag_columns_are_boolean_before_graph_execution():
             "Partial_Payment_Allowed",
         ):
             assert pd.api.types.is_bool_dtype(frame[column].dtype)
+
+
+def test_graph_v2_executes_same_day_income_before_declared_expense():
+    line_items = LineItemSet()
+    _item(line_items, "expense declared first", 80, priority=1)
+    _item(
+        line_items,
+        "income declared second",
+        100,
+        priority=1,
+        income=True,
+    )
+    rules = MemoRuleSet()
+    rules.addMemoRule("expense declared first", "Checking", None, 1)
+    rules.addMemoRule(
+        "income declared second", None, "Checking", 1
+    )
+    conditions = _conditions(
+        "same-day-income-first",
+        _accounts(checking=0),
+        line_items,
+        rules,
+    )
+
+    result = ExecutionEngine.runForecast(
+        conditions,
+        conditions.milestone_set,
+    )
+
+    assert result.forecast_df.iloc[-1]["Checking"] == 20
+    confirmed_memos = result.confirmed_df["Memo"].tolist()
+    assert confirmed_memos.count("income declared second") == 1
+    assert confirmed_memos.count("expense declared first") == 1
 
 
 @pytest.mark.parametrize(
@@ -693,6 +727,97 @@ def _policy_case(kind):
         end=date(2026, 1, 5),
         policy_set=ForecastPolicySet(*policies),
     )
+
+
+def _binary_trace_case():
+    accounts = _accounts(checking=500)
+    accounts.createCreditCardAccount(
+        "Card", 200, 500, 0, 10_000,
+        date(2026, 1, 1), 0.20, 40, 500,
+    )
+    line_items = LineItemSet()
+    _item(
+        line_items,
+        "future expense",
+        400,
+        start=date(2026, 1, 4),
+    )
+    rules = MemoRuleSet()
+    rules.addMemoRule("future expense", "Checking", None, 1)
+    return _conditions(
+        "binary-trace",
+        accounts,
+        line_items,
+        rules,
+        end=date(2026, 1, 5),
+        policy_set=ForecastPolicySet(
+            SurplusDebtPaymentPolicy(
+                "credit", "avalanche", priority=2
+            )
+        ),
+    )
+
+
+def test_graph_v2_trace_logs_binary_trials_and_propagation_work(monkeypatch):
+    messages = []
+
+    def capture(message, *args, **kwargs):
+        messages.append(message % args if args else str(message))
+
+    monkeypatch.setattr(graph_v2.logger, "info", capture)
+
+    result = ForecastHandler.runForecast(
+        _binary_trace_case(),
+        engine="graph v2",
+        graph_trace=True,
+    )
+    output = "\n".join(messages)
+
+    assert "Surplus debt request:" in output
+    assert "Binary trial started: trial=1/" in output
+    assert "Binary trial accepted:" in output
+    assert "Binary trial rejected:" in output
+    assert "Propagation rejected:" in output
+    assert "distinct=" in output
+    assert "repeats=" in output
+    assert "enqueued=" in output
+    assert "max_pending=" in output
+    assert "top_node_types=" in output
+    assert result.policy_results[
+        "surplus_debt_payment:credit"
+    ]["debt_paid"] == 100
+    assert not any(
+        "trace" in str(key).lower()
+        for key in result.graph_diagnostics
+    )
+
+
+def test_graph_v2_trace_is_opt_in(monkeypatch):
+    messages = []
+
+    def capture(message, *args, **kwargs):
+        messages.append(message % args if args else str(message))
+
+    monkeypatch.setattr(graph_v2.logger, "info", capture)
+
+    ForecastHandler.runForecast(
+        _policy_case("surplus-credit"),
+        engine="graph v2",
+    )
+
+    output = "\n".join(messages)
+    assert "Propagation started:" not in output
+    assert "Speculative transaction started:" not in output
+    assert "Surplus debt request:" not in output
+
+
+def test_graph_trace_rejects_non_v2_engines():
+    with pytest.raises(ValueError, match="graph_trace is supported only"):
+        ForecastHandler.runForecast(
+            _policy_case("minimum-checking"),
+            engine="legacy",
+            graph_trace=True,
+        )
 
 
 @pytest.mark.parametrize(

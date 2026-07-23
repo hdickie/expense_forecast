@@ -16,7 +16,6 @@ Contract
 
 from dataclasses import dataclass
 from datetime import date
-from decimal import Decimal
 
 
 #TODO DOC manual review of CreditCardBillingState docstring
@@ -35,24 +34,24 @@ class CreditCardBillingState:
     @interface-report: show
     """
     billing_cycle_start_date: date
-    previous_statement_balance: Decimal
-    current_statement_balance: Decimal
-    billing_cycle_payment_balance: Decimal
-    end_of_previous_cycle_balance: Decimal
-    minimum_payment: Decimal
-    minimum_payment_floor: Decimal
-    minimum_payment_credit_balance: Decimal
+    previous_statement_balance: float
+    current_statement_balance: float
+    billing_cycle_payment_balance: float
+    end_of_previous_cycle_balance: float
+    minimum_payment: float
+    minimum_payment_floor: float
+    minimum_payment_credit_balance: float
 
     #TODO DOC manual review of CreditCardBillingState.__init__ docstring
-    def __init__(self, billing_cycle_start_date: date, previous_statement_balance: Decimal,
-                  current_statement_balance: Decimal, billing_cycle_payment_balance: Decimal,
-                  minimum_payment: Decimal,
+    def __init__(self, billing_cycle_start_date: date, previous_statement_balance: float,
+                  current_statement_balance: float, billing_cycle_payment_balance: float,
+                  minimum_payment: float,
                   interest_type: str,
                   interest_interval: str,
-                  apr: Decimal,
-                  end_of_previous_cycle_balance: Decimal = None,
-                  minimum_payment_floor: Decimal = None,
-                  minimum_payment_credit_balance: Decimal = Decimal("0"),
+                  apr: float,
+                  end_of_previous_cycle_balance: float = None,
+                  minimum_payment_floor: float = None,
+                  minimum_payment_credit_balance: float = float("0"),
                   ):
         """
         #TODO DOC one-line description of CreditCardBillingState.__init__.
@@ -109,20 +108,20 @@ class CreditCardBillingState:
         @interface-report: show
         """
         self.billing_cycle_start_date = billing_cycle_start_date
-        previous_statement_balance = Decimal(str(previous_statement_balance))
-        current_statement_balance = Decimal(str(current_statement_balance))
-        billing_cycle_payment_balance = Decimal(str(billing_cycle_payment_balance))
-        minimum_payment = Decimal(str(minimum_payment))
+        previous_statement_balance = float(str(previous_statement_balance))
+        current_statement_balance = float(str(current_statement_balance))
+        billing_cycle_payment_balance = float(str(billing_cycle_payment_balance))
+        minimum_payment = float(str(minimum_payment))
         if minimum_payment_floor is None:
             minimum_payment_floor = minimum_payment
-        minimum_payment_floor = Decimal(str(minimum_payment_floor))
-        minimum_payment_credit_balance = Decimal(str(minimum_payment_credit_balance))
-        apr = Decimal(str(apr))
+        minimum_payment_floor = float(str(minimum_payment_floor))
+        minimum_payment_credit_balance = float(str(minimum_payment_credit_balance))
+        apr = float(str(apr))
         if end_of_previous_cycle_balance is None:
             end_of_previous_cycle_balance = (
                 previous_statement_balance + billing_cycle_payment_balance
             )
-        end_of_previous_cycle_balance = Decimal(str(end_of_previous_cycle_balance))
+        end_of_previous_cycle_balance = float(str(end_of_previous_cycle_balance))
 
         assert previous_statement_balance >= 0
         self.previous_statement_balance = previous_statement_balance
@@ -148,7 +147,7 @@ class CreditCardBillingState:
         self.apr = apr
 
     #TODO DOC manual review of CreditCardBillingState.calculate_next_minimum_payment docstring
-    def calculate_next_minimum_payment(self) -> Decimal:
+    def calculate_next_minimum_payment(self) -> float:
         """
         #TODO DOC one-line description of CreditCardBillingState.calculate_next_minimum_payment.
 
@@ -174,7 +173,7 @@ class CreditCardBillingState:
         @interface-report: show
         """
         interest_accrued_this_cycle = self.interest_accrued_this_cycle()
-        principal_due_this_cycle = self.previous_statement_balance * Decimal("0.01")
+        principal_due_this_cycle = self.previous_statement_balance * float("0.01")
         total_balance = (
             self.previous_statement_balance
             + self.current_statement_balance
@@ -182,7 +181,7 @@ class CreditCardBillingState:
         )
 
         if interest_accrued_this_cycle + principal_due_this_cycle == 0:
-            return Decimal("0")
+            return float("0")
 
         return min(
             total_balance,
@@ -193,7 +192,7 @@ class CreditCardBillingState:
         )
 
     #TODO DOC manual review of CreditCardBillingState.interest_accrued_this_cycle docstring
-    def interest_accrued_this_cycle(self) -> Decimal:
+    def interest_accrued_this_cycle(self) -> float:
         """
         #TODO DOC one-line description of CreditCardBillingState.interest_accrued_this_cycle.
 
@@ -226,10 +225,10 @@ class CreditCardBillingState:
             raise NotImplementedError(
                 f"Credit card interest type '{self.interest_type}' is not implemented."
             )
-        return self.previous_statement_balance * (self.apr / Decimal("12"))
+        return self.previous_statement_balance * (self.apr / float("12"))
 
     #TODO DOC manual review of CreditCardBillingState.remaining_minimum_payment_due docstring
-    def remaining_minimum_payment_due(self) -> Decimal:
+    def remaining_minimum_payment_due(self) -> float:
         """
         #TODO DOC one-line description of CreditCardBillingState.remaining_minimum_payment_due.
 
@@ -255,12 +254,12 @@ class CreditCardBillingState:
         @interface-report: show
         """
         return max(
-            Decimal("0"),
+            float("0"),
             self.minimum_payment - self.minimum_payment_credit_balance
         )
 
     #TODO DOC manual review of CreditCardBillingState.remaining_statement_balance docstring
-    def remaining_statement_balance(self) -> Decimal:
+    def remaining_statement_balance(self) -> float:
         """
         #TODO DOC one-line description of CreditCardBillingState.remaining_statement_balance.
 
@@ -286,7 +285,7 @@ class CreditCardBillingState:
         @interface-report: show
         """
         return max(
-            Decimal("0"),
+            float("0"),
             self.previous_statement_balance - self.billing_cycle_payment_balance
         )
 
@@ -335,8 +334,8 @@ class CreditCardBillingState:
         return CreditCardBillingState(
             billing_cycle_start_date=new_cycle_start_date,
             previous_statement_balance=next_statement_balance,
-            current_statement_balance=Decimal("0"),
-            billing_cycle_payment_balance=Decimal("0"),
+            current_statement_balance=float("0"),
+            billing_cycle_payment_balance=float("0"),
             end_of_previous_cycle_balance=end_of_previous_cycle_balance,
             minimum_payment=next_minimum_payment,
             interest_type=self.interest_type,

@@ -17,7 +17,7 @@ def test_policy_minimum_is_soft_but_hard_minimum_always_applies():
 
     mandatory = copy.deepcopy(accounts)
     mandatory.executeTransaction("Checking", None, 600)
-    assert mandatory.accounts[0].balance == Decimal("400")
+    assert mandatory.accounts[0].balance == float("400")
 
     optional = copy.deepcopy(accounts)
     with pytest.raises(AccountBoundaryError, match="Account_From boundaries"):
@@ -45,7 +45,6 @@ def test_account_set_from_dict_round_trips_all_account_types():
     assert rebuilt.to_dict() == accounts.to_dict()
 import doctest, copy
 from datetime import date
-from decimal import Decimal
 
 from expense_forecast.CheckingBillingState import CheckingBillingState
 from expense_forecast.CreditCardBillingState import CreditCardBillingState
@@ -195,7 +194,7 @@ def test_user_message_preserves_ansi_color_in_log_file(tmp_path):
 
 def checking_billing_state(balance=0, is_primary=True):
     return CheckingBillingState(
-        balance=Decimal(str(balance)),
+        balance=float(str(balance)),
         is_primary=is_primary,
     )
 
@@ -212,13 +211,13 @@ def credit_billing_state(
 ):
     return CreditCardBillingState(
         billing_cycle_start_date=billing_cycle_start_date,
-        previous_statement_balance=Decimal(str(previous_statement_balance)),
-        current_statement_balance=Decimal(str(current_statement_balance)),
-        billing_cycle_payment_balance=Decimal(str(billing_cycle_payment_balance)),
-        minimum_payment=Decimal(str(minimum_payment)),
+        previous_statement_balance=float(str(previous_statement_balance)),
+        current_statement_balance=float(str(current_statement_balance)),
+        billing_cycle_payment_balance=float(str(billing_cycle_payment_balance)),
+        minimum_payment=float(str(minimum_payment)),
         interest_type=interest_type,
         interest_interval=interest_interval,
-        apr=Decimal(str(apr)),
+        apr=float(str(apr)),
     )
 
 
@@ -234,13 +233,13 @@ def loan_billing_state(
 ):
     return LoanBillingState(
         billing_cycle_start_date=billing_cycle_start_date,
-        previous_statement_balance=Decimal(str(previous_statement_balance)),
-        current_statement_balance=Decimal(str(current_statement_balance)),
-        billing_cycle_payment_balance=Decimal(str(billing_cycle_payment_balance)),
-        minimum_payment=Decimal(str(minimum_payment)),
+        previous_statement_balance=float(str(previous_statement_balance)),
+        current_statement_balance=float(str(current_statement_balance)),
+        billing_cycle_payment_balance=float(str(billing_cycle_payment_balance)),
+        minimum_payment=float(str(minimum_payment)),
         interest_type=interest_type,
         interest_interval=interest_interval,
-        apr=Decimal(str(apr)),
+        apr=float(str(apr)),
     )
 
 
@@ -712,7 +711,7 @@ class TestAccountSet:
         )
 
         assert result == [
-            ["test checking", "higher apr loan", Decimal("100.0")]
+            ["test checking", "higher apr loan", float("100.0")]
         ]
 
     @pytest.mark.unit
@@ -751,7 +750,7 @@ class TestAccountSet:
         )
 
         assert result == [
-            ["test checking", "small higher apr loan", Decimal("100.0")]
+            ["test checking", "small higher apr loan", float("100.0")]
         ]
 
     @pytest.mark.unit
@@ -792,14 +791,14 @@ class TestAccountSet:
         )
 
         result = test_account_set.getAccounts().set_index("Name")
-        assert result.loc["test checking", "Balance"] == Decimal("900.0")
+        assert result.loc["test checking", "Balance"] == float("900.0")
         assert (
             result.loc["higher apr loan", "Balance"]
-            == Decimal("910.0")
+            == float("910.0")
         )
         assert (
             result.loc["lower apr loan", "Balance"]
-            == Decimal("1010.0")
+            == float("1010.0")
         )
 
     @pytest.mark.unit
@@ -838,7 +837,7 @@ class TestAccountSet:
         )
 
         allocated_amount = sum(payment[2] for payment in result)
-        assert allocated_amount == pytest.approx(Decimal("5084.64"), abs=0.01)
+        assert allocated_amount == pytest.approx(float("5084.64"), abs=0.01)
         assert [payment[1] for payment in result] == [
             "effectively tied loan",
             "barely higher loan",
@@ -1925,8 +1924,8 @@ def test_AccountSet__createAccount__investment():
     investment = accounts.accounts[0]
     assert investment.account_type == "investment"
     assert investment.balance == 1000
-    assert investment.billing_state.balance == Decimal("1000")
-    assert investment.billing_state.apr == Decimal("0.07")
+    assert investment.billing_state.balance == float("1000")
+    assert investment.billing_state.apr == float("0.07")
 
 
 # Migration notes:

@@ -288,3 +288,55 @@ class ScenarioSpace:
         if len(matching) > 1:
             raise ValueError(f"Duplicate policy override for choices {choices!r}")
         return copy.deepcopy(matching[0] if matching else self.default_policy_set)
+
+    def from_choice_keys(self, choice_keys={}):
+        """Build one Scenario from a human-readable dimension/choice mapping.
+
+        The mapping may select any subset of this space's dimensions.  An
+        empty mapping therefore represents the invariant transactions alone.
+        Unlike ``self.scenarios``, this method does not search the precomputed
+        Cartesian product; it composes exactly the choices the caller names.
+        """
+        if not isinstance(choice_keys, dict):
+            raise TypeError("choice_keys must be a mapping")
+
+        unknown_dimensions = [
+            name for name in choice_keys if name not in self.scenario_dimensions
+        ]
+        if unknown_dimensions:
+            known = ", ".join(repr(name) for name in self.dimension_names) or "none"
+            unknown = ", ".join(repr(name) for name in unknown_dimensions)
+            raise ValueError(
+                f"Unknown scenario dimension(s): {unknown}. Known dimensions: {known}"
+            )
+
+        # Start with a copy so the returned Scenario never shares mutable line
+        # item or metadata state with the ScenarioSpace.
+        selected_line_items = copy.deepcopy(self.invariant_transactions)
+        selected_choices = {}
+        label_parts = []
+
+        # Space declaration order makes labels stable even when the caller's
+        # dictionary was constructed in a different order.
+        for dimension_name in self.dimension_names:
+            if dimension_name not in choice_keys:
+                continue
+            choice_name = choice_keys[dimension_name]
+            dimension = self.scenario_dimensions[dimension_name]
+            if choice_name not in dimension.choices:
+                known = ", ".join(repr(name) for name in dimension.choices)
+                raise ValueError(
+                    f"Unknown choice {choice_name!r} for ScenarioDimension "
+                    f"{dimension_name!r}. Known choices: {known}"
+                )
+
+            selected_line_items = selected_line_items + dimension.select(choice_name)
+            selected_choices[dimension_name] = choice_name
+            label_parts.append(f"{dimension_name}: {choice_name}")
+
+        return Scenario(
+            label=" | ".join(label_parts) if label_parts else "Invariant",
+            choices=selected_choices,
+            line_item_set=selected_line_items,
+            policy_set=self._policy_set_for_choices(selected_choices),
+        )

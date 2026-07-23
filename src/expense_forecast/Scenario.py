@@ -93,6 +93,22 @@ class Scenario:
     def line_items(self):
         return self.line_item_set.line_items
 
+    def with_policy_set(self, policy_set):
+        """Return an independent copy of this scenario with new policies.
+
+        ScenarioSpace may reuse its generated Scenario objects across several
+        forecasts.  Returning a copy keeps fluent configuration from changing
+        either the space or another forecast built from the same selection.
+        """
+        if not isinstance(policy_set, ForecastPolicySet):
+            raise TypeError("policy_set must be a ForecastPolicySet")
+        return Scenario(
+            label=self.label,
+            choices=self.choices,
+            line_item_set=self.line_item_set,
+            policy_set=policy_set,
+        )
+
     def to_initial_conditions(
         self, start_date, end_date, account_set, memo_rule_set, **kwargs
     ):

@@ -3,7 +3,6 @@ from __future__ import annotations
 import copy
 import datetime
 import re
-from decimal import Decimal
 
 import pandas as pd
 
@@ -127,8 +126,8 @@ class AccountStateNode(GraphNode):
 
     @staticmethod
     def _future_source_reserve(events, current, source_name):
-        running = Decimal("0")
-        maximum = Decimal("0")
+        running = float("0")
+        maximum = float("0")
         for event in events:
             # Higher-priority events on the current date have already been
             # applied by the queue before this policy is evaluated. Counting
@@ -152,16 +151,16 @@ class AccountStateNode(GraphNode):
         source_name = event.account_from
         threshold = None
         if str(source_name).startswith("CHECKING_ABOVE:"):
-            threshold = Decimal(str(source_name).split(":", 1)[1])
+            threshold = float(str(source_name).split(":", 1)[1])
             source_name = account_set.primary_checking_account_name
         source = account_set._get_account_by_name(source_name)
         if source is not None and source.account_type == "checking":
             floor = max(
-                Decimal(str(
+                float(str(
                     source.effective_policy_min_balance
                     if event.priority > 1 else source.min_balance
                 )),
-                threshold or Decimal("0"),
+                threshold or float("0"),
             )
             # CHECKING_ABOVE encodes the surplus policy's complete reserve
             # rule. Legacy likewise executes the amount above that threshold
@@ -169,12 +168,12 @@ class AccountStateNode(GraphNode):
             # time would incorrectly suppress the investment after a higher-
             # priority saving policy is rejected.
             reserve = (
-                Decimal("0")
+                float("0")
                 if threshold is not None
                 else self._future_source_reserve(events, event, source_name)
             )
             amount = min(
-                amount, Decimal(str(source.balance)) - floor - reserve
+                amount, float(str(source.balance)) - floor - reserve
             )
         destination = str(event.account_to)
         if destination.startswith("ALL_LOANS"):
@@ -194,9 +193,9 @@ class AccountStateNode(GraphNode):
                 if account.account_type == debt_type
             }
             outstanding = sum(
-                (Decimal(str(account.balance)) for account in account_set.accounts
+                (float(str(account.balance)) for account in account_set.accounts
                  if account.name in applicable_names),
-                Decimal("0"),
+                float("0"),
             )
             future_claim = sum(
                 (
@@ -216,11 +215,11 @@ class AccountStateNode(GraphNode):
                         )
                     )
                 ),
-                Decimal("0"),
+                float("0"),
             )
             amount = min(amount, outstanding - future_claim)
         return max(
-            Decimal("0"),
+            float("0"),
             amount,
         )
 
@@ -336,7 +335,7 @@ class AccountStateNode(GraphNode):
             account = after._get_account_by_name(name)
             if account is None:
                 continue
-            delta = Decimal(str(old)) - Decimal(str(account.balance))
+            delta = float(str(old)) - float(str(account.balance))
             if account.account_type == "credit" and delta > 0:
                 if self.approximate and str(event.account_to).startswith("ALL_"):
                     continue
@@ -551,8 +550,8 @@ class AccountStateNode(GraphNode):
                         enforce_policy_minimum=event.priority > 1,
                     )
                 except AccountBoundaryError:
-                    amount = Decimal("0")
-                amount = Decimal(str(amount or 0))
+                    amount = float("0")
+                amount = float(str(amount or 0))
                 if (
                     amount <= 0
                     and (
@@ -564,7 +563,7 @@ class AccountStateNode(GraphNode):
                     and event.partial_payment_allowed
                 ):
                     amount = self._maximum_partial(account_set, event)
-                if amount <= Decimal("0.005"):
+                if amount <= float("0.005"):
                     record = event.transaction_record()
                     if event.deferrable:
                         next_income = next(
@@ -608,8 +607,8 @@ class AccountStateNode(GraphNode):
                     minimum_payment = min(
                         card.billing_state.remaining_minimum_payment_due(),
                         card.balance,
-                        Decimal(str(checking.balance))
-                        - Decimal(str(checking.min_balance)),
+                        float(str(checking.balance))
+                        - float(str(checking.min_balance)),
                     )
                     if minimum_payment > 0:
                         account_set.executeTransaction(
@@ -681,7 +680,7 @@ class AccountStateNode(GraphNode):
                 memo_groups = {}
                 for event, amount in interval_events:
                     key = (event.memo, event.account_from, event.account_to)
-                    count, total = memo_groups.get(key, (0, Decimal("0")))
+                    count, total = memo_groups.get(key, (0, float("0")))
                     memo_groups[key] = (count + 1, total + amount)
                 memo_parts = []
                 for (memo, account_from, account_to), (count, total) in memo_groups.items():
@@ -807,14 +806,14 @@ class AccountStateNode(GraphNode):
             account.balance = account.billing_state.balance
             if growth:
                 investment_returns[account.name] = (
-                    investment_returns.get(account.name, Decimal("0")) + growth
+                    investment_returns.get(account.name, float("0")) + growth
                 )
                 directives.append(
                     f"INVESTMENT RETURN ({account.name} +${growth})"
                 )
         elif account.account_type == "loan":
             state = account.billing_state
-            interest = state.principal_balance * state.apr * Decimal(days) / Decimal("365.25")
+            interest = state.principal_balance * state.apr * float(days) / float("365.25")
             state.interest_balance += interest
             AccountSet._sync_debt_account_from_billing_state(account)
             if interest:
@@ -853,18 +852,18 @@ class AccountStateNode(GraphNode):
                 account.billing_state = account.billing_state.roll_cycle(day)
                 AccountSet._sync_debt_account_from_billing_state(account)
                 if account.name in self.current_statement_policy_cards:
-                    payment = Decimal("0")
+                    payment = float("0")
                 else:
                     payment = min(
                         account.billing_state.remaining_minimum_payment_due(),
                         account.balance,
-                        Decimal(str(account_set._get_account_by_name(checking_name).balance)),
+                        float(str(account_set._get_account_by_name(checking_name).balance)),
                     )
             else:
                 payment = min(
                     account.billing_state.minimum_payment,
                     account.billing_state.balance,
-                    Decimal(str(account_set._get_account_by_name(checking_name).balance)),
+                    float(str(account_set._get_account_by_name(checking_name).balance)),
                 )
             if payment > 0:
                 account_set.executeTransaction(
@@ -895,10 +894,10 @@ class AccountStateNode(GraphNode):
             # summing unrounded daily account deltas from snapshots.
             total = sum(
                 (
-                    Decimal(str(values.get(name, 0)))
+                    float(str(values.get(name, 0)))
                     for values in interval["_Investment Returns"]
                 ),
-                Decimal("0"),
+                float("0"),
             )
             if total:
                 retained.append(f"INVESTMENT RETURN ({name} +${total})")
@@ -906,10 +905,10 @@ class AccountStateNode(GraphNode):
 
     @staticmethod
     def _maximum_partial(account_set, event):
-        low, high = Decimal("0"), event.amount
-        best = Decimal("0")
+        low, high = float("0"), event.amount
+        best = float("0")
         for _ in range(60):
-            middle = (low + high) / Decimal("2")
+            middle = (low + high) / float("2")
             candidate = copy.deepcopy(account_set)
             try:
                 executed = candidate.executeTransaction(
@@ -918,15 +917,15 @@ class AccountStateNode(GraphNode):
                     enforce_policy_minimum=event.priority > 1,
                 )
             except AccountBoundaryError:
-                executed = Decimal("0")
-            if Decimal(str(executed or 0)) > 0:
+                executed = float("0")
+            if float(str(executed or 0)) > 0:
                 best, low = middle, middle
             else:
                 high = middle
         if best > 0:
-            return Decimal(str(account_set.executeTransaction(
+            return float(str(account_set.executeTransaction(
                 event.account_from, event.account_to, best,
                 income_flag=event.income_flag,
                 enforce_policy_minimum=event.priority > 1,
             )))
-        return Decimal("0")
+        return float("0")

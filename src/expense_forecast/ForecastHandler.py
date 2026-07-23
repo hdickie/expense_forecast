@@ -25,6 +25,7 @@ from expense_forecast.AccountSet import (
     AccountBoundaryError,
     AccountSet,
     MONEY_BOUNDARY_TOLERANCE,
+    ROUNDING_ERROR_TOLERANCE,
 )
 from expense_forecast.LineItemSet import LineItemSet
 # from expense_forecast.ForecastSetInitialConditions import ForecastSetInitialConditions
@@ -40,7 +41,6 @@ import hashlib
 import json
 from pprint import pformat
 from datetime import date
-from decimal import Decimal
 from typing import Any
 import datetime
 import calendar
@@ -104,9 +104,6 @@ logger = setup_logger(__name__, project_log_file(__name__))
 
 # Show all decimal places in data frames
 pd.set_option("display.precision", 2)
-ROUNDING_ERROR_TOLERANCE = (
-    0.0000000001  # 10 places? overkill but I want to see if it works
-)
 #TODO #Codex-write-doctstring-OK
 def _stable_df_payload(df):
     """
@@ -237,6 +234,7 @@ class ForecastHandler:
         milestone_set: MilestoneSet = None,
         include_debug_columns=False,
         engine="legacy",
+        graph_trace=False,
     ) -> ExpenseForecastResult:
         if engine not in {
             "legacy", "graph", "graph v2", "shadow", "shadow v2"
@@ -244,6 +242,11 @@ class ForecastHandler:
             raise ValueError(
                 "engine must be 'legacy', 'graph', 'graph v2', 'shadow', "
                 "or 'shadow v2'"
+            )
+        if graph_trace and engine not in {"graph v2", "shadow v2"}:
+            raise ValueError(
+                "graph_trace is supported only with engine='graph v2' "
+                "or engine='shadow v2'"
             )
         if engine == "graph v2":
             from expense_forecast.MemoizedDynamicDependencyGraphEngine import (
@@ -253,7 +256,11 @@ class ForecastHandler:
             resolved_milestones = milestone_set or getattr(
                 IO, "milestone_set", MilestoneSet()
             )
-            return ExecutionEngine.runForecast(IO, resolved_milestones)
+            return ExecutionEngine.runForecast(
+                IO,
+                resolved_milestones,
+                graph_trace=graph_trace,
+            )
         if engine == "shadow v2":
             from expense_forecast.MemoizedDynamicDependencyGraphEngine import (
                 ExecutionEngine,
@@ -274,7 +281,9 @@ class ForecastHandler:
             scenario = IO.forecast_name or IO.unique_id
             try:
                 graph_output = ExecutionEngine.runForecast(
-                    IO, resolved_milestones
+                    IO,
+                    resolved_milestones,
+                    graph_trace=graph_trace,
                 )
             except Exception as error:
                 raise GraphV2ShadowMismatchError(
@@ -727,7 +736,7 @@ class ForecastHandler:
                 return
             days = (event_date - cursor).days
             state = account.billing_state
-            interest = state.principal_balance * state.apr * Decimal(days) / Decimal("365.25")
+            interest = state.principal_balance * state.apr * float(days) / float("365.25")
             state.interest_balance += interest
             loan_interest_cursor[account.name] = event_date
             sync(account)
@@ -792,10 +801,10 @@ class ForecastHandler:
                     enforce_policy_minimum=int(txn["Priority"]) > 1,
                 )
             except AccountBoundaryError:
-                return None, Decimal("0")
+                return None, float("0")
             if executed is None:
-                executed = Decimal(str(amount))
-            return candidate_account_set, Decimal(str(executed))
+                executed = float(str(amount))
+            return candidate_account_set, float(str(executed))
 
         def attempt_transaction(base_account_set, txn, amount):
             """Execute against a copy and recursively validate the suffix."""
@@ -803,14 +812,14 @@ class ForecastHandler:
                 base_account_set, txn, amount
             )
             if candidate_account_set is None:
-                return None, Decimal("0")
+                return None, float("0")
             if executed <= MONEY_BOUNDARY_TOLERANCE:
-                return candidate_account_set, Decimal("0")
+                return candidate_account_set, float("0")
             feasible, _ = future_lower_priorities_are_feasible(
                 candidate_account_set, txn
             )
             if not feasible:
-                return None, Decimal("0")
+                return None, float("0")
             return candidate_account_set, executed
 
         def constrained_transaction(base_account_set, txn, amount):
@@ -837,7 +846,7 @@ class ForecastHandler:
                 return None, None, "balance-dependent destination"
 
             source_name = source_account.name
-            source_floor = Decimal(str(
+            source_floor = float(str(
                 source_account.effective_policy_min_balance
                 if int(txn["Priority"]) > 1
                 else source_account.min_balance
@@ -845,7 +854,7 @@ class ForecastHandler:
             if str(source).startswith("CHECKING_ABOVE:"):
                 source_floor = max(
                     source_floor,
-                    Decimal(str(source).split(":", 1)[1]),
+                    float(str(source).split(":", 1)[1]),
                 )
 
             maximum_need, binding_date, affected_nodes = (
@@ -855,11 +864,11 @@ class ForecastHandler:
             )
 
             available = (
-                Decimal(str(source_account.balance))
+                float(str(source_account.balance))
                 - source_floor
                 - maximum_need
             )
-            destination_capacity = Decimal("Infinity")
+            destination_capacity = float("Infinity")
             if str(destination).startswith("ALL_"):
                 debt_type = (
                     "loan" if str(destination).startswith("ALL_LOANS") else "credit"
@@ -869,7 +878,7 @@ class ForecastHandler:
                     if account.account_type == debt_type
                 ]
                 if any(
-                    Decimal(str(account.billing_state.apr)) != 0
+                    float(str(account.billing_state.apr)) != 0
                     for account in debt_accounts
                 ):
                     return None, None, "nonlinear debt ledger"
@@ -878,18 +887,18 @@ class ForecastHandler:
                     txn["Date"], txn["Priority"],
                 )
                 destination_capacity = max(
-                    Decimal("0"),
+                    float("0"),
                     sum(
-                        (Decimal(str(account.balance)) for account in debt_accounts),
-                        Decimal("0"),
+                        (float(str(account.balance)) for account in debt_accounts),
+                        float("0"),
                     ) - future_payments,
                 )
             safe_amount = max(
-                Decimal("0"),
-                min(Decimal(str(amount)), available, destination_capacity),
+                float("0"),
+                min(float(str(amount)), available, destination_capacity),
             )
             return safe_amount, {
-                "available_headroom": float(max(Decimal("0"), available)),
+                "available_headroom": float(max(float("0"), available)),
                 "binding_account": source_name,
                 "binding_date": binding_date,
                 "binding_constraint": "future mandatory reserve",
@@ -898,11 +907,11 @@ class ForecastHandler:
 
         def maximum_partial_transaction(base_account_set, txn):
             """Find the largest currently valid amount without mutating state."""
-            requested_amount = Decimal(str(txn["Amount"]))
-            low = Decimal("0")
+            requested_amount = float(str(txn["Amount"]))
+            low = float("0")
             high = requested_amount
             best_account_set = None
-            best_executed_amount = Decimal("0")
+            best_executed_amount = float("0")
 
             for _ in range(60):
                 # This search determines persisted debt/payment state, not
@@ -912,9 +921,9 @@ class ForecastHandler:
                 # rounding. Resolve the executable boundary to sub-cent
                 # precision and leave presentation rounding to the result
                 # materializer.
-                if high - low <= Decimal("0.000001"):
+                if high - low <= float("0.000001"):
                     break
-                candidate_amount = (low + high) / Decimal("2")
+                candidate_amount = (low + high) / float("2")
                 candidate_account_set, executed_amount = attempt_current_transaction(
                     base_account_set,
                     txn,
@@ -928,7 +937,7 @@ class ForecastHandler:
                 best_executed_amount = executed_amount
 
             if best_account_set is None:
-                return None, Decimal("0")
+                return None, float("0")
 
             # Preserve recursive future feasibility without performing a full
             # suffix run on every binary-search step. A boundary violation is
@@ -942,18 +951,18 @@ class ForecastHandler:
                     return best_account_set, best_executed_amount
                 reduction = getattr(error, "boundary_shortfall", None)
                 if reduction is None or reduction <= MONEY_BOUNDARY_TOLERANCE:
-                    return None, Decimal("0")
+                    return None, float("0")
                 revised_amount = max(
-                    Decimal("0"), best_executed_amount - Decimal(str(reduction))
+                    float("0"), best_executed_amount - float(str(reduction))
                 )
                 if revised_amount <= MONEY_BOUNDARY_TOLERANCE:
-                    return None, Decimal("0")
+                    return None, float("0")
                 best_account_set, best_executed_amount = attempt_current_transaction(
                     base_account_set, txn, revised_amount
                 )
                 if best_account_set is None:
-                    return None, Decimal("0")
-            return None, Decimal("0")
+                    return None, float("0")
+            return None, float("0")
 
         def next_income_date_after(transaction_date):
             return next(
@@ -972,7 +981,7 @@ class ForecastHandler:
             if output_date.day == 1:
                 for account in account_set.accounts:
                     if account.account_type == "loan":
-                        account.billing_state.billing_cycle_payment_balance = Decimal("0")
+                        account.billing_state.billing_cycle_payment_balance = float("0")
             if schedule.empty:
                 interval_transactions = []
             else:
@@ -1200,8 +1209,8 @@ class ForecastHandler:
                     minimum_payment = min(
                         card.billing_state.remaining_minimum_payment_due(),
                         card.balance,
-                        Decimal(str(checking.balance))
-                        - Decimal(str(checking.min_balance)),
+                        float(str(checking.balance))
+                        - float(str(checking.min_balance)),
                     )
                     if minimum_payment > 0:
                         account_set.executeTransaction(
@@ -1233,10 +1242,10 @@ class ForecastHandler:
                 )
                 if account_to_obj is not None and account_to_obj.account_type == "credit":
                     directives.append(
-                        f"ADDTL CC PAYMENT ({account_to} -${executed_amount})"
+                        f"ADDTL CC PAYMENT ({account_to} -${executed_amount:g})"
                     )
                 key = (txn["Memo"], account_from, account_to)
-                count, total = memo_groups.get(key, (0, Decimal("0")))
+                count, total = memo_groups.get(key, (0, float("0")))
                 memo_groups[key] = (count + 1, total + executed_amount)
 
             for account in account_set.accounts:
@@ -1261,8 +1270,8 @@ class ForecastHandler:
                     payment = min(
                         account.billing_state.minimum_payment,
                         account.billing_state.balance,
-                        Decimal(str(checking.balance))
-                        - Decimal(str(checking.min_balance)),
+                        float(str(checking.balance))
+                        - float(str(checking.min_balance)),
                     )
                 else:
                     interest = account.billing_state.interest_accrued_this_cycle()
@@ -1275,8 +1284,8 @@ class ForecastHandler:
                     payment = min(
                         account.billing_state.remaining_minimum_payment_due(),
                         account.balance,
-                        Decimal(str(checking.balance))
-                        - Decimal(str(checking.min_balance)),
+                        float(str(checking.balance))
+                        - float(str(checking.min_balance)),
                     )
 
                 if payment > 0:
@@ -2116,7 +2125,7 @@ class ForecastHandler:
                         card.billing_state.current_statement_balance
                     ),
                     max(
-                        Decimal("0"),
+                        float("0"),
                         AccountSet._money(checking.balance)
                         - AccountSet._money(checking.min_balance),
                     ),
@@ -2654,10 +2663,10 @@ class ForecastHandler:
             # successful transaction and the original synthetic proposal is
             # incorrectly confirmed and rendered as a $0 memo.
             if str(source_name).startswith("CHECKING_ABOVE:"):
-                threshold = Decimal(str(source_name).split(":", 1)[1])
+                threshold = float(str(source_name).split(":", 1)[1])
                 executable_surplus = max(
-                    Decimal("0"),
-                    Decimal(str(source_account.balance)) - threshold,
+                    float("0"),
+                    float(str(source_account.balance)) - threshold,
                 )
                 if executable_surplus <= MONEY_BOUNDARY_TOLERANCE:
                     new_skipped_df = pd.concat(
@@ -2666,7 +2675,7 @@ class ForecastHandler:
                     )
                     continue
                 proposed_row["Amount"] = min(
-                    Decimal(str(proposed_row["Amount"])),
+                    float(str(proposed_row["Amount"])),
                     executable_surplus,
                 )
 
@@ -2677,11 +2686,11 @@ class ForecastHandler:
             policy_floor = getattr(source_account, "policy_min_balance", None)
             if policy_floor is not None and int(proposed_row["Priority"]) > 1:
                 policy_headroom = max(
-                    Decimal("0"),
-                    Decimal(str(source_account.balance))
-                    - Decimal(str(source_account.effective_policy_min_balance)),
+                    float("0"),
+                    float(str(source_account.balance))
+                    - float(str(source_account.effective_policy_min_balance)),
                 )
-                requested = Decimal(str(proposed_row["Amount"]))
+                requested = float(str(proposed_row["Amount"]))
                 if requested > policy_headroom:
                     if (
                         bool(proposed_row["Partial_Payment_Allowed"])
@@ -2701,8 +2710,8 @@ class ForecastHandler:
                 destination_account = account_set._get_account_by_name(savings_name)
                 destination_column = savings_name
                 policy_destination_headroom = max(
-                    Decimal("0"),
-                    Decimal(str(threshold)) - Decimal(str(destination_account.balance)),
+                    float("0"),
+                    float(str(threshold)) - float(str(destination_account.balance)),
                 )
                 if policy_destination_headroom <= MONEY_BOUNDARY_TOLERANCE:
                     new_skipped_df = pd.concat(
@@ -2724,10 +2733,10 @@ class ForecastHandler:
             result = None
             if deterministic_endpoints and source_name in forecast_df.columns:
                 future_mask = forecast_df["Date"] >= d
-                source_headroom = Decimal(str(
+                source_headroom = float(str(
                     forecast_df.loc[future_mask, source_name].min()
-                )) - Decimal(str(source_account.min_balance))
-                destination_headroom = Decimal("Infinity")
+                )) - float(str(source_account.min_balance))
+                destination_headroom = float("Infinity")
                 if policy_destination_headroom is not None:
                     destination_headroom = policy_destination_headroom
                 if destination_account is not None and not math.isinf(
@@ -2735,19 +2744,19 @@ class ForecastHandler:
                 ):
                     destination_headroom = min(
                         destination_headroom,
-                        Decimal(str(destination_account.max_balance)) - Decimal(str(
+                        float(str(destination_account.max_balance)) - float(str(
                             forecast_df.loc[future_mask, destination_column].max()
                         )),
                     )
                 safe_amount = max(
-                    Decimal("0"),
+                    float("0"),
                     min(
-                        Decimal(str(proposed_row["Amount"])),
+                        float(str(proposed_row["Amount"])),
                         source_headroom,
                         destination_headroom,
                     ),
                 )
-                requested_amount = Decimal(str(proposed_row["Amount"]))
+                requested_amount = float(str(proposed_row["Amount"]))
                 if safe_amount >= requested_amount - MONEY_BOUNDARY_TOLERANCE:
                     result = forecast_df.copy()
                     result.loc[future_mask, source_name] = (
@@ -2775,7 +2784,7 @@ class ForecastHandler:
                         )
 
                 if result is not None:
-                    amount = Decimal(str(proposed_row["Amount"]))
+                    amount = float(str(proposed_row["Amount"]))
                     date_mask = result["Date"] == d
                     if str(destination_name).startswith("SAVINGS_BELOW:"):
                         result.loc[date_mask, "Memo"] += (
@@ -2890,8 +2899,8 @@ class ForecastHandler:
                     if shortfall is None or shortfall <= MONEY_BOUNDARY_TOLERANCE:
                         break
                     reduced_amount = max(
-                        Decimal("0"),
-                        Decimal(str(reduced_amount)) - Decimal(str(shortfall)),
+                        float("0"),
+                        float(str(reduced_amount)) - float(str(shortfall)),
                     )
                     logger.info(
                         "%s recursive suffix rejected the partial transaction; "
@@ -3259,7 +3268,7 @@ class ForecastHandler:
         savings_threshold = None
         if str(destination_name).startswith("SAVINGS_BELOW:"):
             _, threshold_text, destination_name = str(destination_name).split(":", 2)
-            savings_threshold = Decimal(threshold_text)
+            savings_threshold = float(threshold_text)
 
         from_basename_sel_vec = account_base_names == source_name
         to_basename_sel_vec = account_base_names == destination_name
@@ -3351,17 +3360,17 @@ class ForecastHandler:
                 (a for a in account_set.accounts if a.name == account_name), None
             )
             if account is None or account_name not in forecast_df.columns:
-                return Decimal("0")
+                return float("0")
             future_rows = forecast_df.loc[forecast_df["Date"] >= d, account_name]
             if future_rows.empty:
-                future_balance = Decimal(str(account.balance))
+                future_balance = float(str(account.balance))
             else:
                 future_balance = min(
-                    Decimal(str(value)) for value in future_rows.dropna().tolist()
+                    float(str(value)) for value in future_rows.dropna().tolist()
                 )
             capacity = max(
-                Decimal("0"),
-                future_balance - Decimal(str(account.min_balance)),
+                float("0"),
+                future_balance - float(str(account.min_balance)),
             )
             # Exact forecast balance columns are captured before the billing-
             # cycle minimum payment on some boundary rows. Reserve that known
@@ -3376,15 +3385,15 @@ class ForecastHandler:
                     log_stack_depth=log_stack_depth,
                 )
                 capacity = max(
-                    Decimal("0"), capacity - Decimal(str(future_minimum))
+                    float("0"), capacity - float(str(future_minimum))
                 )
             return capacity
 
         if savings_threshold is not None:
             destination_account = account_set._get_account_by_name(destination_name)
             dest_bound = max(
-                Decimal("0"),
-                savings_threshold - Decimal(str(destination_account.balance)),
+                float("0"),
+                savings_threshold - float(str(destination_account.balance)),
             )
         elif destination_name in {"ALL_CREDIT_CARDS", "ALL_CREDIT_CARDS_SNOWBALL"}:
             dest_bound = sum(
@@ -3393,7 +3402,7 @@ class ForecastHandler:
                     for account in account_set.accounts
                     if account.account_type == "credit"
                 ),
-                Decimal("0"),
+                float("0"),
             )
         elif destination_name in {"ALL_LOANS", "ALL_LOANS_SNOWBALL"}:
             dest_bound = sum(
@@ -3402,7 +3411,7 @@ class ForecastHandler:
                     for account in account_set.accounts
                     if account.account_type == "loan"
                 ),
-                Decimal("0"),
+                float("0"),
             )
         elif dest_account_type == "credit":
             dest_bound = future_debt_capacity(destination_name)
@@ -3543,7 +3552,7 @@ class ForecastHandler:
             balance = account_row["Balance"]
 
             if account_name in forecast_df.columns:
-                if isinstance(balance, Decimal) and forecast_df[account_name].dtype != object:
+                if isinstance(balance, float) and forecast_df[account_name].dtype != object:
                     forecast_df[account_name] = forecast_df[account_name].astype(object)
                 forecast_df.loc[forecast_df["Date"] == d, account_name] = (
                     balance
@@ -4732,7 +4741,7 @@ class ForecastHandler:
             account.balance = relevant_balance
 
             if account.account_type == "investment":
-                account.billing_state.balance = Decimal(str(relevant_balance))
+                account.billing_state.balance = float(str(relevant_balance))
             elif account.account_type == "credit":
                 billing_state = account.billing_state
                 curr_column = f"{account.name}: Curr Stmt Bal"
@@ -4744,22 +4753,22 @@ class ForecastHandler:
 
                 billing_state_updated = False
                 if curr_column in relevant_forecast_day.columns:
-                    billing_state.current_statement_balance = Decimal(
+                    billing_state.current_statement_balance = float(
                         str(relevant_forecast_day[curr_column].iat[0])
                     )
                     billing_state_updated = True
                 if prev_column in relevant_forecast_day.columns:
-                    billing_state.previous_statement_balance = Decimal(
+                    billing_state.previous_statement_balance = float(
                         str(relevant_forecast_day[prev_column].iat[0])
                     )
                     billing_state_updated = True
                 if payment_column in relevant_forecast_day.columns:
-                    billing_state.billing_cycle_payment_balance = Decimal(
+                    billing_state.billing_cycle_payment_balance = float(
                         str(relevant_forecast_day[payment_column].iat[0])
                     )
                     billing_state_updated = True
                 if end_of_previous_cycle_column in relevant_forecast_day.columns:
-                    billing_state.end_of_previous_cycle_balance = Decimal(
+                    billing_state.end_of_previous_cycle_balance = float(
                         str(relevant_forecast_day[end_of_previous_cycle_column].iat[0])
                     )
                     billing_state_updated = True
@@ -4773,17 +4782,17 @@ class ForecastHandler:
 
                 billing_state_updated = False
                 if principal_column in relevant_forecast_day.columns:
-                    billing_state.principal_balance = Decimal(
+                    billing_state.principal_balance = float(
                         str(relevant_forecast_day[principal_column].iat[0])
                     )
                     billing_state_updated = True
                 if interest_column in relevant_forecast_day.columns:
-                    billing_state.interest_balance = Decimal(
+                    billing_state.interest_balance = float(
                         str(relevant_forecast_day[interest_column].iat[0])
                     )
                     billing_state_updated = True
                 if payment_column in relevant_forecast_day.columns:
-                    billing_state.billing_cycle_payment_balance = Decimal(
+                    billing_state.billing_cycle_payment_balance = float(
                         str(relevant_forecast_day[payment_column].iat[0])
                     )
                     billing_state_updated = True
@@ -7781,7 +7790,7 @@ class ForecastHandler:
         violations = account_deltas[is_debt_component] > 0
         checking_deltas = account_deltas[A_df["Account_Type"].eq("checking")]
         checking_created_value = (
-            sum(Decimal(str(delta)) for delta in checking_deltas)
+            sum(float(str(delta)) for delta in checking_deltas)
             > MONEY_BOUNDARY_TOLERANCE
         )
 
@@ -7798,7 +7807,7 @@ class ForecastHandler:
             )
 
         account_deltas_list = account_deltas.tolist()
-        account_delta_total = sum(Decimal(str(delta)) for delta in account_deltas_list)
+        account_delta_total = sum(float(str(delta)) for delta in account_deltas_list)
 
         if account_delta_total == 0:
             # log_in_color(
@@ -11818,7 +11827,7 @@ class ForecastHandler:
         fig.write_image(output_path)
 
     @staticmethod
-    def get_delta_explanation_sentence(column_name: str, delta: Decimal, length_of_forecast_in_days: int) -> str:
+    def get_delta_explanation_sentence(column_name: str, delta: float, length_of_forecast_in_days: int) -> str:
         avg = delta / length_of_forecast_in_days
         if delta > 0:
             return f"{column_name} rose by ${delta:,.2f} over {length_of_forecast_in_days} days, averaging ${avg:,.2f} per day."
@@ -11828,9 +11837,9 @@ class ForecastHandler:
             return f"{column_name} fell by ${delta:,.2f} over {length_of_forecast_in_days} days, averaging ${avg:,.2f} per day."
 
     @staticmethod
-    def get_last_row_first_row_delta(df: pd.DataFrame, column_name: str) -> Decimal:
-        # Decimal does not accept NumPy scalar types directly.
-        return Decimal(str(
+    def get_last_row_first_row_delta(df: pd.DataFrame, column_name: str) -> float:
+        # float does not accept NumPy scalar types directly.
+        return float(str(
             df[column_name].iat[-1] - df[column_name].iat[0]
         ))
 
@@ -11845,18 +11854,483 @@ class ForecastHandler:
         # TODO handle plural of minute(s) and second(s) in get_time_elapsed_string i just don't want to do it rn 
         return f"{mins} minute and {secs} seconds"
 
-    def generateComparisonReport(self, E: ExpenseForecastResult) -> str:
-        """
-        Generate a self-contained HTML report for one ExpenseForecastResult.
+    @classmethod
+    def generateComparisonReport(
+        cls,
+        E_1: ExpenseForecastResult,
+        E_2: ExpenseForecastResult,
+        report_name: str = "Comparison Report",
+        output_path=None,
+        write_file: bool = True,
+    ) -> str:
+        """Generate a self-contained comparison report for two forecasts."""
+        started_at = perf_counter()
 
-        This method assumes scalar values and pandas DataFrames are available as
-        attributes on E. Adapt scalar_value() and dataframe_value() if E exposes
-        report data through another interface.
-        """
+        def normalized_dates(result):
+            if "Date" not in result.forecast_df.columns:
+                raise ValueError(
+                    "Comparison reports require a Date forecast column"
+                )
+            return [
+                cls._normalize_date_value(value)
+                for value in result.forecast_df["Date"]
+            ]
 
+        dates_1 = normalized_dates(E_1)
+        dates_2 = normalized_dates(E_2)
+        if dates_1 != dates_2:
+            raise ValueError(
+                "Comparison reports require matching forecast date ranges "
+                "and row dates"
+            )
 
+        def account_schema(result):
+            return [
+                (account.name, account.account_type)
+                for account in result.initial_conditions.initial_account_set.accounts
+            ]
 
-        return ""
+        schema_1 = account_schema(E_1)
+        schema_2 = account_schema(E_2)
+        if dict(schema_1) != dict(schema_2):
+            raise ValueError(
+                "Comparison reports require matching top-level account names "
+                f"and types; baseline={schema_1!r}, comparison={schema_2!r}"
+            )
+
+        # Validate report accounting only after compatibility checks so an
+        # incompatible result produces the comparison-specific error rather
+        # than failing while its summaries are being reparsed.
+        cls._assert_report_accounting_invariants(E_1)
+        cls._assert_report_accounting_invariants(E_2)
+
+        def identity(result):
+            initial = result.initial_conditions
+            return {
+                "name": initial.forecast_name or "Unnamed Forecast",
+                "id": result.unique_id,
+                "date_range": (
+                    f"{initial.start_date:%Y-%m-%d} to "
+                    f"{initial.end_date:%Y-%m-%d}"
+                ),
+            }
+
+        identity_1 = identity(E_1)
+        identity_2 = identity(E_2)
+        final_1 = E_1.forecast_df.iloc[-1]
+        final_2 = E_2.forecast_df.iloc[-1]
+        account_deltas = []
+        for account_name, account_type in schema_1:
+            if (
+                account_name not in E_1.forecast_df.columns
+                or account_name not in E_2.forecast_df.columns
+            ):
+                raise ValueError(
+                    f"Forecast output is missing account column {account_name!r}"
+                )
+            baseline = float(final_1[account_name])
+            comparison = float(final_2[account_name])
+            account_deltas.append({
+                "account": account_name,
+                "account_type": account_type,
+                "baseline": baseline,
+                "comparison": comparison,
+                "delta": comparison - baseline,
+            })
+
+        def flatten_milestones(result):
+            flattened = {}
+            for group in result.milestone_results or []:
+                if isinstance(group, dict):
+                    flattened.update(group)
+            return flattened
+
+        def milestone_date(value):
+            if value is None or str(value).strip().lower() in {
+                "", "none", "nat"
+            }:
+                return None
+            try:
+                return pd.Timestamp(value).date()
+            except (TypeError, ValueError):
+                return None
+
+        milestones_1 = flatten_milestones(E_1)
+        milestones_2 = flatten_milestones(E_2)
+        milestone_deltas = []
+        milestone_statuses = []
+        for milestone_name in sorted(set(milestones_1) | set(milestones_2)):
+            achieved_1 = milestone_date(milestones_1.get(milestone_name))
+            achieved_2 = milestone_date(milestones_2.get(milestone_name))
+            if achieved_1 is not None and achieved_2 is not None:
+                milestone_deltas.append({
+                    "milestone": milestone_name,
+                    "baseline_date": achieved_1.isoformat(),
+                    "comparison_date": achieved_2.isoformat(),
+                    "delta_days": (achieved_2 - achieved_1).days,
+                })
+            else:
+                milestone_statuses.append({
+                    "milestone": milestone_name,
+                    "baseline": (
+                        achieved_1.isoformat() if achieved_1 else "Not achieved"
+                    ),
+                    "comparison": (
+                        achieved_2.isoformat() if achieved_2 else "Not achieved"
+                    ),
+                })
+
+        def scenario_metadata(result):
+            line_items = (
+                result.resolved_line_item_set
+                or result.initial_conditions.initial_line_item_set
+            )
+            timelines = getattr(line_items, "scenario_timelines", {}) or {}
+            selections = getattr(line_items, "scenario_selections", {}) or {}
+            rows = []
+            for dimension_name, timeline in timelines.items():
+                for entry in timeline:
+                    rows.append({
+                        "dimension": dimension_name,
+                        "choice": entry.get("choice", ""),
+                        "start": str(entry.get("effective_date", "")),
+                        "end": str(entry.get("end_date") or "Forecast end"),
+                        "transition": entry.get("transition_name"),
+                        "milestone": entry.get("trigger_milestone"),
+                    })
+            dimensions_with_timelines = {
+                row["dimension"] for row in rows
+            }
+            for dimension_name, choice in selections.items():
+                if dimension_name not in dimensions_with_timelines:
+                    rows.append({
+                        "dimension": dimension_name,
+                        "choice": choice,
+                        "start": identity(result)["date_range"].split(" to ")[0],
+                        "end": identity(result)["date_range"].split(" to ")[1],
+                        "transition": None,
+                        "milestone": None,
+                    })
+            return rows
+
+        def policy_metadata(result):
+            """Pair configured policies with their first activation/execution."""
+            rows = []
+            policy_set = getattr(result.initial_conditions, "policy_set", None)
+            for policy in getattr(policy_set, "policies", []):
+                policy_result = result.policy_results.get(
+                    policy.policy_key, {}
+                )
+                activation_date = policy_result.get("activation_date")
+
+                # Allocation policies do not all expose an explicit activation
+                # field yet. Their first confirmed synthetic transaction is
+                # the observable date on which they became active.
+                if activation_date in (None, "None"):
+                    confirmed = result.confirmed_df
+                    if (
+                        confirmed is not None
+                        and not confirmed.empty
+                        and {"Date", "Memo"}.issubset(confirmed.columns)
+                    ):
+                        matching = confirmed.loc[
+                            confirmed["Memo"].astype(str).str.startswith(
+                                f"POLICY {policy.policy_key}"
+                            ),
+                            "Date",
+                        ]
+                        if not matching.empty:
+                            activation_date = min(
+                                cls._normalize_date_value(value)
+                                for value in matching
+                            )
+
+                policy_name = str(policy.policy_name).replace("_", " ").title()
+                if isinstance(policy, MinimumCheckingBalancePolicy):
+                    target = float(str(policy.target))
+                    rendered_target = f"{target:.2f}".rstrip("0").rstrip(".")
+                    policy_name += f" ${rendered_target}"
+                rows.append({
+                    "name": policy_name,
+                    "priority": policy.priority,
+                    "status": str(
+                        policy_result.get("status", "not evaluated")
+                    ).replace("_", " ").title(),
+                    "activation_date": (
+                        cls._normalize_date_value(activation_date).isoformat()
+                        if activation_date not in (None, "None")
+                        else None
+                    ),
+                })
+            return rows
+
+        metadata_1 = scenario_metadata(E_1)
+        metadata_2 = scenario_metadata(E_2)
+        shared_choices = {
+            (row["dimension"], row["choice"])
+            for row in metadata_1
+        } & {
+            (row["dimension"], row["choice"])
+            for row in metadata_2
+        }
+
+        def scenario_card(result, side_label, rows):
+            rows = [
+                row for row in rows
+                if (row["dimension"], row["choice"]) not in shared_choices
+            ]
+            if not rows:
+                body = '<p class="empty-state">No scenario choices recorded.</p>'
+            else:
+                rendered_rows = []
+                for row in rows:
+                    transition = ""
+                    if row["transition"]:
+                        transition = (
+                            '<span class="timeline-trigger">'
+                            f"via {escape(str(row['transition']))}"
+                            + (
+                                f" · {escape(str(row['milestone']))}"
+                                if row["milestone"] else ""
+                            )
+                            + "</span>"
+                        )
+                    rendered_rows.append(
+                        '<li><span class="timeline-dimension">'
+                        f"{escape(str(row['dimension']))}</span>"
+                        '<strong>' + escape(str(row["choice"])) + '</strong>'
+                        '<span class="timeline-range">'
+                        f"{escape(str(row['start']))} – {escape(str(row['end']))}"
+                        "</span>" + transition + "</li>"
+                    )
+                body = '<ul class="timeline-list">' + "".join(rendered_rows) + "</ul>"
+            policies = policy_metadata(result)
+            if not policies:
+                policy_body = (
+                    '<p class="empty-state">No policies configured.</p>'
+                )
+            else:
+                policy_rows = []
+                for policy in policies:
+                    activation_text = (
+                        f"Active from {policy['activation_date']}"
+                        if policy["activation_date"]
+                        else "No activation recorded"
+                    )
+                    policy_rows.append(
+                        '<li><span class="timeline-dimension">'
+                        f"Priority {escape(str(policy['priority']))}</span>"
+                        f"<strong>{escape(policy['name'])}</strong>"
+                        '<span class="timeline-range">'
+                        f"{escape(activation_text)} · "
+                        f"{escape(policy['status'])}</span></li>"
+                    )
+                policy_body = (
+                    '<ul class="timeline-list">'
+                    + "".join(policy_rows)
+                    + "</ul>"
+                )
+            return (
+                '<aside class="scenario-card card"><p class="eyebrow">'
+                f"{escape(side_label)}</p>{body}"
+                '<div class="card-divider"></div>'
+                '<p class="eyebrow policy-heading">Policies</p>'
+                f"{policy_body}</aside>"
+            )
+
+        unmatched_rows = "".join(
+            "<tr>"
+            f"<td>{escape(str(row['milestone']))}</td>"
+            f"<td>{escape(row['baseline'])}</td>"
+            f"<td>{escape(row['comparison'])}</td>"
+            "</tr>"
+            for row in milestone_statuses
+        )
+        unmatched_section = (
+            '<div class="status-table-wrap"><h3>Unmatched milestones</h3>'
+            '<table><thead><tr><th>Milestone</th><th>Baseline</th>'
+            '<th>Comparison</th></tr></thead><tbody>'
+            f"{unmatched_rows}</tbody></table></div>"
+            if milestone_statuses else ""
+        )
+
+        comparison_data = json.dumps(
+            {
+                "accounts": account_deltas,
+                "milestones": milestone_deltas,
+                "baseline_name": identity_1["name"],
+                "comparison_name": identity_2["name"],
+            },
+            ensure_ascii=False,
+        ).replace("<", "\\u003c")
+        waterfall_tabs = "".join(
+            '<button type="button" class="waterfall-tab'
+            + (" is-active" if index == 0 else "")
+            + '" data-account="'
+            + escape(row["account"], quote=True)
+            + '">'
+            + escape(row["account"])
+            + "</button>"
+            for index, row in enumerate(account_deltas)
+        )
+        initial_waterfall_account = (
+            account_deltas[0]["account"] if account_deltas else "Account"
+        )
+        embedded_reports = json.dumps(
+            {
+                "baseline": cls.generateHTMLReport(
+                    E_1,
+                    write_file=False,
+                    comparison_return=True,
+                ),
+                "alternate": cls.generateHTMLReport(
+                    E_2,
+                    write_file=False,
+                    comparison_return=True,
+                ),
+            },
+            ensure_ascii=False,
+        ).replace("<", "\\u003c")
+
+        html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{escape(report_name)}</title>
+<style>
+:root {{ --bg:#f7f7f5; --surface:#fff; --text:#1d1d1f; --muted:#77777d;
+--border:#dedee2; --positive:#2f7d4a; --negative:#b65a5a; --accent:#315c72; }}
+* {{ box-sizing:border-box; }} body {{ margin:0; background:var(--bg); color:var(--text);
+font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif; }}
+.page {{ width:min(1500px,100%); margin:auto; padding:42px clamp(24px,4vw,72px) 72px; }}
+.header {{ display:grid; grid-template-columns:1fr 1.15fr 1fr; align-items:start; gap:24px; }}
+.identity.right {{ text-align:right; }} .identity h1 {{ margin:0; font-size:1.65rem; }}
+.identity p,.subtitle {{ color:var(--muted); margin:7px 0 0; }} .uid {{ font-family:monospace; }}
+.identity-link {{ appearance:none; margin:0; padding:0; border:0; background:none; color:inherit;
+font:inherit; text-align:inherit; cursor:pointer; }} .identity-link:hover {{ color:var(--accent); text-decoration:underline; }}
+.report-title {{ text-align:center; }} .report-title h2 {{ margin:0; font-size:2rem; }}
+.comparison-grid {{ display:grid; grid-template-columns:minmax(210px,1fr) minmax(0,3fr) minmax(210px,1fr);
+gap:24px; align-items:stretch; margin-top:36px; }}
+.card,.chart-card {{ background:var(--surface); border:1px solid var(--border); border-radius:12px;
+padding:20px; box-shadow:0 1px 2px rgba(0,0,0,.025); }}
+.eyebrow {{ margin:0 0 14px; color:var(--muted); font-size:.75rem; text-transform:uppercase;
+letter-spacing:.08em; font-weight:700; }} .timeline-list {{ list-style:none; margin:0; padding:0; }}
+.timeline-list li {{ display:grid; gap:4px; padding:12px 0; border-top:1px solid #ececef; }}
+.timeline-list li:first-child {{ border-top:0; padding-top:0; }} .timeline-dimension,.timeline-range,
+.timeline-trigger,.empty-state {{ color:var(--muted); font-size:.8rem; }}
+.card-divider {{ height:1px; margin:18px 0; background:#dedee2; }} .policy-heading {{ margin-bottom:14px; }}
+.chart-card h2,.section h2 {{ margin:0; font-size:1.2rem; }} .chart-note {{ color:var(--muted); font-size:.82rem; }}
+svg {{ display:block; width:100%; height:auto; overflow:visible; }}
+.section {{ margin-top:32px; }} .section > .chart-card {{ padding:24px; }}
+.status-table-wrap {{ margin-top:22px; }} table {{ width:100%; border-collapse:collapse; }}
+th,td {{ padding:10px 12px; text-align:left; border-bottom:1px solid #ececef; }} th {{ color:var(--muted); }}
+.placeholder {{ min-height:190px; display:grid; place-items:center; border:1px dashed #bfc0c5;
+border-radius:9px; color:var(--muted); background:linear-gradient(135deg,#fafafa,#f1f1ef); }}
+.waterfall-nav {{ display:grid; grid-auto-flow:column; grid-auto-columns:minmax(120px,1fr);
+overflow-x:auto; margin:18px 0 14px; border:1px solid var(--border); border-radius:9px; }}
+.waterfall-tab {{ min-height:42px; border:0; border-left:1px solid var(--border); background:#fafafa;
+color:var(--muted); cursor:pointer; font:inherit; }} .waterfall-tab:first-child {{ border-left:0; }}
+.waterfall-tab.is-active {{ background:var(--accent); color:#fff; }}
+.embedded-report-view {{ position:fixed; inset:0; z-index:20; background:var(--bg); }}
+.embedded-report-view[hidden] {{ display:none; }} .embedded-report-frame {{ width:100%; height:100vh; border:0; display:block; }}
+.axis {{ stroke:#96969b; stroke-width:1; }} .grid {{ stroke:#ececef; stroke-width:1; }}
+.label {{ fill:var(--text); font-size:12px; }} .value {{ fill:var(--muted); font-size:11px; }}
+@media(max-width:900px) {{ .header {{ grid-template-columns:1fr; text-align:left; }}
+.identity.right,.report-title {{ text-align:left; }} .comparison-grid {{ grid-template-columns:1fr; }}
+.chart-card {{ grid-row:1; }} }}
+</style>
+</head>
+<body><main class="page" id="comparison-landing">
+<header class="header">
+<section class="identity"><h1><button type="button" class="identity-link" data-report-view="baseline">{escape(identity_1['name'])}</button></h1><p><button type="button" class="identity-link uid" data-report-view="baseline">{escape(identity_1['id'])}</button></p></section>
+<section class="report-title"><h2>{escape(report_name)}</h2><p class="subtitle">Comparison minus baseline</p><p class="subtitle">{escape(identity_1['date_range'])}</p></section>
+<section class="identity right"><h1><button type="button" class="identity-link" data-report-view="alternate">{escape(identity_2['name'])}</button></h1><p><button type="button" class="identity-link uid" data-report-view="alternate">{escape(identity_2['id'])}</button></p></section>
+</header>
+<section class="comparison-grid">
+{scenario_card(E_1, 'Baseline Only Choices', metadata_1)}
+<div class="chart-card"><h2>Final Account Balance Differences</h2><p class="chart-note">Positive bars mean the comparison balance is higher.</p><svg id="account-chart" viewBox="0 0 900 430" role="img" aria-label="Final account balance deltas"></svg></div>
+{scenario_card(E_2, 'Alternate Choices', metadata_2)}
+</section>
+<section class="section"><div class="chart-card"><h2>Milestone Timing Differences</h2><p class="chart-note">Days relative to baseline: left is earlier, right is later.</p><svg id="milestone-chart" viewBox="0 0 900 280" role="img" aria-label="Milestone timing deltas"></svg>{unmatched_section}</div></section>
+<section class="section"><div class="chart-card"><h2>Waterfall Comparison</h2><nav class="waterfall-nav" aria-label="Waterfall account">{waterfall_tabs}</nav><div class="placeholder" id="waterfall-placeholder"><span><strong id="waterfall-account-name">{escape(initial_waterfall_account)}</strong><br>Waterfall analysis will be added in a future report revision.</span></div></div></section>
+</main>
+<section class="embedded-report-view" id="embedded-baseline" hidden><iframe class="embedded-report-frame" title="{escape(identity_1['name'], quote=True)} report"></iframe></section>
+<section class="embedded-report-view" id="embedded-alternate" hidden><iframe class="embedded-report-frame" title="{escape(identity_2['name'], quote=True)} report"></iframe></section>
+<script id="comparison-data" type="application/json">{comparison_data}</script>
+<script id="embedded-reports-data" type="application/json">{embedded_reports}</script>
+<script>
+(() => {{
+const data=JSON.parse(document.getElementById('comparison-data').textContent);
+const embeddedReports=JSON.parse(document.getElementById('embedded-reports-data').textContent);
+const NS='http://www.w3.org/2000/svg';
+const add=(svg,tag,attrs,text) => {{ const el=document.createElementNS(NS,tag);
+Object.entries(attrs||{{}}).forEach(([k,v])=>el.setAttribute(k,v)); if(text!==undefined)el.textContent=text;
+svg.appendChild(el); return el; }};
+const money=v=>new Intl.NumberFormat('en-US',{{style:'currency',currency:'USD'}}).format(v);
+const accountSvg=document.getElementById('account-chart'), accounts=data.accounts;
+const zeroY=210, max=Math.max(1,...accounts.map(d=>Math.abs(d.delta))), scale=155/max;
+add(accountSvg,'line',{{x1:55,y1:zeroY,x2:875,y2:zeroY,class:'axis'}});
+if(!accounts.length) add(accountSvg,'text',{{x:450,y:215,'text-anchor':'middle',class:'label'}},'No accounts');
+accounts.forEach((d,i)=>{{ const slot=820/accounts.length, width=Math.min(76,slot*.62), x=55+i*slot+(slot-width)/2;
+const height=Math.abs(d.delta)*scale, y=d.delta>=0?zeroY-height:zeroY;
+const bar=add(accountSvg,'rect',{{x,y,width,height:Math.max(2,height),rx:4,fill:d.delta>=0?'#2f7d4a':'#b65a5a'}});
+add(bar,'title',{{}},`${{d.account}}\n${{data.baseline_name}}: ${{money(d.baseline)}}\n${{data.comparison_name}}: ${{money(d.comparison)}}\nDelta: ${{money(d.delta)}}`);
+add(accountSvg,'text',{{x:x+width/2,y:390,'text-anchor':'middle',class:'label'}},d.account);
+add(accountSvg,'text',{{x:x+width/2,y:d.delta>=0?y-8:y+height+16,'text-anchor':'middle',class:'value'}},money(d.delta)); }});
+const milestoneSvg=document.getElementById('milestone-chart'), milestones=data.milestones;
+const height=Math.max(280,80+milestones.length*46); milestoneSvg.setAttribute('viewBox',`0 0 900 ${{height}}`);
+const zeroX=560, dayMax=Math.max(1,...milestones.map(d=>Math.abs(d.delta_days))), dayScale=280/dayMax;
+add(milestoneSvg,'line',{{x1:zeroX,y1:35,x2:zeroX,y2:height-25,class:'axis'}});
+if(!milestones.length) add(milestoneSvg,'text',{{x:450,y:145,'text-anchor':'middle',class:'label'}},'No jointly achieved milestones');
+milestones.forEach((d,i)=>{{ const y=58+i*46, width=Math.abs(d.delta_days)*dayScale, x=d.delta_days>=0?zeroX:zeroX-width;
+add(milestoneSvg,'text',{{x:8,y:y+5,class:'label'}},d.milestone);
+const bar=add(milestoneSvg,'rect',{{x,y:y-13,width:Math.max(2,width),height:24,rx:4,fill:d.delta_days<=0?'#2f7d4a':'#b65a5a'}});
+add(bar,'title',{{}},`${{d.milestone}}\n${{data.baseline_name}}: ${{d.baseline_date}}\n${{data.comparison_name}}: ${{d.comparison_date}}\nDelta: ${{d.delta_days}} days`);
+add(milestoneSvg,'text',{{x:d.delta_days>=0?x+width+8:x-8,y:y+5,'text-anchor':d.delta_days>=0?'start':'end',class:'value'}},`${{d.delta_days}}d`); }});
+document.querySelectorAll('.waterfall-tab').forEach(button => {{
+button.addEventListener('click', () => {{
+document.querySelectorAll('.waterfall-tab').forEach(candidate => candidate.classList.toggle('is-active',candidate===button));
+document.getElementById('waterfall-account-name').textContent=button.dataset.account;
+}}); }});
+const showComparison=() => {{
+document.getElementById('comparison-landing').hidden=false;
+document.querySelectorAll('.embedded-report-view').forEach(view=>view.hidden=true);
+}};
+document.querySelectorAll('[data-report-view]').forEach(button=>{{
+button.addEventListener('click',()=>{{
+const name=button.dataset.reportView, view=document.getElementById(`embedded-${{name}}`), frame=view.querySelector('iframe');
+if(!frame.srcdoc) frame.srcdoc=embeddedReports[name];
+document.getElementById('comparison-landing').hidden=true;
+document.querySelectorAll('.embedded-report-view').forEach(candidate=>candidate.hidden=candidate!==view);
+}}); }});
+window.addEventListener('message',event=>{{
+if(event.data && event.data.type==='expense-forecast:return-comparison') showComparison();
+}});
+}})();
+</script></body></html>"""
+
+        if not write_file:
+            return html
+        if output_path is None:
+            target_path = Path(
+                f"Comparison_{E_1.unique_id}_vs_{E_2.unique_id}.html"
+            )
+        else:
+            target_path = Path(output_path)
+            if target_path.suffix.lower() not in {".html", ".htm"}:
+                target_path = target_path / (
+                    f"Comparison_{E_1.unique_id}_vs_{E_2.unique_id}.html"
+                )
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        target_path.write_text(html)
+        cls._phase_log(
+            "green",
+            "Comparison report completed: "
+            f"baseline={E_1.unique_id} comparison={E_2.unique_id} "
+            f"destination={target_path} elapsed={perf_counter()-started_at:.2f}s",
+        )
+        return str(target_path)
 
     @staticmethod
     def _assert_report_accounting_invariants(
@@ -11897,20 +12371,18 @@ class ForecastHandler:
         ):
             return
 
-        confirmed_income_counts: dict[tuple[date, Decimal], int] = {}
+        confirmed_income_counts: dict[tuple[date, float], int] = {}
         for _, transaction in confirmed_df.iterrows():
             if not bool(transaction["Income_Flag"]):
                 continue
             transaction_date = pd.Timestamp(transaction["Date"]).date()
-            amount = Decimal(str(transaction["Amount"])).quantize(
-                Decimal("0.01")
-            )
+            amount = round(float(transaction["Amount"]), 2)
             key = (transaction_date, amount)
             confirmed_income_counts[key] = (
                 confirmed_income_counts.get(key, 0) + 1
             )
 
-        rendered_income_counts: dict[tuple[date, Decimal], int] = {}
+        rendered_income_counts: dict[tuple[date, float], int] = {}
         income_pattern = re.compile(
             r"^INCOME\s*\([^)]*\+\$([0-9,]+(?:\.\d+)?)\)$",
             re.IGNORECASE,
@@ -11925,8 +12397,8 @@ class ForecastHandler:
                 match = income_pattern.match(directive)
                 if match is None:
                     continue
-                amount = Decimal(match.group(1).replace(",", "")).quantize(
-                    Decimal("0.01")
+                amount = round(
+                    float(match.group(1).replace(",", "")), 2
                 )
                 key = (row_date, amount)
                 rendered_income_counts[key] = (
@@ -11963,6 +12435,35 @@ class ForecastHandler:
             "Net Worth",
         )
         tolerance = float(MONEY_BOUNDARY_TOLERANCE)
+
+        # Graph v2 calculates summaries from full-precision balances and then
+        # rounds every public column to cents.  This audit necessarily rebuilds
+        # those summaries from the already-rounded account columns.  Each
+        # component can therefore contribute half a cent of harmless display
+        # error, plus another half cent when the original total was rounded.
+        # Use that mathematical bound only for account aggregates; memo-derived
+        # gain, loss, interest, and return values retain the stricter tolerance.
+        account_info = E.initial_conditions.initial_account_set.getAccounts()
+        aggregate_component_counts = {
+            "Liquid Total": int((account_info.Account_Type == "checking").sum()),
+            "Investment Total": int(
+                (account_info.Account_Type == "investment").sum()
+            ),
+            "CC Debt Total": int(
+                account_info.Account_Type.isin(
+                    ["credit", "credit prev stmt bal", "credit curr stmt bal"]
+                ).sum()
+            ),
+            "Loan Total": int(
+                account_info.Account_Type.isin(
+                    ["loan", "principal balance", "interest"]
+                ).sum()
+            ),
+        }
+        aggregate_component_counts["Net Worth"] = sum(
+            aggregate_component_counts.values()
+        )
+
         for column in audited_columns:
             if column not in forecast_df.columns or column not in recomputed:
                 continue
@@ -11972,7 +12473,17 @@ class ForecastHandler:
             expected_values = pd.to_numeric(
                 recomputed[column], errors="coerce"
             )
-            mismatches = (actual_values - expected_values).abs() > tolerance
+            allowed_difference = tolerance
+            if column in aggregate_component_counts:
+                allowed_difference = (
+                    aggregate_component_counts[column] + 1
+                ) * tolerance
+            # Absorb only floating-point representation noise around the
+            # float-derived boundary itself.
+            allowed_difference += 1e-9
+            mismatches = (
+                actual_values - expected_values
+            ).abs() > allowed_difference
             if not mismatches.any():
                 continue
             row_index = mismatches[mismatches].index[0]
@@ -12009,9 +12520,12 @@ class ForecastHandler:
                 - numeric["CC Debt Total"]
                 - numeric["Loan Total"]
             )
+            # Five independently rounded public totals participate in this
+            # identity: Net Worth and the four account-type summaries.
+            net_worth_identity_tolerance = (5 * tolerance) + 1e-9
             net_worth_mismatch = (
                 numeric["Net Worth"] - expected_net_worth
-            ).abs() > tolerance
+            ).abs() > net_worth_identity_tolerance
             assert not net_worth_mismatch.any(), (
                 "Report accounting invariant failed: Net Worth does not "
                 "equal liquid plus investments minus credit and loan debt."
@@ -12024,7 +12538,12 @@ class ForecastHandler:
                 - numeric["CC Debt Total"].diff().fillna(0)
                 - numeric["Loan Total"].diff().fillna(0)
             )
-            assert ((actual_change - expected_change).abs() <= tolerance).all(), (
+            # A difference compares two adjacent rounded identities, doubling
+            # their maximum presentation error.
+            assert (
+                (actual_change - expected_change).abs()
+                <= (2 * net_worth_identity_tolerance)
+            ).all(), (
                 "Report accounting invariant failed: a daily Net Worth change "
                 "does not reconcile to the account-type balance changes."
             )
@@ -12035,6 +12554,7 @@ class ForecastHandler:
         E: ExpenseForecastResult,
         output_path=None,
         write_file=True,
+        comparison_return: bool = False,
     ) -> str:
         """
         Generate a self-contained HTML report for one ExpenseForecastResult.
@@ -13672,6 +14192,23 @@ class ForecastHandler:
             default=str,
         ).replace("</", "<\\/")
 
+        comparison_return_markup = (
+            """
+            <button
+                type="button"
+                class="comparison-return-link"
+                onclick="window.parent.postMessage(
+                    {type: 'expense-forecast:return-comparison'}, '*'
+                )"
+            >
+                <em>This report was generated as part of a comparison.
+                Click here to view.</em>
+            </button>
+            """
+            if comparison_return
+            else ""
+        )
+
         html = f"""<!DOCTYPE html>
         <html lang="en">
         <head>
@@ -13904,6 +14441,23 @@ class ForecastHandler:
                     font-size: var(--report-date-range-font-size);
                     font-weight: 450;
                     line-height: 1.3;
+                }}
+
+                .comparison-return-link {{
+                    display: block;
+                    margin: 8px 0 0;
+                    padding: 0;
+                    border: 0;
+                    background: transparent;
+                    color: var(--report-accent-color);
+                    font-size: var(--report-date-range-font-size);
+                    line-height: 1.35;
+                    text-align: left;
+                    cursor: pointer;
+                }}
+
+                .comparison-return-link:hover {{
+                    text-decoration: underline;
                 }}
 
                 /*
@@ -14516,6 +15070,8 @@ class ForecastHandler:
                         <p class="scenario-date-range">
                             {scalar_value("date_range")}
                         </p>
+
+                        {comparison_return_markup}
                     </section>
 
                     <!--

@@ -1,5 +1,4 @@
 from datetime import date
-from decimal import Decimal
 
 import pandas as pd
 import pytest
@@ -13,7 +12,7 @@ from expense_forecast.InvestmentBillingState import InvestmentBillingState
 
 def checking_billing_state(balance=0, is_primary=True):
     return CheckingBillingState(
-        balance=Decimal(str(balance)),
+        balance=float(str(balance)),
         is_primary=is_primary,
     )
 
@@ -30,13 +29,13 @@ def credit_billing_state(
 ):
     return CreditCardBillingState(
         billing_cycle_start_date=billing_cycle_start_date,
-        previous_statement_balance=Decimal(str(previous_statement_balance)),
-        current_statement_balance=Decimal(str(current_statement_balance)),
-        billing_cycle_payment_balance=Decimal(str(billing_cycle_payment_balance)),
-        minimum_payment=Decimal(str(minimum_payment)),
+        previous_statement_balance=float(str(previous_statement_balance)),
+        current_statement_balance=float(str(current_statement_balance)),
+        billing_cycle_payment_balance=float(str(billing_cycle_payment_balance)),
+        minimum_payment=float(str(minimum_payment)),
         interest_type=interest_type,
         interest_interval=interest_interval,
-        apr=Decimal(str(apr)),
+        apr=float(str(apr)),
     )
 
 
@@ -52,13 +51,13 @@ def loan_billing_state(
 ):
     return LoanBillingState(
         billing_cycle_start_date=billing_cycle_start_date,
-        previous_statement_balance=Decimal(str(previous_statement_balance)),
-        current_statement_balance=Decimal(str(current_statement_balance)),
-        billing_cycle_payment_balance=Decimal(str(billing_cycle_payment_balance)),
-        minimum_payment=Decimal(str(minimum_payment)),
+        previous_statement_balance=float(str(previous_statement_balance)),
+        current_statement_balance=float(str(current_statement_balance)),
+        billing_cycle_payment_balance=float(str(billing_cycle_payment_balance)),
+        minimum_payment=float(str(minimum_payment)),
         interest_type=interest_type,
         interest_interval=interest_interval,
-        apr=Decimal(str(apr)),
+        apr=float(str(apr)),
     )
 
 
@@ -68,9 +67,9 @@ def investment_billing_state(
     apr=0.01,
 ):
     return InvestmentBillingState(
-        balance=Decimal(str(balance)),
+        balance=float(str(balance)),
         billing_start_date=billing_cycle_start_date,
-        expected_apr=Decimal(str(apr)),
+        expected_apr=float(str(apr)),
     )
 
 

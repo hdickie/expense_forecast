@@ -1,6 +1,5 @@
 import pytest
 from datetime import date
-from decimal import Decimal
 from expense_forecast.AccountSet import AccountSet
 from expense_forecast.LineItemSet import LineItemSet
 from expense_forecast.MemoRuleSet import MemoRuleSet
@@ -2668,10 +2667,10 @@ class TestForecastHandler:
         directives = result.forecast_df["Memo Directives"].tolist()
         assert sum("Credit" in directive for directive in directives) == 3
         assert result.forecast_df.iloc[-1]["Checking"] == 1000 - (40 * 3)
-        balance = Decimal("1000")
+        balance = float("1000")
         for _ in range(3):
-            balance += balance * Decimal("0.25") / Decimal("12")
-            balance -= Decimal("40")
+            balance += balance * float("0.25") / float("12")
+            balance -= float("40")
         assert result.forecast_df.iloc[-1]["Credit"] == round(float(balance), 2)
 
     # Expected Data:
@@ -2709,10 +2708,10 @@ class TestForecastHandler:
         directives = result.forecast_df["Memo Directives"].tolist()
         assert sum("Loan" in directive for directive in directives) == 3
         assert result.forecast_df.iloc[-1]["Checking"] == 1000 - (40 * 3)
-        principal, interest = Decimal("1000"), Decimal("0")
+        principal, interest = float("1000"), float("0")
         for elapsed_days in (28, 31, 27):
-            interest += principal * Decimal("0.1") * elapsed_days / Decimal("365.25")
-            payment = Decimal("40")
+            interest += principal * float("0.1") * elapsed_days / float("365.25")
+            payment = float("40")
             interest_payment = min(payment, interest)
             interest -= interest_payment
             principal -= payment - interest_payment
@@ -2739,16 +2738,16 @@ class TestForecastHandler:
         assert sum("Loan" in directive for directive in directives) == 3
         assert sum("Credit" in directive for directive in directives) == 3
         assert result.forecast_df.iloc[-1]["Checking"] == 1000 - ((40 * 3) * 2)
-        credit_balance = Decimal("1000")
+        credit_balance = float("1000")
         for _ in range(3):
-            credit_balance += credit_balance * Decimal("0.25") / Decimal("12")
-            credit_balance -= Decimal("40")
-        loan_principal, loan_interest = Decimal("1000"), Decimal("0")
+            credit_balance += credit_balance * float("0.25") / float("12")
+            credit_balance -= float("40")
+        loan_principal, loan_interest = float("1000"), float("0")
         for elapsed_days in (28, 31, 27):
-            loan_interest += loan_principal * Decimal("0.1") * elapsed_days / Decimal("365.25")
-            interest_payment = min(Decimal("40"), loan_interest)
+            loan_interest += loan_principal * float("0.1") * elapsed_days / float("365.25")
+            interest_payment = min(float("40"), loan_interest)
             loan_interest -= interest_payment
-            loan_principal -= Decimal("40") - interest_payment
+            loan_principal -= float("40") - interest_payment
         assert result.forecast_df.iloc[-1]["Credit"] == round(float(credit_balance), 2)
         assert result.forecast_df.iloc[-1]["Loan: Principal Balance"] == round(float(loan_principal), 2)
         assert result.forecast_df.iloc[-1]["Loan: Interest"] == round(float(loan_interest), 2)
@@ -2790,16 +2789,16 @@ class TestForecastHandler:
         ]
         july_memo = result.forecast_df.loc[result.forecast_df.Date == date(2026, 7, 1), "Memo"].iat[0]
         assert "extra loan payment (Checking -$100.00)" in july_memo
-        principal, interest = Decimal("1000"), Decimal("0")
-        interest += principal * Decimal("0.1") * Decimal("12") / Decimal("365.25")
-        interest_payment = min(Decimal("100"), interest)
+        principal, interest = float("1000"), float("0")
+        interest += principal * float("0.1") * float("12") / float("365.25")
+        interest_payment = min(float("100"), interest)
         interest -= interest_payment
-        principal -= Decimal("100") - interest_payment
+        principal -= float("100") - interest_payment
         for elapsed_days in (16, 31, 27):
-            interest += principal * Decimal("0.1") * elapsed_days / Decimal("365.25")
-            interest_payment = min(Decimal("40"), interest)
+            interest += principal * float("0.1") * elapsed_days / float("365.25")
+            interest_payment = min(float("40"), interest)
             interest -= interest_payment
-            principal -= Decimal("40") - interest_payment
+            principal -= float("40") - interest_payment
         assert result.forecast_df.iloc[-1]["Loan: Principal Balance"] == round(float(principal), 2)
         assert result.forecast_df.iloc[-1]["Loan: Interest"] == round(float(interest), 2)
 
@@ -2831,12 +2830,12 @@ class TestForecastHandler:
         )
 
         payment_row = result.forecast_df.iloc[-1]
-        high_interest = Decimal("1000") * Decimal("0.2") * Decimal("12") / Decimal("365.25")
-        high_principal = Decimal("900") + high_interest
+        high_interest = float("1000") * float("0.2") * float("12") / float("365.25")
+        high_principal = float("900") + high_interest
         post_payment_high_interest = (
-            high_principal * Decimal("0.2") * Decimal("5") / Decimal("365.25")
+            high_principal * float("0.2") * float("5") / float("365.25")
         )
-        low_interest = Decimal("1000") * Decimal("0.1") * Decimal("17") / Decimal("365.25")
+        low_interest = float("1000") * float("0.1") * float("17") / float("365.25")
         assert payment_row["Checking"] == 900
         assert payment_row["High APR Loan: Principal Balance"] == round(
             float(high_principal), 2
@@ -3079,8 +3078,8 @@ class TestForecastHandler:
             io, MilestoneSet(), include_debug_columns=True
         )
 
-        expected_balance = Decimal("1000") * (
-            Decimal("1") + Decimal("0.1") / Decimal("365.25")
+        expected_balance = float("1000") * (
+            float("1") + float("0.1") / float("365.25")
         ) ** 4
         expected_rounded = round(float(expected_balance), 2)
         assert exact.forecast_df.iloc[-1]["Brokerage"] == expected_rounded
@@ -3134,9 +3133,9 @@ class TestForecastHandler:
             io, MilestoneSet(), include_debug_columns=True
         )
 
-        daily_factor = Decimal("1") + Decimal("0.1") / Decimal("365.25")
+        daily_factor = float("1") + float("0.1") / float("365.25")
         expected_balance = (
-            Decimal("1000") * daily_factor ** 2 + Decimal("100")
+            float("1000") * daily_factor ** 2 + float("100")
         ) * daily_factor ** 2
         assert exact.forecast_df.iloc[-1]["Checking"] == 900
         assert approximate.forecast_df.iloc[-1]["Checking"] == 900
@@ -3224,11 +3223,11 @@ class TestForecastHandler:
         assert "ADDTL CC PAYMENT (Checking" not in july_directives
         # The advance payment lowers the statement balance used for interest and
         # satisfies the first approximate minimum payment through payment credit.
-        credit_balance = Decimal("1000") - Decimal("100")
-        credit_balance += credit_balance * Decimal("0.25") / Decimal("12")
+        credit_balance = float("1000") - float("100")
+        credit_balance += credit_balance * float("0.25") / float("12")
         for _ in range(2):
-            credit_balance += credit_balance * Decimal("0.25") / Decimal("12")
-            credit_balance -= Decimal("40")
+            credit_balance += credit_balance * float("0.25") / float("12")
+            credit_balance -= float("40")
         assert result.forecast_df.iloc[-1]["Credit"] == round(float(credit_balance), 2)
 
     @pytest.mark.integration
