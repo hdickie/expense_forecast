@@ -4,7 +4,7 @@ These tests intentionally use ordinary assertions.  A red test is an
 unimplemented or divergent graph-v2 behavior, not an expected failure.
 """
 
-from datetime import date
+from datetime import date, timedelta
 
 import pandas as pd
 import pytest
@@ -143,6 +143,16 @@ def _assert_shadow_parity(conditions):
     return result
 
 
+def _assert_approximate_shadow_parity(conditions):
+    result = ForecastHandler.runForecastApproximate(
+        conditions,
+        engine="shadow v2",
+    )
+    assert result.approximate_flag is True
+    assert result.forecast_df["Date"].tolist()
+    return result
+
+
 def test_transaction_flag_columns_are_boolean_before_graph_execution():
     line_items = LineItemSet()
     _item(line_items, "mandatory", 10, priority=1)
@@ -202,6 +212,133 @@ def test_graph_v2_executes_same_day_income_before_declared_expense():
     confirmed_memos = result.confirmed_df["Memo"].tolist()
     assert confirmed_memos.count("income declared second") == 1
     assert confirmed_memos.count("expense declared first") == 1
+
+
+@pytest.mark.parametrize(
+    ("approximate", "engine"),
+    [
+        pytest.param(False, "legacy", id="legacy-exact"),
+        pytest.param(True, "legacy", id="legacy-approximate"),
+        pytest.param(False, "graph v2", id="graph-v2-exact"),
+        pytest.param(True, "graph v2", id="graph-v2-approximate"),
+    ],
+)
+def test_start_date_deferral_moves_to_first_executable_day(
+    approximate,
+    engine,
+):
+    line_items = LineItemSet()
+    _item(
+        line_items,
+        "start-boundary deferral",
+        50,
+        start=START,
+        priority=2,
+        deferrable=True,
+    )
+    rules = MemoRuleSet()
+    rules.addMemoRule(
+        "start-boundary deferral", "Checking", None, 2
+    )
+    conditions = _conditions(
+        "start-boundary-deferral",
+        _accounts(checking=100),
+        line_items,
+        rules,
+        end=date(2026, 1, 3),
+    )
+    runner = (
+        ForecastHandler.runForecastApproximate
+        if approximate
+        else ForecastHandler.runForecast
+    )
+
+    result = runner(conditions, engine=engine)
+
+    assert result.confirmed_df.loc[
+        result.confirmed_df["Memo"] == "start-boundary deferral",
+        "Date",
+    ].tolist() == [START + timedelta(days=1)]
+    assert conditions.initial_line_item_set.line_items[0].start_date == START
+
+
+@pytest.mark.parametrize(
+    ("approximate", "engine", "expected_date"),
+    [
+        pytest.param(
+            False, "legacy", date(2026, 1, 16), id="legacy-exact"
+        ),
+        pytest.param(
+            True, "legacy", date(2026, 2, 2), id="legacy-approximate"
+        ),
+        pytest.param(
+            False, "graph v2", date(2026, 1, 16), id="graph-v2-exact"
+        ),
+        pytest.param(
+            True, "graph v2", date(2026, 2, 2),
+            id="graph-v2-approximate",
+        ),
+    ],
+)
+def test_transition_reschedules_past_deferrable_choice(
+    approximate,
+    engine,
+    expected_date,
+):
+    stay = LineItemSet()
+    buy = LineItemSet()
+    _item(
+        buy,
+        "deferred purchase",
+        50,
+        start=date(2026, 1, 2),
+        priority=2,
+        deferrable=True,
+    )
+    lifestyle = ScenarioDimension(
+        "Lifestyle", {"Stay": stay, "Buy": buy}
+    )
+    trigger = LineItemSet()
+    _item(
+        trigger,
+        "transition trigger",
+        1,
+        start=date(2026, 1, 15),
+    )
+    rules = MemoRuleSet()
+    rules.addMemoRule("transition trigger", "Checking", None, 1)
+    rules.addMemoRule("deferred purchase", "Checking", None, 2)
+    milestones = MilestoneSet({
+        "Triggered": MemoMilestone(memo_regex="transition trigger"),
+    })
+    transitions = ConditionalScenarioTransitionSet(
+        ConditionalScenarioTransition(
+            "Buy after trigger",
+            "Triggered",
+            {"Lifestyle": "Buy"},
+        )
+    )
+    conditions = _conditions(
+        "transition-past-deferral",
+        _accounts(checking=100),
+        trigger + lifestyle.select("Stay"),
+        rules,
+        end=date(2026, 2, 5),
+        milestone_set=milestones,
+        transition_set=transitions,
+    )
+    runner = (
+        ForecastHandler.runForecastApproximate
+        if approximate
+        else ForecastHandler.runForecast
+    )
+
+    result = runner(conditions, engine=engine)
+
+    assert result.confirmed_df.loc[
+        result.confirmed_df["Memo"] == "deferred purchase",
+        "Date",
+    ].tolist() == [expected_date]
 
 
 @pytest.mark.parametrize(
@@ -1216,6 +1353,16 @@ def _scenario_transition_case():
 
 def test_shadow_v2_milestone_and_scenario_transition_parity():
     conditions = _scenario_transition_case()
+    without_transition = ExpenseForecastInitialConditions(
+        conditions.start_date,
+        conditions.end_date,
+        conditions.initial_account_set,
+        conditions.initial_line_item_set,
+        conditions.initial_memo_rule_set,
+        milestone_set=conditions.milestone_set,
+    )
+    assert conditions.unique_id != without_transition.unique_id
+
     result = _assert_shadow_parity(conditions)
     # Shadow mode returns legacy after parity, so exercise v2 directly for its
     # transition-specific audit fields.
@@ -1237,6 +1384,80 @@ def test_shadow_v2_milestone_and_scenario_transition_parity():
     assert rebuilt.transition_results == graph_result.transition_results
     assert rebuilt.resolved_line_item_set.scenario_timelines == (
         graph_result.resolved_line_item_set.scenario_timelines
+    )
+
+
+def test_graph_v2_income_transition_preserves_semiweekly_cadence():
+    accounts = _accounts(checking=500)
+    year_one = LineItemSet()
+    _item(
+        year_one,
+        "paycheck",
+        100,
+        start=date(2026, 1, 2),
+        end=date(2026, 2, 1),
+        interval="semiweekly",
+        income=True,
+        recurrence_key="paycheck",
+    )
+    year_two = LineItemSet()
+    _item(
+        year_two,
+        "paycheck",
+        125,
+        start=date(2026, 1, 9),
+        end=date(2026, 2, 1),
+        interval="semiweekly",
+        income=True,
+        recurrence_key="paycheck",
+    )
+    income = ScenarioDimension(
+        "Income", {"Year 1": year_one, "Year 2": year_two}
+    )
+    trigger = LineItemSet()
+    _item(trigger, "raise effective", 1, start=date(2026, 1, 9))
+    rules = MemoRuleSet()
+    rules.addMemoRule("paycheck", None, "Checking", 1)
+    rules.addMemoRule("raise effective", "Checking", None, 1)
+    milestones = MilestoneSet(
+        {"Raise": MemoMilestone(memo_regex="raise effective")}
+    )
+    transitions = ConditionalScenarioTransitionSet(
+        ConditionalScenarioTransition(
+            "Use raised income",
+            "Raise",
+            {"Income": "Year 2"},
+        )
+    )
+    conditions = _conditions(
+        "income-transition-cadence",
+        accounts,
+        trigger + income.select("Year 1"),
+        rules,
+        end=date(2026, 2, 1),
+        milestone_set=milestones,
+        transition_set=transitions,
+    )
+
+    result = ExecutionEngine.runForecast(
+        conditions,
+        milestones,
+    )
+    paycheck_dates = (
+        result.confirmed_df.loc[
+            result.confirmed_df["Memo"] == "paycheck",
+            "Date",
+        ].tolist()
+    )
+
+    assert paycheck_dates == [
+        date(2026, 1, 2),
+        date(2026, 1, 16),
+        date(2026, 1, 30),
+    ]
+    assert all(
+        (later - earlier).days == 14
+        for earlier, later in zip(paycheck_dates, paycheck_dates[1:])
     )
 
 
@@ -1309,9 +1530,96 @@ def test_v2_comparator_reports_all_controlled_differences():
     )
 
 
-def test_shadow_v2_remains_exact_only():
-    conditions = _conditions("exact-only", _accounts())
-    with pytest.raises(ValueError, match="engine must be"):
+def test_shadow_v2_approximate_empty_forecast_parity():
+    conditions = _conditions("approximate-empty", _accounts())
+    result = ForecastHandler.runForecastApproximate(
+        conditions, engine="shadow v2"
+    )
+
+    assert result.approximate_flag is True
+    assert result.unique_id.endswith("_A")
+    assert list(result.forecast_df["Date"]) == [
+        conditions.start_date,
+        conditions.end_date,
+    ]
+    assert result.graph_diagnostics.output_bins == 2
+    assert result.graph_diagnostics.sparse_calendar_dates == 2
+    assert result.graph_diagnostics.daily_carry_nodes == 0
+    assert result.to_dict()["approximate_flag"] is True
+
+
+@pytest.mark.parametrize(
+    "conditions",
+    [
+        pytest.param(
+            _cash_case(
+                "approximate-income-spend",
+                [
+                    {
+                        "memo": "income",
+                        "amount": 500,
+                        "start": date(2026, 1, 3),
+                        "income": True,
+                        "account_from": None,
+                        "account_to": "Checking",
+                    },
+                    {
+                        "memo": "spend",
+                        "amount": 100,
+                        "start": date(2026, 1, 4),
+                    },
+                ],
+                end=date(2026, 2, 5),
+            ),
+            id="income-and-spending",
+        ),
+        pytest.param(
+            _debt_case("credit-rollover-interest-and-minimum"),
+            id="credit-rollover",
+        ),
+        pytest.param(
+            _debt_case("loan-interest-and-minimum"),
+            id="loan-interest",
+        ),
+        pytest.param(
+            _investment_case("contribution"),
+            id="investment-contribution",
+        ),
+        pytest.param(
+            _policy_case("fixed-investment"),
+            id="fixed-investment-policy",
+        ),
+    ],
+)
+def test_shadow_v2_approximate_behavior_parity(conditions):
+    _assert_approximate_shadow_parity(conditions)
+
+
+def test_shadow_v2_approximate_transition_parity():
+    conditions = _scenario_transition_case()
+    _assert_approximate_shadow_parity(conditions)
+
+
+@pytest.mark.parametrize(
+    "kind",
+    [
+        "minimum-checking",
+        "surplus-saving",
+        "fixed-investment",
+        "income-percentage",
+        "surplus-investment",
+        "contribution-cap",
+    ],
+)
+def test_shadow_v2_approximate_policy_parity(kind):
+    _assert_approximate_shadow_parity(_policy_case(kind))
+
+
+def test_approximate_graph_trace_rejects_unrelated_engines():
+    conditions = _conditions("approximate-trace", _accounts())
+    with pytest.raises(ValueError, match="graph_trace"):
         ForecastHandler.runForecastApproximate(
-            conditions, engine="shadow v2"
+            conditions,
+            engine="legacy",
+            graph_trace=True,
         )

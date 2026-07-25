@@ -346,7 +346,8 @@ class ExpenseForecastInitialConditions:
         end_date: date,
         account_set,
         line_item_set,
-        memo_rule_set
+        memo_rule_set,
+        transition_set=None,
     ) -> str:
 
         """
@@ -406,6 +407,18 @@ class ExpenseForecastInitialConditions:
             "scenario_timelines": getattr(line_item_set, "scenario_timelines", {}),
             "memo_rules": _stable_df_payload(memo_rules_df),
         }
+        transitions = [
+                {
+                    "name": transition.name,
+                    "milestone": transition.milestone,
+                    "changes": dict(transition.changes),
+                }
+                for transition in getattr(
+                    transition_set, "transitions", ()
+                )
+            ]
+        if transitions:
+            payload["transitions"] = transitions
 
         canonical_json = json.dumps(
             payload,
@@ -862,7 +875,9 @@ class ExpenseForecastInitialConditions:
             end_date=self.end_date,
             account_set=self.initial_account_set,
             line_item_set=self.initial_line_item_set,
-            memo_rule_set=self.initial_memo_rule_set)
+            memo_rule_set=self.initial_memo_rule_set,
+            transition_set=self.transition_set,
+        )
         if self.policy_set:
             policy_json = json.dumps(
                 self._object_to_json_data(self.policy_set), sort_keys=True

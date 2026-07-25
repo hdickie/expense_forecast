@@ -102,6 +102,44 @@ class TestLineItemSetMethods:
         assert result.scenario_selections == {"Food": "Average"}
         assert [item.memo for item in result.line_items] == ["average"]
 
+    def test_replace_scenario_choice_preserves_matching_recurrence_anchor(self):
+        anchor = date(2026, 1, 2)
+        first = LineItemSet([
+            LineItem(
+                start_date=anchor,
+                end_date=date(2026, 12, 31),
+                priority=1,
+                interval="semiweekly",
+                amount=100,
+                deferrable=False,
+                memo="paycheck",
+                recurrence_key="paycheck",
+                recurrence_anchor=anchor,
+            )
+        ])
+        second = LineItemSet([
+            LineItem(
+                start_date=date(2026, 1, 9),
+                end_date=date(2026, 12, 31),
+                priority=1,
+                interval="semiweekly",
+                amount=125,
+                deferrable=False,
+                memo="paycheck",
+                recurrence_key="paycheck",
+                recurrence_anchor=date(2026, 1, 9),
+            )
+        ])
+        income = ScenarioDimension(
+            "Income", {"Year 1": first, "Year 2": second}
+        )
+
+        result = income.select("Year 1").replace_scenario_choice(
+            "Income", "Year 2"
+        )
+
+        assert result.line_items[0].recurrence_anchor == anchor
+
     @pytest.mark.parametrize(
         "line_items__list",
         [

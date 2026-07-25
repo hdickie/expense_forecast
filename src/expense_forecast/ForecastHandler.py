@@ -236,6 +236,7 @@ class ForecastHandler:
         engine="legacy",
         graph_trace=False,
     ) -> ExpenseForecastResult:
+        IO = cls._move_start_date_deferrals_after_seed(IO)
         if engine not in {
             "legacy", "graph", "graph v2", "shadow", "shadow v2"
         }:
@@ -540,9 +541,75 @@ class ForecastHandler:
         milestone_set: MilestoneSet = None,
         include_debug_columns=False,
         engine="legacy",
+        graph_trace=False,
     ) -> ExpenseForecastResult:
-        if engine not in {"legacy", "graph", "shadow"}:
-            raise ValueError("engine must be 'legacy', 'graph', or 'shadow'")
+        IO = cls._move_start_date_deferrals_after_seed(IO)
+        if engine not in {
+            "legacy", "graph", "graph v2", "shadow", "shadow v2"
+        }:
+            raise ValueError(
+                "engine must be 'legacy', 'graph', 'graph v2', 'shadow', "
+                "or 'shadow v2'"
+            )
+        if graph_trace and engine not in {"graph v2", "shadow v2"}:
+            raise ValueError(
+                "graph_trace is supported only with engine='graph v2' "
+                "or engine='shadow v2'"
+            )
+        if engine in {"graph v2", "shadow v2"}:
+            from expense_forecast.MemoizedDynamicDependencyGraphEngine import (
+                ExecutionEngine,
+                GraphV2Difference,
+                GraphV2ShadowMismatchError,
+                compare_v2_result,
+            )
+
+            resolved_milestones = milestone_set or getattr(
+                IO, "milestone_set", MilestoneSet()
+            )
+            if engine == "graph v2":
+                return ExecutionEngine.runForecastApproximate(
+                    IO,
+                    resolved_milestones,
+                    include_debug_columns=include_debug_columns,
+                    graph_trace=graph_trace,
+                )
+
+            legacy_result = cls.runForecastApproximate(
+                IO,
+                resolved_milestones,
+                include_debug_columns,
+                engine="legacy",
+            )
+            scenario = IO.forecast_name or IO.unique_id
+            try:
+                graph_result = ExecutionEngine.runForecastApproximate(
+                    IO,
+                    resolved_milestones,
+                    include_debug_columns=include_debug_columns,
+                    graph_trace=graph_trace,
+                )
+            except Exception as error:
+                raise GraphV2ShadowMismatchError(
+                    scenario=scenario,
+                    differences=[
+                        GraphV2Difference(
+                            section="execution",
+                            variable=type(error).__name__,
+                            graph_value=str(error),
+                            legacy_value="completed successfully",
+                            producer=(
+                                "ExecutionEngine.runForecastApproximate"
+                            ),
+                        )
+                    ],
+                ) from error
+            compare_v2_result(
+                graph_result,
+                legacy_result,
+                scenario=scenario,
+            )
+            return graph_result
         if engine in {"graph", "shadow"}:
             from expense_forecast.graph_engine import GraphForecastRunner
             from expense_forecast.graph_engine.comparator import compare_results
@@ -16615,18 +16682,21 @@ if(event.data && event.data.type==='expense-forecast:return-comparison') showCom
                             previous_write,
                             choice_name,
                         )
-                    current_budget = current_budget.replace_scenario_choice(
-                        dimension_name, choice_name
-                    )
                     changed_at_boundary[dimension_name] = choice_name
+                current_budget = current_budget.apply_scenario_transition(
+                    transition_name=transition.name,
+                    trigger_milestone=transition.milestone,
+                    trigger_date=next_date,
+                    changes=transition.changes,
+                    history_start_date=original_IO.start_date,
+                )
 
             if next_date >= current_IO.end_date:
                 break
-            next_start = (
-                next_date
-                if approximate
-                else next_date + datetime.timedelta(days=1)
-            )
+            # The committed trigger row is the seed for every suffix. New
+            # choices become effective on the following day, which must be an
+            # executable row rather than a second finalized seed.
+            next_start = next_date
             next_accounts = cls._account_set_from_forecast_row(
                 current_IO.initial_account_set,
                 committed_rows.tail(1).iloc[0],
@@ -16647,18 +16717,18 @@ if(event.data && event.data.type==='expense-forecast:return-comparison') showCom
                 memo_rule_set=original_IO.initial_memo_rule_set,
                 **io_kwargs,
             )
-            if approximate:
-                current_IO._exclude_schedule_through = next_date
-                for attr in ("initial_confirmed_df", "initial_proposed_df"):
-                    frame = getattr(current_IO, attr)
-                    if not frame.empty:
-                        setattr(
-                            current_IO,
-                            attr,
-                            frame.loc[
-                                frame["Date"].apply(cls._normalize_date_value) > next_date
-                            ].copy(),
-                        )
+            current_IO._exclude_schedule_through = next_date
+            for attr in ("initial_confirmed_df", "initial_proposed_df"):
+                frame = getattr(current_IO, attr)
+                if not frame.empty:
+                    setattr(
+                        current_IO,
+                        attr,
+                        frame.loc[
+                            frame["Date"].apply(cls._normalize_date_value)
+                            > next_date
+                        ].copy(),
+                    )
             boundary_date = next_date
 
         forecast_df = pd.concat(forecast_parts, ignore_index=True)
@@ -17060,3 +17130,45 @@ if(event.data && event.data.type==='expense-forecast:return-comparison') showCom
         R.milestone_results = MilestoneSet.evaluateMilestones(R.forecast_df, R.milestone_set, log_stack_depth=log_stack_depth)
 
         return R
+    @classmethod
+    def _move_start_date_deferrals_after_seed(cls, IO):
+        """Move user-scheduled opening-row deferrals to the first executable day.
+
+        The opening forecast row is a finalized seed state in every engine.
+        A deferrable occurrence placed there cannot be attempted consistently,
+        so normalize only the runner's private copy to the following day.
+        """
+        start_date = IO.start_date
+        next_date = start_date + datetime.timedelta(days=1)
+        affected_items = [
+            item
+            for item in IO.initial_line_item_set.line_items
+            if item.deferrable and item.start_date == start_date
+        ]
+        if not affected_items:
+            return IO
+
+        normalized = copy.deepcopy(IO)
+        for item in normalized.initial_line_item_set.line_items:
+            if not item.deferrable or item.start_date != start_date:
+                continue
+            item.start_date = next_date
+            if item.interval == "once":
+                item.end_date = next_date
+            if item.recurrence_anchor == start_date:
+                item.recurrence_anchor = next_date
+
+        # Legacy runners consume the preprocessed transaction frames while
+        # graph runners expand the LineItemSet. Keep both representations in
+        # agreement without changing the caller's initial conditions.
+        for frame_name in ("initial_proposed_df", "initial_deferred_df"):
+            frame = getattr(normalized, frame_name, None)
+            if frame is None or frame.empty:
+                continue
+            dates = frame["Date"].map(cls._normalize_date_value)
+            selection = dates.eq(start_date) & frame["Deferrable"].fillna(
+                False
+            ).astype(bool)
+            frame.loc[selection, "Date"] = next_date
+
+        return normalized

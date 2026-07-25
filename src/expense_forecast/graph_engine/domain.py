@@ -119,6 +119,19 @@ class AccountStateNode(GraphNode):
             dates.append(end)
         return dates
 
+    def _presentation_dates(self):
+        """Dates exposed by this segment's public forecast.
+
+        Keeping this definition beside the event-calendar construction avoids
+        a subtle split-brain bug where execution and projection disagree about
+        which month boundaries exist.
+        """
+        return self._output_dates(
+            self.IO.start_date,
+            self.IO.end_date,
+            self.approximate,
+        )
+
     @staticmethod
     def _append_directive(parts, value):
         if value:
@@ -175,6 +188,12 @@ class AccountStateNode(GraphNode):
             amount = min(
                 amount, float(str(source.balance)) - floor - reserve
             )
+            if amount < event.amount and not event.partial_payment_allowed:
+                # Headroom is a feasibility bound, not permission to rewrite a
+                # fixed transaction.  Only explicitly partial transactions
+                # may be reduced to that bound; otherwise normal execution
+                # rejects and classifies the original request.
+                amount = event.amount
         destination = str(event.account_to)
         if destination.startswith("ALL_LOANS"):
             debt_type = "loan"
@@ -447,19 +466,46 @@ class AccountStateNode(GraphNode):
                 start = start.date()
             if account.account_type == "investment":
                 accrual_cursors[account.name] = max(
-                    evaluation_start - datetime.timedelta(days=1),
+                    # The opening row is a completed seed boundary. Returns
+                    # begin over the following open span, not on that row.
+                    evaluation_start,
                     start - datetime.timedelta(days=1),
                 )
             elif account.account_type == "loan":
                 accrual_cursors[account.name] = max(
-                    evaluation_start - datetime.timedelta(days=1), start
+                    # Approximate loan accrual measures the open span after
+                    # the seed boundary.  The seed date itself is already
+                    # represented by the opening balance.
+                    evaluation_start,
+                    start,
                 )
 
-        for day in generate_date_sequence(
-            evaluation_start,
-            (self.IO.end_date - evaluation_start).days,
-            "daily",
-        ):
+        if self.approximate:
+            # Approximate execution is event-time execution.  Account state is
+            # visited only when a transaction occurs or a public month-boundary
+            # row must be emitted.  Accrual helpers receive the exact elapsed
+            # span from their cursors, so omitting quiet calendar days changes
+            # work—not financial semantics.
+            execution_dates = sorted(
+                {
+                    day
+                    for day in output_dates
+                    if evaluation_start <= day <= self.IO.end_date
+                }
+                | {
+                    day
+                    for day in by_day
+                    if evaluation_start <= day <= self.IO.end_date
+                }
+            )
+        else:
+            execution_dates = generate_date_sequence(
+                evaluation_start,
+                (self.IO.end_date - evaluation_start).days,
+                "daily",
+            )
+
+        for day in execution_dates:
             directives, memos, investment_returns = [], [], {}
             active_reserves = [
                 policy for policy in self.reserve_policies

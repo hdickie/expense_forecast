@@ -12,6 +12,21 @@ def _normalized_frame(frame, *, transaction=False):
     if frame is None:
         return pd.DataFrame()
     result = frame.copy()
+    if transaction:
+        for column in (
+            "Income_Flag",
+            "Deferrable",
+            "Partial_Payment_Allowed",
+        ):
+            if column in result:
+                # Historical approximate frames used null for an omitted
+                # false flag.  The graph schema stores the same meaning as an
+                # explicit bool, so compare the business value.
+                result[column] = result[column].map(
+                    lambda value: (
+                        False if pd.isna(value) else bool(value)
+                    )
+                )
     if transaction and not result.empty:
         sort_columns = [
             column for column in ("Date", "Priority", "Memo", "Amount")

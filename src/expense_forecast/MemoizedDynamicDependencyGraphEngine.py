@@ -1,9 +1,9 @@
 # Based on this paper: https://csd.cs.cmu.edu/sites/default/files/phd-thesis/CMU-CS-05-129.pdf
 from __future__ import annotations
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field, is_dataclass
 from heapq import heappop, heappush
 from collections import Counter
-from collections.abc import Hashable
+from collections.abc import Hashable, Mapping
 from numbers import Number
 from abc import ABC, abstractmethod
 
@@ -52,6 +52,7 @@ import math
 import threading
 from contextlib import contextmanager
 from time import perf_counter
+import numpy as np
 from expense_forecast.log_methods import project_log_file, setup_logger
 
 logger = setup_logger(
@@ -393,6 +394,7 @@ def compare_v2_result(
                     producer="result assembly",
                 )
             )
+
         else:
             graph_value = getattr(graph_output, attribute)
             legacy_value = getattr(legacy_result, attribute)
@@ -418,6 +420,19 @@ def compare_v2_result(
                     producer="result assembly",
                 )
             )
+
+    if graph_is_result and (
+        graph_output.approximate_flag != legacy_result.approximate_flag
+    ):
+        differences.append(
+            GraphV2Difference(
+                section="result",
+                variable="approximate_flag",
+                graph_value=graph_output.approximate_flag,
+                legacy_value=legacy_result.approximate_flag,
+                producer="result assembly",
+            )
+        )
 
     if differences:
         raise GraphV2ShadowMismatchError(
@@ -538,6 +553,11 @@ class ExecutionContext:
     graph_trace: bool = False
     latest_priority: Priority = field(default_factory=lambda: Priority(0, 0, 0))
     forecast_df: pd.DataFrame = field(init=False)
+    numeric_values: np.ndarray = field(init=False)
+    numeric_columns: list[str] = field(init=False)
+    numeric_column_positions: dict[str, int] = field(init=False)
+    date_positions: dict[date, int] = field(init=False)
+    memo_values: dict[str, np.ndarray] = field(init=False)
 
     readers: dict[CellId, set[NodeId]] = field(default_factory=dict)
     nodes: dict[NodeId, "ComputationNode"] = field(default_factory=dict)
@@ -571,7 +591,18 @@ class ExecutionContext:
         candidate.graph_trace = self.graph_trace
         candidate.latest_priority = self.latest_priority
 
+        # Forking speculative forecasts is a hot path. NumPy copies the dense
+        # numeric state in one contiguous operation; the small DataFrame is
+        # retained only as a date-index shell until public materialization.
         candidate.forecast_df = self.forecast_df.copy(deep=True)
+        candidate.numeric_values = self.numeric_values.copy()
+        candidate.numeric_columns = self.numeric_columns
+        candidate.numeric_column_positions = self.numeric_column_positions
+        candidate.date_positions = self.date_positions
+        candidate.memo_values = {
+            column: values.copy()
+            for column, values in self.memo_values.items()
+        }
 
         candidate.readers = {
             cell: set(node_ids)
@@ -672,17 +703,30 @@ class ExecutionContext:
             self.initial_conditions.end_date,
             freq="D",
         ) ]
-        initialized_forecast_df = pd.DataFrame(
-                index=forecast_dates,
-                columns=cell_columns,
-                # Numeric graph state stays in native float64 columns. Memo
-                # columns are added separately below and therefore retain
-                # their independent string/object dtype.
-                dtype="float64",
-            )
-        initialized_forecast_df['Memo'] = ''
-        initialized_forecast_df['Memo Directives'] = ''
-        self.forecast_df = initialized_forecast_df
+        self.numeric_columns = list(cell_columns)
+        self.numeric_column_positions = {
+            column_name: position
+            for position, column_name in enumerate(self.numeric_columns)
+        }
+        self.date_positions = {
+            forecast_date: position
+            for position, forecast_date in enumerate(forecast_dates)
+        }
+        self.numeric_values = np.full(
+            (len(forecast_dates), len(self.numeric_columns)),
+            np.nan,
+            dtype=np.float64,
+        )
+        self.memo_values = {
+            "Memo": np.full(len(forecast_dates), "", dtype=object),
+            "Memo Directives": np.full(
+                len(forecast_dates), "", dtype=object
+            ),
+        }
+        # During execution pandas supplies only the convenient date index.
+        # Numeric and memo state live in the arrays above and are materialized
+        # into a public DataFrame exactly once after propagation.
+        self.forecast_df = pd.DataFrame(index=forecast_dates)
 
         self.confirmed_df = self.initial_conditions.initial_confirmed_df.copy()
         self.deferred_df = self.initial_conditions.initial_deferred_df.copy()
@@ -696,10 +740,11 @@ class ExecutionContext:
 
 
     def read(self, cell: CellId):
-        return self.forecast_df.at[
-            cell.forecast_date,
-            cell.column_name,
-        ]
+        row = self.date_positions[cell.forecast_date]
+        if cell.column_name in self.memo_values:
+            return self.memo_values[cell.column_name][row]
+        column = self.numeric_column_positions[cell.column_name]
+        return self.numeric_values[row, column]
 
     def write(self, cell: CellId, value) -> bool:
         logger.debug('write '+str(cell.forecast_date)+' '+str(cell.column_name).ljust(25,'.')+' '+str(value))
@@ -709,22 +754,36 @@ class ExecutionContext:
             and not isinstance(value, bool)
         ):
             value = round(float(value), FLOAT_ROUNDING_DECIMALS)
-        previous_value = self.forecast_df.at[
-            cell.forecast_date,
-            cell.column_name,
-        ]
+        row = self.date_positions[cell.forecast_date]
+        if cell.column_name in self.memo_values:
+            previous_value = self.memo_values[cell.column_name][row]
+        else:
+            column = self.numeric_column_positions[cell.column_name]
+            previous_value = self.numeric_values[row, column]
 
         changed = not values_equal(previous_value, value)
 
         if changed:
             self.write_revision += 1
-            self.forecast_df.at[
-                cell.forecast_date,
-                cell.column_name,
-            ] = value
+            if cell.column_name in self.memo_values:
+                self.memo_values[cell.column_name][row] = value
+            else:
+                self.numeric_values[row, column] = value
             self.cell_revisions[cell] = self.write_revision
 
         return changed
+
+    def materialize_forecast_df(self) -> pd.DataFrame:
+        """Build the public pandas representation from dense graph state."""
+        frame = pd.DataFrame(
+            self.numeric_values.copy(),
+            index=self.forecast_df.index.copy(),
+            columns=self.numeric_columns,
+        )
+        for column_name, values in self.memo_values.items():
+            frame[column_name] = values.copy()
+        self.forecast_df = frame
+        return frame
 
     def restore_owned_outputs(
         self,
@@ -2136,6 +2195,35 @@ class CarryValueNode(ComputationNode):
 
 class ExecutionEngine:
 
+    @staticmethod
+    def _group_transaction_schedule(
+        schedule: pd.DataFrame,
+    ) -> dict[tuple[int, date], list[dict[str, object]]]:
+        """Convert pandas schedule rows into execution-ready Python records.
+
+        Schedule construction and deferral editing remain convenient in
+        pandas. Execution does not: converting once avoids allocating a Series
+        for every row through ``iterrows()`` during the hot scheduling loop.
+        Python's stable list sort preserves declaration order within the income
+        and non-income groups.
+        """
+        columns = tuple(schedule.columns)
+        grouped: dict[tuple[int, date], list[dict[str, object]]] = {}
+        for values in schedule.itertuples(index=False, name=None):
+            record = dict(zip(columns, values))
+            key = (int(record["Priority"]), record["Date"])
+            grouped.setdefault(key, []).append(record)
+
+        for records in grouped.values():
+            records.sort(
+                key=lambda record: not (
+                    False
+                    if pd.isna(record["Income_Flag"])
+                    else bool(record["Income_Flag"])
+                )
+            )
+        return grouped
+
     @classmethod
     def _carry_accounts_forward(
         cls,
@@ -2685,7 +2773,7 @@ class ExecutionEngine:
     @classmethod
     def assemble_transaction_node(
         cls,
-        line_item_row: pd.Series,
+        line_item_row: Mapping[str, object],
         context: ExecutionContext,
     ) -> TransactionNode:
         # Line-item and memo-rule data first produce a neutral transaction
@@ -4071,12 +4159,13 @@ class ExecutionEngine:
             # A reserve is safe to activate only where every later balance is
             # already at least the target.  The reverse cumulative minimum is
             # the same stable-suffix test used by the legacy policy runner.
-            balances = pd.to_numeric(
-                context.forecast_df[account_name], errors="coerce"
-            )
-            suffix_minimum = balances.iloc[::-1].cummin().iloc[::-1]
+            account_column = context.numeric_column_positions[account_name]
+            balances = context.numeric_values[:, account_column]
+            suffix_minimum = np.minimum.accumulate(
+                balances[::-1]
+            )[::-1]
             qualifying_dates = context.forecast_df.index[
-                suffix_minimum >= float(target)
+                suffix_minimum >= target
             ]
 
             if len(qualifying_dates) == 0:
@@ -4620,8 +4709,81 @@ class ExecutionEngine:
         #initial_conditions.policy_set has a dict of policy_type_name_str ->
         # policy
 
-    # The same as runForecastOnce, but it evaluates transitions, which require
-    # all priorities to resolved before they can be evaluated
+    @classmethod
+    def runForecastOnceApproximate(
+        cls,
+        initial_conditions: ExpenseForecastInitialConditions,
+        milestone_set: MilestoneSet,
+        include_debug_columns: bool = False,
+        graph_trace: bool = False,
+    ) -> ExpenseForecastResult:
+        """Execute one transition-free approximate graph segment.
+
+        The approximate graph-domain evaluator uses a sparse calendar made of
+        transaction dates and public month boundaries.  Account formulas still
+        receive exact elapsed-day spans, while only boundary rows are exposed
+        in the returned forecast.
+        """
+        if initial_conditions.transition_set:
+            raise ValueError(
+                "runForecastOnceApproximate requires a transition-free segment"
+            )
+
+        from expense_forecast.graph_engine import GraphForecastRunner
+
+        logger.info(
+            "Graph v2 approximate segment started: range=%s to %s",
+            initial_conditions.start_date,
+            initial_conditions.end_date,
+        )
+        result = GraphForecastRunner(
+            initial_conditions,
+            milestone_set,
+            approximate=True,
+            include_debug_columns=include_debug_columns,
+        ).run()
+        result.approximate_flag = True
+        if graph_trace:
+            diagnostics = result.graph_diagnostics
+            logger.info(
+                "Graph v2 approximate trace: output_bins=%d "
+                "events_recomputed=%d nodes_evaluated=%d",
+                len(result.forecast_df.index),
+                diagnostics.events_recomputed,
+                len(diagnostics.nodes_evaluated),
+            )
+        logger.info(
+            "Graph v2 approximate segment complete: rows=%d confirmed=%d "
+            "deferred=%d skipped=%d",
+            len(result.forecast_df.index),
+            len(result.confirmed_df.index),
+            len(result.deferred_df.index),
+            len(result.skipped_df.index),
+        )
+        return result
+
+    @classmethod
+    def runForecastApproximate(
+        cls,
+        initial_conditions: ExpenseForecastInitialConditions,
+        milestone_set: MilestoneSet,
+        include_debug_columns: bool = False,
+        graph_trace: bool = False,
+    ) -> ExpenseForecastResult:
+        """Run graph-v2 approximate execution.
+
+        The segment API owns sparse financial execution.  Transition-aware
+        suffix stitching is deliberately kept at this wrapper boundary, just
+        as it is for exact graph-v2 execution.
+        """
+        return cls._runForecastWithTransitions(
+            initial_conditions,
+            milestone_set,
+            include_debug_columns=include_debug_columns,
+            graph_trace=graph_trace,
+            approximate=True,
+        )
+
     @classmethod
     def runForecast(
         cls,
@@ -4629,10 +4791,29 @@ class ExecutionEngine:
         milestone_set: MilestoneSet,
         graph_trace: bool = False,
     ) -> ExpenseForecastResult:
+        return cls._runForecastWithTransitions(
+            initial_conditions,
+            milestone_set,
+            graph_trace=graph_trace,
+            approximate=False,
+        )
+
+    # The same wrapper serves both grains: segment execution differs, while
+    # committing a milestone boundary and rebuilding its suffix does not.
+    @classmethod
+    def _runForecastWithTransitions(
+        cls,
+        initial_conditions: ExpenseForecastInitialConditions,
+        milestone_set: MilestoneSet,
+        include_debug_columns: bool = False,
+        graph_trace: bool = False,
+        approximate: bool = False,
+    ) -> ExpenseForecastResult:
         transition_set = copy.deepcopy(initial_conditions.transition_set)
         logger.info(
-            "Graph v2 forecast started: name=%r range=%s to %s "
+            "Graph v2 %s forecast started: name=%r range=%s to %s "
             "accounts=%d policies=%d transitions=%d",
+            "approximate" if approximate else "exact",
             initial_conditions.forecast_name or "Unnamed forecast",
             initial_conditions.start_date,
             initial_conditions.end_date,
@@ -4640,18 +4821,30 @@ class ExecutionEngine:
             len(initial_conditions.policy_set.policies),
             len(transition_set.transitions) if transition_set else 0,
         )
+        run_segment = (
+            cls.runForecastOnceApproximate
+            if approximate
+            else cls.runForecastOnce
+        )
         if not transition_set:
-            return cls.runForecastOnce(
+            return run_segment(
                 initial_conditions,
                 milestone_set,
+                include_debug_columns=include_debug_columns,
                 graph_trace=graph_trace,
             )
 
+        segment_initial_conditions = copy.deepcopy(initial_conditions)
+        # The wrapper owns transition evaluation.  A segment sees only the
+        # financial configuration valid for that suffix.
+        segment_initial_conditions.transition_set = (
+            ConditionalScenarioTransitionSet()
+        )
         # Transition boundaries need subtype ledgers and active policy bounds
         # to seed the next graph. These columns remain internal until the final
         # stitched forecast is materialized.
-        current_result = cls.runForecastOnce(
-            initial_conditions,
+        current_result = run_segment(
+            segment_initial_conditions,
             milestone_set,
             include_debug_columns=True,
             graph_trace=graph_trace,
@@ -4723,7 +4916,11 @@ class ExecutionEngine:
                 safety_decisions.append(copy.deepcopy(decision))
 
             graph_diagnostic_segments.append(
-                copy.deepcopy(result.graph_diagnostics or {})
+                (
+                    asdict(result.graph_diagnostics)
+                    if is_dataclass(result.graph_diagnostics)
+                    else copy.deepcopy(result.graph_diagnostics or {})
+                )
             )
 
         while True:
@@ -4850,7 +5047,7 @@ class ExecutionEngine:
                 policy_set=copy.deepcopy(initial_conditions.policy_set),
                 forecast_name=initial_conditions.forecast_name,
             )
-            current_result = cls.runForecastOnce(
+            current_result = run_segment(
                 suffix_conditions,
                 milestone_set,
                 include_debug_columns=True,
@@ -4876,18 +5073,19 @@ class ExecutionEngine:
             raw_forecast,
             log_stack_depth=0,
         )
-        debug_columns = set()
-        for account in initial_conditions.initial_account_set.accounts:
-            debug_columns.update(
-                set(
-                    initial_conditions.initial_account_set
-                    .getForecastColumnsForAccount(account)
-                ) - {account.name}
+        if not include_debug_columns:
+            debug_columns = set()
+            for account in initial_conditions.initial_account_set.accounts:
+                debug_columns.update(
+                    set(
+                        initial_conditions.initial_account_set
+                        .getForecastColumnsForAccount(account)
+                    ) - {account.name}
+                )
+            forecast_df = forecast_df.drop(
+                columns=list(debug_columns),
+                errors="ignore",
             )
-        forecast_df = forecast_df.drop(
-            columns=list(debug_columns),
-            errors="ignore",
-        )
         forecast_df = ForecastHandler._roundForecastOutput(
             forecast_df,
             decimals=2,
@@ -4943,6 +5141,7 @@ class ExecutionEngine:
             },
             transition_results=transition_results,
             resolved_line_item_set=resolved_line_items,
+            approximate_flag=approximate,
         )
 
     @classmethod
@@ -4967,7 +5166,8 @@ class ExecutionEngine:
             len(context.forecast_df.index),
         )
         
-        # forecast_df has been initialized with 0s and empty strings
+        # Initialize the graph structure; numeric storage itself is the dense
+        # NumPy matrix owned by the execution context.
         cls.build_initial_account_nodes(context)
         for day_index in range(1, len(context.forecast_df.index)):
             cls.build_balance_carry_nodes_for_day(
@@ -4986,6 +5186,9 @@ class ExecutionEngine:
         #if there are deferrals, this needs to be recomputed (and it will be based on a flag)
         #but most of the time, it is fine to compute this once at the start
         transactions_schedule = context.line_item_set.getLineItemSchedule()
+        transactions_by_priority_and_date = (
+            cls._group_transaction_schedule(transactions_schedule)
+        )
 
         all_priority_levels = set(context.initial_conditions.initial_line_item_set.getLineItems()["Priority"].unique().flat)
         all_priority_levels.add(1) #to make sure 1 is always in the set
@@ -5006,15 +5209,32 @@ class ExecutionEngine:
                     priority_level
                 )
             )
-            scheduled_at_level = transactions_schedule.loc[
-                transactions_schedule["Priority"] == priority_level
-            ]
+            scheduled_groups_at_level = {
+                scheduled_date: records
+                for (scheduled_priority, scheduled_date), records
+                in transactions_by_priority_and_date.items()
+                if scheduled_priority == priority_level
+            }
+            scheduled_transaction_count = sum(
+                len(records)
+                for records in scheduled_groups_at_level.values()
+            )
             logger.info(
                 "Priority %s started: transactions=%d dates=%d policies=%d",
                 priority_level,
-                len(scheduled_at_level.index),
-                scheduled_at_level["Date"].nunique(),
+                scheduled_transaction_count,
+                len(scheduled_groups_at_level),
                 len(policies_at_this_level),
+            )
+
+            deferrals_exist_at_this_level = any(
+                (
+                    False
+                    if pd.isna(record["Deferrable"])
+                    else bool(record["Deferrable"])
+                )
+                for records in scheduled_groups_at_level.values()
+                for record in records
             )
 
             mandatory_statement_events = {}
@@ -5059,29 +5279,21 @@ class ExecutionEngine:
                 for policy in policies
             }
 
-            deferrals_exist_at_this_level = bool(
-                (
-                    (transactions_schedule["Priority"] == priority_level)
-                    & transactions_schedule["Deferrable"]
-                    .map(
-                        lambda value: (
-                            False if pd.isna(value) else bool(value)
-                        )
-                    )
-                    .astype(bool)
-                ).any()
-            )
-
             # Most forecast dates contain no scheduled transaction. Walk only
             # the dates present at this priority instead of scanning every
             # forecast row. A deferral can insert a new future occurrence, so
-            # refresh the candidate dates after each processed date when this
-            # level contains deferrable work.
+            # refresh the grouped records after each processed date only when
+            # this level contains deferrable work.
             processed_through = context.initial_conditions.start_date
             while True:
                 if deferrals_exist_at_this_level:
                     transactions_schedule = (
                         context.line_item_set.getLineItemSchedule()
+                    )
+                    transactions_by_priority_and_date = (
+                        cls._group_transaction_schedule(
+                            transactions_schedule
+                        )
                     )
 
                 # TODO an expanded version of the above will be required for
@@ -5089,13 +5301,11 @@ class ExecutionEngine:
 
                 candidate_dates = {
                     scheduled_date
-                    for scheduled_date in transactions_schedule.loc[
-                        transactions_schedule["Priority"]
-                        == priority_level,
-                        "Date",
-                    ]
+                    for scheduled_priority, scheduled_date
+                    in transactions_by_priority_and_date
                     if (
-                        processed_through < scheduled_date
+                        scheduled_priority == priority_level
+                        and processed_through < scheduled_date
                         <= context.initial_conditions.end_date
                     )
                 }
@@ -5109,11 +5319,7 @@ class ExecutionEngine:
                     break
 
                 transaction_date = dates_at_priority[0]
-                day_index = int(
-                    context.forecast_df.index.get_indexer(
-                        pd.Index([transaction_date])
-                    )[0]
-                )
+                day_index = context.date_positions.get(transaction_date, -1)
                 if day_index < 0:
                     raise ValueError(
                         f"Scheduled transaction date {transaction_date} "
@@ -5127,25 +5333,26 @@ class ExecutionEngine:
                     day_index,
                 )
 
-                txn_date_selection_mask = (transactions_schedule["Date"] == transaction_date)
-                txn_priority_selection_mask = (transactions_schedule["Priority"] == priority_level)
-                transactions_for_this_day = transactions_schedule.loc[txn_date_selection_mask & txn_priority_selection_mask]
-
-                # Same-day income must be available before any transaction can
-                # spend it.  A stable sort preserves declaration order within
-                # the income and non-income groups.
-                transactions_for_this_day = transactions_for_this_day.sort_values(
-                    by="Income_Flag",
-                    ascending=False,
-                    kind="stable",
+                transactions_for_this_day = (
+                    transactions_by_priority_and_date.get(
+                        (priority_level, transaction_date), []
+                    )
                 )
-
-                for line_item_index, line_item_row in transactions_for_this_day.iterrows():
-                    logger.debug("Processing line-item row %s", line_item_index)
-                    transaction_node = cls.assemble_transaction_node(line_item_row, context)
+                for line_item_index, line_item_row in enumerate(
+                    transactions_for_this_day
+                ):
+                    logger.debug(
+                        "Processing grouped line-item row %s",
+                        line_item_index,
+                    )
+                    transaction_node = cls.assemble_transaction_node(
+                        line_item_row, context
+                    )
                     if priority_level > 1:
-                        context = cls.attemptTransaction(transaction_node=transaction_node,
-                                            context=context)
+                        context = cls.attemptTransaction(
+                            transaction_node=transaction_node,
+                            context=context,
+                        )
                     elif priority_level == 1:
                         context.register(
                             day_index=day_index,
@@ -5229,6 +5436,7 @@ class ExecutionEngine:
                 len(context.pending_heap),
             )
         ExecutionEngine.propagate(context)
+        context.materialize_forecast_df()
 
         # Account ledgers and active bounds are graph implementation state.
         # Keep only the public account balances and memo columns before

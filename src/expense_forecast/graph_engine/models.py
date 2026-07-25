@@ -78,6 +78,9 @@ class GraphExecutionDiagnostics:
     investment_spans_recomputed: int = 0
     policy_iterations: int = 0
     converged_components: list[str] = field(default_factory=list)
+    sparse_calendar_dates: int = 0
+    output_bins: int = 0
+    daily_carry_nodes: int = 0
 
 
 def stable_fingerprint(value: Any) -> str:

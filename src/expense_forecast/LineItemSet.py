@@ -802,10 +802,15 @@ class LineItemSet:
         current_choice_set = choices[current_choice]
         next_choice_set = choices[choice_name]
         remaining_items = list(self.line_items)
+        outgoing_recurrence_anchors = {}
         for item_to_remove in current_choice_set.line_items:
             key = self._line_item_key(item_to_remove)
             for index, candidate in enumerate(remaining_items):
                 if self._line_item_key(candidate) == key:
+                    if candidate.interval != "once":
+                        outgoing_recurrence_anchors[
+                            candidate.recurrence_key
+                        ] = candidate.recurrence_anchor
                     remaining_items.pop(index)
                     break
             else:
@@ -815,7 +820,18 @@ class LineItemSet:
                 )
 
         observed_keys = {self._line_item_key(item) for item in remaining_items}
-        for item in next_choice_set.line_items:
+        for item in copy.deepcopy(next_choice_set.line_items):
+            # A scenario change alters the terms of a recurring transaction,
+            # not its clock.  When the replacement represents the same
+            # recurrence, retain the anchor established by the outgoing
+            # choice so clipping the suffix cannot restart the cadence.
+            if (
+                item.interval != "once"
+                and item.recurrence_key in outgoing_recurrence_anchors
+            ):
+                item.recurrence_anchor = outgoing_recurrence_anchors[
+                    item.recurrence_key
+                ]
             key = self._line_item_key(item)
             if key not in observed_keys:
                 remaining_items.append(item)
@@ -858,6 +874,55 @@ class LineItemSet:
                 dimension_name,
                 choice_name,
             )
+            replacement_signatures = {
+                (
+                    item.priority,
+                    item.interval,
+                    item.amount,
+                    item.memo,
+                    item.income_flag,
+                    item.deferrable,
+                    item.partial_payment_allowed,
+                    item.recurrence_key,
+                )
+                for item in result.scenario_dimensions[
+                    dimension_name
+                ][choice_name].line_items
+            }
+            for item in result.line_items:
+                signature = (
+                    item.priority,
+                    item.interval,
+                    item.amount,
+                    item.memo,
+                    item.income_flag,
+                    item.deferrable,
+                    item.partial_payment_allowed,
+                    item.recurrence_key,
+                )
+                if signature in replacement_signatures:
+                    if (
+                        item.interval == "once"
+                        and item.deferrable
+                        and item.start_date < effective_date
+                    ):
+                        # A deferred one-time choice is still pending when the
+                        # choice becomes active. Put its first attempt at the
+                        # beginning of the new suffix; normal deferral logic
+                        # can move it farther if necessary.
+                        item.start_date = effective_date
+                        item.end_date = effective_date
+                        item.recurrence_anchor = effective_date
+                        continue
+                    if item.interval == "once":
+                        continue
+                    # The transition controls when the replacement becomes
+                    # eligible, while recurrence_anchor controls which dates
+                    # on or after that boundary belong to its cadence.
+                    item.start_date = max(
+                        item.start_date,
+                        effective_date,
+                    )
             timelines = copy.deepcopy(result.scenario_timelines)
             timeline = timelines.setdefault(dimension_name, [])
 

@@ -85,8 +85,8 @@ class ScheduleNode(GraphNode):
                     float(str(line_item.amount)),
                     line_item.memo,
                     bool(line_item.income_flag),
-                    line_item.deferrable,
-                    line_item.partial_payment_allowed,
+                    bool(line_item.deferrable),
+                    bool(line_item.partial_payment_allowed),
                 ))
         events.sort(key=lambda item: (
             item.date,
@@ -516,6 +516,21 @@ class GraphForecastRunner:
             "initial graph evaluation",
         )
         self.graph.evaluate(self.context, change)
+        if self.approximate:
+            output_dates = PresentationNode._approximate_dates(
+                self.IO.start_date,
+                self.IO.end_date,
+            )
+            transaction_dates = {
+                event.date for event in self.context.values.get(SCHEDULE, ())
+            }
+            self.context.diagnostics.sparse_calendar_dates = len(
+                transaction_dates | set(output_dates)
+            )
+            self.context.diagnostics.output_bins = len(output_dates)
+            # The approximate evaluator advances between sparse events using
+            # elapsed spans; it never constructs one carry node per day.
+            self.context.diagnostics.daily_carry_nodes = 0
         if self.configured_policy_set:
             self.context.diagnostics.policy_iterations += 1
             self.context.diagnostics.converged_components.append(
@@ -562,19 +577,10 @@ class GraphForecastRunner:
             "Date", "Priority", "Amount", "Memo", "Income_Flag",
             "Deferrable", "Partial_Payment_Allowed",
         ]
-        # The exact legacy runner historically omits this column only for an
-        # entirely empty transaction result. Preserve that public shape while
-        # shadow parity is the migration contract.
-        empty_exact_columns = [column for column in columns if column != "Income_Flag"]
-        exact_schedule_is_empty = not self.context.values.get(SCHEDULE)
         frames = {
             name: pd.DataFrame(
                 records,
-                columns=(
-                    empty_exact_columns
-                    if not self.approximate and exact_schedule_is_empty
-                    else columns
-                ),
+                columns=columns,
             )
             for name, records in transactions.items()
         }

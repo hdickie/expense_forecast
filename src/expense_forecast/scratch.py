@@ -139,9 +139,9 @@ def print_policy_safety_diagnostics(
 def get_B_invariant(start_date, end_date):
     B_invariant = LineItemSet()
 
-    # B_invariant.addLineItem(start_date=start_date, end_date=end_date, priority=1,
-    #                 interval='daily',amount=food_daily_amount,memo='food expense',income_flag=False, 
-    #                 deferrable=False, partial_payment_allowed=False)
+    B_invariant.addLineItem(start_date=start_date, end_date=end_date, priority=1,
+                    interval='daily',amount=15,memo='food expense',income_flag=False, 
+                    deferrable=False, partial_payment_allowed=False)
     B_invariant.addLineItem(start_date=start_date, end_date=end_date, priority=1,
                     interval='semiweekly',amount=60,memo='gas expense',income_flag=False, 
                     deferrable=False, partial_payment_allowed=False)
@@ -301,6 +301,7 @@ def getComprehensiveMemoRules():
                   account_to='Citi',
                   transaction_priority=1)
     M.addMemoRule(memo_regex='all loan payment',account_from='Checking',account_to='ALL_LOANS',transaction_priority=1)
+    M.addMemoRule(memo_regex='.*',account_from='Checking',account_to=None,transaction_priority=4) #discretionary spend
     return M
 
 def getHardCodedCreditCardPayments(user_vars):
@@ -2162,7 +2163,7 @@ if __name__ == '__main__':
         with logged_phase("Base initialization"):
 
             start_date = date(2026,7,14)
-            end_date = start_date + datetime.timedelta(days=365 * 2)
+            end_date = start_date + datetime.timedelta(days=365 * 5)
 
             user_vars = getUserVars()
 
@@ -2184,7 +2185,8 @@ if __name__ == '__main__':
                 memo='CNA income Eugene',
                 income_flag=True, 
                 deferrable=False, 
-                partial_payment_allowed=False)      
+                partial_payment_allowed=False,
+                recurrence_key='CNA paycheck')      
             cna_la_part_time = LineItemSet()
             cna_la_part_time.addLineItem(start_date=start_date, 
                 end_date=end_date, 
@@ -2194,7 +2196,8 @@ if __name__ == '__main__':
                 memo='CNA income Los Angeles part-time',
                 income_flag=True, 
                 deferrable=False, 
-                partial_payment_allowed=False)
+                partial_payment_allowed=False,
+                recurrence_key='CNA paycheck')
             cna_la_full_time = LineItemSet()
             cna_la_full_time.addLineItem(start_date=start_date, 
                 end_date=end_date, 
@@ -2204,7 +2207,8 @@ if __name__ == '__main__':
                 memo='CNA income Los Angeles full-time',
                 income_flag=True, 
                 deferrable=False, 
-                partial_payment_allowed=False)
+                partial_payment_allowed=False,
+                recurrence_key='CNA paycheck')
             income_key_to_LIS_map['CNA Eugene'] =  LineItemSet()
             income_key_to_LIS_map['CNA Eugene'] = cna_eugene
             income_key_to_LIS_map['CNA LA Part-Time'] = cna_la_part_time
@@ -2250,14 +2254,16 @@ if __name__ == '__main__':
                 0.025,  # Year 25
             ]
             for index, rate in enumerate(rn_annual_raise_rates):
-                income_key_to_LIS_map[f"RN Year {index+2}"] = LineItemSet()
-                income_key_to_LIS_map[f"RN Year {index+2}"].addLineItem(
+                rn_income_year_choice_name = f"RN Year {index+2}"
+                rn_income_year_memo = f"RN Year {index+2} income"
+                income_key_to_LIS_map[rn_income_year_choice_name] = LineItemSet()
+                income_key_to_LIS_map[rn_income_year_choice_name].addLineItem(
                     start_date=start_date,
                     end_date=end_date,
                     priority=1,
                     interval='semiweekly',
                     amount=previous_year_salary * (1+rate),
-                    memo=f"RN Year {index+2}",
+                    memo=rn_income_year_memo,
                     income_flag=True,
                     recurrence_key='RN paycheck',
                 )
@@ -2291,14 +2297,83 @@ if __name__ == '__main__':
 
             dated_income = income.to_line_item_set(end_date)
 
+            # used Lexus 2023 Lexus GX 460 - $52,000
+            # new lexus GX $95,000
+            # assume 7.5% apr if i take out a loan for either
+            
+
+            living_situation_key_to_LIS_map = {}
+            stay_in_car = LineItemSet()
+            living_situation_key_to_LIS_map["Stay in Car"] = stay_in_car
+
+            # a transition based on starting RN job
+            rent_a_place_for_2200 = LineItemSet()
+            rent_a_place_for_2200.addLineItem(
+                    start_date=start_date,
+                    end_date=end_date,
+                    priority=1,
+                    interval='monthly',
+                    amount=2200,
+                    memo='rent expense',
+                    income_flag=False,
+                )
+            living_situation_key_to_LIS_map[f"Rent 2200"] = rent_a_place_for_2200
+
+            # a deferrable transaction based on when I have enough
+            buy_a_lexus_cash = LineItemSet()
+            buy_a_lexus_cash.addLineItem(start_date=start_date + datetime.timedelta(days=1), 
+                end_date=start_date + datetime.timedelta(days=1), 
+                priority=4,
+                interval='once',
+                amount=95_000,
+                memo='Buy a Lexus',
+                income_flag=False, 
+                deferrable=True, 
+                partial_payment_allowed=False)
+            living_situation_key_to_LIS_map[f"Lexus Cash"] = buy_a_lexus_cash
+
+            # buy_a_lexus_car_loan = LineItemSet()
+
+            living_situation = ScenarioDimension(
+                "Living Situation",
+                living_situation_key_to_LIS_map,
+            )
+            milestones = MilestoneSet({
+                'Get job as RN': MemoMilestone(memo_regex=r'RN Year 1 income'),
+            })
+            transitions_1 = ConditionalScenarioTransitionSet(
+                ConditionalScenarioTransition(
+                    name='Start rent',
+                    milestone='Get job as RN',
+                    changes={
+                        'Living Situation': 'Rent 2200',
+                    },
+                )
+            )
+            transitions_2 = ConditionalScenarioTransitionSet(
+                ConditionalScenarioTransition(
+                    name='Buy Lexus',
+                    milestone='Get job as RN',
+                    changes={
+                        'Living Situation': 'Lexus Cash',
+                    },
+                )
+            )
+
         with logged_phase("Scenario-space expansion"):
             scenario_space = ScenarioSpace(
                 invariant_transactions=(
                     dated_income + get_B_invariant(start_date, end_date)
                 ),
-                scenario_dimensions={},
+                scenario_dimensions={
+                    "Living Situation": living_situation,
+                },
                 memo_rule_set=M,
                 default_policy_set=ForecastPolicySet(
+                    MinimumCheckingBalancePolicy(
+                        account_name='Checking', target=2_000,
+                        priority=1, on_unmet='warn',
+                    ),
                     CurrentStatementBalancePaymentPolicy(
                         account_name='Chase', priority=1, on_unmet='warn'
                     ),
@@ -2306,34 +2381,63 @@ if __name__ == '__main__':
                         debt_type='credit', strategy='avalanche',
                         priority=2, on_unmet='warn',
                     ),
-                    MinimumCheckingBalancePolicy(
-                        account_name='Checking', target=2_000,
+                    SurplusDebtPaymentPolicy(
+                        debt_type='loan', strategy='avalanche',
                         priority=3, on_unmet='warn',
                     ),
+                    
                 ),
                 policy_overrides=[
                 ],
             )
 
-            scenario = scenario_space.from_choice_keys({})  # no variable choices
+            scenario = scenario_space.from_choice_keys({
+                "Living Situation": "Stay in Car",
+            })
     
         with logged_phase("Initial-condition materialization"):
-            IO = scenario.to_initial_conditions(
+            IO_1 = scenario.to_initial_conditions(
                 start_date, end_date, A, M,
-                forecast_name='Plan A',
+                forecast_name='Plan A: Stay in Car',
+                milestone_set = milestones
+            )
+            IO_2 = scenario.to_initial_conditions(
+                start_date, end_date, A, M,
+                forecast_name='Plan B: Rent 2200',
+                milestone_set = milestones,
+                transition_set = transitions_1
+            )
+            IO_3 = scenario.to_initial_conditions(
+                start_date, end_date, A, M,
+                forecast_name='Plan C: Lexus Cash',
+                milestone_set = milestones,
+                transition_set = transitions_2
             )
 
         
         with logged_phase("Graph v2 forecast + report"):
-            R = ForecastHandler.runForecast(
-                IO,
+            R_1 = ForecastHandler.runForecastApproximate(
+                IO_1,
                 engine="graph v2",
-                graph_trace=True,
+                graph_trace=True
             )
-            # R_2 = ForecastHandler.runForecast(IO_2, engine="graph v2")
-            ForecastHandler.generateHTMLReport(R)
+            ForecastHandler.generateHTMLReport(R_1)
+            R_2 = ForecastHandler.runForecastApproximate(
+                IO_2,
+                engine="graph v2",
+                graph_trace=True
+            )
+            ForecastHandler.generateHTMLReport(R_2)
+            R_3 = ForecastHandler.runForecastApproximate(
+                IO_3,
+                engine="graph v2",
+                graph_trace=True
+            )
+            ForecastHandler.generateHTMLReport(R_3)
 
-        # ForecastHandler.generateComparisonReport(R_1, R_2)
+            ForecastHandler.generateComparisonReport(R_1, R_2)
+            ForecastHandler.generateComparisonReport(R_2, R_3)
+            ForecastHandler.generateComparisonReport(R_1, R_3)
 
 
 
