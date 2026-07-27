@@ -32,6 +32,7 @@ import datetime
 import logging
 
 from expense_forecast.LineItemSet import LineItemSet
+from expense_forecast.ScenarioChoice import ScenarioChoice
 
 
 logger = logging.getLogger(__name__)
@@ -53,7 +54,7 @@ class ScenarioDimension:
     @interface-report: show
     """
     #TODO DEFER manual review of ScenarioDimension.__init__ docstring
-    def __init__(self, name, choices: dict[str, LineItemSet] = None):
+    def __init__(self, name, choices=None):
 
         """
         #TODO DEFER one-line description of ScenarioDimension.__init__.
@@ -94,21 +95,15 @@ class ScenarioDimension:
         # the choice templates themselves.
         self.scenario_timelines = []
         if choices is not None:
-            for choice_name, choice_line_item_set in choices.items():
+            for choice_name, choice_value in choices.items():
                 if choice_name is None:
                     raise ValueError("choice_name for ScenarioDimension cannot be None")
 
                 if not isinstance(choice_name, str) or choice_name.strip() == "":
                     raise ValueError("choice_name for ScenarioDimension cannot be empty string")
-                if not isinstance(choice_line_item_set, LineItemSet):
-                    raise TypeError(
-                        "ScenarioDimension choices must be LineItemSet instances"
-                    )
-                if choice_line_item_set.scenario_selections:
-                    raise ValueError(
-                        "ScenarioDimension choices cannot contain scenario selections"
-                    )
-                self.choices[choice_name] = copy.deepcopy(choice_line_item_set)
+                self.choices[choice_name] = ScenarioChoice.normalize(
+                    choice_value
+                )
 
     def _validate_timeline_choice(self, choice_name: str) -> None:
         if choice_name not in self.choices:
@@ -220,7 +215,7 @@ class ScenarioDimension:
         return materialized
 
     #TODO DOC manual review of ScenarioDimension.addChoice docstring
-    def addChoice(self, label: str, line_item_set: LineItemSet):
+    def addChoice(self, label: str, choice):
         """
         #TODO DOC one-line description of ScenarioDimension.addChoice.
 
@@ -253,13 +248,9 @@ class ScenarioDimension:
 
         if not isinstance(label, str) or label.strip() == "":
             raise ValueError("label for ScenarioDimensio::addChoice cannot be empty string")
-        if not isinstance(line_item_set, LineItemSet):
-            raise TypeError("line_item_set must be a LineItemSet")
         if label in self.choices:
             raise ValueError(f"Duplicate choice {label!r}")
-        if line_item_set.scenario_selections:
-            raise ValueError("ScenarioDimension choices cannot contain scenario selections")
-        self.choices[label] = copy.deepcopy(line_item_set)
+        self.choices[label] = ScenarioChoice.normalize(choice)
 
     def select(
         self, choice_name: str, effective_date: datetime.date = None
@@ -271,7 +262,9 @@ class ScenarioDimension:
             )
         if effective_date is not None and not isinstance(effective_date, datetime.date):
             raise TypeError("effective_date must be a datetime.date or None")
-        items = copy.deepcopy(self.choices[choice_name].line_items)
+        items = copy.deepcopy(
+            self.choices[choice_name].line_item_set.line_items
+        )
         if effective_date is not None:
             for item in items:
                 if item.interval != "once":
@@ -282,7 +275,7 @@ class ScenarioDimension:
             scenario_selections=(
                 {self.name: choice_name} if effective_date is None else {}
             ),
-            scenario_dimensions={self.name: self.choices},
+            scenario_dimensions={self.name: copy.deepcopy(self.choices)},
             scenario_timelines=(
                 {self.name: [{
                     "choice": choice_name,
@@ -320,7 +313,9 @@ class ScenarioDimension:
             raise ValueError("start_date must be on or before end_date")
 
         scheduled_items = []
-        for line_item in copy.deepcopy(self.choices[choice_name].line_items):
+        for line_item in copy.deepcopy(
+            self.choices[choice_name].line_item_set.line_items
+        ):
             if line_item.interval == "once":
                 if start_date <= line_item.start_date <= end_date:
                     scheduled_items.append(line_item)
@@ -347,7 +342,7 @@ class ScenarioDimension:
                 line_item.recurrence_anchor = start_date
         return LineItemSet(
             scheduled_items,
-            scenario_dimensions={self.name: self.choices},
+            scenario_dimensions={self.name: copy.deepcopy(self.choices)},
             scenario_timelines={self.name: [{
                 "choice": choice_name,
                 "effective_date": start_date,

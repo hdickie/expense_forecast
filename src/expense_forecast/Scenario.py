@@ -27,6 +27,15 @@ import copy
 
 from expense_forecast.ForecastPolicySet import ForecastPolicySet
 from expense_forecast.LineItemSet import LineItemSet
+from expense_forecast.ConditionalScenarioTransitionSet import (
+    ConditionalScenarioTransitionSet,
+)
+from expense_forecast.AccountSet import AccountSet
+from expense_forecast.MemoRuleSet import MemoRuleSet
+from expense_forecast.ScenarioChoice import (
+    overlay_account_sets,
+    overlay_memo_rule_sets,
+)
 
 
 #TODO DEFER manual review of Scenario docstring
@@ -45,7 +54,10 @@ class Scenario:
     @interface-report: show
     """
     #TODO DEFER manual review of Scenario.__init__ docstring
-    def __init__(self, label, choices, line_item_set, policy_set=None):
+    def __init__(
+        self, label, choices, line_item_set, policy_set=None,
+        transition_set=None, account_set=None, memo_rule_set=None,
+    ):
         """
         #TODO DEFER one-line description of Scenario.__init__.
 
@@ -82,12 +94,30 @@ class Scenario:
         if not isinstance(line_item_set, LineItemSet):
             raise TypeError("line_item_set must be a LineItemSet")
         configured = policy_set or ForecastPolicySet()
+        configured_transitions = (
+            transition_set or ConditionalScenarioTransitionSet()
+        )
+        configured_accounts = account_set or AccountSet()
+        configured_memo_rules = memo_rule_set or MemoRuleSet()
         if not isinstance(configured, ForecastPolicySet):
             raise TypeError("policy_set must be a ForecastPolicySet")
+        if not isinstance(
+            configured_transitions, ConditionalScenarioTransitionSet
+        ):
+            raise TypeError(
+                "transition_set must be a ConditionalScenarioTransitionSet"
+            )
+        if not isinstance(configured_accounts, AccountSet):
+            raise TypeError("account_set must be an AccountSet")
+        if not isinstance(configured_memo_rules, MemoRuleSet):
+            raise TypeError("memo_rule_set must be a MemoRuleSet")
         self.label = label
         self.choices = dict(choices)
         self.line_item_set = copy.deepcopy(line_item_set)
         self.policy_set = copy.deepcopy(configured)
+        self.transition_set = copy.deepcopy(configured_transitions)
+        self.account_set = copy.deepcopy(configured_accounts)
+        self.memo_rule_set = copy.deepcopy(configured_memo_rules)
 
     @property
     def line_items(self):
@@ -107,6 +137,9 @@ class Scenario:
             choices=self.choices,
             line_item_set=self.line_item_set,
             policy_set=policy_set,
+            transition_set=self.transition_set,
+            account_set=self.account_set,
+            memo_rule_set=self.memo_rule_set,
         )
 
     def to_initial_conditions(
@@ -116,12 +149,33 @@ class Scenario:
             ExpenseForecastInitialConditions,
         )
 
+        supplied_transition_set = kwargs.pop("transition_set", None)
+        if supplied_transition_set is not None and not isinstance(
+            supplied_transition_set, ConditionalScenarioTransitionSet
+        ):
+            raise TypeError(
+                "transition_set must be a ConditionalScenarioTransitionSet"
+            )
+        transitions = ConditionalScenarioTransitionSet(
+            *self.transition_set.transitions,
+            *(
+                supplied_transition_set.transitions
+                if supplied_transition_set is not None else []
+            ),
+        )
+        resolved_accounts = overlay_account_sets(
+            account_set, self.account_set
+        )
+        resolved_memo_rules = overlay_memo_rule_sets(
+            memo_rule_set, self.memo_rule_set
+        )
         return ExpenseForecastInitialConditions(
             start_date=start_date,
             end_date=end_date,
-            account_set=copy.deepcopy(account_set),
+            account_set=resolved_accounts,
             line_item_set=copy.deepcopy(self.line_item_set),
-            memo_rule_set=copy.deepcopy(memo_rule_set),
+            memo_rule_set=resolved_memo_rules,
             policy_set=copy.deepcopy(self.policy_set),
+            transition_set=copy.deepcopy(transitions),
             **kwargs,
         )

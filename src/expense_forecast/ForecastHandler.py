@@ -33,6 +33,7 @@ from expense_forecast.MemoRuleSet import MemoRuleSet
 from expense_forecast.MilestoneSet import MilestoneSet
 from expense_forecast.ExpenseForecastInitialConditions import ExpenseForecastInitialConditions
 from expense_forecast.ExpenseForecastResult import ExpenseForecastResult
+from expense_forecast.ForecastResultSet import ForecastResultSet
 from expense_forecast.ForecastPolicySet import ForecastPolicySet
 from expense_forecast.MinimumCheckingBalancePolicy import MinimumCheckingBalancePolicy
 
@@ -49,6 +50,7 @@ from contextlib import nullcontext
 from time import perf_counter
 import os
 import tempfile
+import shutil
 from pathlib import Path
 from dateutil.relativedelta import relativedelta
 from expense_forecast.log_methods import (
@@ -89,6 +91,14 @@ from expense_forecast.InvestmentPolicies import (
 )
 from expense_forecast.ForecastPolicy import ForecastPolicyError
 from expense_forecast.PolicyEventGraph import PolicyEventGraph
+from expense_forecast.ScenarioChoice import (
+    ScenarioChoice,
+    overlay_account_sets,
+    extend_account_schema,
+    overlay_memo_rule_sets,
+    overlay_policy_sets,
+    overlay_transition_sets,
+)
 from matplotlib.pyplot import figure
 
 try:
@@ -181,6 +191,8 @@ class ForecastHandler:
             stripped_value = value.strip()
             if stripped_value == "":
                 return value
+            if stripped_value.lower() in {"none", "null", "nat"}:
+                return None
             for date_format in ["%Y%m%d", "%Y-%m-%d"]:
                 try:
                     return datetime.datetime.strptime(
@@ -188,6 +200,14 @@ class ForecastHandler:
                     ).date()
                 except ValueError:
                     pass
+            # Approximate forecasts can materialize milestone dates with a
+            # time component (for example ``2037-06-01 00:00:00``).  Those
+            # values still describe forecast dates and must not remain strings
+            # when transition code compares them with DataFrame date cells.
+            try:
+                return pd.Timestamp(stripped_value).date()
+            except (TypeError, ValueError):
+                pass
         return value
 
     #Codex-write-doctstring-OK
@@ -533,6 +553,64 @@ class ForecastHandler:
         ):
             return f"INVESTMENT WITHDRAWAL ({account_to_obj.name} +${amount})"
         return None
+
+    @classmethod
+    def runForecastSetApproximate(
+        cls,
+        initial_conditions_list,
+        milestone_set=None,
+        include_debug_columns=False,
+        engine="graph v2",
+        graph_trace=False,
+    ) -> ForecastResultSet:
+        """Run comparable approximate forecasts in declaration order.
+
+        Scenario materialization remains explicit: this method accepts only
+        complete initial conditions and forwards the same execution options to
+        each forecast.  Sequential execution keeps log output intelligible and
+        avoids introducing concurrency semantics into the first set runner.
+        """
+        if isinstance(
+            initial_conditions_list,
+            ExpenseForecastInitialConditions,
+        ):
+            raise TypeError(
+                "initial_conditions_list must be an iterable of "
+                "ExpenseForecastInitialConditions"
+            )
+
+        try:
+            initial_conditions = list(initial_conditions_list)
+        except TypeError as error:
+            raise TypeError(
+                "initial_conditions_list must be an iterable of "
+                "ExpenseForecastInitialConditions"
+            ) from error
+
+        if not initial_conditions:
+            raise ValueError(
+                "runForecastSetApproximate requires at least one forecast"
+            )
+        if any(
+            not isinstance(item, ExpenseForecastInitialConditions)
+            for item in initial_conditions
+        ):
+            raise TypeError(
+                "initial_conditions_list must contain only "
+                "ExpenseForecastInitialConditions"
+            )
+
+        results = [
+            cls.runForecastApproximate(
+                initial_conditions_item,
+                milestone_set=milestone_set,
+                include_debug_columns=include_debug_columns,
+                engine=engine,
+                graph_trace=graph_trace,
+            )
+            for initial_conditions_item in initial_conditions
+        ]
+        return ForecastResultSet(results)
 
     @classmethod
     def runForecastApproximate(
@@ -11952,18 +12030,45 @@ class ForecastHandler:
             )
 
         def account_schema(result):
+            account_set = getattr(
+                result, "resolved_account_set",
+                result.initial_conditions.initial_account_set,
+            )
             return [
                 (account.name, account.account_type)
-                for account in result.initial_conditions.initial_account_set.accounts
+                for account in account_set.accounts
             ]
 
         schema_1 = account_schema(E_1)
         schema_2 = account_schema(E_2)
-        if dict(schema_1) != dict(schema_2):
+        for result, schema in ((E_1, schema_1), (E_2, schema_2)):
+            missing_columns = [
+                name for name, _ in schema
+                if name not in result.forecast_df.columns
+            ]
+            if missing_columns:
+                raise ValueError(
+                    "Forecast output is missing account column(s): "
+                    + ", ".join(repr(name) for name in missing_columns)
+                )
+        shared_account_names = set(dict(schema_1)) & set(dict(schema_2))
+        type_conflicts = {
+            name: (dict(schema_1)[name], dict(schema_2)[name])
+            for name in shared_account_names
+            if dict(schema_1)[name] != dict(schema_2)[name]
+        }
+        if type_conflicts:
             raise ValueError(
-                "Comparison reports require matching top-level account names "
-                f"and types; baseline={schema_1!r}, comparison={schema_2!r}"
+                "Comparison reports require matching types for shared account "
+                f"names; conflicts={type_conflicts!r}"
             )
+        comparison_schema = list(schema_1)
+        observed_accounts = {name for name, _ in comparison_schema}
+        comparison_schema.extend(
+            (name, account_type)
+            for name, account_type in schema_2
+            if name not in observed_accounts
+        )
 
         # Validate report accounting only after compatibility checks so an
         # incompatible result produces the comparison-specific error rather
@@ -11987,16 +12092,15 @@ class ForecastHandler:
         final_1 = E_1.forecast_df.iloc[-1]
         final_2 = E_2.forecast_df.iloc[-1]
         account_deltas = []
-        for account_name, account_type in schema_1:
-            if (
-                account_name not in E_1.forecast_df.columns
-                or account_name not in E_2.forecast_df.columns
-            ):
-                raise ValueError(
-                    f"Forecast output is missing account column {account_name!r}"
-                )
-            baseline = float(final_1[account_name])
-            comparison = float(final_2[account_name])
+        for account_name, account_type in comparison_schema:
+            baseline = (
+                float(final_1[account_name])
+                if account_name in E_1.forecast_df.columns else 0.0
+            )
+            comparison = (
+                float(final_2[account_name])
+                if account_name in E_2.forecast_df.columns else 0.0
+            )
             account_deltas.append({
                 "account": account_name,
                 "account_type": account_type,
@@ -12035,6 +12139,21 @@ class ForecastHandler:
                     "baseline_date": achieved_1.isoformat(),
                     "comparison_date": achieved_2.isoformat(),
                     "delta_days": (achieved_2 - achieved_1).days,
+                    "achievement_status": "both",
+                })
+            elif achieved_1 is not None or achieved_2 is not None:
+                milestone_deltas.append({
+                    "milestone": milestone_name,
+                    "baseline_date": (
+                        achieved_1.isoformat() if achieved_1 else "Not achieved"
+                    ),
+                    "comparison_date": (
+                        achieved_2.isoformat() if achieved_2 else "Not achieved"
+                    ),
+                    "delta_days": None,
+                    "achievement_status": (
+                        "comparison_only" if achieved_2 else "baseline_only"
+                    ),
                 })
             else:
                 milestone_statuses.append({
@@ -12083,12 +12202,35 @@ class ForecastHandler:
         def policy_metadata(result):
             """Pair configured policies with their first activation/execution."""
             rows = []
-            policy_set = getattr(result.initial_conditions, "policy_set", None)
-            for policy in getattr(policy_set, "policies", []):
+            resolved_policy_set = getattr(
+                result,
+                "resolved_policy_set",
+                result.initial_conditions.policy_set,
+            )
+            policies = list(
+                getattr(resolved_policy_set, "policies", []) or []
+            ) or list(
+                getattr(result.initial_conditions.policy_set, "policies", [])
+                or []
+            )
+            for policy in policies:
                 policy_result = result.policy_results.get(
                     policy.policy_key, {}
                 )
                 activation_date = policy_result.get("activation_date")
+                if activation_date in (None, "None"):
+                    history_dates = [
+                        entry.get("effective_date")
+                        for entry in policy_result.get(
+                            "configuration_history", []
+                        )
+                        if entry.get("effective_date") is not None
+                    ]
+                    if history_dates:
+                        activation_date = min(
+                            cls._normalize_date_value(value)
+                            for value in history_dates
+                        )
 
                 # Allocation policies do not all expose an explicit activation
                 # field yet. Their first confirmed synthetic transaction is
@@ -12117,7 +12259,14 @@ class ForecastHandler:
                     target = float(str(policy.target))
                     rendered_target = f"{target:.2f}".rstrip("0").rstrip(".")
                     policy_name += f" ${rendered_target}"
+                elif isinstance(policy, SurplusDebtPaymentPolicy):
+                    policy_name = (
+                        "Surplus CC Payment"
+                        if policy.debt_type == "credit"
+                        else "Surplus Loan Payment"
+                    )
                 rows.append({
+                    "key": policy.policy_key,
                     "name": policy_name,
                     "priority": policy.priority,
                     "status": str(
@@ -12133,19 +12282,73 @@ class ForecastHandler:
 
         metadata_1 = scenario_metadata(E_1)
         metadata_2 = scenario_metadata(E_2)
-        shared_choices = {
-            (row["dimension"], row["choice"])
-            for row in metadata_1
-        } & {
-            (row["dimension"], row["choice"])
-            for row in metadata_2
+        def exclusive_choice_ranges(rows, other_rows, result):
+            """Remove only dates where the same choice is active on both sides."""
+            forecast_end = result.initial_conditions.end_date
+            exclusive = []
+            for row in rows:
+                start = cls._normalize_date_value(row["start"])
+                end = (
+                    forecast_end
+                    if row["end"] == "Forecast end"
+                    else cls._normalize_date_value(row["end"])
+                )
+                remaining = [(start, end)]
+                for other in other_rows:
+                    if (
+                        other["dimension"] != row["dimension"]
+                        or other["choice"] != row["choice"]
+                    ):
+                        continue
+                    other_start = cls._normalize_date_value(other["start"])
+                    other_end = (
+                        forecast_end
+                        if other["end"] == "Forecast end"
+                        else cls._normalize_date_value(other["end"])
+                    )
+                    next_remaining = []
+                    for range_start, range_end in remaining:
+                        overlap_start = max(range_start, other_start)
+                        overlap_end = min(range_end, other_end)
+                        if overlap_start > overlap_end:
+                            next_remaining.append((range_start, range_end))
+                            continue
+                        if range_start < overlap_start:
+                            next_remaining.append((
+                                range_start,
+                                overlap_start - datetime.timedelta(days=1),
+                            ))
+                        if overlap_end < range_end:
+                            next_remaining.append((
+                                overlap_end + datetime.timedelta(days=1),
+                                range_end,
+                            ))
+                    remaining = next_remaining
+
+                for range_start, range_end in remaining:
+                    rendered = dict(row)
+                    rendered["start"] = range_start.isoformat()
+                    rendered["end"] = (
+                        "Forecast end"
+                        if range_end == forecast_end
+                        else range_end.isoformat()
+                    )
+                    exclusive.append(rendered)
+            return exclusive
+
+        exclusive_metadata_1 = exclusive_choice_ranges(
+            metadata_1, metadata_2, E_1
+        )
+        exclusive_metadata_2 = exclusive_choice_ranges(
+            metadata_2, metadata_1, E_2
+        )
+
+        baseline_policy_dates = {
+            policy["key"]: policy["activation_date"]
+            for policy in policy_metadata(E_1)
         }
 
-        def scenario_card(result, side_label, rows):
-            rows = [
-                row for row in rows
-                if (row["dimension"], row["choice"]) not in shared_choices
-            ]
+        def scenario_card(result, side_label, rows, compare_activation=False):
             if not rows:
                 body = '<p class="empty-state">No scenario choices recorded.</p>'
             else:
@@ -12184,12 +12387,30 @@ class ForecastHandler:
                         if policy["activation_date"]
                         else "No activation recorded"
                     )
+                    activation_class = ""
+                    baseline_date = baseline_policy_dates.get(policy["key"])
+                    if (
+                        compare_activation
+                        and baseline_date
+                        and policy["activation_date"]
+                    ):
+                        alternate_date = cls._normalize_date_value(
+                            policy["activation_date"]
+                        )
+                        normalized_baseline = cls._normalize_date_value(
+                            baseline_date
+                        )
+                        if alternate_date < normalized_baseline:
+                            activation_class = " activation-earlier"
+                        elif alternate_date > normalized_baseline:
+                            activation_class = " activation-later"
                     policy_rows.append(
                         '<li><span class="timeline-dimension">'
                         f"Priority {escape(str(policy['priority']))}</span>"
                         f"<strong>{escape(policy['name'])}</strong>"
                         '<span class="timeline-range">'
-                        f"{escape(activation_text)} · "
+                        f'<span class="policy-activation{activation_class}">'
+                        f"{escape(activation_text)}</span> · "
                         f"{escape(policy['status'])}</span></li>"
                     )
                 policy_body = (
@@ -12214,7 +12435,7 @@ class ForecastHandler:
             for row in milestone_statuses
         )
         unmatched_section = (
-            '<div class="status-table-wrap"><h3>Unmatched milestones</h3>'
+            '<div class="status-table-wrap"><h3>Unachieved Milestones</h3>'
             '<table><thead><tr><th>Milestone</th><th>Baseline</th>'
             '<th>Comparison</th></tr></thead><tbody>'
             f"{unmatched_rows}</tbody></table></div>"
@@ -12286,6 +12507,10 @@ letter-spacing:.08em; font-weight:700; }} .timeline-list {{ list-style:none; mar
 .timeline-list li {{ display:grid; gap:4px; padding:12px 0; border-top:1px solid #ececef; }}
 .timeline-list li:first-child {{ border-top:0; padding-top:0; }} .timeline-dimension,.timeline-range,
 .timeline-trigger,.empty-state {{ color:var(--muted); font-size:.8rem; }}
+.policy-activation.activation-earlier {{ color:var(--positive); font-weight:700; }}
+.policy-activation.activation-later {{ color:var(--negative); font-weight:700; }}
+.scenario-card {{ display:flex; flex-direction:column; }}
+.scenario-card .card-divider {{ margin-top:auto; }}
 .card-divider {{ height:1px; margin:18px 0; background:#dedee2; }} .policy-heading {{ margin-bottom:14px; }}
 .chart-card h2,.section h2 {{ margin:0; font-size:1.2rem; }} .chart-note {{ color:var(--muted); font-size:.82rem; }}
 svg {{ display:block; width:100%; height:auto; overflow:visible; }}
@@ -12315,9 +12540,9 @@ color:var(--muted); cursor:pointer; font:inherit; }} .waterfall-tab:first-child 
 <section class="identity right"><h1><button type="button" class="identity-link" data-report-view="alternate">{escape(identity_2['name'])}</button></h1><p><button type="button" class="identity-link uid" data-report-view="alternate">{escape(identity_2['id'])}</button></p></section>
 </header>
 <section class="comparison-grid">
-{scenario_card(E_1, 'Baseline Only Choices', metadata_1)}
+{scenario_card(E_1, 'Baseline Only Choices', exclusive_metadata_1)}
 <div class="chart-card"><h2>Final Account Balance Differences</h2><p class="chart-note">Positive bars mean the comparison balance is higher.</p><svg id="account-chart" viewBox="0 0 900 430" role="img" aria-label="Final account balance deltas"></svg></div>
-{scenario_card(E_2, 'Alternate Choices', metadata_2)}
+{scenario_card(E_2, 'Alternate Choices', exclusive_metadata_2, compare_activation=True)}
 </section>
 <section class="section"><div class="chart-card"><h2>Milestone Timing Differences</h2><p class="chart-note">Days relative to baseline: left is earlier, right is later.</p><svg id="milestone-chart" viewBox="0 0 900 280" role="img" aria-label="Milestone timing deltas"></svg>{unmatched_section}</div></section>
 <section class="section"><div class="chart-card"><h2>Waterfall Comparison</h2><nav class="waterfall-nav" aria-label="Waterfall account">{waterfall_tabs}</nav><div class="placeholder" id="waterfall-placeholder"><span><strong id="waterfall-account-name">{escape(initial_waterfall_account)}</strong><br>Waterfall analysis will be added in a future report revision.</span></div></div></section>
@@ -12346,15 +12571,19 @@ add(bar,'title',{{}},`${{d.account}}\n${{data.baseline_name}}: ${{money(d.baseli
 add(accountSvg,'text',{{x:x+width/2,y:390,'text-anchor':'middle',class:'label'}},d.account);
 add(accountSvg,'text',{{x:x+width/2,y:d.delta>=0?y-8:y+height+16,'text-anchor':'middle',class:'value'}},money(d.delta)); }});
 const milestoneSvg=document.getElementById('milestone-chart'), milestones=data.milestones;
-const height=Math.max(280,80+milestones.length*46); milestoneSvg.setAttribute('viewBox',`0 0 900 ${{height}}`);
-const zeroX=560, dayMax=Math.max(1,...milestones.map(d=>Math.abs(d.delta_days))), dayScale=280/dayMax;
+const height=Math.max(110,80+milestones.length*46); milestoneSvg.setAttribute('viewBox',`0 0 900 ${{height}}`);
+const numericMilestones=milestones.filter(d=>Number.isFinite(d.delta_days));
+const zeroX=560, dayMax=Math.max(1,...numericMilestones.map(d=>Math.abs(d.delta_days))), dayScale=280/dayMax;
 add(milestoneSvg,'line',{{x1:zeroX,y1:35,x2:zeroX,y2:height-25,class:'axis'}});
-if(!milestones.length) add(milestoneSvg,'text',{{x:450,y:145,'text-anchor':'middle',class:'label'}},'No jointly achieved milestones');
-milestones.forEach((d,i)=>{{ const y=58+i*46, width=Math.abs(d.delta_days)*dayScale, x=d.delta_days>=0?zeroX:zeroX-width;
+if(!milestones.length) add(milestoneSvg,'text',{{x:450,y:height/2+5,'text-anchor':'middle',class:'label'}},'No jointly achieved milestones');
+milestones.forEach((d,i)=>{{ const y=58+i*46, oneSided=d.achievement_status!=='both';
+const direction=oneSided?(d.achievement_status==='comparison_only'?-1:1):(d.delta_days<0?-1:1);
+const width=oneSided?42:Math.abs(d.delta_days)*dayScale, x=direction>=0?zeroX:zeroX-width;
 add(milestoneSvg,'text',{{x:8,y:y+5,class:'label'}},d.milestone);
-const bar=add(milestoneSvg,'rect',{{x,y:y-13,width:Math.max(2,width),height:24,rx:4,fill:d.delta_days<=0?'#2f7d4a':'#b65a5a'}});
-add(bar,'title',{{}},`${{d.milestone}}\n${{data.baseline_name}}: ${{d.baseline_date}}\n${{data.comparison_name}}: ${{d.comparison_date}}\nDelta: ${{d.delta_days}} days`);
-add(milestoneSvg,'text',{{x:d.delta_days>=0?x+width+8:x-8,y:y+5,'text-anchor':d.delta_days>=0?'start':'end',class:'value'}},`${{d.delta_days}}d`); }});
+const bar=add(milestoneSvg,'rect',{{x,y:y-13,width:Math.max(2,width),height:24,rx:4,fill:direction<=0?'#2f7d4a':'#b65a5a'}});
+const resultText=oneSided?(d.achievement_status==='comparison_only'?'Comparison only':'Baseline only'):`${{d.delta_days}} days`;
+add(bar,'title',{{}},`${{d.milestone}}\n${{data.baseline_name}}: ${{d.baseline_date}}\n${{data.comparison_name}}: ${{d.comparison_date}}\n${{resultText}}`);
+add(milestoneSvg,'text',{{x:direction>=0?x+width+8:x-8,y:y+5,'text-anchor':direction>=0?'start':'end',class:'value'}},oneSided?resultText:`${{d.delta_days}}d`); }});
 document.querySelectorAll('.waterfall-tab').forEach(button => {{
 button.addEventListener('click', () => {{
 document.querySelectorAll('.waterfall-tab').forEach(candidate => candidate.classList.toggle('is-active',candidate===button));
@@ -12398,6 +12627,401 @@ if(event.data && event.data.type==='expense-forecast:return-comparison') showCom
             f"destination={target_path} elapsed={perf_counter()-started_at:.2f}s",
         )
         return str(target_path)
+
+    @classmethod
+    def generateForecastSetReport(
+        cls,
+        result_set: ForecastResultSet,
+        report_name: str = "Feasibility Report",
+        output_path=None,
+        write_file: bool = True,
+    ) -> str:
+        """Generate reports and an interactive index for completed forecasts."""
+        if not isinstance(result_set, ForecastResultSet):
+            raise TypeError("result_set must be a ForecastResultSet")
+        started_at = perf_counter()
+        results = list(result_set.results)
+
+        if output_path is None:
+            main_path = Path(f"ForecastSet_{result_set.unique_id}.html")
+        else:
+            main_path = Path(output_path)
+            if main_path.suffix.lower() not in {".html", ".htm"}:
+                main_path = main_path / f"ForecastSet_{result_set.unique_id}.html"
+        report_directory = main_path.with_name(
+            f"{main_path.stem}_reports"
+        )
+
+        def report_name_for(result):
+            return (
+                result.initial_conditions.forecast_name
+                or f"Forecast {result.unique_id}"
+            )
+
+        single_reports = {}
+        for result in results:
+            filename = f"Forecast_{result.unique_id}.html"
+            if write_file:
+                target = report_directory / filename
+                cls.generateHTMLReport(result, output_path=target)
+                single_reports[result.unique_id] = (
+                    f"{report_directory.name}/{filename}"
+                )
+            else:
+                single_reports[result.unique_id] = cls.generateHTMLReport(
+                    result, write_file=False, comparison_return=True
+                )
+
+        comparison_reports = {}
+        for baseline_index, baseline in enumerate(results):
+            for alternate_index in range(baseline_index + 1, len(results)):
+                alternate = results[alternate_index]
+                filename = (
+                    f"Comparison_{baseline.unique_id}_vs_"
+                    f"{alternate.unique_id}.html"
+                )
+                key = f"{baseline_index}:{alternate_index}"
+                if write_file:
+                    target = report_directory / filename
+                    cls.generateComparisonReport(
+                        baseline, alternate, output_path=target
+                    )
+                    comparison_reports[key] = (
+                        f"{report_directory.name}/{filename}"
+                    )
+                else:
+                    comparison_reports[key] = cls.generateComparisonReport(
+                        baseline, alternate, write_file=False
+                    )
+
+        def append_unique(target, values):
+            observed = set(target)
+            for value in values:
+                if value not in observed:
+                    target.append(value)
+                    observed.add(value)
+
+        dimensions = []
+        choices_by_dimension = {}
+        milestones = []
+        account_metrics = []
+        summary_metrics = [
+            "Net Worth", "Liquid Total", "CC Debt Total", "Loan Total",
+            "Investment Total",
+        ]
+        for result in results:
+            line_items = (
+                result.resolved_line_item_set
+                or result.initial_conditions.initial_line_item_set
+            )
+            append_unique(dimensions, line_items.scenario_dimensions.keys())
+            for dimension_name, definitions in (
+                line_items.scenario_dimensions.items()
+            ):
+                choices_by_dimension.setdefault(dimension_name, [])
+                append_unique(
+                    choices_by_dimension[dimension_name],
+                    definitions.keys(),
+                )
+            append_unique(
+                milestones,
+                getattr(result.milestone_set, "milestone_names", []),
+            )
+            for group in result.milestone_results or []:
+                if isinstance(group, dict):
+                    append_unique(milestones, group.keys())
+            resolved_accounts = getattr(
+                result,
+                "resolved_account_set",
+                result.initial_conditions.initial_account_set,
+            )
+            append_unique(
+                account_metrics,
+                [account.name for account in resolved_accounts.accounts],
+            )
+        append_unique(
+            account_metrics,
+            [
+                metric for metric in summary_metrics
+                if any(metric in result.forecast_df.columns for result in results)
+            ],
+        )
+
+        def milestone_value(value):
+            if value is None or str(value).strip().lower() in {
+                "", "none", "nat", "not achieved",
+            }:
+                return None
+            try:
+                return cls._normalize_date_value(value).isoformat()
+            except (TypeError, ValueError):
+                return None
+
+        report_rows = []
+        for index, result in enumerate(results):
+            line_items = (
+                result.resolved_line_item_set
+                or result.initial_conditions.initial_line_item_set
+            )
+            flattened_milestones = {}
+            for group in result.milestone_results or []:
+                if isinstance(group, dict):
+                    flattened_milestones.update(group)
+            final_row = result.forecast_df.iloc[-1]
+            values = {
+                metric: (
+                    float(final_row[metric])
+                    if metric in result.forecast_df.columns else 0.0
+                )
+                for metric in account_metrics
+            }
+            report_rows.append({
+                "index": index,
+                "id": result.unique_id,
+                "name": report_name_for(result),
+                "choices": {
+                    dimension: line_items.scenario_selections.get(dimension)
+                    for dimension in dimensions
+                },
+                "milestones": {
+                    name: milestone_value(flattened_milestones.get(name))
+                    for name in milestones
+                },
+                "values": values,
+                "single_report": (
+                    single_reports[result.unique_id] if write_file else "#"
+                ),
+            })
+
+        matrix_header = "".join(
+            f"<th>{escape(report_name_for(result))}</th>"
+            for result in results
+        )
+        matrix_rows = []
+        for row_index, row_result in enumerate(results):
+            cells = []
+            for column_index, column_result in enumerate(results):
+                if column_index < row_index:
+                    cells.append('<td class="matrix-empty">—</td>')
+                elif column_index == row_index:
+                    cells.append(
+                        '<td><a class="report-link" '
+                        f'data-report-kind="single" data-report-key="'
+                        f'{escape(row_result.unique_id, quote=True)}" href="'
+                        f'{escape(single_reports[row_result.unique_id] if write_file else "#", quote=True)}">'
+                        "Single</a></td>"
+                    )
+                else:
+                    key = f"{row_index}:{column_index}"
+                    cells.append(
+                        '<td><a class="report-link" '
+                        f'data-report-kind="comparison" data-report-key="{key}" '
+                        f'href="{escape(comparison_reports[key] if write_file else "#", quote=True)}">'
+                        "Compare</a></td>"
+                    )
+            matrix_rows.append(
+                f"<tr><th>{escape(report_name_for(row_result))}</th>"
+                + "".join(cells) + "</tr>"
+            )
+
+        filter_controls = []
+        multiple_controls = []
+        for dimension in dimensions:
+            choice_values = choices_by_dimension.get(dimension, [])
+            datalist_id = "choices-" + hashlib.sha256(
+                dimension.encode("utf-8")
+            ).hexdigest()[:8]
+            labels = ["All", *choice_values]
+            filter_controls.append(
+                '<label class="filter-control"><span>'
+                f"{escape(dimension)}</span>"
+                f'<input type="range" min="0" max="{len(choice_values)}" '
+                f'value="0" step="1" data-single-dimension="'
+                f'{escape(dimension, quote=True)}" list="{datalist_id}">'
+                f'<output data-single-output="{escape(dimension, quote=True)}">'
+                "All</output>"
+                f'<datalist id="{datalist_id}">'
+                + "".join(
+                    f'<option value="{index}" label="{escape(label, quote=True)}">'
+                    for index, label in enumerate(labels)
+                )
+                + "</datalist></label>"
+            )
+            multiple_controls.append(
+                '<label class="filter-control"><span>'
+                f"{escape(dimension)}</span>"
+                f'<select multiple data-multiple-dimension="'
+                f'{escape(dimension, quote=True)}">'
+                + "".join(
+                    f'<option value="{escape(choice, quote=True)}" selected>'
+                    f"{escape(choice)}</option>"
+                    for choice in choice_values
+                )
+                + "</select></label>"
+            )
+
+        table_headers = (
+            "<th>Report</th>"
+            + "".join(f"<th>{escape(value)}</th>" for value in dimensions)
+            + "".join(
+                f"<th>{escape(value)} Date</th>" for value in milestones
+            )
+            + "".join(
+                f"<th>Final {escape(value)}</th>" for value in account_metrics
+            )
+        )
+        data_payload = json.dumps({
+            "results": report_rows,
+            "dimensions": dimensions,
+            "choices": choices_by_dimension,
+            "milestones": milestones,
+            "metrics": account_metrics,
+            "write_file": write_file,
+            "single_reports": single_reports if not write_file else {},
+            "comparison_reports": (
+                comparison_reports if not write_file else {}
+            ),
+        }, ensure_ascii=False).replace("<", "\\u003c")
+
+        html = f"""<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{escape(report_name)}</title>
+<style>
+:root{{--bg:#f7f7f5;--surface:#fff;--text:#1d1d1f;--muted:#77777d;
+--border:#dedee2;--accent:#315c72;--positive:#2f7d4a;--negative:#b65a5a}}
+*{{box-sizing:border-box}} body{{margin:0;background:var(--bg);color:var(--text);
+font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}}
+.page{{width:min(1800px,100%);margin:auto;padding:40px clamp(20px,3vw,56px) 72px}}
+.hero{{text-align:center;margin-bottom:32px}}.hero h1{{margin:0;font-size:2.15rem}}
+.hero p{{margin:8px 0 0;color:var(--muted)}} .workspace{{display:grid;
+grid-template-columns:minmax(230px,1fr) minmax(460px,3fr) minmax(250px,1.2fr);
+gap:22px;align-items:stretch}} .card{{background:var(--surface);border:1px solid var(--border);
+border-radius:12px;padding:20px;box-shadow:0 1px 2px rgba(0,0,0,.025)}} h2{{font-size:1.15rem;margin:0 0 14px}}
+.mode-nav{{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--border);
+border-radius:9px;overflow:hidden;margin-bottom:18px}}.mode-nav button{{border:0;border-left:1px solid var(--border);
+padding:10px 5px;background:#fafafa;color:var(--muted);cursor:pointer}}.mode-nav button:first-child{{border-left:0}}
+.mode-nav button.active{{background:var(--accent);color:white}}.mode-panel[hidden]{{display:none}}
+.filter-control{{display:grid;gap:7px;margin:0 0 17px;font-size:.84rem;font-weight:650}}
+.filter-control output{{color:var(--accent);font-weight:700}}select[multiple]{{min-height:90px;border:1px solid var(--border);border-radius:7px}}
+#scatter{{width:100%;min-height:520px;display:block}}.legend{{display:flex;flex-wrap:wrap;gap:8px;
+max-height:145px;overflow:auto;margin-top:12px}}.legend label{{font-size:.72rem;color:var(--muted);
+border:1px solid var(--border);border-radius:999px;padding:5px 8px;background:#fafafa}}
+.range-group{{border-top:1px solid #ececef;padding:12px 0}}.range-group:first-child{{border-top:0}}
+.range-name{{font-weight:700;font-size:.84rem}}.range-value{{display:block;color:var(--muted);font-size:.8rem;margin-top:3px}}
+.section{{margin-top:28px}}.table-scroll{{overflow:auto;max-width:100%}}table{{border-collapse:collapse;width:100%;font-size:.82rem}}
+th,td{{padding:10px 12px;border-bottom:1px solid #ececef;text-align:left;white-space:nowrap}}th{{color:var(--muted);background:#fafafa}}
+.report-link{{color:var(--accent);font-weight:700;text-decoration:none}}.matrix-empty{{color:#c7c7cc}}
+.report-button{{display:inline-block;padding:6px 10px;border-radius:7px;background:var(--accent);
+color:#fff;font-weight:700;text-decoration:none}}
+.placeholder{{min-height:220px;display:grid;place-items:center;text-align:center;color:var(--muted);
+border:1px dashed #bfc0c5;border-radius:9px}}.tooltip{{position:fixed;z-index:10;pointer-events:none;
+background:#202124;color:#fff;padding:9px 11px;border-radius:7px;font-size:.75rem;white-space:pre-line;
+box-shadow:0 5px 18px rgba(0,0,0,.2)}}.tooltip[hidden]{{display:none}}
+.embedded-view{{position:fixed;inset:0;z-index:20;background:var(--bg)}}.embedded-view[hidden]{{display:none}}
+.embedded-view iframe{{width:100%;height:100vh;border:0}}
+@media(max-width:1050px){{.workspace{{grid-template-columns:1fr}}}}
+</style></head><body><main class="page">
+<header class="hero"><h1>{escape(report_name)}</h1>
+<p>{result_set.start_date:%Y-%m-%d} to {result_set.end_date:%Y-%m-%d}</p></header>
+<section class="workspace">
+<aside class="card"><nav class="mode-nav">
+<button class="active" data-mode="single">SINGLE</button>
+<button data-mode="multiple">MULTIPLE</button><button data-mode="range">RANGE</button>
+</nav><div class="mode-panel" data-panel="single">{''.join(filter_controls) or '<p>No scenario dimensions.</p>'}</div>
+<div class="mode-panel" data-panel="multiple" hidden>{''.join(multiple_controls) or '<p>No scenario dimensions.</p>'}</div>
+<div class="mode-panel placeholder" data-panel="range" hidden>Drag-to-select range analysis will be added in a future revision.</div></aside>
+<section class="card"><h2>Feasible Region</h2><svg id="scatter" viewBox="0 0 980 560"></svg>
+<div class="legend" id="series-legend"></div></section>
+<aside class="card"><h2>Visible Ranges</h2><div id="range-panel"></div></aside>
+</section>
+<section class="card section"><h2>Forecast Outcomes</h2><div class="table-scroll">
+<table><thead><tr>{table_headers}</tr></thead><tbody id="forecast-table"></tbody></table></div></section>
+<section class="card section"><h2>Comparison Reports</h2>
+<p>Rows are baselines; columns are alternates.</p><div class="table-scroll"><table>
+<thead><tr><th>Baseline \\ Alternate</th>{matrix_header}</tr></thead>
+<tbody>{''.join(matrix_rows)}</tbody></table></div></section>
+</main><div class="tooltip" id="tooltip" hidden></div>
+<section class="embedded-view" id="embedded-view" hidden><iframe title="Embedded forecast report"></iframe></section>
+<script id="forecast-set-data" type="application/json">{data_payload}</script>
+<script>
+(()=>{{const data=JSON.parse(document.getElementById('forecast-set-data').textContent);
+const NS='http://www.w3.org/2000/svg',svg=document.getElementById('scatter'),tooltip=document.getElementById('tooltip');
+const money=v=>new Intl.NumberFormat('en-US',{{style:'currency',currency:'USD',maximumFractionDigits:0}}).format(v);
+const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}}[c]));
+const dateText=v=>v||'—';let mode='single',hiddenSeries=new Set();
+const colors=['#315c72','#2f7d4a','#9b6a3c','#76528f','#b65a5a','#367c83','#8a7a2f','#5a6c9f'];
+const series=[];data.milestones.forEach(m=>data.metrics.forEach(metric=>series.push({{key:m+'\\u001f'+metric,milestone:m,metric}})));
+function filters(){{const result={{}};if(mode==='single')document.querySelectorAll('[data-single-dimension]').forEach(input=>{{
+const choices=data.choices[input.dataset.singleDimension]||[],i=Number(input.value);result[input.dataset.singleDimension]=i?new Set([choices[i-1]]):null;}});
+else if(mode==='multiple')document.querySelectorAll('[data-multiple-dimension]').forEach(select=>{{
+const selected=new Set([...select.selectedOptions].map(o=>o.value)),all=data.choices[select.dataset.multipleDimension]||[];
+result[select.dataset.multipleDimension]=selected.size===all.length?null:selected;}});return result;}}
+function visible(){{const f=filters();return data.results.filter(r=>Object.entries(f).every(([d,wanted])=>!wanted||wanted.has(r.choices[d])));}}
+function el(tag,attrs,text){{const node=document.createElementNS(NS,tag);Object.entries(attrs||{{}}).forEach(([k,v])=>node.setAttribute(k,v));
+if(text!==undefined)node.textContent=text;return node;}}
+function renderLegend(){{const root=document.getElementById('series-legend');root.innerHTML='';series.forEach((s,i)=>{{
+const label=document.createElement('label'),box=document.createElement('input');box.type='checkbox';box.checked=!hiddenSeries.has(s.key);
+box.addEventListener('change',()=>{{box.checked?hiddenSeries.delete(s.key):hiddenSeries.add(s.key);render();}});
+label.append(box,document.createTextNode(' '+s.milestone+' × '+s.metric));label.style.borderColor=colors[i%colors.length];root.append(label);}});}}
+function renderPlot(rows){{svg.innerHTML='';const points=[];series.forEach((s,si)=>{{if(hiddenSeries.has(s.key))return;
+rows.forEach(r=>{{const d=r.milestones[s.milestone];if(d)points.push({{r,s,si,x:new Date(d+'T00:00:00').getTime(),y:r.values[s.metric]}});}});}});
+const left=92,right=955,top=25,bottom=505,xValues=points.map(p=>p.x),xMin=xValues.length?Math.min(...xValues):Date.now();
+const xMaxRaw=xValues.length?Math.max(...xValues):xMin+86400000,xMax=xMaxRaw===xMin?xMin+86400000:xMaxRaw;
+const yMin=Math.min(0,...points.map(p=>p.y)),yMax=Math.max(1,...points.map(p=>p.y));const sx=x=>left+(x-xMin)/(xMax-xMin||1)*(right-left);
+const sy=y=>bottom-(y-yMin)/(yMax-yMin||1)*(bottom-top);svg.append(el('line',{{x1:left,y1:bottom,x2:right,y2:bottom,stroke:'#999'}}));
+svg.append(el('line',{{x1:left,y1:top,x2:left,y2:bottom,stroke:'#999'}}));if(!points.length)svg.append(el('text',{{x:520,y:270,'text-anchor':'middle',fill:'#777'}},'No achieved milestones for visible forecasts'));
+for(let i=0;i<5;i++){{const stamp=xMin+(xMax-xMin)*i/4,x=sx(stamp),label=new Date(stamp).toISOString().slice(0,10);
+svg.append(el('line',{{x1:x,y1:bottom,x2:x,y2:bottom+5,stroke:'#999'}}));svg.append(el('text',{{x,y:bottom+20,'text-anchor':'middle',fill:'#777','font-size':11}},label));}}
+for(let i=0;i<5;i++){{const value=yMin+(yMax-yMin)*i/4,y=sy(value);svg.append(el('line',{{x1:left,y1:y,x2:right,y2:y,stroke:'#ececef'}}));
+svg.append(el('text',{{x:left-8,y:y+4,'text-anchor':'end',fill:'#777','font-size':11}},money(value)));}}
+points.forEach(p=>{{const c=el('circle',{{cx:sx(p.x),cy:sy(p.y),r:5,fill:colors[p.si%colors.length],opacity:.72,stroke:'#fff','stroke-width':1}});
+c.addEventListener('mouseenter',event=>{{tooltip.hidden=false;tooltip.textContent=p.r.name+'\\n'+p.s.milestone+': '+p.r.milestones[p.s.milestone]+'\\n'+p.s.metric+': '+money(p.y);
+tooltip.style.left=(event.clientX+12)+'px';tooltip.style.top=(event.clientY+12)+'px';}});c.addEventListener('mouseleave',()=>tooltip.hidden=true);
+c.addEventListener('click',()=>openReport('single',p.r.id,p.r.single_report));svg.append(c);}});
+svg.append(el('text',{{x:520,y:550,'text-anchor':'middle',fill:'#777','font-size':12}},'Milestone achievement date'));}}
+function renderRanges(rows){{const root=document.getElementById('range-panel');root.innerHTML='';data.metrics.forEach(metric=>{{const values=rows.map(r=>r.values[metric]);
+const div=document.createElement('div');div.className='range-group';div.innerHTML='<span class="range-name">'+safe(metric)+'</span><span class="range-value">'+(values.length?money(Math.min(...values))+' – '+money(Math.max(...values)):'—')+'</span>';root.append(div);}});
+data.milestones.forEach(m=>{{const dates=rows.map(r=>r.milestones[m]).filter(Boolean).sort(),missing=rows.length-dates.length,div=document.createElement('div');div.className='range-group';
+div.innerHTML='<span class="range-name">'+safe(m)+'</span><span class="range-value">'+(dates.length?dates[0]+' – '+dates[dates.length-1]:'Not achieved')+(missing?' · '+missing+' unachieved':'')+'</span>';root.append(div);}});}}
+function renderTable(rows){{const body=document.getElementById('forecast-table');body.innerHTML='';rows.forEach(r=>{{const tr=document.createElement('tr');
+let html='<td><a class="report-button" href="'+r.single_report+'" data-dynamic-single="'+r.id+'">Open</a></td>';
+data.dimensions.forEach(d=>html+='<td>'+safe(r.choices[d]||'—')+'</td>');data.milestones.forEach(m=>html+='<td>'+safe(dateText(r.milestones[m]))+'</td>');
+data.metrics.forEach(metric=>html+='<td>'+money(r.values[metric])+'</td>');tr.innerHTML=html;body.append(tr);}});
+body.querySelectorAll('[data-dynamic-single]').forEach(a=>a.addEventListener('click',e=>{{if(!data.write_file){{e.preventDefault();openReport('single',a.dataset.dynamicSingle,data.single_reports[a.dataset.dynamicSingle]);}}}}));}}
+function render(){{const rows=visible();renderPlot(rows);renderRanges(rows);renderTable(rows);}}
+function openReport(kind,key,htmlOrHref){{if(data.write_file){{location.href=htmlOrHref;return;}}const view=document.getElementById('embedded-view'),frame=view.querySelector('iframe');
+frame.srcdoc=kind==='single'?data.single_reports[key]:data.comparison_reports[key];view.hidden=false;}}
+document.querySelectorAll('[data-mode]').forEach(button=>button.addEventListener('click',()=>{{mode=button.dataset.mode;
+document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b===button));document.querySelectorAll('[data-panel]').forEach(p=>p.hidden=p.dataset.panel!==mode);
+if(mode!=='range')render();}}));document.querySelectorAll('[data-single-dimension]').forEach(input=>input.addEventListener('input',()=>{{
+const choices=data.choices[input.dataset.singleDimension]||[];document.querySelector('[data-single-output="'+CSS.escape(input.dataset.singleDimension)+'"]').value=Number(input.value)?choices[Number(input.value)-1]:'All';render();}}));
+document.querySelectorAll('[data-multiple-dimension]').forEach(select=>select.addEventListener('change',render));
+document.querySelectorAll('.report-link[data-report-kind]').forEach(a=>a.addEventListener('click',e=>{{if(!data.write_file){{e.preventDefault();openReport(a.dataset.reportKind,a.dataset.reportKey);}}}}));
+window.addEventListener('message',event=>{{if(event.data&&event.data.type==='expense-forecast:return-comparison')document.getElementById('embedded-view').hidden=true;}});
+renderLegend();render();}})();
+</script></body></html>"""
+
+        if not write_file:
+            return html
+        # Single-forecast reports currently load the project-owned chart
+        # renderers as sibling files. Keep the generated bundle portable by
+        # placing those renderers beside every child report.
+        project_root = Path(__file__).resolve().parents[2]
+        report_directory.mkdir(parents=True, exist_ok=True)
+        for asset_name in ("hero_chart.js", "detail_charts.js"):
+            source = project_root / asset_name
+            if source.exists():
+                shutil.copy2(source, report_directory / asset_name)
+        main_path.parent.mkdir(parents=True, exist_ok=True)
+        main_path.write_text(html)
+        cls._phase_log(
+            "green",
+            "Forecast-set report completed: "
+            f"forecasts={len(results)} comparisons={len(comparison_reports)} "
+            f"destination={main_path} elapsed={perf_counter()-started_at:.2f}s",
+        )
+        return str(main_path)
 
     @staticmethod
     def _assert_report_accounting_invariants(
@@ -12486,8 +13110,12 @@ if(event.data && event.data.type==='expense-forecast:return-comparison') showCom
         # Memo, and Memo Directives. This deliberately starts with a copy of
         # the raw forecast instead of trusting the values the report is about
         # to plot. A mismatch identifies the exact row and derived column.
-        recomputed = ForecastHandler._appendSummaryLines(
+        report_account_set = getattr(
+            E, "resolved_account_set",
             E.initial_conditions.initial_account_set,
+        )
+        recomputed = ForecastHandler._appendSummaryLines(
+            report_account_set,
             forecast_df.copy(deep=True),
         )
         audited_columns = (
@@ -12510,7 +13138,7 @@ if(event.data && event.data.type==='expense-forecast:return-comparison') showCom
         # error, plus another half cent when the original total was rounded.
         # Use that mathematical bound only for account aggregates; memo-derived
         # gain, loss, interest, and return values retain the stricter tolerance.
-        account_info = E.initial_conditions.initial_account_set.getAccounts()
+        account_info = report_account_set.getAccounts()
         aggregate_component_counts = {
             "Liquid Total": int((account_info.Account_Type == "checking").sum()),
             "Investment Total": int(
@@ -12698,10 +13326,14 @@ if(event.data && event.data.type==='expense-forecast:return-comparison') showCom
             timestamp = pd.to_datetime(date_achieved, errors="coerce")
             return None if pd.isna(timestamp) else pd.Timestamp(timestamp)
 
+        milestone_timestamps = {
+            milestone_name: milestone_timestamp(date_achieved)
+            for milestone_name, date_achieved in milestone_results.items()
+        }
         achieved_milestones = [
             (milestone_name, timestamp)
-            for milestone_name, date_achieved in milestone_results.items()
-            if (timestamp := milestone_timestamp(date_achieved)) is not None
+            for milestone_name, timestamp in milestone_timestamps.items()
+            if timestamp is not None
         ]
 
         def format_milestone_elapsed_time(date_achieved: pd.Timestamp) -> str:
@@ -12715,8 +13347,7 @@ if(event.data && event.data.type==='expense-forecast:return-comparison') showCom
             elapsed_years = elapsed_days / 365.25
             return f"{elapsed_years:.1f} years"
 
-        report_data_frames["milestone_dates"] = pd.DataFrame(
-            [
+        milestone_date_rows = [
                 {
                     "Milestone": milestone_name,
                     "Date": date_achieved.date().isoformat(),
@@ -12726,12 +13357,26 @@ if(event.data && event.data.type==='expense-forecast:return-comparison') showCom
                     achieved_milestones,
                     key=lambda item: item[1],
                 )
-            ],
+            ]
+        milestone_date_rows.extend(
+            {
+                "Milestone": milestone_name,
+                "Date": "Not achieved",
+                "Time": "-",
+            }
+            for milestone_name, timestamp in milestone_timestamps.items()
+            if timestamp is None
+        )
+        report_data_frames["milestone_dates"] = pd.DataFrame(
+            milestone_date_rows,
             columns=["Milestone", "Date", "Time"],
         )
 
         initial_conditions = E.initial_conditions
-        initial_account_set = initial_conditions.initial_account_set
+        initial_account_set = getattr(
+            E, "resolved_account_set",
+            initial_conditions.initial_account_set,
+        )
         initial_line_item_set = initial_conditions.initial_line_item_set
         initial_memo_rule_set = initial_conditions.initial_memo_rule_set
         primary_checking_name = initial_account_set.primary_checking_account_name
@@ -12803,9 +13448,19 @@ if(event.data && event.data.type==='expense-forecast:return-comparison') showCom
             if not methods:
                 return "Not evaluated"
             return "Mixed" if len(methods) > 1 else format_policy_label(next(iter(methods)))
-        configured_policies = list(
+        resolved_policies = list(
+            getattr(getattr(E, "resolved_policy_set", None), "policies", [])
+            or []
+        )
+        initial_policies = list(
             getattr(initial_conditions.policy_set, "policies", []) or []
         )
+        # Older callers sometimes attach policy configuration to the result's
+        # initial conditions after constructing the result (notably report
+        # fixtures). Prefer the resolved snapshot whenever it contains data,
+        # while retaining that harmless compatibility behavior for an empty
+        # snapshot.
+        configured_policies = resolved_policies or initial_policies
         ordered_policies = [
             policy
             for _, policy in sorted(
@@ -12906,7 +13561,11 @@ if(event.data && event.data.type==='expense-forecast:return-comparison') showCom
             if isinstance(policy, SurplusDebtPaymentPolicy):
                 applies_to = "Credit cards" if policy.debt_type == "credit" else "Loans"
                 return (
-                    "Surplus Debt Payment",
+                    (
+                        "Surplus CC Payment"
+                        if policy.debt_type == "credit"
+                        else "Surplus Loan Payment"
+                    ),
                     applies_to,
                     format_policy_label(policy.strategy),
                 )
@@ -16140,6 +16799,18 @@ if(event.data && event.data.type==='expense-forecast:return-comparison') showCom
     ):
         """Apply configured forecast policies without changing public runners."""
         configured_IO = copy.deepcopy(IO)
+
+        def preserve_configured_sets(result):
+            """Keep generated policy transactions out of resolved configuration."""
+            result.resolved_account_set = copy.deepcopy(
+                configured_IO.initial_account_set
+            )
+            result.resolved_memo_rule_set = copy.deepcopy(
+                configured_IO.initial_memo_rule_set
+            )
+            result.resolved_policy_set = copy.deepcopy(configured_IO.policy_set)
+            return result
+
         IO = cls._materialize_cash_allocation_policies(
             copy.deepcopy(IO), approximate=approximate
         )
@@ -16161,7 +16832,7 @@ if(event.data && event.data.type==='expense-forecast:return-comparison') showCom
             result.policy_results = cls._summarize_cash_policy_results(
                 policy_set, result
             )
-            return result
+            return preserve_configured_sets(result)
 
         original_IO = configured_IO
         policy = min(reserve_policies, key=lambda candidate: candidate.priority)
@@ -16217,7 +16888,7 @@ if(event.data && event.data.type==='expense-forecast:return-comparison') showCom
                     "target": candidate.target,
                     "activation_date": IO.start_date,
                 } for candidate, account in reserve_entries})
-            return result
+            return preserve_configured_sets(result)
 
         def priority_one_io(source_io):
             result = copy.deepcopy(source_io)
@@ -16262,12 +16933,16 @@ if(event.data && event.data.type==='expense-forecast:return-comparison') showCom
                 scenario_selections=source_io.initial_line_item_set.scenario_selections,
                 scenario_dimensions={
                     dimension_name: {
-                        choice_name: LineItemSet(
-                            [
+                        choice_name: ScenarioChoice(
+                            line_item_set=LineItemSet([
                                 copy.deepcopy(item)
                                 for item in choice.line_items
                                 if precedes_reserve(item.priority, item.memo)
-                            ]
+                            ]),
+                            account_set=choice.account_set,
+                            memo_rule_set=choice.memo_rule_set,
+                            policy_set=choice.policy_set,
+                            transition_set=choice.transition_set,
                         )
                         for choice_name, choice in choices.items()
                     }
@@ -16375,7 +17050,7 @@ if(event.data && event.data.type==='expense-forecast:return-comparison') showCom
                 for key, value in policy_results.items()
                 if key in unattainable_keys
             })
-            return fallback_result
+            return preserve_configured_sets(fallback_result)
 
         activation_row = qualifying.iloc[0]
         activation_date = cls._normalize_date_value(activation_row["Date"])
@@ -16580,7 +17255,7 @@ if(event.data && event.data.type==='expense-forecast:return-comparison') showCom
             result.forecast_df = result.forecast_df.drop(
                 columns=list(debug_columns), errors="ignore"
             )
-        return result
+        return preserve_configured_sets(result)
 
     @classmethod
     def _runForecastWithScenarioTransitions(
@@ -16596,6 +17271,10 @@ if(event.data && event.data.type==='expense-forecast:return-comparison') showCom
         original_IO = copy.deepcopy(IO)
         current_IO = copy.deepcopy(IO)
         current_budget = copy.deepcopy(IO.initial_line_item_set)
+        resolved_account_set = copy.deepcopy(IO.initial_account_set)
+        resolved_memo_rule_set = copy.deepcopy(IO.initial_memo_rule_set)
+        resolved_policy_set = copy.deepcopy(IO.policy_set)
+        resolved_transition_set = copy.deepcopy(transitions)
         fired_milestones = set()
         forecast_parts = []
         transaction_parts = {name: [] for name in ("confirmed_df", "deferred_df", "skipped_df")}
@@ -16617,7 +17296,9 @@ if(event.data && event.data.type==='expense-forecast:return-comparison') showCom
             segment = runner(current_IO, milestone_set, True)
             milestone_dates = cls._flatten_milestone_results(segment.milestone_results)
             candidates = []
-            for declaration_index, transition in enumerate(transitions.transitions):
+            for declaration_index, transition in enumerate(
+                resolved_transition_set.transitions
+            ):
                 if transition.milestone in fired_milestones:
                     continue
                 achieved_date = milestone_dates.get(transition.milestone)
@@ -16690,6 +17371,39 @@ if(event.data && event.data.type==='expense-forecast:return-comparison') showCom
                     changes=transition.changes,
                     history_start_date=original_IO.start_date,
                 )
+                for dimension_name, choice_name in transition.changes.items():
+                    activated_choice = current_budget.scenario_dimensions[
+                        dimension_name
+                    ][choice_name]
+                    resolved_account_set = overlay_account_sets(
+                        resolved_account_set,
+                        activated_choice.account_set,
+                    )
+                    resolved_memo_rule_set = overlay_memo_rule_sets(
+                        resolved_memo_rule_set,
+                        activated_choice.memo_rule_set,
+                    )
+                    resolved_policy_set = overlay_policy_sets(
+                        resolved_policy_set,
+                        activated_choice.policy_set,
+                    )
+                    previous_transition_names = {
+                        candidate.name
+                        for candidate in resolved_transition_set.transitions
+                    }
+                    resolved_transition_set = overlay_transition_sets(
+                        resolved_transition_set,
+                        activated_choice.transition_set,
+                    )
+                    newly_activated = [
+                        candidate
+                        for candidate in resolved_transition_set.transitions
+                        if candidate.name not in previous_transition_names
+                    ]
+                    if newly_activated:
+                        ConditionalScenarioTransitionSet(
+                            newly_activated
+                        ).validate(milestone_set, current_budget)
 
             if next_date >= current_IO.end_date:
                 break
@@ -16700,6 +17414,9 @@ if(event.data && event.data.type==='expense-forecast:return-comparison') showCom
             next_accounts = cls._account_set_from_forecast_row(
                 current_IO.initial_account_set,
                 committed_rows.tail(1).iloc[0],
+            )
+            next_accounts = extend_account_schema(
+                next_accounts, resolved_account_set
             )
             io_kwargs = {
                 "milestone_set": milestone_set,
@@ -16714,7 +17431,8 @@ if(event.data && event.data.type==='expense-forecast:return-comparison') showCom
                 end_date=original_IO.end_date,
                 account_set=next_accounts,
                 line_item_set=current_budget,
-                memo_rule_set=original_IO.initial_memo_rule_set,
+                memo_rule_set=resolved_memo_rule_set,
+                policy_set=resolved_policy_set,
                 **io_kwargs,
             )
             current_IO._exclude_schedule_through = next_date
@@ -16736,10 +17454,10 @@ if(event.data && event.data.type==='expense-forecast:return-comparison') showCom
             raise ValueError("Conditional forecast produced duplicate dates")
         if not include_debug_columns:
             debug_columns = set()
-            for account in original_IO.initial_account_set.accounts:
+            for account in resolved_account_set.accounts:
                 debug_columns.update(
                     set(
-                        original_IO.initial_account_set
+                        resolved_account_set
                         .getForecastColumnsForAccount(account)
                     )
                     - {account.name}
@@ -16748,8 +17466,16 @@ if(event.data && event.data.type==='expense-forecast:return-comparison') showCom
                 columns=[c for c in debug_columns if c in forecast_df.columns],
                 errors="ignore",
             )
+        for account in resolved_account_set.accounts:
+            for column in resolved_account_set.getForecastColumnsForAccount(
+                account
+            ):
+                if column not in forecast_df.columns:
+                    forecast_df[column] = 0.0
+                else:
+                    forecast_df[column] = forecast_df[column].fillna(0.0)
         forecast_df = cls._appendSummaryLines(
-            original_IO.initial_account_set, forecast_df, log_stack_depth=0
+            resolved_account_set, forecast_df, log_stack_depth=0
         )
         forecast_df = cls._roundForecastOutput(forecast_df, decimals=2)
         result_frames = {}
@@ -16772,6 +17498,10 @@ if(event.data && event.data.type==='expense-forecast:return-comparison') showCom
                 forecast_df, milestone_set, log_stack_depth=0
             ),
             approximate_flag=approximate,
+            resolved_line_item_set=current_budget,
+            resolved_account_set=resolved_account_set,
+            resolved_memo_rule_set=resolved_memo_rule_set,
+            resolved_policy_set=resolved_policy_set,
         )
         return result
 

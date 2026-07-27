@@ -307,7 +307,38 @@
             }
         ]
     },
-    "start_ts": "2026-07-23T08:26:30.024169",
-    "end_ts": "2026-07-23T08:26:30.142338",
+    "resolved_account_set": {
+        "accounts": [
+            {
+                "Name": "Checking",
+                "Balance": 1200,
+                "Min_Balance": 0,
+                "Max_Balance": 10000,
+                "Account_Type": "checking",
+                "Billing_Start_Date": null,
+                "Interest_Type": null,
+                "APR": null,
+                "Interest_interval": null,
+                "Minimum_Payment": null,
+                "Primary_Checking_Ind": true
+            }
+        ]
+    },
+    "resolved_memo_rule_set": {
+        "memo_rules": [
+            {
+                "Memo_Regex": ".*",
+                "Account_From": "Checking",
+                "Account_To": null,
+                "Transaction_Priority": 1
+            }
+        ]
+    },
+    "resolved_policy_set": {
+        "py/object": "expense_forecast.ForecastPolicySet.ForecastPolicySet",
+        "policies": []
+    },
+    "start_ts": "2026-07-25T17:18:15.883224",
+    "end_ts": "2026-07-25T17:18:17.063457",
     "approximate_flag": false
 }

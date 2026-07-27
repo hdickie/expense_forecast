@@ -597,6 +597,13 @@ class GraphForecastRunner:
                 forecast, self.milestone_set, log_stack_depth=0
             ),
             approximate_flag=self.approximate,
+            resolved_account_set=copy.deepcopy(
+                self.configured_IO.initial_account_set
+            ),
+            resolved_memo_rule_set=copy.deepcopy(
+                self.configured_IO.initial_memo_rule_set
+            ),
+            resolved_policy_set=copy.deepcopy(self.configured_policy_set),
             # Results are immutable snapshots even when this runner is reused
             # for another candidate evaluation.
             graph_diagnostics=copy.deepcopy(self.context.diagnostics),

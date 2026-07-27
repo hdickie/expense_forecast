@@ -288,7 +288,7 @@ class ExpenseForecastResult:
 
         @interface-report: show
         """
-        allowed_kwargs = ['confirmed_df', 'deferred_df', 'skipped_df', 'milestone_set', 'milestone_results', 'approximate_flag', 'policy_results', 'safety_decisions', 'graph_diagnostics', 'transition_results', 'resolved_line_item_set']
+        allowed_kwargs = ['confirmed_df', 'deferred_df', 'skipped_df', 'milestone_set', 'milestone_results', 'approximate_flag', 'policy_results', 'safety_decisions', 'graph_diagnostics', 'transition_results', 'resolved_line_item_set', 'resolved_account_set', 'resolved_memo_rule_set', 'resolved_policy_set']
         for key in kwargs:
             if key not in allowed_kwargs:
                 raise TypeError(f"Unexpected keyword argument '{key}'")
@@ -334,6 +334,18 @@ class ExpenseForecastResult:
         self.resolved_line_item_set = kwargs.get(
             'resolved_line_item_set',
             initial_conditions.initial_line_item_set,
+        )
+        self.resolved_account_set = kwargs.get(
+            "resolved_account_set",
+            initial_conditions.initial_account_set,
+        )
+        self.resolved_memo_rule_set = kwargs.get(
+            "resolved_memo_rule_set",
+            initial_conditions.initial_memo_rule_set,
+        )
+        self.resolved_policy_set = kwargs.get(
+            "resolved_policy_set",
+            initial_conditions.policy_set,
         )
 
         self.approximate_flag = kwargs.get('approximate_flag', False)
@@ -638,6 +650,15 @@ class ExpenseForecastResult:
             "resolved_line_item_set": LineItemSet.from_dict(
                 data["resolved_line_item_set"]
             ) if data.get("resolved_line_item_set") else initial_conditions.initial_line_item_set,
+            "resolved_account_set": AccountSet.from_dict(
+                data["resolved_account_set"]
+            ) if data.get("resolved_account_set") else initial_conditions.initial_account_set,
+            "resolved_memo_rule_set": MemoRuleSet.from_dict(
+                data["resolved_memo_rule_set"]
+            ) if data.get("resolved_memo_rule_set") else initial_conditions.initial_memo_rule_set,
+            "resolved_policy_set": cls._object_from_json_data(
+                data.get("resolved_policy_set")
+            ) or initial_conditions.policy_set,
             "approximate_flag": data.get("approximate_flag", False),
         }
         if milestone_set is not None or milestone_results is not None:
@@ -870,6 +891,11 @@ class ExpenseForecastResult:
                 self.transition_results
             ),
             "resolved_line_item_set": self.resolved_line_item_set.to_dict(),
+            "resolved_account_set": self.resolved_account_set.to_dict(),
+            "resolved_memo_rule_set": self.resolved_memo_rule_set.to_dict(),
+            "resolved_policy_set": self._object_to_json_data(
+                self.resolved_policy_set
+            ),
             "start_ts": self.start_ts.isoformat(),
             "end_ts": self.end_ts.isoformat(),
             "approximate_flag": self.approximate_flag,

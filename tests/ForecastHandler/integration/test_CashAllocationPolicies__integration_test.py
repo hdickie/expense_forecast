@@ -159,7 +159,7 @@ def test_policy_report_renders_summary_and_type_specific_details():
         "Current Statement Balance Payment"
     )
     assert summary.index("Current Statement Balance Payment") < summary.index(
-        "Surplus Debt Payment"
+        "Surplus CC Payment"
     )
     assert summary.index("Brokerage") < summary.index("IRA")
     assert "Keep $2,000.00 available" in summary
@@ -263,7 +263,7 @@ def test_report_ignores_string_none_for_unachieved_milestone():
     milestone_page = html.split('id="detail-page-milestones"', 1)[1].split(
         'id="detail-page-sankey"', 1
     )[0]
-    assert "Not Achieved" not in milestone_page
+    assert "Not Achieved" in milestone_page
     assert "Achieved" in milestone_page
     assert "2026-02-02" in milestone_page
     assert milestone_page.index(">Milestone</th>") < milestone_page.index(">Date</th>")

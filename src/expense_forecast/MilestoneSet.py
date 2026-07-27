@@ -105,10 +105,11 @@ class MilestoneSet:
                     .sum(axis=1, min_count=1)
                 )
 
-        raise ValueError(
-            "Could not find forecast columns for account milestone account_name "
-            + repr(account_name)
-        )
+        # Initial transition segments legitimately omit accounts that are
+        # reachable only after a future ScenarioChoice activates. Initial
+        # condition validation already rejects truly unknown account names,
+        # so absence here means the milestone is not achieved in this segment.
+        return pd.Series(float("nan"), index=forecast_df.index)
 
     #TODO DOC manual review of MilestoneSet._validate_unique_account_milestones docstring
     @staticmethod

@@ -8,6 +8,7 @@ from expense_forecast.ExpenseForecastInitialConditions import (
     ExpenseForecastInitialConditions,
 )
 from expense_forecast.ForecastHandler import ForecastHandler
+from expense_forecast.ForecastResultSet import ForecastResultSet
 from expense_forecast.ForecastPolicySet import ForecastPolicySet
 from expense_forecast.LineItemSet import LineItemSet
 from expense_forecast.MemoRuleSet import MemoRuleSet
@@ -143,18 +144,35 @@ def test_comparison_report_renders_deltas_timelines_and_milestones():
         '<script id="embedded-reports-data"', 1
     )[0]
     assert landing_html.count("Minimum Checking Balance $500") == 2
-    assert "Active from 2026-01-02 · Activated" in html
-    assert "No activation recorded · Not Achieved" in html
+    assert "Active from 2026-01-02</span> · Activated" in html
+    assert "No activation recorded</span> · Not Achieved" in html
     card = next(row for row in data["accounts"] if row["account"] == "Card")
     assert card["baseline"] == 0
     assert card["comparison"] == 100
     assert card["delta"] == 100
-    assert data["milestones"] == [{
-        "milestone": "Shared",
-        "baseline_date": "2026-01-01",
-        "comparison_date": "2026-01-03",
-        "delta_days": 2,
-    }]
+    assert data["milestones"] == [
+        {
+            "milestone": "Baseline only",
+            "baseline_date": "2026-01-02",
+            "comparison_date": "Not achieved",
+            "delta_days": None,
+            "achievement_status": "baseline_only",
+        },
+        {
+            "milestone": "Comparison only",
+            "baseline_date": "Not achieved",
+            "comparison_date": "2026-01-02",
+            "delta_days": None,
+            "achievement_status": "comparison_only",
+        },
+        {
+            "milestone": "Shared",
+            "baseline_date": "2026-01-01",
+            "comparison_date": "2026-01-03",
+            "delta_days": 2,
+            "achievement_status": "both",
+        },
+    ]
     assert "Baseline only" in html
     assert "Comparison only" in html
     assert "Waterfall analysis will be added" in html
@@ -172,6 +190,103 @@ def test_comparison_report_renders_deltas_timelines_and_milestones():
         "baseline"
     ]
     assert "expense-forecast:return-comparison" in embedded["alternate"]
+
+
+def test_comparison_colors_only_matching_alternate_policy_activation():
+    baseline = _comparison_result("Baseline", "Low")
+    alternate = _comparison_result("Alternate", "Standard")
+    for result, activation in (
+        (baseline, date(2026, 1, 3)),
+        (alternate, date(2026, 1, 2)),
+    ):
+        policy = MinimumCheckingBalancePolicy(500, priority=2)
+        result.initial_conditions.policy_set = ForecastPolicySet(policy)
+        result.policy_results = {
+            policy.policy_key: {
+                "status": "activated",
+                "activation_date": activation,
+            }
+        }
+
+    html = ForecastHandler.generateComparisonReport(
+        baseline, alternate, write_file=False
+    )
+
+    assert (
+        'class="policy-activation activation-earlier">'
+        "Active from 2026-01-02</span>"
+    ) in html
+    assert html.count("activation-earlier") == 2  # CSS and alternate value.
+
+    key = MinimumCheckingBalancePolicy(500, priority=2).policy_key
+    alternate.policy_results[key]["activation_date"] = date(2026, 1, 4)
+    later_html = ForecastHandler.generateComparisonReport(
+        baseline, alternate, write_file=False
+    )
+    assert (
+        'class="policy-activation activation-later">'
+        "Active from 2026-01-04</span>"
+    ) in later_html
+
+    alternate.policy_results[key]["activation_date"] = date(2026, 1, 3)
+    equal_html = ForecastHandler.generateComparisonReport(
+        baseline, alternate, write_file=False
+    )
+    assert (
+        'class="policy-activation">Active from 2026-01-03</span>'
+    ) in equal_html
+
+
+def test_forecast_set_report_renders_filters_series_table_and_matrix():
+    low = _comparison_result("Low", "Low")
+    standard = _comparison_result("Standard", "Standard")
+    for result, achieved in (
+        (low, date(2026, 1, 2)),
+        (standard, None),
+    ):
+        result.milestone_results = [{"Retirement": achieved}, {}, {}]
+
+    html = ForecastHandler.generateForecastSetReport(
+        ForecastResultSet(low, standard),
+        write_file=False,
+    )
+
+    assert html.startswith("<!DOCTYPE html>")
+    assert "<h1>Feasibility Report</h1>" in html
+    assert 'data-mode="single"' in html
+    assert 'data-mode="multiple"' in html
+    assert 'data-mode="range"' in html
+    assert '"milestones": ["Retirement"]' in html
+    assert "s.milestone+' × '+s.metric" in html
+    assert "Visible Ranges" in html
+    assert "Final Checking" in html
+    assert "Rows are baselines; columns are alternates." in html
+    assert html.count(">Compare</a>") == 1
+    assert html.count(">Single</a>") == 2
+    assert '"Retirement": null' in html
+
+
+def test_forecast_set_report_writes_child_report_bundle(tmp_path):
+    low = _comparison_result("Low", "Low")
+    standard = _comparison_result("Standard", "Standard")
+    result_set = ForecastResultSet(low, standard)
+
+    output = ForecastHandler.generateForecastSetReport(
+        result_set,
+        output_path=tmp_path / "plans.html",
+    )
+
+    report_dir = tmp_path / "plans_reports"
+    assert output == str(tmp_path / "plans.html")
+    assert (tmp_path / "plans.html").exists()
+    assert (report_dir / f"Forecast_{low.unique_id}.html").exists()
+    assert (report_dir / f"Forecast_{standard.unique_id}.html").exists()
+    assert (
+        report_dir
+        / f"Comparison_{low.unique_id}_vs_{standard.unique_id}.html"
+    ).exists()
+    assert (report_dir / "hero_chart.js").exists()
+    assert (report_dir / "detail_charts.js").exists()
 
 
 def test_comparison_report_file_output_contract(tmp_path, monkeypatch):
@@ -208,7 +323,7 @@ def test_comparison_report_rejects_incompatible_results():
     different_accounts.initial_conditions.initial_account_set.accounts[
         0
     ].name = "Other Checking"
-    with pytest.raises(ValueError, match="matching top-level account"):
+    with pytest.raises(ValueError, match="missing account column"):
         ForecastHandler.generateComparisonReport(
             baseline, different_accounts, write_file=False
         )

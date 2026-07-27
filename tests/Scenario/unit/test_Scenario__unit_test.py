@@ -6,8 +6,78 @@ from expense_forecast.ScenarioSpace import ScenarioSpace
 from expense_forecast.ForecastPolicySet import ForecastPolicySet
 from expense_forecast.MinimumCheckingBalancePolicy import MinimumCheckingBalancePolicy
 from expense_forecast.MemoRuleSet import MemoRuleSet
+from expense_forecast.ScenarioChoice import ScenarioChoice
+from expense_forecast.ConditionalScenarioTransition import (
+    ConditionalScenarioTransition,
+)
+from expense_forecast.ConditionalScenarioTransitionSet import (
+    ConditionalScenarioTransitionSet,
+)
+from expense_forecast.AccountSet import AccountSet
 
 class TestForecastScenarioUnit:
+
+    def test_scenario_choice_contributes_policies_and_transitions(self):
+        reserve = MinimumCheckingBalancePolicy(500, priority=2)
+        transition = ConditionalScenarioTransition(
+            "Raise food budget",
+            "Income milestone",
+            {"Food": "Standard"},
+        )
+        food = ScenarioDimension(
+            "Food",
+            {
+                "Low": ScenarioChoice(
+                    line_item_set=LineItemSet(),
+                    policy_set=ForecastPolicySet(reserve),
+                    transition_set=ConditionalScenarioTransitionSet(
+                        transition
+                    ),
+                ),
+                "Standard": LineItemSet(),
+            },
+        )
+        space = ScenarioSpace(
+            LineItemSet(), {"Food": food}, MemoRuleSet()
+        )
+
+        scenario = space.from_choice_keys({"Food": "Low"})
+
+        assert scenario.policy_set.policies[0].target == 500
+        assert scenario.transition_set.transitions[0].name == (
+            "Raise food budget"
+        )
+        assert scenario.line_item_set.scenario_selections == {"Food": "Low"}
+
+    def test_scenario_choice_configuration_round_trips_with_line_items(self):
+        accounts = AccountSet()
+        accounts.createCheckingAccount(
+            "Savings", 250, 0, float("inf"), primary_checking_ind=False
+        )
+        rules = MemoRuleSet()
+        rules.addMemoRule("save", "Checking", "Savings", 2)
+        dimension = ScenarioDimension(
+            "Saving",
+            {
+                "Enabled": ScenarioChoice(
+                    account_set=accounts,
+                    memo_rule_set=rules,
+                    policy_set=ForecastPolicySet(
+                        MinimumCheckingBalancePolicy(500, priority=2)
+                    ),
+                )
+            },
+        )
+
+        rebuilt = LineItemSet.from_dict(
+            dimension.select("Enabled").to_dict()
+        )
+        choice = rebuilt.scenario_dimensions["Saving"]["Enabled"]
+
+        assert choice.account_set.accounts[0].name == "Savings"
+        assert choice.memo_rule_set.memo_rules[0].memo_regex == "save"
+        assert choice.policy_set.policies[0].target == 500
+
 
     def test_from_choice_keys_builds_partial_scenario_with_metadata(self):
         food = ScenarioDimension(
@@ -66,6 +136,42 @@ class TestForecastScenarioUnit:
             space.from_choice_keys({"Food": "Low"})
         with pytest.raises(TypeError, match="choice_keys must be a mapping"):
             space.from_choice_keys([("Food", "Standard")])
+
+    def test_materialize_from_keys_preserves_order_and_independence(self):
+        food = ScenarioDimension(
+            "Food", {"Low": LineItemSet(), "Standard": LineItemSet()}
+        )
+        space = ScenarioSpace(
+            LineItemSet(), {"Food": food}, MemoRuleSet()
+        )
+
+        scenarios = space.materialize_from_keys(
+            [{"Food": "Standard"}, {}, {"Food": "Low"}]
+        )
+
+        assert [scenario.label for scenario in scenarios] == [
+            "Food: Standard",
+            "Invariant",
+            "Food: Low",
+        ]
+        scenarios[0].choices["Food"] = "Changed"
+        assert scenarios[2].choices == {"Food": "Low"}
+        assert space.from_choice_keys({"Food": "Standard"}).choices == {
+            "Food": "Standard"
+        }
+
+    def test_materialize_from_keys_reuses_choice_validation(self):
+        food = ScenarioDimension("Food", {"Standard": LineItemSet()})
+        space = ScenarioSpace(
+            LineItemSet(), {"Food": food}, MemoRuleSet()
+        )
+
+        with pytest.raises(ValueError, match="Unknown choice 'Low'"):
+            space.materialize_from_keys([{"Food": "Low"}])
+        with pytest.raises(
+            TypeError, match="choice_key_maps must be an iterable"
+        ):
+            space.materialize_from_keys({"Food": "Standard"})
 
     def test_from_choice_keys_policy_override_and_fluent_replacement_are_isolated(self):
         work = ScenarioDimension(

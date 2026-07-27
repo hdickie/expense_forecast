@@ -24,6 +24,13 @@ from expense_forecast.ForecastPolicySet import ForecastPolicySet
 from expense_forecast.ConditionalScenarioTransitionSet import ConditionalScenarioTransitionSet
 from expense_forecast.ScenarioDimension import ScenarioDimension
 from expense_forecast.ScenarioSpace import ScenarioSpace
+from expense_forecast.ScenarioChoice import (
+    overlay_account_sets,
+    extend_account_schema,
+    overlay_memo_rule_sets,
+    overlay_policy_sets,
+    overlay_transition_sets,
+)
 
 from expense_forecast.ForecastPolicy import ForecastPolicy, ForecastPolicyError
 
@@ -4851,9 +4858,17 @@ class ExecutionEngine:
         )
         first_start_ts = current_result.start_ts
         remaining = list(transition_set.transitions)
+        resolved_transition_set = copy.deepcopy(transition_set)
         resolved_line_items = copy.deepcopy(
             initial_conditions.initial_line_item_set
         )
+        resolved_account_set = copy.deepcopy(
+            initial_conditions.initial_account_set
+        )
+        resolved_memo_rule_set = copy.deepcopy(
+            initial_conditions.initial_memo_rule_set
+        )
+        resolved_policy_set = copy.deepcopy(initial_conditions.policy_set)
         transition_results = {}
         forecast_parts = []
         transaction_parts = {
@@ -4861,6 +4876,14 @@ class ExecutionEngine:
             for name in ("confirmed_df", "deferred_df", "skipped_df")
         }
         policy_results = {}
+        policy_configuration_history = {
+            policy.policy_key: [{
+                "effective_date": initial_conditions.start_date,
+                "source": "initial",
+                "configuration": copy.deepcopy(policy),
+            }]
+            for policy in resolved_policy_set.policies
+        }
         safety_decisions = []
         graph_diagnostic_segments = []
         committed_through = None
@@ -4940,6 +4963,18 @@ class ExecutionEngine:
                 current_visible.drop(columns=summary_columns, errors="ignore")
             )
             visible_forecast = pd.concat(visible_parts, ignore_index=True)
+
+            # Segment stitching intentionally removes derived summary columns:
+            # each segment calculated them against a different opening state.
+            # Milestones may legitimately target a summary such as Net Worth,
+            # so rebuild all summaries over the complete visible prefix/suffix
+            # before evaluating transition triggers.
+            visible_forecast["Next Income Date"] = ""
+            visible_forecast = ForecastHandler._appendSummaryLines(
+                resolved_account_set,
+                visible_forecast,
+                log_stack_depth=0,
+            )
             milestone_results = MilestoneSet.evaluateMilestones(
                 visible_forecast,
                 milestone_set,
@@ -4957,6 +4992,11 @@ class ExecutionEngine:
                 trigger_date = ForecastHandler._normalize_date_value(
                     trigger_date
                 )
+                # Legacy milestone evaluation represents an unachieved
+                # milestone with the string "None". Date normalization turns
+                # that sentinel into None; it is not a transition candidate.
+                if trigger_date is None:
+                    continue
                 if committed_through is not None and trigger_date <= committed_through:
                     continue
                 candidates.append(
@@ -5012,11 +5052,64 @@ class ExecutionEngine:
                         history_start_date=initial_conditions.start_date,
                     )
                 )
+                for dimension_name, choice_name in transition.changes.items():
+                    activated_choice = resolved_line_items.scenario_dimensions[
+                        dimension_name
+                    ][choice_name]
+                    resolved_account_set = overlay_account_sets(
+                        resolved_account_set,
+                        activated_choice.account_set,
+                    )
+                    resolved_memo_rule_set = overlay_memo_rule_sets(
+                        resolved_memo_rule_set,
+                        activated_choice.memo_rule_set,
+                    )
+                    resolved_policy_set = overlay_policy_sets(
+                        resolved_policy_set,
+                        activated_choice.policy_set,
+                    )
+                    previous_transition_names = {
+                        candidate.name
+                        for candidate in resolved_transition_set.transitions
+                    }
+                    resolved_transition_set = overlay_transition_sets(
+                        resolved_transition_set,
+                        activated_choice.transition_set,
+                    )
+                    newly_activated = [
+                        candidate
+                        for candidate in resolved_transition_set.transitions
+                        if candidate.name not in previous_transition_names
+                    ]
+                    if newly_activated:
+                        ConditionalScenarioTransitionSet(
+                            newly_activated
+                        ).validate(milestone_set, resolved_line_items)
+                        remaining.extend(copy.deepcopy(newly_activated))
+                    for policy in activated_choice.policy_set.policies:
+                        policy_configuration_history.setdefault(
+                            policy.policy_key, []
+                        ).append({
+                            "effective_date": (
+                                next_date + datetime.timedelta(days=1)
+                            ),
+                            "source_dimension": dimension_name,
+                            "source_choice": choice_name,
+                            "configuration": copy.deepcopy(policy),
+                        })
                 transition_results[transition.name] = {
                     "status": "triggered",
                     "milestone": transition.milestone,
                     "trigger_date": next_date,
                     "changes": copy.deepcopy(transition.changes),
+                    "added_accounts": [
+                        account.name
+                        for dimension_name, choice_name
+                        in transition.changes.items()
+                        for account in resolved_line_items.scenario_dimensions[
+                            dimension_name
+                        ][choice_name].account_set.accounts
+                    ],
                 }
                 remaining.remove(transition)
 
@@ -5033,18 +5126,22 @@ class ExecutionEngine:
                     f"No forecast row exists for transition boundary {next_date}"
                 )
             suffix_accounts = ForecastHandler._account_set_from_forecast_row(
-                initial_conditions.initial_account_set,
+                current_result.resolved_account_set,
                 boundary_rows.iloc[-1],
+            )
+            suffix_accounts = extend_account_schema(
+                suffix_accounts,
+                resolved_account_set,
             )
             suffix_conditions = ExpenseForecastInitialConditions(
                 start_date=next_date,
                 end_date=initial_conditions.end_date,
                 account_set=suffix_accounts,
                 line_item_set=resolved_line_items,
-                memo_rule_set=initial_conditions.initial_memo_rule_set,
+                memo_rule_set=resolved_memo_rule_set,
                 milestone_set=milestone_set,
                 transition_set=ConditionalScenarioTransitionSet(),
-                policy_set=copy.deepcopy(initial_conditions.policy_set),
+                policy_set=copy.deepcopy(resolved_policy_set),
                 forecast_name=initial_conditions.forecast_name,
             )
             current_result = run_segment(
@@ -5068,17 +5165,25 @@ class ExecutionEngine:
             errors="ignore",
         )
         raw_forecast["Next Income Date"] = ""
+        for account in resolved_account_set.accounts:
+            for column in resolved_account_set.getForecastColumnsForAccount(
+                account
+            ):
+                if column not in raw_forecast.columns:
+                    raw_forecast[column] = 0.0
+                else:
+                    raw_forecast[column] = raw_forecast[column].fillna(0.0)
         forecast_df = ForecastHandler._appendSummaryLines(
-            initial_conditions.initial_account_set,
+            resolved_account_set,
             raw_forecast,
             log_stack_depth=0,
         )
         if not include_debug_columns:
             debug_columns = set()
-            for account in initial_conditions.initial_account_set.accounts:
+            for account in resolved_account_set.accounts:
                 debug_columns.update(
                     set(
-                        initial_conditions.initial_account_set
+                        resolved_account_set
                         .getForecastColumnsForAccount(account)
                     ) - {account.name}
                 )
@@ -5096,6 +5201,10 @@ class ExecutionEngine:
             log_stack_depth=0,
         )
         policy_results.update(current_result.policy_results or {})
+        for policy_key, history in policy_configuration_history.items():
+            policy_results.setdefault(policy_key, {})[
+                "configuration_history"
+            ] = history
 
         result_frames = {
             name: (
@@ -5141,6 +5250,9 @@ class ExecutionEngine:
             },
             transition_results=transition_results,
             resolved_line_item_set=resolved_line_items,
+            resolved_account_set=resolved_account_set,
+            resolved_memo_rule_set=resolved_memo_rule_set,
+            resolved_policy_set=resolved_policy_set,
             approximate_flag=approximate,
         )
 

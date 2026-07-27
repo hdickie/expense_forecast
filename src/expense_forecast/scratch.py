@@ -17,7 +17,9 @@ from expense_forecast.AccountMilestone import AccountMilestone
 from expense_forecast.CompositeMilestone import CompositeMilestone
 
 from expense_forecast.ScenarioDimension import ScenarioDimension
+from expense_forecast.ScenarioChoice import ScenarioChoice
 from expense_forecast.ScenarioSpace import ScenarioSpace
+from expense_forecast.ForecastResultSet import ForecastResultSet
 from expense_forecast.ForecastPolicySet import ForecastPolicySet
 from expense_forecast.MinimumCheckingBalancePolicy import MinimumCheckingBalancePolicy
 from expense_forecast.SurplusDebtPaymentPolicy import SurplusDebtPaymentPolicy
@@ -647,8 +649,8 @@ if __name__ == '__main__':
     # action = 'I just won the lottery'
     # action = 'example single forecast report'
     # action = 'dated scenarios and policies'
-    action = 'forecast set'
-
+    # action = 'forecast set'
+    action = 'home purchase'
     if action == 'near term':
 
         start_date = date(2026,7,14)
@@ -2302,9 +2304,7 @@ if __name__ == '__main__':
             # assume 7.5% apr if i take out a loan for either
             
 
-            living_situation_key_to_LIS_map = {}
             stay_in_car = LineItemSet()
-            living_situation_key_to_LIS_map["Stay in Car"] = stay_in_car
 
             # a transition based on starting RN job
             rent_a_place_for_2200 = LineItemSet()
@@ -2317,8 +2317,6 @@ if __name__ == '__main__':
                     memo='rent expense',
                     income_flag=False,
                 )
-            living_situation_key_to_LIS_map[f"Rent 2200"] = rent_a_place_for_2200
-
             # a deferrable transaction based on when I have enough
             buy_a_lexus_cash = LineItemSet()
             buy_a_lexus_cash.addLineItem(start_date=start_date + datetime.timedelta(days=1), 
@@ -2330,34 +2328,57 @@ if __name__ == '__main__':
                 income_flag=False, 
                 deferrable=True, 
                 partial_payment_allowed=False)
-            living_situation_key_to_LIS_map[f"Lexus Cash"] = buy_a_lexus_cash
-
             # buy_a_lexus_car_loan = LineItemSet()
 
             living_situation = ScenarioDimension(
                 "Living Situation",
-                living_situation_key_to_LIS_map,
+                {
+                    "Stay in Car": ScenarioChoice(
+                        line_item_set=stay_in_car,
+                    ),
+                    "Rent 2200": ScenarioChoice(
+                        line_item_set=rent_a_place_for_2200,
+                    ),
+                    "Lexus Cash": ScenarioChoice(
+                        line_item_set=buy_a_lexus_cash,
+                    ),
+                },
             )
             milestones = MilestoneSet({
-                'Get job as RN': MemoMilestone(memo_regex=r'RN Year 1 income'),
+                'Get job as RN': MemoMilestone(Milestone_Name='Get job as RN', memo_regex=r'RN Year 1 income'),
+                'Net Worth $0': AccountMilestone(Milestone_Name='Net Worth $0', Account_Name='Net Worth', Min_Balance=0, Max_Balance=float('Inf')),
+                'Net Worth $50k': AccountMilestone(Milestone_Name='Net Worth $50k', Account_Name='Net Worth', Min_Balance=50_000, Max_Balance=float('Inf'))
             })
-            transitions_1 = ConditionalScenarioTransitionSet(
-                ConditionalScenarioTransition(
-                    name='Start rent',
-                    milestone='Get job as RN',
-                    changes={
-                        'Living Situation': 'Rent 2200',
-                    },
-                )
-            )
-            transitions_2 = ConditionalScenarioTransitionSet(
-                ConditionalScenarioTransition(
-                    name='Buy Lexus',
-                    milestone='Get job as RN',
-                    changes={
-                        'Living Situation': 'Lexus Cash',
-                    },
-                )
+            # A separate plan dimension lets all three forecasts begin in the
+            # same living situation while their selected ScenarioChoice
+            # contributes a different runtime transition.
+            forecast_plan = ScenarioDimension(
+                "Forecast Plan",
+                {
+                    "Stay in Car": ScenarioChoice(),
+                    "Rent after RN job": ScenarioChoice(
+                        transition_set=ConditionalScenarioTransitionSet(
+                            ConditionalScenarioTransition(
+                                name='Start rent',
+                                milestone='Get job as RN',
+                                changes={
+                                    'Living Situation': 'Rent 2200',
+                                },
+                            )
+                        ),
+                    ),
+                    "Buy Lexus after RN job": ScenarioChoice(
+                        transition_set=ConditionalScenarioTransitionSet(
+                            ConditionalScenarioTransition(
+                                name='Buy Lexus',
+                                milestone='Get job as RN',
+                                changes={
+                                    'Living Situation': 'Lexus Cash',
+                                },
+                            )
+                        ),
+                    ),
+                },
             )
 
         with logged_phase("Scenario-space expansion"):
@@ -2367,6 +2388,7 @@ if __name__ == '__main__':
                 ),
                 scenario_dimensions={
                     "Living Situation": living_situation,
+                    "Forecast Plan": forecast_plan,
                 },
                 memo_rule_set=M,
                 default_policy_set=ForecastPolicySet(
@@ -2391,59 +2413,64 @@ if __name__ == '__main__':
                 ],
             )
 
-            scenario = scenario_space.from_choice_keys({
+            scenario_1 = scenario_space.from_choice_keys({
                 "Living Situation": "Stay in Car",
+                "Forecast Plan": "Stay in Car",
+            })
+            scenario_2 = scenario_space.from_choice_keys({
+                "Living Situation": "Stay in Car",
+                "Forecast Plan": "Rent after RN job",
+            })
+            scenario_3 = scenario_space.from_choice_keys({
+                "Living Situation": "Stay in Car",
+                "Forecast Plan": "Buy Lexus after RN job",
             })
     
         with logged_phase("Initial-condition materialization"):
-            IO_1 = scenario.to_initial_conditions(
+            IO_1 = scenario_1.to_initial_conditions(
                 start_date, end_date, A, M,
                 forecast_name='Plan A: Stay in Car',
                 milestone_set = milestones
             )
-            IO_2 = scenario.to_initial_conditions(
+            IO_2 = scenario_2.to_initial_conditions(
                 start_date, end_date, A, M,
                 forecast_name='Plan B: Rent 2200',
                 milestone_set = milestones,
-                transition_set = transitions_1
             )
-            IO_3 = scenario.to_initial_conditions(
+            IO_3 = scenario_3.to_initial_conditions(
                 start_date, end_date, A, M,
                 forecast_name='Plan C: Lexus Cash',
                 milestone_set = milestones,
-                transition_set = transitions_2
             )
 
-        
         with logged_phase("Graph v2 forecast + report"):
+
             R_1 = ForecastHandler.runForecastApproximate(
                 IO_1,
                 engine="graph v2",
                 graph_trace=True
             )
-            ForecastHandler.generateHTMLReport(R_1)
+            # ForecastHandler.generateHTMLReport(R_1)
             R_2 = ForecastHandler.runForecastApproximate(
                 IO_2,
                 engine="graph v2",
                 graph_trace=True
             )
-            ForecastHandler.generateHTMLReport(R_2)
+            # ForecastHandler.generateHTMLReport(R_2)
             R_3 = ForecastHandler.runForecastApproximate(
                 IO_3,
                 engine="graph v2",
                 graph_trace=True
             )
-            ForecastHandler.generateHTMLReport(R_3)
+            # ForecastHandler.generateHTMLReport(R_3)
 
-            ForecastHandler.generateComparisonReport(R_1, R_2)
-            ForecastHandler.generateComparisonReport(R_2, R_3)
-            ForecastHandler.generateComparisonReport(R_1, R_3)
+            RS = ForecastResultSet(R_1, R_2, R_3)
 
+            ForecastHandler.generateForecastSetReport(RS)
 
-
-
-
-
+            # ForecastHandler.generateComparisonReport(R_1, R_2)
+            # ForecastHandler.generateComparisonReport(R_2, R_3)
+            # ForecastHandler.generateComparisonReport(R_1, R_3)
 
         ############################
         # paycheck_dates = scenario.line_item_set.getLineItemSchedule().loc[
@@ -2473,3 +2500,384 @@ if __name__ == '__main__':
         #     decision for decision in R.safety_decisions
         #     if decision['executed'] > 0
         # ])
+
+    elif action == 'home purchase':
+        print('hello')
+        logger.info("Scratch start")
+        with logged_phase("Base initialization"):
+
+            start_date = date(2032,7,25) #my 36th birthday
+            end_date = start_date + datetime.timedelta(days=365 * 30)
+
+            user_vars = getUserVars()
+
+            A = AccountSet.from_dict({'accounts': [{'Name': 'Checking',
+               'Balance': 2000.0,
+               'Min_Balance': 0,
+               'Max_Balance': float('inf'),
+               'Account_Type': 'checking',
+               'Billing_Start_Date': None,
+               'Interest_Type': None,
+               'APR': None,
+               'Interest_interval': None,
+               'Minimum_Payment': None,
+               'Primary_Checking_Ind': True},
+              {'Name': 'Savings',
+               'Balance': 5000.0,
+               'Min_Balance': 0,
+               'Max_Balance': float('inf'),
+               'Account_Type': 'checking',
+               'Billing_Start_Date': None,
+               'Interest_Type': None,
+               'APR': None,
+               'Interest_interval': None,
+               'Minimum_Payment': None,
+               'Primary_Checking_Ind': False},
+              {'Name': 'Chase',
+               'Balance': 0.0,
+               'Min_Balance': 0,
+               'Max_Balance': 25000,
+               'Account_Type': 'credit',
+               'Billing_Start_Date': '2026-06-06',
+               'Interest_Type': 'compound',
+               'APR': 0.2724,
+               'Interest_interval': 'monthly',
+               'Minimum_Payment': 40.0,
+               'Primary_Checking_Ind': None,
+               'Current_Statement_Balance': 0.0,
+               'Previous_Statement_Balance': 0.0,
+               'Billing_Cycle_Payment_Balance': 0,
+               'End_Of_Previous_Cycle_Balance': 0,
+               'Minimum_Payment_Floor': 40.0,
+               'Minimum_Payment_Credit_Balance': 0.0},
+              {'Name': 'Brokerage',
+               'Balance': 20_000.00,
+               'Min_Balance': 0,
+               'Max_Balance': float('inf'),
+               'Account_Type': 'investment',
+               'Billing_Start_Date': '2030-01-01',
+               'Interest_Type': None,
+               'APR': 0.07,
+               'Interest_interval': None,
+               'Minimum_Payment': None,
+               'Primary_Checking_Ind': None}]})
+
+            M = MemoRuleSet()
+            M.addMemoRule(memo_regex='.*expense.*',
+                  account_from='Chase',
+                  account_to=None,
+                  transaction_priority=1)
+            M.addMemoRule(memo_regex='.*cc payment.*',
+                        account_from='Checking',
+                        account_to='Chase',
+                        transaction_priority=1)
+            M.addMemoRule(memo_regex='.*income.*',
+                        account_from=None,
+                        account_to='Checking',
+                        transaction_priority=1)
+            # M.addMemoRule(memo_regex='.*',account_from='Checking',account_to=None,transaction_priority=4) #discretionary spend
+
+            ### Dimensions
+            # Housing
+            #   Car, 1800, 2200, 2500
+            # Work
+            #   RN for each year according to raise schedule. Does not consider inflation
+            income_key_to_LIS_map = {}
+
+            income_key_to_LIS_map[f"RN Year 1"] = LineItemSet()
+            income_key_to_LIS_map[f"RN Year 1"].addLineItem(
+                    start_date=start_date,
+                    end_date=end_date,
+                    priority=1,
+                    interval='semiweekly',
+                    amount=user_vars["rn_year_1"],
+                    memo='RN Year 1 income',
+                    income_flag=True,
+                    recurrence_key='RN paycheck',
+                )
+            previous_year_salary = user_vars["rn_year_1"]
+            rn_annual_raise_rates = [
+                0.060,  # Year 1
+                0.055,  # Year 2
+                0.050,  # Year 3
+                0.045,  # Year 4
+                0.040,  # Year 5
+                0.038,  # Year 6
+                0.036,  # Year 7
+                0.034,  # Year 8
+                0.032,  # Year 9
+                0.030,  # Year 10
+                0.030,  # Year 11
+                0.029,  # Year 12
+                0.029,  # Year 13
+                0.028,  # Year 14
+                0.028,  # Year 15
+                0.027,  # Year 16
+                0.027,  # Year 17
+                0.026,  # Year 18
+                0.026,  # Year 19
+                0.025,  # Year 20
+                0.025,  # Year 21
+                0.025,  # Year 22
+                0.025,  # Year 23
+                0.025,  # Year 24
+                0.025,  # Year 25
+            ]
+            for index, rate in enumerate(rn_annual_raise_rates):
+                rn_income_year_choice_name = f"RN Year {index+2}"
+                rn_income_year_memo = f"RN Year {index+2} income"
+                income_key_to_LIS_map[rn_income_year_choice_name] = LineItemSet()
+                income_key_to_LIS_map[rn_income_year_choice_name].addLineItem(
+                    start_date=start_date,
+                    end_date=end_date,
+                    priority=1,
+                    interval='semiweekly',
+                    amount=previous_year_salary * (1+rate),
+                    memo=rn_income_year_memo,
+                    income_flag=True,
+                    recurrence_key='RN paycheck',
+                )
+
+            income = ScenarioDimension("Income", income_key_to_LIS_map)
+
+
+            income.set_default(start_date, 'RN Year 4')
+
+            # up to year 25
+            for i in range(5,26):
+                income.change_choice_on_date(date(2033 + (i - 5),6,1), 'RN Year '+str(i))
+
+            dated_income = income.to_line_item_set(end_date)
+
+
+
+            stay_in_car = LineItemSet()
+
+            # a transition based on starting RN job
+            rent_a_place_for_2200 = LineItemSet()
+            rent_a_place_for_2200.addLineItem(
+                    start_date=start_date,
+                    end_date=end_date,
+                    priority=1,
+                    interval='monthly',
+                    amount=2200,
+                    memo='rent expense',
+                    income_flag=False,
+                )
+
+            # Reach Condo purchase:
+            # - The milestone is evaluated on the committed forecast.
+            # - The transition activates this choice on the following day.
+            # - The mortgage account begins at the financed principal.
+            # - The down payment is real spend from Savings; it is not a
+            #   mortgage payment and therefore must not route to the loan.
+            reach_condo_price = 1_400_000
+            reach_condo_down_payment = 420_000
+            reach_condo_principal = (
+                reach_condo_price - reach_condo_down_payment
+            )
+            reach_condo_apr = 0.0625
+            mortgage_term_months = 30 * 12
+            monthly_mortgage_rate = reach_condo_apr / 12
+            reach_condo_minimum_payment = (
+                reach_condo_principal
+                * monthly_mortgage_rate
+                * (1 + monthly_mortgage_rate) ** mortgage_term_months
+                / (
+                    (1 + monthly_mortgage_rate) ** mortgage_term_months
+                    - 1
+                )
+            )
+
+            reach_condo_accounts = AccountSet()
+            reach_condo_accounts.createLoanAccount(
+                name="Reach Condo Mortgage",
+                principal_balance=reach_condo_principal,
+                interest_balance=0,
+                min_balance=0,
+                max_balance=reach_condo_price,
+                # The fixed anchor establishes monthly billing cadence. When
+                # the account activates, graph-v2 builds only future events.
+                billing_start_date=start_date,
+                apr=reach_condo_apr,
+                minimum_payment=reach_condo_minimum_payment,
+            )
+            reach_condo_purchase = LineItemSet()
+            reach_condo_purchase.addLineItem(
+                start_date=start_date,
+                end_date=start_date,
+                priority=2,
+                interval="once",
+                amount=reach_condo_down_payment,
+                memo="reach condo down payment",
+                income_flag=False,
+                # A transitioned one-time deferrable item dated before its
+                # activation is moved to the first active day (D+1).
+                deferrable=True,
+                partial_payment_allowed=False,
+            )
+            reach_condo_rules = MemoRuleSet()
+            reach_condo_rules.addMemoRule(
+                memo_regex="reach condo down payment",
+                account_from="Savings",
+                account_to=None,
+                transaction_priority=2,
+            )
+
+            living_situation = ScenarioDimension(
+                "Living Situation",
+                {
+                    "Stay in Car": ScenarioChoice(
+                        line_item_set=stay_in_car,
+                    ),
+                    "Rent 2200": ScenarioChoice(
+                        line_item_set=rent_a_place_for_2200,
+                    ),
+                    "Reach Condo": ScenarioChoice(
+                        line_item_set=reach_condo_purchase,
+                        account_set=reach_condo_accounts,
+                        memo_rule_set=reach_condo_rules,
+                    ),
+                },
+            )
+
+            # TODO
+            maximum_investment = LineItemSet()
+
+            investment_strategy = ScenarioDimension(
+                "Investment Strategy",
+                {
+                    "Maximum": ScenarioChoice(
+                        line_item_set=maximum_investment
+                    )
+                }
+            )
+
+            # TODO
+
+            # Reach Condo       1.4M    6.25    420_000 down
+            # Comf. Condo       1.0M    6.25    300_000 down
+            # Suburban          0.5M    5.75    150_000 down
+
+            home_purchase = ScenarioDimension(
+                "Home Purchase",
+                {
+                    "Reach Condo": ScenarioChoice(
+                        transition_set=ConditionalScenarioTransitionSet(
+                            ConditionalScenarioTransition(
+                                name='Purchase Reach Condo',
+                                milestone='Savings $420k',
+                                changes={
+                                    'Living Situation': 'Reach Condo',
+                                },
+                            )
+                        ),
+                    ),
+                }
+            )
+
+            milestones = MilestoneSet({
+                'Net Worth $0': AccountMilestone(Milestone_Name='Net Worth $0', Account_Name='Net Worth', Min_Balance=0, Max_Balance=float('Inf')),
+                'Net Worth $100k': AccountMilestone(Milestone_Name='Net Worth $100k', Account_Name='Net Worth', Min_Balance=100_000, Max_Balance=float('Inf')),
+                'Net Worth $250k': AccountMilestone(Milestone_Name='Net Worth $250k', Account_Name='Net Worth', Min_Balance=250_000, Max_Balance=float('Inf')),
+                'Net Worth $500k': AccountMilestone(Milestone_Name='Net Worth $500k', Account_Name='Net Worth', Min_Balance=500_000, Max_Balance=float('Inf')),
+                'Net Worth $750k': AccountMilestone(Milestone_Name='Net Worth $750k', Account_Name='Net Worth', Min_Balance=750_000, Max_Balance=float('Inf')),
+                'Net Worth $1M': AccountMilestone(Milestone_Name='Net Worth $1M', Account_Name='Net Worth', Min_Balance=1_000_000, Max_Balance=float('Inf')),
+                'Net Worth $1.5M': AccountMilestone(Milestone_Name='Net Worth $1.5M', Account_Name='Net Worth', Min_Balance=1_500_000, Max_Balance=float('Inf')),
+                'Net Worth $2M': AccountMilestone(Milestone_Name='Net Worth $2M', Account_Name='Net Worth', Min_Balance=2_000_000, Max_Balance=float('Inf')),
+                'Savings $420k': AccountMilestone(
+                    Milestone_Name='Savings $420k',
+                    Account_Name='Savings',
+                    Min_Balance=reach_condo_down_payment,
+                    Max_Balance=float('Inf'),
+                ),
+            })
+
+
+        with logged_phase("Scenario-space expansion"):
+            scenario_space = ScenarioSpace(
+                invariant_transactions=(
+                    dated_income + get_B_invariant(start_date, end_date)
+                ),
+                scenario_dimensions={
+                    "Living Situation": living_situation,
+                    "Home Purchase": home_purchase,
+                },
+                memo_rule_set=M,
+                default_policy_set=ForecastPolicySet(
+                    CurrentStatementBalancePaymentPolicy(
+                        account_name='Chase', priority=1, on_unmet='warn'
+                    ),
+
+                ),
+                policy_overrides=[
+                ],
+            )
+
+            # scenario_1 = scenario_space.from_choice_keys({
+            #     "Living Situation": "Stay in Car",
+            #     "Forecast Plan": "Rent 200",
+            #     "Home Purchase": "Reach Condo",
+            # })
+            # scenario_2 = scenario_space.from_choice_keys({
+            #     "Living Situation": "Stay in Car",
+            #     "Forecast Plan": "Rent after RN job",
+            #     "Home Purchase": "Reach Condo",
+            # })
+            # scenario_3 = scenario_space.from_choice_keys({
+            #     "Living Situation": "Stay in Car",
+            #     "Forecast Plan": "Buy Lexus after RN job",
+            #     "Home Purchase": "Reach Condo",
+            # })
+
+        with logged_phase("Initial-condition materialization"):
+            scenario_list = scenario_space.materialize_from_keys(
+                [   {"Living Situation":"Stay in Car"},
+                    {"Living Situation":"Stay in Car", "Home Purchase":"Reach Condo"},
+                    {"Living Situation":"Rent 2200"},
+                    {"Living Situation":"Rent 2200", "Home Purchase":"Reach Condo"},
+                 ]
+            )
+            initial_conditions_list = [
+                scenario.to_initial_conditions(
+                    start_date,
+                    end_date,
+                    A,
+                    M,
+                    milestone_set=milestones,
+                )
+                for scenario in scenario_list
+            ]
+
+        with logged_phase("Graph v2 forecast + report"):
+
+            # R_1 = ForecastHandler.runForecastApproximate(
+            #     IO_1,
+            #     engine="graph v2",
+            #     graph_trace=True
+            # )
+            # # ForecastHandler.generateHTMLReport(R_1)
+            # R_2 = ForecastHandler.runForecastApproximate(
+            #     IO_2,
+            #     engine="graph v2",
+            #     graph_trace=True
+            # )
+            # # ForecastHandler.generateHTMLReport(R_2)
+            # R_3 = ForecastHandler.runForecastApproximate(
+            #     IO_3,
+            #     engine="graph v2",
+            #     graph_trace=True
+            # )
+            # # ForecastHandler.generateHTMLReport(R_3)
+
+            RS = ForecastHandler.runForecastSetApproximate(
+                initial_conditions_list,
+                engine="graph v2",
+            )
+            # RS = ForecastResultSet(R_1, R_2, R_3)
+
+            ForecastHandler.generateForecastSetReport(RS)
+
+            # ForecastHandler.generateComparisonReport(R_1, R_2)
+            # ForecastHandler.generateComparisonReport(R_2, R_3)
+            # ForecastHandler.generateComparisonReport(R_1, R_3)

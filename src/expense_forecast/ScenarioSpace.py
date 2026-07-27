@@ -18,11 +18,36 @@ from expense_forecast.ScenarioDimension import ScenarioDimension
 from expense_forecast.LineItemSet import LineItemSet
 from expense_forecast.ForecastPolicySet import ForecastPolicySet
 from expense_forecast.Scenario import Scenario
+from expense_forecast.ConditionalScenarioTransitionSet import (
+    ConditionalScenarioTransitionSet,
+)
+from expense_forecast.AccountSet import AccountSet
+from expense_forecast.ScenarioChoice import (
+    overlay_account_sets,
+    overlay_memo_rule_sets,
+    overlay_policy_sets,
+)
 import copy
 import pandas as pd
 
 #TODO DOC manual review of ScenarioSpace docstring
 class ScenarioSpace:
+
+    @staticmethod
+    def _merge_policy_sets(*policy_sets):
+        result = ForecastPolicySet()
+        for policy_set in policy_sets:
+            result = overlay_policy_sets(result, policy_set)
+        return result
+
+    @staticmethod
+    def _merge_transition_sets(*transition_sets):
+        transitions = [
+            copy.deepcopy(transition)
+            for transition_set in transition_sets
+            for transition in transition_set.transitions
+        ]
+        return ConditionalScenarioTransitionSet(*transitions)
 
     """
     Summary
@@ -123,7 +148,7 @@ class ScenarioSpace:
         existing_scenarios = list(self.scenarios.items())
         new_scenarios = {}
         for existing_scenario_name, existing_scenario_line_item_set in existing_scenarios:
-            for choice_name, choice_line_item_set in scenario_dimension.choices.items():
+            for choice_name, choice in scenario_dimension.choices.items():
 
                 if self.dimension_count > 0:
                     new_scenario_name = existing_scenario_name+" | "+choice_name
@@ -141,11 +166,37 @@ class ScenarioSpace:
                     if isinstance(existing_scenario_line_item_set, Scenario) else {}
                 )
                 choices[dimension_name] = choice_name
+                choice_policy_set = self._merge_policy_sets(
+                    existing_scenario_line_item_set.policy_set,
+                    choice.policy_set,
+                )
+                choice_transition_set = self._merge_transition_sets(
+                    existing_scenario_line_item_set.transition_set,
+                    choice.transition_set,
+                )
+                choice_account_set = overlay_account_sets(
+                    existing_scenario_line_item_set.account_set,
+                    choice.account_set,
+                )
+                choice_memo_rule_set = overlay_memo_rule_sets(
+                    existing_scenario_line_item_set.memo_rule_set,
+                    choice.memo_rule_set,
+                )
                 new_scenarios[new_scenario_name] = Scenario(
                     new_scenario_name,
                     choices,
                     line_item_set,
-                    self._policy_set_for_choices(choices),
+                    (
+                        self._policy_set_for_choices(choices)
+                        if any(
+                            override_choices == choices
+                            for override_choices, _ in self.policy_overrides
+                        )
+                        else choice_policy_set
+                    ),
+                    choice_transition_set,
+                    choice_account_set,
+                    choice_memo_rule_set,
                 )
         self.scenarios = new_scenarios
 
@@ -274,7 +325,8 @@ class ScenarioSpace:
 
         self.dimension_count = 0
         self.scenarios[''] = Scenario(
-            '', {}, self.invariant_transactions, self.default_policy_set
+            '', {}, self.invariant_transactions, self.default_policy_set,
+            account_set=AccountSet(),
         )
 
         for dimension_name, dimension_line_item_set in scenario_dimensions.items():
@@ -314,6 +366,10 @@ class ScenarioSpace:
         # item or metadata state with the ScenarioSpace.
         selected_line_items = copy.deepcopy(self.invariant_transactions)
         selected_choices = {}
+        selected_policy_sets = [copy.deepcopy(self.default_policy_set)]
+        selected_transition_sets = []
+        selected_account_set = AccountSet()
+        selected_memo_rule_set = MemoRuleSet()
         label_parts = []
 
         # Space declaration order makes labels stable even when the caller's
@@ -331,12 +387,62 @@ class ScenarioSpace:
                 )
 
             selected_line_items = selected_line_items + dimension.select(choice_name)
+            selected_policy_sets.append(
+                copy.deepcopy(dimension.choices[choice_name].policy_set)
+            )
+            selected_transition_sets.append(
+                copy.deepcopy(dimension.choices[choice_name].transition_set)
+            )
+            selected_account_set = overlay_account_sets(
+                selected_account_set,
+                dimension.choices[choice_name].account_set,
+            )
+            selected_memo_rule_set = overlay_memo_rule_sets(
+                selected_memo_rule_set,
+                dimension.choices[choice_name].memo_rule_set,
+            )
             selected_choices[dimension_name] = choice_name
             label_parts.append(f"{dimension_name}: {choice_name}")
 
+        exact_override = any(
+            override_choices == selected_choices
+            for override_choices, _ in self.policy_overrides
+        )
         return Scenario(
             label=" | ".join(label_parts) if label_parts else "Invariant",
             choices=selected_choices,
             line_item_set=selected_line_items,
-            policy_set=self._policy_set_for_choices(selected_choices),
+            policy_set=(
+                self._policy_set_for_choices(selected_choices)
+                if exact_override
+                else self._merge_policy_sets(*selected_policy_sets)
+            ),
+            transition_set=self._merge_transition_sets(
+                *selected_transition_sets
+            ),
+            account_set=selected_account_set,
+            memo_rule_set=selected_memo_rule_set,
         )
+
+    def materialize_from_keys(self, choice_key_maps):
+        """Build an ordered list of scenarios from readable choice mappings.
+
+        This is deliberately a thin plural counterpart to
+        :meth:`from_choice_keys`.  Keeping all composition and validation in
+        that method ensures a scenario behaves identically whether selected
+        alone or as part of a forecast set.
+        """
+        if isinstance(choice_key_maps, (str, bytes, dict)):
+            raise TypeError("choice_key_maps must be an iterable of mappings")
+
+        try:
+            choice_key_maps = list(choice_key_maps)
+        except TypeError as error:
+            raise TypeError(
+                "choice_key_maps must be an iterable of mappings"
+            ) from error
+
+        return [
+            self.from_choice_keys(choice_keys)
+            for choice_keys in choice_key_maps
+        ]

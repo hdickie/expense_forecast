@@ -558,6 +558,49 @@ class ExpenseForecastInitialConditions:
         if start_date > end_date:
             raise ValueError(f"start_date must be before end date. start = {start_date} end = {end_date}")
 
+    @staticmethod
+    def _validate_account_milestone_targets(
+        account_set, line_item_set, milestone_set, transition_set
+    ):
+        """Reject milestone targets outside the reachable account schema."""
+        valid_targets = {account.name for account in account_set.accounts}
+        valid_targets.update({
+            "Net Worth",
+            "Liquid Total",
+            "CC Debt Total",
+            "Loan Total",
+            "Investment Total",
+        })
+        # Choices activated by one transition may contribute further
+        # transitions. Walk that reachable configuration graph, but do not
+        # admit accounts from choices that no configured transition can reach.
+        pending_transitions = list(transition_set.transitions)
+        observed_transition_names = set()
+        while pending_transitions:
+            transition = pending_transitions.pop(0)
+            if transition.name in observed_transition_names:
+                continue
+            observed_transition_names.add(transition.name)
+            for dimension_name, choice_name in transition.changes.items():
+                choice = line_item_set.scenario_dimensions[
+                    dimension_name
+                ][choice_name]
+                valid_targets.update(
+                    account.name for account in choice.account_set.accounts
+                )
+                pending_transitions.extend(choice.transition_set.transitions)
+
+        account_milestones = list(milestone_set.account_milestones)
+        for composite in milestone_set.composite_milestones:
+            account_milestones.extend(composite.account_milestones)
+        for milestone in account_milestones:
+            if milestone.account_name not in valid_targets:
+                raise ValueError(
+                    f"Account milestone {milestone.milestone_name!r} targets "
+                    f"unknown or unreachable account "
+                    f"{milestone.account_name!r}"
+                )
+
     #TODO DOC manual review of ExpenseForecastInitialConditions._validate_account_budget_memo_rule_intersection docstring
     @classmethod
     def _validate_account_budget_memo_rule_intersection(cls, account_set: AccountSet,
@@ -861,6 +904,12 @@ class ExpenseForecastInitialConditions:
         if not isinstance(self.transition_set, ConditionalScenarioTransitionSet):
             raise TypeError("transition_set must be a ConditionalScenarioTransitionSet")
         self.transition_set.validate(self.milestone_set, self.initial_line_item_set)
+        self._validate_account_milestone_targets(
+            self.initial_account_set,
+            self.initial_line_item_set,
+            self.milestone_set,
+            self.transition_set,
+        )
         self.policy_set = copy.deepcopy(
             kwargs.get('policy_set') or ForecastPolicySet()
         )

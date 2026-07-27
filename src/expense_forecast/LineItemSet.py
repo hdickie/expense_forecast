@@ -96,7 +96,18 @@ class LineItemSet:
         self.budget_items__list = self.line_items__list
         self.budget_items = self.line_items
         self.scenario_selections = dict(scenario_selections or {})
-        self.scenario_dimensions = copy.deepcopy(scenario_dimensions or {})
+        raw_dimensions = scenario_dimensions or {}
+        if raw_dimensions:
+            from expense_forecast.ScenarioChoice import ScenarioChoice
+            self.scenario_dimensions = {
+                dimension_name: {
+                    choice_name: ScenarioChoice.normalize(choice)
+                    for choice_name, choice in choices.items()
+                }
+                for dimension_name, choices in raw_dimensions.items()
+            }
+        else:
+            self.scenario_dimensions = {}
         self.scenario_timelines = copy.deepcopy(scenario_timelines or {})
 
         if set(self.scenario_selections) - set(self.scenario_dimensions):
@@ -474,8 +485,8 @@ class LineItemSet:
         if self.scenario_dimensions:
             result["scenario_dimensions"] = {
                 dimension_name: {
-                    choice_name: choice_set.to_dict()
-                    for choice_name, choice_set in choices.items()
+                    choice_name: choice.to_dict()
+                    for choice_name, choice in choices.items()
                 }
                 for dimension_name, choices in self.scenario_dimensions.items()
             }
@@ -560,9 +571,10 @@ class LineItemSet:
                 )
             )
 
+        from expense_forecast.ScenarioChoice import ScenarioChoice
         scenario_dimensions = {
             dimension_name: {
-                choice_name: cls.from_dict(choice_data)
+                choice_name: ScenarioChoice.from_dict(choice_data)
                 for choice_name, choice_data in choices_data.items()
             }
             for dimension_name, choices_data in data.get(
@@ -799,8 +811,8 @@ class LineItemSet:
         if current_choice == choice_name:
             return copy.deepcopy(self)
 
-        current_choice_set = choices[current_choice]
-        next_choice_set = choices[choice_name]
+        current_choice_set = choices[current_choice].line_item_set
+        next_choice_set = choices[choice_name].line_item_set
         remaining_items = list(self.line_items)
         outgoing_recurrence_anchors = {}
         for item_to_remove in current_choice_set.line_items:
@@ -887,7 +899,7 @@ class LineItemSet:
                 )
                 for item in result.scenario_dimensions[
                     dimension_name
-                ][choice_name].line_items
+                ][choice_name].line_item_set.line_items
             }
             for item in result.line_items:
                 signature = (

@@ -370,6 +370,22 @@ class MemoRuleSet:
             ]
         }
 
+    @classmethod
+    def from_dict(cls, data):
+        if not isinstance(data, dict) or not isinstance(
+            data.get("memo_rules"), list
+        ):
+            raise TypeError("MemoRuleSet.from_dict requires a 'memo_rules' list")
+        return cls([
+            MemoRule(
+                row["Memo_Regex"],
+                row["Account_From"],
+                row["Account_To"],
+                row["Transaction_Priority"],
+            )
+            for row in data["memo_rules"]
+        ])
+
     #TODO DOC manual review of MemoRuleSet.to_json docstring
     def to_json(self):
         """
